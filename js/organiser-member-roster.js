@@ -4,7 +4,7 @@
 
   const params = new URLSearchParams(location.search);
   const organiserId = String(params.get('id') || params.get('organiserId') || '').trim();
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 25;
   let members = [];
   let events = [];
   let lastReports = null;
@@ -69,8 +69,230 @@
   }
 
   function isBookedForSelectedEvent(m) {
-    if (!selectedEventId() || !lastReports || !lastReports.bookedForEvent) return null;
-    return bookedEmailSet().has(String(m.email || '').toLowerCase());
+    const eventId = selectedEventId();
+    if (!eventId) return null;
+    return isBookedForEvent(m, eventId);
+  }
+
+  function memberBookings(m) {
+    return (
+      m.bookings || {
+        total: 0,
+        upcoming: [],
+        recent: [],
+        all: [],
+        latest: null,
+      }
+    );
+  }
+
+  function isBookedForEvent(m, eventId) {
+    if (!eventId) return null;
+    const bookings = memberBookings(m);
+    if (bookings.all && bookings.all.length) {
+      return bookings.all.some(function (b) {
+        return String(b.eventId) === String(eventId);
+      });
+    }
+    if (lastReports && lastReports.bookedForEvent) {
+      return bookedEmailSet().has(String(m.email || '').toLowerCase());
+    }
+    return false;
+  }
+
+  function formatShortEventDate(startsAt) {
+    if (!startsAt) return '';
+    try {
+      return new Date(startsAt).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  }
+
+  function renderBookingsCell(m) {
+    const bookings = memberBookings(m);
+    const eventId = selectedEventId();
+
+    if (eventId) {
+      const booked = isBookedForEvent(m, eventId);
+      const ev = events.find(function (e) {
+        return String(e.id) === String(eventId);
+      });
+      const evTitle = ev ? ev.title || 'Event' : 'This event';
+      const highlight = booked
+        ? '<span class="omr-booking-pill omr-booking-pill-yes" title="' +
+          esc(evTitle) +
+          '">Booked for this event</span>'
+        : '<span class="omr-booking-pill omr-booking-pill-no">Not booked for this event</span>';
+      const others = (bookings.upcoming || []).filter(function (b) {
+        return String(b.eventId) !== String(eventId);
+      });
+      let extra = '';
+      if (others.length) {
+        extra = others
+          .slice(0, 2)
+          .map(function (b) {
+            const date = formatShortEventDate(b.startsAt);
+            return (
+              '<span class="omr-booking-chip omr-booking-chip-upcoming" title="' +
+              esc(b.title + (date ? ' · ' + date : '')) +
+              '">' +
+              esc(b.title.slice(0, 24) + (b.title.length > 24 ? '…' : '')) +
+              '</span>'
+            );
+          })
+          .join('');
+        if (others.length > 2) {
+          extra += '<span class="omr-booking-more">+' + (others.length - 2) + ' more</span>';
+        }
+      }
+      return (
+        '<div class="omr-bookings-cell">' +
+        highlight +
+        (extra ? '<div class="omr-booking-chips">' + extra + '</div>' : '') +
+        '</div>'
+      );
+    }
+
+    if (!bookings.total) {
+      return '<span class="omr-badge-pending">None yet</span>';
+    }
+
+    const upcoming = bookings.upcoming || [];
+    const chips = upcoming
+      .slice(0, 2)
+      .map(function (b) {
+        const date = formatShortEventDate(b.startsAt);
+        return (
+          '<span class="omr-booking-chip omr-booking-chip-upcoming" title="' +
+          esc(b.title + (date ? ' · ' + date : '')) +
+          '">' +
+          esc(b.title.slice(0, 26) + (b.title.length > 26 ? '…' : '')) +
+          '</span>'
+        );
+      })
+      .join('');
+    const pastCount = (bookings.recent || []).length;
+    let more = '';
+    if (upcoming.length > 2) {
+      more = '<span class="omr-booking-more">+' + (upcoming.length - 2) + ' upcoming</span>';
+    } else if (!upcoming.length && pastCount) {
+      more = '<span class="omr-booking-more">' + pastCount + ' past</span>';
+    }
+    const summary =
+      '<span class="omr-booking-summary">' +
+      bookings.total +
+      (bookings.total === 1 ? ' event' : ' events') +
+      '</span>';
+    return (
+      '<div class="omr-bookings-cell">' +
+      summary +
+      (chips || more
+        ? '<div class="omr-booking-chips">' + chips + more + '</div>'
+        : '') +
+      '</div>'
+    );
+  }
+
+  function memberActionsHtml(m) {
+    const items = [
+      '<button type="button" class="org-action-item omr-action-edit-name" data-id="' +
+        esc(m.id) +
+        '" data-email="' +
+        esc(m.email) +
+        '" data-name="' +
+        esc(m.name || '') +
+        '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit name</strong><span>Update display name</span></span></button>',
+      '<button type="button" class="org-action-item omr-action-edit-expiry" data-id="' +
+        esc(m.id) +
+        '" data-email="' +
+        esc(m.email) +
+        '" data-expires="' +
+        esc(m.expiresAt || '') +
+        '"><span class="org-action-icon">📅</span><span class="org-action-text"><strong>Edit expiry</strong><span>Change membership end date</span></span></button>',
+    ];
+    if (!isClaimed(m)) {
+      items.push(
+        '<button type="button" class="org-action-item omr-action-resend" data-id="' +
+          esc(m.id) +
+          '" data-email="' +
+          esc(m.email) +
+          '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Resend invite</strong><span>Send Hub sign-up email again</span></span></button>'
+      );
+    }
+    items.push(
+      '<button type="button" class="org-action-item danger omr-action-remove" data-id="' +
+        esc(m.id) +
+        '"><span class="org-action-icon">✕</span><span class="org-action-text"><strong>Remove</strong><span>Remove from membership list</span></span></button>'
+    );
+    const label = String(m.name || m.email || 'Member').slice(0, 36);
+    return (
+      '<div class="org-action-wrap">' +
+      '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
+      '<div class="org-action-menu" role="menu">' +
+      '<div class="org-action-menu-header">' +
+      esc(label) +
+      '</div>' +
+      items.join('') +
+      '</div></div>'
+    );
+  }
+
+  function closeAllActionMenus() {
+    document.querySelectorAll('.org-action-menu.is-open').forEach(function (menu) {
+      menu.classList.remove('is-open', 'is-floating');
+      menu.style.top = '';
+      menu.style.left = '';
+      menu.style.right = '';
+      menu.style.bottom = '';
+      menu.style.visibility = '';
+      menu.style.display = '';
+      if (menu._actionWrap) {
+        menu._actionWrap.appendChild(menu);
+        menu._actionWrap = null;
+      }
+    });
+    document.querySelectorAll('[data-org-action-toggle][aria-expanded="true"]').forEach(function (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function getActionMenuPortal() {
+    return document.getElementById('omr-action-menu-portal') || document.body;
+  }
+
+  function openActionMenu(menu, toggle) {
+    const wrap = toggle.closest('.org-action-wrap');
+    const portal = getActionMenuPortal();
+    if (wrap && menu.parentElement !== portal) {
+      menu._actionWrap = wrap;
+      portal.appendChild(menu);
+    }
+    menu.classList.add('is-open', 'is-floating');
+    toggle.setAttribute('aria-expanded', 'true');
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    const rect = toggle.getBoundingClientRect();
+    const menuW = menu.offsetWidth || 240;
+    const menuH = menu.offsetHeight || 200;
+    let top = rect.bottom + 6;
+    let left = rect.right - menuW;
+    if (top + menuH > window.innerHeight - 12) {
+      top = Math.max(12, rect.top - menuH - 6);
+    }
+    if (left < 12) left = 12;
+    if (left + menuW > window.innerWidth - 12) {
+      left = window.innerWidth - menuW - 12;
+    }
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+    menu.style.right = 'auto';
+    menu.style.bottom = 'auto';
+    menu.style.visibility = '';
   }
 
   function isClaimed(m) {
@@ -177,6 +399,7 @@
             if (statusSel) statusSel.value = 'all';
           }
           page = 1;
+          renderRoster();
           loadReports(sel.value).then(function () {
             renderRoster();
           });
@@ -300,6 +523,8 @@
       if (filters.status === 'claimed' && !isClaimed(m)) return false;
       if (filters.status === 'unclaimed' && isClaimed(m)) return false;
       if (filters.status === 'expiring' && !m.expiringSoon) return false;
+      if (filters.status === 'has_bookings' && !memberBookings(m).total) return false;
+      if (filters.status === 'no_bookings' && memberBookings(m).total) return false;
       if (filters.status === 'booked') {
         if (!eventSelected) return false;
         if (!isBookedForSelectedEvent(m)) return false;
@@ -350,10 +575,17 @@
       'Expiring soon',
       'Hub account',
       'Invite sent',
+      'Event bookings',
     ];
-    if (eventId && lastReports && lastReports.bookedForEvent) header.push('Booked for event');
+    if (eventId) header.push('Booked for selected event');
     const lines = [header.map(csvCell).join(',')];
     rows.forEach(function (m) {
+      const b = memberBookings(m);
+      const bookingLabels = (b.all || [])
+        .map(function (x) {
+          return x.title || 'Event';
+        })
+        .join('; ');
       const row = [
         m.name || '',
         m.email,
@@ -361,9 +593,10 @@
         m.expiringSoon ? 'Yes' : '',
         isClaimed(m) ? 'Signed up' : 'Not yet',
         m.inviteSentAt ? 'Yes' : 'No',
+        bookingLabels || 'None',
       ];
-      if (eventId && lastReports && lastReports.bookedForEvent) {
-        row.push(isBookedForSelectedEvent(m) ? 'Yes' : 'No');
+      if (eventId) {
+        row.push(isBookedForEvent(m, eventId) ? 'Yes' : 'No');
       }
       lines.push(row.map(csvCell).join(','));
     });
@@ -485,8 +718,8 @@
     const body = document.getElementById('omr-body');
     const empty = document.getElementById('omr-empty');
     const count = document.getElementById('omr-count');
-    const bookedTh = document.getElementById('omr-booked-th');
     if (!body) return;
+    closeAllActionMenus();
     body.innerHTML = '';
 
     const totalActive = members.filter(function (m) {
@@ -494,9 +727,6 @@
     }).length;
     syncAddPanel(totalActive);
     syncBulkResend(totalActive);
-
-    const showBooked = Boolean(selectedEventId() && lastReports && lastReports.bookedForEvent);
-    if (bookedTh) bookedTh.hidden = !showBooked;
 
     const rows = filteredMembers();
     if (count) {
@@ -508,7 +738,19 @@
     }
 
     if (!rows.length) {
-      if (empty) empty.hidden = false;
+      if (empty) {
+        empty.hidden = false;
+        const title = empty.querySelector('.org-empty-state-title');
+        const text = empty.querySelector('.org-empty-state-text');
+        if (totalActive > 0 && title && text) {
+          title.textContent = 'No members match these filters';
+          text.textContent = 'Try a different search or filter, or clear the event filter.';
+        } else if (title && text) {
+          title.textContent = 'No members yet';
+          text.textContent =
+            'Add someone above or import a spreadsheet to start your membership register.';
+        }
+      }
       renderPagination(0);
       return;
     }
@@ -533,13 +775,6 @@
           ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
           : esc(m.expiresAt)
         : '—';
-      const bookedCell = showBooked
-        ? '<td>' +
-          (isBookedForSelectedEvent(m)
-            ? '<span class="omr-badge-claimed">Booked</span>'
-            : '<span class="omr-badge-pending">Not booked</span>') +
-          '</td>'
-        : '';
       tr.innerHTML =
         '<td class="omr-name-cell" data-id="' +
         esc(m.id) +
@@ -555,80 +790,108 @@
         hub +
         '</td><td>' +
         invite +
-        '</td>' +
-        bookedCell +
-        '<td class="omr-actions">' +
-        '<button type="button" class="ee-btn ee-btn-outline omr-btn-sm omr-edit-name" data-id="' +
-        esc(m.id) +
-        '" data-email="' +
-        esc(m.email) +
-        '" data-name="' +
-        esc(m.name || '') +
-        '">Edit name</button> ' +
-        '<button type="button" class="ee-btn ee-btn-outline omr-btn-sm omr-edit-expiry" data-id="' +
-        esc(m.id) +
-        '" data-email="' +
-        esc(m.email) +
-        '" data-expires="' +
-        esc(m.expiresAt || '') +
-        '">Edit expiry</button> ' +
-        (!isClaimed(m)
-          ? '<button type="button" class="ee-btn ee-btn-outline omr-btn-sm omr-resend" data-id="' +
-            esc(m.id) +
-            '" data-email="' +
-            esc(m.email) +
-            '">Resend invite</button> '
-          : '') +
-        '<button type="button" class="ee-btn ee-btn-outline omr-btn-sm omr-remove" data-id="' +
-        esc(m.id) +
-        '">Remove</button></td>';
+        '</td><td class="omr-bookings-col">' +
+        renderBookingsCell(m) +
+        '</td><td class="org-td-actions omr-actions">' +
+        memberActionsHtml(m) +
+        '</td>';
       body.appendChild(tr);
     });
+  }
 
-    body.querySelectorAll('.omr-remove').forEach(function (btn) {
-      btn.addEventListener('click', async function () {
+  function bindMemberActionHandlers() {
+    if (document.documentElement.dataset.omrActionBound === '1') return;
+    document.documentElement.dataset.omrActionBound = '1';
+
+    document.addEventListener('click', function (e) {
+      const toggle = e.target.closest('[data-org-action-toggle]');
+      if (toggle && toggle.closest('#omr-body')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrap = toggle.closest('.org-action-wrap');
+        const menu = wrap && wrap.querySelector('.org-action-menu');
+        if (!menu) return;
+        const wasOpen = menu.classList.contains('is-open');
+        closeAllActionMenus();
+        if (!wasOpen) openActionMenu(menu, toggle);
+        return;
+      }
+
+      if (
+        !e.target.closest('.org-action-menu') &&
+        !e.target.closest('[data-org-action-toggle]')
+      ) {
+        closeAllActionMenus();
+      }
+
+      const removeBtn = e.target.closest('.omr-action-remove');
+      if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllActionMenus();
         if (!confirm('Remove this member from the list?')) return;
-        try {
-          await api(rosterUrl('&id=' + encodeURIComponent(btn.dataset.id)), { method: 'DELETE' });
-          await refresh();
-        } catch (e) {
-          showAlert(e.message, 'error');
-        }
-      });
+        (async function () {
+          try {
+            await api(rosterUrl('&id=' + encodeURIComponent(removeBtn.dataset.id)), {
+              method: 'DELETE',
+            });
+            await refresh();
+          } catch (err) {
+            showAlert(err.message, 'error');
+          }
+        })();
+        return;
+      }
+
+      const resendBtn = e.target.closest('.omr-action-resend');
+      if (resendBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllActionMenus();
+        resendBtn.disabled = true;
+        (async function () {
+          try {
+            await api(rosterUrl(), {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                organiserId: organiserId,
+                id: resendBtn.dataset.id,
+                email: resendBtn.dataset.email,
+                resendInvite: true,
+              }),
+            });
+            showAlert('Invite resent.', 'success');
+            await refresh();
+          } catch (err) {
+            showAlert(err.message, 'error');
+          } finally {
+            resendBtn.disabled = false;
+          }
+        })();
+        return;
+      }
+
+      const editExpiryBtn = e.target.closest('.omr-action-edit-expiry');
+      if (editExpiryBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllActionMenus();
+        startExpiryEdit(editExpiryBtn.dataset.id, editExpiryBtn.dataset.email, editExpiryBtn.dataset.expires);
+        return;
+      }
+
+      const editNameBtn = e.target.closest('.omr-action-edit-name');
+      if (editNameBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllActionMenus();
+        startNameEdit(editNameBtn.dataset.id, editNameBtn.dataset.email, editNameBtn.dataset.name);
+      }
     });
-    body.querySelectorAll('.omr-resend').forEach(function (btn) {
-      btn.addEventListener('click', async function () {
-        btn.disabled = true;
-        try {
-          await api(rosterUrl(), {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              organiserId: organiserId,
-              id: btn.dataset.id,
-              email: btn.dataset.email,
-              resendInvite: true,
-            }),
-          });
-          showAlert('Invite resent.', 'success');
-          await refresh();
-        } catch (e) {
-          showAlert(e.message, 'error');
-        } finally {
-          btn.disabled = false;
-        }
-      });
-    });
-    body.querySelectorAll('.omr-edit-expiry').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        startExpiryEdit(btn.dataset.id, btn.dataset.email, btn.dataset.expires);
-      });
-    });
-    body.querySelectorAll('.omr-edit-name').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        startNameEdit(btn.dataset.id, btn.dataset.email, btn.dataset.name);
-      });
-    });
+
+    window.addEventListener('scroll', closeAllActionMenus, true);
+    window.addEventListener('resize', closeAllActionMenus);
   }
 
   function startNameEdit(memberId, email, currentName) {
@@ -774,6 +1037,7 @@
     }
 
     removeDuplicateAddPanels();
+    bindMemberActionHandlers();
 
     document.getElementById('omr-jump-add')?.addEventListener('click', function () {
       jumpToAddSection('omr-add-card');

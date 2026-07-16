@@ -683,6 +683,90 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
   return reports;
 }
 
+async function buildMemberBookingIndex(orgId) {
+  const sb = getSupabaseAdmin();
+  const { data: regs, error } = await sb
+    .from('registrations')
+    .select(
+      'event_id, created_at, application_status, payment_status, cancelled_at, attendees(email)'
+    )
+    .eq('organiser_id', orgId)
+    .is('cancelled_at', null);
+  if (error) throw new Error(error.message);
+
+  const eventIds = [...new Set((regs || []).map((row) => row.event_id).filter(Boolean))];
+  const eventsById = new Map();
+  for (let i = 0; i < eventIds.length; i += 80) {
+    const chunk = eventIds.slice(i, i + 80);
+    const { data: evs, error: evErr } = await sb
+      .from('events')
+      .select('id, title, starts_at')
+      .in('id', chunk);
+    if (evErr) throw new Error(evErr.message);
+    (evs || []).forEach((ev) => eventsById.set(ev.id, ev));
+  }
+
+  const now = Date.now();
+  const byEmail = new Map();
+
+  (regs || []).forEach((row) => {
+    const app = String(row.application_status || 'Approved');
+    const pay = String(row.payment_status || '');
+    if (app === 'Denied' || pay === 'Refunded') return;
+    const email = normalizeRosterEmail(row.attendees?.email);
+    if (!email || !row.event_id) return;
+    const ev = eventsById.get(row.event_id) || {};
+    const start = ev.starts_at ? new Date(ev.starts_at).getTime() : 0;
+    const item = {
+      eventId: row.event_id,
+      title: String(ev.title || 'Event').trim(),
+      startsAt: ev.starts_at || null,
+      isUpcoming: start >= now,
+    };
+    if (!byEmail.has(email)) byEmail.set(email, []);
+    byEmail.get(email).push(item);
+  });
+
+  const index = new Map();
+  byEmail.forEach((bookings, email) => {
+    bookings.sort((a, b) => {
+      const ta = a.startsAt ? new Date(a.startsAt).getTime() : 0;
+      const tb = b.startsAt ? new Date(b.startsAt).getTime() : 0;
+      return tb - ta;
+    });
+    const unique = [];
+    const seen = new Set();
+    bookings.forEach((b) => {
+      const key = String(b.eventId);
+      if (seen.has(key)) return;
+      seen.add(key);
+      unique.push(b);
+    });
+    index.set(email, {
+      total: unique.length,
+      upcoming: unique.filter((b) => b.isUpcoming),
+      recent: unique.filter((b) => !b.isUpcoming),
+      all: unique,
+      latest: unique[0] || null,
+    });
+  });
+  return index;
+}
+
+async function enrichMembersWithBookings(orgId, members) {
+  const index = await buildMemberBookingIndex(orgId);
+  return (members || []).map((m) => ({
+    ...m,
+    bookings: index.get(m.email) || {
+      total: 0,
+      upcoming: [],
+      recent: [],
+      all: [],
+      latest: null,
+    },
+  }));
+}
+
 async function listRosterGroupsForAttendee(email) {
   const sb = getSupabaseAdmin();
   const em = normalizeRosterEmail(email);
@@ -1084,6 +1168,8 @@ module.exports = {
   parseRosterCsv,
   loadMemberTicketsForEvent,
   buildRosterReports,
+  buildMemberBookingIndex,
+  enrichMembersWithBookings,
   listRosterGroupsForAttendee,
   sendMemberRosterInviteEmail,
   ensureOrganiserFavouritesForRoster,

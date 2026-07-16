@@ -8,6 +8,7 @@ const {
   parseRosterCsv,
   buildRosterReports,
   sendMemberRosterBookingReminders,
+  enrichMembersWithBookings,
 } = require('../organiser-member-roster');
 
 function parseBody(req) {
@@ -74,7 +75,10 @@ module.exports = async function handler(req, res) {
       }
 
       const status = String(req.query?.status || 'active').trim().toLowerCase();
-      const members = await listRosterForOrganiser(organiserId, { status });
+      const members = await enrichMembersWithBookings(
+        organiserId,
+        await listRosterForOrganiser(organiserId, { status })
+      );
       return json(res, 200, { ok: true, members });
     }
 

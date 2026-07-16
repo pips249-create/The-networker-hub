@@ -715,3 +715,74 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.omr-bookings-col {
+  min-width: 160px;
+  max-width: 280px;
+}
+
+.omr-bookings-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.omr-booking-summary {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #084a52;
+}
+
+.omr-booking-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.omr-booking-chip {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.35;
+  background: #e8f6f8;
+  color: #084a52;
+  border: 1px solid rgba(13, 110, 122, 0.15);
+}
+
+.omr-booking-chip-upcoming {
+  background: #eef8f0;
+  border-color: rgba(26, 122, 76, 0.2);
+  color: #1a7a4c;
+}
+
+.omr-booking-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.omr-booking-pill-yes {
+  background: #eef8f0;
+  color: #1a7a4c;
+}
+
+.omr-booking-pill-no {
+  background: #faf5ff;
+  color: #9a7aa8;
+}
+
+.omr-booking-more {
+  font-size: 11px;
+  color: #7a94a3;
+}
+
+.omr-table tbody td.org-td-actions {
+  white-space: nowrap;
+  width: 1%;
+}

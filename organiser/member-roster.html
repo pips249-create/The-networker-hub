@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem3" />
-    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem5" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem6" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
@@ -127,11 +127,13 @@
             <option value="claimed">Signed up to the Hub</option>
             <option value="unclaimed">Not signed up yet</option>
             <option value="expiring">Expiring soon</option>
+            <option value="has_bookings">Has event bookings</option>
+            <option value="no_bookings">No event bookings yet</option>
             <option value="booked">Booked for selected event</option>
             <option value="not_booked">Not booked for selected event</option>
           </select>
-          <select id="omr-event-select" aria-label="Select event for booking report">
-            <option value="">Report for event…</option>
+          <select id="omr-event-select" aria-label="Filter or report by event">
+            <option value="">All events — show bookings</option>
           </select>
           <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-bulk-resend" hidden>
             Resend invites to not signed up
@@ -162,8 +164,8 @@
                 <th>Expires</th>
                 <th>Hub account</th>
                 <th>Invite</th>
-                <th id="omr-booked-th" hidden>Booked</th>
-                <th>Actions</th>
+                <th>Event bookings</th>
+                <th class="org-td-actions">Actions</th>
               </tr>
             </thead>
             <tbody id="omr-body"></tbody>
@@ -188,9 +190,11 @@
       </div>
     </div>
 
+    <div id="omr-action-menu-portal"></div>
+
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
-    <script src="../js/organiser-member-roster.js?v=20260716mem5"></script>
+    <script src="../js/organiser-member-roster.js?v=20260716mem6"></script>
   </body>
 </html>
