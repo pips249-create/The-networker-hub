@@ -426,6 +426,34 @@ function applyGroupSalesSummary(groups, summary) {
   });
 }
 
+/** Enrich lean-bootstrap groups with event counts and revenue without loading full events. */
+function enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary) {
+  const eventsByGroup = new Map();
+  (eventSummaries || []).forEach((ev) => {
+    const orgId = ev.organiserId;
+    if (!orgId) return;
+    eventsByGroup.set(orgId, (eventsByGroup.get(orgId) || 0) + 1);
+  });
+
+  let enriched = (groups || []).map((g) => {
+    const status = deriveGroupListingStatus(g.statusRaw);
+    const eventsListed = eventsByGroup.get(g.id) || 0;
+    return {
+      ...g,
+      eventsListed,
+      statusKey: status.key,
+      statusLabel: status.label,
+      revenueDisplay: g.revenueDisplay || formatMoney(g.revenueNum || 0),
+    };
+  });
+
+  if (workspaceSummary?.computed) {
+    enriched = applyGroupSalesSummary(enriched, workspaceSummary);
+  }
+
+  return enriched;
+}
+
 async function countEventsForOrganiser(groupIds) {
   const sb = getSupabaseAdmin();
   const ids = groupIds || [];
@@ -1820,11 +1848,31 @@ async function getLeanOrganiserWorkspace(req) {
   }
 
   const groupIds = groups.map((g) => g.id);
-  const [pendingClaimGroups, eventSummaries, accessStatus] = await Promise.all([
+  const [pendingClaimGroups, eventSummaries, accessStatus, workspaceSalesCache] = await Promise.all([
     pendingClaimsPromise,
     listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
     accessStatusPromise,
+    (async () => {
+      try {
+        const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
+        return await buildOrganiserWorkspaceSummary(groupIds, adminView);
+      } catch {
+        return null;
+      }
+    })(),
   ]);
+
+  const workspaceSummary = workspaceSalesCache
+    ? {
+        computed: workspaceSalesCache.computed,
+        totalRevenue: workspaceSalesCache.totalRevenue,
+        totalTicketsSold: workspaceSalesCache.totalTicketsSold,
+        revenueByGroupId: workspaceSalesCache.revenueByGroupId,
+        ticketsSoldByGroupId: workspaceSalesCache.ticketsSoldByGroupId,
+      }
+    : null;
+
+  groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary);
 
   let stripeConnectEnabled = false;
   try {
@@ -1848,7 +1896,7 @@ async function getLeanOrganiserWorkspace(req) {
       offset: 0,
       hasMore: eventSummaries.length > 0,
     },
-    workspaceSummary: null,
+    workspaceSummary,
     eventSummaries,
     reviews: [],
     groupRankings: {},

@@ -389,7 +389,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id, g.slug)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="#org-linkedin-posts">Build a LinkedIn post image</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="#org-social-linkedin">Build a LinkedIn post image</a>' +
       '</div></article>'
     );
   }
@@ -460,9 +460,16 @@
   }
 
   function updateRankingPanelSummaries(summaryText) {
-    const el = document.getElementById('org-ranking-panel-events-summary');
-    if (!el) return;
-    el.textContent = summaryText ? ' — ' + summaryText : '';
+    const badgeLine = document.getElementById('org-social-ranking-badge');
+    if (badgeLine) {
+      badgeLine.textContent = summaryText ? 'Your badge this month: ' + summaryText : '';
+      badgeLine.hidden = !summaryText;
+    }
+  }
+
+  function updateSocialRankingNav(hasRanking) {
+    const navRanking = document.getElementById('org-social-nav-ranking');
+    if (navRanking) navRanking.hidden = !hasRanking;
   }
 
   function renderOrganiserRankingShare() {
@@ -470,7 +477,7 @@
     const cardsEl = document.getElementById('org-ranking-share-cards');
     const examplesEl = document.getElementById('org-ranking-tier-examples');
     const groupsMount = document.getElementById('org-ranking-share-groups-mount');
-    const eventsPanel = document.getElementById('org-ranking-panel-events');
+    const eventsPanel = document.getElementById('org-social-ranking');
 
     const periodLabel =
       (bestGroupRanking() && bestGroupRanking().periodLabel) ||
@@ -518,8 +525,7 @@
     updateRankingPanelSummaries(summaryText);
 
     if (eventsPanel) eventsPanel.hidden = !ranked.length;
-
-    bindRankingPanel('org-ranking-panel-events', RANKING_PANEL_COLLAPSE_KEYS.events);
+    updateSocialRankingNav(ranked.length > 0);
 
     if (shareRoot) {
       if (cardsEl) cardsEl.innerHTML = cardsHtml;
@@ -638,25 +644,27 @@
   }
 
   function updateFeaturedUpgradeHeaderSummary(eventCount) {
-    const el = document.getElementById('org-featured-upgrade-header-summary');
+    const el = document.getElementById('org-featured-upgrade-status');
     if (!el) return;
     const slots = featuredSpotlightSlots;
     if (!state.eventsLoaded) {
       el.textContent = '';
+      el.hidden = true;
       return;
     }
+    el.hidden = false;
     if (!eventCount) {
-      el.textContent = ' — No upcoming live events';
+      el.textContent =
+        'Publish an upcoming live event first, then return here to add Premium Spotlight.';
       return;
     }
     let text =
-      ' — ' +
       eventCount +
-      (eventCount === 1 ? ' event available' : ' events available');
+      (eventCount === 1 ? ' upcoming live event ready to upgrade' : ' upcoming live events ready to upgrade');
     if (slots && slots.full) {
-      text += ' · Spotlight full';
+      text += ' · Spotlight carousel is full — try again later';
     } else if (slots && slots.available > 0 && slots.available <= 3) {
-      text += ' · ' + slots.available + ' spotlight place' + (slots.available === 1 ? '' : 's') + ' left';
+      text += ' · Only ' + slots.available + ' spotlight place' + (slots.available === 1 ? '' : 's') + ' left';
     }
     el.textContent = text;
   }
@@ -970,7 +978,6 @@
     if (!state.eventsLoaded) {
       updateFeaturedUpgradeHeaderSummary(0);
       root.innerHTML = '<p class="org-featured-upgrade-loading">Loading your events…</p>';
-      bindRankingPanel('org-featured-upgrade', RANKING_PANEL_COLLAPSE_KEYS.featuredUpgrade);
       ensureEventsLoaded().then(function () {
         renderFeaturedUpgradePanel();
       });
@@ -1011,7 +1018,6 @@
         featuredUpgradeSlotStatusHtml() +
         '<p class="org-featured-upgrade-empty">No upcoming live events yet. Publish an event with a future date first, then return here to upgrade it.</p>' +
         '<p class="org-section-sub"><a class="org-inline-link" href="#events-list" data-org-route="events-list">Go to My events</a></p>';
-      bindRankingPanel('org-featured-upgrade', RANKING_PANEL_COLLAPSE_KEYS.featuredUpgrade);
       return;
     }
 
@@ -1060,15 +1066,7 @@
 
     root.innerHTML =
       featuredUpgradeSlotStatusHtml() +
-      '<details class="org-featured-upgrade-details">' +
-      '<summary>What&apos;s included</summary>' +
-      '<ul class="org-featured-upgrade-features">' +
-      '<li>Featured in the Premium Spotlight carousel (max. 12 events at a time)</li>' +
-      '<li>Top placement in search and category results</li>' +
-      '<li>Featured badge on your listing card</li>' +
-      '</ul>' +
-      '<p class="org-featured-upgrade-policy">Featured in Premium Spotlight for people browsing your area and dates — still visible when they filter by event type or ticket price. Placement runs until your event starts when that is sooner than your chosen period.</p>' +
-      '</details>' +
+      '<p class="org-featured-upgrade-policy">Placement runs until your event starts when that is sooner than your chosen period. Still visible when attendees filter by event type or ticket price.</p>' +
       '<div class="org-featured-upgrade-plan">' +
       '<span class="org-featured-upgrade-plan-label">How long to feature each event</span>' +
       '<div class="org-featured-upgrade-plan-options">' +
@@ -1096,7 +1094,6 @@
     bindFeaturedUpgradeUi(root);
     updateFeaturedUpgradeSummary(root);
     updateFeaturedUpgradeHeaderSummary(liveEvents.length);
-    bindRankingPanel('org-featured-upgrade', RANKING_PANEL_COLLAPSE_KEYS.featuredUpgrade);
   }
 
   function ensureFeaturedUpgradePanelReady() {
@@ -1206,12 +1203,12 @@
       banner.innerHTML = html;
     });
 
-    const eventsPanel = document.getElementById('org-ranking-panel-events');
+    const eventsPanel = document.getElementById('org-social-ranking');
     const hasRanking = Boolean(best);
     if (eventsPanel) eventsPanel.hidden = !hasRanking;
+    updateSocialRankingNav(hasRanking);
     if (hasRanking) {
       updateRankingPanelSummaries(rankingBadgeText(best));
-      bindRankingPanel('org-ranking-panel-events', RANKING_PANEL_COLLAPSE_KEYS.events);
     }
   }
 
@@ -2737,6 +2734,9 @@
         state.events = data.events || [];
         state.upcomingEvents = data.upcomingEvents || [];
         state.tickets = data.tickets || [];
+        if (data.groups && data.groups.length) {
+          state.groups = data.groups;
+        }
         state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
         state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
         state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
@@ -2748,6 +2748,9 @@
         renderStats();
         fillMyEventsFilters();
         fillEventSelect(document.getElementById('ticket-event'));
+        if (document.querySelector('[data-org-page="groups"].is-active')) {
+          renderGroups();
+        }
         return true;
       })
       .catch((err) => {

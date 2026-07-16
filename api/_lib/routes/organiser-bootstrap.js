@@ -57,6 +57,7 @@ module.exports = async function handler(req, res) {
         upcomingEvents: ws.upcomingEvents || [],
         tickets: ws.tickets,
         eventsPagination: ws.eventsPagination,
+        groups: ws.groups || [],
         organiserAccess: accessStatus.organiserAccess,
         organiserEmailVerified: accessStatus.organiserEmailVerified,
       });

@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716nav" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716social" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -606,69 +606,81 @@
             <p class="org-page-kicker">Grow your reach</p>
             <h1 class="org-page-title">Promote &amp; social</h1>
             <p class="org-page-lead">
-              Create ready-to-share event posts using your event photo, organiser logo and listing link, then download the image and copy the caption.
+              Three ways to get more eyes on your events: upgrade to <strong>Premium Spotlight</strong>, build a LinkedIn post, or share your ranking badge when you earn one.
             </p>
           </header>
 
-          <section class="org-linkedin-posts" id="org-linkedin-posts" aria-labelledby="org-linkedin-posts-title">
-            <h2 class="org-section-title" id="org-linkedin-posts-title">Build a LinkedIn post</h2>
-            <p class="org-section-sub">
-              Choose a category and caption (or write your own), pick a background, then download the image and copy the caption.
-            </p>
-            <div id="org-post-builder-root"></div>
+          <nav class="org-social-nav" aria-label="Promotion tools">
+            <a class="org-social-nav-link" href="#org-social-spotlight">Premium Spotlight</a>
+            <a class="org-social-nav-link" href="#org-social-linkedin">LinkedIn post</a>
+            <a class="org-social-nav-link" href="#org-social-ranking" id="org-social-nav-ranking" hidden>Ranking badge</a>
+          </nav>
+
+          <section
+            class="org-social-tool org-social-tool--spotlight"
+            id="org-social-spotlight"
+            aria-labelledby="org-social-spotlight-title"
+          >
+            <header class="org-social-tool-head">
+              <div class="org-social-tool-head-row">
+                <span class="org-featured-upgrade-badge org-featured-upgrade-badge--section">Premium Spotlight</span>
+                <p class="org-social-tool-price">£55 <span>/ month per event</span></p>
+              </div>
+              <h2 class="org-section-title" id="org-social-spotlight-title">Upgrade your listing</h2>
+              <p class="org-section-sub org-social-tool-lede">
+                Feature live events in the Premium Spotlight carousel and top placement across the hub — only
+                <strong>12 featured events</strong> appear in the carousel at any one time.
+              </p>
+              <ul class="org-social-tool-features">
+                <li>Featured in the Premium Spotlight carousel on Browse events</li>
+                <li>Top placement in search and category results</li>
+                <li>Featured badge on your listing card</li>
+              </ul>
+              <p class="org-social-tool-status" id="org-featured-upgrade-status" role="status"></p>
+            </header>
+            <div class="org-social-tool-body" id="org-featured-upgrade-body">
+              <div id="org-featured-upgrade-root" aria-live="polite"></div>
+            </div>
           </section>
 
-          <section class="org-ranking-panel org-ranking-panel--social" id="org-ranking-panel-events" hidden>
-            <button
-              type="button"
-              class="org-ranking-panel-toggle"
-              aria-expanded="false"
-              aria-controls="org-ranking-panel-events-body"
-            >
-              <span class="org-ranking-panel-title">Share your ranking badge</span>
-              <span class="org-ranking-panel-summary" id="org-ranking-panel-events-summary"></span>
-              <span class="org-ranking-panel-chev" aria-hidden="true">Show</span>
-            </button>
-            <div class="org-ranking-panel-body" id="org-ranking-panel-events-body" hidden>
+          <section
+            class="org-social-tool org-social-tool--linkedin"
+            id="org-social-linkedin"
+            aria-labelledby="org-linkedin-posts-title"
+          >
+            <header class="org-social-tool-head">
+              <h2 class="org-section-title" id="org-linkedin-posts-title">Build a LinkedIn post</h2>
+              <p class="org-section-sub">
+                Choose a category and caption (or write your own), pick a background, then download the image and copy the caption.
+              </p>
+            </header>
+            <div class="org-social-tool-body">
+              <div id="org-post-builder-root"></div>
+            </div>
+          </section>
+
+          <section
+            class="org-social-tool org-social-tool--ranking org-ranking-panel org-ranking-panel--social"
+            id="org-social-ranking"
+            aria-labelledby="org-social-ranking-title"
+            hidden
+          >
+            <header class="org-social-tool-head">
+              <h2 class="org-section-title" id="org-social-ranking-title">Share your ranking badge</h2>
+              <p class="org-section-sub" id="org-ranking-panel-events-summary">
+                Monthly badges are based on attendee reviews. Preview your social post, then copy it or your profile link.
+              </p>
+              <p class="org-social-ranking-badge" id="org-social-ranking-badge" hidden></p>
+            </header>
+            <div class="org-social-tool-body" id="org-ranking-panel-events-body">
               <aside class="org-ranking-banner" id="org-events-ranking-banner" role="status"></aside>
               <div class="org-ranking-share" id="org-ranking-share-events">
-                <div class="org-ranking-share-head">
-                  <h2 class="org-section-title">Share on social</h2>
-                  <p class="org-section-sub">
-                    Monthly badges are based on attendee reviews. Preview your social post, then copy it or your profile link.
-                  </p>
-                </div>
                 <div class="org-ranking-share-cards" id="org-ranking-share-cards"></div>
                 <details class="org-ranking-tier-guide">
                   <summary>Badge tiers — what Top 10, 25 and 50 look like</summary>
                   <div class="org-ranking-tier-examples" id="org-ranking-tier-examples"></div>
                 </details>
               </div>
-            </div>
-          </section>
-
-          <section
-            class="org-featured-upgrade org-ranking-panel org-featured-upgrade-panel"
-            id="org-featured-upgrade"
-            aria-labelledby="org-featured-upgrade-title"
-          >
-            <button
-              type="button"
-              class="org-ranking-panel-toggle org-featured-upgrade-toggle"
-              aria-expanded="false"
-              aria-controls="org-featured-upgrade-body"
-            >
-              <span class="org-featured-upgrade-badge org-featured-upgrade-badge--inline">Featured listing</span>
-              <span class="org-ranking-panel-title" id="org-featured-upgrade-title">Upgrade your listing</span>
-              <span class="org-ranking-panel-summary" id="org-featured-upgrade-header-summary"></span>
-              <span class="org-ranking-panel-chev" aria-hidden="true">Show</span>
-            </button>
-            <div class="org-ranking-panel-body org-featured-upgrade-body" id="org-featured-upgrade-body" hidden>
-              <p class="org-section-sub org-featured-upgrade-lede">
-                Feature live events in the Premium Spotlight carousel and top placement across the hub — only
-                <strong>12 featured events</strong> appear in the carousel at any one time.
-              </p>
-              <div id="org-featured-upgrade-root" aria-live="polite"></div>
             </div>
           </section>
         </section>
@@ -1833,6 +1845,6 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716nav"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716social"></script>
   </body>
 </html>
