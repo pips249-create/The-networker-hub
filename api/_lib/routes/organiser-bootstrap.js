@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
+const { organiserPersonalScopeFromRequest } = require('../auth');
 
 module.exports = async function handler(req, res) {
   const startedAt = Date.now();
@@ -20,6 +21,44 @@ module.exports = async function handler(req, res) {
 
   try {
     const eventsOnly = String(req.query?.eventsOnly || '') === '1';
+    const groupsOnly = String(req.query?.groupsOnly || '') === '1';
+
+    if (groupsOnly) {
+      const { requireOrganiserSession, listGroupsForSession } = api;
+      const wsAuth = requireOrganiserSession(req);
+      if (!wsAuth.ok) {
+        return json(res, wsAuth.status || 401, { error: wsAuth.error });
+      }
+      const { session } = wsAuth;
+      const isAdmin = api.isPlatformAdmin ? api.isPlatformAdmin(session) : false;
+      const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
+      const adminView = isAdmin && !personalScope;
+      let groups = [];
+      let groupsError = null;
+      try {
+        groups = await listGroupsForSession(session, adminView);
+      } catch (e) {
+        groupsError = e.message;
+      }
+      const accessStatus = await getOrganiserAccessStatus(session).catch(() => ({
+        organiserAccess: false,
+        organiserEmailVerified: false,
+        pendingClaimCount: 0,
+      }));
+      res.setHeader(
+        'Server-Timing',
+        'organiser-bootstrap;dur=' + String(Date.now() - startedAt)
+      );
+      return json(res, 200, {
+        ok: true,
+        groups,
+        events: [],
+        groupsError,
+        organiserAccess: accessStatus.organiserAccess,
+        organiserEmailVerified: accessStatus.organiserEmailVerified,
+      });
+    }
+
     const ws = eventsOnly
       ? await getOrganiserWorkspace(req)
       : await getLeanOrganiserWorkspace(req);

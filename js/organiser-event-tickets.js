@@ -395,16 +395,23 @@
     if (!anchorId) return;
 
     let allEvents = [];
-    try {
-      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        if (cached && cached.ts && Date.now() - cached.ts < 120000) {
-          allEvents = cached.events || [];
+    const embedBootstrap = window.HubOrganiserEmbedBootstrap;
+    if (embedBootstrap && embedBootstrap.readCache) {
+      const cached = embedBootstrap.readCache();
+      if (cached) allEvents = cached.events || [];
+    } else {
+      try {
+        const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          const at = Number(cached && (cached.at || cached.ts) ? cached.at || cached.ts : 0);
+          if (at && Date.now() - at < 300000) {
+            allEvents = cached.events || [];
+          }
         }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
 
     if (!allEvents.length) {
@@ -461,25 +468,45 @@
       if (!byId.has(id)) byId.set(id, { id });
     });
 
-    try {
-      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        (cached.events || []).forEach((ev) => {
-          if (!ev || !ev.id || !byId.has(ev.id)) return;
-          const cur = byId.get(ev.id);
-          byId.set(ev.id, {
-            id: ev.id,
-            title: cur.title || ev.title,
-            date: cur.date || ev.date,
-            endDate: cur.endDate || ev.endDate || '',
-            imageUrl: cur.imageUrl || ev.imageUrl,
-            imagePosition: cur.imagePosition || ev.imagePosition || '',
-          });
+    const embedBootstrap = window.HubOrganiserEmbedBootstrap;
+    const cachedEvents =
+      embedBootstrap && embedBootstrap.readCache
+        ? (embedBootstrap.readCache() || {}).events || []
+        : [];
+    if (cachedEvents.length) {
+      cachedEvents.forEach((ev) => {
+        if (!ev || !ev.id || !byId.has(ev.id)) return;
+        const cur = byId.get(ev.id);
+        byId.set(ev.id, {
+          id: ev.id,
+          title: cur.title || ev.title,
+          date: cur.date || ev.date,
+          endDate: cur.endDate || ev.endDate || '',
+          imageUrl: cur.imageUrl || ev.imageUrl,
+          imagePosition: cur.imagePosition || ev.imagePosition || '',
         });
+      });
+    } else {
+      try {
+        const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          (cached.events || []).forEach((ev) => {
+            if (!ev || !ev.id || !byId.has(ev.id)) return;
+            const cur = byId.get(ev.id);
+            byId.set(ev.id, {
+              id: ev.id,
+              title: cur.title || ev.title,
+              date: cur.date || ev.date,
+              endDate: cur.endDate || ev.endDate || '',
+              imageUrl: cur.imageUrl || ev.imageUrl,
+              imagePosition: cur.imagePosition || ev.imagePosition || '',
+            });
+          });
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
 
     const missingDates = eventIds.filter((id) => {

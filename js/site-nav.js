@@ -2,6 +2,23 @@
  * Attendee ↔ organiser mode toggle (cookie hub_view).
  */
 (function () {
+  var isEmbedDrawer = false;
+  try {
+    isEmbedDrawer =
+      new URLSearchParams(window.location.search).get('embed') === '1' ||
+      window.self !== window.top;
+  } catch (e) {
+    isEmbedDrawer = false;
+  }
+
+  if (isEmbedDrawer) {
+    var navMount = document.getElementById('hub-site-nav');
+    if (navMount) navMount.hidden = true;
+    window.hubFetchSession = function () {
+      return Promise.resolve({ ok: true });
+    };
+    return;
+  }
   function bindSwitch(container, root) {
     if (!container || container.dataset.hubModeBound) return;
     container.dataset.hubModeBound = '1';

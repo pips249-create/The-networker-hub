@@ -1330,6 +1330,27 @@
     }
   }
 
+  function embedBootstrapPayload() {
+    return {
+      type: 'hub-event-drawer-bootstrap',
+      groups: state.groups || [],
+      events: state.events || [],
+    };
+  }
+
+  function refreshEmbedBootstrapCache() {
+    cacheBootstrapForEmbed({ groups: state.groups, events: state.events });
+  }
+
+  function sendEmbedBootstrapToFrame(frame) {
+    if (!frame || !frame.contentWindow) return;
+    try {
+      frame.contentWindow.postMessage(embedBootstrapPayload(), window.location.origin);
+    } catch {
+      /* ignore */
+    }
+  }
+
   function prefetchEventsInBackground() {
     if (state.eventsFullyLoaded || state.eventsLoading || !state.eventsHasMore) return;
     if (!document.querySelector('[data-org-page="events"].is-active')) return;
@@ -4483,6 +4504,10 @@
     eventDrawerLoadTimeout = setTimeout(function () {
       setEventDrawerLoading(false);
     }, 12000);
+    refreshEmbedBootstrapCache();
+    frame.onload = function () {
+      sendEmbedBootstrapToFrame(frame);
+    };
     frame.src = frameUrl;
 
     drawer.hidden = false;
@@ -10915,6 +10940,18 @@
 
     window.addEventListener('message', (e) => {
       if (e.origin !== window.location.origin) return;
+      if (e.data && e.data.type === 'hub-event-drawer-bootstrap-request') {
+        const frame = document.getElementById('org-event-drawer-frame');
+        if (frame && e.source === frame.contentWindow) {
+          refreshEmbedBootstrapCache();
+          try {
+            e.source.postMessage(embedBootstrapPayload(), window.location.origin);
+          } catch {
+            sendEmbedBootstrapToFrame(frame);
+          }
+        }
+        return;
+      }
       if (e.data && e.data.type === 'hub-event-cancel-request') {
         const cancelId = e.data.eventId || '';
         if (cancelId) openCancelEventModal(cancelId);

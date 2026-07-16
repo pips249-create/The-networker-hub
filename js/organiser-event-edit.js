@@ -9,8 +9,6 @@
   const AUTODRAFT_PREFIX = 'hub_event_autodraft_v1:';
   const EDIT_AUTODRAFT_PREFIX = 'hub_event_edit_autodraft_v1:';
   const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
-  const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
-  const ORG_BOOTSTRAP_CACHE_MS = 120000;
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
@@ -899,25 +897,13 @@
     return { ok: res.ok, status: res.status, data };
   }
 
-  function readEmbedBootstrapCache() {
-    if (!isEmbedDrawer) return null;
-    try {
-      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed || Date.now() - Number(parsed.at || 0) > ORG_BOOTSTRAP_CACHE_MS) return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
   async function loadOrganiserBootstrapData() {
-    const cached = readEmbedBootstrapCache();
-    if (cached) {
-      return { ok: true, data: { groups: cached.groups || [], events: cached.events || [] } };
+    if (window.HubOrganiserEmbedBootstrap && window.HubOrganiserEmbedBootstrap.loadOrganiserBootstrapData) {
+      return window.HubOrganiserEmbedBootstrap.loadOrganiserBootstrapData({
+        groupsOnly: !editId,
+      });
     }
-    return api('/api/organiser/bootstrap');
+    return api('/api/organiser/bootstrap' + (editId ? '' : '?groupsOnly=1'));
   }
 
   function pad2(n) {
@@ -2102,7 +2088,7 @@
       QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
     }
     bindTimeListRefresh();
-    if (!editId && window.HubFlowTour) {
+    if (!editId && window.HubFlowTour && !isEmbedDrawer) {
       window.HubFlowTour.startEventEditTour({ isEdit: false, delay: 0 });
     }
     if (editId) {

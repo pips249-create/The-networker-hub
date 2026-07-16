@@ -677,9 +677,12 @@
     }
 
     let ev = null;
-    const bootstrap = await api('/api/organiser/bootstrap');
-    if (bootstrap.ok) {
-      ev = (bootstrap.data.events || []).find((e) => e.id === eventIds[0]) || null;
+    const embedBootstrap = window.HubOrganiserEmbedBootstrap;
+    if (embedBootstrap && embedBootstrap.readCache) {
+      const cached = embedBootstrap.readCache();
+      if (cached) {
+        ev = (cached.events || []).find((e) => e.id === eventIds[0]) || null;
+      }
     }
     if (!ev) {
       const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(eventIds[0]));
