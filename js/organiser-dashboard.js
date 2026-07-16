@@ -10,6 +10,7 @@
   const expandedSeriesKeys = new Set();
   let eventsGroupingPromise = null;
   let bootstrapReady = false;
+  let membershipsRosterLoadedFor = '';
   let attendeesLoadingPromise = null;
   let teamLoadingPromise = null;
   let eventsLoadingPromise = null;
@@ -6440,19 +6441,21 @@
         return groupMembershipPriority(b) - groupMembershipPriority(a);
       });
     const prev = filters.membershipsGroup || sel.value || '';
-    sel.innerHTML = '';
-    groups.forEach(function (g) {
-      const opt = document.createElement('option');
-      opt.value = g.id;
-      opt.textContent = membershipGroupOptionLabel(g);
-      sel.appendChild(opt);
-    });
     if (!groups.length) {
+      sel.replaceChildren();
       filters.membershipsGroup = '';
       return;
     }
-    filters.membershipsGroup = preferredMembershipGroupId(groups, prev);
-    sel.value = filters.membershipsGroup;
+    const nextId = preferredMembershipGroupId(groups, prev);
+    const options = groups.map(function (g) {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = membershipGroupOptionLabel(g);
+      return opt;
+    });
+    sel.replaceChildren(...options);
+    filters.membershipsGroup = nextId;
+    sel.value = nextId;
     sel.hidden = groups.length <= 1;
     const label = sel.closest('.org-filter-bar--memberships-group')?.querySelector('.org-filter-label');
     if (label) label.hidden = groups.length <= 1;
@@ -6557,6 +6560,7 @@
       sel.dataset.membershipsBound = '1';
       sel.addEventListener('change', function () {
         filters.membershipsGroup = sel.value || '';
+        membershipsRosterLoadedFor = '';
         updateMembershipGroupMeta(filters.membershipsGroup);
         syncMembershipGroupUrl();
         if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
@@ -6567,8 +6571,16 @@
       });
     }
 
-    if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
-      window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup).catch(function (err) {
+    const groupId = filters.membershipsGroup;
+    if (
+      window.OrganiserMemberRoster &&
+      typeof window.OrganiserMemberRoster.loadForGroup === 'function' &&
+      groupId &&
+      groupId !== membershipsRosterLoadedFor
+    ) {
+      membershipsRosterLoadedFor = groupId;
+      window.OrganiserMemberRoster.loadForGroup(groupId).catch(function (err) {
+        membershipsRosterLoadedFor = '';
         showOrganiserAlert(err.message || 'Could not load membership', true);
       });
     }

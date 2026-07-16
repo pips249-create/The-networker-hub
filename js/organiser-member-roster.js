@@ -17,16 +17,13 @@
   const filters = { search: '', status: 'all' };
 
   function getOrganiserId() {
-    const passed = String(organiserId || '').trim();
-    if (isDashboardEmbed) {
-      const sel = document.getElementById('filter-memberships-group');
-      if (sel && passed && sel.value !== passed) {
-        sel.value = passed;
-      }
-      const fromSelect = String(sel && sel.value ? sel.value : '').trim();
-      return fromSelect || passed;
-    }
-    return passed;
+    return String(organiserId || '').trim();
+  }
+
+  function syncGroupSelect() {
+    if (!isDashboardEmbed) return;
+    const sel = document.getElementById('filter-memberships-group');
+    if (sel && organiserId) sel.value = organiserId;
   }
 
   function requireOrganiserId() {
@@ -1103,19 +1100,22 @@
     page = Math.max(Number(pageNum) || 1, 1);
     const hint = document.getElementById('omr-load-hint');
     if (hint) hint.hidden = false;
+    const path =
+      '/api/organiser/roster?organiserId=' +
+      encodeURIComponent(groupId) +
+      rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE);
     try {
-      const data = await api(rosterUrl(rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE)));
+      const data = await api(path);
       if (getOrganiserId() !== groupId) return;
       members = data.members || [];
       rosterTotal = Number(data.total) || members.length;
       rosterActiveTotal = Number(data.totalActive) || rosterTotal;
-      renderRoster();
     } catch (err) {
       if (getOrganiserId() !== groupId) return;
       showAlert(err.message, 'error');
-      renderRoster();
     } finally {
       if (getOrganiserId() === groupId && hint) hint.hidden = true;
+      if (getOrganiserId() === groupId) renderRoster();
     }
   }
 
@@ -1422,8 +1422,7 @@
   async function loadForGroup(groupId) {
     const id = String(groupId || '').trim();
     organiserId = id;
-    const sel = document.getElementById('filter-memberships-group');
-    if (sel && id) sel.value = id;
+    syncGroupSelect();
 
     if (!id) {
       members = [];
