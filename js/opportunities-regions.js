@@ -25,6 +25,10 @@
     cambridge: { name: 'Cambridge' },
     oxford: { name: 'Oxford' },
     chester: { name: 'Chester' },
+    belfast: { name: 'Belfast' },
+    reading: { name: 'Reading' },
+    leicester: { name: 'Leicester' },
+    bournemouth: { name: 'Bournemouth' },
   };
 
   var params = new URLSearchParams(window.location.search);

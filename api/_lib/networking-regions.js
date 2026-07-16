@@ -68,6 +68,10 @@ const NETWORKING_REGIONS = {
   cambridge: { name: 'Cambridge', location: 'Cambridge', areaType: 'city' },
   oxford: { name: 'Oxford', location: 'Oxford', areaType: 'city' },
   chester: { name: 'Chester', location: 'Chester', areaType: 'city' },
+  belfast: { name: 'Belfast', location: 'Belfast', areaType: 'city' },
+  reading: { name: 'Reading', location: 'Reading', areaType: 'city' },
+  leicester: { name: 'Leicester', location: 'Leicester', areaType: 'city' },
+  bournemouth: { name: 'Bournemouth', location: 'Bournemouth', areaType: 'city' },
 };
 
 const NETWORKING_REGION_SLUGS = Object.keys(NETWORKING_REGIONS);

@@ -43,7 +43,15 @@ const REGION_SECTORS = {
   sheffield: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12', 'S13', 'S14', 'S17', 'S20', 'S21', 'S25', 'S26', 'S30', 'S35', 'S36', 'S40', 'S41', 'S60', 'S61', 'S62', 'S63', 'S64', 'S65', 'S66', 'S70', 'S71', 'S72', 'S73', 'S74', 'S75', 'S80', 'S81'],
   nottingham: ['NG1', 'NG2', 'NG3', 'NG4', 'NG5', 'NG6', 'NG7', 'NG8', 'NG9', 'NG10', 'NG11', 'NG12', 'NG13', 'NG14', 'NG15', 'NG16', 'NG17', 'NG18', 'NG19', 'NG20', 'NG21', 'NG22', 'NG23', 'NG24', 'NG25', 'NG31', 'NG32', 'NG33', 'NG34'],
   cardiff: ['CF3', 'CF5', 'CF10', 'CF11', 'CF14', 'CF15', 'CF23', 'CF24', 'CF30', 'CF31', 'CF33', 'CF35', 'CF37', 'CF38', 'CF39', 'CF40', 'CF41', 'CF42', 'CF43', 'CF44', 'CF45', 'CF46', 'CF47', 'CF48', 'CF61', 'CF62', 'CF63', 'CF64', 'CF71', 'CF72', 'CF81', 'CF82', 'CF83'],
-  brighton: ['BN1', 'BN2', 'BN3', 'BN41', 'BN42', 'BN43', 'BN45'],
+    brighton: ['BN1', 'BN2', 'BN3', 'BN41', 'BN42', 'BN43', 'BN45'],
+    belfast: [
+      'BT1', 'BT2', 'BT3', 'BT4', 'BT5', 'BT6', 'BT7', 'BT8', 'BT9', 'BT10', 'BT11', 'BT12',
+      'BT13', 'BT14', 'BT15', 'BT16', 'BT17', 'BT27', 'BT28', 'BT29', 'BT36', 'BT37', 'BT38',
+      'BT39',
+    ],
+    reading: ['RG1', 'RG2', 'RG4', 'RG5', 'RG6', 'RG7', 'RG8', 'RG10', 'RG30', 'RG31', 'RG40', 'RG41', 'RG42'],
+    leicester: ['LE1', 'LE2', 'LE3', 'LE4', 'LE5', 'LE7', 'LE8', 'LE9', 'LE19'],
+    bournemouth: ['BH1', 'BH2', 'BH3', 'BH4', 'BH5', 'BH6', 'BH7', 'BH8', 'BH9', 'BH10', 'BH11', 'BH12', 'BH23'],
 };
 
 const CITY_ALIASES = {
@@ -70,6 +78,10 @@ const CITY_ALIASES = {
   nottingham: 'nottingham',
   cardiff: 'cardiff',
   brighton: 'brighton',
+  belfast: 'belfast',
+  reading: 'reading',
+  leicester: 'leicester',
+  bournemouth: 'bournemouth',
 };
 
 const UK_OUTCODE_RE = /\b([A-Z]{1,2}\d{1,2}[A-Z]?)/i;

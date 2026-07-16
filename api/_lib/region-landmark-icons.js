@@ -494,6 +494,60 @@ const LANDMARKS = {
     hero:
       '<path d="M20 82h200" opacity=".35"/><path d="M60 82V32h120v50"/><path d="M80 82V50c0-14 10-22 40-22s40 8 40 22v32" opacity=".55"/><path d="M72 32h96v28H72z"/><circle cx="120" cy="46" r="12"/><path d="M120 46v-8M120 46l6 4"/><path d="M84 32l10-16h52l10 16"/>',
   },
+  'belfast-city-hall': {
+    label: 'Belfast City Hall',
+    chip:
+      HATCH.ground +
+      '<path d="M14 72V42h52v30" stroke-width="1.45"/>' +
+      '<path d="M14 42l26-12 26 12" stroke-width="1.4"/>' +
+      '<path d="M30 42V28h20v14" stroke-width="1.45"/>' +
+      '<circle cx="40" cy="34" r="5" stroke-width="1.2"/>' +
+      '<path d="M36 28h8l-2-6h-4z" stroke-width="1.2"/>' +
+      '<path d="M40 22v3" stroke-width="1.2"/>' +
+      '<path d="M20 52h8M52 52h8M20 62h8M52 62h8" opacity=".45" stroke-width="1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M48 82V44h144v38"/><path d="M48 44l72-18 72 18"/><path d="M96 44V24h48v20"/><circle cx="120" cy="34" r="10"/><path d="M108 24h24l-4-10h-16z"/><path d="M120 14v4"/><path d="M64 56h16M160 56h16" opacity=".45"/>',
+  },
+  'reading-blade': {
+    label: 'The Blade',
+    chip:
+      HATCH.ground +
+      '<path d="M34 72V14h12v58" stroke-width="1.55"/>' +
+      '<path d="M30 72h20" stroke-width="1.5"/>' +
+      '<path d="M34 24h12M34 36h12M34 48h12M34 60h12" opacity=".4" stroke-width="1"/>' +
+      '<path d="M38 14V6h4v8" stroke-width="1.3"/>' +
+      '<path d="M46 20l4 3M46 36l4 3M46 52l4 3" opacity=".25" stroke-width=".85"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M104 82V12h32v70"/><path d="M90 82h60" stroke-width="2"/><path d="M104 28h32M104 44h32M104 60h32" opacity=".4"/><path d="M112 12V0h16v12"/><path d="M140 24l8 6M140 44l8 6M140 64l8 6" opacity=".3"/>',
+  },
+  'leicester-clock-tower': {
+    label: 'Leicester Clock Tower',
+    chip:
+      HATCH.ground +
+      '<path d="M28 72V38h24v34" stroke-width="1.5"/>' +
+      '<path d="M26 38h28" stroke-width="1.4"/>' +
+      '<path d="M32 38V24h16v14" stroke-width="1.4"/>' +
+      '<circle cx="40" cy="30" r="5.5" stroke-width="1.2"/>' +
+      '<path d="M40 30v-3.5M40 30l2.5 2" stroke-width="1.1"/>' +
+      '<path d="M34 18h12l-2-6h-8z" stroke-width="1.2"/>' +
+      '<path d="M40 12v3" stroke-width="1.2"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M96 82V34h48v48"/><path d="M92 34h56"/><path d="M104 34V16h32v18"/><circle cx="120" cy="26" r="9"/><path d="M120 26v-5M120 26l4 3"/><path d="M108 16h24l-3-8h-18z"/><path d="M120 8v4"/>',
+  },
+  'bournemouth-pier': {
+    label: 'Bournemouth Pier',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72h64" opacity=".35" stroke-width="1.1"/>' +
+      '<path d="M10 72V58h12v14M58 72V58h12v14" stroke-width="1.4"/>' +
+      '<path d="M22 58h36" stroke-width="1.5"/>' +
+      '<path d="M26 58V48h28v10" stroke-width="1.35"/>' +
+      '<path d="M24 48l16-8 16 8" stroke-width="1.3"/>' +
+      '<path d="M36 40v8M44 40v8" opacity=".45" stroke-width="1"/>' +
+      '<path d="M14 62h4M62 62h4" opacity=".4" stroke-width="1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M40 82h160" opacity=".35"/><path d="M48 82V56h24v26M168 82V56h24v26"/><path d="M72 56h96" stroke-width="2"/><path d="M80 56V42h80v14"/><path d="M72 42l48-16 48 16"/><path d="M104 30v12M128 30v12" opacity=".45"/>',
+  },
 };
 
 /** @type {Record<string, string>} */
@@ -518,6 +572,10 @@ const LANDMARK_BY_REGION = {
   brighton: 'brighton',
   cambridge: 'cambridge',
   oxford: 'oxford',
+  belfast: 'belfast-city-hall',
+  reading: 'reading-blade',
+  leicester: 'leicester-clock-tower',
+  bournemouth: 'bournemouth-pier',
 };
 
 function landmarkKeyForRegion(slug) {

@@ -65,6 +65,9 @@ const GATE_BYPASS_PREFIXES = [
   '/assets/',
 ];
 
+/** Unlisted internal sales decks — not linked from nav; noindex in page HTML. */
+const INTERNAL_SALES_PREFIXES = ['/p/tnh-ev-hub-k7m2'];
+
 /** Organiser early-access paths — reachable while the public site gate is on. */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
@@ -217,6 +220,22 @@ const NETWORKING_REGION_THEMES = {
   "cardiff": {
     "tagline": "From the bay and city centre to business networks across South Wales.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><ellipse cx=\"120\" cy=\"42\" rx=\"88\" ry=\"28\"/><ellipse cx=\"120\" cy=\"42\" rx=\"52\" ry=\"14\" opacity=\".45\"/><path d=\"M40 42h160\" opacity=\".4\"/><path d=\"M48 62c18 14 44 20 72 20s54-6 72-20\" opacity=\".5\"/><path d=\"M40 62V42M200 62V42\"/></svg>"
+  },
+  "belfast": {
+    "tagline": "From the Cathedral Quarter and Titanic Quarter to business networks across Belfast.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M48 82V44h144v38\"/><path d=\"M48 44l72-18 72 18\"/><path d=\"M96 44V24h48v20\"/><circle cx=\"120\" cy=\"34\" r=\"10\"/><path d=\"M108 24h24l-4-10h-16z\"/><path d=\"M120 14v4\"/><path d=\"M64 56h16M160 56h16\" opacity=\".45\"/></svg>"
+  },
+  "reading": {
+    "tagline": "From the town centre and Thames Valley to business communities across Berkshire.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V12h32v70\"/><path d=\"M90 82h60\" stroke-width=\"2\"/><path d=\"M104 28h32M104 44h32M104 60h32\" opacity=\".4\"/><path d=\"M112 12V0h16v12\"/><path d=\"M140 24l8 6M140 44l8 6M140 64l8 6\" opacity=\".3\"/></svg>"
+  },
+  "leicester": {
+    "tagline": "From the Golden Mile and city centre to the wider Leicestershire network.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M96 82V34h48v48\"/><path d=\"M92 34h56\"/><path d=\"M104 34V16h32v18\"/><circle cx=\"120\" cy=\"26\" r=\"9\"/><path d=\"M120 26v-5M120 26l4 3\"/><path d=\"M108 16h24l-3-8h-18z\"/><path d=\"M120 8v4\"/></svg>"
+  },
+  "bournemouth": {
+    "tagline": "From the seafront and BIC to business communities across Dorset.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M40 82h160\" opacity=\".35\"/><path d=\"M48 82V56h24v26M168 82V56h24v26\"/><path d=\"M72 56h96\" stroke-width=\"2\"/><path d=\"M80 56V42h80v14\"/><path d=\"M72 42l48-16 48 16\"/><path d=\"M104 30v12M128 30v12\" opacity=\".45\"/></svg>"
   }
 };
 
@@ -293,6 +312,29 @@ function injectNetworkingRegionContent(html, meta) {
         '</div>'
       : '<div class="networking-region-landmark" id="networking-region-skyline" hidden aria-hidden="true"></div>'
   );
+
+  if (meta.listingsHtml) {
+    out = out.replace(/<div class="event-listings" id="event-listings"><\/div>/i, meta.listingsHtml);
+  }
+
+  if (region.location) {
+    const locVal = escapeHtml(region.location);
+    out = out.replace(
+      /(<input[^>]*\bid="postcode"[^>]*)(>)/i,
+      function (match, before, close) {
+        if (/\bvalue=/i.test(before)) return match;
+        return before + ' value="' + locVal + '"' + close;
+      }
+    );
+  }
+
+  if (typeof meta.listingsTotal === 'number' && meta.listingsTotal >= 0) {
+    out = out.replace(
+      /<strong id="results-count">[\s\S]*?<\/strong>/i,
+      '<strong id="results-count">' + escapeHtml(String(meta.listingsTotal)) + '</strong>'
+    );
+  }
+
   return out;
 }
 
@@ -355,6 +397,12 @@ async function verifySignedToken(token, secret) {
   }
 }
 
+function isInternalSalesPath(pathname) {
+  return INTERNAL_SALES_PREFIXES.some(function (prefix) {
+    return pathname === prefix || pathname.startsWith(prefix + '/');
+  });
+}
+
 function isOrganiserEarlyAccessPath(pathname) {
   return ORGANISER_EARLY_ACCESS_PREFIXES.some(function (prefix) {
     return pathname === prefix || pathname.startsWith(prefix + '/');
@@ -369,6 +417,7 @@ function isGateBypassPath(pathname) {
   ) {
     return true;
   }
+  if (isInternalSalesPath(pathname)) return true;
   return isOrganiserEarlyAccessPath(pathname);
 }
 

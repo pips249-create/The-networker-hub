@@ -453,3 +453,60 @@ body.opp-regional-landing .opp-hero-copy h1 .accent {
     grid-template-columns: 1fr;
   }
 }
+
+/* Server-rendered event list on /networking/:region (SEO + no-JS fallback) */
+.hub-region-ssr-listings {
+  display: grid;
+  gap: 12px;
+}
+
+.hub-region-ssr-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.hub-region-ssr-card {
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(31, 28, 70, 0.08);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.hub-region-ssr-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.hub-region-ssr-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hub-region-ssr-title a:hover {
+  color: var(--brand-blue, #4aa8f0);
+}
+
+.hub-region-ssr-meta {
+  margin: 0;
+  color: #635c5e;
+  font-size: 0.92rem;
+}
+
+.hub-region-ssr-more,
+.hub-region-ssr-empty {
+  margin: 4px 0 0;
+  color: #635c5e;
+  font-size: 0.95rem;
+}
+
+.hub-region-ssr-more a,
+.hub-region-ssr-empty a {
+  color: var(--brand-blue, #4aa8f0);
+  font-weight: 600;
+  text-decoration: none;
+}

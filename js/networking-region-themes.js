@@ -40,6 +40,10 @@
     glasgow: theme('#0a7088', 'Connect with entrepreneurs across the Clyde and the city centre.', 'glasgow', '#67e8f9'),
     edinburgh: theme('#6a3068', 'From the Old Town and New Town to Leith and the wider Lothians.', 'edinburgh', '#e0a8d8'),
     cardiff: theme('#8a2432', 'From the bay and city centre to business networks across South Wales.', 'cardiff', '#f0a0a8'),
+    belfast: theme('#1a4a6e', 'From the Cathedral Quarter and Titanic Quarter to business networks across Belfast.', 'belfast', '#93c5fd'),
+    reading: theme('#6a4058', 'From the town centre and Thames Valley to business communities across Berkshire.', 'reading', '#e8c4d0'),
+    leicester: theme('#285878', 'From the Golden Mile and city centre to the wider Leicestershire network.', 'leicester', '#93c5fd'),
+    bournemouth: theme('#0878a0', 'From the seafront and BIC to business communities across Dorset.', 'bournemouth', '#67e8f9'),
   };
 
   function hexToRgb(hex) {

@@ -16,6 +16,7 @@ const { publicOrganiserSlug } = require('./organiser-slug');
 const { publicOpportunitySlug } = require('./opportunity-slug');
 const { eventImageUrl } = require('./event-image');
 const { getNetworkingRegion } = require('./networking-regions');
+const { buildNetworkingRegionSsr } = require('./networking-region-ssr');
 
 function trimText(text, max) {
   const raw = String(text || '')
@@ -482,18 +483,26 @@ function buildStaticPageMeta(pageKey, origin) {
   };
 }
 
-function buildNetworkingRegionMeta(slug, origin) {
+async function buildNetworkingRegionMeta(slug, origin) {
   const region = getNetworkingRegion(slug);
   if (!region) return null;
 
   const year = new Date().getFullYear();
   const canonical = absoluteUrl(origin, region.path);
   const image = absoluteUrl(origin, '/assets/logo.png');
-  const title = `Business Networking Events in ${region.name} ${year} – The Networker Hub`;
-  const description = trimText(
+  const ssr = await buildNetworkingRegionSsr(slug, origin);
+  const eventCount = Number(ssr.total) || 0;
+  let description = trimText(
     `Find business networking events, meetings and organiser groups in ${region.name}. Browse upcoming local listings and book your next event on The Networker Hub.`,
     160
   );
+  if (eventCount > 0) {
+    description = trimText(
+      `Browse ${eventCount} upcoming business networking events in ${region.name}. Find meetings, workshops and conferences — book on The Networker Hub.`,
+      160
+    );
+  }
+  const title = `Business Networking Events in ${region.name} ${year} – The Networker Hub`;
   const meta = { title, description, canonical, image, ogType: 'website' };
   const pageName = `The best business networking events and groups in ${region.name} ${year}`;
   const collectionPage = {
@@ -526,6 +535,9 @@ function buildNetworkingRegionMeta(slug, origin) {
     origin
   );
 
+  const schemaParts = [collectionPage, breadcrumbs];
+  if (ssr.itemList) schemaParts.push(ssr.itemList);
+
   return {
     ok: true,
     type: 'networking-region',
@@ -537,9 +549,11 @@ function buildNetworkingRegionMeta(slug, origin) {
       path: region.path,
       year,
     },
+    listingsHtml: ssr.listingsHtml,
+    listingsTotal: eventCount,
     ...meta,
     openGraph: buildOpenGraphTags(meta),
-    schema: buildSchemaGraphFromParts([collectionPage, breadcrumbs], origin),
+    schema: buildSchemaGraphFromParts(schemaParts, origin),
     breadcrumbs: breadcrumbs.itemListElement,
   };
 }
@@ -552,7 +566,7 @@ async function buildSeoMeta(type, slug, origin) {
   if (t === 'event') return buildEventMeta(s, origin);
   if (t === 'organiser') return buildOrganiserMeta(s, origin);
   if (t === 'opportunity') return buildOpportunityMeta(s, origin);
-  if (t === 'networking-region') return buildNetworkingRegionMeta(s, origin);
+  if (t === 'networking-region') return await buildNetworkingRegionMeta(s, origin);
   return null;
 }
 

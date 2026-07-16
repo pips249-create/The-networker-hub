@@ -24,6 +24,10 @@
     cambridge: { name: 'Cambridge', location: 'Cambridge' },
     oxford: { name: 'Oxford', location: 'Oxford' },
     chester: { name: 'Chester', location: 'Chester' },
+    belfast: { name: 'Belfast', location: 'Belfast' },
+    reading: { name: 'Reading', location: 'Reading' },
+    leicester: { name: 'Leicester', location: 'Leicester' },
+    bournemouth: { name: 'Bournemouth', location: 'Bournemouth' },
   };
 
   var match = String(window.location.pathname || '').match(/^\/networking\/([^/]+)\/?$/);
