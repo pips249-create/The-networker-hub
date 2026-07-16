@@ -12,7 +12,6 @@
   let page = 1;
   let controlsBound = false;
   let searchTimer = null;
-  let loadGeneration = 0;
   let activeLoadPromise = null;
   let activeLoadGroupId = '';
   const filters = { search: '', status: 'all' };
@@ -1098,39 +1097,41 @@
     }
   }
 
-  async function fetchRosterPage(pageNum, generation) {
+  async function fetchRosterPage(pageNum) {
+    const groupId = getOrganiserId();
+    if (!groupId) return;
     page = Math.max(Number(pageNum) || 1, 1);
     const hint = document.getElementById('omr-load-hint');
     if (hint) hint.hidden = false;
-    const gen = generation != null ? generation : loadGeneration;
     try {
       const data = await api(rosterUrl(rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE)));
-      if (gen !== loadGeneration) return;
+      if (getOrganiserId() !== groupId) return;
       members = data.members || [];
       rosterTotal = Number(data.total) || members.length;
       rosterActiveTotal = Number(data.totalActive) || rosterTotal;
       renderRoster();
     } catch (err) {
-      if (gen !== loadGeneration) return;
+      if (getOrganiserId() !== groupId) return;
       showAlert(err.message, 'error');
+      renderRoster();
     } finally {
-      if (gen === loadGeneration && hint) hint.hidden = true;
+      if (getOrganiserId() === groupId && hint) hint.hidden = true;
     }
   }
 
-  async function refresh(generation) {
+  async function refresh() {
+    const groupId = getOrganiserId();
+    if (!groupId) return;
     page = 1;
-    const gen = generation != null ? generation : loadGeneration;
-    await fetchRosterPage(1, gen);
-    if (gen !== loadGeneration) return;
+    await fetchRosterPage(1);
+    if (getOrganiserId() !== groupId) return;
     const eventId = selectedEventId();
     try {
       await loadReports(eventId);
     } catch (err) {
       showAlert(err.message || 'Could not load member reports.', 'error');
     }
-    if (gen !== loadGeneration) return;
-    renderRoster();
+    if (getOrganiserId() === groupId) renderRoster();
   }
 
   function removeDuplicateAddPanels() {
@@ -1420,24 +1421,11 @@
 
   async function loadForGroup(groupId) {
     const id = String(groupId || '').trim();
-    if (activeLoadGroupId === id && activeLoadPromise) return activeLoadPromise;
-
-    const gen = ++loadGeneration;
-    activeLoadGroupId = id;
-    activeLoadPromise = loadForGroupInner(id, gen).finally(function () {
-      if (activeLoadGroupId === id) {
-        activeLoadPromise = null;
-      }
-    });
-    return activeLoadPromise;
-  }
-
-  async function loadForGroupInner(groupId, generation) {
-    organiserId = String(groupId || '').trim();
+    organiserId = id;
     const sel = document.getElementById('filter-memberships-group');
-    if (sel && organiserId) sel.value = organiserId;
+    if (sel && id) sel.value = id;
 
-    if (!organiserId) {
+    if (!id) {
       members = [];
       rosterTotal = 0;
       rosterActiveTotal = 0;
@@ -1452,23 +1440,31 @@
       return;
     }
 
-    bindControlsOnce();
-    page = 1;
+    if (activeLoadGroupId === id && activeLoadPromise) return activeLoadPromise;
 
-    try {
-      const group = await api('/api/organiser/groups?id=' + encodeURIComponent(organiserId));
-      if (generation !== loadGeneration) return;
-      const title = document.getElementById('omr-title');
-      if (title && group.group?.name) {
-        title.textContent = 'Membership — ' + group.group.name;
+    activeLoadGroupId = id;
+    activeLoadPromise = (async function () {
+      bindControlsOnce();
+      page = 1;
+
+      try {
+        const group = await api('/api/organiser/groups?id=' + encodeURIComponent(id));
+        if (getOrganiserId() !== id) return;
+        const title = document.getElementById('omr-title');
+        if (title && group.group?.name) {
+          title.textContent = 'Membership — ' + group.group.name;
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
-    }
 
-    await loadEvents();
-    if (generation !== loadGeneration) return;
-    await refresh(generation);
+      await loadEvents();
+      if (getOrganiserId() !== id) return;
+      await refresh();
+    })().finally(function () {
+      if (activeLoadGroupId === id) activeLoadPromise = null;
+    });
+    return activeLoadPromise;
   }
 
   async function initStandalone() {
