@@ -2,6 +2,7 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const {
   listRosterForOrganiser,
+  listRosterPage,
   upsertRosterMember,
   removeRosterMember,
   importRosterCsv,
@@ -9,6 +10,7 @@ const {
   buildRosterReports,
   sendMemberRosterBookingReminders,
   enrichMembersWithBookings,
+  queueUnclaimedMemberInvites,
 } = require('../organiser-member-roster');
 
 function parseBody(req) {
@@ -70,8 +72,35 @@ module.exports = async function handler(req, res) {
         const recentEventIds = recentRaw
           ? recentRaw.split(',').map((s) => s.trim()).filter(Boolean)
           : [];
+        const started = Date.now();
         const reports = await buildRosterReports(organiserId, { eventId, recentEventIds });
-        return json(res, 200, { ok: true, reports });
+        return json(res, 200, {
+          ok: true,
+          reports,
+          durationMs: Date.now() - started,
+        });
+      }
+
+      const limitRaw = req.query?.limit;
+      const offsetRaw = req.query?.offset;
+      const usePagination = limitRaw != null || offsetRaw != null || req.query?.page != null;
+
+      if (usePagination) {
+        const limit = Math.min(Math.max(Number(limitRaw) || 25, 1), 100);
+        const pageNum = Math.max(Number(req.query?.page) || 1, 1);
+        const offset =
+          offsetRaw != null ? Math.max(Number(offsetRaw) || 0, 0) : (pageNum - 1) * limit;
+        const search = String(req.query?.search || req.query?.q || '').trim();
+        const filter = String(req.query?.filter || req.query?.statusFilter || 'all').trim();
+        const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
+        const { members, total } = await listRosterPage(organiserId, {
+          limit,
+          offset,
+          search,
+          filter,
+          eventId,
+        });
+        return json(res, 200, { ok: true, members, total, limit, offset });
       }
 
       const status = String(req.query?.status || 'active').trim().toLowerCase();
@@ -102,6 +131,11 @@ module.exports = async function handler(req, res) {
         const eventId = String(body.eventId || body.event_id || '').trim();
         if (!eventId) return json(res, 400, { ok: false, error: 'missing_event_id' });
         const result = await sendMemberRosterBookingReminders(groupId, eventId);
+        return json(res, 200, { ok: true, ...result });
+      }
+
+      if (action === 'queue-invites' || action === 'queue_invites') {
+        const result = await queueUnclaimedMemberInvites(groupId);
         return json(res, 200, { ok: true, ...result });
       }
 

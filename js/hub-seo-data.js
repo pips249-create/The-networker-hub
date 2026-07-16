@@ -1535,7 +1535,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 2,
               "name": "Send an invite",
-              "text": "In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 10 editors per organiser account.",
+              "text": "In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 100 editors per organiser account.",
               "url": "http://localhost:3000/guides/invite-your-team#send-invite"
             },
             {

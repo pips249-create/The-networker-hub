@@ -13,6 +13,7 @@ const routes = {
   'engagement-emails': require('./_lib/routes/cron-engagement-emails'),
   'online-join-reminders': require('./_lib/routes/cron-online-join-reminders'),
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
+  'roster-emails': require('./_lib/routes/cron-roster-emails'),
 };
 
 module.exports = async function handler(req, res) {

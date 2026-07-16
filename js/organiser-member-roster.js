@@ -334,10 +334,12 @@
     const addDetails = document.getElementById('omr-add-details');
     const importDetails = document.getElementById('omr-import-card');
     if (targetId === 'omr-import-card' && importDetails) {
+      if (addDetails) addDetails.open = false;
       importDetails.open = true;
       importDetails.dataset.omrUserOpened = '1';
     }
     if ((targetId === 'omr-add-card' || targetId === 'omr-add-details') && addDetails) {
+      if (importDetails) importDetails.open = false;
       addDetails.open = true;
       addDetails.dataset.omrUserOpened = '1';
     }

@@ -78,6 +78,10 @@ const INTERNAL_SALES_PREFIXES = [
   '/p-tnh-embed-events-k1',
   '/p-tnh-embed-org-k2',
   '/p-tnh-embed-dash-k3',
+  '/p-tnh-embed-events-wibn',
+  '/p-tnh-embed-org-wibn',
+  '/p-tnh-embed-opps-wibn',
+  '/p-tnh-embed-dash-wibn',
 ];
 
 /** Organiser early-access paths — reachable while the public site gate is on. */

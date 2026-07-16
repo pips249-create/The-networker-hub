@@ -1,0 +1,303 @@
+/**
+ * Staggered outbound emails for member lists (invites, new-event alerts, booking reminders).
+ */
+const { getSupabaseAdmin } = require('./supabase');
+const { sendTemplatedEmail } = require('./send-template-email');
+const {
+  siteBase,
+  hubAccountUrl,
+  organiserPublicUrl,
+  eventPublicUrl,
+  legalPolicyUrl,
+  contactUrl,
+  logoNavUrl,
+  logoFooterUrl,
+  browseEventsUrl,
+} = require('./hub-email-urls');
+const { formatEventDateTime } = require('./favourite-sales-emails');
+const { emailGreetingName } = require('./email-display-name');
+
+function loginUrlWithNext(site, email, nextUrl) {
+  return (
+    site +
+    '/login?email=' +
+    encodeURIComponent(email) +
+    '&next=' +
+    encodeURIComponent(nextUrl)
+  );
+}
+
+function rosterHelpers() {
+  return require('./organiser-member-roster');
+}
+
+const QUEUE_KINDS = {
+  INVITE: 'invite',
+  NEW_EVENT: 'new_event',
+  BOOKING_REMINDER: 'booking_reminder',
+};
+
+const MAX_SPREAD_MS = 2 * 60 * 60 * 1000;
+const MIN_GAP_MS = 5000;
+
+function staggerScheduledFor(index, total, baseTime) {
+  const base = baseTime instanceof Date ? baseTime : new Date();
+  if (total <= 1) return base.toISOString();
+  const span = Math.min(MAX_SPREAD_MS, Math.max(MIN_GAP_MS * (total - 1), MIN_GAP_MS));
+  const gap = span / (total - 1);
+  return new Date(base.getTime() + index * gap).toISOString();
+}
+
+async function enqueueRosterEmailQueue(rows) {
+  const items = (rows || []).filter((row) => row && row.roster_member_id && row.organiser_id && row.kind);
+  if (!items.length) return { queued: 0 };
+
+  const sb = getSupabaseAdmin();
+  let queued = 0;
+  for (const row of items) {
+    const { error } = await sb.from('organiser_roster_email_queue').insert(row);
+    if (error) {
+      if (/duplicate key|unique constraint|23505/i.test(error.message || '')) continue;
+      throw new Error(error.message);
+    }
+    queued += 1;
+  }
+  return { queued };
+}
+
+async function queueMemberRosterInvites(organiserId, memberRows, options) {
+  const orgId = String(organiserId || '').trim();
+  const members = (memberRows || []).filter((m) => m && m.id && m.email);
+  if (!orgId || !members.length) return { queued: 0 };
+
+  const base = options?.baseTime || new Date();
+  const rows = members.map((member, index) => ({
+    kind: QUEUE_KINDS.INVITE,
+    organiser_id: orgId,
+    roster_member_id: member.id,
+    event_id: null,
+    scheduled_for: staggerScheduledFor(index, members.length, base),
+  }));
+
+  return enqueueRosterEmailQueue(rows);
+}
+
+async function queueNewEventAlerts(eventRow, members, options) {
+  const eventId = String(eventRow?.id || '').trim();
+  const organiserId = String(eventRow?.organiser_id || eventRow?.organiserId || '').trim();
+  const list = (members || []).filter((m) => m && m.id && m.email && m.membershipActive !== false);
+  if (!eventId || !organiserId || !list.length) return { queued: 0 };
+
+  const base = options?.baseTime || new Date();
+  const rows = list.map((member, index) => ({
+    kind: QUEUE_KINDS.NEW_EVENT,
+    organiser_id: organiserId,
+    roster_member_id: member.id,
+    event_id: eventId,
+    scheduled_for: staggerScheduledFor(index, list.length, base),
+  }));
+
+  return enqueueRosterEmailQueue(rows);
+}
+
+async function queueBookingReminders(organiserId, eventId, members, options) {
+  const orgId = String(organiserId || '').trim();
+  const evId = String(eventId || '').trim();
+  const list = (members || []).filter((m) => m && m.id && m.email);
+  if (!orgId || !evId || !list.length) return { queued: 0 };
+
+  const base = options?.baseTime || new Date();
+  const rows = list.map((member, index) => ({
+    kind: QUEUE_KINDS.BOOKING_REMINDER,
+    organiser_id: orgId,
+    roster_member_id: member.id,
+    event_id: evId,
+    scheduled_for: staggerScheduledFor(index, list.length, base),
+  }));
+
+  return enqueueRosterEmailQueue(rows);
+}
+
+async function sendQueuedBookingReminder(sb, { eventRow, organiser, member }) {
+  const { normalizeRosterEmail } = rosterHelpers();
+  const email = normalizeRosterEmail(member.email);
+  if (!email) return 'skipped';
+
+  const site = siteBase();
+  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at);
+  const eventLocation =
+    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
+    'See event page';
+  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
+  const eventUrl = eventPublicUrl(eventRow, site);
+  const organiserUrl = organiserPublicUrl(organiser, site);
+  const organiserName = String(organiser.name || 'your networking group').trim();
+  const hasAccount = Boolean(member.attendee_id || member.claimed_at);
+  const ctaUrl = hasAccount
+    ? loginUrlWithNext(site, email, eventUrl)
+    : site + '/register?email=' + encodeURIComponent(email) + '&next=' + encodeURIComponent(eventUrl);
+  const ctaLabel = hasAccount ? 'Book member tickets' : 'Create account & book';
+
+  await sendTemplatedEmail({
+    slug: 'member_roster_booking_reminder',
+    to: email,
+    variables: {
+      user_name: emailGreetingName(member.name, email),
+      user_email: email,
+      organiser_name: organiserName,
+      organiser_url: organiserUrl,
+      event_name: String(eventRow.title || 'Event').trim(),
+      event_date: event_date || '',
+      event_time: eventTimeSuffix,
+      event_location: eventLocation,
+      event_url: eventUrl,
+      cta_url: ctaUrl,
+      cta_label: ctaLabel,
+      hub_account_url: hubAccountUrl(site),
+      browse_events_url: browseEventsUrl(site),
+      contact_url: contactUrl(site),
+      privacy_url: legalPolicyUrl(site, 'privacy'),
+      terms_url: legalPolicyUrl(site, 'terms'),
+      site_url: site,
+      logo_url: logoNavUrl(site),
+      logo_footer_url: logoFooterUrl(site),
+    },
+  });
+  return 'sent';
+}
+
+async function processDueRosterEmails(sb, options) {
+  const batchSize = Math.min(Math.max(Number(options?.batchSize) || 40, 1), 80);
+  const now = new Date().toISOString();
+  const result = { sent: 0, skipped: 0, failed: 0, errors: [] };
+
+  const { data: due, error: dueErr } = await sb
+    .from('organiser_roster_email_queue')
+    .select('id, kind, organiser_id, roster_member_id, event_id')
+    .is('sent_at', null)
+    .is('failed_at', null)
+    .lte('scheduled_for', now)
+    .order('scheduled_for', { ascending: true })
+    .limit(batchSize);
+  if (dueErr) throw new Error(dueErr.message);
+  if (!(due || []).length) return result;
+
+  const {
+    normalizeRosterEmail,
+    rosterRowToClient,
+    sendMemberRosterInviteEmail,
+    sendMemberRosterNewEventAlert,
+  } = rosterHelpers();
+
+  for (const row of due) {
+    try {
+      const memberRes = await sb
+        .from('organiser_member_roster')
+        .select('*')
+        .eq('id', row.roster_member_id)
+        .eq('organiser_id', row.organiser_id)
+        .maybeSingle();
+      if (memberRes.error) throw new Error(memberRes.error.message);
+      const memberRow = memberRes.data;
+      if (!memberRow || memberRow.status !== 'active') {
+        await sb
+          .from('organiser_roster_email_queue')
+          .update({ sent_at: now, last_error: 'member_inactive' })
+          .eq('id', row.id);
+        result.skipped += 1;
+        continue;
+      }
+
+      const organiserRes = await sb
+        .from('organisers')
+        .select('id, name, slug, photo_url')
+        .eq('id', row.organiser_id)
+        .maybeSingle();
+      if (organiserRes.error) throw new Error(organiserRes.error.message);
+      if (!organiserRes.data) throw new Error('organiser_not_found');
+
+      let outcome = 'skipped';
+      if (row.kind === QUEUE_KINDS.INVITE) {
+        const client = rosterRowToClient(memberRow);
+        const invite = await sendMemberRosterInviteEmail({
+          organiserRow: organiserRes.data,
+          memberEmail: client.email,
+          memberName: client.name,
+          rosterRowId: client.id,
+          attendeeId: client.attendeeId,
+        });
+        outcome = invite.sent ? 'sent' : 'skipped';
+      } else if (row.kind === QUEUE_KINDS.NEW_EVENT) {
+        const eventRes = await sb
+          .from('events')
+          .select(
+            'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at'
+          )
+          .eq('id', row.event_id)
+          .maybeSingle();
+        if (eventRes.error) throw new Error(eventRes.error.message);
+        if (!eventRes.data) throw new Error('event_not_found');
+        outcome = await sendMemberRosterNewEventAlert(sb, {
+          eventRow: eventRes.data,
+          organiser: organiserRes.data,
+          member: rosterRowToClient(memberRow),
+        });
+      } else if (row.kind === QUEUE_KINDS.BOOKING_REMINDER) {
+        const eventRes = await sb
+          .from('events')
+          .select(
+            'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id'
+          )
+          .eq('id', row.event_id)
+          .maybeSingle();
+        if (eventRes.error) throw new Error(eventRes.error.message);
+        if (!eventRes.data) throw new Error('event_not_found');
+        outcome = await sendQueuedBookingReminder(sb, {
+          eventRow: eventRes.data,
+          organiser: organiserRes.data,
+          member: memberRow,
+        });
+      }
+
+      await sb
+        .from('organiser_roster_email_queue')
+        .update({ sent_at: new Date().toISOString(), last_error: outcome === 'skipped' ? 'skipped' : null })
+        .eq('id', row.id);
+
+      if (outcome === 'sent') result.sent += 1;
+      else result.skipped += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+        await sb
+          .from('organiser_roster_email_queue')
+          .update({ sent_at: new Date().toISOString(), last_error: 'emails_disabled' })
+          .eq('id', row.id);
+        result.skipped += 1;
+        continue;
+      }
+      await sb
+        .from('organiser_roster_email_queue')
+        .update({
+          failed_at: new Date().toISOString(),
+          last_error: String(e.message || e).slice(0, 500),
+        })
+        .eq('id', row.id);
+      result.failed += 1;
+      if (result.errors.length < 20) {
+        result.errors.push({ queueId: row.id, message: e.message || String(e) });
+      }
+    }
+  }
+
+  return result;
+}
+
+module.exports = {
+  QUEUE_KINDS,
+  staggerScheduledFor,
+  enqueueRosterEmailQueue,
+  queueMemberRosterInvites,
+  queueNewEventAlerts,
+  queueBookingReminders,
+  processDueRosterEmails,
+};

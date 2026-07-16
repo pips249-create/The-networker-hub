@@ -337,6 +337,116 @@ async function listRosterForOrganiser(organiserId, { status } = {}) {
   return (data || []).map(rosterRowToClient);
 }
 
+const ROSTER_PAGE_SIZE_DEFAULT = 25;
+const ROSTER_PAGE_SIZE_MAX = 100;
+
+async function getBookedEmailsForEvent(sb, organiserId, eventId) {
+  const { data: regs, error } = await sb
+    .from('registrations')
+    .select('application_status, payment_status, attendees(email)')
+    .eq('event_id', eventId)
+    .eq('organiser_id', organiserId)
+    .is('cancelled_at', null);
+  if (error) throw new Error(error.message);
+  const bookedEmails = new Set();
+  (regs || []).forEach((row) => {
+    const app = String(row.application_status || 'Approved');
+    const pay = String(row.payment_status || '');
+    if (app === 'Denied' || pay === 'Refunded') return;
+    const em = normalizeRosterEmail(row.attendees?.email);
+    if (em) bookedEmails.add(em);
+  });
+  return bookedEmails;
+}
+
+function memberMatchesSearch(member, search) {
+  const q = String(search || '').trim().toLowerCase();
+  if (!q) return true;
+  const hay = ((member.name || '') + ' ' + (member.email || '')).toLowerCase();
+  return hay.includes(q);
+}
+
+/**
+ * Paginated roster for dashboard lazy loading.
+ */
+async function listRosterPage(organiserId, options = {}) {
+  const sb = getSupabaseAdmin();
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) return { members: [], total: 0 };
+
+  const limit = Math.min(
+    Math.max(Number(options.limit) || ROSTER_PAGE_SIZE_DEFAULT, 1),
+    ROSTER_PAGE_SIZE_MAX
+  );
+  const offset = Math.max(Number(options.offset) || 0, 0);
+  const search = String(options.search || '').trim();
+  const filter = String(options.filter || 'all').trim().toLowerCase();
+  const eventId = String(options.eventId || '').trim();
+  const enrichBookings = options.enrichBookings !== false;
+
+  const bookingFilters = ['booked', 'not_booked', 'has_bookings', 'no_bookings'];
+  if (bookingFilters.includes(filter)) {
+    let filtered = await listRosterForOrganiser(orgId, { status: 'active' });
+    if (filter === 'booked' || filter === 'not_booked') {
+      if (!eventId) return { members: [], total: 0 };
+      const bookedEmails = await getBookedEmailsForEvent(sb, orgId, eventId);
+      filtered = filtered.filter((m) => {
+        const isBooked = bookedEmails.has(m.email);
+        return filter === 'booked' ? isBooked : !isBooked;
+      });
+    } else {
+      const index = await buildMemberBookingIndex(orgId);
+      filtered = filtered.filter((m) => {
+        const has = (index.get(m.email)?.total || 0) > 0;
+        return filter === 'has_bookings' ? has : !has;
+      });
+    }
+    if (search) {
+      filtered = filtered.filter((m) => memberMatchesSearch(m, search));
+    }
+    const total = filtered.length;
+    const slice = filtered.slice(offset, offset + limit);
+    const members = enrichBookings ? await enrichMembersWithBookings(orgId, slice) : slice;
+    return { members, total };
+  }
+
+  let q = sb
+    .from('organiser_member_roster')
+    .select('*', { count: 'exact' })
+    .eq('organiser_id', orgId)
+    .eq('status', ROSTER_STATUS_ACTIVE);
+
+  if (search) {
+    const term = search.replace(/[%_,]/g, ' ').trim();
+    if (term) {
+      q = q.or(`email.ilike.%${term}%,name.ilike.%${term}%`);
+    }
+  }
+
+  if (filter === 'claimed') {
+    q = q.or('claimed_at.not.is.null,attendee_id.not.is.null');
+  } else if (filter === 'unclaimed') {
+    q = q.is('claimed_at', null).is('attendee_id', null);
+  } else if (filter === 'expiring') {
+    const today = new Date().toISOString().slice(0, 10);
+    const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    q = q.not('expires_at', 'is', null).gte('expires_at', today).lte('expires_at', in14);
+  }
+
+  q = q
+    .order('name', { ascending: true, nullsFirst: false })
+    .order('email', { ascending: true })
+    .range(offset, offset + limit - 1);
+
+  const { data, error, count } = await q;
+  if (error) throw new Error(error.message);
+  const rows = (data || []).map(rosterRowToClient);
+  const members = enrichBookings
+    ? await enrichMembersWithBookings(orgId, rows, { emails: rows.map((m) => m.email) })
+    : rows;
+  return { members, total: Number(count) || rows.length };
+}
+
 function rosterRowToClient(row) {
   const expiresAt = row.expires_at || null;
   const days = daysUntilExpiry(expiresAt);
@@ -369,6 +479,7 @@ async function upsertRosterMember(organiserId, payload, options) {
   const status = String(payload.status || ROSTER_STATUS_ACTIVE).trim();
   const sendInvite = opts.sendInvite !== false && payload.sendInvite !== false;
   const resendInvite = Boolean(opts.resendInvite || payload.resendInvite);
+  const skipSideEffects = Boolean(opts.skipSideEffects);
 
   if (!orgId || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const err = new Error('invalid_roster_member');
@@ -448,6 +559,7 @@ async function upsertRosterMember(organiserId, payload, options) {
   }
 
   const becameActiveMember =
+    !skipSideEffects &&
     saved.status === ROSTER_STATUS_ACTIVE &&
     rosterRowIsActive(saved) &&
     (isNew || String(existing?.status || '') === ROSTER_STATUS_REMOVED);
@@ -486,25 +598,82 @@ async function removeRosterMember(organiserId, memberId) {
   return { ok: true };
 }
 
+async function batchResolveAttendeeIdsByEmails(sb, emails) {
+  const map = new Map();
+  const list = [...new Set((emails || []).map(normalizeRosterEmail).filter(Boolean))];
+  for (let i = 0; i < list.length; i += 100) {
+    const chunk = list.slice(i, i + 100);
+    const { data, error } = await sb.from('attendees').select('id, email').in('email', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      map.set(normalizeRosterEmail(row.email), row.id);
+    });
+  }
+  return map;
+}
+
 async function importRosterCsv(organiserId, rows, options) {
+  const orgId = String(organiserId || '').trim();
+  const sendInvite = options?.sendInvite === true;
+  const { queueMemberRosterInvites } = require('./organiser-roster-email-queue');
+
   let ok = 0;
   let fail = 0;
-  let invitesSent = 0;
   const errors = [];
-  const sendInvite = options?.sendInvite === true;
+  const savedMembers = [];
+  const normalized = [];
+
   for (const row of rows || []) {
+    const email = normalizeRosterEmail(row.email);
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fail += 1;
+      if (errors.length < 20) errors.push({ email: row.email, message: 'invalid_email' });
+      continue;
+    }
+    normalized.push({
+      email,
+      name: String(row.name || '').trim() || null,
+      expiresAt: parseExpiresAt(row.expiresAt ?? row.expires_at),
+    });
+  }
+
+  for (const row of normalized) {
     try {
-      const result = await upsertRosterMember(organiserId, row, { sendInvite });
-      ok++;
-      if (result.invite?.sent) invitesSent += 1;
+      const result = await upsertRosterMember(
+        orgId,
+        {
+          email: row.email,
+          name: row.name,
+          expiresAt: row.expiresAt,
+          sendInvite: false,
+        },
+        { sendInvite: false, skipSideEffects: true }
+      );
+      ok += 1;
+      if (result.member) savedMembers.push(result.member);
     } catch (e) {
-      fail++;
+      fail += 1;
       if (errors.length < 20) {
         errors.push({ email: row.email, message: e.message });
       }
     }
   }
-  return { total: (rows || []).length, ok, fail, invitesSent, errors };
+
+  let invitesQueued = 0;
+  if (sendInvite && savedMembers.length) {
+    const toInvite = savedMembers.filter((m) => m.status === ROSTER_STATUS_ACTIVE && m.email);
+    const queued = await queueMemberRosterInvites(orgId, toInvite);
+    invitesQueued = queued.queued || 0;
+  }
+
+  return {
+    total: (rows || []).length,
+    ok,
+    fail,
+    invitesSent: 0,
+    invitesQueued,
+    errors,
+  };
 }
 
 function parseRosterCsv(text) {
@@ -690,8 +859,12 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
   return reports;
 }
 
-async function buildMemberBookingIndex(orgId) {
+async function buildMemberBookingIndex(orgId, options) {
   const sb = getSupabaseAdmin();
+  const emailFilter =
+    options && options.emails
+      ? new Set((options.emails || []).map(normalizeRosterEmail).filter(Boolean))
+      : null;
   const { data: regs, error } = await sb
     .from('registrations')
     .select(
@@ -722,6 +895,7 @@ async function buildMemberBookingIndex(orgId) {
     if (app === 'Denied' || pay === 'Refunded') return;
     const email = normalizeRosterEmail(row.attendees?.email);
     if (!email || !row.event_id) return;
+    if (emailFilter && !emailFilter.has(email)) return;
     const ev = eventsById.get(row.event_id) || {};
     const start = ev.starts_at ? new Date(ev.starts_at).getTime() : 0;
     const item = {
@@ -760,8 +934,9 @@ async function buildMemberBookingIndex(orgId) {
   return index;
 }
 
-async function enrichMembersWithBookings(orgId, members) {
-  const index = await buildMemberBookingIndex(orgId);
+async function enrichMembersWithBookings(orgId, members, options) {
+  const emails = (members || []).map((m) => m.email).filter(Boolean);
+  const index = await buildMemberBookingIndex(orgId, { emails });
   return (members || []).map((m) => ({
     ...m,
     bookings: index.get(m.email) || {
@@ -968,7 +1143,7 @@ async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
  * the daily saved-organiser cron does not double-send to the same inbox.
  */
 async function notifyRosterMembersOfPublishedEvent(eventRow) {
-  const result = { sent: 0, skipped: 0, errors: [] };
+  const result = { sent: 0, skipped: 0, queued: 0, errors: [] };
   const eventId = String(eventRow?.id || '').trim();
   const organiserId = String(eventRow?.organiser_id || eventRow?.organiserId || '').trim();
   if (!eventId || !organiserId) return result;
@@ -998,31 +1173,15 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
     .in('roster_member_id', memberIds);
   if (alertedRes.error) throw new Error(alertedRes.error.message);
   const already = new Set((alertedRes.data || []).map((r) => String(r.roster_member_id)));
+  const toQueue = activeMembers.filter((m) => !already.has(m.id));
+  result.skipped = activeMembers.length - toQueue.length;
 
-  for (const member of activeMembers) {
-    const email = normalizeRosterEmail(member.email);
-    if (!email) {
-      result.skipped += 1;
-      continue;
-    }
-    try {
-      const outcome = await sendMemberRosterNewEventAlert(sb, {
-        eventRow,
-        organiser,
-        member,
-        alreadyAlerted: already,
-      });
-      if (outcome === 'sent') result.sent += 1;
-      else result.skipped += 1;
-    } catch (e) {
-      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
-        result.skipped += 1;
-        continue;
-      }
-      result.errors.push({ email, message: e.message || String(e) });
-    }
-  }
+  if (!toQueue.length) return result;
 
+  const { queueNewEventAlerts } = require('./organiser-roster-email-queue');
+  const queued = await queueNewEventAlerts(eventRow, toQueue);
+  result.queued = queued.queued || 0;
+  result.sent = result.queued;
   return result;
 }
 
@@ -1063,101 +1222,34 @@ async function buildRosterSummariesForOrganisers(organiserIds) {
  * Email active members who have not booked a specific event.
  */
 async function sendMemberRosterBookingReminders(organiserId, eventId) {
-  const result = { sent: 0, skipped: 0, errors: [] };
   const orgId = String(organiserId || '').trim();
   const targetEventId = String(eventId || '').trim();
-  if (!orgId || !targetEventId) return result;
+  if (!orgId || !targetEventId) return { sent: 0, skipped: 0, queued: 0, errors: [] };
 
   const reports = await buildRosterReports(orgId, { eventId: targetEventId });
   const notBooked = reports.bookedForEvent?.notBooked || [];
-  if (!notBooked.length) return result;
+  if (!notBooked.length) return { sent: 0, skipped: 0, queued: 0, errors: [] };
 
-  const sb = getSupabaseAdmin();
-  const { data: eventRow, error: eventErr } = await sb
-    .from('events')
-    .select(
-      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id'
-    )
-    .eq('id', targetEventId)
-    .maybeSingle();
-  if (eventErr) throw new Error(eventErr.message);
-  if (!eventRow) {
-    const err = new Error('event_not_found');
-    err.status = 404;
-    throw err;
-  }
+  const { queueBookingReminders } = require('./organiser-roster-email-queue');
+  const queued = await queueBookingReminders(orgId, targetEventId, notBooked);
+  return {
+    sent: 0,
+    queued: queued.queued || 0,
+    skipped: 0,
+    errors: [],
+  };
+}
 
-  const { data: organiser, error: orgErr } = await sb
-    .from('organisers')
-    .select('id, name, slug')
-    .eq('id', orgId)
-    .maybeSingle();
-  if (orgErr) throw new Error(orgErr.message);
-  if (!organiser) return result;
-
-  const site = siteBase();
-  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at);
-  const eventLocation =
-    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
-    'See event page';
-  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
-  const eventUrl = eventPublicUrl(eventRow, site);
-  const organiserUrl = organiserPublicUrl(organiser, site);
-  const organiserName = String(organiser.name || 'your networking group').trim();
-
-  for (const member of notBooked) {
-    const email = normalizeRosterEmail(member.email);
-    if (!email) {
-      result.skipped += 1;
-      continue;
-    }
-    const hasAccount = Boolean(member.claimedAt || member.attendeeId);
-    const ctaUrl = hasAccount
-      ? loginUrlWithNext(site, email, eventUrl)
-      : site +
-        '/register?email=' +
-        encodeURIComponent(email) +
-        '&next=' +
-        encodeURIComponent(eventUrl);
-    const ctaLabel = hasAccount ? 'Book member tickets' : 'Create account & book';
-
-    try {
-      await sendTemplatedEmail({
-        slug: 'member_roster_booking_reminder',
-        to: email,
-        variables: {
-          user_name: emailGreetingName(member.name, email),
-          user_email: email,
-          organiser_name: organiserName,
-          organiser_url: organiserUrl,
-          event_name: String(eventRow.title || 'Event').trim(),
-          event_date: event_date || '',
-          event_time: eventTimeSuffix,
-          event_location: eventLocation,
-          event_url: eventUrl,
-          cta_url: ctaUrl,
-          cta_label: ctaLabel,
-          hub_account_url: hubAccountUrl(site),
-          browse_events_url: browseEventsUrl(site),
-          contact_url: contactUrl(site),
-          privacy_url: legalPolicyUrl(site, 'privacy'),
-          terms_url: legalPolicyUrl(site, 'terms'),
-          site_url: site,
-          logo_url: logoNavUrl(site),
-          logo_footer_url: logoFooterUrl(site),
-        },
-      });
-      result.sent += 1;
-    } catch (e) {
-      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
-        result.skipped += 1;
-        continue;
-      }
-      result.errors.push({ email, message: e.message || String(e) });
-    }
-  }
-
-  return result;
+async function queueUnclaimedMemberInvites(organiserId) {
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) return { queued: 0 };
+  const members = await listRosterForOrganiser(orgId, { status: 'active' });
+  const unclaimed = (members || []).filter(
+    (m) => m.email && !m.claimedAt && !m.attendeeId && m.membershipActive
+  );
+  if (!unclaimed.length) return { queued: 0 };
+  const { queueMemberRosterInvites } = require('./organiser-roster-email-queue');
+  return queueMemberRosterInvites(orgId, unclaimed);
 }
 
 module.exports = {
@@ -1169,6 +1261,7 @@ module.exports = {
   assertMembersOnlyBookingAllowed,
   claimRosterEntriesForAttendee,
   listRosterForOrganiser,
+  listRosterPage,
   upsertRosterMember,
   removeRosterMember,
   importRosterCsv,
@@ -1179,9 +1272,12 @@ module.exports = {
   enrichMembersWithBookings,
   listRosterGroupsForAttendee,
   sendMemberRosterInviteEmail,
+  sendMemberRosterNewEventAlert,
+  rosterRowToClient,
   ensureOrganiserFavouritesForRoster,
   notifyRosterMembersOfPublishedEvent,
   notifyRosterMemberOfUpcomingLiveEvents,
   buildRosterSummariesForOrganisers,
   sendMemberRosterBookingReminders,
+  queueUnclaimedMemberInvites,
 };

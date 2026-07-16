@@ -332,6 +332,24 @@
   list-style: none;
 }
 
+/* Compact register: panels open via header quick actions, not full-width summaries */
+.omr-add-section--compact .omr-add-summary,
+.omr-add-section--compact .omr-import-summary {
+  display: none;
+}
+
+.omr-add-section--compact .omr-add-details:not([open]),
+.omr-add-section--compact .omr-import-details:not([open]) {
+  display: none;
+  border: none;
+  margin: 0;
+}
+
+.omr-add-section--compact .omr-add-details[open] .omr-add-panel,
+.omr-add-section--compact .omr-import-details[open] .omr-import-body {
+  padding-top: 14px;
+}
+
 .omr-add-summary::-webkit-details-marker,
 .omr-add-section--compact .omr-import-summary::-webkit-details-marker {
   display: none;

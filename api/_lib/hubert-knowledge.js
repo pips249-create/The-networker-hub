@@ -110,7 +110,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER TEAM & EDITORS',
     body:
-      'Team invites live under /organiser/ → Team & invites. Only the account owner can invite or remove editors (up to 10 editors per organiser account). When inviting, the owner can grant access to all groups or selected networking groups only. ' +
+      'Team invites live under /organiser/ → Team & invites. Only the account owner can invite or remove editors (up to 100 editors per organiser account). When inviting, the owner can grant access to all groups or selected networking groups only. ' +
       'INVITE FLOW: owner enters colleague email, chooses group access, invite email is sent → colleague signs in with that exact email → they become Active and see only their assigned groups (or all groups if the owner chose that). ' +
       'EDITOR ACCESS: manage assigned groups (or all groups); create and edit events, tickets, and attendees; view revenue and reviews for those groups; reply publicly to attendee reviews; manage business opportunities. ' +
       'EDITORS CANNOT: invite or remove team members; create or duplicate networking groups; add bank details or request payouts; delete events (cancel instead if needed). ' +
@@ -568,7 +568,7 @@ const ORGANISER_PAGE_CONTEXT = {
   'group-edit':
     'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':
-    'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Team editors can manage events and view revenue but cannot invite others or delete events; up to 10 editors per account. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Team editors can manage events and view revenue but cannot invite others or delete events; up to 100 editors per account. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   guides:
     'The user is on the organiser guides / onboarding checklist page. Give concise answers (about 2 sentences) with direct links to /organiser/ routes, guide pages under /guides/, or specific dashboard sections. Focus on organiser setup tasks like listing events, Stripe, CSV export, and team invites.',
 };

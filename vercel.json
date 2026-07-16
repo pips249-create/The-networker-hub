@@ -152,6 +152,10 @@
     {
       "path": "/api/cron/organiser-rankings",
       "schedule": "0 10 1 * *"
+    },
+    {
+      "path": "/api/cron/roster-emails",
+      "schedule": "*/15 * * * *"
     }
   ],
   "functions": {
@@ -210,6 +214,22 @@
     {
       "source": "/p-tnh-embed-dash-k3",
       "destination": "/p-tnh-embed-dash-k3.html"
+    },
+    {
+      "source": "/p-tnh-embed-events-wibn",
+      "destination": "/p-tnh-embed-events-wibn.html"
+    },
+    {
+      "source": "/p-tnh-embed-org-wibn",
+      "destination": "/p-tnh-embed-org-wibn.html"
+    },
+    {
+      "source": "/p-tnh-embed-opps-wibn",
+      "destination": "/p-tnh-embed-opps-wibn.html"
+    },
+    {
+      "source": "/p-tnh-embed-dash-wibn",
+      "destination": "/p-tnh-embed-dash-wibn.html"
     },
     {
       "source": "/p-tnh-wibn-onboard-w9m3",

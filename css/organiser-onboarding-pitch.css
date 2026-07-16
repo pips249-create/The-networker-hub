@@ -431,6 +431,82 @@
   font-weight: 600;
 }
 
+.org-pitch-site-links {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.org-pitch-site-links--page {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: none;
+}
+
+@media (max-width: 640px) {
+  .org-pitch-site-links--page {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-pitch-site-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--pitch-border);
+  background: rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  color: inherit;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.org-pitch-site-link:hover {
+  border-color: var(--pitch-teal);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.org-pitch-site-link code {
+  font-size: 0.72rem;
+  color: var(--pitch-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 8px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.org-pitch-site-link strong {
+  font-size: 1.05rem;
+  color: var(--pitch-ink);
+}
+
+.org-pitch-site-link span {
+  font-size: 0.82rem;
+  color: var(--pitch-teal);
+  font-weight: 600;
+}
+
+.org-pitch-present-overlay .org-pitch-site-link {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.org-pitch-present-overlay .org-pitch-site-link strong {
+  color: #fff;
+}
+
+.org-pitch-present-overlay .org-pitch-site-link span {
+  color: #7dffd4;
+}
+
+.org-pitch-present-overlay .org-pitch-site-link code {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .org-pitch-map-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

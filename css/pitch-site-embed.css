@@ -1,0 +1,75 @@
+/**
+ * Shared styles for pitch-deck iframe previews of live site pages.
+ */
+html,
+body.pitch-site-embed {
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pitch-site-embed .hub-site-nav,
+.pitch-site-embed .events-filter-bar,
+.pitch-site-embed .events-results-meta,
+.pitch-site-embed .opp-strip-filters,
+.pitch-site-embed .opp-listings-toolbar {
+  position: static !important;
+}
+
+.pitch-site-embed .events-filter-shell {
+  position: static;
+}
+
+.pitch-site-embed .networking-region-intro,
+.pitch-site-embed .events-promo-section,
+.pitch-site-embed .networking-location-directory,
+.pitch-site-embed .opp-promo-section,
+.pitch-site-embed .opp-hubert-strip,
+.pitch-site-embed .opp-browse-disclaimer,
+.pitch-site-embed .events-organiser-footnote,
+.pitch-site-embed .org-profile-section--cta,
+.pitch-site-embed .org-profile-breadcrumb,
+.pitch-site-embed .org-showcase-reviews,
+.pitch-site-embed .org-profile-side,
+.pitch-site-embed .opp-invest-pills,
+.pitch-site-embed .hub-modal,
+.pitch-site-embed .load-status {
+  display: none !important;
+}
+
+.pitch-site-embed .org-profile-shell {
+  padding-top: 0;
+}
+
+.pitch-site-embed .org-showcase-visual .org-showcase-photo img {
+  object-fit: contain;
+  padding: 18px;
+  background: #fff;
+}
+
+.pitch-site-embed .opp-card-media--logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  padding: 20px;
+  background: linear-gradient(165deg, #f5eef8, #fff);
+}
+
+.pitch-site-embed .opp-card-media--logo img {
+  max-height: 64px;
+  max-width: 80%;
+  object-fit: contain;
+}
+
+.pitch-site-embed .fo-hero-visual {
+  margin: 0;
+  max-width: none;
+}
+
+.pitch-site-embed .fo-dash-mock {
+  max-width: none;
+  box-shadow: none;
+  border-radius: 0;
+}

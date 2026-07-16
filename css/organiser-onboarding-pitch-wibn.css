@@ -1,0 +1,272 @@
+/* WIBN organiser pitch — TNH lavender base + WIBN magenta / blue-grey accents */
+.org-pitch-page--wibn {
+  /* The Networker Hub */
+  --tnh-lavender: #c299d1;
+  --tnh-lavender-deep: #9a7aa8;
+  --tnh-lavender-soft: #ebe0f0;
+  --tnh-lavender-glow: #f5eef8;
+  --tnh-teal: #0d6e7a;
+  --tnh-teal-soft: #e8f6f8;
+  --tnh-ink: #1e3a4f;
+  --tnh-muted: #635c5e;
+  --tnh-cream: #faf7f2;
+
+  /* WIBN (from official logo) */
+  --wibn-magenta: #e6007e;
+  --wibn-magenta-soft: #fce4f0;
+  --wibn-magenta-deep: #c4006a;
+  --wibn-blue-grey: #8f93b4;
+  --wibn-blue-grey-soft: #e4e5ef;
+  --wibn-charcoal: #1d1d1b;
+
+  /* Map pitch tokens → our palette */
+  --pitch-teal: var(--tnh-lavender-deep);
+  --pitch-teal-soft: var(--tnh-lavender-soft);
+  --pitch-ink: var(--tnh-ink);
+  --pitch-muted: var(--tnh-muted);
+  --pitch-gold: var(--tnh-lavender);
+  --pitch-surface: #fffdfb;
+  --pitch-border: rgba(194, 153, 209, 0.28);
+  background: linear-gradient(180deg, var(--pitch-surface) 0%, var(--tnh-lavender-glow) 100%);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-banner {
+  background: linear-gradient(90deg, var(--tnh-ink) 0%, #2a3d52 55%, var(--wibn-blue-grey) 100%);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-banner strong {
+  color: var(--tnh-lavender);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-kicker {
+  background: linear-gradient(135deg, var(--tnh-lavender-deep) 0%, var(--tnh-lavender) 100%);
+  box-shadow: inset 0 -3px 0 var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.org-pitch-page--wibn .org-pitch-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pitch-ink);
+  box-shadow: 0 6px 20px rgba(194, 153, 209, 0.12);
+}
+
+.org-pitch-page--wibn .org-pitch-chip--highlight {
+  background: linear-gradient(135deg, var(--wibn-magenta) 0%, var(--wibn-magenta-deep) 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(230, 0, 126, 0.22);
+}
+
+.org-pitch-page--wibn .org-pitch-pricing-box {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .org-pitch-page--wibn .org-pitch-pricing-box {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.org-pitch-page--wibn .org-pitch-pricing-item {
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+  text-align: center;
+}
+
+.org-pitch-page--wibn .org-pitch-pricing-item strong {
+  display: block;
+  font-size: 1.35rem;
+  color: var(--tnh-lavender-deep);
+  margin-bottom: 4px;
+}
+
+.org-pitch-page--wibn .org-pitch-pricing-item span {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--pitch-muted);
+}
+
+.org-pitch-page--wibn .org-pitch-bonus-box {
+  margin-top: 18px;
+  padding: 20px 22px 20px 26px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--tnh-lavender-deep) 0%, var(--tnh-lavender) 55%, var(--wibn-blue-grey) 100%);
+  border-left: 5px solid var(--wibn-magenta);
+  color: #fff;
+  box-shadow: 0 14px 40px rgba(194, 153, 209, 0.28);
+}
+
+.org-pitch-page--wibn .org-pitch-bonus-box h3 {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+}
+
+.org-pitch-page--wibn .org-pitch-bonus-box p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.org-pitch-page--wibn .org-pitch-bonus-box ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.org-pitch-page--wibn .org-pitch-bonus-box li {
+  position: relative;
+  padding: 6px 0 6px 18px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.org-pitch-page--wibn .org-pitch-bonus-box li::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  color: var(--wibn-magenta);
+  text-shadow: 0 0 12px rgba(230, 0, 126, 0.45);
+}
+
+.org-pitch-page--wibn .pitch-embed-events-hero {
+  background: linear-gradient(165deg, var(--tnh-ink) 0%, var(--wibn-blue-grey) 52%, var(--tnh-lavender-deep) 100%);
+}
+
+.org-pitch-page--wibn .pitch-embed-events-hero h3 span {
+  color: var(--tnh-lavender);
+}
+
+.org-pitch-page--wibn .pitch-embed-tabs span.is-on {
+  background: rgba(194, 153, 209, 0.35);
+}
+
+.org-pitch-page--wibn .pitch-embed-chips span.is-on {
+  background: var(--tnh-lavender-soft);
+  border-color: var(--tnh-lavender-deep);
+  color: var(--tnh-lavender-deep);
+}
+
+.org-pitch-page--wibn .pitch-embed-card.is-highlight {
+  border-color: var(--wibn-magenta);
+  box-shadow: 0 8px 24px rgba(230, 0, 126, 0.14);
+}
+
+.org-pitch-page--wibn .pitch-embed-card em,
+.org-pitch-page--wibn .pitch-live-link {
+  color: var(--tnh-teal);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-hero h1 .accent {
+  color: var(--tnh-lavender-deep);
+}
+
+.org-pitch-page--wibn .pitch-embed-org {
+  background: linear-gradient(165deg, #fff 0%, var(--tnh-lavender-glow) 100%);
+  border-color: var(--pitch-border);
+}
+
+.org-pitch-page--wibn .org-pitch-tile em {
+  color: var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-present-overlay {
+  background: linear-gradient(165deg, var(--tnh-ink) 0%, #3a4a62 42%, var(--tnh-lavender-deep) 100%);
+}
+
+.org-pitch-page--wibn .org-pitch-slide-kicker,
+.org-pitch-page--wibn #org-pitch-present-counter,
+.org-pitch-page--wibn .org-pitch-slide-close .url {
+  color: var(--tnh-lavender);
+}
+
+.org-pitch-page--wibn .org-pitch-slide h2 .accent {
+  color: var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-slide-bullets li::before {
+  background: var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-present-dots span.is-active {
+  background: var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-banner-actions button:hover {
+  background: var(--tnh-lavender);
+  border-color: var(--tnh-lavender);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-nav button.is-active,
+.org-pitch-page--wibn .sponsor-pitch-nav button:hover,
+.org-pitch-page--wibn .sponsor-pitch-scenario-tabs button.is-active,
+.org-pitch-page--wibn .org-pitch-site-tabs button.is-active {
+  background: var(--tnh-lavender-deep);
+  border-color: var(--tnh-lavender-deep);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-cta {
+  background: linear-gradient(135deg, var(--tnh-ink) 0%, var(--tnh-lavender-deep) 70%, var(--wibn-blue-grey) 100%);
+  border-top: 3px solid var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .sponsor-pitch-cta .primary {
+  background: #fff;
+  color: var(--tnh-lavender-deep);
+}
+
+.org-pitch-page--wibn .org-pitch-hero-logos img[alt='Women In Business Network'] {
+  height: 52px;
+  width: auto;
+  max-width: 200px;
+}
+
+.org-pitch-page--wibn .org-pitch-site-link:hover {
+  border-color: var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-site-link span {
+  color: var(--wibn-magenta);
+}
+
+.org-pitch-page--wibn .org-pitch-present-overlay .org-pitch-site-link span {
+  color: var(--tnh-lavender);
+}
+
+.org-pitch-page--wibn .org-pitch-slide-snippet .pitch-embed-opp-card em {
+  color: var(--tnh-teal);
+}
+
+.org-pitch-page--wibn .pitch-embed-opps-hero {
+  background: linear-gradient(165deg, var(--tnh-ink) 0%, var(--wibn-blue-grey) 52%, var(--tnh-lavender-deep) 100%);
+}
+
+.org-pitch-page--wibn .pitch-embed-opps-hero h3 span {
+  color: var(--tnh-lavender);
+}
+
+.org-pitch-page--wibn .org-pitch-slide-logos img[alt='Women In Business Network'] {
+  height: 44px;
+  width: auto;
+  max-width: 180px;
+}

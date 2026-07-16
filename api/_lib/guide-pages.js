@@ -60,7 +60,7 @@ const GUIDE_PAGES = {
     howToName: 'How to invite editors to your organiser workspace on The Networker Hub',
     steps: [
       { id: 'who-can-invite', name: 'Who can invite', text: 'Only the account owner can send or remove team invites. Editors can see the team list but cannot invite others.' },
-      { id: 'send-invite', name: 'Send an invite', text: 'In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 10 editors per organiser account.' },
+      { id: 'send-invite', name: 'Send an invite', text: 'In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 100 editors per organiser account.' },
       { id: 'accept', name: 'They accept by signing in', text: 'Your colleague opens the email and signs in with that exact email address. Once signed in, their status changes to Active on your team list.' },
       { id: 'permissions', name: 'What editors can do', text: 'Editors can view all networking groups, create and edit events and tickets, view revenue and registrations, and manage business opportunity listings.' },
       { id: 'restrictions', name: 'What editors cannot do', text: 'Editors cannot invite or remove team members or delete events. Access is account-wide across every group on your organiser account.' },

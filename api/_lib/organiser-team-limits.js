@@ -1,5 +1,5 @@
 /** Max editors (pending + active) per organiser account — owner not counted. */
-const ORGANISER_TEAM_MAX = 10;
+const ORGANISER_TEAM_MAX = 100;
 
 async function countTeamInviteSlots(sb, accountId) {
   const id = String(accountId || '').trim();

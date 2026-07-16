@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Events directory — WIBN pitch embed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/hub.css?v=20260716embedw2">
+<link rel="stylesheet" href="/css/hub-mobile.css?v=20260716embedw2">
+<link rel="stylesheet" href="/css/hub-ranking-badge.css?v=20260716embedw2">
+<link rel="stylesheet" href="/css/events-page.css?v=20260716embedw2">
+<link rel="stylesheet" href="/css/events-filter-bar.css?v=20260716embedw2">
+<link rel="stylesheet" href="/css/pitch-site-embed.css?v=20260716embedw2">
+</head>
+<body class="events-page pitch-site-embed">
+
+<div id="hub-site-nav"></div>
+<script src="/js/site-nav.js?v=20260715a" data-root="/" data-page="events"></script>
+
+<section class="events-hero" aria-labelledby="events-hero-heading">
+  <div class="events-hero-inner events-hero-layout">
+    <div class="events-hero-copy">
+      <p class="events-hero-badge">Event discovery</p>
+      <h1 id="events-hero-heading">
+        Find your next <span class="accent">women&rsquo;s networking event</span> across the UK
+      </h1>
+      <div class="events-hero-browse-switch browse-mode-toggle browse-mode-toggle--hero" role="tablist" aria-label="Browse events or organisers">
+        <button type="button" class="browse-mode-btn is-active" data-browse-mode="events" role="tab" aria-selected="true">Events</button>
+        <button type="button" class="browse-mode-btn" data-browse-mode="organisers" role="tab" aria-selected="false">Organisers</button>
+      </div>
+      <p class="events-hero-lede">Meetings, guest visits, and women-only groups — filter by city, date, and format.</p>
+    </div>
+    <div class="events-hero-sponsor-slot">
+      <aside class="sponsor-hub sponsor-hub--fallback sponsor-hub--in-hero" aria-labelledby="sponsor-heading">
+        <div class="sponsor-hub-head" id="sponsor-heading">
+          <span class="icon" aria-hidden="true">★</span>
+          <span>Sponsor Hub</span>
+        </div>
+        <p class="sponsor-tagline">Reach women in business across 100+ UK chapters.</p>
+        <a class="sponsor-cta" href="#">Find out more →</a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<main class="shell" id="events-shell">
+  <div class="events-filter-shell">
+    <div class="events-filter-bar" role="search" aria-label="Filter events">
+      <div class="filter-bar-row filter-bar-row-top">
+        <div class="filter-field filter-field-grow filter-field-search">
+          <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+          </span>
+          <label class="visually-hidden" for="search">Search events</label>
+          <input type="search" id="search" value="women only WIBN" readonly aria-label="Search events">
+        </div>
+      </div>
+      <div class="filter-bar-row filter-bar-row-location filter-event-only">
+        <div class="filter-field filter-field-postcode">
+          <span class="filter-field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </span>
+          <label class="visually-hidden" for="postcode">Location</label>
+          <input type="text" id="postcode" value="London" readonly autocomplete="postal-code">
+        </div>
+        <label class="filter-location-radius">
+          <span class="visually-hidden" for="location-radius">Distance from location</span>
+          <select id="location-radius" aria-label="Distance from location">
+            <option value="25" selected>25 mi</option>
+          </select>
+        </label>
+      </div>
+      <div class="filter-bar-row filter-bar-row-bottom">
+        <div class="filter-bar-cluster">
+          <div class="filter-bar-quick filter-event-only">
+            <div class="filter-date-wrap">
+              <span class="filter-date-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              </span>
+              <label class="filter-date-label" for="date-range">Dates</label>
+              <input type="text" id="date-range" value="Any date" readonly aria-label="Filter by date range">
+            </div>
+          </div>
+          <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested filter-event-only">
+            <fieldset class="filter-format-group filter-format-group--with-chips">
+              <legend class="filter-bar-chip-label">Format</legend>
+              <label class="filter-checkbox">
+                <input type="checkbox" checked readonly>
+                <span class="filter-checkbox-box" aria-hidden="true"></span>
+                In person
+              </label>
+              <label class="filter-checkbox">
+                <input type="checkbox" checked readonly>
+                <span class="filter-checkbox-box" aria-hidden="true"></span>
+                Online
+              </label>
+            </fieldset>
+          </div>
+          <div class="events-view-toggle filter-event-only" role="group" aria-label="Results view">
+            <button type="button" class="events-view-toggle-btn is-active" aria-pressed="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+              List
+            </button>
+            <button type="button" class="events-view-toggle-btn" aria-pressed="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6"/><line x1="8" y1="3" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="21"/></svg>
+              Map
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="events-results-meta" id="events-results">
+    <span class="events-results-count">Showing <strong>24</strong> results</span>
+    <div class="events-results-actions">
+      <div class="browse-mode-toggle events-browse-switch" role="tablist" aria-label="Browse events or organisers">
+        <button type="button" class="browse-mode-btn is-active" role="tab" aria-selected="true">Events</button>
+        <button type="button" class="browse-mode-btn" role="tab" aria-selected="false">Organisers</button>
+      </div>
+      <div class="events-sort-wrap">
+        <label for="sort">Sort by</label>
+        <select id="sort">
+          <option value="recommended" selected>Recommended</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="events-body">
+    <div class="events-main">
+      <section class="listings-block" aria-labelledby="all-heading">
+        <h2 class="listings-header" id="all-heading">All listings</h2>
+        <div class="event-listings" id="event-listings">
+          <div class="event-grid">
+            <article class="event-grid-card is-premium">
+              <div class="event-grid-media">
+                <img class="event-grid-img is-logo-cover" src="/assets/marketing/wibn-logo.svg" alt="" width="400" height="240">
+                <span class="event-grid-premium">Premium</span>
+                <span class="event-grid-ranking hub-ranking-badge hub-ranking-badge--top10">★ Top 10%</span>
+                <span class="event-grid-category">Monthly meeting</span>
+              </div>
+              <div class="event-grid-body">
+                <div class="event-grid-body-top">
+                  <span class="event-grid-format in-person">In-person</span>
+                  <span class="event-grid-price">Guest visit</span>
+                </div>
+                <h3 class="event-grid-title">WIBN King&rsquo;s Cross · monthly meeting</h3>
+                <div class="event-grid-rating">
+                  <span class="stars">★★★★★</span>
+                  <span class="review-count">(18)</span>
+                  <button type="button" class="fav-btn" aria-label="Save event" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                  </button>
+                </div>
+                <p class="event-grid-meta">London · Wed 23 Jul · 10:00 · One profession per group</p>
+              </div>
+              <a class="event-grid-card-link" href="#" aria-label="View WIBN King's Cross monthly meeting"></a>
+            </article>
+
+            <article class="event-grid-card">
+              <div class="event-grid-media">
+                <img class="event-grid-img is-logo-cover" src="/assets/marketing/wibn-logo.svg" alt="" width="400" height="240">
+                <span class="event-grid-category">Online group</span>
+              </div>
+              <div class="event-grid-body">
+                <div class="event-grid-body-top">
+                  <span class="event-grid-format online">Online</span>
+                  <span class="event-grid-price">Free visit</span>
+                </div>
+                <h3 class="event-grid-title">WIBN National Online · Marketing</h3>
+                <div class="event-grid-rating">
+                  <span class="stars">★★★★☆</span>
+                  <span class="review-count">(9)</span>
+                  <button type="button" class="fav-btn" aria-label="Save event" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                  </button>
+                </div>
+                <p class="event-grid-meta">Thu 24 Jul · Zoom · Non-members welcome</p>
+              </div>
+              <a class="event-grid-card-link" href="#" aria-label="View WIBN National Online Marketing"></a>
+            </article>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+</body>
+</html>

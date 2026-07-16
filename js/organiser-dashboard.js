@@ -61,7 +61,7 @@
     groupRankings: {},
     teamMembers: [],
     teamLoaded: false,
-    teamMax: 10,
+    teamMax: 100,
     teamCount: 0,
     teamSlotsRemaining: 10,
     useTeamWorkspace: false,
@@ -7660,7 +7660,7 @@
     state.canCreateGroups = data.canCreateGroups !== false;
     state.organiserRole = data.role || state.organiserRole;
     state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
-    state.teamMax = Number(data.teamMax) || 10;
+    state.teamMax = Number(data.teamMax) || 100;
     state.teamCount = Number(data.teamCount) || 0;
     state.teamSlotsRemaining = Number(data.teamSlotsRemaining);
     if (!Number.isFinite(state.teamSlotsRemaining)) {
