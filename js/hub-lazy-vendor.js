@@ -65,9 +65,10 @@
   }
 
   function hubLoadFlatpickr() {
+    // Must use unpkg — site CSP allows unpkg.com, not cdn.jsdelivr.net.
     return Promise.all([
-      loadStyle('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css'),
-      loadScript('https://cdn.jsdelivr.net/npm/flatpickr', function () {
+      loadStyle('https://unpkg.com/flatpickr@4.6.13/dist/flatpickr.min.css'),
+      loadScript('https://unpkg.com/flatpickr@4.6.13/dist/flatpickr.min.js', function () {
         return !!global.flatpickr;
       }),
     ]);
