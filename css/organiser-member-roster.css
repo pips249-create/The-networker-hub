@@ -83,10 +83,58 @@
   color: #4a6272;
 }
 
+.omr-page .omr-wrap {
+  max-width: 1120px;
+}
+
+.omr-lead {
+  max-width: 52ch;
+  margin-bottom: 20px;
+}
+
+.omr-register {
+  margin: 0 0 28px;
+  padding: 20px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(13, 110, 122, 0.12);
+  box-shadow: 0 1px 3px rgba(26, 46, 59, 0.05);
+}
+
+.omr-section-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #084a52;
+}
+
+.omr-register .omr-count {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #7a94a3;
+}
+
+.omr-filter-bar {
+  margin: 16px 0;
+}
+
+.omr-reports-wrap {
+  margin: 0 0 16px;
+}
+
+.omr-reports-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a94a3;
+}
+
 .omr-wrap .omr-reports {
   display: grid;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 @media (min-width: 720px) {
@@ -157,8 +205,17 @@
   color: #084a52;
 }
 
-.omr-members-card {
-  margin-top: 20px;
+.omr-members-card,
+.omr-add-section {
+  margin-top: 0;
+}
+
+.omr-add-section {
+  margin-bottom: 20px;
+}
+
+.omr-add-section .omr-add-panel {
+  margin-bottom: 0;
 }
 
 .omr-roster-head {
@@ -233,13 +290,15 @@
 }
 
 .omr-table-wrap {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #cfe4ea;
-  box-shadow: 0 2px 10px rgba(26, 46, 59, 0.06);
-  overflow: hidden;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  margin-top: 0;
+}
+
+.omr-table tbody td.omr-actions {
+  white-space: nowrap;
+}
+
+.omr-page {
+  padding-bottom: 96px;
 }
 
 .omr-table {

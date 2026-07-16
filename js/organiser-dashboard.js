@@ -6421,7 +6421,7 @@
 
       const cta = document.createElement('span');
       cta.className = 'org-member-list-chooser-cta';
-      cta.textContent = 'Open membership →';
+      cta.textContent = 'Open member register →';
 
       link.appendChild(textWrap);
       link.appendChild(cta);

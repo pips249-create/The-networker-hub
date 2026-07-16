@@ -185,7 +185,11 @@
 
   function renderReports(reports) {
     const mount = document.getElementById('omr-reports');
-    if (!mount || !reports) return;
+    const wrap = document.getElementById('omr-reports-wrap');
+    if (!mount || !reports) {
+      if (wrap) wrap.hidden = true;
+      return;
+    }
     const h = reports.rosterHealth || {};
     const booked = reports.bookedForEvent;
     const attendance = reports.eventAttendance;
@@ -266,6 +270,7 @@
 
     mount.innerHTML = html;
     mount.hidden = false;
+    if (wrap) wrap.hidden = false;
   }
 
   async function loadReports(eventId) {
@@ -494,8 +499,8 @@
       count.hidden = totalActive === 0;
       count.textContent =
         rows.length === totalActive
-          ? totalActive + (totalActive === 1 ? ' member' : ' members')
-          : rows.length + ' of ' + totalActive + ' members';
+          ? totalActive + (totalActive === 1 ? ' member on this register' : ' members on this register')
+          : rows.length + ' of ' + totalActive + ' members shown';
     }
 
     if (!rows.length) {
@@ -760,7 +765,7 @@
 
   async function init() {
     if (!organiserId) {
-      location.href = '/organiser/#groups';
+      location.href = '/organiser/#memberships';
       return;
     }
 
@@ -774,19 +779,20 @@
 
     const back = document.getElementById('omr-back');
     if (back) {
+      back.href = '/organiser/#memberships';
       back.addEventListener('click', function (e) {
-        let cameFromWorkspace = false;
+        let cameFromMemberships = false;
         try {
           const ref = document.referrer ? new URL(document.referrer) : null;
-          cameFromWorkspace =
+          cameFromMemberships =
             !!ref &&
             ref.origin === location.origin &&
             /^\/organiser(\/|$)/.test(ref.pathname) &&
-            !/member-roster/.test(ref.pathname);
+            (ref.hash === '#memberships' || ref.hash === '#member-lists');
         } catch {
           /* fall through */
         }
-        if (cameFromWorkspace && window.history.length > 1) {
+        if (cameFromMemberships && window.history.length > 1) {
           e.preventDefault();
           window.history.back();
         }
