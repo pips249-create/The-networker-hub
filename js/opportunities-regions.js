@@ -110,8 +110,6 @@
   if (directory) {
     directory.classList.add('is-regional-landing');
     setText('networking-location-directory-heading', 'Other UK locations');
-    var citiesHeading = directory.querySelector('.networking-location-cities-heading');
-    if (citiesHeading) citiesHeading.textContent = 'Other popular cities';
   }
 
   var currentLink = document.querySelector(
@@ -119,18 +117,6 @@
   );
   if (currentLink) {
     currentLink.hidden = true;
-    var popular = {
-      manchester: true,
-      birmingham: true,
-      liverpool: true,
-      leeds: true,
-      glasgow: true,
-      edinburgh: true,
-    };
-    if (!popular[slug]) {
-      var more = document.getElementById('networking-location-more');
-      if (more) more.open = true;
-    }
   }
 
   var providerLink = document.getElementById('networking-region-provider-link');

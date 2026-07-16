@@ -151,10 +151,6 @@ function applyOutcodeFilter(query, params) {
           orParts.push(`location_label.ilike.%${cityTerm}%`);
         }
       }
-      if (textFilters && textFilters.postcodePrefix && textFilters.postcodePrefix.length >= 2) {
-        orParts.push(`postcode.ilike.${textFilters.postcodePrefix}%`);
-        orParts.push(`location_label.ilike.%${textFilters.postcodePrefix}%`);
-      }
     }
 
     return query.or(orParts.join(','));

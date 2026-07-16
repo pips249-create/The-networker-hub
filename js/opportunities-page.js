@@ -110,9 +110,7 @@
       .join(' ')
       .toLowerCase();
     var city = activeCityName.toLowerCase();
-    if (hay.indexOf(city) !== -1) return true;
-    if (city.indexOf('london') !== -1 && hay.indexOf('london') !== -1) return true;
-    return false;
+    return hay.indexOf(city) !== -1;
   }
 
   function cacheEls() {

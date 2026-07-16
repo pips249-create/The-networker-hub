@@ -422,9 +422,6 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
 }
 
 .networking-location-groups {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 28px;
   margin-top: 24px;
 }
 
