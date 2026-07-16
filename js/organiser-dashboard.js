@@ -6271,8 +6271,40 @@
     return out;
   }
 
+  function normalizeGroupDisplayKey(g) {
+    const slug = String((g && g.slug) || '')
+      .trim()
+      .toLowerCase();
+    if (slug) return slug;
+    return String((g && g.name) || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  function groupMembershipPriority(g) {
+    const summary = (g && g.rosterSummary) || {};
+    const active = Number(summary.active) || 0;
+    const events = Number(g.eventsListed) || 0;
+    const created = g.createdAt ? new Date(g.createdAt).getTime() : 0;
+    return active * 10000 + events * 100 + created / 1e6;
+  }
+
+  /** One chooser row per slug/name — keeps the group with the most members/events. */
+  function dedupeGroupsForMembership(groups) {
+    const byKey = new Map();
+    dedupeGroupsById(groups).forEach(function (g) {
+      const key = normalizeGroupDisplayKey(g) || g.id;
+      const prev = byKey.get(key);
+      if (!prev || groupMembershipPriority(g) > groupMembershipPriority(prev)) {
+        byKey.set(key, g);
+      }
+    });
+    return [...byKey.values()];
+  }
+
   function memberListGroups() {
-    return dedupeGroupsById(state.groups);
+    return dedupeGroupsForMembership(state.groups);
   }
 
   function memberRosterUrl(groupId) {
