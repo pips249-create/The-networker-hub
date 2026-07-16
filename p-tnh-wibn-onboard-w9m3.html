@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260716wibn4">
 <link rel="stylesheet" href="/css/organiser-onboarding-pitch.css?v=20260716wibn6">
-<link rel="stylesheet" href="/css/organiser-onboarding-pitch-wibn.css?v=20260716wibn6">
+<link rel="stylesheet" href="/css/organiser-onboarding-pitch-wibn.css?v=20260716wibn7">
 <link rel="icon" href="/assets/hubert-icon.png" type="image/png">
 </head>
 <body class="sponsor-pitch-page org-pitch-page org-pitch-page--wibn">
@@ -53,6 +53,7 @@
       <button type="button" data-pitch-section="bonus">Business Opps</button>
       <button type="button" data-pitch-section="site">See the Hub</button>
       <button type="button" data-pitch-section="tools">WIBN tools</button>
+      <button type="button" data-pitch-section="hq-model">HQ model</button>
       <button type="button" data-pitch-section="forecast">Forecast</button>
       <button type="button" data-pitch-section="pilot">Pilot</button>
     </div>
@@ -179,6 +180,63 @@
     </div>
   </section>
 
+  <section class="sponsor-pitch-section org-pitch-section--compact" id="hq-model">
+    <h2>One HQ account vs independent chapters</h2>
+    <p class="section-intro">
+      WIBN is one national network — not ~100 separate organiser sign-ups. Here&rsquo;s how the recommended
+      HQ model compares to each chapter running its own account.
+    </p>
+
+    <div class="sponsor-pitch-table-wrap">
+      <table class="sponsor-pitch-table org-pitch-hq-compare">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col" class="org-pitch-hq-compare-rec">WIBN HQ model <span class="org-pitch-hq-tag">Recommended</span></th>
+            <th scope="col">Independent accounts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Structure</th>
+            <td class="org-pitch-hq-compare-rec">One organiser account · ~100 chapter pages</td>
+            <td>~100 separate accounts · one page each</td>
+          </tr>
+          <tr>
+            <th scope="row">Who logs in</th>
+            <td class="org-pitch-hq-compare-rec">HQ owner + chapter editors (scoped access)</td>
+            <td>Each associate owns their own login</td>
+          </tr>
+          <tr>
+            <th scope="row">Ticket revenue</th>
+            <td class="org-pitch-hq-compare-rec">Rolls up in one dashboard · one Stripe Connect</td>
+            <td>Split across accounts · separate payouts</td>
+          </tr>
+          <tr>
+            <th scope="row">Member registers</th>
+            <td class="org-pitch-hq-compare-rec">One register per chapter (~15 members each)</td>
+            <td>Same — but no cross-chapter view for HQ</td>
+          </tr>
+          <tr>
+            <th scope="row">Associate leaves / sells</th>
+            <td class="org-pitch-hq-compare-rec">Swap editor invite · chapter history stays on the page</td>
+            <td>Transfer whole account &amp; Stripe setup</td>
+          </tr>
+          <tr>
+            <th scope="row">National visibility</th>
+            <td class="org-pitch-hq-compare-rec">HQ network summary · total members &amp; revenue</td>
+            <td>HQ would need admin reports or manual consolidation</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="sponsor-pitch-note" style="margin-top:14px;">
+      <strong>For Louise / WIBN HQ:</strong> one account, one payout destination, chapter editors for associates —
+      same model as listing five organiser pages under one login, scaled to ~100.
+    </p>
+  </section>
+
   <section class="sponsor-pitch-section org-pitch-section--compact" id="forecast">
     <h2>Discovery forecast</h2>
     <p class="section-intro">Illustrative monthly ranges post public launch (Sep 2026) — planning estimates for directory traffic and chapter visibility, not guaranteed.</p>
@@ -221,7 +279,7 @@
     <div class="org-pitch-objection-compact">
       <div><strong>Already have WIBN software?</strong> Hub runs discovery &amp; bookings — community stays yours.</div>
       <div><strong>100 chapters is a lot</strong> Pilot 3, templatise, then batch-roll by region.</div>
-      <div><strong>Franchise model</strong> One page per chapter · central HQ editors.</div>
+      <div><strong>Franchise model</strong> One HQ account · one page per chapter · central editors — see <a href="#hq-model">HQ model</a>.</div>
       <div><strong>Another login?</strong> Browse free · 2 min to book or apply.</div>
     </div>
 
@@ -242,7 +300,7 @@
 
 <div class="org-pitch-present-overlay" id="org-pitch-present" aria-hidden="true">
   <div class="org-pitch-present-bar">
-    <span id="org-pitch-present-counter">1 / 11</span>
+    <span id="org-pitch-present-counter">1 / 12</span>
     <span><kbd>←</kbd> <kbd>→</kbd> · <kbd>Esc</kbd></span>
     <button type="button" id="org-pitch-present-close">Exit</button>
   </div>
@@ -349,6 +407,17 @@
         <li>No per-chapter subscription</li>
         <li>Members pay 4.5% + 20p at checkout</li>
         <li>Business Opps — 3 months free for WIBN</li>
+      </ul>
+    </div>
+
+    <div class="org-pitch-slide">
+      <p class="org-pitch-slide-kicker">HQ model</p>
+      <h2>One account. <span class="accent">~100 chapters.</span></h2>
+      <ul class="org-pitch-slide-bullets">
+        <li>HQ owner — one login, one Stripe, revenue rolls up</li>
+        <li>Chapter editors — scoped to their group only</li>
+        <li>Associate change — swap invite, keep roster &amp; history</li>
+        <li>Not ~100 separate organiser sign-ups</li>
       </ul>
     </div>
 

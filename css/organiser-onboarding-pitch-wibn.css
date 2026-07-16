@@ -270,3 +270,55 @@
   width: auto;
   max-width: 180px;
 }
+
+.org-pitch-page--wibn .org-pitch-hq-compare th,
+.org-pitch-page--wibn .org-pitch-hq-compare td {
+  vertical-align: top;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.org-pitch-page--wibn .org-pitch-hq-compare tbody th[scope='row'] {
+  color: var(--pitch-ink);
+  font-weight: 600;
+  white-space: nowrap;
+  width: 22%;
+}
+
+.org-pitch-page--wibn .org-pitch-hq-compare-rec {
+  background: rgba(230, 0, 126, 0.06);
+}
+
+.org-pitch-page--wibn .org-pitch-hq-compare thead .org-pitch-hq-compare-rec {
+  background: linear-gradient(180deg, rgba(230, 0, 126, 0.1) 0%, rgba(230, 0, 126, 0.04) 100%);
+}
+
+.org-pitch-page--wibn .org-pitch-hq-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--wibn-magenta);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.org-pitch-page--wibn .org-pitch-objection-compact a {
+  color: var(--wibn-magenta-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.org-pitch-page--wibn .org-pitch-objection-compact a:hover {
+  color: var(--wibn-magenta);
+}
+
+@media (max-width: 720px) {
+  .org-pitch-page--wibn .org-pitch-hq-compare tbody th[scope='row'] {
+    white-space: normal;
+  }
+}
