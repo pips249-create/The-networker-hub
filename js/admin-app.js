@@ -847,16 +847,38 @@
     }, METRICS_POLL_MS);
   }
 
+  function parseAdminFetchResponse(r, text) {
+    var data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (_parseErr) {
+        var snippet = String(text || '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 160);
+        return {
+          ok: false,
+          error: 'invalid_response',
+          message: snippet
+            ? 'Server returned an unexpected response (HTTP ' + r.status + '): ' + snippet
+            : 'Server returned an unexpected empty response (HTTP ' + r.status + ').',
+        };
+      }
+    }
+    data = data || {};
+    if (!r.ok) {
+      data.error = data.error || data.message || 'request_failed';
+      data.ok = false;
+    }
+    return data;
+  }
+
   function adminGet(url) {
     return fetch(url, { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
-        return r.json().then(function (data) {
-          data = data || {};
-          if (!r.ok) {
-            data.error = data.error || data.message || 'request_failed';
-            data.ok = false;
-          }
-          return data;
+        return r.text().then(function (text) {
+          return parseAdminFetchResponse(r, text);
         });
       })
       .catch(function (err) {
@@ -876,13 +898,8 @@
       body: JSON.stringify(body || {}),
     })
       .then(function (r) {
-        return r.json().then(function (data) {
-          data = data || {};
-          if (!r.ok) {
-            data.error = data.error || data.message || 'request_failed';
-            data.ok = false;
-          }
-          return data;
+        return r.text().then(function (text) {
+          return parseAdminFetchResponse(r, text);
         });
       })
       .catch(function (err) {
@@ -902,13 +919,8 @@
       body: JSON.stringify(body || {}),
     })
       .then(function (r) {
-        return r.json().then(function (data) {
-          data = data || {};
-          if (!r.ok) {
-            data.error = data.error || data.message || 'request_failed';
-            data.ok = false;
-          }
-          return data;
+        return r.text().then(function (text) {
+          return parseAdminFetchResponse(r, text);
         });
       })
       .catch(function (err) {
@@ -9987,9 +9999,10 @@
               (data.removed === 1 ? '' : 's') +
               ' (cancelled, refunds processing, organiser notified)'
           );
-          if (data.removedEvents && data.removedEvents.length) {
-            var suspended = data.removedEvents.filter(function (row) {
-              return row.moderationResult && row.moderationResult.hubSuspended;
+          var removedRows = data.removedEvents || data.removedSummaries || [];
+          if (removedRows.length) {
+            var suspended = removedRows.filter(function (row) {
+              return row.hubSuspended || (row.moderationResult && row.moderationResult.hubSuspended);
             }).length;
             if (suspended) {
               parts.push(

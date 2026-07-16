@@ -438,7 +438,13 @@ async function bulkDeleteEvents(ids, opts) {
     removed: removed.length,
     skipped,
     titles: [...deleted, ...removed].map((d) => d.title),
-    removedEvents: removed,
+    removedSummaries: removed.map((row) => ({
+      id: row.id,
+      title: row.title,
+      paidBookings: row.paidBookings || 0,
+      refundsConfirmed: Boolean(row.refundsConfirmed),
+      hubSuspended: Boolean(row.moderationResult && row.moderationResult.hubSuspended),
+    })),
   };
 }
 

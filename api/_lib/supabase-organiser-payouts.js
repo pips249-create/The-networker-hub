@@ -213,18 +213,24 @@ async function listPayoutsForEvents(eventIds) {
 }
 
 async function listCancellationsForEvents(eventIds) {
-  if (!eventIds.length) return [];
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) return [];
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('event_cancellations')
-    .select('*')
-    .in('event_id', eventIds)
-    .order('created_at', { ascending: false });
-  if (error) {
-    if (isMissingRelationError(error)) return [];
-    throw new Error(error.message);
+  const rows = [];
+  for (let i = 0; i < ids.length; i += REGISTRATION_QUERY_CHUNK) {
+    const chunk = ids.slice(i, i + REGISTRATION_QUERY_CHUNK);
+    const { data, error } = await sb
+      .from('event_cancellations')
+      .select('*')
+      .in('event_id', chunk)
+      .order('created_at', { ascending: false });
+    if (error) {
+      if (isMissingRelationError(error)) return rows;
+      throw new Error(error.message);
+    }
+    if (data?.length) rows.push(...data);
   }
-  return data || [];
+  return rows;
 }
 
 async function listRegistrationsForEvents(eventIds) {

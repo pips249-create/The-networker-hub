@@ -50,22 +50,18 @@ async function handleSupabaseForgot(email) {
     };
   }
 
+  const { createPasswordResetLink, sendPasswordResetEmail } = require('../password-reset-email');
+  let resetUrl = null;
+  let emailSent = false;
+
   if (sbAuth.authEmailsEnabled()) {
     try {
-      const { sendPasswordResetEmail } = require('../password-reset-email');
-      await sendPasswordResetEmail({
+      const sent = await sendPasswordResetEmail({
         email,
         userName: user.name || user.full_name || '',
       });
-      return {
-        status: 200,
-        body: {
-          ok: true,
-          emailSent: true,
-          accountFound: true,
-          message: 'Check your email for a reset link.',
-        },
-      };
+      emailSent = Boolean(sent?.ok);
+      resetUrl = sent?.reset_url || null;
     } catch (e) {
       const code = e.code || '';
       if (code === 'resend_not_configured') {
@@ -82,14 +78,31 @@ async function handleSupabaseForgot(email) {
     }
   }
 
+  if (!resetUrl) {
+    try {
+      resetUrl = await createPasswordResetLink(email);
+    } catch (e) {
+      return { status: 500, body: { error: 'server_error', message: e.message } };
+    }
+  }
+
+  const showLinkOnPage =
+    !emailSent &&
+    (process.env.AUTH_SHOW_RESET_LINK !== 'false' ||
+      process.env.AUTH_DEV_RESET_LINK === 'true');
+
   return {
     status: 200,
     body: {
       ok: true,
-      emailSent: false,
+      emailSent,
       accountFound: true,
-      message:
-        'Password reset emails are turned off. Ask your admin to set a new password, or use account settings after signing in.',
+      message: emailSent
+        ? 'Check your email for a reset link (valid 1 hour).'
+        : showLinkOnPage
+          ? 'Email is not configured yet — use the reset link shown below.'
+          : 'Password reset emails are turned off. Ask your admin to set a new password, or use account settings after signing in.',
+      ...(showLinkOnPage && resetUrl ? { resetUrl } : {}),
     },
   };
 }

@@ -1853,37 +1853,23 @@ async function getLeanOrganiserWorkspace(req) {
   }
 
   const groupIds = groups.map((g) => g.id);
-  const [pendingClaimGroups, eventSummaries, accessStatus, workspaceSalesCache] = await Promise.all([
+  const rosterPromise = (async () => {
+    try {
+      const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
+      return await buildRosterSummariesForOrganisers(groupIds);
+    } catch {
+      return new Map();
+    }
+  })();
+
+  const [pendingClaimGroups, eventSummaries, accessStatus, rosterSummaries] = await Promise.all([
     pendingClaimsPromise,
     listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
     accessStatusPromise,
-    (async () => {
-      try {
-        const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
-        return await buildOrganiserWorkspaceSummary(groupIds, adminView);
-      } catch {
-        return null;
-      }
-    })(),
+    rosterPromise,
   ]);
 
-  const workspaceSummary = workspaceSalesCache
-    ? {
-        computed: workspaceSalesCache.computed,
-        totalRevenue: workspaceSalesCache.totalRevenue,
-        totalTicketsSold: workspaceSalesCache.totalTicketsSold,
-        revenueByGroupId: workspaceSalesCache.revenueByGroupId,
-        ticketsSoldByGroupId: workspaceSalesCache.ticketsSoldByGroupId,
-      }
-    : null;
-
-  let rosterSummaries = new Map();
-  try {
-    const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
-    rosterSummaries = await buildRosterSummariesForOrganisers(groupIds);
-  } catch {
-    rosterSummaries = new Map();
-  }
+  const workspaceSummary = null;
 
   groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries);
 
@@ -2162,6 +2148,51 @@ function airtableSetupHint() {
   return null;
 }
 
+/** Revenue/ticket totals for the signed-in workspace — deferred from lean bootstrap. */
+async function getOrganiserWorkspaceStats(req) {
+  const { requireOrganiserSession } = require('./organiser');
+  const wsAuth = requireOrganiserSession(req);
+  if (!wsAuth.ok) return wsAuth;
+
+  const { session } = wsAuth;
+  const isAdmin = sbOrg.isPlatformAdmin(session);
+  const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
+  const adminView = isAdmin && !personalScope;
+
+  const access = await resolveOrganiserAccess(session).catch(() => null);
+  let groups = [];
+  try {
+    groups = await sbOrg.listGroupsForSession(session, adminView, access);
+  } catch (e) {
+    return { ok: false, status: 500, error: 'groups_failed', message: e.message };
+  }
+
+  const groupIds = groups.map((g) => g.id);
+  let workspaceSalesCache = null;
+  try {
+    const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
+    workspaceSalesCache = await buildOrganiserWorkspaceSummary(groupIds, adminView);
+  } catch {
+    workspaceSalesCache = null;
+  }
+
+  const workspaceSummary = workspaceSalesCache
+    ? {
+        computed: workspaceSalesCache.computed,
+        totalRevenue: workspaceSalesCache.totalRevenue,
+        totalTicketsSold: workspaceSalesCache.totalTicketsSold,
+        revenueByGroupId: workspaceSalesCache.revenueByGroupId,
+        ticketsSoldByGroupId: workspaceSalesCache.ticketsSoldByGroupId,
+      }
+    : null;
+
+  return {
+    ok: true,
+    session,
+    workspaceSummary,
+  };
+}
+
 module.exports = {
   WORKSPACE_EVENTS_LIMIT_DEFAULT,
   WORKSPACE_EVENTS_LIMIT_MAX,
@@ -2187,6 +2218,7 @@ module.exports = {
   enrichGroupForDashboard,
   enrichOrganiserOverview,
   getLeanOrganiserWorkspace,
+  getOrganiserWorkspaceStats,
   getOrganiserWorkspace,
   airtableSetupHint,
   rowToEvent,

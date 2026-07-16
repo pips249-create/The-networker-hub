@@ -30,18 +30,27 @@ const routes = {
 };
 
 module.exports = async function handler(req, res) {
-  setCors(req, res);
+  try {
+    setCors(req, res);
 
-  const session = sessionFromRequest(req);
-  const gate = requireAdmin(session);
-  if (!gate.ok) {
-    return json(res, gate.status, { error: gate.error, message: gate.message });
-  }
+    const session = sessionFromRequest(req);
+    const gate = requireAdmin(session);
+    if (!gate.ok) {
+      return json(res, gate.status, { error: gate.error, message: gate.message });
+    }
 
-  const route = getSubRoute(req, '/api/admin');
-  const fn = routes[route];
-  if (!fn) {
-    return json(res, 404, { error: 'not_found', path: route || '(empty)' });
+    const route = getSubRoute(req, '/api/admin');
+    const fn = routes[route];
+    if (!fn) {
+      return json(res, 404, { error: 'not_found', path: route || '(empty)' });
+    }
+    return await fn(req, res);
+  } catch (e) {
+    console.error('[admin] unhandled', e?.message || e);
+    return json(res, 500, {
+      ok: false,
+      error: 'admin_handler_failed',
+      message: e?.message || 'Admin request failed',
+    });
   }
-  return fn(req, res);
 };

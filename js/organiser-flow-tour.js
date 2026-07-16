@@ -504,6 +504,33 @@
         /* ignore */
       }
     },
+    isEventTourPending: function () {
+      try {
+        return global.sessionStorage.getItem('hub_flow_event_tour_pending') === '1';
+      } catch (e) {
+        return false;
+      }
+    },
+    isEventListingTourComplete: function () {
+      var keys = [
+        'hub_flow_tour_event_format_v1',
+        'hub_flow_tour_event_edit_v1',
+        'hub_flow_tour_event_location_v1',
+        'hub_flow_tour_event_tickets_v1',
+      ];
+      return keys.every(function (key) {
+        try {
+          return global.localStorage.getItem(key) === '1';
+        } catch (e) {
+          return false;
+        }
+      });
+    },
+    /** First listing: use full pages so Hubert can spotlight fields (drawer embed skips tours). */
+    shouldGuideFirstEventListing: function () {
+      if (this.isEventTourPending()) return true;
+      return !this.isEventListingTourComplete();
+    },
     consumeEventTourPending: function () {
       try {
         var pending = global.sessionStorage.getItem('hub_flow_event_tour_pending') === '1';

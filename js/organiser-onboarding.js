@@ -1,32 +1,70 @@
 (function () {
-  var TOUR_KEY = 'hub_organiser_tour_v2';
+  var TOUR_KEY = 'hub_organiser_tour_v3';
   var CHECKLIST_KEY = 'hub_getting_started_dismissed';
   var PROFILE_REVIEW_KEY = 'hub_organiser_profile_review_v1';
   var READY_EVENT_KEY = 'hub_ready_event_dismissed';
   var RESUME_KEY = 'hub_setup_resume_dismissed';
 
+  function goDashboard() {
+    if (window.orgDashSetRoute) window.orgDashSetRoute('dashboard');
+  }
+
   var steps = [
     {
       title: 'Welcome to your organiser workspace',
-      body: 'Two steps to go live: confirm your organiser page, then list your first event. We\'ll highlight your checklist — Hubert can answer questions anytime.',
+      body: 'Your hub for events, memberships, business opportunities, and payouts. Follow the setup checklist when it appears — Hubert can answer questions anytime.',
       target: null,
+      beforeShow: goDashboard,
     },
     {
-      title: 'Start from Overview',
-      body: 'Use the shortcuts below for events, business opportunities, and member lists. New organisers: follow the setup checklist when it appears.',
+      title: 'Jump in from Overview',
+      body: 'Use these shortcuts for My events, business opportunities, and Memberships — your member register for members-only tickets and renewals.',
       target: '.org-hub-portals',
+      beforeShow: goDashboard,
+    },
+    {
+      title: 'Your setup checklist',
+      body: 'New organisers: create your organiser page, optionally set up membership, then list your first event. Dismiss the checklist anytime — your progress is saved.',
+      target: '#org-getting-started',
+      beforeShow: goDashboard,
+    },
+    {
+      title: 'Notifications',
+      body: 'Pending applications, payout setup, and other action items show up here — open Notifications in the sidebar so nothing slips through.',
+      target: '#org-notifications-nav',
+      beforeShow: goDashboard,
     },
     {
       title: 'My events',
-      body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Reviews, Revenue — to switch sections.',
+      body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Cancellations, Reviews, and Revenue — to switch sections.',
       target: '#org-events-subnav',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('events-list');
       },
     },
     {
+      title: 'Memberships',
+      body: 'Upload your member register, sell members-only tickets, and track renewals. Members get email alerts when you publish events.',
+      target: '#org-nav-memberships',
+      beforeShow: goDashboard,
+    },
+    {
+      title: 'Team & invites',
+      body: 'Invite colleagues as editors to help manage events — assign which organiser pages they can access. Only the account owner can change bank details.',
+      target: '#org-nav-team',
+      beforeShow: goDashboard,
+    },
+    {
+      title: 'Promote & social',
+      body: 'Boost visibility with Premium Spotlight, build LinkedIn post images, and share your ranking badge when you earn one.',
+      target: '.org-social-nav',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('social');
+      },
+    },
+    {
       title: 'Revenue & payouts',
-      body: 'Set up Stripe bank details before publishing paid tickets. After an event ends and is archived, request your payout from the Revenue tab.',
+      body: 'Connect Stripe before publishing paid tickets. After an event ends and is archived, request your payout from the Revenue tab.',
       target: '#events-tab-revenue',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('events-revenue');

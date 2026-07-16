@@ -113,34 +113,57 @@ async function adminRemoveEvent(sb, eventId, opts) {
   if (existingCancellation && existingCancellation.removed_by_admin) {
     cancellation = existingCancellation;
   } else if (!existingCancellation) {
-    const { data: inserted, error: insertErr } = await sb
-      .from('event_cancellations')
-      .insert({
-        event_id: eventId,
-        reason,
-        details: details || null,
-        refund_terms_confirmed: true,
-        cancelled_by: adminUserId,
-        removed_by_admin: true,
-      })
-      .select('*')
-      .single();
-    if (insertErr) throw new Error(insertErr.message);
-    cancellation = inserted;
+    const cancellationRow = {
+      event_id: eventId,
+      reason,
+      refund_terms_confirmed: true,
+      cancelled_by: adminUserId,
+      removed_by_admin: true,
+    };
+    if (details) cancellationRow.details = details;
+
+    let insertRes = await sb.from('event_cancellations').insert(cancellationRow).select('*').single();
+    if (
+      insertRes.error &&
+      details &&
+      /details/i.test(String(insertRes.error.message || ''))
+    ) {
+      delete cancellationRow.details;
+      insertRes = await sb.from('event_cancellations').insert(cancellationRow).select('*').single();
+    }
+    if (insertRes.error) throw new Error(insertRes.error.message);
+    cancellation = insertRes.data;
   } else {
-    const { data: updated, error: updateErr } = await sb
+    const updateRow = {
+      reason,
+      removed_by_admin: true,
+      refund_terms_confirmed: true,
+    };
+    if (details || existingCancellation.details) {
+      updateRow.details = details || existingCancellation.details || null;
+    }
+
+    let updateRes = await sb
       .from('event_cancellations')
-      .update({
-        reason,
-        details: details || existingCancellation.details || null,
-        removed_by_admin: true,
-        refund_terms_confirmed: true,
-      })
+      .update(updateRow)
       .eq('id', existingCancellation.id)
       .select('*')
       .single();
-    if (updateErr) throw new Error(updateErr.message);
-    cancellation = updated;
+    if (
+      updateRes.error &&
+      Object.prototype.hasOwnProperty.call(updateRow, 'details') &&
+      /details/i.test(String(updateRes.error.message || ''))
+    ) {
+      delete updateRow.details;
+      updateRes = await sb
+        .from('event_cancellations')
+        .update(updateRow)
+        .eq('id', existingCancellation.id)
+        .select('*')
+        .single();
+    }
+    if (updateRes.error) throw new Error(updateRes.error.message);
+    cancellation = updateRes.data;
   }
 
   if (!alreadyCancelled) {

@@ -6,6 +6,7 @@ const { json, setCors } = require('./_lib/auth');
 
 const routes = {
   bootstrap: require('./_lib/routes/organiser-bootstrap'),
+  'workspace-stats': require('./_lib/routes/organiser-workspace-stats'),
   groups: require('./_lib/routes/organiser-groups'),
   'group-claims': require('./_lib/routes/organiser-group-claims'),
   events: require('./_lib/routes/organiser-events'),
