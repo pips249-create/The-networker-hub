@@ -1377,56 +1377,19 @@ a.ee-wizard-link:hover {
   text-align: center;
 }
 
-.organiser-published-page .ep-next-steps {
-  margin-bottom: 24px;
-}
-
-.organiser-published-page .ep-next-steps-label {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ee-purple);
-}
-
-.organiser-published-page .ep-next-steps-heading {
-  margin: 0 0 16px;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--ee-text);
-}
-
-.organiser-published-page .ep-next-steps .oe-premium-slot-status,
-.organiser-published-page .ep-next-steps .oe-premium-note {
-  margin-top: 0;
-}
-
-.organiser-published-page .ep-next-steps-actions {
-  display: grid;
-  gap: 10px;
-}
-
-@media (min-width: 768px) {
-  .organiser-published-page .ep-next-steps-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: stretch;
-  }
-}
-
-.organiser-published-page .ep-next-steps-actions.ep-next-steps-actions--single {
-  grid-template-columns: 1fr;
-  max-width: 320px;
-}
-
-.organiser-published-page .ep-next-step-btn {
-  width: 100%;
-  justify-content: center;
-  text-align: center;
-}
-
 .organiser-published-page .ep-publish-row.ep-publish-row--preview-only {
   grid-template-columns: 1fr;
+}
+
+.organiser-published-page .oe-premium-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.organiser-published-page .oe-premium-actions .ee-btn {
+  flex: 1 1 180px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ep-share-link-row {

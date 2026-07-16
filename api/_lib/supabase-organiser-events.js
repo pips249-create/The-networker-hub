@@ -104,6 +104,7 @@ const {
   composeEventDescription,
 } = require('./event-description');
 const { eventImageUrl, eventImageDbValue, normalizeEventImagePosition } = require('./event-image');
+const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 
 function rowToEvent(row) {
   if (!row) return null;
@@ -162,6 +163,8 @@ function rowToEvent(row) {
     alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),
     alumniSourceEventId: row.alumni_source_event_id || null,
     guestPassesDisabled: Boolean(row.guest_passes_disabled),
+    featured: isEventCurrentlyFeatured(row),
+    featuredUntil: row.featured_until || null,
   };
 }
 

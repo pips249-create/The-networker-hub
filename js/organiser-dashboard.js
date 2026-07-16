@@ -541,6 +541,408 @@
     }
   }
 
+  const FEATURED_LISTING_PRICE = '£0.00';
+  const FEATURED_UPGRADE_QUEUE_KEY = 'hub_featured_upgrade_queue';
+  const FEATURED_PLAN_OPTIONS = [
+    { id: '1month', label: '1 month', price: FEATURED_LISTING_PRICE },
+  ];
+  let featuredSpotlightSlots = null;
+
+  function eventIsLiveForFeatured(ev) {
+    const status = String(ev?.status || ev?.listingStatus || '').toLowerCase();
+    const approved = String(ev?.approvalStatus || ev?.statusRaw || '').toLowerCase() === 'approved';
+    return status === 'published' && approved;
+  }
+
+  function eventFeaturedMeta(ev) {
+    if (!ev?.featured) return { label: '', tone: 'muted' };
+    const raw = ev.featuredUntil;
+    if (!raw) return { label: 'Featured', tone: 'ok' };
+    const until = new Date(raw);
+    if (Number.isNaN(until.getTime())) return { label: 'Featured', tone: 'ok' };
+    const label = formatDateShort(raw);
+    if (until.getTime() < Date.now()) return { label: 'Featured ended ' + label, tone: 'muted' };
+    const daysLeft = Math.ceil((until.getTime() - Date.now()) / 86400000);
+    if (daysLeft <= 14) return { label: 'Featured until ' + label + ' (' + daysLeft + 'd)', tone: 'warn' };
+    return { label: 'Featured until ' + label, tone: 'ok' };
+  }
+
+  function liveEventsForFeaturedUpgrade() {
+    return (state.events || [])
+      .filter(eventIsLiveForFeatured)
+      .slice()
+      .sort(function (a, b) {
+        const aTs = a.date ? new Date(a.date).getTime() : 0;
+        const bTs = b.date ? new Date(b.date).getTime() : 0;
+        if (aTs !== bTs) return bTs - aTs;
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      });
+  }
+
+  function featuredUpgradeEventDisabled(ev) {
+    if (!featuredSpotlightSlots || !featuredSpotlightSlots.full) return false;
+    return !ev.featured;
+  }
+
+  function selectedFeaturedUpgradePlanId(root) {
+    const checked = root?.querySelector('input[name="org-featured-plan"]:checked');
+    return checked ? checked.value : '1month';
+  }
+
+  function selectedFeaturedUpgradeEventIds(root) {
+    if (!root) return [];
+    return Array.from(root.querySelectorAll('.org-featured-upgrade-event-input:checked'))
+      .map(function (input) {
+        return input.value;
+      })
+      .filter(Boolean);
+  }
+
+  function updateFeaturedUpgradeSummary(root) {
+    const summary = root?.querySelector('#org-featured-upgrade-summary');
+    const btn = root?.querySelector('#org-featured-upgrade-submit');
+    const ids = selectedFeaturedUpgradeEventIds(root);
+    const newFeaturedCount = ids.filter(function (id) {
+      const ev = (state.events || []).find(function (row) {
+        return row.id === id;
+      });
+      return ev && !ev.featured;
+    }).length;
+    const slots = featuredSpotlightSlots;
+    let blocked = false;
+    if (slots && slots.full && newFeaturedCount > 0) blocked = true;
+    if (slots && !slots.full && newFeaturedCount > slots.available) blocked = true;
+
+    if (summary) {
+      if (!ids.length) {
+        summary.textContent = 'Select one or more live events to upgrade.';
+      } else if (ids.length === 1) {
+        summary.textContent = '1 event selected — checkout opens for this event.';
+      } else {
+        summary.textContent =
+          ids.length +
+          ' events selected — you will check out separately for each event, one after another.';
+      }
+    }
+    if (btn) {
+      btn.disabled = !ids.length || blocked;
+      btn.textContent =
+        ids.length > 1
+          ? 'Upgrade ' + ids.length + ' events'
+          : ids.length === 1
+            ? 'Upgrade selected event'
+            : 'Upgrade selected events';
+    }
+  }
+
+  async function loadFeaturedSpotlightSlots() {
+    try {
+      const res = await fetch('/api/hub-listings?meta=featured-slots', { cache: 'no-store' });
+      const data = await res.json();
+      if (res.ok && data.featuredSlots) featuredSpotlightSlots = data.featuredSlots;
+    } catch (e) {
+      /* non-fatal */
+    }
+  }
+
+  function featuredUpgradeSlotStatusHtml() {
+    const slots = featuredSpotlightSlots;
+    if (!slots) return '';
+    if (slots.full) {
+      return (
+        '<p class="org-featured-upgrade-slot-status" role="status">' +
+        'All ' +
+        esc(String(slots.max || 12)) +
+        ' featured spotlight places are taken right now. You can still extend events you already feature — try again later for new placements.</p>'
+      );
+    }
+    if (slots.available > 0 && slots.available <= 3) {
+      return (
+        '<p class="org-featured-upgrade-slot-status" role="status">' +
+        (slots.available === 1
+          ? 'Only 1 featured spotlight place left right now.'
+          : 'Only ' + esc(String(slots.available)) + ' featured spotlight places left right now.') +
+        '</p>'
+      );
+    }
+    return '';
+  }
+
+  function bindFeaturedUpgradeUi(root) {
+    if (!root || root.dataset.featuredBound === '1') return;
+    root.dataset.featuredBound = '1';
+
+    root.addEventListener('change', function (e) {
+      const target = e.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (
+        target.matches('.org-featured-upgrade-event-input') ||
+        target.matches('input[name="org-featured-plan"]')
+      ) {
+        updateFeaturedUpgradeSummary(root);
+      }
+    });
+
+    root.addEventListener('click', function (e) {
+      if (e.target.closest('#org-featured-upgrade-submit')) {
+        e.preventDefault();
+        startFeaturedUpgradeCheckout(root);
+        return;
+      }
+
+      const selectAll = e.target.closest('#org-featured-upgrade-select-all');
+      if (selectAll) {
+        e.preventDefault();
+        root.querySelectorAll('.org-featured-upgrade-event-input:not(:disabled)').forEach(function (input) {
+          input.checked = true;
+        });
+        updateFeaturedUpgradeSummary(root);
+        return;
+      }
+
+      const label = e.target.closest('.org-featured-upgrade-event');
+      if (label && label.classList.contains('is-disabled')) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  function writeFeaturedUpgradeQueue(planId, eventIds) {
+    if (!eventIds || eventIds.length < 2) {
+      try {
+        sessionStorage.removeItem(FEATURED_UPGRADE_QUEUE_KEY);
+      } catch (e) {
+        /* ignore */
+      }
+      return;
+    }
+    try {
+      sessionStorage.setItem(
+        FEATURED_UPGRADE_QUEUE_KEY,
+        JSON.stringify({
+          planId: planId || '1month',
+          remaining: eventIds.slice(1),
+          returnTo: 'social',
+        })
+      );
+    } catch (e) {
+      /* ignore private mode */
+    }
+  }
+
+  async function startFeaturedUpgradeCheckout(root) {
+    const errorEl = root?.querySelector('#org-featured-upgrade-error');
+    const submit = root?.querySelector('#org-featured-upgrade-submit');
+    const planId = selectedFeaturedUpgradePlanId(root);
+    const eventIds = selectedFeaturedUpgradeEventIds(root);
+    if (!eventIds.length) return;
+
+    const newFeaturedCount = eventIds.filter(function (id) {
+      const ev = (state.events || []).find(function (row) {
+        return row.id === id;
+      });
+      return ev && !ev.featured;
+    }).length;
+    const slots = featuredSpotlightSlots;
+    if (slots && slots.full && newFeaturedCount > 0) {
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent =
+          'All featured spotlight places are taken. Extend an event you already feature, or try again when a slot opens.';
+      }
+      return;
+    }
+    if (slots && newFeaturedCount > slots.available) {
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent =
+          'Only ' +
+          slots.available +
+          ' spotlight place' +
+          (slots.available === 1 ? ' is' : 's are') +
+          ' available — deselect some events or try again later.';
+      }
+      return;
+    }
+
+    if (errorEl) errorEl.hidden = true;
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = 'Opening secure checkout…';
+    }
+
+    writeFeaturedUpgradeQueue(planId, eventIds);
+
+    try {
+      const res = await fetch('/api/organiser/event-featured-checkout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: eventIds[0],
+          planId: planId,
+          returnTo: 'social',
+        }),
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (res.ok && data.ok && data.url) {
+        location.href = data.url;
+        return;
+      }
+      try {
+        sessionStorage.removeItem(FEATURED_UPGRADE_QUEUE_KEY);
+      } catch (e) {
+        /* ignore */
+      }
+      const msg =
+        data.error === 'stripe_not_configured'
+          ? 'Stripe is not configured for checkout yet. Your events stay live.'
+          : data.error === 'featured_slots_full'
+            ? data.message ||
+              'All featured spotlight places are currently taken. Try again when a slot opens.'
+            : data.message || data.error || 'Could not start checkout.';
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent = msg;
+      }
+    } catch (e) {
+      try {
+        sessionStorage.removeItem(FEATURED_UPGRADE_QUEUE_KEY);
+      } catch (err) {
+        /* ignore */
+      }
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent = 'Could not reach checkout. Try again in a moment.';
+      }
+    }
+
+    if (submit) {
+      submit.disabled = false;
+      updateFeaturedUpgradeSummary(root);
+    }
+  }
+
+  function renderFeaturedUpgradePanel() {
+    const root = document.getElementById('org-featured-upgrade-root');
+    if (!root || !isSocialPageActive()) return;
+
+    if (!state.eventsLoaded) {
+      root.innerHTML = '<p class="org-featured-upgrade-loading">Loading your events…</p>';
+      ensureEventsLoaded().then(function () {
+        renderFeaturedUpgradePanel();
+      });
+      return;
+    }
+
+    if (!state.eventsFullyLoaded && state.eventsHasMore && !eventsFiltersActive()) {
+      root.innerHTML = '<p class="org-featured-upgrade-loading">Loading your events…</p>';
+      ensureAllEventsForGrouping()
+        .then(function () {
+          renderFeaturedUpgradePanel();
+        })
+        .catch(function () {
+          renderFeaturedUpgradePanel();
+        });
+      return;
+    }
+
+    const liveEvents = liveEventsForFeaturedUpgrade();
+    const planOptionsHtml = FEATURED_PLAN_OPTIONS.map(function (plan, index) {
+      return (
+        '<label class="org-featured-upgrade-plan-option">' +
+        '<input type="radio" name="org-featured-plan" value="' +
+        esc(plan.id) +
+        '"' +
+        (index === 0 ? ' checked' : '') +
+        ' />' +
+        esc(plan.label) +
+        ' · ' +
+        esc(plan.price) +
+        '</label>'
+      );
+    }).join('');
+
+    if (!liveEvents.length) {
+      root.innerHTML =
+        featuredUpgradeSlotStatusHtml() +
+        '<p class="org-featured-upgrade-empty">No live events yet. Publish an event first, then return here to upgrade it.</p>' +
+        '<p class="org-section-sub"><a class="org-inline-link" href="#events-list" data-org-route="events-list">Go to My events</a></p>';
+      return;
+    }
+
+    const eventsHtml = liveEvents
+      .map(function (ev) {
+        const disabled = featuredUpgradeEventDisabled(ev);
+        const meta = eventFeaturedMeta(ev);
+        const dateLabel = ev.date ? formatDateShort(ev.date) : 'Date TBC';
+        const typeLabel = ev.type ? String(ev.type) : 'Event';
+        return (
+          '<label class="org-featured-upgrade-event' +
+          (disabled ? ' is-disabled' : '') +
+          '">' +
+          '<input class="org-featured-upgrade-event-input" type="checkbox" value="' +
+          esc(ev.id) +
+          '"' +
+          (disabled ? ' disabled' : '') +
+          ' />' +
+          '<span class="org-featured-upgrade-event-body">' +
+          '<span class="org-featured-upgrade-event-title">' +
+          esc(ev.title || 'Untitled event') +
+          '</span>' +
+          '<span class="org-featured-upgrade-event-meta">' +
+          esc(typeLabel + ' · ' + dateLabel) +
+          '</span>' +
+          (meta.label
+            ? '<span class="org-featured-upgrade-event-badge">' + esc(meta.label) + '</span>'
+            : '') +
+          (disabled ? '<span class="org-featured-upgrade-event-meta">Spotlight full — try again later</span>' : '') +
+          '</span></label>'
+        );
+      })
+      .join('');
+
+    root.innerHTML =
+      featuredUpgradeSlotStatusHtml() +
+      '<ul class="org-featured-upgrade-features">' +
+      '<li>Featured in the Premium Spotlight carousel (max. 12 events at a time)</li>' +
+      '<li>Top placement in search and category results</li>' +
+      '<li>Featured badge on your listing card</li>' +
+      '</ul>' +
+      '<div class="org-featured-upgrade-plan">' +
+      '<span class="org-featured-upgrade-plan-label">How long to feature each event</span>' +
+      '<div class="org-featured-upgrade-plan-options">' +
+      planOptionsHtml +
+      '</div></div>' +
+      '<div class="org-featured-upgrade-events-head">' +
+      '<p class="org-featured-upgrade-events-title">Select events to upgrade</p>' +
+      '<button type="button" class="org-featured-upgrade-select-all" id="org-featured-upgrade-select-all">Select all</button>' +
+      '</div>' +
+      '<div class="org-featured-upgrade-events" id="org-featured-upgrade-events">' +
+      eventsHtml +
+      '</div>' +
+      '<p class="org-featured-upgrade-note" id="org-featured-upgrade-error" hidden role="alert"></p>' +
+      '<div class="org-featured-upgrade-actions">' +
+      '<button type="button" class="org-btn org-btn-gold" id="org-featured-upgrade-submit" disabled>Upgrade selected events</button>' +
+      '<p class="org-featured-upgrade-summary" id="org-featured-upgrade-summary">Select one or more live events to upgrade.</p>' +
+      '</div>';
+
+    bindFeaturedUpgradeUi(root);
+    updateFeaturedUpgradeSummary(root);
+  }
+
+  function ensureFeaturedUpgradePanelReady() {
+    if (featuredSpotlightSlots !== null) {
+      renderFeaturedUpgradePanel();
+      return Promise.resolve();
+    }
+    return loadFeaturedSpotlightSlots().then(function () {
+      renderFeaturedUpgradePanel();
+    });
+  }
+
   function bestGroupRanking() {
     const rankings = state.groupRankings || {};
     const entries = Object.keys(rankings)
@@ -3912,31 +4314,14 @@
   }
 
   function renderEventDrawerOverview(ev, drawerUi) {
-    const wrap = document.getElementById('org-event-drawer-stats');
     const cancelRow = document.getElementById('org-event-drawer-cancel');
     const progressStep = drawerUi && drawerUi.progressStep ? drawerUi.progressStep : null;
     renderEventDrawerProgress(progressStep);
 
-    if (!wrap) return;
     if (progressStep || !ev || !ev.id) {
-      wrap.hidden = true;
       if (cancelRow) cancelRow.hidden = true;
       return;
     }
-    const ticketsEl = document.getElementById('org-event-drawer-stat-tickets');
-    const revenueEl = document.getElementById('org-event-drawer-stat-revenue');
-    const statusEl = document.getElementById('org-event-drawer-stat-status');
-    if (ticketsEl) {
-      ticketsEl.textContent =
-        ev.ticketsSoldLabel || formatTicketsSoldLabel(ev.ticketsSold, ev.ticketsCapacity);
-    }
-    if (revenueEl) {
-      revenueEl.textContent = ev.revenueDisplay || formatGbpAmount(ev.revenueNum || 0);
-    }
-    if (statusEl) {
-      statusEl.textContent = ev.statusLabel || ev.statusKey || 'Draft';
-    }
-    wrap.hidden = false;
     if (cancelRow) {
       const canCancel = eventCanCancel(ev);
       cancelRow.hidden = !canCancel;
@@ -5719,6 +6104,7 @@
     }
     if (page === 'social') {
       renderOrganiserRankingShare();
+      ensureFeaturedUpgradePanelReady();
       requestAnimationFrame(function () {
         ensureLinkedInPostBuilder({ force: true });
         loadOpportunitiesList().then(function () {
@@ -9303,6 +9689,16 @@
         }
         showOrganiserAlert(
           'Your event is live. We created a social post draft in Promote & social.',
+          false
+        );
+      }
+      if (new URLSearchParams(window.location.search).get('featured') === 'cancelled') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('featured');
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+        setRoute('social');
+        showOrganiserAlert(
+          'Checkout was cancelled — your events stay live. You can upgrade any time from Promote & social.',
           false
         );
       }

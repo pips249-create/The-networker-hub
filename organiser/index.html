@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716back" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716feat" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -549,6 +549,17 @@
               Create ready-to-share event posts using your event photo, organiser logo and listing link, then download the image and copy the caption.
             </p>
           </header>
+
+          <section class="org-featured-upgrade" id="org-featured-upgrade" aria-labelledby="org-featured-upgrade-title">
+            <div class="org-featured-upgrade-card">
+              <p class="org-featured-upgrade-badge">Featured listing</p>
+              <h2 class="org-section-title" id="org-featured-upgrade-title">Upgrade your listing</h2>
+              <p class="org-section-sub org-featured-upgrade-lede">
+                Feature one or more live events in the Premium Spotlight carousel and top placement across the hub. Choose as many events as you like and how long to feature each one — only <strong>12 featured events</strong> appear in the carousel at any one time.
+              </p>
+              <div id="org-featured-upgrade-root" aria-live="polite"></div>
+            </div>
+          </section>
 
           <section class="org-ranking-panel org-ranking-panel--social" id="org-ranking-panel-events" hidden>
             <button
@@ -1719,20 +1730,6 @@
           </button>
           <h2 class="org-group-drawer-title" id="org-event-drawer-title">Edit event</h2>
           <div class="org-event-drawer-progress" id="org-event-drawer-progress" hidden></div>
-          <div class="org-event-drawer-stats org-stats org-stats--three" id="org-event-drawer-stats" hidden>
-            <div class="org-stat gold">
-              <div class="org-stat-label">Tickets sold</div>
-              <div class="org-stat-value" id="org-event-drawer-stat-tickets">0</div>
-            </div>
-            <div class="org-stat green">
-              <div class="org-stat-label">Revenue</div>
-              <div class="org-stat-value" id="org-event-drawer-stat-revenue">£0</div>
-            </div>
-            <div class="org-stat purple">
-              <div class="org-stat-label">Status</div>
-              <div class="org-stat-value org-stat-value--text" id="org-event-drawer-stat-status">Draft</div>
-            </div>
-          </div>
           <div class="org-event-drawer-cancel" id="org-event-drawer-cancel" hidden>
             <button type="button" class="org-btn org-btn-danger org-btn-sm" id="org-event-drawer-cancel-btn" data-cancel-event="">
               Cancel this event
@@ -1788,6 +1785,6 @@
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716back"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716feat"></script>
   </body>
 </html>

@@ -113,24 +113,31 @@ module.exports = async function handler(req, res) {
 
     const siteUrl = siteBaseUrl();
     const title = encodeURIComponent(event.title || '');
+    const returnTo = String(body.returnTo || body.return_to || '').trim().toLowerCase();
+    const fromDashboard = returnTo === 'social' || returnTo === 'dashboard';
+    const successBase =
+      siteUrl +
+      '/organiser/event-featured-success?session_id={CHECKOUT_SESSION_ID}&id=' +
+      encodeURIComponent(eventId) +
+      '&plan=' +
+      encodeURIComponent(planId) +
+      (title ? '&title=' + title : '');
+    const successUrl = fromDashboard ? successBase + '&return=social' : successBase;
+    const cancelUrl = fromDashboard
+      ? siteUrl + '/organiser/?featured=cancelled#social'
+      : siteUrl +
+        '/organiser/event-published?ids=' +
+        encodeURIComponent(eventId) +
+        (title ? '&title=' + title : '') +
+        '&featured=cancelled';
+
     const checkoutSession = await createEventFeaturedCheckoutSession({
       email: auth.session.email,
       eventId,
       planId,
       eventTitle: event.title,
-      successUrl:
-        siteUrl +
-        '/organiser/event-featured-success?session_id={CHECKOUT_SESSION_ID}&id=' +
-        encodeURIComponent(eventId) +
-        '&plan=' +
-        encodeURIComponent(planId) +
-        (title ? '&title=' + title : ''),
-      cancelUrl:
-        siteUrl +
-        '/organiser/event-published?ids=' +
-        encodeURIComponent(eventId) +
-        (title ? '&title=' + title : '') +
-        '&featured=cancelled',
+      successUrl,
+      cancelUrl,
     });
 
     return json(res, 200, {

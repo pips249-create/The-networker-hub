@@ -107,6 +107,12 @@
   function setShareUrls(title) {
     const urlInput = document.getElementById('ep-share-url');
     if (urlInput) urlInput.value = listingUrl;
+    syncOpenListingHref();
+  }
+
+  function syncOpenListingHref() {
+    const openListing = document.getElementById('ep-open-listing');
+    if (openListing && listingUrl) openListing.href = listingUrl;
   }
 
   function platformShareUrl(platform, title, caption) {
@@ -358,7 +364,7 @@
       }
       if (lead) {
         lead.textContent =
-          'Attendees can find it on the hub. Choose your next step below, preview your listing, then share it with your network.';
+          'Attendees can find it on the hub. Preview your listing and choose featured placement, then share it with your network.';
       }
     }
 
@@ -523,15 +529,15 @@
     return '1month';
   }
 
-  const nextStepsActions = document.getElementById('ep-next-steps-actions');
   const publishRow = document.querySelector('.ep-publish-row');
 
   function hideFeaturedUpsell() {
     if (featuredUpsell) featuredUpsell.hidden = true;
-    if (featuredYes) featuredYes.hidden = true;
-    if (featuredSkip) featuredSkip.hidden = true;
-    if (nextStepsActions) nextStepsActions.classList.add('ep-next-steps-actions--single');
     if (publishRow) publishRow.classList.add('ep-publish-row--preview-only');
+    const previewCard = document.getElementById('ep-preview-heading');
+    if (previewCard) {
+      previewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   if (extendFeatured && featuredHeading) {
@@ -643,6 +649,7 @@
 
   loadFeaturedSlotStatus();
 
+  syncOpenListingHref();
   setShareUrls(fallbackTitle);
   fetchPreview();
 })();
