@@ -714,7 +714,7 @@
       '<div class="org-post-field">' +
       '<span class="org-post-label">Category</span>' +
       categoryTabsHtml +
-      '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity listing to unlock opportunity captions. <a href="#business-list">List a listing →</a></p>' +
+      '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity to unlock opportunity captions. <a href="#business-list">List a business opportunity →</a></p>' +
       '</div>' +
       '<div class="org-post-field">' +
       '<span class="org-post-label">Caption</span>' +
