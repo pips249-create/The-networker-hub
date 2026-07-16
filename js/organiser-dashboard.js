@@ -6416,14 +6416,19 @@
       return groupMembershipPriority(b) - groupMembershipPriority(a);
     });
     if (!list.length) return '';
+    const best = list[0];
     const wanted = String(preferredId || '').trim();
     if (wanted) {
       const match = list.find(function (g) {
         return g.id === wanted;
       });
-      if (match) return match.id;
+      if (match) {
+        const matchActive = Number(match.rosterSummary && match.rosterSummary.active) || 0;
+        const bestActive = Number(best.rosterSummary && best.rosterSummary.active) || 0;
+        if (matchActive > 0 || bestActive === 0) return match.id;
+      }
     }
-    return list[0].id;
+    return best.id;
   }
 
   function fillMembershipsGroupFilter() {

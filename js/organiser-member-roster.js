@@ -12,14 +12,22 @@
   let page = 1;
   let controlsBound = false;
   let searchTimer = null;
+  let loadGeneration = 0;
+  let activeLoadPromise = null;
+  let activeLoadGroupId = '';
   const filters = { search: '', status: 'all' };
 
   function getOrganiserId() {
+    const passed = String(organiserId || '').trim();
     if (isDashboardEmbed) {
       const sel = document.getElementById('filter-memberships-group');
-      return String(sel && sel.value ? sel.value : '').trim();
+      if (sel && passed && sel.value !== passed) {
+        sel.value = passed;
+      }
+      const fromSelect = String(sel && sel.value ? sel.value : '').trim();
+      return fromSelect || passed;
     }
-    return organiserId;
+    return passed;
   }
 
   function requireOrganiserId() {
@@ -1090,32 +1098,38 @@
     }
   }
 
-  async function fetchRosterPage(pageNum) {
+  async function fetchRosterPage(pageNum, generation) {
     page = Math.max(Number(pageNum) || 1, 1);
     const hint = document.getElementById('omr-load-hint');
     if (hint) hint.hidden = false;
+    const gen = generation != null ? generation : loadGeneration;
     try {
       const data = await api(rosterUrl(rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE)));
+      if (gen !== loadGeneration) return;
       members = data.members || [];
       rosterTotal = Number(data.total) || members.length;
       rosterActiveTotal = Number(data.totalActive) || rosterTotal;
       renderRoster();
     } catch (err) {
+      if (gen !== loadGeneration) return;
       showAlert(err.message, 'error');
     } finally {
-      if (hint) hint.hidden = true;
+      if (gen === loadGeneration && hint) hint.hidden = true;
     }
   }
 
-  async function refresh() {
+  async function refresh(generation) {
     page = 1;
-    await fetchRosterPage(1);
+    const gen = generation != null ? generation : loadGeneration;
+    await fetchRosterPage(1, gen);
+    if (gen !== loadGeneration) return;
     const eventId = selectedEventId();
     try {
       await loadReports(eventId);
     } catch (err) {
       showAlert(err.message || 'Could not load member reports.', 'error');
     }
+    if (gen !== loadGeneration) return;
     renderRoster();
   }
 
@@ -1405,8 +1419,25 @@
   }
 
   async function loadForGroup(groupId) {
+    const id = String(groupId || '').trim();
+    if (activeLoadGroupId === id && activeLoadPromise) return activeLoadPromise;
+
+    const gen = ++loadGeneration;
+    activeLoadGroupId = id;
+    activeLoadPromise = loadForGroupInner(id, gen).finally(function () {
+      if (activeLoadGroupId === id) {
+        activeLoadPromise = null;
+      }
+    });
+    return activeLoadPromise;
+  }
+
+  async function loadForGroupInner(groupId, generation) {
     organiserId = String(groupId || '').trim();
-    if (!getOrganiserId()) {
+    const sel = document.getElementById('filter-memberships-group');
+    if (sel && organiserId) sel.value = organiserId;
+
+    if (!organiserId) {
       members = [];
       rosterTotal = 0;
       rosterActiveTotal = 0;
@@ -1425,7 +1456,8 @@
     page = 1;
 
     try {
-      const group = await api('/api/organiser/groups?id=' + encodeURIComponent(getOrganiserId()));
+      const group = await api('/api/organiser/groups?id=' + encodeURIComponent(organiserId));
+      if (generation !== loadGeneration) return;
       const title = document.getElementById('omr-title');
       if (title && group.group?.name) {
         title.textContent = 'Membership — ' + group.group.name;
@@ -1435,7 +1467,8 @@
     }
 
     await loadEvents();
-    await refresh();
+    if (generation !== loadGeneration) return;
+    await refresh(generation);
   }
 
   async function initStandalone() {
