@@ -547,6 +547,14 @@ body.networking-region-page[data-region="chester"] .events-hero-copy h1 .accent 
 .networking-location-links a[data-region="cambridge"] { --link-accent: #92400e; }
 .networking-location-links a[data-region="oxford"] { --link-accent: #1e3a8a; }
 
+body.opp-regional-landing .networking-region-intro {
+  margin: 0 0 20px;
+}
+
+body.opp-regional-landing .opp-hero-copy h1 .accent {
+  color: var(--opp-region-accent, inherit);
+}
+
 .networking-location-links a:hover,
 .networking-location-links a[aria-current="page"] {
   border-color: var(--link-accent, #7668ce);

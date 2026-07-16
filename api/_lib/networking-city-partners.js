@@ -1,5 +1,5 @@
 /**
- * City Partner placements on /networking/:region landing pages.
+ * City Partner placements on regional landing pages (/networking/:region and /opportunities/networking/:region).
  * Logo + CTA only — website placement, not included in hub emails.
  */
 const { NETWORKING_REGIONS } = require('./networking-regions');

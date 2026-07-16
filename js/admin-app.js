@@ -261,6 +261,10 @@
     return 'networking_city_partner_' + String(slug || '').trim();
   }
 
+  function cityPartnerPlacementPaths(slug) {
+    return '/networking/' + slug + ' and /opportunities/networking/' + slug;
+  }
+
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
   var CMS_AD_SLOTS = [
     {
@@ -379,7 +383,7 @@
         group: 'City pages',
         label: 'City Partner — ' + (region ? region.name : slug),
         preview: 'city_partner',
-        help: 'Logo + CTA on /networking/' + slug + ' — website only, not in emails.',
+        help: 'Logo + link on ' + cityPartnerPlacementPaths(slug) + ' — website only, not in emails.',
         tagline: '',
         ctaLabel: 'Find out more',
         ctaUrl: 'https://',
@@ -623,7 +627,7 @@
       } else if (fullHash === 'sponsorship/city-partners') {
         title = 'City Partner placements';
         subtitle =
-          'Logo + CTA on /networking/:city pages — website only, not included in hub emails.';
+          'Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in hub emails.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
         title = 'Event & organiser pages — Sponsor carousel (3 ads)';
         subtitle =
@@ -5064,7 +5068,7 @@
       '<span class="admin-ad-picker-status" id="city-partners-picker-status">…</span>' +
       '</div>' +
       '<p class="admin-ad-picker-label">City Partner placements</p>' +
-      '<p class="admin-ad-picker-help">Logo + CTA on /networking/:city intro blocks — website only, not in emails.</p>' +
+      '<p class="admin-ad-picker-help">Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in emails.</p>' +
       '<span class="admin-ad-picker-action">Manage cities →</span>' +
       '</a></div></section>' +
       '<section class="admin-ad-picker-group">' +
@@ -5240,6 +5244,8 @@
         '</p>' +
         '<p class="admin-ad-picker-help">/networking/' +
         esc(region.slug) +
+        ' · /opportunities/networking/' +
+        esc(region.slug) +
         '</p>' +
         '<span class="admin-ad-picker-action">Edit placement →</span>' +
         '</a>'
@@ -5251,7 +5257,7 @@
       sponsorshipBackLinkHtml() +
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">City Partner placements</h3>' +
-      '<p class="text-sm text-slate-600">Logo + CTA on regional landing pages. Website only — never included in hub emails. When a city is live, the organiser CTA moves to a text link under the intro copy.</p>' +
+      '<p class="text-sm text-slate-600">Logo + link on regional landing pages (/networking/:city and /opportunities/networking/:city). Website only — never included in hub emails. When a city is live, the organiser/provider CTA stays as a text link under the intro copy.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +
@@ -5329,10 +5335,17 @@
       if (active) active.checked = true;
       if (includeInEmails) includeInEmails.checked = true;
       if (previewHint) {
-        previewHint.textContent =
-          d.preview === 'compact'
-            ? 'Logo centred above the button, as on event and organiser detail pages.'
-            : 'Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.';
+        if (d.preview === 'city_partner') {
+          previewHint.textContent =
+            'Logo + link — matches the City Partner block on ' +
+            cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
+            ' (not included in emails).';
+        } else {
+          previewHint.textContent =
+            d.preview === 'compact'
+              ? 'Logo centred above the button, as on event and organiser detail pages.'
+              : 'Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.';
+        }
       }
       sponsorLogoBase64 = null;
       sponsorLogoMime = '';
@@ -5368,11 +5381,11 @@
       '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, wide format recommended)</label>' +
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
       '<div class="grid sm:grid-cols-2 gap-4">' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
+      '<div><label id="sponsor-cta-label-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaLabel) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color-hex">CTA button colour (Hex)</label>' +
+      '<div id="sponsor-cta-color-wrap"><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color-hex">CTA button colour (Hex)</label>' +
       '<div class="flex items-center gap-2">' +
       '<span id="sponsor-cta-color-swatch" class="h-10 w-14 shrink-0 rounded border border-slate-200" style="background:' +
       esc(slotDefaults().ctaColor || defaultSponsorCtaColor()) +
@@ -5437,6 +5450,8 @@
       var slot = slotDefaults();
       var heroFields = document.getElementById('sponsor-hero-fields');
       var ctaUrlLabel = document.getElementById('sponsor-cta-url-label');
+      var ctaLabelLabel = document.getElementById('sponsor-cta-label-label');
+      var ctaColorWrap = document.getElementById('sponsor-cta-color-wrap');
       var previewHint = document.getElementById('sponsor-preview-hint');
       var includeWrap = document.getElementById('sponsor-include-emails-wrap');
       var emailScope = document.getElementById('sponsor-email-scope');
@@ -5451,6 +5466,11 @@
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
       if (heroFields) heroFields.hidden = slot.preview === 'compact' || slot.preview === 'city_partner';
+      if (ctaColorWrap) ctaColorWrap.hidden = slot.preview === 'city_partner';
+      if (ctaLabelLabel) {
+        ctaLabelLabel.textContent =
+          slot.preview === 'city_partner' ? 'Link label (shown under logo)' : 'CTA button label';
+      }
       if (ctaUrlLabel) {
         ctaUrlLabel.textContent =
           slot.preview === 'compact' || slot.preview === 'city_partner'
@@ -5460,8 +5480,8 @@
       if (previewHint) {
         if (slot.preview === 'city_partner') {
           previewHint.textContent =
-            'Logo + CTA only — matches the City Partner block on /networking/' +
-            cityPartnerSlugFromSlot(currentSlotKey) +
+            'Logo + link — matches the City Partner block on ' +
+            cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
             ' (not included in emails).';
         } else {
           previewHint.textContent =
@@ -5472,11 +5492,42 @@
       }
     }
 
+    function renderCityPartnerPreview(el, creative, inactive) {
+      if (!el) return;
+      var block = {
+        active: true,
+        logo_url: creative.logoUrl,
+        cta_label: creative.ctaLabel,
+        cta_url: creative.ctaUrl,
+        cta_color: creative.ctaColor,
+        company_name: creative.companyName,
+      };
+      var inactiveNote = inactive
+        ? '<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">Inactive — hidden on site until <strong>Ad active</strong> is checked.</p>'
+        : '';
+      el.innerHTML =
+        inactiveNote +
+        '<div class="networking-region-city-partner admin-city-partner-preview" id="admin-city-partner-preview-shell" style="--region-accent:' +
+        esc(creative.ctaColor || '#7668ce') +
+        ';--region-accent-border:rgba(118,104,206,0.35)"></div>';
+      var shell = document.getElementById('admin-city-partner-preview-shell');
+      if (!shell || !window.CmsAdBlocks) return;
+      if (window.CmsAdBlocks.renderCityPartnerAd(shell, block)) return;
+      if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+        window.CmsAdBlocks.renderCityPartnerPlaceholder(shell);
+      }
+    }
+
     function renderPreview() {
       var creative = readForm();
       var el = document.getElementById('sponsor-preview');
       var slot = slotDefaults();
       if (!el) return;
+
+      if (slot.preview === 'city_partner') {
+        renderCityPartnerPreview(el, creative, !creative.active);
+        return;
+      }
 
       if (!creative.active) {
         el.innerHTML =
@@ -5637,7 +5688,15 @@
       }
       if (
         creative.active &&
-        (slot.preview === 'compact' || slot.preview === 'city_partner') &&
+        slot.preview === 'city_partner' &&
+        !creative.logoUrl
+      ) {
+        setSponsorStatus('Upload or paste a logo before publishing an active city partner ad.', 'error');
+        return;
+      }
+      if (
+        creative.active &&
+        slot.preview === 'compact' &&
         !creative.logoUrl
       ) {
         setSponsorStatus('Upload or paste a logo before publishing an active sidebar ad.', 'error');

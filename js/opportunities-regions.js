@@ -1,6 +1,7 @@
 /**
  * City landing pages for business opportunities — /opportunities/networking/:region
  * (rewrites to /opportunities/?city=:region). Mirrors js/networking-regions.js slugs.
+ * City Partner ads reuse the same CMS slots as event city pages (networking_city_partner_*).
  */
 (function () {
   var REGIONS = {
@@ -55,6 +56,10 @@
 
   document.body.classList.add('opp-regional-landing');
   document.body.setAttribute('data-opp-region', slug);
+  document.body.setAttribute('data-region', slug);
+  if (theme.accent) {
+    document.body.style.setProperty('--opp-region-accent', theme.accent);
+  }
 
   function setText(id, text) {
     var el = document.getElementById(id);
@@ -73,6 +78,33 @@
       region.name +
       '. Browse free and enquire directly with providers.'
   );
+
+  var intro = document.getElementById('networking-region-intro');
+  if (intro) {
+    intro.hidden = false;
+    intro.setAttribute('data-region', slug);
+  }
+
+  var introHeading = document.getElementById('networking-region-intro-heading');
+  if (introHeading) {
+    introHeading.innerHTML =
+      'Business opportunities in <span class="networking-region-name-accent"></span>';
+    var nameAccent = introHeading.querySelector('.networking-region-name-accent');
+    if (nameAccent) nameAccent.textContent = region.name;
+  }
+
+  var introCopy = theme.tagline
+    ? theme.tagline + ' Browse live listings and enquire directly with providers.'
+    : 'Browse franchises, side hustles, and partnerships across ' + region.name + '.';
+  setText('networking-region-intro-copy', introCopy);
+
+  var landmark = document.getElementById('networking-region-skyline');
+  if (landmark) {
+    landmark.className = 'networking-region-landmark';
+    landmark.style.removeProperty('--skyline-image');
+    landmark.innerHTML = theme.landmark || '';
+    landmark.hidden = !theme.landmark;
+  }
 
   var directory = document.getElementById('networking-location-directory');
   if (directory) {
@@ -99,5 +131,30 @@
       var more = document.getElementById('networking-location-more');
       if (more) more.open = true;
     }
+  }
+
+  var providerLink = document.getElementById('networking-region-provider-link');
+  if (providerLink) providerLink.hidden = false;
+
+  var partnerShell = document.getElementById('networking-region-city-partner');
+  if (partnerShell && window.CmsAdBlocks) {
+    if (
+      !partnerShell.querySelector('.networking-city-partner-ad') &&
+      window.CmsAdBlocks.renderCityPartnerPlaceholder
+    ) {
+      window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+    }
+    window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug)
+      .then(function (block) {
+        if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) return;
+        if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+          window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+        }
+      })
+      .catch(function () {
+        if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+          window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+        }
+      });
   }
 })();
