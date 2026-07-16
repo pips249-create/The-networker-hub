@@ -8,7 +8,7 @@ Square PDFs for LinkedIn document posts, carousels, or DMs. All hosted at `/asse
 |-----|----------|----------------|
 | **`attendee-benefits-linkedin.pdf`** | Attendees | Why browse here: events, organisers, Business Opps in one place |
 | **`business-opps-explainer-linkedin.pdf`** | Entrepreneurs / browsers | **What is the Business Opps page?** Types, filters, browse free |
-| **`organiser-benefits-linkedin.pdf`** | Organisers | Why switch: pricing, discovery, dashboard, networking tools |
+| **`organiser-benefits-linkedin.pdf`** | Organisers | Why switch: pricing, discovery, dashboard, memberships, networking tools |
 | **`list-business-opportunity-linkedin.pdf`** | Providers | How to list an opportunity: steps and pricing |
 | `list-business-opportunity-guide.pdf` | Providers | A4 printable: full how-to-list guide |
 
@@ -46,7 +46,7 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 **Intro text**
 > Still running your networking group on a generic ticketing platform?
 >
-> The Networker Hub is built for UK networking organisers: **free to list**, you **keep 100% of the ticket price**, members discover you in our events and organiser directory, and you get tools other platforms don't offer: guest visits, visit tracking, Category Exclusivity, and Previous Attendees. Plus list business opportunities in the same dashboard.
+> The Networker Hub is built for UK networking organisers: **free to list**, you **keep 100% of the ticket price**, members discover you in our events and organiser directory, and you get tools other platforms don't offer: guest visits, visit tracking, Category Exclusivity, Previous Attendees, and **memberships** — upload your member list, sell Members only tickets without access codes, and track renewals with reports and booking reminders. Plus list business opportunities in the same dashboard.
 
 **Headline:** Ticketing built for networking groups  
 **CTA:** Learn more  
