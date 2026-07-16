@@ -31,8 +31,13 @@
     { "source": "/admin/index.html", "destination": "/admin/", "permanent": true },
     { "source": "/advertising.html", "destination": "/advertising", "permanent": true },
     { "source": "/p-tnh-ev-hub-k7m2.html", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },
-    { "source": "/p-tnh-org-onboard-x4n7.html", "destination": "/p/tnh-org-onboard-x4n7", "permanent": true },
-    { "source": "/p-tnh-bmu-onboard-k7m2.html", "destination": "/p/tnh-bmu-onboard-k7m2", "permanent": true },
+    { "source": "/p/tnh-ev-hub-k7m2", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },
+    { "source": "/p-tnh-org-onboard-x4n7.html", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
+    { "source": "/p/tnh-org-onboard-x4n7", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
+    { "source": "/p-tnh-bmu-onboard-k7m2.html", "destination": "/p-tnh-bmu-onboard-k7m2", "permanent": true },
+    { "source": "/p/tnh-bmu-onboard-k7m2", "destination": "/p-tnh-bmu-onboard-k7m2", "permanent": true },
+    { "source": "/p-tnh-wibn-onboard-w9m3.html", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
+    { "source": "/p/tnh-wibn-onboard-w9m3", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
     { "source": "/faq.html", "destination": "/faq", "permanent": true },
     { "source": "/about.html", "destination": "/about", "permanent": true },
     { "source": "/contact.html", "destination": "/contact", "permanent": true },
@@ -195,14 +200,6 @@
       "destination": "/advertising.html"
     },
     {
-      "source": "/p/tnh-org-onboard-x4n7",
-      "destination": "/p-tnh-org-onboard-x4n7.html"
-    },
-    {
-      "source": "/p/tnh-bmu-onboard-k7m2",
-      "destination": "/p-tnh-bmu-onboard-k7m2.html"
-    },
-    {
       "source": "/p-tnh-embed-events-k1",
       "destination": "/p-tnh-embed-events-k1.html"
     },
@@ -213,6 +210,22 @@
     {
       "source": "/p-tnh-embed-dash-k3",
       "destination": "/p-tnh-embed-dash-k3.html"
+    },
+    {
+      "source": "/p-tnh-wibn-onboard-w9m3",
+      "destination": "/p-tnh-wibn-onboard-w9m3.html"
+    },
+    {
+      "source": "/p-tnh-bmu-onboard-k7m2",
+      "destination": "/p-tnh-bmu-onboard-k7m2.html"
+    },
+    {
+      "source": "/p-tnh-org-onboard-x4n7",
+      "destination": "/p-tnh-org-onboard-x4n7.html"
+    },
+    {
+      "source": "/p-tnh-ev-hub-k7m2",
+      "destination": "/p-tnh-ev-hub-k7m2.html"
     },
     {
       "source": "/help/organiser-payouts",

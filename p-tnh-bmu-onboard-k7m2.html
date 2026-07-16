@@ -8,14 +8,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260716bmu2">
-<link rel="stylesheet" href="/css/organiser-onboarding-pitch.css?v=20260716bmu3">
+<link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260716bmu4">
+<link rel="stylesheet" href="/css/organiser-onboarding-pitch.css?v=20260716bmu5">
+<link rel="stylesheet" href="/css/for-organisers-page.css?v=20260716bmu4">
 <link rel="icon" href="/assets/hubert-icon.png" type="image/png">
 </head>
 <body class="sponsor-pitch-page org-pitch-page">
 
 <div class="sponsor-pitch-banner" aria-hidden="false">
-  <span><strong>BMU pitch</strong> — <code>/p/tnh-bmu-onboard-k7m2</code></span>
+  <span><strong>BMU pitch</strong> — <code>/p-tnh-bmu-onboard-k7m2</code></span>
   <div class="org-pitch-banner-actions">
     <button type="button" id="org-pitch-present-open">Present</button>
     <span><a href="https://business-matching.co.uk/" target="_blank" rel="noopener">business-matching.co.uk</a></span>
@@ -130,19 +131,91 @@
 
       <div class="org-pitch-site-frame-wrap" data-site-panel-view="events">
         <div class="org-pitch-site-chrome"><span></span><span></span><span></span><code>/events/</code></div>
-        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-events-k1" title="Events directory preview" loading="lazy"></iframe>
+        <div class="org-pitch-site-inline">
+          <div class="pitch-embed-events">
+            <div class="pitch-embed-events-hero">
+              <p class="pitch-embed-kicker">Event discovery</p>
+              <h3>Find your next <span>business event</span> across the UK</h3>
+              <div class="pitch-embed-tabs"><span class="is-on">Events</span><span>Organisers</span></div>
+            </div>
+            <div class="pitch-embed-filter">
+              <div class="pitch-embed-search">Business Matching Leeds</div>
+              <div class="pitch-embed-chips"><span class="is-on">Near Leeds · 25 mi</span><span class="is-on">In person</span><span>Hybrid</span></div>
+            </div>
+            <div class="pitch-embed-list">
+              <article class="pitch-embed-card is-highlight">
+                <div class="pitch-embed-card-logo"><img src="/assets/marketing/bmu-logo.png" alt="" onerror="this.onerror=null;this.src='https://business-matching.co.uk/img/logo.png';"></div>
+                <div><strong>Business Matching UK · Leeds hybrid meeting</strong><span>Thu 24 Jul · Guest visit · Max 100 members</span></div>
+                <em>Register</em>
+              </article>
+              <article class="pitch-embed-card">
+                <div class="pitch-embed-card-icon">🤝</div>
+                <div><strong>Friday breakfast networking</strong><span>Manchester · Tue 22 Jul</span></div>
+                <em>from £15</em>
+              </article>
+            </div>
+          </div>
+        </div>
         <p class="org-pitch-site-caption">Members browse free · filter by city · book or register interest · <a href="/events/" target="_blank" rel="noopener">Open live →</a></p>
       </div>
 
       <div class="org-pitch-site-frame-wrap" data-site-panel-view="organiser" hidden>
         <div class="org-pitch-site-chrome"><span></span><span></span><span></span><code>/organisers/business-matching-manchester</code></div>
-        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-org-k2" title="Organiser page preview" loading="lazy"></iframe>
+        <div class="org-pitch-site-inline">
+          <article class="pitch-embed-org">
+            <div class="pitch-embed-org-head">
+              <div class="pitch-embed-org-logo"><img src="/assets/marketing/bmu-logo.png" alt="Business Matching UK" onerror="this.onerror=null;this.src='https://business-matching.co.uk/img/logo.png';"></div>
+              <div>
+                <h3>Business Matching UK · Manchester</h3>
+                <p>Guaranteed business opportunities · max 100 members · one specialist per occupation.</p>
+                <div class="pitch-embed-org-meta"><span>★ 4.9</span><span>87 members</span><span>Leeds · Manchester</span></div>
+              </div>
+            </div>
+            <div class="pitch-embed-org-events">
+              <div><strong>Tri-weekly hybrid · Week A</strong><span>Thu 17 Jul · Zoom</span></div>
+              <div><strong>Face-to-face · Week B</strong><span>Thu 24 Jul · Guest visit</span></div>
+              <div><strong>Marketing occupation</strong><span>Category Exclusivity · 1 slot open</span></div>
+            </div>
+          </article>
+        </div>
         <p class="org-pitch-site-caption">One page per city group · logo, reviews, every meeting · <a href="/events/?mode=organisers" target="_blank" rel="noopener">Browse organisers →</a></p>
       </div>
 
       <div class="org-pitch-site-frame-wrap" data-site-panel-view="dashboard" hidden>
         <div class="org-pitch-site-chrome"><span></span><span></span><span></span><code>/organiser/</code></div>
-        <iframe class="org-pitch-site-frame" src="/p-tnh-embed-dash-k3" title="Organiser dashboard preview" loading="lazy"></iframe>
+        <div class="org-pitch-site-inline org-pitch-site-inline--dash">
+          <div class="fo-dash-mock" aria-label="Organiser workspace preview">
+            <div class="fo-dash-mock-bar">
+              <div class="fo-dash-mock-dots"><span></span><span></span><span></span></div>
+              <span>Business Matching UK · Manchester · Organiser workspace</span>
+            </div>
+            <div class="fo-dash-mock-body">
+              <nav class="fo-dash-mock-nav">
+                <button type="button" class="fo-dash-mock-nav-item">Overview</button>
+                <button type="button" class="fo-dash-mock-nav-item">My events</button>
+                <button type="button" class="fo-dash-mock-nav-item">Attendees</button>
+                <button type="button" class="fo-dash-mock-nav-item is-active">Applications</button>
+                <button type="button" class="fo-dash-mock-nav-item">Member list</button>
+              </nav>
+              <div class="fo-dash-mock-main">
+                <div class="fo-dash-mock-panel is-active">
+                  <p class="fo-dash-mock-title">Category Exclusivity · open occupations</p>
+                  <p class="fo-dash-mock-sub">87 / 100 members · Marketing slot open</p>
+                  <div class="fo-dash-mock-stats">
+                    <div class="fo-dash-mock-stat"><b>4</b><small>Pending</small></div>
+                    <div class="fo-dash-mock-stat"><b>82</b><small>Approved</small></div>
+                    <div class="fo-dash-mock-stat"><b>12</b><small>Guest visits</small></div>
+                  </div>
+                  <ul class="fo-dash-mock-list">
+                    <li><strong>Marketing · Agency owner</strong><span>Pending · approve &amp; send payment link</span></li>
+                    <li><strong>Finance · Accountant</strong><span>Declined · slot filled</span></li>
+                    <li><strong>HR · Consultant</strong><span>Approved · awaiting payment</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <p class="org-pitch-site-caption">Approve occupations · track guest visits · member register · <a href="/for-organisers" target="_blank" rel="noopener">Organiser overview →</a></p>
       </div>
     </div>
@@ -342,6 +415,6 @@
   <div class="org-pitch-present-dots" id="org-pitch-present-dots" aria-hidden="true"></div>
 </div>
 
-<script src="/js/organiser-onboarding-pitch.js?v=20260716bmu3"></script>
+<script src="/js/organiser-onboarding-pitch.js?v=20260716bmu5"></script>
 </body>
 </html>

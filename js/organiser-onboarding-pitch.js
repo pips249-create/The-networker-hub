@@ -90,11 +90,13 @@
       idx = 0;
       renderSlide();
       overlay.classList.add('is-open');
+      overlay.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
     }
 
     function closePresent() {
       overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
 
@@ -110,6 +112,15 @@
 
     openBtn.addEventListener('click', openPresent);
     if (closeBtn) closeBtn.addEventListener('click', closePresent);
+
+    if (dotsWrap) {
+      dotsWrap.addEventListener('click', function (e) {
+        var dot = e.target.closest('[data-slide-dot]');
+        if (!dot) return;
+        idx = parseInt(dot.getAttribute('data-slide-dot'), 10) || 0;
+        renderSlide();
+      });
+    }
 
     document.addEventListener('keydown', function (e) {
       if (!overlay.classList.contains('is-open')) return;
@@ -164,9 +175,40 @@ function bindForecastTabs() {
   var table = document.getElementById('pitch-forecast-table');
   if (!wrap || !table) return;
 
-  var isBmu = document.body.classList.contains('org-pitch-page');
+  var isWibn = document.body.classList.contains('org-pitch-page--wibn');
+  var isBmu = document.body.classList.contains('org-pitch-page') && !isWibn;
 
-  var scenarios = isBmu
+  var scenarios = isWibn
+    ? {
+        launch: {
+          label: 'Launch · months 1–3 post Sep 2026',
+          rows: [
+            ['Events directory views', '2k – 5k / mo', 'UK-wide browse · map · filters'],
+            ['Organiser profile views', '400 – 1.2k / mo', 'Chapters discovered via directory'],
+            ['Discovery-led bookings', '50 – 180 / mo', 'Guest visits & open checkout'],
+            ['WIBN pilot chapters (est.)', '150 – 400 / mo', 'Profile views · 5–10 live groups'],
+          ],
+        },
+        growth: {
+          label: 'Growth · months 4–12',
+          rows: [
+            ['Events directory views', '8k – 18k / mo', 'Primary UK networking discovery page'],
+            ['Organiser profile views', '2k – 5k / mo', 'Organiser tab + SEO landing pages'],
+            ['Discovery-led bookings', '400 – 1.2k / mo', 'Compounds as chapters list here'],
+            ['WIBN per chapter (est.)', '80 – 200 / mo', '30–50 listed · local + online funnel'],
+          ],
+        },
+        scale: {
+          label: 'Scale · year 2+',
+          rows: [
+            ['Events directory views', '20k – 45k / mo', 'Directory + regional SEO pages'],
+            ['Organiser profile views', '6k – 15k / mo', '~100-chapter organiser network potential'],
+            ['Discovery-led bookings', '1.5k – 4k / mo', 'Saved events · ticket alerts · re-engagement'],
+            ['WIBN national footprint (est.)', '4k – 12k / mo', 'Profile views across all chapters'],
+          ],
+        },
+      }
+    : isBmu
     ? {
         launch: {
           label: 'Launch · months 1–3 post Sep 2026',
