@@ -11,6 +11,7 @@
   let eventsGroupingPromise = null;
   let bootstrapReady = false;
   let membershipsRosterLoadedFor = '';
+  let membershipsRosterLoadedFor = '';
   let attendeesLoadingPromise = null;
   let teamLoadingPromise = null;
   let eventsLoadingPromise = null;
@@ -6390,6 +6391,23 @@
     return false;
   }
 
+  function membershipsRosterAppearsPainted() {
+    if (
+      window.OrganiserMemberRoster &&
+      typeof window.OrganiserMemberRoster.appearsPainted === 'function'
+    ) {
+      return window.OrganiserMemberRoster.appearsPainted();
+    }
+    const tbody = document.getElementById('omr-body');
+    const empty = document.getElementById('omr-empty');
+    return Boolean(tbody && (tbody.children.length > 0 || (empty && !empty.hidden)));
+  }
+
+  function membershipsRosterLoading() {
+    const hint = document.getElementById('omr-load-hint');
+    return Boolean(hint && !hint.hidden);
+  }
+
   function membershipSummaryLine(g) {
     const summary = g && g.rosterSummary ? g.rosterSummary : null;
     if (!summary || !summary.active) {
@@ -6572,17 +6590,27 @@
     }
 
     const groupId = filters.membershipsGroup;
-    if (
+    const needsRosterLoad =
       window.OrganiserMemberRoster &&
       typeof window.OrganiserMemberRoster.loadForGroup === 'function' &&
       groupId &&
-      groupId !== membershipsRosterLoadedFor
-    ) {
+      (groupId !== membershipsRosterLoadedFor ||
+        (!membershipsRosterAppearsPainted() && !membershipsRosterLoading()));
+    if (needsRosterLoad) {
       membershipsRosterLoadedFor = groupId;
-      window.OrganiserMemberRoster.loadForGroup(groupId).catch(function (err) {
-        membershipsRosterLoadedFor = '';
-        showOrganiserAlert(err.message || 'Could not load membership', true);
-      });
+      window.OrganiserMemberRoster.loadForGroup(groupId)
+        .then(function () {
+          if (
+            groupId === filters.membershipsGroup &&
+            !membershipsRosterAppearsPainted()
+          ) {
+            membershipsRosterLoadedFor = '';
+          }
+        })
+        .catch(function (err) {
+          membershipsRosterLoadedFor = '';
+          showOrganiserAlert(err.message || 'Could not load membership', true);
+        });
     }
   }
 

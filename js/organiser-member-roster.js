@@ -150,6 +150,24 @@
     }
   }
 
+  function bookingChipTitle(title) {
+    const label = String(title || 'Event');
+    return label.slice(0, 26) + (label.length > 26 ? '…' : '');
+  }
+
+  function rosterAppearsPainted() {
+    const body = document.getElementById('omr-body');
+    const empty = document.getElementById('omr-empty');
+    return Boolean(body && (body.children.length > 0 || (empty && !empty.hidden)));
+  }
+
+  async function ensureRosterPainted(groupId) {
+    if (getOrganiserId() !== groupId) return;
+    if (rosterAppearsPainted()) return;
+    await fetchRosterPage(page || 1);
+    if (getOrganiserId() === groupId && !rosterAppearsPainted()) renderRoster();
+  }
+
   function renderBookingsCell(m) {
     const bookings = memberBookings(m);
     const eventId = selectedEventId();
@@ -176,9 +194,9 @@
             const date = formatShortEventDate(b.startsAt);
             return (
               '<span class="omr-booking-chip omr-booking-chip-upcoming" title="' +
-              esc(b.title + (date ? ' · ' + date : '')) +
+              esc((b.title || 'Event') + (date ? ' · ' + date : '')) +
               '">' +
-              esc(b.title.slice(0, 24) + (b.title.length > 24 ? '…' : '')) +
+              esc(bookingChipTitle(b.title)) +
               '</span>'
             );
           })
@@ -206,9 +224,9 @@
         const date = formatShortEventDate(b.startsAt);
         return (
           '<span class="omr-booking-chip omr-booking-chip-upcoming" title="' +
-          esc(b.title + (date ? ' · ' + date : '')) +
+          esc((b.title || 'Event') + (date ? ' · ' + date : '')) +
           '">' +
-          esc(b.title.slice(0, 26) + (b.title.length > 26 ? '…' : '')) +
+          esc(bookingChipTitle(b.title)) +
           '</span>'
         );
       })
@@ -807,80 +825,91 @@
     const empty = document.getElementById('omr-empty');
     const count = document.getElementById('omr-count');
     if (!body) return;
-    closeAllActionMenus();
-    body.innerHTML = '';
+    try {
+      closeAllActionMenus();
+      body.innerHTML = '';
 
-    const totalActive = rosterActiveTotal;
-    syncAddPanel(totalActive);
-    syncBulkResend(totalActive);
+      const totalActive = rosterActiveTotal;
+      syncAddPanel(totalActive);
+      syncBulkResend(totalActive);
 
-    const rows = members;
-    if (count) {
-      count.hidden = totalActive === 0 && rosterTotal === 0;
-      count.textContent =
-        rosterTotal === totalActive
-          ? totalActive + (totalActive === 1 ? ' member on this register' : ' members on this register')
-          : rosterTotal + ' of ' + totalActive + ' members shown';
-    }
+      const rows = members;
+      if (count) {
+        count.hidden = totalActive === 0 && rosterTotal === 0;
+        count.textContent =
+          rosterTotal === totalActive
+            ? totalActive + (totalActive === 1 ? ' member on this register' : ' members on this register')
+            : rosterTotal + ' of ' + totalActive + ' members shown';
+      }
 
-    if (!rows.length) {
+      if (!rows.length) {
+        if (empty) {
+          empty.hidden = false;
+          const title = empty.querySelector('.org-empty-state-title');
+          const text = empty.querySelector('.org-empty-state-text');
+          if (totalActive > 0 && title && text) {
+            title.textContent = 'No members match these filters';
+            text.textContent = 'Try a different search or filter, or clear the event filter.';
+          } else if (title && text) {
+            title.textContent = 'No members yet';
+            text.textContent =
+              'Add someone above or import a spreadsheet to start your membership register.';
+          }
+        }
+        renderPagination(rosterTotal);
+        return;
+      }
+      if (empty) empty.hidden = true;
+
+      renderPagination(rosterTotal);
+
+      rows.forEach(function (m) {
+        const tr = document.createElement('tr');
+        const hub = isClaimed(m)
+          ? '<span class="omr-badge-claimed">Signed up</span>'
+          : '<span class="omr-badge-pending">Not yet</span>';
+        const invite = isClaimed(m)
+          ? '—'
+          : m.inviteSentAt
+            ? '<span class="omr-badge-claimed">Sent</span>'
+            : '<span class="omr-badge-pending">Not sent</span>';
+        const exp = m.expiresAt
+          ? m.expiringSoon
+            ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
+            : esc(m.expiresAt)
+          : '—';
+        tr.innerHTML =
+          '<td class="omr-name-cell" data-id="' +
+          esc(m.id) +
+          '"><span class="omr-member-name">' +
+          esc(m.name || '—') +
+          '</span></td><td>' +
+          esc(m.email) +
+          '</td><td class="omr-expires-cell" data-id="' +
+          esc(m.id) +
+          '">' +
+          exp +
+          '</td><td>' +
+          hub +
+          '</td><td>' +
+          invite +
+          '</td><td class="omr-bookings-col">' +
+          renderBookingsCell(m) +
+          '</td><td class="org-td-actions omr-actions">' +
+          memberActionsHtml(m) +
+          '</td>';
+        body.appendChild(tr);
+      });
+    } catch (err) {
       if (empty) {
         empty.hidden = false;
         const title = empty.querySelector('.org-empty-state-title');
         const text = empty.querySelector('.org-empty-state-text');
-        if (totalActive > 0 && title && text) {
-          title.textContent = 'No members match these filters';
-          text.textContent = 'Try a different search or filter, or clear the event filter.';
-        } else if (title && text) {
-          title.textContent = 'No members yet';
-          text.textContent =
-            'Add someone above or import a spreadsheet to start your membership register.';
-        }
+        if (title) title.textContent = 'Could not show members';
+        if (text) text.textContent = err.message || 'Something went wrong loading the register.';
       }
-      renderPagination(rosterTotal);
-      return;
+      showAlert(err.message || 'Could not show members on the register.', 'error');
     }
-    if (empty) empty.hidden = true;
-
-    renderPagination(rosterTotal);
-
-    rows.forEach(function (m) {
-      const tr = document.createElement('tr');
-      const hub = isClaimed(m)
-        ? '<span class="omr-badge-claimed">Signed up</span>'
-        : '<span class="omr-badge-pending">Not yet</span>';
-      const invite = isClaimed(m)
-        ? '—'
-        : m.inviteSentAt
-          ? '<span class="omr-badge-claimed">Sent</span>'
-          : '<span class="omr-badge-pending">Not sent</span>';
-      const exp = m.expiresAt
-        ? m.expiringSoon
-          ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
-          : esc(m.expiresAt)
-        : '—';
-      tr.innerHTML =
-        '<td class="omr-name-cell" data-id="' +
-        esc(m.id) +
-        '"><span class="omr-member-name">' +
-        esc(m.name || '—') +
-        '</span></td><td>' +
-        esc(m.email) +
-        '</td><td class="omr-expires-cell" data-id="' +
-        esc(m.id) +
-        '">' +
-        exp +
-        '</td><td>' +
-        hub +
-        '</td><td>' +
-        invite +
-        '</td><td class="omr-bookings-col">' +
-        renderBookingsCell(m) +
-        '</td><td class="org-td-actions omr-actions">' +
-        memberActionsHtml(m) +
-        '</td>';
-      body.appendChild(tr);
-    });
   }
 
   function bindMemberActionHandlers() {
@@ -1462,6 +1491,7 @@
       await refresh();
     })().finally(function () {
       if (activeLoadGroupId === id) activeLoadPromise = null;
+      ensureRosterPainted(id);
     });
     return activeLoadPromise;
   }
@@ -1476,6 +1506,7 @@
 
   window.OrganiserMemberRoster = {
     loadForGroup: loadForGroup,
+    appearsPainted: rosterAppearsPainted,
   };
 
   if (isStandalonePage) {
