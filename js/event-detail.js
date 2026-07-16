@@ -675,6 +675,11 @@
   function normalizeEventFlags(ev, params) {
     const p = params || new URLSearchParams(window.location.search);
     const approvalFromTickets = (ev.tickets || []).some(tierIsApplication);
+    const past =
+      parseBoolFlag(ev.isEventPast) ||
+      (window.HubEventTimezone && typeof window.HubEventTimezone.isEventPast === 'function'
+        ? window.HubEventTimezone.isEventPast(ev)
+        : false);
     return {
       ...ev,
       isApprovalRequired:
@@ -683,8 +688,12 @@
         p.get('approval') === '1' ||
         p.get('isApprovalRequired') === '1',
       isSoldOut: parseBoolFlag(ev.isSoldOut) || p.get('sold_out') === '1' || p.get('isSoldOut') === '1',
+      isEventPast: past,
       isSalesClosed:
-        parseBoolFlag(ev.isSalesClosed) || p.get('sales_closed') === '1' || p.get('isSalesClosed') === '1',
+        past ||
+        parseBoolFlag(ev.isSalesClosed) ||
+        p.get('sales_closed') === '1' ||
+        p.get('isSalesClosed') === '1',
       isTicketSalesPending:
         parseBoolFlag(ev.isTicketSalesPending) ||
         p.get('ticket_sales_pending') === '1' ||
@@ -1132,8 +1141,15 @@
         : '');
     setText('ev-meta-starts', dateLabel || 'Date to be confirmed');
     const timeRow = document.getElementById('ev-meta-time-row');
-    if (ev.time) {
-      setText('ev-meta-time', ev.time);
+    const timeLabel =
+      window.HubEventTimezone && typeof window.HubEventTimezone.formatTimeRange === 'function'
+        ? window.HubEventTimezone.formatTimeRange(
+            ev.dateFieldRaw || ev.dateRaw,
+            ev.endDateRaw
+          ) || ev.time
+        : ev.time;
+    if (timeLabel) {
+      setText('ev-meta-time', timeLabel);
       if (timeRow) timeRow.style.display = '';
     } else if (timeRow) timeRow.style.display = 'none';
   }
@@ -1209,7 +1225,7 @@
         if (entry.isSoldOut) btn.classList.add('is-sold-out');
         if (entry.id === selectedSeriesEventId) btn.classList.add('is-selected');
         btn.setAttribute('aria-label', formatSeriesSelectedLine(entry));
-        if (cellDate < today) {
+        if (!seriesEntryIsBookable(entry)) {
           btn.classList.add('is-past');
           btn.disabled = true;
         } else {
@@ -1243,20 +1259,29 @@
     if (collapsed) collapsed.hidden = open;
   }
 
+  function seriesEntryIsBookable(entry) {
+    if (!entry || entry.isSoldOut) return false;
+    if (
+      window.HubEventTimezone &&
+      typeof window.HubEventTimezone.isEventPast === 'function' &&
+      window.HubEventTimezone.isEventPast(entry)
+    ) {
+      return false;
+    }
+    const ts =
+      entry.dateTs != null
+        ? Number(entry.dateTs)
+        : entry.dateRaw
+          ? new Date(entry.dateRaw).getTime()
+          : 0;
+    return !ts || ts >= Date.now() - 86400000;
+  }
+
   function seriesHasOtherBookableDates(currentEventId) {
     if (!seriesDatesList || seriesDatesList.length <= 1) return false;
-    const now = Date.now() - 86400000;
     return seriesDatesList.some(function (entry) {
       if (!entry || !entry.id || entry.id === currentEventId) return false;
-      if (entry.isSoldOut) return false;
-      const ts =
-        entry.dateTs != null
-          ? Number(entry.dateTs)
-          : entry.dateRaw
-            ? new Date(entry.dateRaw).getTime()
-            : 0;
-      if (ts && ts < now) return false;
-      return true;
+      return seriesEntryIsBookable(entry);
     });
   }
 
@@ -1311,14 +1336,8 @@
     updateSeriesDateCopy();
 
     const now = Date.now() - 86400000;
-    const upcoming = seriesDatesList.find((item) => {
-      const ts =
-        item.dateTs != null
-          ? Number(item.dateTs)
-          : item.dateRaw
-            ? new Date(item.dateRaw).getTime()
-            : 0;
-      return ts >= now;
+    const upcoming = seriesDatesList.find(function (item) {
+      return seriesEntryIsBookable(item);
     });
     const initialEntry =
       seriesDatesList.find((item) => item.id === initialEv.id) || upcoming || seriesDatesList[0];
@@ -1748,6 +1767,7 @@
     const messages = {
       invalid_event_id: 'This event could not be loaded for checkout. Refresh the page and try again.',
       event_not_found: 'This event is no longer available.',
+      event_ended: 'This event has ended.',
       event_not_published: 'This event is not open for bookings yet.',
       ticket_not_found: 'That ticket type is no longer available.',
       ticket_sold_out: 'Sorry — that ticket tier is sold out.',
@@ -3162,6 +3182,7 @@
 
     let labelText = 'Get tickets';
     if (registrationIsConfirmedGoing(eventApplicationState)) labelText = "You're already going";
+    else if (ev.isEventPast) labelText = 'Event ended';
     else if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
     else if (ev.isTicketSalesScheduled || ev.isTicketSalesPending) labelText = 'View tickets';
@@ -4201,7 +4222,9 @@
           return;
         }
         showEventLoadError(
-          data.message || 'This event could not be found. It may be unpublished or removed.'
+          data.error === 'event_ended'
+            ? 'This event has ended.'
+            : data.message || 'This event could not be found. It may be unpublished or removed.'
         );
         return;
       } catch (e) {

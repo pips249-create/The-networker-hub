@@ -43,7 +43,7 @@
     'vat-treatment': {
       title: 'VAT on ticket prices',
       body:
-        'Required before publishing. Choose whether your listed price includes VAT or whether VAT is added at checkout. Shown on your public listing so attendees know what to expect.',
+        'Required before publishing paid tickets. Choose whether your listed price includes VAT or whether VAT is added at checkout. Shown on your public listing so attendees know what to expect. Not needed when all tickets are free.',
       hubertPrompt: 'Should VAT be included in my ticket price or added at checkout?',
     },
     'stripe-refunds': {

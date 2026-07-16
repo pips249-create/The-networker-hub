@@ -230,7 +230,6 @@
       '<a class="networking-city-partner-logo-link" href="/advertising#city-partner-package">' +
       '<div class="networking-city-partner-logo-placeholder">Your logo here</div>' +
       '</a>' +
-      '<a class="networking-city-partner-cta networking-city-partner-cta--text" href="/advertising#city-partner-package">Become a city partner</a>' +
       '</aside>';
     return true;
   }

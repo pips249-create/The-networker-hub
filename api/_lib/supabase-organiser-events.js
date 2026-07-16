@@ -1466,7 +1466,16 @@ async function createTicketsForEvents({
   if (approvalErr) throw new Error(approvalErr.message);
 
   let publishedEvents = null;
-  if (publish && refund) {
+  if (publish) {
+    const { tiersHavePaidPrice } = require('./supabase-events');
+    const hasPaidTickets = tiersHavePaidPrice(out);
+    const refundPayload = hasPaidTickets ? refund : {};
+    if (hasPaidTickets && (!refund || !String(refund.refundPolicy || '').trim())) {
+      const e = new Error('Select a refund policy before publishing paid tickets.');
+      e.status = 400;
+      e.code = 'refund_policy_required';
+      throw e;
+    }
     const { data: eventRows, error: eventLoadErr } = await sb
       .from('events')
       .select('id, organiser_id')
@@ -1474,8 +1483,8 @@ async function createTicketsForEvents({
     if (eventLoadErr) throw new Error(eventLoadErr.message);
     const organiserIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
     const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
-    await assertOrganiserReadyForPaidPublish(sb, organiserIds, tiers);
-    publishedEvents = await publishEventsWithRefund(ids, refund, out);
+    await assertOrganiserReadyForPaidPublish(sb, organiserIds, out);
+    publishedEvents = await publishEventsWithRefund(ids, refundPayload || {}, out);
   }
 
   if (attendeeExtras != null && typeof attendeeExtras === 'object') {

@@ -187,10 +187,14 @@
           </div>
         </div>
 
+        <p class="ee-hint ee-free-tickets-note" id="ee-free-tickets-note" hidden>
+          All your ticket types are free — VAT and refund policy are not required.
+        </p>
+
         <div class="ee-card" id="ee-vat-card">
           <h2 data-hub-tip="vat-treatment">VAT on ticket prices</h2>
           <p class="ee-hint" style="margin-top:0">
-            Required before publishing. Choose one option — shown under tickets on your public listing so attendees know how VAT applies.
+            Required before publishing paid tickets. Choose one option — shown under tickets on your public listing so attendees know how VAT applies.
           </p>
           <div class="ee-vat-options" role="radiogroup" aria-label="VAT on ticket prices" aria-required="true">
             <div class="ee-vat-card" data-vat="included" role="radio" tabindex="0" aria-checked="false">
@@ -229,7 +233,7 @@
 
         <div class="ee-card" id="ee-refund-card">
           <h2>Refund policy</h2>
-          <p class="ee-hint" style="margin-top:0">Choose one of our fixed refund policies. Required before publishing.</p>
+          <p class="ee-hint" style="margin-top:0">Choose one of our fixed refund policies. Required before publishing paid tickets.</p>
           <div class="ee-refund-options" role="radiogroup" aria-label="Refund policy">
             <div class="ee-refund-card" data-policy="flexible" role="radio" tabindex="0" aria-checked="false">
               <input type="radio" name="refund-policy" value="flexible" id="refund-policy-flexible" />
@@ -265,7 +269,7 @@
             <input type="checkbox" id="refund-terms-agreed" />
             <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
           </label>
-          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Before this event can go live: add a ticket type, choose VAT, and complete the refund policy.</p>
+          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Before this event can go live: add a ticket type and complete any paid-ticket setup (VAT, refund policy, bank details).</p>
         </div>
 
         <div class="ee-actions">

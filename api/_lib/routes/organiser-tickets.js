@@ -2,6 +2,12 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { normalizeTicketVisibility } = require('../ticket-visibility');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { validateRefundPublishPayload } = require('../event-refund-policy');
+const { tiersHavePaidPrice } = require('../supabase-events');
+
+function requestHasPaidTickets(tiers, alumniFastPass) {
+  if (alumniFastPass?.enabled && Number(alumniFastPass.price) > 0) return true;
+  return tiersHavePaidPrice(tiers);
+}
 
 function parseBody(req) {
   let body = req.body;
@@ -116,8 +122,23 @@ module.exports = async function handler(req, res) {
           .filter((t) => t.name);
         if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });
 
+        const alumniRaw = body.alumniFastPass || body.alumni_fast_pass;
+        const alumniFastPass =
+          alumniRaw && typeof alumniRaw === 'object'
+            ? {
+                enabled: Boolean(alumniRaw.enabled),
+                price: alumniRaw.price,
+                quantityAvailable: alumniRaw.quantityAvailable ?? alumniRaw.quantity_available,
+                saleEnd: alumniRaw.saleEnd || alumniRaw.sale_end || null,
+                description: alumniRaw.description || '',
+                sourceEventId: alumniRaw.sourceEventId || alumniRaw.source_event_id || null,
+              }
+            : null;
+
         const publish = Boolean(body.publish);
-        if (publish) {
+        const hasPaidTickets = requestHasPaidTickets(tiers, alumniFastPass);
+
+        if (publish && hasPaidTickets) {
           const refundCheck = validateRefundPublishPayload({
             refundPolicy: body.refundPolicy,
             refundPolicyDetails: body.refundPolicyDetails || '',
@@ -132,22 +153,9 @@ module.exports = async function handler(req, res) {
         if (vatTreatment && !['included', 'added'].includes(vatTreatment)) {
           return json(res, 400, { error: 'invalid_vat_treatment' });
         }
-        if (publish && !vatTreatment) {
+        if (publish && hasPaidTickets && !vatTreatment) {
           return json(res, 400, { error: 'vat_treatment_required' });
         }
-
-        const alumniRaw = body.alumniFastPass || body.alumni_fast_pass;
-        const alumniFastPass =
-          alumniRaw && typeof alumniRaw === 'object'
-            ? {
-                enabled: Boolean(alumniRaw.enabled),
-                price: alumniRaw.price,
-                quantityAvailable: alumniRaw.quantityAvailable ?? alumniRaw.quantity_available,
-                saleEnd: alumniRaw.saleEnd || alumniRaw.sale_end || null,
-                description: alumniRaw.description || '',
-                sourceEventId: alumniRaw.sourceEventId || alumniRaw.source_event_id || null,
-              }
-            : null;
 
         const result = await createTicketsForEvents({
           eventIds: ids,
@@ -163,15 +171,18 @@ module.exports = async function handler(req, res) {
             body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
               ? body.attendeeExtras
               : null,
-          refund: publish
-            ? {
-                refundPolicy: body.refundPolicy,
-                refundPolicyDetails: body.refundPolicyDetails || '',
-                refundCutoffDays: body.refundCutoffDays,
-                refundTermsAgreed: body.refundTermsAgreed,
-                vatTreatment: vatTreatment || null,
-              }
-            : null,
+          refund:
+            publish && hasPaidTickets
+              ? {
+                  refundPolicy: body.refundPolicy,
+                  refundPolicyDetails: body.refundPolicyDetails || '',
+                  refundCutoffDays: body.refundCutoffDays,
+                  refundTermsAgreed: body.refundTermsAgreed,
+                  vatTreatment: vatTreatment || null,
+                }
+              : publish
+                ? {}
+                : null,
         });
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {

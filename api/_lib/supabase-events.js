@@ -8,6 +8,12 @@ const { eventHasTicketsOnSale, resolveTicketSalesEnabled, earliestTicketSaleStar
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { isMembersOnlyTicket } = require('./ticket-visibility');
+const {
+  formatTimeRange,
+  formatDateOnly,
+  formatTime: formatEventTime,
+  isEventPast,
+} = require('./event-timezone');
 
 const IN_CHUNK_SIZE = 80;
 
@@ -143,6 +149,7 @@ function ukOutcode(postcode) {
   return m ? m[1] : '';
 }
 
+
 function formatDateParts(startsAt) {
   if (!startsAt) return { iso: '', ts: null, display: '', short: '', dateOnly: '', time: '' };
   const d = new Date(startsAt);
@@ -150,32 +157,15 @@ function formatDateParts(startsAt) {
     return { iso: '', ts: null, display: '', short: '', dateOnly: '', time: '' };
   }
   const iso = d.toISOString();
-  const dateOnly = d.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const time = d.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+  const dateOnly = formatDateOnly(startsAt);
+  const time = formatEventTime(startsAt);
   const display = `${dateOnly}, ${time}`;
-  const short = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const short = d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Europe/London',
+  });
   return { iso, ts: d.getTime(), display, short, dateOnly, time };
-}
-
-function formatTimeRange(startsAt, endsAt) {
-  if (!startsAt) return '';
-  const start = new Date(startsAt);
-  if (Number.isNaN(start.getTime())) return '';
-  const fmt = (d) =>
-    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-  if (!endsAt) return fmt(start);
-  const end = new Date(endsAt);
-  if (Number.isNaN(end.getTime())) return fmt(start);
-  return `${fmt(start)} – ${fmt(end)}`;
 }
 
 function cardLocationLabel(row) {
@@ -360,13 +350,16 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
         organiser.stripe_charges_enabled &&
         organiser.stripe_connect_details_submitted
     );
+  const eventHasEnded = isEventPast(row);
   const isSalesClosed =
+    eventHasEnded ||
     isSoldOut ||
     !ticketSalesEnabled ||
     !ticketsOnSale ||
     (connectRequired && !connectReady);
   let salesClosedReason = '';
-  if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
+  if (eventHasEnded) salesClosedReason = 'event_ended';
+  else if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
   else if (!hasTicketTiers) salesClosedReason = 'no_tickets';
   else if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
   else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
@@ -435,6 +428,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
       tiers.some((t) => t.categoryExclusivity || /application/i.test(t.ticketType || '')),
     isSoldOut,
     isSalesClosed,
+    isEventPast: eventHasEnded,
     isTicketSalesPending,
     isTicketSalesScheduled,
     ticketSalesEnabled,
@@ -506,6 +500,10 @@ function ticketPriceNum(ticket) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function tiersHavePaidPrice(tickets) {
+  return (tickets || []).some((t) => ticketPriceNum(t) > 0);
+}
+
 /** Auto-approve when the organiser has completed everything needed for public browse. */
 function eventRowReadyForAutoApproval(row, organiser, tickets, refundPayload) {
   if (!row) return false;
@@ -518,16 +516,18 @@ function eventRowReadyForAutoApproval(row, organiser, tickets, refundPayload) {
   const ticketList = Array.isArray(tickets) ? tickets : [];
   if (!ticketList.length) return false;
 
-  const refundPolicy = String(refundPayload?.refundPolicy || row.refund_policy || '').trim();
-  if (!refundPolicy) return false;
-  const refundAgreed = Boolean(
-    refundPayload?.refundTermsAgreed ?? row.refund_terms_agreed ?? row.refund_terms_agreed_at
-  );
-  if (!refundAgreed) return false;
+  const hasPaidTickets = tiersHavePaidPrice(ticketList);
+  if (hasPaidTickets) {
+    const refundPolicy = String(refundPayload?.refundPolicy || row.refund_policy || '').trim();
+    if (!refundPolicy) return false;
+    const refundAgreed = Boolean(
+      refundPayload?.refundTermsAgreed ?? row.refund_terms_agreed ?? row.refund_terms_agreed_at
+    );
+    if (!refundAgreed) return false;
 
-  const hasPaidTickets = ticketList.some((t) => ticketPriceNum(t) > 0);
-  const vatTreatment = String(refundPayload?.vatTreatment || row.vat_treatment || '').trim();
-  if (hasPaidTickets && !vatTreatment) return false;
+    const vatTreatment = String(refundPayload?.vatTreatment || row.vat_treatment || '').trim();
+    if (!vatTreatment) return false;
+  }
 
   if (organiser) {
     const listingStatus = String(organiser.listing_status || '').toLowerCase();
@@ -554,19 +554,11 @@ function browseEventEndRaw(source) {
 }
 
 function isUpcomingBrowseEventRow(row) {
-  const endRaw = browseEventEndRaw(row);
-  if (!endRaw) return false;
-  const d = new Date(endRaw);
-  if (Number.isNaN(d.getTime())) return false;
-  return d >= new Date();
+  return !isEventPast(row);
 }
 
 function isUpcomingBrowseEvent(ev) {
-  const endRaw = browseEventEndRaw(ev);
-  if (!endRaw) return false;
-  const d = new Date(endRaw);
-  if (Number.isNaN(d.getTime())) return false;
-  return d >= new Date();
+  return !isEventPast(ev);
 }
 
 function bestSeriesPhotoFromRows(rows) {
@@ -1037,6 +1029,16 @@ async function handle(req, res) {
         organiserRankingPromise,
       ]);
       const seriesDates = seriesResult.seriesDates || [];
+      const hasUpcomingSeriesDate = seriesDates.some((entry) => !isEventPast(entry));
+      if (isEventPast(row) && !hasUpcomingSeriesDate) {
+        return res.status(404).json({
+          configured: true,
+          provider: 'supabase',
+          error: 'event_ended',
+          message: 'This event has ended.',
+          event: null,
+        });
+      }
       const seriesSiblingRows = seriesResult.siblingRows || [];
       const ticketsList = ticketsRaw || [];
       const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsList);
@@ -1130,7 +1132,10 @@ module.exports = {
   isPublicEvent,
   isUpcomingBrowseEvent,
   eventRowReadyForAutoApproval,
+  ticketPriceNum,
+  tiersHavePaidPrice,
   isUpcomingBrowseEventRow,
+  isEventPast,
   ukOutcode,
   slugFormat,
   eventTypeTabCategory,

@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260715twocol2" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260702" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714photo" />
@@ -28,7 +28,7 @@
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260715a" data-root="../" data-page="organiser"></script>
 
-    <div class="ee-wrap">
+    <div class="ee-wrap ee-wrap--wide">
       <header class="ee-page-head">
         <div class="ee-top-bar">
           <a class="ee-back" href="/organiser/#events-list" id="ee-back-link">← Back to My Events</a>
@@ -70,6 +70,8 @@
       <div id="ee-alert" class="ee-alert" hidden></div>
 
       <form id="ee-form" novalidate>
+        <div class="ee-grid ee-grid--create">
+        <div class="ee-main-col">
         <!-- Section 1: Group -->
         <div class="ee-card" id="ee-card-group">
           <h2>Which organiser is this event for?</h2>
@@ -221,6 +223,9 @@
           </div>
         </div>
 
+        </div><!-- /.ee-main-col -->
+
+        <aside class="ee-sticky-side">
         <!-- Section 4: Dates -->
         <div class="ee-card ee-card-dates" id="ee-card-dates">
           <h2>Dates</h2>
@@ -254,6 +259,8 @@
             <ul id="ee-date-list"></ul>
           </div>
         </div>
+        </aside><!-- /.ee-sticky-side -->
+        </div><!-- /.ee-grid -->
 
         <!-- Section 5: Save or publish -->
         <div class="ee-card ee-card-actions">
@@ -275,8 +282,9 @@
     <script src="../js/fact-loader.js?v=20260613"></script>
     <script src="../js/organiser-page-loading.js?v=20260714busy"></script>
     <script src="../js/meeting-types.js?v=20260715mc"></script>
-    <script src="../js/organiser-quarter-time.js?v=20260714time"></script>
+    <script src="../js/hub-event-timezone.js?v=20260716"></script>
+    <script src="../js/organiser-quarter-time.js?v=20260716sync"></script>
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
-    <script src="../js/organiser-event-edit.js?v=20260715mc"></script>
+    <script src="../js/organiser-event-edit.js?v=20260716sync"></script>
   </body>
 </html>

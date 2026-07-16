@@ -91,20 +91,21 @@
 
   function getPublishBlockers(tiers) {
     const list = tiers || collectActiveTiers();
-    const refund = collectRefundPayload();
+    const hasPaid = tiersHavePaidPrice(list);
+    const refund = hasPaid ? collectRefundPayload() : null;
     const blockers = [];
     if (!list.length) {
       blockers.push('Add at least one ticket type with a name');
     } else if (!tiersHaveRequiredSaleEnds(list)) {
       blockers.push('Choose a valid sale end for every ticket tier');
     }
-    if (!collectVatTreatment()) {
+    if (hasPaid && !collectVatTreatment()) {
       blockers.push('Choose how VAT applies to ticket prices');
     }
-    if (!refund.refundPolicy) {
+    if (hasPaid && !refund.refundPolicy) {
       blockers.push('Select a refund policy');
     }
-    if (!refund.refundTermsAgreed) {
+    if (hasPaid && !refund.refundTermsAgreed) {
       blockers.push('Tick the refund responsibility checkbox');
     }
     const paymentNeeded =
@@ -1222,6 +1223,19 @@
     paymentSetupState = await window.HubOrganiserPaymentSetup.fetchState();
   }
 
+  function syncPaidOnlySections(tiers) {
+    const hasPaid = tiersHavePaidPrice(tiers);
+    const vatCard = document.getElementById('ee-vat-card');
+    const refundCard = document.getElementById('ee-refund-card');
+    const freeNote = document.getElementById('ee-free-tickets-note');
+    if (vatCard) vatCard.hidden = !hasPaid;
+    if (refundCard) refundCard.hidden = !hasPaid;
+    if (freeNote) freeNote.hidden = hasPaid;
+    document.querySelectorAll('input[name="vat-treatment"]').forEach(function (radio) {
+      radio.required = hasPaid;
+    });
+  }
+
   function updatePublishButton() {
     const btn = document.getElementById('ee-tickets-submit');
     const warn = document.getElementById('ee-publish-warn');
@@ -1235,6 +1249,7 @@
     }
     try {
       const tiers = collectActiveTiers();
+      syncPaidOnlySections(tiers);
       const blockers = getPublishBlockers(tiers);
       // Keep Publish clickable so incomplete setup shows a clear message instead of a dead click.
       btn.disabled = false;
@@ -1254,7 +1269,7 @@
       if (warn) {
         warn.hidden = false;
         warn.textContent =
-          'Finish ticket types, VAT, and refund policy below, then click Publish event again.';
+          'Finish ticket types below, then click Publish event again.';
       }
     }
   }
@@ -1834,7 +1849,8 @@
       return;
     }
 
-    const refund = collectRefundPayload();
+    const hasPaidTickets = tiersHavePaidPrice(tiers);
+    const refund = hasPaidTickets ? collectRefundPayload() : {};
     if (publish) {
       const blockers = getPublishBlockers(tiers);
       if (blockers.length) {
@@ -1845,9 +1861,9 @@
           warn.textContent = 'Before this event can go live: ' + blockers.join('; ') + '.';
           warn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        if (!collectVatTreatment()) {
-          document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } else if (!refund.refundPolicy || !refund.refundTermsAgreed) {
+        if (blockers.some((b) => /VAT/i.test(b))) {
+          document.getElementById('ee-vat-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else if (blockers.some((b) => /refund/i.test(b))) {
           document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else if (blockers.some((b) => /bank details/i.test(b))) {
           document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
@@ -1941,7 +1957,7 @@
       attendanceMode,
       guestPassesDisabled: collectGuestPassesDisabled(),
       alumniFastPass: collectAlumniFastPass(),
-      vatTreatment: collectVatTreatment(),
+      vatTreatment: hasPaidTickets ? collectVatTreatment() : '',
       attendeeExtras: attendeeExtras(),
       ...refund,
     };
@@ -2023,7 +2039,7 @@
         });
       if (!allLive) {
         showAlert(
-          'Tickets were saved, but this event is still a draft and not live yet. Check VAT, refund policy, bank details (for paid tickets), and dates — then click Publish event again.',
+          'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then click Publish event again.',
           'warn'
         );
         return;
@@ -2040,10 +2056,12 @@
       existingTicketsLoaded = true;
       clearTicketDraft();
       showAlert(
-        'Tickets saved as draft. Your event is not on Browse events yet — choose VAT and refund policy below, then click Publish event.',
+        'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Publish event.',
         'ok'
       );
-      document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (tiersHavePaidPrice(collectActiveTiers())) {
+        document.getElementById('ee-vat-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
       return;
     }
 
@@ -2061,29 +2079,33 @@
     }
     clearTicketDraft();
 
+    const publishedTitle = seriesMeta.title || '';
+    const publishedImage =
+      seriesMeta.imageUrl ||
+      (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
+      '';
+    const publishedQs = new URLSearchParams();
+    publishedQs.set('ids', eventIds.join(','));
+    if (publishedTitle) publishedQs.set('title', publishedTitle);
+    if (publishedImage) publishedQs.set('image', publishedImage);
+    const publishedUrl = '/organiser/event-published?' + publishedQs.toString();
+
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       window.parent.postMessage(
         {
           type: 'hub-event-tickets-done',
           eventIds: eventIds.slice(),
           eventId: eventIds[0] || '',
-          title: seriesMeta.title || '',
-          imageUrl:
-            seriesMeta.imageUrl ||
-            (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
-            '',
+          title: publishedTitle,
+          imageUrl: publishedImage,
+          publishedUrl: publishedUrl,
         },
         window.location.origin
       );
       return;
     }
 
-    try {
-      sessionStorage.setItem('hub_promote_event_id', eventIds[0] || '');
-    } catch {
-      /* ignore private mode */
-    }
-    location.href = '/organiser/#social';
+    location.href = publishedUrl;
   }
 
   document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {

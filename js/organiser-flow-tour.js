@@ -399,17 +399,17 @@
     },
     {
       title: 'VAT on ticket prices',
-      body: 'Choose exactly one option: VAT included in the price, or VAT added at checkout. Required before you publish.',
+      body: 'If you sell paid tickets, choose exactly one option: VAT included in the price, or VAT added at checkout. Not required for free-only events.',
       target: '#ee-vat-card',
     },
     {
       title: 'Refund policy',
-      body: 'Pick how refunds work and confirm you understand Stripe Connect handles payouts and refunds.',
+      body: 'For paid tickets, pick how refunds work and confirm you understand Stripe Connect handles payouts and refunds.',
       target: '#ee-refund-card',
     },
     {
       title: 'Publish when ready',
-      body: 'Save as draft anytime, or publish when ticket types, VAT, and refund policy are complete.',
+      body: 'Save as draft anytime, or publish when ticket types are complete. Paid tickets also need VAT, refund policy, and bank details.',
       target: '.ee-actions',
     },
   ];

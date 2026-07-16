@@ -1124,23 +1124,23 @@
       });
   }
 
+  function openDatePicker() {
+    ensureFlatpickr(function () {
+      if (flatpickrInstance) flatpickrInstance.open();
+    });
+  }
+
   if (dateWrap) {
     dateWrap.addEventListener('click', function (e) {
-      if (e.target === dateRangeInput) return;
-      ensureFlatpickr(function () {
-        if (flatpickrInstance) flatpickrInstance.open();
-      });
+      if (e.target.closest('.flatpickr-calendar')) return;
+      openDatePicker();
     });
   }
 
   if (dateRangeInput) {
-    dateRangeInput.addEventListener(
-      'focus',
-      function () {
-        ensureFlatpickr();
-      },
-      { once: true }
-    );
+    dateRangeInput.addEventListener('focus', function () {
+      openDatePicker();
+    });
   }
 
   if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {

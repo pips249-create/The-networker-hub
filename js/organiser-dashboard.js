@@ -839,11 +839,15 @@
 
   function formatTimeShort(raw) {
     if (!raw) return '';
+    if (window.HubEventTimezone && typeof window.HubEventTimezone.formatTime === 'function') {
+      return window.HubEventTimezone.formatTime(raw);
+    }
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return '';
     return d.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Europe/London',
     });
   }
 
@@ -1282,10 +1286,19 @@
 
   function formatTimeRange(startRaw, endRaw) {
     if (!startRaw) return '—';
+    if (window.HubEventTimezone && typeof window.HubEventTimezone.formatTimeRange === 'function') {
+      const range = window.HubEventTimezone.formatTimeRange(startRaw, endRaw);
+      return range || '—';
+    }
     const start = new Date(startRaw);
     if (Number.isNaN(start.getTime())) return '—';
     const fmt = (d) =>
-      d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+      d.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/London',
+      });
     if (endRaw) {
       const end = new Date(endRaw);
       if (!Number.isNaN(end.getTime())) return fmt(start) + ' – ' + fmt(end);
@@ -9063,24 +9076,27 @@
         return;
       }
       if (e.data && e.data.type === 'hub-event-tickets-done') {
+        const publishedEventIds = Array.isArray(e.data.eventIds)
+          ? e.data.eventIds.filter(Boolean)
+          : [];
         const publishedEventId =
-          e.data.eventId || (Array.isArray(e.data.eventIds) ? e.data.eventIds[0] : '') || '';
+          e.data.eventId || publishedEventIds[0] || '';
         closeEventEditorDrawer();
+        if (e.data.publishedUrl) {
+          location.href = String(e.data.publishedUrl);
+          return;
+        }
+        if (publishedEventId) {
+          const qs = new URLSearchParams();
+          qs.set('ids', publishedEventIds.length ? publishedEventIds.join(',') : publishedEventId);
+          if (e.data.title) qs.set('title', String(e.data.title));
+          if (e.data.imageUrl) qs.set('image', String(e.data.imageUrl));
+          location.href = '/organiser/event-published?' + qs.toString();
+          return;
+        }
         loadBootstrap({ silent: true }).then(function () {
           renderAll();
-          setRoute('social');
-          ensureLinkedInPostBuilder({ force: true });
-          if (publishedEventId && linkedInPostBuilder?.prefillEvent) {
-            linkedInPostBuilder.prefillEvent(publishedEventId);
-          }
-          document.getElementById('org-linkedin-posts')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
-          showOrganiserAlert(
-            'Your event is live. We created a social post draft in Promote & social.',
-            false
-          );
+          showOrganiserAlert('Your event is live.', false);
         });
         return;
       }

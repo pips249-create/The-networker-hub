@@ -184,7 +184,21 @@
     populateSelect(document.getElementById(endId), endTime);
   }
 
+  function syncPairFromUi(startId, endId) {
+    [startId, endId].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const hourSel = document.getElementById(id + '-hour');
+      const minSel = document.getElementById(id + '-min');
+      if (hourSel && minSel) {
+        const next = hourSel.value + ':' + minSel.value;
+        if (el.value !== next) el.value = next;
+      }
+    });
+  }
+
   function validatePair(startId, endId) {
+    syncPairFromUi(startId, endId);
     const startEl = document.getElementById(startId);
     const endEl = document.getElementById(endId);
     const start = startEl ? startEl.value : '';
@@ -206,5 +220,6 @@
     initPair: initPair,
     setValues: setValues,
     validatePair: validatePair,
+    syncPairFromUi: syncPairFromUi,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

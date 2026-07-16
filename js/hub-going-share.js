@@ -299,12 +299,166 @@
     );
   }
 
+  function buildOrganiserPromoCaption(ev, listingUrl) {
+    if (global.HubCommsPack && global.HubCommsPack.buildEventCommsPack) {
+      return global.HubCommsPack.buildEventCommsPack(
+        {
+          title: ev && ev.title,
+          date: formatShareDate(ev && (ev.starts_at || ev.date || ev.dateLine)),
+          location: ev && ev.location,
+          description: ev && ev.description,
+        },
+        listingUrl
+      ).caption;
+    }
+    const title = String((ev && ev.title) || 'Our event').trim();
+    const url = String(listingUrl || '').trim();
+    return (
+      "We've just added a new event:\n\n📅 " +
+      title +
+      '\n\nBuy tickets now on The Networker Hub:\n' +
+      url
+    );
+  }
+
+  async function generateOrganiserPromoCardDataUrl(ev) {
+    const canvas = document.createElement('canvas');
+    canvas.width = CARD_W;
+    canvas.height = CARD_H;
+    const ctx = canvas.getContext('2d');
+
+    const bg = ctx.createLinearGradient(0, 0, CARD_W, CARD_H);
+    bg.addColorStop(0, '#faf6ee');
+    bg.addColorStop(0.55, '#f5f0e8');
+    bg.addColorStop(1, '#ebe0f0');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, CARD_W, CARD_H);
+
+    ctx.fillStyle = '#9a7aa8';
+    ctx.fillRect(0, 0, CARD_W, 14);
+
+    ctx.fillStyle = 'rgba(154, 122, 168, 0.12)';
+    ctx.beginPath();
+    ctx.arc(1080, 120, 200, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(45, 27, 94, 0.06)';
+    ctx.beginPath();
+    ctx.arc(120, 560, 240, 0, Math.PI * 2);
+    ctx.fill();
+
+    const imageUrl = resolveEventImageUrl(ev);
+    const logoUrl = String((ev && ev.organiserLogo) || '').trim();
+    const [eventImg, orgLogoImg, hubLogo] = await Promise.all([
+      loadImage(imageUrl),
+      loadImage(logoUrl && logoUrl !== imageUrl ? logoUrl : ''),
+      loadImage(hubLogoUrl()),
+    ]);
+
+    const logoImg = orgLogoImg || (isLikelyLogo(eventImg, imageUrl, ev) ? eventImg : null);
+    const photoImg = logoImg && eventImg === logoImg ? null : eventImg;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    roundRect(ctx, 64, 56, CARD_W - 128, CARD_H - 148, 24);
+    ctx.fill();
+
+    let textX = 100;
+    let textMaxW = CARD_W - 200;
+
+    if (photoImg) {
+      drawCoverImage(ctx, photoImg, 88, 88, 420, 380, ev && (ev.imagePosition || ev.photoPosition));
+      textX = 560;
+      textMaxW = CARD_W - textX - 96;
+    } else if (logoImg) {
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, 100, 100, 200, 200, 28);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(45, 27, 94, 0.08)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, 100, 100, 200, 200, 28);
+      ctx.stroke();
+      drawContainedImage(ctx, logoImg, 124, 124, 152, 152);
+      textX = 360;
+      textMaxW = CARD_W - textX - 100;
+    }
+
+    const badgeLabel = 'NEW EVENT';
+    ctx.font = '700 22px "DM Sans", system-ui, sans-serif';
+    const badgeW = Math.ceil(ctx.measureText(badgeLabel).width) + 40;
+    ctx.fillStyle = '#9a7aa8';
+    roundRect(ctx, textX, 108, badgeW, 44, 22);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badgeLabel, textX + 20, 130);
+
+    ctx.fillStyle = '#2d1b5e';
+    ctx.font = '700 48px "DM Sans", system-ui, sans-serif';
+    const titleLines = wrapLines(ctx, (ev && ev.title) || 'Event', textMaxW, 3);
+    let titleY = 210;
+    titleLines.forEach(function (line) {
+      ctx.fillText(line, textX, titleY);
+      titleY += 56;
+    });
+
+    const organiser = String((ev && (ev.organiserName || ev.groupName)) || '').trim();
+    const title = String((ev && ev.title) || '').trim();
+    if (organiser && organiser.toLowerCase() !== title.toLowerCase()) {
+      ctx.fillStyle = '#5a4a62';
+      ctx.font = '600 24px "DM Sans", system-ui, sans-serif';
+      ctx.fillText(truncateText(ctx, 'Hosted by ' + organiser, textMaxW), textX, titleY + 8);
+      titleY += 40;
+    }
+
+    const dateLabel = formatShareDate(ev && (ev.starts_at || ev.date || ev.dateLine));
+    const location = String((ev && ev.location) || '').trim();
+    const meta = [dateLabel, location].filter(Boolean).join('  ·  ');
+    if (meta) {
+      ctx.fillStyle = '#5a4a62';
+      ctx.font = '500 26px "DM Sans", system-ui, sans-serif';
+      ctx.fillText(truncateText(ctx, meta, textMaxW), textX, titleY + 28);
+    }
+
+    ctx.fillStyle = '#5a4a62';
+    ctx.font = '500 24px "DM Sans", system-ui, sans-serif';
+    ctx.fillText('Book on The Networker Hub', textX, titleY + 72);
+
+    ctx.fillStyle = 'rgba(45, 27, 94, 0.08)';
+    ctx.fillRect(64, CARD_H - 78, CARD_W - 128, 1);
+
+    if (hubLogo) {
+      drawContainedImage(ctx, hubLogo, 96, CARD_H - 64, 140, 40);
+    }
+    ctx.fillStyle = '#5a4a62';
+    ctx.font = '600 22px "DM Sans", system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('The Networker Hub', hubLogo ? 250 : 96, CARD_H - 44);
+
+    ctx.fillStyle = '#9d87aa';
+    ctx.font = '500 20px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('thenetworkerhub.com', CARD_W - 96, CARD_H - 44);
+    ctx.textAlign = 'left';
+
+    return canvas.toDataURL('image/png');
+  }
+
   global.HubGoingShare = {
     buildAttendeeCaption: buildAttendeeCaption,
+    buildOrganiserPromoCaption: buildOrganiserPromoCaption,
     generateGoingCardDataUrl: generateGoingCardDataUrl,
+    generateOrganiserPromoCardDataUrl: generateOrganiserPromoCardDataUrl,
     downloadPngDataUrl: downloadPngDataUrl,
     eventPageUrl: eventPageUrl,
     formatShareDate: formatShareDate,
     safeFilename: safeFilename,
+  };
+
+  global.HubOrganiserEventShare = {
+    buildPromoCaption: buildOrganiserPromoCaption,
+    generatePromoCardDataUrl: generateOrganiserPromoCardDataUrl,
+    downloadPngDataUrl: downloadPngDataUrl,
+    safeFilename: safeFilename,
+    formatShareDate: formatShareDate,
   };
 })(typeof window !== 'undefined' ? window : global);

@@ -645,6 +645,9 @@
   }
 
   function validateTimes() {
+    if (QuarterTime && QuarterTime.syncPairFromUi) {
+      QuarterTime.syncPairFromUi('ee-start-time', 'ee-end-time');
+    }
     if (QuarterTime && QuarterTime.validatePair) {
       return QuarterTime.validatePair('ee-start-time', 'ee-end-time');
     }
@@ -796,6 +799,10 @@
     const [y, m, d] = dateKeyStr.split('-').map(Number);
     const rounded = QuarterTime ? QuarterTime.roundToQuarterHour(timeStr) : timeStr || '10:00';
     const [hh, mm] = rounded.split(':').map(Number);
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonWallToUtcIso === 'function') {
+      return tz.londonWallToUtcIso(y, m, d, hh || 0, mm || 0);
+    }
     const local = new Date(y, m - 1, d, hh || 0, mm || 0, 0);
     return local.toISOString();
   }
@@ -1507,10 +1514,16 @@
       if (!timeSet) {
         calYear = d.getFullYear();
         calMonth = d.getMonth();
-        const t = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+        const tz = window.HubEventTimezone;
+        const t =
+          tz && typeof tz.londonTimeFromIso === 'function'
+            ? tz.londonTimeFromIso(peer.date)
+            : pad2(d.getHours()) + ':' + pad2(d.getMinutes());
         const endD = peer.endDate ? parseAirtableDate(peer.endDate) : null;
         const endT = endD
-          ? pad2(endD.getHours()) + ':' + pad2(endD.getMinutes())
+          ? tz && typeof tz.londonTimeFromIso === 'function'
+            ? tz.londonTimeFromIso(peer.endDate)
+            : pad2(endD.getHours()) + ':' + pad2(endD.getMinutes())
           : '12:00';
         if (QuarterTime) {
           QuarterTime.setValues('ee-start-time', 'ee-end-time', t, endT);

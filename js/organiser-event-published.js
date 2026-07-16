@@ -25,6 +25,32 @@
   let listingUrl = primaryId
     ? origin + '/events/event?id=' + encodeURIComponent(primaryId)
     : origin + '/events/';
+  let sharePack = null;
+  let sharePackPromise = null;
+  let shareCardDataUrl = '';
+  let shareEventData = null;
+  let shareModalPlatform = '';
+
+  const sharePackEl = document.getElementById('ep-share-pack');
+  const shareImagePreview = document.getElementById('ep-share-image-preview');
+  const shareImageLoading = document.getElementById('ep-share-image-loading');
+  const downloadImageBtn = document.getElementById('ep-download-image');
+  const shareModal = document.getElementById('ep-share-modal');
+  const shareModalPreview = document.getElementById('ep-share-modal-preview');
+  const shareModalLoading = document.getElementById('ep-share-modal-loading');
+  const shareModalCaption = document.getElementById('ep-share-modal-caption');
+  const shareModalDownload = document.getElementById('ep-share-modal-download');
+  const shareModalOpen = document.getElementById('ep-share-modal-open');
+  const shareModalTitle = document.getElementById('ep-share-modal-title');
+  const shareModalSub = document.getElementById('ep-share-modal-sub');
+
+  const PLATFORM_LABELS = {
+    linkedin: 'LinkedIn',
+    facebook: 'Facebook',
+    x: 'X',
+    whatsapp: 'WhatsApp',
+    email: 'Email',
+  };
 
   function esc(s) {
     const d = document.createElement('div');
@@ -71,40 +97,166 @@
 
   function setShareUrls(title) {
     const urlInput = document.getElementById('ep-share-url');
-    const encoded = encodeURIComponent(listingUrl);
-    const text = encodeURIComponent(
-      (title || 'My event') + ' — join us on The Networker Hub'
-    );
     if (urlInput) urlInput.value = listingUrl;
+  }
 
-    const linkedin = document.getElementById('ep-share-linkedin');
-    const facebook = document.getElementById('ep-share-facebook');
-    const xBtn = document.getElementById('ep-share-x');
-    const whatsapp = document.getElementById('ep-share-whatsapp');
-    const email = document.getElementById('ep-share-email');
-
-    if (linkedin) {
-      linkedin.href =
-        'https://www.linkedin.com/sharing/share-offsite/?url=' + encoded;
+  function platformShareUrl(platform, title, caption) {
+    const encoded = encodeURIComponent(listingUrl);
+    const shareText = String(caption || title || 'My event').trim();
+    const shortText =
+      shareText.length > 240 ? shareText.slice(0, 237).trim() + '…' : shareText;
+    const text = encodeURIComponent(shortText);
+    if (platform === 'linkedin') {
+      return 'https://www.linkedin.com/feed/?shareActive=true';
     }
-    if (facebook) {
-      facebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encoded;
+    if (platform === 'facebook') {
+      return 'https://www.facebook.com/sharer/sharer.php?u=' + encoded;
     }
-    if (xBtn) {
-      xBtn.href =
-        'https://twitter.com/intent/tweet?url=' + encoded + '&text=' + text;
+    if (platform === 'x') {
+      return 'https://twitter.com/intent/tweet?url=' + encoded + '&text=' + text;
     }
-    if (whatsapp) {
-      whatsapp.href =
-        'https://wa.me/?text=' + encodeURIComponent((title || 'Event') + ' ' + listingUrl);
+    if (platform === 'whatsapp') {
+      return 'https://wa.me/?text=' + encodeURIComponent(shareText + '\n\n' + listingUrl);
     }
-    if (email) {
-      email.href =
+    if (platform === 'email') {
+      return (
         'mailto:?subject=' +
         encodeURIComponent('Join my event on The Networker Hub') +
         '&body=' +
-        encodeURIComponent('Book your place:\n' + listingUrl);
+        encodeURIComponent(shareText + '\n\n' + listingUrl)
+      );
     }
+    return listingUrl;
+  }
+
+  async function copyText(text, feedbackEl, originalLabel, copiedLabel) {
+    if (!text) return false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        window.prompt('Copy this text:', text);
+      }
+      if (feedbackEl) {
+        feedbackEl.hidden = false;
+        feedbackEl.textContent = copiedLabel || 'Copied to clipboard';
+        setTimeout(() => {
+          feedbackEl.hidden = true;
+        }, 2500);
+      }
+      return true;
+    } catch {
+      window.prompt('Copy this text:', text);
+      return false;
+    }
+  }
+
+  function setShareImageState({ loading, dataUrl }) {
+    if (shareImageLoading) shareImageLoading.hidden = !loading;
+    if (shareImagePreview) {
+      if (dataUrl) {
+        shareImagePreview.src = dataUrl;
+        shareImagePreview.hidden = false;
+      } else {
+        shareImagePreview.hidden = true;
+        shareImagePreview.removeAttribute('src');
+      }
+    }
+    if (shareModalLoading) shareModalLoading.hidden = !loading;
+    if (shareModalPreview) {
+      if (dataUrl) {
+        shareModalPreview.src = dataUrl;
+        shareModalPreview.hidden = false;
+      } else {
+        shareModalPreview.hidden = true;
+        shareModalPreview.removeAttribute('src');
+      }
+    }
+    const ready = Boolean(dataUrl);
+    if (downloadImageBtn) downloadImageBtn.disabled = !ready;
+    if (shareModalDownload) shareModalDownload.disabled = !ready;
+  }
+
+  async function ensureSharePack(ev) {
+    if (!window.HubOrganiserEventShare) return null;
+    if (sharePackPromise) return sharePackPromise;
+    sharePackPromise = (async function () {
+      shareEventData = ev;
+      listingUrl = buildListingUrl(ev);
+      const title = ev.title || fallbackTitle || 'Your event';
+      const caption = window.HubOrganiserEventShare.buildPromoCaption(ev, listingUrl);
+      sharePack = { title, url: listingUrl, caption };
+      setShareUrls(title);
+
+      const commsRoot = document.getElementById('ep-comms-preview');
+      if (window.HubCommsPack && commsRoot) {
+        if (sharePackEl) sharePackEl.hidden = false;
+        window.HubCommsPack.bindCommsPack(commsRoot, sharePack);
+      }
+      if (shareModalCaption) shareModalCaption.value = caption;
+
+      setShareImageState({ loading: true, dataUrl: '' });
+      shareCardDataUrl = '';
+      try {
+        shareCardDataUrl = await window.HubOrganiserEventShare.generatePromoCardDataUrl(ev);
+        setShareImageState({ loading: false, dataUrl: shareCardDataUrl });
+      } catch {
+        setShareImageState({ loading: false, dataUrl: '' });
+        if (shareImageLoading) {
+          shareImageLoading.hidden = false;
+          shareImageLoading.textContent =
+            'Could not create image. You can still copy the caption and link.';
+        }
+      }
+      return sharePack;
+    })();
+    return sharePackPromise;
+  }
+
+  function openShareModal(platform) {
+    if (!shareModal) return;
+    shareModalPlatform = platform || 'linkedin';
+    const label = PLATFORM_LABELS[shareModalPlatform] || 'social media';
+    if (shareModalTitle) shareModalTitle.textContent = 'Share to ' + label;
+    if (shareModalSub) {
+      shareModalSub.textContent =
+        'Download the image, copy the caption, then paste both into your ' + label + ' post.';
+    }
+    if (shareModalOpen) {
+      shareModalOpen.textContent = 'Open ' + label;
+      shareModalOpen.href = platformShareUrl(
+        shareModalPlatform,
+        sharePack && sharePack.title,
+        sharePack && sharePack.caption
+      );
+      if (shareModalPlatform === 'email') {
+        shareModalOpen.removeAttribute('target');
+      } else {
+        shareModalOpen.setAttribute('target', '_blank');
+        shareModalOpen.setAttribute('rel', 'noopener noreferrer');
+      }
+    }
+    if (shareModalCaption && sharePack) shareModalCaption.value = sharePack.caption || '';
+    if (shareCardDataUrl) {
+      setShareImageState({ loading: false, dataUrl: shareCardDataUrl });
+    } else if (shareEventData) {
+      setShareImageState({ loading: true, dataUrl: '' });
+      window.HubOrganiserEventShare.generatePromoCardDataUrl(shareEventData)
+        .then(function (dataUrl) {
+          shareCardDataUrl = dataUrl;
+          setShareImageState({ loading: false, dataUrl });
+        })
+        .catch(function () {
+          setShareImageState({ loading: false, dataUrl: '' });
+        });
+    }
+    shareModal.hidden = false;
+    document.body.classList.add('ep-share-modal-open');
+  }
+
+  function closeShareModal() {
+    if (shareModal) shareModal.hidden = true;
+    document.body.classList.remove('ep-share-modal-open');
   }
 
   function formatDateLine(raw) {
@@ -169,21 +321,20 @@
     }
 
     setShareUrls(title);
-
-    const commsRoot = document.getElementById('ep-comms-preview');
-    if (window.HubCommsPack && commsRoot) {
-      const pack = window.HubCommsPack.buildEventCommsPack(
-        {
-          title,
-          date: formatDateLine(ev.date || ev.dateLine),
-          location: ev.location,
-          description: plainDescription(ev.description),
-        },
-        listingUrl
-      );
-      commsRoot.hidden = false;
-      window.HubCommsPack.bindCommsPack(commsRoot, pack);
-    }
+    ensureSharePack({
+      id: ev.id || primaryId,
+      slug: ev.slug,
+      title,
+      description: plainDescription(ev.description),
+      date: ev.date || ev.dateLine,
+      starts_at: ev.starts_at || ev.date || ev.dateLine,
+      location: ev.location,
+      imageUrl: photo,
+      photo,
+      imagePosition: ev.imagePosition || ev.photoPosition,
+      organiserName: ev.organiserName || ev.groupName,
+      organiserLogo: ev.organiserLogo,
+    });
   }
 
   async function fetchPreview() {
@@ -244,6 +395,9 @@
           location: data.event.location,
           imageUrl: data.event.imageUrl,
           photo: data.event.imageUrl,
+          imagePosition: data.event.imagePosition,
+          organiserName: data.event.organiserName || data.event.groupName,
+          organiserLogo: data.event.organiserLogo,
           approvalStatus: data.event.approvalStatus,
         });
         return;
@@ -276,15 +430,8 @@
 
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
-    try {
-      await navigator.clipboard.writeText(listingUrl);
-      if (feedback) {
-        feedback.hidden = false;
-        setTimeout(() => {
-          feedback.hidden = true;
-        }, 2500);
-      }
-    } catch {
+    const copied = await copyText(listingUrl, feedback, '', 'Link copied to clipboard');
+    if (!copied) {
       const input = document.getElementById('ep-share-url');
       if (input) {
         input.select();
@@ -292,6 +439,71 @@
         if (feedback) feedback.hidden = false;
       }
     }
+  });
+
+  document.getElementById('ep-copy-caption')?.addEventListener('click', async () => {
+    const feedback = document.getElementById('ep-copy-feedback');
+    const btn = document.getElementById('ep-copy-caption');
+    const original = btn ? btn.textContent : '';
+    const copied = await copyText(sharePack && sharePack.caption, feedback, '', 'Caption copied to clipboard');
+    if (copied && btn) {
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = original || 'Copy social post';
+      }, 2000);
+    }
+  });
+
+  function downloadShareImage() {
+    if (!shareCardDataUrl || !window.HubOrganiserEventShare) return;
+    const name =
+      window.HubOrganiserEventShare.safeFilename(sharePack && sharePack.title) + '-event-promo.png';
+    window.HubOrganiserEventShare.downloadPngDataUrl(shareCardDataUrl, name);
+  }
+
+  downloadImageBtn?.addEventListener('click', downloadShareImage);
+  shareModalDownload?.addEventListener('click', downloadShareImage);
+
+  shareModalOpen?.addEventListener('click', async () => {
+    if (!sharePack || !sharePack.caption) return;
+    await copyText(sharePack.caption);
+    const feedback = document.getElementById('ep-copy-feedback');
+    if (feedback) {
+      feedback.hidden = false;
+      feedback.textContent = 'Caption copied — paste it into your post';
+      setTimeout(() => {
+        feedback.hidden = true;
+      }, 2500);
+    }
+  });
+
+  document.getElementById('ep-share-modal-copy-caption')?.addEventListener('click', async () => {
+    const btn = document.getElementById('ep-share-modal-copy-caption');
+    const original = btn ? btn.textContent : '';
+    await copyText(sharePack && sharePack.caption);
+    if (btn) {
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = original || 'Copy caption';
+      }, 2000);
+    }
+  });
+
+  ['ep-share-modal-backdrop', 'ep-share-modal-close'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('click', closeShareModal);
+  });
+
+  document.querySelectorAll('[data-share-platform]').forEach((btn) => {
+    btn.addEventListener('click', async function () {
+      const platform = btn.getAttribute('data-share-platform') || 'linkedin';
+      if (sharePackPromise) await sharePackPromise;
+      else if (shareEventData) await ensureSharePack(shareEventData);
+      openShareModal(platform);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && shareModal && !shareModal.hidden) closeShareModal();
   });
 
   function selectedPlanId() {

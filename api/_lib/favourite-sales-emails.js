@@ -13,19 +13,16 @@ const {
   groupTicketsByEventId,
 } = require('./ticket-sales');
 
+const { formatDateOnly, formatTime } = require('./event-timezone');
+
 function formatEventDateTime(startsAt) {
   const starts = startsAt ? new Date(startsAt) : null;
   if (!starts || Number.isNaN(starts.getTime())) {
     return { event_date: 'Date TBC', event_time: '' };
   }
   return {
-    event_date: starts.toLocaleDateString('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
-    event_time: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    event_date: formatDateOnly(startsAt),
+    event_time: formatTime(startsAt),
   };
 }
 
