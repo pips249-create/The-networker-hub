@@ -8,11 +8,12 @@
   /** Sector = letters + leading digit(s) before optional trailing letter (SW1A → SW1, M14 → M1). */
   function parseOutcode(raw) {
     if (!raw) return '';
-    var s = String(raw).trim().toUpperCase().replace(/\s+/g, '');
-    var m = s.match(UK_OUTCODE_RE);
-    if (m) return m[1];
-    var compact = s.replace(/[^A-Z0-9]/g, '');
-    m = compact.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/);
+    var text = String(raw).trim().toUpperCase();
+    var spacedMatch = text.match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?)\s+\d[A-Z]{2}\b/);
+    if (spacedMatch) return spacedMatch[1];
+    var compact = text.replace(/\s+/g, '');
+    var withoutInward = compact.replace(/(\d[A-Z]{2})$/, '');
+    var m = withoutInward.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/);
     return m ? m[1] : '';
   }
 
@@ -135,6 +136,54 @@
     if (!raw) return '';
     return String(raw).trim().toLowerCase().replace(/\s+/g, ' ');
   }
+
+  var UK_FULL_POSTCODE_RE = /\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b/i;
+
+  function parseFullUkPostcode(raw) {
+    var text = String(raw || '').trim();
+    if (!text) return '';
+    if (/\s/.test(text)) {
+      var spaced = text.match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?)\s+\d[A-Z]{2}\b/i);
+      if (spaced) {
+        var inward = text.match(/\d[A-Z]{2}\b/i);
+        return (spaced[1] + ' ' + (inward ? inward[0] : '')).trim().toUpperCase();
+      }
+      return '';
+    }
+    var compact = text.replace(/\s+/g, '').toUpperCase();
+    var parts = compact.match(/^(.+?)(\d[A-Z]{2})$/);
+    if (parts) {
+      var oc = parseOutcode(compact);
+      if (oc) return oc + ' ' + parts[2];
+    }
+    return '';
+  }
+
+  function parseCityFromLocationLabel(location, postcodeHint) {
+    var parts = String(location || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    if (!parts.length) return '';
+
+    var pcNorm = String(postcodeHint || parseFullUkPostcode(location) || '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var part = parts[i];
+      var partNorm = part.replace(/\s+/g, '').toUpperCase();
+      if (pcNorm && partNorm === pcNorm) continue;
+      if (parseOutcode(part)) continue;
+      if (part.length >= 2 && part.length <= 64) return part;
+    }
+    return '';
+  }
+
+  window.hubParseFullUkPostcode = parseFullUkPostcode;
+  window.hubParseCityFromLocationLabel = parseCityFromLocationLabel;
 
   function cityRegionFromInput(raw) {
     var norm = normalizeLocationText(raw);

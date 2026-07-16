@@ -72,12 +72,13 @@ const sectorSetCache = Object.create(null);
 
 function parseOutcode(raw) {
   if (!raw) return '';
-  const s = String(raw).trim().toUpperCase().replace(/\s+/g, '');
-  const m = s.match(UK_OUTCODE_RE);
-  if (m) return m[1];
-  const compact = s.replace(/[^A-Z0-9]/g, '');
-  const m2 = compact.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/);
-  return m2 ? m2[1] : '';
+  const text = String(raw).trim().toUpperCase();
+  const spacedMatch = text.match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?)\s+\d[A-Z]{2}\b/);
+  if (spacedMatch) return spacedMatch[1];
+  const compact = text.replace(/\s+/g, '');
+  const withoutInward = compact.replace(/(\d[A-Z]{2})$/, '');
+  const m = withoutInward.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/);
+  return m ? m[1] : '';
 }
 
 function sectorOf(outcode) {
@@ -134,6 +135,88 @@ function cityRegionFromInput(raw) {
   return null;
 }
 
+const UK_FULL_POSTCODE_RE = /\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b/i;
+
+/** Full UK postcode from free text (venue line, location label, etc.). */
+function parseFullUkPostcode(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  if (/\s/.test(text)) {
+    const spaced = text.match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?)\s+\d[A-Z]{2}\b/i);
+    if (spaced) {
+      const inward = text.match(/\d[A-Z]{2}\b/i);
+      return (spaced[1] + ' ' + (inward ? inward[0] : '')).trim().toUpperCase();
+    }
+    return '';
+  }
+  const compact = text.replace(/\s+/g, '').toUpperCase();
+  const parts = compact.match(/^(.+?)(\d[A-Z]{2})$/);
+  if (parts) {
+    const oc = parseOutcode(compact);
+    if (oc) return oc + ' ' + parts[2];
+  }
+  return '';
+}
+
+/** Best-effort city/town from a comma-separated location label. */
+function parseCityFromLocationLabel(location, postcodeHint) {
+  const parts = String(location || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!parts.length) return '';
+
+  const pcNorm = String(postcodeHint || parseFullUkPostcode(location) || '')
+    .replace(/\s+/g, '')
+    .toUpperCase();
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    const partNorm = part.replace(/\s+/g, '').toUpperCase();
+    if (pcNorm && partNorm === pcNorm) continue;
+    if (parseOutcode(part)) continue;
+    if (part.length >= 2 && part.length <= 64) return part;
+  }
+  return '';
+}
+
+/** Derive structured location fields when only a combined label was saved. */
+function deriveLocationFields(payload) {
+  const location = String(
+    payload.location || payload.fullAddress || payload.location_label || ''
+  ).trim();
+  let postcode = String(payload.postcode || '').trim();
+  let city = String(payload.city || '').trim();
+
+  if (!postcode && location) {
+    postcode = parseFullUkPostcode(location);
+  }
+  if (!city && location) {
+    city = parseCityFromLocationLabel(location, postcode);
+  }
+
+  return { location, postcode, city };
+}
+
+/** City name + postcode prefix for text fallbacks when outcode column is empty. */
+function regionLocationTextFilters(regionKey) {
+  const region = String(regionKey || '').trim().toLowerCase();
+  if (!region) return null;
+
+  const { getNetworkingRegion } = require('./networking-regions');
+  const meta = getNetworkingRegion(region);
+  const cityName = meta && meta.name ? String(meta.name).trim() : '';
+
+  const sectors = REGION_SECTORS[region] || [];
+  let postcodePrefix = '';
+  if (sectors.length) {
+    const letters = sectors[0].match(/^([A-Z]{2,})/);
+    postcodePrefix = letters ? letters[1] : '';
+  }
+
+  return { cityName, postcodePrefix };
+}
+
 /** Returns unique outcodes for SQL .in() filter, or null if no outcode-based filter. */
 function outcodeListForLocation(input, explicitOutcodes) {
   const fromClient = (explicitOutcodes || []).map((s) => parseOutcode(s)).filter(Boolean);
@@ -184,8 +267,13 @@ function bboxForRadiusMiles(lat, lng, radiusMi) {
 
 module.exports = {
   parseOutcode,
+  parseFullUkPostcode,
+  parseCityFromLocationLabel,
+  deriveLocationFields,
+  regionLocationTextFilters,
   outcodeListForLocation,
   haversineMiles,
   bboxForRadiusMiles,
   cityRegionFromInput,
+  REGION_SECTORS,
 };

@@ -46,6 +46,62 @@
   let eventFormat = normalizeEventFormat(
     params.get('format') || sessionStorage.getItem(FORMAT_STORAGE_KEY) || ''
   );
+  let duplicateSourceTitle = '';
+  let duplicateDefaultTitle = '';
+
+  const DUPLICATE_TITLE_SUFFIX_RE = / \(copy\)$/i;
+
+  function defaultDuplicateTitle(sourceTitle) {
+    const base = String(sourceTitle || '').trim();
+    if (!base) return '';
+    return DUPLICATE_TITLE_SUFFIX_RE.test(base) ? base : base + ' (copy)';
+  }
+
+  function duplicateDraftActive() {
+    return Boolean(duplicateSourceTitle && duplicateDefaultTitle);
+  }
+
+  function validateDuplicateTitle(title) {
+    if (!duplicateDraftActive()) return '';
+    const proposed = String(title || '').trim();
+    if (!proposed) return 'Enter an event title.';
+    if (proposed.toLowerCase() === duplicateSourceTitle.toLowerCase()) {
+      return (
+        'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
+      );
+    }
+    return '';
+  }
+
+  function applyDuplicateDraftUi(ev) {
+    const banner = document.getElementById('ee-duplicate-banner');
+    duplicateSourceTitle = '';
+    duplicateDefaultTitle = '';
+    if (!ev || !ev.duplicatedFromEventId) {
+      if (banner) banner.hidden = true;
+      return;
+    }
+    duplicateSourceTitle = String(ev.duplicateSourceTitle || '').trim();
+    if (!duplicateSourceTitle && ev.title) {
+      duplicateSourceTitle = String(ev.title).replace(DUPLICATE_TITLE_SUFFIX_RE, '').trim();
+    }
+    duplicateDefaultTitle = defaultDuplicateTitle(duplicateSourceTitle);
+    if (banner) {
+      banner.hidden = false;
+      banner.innerHTML =
+        'This is a <strong>draft copy</strong> of “' +
+        escHtml(duplicateSourceTitle || 'the original event') +
+        '”. Keep “(copy)” in the title or choose a new name so it stays separate from the original series.';
+    }
+  }
+
+  function escHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
   const FORMAT_LABELS = {
     'in-person': 'In person',
@@ -678,13 +734,22 @@
 
   function snapshotLocationFromEvent(ev) {
     const normalized = normalizeEventForForm(ev);
+    let city = normalized.city || '';
+    let postcode = normalized.postcode || '';
+    const location = normalized.location || '';
+    if (!postcode && location && window.hubParseFullUkPostcode) {
+      postcode = window.hubParseFullUkPostcode(location);
+    }
+    if (!city && location && window.hubParseCityFromLocationLabel) {
+      city = window.hubParseCityFromLocationLabel(location, postcode);
+    }
     cachedLocationFields = {
       venue: normalized.venue || '',
       addressLine1: normalized.addressLine1 || '',
-      city: normalized.city || '',
-      postcode: normalized.postcode || '',
-      location: normalized.location || '',
-      fullAddress: normalized.location || '',
+      city: city,
+      postcode: postcode,
+      location: location,
+      fullAddress: location,
       eventFormat: resolveEventFormat(ev),
       onlinePlatform: normalized.onlinePlatform || '',
       onlineLink: normalized.onlineLink || '',
@@ -1454,6 +1519,12 @@
       titleBtn.addEventListener('click', () => {
         const group = getSelectedGroup();
         if (!group || !group.name) return;
+        if (duplicateDraftActive()) {
+          const ok = window.confirm(
+            'Replace the draft copy title with your organiser page name? The copy should keep “(copy)” or use a different name from the original event.'
+          );
+          if (!ok) return;
+        }
         const titleEl = document.getElementById('ee-title');
         if (titleEl) titleEl.value = group.name;
       });
@@ -1524,6 +1595,7 @@
 
   function findSeriesPeers(ev, allEvents) {
     if (!ev || !ev.id) return [];
+    if (String(ev.duplicatedFromEventId || '').trim()) return [ev];
     const all = allEvents || [];
     const seriesGroupId = String(ev.seriesGroupId || '').trim();
     if (seriesGroupId) {
@@ -1538,6 +1610,7 @@
       if (peerGroup !== groupId) return false;
       if (String(peer.title || '').trim().toLowerCase() !== titleKey) return false;
       if (String(peer.seriesGroupId || '').trim()) return false;
+      if (String(peer.duplicatedFromEventId || '').trim()) return false;
       return true;
     });
     return peers.length > 1 ? sortEventsByDate(peers) : [ev];
@@ -1607,6 +1680,7 @@
         ? rawEv._seriesPeers
         : findSeriesPeers(ev, []);
     applySeriesEditUi(seriesPeers.length > 1 ? seriesPeers : [], ev);
+    applyDuplicateDraftUi(rawEv);
     applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
   }
 
@@ -1770,6 +1844,11 @@
       showAlert('Choose a group and enter an event title.');
       return;
     }
+    const duplicateTitleError = validateDuplicateTitle(title);
+    if (duplicateTitleError) {
+      showAlert(duplicateTitleError);
+      return;
+    }
 
     const description = document.getElementById('ee-description').value.trim();
     if (countWords(description) > DESCRIPTION_MAX_WORDS) {
@@ -1867,7 +1946,10 @@
       const msg =
         err === 'missing_dates'
           ? 'Select at least one date on the calendar before publishing.'
-          : res.data.message || err || 'Could not save event';
+          : err === 'duplicate_title_matches_source'
+            ? res.data.message ||
+              'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
+            : res.data.message || err || 'Could not save event';
       showAlert(msg);
       return;
     }

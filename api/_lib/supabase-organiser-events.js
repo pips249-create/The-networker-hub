@@ -51,6 +51,50 @@ function newSeriesGroupId() {
   return crypto.randomUUID();
 }
 
+const DUPLICATE_TITLE_SUFFIX_RE = / \(copy\)$/i;
+
+function defaultDuplicateTitle(sourceTitle) {
+  const base = String(sourceTitle || 'Event').trim() || 'Event';
+  return DUPLICATE_TITLE_SUFFIX_RE.test(base) ? base : base + ' (copy)';
+}
+
+/** Block reverting a draft copy to the source title; clear marker after an explicit rename. */
+async function applyDuplicateTitleGuard(sb, existingRow, payload) {
+  const sourceId = String(existingRow?.duplicated_from_event_id || '').trim();
+  if (!sourceId || payload.title == null) return payload;
+
+  const proposed = String(payload.title || '').trim();
+  const { data: sourceRow, error } = await sb
+    .from('events')
+    .select('title')
+    .eq('id', sourceId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+
+  const sourceTitle = String(sourceRow?.title || '').trim();
+  if (!sourceTitle) return payload;
+
+  const sourceKey = sourceTitle.toLowerCase();
+  const proposedKey = proposed.toLowerCase();
+  const defaultCopyKey = defaultDuplicateTitle(sourceTitle).toLowerCase();
+
+  if (proposedKey === sourceKey) {
+    const err = new Error(
+      'This draft copy must keep “(copy)” in the title or use a new name — it cannot share the same title as the original event.'
+    );
+    err.status = 400;
+    err.code = 'duplicate_title_matches_source';
+    throw err;
+  }
+
+  const next = { ...payload };
+  if (proposedKey !== defaultCopyKey) {
+    next.duplicatedFromEventId = null;
+    next._clearDuplicatedFrom = true;
+  }
+  return next;
+}
+
 /** Assign a shared series id when saving multiple dates in one listing. */
 function resolveSeriesGroupId(existingSeriesGroupId, occurrenceCount) {
   const existing = String(existingSeriesGroupId || '').trim();
@@ -61,6 +105,7 @@ function resolveSeriesGroupId(existingSeriesGroupId, occurrenceCount) {
 
 const { normalizeEventType } = require('./event-types');
 const { ukOutcode } = require('./supabase-events');
+const { deriveLocationFields } = require('./uk-outcode');
 
 function mapEventType(type) {
   return normalizeEventType(type);
@@ -162,6 +207,7 @@ function rowToEvent(row) {
     attendanceMode: normalizeAttendanceMode(row.attendance_mode),
     alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),
     alumniSourceEventId: row.alumni_source_event_id || null,
+    duplicatedFromEventId: row.duplicated_from_event_id || null,
     guestPassesDisabled: Boolean(row.guest_passes_disabled),
     featured: isEventCurrentlyFeatured(row),
     featuredUntil: row.featured_until || null,
@@ -506,7 +552,19 @@ async function getEventById(eventId) {
     e.status = 404;
     throw e;
   }
-  return rowToEvent(data);
+  const event = rowToEvent(data);
+  if (event.duplicatedFromEventId) {
+    const { data: sourceRow, error: sourceErr } = await sb
+      .from('events')
+      .select('title')
+      .eq('id', event.duplicatedFromEventId)
+      .maybeSingle();
+    if (sourceErr) throw new Error(sourceErr.message);
+    if (sourceRow?.title) {
+      event.duplicateSourceTitle = String(sourceRow.title).trim();
+    }
+  }
+  return event;
 }
 
 async function resolveEventPhotoUrl(payload, eventId) {
@@ -606,10 +664,19 @@ async function buildEventRow(payload, eventId, mode) {
     row.meeting_type = mapMeetingType(payload.eventFormat);
     row.venue = payload.venue || null;
     row.address = payload.addressLine1 || payload.fullAddress || null;
-    row.city = payload.city || null;
-    row.postcode = payload.postcode || null;
-    row.outcode = ukOutcode(payload.postcode) || null;
-    row.location_label = payload.location || payload.city || payload.venue || null;
+    const derived = deriveLocationFields(payload);
+    row.city = derived.city || null;
+    row.postcode = derived.postcode || null;
+    row.outcode = ukOutcode(derived.postcode) || null;
+    row.location_label = derived.location || derived.city || payload.venue || null;
+    if (row.postcode) {
+      const geo = await geocodeUkPostcode(row.postcode);
+      if (geo) {
+        if (geo.latitude != null) row.latitude = geo.latitude;
+        if (geo.longitude != null) row.longitude = geo.longitude;
+        if (!row.city && geo.city) row.city = geo.city;
+      }
+    }
   }
 
   row.meeting_link = payload.onlineLink || null;
@@ -630,6 +697,12 @@ async function buildEventRow(payload, eventId, mode) {
   if (payload.seriesGroupId) {
     row.series_group_id = payload.seriesGroupId;
   }
+  if (payload.duplicatedFromEventId) {
+    row.duplicated_from_event_id = payload.duplicatedFromEventId;
+  }
+  if (payload._clearDuplicatedFrom) {
+    row.duplicated_from_event_id = null;
+  }
 
   if (!isLocked && touchDate) {
     const dates = parseDateIso(payload.date, payload.endDate);
@@ -639,15 +712,6 @@ async function buildEventRow(payload, eventId, mode) {
     const dates = parseDateIso(payload.date, payload.endDate);
     row.starts_at = dates.starts_at;
     row.ends_at = dates.ends_at;
-  }
-
-  if (!isLocked && payload.postcode) {
-    const geo = await geocodeUkPostcode(payload.postcode);
-    if (geo) {
-      if (geo.latitude != null) row.latitude = geo.latitude;
-      if (geo.longitude != null) row.longitude = geo.longitude;
-      if (!row.city && geo.city) row.city = geo.city;
-    }
   }
 
   if (listingStatus != null) {
@@ -744,11 +808,12 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
   }
 
   let title = String(row.title || 'Event').trim() || 'Event';
-  if (!/\(copy\)$/i.test(title)) title += ' (copy)';
+  title = defaultDuplicateTitle(title);
 
   const event = await createEvent({
     groupId: organiserId,
     title,
+    duplicatedFromEventId: id,
     type: normalizeEventType(row.event_type || ''),
     description: plainEventDescription(row.description),
     location: String(row.location_label || row.city || row.venue || '').trim(),
@@ -856,7 +921,8 @@ async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
   const previousLink = String(existing?.meeting_link || '').trim();
-  const patchPayload = { ...payload, groupId: payload.groupId };
+  let patchPayload = { ...payload, groupId: payload.groupId };
+  patchPayload = await applyDuplicateTitleGuard(sb, existing, patchPayload);
   const saleLocked =
     existing &&
     (existing.locked ||
@@ -1252,6 +1318,7 @@ function seriesTitleKey(row) {
 
 async function fetchSeriesPeerIds(sb, row) {
   if (!row?.id) return [];
+  if (row.duplicated_from_event_id) return [];
   const exclude = new Set([row.id]);
 
   if (row.series_group_id) {
@@ -1270,7 +1337,7 @@ async function fetchSeriesPeerIds(sb, row) {
 
   const { data, error } = await sb
     .from('events')
-    .select('id, title, series_group_id')
+    .select('id, title, series_group_id, duplicated_from_event_id')
     .eq('organiser_id', organiserId)
     .in('status', ACTIVE_SERIES_STATUSES);
   if (error) throw new Error(error.message);
@@ -1278,6 +1345,7 @@ async function fetchSeriesPeerIds(sb, row) {
   const peerIds = (data || [])
     .filter((peer) => {
       if (seriesTitleKey(peer) !== titleKey) return false;
+      if (String(peer.duplicated_from_event_id || '').trim()) return false;
       // Title-only fallback for legacy rows — never merge into an explicit series.
       return !String(peer.series_group_id || '').trim();
     })

@@ -3,7 +3,7 @@
  */
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
-const { outcodeListForLocation, haversineMiles, bboxForRadiusMiles, cityRegionFromInput } = require('./uk-outcode');
+const { outcodeListForLocation, haversineMiles, bboxForRadiusMiles, cityRegionFromInput, regionLocationTextFilters } = require('./uk-outcode');
 const {
   eventsFromPublishedRows,
   isUpcomingBrowseEvent,
@@ -138,10 +138,26 @@ function applySearchFilter(query, params) {
 function applyOutcodeFilter(query, params) {
   const outcodes = outcodeListForLocation(params.location, params.outcodes);
   if (outcodes && outcodes.length) {
-    if (outcodes.length <= 120) {
-      return query.in('outcode', outcodes);
+    const ocList = outcodes.length <= 120 ? outcodes : outcodes.slice(0, 120);
+    const region = cityRegionFromInput(params.location);
+    const orParts = [`outcode.in.(${ocList.join(',')})`];
+
+    if (region) {
+      const textFilters = regionLocationTextFilters(region);
+      if (textFilters && textFilters.cityName) {
+        const cityTerm = sanitizeSearchTerm(textFilters.cityName.toLowerCase());
+        if (cityTerm.length >= 3) {
+          orParts.push(`city.ilike.%${cityTerm}%`);
+          orParts.push(`location_label.ilike.%${cityTerm}%`);
+        }
+      }
+      if (textFilters && textFilters.postcodePrefix && textFilters.postcodePrefix.length >= 2) {
+        orParts.push(`postcode.ilike.${textFilters.postcodePrefix}%`);
+        orParts.push(`location_label.ilike.%${textFilters.postcodePrefix}%`);
+      }
     }
-    return query.in('outcode', outcodes.slice(0, 120));
+
+    return query.or(orParts.join(','));
   }
 
   const raw = params.location;
@@ -471,6 +487,9 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   let featured = [];
   if (params.mode === 'featured' || params.includeMeta) {
+    // Spotlight uses location, search, format, dates, and price floor — but not
+    // event-type chips, free-only, or max price, so premium stays visible when
+    // users refine the grid (Option B: relevant premium).
     let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
     fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
     fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX);
@@ -482,8 +501,11 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   let meta = null;
   if (params.includeMeta) {
+    const { listActiveFeaturedEventRows } = require('./event-featured-slots');
+    const activeFeaturedRows = await listActiveFeaturedEventRows();
     meta = {
       typeCounts: await fetchBrowseTypeCounts(sb, params),
+      spotlightHasActiveFeatured: activeFeaturedRows.length > 0,
     };
   }
 

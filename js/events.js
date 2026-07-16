@@ -10,6 +10,7 @@
     status: document.getElementById('load-status'),
     featuredList: document.getElementById('featured-list'),
     spotlightTrack: document.getElementById('spotlight-track'),
+    spotlightNote: document.getElementById('spotlight-note'),
     listings: document.getElementById('event-listings'),
     resultsCount: document.getElementById('results-count'),
     location: document.getElementById('location'),
@@ -51,10 +52,97 @@
   }
 
   function hasAnyFeaturedEvents() {
+    if (typeof window.hubBrowseHasActiveFeatured === 'boolean') {
+      return window.hubBrowseHasActiveFeatured;
+    }
     const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
     return source.some(function (ev) {
       return ev.featured;
     });
+  }
+
+  function spotlightRefinementNote() {
+    if (!window.hubSpotlightRefinementFiltersActive) return '';
+    const refinement = window.hubSpotlightRefinementFiltersActive();
+    if (!refinement || !refinement.any) return '';
+    const parts = [];
+    if (refinement.type) parts.push('other event types');
+    if (refinement.freeOnly || refinement.priceMax) parts.push('different ticket prices');
+    if (!parts.length) return '';
+    return (
+      'Premium listings match your area and dates — they may include ' + parts.join(' and ') + '.'
+    );
+  }
+
+  function spotlightEmptyTitle() {
+    const locationLabel =
+      window.hubSpotlightLocationLabel && window.hubSpotlightLocationLabel();
+    const searchInput = document.getElementById('search');
+    const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
+    if (locationLabel && searchQ) {
+      return (
+        'No premium events for “' +
+        escapeHtml(searchQ) +
+        '” in ' +
+        escapeHtml(locationLabel) +
+        ' right now'
+      );
+    }
+    if (locationLabel) {
+      return 'No premium events in ' + escapeHtml(locationLabel) + ' right now';
+    }
+    if (searchQ) {
+      return 'No premium events for “' + escapeHtml(searchQ) + '” right now';
+    }
+    return 'No premium events match your current filters';
+  }
+
+  function spotlightEmptyHtml() {
+    const hasLocation =
+      window.hubSpotlightHasLocationFilter && window.hubSpotlightHasLocationFilter();
+    const clearLocationBtn = hasLocation
+      ? '<button type="button" class="spotlight-empty-btn" data-spotlight-clear="location">Clear location</button>'
+      : '';
+    return (
+      '<div class="spotlight-empty-block" role="status">' +
+      '<p class="spotlight-empty-title">' +
+      spotlightEmptyTitle() +
+      '</p>' +
+      '<p class="spotlight-empty-text">Try widening your search area or clearing filters. Premium listings still follow your location and dates.</p>' +
+      '<div class="spotlight-empty-actions">' +
+      clearLocationBtn +
+      '<button type="button" class="spotlight-empty-btn spotlight-empty-btn--primary" data-spotlight-clear="all">Clear all filters</button>' +
+      '</div></div>'
+    );
+  }
+
+  function bindSpotlightEmptyActions(root) {
+    if (!root || root.dataset.spotlightEmptyBound === '1') return;
+    root.dataset.spotlightEmptyBound = '1';
+    root.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-spotlight-clear]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-spotlight-clear');
+      if (action === 'location' && window.hubClearSpotlightLocationFilter) {
+        window.hubClearSpotlightLocationFilter();
+        return;
+      }
+      if (action === 'all' && window.hubResetFilters) {
+        window.hubResetFilters();
+      }
+    });
+  }
+
+  function renderSpotlightNote(hasPremium) {
+    if (!els.spotlightNote) return;
+    const note = hasPremium ? spotlightRefinementNote() : '';
+    if (!note) {
+      els.spotlightNote.hidden = true;
+      els.spotlightNote.textContent = '';
+      return;
+    }
+    els.spotlightNote.textContent = note;
+    els.spotlightNote.hidden = false;
   }
 
   function stopSpotlightAuto() {
@@ -845,13 +933,13 @@
     if (document.body.classList.contains('browse-mode-organisers')) return;
 
     const premium = getSpotlightPremium();
+    renderSpotlightNote(premium.length > 0);
 
     if (els.spotlightTrack) {
       if (!premium.length) {
         if (hasAnyFeaturedEvents()) {
-          const emptyMsg =
-            'No premium events match your current filters. Try clearing filters or widening your search area.';
-          els.spotlightTrack.innerHTML = '<p class="spotlight-empty">' + emptyMsg + '</p>';
+          els.spotlightTrack.innerHTML = spotlightEmptyHtml();
+          bindSpotlightEmptyActions(els.spotlightTrack);
         } else {
           els.spotlightTrack.innerHTML = spotlightBoostPromoCard();
           bindSpotlightBoostPromo();

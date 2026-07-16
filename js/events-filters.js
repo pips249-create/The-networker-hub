@@ -926,6 +926,55 @@
   window.hubGetActiveTypeTabs = function () {
     return activeTypeTabs.slice();
   };
+
+  window.hubSpotlightLocationLabel = function () {
+    if (window.hubIsNearMeActive && window.hubIsNearMeActive()) {
+      var miles = window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15;
+      return 'near you (' + miles + ' mi)';
+    }
+    var pc = postcodeInput ? String(postcodeInput.value || '').trim() : '';
+    if (pc) return pc;
+    var regional = window.hubRegionalLanding;
+    if (regional && regional.name) return String(regional.name).trim();
+    return '';
+  };
+
+  window.hubSpotlightRefinementFiltersActive = function () {
+    var typeActive = activeTypeTabs.length > 0;
+    var freeOnly = !!(checkFreeOnly && checkFreeOnly.checked);
+    var priceMax = !!(priceMaxInput && String(priceMaxInput.value || '').trim() !== '');
+    var searchQ = searchInput ? String(searchInput.value || '').trim() : '';
+    return {
+      type: typeActive,
+      freeOnly: freeOnly,
+      priceMax: priceMax,
+      search: !!searchQ,
+      any: typeActive || freeOnly || priceMax,
+    };
+  };
+
+  window.hubSpotlightHasLocationFilter = function () {
+    if (window.hubIsNearMeActive && window.hubIsNearMeActive()) return true;
+    var pc = postcodeInput ? String(postcodeInput.value || '').trim() : '';
+    if (pc) return true;
+    return !!(window.hubRegionalLanding && window.hubRegionalLanding.location);
+  };
+
+  window.hubClearSpotlightLocationFilter = function () {
+    var regional = window.hubRegionalLanding;
+    if (regional && regional.location) {
+      window.location.href = '/events/';
+      return;
+    }
+    if (postcodeInput) postcodeInput.value = '';
+    if (toggleNearMe) toggleNearMe.checked = false;
+    if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
+    window.hubUserCoords = null;
+    window.hubLocationFilterState = null;
+    window.hubLocationFilterCoords = null;
+    syncNearRadiusUi();
+    applyFilters({ immediate: true });
+  };
   window.hubFilterServerBrowseEvents = function (list) {
     // Drop events that have already started — server should filter too, but
     // keep this as a safety net for cached API responses.

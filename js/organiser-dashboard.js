@@ -1067,7 +1067,7 @@
       '<li>Top placement in search and category results</li>' +
       '<li>Featured badge on your listing card</li>' +
       '</ul>' +
-      '<p class="org-featured-upgrade-policy">Featured placement runs until your event starts when that is sooner than your chosen period — listings leave the browse page once the event begins.</p>' +
+      '<p class="org-featured-upgrade-policy">Featured in Premium Spotlight for people browsing your area and dates — still visible when they filter by event type or ticket price. Placement runs until your event starts when that is sooner than your chosen period.</p>' +
       '</details>' +
       '<div class="org-featured-upgrade-plan">' +
       '<span class="org-featured-upgrade-plan-label">How long to feature each event</span>' +
@@ -1892,6 +1892,9 @@
     if (seriesGroupId) {
       return 'sg:' + seriesGroupId;
     }
+    if (String(ev.duplicatedFromEventId || '').trim()) {
+      return 'dup:' + String(ev.id || '');
+    }
     const pattern = String(ev.recurrencePattern || '').trim().toLowerCase();
     const endDate = String(ev.recurrenceEndDate || '').trim().slice(0, 10);
     if (pattern && endDate) {
@@ -1901,6 +1904,7 @@
       if (eventOrganiserGroupId(peer) !== groupId) return false;
       if (String(peer.title || '').trim().toLowerCase() !== title) return false;
       if (String(peer.seriesGroupId || '').trim()) return false;
+      if (String(peer.duplicatedFromEventId || '').trim()) return false;
       return true;
     });
     if (sameTitlePeers.length > 1) {

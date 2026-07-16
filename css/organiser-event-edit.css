@@ -1979,6 +1979,17 @@ body.ee-is-new-listing #ee-event-stats {
   color: var(--ee-text);
 }
 
+.ee-duplicate-banner {
+  background: #fff8e6;
+  border: 1px solid #e8c96a;
+  border-radius: var(--ee-radius);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: var(--ee-text);
+}
+
 .ee-card.is-series-locked .ee-field input,
 .ee-card.is-series-locked .ee-field select,
 .ee-card.is-series-locked .ee-field textarea,
@@ -2317,6 +2328,127 @@ body.ee-is-loading {
   justify-content: flex-end;
   margin-top: 16px;
   flex-wrap: wrap;
+}
+
+body.ee-modal-open {
+  overflow: hidden;
+}
+
+.ee-publish-review-panel {
+  width: min(100%, 560px);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+}
+
+.ee-publish-review-title {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+  color: var(--ee-navy, #0d1f3c);
+}
+
+.ee-publish-review-lede {
+  margin: 0 0 18px;
+  color: var(--ee-muted, #635c5e);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.ee-publish-review-body {
+  display: grid;
+  gap: 14px;
+}
+
+.ee-publish-review-section {
+  padding: 14px 16px;
+  border: 1px solid rgba(13, 31, 60, 0.1);
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+.ee-publish-review-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ee-publish-review-section-head h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-muted, #635c5e);
+}
+
+.ee-publish-review-edit {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ee-link, #1a5fb4);
+  text-decoration: none;
+}
+
+.ee-publish-review-edit:hover {
+  text-decoration: underline;
+}
+
+.ee-publish-review-value {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--ee-navy, #0d1f3c);
+}
+
+.ee-publish-review-sub {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ee-muted, #635c5e);
+}
+
+.ee-publish-review-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ee-navy, #0d1f3c);
+}
+
+.ee-publish-review-list li + li {
+  margin-top: 4px;
+}
+
+.ee-publish-review-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ee-publish-review-dates li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(13, 31, 60, 0.12);
+  font-size: 0.88rem;
+}
+
+.ee-publish-review-next {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f0f6ff;
+  color: #1e3a5f;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.ee-publish-review-actions {
+  margin-top: 18px;
 }
 
 /* Featured listing upsell (post-publish) */

@@ -324,6 +324,12 @@
     copy.city = String(ev.city || '').trim();
     copy.postcode = String(ev.postcode || '').trim();
     copy.location = String(ev.location || '').trim();
+    if (!copy.postcode && copy.location && window.hubParseFullUkPostcode) {
+      copy.postcode = window.hubParseFullUkPostcode(copy.location);
+    }
+    if (!copy.city && copy.location && window.hubParseCityFromLocationLabel) {
+      copy.city = window.hubParseCityFromLocationLabel(copy.location, copy.postcode);
+    }
     copy.onlinePlatform = String(ev.onlinePlatform || '').trim();
     copy.onlineLink = String(ev.onlineLink || '').trim();
     if (!copy.onlineLink && looksLikeUrl(copy.location)) copy.onlineLink = copy.location;

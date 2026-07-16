@@ -81,7 +81,7 @@
       return (
         'Featured placement runs for up to ' +
         preview.planLabel +
-        ' while your event is on the browse page.'
+        ' for people browsing your area and dates on the hub.'
       );
     }
     var eventDate = formatDate(opts.eventStartIso || opts.date);

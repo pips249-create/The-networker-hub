@@ -48,6 +48,7 @@ function isPublicListingPath(pathname) {
   const oppMatch = path.match(/^\/opportunities\/([^/]+)$/);
   if (oppMatch && !SKIP_OPPORTUNITY_SLUGS.has(decodeURIComponent(oppMatch[1]))) return true;
   if (/^\/networking\/[^/]+$/.test(path)) return true;
+  if (/^\/opportunities\/networking\/[^/]+$/.test(path)) return true;
   return false;
 }
 

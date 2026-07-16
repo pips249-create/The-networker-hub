@@ -6,7 +6,7 @@ const { isEventStarted } = require('./event-timezone');
 const ACTIVE_SERIES_STATUSES = ['draft', 'published', 'unpublished'];
 
 const SERIES_PEER_COLUMNS =
-  'id, series_group_id, organiser_id, title, status, approval_status, starts_at, recurrence_pattern, recurrence_end_date, featured, featured_until, featured_plan, featured_paid_at, featured_amount_gbp';
+  'id, series_group_id, duplicated_from_event_id, organiser_id, title, status, approval_status, starts_at, recurrence_pattern, recurrence_end_date, featured, featured_until, featured_plan, featured_paid_at, featured_amount_gbp';
 
 function seriesTitleKey(row) {
   return String(row?.title || '')
@@ -22,6 +22,7 @@ function isPublishedApprovedRow(row) {
 
 async function fetchSeriesPeerRows(sb, row) {
   if (!row?.id) return [];
+  if (row.duplicated_from_event_id) return [row];
 
   let peers = [];
 
@@ -52,6 +53,7 @@ async function fetchSeriesPeerRows(sb, row) {
 
     peers = (data || []).filter((peer) => {
       if (seriesTitleKey(peer) !== titleKey) return false;
+      if (String(peer.duplicated_from_event_id || '').trim()) return false;
       if (String(peer.series_group_id || '').trim()) return false;
       if (pattern && endDate) {
         return (

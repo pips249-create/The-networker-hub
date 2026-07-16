@@ -113,6 +113,9 @@
     } else {
       window.hubBrowseTypeCounts = null;
     }
+    if (data.meta && typeof data.meta.spotlightHasActiveFeatured === 'boolean') {
+      window.hubBrowseHasActiveFeatured = data.meta.spotlightHasActiveFeatured;
+    }
     if (typeof page === 'number') {
       window.hubBrowseCurrentPage = page;
     }

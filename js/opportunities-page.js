@@ -54,8 +54,40 @@
   var spotlightAnimating = false;
   var spotlightCarouselBound = false;
   var pendingResultsScroll = false;
+  var activeCitySlug = '';
+  var activeCityName = '';
 
   var els = {};
+
+  function syncRegionalLanding() {
+    var regional = window.hubOppRegionalLanding;
+    activeCitySlug = regional && regional.slug ? String(regional.slug) : '';
+    activeCityName = regional && regional.cityQuery ? String(regional.cityQuery) : '';
+    if (!activeCitySlug) {
+      var params = new URLSearchParams(window.location.search);
+      var city = String(params.get('city') || '').trim().toLowerCase();
+      if (city) activeCitySlug = city;
+    }
+  }
+
+  function matchesCityRegion(item) {
+    if (!activeCityName) return true;
+    var hay = [
+      item.locationLabel,
+      item.searchText,
+      item.title,
+      item.desc,
+      (item.tags || []).join(' '),
+      (item.filterTags || []).join(' '),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    var city = activeCityName.toLowerCase();
+    if (hay.indexOf(city) !== -1) return true;
+    if (city.indexOf('london') !== -1 && hay.indexOf('london') !== -1) return true;
+    return false;
+  }
 
   function cacheEls() {
     els.mount = document.getElementById('opp-listings-mount');
@@ -416,6 +448,7 @@
   }
 
   function matchesFilter(item) {
+    if (activeCitySlug && !matchesCityRegion(item)) return false;
     if (activeType !== 'all' && item.type !== activeType && !hasTag(item, activeType)) return false;
     if (activeCategory && item.category !== activeCategory) return false;
     if (!matchesSidebar(item)) return false;
@@ -793,7 +826,9 @@
   function updateResultsCount(shown, total, rangeStart, rangeEnd) {
     if (!els.resultsCount) return;
     if (!total) {
-      els.resultsCount.innerHTML = 'No listings match your filters';
+      els.resultsCount.innerHTML = activeCityName
+        ? 'No opportunities in ' + activeCityName + ' match your filters'
+        : 'No listings match your filters';
       return;
     }
     if (total <= PAGE_SIZE) {
@@ -945,11 +980,21 @@
 
     if (!filtered.length) {
       disconnectLazyObserver();
+      var emptyTitle = activeCityName
+        ? 'No opportunities in ' + escapeHtml(activeCityName) + ' yet'
+        : 'No opportunities match your filters';
+      var emptyLead = activeCityName
+        ? 'Try clearing filters or browse all UK listings.'
+        : 'Try adjusting your search or clear all filters.';
       els.mount.innerHTML =
         '<div class="opp-no-results is-visible" role="status">' +
         '<div class="opp-no-results-icon" aria-hidden="true">🔍</div>' +
-        '<h3>No opportunities match your filters</h3>' +
-        '<p>Try adjusting your search or <button type="button" class="opp-clear-btn" id="opp-clear-filters">clear all filters</button>.</p>' +
+        '<h3>' +
+        emptyTitle +
+        '</h3>' +
+        '<p>' +
+        emptyLead +
+        ' <button type="button" class="opp-clear-btn" id="opp-clear-filters">Clear filters</button>.</p>' +
         '</div>';
       updateResultsCount(0, 0, 0, 0);
       bindClearFilters();
@@ -1046,6 +1091,7 @@
   }
 
   function readFiltersFromUrl() {
+    syncRegionalLanding();
     var params = new URLSearchParams(window.location.search);
     var type = params.get('type');
     if (type && TAB_TYPES.indexOf(type) !== -1) activeType = type;
@@ -1100,9 +1146,13 @@
     if (c.sort && c.sort !== 'recommended') params.set('sort', c.sort);
     if (c.minInvest !== '' && c.minInvest != null) params.set('min', String(c.minInvest));
     if (c.maxInvest !== '' && c.maxInvest != null) params.set('max', String(c.maxInvest));
+    if (activeCitySlug) params.set('city', activeCitySlug);
 
     var qs = params.toString();
-    var next = window.location.pathname + (qs ? '?' + qs : '') + (window.location.hash || '');
+    var path = activeCitySlug
+      ? '/opportunities/networking/' + encodeURIComponent(activeCitySlug)
+      : window.location.pathname;
+    var next = path + (qs ? '?' + qs : '') + (window.location.hash || '');
     var current = window.location.pathname + window.location.search + (window.location.hash || '');
     if (next !== current) {
       window.history.replaceState({}, '', next);
@@ -1126,6 +1176,20 @@
   }
 
   function resetFilters() {
+    var regional = window.hubOppRegionalLanding;
+    if (regional && regional.slug && !searchQ && !activeCategory && activeType === 'all') {
+      var hasExtra =
+        (els.filterInvest && els.filterInvest.value) ||
+        (els.filterLocation && els.filterLocation.value) ||
+        (els.filterCommitment && els.filterCommitment.value) ||
+        minInvest !== null ||
+        maxInvest !== null;
+      if (!hasExtra) {
+        window.location.href = '/opportunities/';
+        return;
+      }
+    }
+
     activeType = 'all';
     activeCategory = '';
     searchQ = '';
