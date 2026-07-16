@@ -1111,7 +1111,11 @@
     page = 1;
     await fetchRosterPage(1);
     const eventId = selectedEventId();
-    await loadReports(eventId);
+    try {
+      await loadReports(eventId);
+    } catch (err) {
+      showAlert(err.message || 'Could not load member reports.', 'error');
+    }
     renderRoster();
   }
 

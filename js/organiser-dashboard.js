@@ -6404,26 +6404,49 @@
     return parts.join(' · ');
   }
 
+  function membershipGroupOptionLabel(g) {
+    const name = g.name || 'Organiser page';
+    const active = Number(g.rosterSummary && g.rosterSummary.active) || 0;
+    if (!active) return name;
+    return name + ' (' + active + (active === 1 ? ' member' : ' members') + ')';
+  }
+
+  function preferredMembershipGroupId(groups, preferredId) {
+    const list = (groups || []).slice().sort(function (a, b) {
+      return groupMembershipPriority(b) - groupMembershipPriority(a);
+    });
+    if (!list.length) return '';
+    const wanted = String(preferredId || '').trim();
+    if (wanted) {
+      const match = list.find(function (g) {
+        return g.id === wanted;
+      });
+      if (match) return match.id;
+    }
+    return list[0].id;
+  }
+
   function fillMembershipsGroupFilter() {
     const sel = document.getElementById('filter-memberships-group');
     if (!sel) return;
-    const groups = memberListGroups();
+    const groups = memberListGroups()
+      .slice()
+      .sort(function (a, b) {
+        return groupMembershipPriority(b) - groupMembershipPriority(a);
+      });
     const prev = filters.membershipsGroup || sel.value || '';
     sel.innerHTML = '';
     groups.forEach(function (g) {
       const opt = document.createElement('option');
       opt.value = g.id;
-      opt.textContent = g.name || 'Organiser page';
+      opt.textContent = membershipGroupOptionLabel(g);
       sel.appendChild(opt);
     });
     if (!groups.length) {
       filters.membershipsGroup = '';
       return;
     }
-    const match = groups.find(function (g) {
-      return g.id === prev;
-    });
-    filters.membershipsGroup = (match || groups[0]).id;
+    filters.membershipsGroup = preferredMembershipGroupId(groups, prev);
     sel.value = filters.membershipsGroup;
     sel.hidden = groups.length <= 1;
     const label = sel.closest('.org-filter-bar--memberships-group')?.querySelector('.org-filter-label');
