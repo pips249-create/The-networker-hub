@@ -13,6 +13,12 @@
   width: auto;
   max-width: min(240px, 42vw);
   object-fit: contain;
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--pitch-border);
+  box-sizing: content-box;
+  box-shadow: 0 2px 12px rgba(15, 36, 51, 0.06);
 }
 
 .org-pitch-hero-logos .org-pitch-logo-x {
@@ -146,9 +152,21 @@
 .org-pitch-site-frame {
   display: block;
   width: 100%;
-  height: 420px;
+  height: 580px;
   border: none;
   background: #fff;
+}
+
+.org-pitch-embed-frame {
+  display: block;
+  width: 100%;
+  height: 580px;
+  border: none;
+  background: #fff;
+}
+
+.org-pitch-slide-snippet--dash .org-pitch-embed-frame {
+  height: 520px;
 }
 
 .org-pitch-site-inline {
@@ -586,10 +604,15 @@
   width: auto;
   max-width: 180px;
   object-fit: contain;
+  padding: 12px 18px;
+  background: #fff;
+  border-radius: 12px;
+  box-sizing: content-box;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
 }
 
 .org-pitch-slide-logos span {
-  color: var(--pitch-muted);
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 600;
 }
 
@@ -684,8 +707,9 @@
   flex: 1;
   display: grid;
   place-items: center;
-  padding: 32px 24px 72px;
-  overflow: hidden;
+  padding: 24px 24px 72px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .org-pitch-slide {
@@ -841,4 +865,178 @@
 .org-pitch-present-dots span.is-active {
   background: #7dffd4;
   transform: scale(1.2);
+}
+
+/* Present-mode website snippets */
+.org-pitch-slide--visual h2 {
+  margin-bottom: 14px;
+  font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+}
+
+.org-pitch-slide-snippet {
+  margin: 0 auto;
+  max-width: 820px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.38);
+  text-align: left;
+}
+
+.org-pitch-slide-snippet .org-pitch-site-inline {
+  min-height: 0;
+  max-height: none;
+}
+
+.org-pitch-slide-snippet--dash .org-pitch-site-inline {
+  max-height: 320px;
+  padding: 10px;
+}
+
+.org-pitch-slide-snippet .pitch-embed-events-hero {
+  padding: 14px 16px 12px;
+}
+
+.org-pitch-slide-snippet .pitch-embed-events-hero h3 {
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.org-pitch-slide-snippet .pitch-embed-org-head {
+  padding: 14px;
+}
+
+.org-pitch-slide-snippet .pitch-embed-org-head h3 {
+  font-size: 0.95rem;
+}
+
+.org-pitch-slide-snippet .pitch-embed-org-head p {
+  font-size: 0.76rem;
+}
+
+.org-pitch-slide-snippet .fo-dash-mock-nav-item {
+  font-size: 0.68rem;
+  padding: 6px 8px;
+}
+
+.org-pitch-slide-snippet .fo-dash-mock-title {
+  font-size: 0.82rem;
+}
+
+.org-pitch-slide-snippet .fo-dash-mock-list li {
+  font-size: 0.72rem;
+}
+
+.org-pitch-slide-caption {
+  margin: 14px auto 0;
+  max-width: 720px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.org-pitch-slide-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-width: 820px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+@media (max-width: 720px) {
+  .org-pitch-slide-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-pitch-slide-split .org-pitch-slide-card {
+  margin: 0;
+}
+
+/* Business opportunities embed (pitch mocks) */
+.pitch-embed-opps-hero {
+  background: linear-gradient(165deg, #1e3a4f 0%, #3a4a62 55%, #9a7aa8 100%);
+  color: #fff;
+  padding: 16px 18px 14px;
+}
+
+.pitch-embed-opps-hero h3 span {
+  color: #d4b8e8;
+}
+
+.pitch-embed-opps-list {
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 8px;
+  background: #faf7f2;
+}
+
+.pitch-embed-opp-card {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--pitch-border);
+  border-radius: 12px;
+  position: relative;
+}
+
+.pitch-embed-opp-card.is-highlight {
+  border-color: #e6007e;
+  box-shadow: 0 8px 24px rgba(230, 0, 126, 0.12);
+  padding-top: 16px;
+}
+
+.pitch-embed-opp-badge {
+  position: absolute;
+  top: -7px;
+  left: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e6007e;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pitch-embed-opp-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--pitch-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.pitch-embed-opp-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.pitch-embed-opp-card strong {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--pitch-ink);
+  margin-bottom: 2px;
+}
+
+.pitch-embed-opp-card span {
+  font-size: 0.72rem;
+  color: var(--pitch-muted);
+}
+
+.pitch-embed-opp-card em {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--pitch-teal);
+  white-space: nowrap;
 }
