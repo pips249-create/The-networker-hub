@@ -5971,8 +5971,16 @@ body.org-event-drawer-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(250, 247, 242, 0.94);
-  backdrop-filter: blur(3px);
+  background: rgba(250, 247, 242, 0.82);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.org-event-drawer-loading.is-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .org-event-drawer-loading[hidden] {
@@ -5982,6 +5990,14 @@ body.org-event-drawer-open {
 .org-event-drawer-loading-card {
   text-align: center;
   padding: 24px;
+  transform: translateY(4px);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  opacity: 0.92;
+}
+
+.org-event-drawer-loading.is-visible .org-event-drawer-loading-card {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .org-event-drawer-loading-spinner {
@@ -6002,7 +6018,9 @@ body.org-event-drawer-open {
 }
 
 .org-event-drawer-frame-wrap.is-loading .org-event-drawer-frame {
-  visibility: hidden;
+  opacity: 0.35;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
 }
 
 .org-event-drawer-frame {
@@ -6011,6 +6029,8 @@ body.org-event-drawer-open {
   border: none;
   display: block;
   background: #fff;
+  opacity: 1;
+  transition: opacity 0.22s ease;
 }
 
 /* ─── Recurring event series rows ─── */

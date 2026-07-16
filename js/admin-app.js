@@ -6309,6 +6309,7 @@
     var emailSponsorLogoBase64 = null;
     var emailSponsorLogoMime = '';
     var emailSponsorLogoFilename = '';
+    var emailSponsorCtaColor = '';
     var BOOKING_EMAIL_SPONSOR_SLOT = 'booking_email_sponsor';
     var EVENTS_SPONSOR_SLOT = 'events_sponsor_hub';
     var previewOrigin = window.location.origin || 'https://the-networker-hub.vercel.app';
@@ -6996,22 +6997,28 @@
       });
     }
 
-    function buildEmailSponsorSectionHtml(logo, url, name) {
+    function buildEmailSponsorSectionHtml(logo, url, name, logoBandBg) {
       var link = String(url || '').trim();
       if (!link) return '';
       var label = String(name || '').trim() || 'Our sponsor';
+      var bandBg = String(logoBandBg || '').trim() || '#f3f4f6';
+      var safeBandBg = attrEsc(bandBg);
       var logoHtml = String(logo || '').trim()
-        ? '<img src="' +
+        ? '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:' +
+          safeBandBg +
+          ';border-radius:10px;"><tr><td style="padding:12px 24px;text-align:center;">' +
+          '<img src="' +
           attrEsc(logo) +
           '" alt="' +
           attrEsc(label) +
-          '" width="140" style="height:auto;display:inline-block;opacity:0.9;">'
+          '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">' +
+          '</td></tr></table>'
         : '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
           esc(label) +
           '</span>';
       return (
         '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
         '<tr><td style="padding:16px 20px;text-align:center;">' +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
         '<a href="' +
@@ -7042,6 +7049,7 @@
       emailSponsorLogoBase64 = null;
       emailSponsorLogoMime = '';
       emailSponsorLogoFilename = '';
+      emailSponsorCtaColor = String(block.cta_color || '').trim();
       var fileInput = document.getElementById('email-sponsor-logo-file');
       if (fileInput) fileInput.value = '';
       updateSampleSponsorSection();
@@ -7051,7 +7059,12 @@
     function updateSampleSponsorSection() {
       var form = readEmailSponsorForm();
       var logo = form.logoUrl || emailSponsorLogoBase64 || '';
-      SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(logo, form.url, form.company);
+      SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(
+        logo,
+        form.url,
+        form.company,
+        emailSponsorCtaColor
+      );
     }
 
     function renderEmailSponsorMiniPreview() {
@@ -7064,11 +7077,16 @@
         return;
       }
       if (logo) {
+        var bandBg = String(emailSponsorCtaColor || '').trim() || '#f3f4f6';
         el.innerHTML =
           '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Our event directory is proudly powered by</p>' +
+          '<div class="inline-block rounded-lg px-6 py-3" style="background:' +
+          attrEsc(bandBg) +
+          ';">' +
           '<img src="' +
           attrEsc(logo) +
-          '" alt="" class="mx-auto max-h-12 w-auto" style="max-width:140px;">';
+          '" alt="" class="mx-auto max-h-12 w-auto" style="max-width:140px;display:block;">' +
+          '</div>';
       } else {
         el.innerHTML =
           '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Our event directory is proudly powered by</p>' +

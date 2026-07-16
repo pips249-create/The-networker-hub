@@ -575,6 +575,7 @@
     });
     const datesCard = document.getElementById('ee-card-dates');
     if (datesCard) datesCard.classList.toggle('is-locked', currentEventLocked);
+    applyFormatUi(eventFormat);
     refreshSeriesEditUi();
   }
 
@@ -1561,10 +1562,48 @@
       /* ignore */
     }
     const badge = document.getElementById('ee-format-badge');
-    if (badge) {
-      badge.textContent = FORMAT_LABELS[eventFormat] || eventFormat;
-      badge.hidden = false;
+    if (badge) badge.hidden = true;
+
+    document.querySelectorAll('[data-ee-format]').forEach((btn) => {
+      btn.classList.toggle(
+        'is-active',
+        normalizeEventFormat(btn.getAttribute('data-ee-format')) === eventFormat
+      );
+      btn.setAttribute(
+        'aria-pressed',
+        normalizeEventFormat(btn.getAttribute('data-ee-format')) === eventFormat ? 'true' : 'false'
+      );
+    });
+
+    const hint = document.getElementById('ee-format-hint');
+    if (hint) {
+      hint.textContent =
+        eventFormat === 'online'
+          ? 'Platform and join link on the next step — sent to ticket holders, not shown publicly.'
+          : 'Venue name, full address and postcode on the next step.';
     }
+
+    const formatField = document.getElementById('ee-format-field');
+    if (formatField) {
+      const locked = currentEventLocked || currentSeriesDateOnly;
+      formatField.classList.toggle('is-locked', locked);
+      formatField.querySelectorAll('[data-ee-format]').forEach((btn) => {
+        btn.disabled = locked;
+      });
+    }
+  }
+
+  function bindFormatToggleButtons() {
+    document.querySelectorAll('[data-ee-format]').forEach((btn) => {
+      if (btn.dataset.formatBound === '1') return;
+      btn.dataset.formatBound = '1';
+      btn.addEventListener('click', () => {
+        if (currentEventLocked || currentSeriesDateOnly) return;
+        eventFormat = normalizeEventFormat(btn.getAttribute('data-ee-format'));
+        applyFormatUi(eventFormat);
+        scheduleAutodraft();
+      });
+    });
   }
 
   function inferFormatFromEvent(ev) {
@@ -2059,6 +2098,7 @@
     bindPhotoUpload();
     bindWordCounter();
     bindCopyFromGroupButtons();
+    bindFormatToggleButtons();
     const cancelBtn = document.getElementById('ee-cancel-event-btn');
     if (cancelBtn) cancelBtn.addEventListener('click', requestEventCancellation);
     if (QuarterTime) {

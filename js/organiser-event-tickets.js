@@ -203,15 +203,44 @@
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function formatTime12hFromIso(iso) {
+    if (!iso) return '';
+    const tz = window.HubEventTimezone;
+    let hour = NaN;
+    let minute = NaN;
+    if (tz && typeof tz.londonTimeFromIso === 'function') {
+      const parts = String(tz.londonTimeFromIso(iso) || '').split(':');
+      hour = Number(parts[0]);
+      minute = Number(parts[1]);
+    } else {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '';
+      hour = d.getHours();
+      minute = d.getMinutes();
+    }
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return '';
+    const period = hour >= 12 ? 'pm' : 'am';
+    const hour12 = hour % 12 || 12;
+    return hour12 + ':' + pad2(minute) + period;
+  }
+
+  function formatReviewTimeRange(startIso, endIso) {
+    const start = formatTime12hFromIso(startIso);
+    if (!start) return '';
+    if (!endIso) return start;
+    const end = formatTime12hFromIso(endIso);
+    return end ? start + ' – ' + end : start;
+  }
+
   function formatReviewDateLabel(ev) {
     if (!ev || !ev.date) return 'Date TBC';
     const datePart = formatDateShort(ev.date);
     const endDate = ev.endDate || anchorEvent?.endDate || '';
-    const tz = window.HubEventTimezone;
-    const timePart =
-      tz && typeof tz.formatTimeRange === 'function'
-        ? tz.formatTimeRange(ev.date, endDate)
-        : '';
+    const timePart = formatReviewTimeRange(ev.date, endDate);
     return timePart ? datePart + ' · ' + timePart : datePart;
   }
 

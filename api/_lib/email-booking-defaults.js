@@ -4,6 +4,7 @@ const {
   isEmailSponsorBlock,
   sponsorLogoUrl,
   sponsorCompanyName,
+  sponsorCtaColor,
 } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 
@@ -16,6 +17,42 @@ const SPONSOR_FALLBACK_SLOTS = [
   LEGACY_SPONSOR_SLOT,
 ];
 
+/** Matches browse-page sponsor logo bands — avoids a harsh white pad behind logos. */
+const EMAIL_SPONSOR_LOGO_BAND_FALLBACK = '#f3f4f6';
+
+function sponsorEmailLogoBandColor(block, override) {
+  const fromOptions = String(override || '').trim();
+  if (/^#[0-9a-f]{3,6}$/i.test(fromOptions)) return fromOptions.toLowerCase();
+  return sponsorCtaColor(block) || EMAIL_SPONSOR_LOGO_BAND_FALLBACK;
+}
+
+function buildSponsorLogoMarkup(logo, name, logoBandBg) {
+  if (!logo) {
+    return (
+      '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
+      name +
+      '</span>'
+    );
+  }
+  const safeLogo = logo.replace(/"/g, '&quot;');
+  const safeName = name.replace(/"/g, '&quot;');
+  const safeBandBg = logoBandBg.replace(/"/g, '&quot;');
+  const imgHtml =
+    '<img src="' +
+    safeLogo +
+    '" alt="' +
+    safeName +
+    '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">';
+  return (
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:' +
+    safeBandBg +
+    ';border-radius:10px;">' +
+    '<tr><td style="padding:12px 24px;text-align:center;">' +
+    imgHtml +
+    '</td></tr></table>'
+  );
+}
+
 function buildSponsorSection(block, options) {
   if (!block) return '';
   const label =
@@ -25,19 +62,12 @@ function buildSponsorSection(block, options) {
   const name = sponsorCompanyName(block) || 'Our sponsor';
   if (!url) return '';
   const safeUrl = url.replace(/"/g, '&quot;');
-  const logoHtml = logo
-    ? '<img src="' +
-      logo.replace(/"/g, '&quot;') +
-      '" alt="' +
-      name.replace(/"/g, '&quot;') +
-      '" width="140" style="height:auto;display:inline-block;opacity:0.9;">'
-    : '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
-      name +
-      '</span>';
+  const logoBandBg = sponsorEmailLogoBandColor(block, options?.logoBandBg);
+  const logoHtml = buildSponsorLogoMarkup(logo, name, logoBandBg);
   // Sits in the cream logo-hero band, in a bordered container just below the Hub logo.
   return (
     '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:16px 20px;text-align:center;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
     label +
@@ -79,8 +109,11 @@ async function getBookingEmailDefaultVars() {
 module.exports = {
   BOOKING_EMAIL_SPONSOR_SLOT,
   EVENTS_SPONSOR_SLOT,
+  EMAIL_SPONSOR_LOGO_BAND_FALLBACK,
+  buildSponsorLogoMarkup,
   buildSponsorSection,
   getBookingEmailDefaultVars,
   resolveBookingEmailSponsorBlock,
   fetchSponsorBlockForSlot,
+  sponsorEmailLogoBandColor,
 };

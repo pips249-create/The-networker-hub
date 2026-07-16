@@ -4325,6 +4325,7 @@
   }
 
   let eventDrawerLoadTimeout = null;
+  let eventDrawerLoadingHideTimer = null;
   let eventDrawerCreateFlow = false;
   let eventDrawerProgressStep = '';
   let eventDrawerBackEventId = '';
@@ -4372,9 +4373,28 @@
           ? String(message || '').trim() || 'Loading event…'
           : 'Loading event…';
       }
-      loading.hidden = !on;
-      loading.setAttribute('aria-hidden', on ? 'false' : 'true');
-      loading.setAttribute('aria-busy', on ? 'true' : 'false');
+      if (eventDrawerLoadingHideTimer) {
+        clearTimeout(eventDrawerLoadingHideTimer);
+        eventDrawerLoadingHideTimer = null;
+      }
+      if (on) {
+        loading.hidden = false;
+        loading.setAttribute('aria-hidden', 'false');
+        loading.setAttribute('aria-busy', 'true');
+        requestAnimationFrame(function () {
+          loading.classList.add('is-visible');
+        });
+      } else {
+        loading.classList.remove('is-visible');
+        loading.setAttribute('aria-busy', 'false');
+        eventDrawerLoadingHideTimer = setTimeout(function () {
+          if (!loading.classList.contains('is-visible')) {
+            loading.hidden = true;
+            loading.setAttribute('aria-hidden', 'true');
+          }
+          eventDrawerLoadingHideTimer = null;
+        }, 220);
+      }
     }
     if (!on && eventDrawerLoadTimeout) {
       clearTimeout(eventDrawerLoadTimeout);
