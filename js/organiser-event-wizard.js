@@ -6,6 +6,7 @@
     { id: 'details', label: 'Event details' },
     { id: 'location', label: 'Location & access' },
     { id: 'tickets', label: 'Set up tickets' },
+    { id: 'review', label: 'Review' },
     { id: 'publish', label: 'Publish' },
   ];
 
@@ -79,6 +80,10 @@
     if (stepId === 'tickets') {
       if (!ctx.eventIds.length) return null;
       return '/organiser/event-tickets?ids=' + encodeURIComponent(ctx.eventIds.join(','));
+    }
+    if (stepId === 'review') {
+      if (!ctx.eventIds.length) return null;
+      return '/organiser/event-review?ids=' + encodeURIComponent(ctx.eventIds.join(','));
     }
     return null;
   }

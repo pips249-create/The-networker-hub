@@ -29,7 +29,6 @@
   let organiserComplimentaryVisits = 0;
   let anchorEvent = null;
   let organiserGroupName = '';
-  let publishReviewOpen = false;
 
   const FORMAT_LABELS = {
     'in-person': 'In person',
@@ -1347,7 +1346,7 @@
       returnPath: paymentSetupReturnPath(),
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
       title: 'Add bank details before you publish paid tickets',
-      lead: 'Stripe will ask for your UK bank account (about 5 minutes). Then come back here and click Review & publish.',
+      lead: 'Stripe will ask for your UK bank account (about 5 minutes). Then come back here and continue to review.',
       singleGroupOnly: true,
     });
     // Persist ticket form before leaving for Stripe, so return does not lose tiers.
@@ -1449,7 +1448,7 @@
       if (warn) {
         warn.hidden = false;
         warn.textContent =
-          'Finish ticket types below, then click Review & publish again.';
+          'Finish ticket types below, then click Continue to review again.';
       }
     }
   }
@@ -1978,257 +1977,17 @@
       window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 0 });
     }
 
-    bindPublishReviewModal();
     notifyEmbedDrawerReady();
   }
 
-  function resolveReviewFormat() {
-    const raw = seriesMeta.eventFormat || anchorEvent?.eventFormat || anchorEvent?.meetingType || 'in-person';
-    const key = String(raw || '')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-');
-    if (key.includes('online') && !key.includes('hybrid') && !key.includes('person')) return 'online';
-    if (key.includes('hybrid')) return 'hybrid';
-    return 'in-person';
+  function reviewPageUrl() {
+    const qs = new URLSearchParams();
+    qs.set('ids', eventIds.join(','));
+    if (isEmbedDrawer) qs.set('embed', '1');
+    return '/organiser/event-review?' + qs.toString();
   }
 
-  function reviewLocationSummary() {
-    const formatKey = resolveReviewFormat();
-    const label = FORMAT_LABELS[formatKey] || 'In person';
-    if (formatKey === 'online') {
-      const link = String(anchorEvent?.onlineLink || '').trim();
-      return link ? label + ' — join link added' : label;
-    }
-    const venue = String(anchorEvent?.venue || '').trim();
-    const city = String(anchorEvent?.city || '').trim();
-    const postcode = String(anchorEvent?.postcode || '').trim();
-    const parts = [venue, city, postcode].filter(Boolean);
-    if (formatKey === 'hybrid') {
-      return parts.length ? label + ' — ' + parts.join(', ') : label + ' — venue and online link';
-    }
-    return parts.length ? parts.join(', ') : label + ' — location saved';
-  }
-
-  function reviewAttendanceLabel() {
-    if (attendanceMode === 'category_exclusivity') return 'Category Exclusivity — apply, then approve before payment';
-    if (attendanceMode === 'guest_programme') {
-      const visits = readGuestVisitsAllowed();
-      return (
-        'Guest visit programme — newcomers can visit up to ' +
-        (visits || organiserComplimentaryVisits || 1) +
-        ' time(s) before buying a member ticket'
-      );
-    }
-    return 'Open ticket booking';
-  }
-
-  function formatTierPrice(price) {
-    const n = Number(price);
-    if (!Number.isFinite(n) || n <= 0) return 'Free';
-    return '£' + n.toFixed(2);
-  }
-
-  function reviewTicketLines(tiers) {
-    return (tiers || []).map(function (tier) {
-      const qty =
-        tier.quantityAvailable == null || tier.quantityAvailable === ''
-          ? 'unlimited'
-          : String(tier.quantityAvailable);
-      let line = esc(tier.name || 'Ticket') + ' — ' + esc(formatTierPrice(tier.price));
-      if (tier.visibility === 'members_only') line += ' (members only)';
-      if (tier.ticketType === 'Alumni') line += ' (previous attendees)';
-      line += ' · ' + esc(qty) + ' available';
-      if (tier.saleEndOption) {
-        line += ' · sales end ' + esc(saleEndLabel(tier.saleEndOption).toLowerCase());
-      }
-      return line;
-    });
-  }
-
-  function reviewEditHref(path) {
-    const id = eventIds[0];
-    if (!id || isEmbedDrawer) return '';
-    return path + '?id=' + encodeURIComponent(id);
-  }
-
-  function reviewSection(title, valueHtml, editPath, editLabel) {
-    const editHref = editPath ? reviewEditHref(editPath) : '';
-    const editLink = editHref
-      ? '<a class="ee-publish-review-edit" href="' +
-        esc(editHref) +
-        '">' +
-        esc(editLabel || 'Edit') +
-        '</a>'
-      : '';
-    return (
-      '<section class="ee-publish-review-section">' +
-      '<div class="ee-publish-review-section-head">' +
-      '<h3>' +
-      esc(title) +
-      '</h3>' +
-      editLink +
-      '</div>' +
-      valueHtml +
-      '</section>'
-    );
-  }
-
-  function renderPublishReviewBody() {
-    const tiers = collectActiveTiers();
-    const hasPaid = tiersHavePaidPrice(tiers);
-    const refund = hasPaid ? collectRefundPayload() : null;
-    const events =
-      seriesMeta.events && seriesMeta.events.length
-        ? seriesMeta.events.slice().sort(function (a, b) {
-            return new Date(a.date || 0) - new Date(b.date || 0);
-          })
-        : eventIds.map(function (id) {
-            return { id: id };
-          });
-    const dateItems = events
-      .map(function (ev) {
-        const label = formatReviewDateLabel(ev);
-        return '<li>' + esc(label) + '</li>';
-      })
-      .join('');
-    const dateCount = events.length;
-    const ticketLines = reviewTicketLines(tiers);
-    const ticketList =
-      ticketLines.length > 0
-        ? '<ul class="ee-publish-review-list">' +
-          ticketLines.map(function (line) {
-            return '<li>' + line + '</li>';
-          }).join('') +
-          '</ul>'
-        : '<p class="ee-publish-review-value">No ticket types</p>';
-
-    let html = '';
-    html += reviewSection(
-      'Event',
-      '<p class="ee-publish-review-value">' +
-        esc(seriesMeta.title || anchorEvent?.title || 'Untitled event') +
-        '</p>' +
-        (organiserGroupName
-          ? '<p class="ee-publish-review-sub">Organiser page: ' + esc(organiserGroupName) + '</p>'
-          : ''),
-      '/organiser/event-edit',
-      'Edit details'
-    );
-    html += reviewSection(
-      dateCount === 1 ? 'Date' : 'Dates (' + dateCount + ')',
-      '<ul class="ee-publish-review-dates">' + dateItems + '</ul>',
-      '/organiser/event-edit',
-      'Edit dates'
-    );
-    html += reviewSection(
-      'Location & format',
-      '<p class="ee-publish-review-value">' +
-        esc(FORMAT_LABELS[resolveReviewFormat()] || 'In person') +
-        '</p>' +
-        '<p class="ee-publish-review-sub">' +
-        esc(reviewLocationSummary()) +
-        '</p>',
-      '/organiser/event-location',
-      'Edit location'
-    );
-    html += reviewSection(
-      'Attendance',
-      '<p class="ee-publish-review-value">' + esc(reviewAttendanceLabel()) + '</p>',
-      '',
-      ''
-    );
-    html += reviewSection(
-      'Tickets',
-      ticketList +
-        (hasPaid
-          ? '<p class="ee-publish-review-sub">' +
-            'VAT: ' +
-            esc(
-              collectVatTreatment() === 'added'
-                ? 'added at checkout'
-                : 'included in ticket price'
-            ) +
-            ' · Refund policy: ' +
-            esc(REFUND_LABELS[refund?.refundPreset || selectedRefundPolicy] || 'Selected') +
-            '</p>'
-          : '<p class="ee-publish-review-sub">Free event — no VAT or refund policy required</p>'),
-      '',
-      ''
-    );
-    return html;
-  }
-
-  function renderPublishReviewNext(tiers) {
-    const scheduled = (tiers || []).some(function (tier) {
-      if (!tier.saleStart) return false;
-      const start = new Date(tier.saleStart);
-      return !Number.isNaN(start.getTime()) && start > Date.now();
-    });
-    let text =
-      'Your listing is submitted for review. Once approved, it appears on Browse events';
-    if (scheduled) {
-      text += ' and ticket sales open on the start dates you set';
-    } else {
-      text += ' and ticket sales go live';
-    }
-    text += '. You can still edit most details from My Events before the first date.';
-    const nextEl = document.getElementById('ee-publish-review-next');
-    if (nextEl) nextEl.textContent = text;
-  }
-
-  function openPublishReviewModal() {
-    const modal = document.getElementById('ee-publish-review-modal');
-    const body = document.getElementById('ee-publish-review-body');
-    if (!modal || !body) return false;
-    const tiers = collectActiveTiers();
-    body.innerHTML = renderPublishReviewBody();
-    renderPublishReviewNext(tiers);
-    modal.hidden = false;
-    publishReviewOpen = true;
-    document.body.classList.add('ee-modal-open');
-    document.getElementById('ee-publish-review-confirm')?.focus();
-    return true;
-  }
-
-  function closePublishReviewModal() {
-    const modal = document.getElementById('ee-publish-review-modal');
-    if (!modal) return;
-    modal.hidden = true;
-    publishReviewOpen = false;
-    document.body.classList.remove('ee-modal-open');
-    document.getElementById('ee-tickets-submit')?.focus();
-  }
-
-  function bindPublishReviewModal() {
-    const modal = document.getElementById('ee-publish-review-modal');
-    if (!modal || modal.dataset.bound === '1') return;
-    modal.dataset.bound = '1';
-
-    document.getElementById('ee-publish-review-back')?.addEventListener('click', closePublishReviewModal);
-    document.getElementById('ee-publish-review-backdrop')?.addEventListener('click', closePublishReviewModal);
-    document.getElementById('ee-publish-review-confirm')?.addEventListener('click', async function () {
-      const confirmBtn = document.getElementById('ee-publish-review-confirm');
-      if (confirmBtn) {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Publishing…';
-      }
-      closePublishReviewModal();
-      await saveTickets(true);
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirm & publish';
-      }
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (!publishReviewOpen || e.key !== 'Escape') return;
-      e.preventDefault();
-      closePublishReviewModal();
-    });
-  }
-
-  async function requestPublishReview() {
+  async function continueToReview() {
     if (ticketsLocked) {
       showAlert(
         'This event has ticket sales — ticket types and refund terms cannot be changed. Cancel the event from the event editor if you need to make changes.',
@@ -2262,7 +2021,7 @@
     }
 
     if (!tiersHaveRequiredSaleEnds(tiers)) {
-      showAlert('Choose a valid sale end for every ticket tier before publishing.', 'warn');
+      showAlert('Choose a valid sale end for every ticket tier before continuing.', 'warn');
       updatePublishButton();
       return;
     }
@@ -2289,10 +2048,11 @@
       }
     }
 
-    openPublishReviewModal();
+    await saveTickets(false, { redirectToReview: true });
   }
 
-  async function saveTickets(publish) {
+  async function saveTickets(publish, options) {
+    options = options || {};
     showAlert('');
 
     if (ticketsLocked) {
@@ -2538,7 +2298,7 @@
         });
       if (!allLive) {
         showAlert(
-          'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then click Review & publish again.',
+          'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then continue to review again.',
           'warn'
         );
         return;
@@ -2554,8 +2314,12 @@
     if (!publish) {
       existingTicketsLoaded = true;
       clearTicketDraft();
+      if (options.redirectToReview) {
+        location.href = reviewPageUrl();
+        return;
+      }
       showAlert(
-        'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Review & publish.',
+        'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
       );
       if (tiersHavePaidPrice(collectActiveTiers())) {
@@ -2620,7 +2384,7 @@
 
   document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    await requestPublishReview();
+    await continueToReview();
   });
 
   const saveDraftBtn = document.getElementById('ee-tickets-save');

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Review before publishing – Organiser – The Networker Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716reviewstep" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
+  </head>
+  <body class="organiser-event-edit-page organiser-event-review-page">
+    <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
+      <div class="ee-page-loading-card">
+        <div class="ee-page-loading-spinner" aria-hidden="true"></div>
+        <p class="ee-page-loading-text"><span class="ee-page-loading-label">Loading</span><span class="ee-page-loading-dots" aria-hidden="true"></span></p>
+      </div>
+    </div>
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260715a" data-root="../" data-page="organiser"></script>
+
+    <div class="ee-wrap ee-review-wrap">
+      <div class="ee-back-row">
+        <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
+        <a class="ee-back ee-back-secondary" id="ee-back-tickets-link" href="#" hidden>← Set up tickets</a>
+      </div>
+      <div id="ee-wizard-mount"></div>
+
+      <div class="ee-card ee-review-card">
+        <h1 class="ee-publish-review-title" id="ee-review-title">Review before publishing</h1>
+        <p class="ee-publish-review-lede">
+          Check everything looks right. Once you publish, your listing is submitted for review and ticket sales go
+          live when approved.
+        </p>
+        <div id="ee-review-alert" class="ee-alert" hidden></div>
+        <div class="ee-publish-review-body" id="ee-publish-review-body"></div>
+        <p class="ee-publish-review-next" id="ee-publish-review-next"></p>
+        <div class="ee-actions ee-publish-review-actions">
+          <a class="ee-btn ee-btn-outline" id="ee-review-back" href="#">Back to edit</a>
+          <button type="button" class="ee-btn ee-btn-primary" id="ee-review-confirm">Confirm &amp; publish</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/organiser-embed-bootstrap.js?v=20260716perf"></script>
+    <script src="../js/hub-event-timezone.js?v=20260716"></script>
+    <script src="../js/organiser-event-wizard.js?v=20260716review" data-step="review"></script>
+    <script src="../js/organiser-page-loading.js?v=20260716progress"></script>
+    <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
+    <script src="../js/organiser-event-review.js?v=20260716review"></script>
+  </body>
+</html>

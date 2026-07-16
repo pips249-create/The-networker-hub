@@ -2451,6 +2451,37 @@ body.ee-modal-open {
   margin-top: 18px;
 }
 
+.organiser-event-review-page .ee-review-wrap {
+  max-width: 720px;
+}
+
+.organiser-event-review-page .ee-review-card {
+  padding: 28px 24px 24px;
+}
+
+.organiser-event-review-page .ee-publish-review-title {
+  font-size: 1.75rem;
+}
+
+.organiser-event-review-page .ee-publish-review-actions {
+  justify-content: flex-start;
+}
+
+.organiser-event-review-page .ee-publish-review-actions .ee-btn-primary {
+  margin-left: auto;
+}
+
+@media (max-width: 520px) {
+  .organiser-event-review-page .ee-publish-review-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .organiser-event-review-page .ee-publish-review-actions .ee-btn-primary {
+    margin-left: 0;
+  }
+}
+
 /* Featured listing upsell (post-publish) */
 .organiser-published-page .ep-featured-single-price {
   display: flex;

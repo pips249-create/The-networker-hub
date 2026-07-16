@@ -9,6 +9,8 @@
       "Let's get your listing details in shape. I'll highlight each section, or you can ask me here.",
     'event-tickets':
       'Almost there — ticket types and publishing next. Ask if VAT, refunds, tier setup, or member list tickets are unclear.',
+    'event-review':
+      'Check your summary before publishing. Ask if anything looks wrong or you want to change a section.',
     'member-roster':
       'This is your membership — it unlocks Members only tickets. Ask how to add members, import CSV, expiry dates, or reports.',
     'group-edit':
@@ -51,6 +53,11 @@
       { label: 'Save before publish', prompt: 'Can I save tickets as draft before publishing my event?' },
       { label: 'Members only ticket', prompt: 'How do I set up a members only ticket with the member list?' },
       { label: 'Member list', prompt: 'What is a member list?' },
+    ],
+    'event-review': [
+      { label: 'What happens when I publish', prompt: 'What happens when I publish my event on The Networker Hub?' },
+      { label: 'Edit before publish', prompt: 'Can I still edit my event after publishing?' },
+      { label: 'Approval time', prompt: 'How long does event listing review take before it goes live?' },
     ],
     'member-roster': [
       { label: 'What is it?', prompt: 'What is a member list?' },
@@ -106,6 +113,7 @@
     if (/\/event-format(?:\.html)?\/?$/.test(path)) return 'event-format';
     if (/\/event-edit(?:\.html)?\/?$/.test(path)) return 'event-edit';
     if (/\/event-tickets(?:\.html)?\/?$/.test(path)) return 'event-tickets';
+    if (/\/event-review(?:\.html)?\/?$/.test(path)) return 'event-review';
     if (/\/group-edit(?:\.html)?\/?$/.test(path)) return 'group-edit';
     if (/\/member-roster(?:\.html)?\/?$/.test(path)) return 'member-roster';
     return '';
