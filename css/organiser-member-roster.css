@@ -211,20 +211,85 @@
 }
 
 .omr-add-section {
-  margin-bottom: 20px;
+  margin: 0 0 24px;
 }
 
-.omr-add-section .omr-add-panel {
+.omr-add-panel {
+  margin: 0;
+  padding: 20px;
+  border-radius: 14px;
+  border: 2px solid rgba(189, 147, 46, 0.35);
+  background: linear-gradient(180deg, #fffbf2 0%, #fff 42%);
+  box-shadow: 0 2px 10px rgba(189, 147, 46, 0.08);
+}
+
+.omr-add-panel-head {
+  margin: 0 0 16px;
+}
+
+.omr-add-panel-title {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #084a52;
+}
+
+.omr-add-panel-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #4a6272;
+}
+
+.omr-add-panel-body {
+  margin: 0;
+}
+
+.omr-add-panel .omr-actions-grid {
+  padding: 0;
+}
+
+.omr-add-panel .omr-card {
   margin-bottom: 0;
+  border: 1px solid rgba(13, 110, 122, 0.12);
+}
+
+.omr-card-heading {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #084a52;
 }
 
 .omr-roster-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 4px;
+}
+
+.omr-roster-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.omr-highlight-flash {
+  animation: omr-highlight-flash 1.2s ease;
+}
+
+@keyframes omr-highlight-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(189, 147, 46, 0.45);
+  }
+  35% {
+    box-shadow: 0 0 0 4px rgba(189, 147, 46, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(189, 147, 46, 0);
+  }
 }
 
 .omr-roster-head h2 {
@@ -389,71 +454,6 @@
   font-size: 13px;
   line-height: 1.45;
   color: #4a6272;
-}
-
-.omr-add-panel {
-  margin: 0 0 20px;
-  border-radius: 12px;
-  border: 1px solid #cfe4ea;
-  background: #fff;
-  overflow: hidden;
-}
-
-.omr-add-panel-toggle {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: 14px 18px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  color: #084a52;
-  text-align: left;
-}
-
-.omr-add-panel-toggle:focus-visible {
-  outline: 2px solid #0d6e7a;
-  outline-offset: -2px;
-}
-
-.omr-add-panel-summary-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-}
-
-.omr-add-panel-toggle::before {
-  content: '▸ ';
-  color: #0d6e7a;
-}
-
-.omr-add-panel.is-open > .omr-add-panel-toggle::before {
-  content: '▾ ';
-}
-
-.omr-add-panel-body[hidden] {
-  display: none;
-}
-
-.omr-add-panel-hint {
-  font-size: 12px;
-  font-weight: 500;
-  color: #7a94a3;
-}
-
-.omr-add-panel .omr-actions-grid {
-  padding: 0 16px 16px;
-}
-
-.omr-add-panel .omr-card {
-  margin-bottom: 0;
 }
 
 .omr-template-row {

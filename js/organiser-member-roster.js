@@ -77,28 +77,32 @@
     return Boolean(m.claimedAt || m.attendeeId);
   }
 
-  function setAddPanelOpen(open) {
-    const panel = document.getElementById('omr-add-panel');
-    const toggle = document.getElementById('omr-add-panel-toggle');
-    const body = document.getElementById('omr-add-panel-body');
-    if (!panel || !toggle || !body) return;
-    panel.classList.toggle('is-open', open);
-    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    body.hidden = !open;
+  function syncAddPanel(totalActive) {
+    const lead = document.getElementById('omr-add-panel-lead');
+    if (!document.getElementById('omr-add-panel')) return;
+    if (lead) {
+      lead.textContent =
+        totalActive > 0
+          ? 'Add more people or import another spreadsheet.'
+          : 'Add someone individually or upload a spreadsheet to start your register.';
+    }
   }
 
-  function syncAddPanel(totalActive) {
-    const hint = document.getElementById('omr-add-panel-hint');
-    const intro = document.getElementById('omr-intro');
-    if (!document.getElementById('omr-add-panel')) return;
-    if (totalActive > 0) {
-      setAddPanelOpen(false);
-      if (hint) hint.textContent = 'Add more people or import another spreadsheet';
-      if (intro) intro.hidden = true;
-    } else {
-      setAddPanelOpen(true);
-      if (hint) hint.textContent = 'Name, email, or a spreadsheet';
-      if (intro) intro.hidden = false;
+  function jumpToAddSection(targetId) {
+    const section = document.getElementById('omr-add-section');
+    const target = document.getElementById(targetId);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (target) {
+      window.setTimeout(function () {
+        target.classList.add('omr-highlight-flash');
+        const focusEl = target.querySelector('input, textarea, button');
+        if (focusEl && typeof focusEl.focus === 'function') focusEl.focus({ preventScroll: true });
+        window.setTimeout(function () {
+          target.classList.remove('omr-highlight-flash');
+        }, 1400);
+      }, 280);
     }
   }
 
@@ -771,10 +775,11 @@
 
     removeDuplicateAddPanels();
 
-    document.getElementById('omr-add-panel-toggle')?.addEventListener('click', function () {
-      const body = document.getElementById('omr-add-panel-body');
-      if (!body) return;
-      setAddPanelOpen(body.hidden);
+    document.getElementById('omr-jump-add')?.addEventListener('click', function () {
+      jumpToAddSection('omr-add-card');
+    });
+    document.getElementById('omr-jump-import')?.addEventListener('click', function () {
+      jumpToAddSection('omr-import-card');
     });
 
     const back = document.getElementById('omr-back');
