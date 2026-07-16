@@ -16,9 +16,9 @@ const DEFAULT_LIMIT = 12;
 const MAX_PINS = 2500;
 const IN_CHUNK = 80;
 
-function upcomingOrFilter(nowIso) {
+function applyUpcomingBrowseFilter(query, nowIso) {
   const now = nowIso || new Date().toISOString();
-  return `starts_at.gt.${now}`;
+  return query.gt('starts_at', now);
 }
 
 function sanitizeSearchTerm(term) {
@@ -169,7 +169,7 @@ function applyGeoBboxFilter(query, params) {
 }
 
 function applyBrowseFilters(query, params) {
-  let next = query.or(upcomingOrFilter());
+  let next = applyUpcomingBrowseFilter(query);
 
   if (params.types.length) {
     next = next.in('type_tab', params.types);

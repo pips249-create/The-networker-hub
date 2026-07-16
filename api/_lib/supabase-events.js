@@ -35,9 +35,9 @@ const BROWSE_ORGANISER_COLUMNS =
 const BROWSE_TICKET_COLUMNS =
   'id,event_id,price,quantity,name,ticket_type,description,sale_ends_at,sale_starts_at,status,visibility';
 
-function upcomingBrowseOrFilter(nowIso) {
+function applyUpcomingBrowseFilter(query, nowIso) {
   const now = nowIso || new Date().toISOString();
-  return `starts_at.gt.${now}`;
+  return query.gt('starts_at', now);
 }
 
 function stripBrowseListPayload(ev) {
@@ -328,7 +328,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const hasTicketTiers = eventTickets.length > 0;
   const spotsLeft = null;
   const isSoldOut = hasTicketTiers && pricedTiers.length > 0 && pricedTiers.every((t) => t.soldOut);
-  const ticketsOnSale = eventHasTicketsOnSale(eventTickets);
+  const ticketsOnSale = eventHasTicketsOnSale(eventTickets, undefined, row.starts_at);
   const ticketSalesOpensAtDate = earliestTicketSaleStart(eventTickets);
   const ticketSalesOpensAt = ticketSalesOpensAtDate ? ticketSalesOpensAtDate.toISOString() : null;
   const ticketSalesOpensLabel = ticketSalesOpensAt
@@ -805,7 +805,7 @@ async function fetchPublishedEventsFromTable(sb, options = {}) {
     .not('starts_at', 'is', null)
     .order('starts_at', { ascending: true, nullsFirst: false });
   if (options.upcomingOnly) {
-    query = query.or(upcomingBrowseOrFilter());
+    query = applyUpcomingBrowseFilter(query);
   }
   const tableRes = await query;
   if (tableRes.error) throw new Error(tableRes.error.message);
@@ -818,7 +818,7 @@ async function fetchPublishedEventRows(sb, options = {}) {
     .select('*')
     .order('next_date', { ascending: true, nullsFirst: false });
   if (options.upcomingOnly) {
-    query = query.or(upcomingBrowseOrFilter());
+    query = applyUpcomingBrowseFilter(query);
   }
   const viewRes = await query;
   if (!viewRes.error) {

@@ -927,10 +927,9 @@
     return activeTypeTabs.slice();
   };
   window.hubFilterServerBrowseEvents = function (list) {
-    // Server browse already applies type/location/price/date filters.
-    // Re-filtering here caused empty pages when Near me was on but coords
-    // were not ready yet (every in-person event was dropped).
-    return list || [];
+    // Drop events that have already started — server should filter too, but
+    // keep this as a safety net for cached API responses.
+    return (list || []).filter(isUpcomingBrowseEvent);
   };
   window.hubIsNearMeActive = isNearMeActive;
   window.hubNearRadiusMiles = getNearRadiusMiles;

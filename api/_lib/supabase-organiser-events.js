@@ -827,6 +827,7 @@ async function syncTicketSaleEndsAfterStartChange(sb, eventId, oldStartsAt, newS
     const endMs = new Date(endRaw).getTime();
     if (!Number.isFinite(endMs)) continue;
 
+    let synced = false;
     for (const offset of relativeOffsets) {
       if (endMs !== oldMs - offset) continue;
       const nextEnd = new Date(newMs - offset).toISOString();
@@ -835,7 +836,15 @@ async function syncTicketSaleEndsAfterStartChange(sb, eventId, oldStartsAt, newS
         .update({ sale_ends_at: nextEnd })
         .eq('id', ticket.id);
       if (updateErr) throw new Error(updateErr.message);
+      synced = true;
       break;
+    }
+    if (!synced && endMs < newMs) {
+      const { error: updateErr } = await sb
+        .from('tickets')
+        .update({ sale_ends_at: newStart })
+        .eq('id', ticket.id);
+      if (updateErr) throw new Error(updateErr.message);
     }
   }
 }
@@ -1171,7 +1180,7 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
     const rowPatch = {
       ...patch,
       slug,
-      ticket_sales_enabled: eventHasTicketsOnSale(eventTickets),
+      ticket_sales_enabled: eventHasTicketsOnSale(eventTickets, undefined, row.starts_at),
     };
     const mergedRow = { ...row, ...rowPatch };
     const organiser = row.organiser_id ? orgById.get(row.organiser_id) : null;

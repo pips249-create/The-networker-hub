@@ -1,7 +1,25 @@
+/** Sale end for "when event starts" tiers — heal rows saved before start time was corrected. */
+function effectiveTicketSaleEnd(ticket, eventStartsAt) {
+  const row = ticket && typeof ticket === 'object' ? ticket : {};
+  const endsRaw = row.sale_ends_at ? String(row.sale_ends_at).trim() : '';
+  if (!endsRaw) return null;
+  const ends = new Date(endsRaw);
+  if (Number.isNaN(ends.getTime())) return null;
+
+  const startRaw = eventStartsAt ? String(eventStartsAt).trim() : '';
+  if (!startRaw) return ends;
+  const eventStart = new Date(startRaw);
+  if (Number.isNaN(eventStart.getTime())) return ends;
+
+  if (ends < eventStart) return eventStart;
+  return ends;
+}
+
 /**
  * Whether a ticket row is on sale at the given time.
+ * Pass eventStartsAt so stale at_start sale ends still track the event start.
  */
-function isTicketOnSale(ticket, at) {
+function isTicketOnSale(ticket, at, eventStartsAt) {
   const row = ticket && typeof ticket === 'object' ? ticket : {};
   const now = at instanceof Date ? at : new Date();
   const status = String(row.status || 'Active').trim();
@@ -10,15 +28,15 @@ function isTicketOnSale(ticket, at) {
   const starts = row.sale_starts_at ? new Date(row.sale_starts_at) : null;
   if (starts && !Number.isNaN(starts.getTime()) && starts > now) return false;
 
-  const ends = row.sale_ends_at ? new Date(row.sale_ends_at) : null;
-  if (ends && !Number.isNaN(ends.getTime()) && ends <= now) return false;
+  const ends = effectiveTicketSaleEnd(row, eventStartsAt);
+  if (ends && ends <= now) return false;
 
   return true;
 }
 
-function eventHasTicketsOnSale(tickets, at) {
+function eventHasTicketsOnSale(tickets, at, eventStartsAt) {
   const list = Array.isArray(tickets) ? tickets : [];
-  return list.some((ticket) => isTicketOnSale(ticket, at));
+  return list.some((ticket) => isTicketOnSale(ticket, at, eventStartsAt));
 }
 
 /** Earliest future sale_starts_at across active tiers (null if none scheduled ahead). */
@@ -72,7 +90,7 @@ function resolveTicketSalesEnabled(eventRow, tickets, at) {
   const now = at instanceof Date ? at : new Date();
   if (!isEventPublishedForSale(ev)) return false;
   const list = Array.isArray(tickets) ? tickets : [];
-  if (!list.length || !eventHasTicketsOnSale(list, now)) return false;
+  if (!list.length || !eventHasTicketsOnSale(list, now, ev.starts_at)) return false;
 
   if (ev.ticket_sales_enabled === true) return true;
 
@@ -138,6 +156,7 @@ function groupTicketsByEventId(tickets) {
 }
 
 module.exports = {
+  effectiveTicketSaleEnd,
   isTicketOnSale,
   eventHasTicketsOnSale,
   earliestTicketSaleStart,
