@@ -173,6 +173,90 @@
   color: #1c2040;
 }
 
+.omr-actions-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.omr-import-details {
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.omr-import-summary {
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #084a52;
+  list-style: none;
+}
+
+.omr-import-summary::-webkit-details-marker {
+  display: none;
+}
+
+.omr-import-summary::before {
+  content: '▸ ';
+  color: #0d6e7a;
+}
+
+.omr-import-details[open] > .omr-import-summary::before {
+  content: '▾ ';
+}
+
+.omr-import-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid rgba(13, 110, 122, 0.08);
+}
+
+.omr-import-hint {
+  margin: 12px 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #4a6272;
+}
+
+.omr-import-hint code {
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #e8f6f8;
+  color: #084a52;
+}
+
+.omr-inline-link {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0d6e7a;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.omr-import-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.omr-import-row .omr-dropzone {
+  flex: 1;
+  min-width: 180px;
+  margin-bottom: 0;
+}
+
+.omr-check--compact {
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
 .omr-actions-grid {
   display: grid;
   gap: 20px;
@@ -245,7 +329,8 @@
   margin: 0;
 }
 
-.omr-add-panel .omr-actions-grid {
+.omr-add-panel .omr-actions-grid,
+.omr-add-panel .omr-actions-stack {
   padding: 0;
 }
 
@@ -506,14 +591,26 @@
 }
 
 .omr-dropzone {
-  border: 2px dashed #9dd9cc;
-  border-radius: 12px;
+  border: 1.5px dashed #9dd9cc;
+  border-radius: 10px;
   padding: 22px 16px;
   text-align: center;
   cursor: pointer;
   background: #e8f6f8;
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
   margin-bottom: 10px;
+}
+
+.omr-dropzone--compact {
+  padding: 10px 12px;
+  text-align: left;
+  background: #fff;
+}
+
+.omr-dropzone--compact .omr-dropzone-inner strong {
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .omr-dropzone:hover,

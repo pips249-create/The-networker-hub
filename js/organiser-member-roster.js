@@ -779,6 +779,8 @@
       jumpToAddSection('omr-add-card');
     });
     document.getElementById('omr-jump-import')?.addEventListener('click', function () {
+      const details = document.getElementById('omr-import-card');
+      if (details && details.tagName === 'DETAILS') details.open = true;
       jumpToAddSection('omr-import-card');
     });
 

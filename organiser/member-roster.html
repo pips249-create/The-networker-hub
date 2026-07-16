@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem3" />
-    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem4" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem5" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
@@ -33,14 +33,12 @@
       <section class="omr-add-section" id="omr-add-section" aria-label="Add or import members">
         <div class="omr-add-panel" id="omr-add-panel">
           <div class="omr-add-panel-head">
-            <h2 class="omr-add-panel-title">Add or import members</h2>
-            <p class="omr-add-panel-lead" id="omr-add-panel-lead">Add someone individually or upload a spreadsheet.</p>
+            <h2 class="omr-add-panel-title">Add a member</h2>
+            <p class="omr-add-panel-lead" id="omr-add-panel-lead">Add someone individually, or import a spreadsheet below.</p>
           </div>
           <div class="omr-add-panel-body" id="omr-add-panel-body">
-            <div class="omr-actions-grid">
+            <div class="omr-actions-stack">
               <div class="ee-card omr-card" id="omr-add-card">
-                <h3 class="omr-card-heading">Add a member</h3>
-                <p class="omr-card-lead">Add someone individually when you’re not importing a full list.</p>
                 <form id="omr-add-form" class="omr-add-form">
                   <div class="ee-row-2">
                     <div class="ee-field">
@@ -65,41 +63,40 @@
                 </form>
               </div>
 
-              <div class="ee-card omr-card" id="omr-import-card">
-                <h3 class="omr-card-heading">Import a spreadsheet</h3>
-                <p class="omr-card-lead">
-                  Export from Excel or Google Sheets as <strong>CSV</strong>, then drop the file here.
-                  Columns: <code>email</code> (required), <code>name</code>, <code>expires</code> or <code>membership expiry</code>.
-                </p>
-                <p class="omr-template-row">
-                  <button type="button" class="ee-btn ee-btn-outline omr-btn-sm" id="omr-download-template">
-                    Download blank CSV template
-                  </button>
-                </p>
-                <div
-                  class="omr-dropzone"
-                  id="omr-dropzone"
-                  tabindex="0"
-                  role="button"
-                  aria-label="Upload member list CSV"
-                >
-                  <input type="file" id="omr-file" accept=".csv,.tsv,text/csv,text/tab-separated-values" hidden />
-                  <div class="omr-dropzone-inner" id="omr-dropzone-inner">
-                    <strong>Drop a CSV here</strong>
-                    <span>or click to choose a file from your computer</span>
+              <details class="omr-import-details" id="omr-import-card">
+                <summary class="omr-import-summary">Import from spreadsheet (CSV)</summary>
+                <div class="omr-import-body">
+                  <p class="omr-import-hint">
+                    Excel or Google Sheets → export as CSV. Columns:
+                    <code>email</code> (required), <code>name</code>, <code>expires</code>.
+                    <button type="button" class="omr-inline-link" id="omr-download-template">Download template</button>
+                  </p>
+                  <div class="omr-import-row">
+                    <div
+                      class="omr-dropzone omr-dropzone--compact"
+                      id="omr-dropzone"
+                      tabindex="0"
+                      role="button"
+                      aria-label="Upload member list CSV"
+                    >
+                      <input type="file" id="omr-file" accept=".csv,.tsv,text/csv,text/tab-separated-values" hidden />
+                      <div class="omr-dropzone-inner" id="omr-dropzone-inner">
+                        <strong>Choose CSV file</strong>
+                      </div>
+                    </div>
+                    <button type="button" class="ee-btn ee-btn-outline omr-btn-sm" id="omr-import-btn">Import</button>
                   </div>
+                  <p class="omr-file-name" id="omr-file-name" hidden></p>
+                  <details class="omr-paste-details">
+                    <summary>Or paste CSV text</summary>
+                    <textarea id="omr-csv" rows="4" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
+                  </details>
+                  <label class="omr-check omr-check--compact">
+                    <input type="checkbox" id="omr-csv-send-invites" />
+                    Send invite emails after import
+                  </label>
                 </div>
-                <p class="omr-file-name" id="omr-file-name" hidden></p>
-                <details class="omr-paste-details">
-                  <summary>Or paste CSV text instead</summary>
-                  <textarea id="omr-csv" rows="5" placeholder="email,name,expires&#10;jane@example.com,Jane Smith,2026-12-31"></textarea>
-                </details>
-                <label class="omr-check">
-                  <input type="checkbox" id="omr-csv-send-invites" />
-                  Send invite emails after import — new emails get a sign-up link; existing Hub accounts get a sign-in link to the group’s next meeting
-                </label>
-                <button type="button" class="ee-btn ee-btn-gold" id="omr-import-btn">Import members</button>
-              </div>
+              </details>
             </div>
           </div>
         </div>
@@ -194,6 +191,6 @@
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
-    <script src="../js/organiser-member-roster.js?v=20260716mem4"></script>
+    <script src="../js/organiser-member-roster.js?v=20260716mem5"></script>
   </body>
 </html>
