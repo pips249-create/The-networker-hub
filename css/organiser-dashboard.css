@@ -6369,6 +6369,41 @@ body.org-event-drawer-open {
   font-weight: 600;
 }
 
+.org-opp-renew-link {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-gold-dark, #9a6b00);
+  text-decoration: none;
+}
+
+.org-opp-renew-link:hover {
+  text-decoration: underline;
+}
+
+.org-inline-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: var(--od-radius-sm);
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.org-inline-banner p {
+  margin: 0;
+}
+
+.org-inline-banner--warn {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+
 .org-opp-new-count {
   display: inline-flex;
   align-items: center;

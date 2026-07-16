@@ -93,6 +93,52 @@
     unregulated_investment: /crypto(?:currency)?|forex|binary option|unregulated investment|high[\s-]?yield|hyip|ponzi/i,
   };
 
+  var CITY_SLUG_BY_NAME = {
+    'central london': 'central-london',
+    'north london': 'north-london',
+    'south london': 'south-london',
+    'east london': 'east-london',
+    'west london': 'west-london',
+    manchester: 'manchester',
+    birmingham: 'birmingham',
+    glasgow: 'glasgow',
+    edinburgh: 'edinburgh',
+    leeds: 'leeds',
+    liverpool: 'liverpool',
+    newcastle: 'newcastle',
+    bristol: 'bristol',
+    sheffield: 'sheffield',
+    nottingham: 'nottingham',
+    cardiff: 'cardiff',
+    brighton: 'brighton',
+    cambridge: 'cambridge',
+    oxford: 'oxford',
+    chester: 'chester',
+  };
+
+  var UMBRELLA_TO_SLUGS = {
+    yorkshire: ['leeds', 'sheffield'],
+    'north england': ['manchester', 'liverpool', 'newcastle', 'leeds', 'sheffield'],
+    'north west': ['manchester', 'liverpool'],
+    north: ['manchester', 'liverpool', 'newcastle', 'leeds', 'sheffield'],
+    midlands: ['birmingham', 'nottingham'],
+    'west midlands': ['birmingham'],
+    'south england': [
+      'bristol',
+      'brighton',
+      'oxford',
+      'cambridge',
+      'central-london',
+      'north-london',
+      'south-london',
+      'east-london',
+      'west-london',
+    ],
+    scotland: ['glasgow', 'edinburgh'],
+    wales: ['cardiff'],
+    london: ['central-london', 'north-london', 'south-london', 'east-london', 'west-london'],
+  };
+
   function metaVal(meta, keyRe) {
     for (var i = 0; i < (meta || []).length; i++) {
       if (keyRe.test(meta[i].key)) return String(meta[i].val || '');
@@ -165,6 +211,45 @@
     if (/event/.test(comm)) tags.push('event-based');
     if (item.category && item.category !== 'general') tags.push('cat-' + item.category);
     item.filterTags = tags;
+    return deriveCitySlugs(item);
+  }
+
+  function deriveCitySlugs(item) {
+    var loc = metaVal(item.meta, /^location$/i) || metaVal(item.meta, /territor/i);
+    var blob = [loc, item.title, item.desc, (item.tags || []).join(' ')]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    var slugs = [];
+    var seen = {};
+
+    function add(slug) {
+      if (!slug || seen[slug]) return;
+      seen[slug] = true;
+      slugs.push(slug);
+    }
+
+    if (/remote|online|uk-wide|uk wide|nationwide|anywhere|work from home|wfh|your area|various territor/.test(blob)) {
+      item.matchesAllCities = true;
+      item.citySlugs = [];
+      return item;
+    }
+
+    Object.keys(CITY_SLUG_BY_NAME).forEach(function (name) {
+      if (blob.indexOf(name) !== -1) add(CITY_SLUG_BY_NAME[name]);
+    });
+
+    Object.keys(UMBRELLA_TO_SLUGS).forEach(function (phrase) {
+      if (blob.indexOf(phrase) !== -1) {
+        UMBRELLA_TO_SLUGS[phrase].forEach(add);
+      }
+    });
+
+    if (/tyne/.test(blob)) add('newcastle');
+    if (/greater manchester/.test(blob)) add('manchester');
+
+    item.citySlugs = slugs;
+    item.matchesAllCities = false;
     return item;
   }
 

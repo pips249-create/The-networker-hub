@@ -102,6 +102,24 @@
     return Boolean(finKey && finVal);
   }
 
+  function parseInvestmentFromForm() {
+    const raw = document.getElementById('oe-investment')?.value.trim() || '';
+    const num = parseInt(raw.replace(/[^0-9]/g, ''), 10);
+    return Number.isNaN(num) ? null : num;
+  }
+
+  function hasHighRiskOpportunityType() {
+    const types = getSelectedTypes();
+    return types.some((type) =>
+      ['franchise', 'distributorship', 'partnership', 'business-opportunity'].includes(type)
+    );
+  }
+
+  function requiresFcaDisclaimer() {
+    const investment = parseInvestmentFromForm();
+    return hasHighRiskOpportunityType() || (investment != null && investment >= 10000);
+  }
+
   function updateEarningsAttestVisibility() {
     const wrap = document.getElementById('oe-earnings-attest-wrap');
     if (!wrap) return;
@@ -109,6 +127,18 @@
     wrap.hidden = !show;
     if (!show) {
       const box = document.getElementById('oe-earnings-attest');
+      if (box) box.checked = false;
+    }
+    updateFcaAttestVisibility();
+  }
+
+  function updateFcaAttestVisibility() {
+    const wrap = document.getElementById('oe-fca-attest-wrap');
+    if (!wrap) return;
+    const show = requiresFcaDisclaimer();
+    wrap.hidden = !show;
+    if (!show) {
+      const box = document.getElementById('oe-fca-attest');
       if (box) box.checked = false;
     }
   }
@@ -124,6 +154,9 @@
       checkoutBody.earningsClaimsAttested = Boolean(
         document.getElementById('oe-earnings-attest')?.checked
       );
+    }
+    if (requiresFcaDisclaimer()) {
+      checkoutBody.fcaDisclaimerAttested = Boolean(document.getElementById('oe-fca-attest')?.checked);
     }
     const res = await api('/api/organiser/opportunity-listing-checkout', {
       method: 'POST',
@@ -428,6 +461,9 @@
       earningsClaimsAttested: hasFinancialClaimsInForm()
         ? Boolean(document.getElementById('oe-earnings-attest')?.checked)
         : false,
+      fcaDisclaimerAttested: requiresFcaDisclaimer()
+        ? Boolean(document.getElementById('oe-fca-attest')?.checked)
+        : false,
     };
   }
 
@@ -593,6 +629,9 @@
     if (hasFinancialClaimsInForm() && !payload.earningsClaimsAttested) {
       return 'Confirm your earnings or return figures are truthful and substantiated.';
     }
+    if (requiresFcaDisclaimer() && !payload.fcaDisclaimerAttested) {
+      return 'Confirm this is not a regulated investment and you will not make guaranteed return claims.';
+    }
 
     const scan = moderationScanInput(payload, { includeMissingFields: true });
     renderModerationWarnings(scan, false);
@@ -754,11 +793,14 @@
     refreshModerationWarnings(false);
     refreshCompleteness();
 
-    ['oe-financial-key', 'oe-financial-val'].forEach((id) => {
+    ['oe-financial-key', 'oe-financial-val', 'oe-investment'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('input', updateEarningsAttestVisibility);
       el.addEventListener('change', updateEarningsAttestVisibility);
+    });
+    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
+      input.addEventListener('change', updateEarningsAttestVisibility);
     });
     updateEarningsAttestVisibility();
 

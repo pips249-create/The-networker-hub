@@ -5,7 +5,7 @@ const {
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { normalizeListingMonths, calculateOpportunityListingTotals } = require('../opportunity-listing-pricing');
-const { opportunityHasFinancialMeta, validateEarningsAttestation } = require('../opportunity-moderation');
+const { opportunityHasFinancialMeta, validateEarningsAttestation, validateFcaDisclaimer } = require('../opportunity-moderation');
 
 function parseBody(req) {
   let body = req.body;
@@ -79,6 +79,20 @@ module.exports = async function handler(req, res) {
           message: attestation.message,
         });
       }
+    }
+
+    const fcaAttestation = validateFcaDisclaimer({
+      type: opportunity.type,
+      types: opportunity.types,
+      meta: opportunity.meta,
+      fcaDisclaimerAttested: Boolean(body.fcaDisclaimerAttested),
+    });
+    if (fcaAttestation) {
+      return json(res, 400, {
+        ok: false,
+        error: fcaAttestation.code,
+        message: fcaAttestation.message,
+      });
     }
 
     const siteUrl = siteBaseUrl();

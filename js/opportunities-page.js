@@ -6,6 +6,9 @@
   var SEARCH_DEBOUNCE_MS = 200;
   var SPOTLIGHT_MAX = 12; /* sync with api/_lib/spotlight-carousel-limits.js */
   var SPOTLIGHT_AUTO_MS = 2800;
+  var VIEW_MODE_KEY = 'hubOppViewMode';
+  var VIEW_MODES = ['grid', 'list', 'map'];
+  var DEFAULT_VIEW_MODE = 'grid';
 
   var META_PIN_SVG =
     '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
@@ -38,7 +41,7 @@
   var FILTER_OPTION_LABELS = {};
   var searchQ = '';
   var sortBy = 'recommended';
-  var viewMode = 'grid';
+  var viewMode = DEFAULT_VIEW_MODE;
   var minInvest = null;
   var maxInvest = null;
   var currentPage = 1;
@@ -59,6 +62,27 @@
 
   var els = {};
 
+  function normalizeViewMode(mode) {
+    var value = String(mode || '').trim().toLowerCase();
+    return VIEW_MODES.indexOf(value) !== -1 ? value : DEFAULT_VIEW_MODE;
+  }
+
+  function loadStoredViewMode() {
+    try {
+      return normalizeViewMode(localStorage.getItem(VIEW_MODE_KEY));
+    } catch (e) {
+      return DEFAULT_VIEW_MODE;
+    }
+  }
+
+  function saveViewMode(mode) {
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, normalizeViewMode(mode));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function syncRegionalLanding() {
     var regional = window.hubOppRegionalLanding;
     activeCitySlug = regional && regional.slug ? String(regional.slug) : '';
@@ -71,7 +95,9 @@
   }
 
   function matchesCityRegion(item) {
-    if (!activeCityName) return true;
+    if (!activeCitySlug) return true;
+    if (item.matchesAllCities) return true;
+    if (item.citySlugs && item.citySlugs.indexOf(activeCitySlug) !== -1) return true;
     var hay = [
       item.locationLabel,
       item.searchText,
@@ -1107,6 +1133,9 @@
     if (els.filterLocation) els.filterLocation.value = params.get('location') || '';
     if (els.filterCommitment) els.filterCommitment.value = params.get('commitment') || '';
 
+    var viewParam = params.get('view');
+    viewMode = viewParam ? normalizeViewMode(viewParam) : loadStoredViewMode();
+
     var min = params.get('min');
     var max = params.get('max');
     minInvest = min !== null && min !== '' ? parseInt(min, 10) : null;
@@ -1147,6 +1176,7 @@
     if (c.minInvest !== '' && c.minInvest != null) params.set('min', String(c.minInvest));
     if (c.maxInvest !== '' && c.maxInvest != null) params.set('max', String(c.maxInvest));
     if (activeCitySlug) params.set('city', activeCitySlug);
+    if (viewMode && viewMode !== DEFAULT_VIEW_MODE) params.set('view', viewMode);
 
     var qs = params.toString();
     var path = activeCitySlug
@@ -1464,7 +1494,8 @@
   function initViewToggle() {
     function setView(mode) {
       var wasMap = viewMode === 'map';
-      viewMode = mode;
+      viewMode = normalizeViewMode(mode);
+      saveViewMode(viewMode);
       syncViewToggleUI();
       if (mode === 'map') {
         if (window.hubSetOppMapView) window.hubSetOppMapView(true);

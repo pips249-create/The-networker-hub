@@ -92,6 +92,44 @@ function opportunityHasFinancialMeta(meta) {
   );
 }
 
+function parseInvestmentAmount(meta) {
+  const raw = metaValue(normalizeMeta(meta), /^investment$/i);
+  if (!raw) return null;
+  const num = parseInt(String(raw).replace(/[^0-9]/g, ''), 10);
+  return Number.isNaN(num) ? null : num;
+}
+
+const HIGH_RISK_OPPORTUNITY_TYPES = new Set([
+  'franchise',
+  'distributorship',
+  'partnership',
+  'business-opportunity',
+]);
+
+function opportunityRequiresFcaDisclaimer(opportunity) {
+  const type = String(opportunity?.type || '').trim().toLowerCase();
+  const types = Array.isArray(opportunity?.types)
+    ? opportunity.types.map((value) => String(value || '').trim().toLowerCase())
+    : [];
+  const hasHighRiskType =
+    HIGH_RISK_OPPORTUNITY_TYPES.has(type) ||
+    types.some((value) => HIGH_RISK_OPPORTUNITY_TYPES.has(value));
+  const investment = parseInvestmentAmount(opportunity?.meta);
+  return hasHighRiskType || (investment != null && investment >= 10000);
+}
+
+function validateFcaDisclaimer(payload) {
+  if (!opportunityRequiresFcaDisclaimer(payload)) return null;
+  if (!payload?.fcaDisclaimerAttested) {
+    return {
+      code: 'fca_disclaimer_required',
+      message:
+        'Confirm this is not a regulated investment and you will not make guaranteed return claims before listing.',
+    };
+  }
+  return null;
+}
+
 function validateEarningsAttestation(payload) {
   if (!opportunityHasFinancialMeta(payload?.meta)) return null;
   if (!payload?.earningsClaimsAttested) {
@@ -140,6 +178,8 @@ module.exports = {
   collectOpportunityText,
   validateStructuredFields,
   opportunityHasFinancialMeta,
+  opportunityRequiresFcaDisclaimer,
   validateEarningsAttestation,
+  validateFcaDisclaimer,
   scanOpportunityRedFlags,
 };

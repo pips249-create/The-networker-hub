@@ -8479,7 +8479,47 @@
         : meta.tone === 'warn'
           ? 'org-opp-expiry is-warn'
           : 'org-opp-expiry';
-    return '<span class="' + cls + '">' + esc(meta.label) + '</span>';
+    const renewUrl =
+      opportunity && opportunity.id
+        ? '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id)
+        : '';
+    const renewLink =
+      (meta.tone === 'warn' || meta.tone === 'danger') && renewUrl
+        ? ' <a class="org-opp-renew-link" href="' + esc(renewUrl) + '">Renew</a>'
+        : '';
+    return '<span class="' + cls + '">' + esc(meta.label) + '</span>' + renewLink;
+  }
+
+  function renderOpportunityExpiryBanner() {
+    const mount = document.getElementById('org-opp-expiry-banner');
+    if (!mount) return;
+    const expiring = (state.opportunities || []).filter(function (o) {
+      const meta = opportunityExpiryMeta(o);
+      return meta.tone === 'warn' || meta.tone === 'danger';
+    });
+    if (!expiring.length) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      return;
+    }
+    const first = expiring[0];
+    const renewUrl = first.id
+      ? '/organiser/opportunity-edit?id=' + encodeURIComponent(first.id)
+      : '/organiser/#business-overview';
+    const copy =
+      expiring.length === 1
+        ? 'Your listing <strong>' + esc(first.title || 'Untitled') + '</strong> expires soon.'
+        : expiring.length + ' of your listings expire soon.';
+    mount.hidden = false;
+    mount.innerHTML =
+      '<div class="org-inline-banner org-inline-banner--warn">' +
+      '<p>' +
+      copy +
+      ' Renew to stay visible on the opportunities directory.</p>' +
+      '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+      esc(renewUrl) +
+      '">Renew listing</a>' +
+      '</div>';
   }
 
   function opportunitySaveCount(o) {
@@ -8579,6 +8619,7 @@
     const list = (state.opportunities || []).slice();
     if (!list.length) {
       setOrgEmpty(empty, { show: true });
+      renderOpportunityExpiryBanner();
       return;
     }
     setOrgEmpty(empty, { show: false });
@@ -8618,6 +8659,7 @@
         '</td>';
       body.appendChild(tr);
     });
+    renderOpportunityExpiryBanner();
     renderOpportunityPerformance();
   }
 
