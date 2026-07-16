@@ -116,6 +116,32 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
 
   const relationshipMap = buildRegistrationRelationshipMap(historyRows || []);
 
+  const orgIds = [
+    ...new Set(
+      (data || [])
+        .map((row) => String(row.organiser_id || row.events?.organiser_id || '').trim())
+        .filter(Boolean)
+    ),
+  ];
+  const rosterMemberKeys = new Set();
+  if (orgIds.length) {
+    const { normalizeRosterEmail, rosterRowIsActive } = require('./organiser-member-roster');
+    const { data: rosterRows, error: rosterErr } = await sb
+      .from('organiser_member_roster')
+      .select('organiser_id, email, status, expires_at')
+      .in('organiser_id', orgIds)
+      .eq('status', 'active');
+    if (rosterErr) throw new Error(rosterErr.message);
+    (rosterRows || []).forEach((row) => {
+      if (!rosterRowIsActive(row)) return;
+      const orgId = String(row.organiser_id || '').trim();
+      const email = normalizeRosterEmail(row.email);
+      if (orgId && email) rosterMemberKeys.add(orgId + '\0' + email);
+    });
+  }
+
+  const { normalizeRosterEmail } = require('./organiser-member-roster');
+
   return (data || [])
     .filter((row) => allowed.has(row.event_id))
     .map((row) => {
@@ -146,6 +172,11 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         ticketPrice > 0;
 
       const relationship = relationshipForRegistration(row, relationshipMap);
+      const organiserId = String(row.organiser_id || event.organiser_id || '').trim();
+      const rosterEmail = normalizeRosterEmail(email);
+      const isRosterMember = Boolean(
+        organiserId && rosterEmail && rosterMemberKeys.has(organiserId + '\0' + rosterEmail)
+      );
 
       return {
         id: row.id,
@@ -182,6 +213,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
                 ? '£' + amountPaid.toFixed(2)
                 : 'Free',
         registeredAt: row.created_at || '',
+        isRosterMember,
         groupRelationship: relationship.groupRelationship,
         priorVisitCount: relationship.priorVisitCount,
         visitCount:

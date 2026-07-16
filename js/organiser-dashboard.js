@@ -2993,8 +2993,8 @@
   function attendeeVisitCountLabel(a) {
     const n = attendeeVisitCount(a);
     if (n == null) return '';
-    if (n === 1) return '1st visit';
-    return n + ' visits';
+    if (n === 1) return '1st booking';
+    return n + ' bookings';
   }
 
   function attendeeGroupRelationshipLabel(a) {
@@ -3005,28 +3005,37 @@
   }
 
   function attendeeGroupRelationshipBadgeHtml(a) {
+    const memberBadge = a.isRosterMember
+      ? '<span class="org-badge org-badge-member" title="On your member list">Member</span>'
+      : '';
     const n = attendeeVisitCount(a);
     if (n == null) {
-      return '<span class="org-attendee-rel-unknown">—</span>';
+      return memberBadge || '<span class="org-attendee-rel-unknown">—</span>';
     }
     const rel = String(a.groupRelationship || '').trim();
-    const label = n === 1 ? '1st visit' : n + ' visits';
+    const label = n === 1 ? '1st booking' : n + ' bookings';
     const cls = rel === 'new' ? 'org-badge-new' : 'org-badge-returning';
     const hint =
-      rel === 'returning' && n > 1
-        ? ' title="Including this booking — ' + n + ' Hub bookings with your organiser page"'
-        : rel === 'new'
-          ? ' title="First Hub booking with your organiser page"'
-          : '';
-    return (
+      a.isRosterMember
+        ? ' title="Member list · ' +
+          (n === 1 ? 'first event booking' : n + ' event bookings') +
+          ' with your organiser page"'
+        : rel === 'returning' && n > 1
+          ? ' title="Including this booking — ' + n + ' Hub bookings with your organiser page"'
+          : rel === 'new'
+            ? ' title="First Hub booking with your organiser page"'
+            : '';
+    const visitBadge =
       '<span class="org-badge org-badge-visit ' +
       cls +
       '"' +
       hint +
       '>' +
       esc(label) +
-      '</span>'
-    );
+      '</span>';
+    return memberBadge
+      ? '<span class="org-attendee-rel-stack">' + memberBadge + visitBadge + '</span>'
+      : visitBadge;
   }
 
   function attendeeStatusLabel(a) {
@@ -3173,7 +3182,7 @@
     }
     el.innerHTML =
       parts.join('') +
-      '<span class="org-attendees-summary-note">Based on Hub bookings with your organiser page — not annual membership records.</span>';
+      '<span class="org-attendees-summary-note">Event bookings register — member list membership is separate. Members on your list still appear here when they book.</span>';
   }
 
   function setAttendeesEventFilterValue(eventId, options) {
