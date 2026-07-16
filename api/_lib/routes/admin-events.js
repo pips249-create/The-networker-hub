@@ -364,6 +364,21 @@ async function adminDeleteEvent(sb, eventId, opts) {
     return { id: eventId, skipped: true, reason: 'has_registrations', title, registrationCount: count };
   }
 
+  if (force) {
+    const { eventNeedsAdminRemovalFlow, adminRemoveEvent } = require('../admin-event-removal');
+    if (eventNeedsAdminRemovalFlow(row, count || 0)) {
+      const reason = String(opts?.reason || '').trim();
+      if (!reason) {
+        return { id: eventId, skipped: true, reason: 'reason_required', title, registrationCount: count || 0 };
+      }
+      return adminRemoveEvent(sb, eventId, {
+        reason,
+        details: opts?.details,
+        adminUserId: opts?.adminUserId,
+      });
+    }
+  }
+
   const { error: ticketErr } = await sb.from('tickets').delete().eq('event_id', eventId);
   if (ticketErr) throw new Error(ticketErr.message);
 
@@ -404,19 +419,27 @@ async function bulkUpdateEvents(ids, body) {
 async function bulkDeleteEvents(ids, opts) {
   const sb = getSupabaseAdmin();
   const deleted = [];
+  const removed = [];
   const skipped = [];
 
   for (const id of ids) {
     try {
       const result = await adminDeleteEvent(sb, id, opts);
       if (result.deleted) deleted.push(result);
+      else if (result.removed) removed.push(result);
       else skipped.push(result);
     } catch (e) {
       skipped.push({ id, skipped: true, reason: e.message || 'delete_failed', title: '' });
     }
   }
 
-  return { deleted: deleted.length, skipped, titles: deleted.map((d) => d.title) };
+  return {
+    deleted: deleted.length,
+    removed: removed.length,
+    skipped,
+    titles: [...deleted, ...removed].map((d) => d.title),
+    removedEvents: removed,
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -499,7 +522,12 @@ module.exports = async function handler(req, res) {
       ];
       if (!ids.length) return json(res, 400, { error: 'missing_ids' });
       try {
-        const result = await bulkDeleteEvents(ids, { force: Boolean(body.force) });
+        const result = await bulkDeleteEvents(ids, {
+          force: Boolean(body.force),
+          reason: body.reason,
+          details: body.details,
+          adminUserId: session.sub,
+        });
         return json(res, 200, { ok: true, ...result });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'bulk_delete_failed', message: e.message });

@@ -205,7 +205,7 @@ async function sendBookingCancelledEmail(sb, registrationId, options = {}) {
   }
 }
 
-async function sendEventCancelledEmail(sb, registrationId, organiserMessage) {
+async function sendEventCancelledEmail(sb, registrationId, organiserMessage, options = {}) {
   const ctx = await loadRegistrationContext(sb, registrationId);
   if (!ctx || !ctx.eventRow) return { skipped: true, reason: 'registration_not_found' };
   if (ctx.registration.event_cancelled_email_sent_at) {
@@ -217,6 +217,7 @@ async function sendEventCancelledEmail(sb, registrationId, organiserMessage) {
 
   const vars = buildCancellationEmailVars(ctx, {
     organiser_message: String(organiserMessage || '').trim(),
+    hub_removed: Boolean(options.hubRemoved),
   });
 
   try {
@@ -276,7 +277,7 @@ async function sendRefundProcessedEmail(sb, registrationId, refundAmount) {
   }
 }
 
-async function sendEventCancelledEmailsForEvent(sb, eventId, cancellation) {
+async function sendEventCancelledEmailsForEvent(sb, eventId, cancellation, options = {}) {
   const { data: registrations, error } = await sb
     .from('registrations')
     .select('id')
@@ -287,11 +288,15 @@ async function sendEventCancelledEmailsForEvent(sb, eventId, cancellation) {
 
   if (error) throw new Error(error.message);
 
-  const message = cancellation?.details || '';
+  const message =
+    String(options.organiserMessage || '').trim() ||
+    String(cancellation?.details || '').trim() ||
+    String(cancellation?.reason || '').trim();
+  const emailOptions = { hubRemoved: Boolean(options.hubRemoved) };
   const result = { sent: 0, skipped: 0, errors: [] };
 
   for (const row of registrations || []) {
-    const outcome = await sendEventCancelledEmail(sb, row.id, message);
+    const outcome = await sendEventCancelledEmail(sb, row.id, message, emailOptions);
     if (outcome.sent) result.sent += 1;
     else if (outcome.skipped) result.skipped += 1;
     else if (outcome.error) {

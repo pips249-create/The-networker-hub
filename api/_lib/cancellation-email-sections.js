@@ -185,14 +185,19 @@ function buildNoRefundRow(eventRow) {
   );
 }
 
-function buildOrganiserMessageRow(message) {
+function buildOrganiserMessageRow(message, options = {}) {
   const text = String(message || '').trim();
   if (!text) return '';
+  const label = options.hubRemoved
+    ? 'Message from The Networker Hub'
+    : 'Message from the organiser';
   return (
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid rgba(194,153,209,0.35);">' +
     '<tr><td style="padding:22px 24px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Message from the organiser</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">' +
+    escapeHtml(label) +
+    '</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
     formatMultilineHtml(text) +
     '</p>' +
@@ -200,13 +205,20 @@ function buildOrganiserMessageRow(message) {
   );
 }
 
-function buildEventCancelledRefundCopy(registration) {
+function buildEventCancelledRefundCopy(registration, options = {}) {
   const amountPaid = formatAmount(registration?.amount_paid);
   if (!isPaidRegistration(registration)) {
     return {
       refund_headline: 'No payment was taken for this booking',
       refund_details:
         'Your registration has been cancelled. Because this was a free ticket, no refund is needed.',
+    };
+  }
+  if (options.hubRemoved) {
+    return {
+      refund_headline: 'A full refund of ' + amountPaid + ' is on its way',
+      refund_details:
+        'The Networker Hub has removed this event. You will receive a full refund of the ticket price you paid, including any booking fees shown at checkout.',
     };
   }
   return {
@@ -264,13 +276,14 @@ function enrichEventCancelledVars(vars, sponsorSection) {
     payment_status: input.payment_status || 'Paid',
     amount_paid: input.amount_paid,
   };
-  const refundCopy = buildEventCancelledRefundCopy(registration);
+  const hubRemoved = Boolean(input.hub_removed);
+  const refundCopy = buildEventCancelledRefundCopy(registration, { hubRemoved });
   const sponsorRow = wrapSponsorRow(resolveSponsorSection(input, sponsorSection));
 
   return {
     ...input,
     ...refundCopy,
-    organiser_message_row: buildOrganiserMessageRow(input.organiser_message),
+    organiser_message_row: buildOrganiserMessageRow(input.organiser_message, { hubRemoved }),
     sponsor_row: sponsorRow,
     sponsor_section: sponsorRow,
   };

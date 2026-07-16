@@ -1571,40 +1571,55 @@
   function deleteSelectedHealthEvents(force) {
     var ids = getSelectedHealthEventIds();
     if (!ids.length) return;
-    if (!window.confirm(eventDeleteConfirmMsg(ids.length, force))) return;
     var msg = document.getElementById('health-delete-msg');
     var btn = force
       ? document.getElementById('health-force-delete-btn')
       : document.getElementById('health-delete-btn');
-    if (btn) btn.disabled = true;
-    if (msg) {
-      msg.textContent = 'Deleting…';
-      msg.className = 'text-xs text-slate-500';
+
+    function runDelete(extra) {
+      if (btn) btn.disabled = true;
+      if (msg) {
+        msg.textContent = force ? 'Removing…' : 'Deleting…';
+        msg.className = 'text-xs text-slate-500';
+      }
+      postAdminEventBulkDelete(ids, {
+        force: !!force,
+        reason: extra && extra.reason,
+        details: extra && extra.details,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+          clearSelectedHealthEvents();
+          if (msg) {
+            msg.textContent = formatEventBulkDeleteResult(data) || 'Done.';
+            msg.className = 'text-xs text-emerald-700 font-semibold';
+          }
+          return fetchEventHealth();
+        })
+        .then(function () {
+          renderEventHealth();
+        })
+        .catch(function (err) {
+          if (msg) {
+            msg.textContent = err.message || 'Could not delete events';
+            msg.className = 'text-xs text-red-700 font-semibold';
+          }
+          if (btn) btn.disabled = false;
+        });
     }
-    adminPost('/api/admin/events', { action: 'bulk_delete', ids: ids, force: !!force })
-      .then(function (data) {
-        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
-        clearSelectedHealthEvents();
-        var parts = ['Deleted ' + (data.deleted || 0) + ' event' + ((data.deleted || 0) === 1 ? '' : 's') + '.'];
-        if (data.skipped && data.skipped.length) {
-          parts.push('Skipped ' + data.skipped.length + ': ' + formatEventBulkSkipped(data.skipped) + '.');
-        }
-        if (msg) {
-          msg.textContent = parts.join(' ');
-          msg.className = 'text-xs text-emerald-700 font-semibold';
-        }
-        return fetchEventHealth();
-      })
-      .then(function () {
-        renderEventHealth();
-      })
-      .catch(function (err) {
-        if (msg) {
-          msg.textContent = err.message || 'Could not delete events';
-          msg.className = 'text-xs text-red-700 font-semibold';
-        }
-        if (btn) btn.disabled = false;
-      });
+
+    if (force) {
+      promptAdminForceRemove(ids.length)
+        .then(function (payload) {
+          runDelete(payload);
+        })
+        .catch(function () {
+          /* cancelled */
+        });
+      return;
+    }
+    if (!window.confirm(eventDeleteConfirmMsg(ids.length, false))) return;
+    runDelete(null);
   }
 
   function deleteSingleHealthEvent(eventId, title, triggerBtn) {
@@ -2185,10 +2200,10 @@
       '<span id="health-bulk-msg" class="text-xs"></span></div></form>' +
       '<div id="health-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
       '<p class="text-sm font-semibold text-brand-900">Delete selected events</p>' +
-      '<p class="text-xs text-slate-600">Events with registrations or active ticket sales are skipped unless you force delete.</p>' +
+      '<p class="text-xs text-slate-600">Events with registrations or active ticket sales are skipped unless you force remove (cancels, refunds attendees, emails organiser).</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="health-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
-      '<button type="button" id="health-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force delete</button>' +
+      '<button type="button" id="health-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force remove</button>' +
       '<span id="health-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div id="event-health-list" class="space-y-3"></div>' +
       '<div id="event-health-completed"></div></div>';
@@ -9676,13 +9691,129 @@
     if (force) {
       return (
         base +
-        '\n\nForce delete will remove events even if they have ticket registrations or are locked. This cannot be undone.'
+        '\n\nEvents with registrations or ticket sales will be cancelled, attendees refunded, and the organiser notified. Draft events with no bookings are deleted immediately.'
       );
     }
     return (
       base +
-      '\n\nEvents with registrations or active ticket sales will be skipped. Use force delete only if you are sure.'
+      '\n\nEvents with registrations or active ticket sales will be skipped. Use force remove if you need to cancel and refund bookings.'
     );
+  }
+
+  var ADMIN_EVENT_REMOVAL_REASONS = [
+    'Breach of Hub rules',
+    'Misleading listing',
+    'Duplicate or test event',
+    'Quality issue',
+    'Organiser request',
+    'Other',
+  ];
+
+  function ensureAdminForceRemoveModal() {
+    if (document.getElementById('admin-force-remove-modal')) return;
+    var modal = document.createElement('div');
+    modal.id = 'admin-force-remove-modal';
+    modal.hidden = true;
+    modal.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'admin-force-remove-title');
+    modal.innerHTML =
+      '<div class="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">' +
+      '<div><h2 id="admin-force-remove-title" class="text-lg font-semibold text-brand-900">Force remove events</h2>' +
+      '<p id="admin-force-remove-sub" class="text-sm text-slate-600 mt-1">Events with bookings will be cancelled. Paying attendees are refunded automatically and the organiser is emailed.</p></div>' +
+      '<div><label for="admin-force-remove-reason" class="block text-xs font-semibold text-slate-500 mb-1">Reason</label>' +
+      '<select id="admin-force-remove-reason" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">' +
+      '<option value="">Select a reason…</option>' +
+      ADMIN_EVENT_REMOVAL_REASONS.map(function (r) {
+        return '<option value="' + attrEsc(r) + '">' + esc(r) + '</option>';
+      }).join('') +
+      '</select></div>' +
+      '<div><label for="admin-force-remove-details" class="block text-xs font-semibold text-slate-500 mb-1">Note for organiser (optional)</label>' +
+      '<textarea id="admin-force-remove-details" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Extra context included in emails where helpful"></textarea></div>' +
+      '<p id="admin-force-remove-error" class="text-xs text-red-700 font-semibold hidden"></p>' +
+      '<div class="flex justify-end gap-2 pt-1">' +
+      '<button type="button" id="admin-force-remove-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>' +
+      '<button type="button" id="admin-force-remove-confirm" class="rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-semibold hover:bg-red-700">Remove events</button>' +
+      '</div></div>';
+    document.body.appendChild(modal);
+
+    document.getElementById('admin-force-remove-cancel').addEventListener('click', function () {
+      modal.hidden = true;
+      if (modal._reject) modal._reject(new Error('cancelled'));
+    });
+    document.getElementById('admin-force-remove-confirm').addEventListener('click', function () {
+      var reasonEl = document.getElementById('admin-force-remove-reason');
+      var detailsEl = document.getElementById('admin-force-remove-details');
+      var errEl = document.getElementById('admin-force-remove-error');
+      var reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+      if (!reason) {
+        if (errEl) {
+          errEl.textContent = 'Select a removal reason.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      if (errEl) errEl.classList.add('hidden');
+      modal.hidden = true;
+      if (modal._resolve) {
+        modal._resolve({
+          reason: reason,
+          details: detailsEl ? String(detailsEl.value || '').trim() : '',
+        });
+      }
+    });
+  }
+
+  function promptAdminForceRemove(count) {
+    ensureAdminForceRemoveModal();
+    var modal = document.getElementById('admin-force-remove-modal');
+    var sub = document.getElementById('admin-force-remove-sub');
+    var reasonEl = document.getElementById('admin-force-remove-reason');
+    var detailsEl = document.getElementById('admin-force-remove-details');
+    var errEl = document.getElementById('admin-force-remove-error');
+    if (sub) {
+      sub.textContent =
+        count === 1
+          ? 'This event will be cancelled if it has bookings. Paying attendees are refunded automatically and the organiser is emailed.'
+          : count +
+            ' events will be cancelled where they have bookings. Paying attendees are refunded automatically and organisers are emailed.';
+    }
+    if (reasonEl) reasonEl.value = '';
+    if (detailsEl) detailsEl.value = '';
+    if (errEl) errEl.classList.add('hidden');
+    modal.hidden = false;
+    return new Promise(function (resolve, reject) {
+      modal._resolve = resolve;
+      modal._reject = reject;
+    });
+  }
+
+  function formatEventBulkDeleteResult(data) {
+    var parts = [];
+    if (data.removed) {
+      parts.push(
+        'Removed ' +
+          data.removed +
+          ' event' +
+          (data.removed === 1 ? '' : 's') +
+          ' (cancelled, refunds processing, organiser notified)'
+      );
+    }
+    if (data.deleted) {
+      parts.push('Deleted ' + data.deleted + ' event' + (data.deleted === 1 ? '' : 's') + '.');
+    }
+    if (data.skipped && data.skipped.length) {
+      parts.push('Skipped ' + data.skipped.length + ': ' + formatEventBulkSkipped(data.skipped) + '.');
+    }
+    return parts.join(' ');
+  }
+
+  function postAdminEventBulkDelete(ids, options) {
+    var payload = { action: 'bulk_delete', ids: ids, force: !!options.force };
+    if (options.reason) payload.reason = options.reason;
+    if (options.details) payload.details = options.details;
+    return adminPost('/api/admin/events', payload);
   }
 
   function formatEventBulkSkipped(skipped) {
@@ -9690,6 +9821,7 @@
     var labels = {
       locked: 'locked (active ticket sales)',
       has_registrations: 'has registrations',
+      reason_required: 'reason required for force remove',
       not_found: 'not found',
     };
     return skipped
@@ -9708,40 +9840,55 @@
   function deleteSelectedEvents(force) {
     var ids = getSelectedEventIds();
     if (!ids.length) return;
-    if (!window.confirm(eventDeleteConfirmMsg(ids.length, force))) return;
     var msg = document.getElementById('event-delete-msg');
     var btn = force
       ? document.getElementById('event-force-delete-btn')
       : document.getElementById('event-delete-btn');
-    if (btn) btn.disabled = true;
-    if (msg) {
-      msg.textContent = 'Deleting…';
-      msg.className = 'text-xs text-slate-500';
+
+    function runDelete(extra) {
+      if (btn) btn.disabled = true;
+      if (msg) {
+        msg.textContent = force ? 'Removing…' : 'Deleting…';
+        msg.className = 'text-xs text-slate-500';
+      }
+      postAdminEventBulkDelete(ids, {
+        force: !!force,
+        reason: extra && extra.reason,
+        details: extra && extra.details,
+      })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
+          clearSelectedEvents();
+          if (msg) {
+            msg.textContent = formatEventBulkDeleteResult(data) || 'Done.';
+            msg.className = 'text-xs text-emerald-700 font-semibold';
+          }
+          return refreshEventCleanupData();
+        })
+        .then(function () {
+          updateEventBulkBar();
+        })
+        .catch(function (err) {
+          if (msg) {
+            msg.textContent = err.message || 'Could not delete events';
+            msg.className = 'text-xs text-red-700 font-semibold';
+          }
+          if (btn) btn.disabled = false;
+        });
     }
-    adminPost('/api/admin/events', { action: 'bulk_delete', ids: ids, force: !!force })
-      .then(function (data) {
-        if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
-        clearSelectedEvents();
-        var parts = ['Deleted ' + (data.deleted || 0) + ' event' + ((data.deleted || 0) === 1 ? '' : 's') + '.'];
-        if (data.skipped && data.skipped.length) {
-          parts.push('Skipped ' + data.skipped.length + ': ' + formatEventBulkSkipped(data.skipped) + '.');
-        }
-        if (msg) {
-          msg.textContent = parts.join(' ');
-          msg.className = 'text-xs text-emerald-700 font-semibold';
-        }
-        return refreshEventCleanupData();
-      })
-      .then(function () {
-        updateEventBulkBar();
-      })
-      .catch(function (err) {
-        if (msg) {
-          msg.textContent = err.message || 'Could not delete events';
-          msg.className = 'text-xs text-red-700 font-semibold';
-        }
-        if (btn) btn.disabled = false;
-      });
+
+    if (force) {
+      promptAdminForceRemove(ids.length)
+        .then(function (payload) {
+          runDelete(payload);
+        })
+        .catch(function () {
+          /* cancelled */
+        });
+      return;
+    }
+    if (!window.confirm(eventDeleteConfirmMsg(ids.length, false))) return;
+    runDelete(null);
   }
 
   function saveEventBulkForm(form) {
@@ -10011,10 +10158,10 @@
       '<span id="event-bulk-msg" class="text-xs"></span></div></form>' +
       '<div id="event-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
       '<p class="text-sm font-semibold text-brand-900">Delete selected events</p>' +
-      '<p class="text-xs text-slate-600">Draft and test events without registrations are removed immediately. Events with registrations or active ticket sales are skipped unless you force delete.</p>' +
+      '<p class="text-xs text-slate-600">Draft and test events without registrations are removed immediately. Events with registrations or active ticket sales are skipped unless you force remove (cancels, refunds attendees, emails organiser).</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="event-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
-      '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force delete</button>' +
+      '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force remove</button>' +
       '<span id="event-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +

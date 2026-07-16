@@ -172,6 +172,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Only {{upcoming_count}} events left on your calendar',
   },
+  event_removed_by_hub: {
+    file: 'event-removed-by-hub.html',
+    marker: 'organiser-email-layout-v2',
+    subject: 'Your event {{event_name}} has been removed from The Networker Hub',
+  },
   saved_organiser_new_listing: {
     file: 'saved-organiser-new-listing.html',
     marker: 'hub-email-layout-v2',

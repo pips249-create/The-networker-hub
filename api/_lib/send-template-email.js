@@ -56,7 +56,10 @@ const {
   stripUnresolvedSponsorPlaceholders,
 } = require('./email-sponsor-sections');
 const { emailGreetingName } = require('./email-display-name');
-const { patchEmailMobileStyles } = require('./email-mobile-styles');
+const {
+  enrichEventRemovedByHubVars,
+  stripEventRemovedByHubPlaceholders,
+} = require('./event-removed-by-hub-sections');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -89,6 +92,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_new_registration',
   'organiser_new_application',
   'organiser_booking_cancelled',
+  'event_removed_by_hub',
   'organiser_ticket_sales_nudge',
   'application_received',
   'application_approved',
@@ -269,6 +273,8 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged = enrichBookingCancelledVars(merged, sponsorSection);
   } else if (slug === 'event_cancelled') {
     merged = enrichEventCancelledVars(merged, sponsorSection);
+  } else if (slug === 'event_removed_by_hub') {
+    merged = enrichEventRemovedByHubVars(merged, sponsorSection);
   } else if (slug === 'refund_processed') {
     merged = enrichRefundProcessedVars(merged, sponsorSection);
   }
@@ -367,6 +373,9 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     html = replacePlaceholders(html, merged);
   } else if (slug === 'event_cancelled') {
     html = stripEventCancelledPlaceholders(html);
+    html = replacePlaceholders(html, merged);
+  } else if (slug === 'event_removed_by_hub') {
+    html = stripEventRemovedByHubPlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'refund_processed') {
     html = stripRefundProcessedPlaceholders(html);
