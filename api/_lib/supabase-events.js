@@ -232,6 +232,8 @@ function ticketRowToTier(row, registrationCount) {
     isMembersOnly: isMembersOnlyTicket(row),
     visibility: String(row.visibility || 'public').toLowerCase(),
     saleEnd: row.sale_ends_at || null,
+    seriesScope: String(row.series_scope || 'date').trim(),
+    isSeriesPass: String(row.series_scope || '').trim() === 'series_pass',
   };
 }
 

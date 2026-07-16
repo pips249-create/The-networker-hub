@@ -228,6 +228,7 @@ function rowToTicket(row) {
     saleStart: row.sale_starts_at || null,
     saleEnd: row.sale_ends_at || null,
     visibility: normalizeTicketVisibility(row.visibility),
+    seriesScope: String(row.series_scope || 'date').trim() === 'series_pass' ? 'series_pass' : 'date',
   };
 }
 
@@ -1582,6 +1583,7 @@ async function createTicketsForEvents({
         displayOrder: tier.displayOrder,
         ticketType: tier.ticketType,
         visibility: tier.visibility,
+        seriesScope: tier.seriesScope || tier.series_scope || 'date',
       });
       out.push(created);
     }

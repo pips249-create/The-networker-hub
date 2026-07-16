@@ -71,7 +71,13 @@ module.exports = async function handler(req, res) {
     };
 
     let result;
-    if (payment.checkoutType === 'series_bundle' && payment.bundleItems?.length) {
+    if (payment.checkoutType === 'series_pass' && payment.bundleItems?.length) {
+      result = await createSeriesBundleFromPayment({
+        ...paymentPayload,
+        bundleItems: payment.bundleItems,
+        registrationKind: 'series_pass',
+      });
+    } else if (payment.checkoutType === 'series_bundle' && payment.bundleItems?.length) {
       result = await createSeriesBundleFromPayment({
         ...paymentPayload,
         bundleItems: payment.bundleItems,

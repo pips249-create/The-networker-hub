@@ -503,7 +503,9 @@ module.exports = async function handler(req, res) {
     }
 
     let maxQty = 99;
-    if (ticketId) {
+    if (seriesMultiDate && seriesMultiDate.pricingMode === 'series_pass') {
+      maxQty = 1;
+    } else if (ticketId) {
       maxQty = await availableTicketQty(sb, ticketId);
       if (maxQty < 1) {
         return json(res, 400, { ok: false, error: 'ticket_sold_out' });

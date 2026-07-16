@@ -678,6 +678,11 @@
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
       '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
       '</div>' +
+      '<div class="ee-field ee-tier-series-pass-field" hidden>' +
+      '<label class="ee-check-label">' +
+      '<input type="checkbox" class="ee-tier-series-pass" /> ' +
+      '<span><strong>Full series pass</strong> — one price covers every date in this listing (not per session)</span>' +
+      '</label></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
       '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today.</p>' +
@@ -1082,6 +1087,7 @@
         ticketType: 'Standard',
         displayOrder: idx,
         visibility: 'public',
+        seriesScope: row.querySelector('.ee-tier-series-pass')?.checked ? 'series_pass' : 'date',
       });
     });
     const privateTier = collectMembersOnlyTicket(tiers);
