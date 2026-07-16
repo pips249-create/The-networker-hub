@@ -57,7 +57,10 @@ async function sendListingExpiryReminders(sb) {
     }
 
     const renewUrl =
-      siteUrl + '/organiser/opportunity-edit?id=' + encodeURIComponent(row.id);
+      siteUrl +
+      '/organiser/?renew=' +
+      encodeURIComponent(row.id) +
+      '#business-overview';
 
     try {
       await sendTemplatedEmail({
@@ -241,7 +244,9 @@ async function runOpportunityReminderMaintenance(sb) {
   const savedSearchMatches = await sendDueSavedSearchMatchEmails(client);
   const listingExpired = await expireOpportunityListings(client);
   const premiumExpired = await expireOpportunityPremium(client);
-  return { listing, premium, savedClosingSoon, savedSearchMatches, listingExpired, premiumExpired };
+  const { notifyPremiumWaitlistIfSlotsOpen } = require('./opportunity-premium-waitlist');
+  const premiumWaitlist = await notifyPremiumWaitlistIfSlotsOpen(client);
+  return { listing, premium, savedClosingSoon, savedSearchMatches, listingExpired, premiumExpired, premiumWaitlist };
 }
 
 module.exports = {

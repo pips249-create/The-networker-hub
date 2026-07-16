@@ -627,6 +627,21 @@
     });
   }
 
+  function recordOpportunityView(item) {
+    if (!item || !item.id) return;
+    try {
+      fetch('/api/opportunities', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'record_view', opportunityId: item.id }),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function finishInit(item) {
     if (!item) {
       showNotFound();
@@ -634,6 +649,7 @@
     }
     maybeRedirectToCanonicalSlug(item);
     render(item);
+    recordOpportunityView(item);
     bindSave();
     bindForm();
     bindClaimForm();

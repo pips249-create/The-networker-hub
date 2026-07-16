@@ -148,7 +148,28 @@ function rowToListing(row) {
     updatedAt: row.updated_at || null,
     rejectionNote: row.rejection_note || null,
     publishedAt: row.published_at || null,
+    viewCount: Number(row.view_count) || 0,
   };
+}
+
+async function incrementOpportunityViewCount(opportunityId) {
+  const id = String(opportunityId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+  const sb = getSupabaseAdmin();
+  const { data: existing, error: loadErr } = await sb
+    .from('business_opportunities')
+    .select('id, status, approval_status, view_count')
+    .eq('id', id)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!existing) throw new Error('not_found');
+  if (String(existing.status || '').toLowerCase() !== 'published') throw new Error('not_found');
+  if (String(existing.approval_status || '') !== 'Approved') throw new Error('not_found');
+
+  const next = Math.max(0, Number(existing.view_count) || 0) + 1;
+  const { error } = await sb.from('business_opportunities').update({ view_count: next }).eq('id', id);
+  if (error) throw new Error(error.message);
+  return next;
 }
 
 async function rejectOpportunityListing(opportunityId, rejectionNote, options) {
@@ -760,6 +781,7 @@ module.exports = {
   listOpportunityEnquiriesForSession,
   listOpportunityEnquiriesSentBySession,
   updateOpportunityEnquiryStatus,
+  incrementOpportunityViewCount,
   normalizeType,
   normalizeTypes,
   normalizeMeta,

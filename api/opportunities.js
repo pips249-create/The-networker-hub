@@ -21,6 +21,7 @@ module.exports = async function handler(req, res) {
     getPublishedOpportunityById,
     getPublishedOpportunityBySlug,
     createOpportunityEnquiry,
+    incrementOpportunityViewCount,
   } = require('./_lib/supabase-opportunities');
 
   if (req.method === 'POST') {
@@ -35,6 +36,23 @@ module.exports = async function handler(req, res) {
     body = body || {};
 
     const action = String(body.action || '').trim().toLowerCase();
+
+    if (action === 'record_view') {
+      const limited = enforceRateLimit(req, res, 'opportunity_view', { max: 30, windowMs: 300_000 });
+      if (!limited.allowed) {
+        return json(res, 429, { ok: false, error: 'rate_limited', retryAfterSec: limited.retryAfterSec });
+      }
+      const opportunityId = String(body.opportunityId || body.id || '').trim();
+      try {
+        const viewCount = await incrementOpportunityViewCount(opportunityId);
+        return json(res, 200, { ok: true, viewCount });
+      } catch (e) {
+        const msg = e.message || String(e);
+        if (msg === 'not_found') return json(res, 404, { ok: false, error: 'not_found' });
+        if (msg === 'invalid_opportunity_id') return json(res, 400, { ok: false, error: msg });
+        return json(res, 500, { ok: false, error: 'view_record_failed', message: msg });
+      }
+    }
 
     if (action === 'claim_request') {
       const limited = enforceRateLimit(req, res, 'opportunity_claim', { max: 5, windowMs: 600_000 });

@@ -114,9 +114,14 @@ function organiserDashboardUrl(siteUrl, options = {}) {
   return base + (qs ? '?' + qs : '') + hash;
 }
 
-function organiserBusinessDashboardUrl(siteUrl) {
+function organiserBusinessDashboardUrl(siteUrl, options = {}) {
   const base = siteBase(siteUrl) + '/organiser/';
-  return base + '?panel=business-overview#business-overview';
+  const renewId = String(options.renewOpportunityId || options.renew || '').trim();
+  const hash = '#business-overview';
+  if (renewId) {
+    return base + '?renew=' + encodeURIComponent(renewId) + hash;
+  }
+  return base + hash;
 }
 
 function opportunityPublicUrl(opportunityRow, siteUrl) {
