@@ -155,7 +155,7 @@
     },
     {
       "path": "/api/cron/roster-emails",
-      "schedule": "*/15 * * * *"
+      "schedule": "45 10 * * *"
     }
   ],
   "functions": {
