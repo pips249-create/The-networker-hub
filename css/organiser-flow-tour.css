@@ -81,6 +81,11 @@ body:not(.ee-embed-drawer).hub-flow-tour-active .ee-wrap {
 
 body.ee-embed-drawer .hub-hubert-guide-panel {
   top: 0;
+  left: auto;
+  right: 0;
+  border-right: none;
+  border-left: 1px solid #cfe4ea;
+  box-shadow: -4px 0 24px rgba(15, 35, 45, 0.12);
 }
 
 .hub-hubert-guide-head {

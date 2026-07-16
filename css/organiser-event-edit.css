@@ -841,6 +841,18 @@ a.ee-wizard-link:hover {
   margin-bottom: 16px;
 }
 
+.ee-field.is-error input,
+.ee-field.is-error select,
+.ee-field.is-error textarea {
+  border-color: #c45c5c;
+  box-shadow: 0 0 0 2px rgba(196, 92, 92, 0.15);
+}
+
+.ee-field-error {
+  color: #8b2e2e;
+  margin-top: 6px;
+}
+
 .ee-sticky-side .ee-card {
   position: sticky;
   top: 16px;
@@ -1123,6 +1135,143 @@ a.ee-wizard-link:hover {
   background: var(--ee-purple-pale);
   border-radius: var(--ee-radius);
   margin: 0;
+}
+
+.ee-step-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ee-purple);
+  margin: 0 0 6px;
+}
+
+.ee-attendance-lead {
+  margin-bottom: 14px;
+}
+
+.ee-attendance-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ee-attendance-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  border: 2px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  padding: 16px;
+  background: var(--ee-white);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ee-attendance-card strong {
+  font-size: 15px;
+  color: var(--ee-text);
+}
+
+.ee-attendance-card > span:last-of-type {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ee-text-mid);
+  font-weight: 400;
+}
+
+.ee-attendance-card-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ee-attendance-card.is-active {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple-pale);
+  box-shadow: inset 0 0 0 1px var(--ee-purple);
+}
+
+.ee-optional-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ee-addon-card {
+  border: 1.5px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  padding: 14px 16px;
+  background: var(--ee-white);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ee-addon-card.is-enabled {
+  border-color: var(--ee-purple);
+  background: #faf9fd;
+}
+
+.ee-addon-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.ee-addon-toggle input {
+  width: auto;
+  margin: 4px 0 0;
+  padding: 0;
+  border: none;
+  accent-color: var(--ee-purple);
+  flex-shrink: 0;
+}
+
+.ee-addon-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ee-addon-toggle-copy strong {
+  font-size: 14px;
+  color: var(--ee-text);
+}
+
+.ee-addon-summary {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ee-text-mid);
+  font-weight: 400;
+}
+
+.ee-addon-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ee-border);
+}
+
+.ee-addon-body .ee-info-box {
+  margin-bottom: 12px;
+}
+
+.ee-ce-questions {
+  margin-top: 4px;
+}
+
+#ee-paid-setup-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .ee-attendance-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ee-info-box {
@@ -1823,6 +1972,7 @@ body.ee-is-new-listing #ee-event-stats {
 .ee-card.is-series-locked .ee-field select,
 .ee-card.is-series-locked .ee-field textarea,
 .ee-card.is-series-locked .ee-mode-btn,
+.ee-card.is-series-locked .ee-attendance-card,
 .ee-card.is-series-locked .ee-upload-zone,
 .ee-card.is-series-locked .ee-btn-compact {
   opacity: 0.55;
@@ -2277,33 +2427,64 @@ body.ee-embed-drawer.ee-is-loading #ee-page-loading {
 }
 
 body.ee-embed-drawer #ee-event-stats,
-body.ee-embed-drawer #ee-cancel-row {
+body.ee-embed-drawer #ee-cancel-row,
+body.ee-embed-drawer .ee-page-head {
   display: none !important;
+}
+
+html.ee-embed-drawer-root,
+body.ee-embed-drawer.organiser-event-edit-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body.ee-embed-drawer .ee-wrap {
   max-width: none;
-  padding: 16px 18px 24px;
-  margin: 0;
+  width: 100%;
+  padding: 0 16px 24px !important;
+  margin: 0 !important;
+  box-sizing: border-box;
 }
 
-body.ee-embed-drawer .ee-page-head {
-  margin-bottom: 12px;
+body.ee-embed-drawer .ee-grid--create {
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
-body.ee-embed-drawer .ee-title {
-  font-size: 20px;
-  margin-bottom: 6px;
-}
-
-body.ee-embed-drawer .ee-lead {
-  font-size: 13px;
-  margin-bottom: 12px;
+body.ee-embed-drawer .ee-grid--create .ee-sticky-side .ee-card {
+  position: static;
 }
 
 body.ee-embed-drawer .ee-card {
-  padding: 16px;
-  margin-bottom: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+body.ee-embed-drawer .ee-card h2 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+body.ee-embed-drawer .ee-field {
+  margin-bottom: 12px;
+}
+
+body.ee-embed-drawer .ee-field > label,
+body.ee-embed-drawer .ee-subheading {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ee-hint--status[hidden] {
+  display: none !important;
+}
+
+.ee-hint--status:not([hidden]) {
+  color: var(--ee-text-mid);
+  font-weight: 500;
 }
 
 body.ee-embed-drawer .ee-actions {
@@ -2326,20 +2507,17 @@ body.ee-embed-drawer .ee-embed-back:not([hidden]) {
   display: inline-flex;
 }
 
-@media (min-width: 860px) {
-  body.ee-embed-drawer .ee-grid--create {
-    grid-template-columns: minmax(0, 1fr) 300px;
-  }
+.hub-field-tip-host.ee-subheading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-@media (max-width: 859px) {
-  body.ee-embed-drawer .ee-grid--create {
-    grid-template-columns: 1fr;
-  }
-
-  body.ee-embed-drawer .ee-grid--create .ee-sticky-side .ee-card {
-    position: static;
-  }
+.ee-field-label-row label[data-hub-tip] {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .hub-payment-setup-card {

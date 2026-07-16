@@ -2343,7 +2343,7 @@
     }
     if (form) {
       form.hidden = !show;
-      if (!show) form.classList.remove('is-paid-guests');
+      if (!show) form.classList.remove('is-paid-guests', 'is-checkout-details');
     }
     const freeDataSharingNote = document.getElementById('checkout-free-data-sharing-note');
     if (freeDataSharingNote && !show) freeDataSharingNote.hidden = true;
@@ -2370,9 +2370,12 @@
     const qtyNum = Math.max(1, parseInt(ticketQty, 10) || currentTicketQty());
     const hasGuests = qtyNum > 1;
     showCheckoutDetails(show);
-    if (form) form.classList.toggle('is-paid-guests', show);
-    if (nameField) nameField.hidden = show;
-    if (emailField) emailField.hidden = show;
+    if (form) {
+      form.classList.toggle('is-paid-guests', show && isPaid);
+      form.classList.toggle('is-checkout-details', show);
+    }
+    if (nameField) nameField.hidden = show && isPaid;
+    if (emailField) emailField.hidden = show && isPaid;
     if (freeTerms) freeTerms.hidden = show && isPaid;
     const freeDataSharingNote = document.getElementById('checkout-free-data-sharing-note');
     if (freeDataSharingNote) freeDataSharingNote.hidden = !show || isPaid;
@@ -2442,15 +2445,16 @@
 
   async function prefillCheckoutDetails() {
     await loadCheckoutSessionUser();
+    const attendee = checkoutAttendeeFromSession();
     const nameEl = document.getElementById('checkout-name');
     const emailEl = document.getElementById('checkout-email');
     if (!nameEl && !emailEl) return;
-    if (checkoutSessionUser) {
-      if (nameEl && checkoutSessionUser.name && !nameEl.value.trim()) {
-        nameEl.value = checkoutSessionUser.name;
+    if (attendee) {
+      if (nameEl && attendee.name && !nameEl.value.trim()) {
+        nameEl.value = attendee.name;
       }
-      if (emailEl && checkoutSessionUser.email && !emailEl.value.trim()) {
-        emailEl.value = checkoutSessionUser.email;
+      if (emailEl && attendee.email && !emailEl.value.trim()) {
+        emailEl.value = attendee.email;
       }
     }
   }
@@ -3748,7 +3752,11 @@
 
       let attendee;
       try {
-        attendee = readPaidCheckoutAttendee(qty);
+        if (!paid && needsCheckoutDetailsStep(ev, qty)) {
+          attendee = readCheckoutDetails(qty);
+        } else {
+          attendee = readPaidCheckoutAttendee(qty);
+        }
       } catch (err) {
         throw err;
       }
@@ -3776,7 +3784,7 @@
     if (checkoutForm) {
       checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (checkoutForm.classList.contains('is-paid-guests')) {
+        if (checkoutForm.classList.contains('is-checkout-details')) {
           const tierEl = getSelectedTierEl();
           const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
           const isPaid = tierPrice > 0;
@@ -3875,6 +3883,7 @@
             renderCheckoutGuestNames(qty);
             renderCheckoutAttendeeExtras(evNow);
             updateFreeCheckoutSummary(evNow);
+            await prefillCheckoutDetails();
             showPaidGuestCheckout(true, false, qty);
             return;
           }
@@ -3921,6 +3930,7 @@
         if (needsCheckoutDetailsStep(evNow, qty)) {
           renderCheckoutGuestNames(qty);
           renderCheckoutAttendeeExtras(evNow);
+          await prefillCheckoutDetails();
           showPaidGuestCheckout(true, true, qty);
           return;
         }

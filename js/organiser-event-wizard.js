@@ -5,7 +5,7 @@
   var STEPS = [
     { id: 'format', label: 'Group & format' },
     { id: 'details', label: 'Event details' },
-    { id: 'tickets', label: 'Tickets' },
+    { id: 'tickets', label: 'Set up tickets' },
     { id: 'publish', label: 'Publish' },
   ];
 

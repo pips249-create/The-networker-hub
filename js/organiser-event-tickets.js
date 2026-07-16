@@ -503,9 +503,17 @@
     return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
   }
 
+  function syncAddonCard(cardId, enabled) {
+    const card = document.getElementById(cardId);
+    if (card) card.classList.toggle('is-enabled', Boolean(enabled));
+  }
+
   function setAttendanceMode(mode) {
-    const requested = mode === 'guest_programme' ? mode : 'tickets';
-    const isCategory = false;
+    const requested =
+      mode === 'guest_programme' || mode === 'tickets' || mode === 'category_exclusivity'
+        ? mode
+        : 'tickets';
+    const isCategory = requested === 'category_exclusivity';
     const isGuest = requested === 'guest_programme';
 
     if (!isCategory) {
@@ -515,7 +523,7 @@
       attendanceMode = 'category_exclusivity';
     }
 
-    document.querySelectorAll('.ee-mode-btn').forEach((btn) => {
+    document.querySelectorAll('.ee-attendance-card, .ee-mode-btn').forEach((btn) => {
       const btnMode = btn.getAttribute('data-mode');
       const active =
         btnMode === 'category_exclusivity'
@@ -526,44 +534,24 @@
     });
 
     const ticketsPanel = document.getElementById('ee-panel-tickets');
-    const guestAddon = document.getElementById('ee-guest-addon');
+    const optionalExtras = document.getElementById('ee-panel-optional-extras');
+    const categoryExclusivityPanel = document.getElementById('ee-panel-category-exclusivity');
     const guestFields = document.getElementById('ee-guest-programme-fields');
     const guestPassesOptOut = document.getElementById('ee-guest-passes-opt-out');
     const panelTitle = document.getElementById('ee-tickets-panel-title');
-    const desc = document.getElementById('ee-mode-desc');
     const openBooking = isOpenBookingMode(attendanceMode);
     const guestOn = attendanceMode === 'guest_programme';
 
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-    if (guestAddon) guestAddon.hidden = !openBooking;
-    const privateAddon = document.getElementById('ee-private-ticket-addon');
-    if (privateAddon) privateAddon.hidden = !openBooking;
+    if (optionalExtras) optionalExtras.hidden = !openBooking;
+    if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
-    // Keep the how-it-works note visible so organisers can read it before enabling.
+    syncAddonCard('ee-guest-addon', guestOn);
     if (panelTitle) {
-      panelTitle.textContent = guestOn ? 'Member ticket types' : 'Ticket types';
+      panelTitle.textContent = guestOn ? 'Member ticket types' : 'Public ticket types';
     }
     syncGuestVisitsInput();
-    if (desc) {
-      if (isCategory) {
-        desc.textContent =
-          'Application-based attendance — you review industry and job title, then approve or deny. Approved applicants pay via your payment link.';
-      } else if (guestOn) {
-        const visits = readGuestVisitsAllowed() || organiserComplimentaryVisits || 0;
-        desc.textContent =
-          visits > 0
-            ? 'Open booking with guest visits — new attendees get ' +
-              visits +
-              ' complimentary visit' +
-              (visits === 1 ? '' : 's') +
-              ' before paid member tickets unlock. Add your ticket types below.'
-            : 'Open booking with guest visits — enter how many complimentary visits (1–3) below.';
-      } else {
-        desc.textContent =
-          'Standard open booking — set up one or more ticket types with prices and quantities. Optionally enable the guest visit programme below.';
-      }
-    }
     updateTierSummary();
   }
 
@@ -807,6 +795,7 @@
     const fields = document.getElementById('ee-private-ticket-fields');
     const enabled = privateTicketEnabled();
     if (fields) fields.hidden = !enabled;
+    syncAddonCard('ee-private-ticket-addon', enabled);
     if (enabled) {
       setMembersOnlyTicketHint(
         'Members on your list see this ticket when signed in with their membership email.',
@@ -966,6 +955,7 @@
   }
 
   function collectActiveTiers() {
+    if (attendanceMode === 'category_exclusivity') return collectCategoryExclusivityTiers();
     return collectTiers();
   }
 
@@ -1088,7 +1078,7 @@
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
         guestPassesDisabled: collectGuestPassesDisabled(),
-        tiers: collectTiers(),
+        tiers: collectActiveTiers(),
         vatTreatment: collectVatTreatment(),
         refund: collectRefundPayload(),
         foodOrDrinkIncluded: !!document.getElementById('ee-food-included')?.checked,
@@ -1121,7 +1111,10 @@
 
   function restoreTicketDraft(draft) {
     if (!draft || typeof draft !== 'object') return false;
-    if (draft.attendanceMode === 'guest_programme') {
+    if (draft.attendanceMode === 'category_exclusivity') {
+      setAttendanceMode('category_exclusivity');
+      if (Array.isArray(draft.tiers) && draft.tiers[0]) prefillCategoryExclusivityFromTicket(draft.tiers[0]);
+    } else if (draft.attendanceMode === 'guest_programme') {
       setAttendanceMode('guest_programme');
       if (Array.isArray(draft.tiers) && draft.tiers.length) prefillTiers(draft.tiers);
     } else if (Array.isArray(draft.tiers) && draft.tiers.length) {
@@ -1254,9 +1247,11 @@
 
   function syncPaidOnlySections(tiers) {
     const hasPaid = tiersHavePaidPrice(tiers);
+    const paidWrap = document.getElementById('ee-paid-setup-wrap');
     const vatCard = document.getElementById('ee-vat-card');
     const refundCard = document.getElementById('ee-refund-card');
     const freeNote = document.getElementById('ee-free-tickets-note');
+    if (paidWrap) paidWrap.hidden = !hasPaid;
     if (vatCard) vatCard.hidden = !hasPaid;
     if (refundCard) refundCard.hidden = !hasPaid;
     if (freeNote) freeNote.hidden = hasPaid;
@@ -1413,7 +1408,9 @@
     const closeSel = document.getElementById('ee-alumni-sale-end');
     const customWrap = document.getElementById('ee-alumni-sale-end-custom');
     const toggle = () => {
-      if (fields) fields.hidden = !enabled?.checked;
+      const on = Boolean(enabled?.checked);
+      if (fields) fields.hidden = !on;
+      syncAddonCard('ee-alumni-addon', on);
       updatePublishButton();
     };
     if (enabled) {
@@ -1497,6 +1494,7 @@
   }
 
   function isCategoryExclusivityTicket(ticket) {
+    if (ticket.categoryExclusivity) return true;
     const kind = ticket.ticketType || '';
     return /application/i.test(kind) || /application to attend/i.test(ticket.name || '');
   }
@@ -1724,6 +1722,8 @@
       }
       if (loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
+      } else if (loaded.event.attendanceMode === 'category_exclusivity') {
+        setAttendanceMode('category_exclusivity');
       }
       prefillGuestPassesDisabled(loaded.event);
       prefillRefundFromEvent(loaded.event);
@@ -1754,24 +1754,37 @@
     if (restoredDraft) {
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
     } else if (loaded.tickets.length) {
+      const categoryExclusivityTicket = loaded.tickets.find(isCategoryExclusivityTicket);
       const memberTickets = loaded.tickets.filter(
         (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isMembersOnlyTicket(t)
       );
       if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
-        prefillGuestPassesDisabled(loaded.event);
-      }
-      if (memberTickets.length) {
         prefillTiers(memberTickets);
+        prefillGuestPassesDisabled(loaded.event);
+      } else if (categoryExclusivityTicket) {
+        prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
       } else {
-        addTierRow();
+        if (memberTickets.length) {
+          prefillTiers(memberTickets);
+        } else {
+          addTierRow();
+        }
+        prefillMembersOnlyTicket(loaded.tickets);
       }
-      prefillMembersOnlyTicket(loaded.tickets);
     } else {
       addTierRow();
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
+    document.getElementById('ee-mode-tickets')?.addEventListener('click', () => {
+      setAttendanceMode(resolveOpenBookingMode());
+      updatePublishButton();
+    });
+    document.getElementById('ee-mode-category-exclusivity')?.addEventListener('click', () => {
+      setAttendanceMode('category_exclusivity');
+      updatePublishButton();
+    });
     bindPrivateTicketFields();
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
       if (attendanceMode === 'category_exclusivity') return;
@@ -1793,6 +1806,9 @@
     }
     bindRefundPolicy();
     bindAlumniFastPassFields();
+    bindCategoryExclusivityCloseFields();
+    document.getElementById('ee-ce-price')?.addEventListener('input', updatePublishButton);
+    document.getElementById('ee-ce-price')?.addEventListener('change', updatePublishButton);
     if (!selectedRefundPolicy && !document.querySelector('input[name="refund-policy"]:checked')) {
       const defaultRadio = document.getElementById('refund-policy-standard');
       if (defaultRadio) selectRefundCard(defaultRadio);
@@ -1840,7 +1856,7 @@
           attendanceMode === 'category_exclusivity'
             ? 'ee-panel-category-exclusivity'
             : attendanceMode === 'guest_programme'
-              ? 'ee-guest-programme-note'
+              ? 'ee-guest-programme-fields'
               : 'ee-panel-tickets';
         document.getElementById(panelId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         const warn = document.getElementById('ee-publish-warn');
@@ -1898,15 +1914,6 @@
         if (visits < 1) {
           showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
           document.getElementById('ee-guest-visits-allowed')?.focus();
-          updatePublishButton();
-          return;
-        }
-        if (!tiersHavePaidPrice(tiers)) {
-          showAlert('Add at least one paid member ticket type for the guest visit programme.', 'warn');
-          document.getElementById('ee-panel-tickets')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          });
           updatePublishButton();
           return;
         }

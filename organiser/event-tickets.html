@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ticket types – Organiser – The Networker Hub</title>
+    <title>Set up tickets – Organiser – The Networker Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716back" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716tixux" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -36,9 +36,9 @@
         <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert's help</button>
       </div>
       <div id="ee-wizard-mount"></div>
-      <h1 class="ee-title">Set up ticket types</h1>
+      <h1 class="ee-title">Set up tickets</h1>
       <p class="ee-lead" id="ee-tickets-lead">
-        Define your ticket tiers once — we’ll create matching ticket types for every date in this series.
+        Choose how people attend, add your ticket types once, and we&rsquo;ll apply them to every date in this series.
       </p>
       <div id="ee-tickets-alert" class="ee-alert" hidden></div>
       <div class="ee-lock-banner" id="ee-tickets-lock-banner" hidden role="status">
@@ -53,28 +53,59 @@
       </div>
 
       <form id="ee-tickets-form">
+        <div class="ee-card ee-attendance-card-wrap">
+          <p class="ee-step-label">Step 1</p>
+          <h2 data-hub-tip="attendance-modes">How should people attend?</h2>
+          <p class="ee-hint ee-attendance-lead">
+            Pick one approach for this event. You can&rsquo;t mix open ticket sales with Category Exclusivity on the same listing.
+          </p>
+          <div class="ee-attendance-options" role="group" aria-label="Attendance mode">
+            <button type="button" class="ee-attendance-card is-active" data-mode="tickets" id="ee-mode-tickets" aria-pressed="true">
+              <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
+              <strong>Open ticket booking</strong>
+              <span>Attendees choose a ticket type and pay straight away. Best for most networking meetings and conferences.</span>
+            </button>
+            <button type="button" class="ee-attendance-card" data-mode="category_exclusivity" id="ee-mode-category-exclusivity" aria-pressed="false">
+              <span class="ee-attendance-card-icon" aria-hidden="true">🪑</span>
+              <strong>Category Exclusivity</strong>
+              <span>Attendees apply first. You review their industry and job title, then approve or decline before they pay.</span>
+            </button>
+          </div>
+        </div>
+
         <div class="ee-card" id="ee-panel-tickets">
-          <h2 id="ee-tickets-panel-title">Ticket types</h2>
+          <p class="ee-step-label">Step 2</p>
+          <h2 id="ee-tickets-panel-title">Public ticket types</h2>
           <p class="ee-hint" style="margin-top:0">
-            Add the tickets everyone should see (e.g. Standard, Early bird). Optional extras for members sit below — guest visits, a members-only ticket, or previous attendees.
+            These are the tickets everyone sees on your listing — e.g. Standard, Early bird, or Member rate.
           </p>
           <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
           <div id="ee-tier-rows"></div>
           <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket type</button>
+        </div>
 
-          <div class="ee-guest-addon" id="ee-guest-addon" data-hub-tip="guest-visit-programme">
-            <h3 class="ee-guest-addon-title">Guest visit programme <span class="ee-optional">(optional)</span></h3>
-            <div class="ee-info-box ee-guest-how" id="ee-guest-programme-note">
-              <strong>How it works</strong>
-              <p>
-                Let newcomers visit your group for free before becoming a paying member. Choose how many complimentary visits they are allowed &mdash; up to a maximum of 3 &mdash; the allowance applies across all of your events. After they&rsquo;ve used their visits, they must become a paid member to attend further events.
-              </p>
-            </div>
-            <label class="ee-check">
+        <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras">
+          <p class="ee-step-label">Step 3 <span class="ee-optional">(optional)</span></p>
+          <h2>Optional extras</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Turn on only what you need. Most events get by with public ticket types alone.
+          </p>
+
+          <div class="ee-addon-card" id="ee-guest-addon" data-hub-tip="guest-visit-programme">
+            <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-guest-programme-enabled" />
-              <span>Enable guest visit programme for this event</span>
+              <span class="ee-addon-toggle-copy">
+                <strong>Guest visit programme</strong>
+                <span class="ee-addon-summary">Let newcomers visit for free before they buy a member ticket</span>
+              </span>
             </label>
-            <div id="ee-guest-programme-fields" hidden>
+            <div class="ee-addon-body" id="ee-guest-programme-fields" hidden>
+              <div class="ee-info-box ee-guest-how" id="ee-guest-programme-note">
+                <strong>How it works</strong>
+                <p>
+                  Newcomers get up to 3 complimentary visits across your organiser page. After that, they must buy a paid member ticket to keep attending.
+                </p>
+              </div>
               <div class="ee-field ee-guest-visits-field">
                 <label for="ee-guest-visits-allowed">Complimentary visits per newcomer</label>
                 <input
@@ -94,32 +125,22 @@
                   <input type="checkbox" id="ee-guest-passes-disabled" aria-describedby="ee-member-only-explainer" />
                   <span>Member-only for this event</span>
                 </label>
-                <div class="ee-info-box ee-guest-member-only" id="ee-member-only-explainer">
-                  <strong>What this means</strong>
-                  <p>
-                    Hides complimentary guest passes on <em>this date only</em>. Paid member tickets stay on sale and anyone can book them straight away &mdash; even newcomers who still have free visits left on your organiser page.
-                  </p>
-                  <p>
-                    Your guest visit programme stays active for your other events. Tick this for conferences, member evenings, or any date where you want paying attendees only.
-                  </p>
-                </div>
+                <p class="ee-hint" id="ee-member-only-explainer">
+                  Hides guest passes on this date only. Paid member tickets stay on sale for anyone.
+                </p>
               </div>
             </div>
           </div>
 
-          <div class="ee-guest-addon ee-private-ticket-addon" id="ee-private-ticket-addon" data-hub-tip="members-only-ticket">
-            <h3 class="ee-guest-addon-title">Members only ticket <span class="ee-optional">(optional)</span></h3>
-            <div class="ee-info-box ee-guest-how">
-              <strong>How it works</strong>
-              <p>
-                Add a ticket that stays off your public event page. People on your member list see it automatically when they sign in with their membership email — no access codes.
-              </p>
-            </div>
-            <label class="ee-check">
+          <div class="ee-addon-card" id="ee-private-ticket-addon" data-hub-tip="members-only-ticket">
+            <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
-              <span>Offer a members-only ticket</span>
+              <span class="ee-addon-toggle-copy">
+                <strong>Members only ticket</strong>
+                <span class="ee-addon-summary">Hidden from the public — visible to people on your member list</span>
+              </span>
             </label>
-            <div id="ee-private-ticket-fields" hidden>
+            <div class="ee-addon-body" id="ee-private-ticket-fields" hidden>
               <div class="ee-row-2">
                 <div class="ee-field">
                   <label for="ee-private-ticket-name">Ticket name</label>
@@ -141,19 +162,15 @@
             </div>
           </div>
 
-          <div class="ee-guest-addon ee-alumni-addon" id="ee-alumni-addon" data-hub-tip="alumni-fast-pass">
-            <h3 class="ee-guest-addon-title">Previous Attendees <span class="ee-optional">(optional)</span></h3>
-            <div class="ee-info-box ee-guest-how">
-              <strong>How it works</strong>
-              <p>
-                Offer a returning ticket rate for people who attended a previous event. After publishing, invite them from your dashboard — each person receives a personal booking link.
-              </p>
-            </div>
-            <label class="ee-check">
+          <div class="ee-addon-card" id="ee-alumni-addon" data-hub-tip="alumni-fast-pass">
+            <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-alumni-enabled" />
-              <span>Enable previous attendee ticket for this event</span>
+              <span class="ee-addon-toggle-copy">
+                <strong>Previous Attendees</strong>
+                <span class="ee-addon-summary">Invite past attendees to a returning rate with personal booking links</span>
+              </span>
             </label>
-            <div id="ee-alumni-fields" hidden>
+            <div class="ee-addon-body" id="ee-alumni-fields" hidden>
               <div class="ee-field">
                 <label for="ee-alumni-price">Previous attendee price (&pound;)</label>
                 <input type="number" id="ee-alumni-price" min="0" step="0.01" value="0" inputmode="decimal" />
@@ -187,12 +204,61 @@
           </div>
         </div>
 
+        <div class="ee-card" id="ee-panel-category-exclusivity" hidden>
+          <p class="ee-step-label">Step 2</p>
+          <h2 data-hub-tip="category-exclusivity">Category Exclusivity</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Set the price, capacity, and application deadline. Attendees apply instead of buying straight away.
+          </p>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-ce-price">Price <span class="ee-optional">(optional)</span></label>
+              <input type="number" id="ee-ce-price" min="0" step="0.01" value="0" inputmode="decimal" />
+              <p class="ee-hint">Charged after you approve. Enter 0 for free.</p>
+            </div>
+            <div class="ee-field">
+              <label for="ee-ce-places">Places available <span class="ee-optional">(optional)</span></label>
+              <input type="number" id="ee-ce-places" min="1" step="1" inputmode="numeric" placeholder="e.g. 20" />
+              <p class="ee-hint">Maximum approved applicants. Leave blank for unlimited.</p>
+            </div>
+          </div>
+          <div class="ee-field">
+            <label for="ee-ce-close">Applications close <span class="ee-optional">(optional)</span></label>
+            <select id="ee-ce-close" aria-describedby="ee-ce-close-hint">
+              <option value="at_start">When the event starts</option>
+              <option value="12_hours">12 hours before the event</option>
+              <option value="1_day">1 day before the event</option>
+              <option value="1_week" selected>1 week before the event</option>
+              <option value="custom">Custom date &amp; time</option>
+            </select>
+            <div class="ee-sale-custom" id="ee-ce-close-custom" hidden>
+              <div class="ee-field">
+                <label for="ee-ce-close-date">Custom closing date</label>
+                <input type="date" id="ee-ce-close-date" aria-label="Application closing date" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-ce-close-time">Time</label>
+                <select id="ee-ce-close-time" aria-label="Application closing time"></select>
+              </div>
+            </div>
+          </div>
+          <div class="ee-ce-questions">
+            <p class="ee-label-block">Application questions <span class="ee-optional">(fixed)</span></p>
+            <ul class="ee-fixed-questions">
+              <li>What industry are you in?</li>
+              <li>What is your job title?</li>
+            </ul>
+          </div>
+        </div>
+
         <p class="ee-hint ee-free-tickets-note" id="ee-free-tickets-note" hidden>
           All your ticket types are free — VAT and refund policy are not required.
         </p>
 
-        <div class="ee-card" id="ee-vat-card">
-          <h2 data-hub-tip="vat-treatment">VAT on ticket prices</h2>
+        <div id="ee-paid-setup-wrap">
+          <div class="ee-card" id="ee-vat-card">
+            <p class="ee-step-label">Step 4</p>
+            <h2 data-hub-tip="vat-treatment">VAT on ticket prices</h2>
           <p class="ee-hint" style="margin-top:0">
             Required before publishing paid tickets. Choose one option — shown under tickets on your public listing so attendees know how VAT applies.
           </p>
@@ -208,9 +274,54 @@
               <span>Ticket price excludes VAT; VAT is calculated at checkout</span>
             </div>
           </div>
+          </div>
+
+          <div id="ee-payment-setup-mount" hidden></div>
+
+          <div class="ee-card" id="ee-refund-card">
+            <h2>Refund policy</h2>
+            <p class="ee-hint" style="margin-top:0">Choose one of our fixed refund policies. Required before publishing paid tickets.</p>
+            <div class="ee-refund-options" role="radiogroup" aria-label="Refund policy">
+              <div class="ee-refund-card" data-policy="flexible" role="radio" tabindex="0" aria-checked="false">
+                <input type="radio" name="refund-policy" value="flexible" id="refund-policy-flexible" />
+                <strong>Flexible</strong>
+                <span>100% refund up to 48 hours before the event. Best for casual meetups with low catering costs.</span>
+              </div>
+              <div class="ee-refund-card" data-policy="standard" role="radio" tabindex="0" aria-checked="false">
+                <input type="radio" name="refund-policy" value="standard" id="refund-policy-standard" checked />
+                <strong>Standard <span class="ee-optional">(recommended)</span></strong>
+                <span>100% refund up to 7 days before the event. No refund after that.</span>
+              </div>
+              <div class="ee-refund-card" data-policy="strict" role="radio" tabindex="0" aria-checked="false">
+                <input type="radio" name="refund-policy" value="strict" id="refund-policy-strict" />
+                <strong>Strict (B2B)</strong>
+                <span>100% refund up to 14 days before the event. No refund after that — suited to conferences and catered events.</span>
+              </div>
+              <div class="ee-refund-card is-none" data-policy="non_refundable" role="radio" tabindex="0" aria-checked="false">
+                <input type="radio" name="refund-policy" value="non_refundable" id="refund-policy-non-refundable" />
+                <strong>Non-refundable</strong>
+                <span>No change-of-mind refunds. Statutory rights still apply if you cancel or materially change the event.</span>
+              </div>
+            </div>
+            <div class="ee-refund-agreement">
+              <p data-hub-tip="stripe-refunds"><strong>Refunds and Stripe Connect</strong></p>
+              <ul>
+                <li>When attendees buy tickets, the <strong>ticket price</strong> is paid to your connected Stripe account at checkout</li>
+                <li>The attendee <strong>booking fee</strong> (4.5% + 20p per ticket) is retained by The Networker Hub — it is separate from your ticket revenue</li>
+                <li>Eligible refunds are processed through Stripe and debited from your connected account balance</li>
+                <li>“No refunds” only applies when an attendee cancels. You must still honour statutory rights, including refunds if you cancel or materially change the event</li>
+              </ul>
+            </div>
+            <label class="ee-check ee-refund-check">
+              <input type="checkbox" id="refund-terms-agreed" />
+              <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
+            </label>
+            <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Before this event can go live: add a ticket type and complete any paid-ticket setup (VAT, refund policy, bank details).</p>
+          </div>
         </div>
 
-        <div class="ee-card">
+        <div class="ee-card" id="ee-attendee-extras-card">
+          <p class="ee-step-label">Step 5 <span class="ee-optional">(optional)</span></p>
           <h2>Attendee information at booking</h2>
           <p class="ee-hint" style="margin-top:0">
             Optional extras for events with catering or accessibility needs. We add a note to your listing description and can collect these details at checkout when registration is connected.
@@ -229,49 +340,6 @@
           </label>
         </div>
 
-        <div id="ee-payment-setup-mount" hidden></div>
-
-        <div class="ee-card" id="ee-refund-card">
-          <h2>Refund policy</h2>
-          <p class="ee-hint" style="margin-top:0">Choose one of our fixed refund policies. Required before publishing paid tickets.</p>
-          <div class="ee-refund-options" role="radiogroup" aria-label="Refund policy">
-            <div class="ee-refund-card" data-policy="flexible" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="flexible" id="refund-policy-flexible" />
-              <strong>Flexible</strong>
-              <span>100% refund up to 48 hours before the event. Best for casual meetups with low catering costs.</span>
-            </div>
-            <div class="ee-refund-card" data-policy="standard" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="standard" id="refund-policy-standard" checked />
-              <strong>Standard <span class="ee-optional">(recommended)</span></strong>
-              <span>100% refund up to 7 days before the event. No refund after that.</span>
-            </div>
-            <div class="ee-refund-card" data-policy="strict" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="strict" id="refund-policy-strict" />
-              <strong>Strict (B2B)</strong>
-              <span>100% refund up to 14 days before the event. No refund after that — suited to conferences and catered events.</span>
-            </div>
-            <div class="ee-refund-card is-none" data-policy="non_refundable" role="radio" tabindex="0" aria-checked="false">
-              <input type="radio" name="refund-policy" value="non_refundable" id="refund-policy-non-refundable" />
-              <strong>Non-refundable</strong>
-              <span>No change-of-mind refunds. Statutory rights still apply if you cancel or materially change the event.</span>
-            </div>
-          </div>
-          <div class="ee-refund-agreement">
-            <p data-hub-tip="stripe-refunds"><strong>Refunds and Stripe Connect</strong></p>
-            <ul>
-              <li>When attendees buy tickets, the <strong>ticket price</strong> is paid to your connected Stripe account at checkout</li>
-              <li>The attendee <strong>booking fee</strong> (4.5% + 20p per ticket) is retained by The Networker Hub — it is separate from your ticket revenue</li>
-              <li>Eligible refunds are processed through Stripe and debited from your connected account balance</li>
-              <li>“No refunds” only applies when an attendee cancels. You must still honour statutory rights, including refunds if you cancel or materially change the event</li>
-            </ul>
-          </div>
-          <label class="ee-check ee-refund-check">
-            <input type="checkbox" id="refund-terms-agreed" />
-            <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
-          </label>
-          <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Before this event can go live: add a ticket type and complete any paid-ticket setup (VAT, refund policy, bank details).</p>
-        </div>
-
         <div class="ee-actions">
           <button type="button" class="ee-btn ee-btn-outline" id="ee-tickets-save">Save tickets (draft)</button>
           <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit">Publish event</button>
@@ -283,7 +351,7 @@
       </form>
     </div>
 
-    <script src="../js/organiser-event-wizard.js?v=20260628" data-step="tickets"></script>
+    <script src="../js/organiser-event-wizard.js?v=20260716tixux" data-step="tickets"></script>
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../"></script>
@@ -294,6 +362,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260715guest"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260716back"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260716guestfree"></script>
   </body>
 </html>

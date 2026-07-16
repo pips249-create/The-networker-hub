@@ -4,6 +4,53 @@
  */
 (function (global) {
   global.OrganiserFieldTips = {
+    'event-organiser': {
+      title: 'Organiser page',
+      body:
+        'Which organiser page this event is listed under. Attendees see this name on the event and can browse other events from the same organiser.',
+      hubertPrompt: 'Which organiser page should I list my event under?',
+    },
+    'event-type': {
+      title: 'Event type',
+      body:
+        'Meeting covers breakfasts, netwalking, women-only and most networking listings. Use Conference, Exhibition or Awards for summits, trade shows and dinners. Events is for other larger formats. Webinar, Workshop and Masterclass help attendees find the right style of listing.',
+      hubertPrompt: 'Which event type should I choose for my networking event?',
+    },
+    'event-description': {
+      title: 'Highlights / description',
+      body:
+        'Attendees search and filter events using this text — include who it is for, what happens, and useful keywords.',
+      hubertPrompt: 'What should I write in the event description?',
+    },
+    'event-photo': {
+      title: 'Event photo',
+      body:
+        'Upload, paste (Ctrl+V), or drop an image — or paste a URL below. Drag the crop to choose what appears on browse cards. Use a landscape photo at least 1200×750px for a sharp listing.',
+      hubertPrompt: 'What size and style of photo works best for an event listing?',
+    },
+    'event-dates': {
+      title: 'Dates',
+      body:
+        'Select one date for a single event, or click multiple days on the calendar to create a series — the same times apply to every date you pick.',
+      hubertPrompt: 'How do I add multiple dates or create a recurring series?',
+    },
+    'event-times': {
+      title: 'Start and end time',
+      body:
+        'Same start and end time for every selected date. End time must be after start time. Pick the hour, then minutes in 15-minute steps.',
+      hubertPrompt: 'Can I set different times for different dates in a series?',
+    },
+    'event-venue': {
+      title: 'Venue & address',
+      body: 'Shown on your public listing for in-person events.',
+      hubertPrompt: 'What address details do I need for an in-person event?',
+    },
+    'event-online': {
+      title: 'Online access',
+      body:
+        'Only shared with ticket holders — not shown on the public listing. You can add or update the join link anytime before the event; ticket holders are emailed when a link is first added. No link yet? Save your listing and paste the Zoom, Teams, or Meet URL when it is ready.',
+      hubertPrompt: 'When do I add the Zoom or Teams link for an online event?',
+    },
     'attendance-modes': {
       title: 'Attendance modes',
       body:
