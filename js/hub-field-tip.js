@@ -123,7 +123,7 @@
     btn.setAttribute('aria-label', 'More about ' + (tip.title || tipId));
     btn.setAttribute('aria-expanded', 'false');
     btn.setAttribute('data-hub-tip-id', tipId);
-    btn.innerHTML = '<span aria-hidden="true">i</span>';
+    btn.innerHTML = '<span aria-hidden="true">?</span>';
     btn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -142,7 +142,7 @@
     if (!tip) return;
     el.setAttribute('data-hub-tip-bound', '1');
     var btn = createButton(tipId, tip);
-    if (el.tagName === 'H2' || el.tagName === 'H3' || el.classList.contains('ee-mode-btn')) {
+    if (el.tagName === 'H2' || el.tagName === 'H3' || el.classList.contains('ee-mode-btn') || el.classList.contains('ee-attendance-card')) {
       el.classList.add('hub-field-tip-host');
       el.appendChild(btn);
     } else {

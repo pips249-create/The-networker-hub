@@ -5,6 +5,7 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
+const { dedupeFeaturedRowsBySeries } = require('./event-series-peers');
 
 const BROWSE_VIEW = 'browse_events_index';
 const EVENT_FEATURED_SPOTLIGHT_MAX = SPOTLIGHT_CAROUSEL_MAX;
@@ -13,10 +14,10 @@ async function listActiveFeaturedEventRows() {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
     .from(BROWSE_VIEW)
-    .select('id, featured, featured_until')
+    .select('id, featured, featured_until, starts_at, series_group_id, organiser_id, title')
     .eq('featured', true);
   if (error) throw new Error(error.message);
-  return (data || []).filter(isEventCurrentlyFeatured);
+  return dedupeFeaturedRowsBySeries((data || []).filter(isEventCurrentlyFeatured));
 }
 
 /** @param {string} [excludeEventId] — extending the same event does not consume an extra slot */

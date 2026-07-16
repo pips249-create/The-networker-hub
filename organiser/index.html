@@ -20,11 +20,11 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
-    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260708" />
+    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716feat" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716drawer" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -550,15 +550,12 @@
             </p>
           </header>
 
-          <section class="org-featured-upgrade" id="org-featured-upgrade" aria-labelledby="org-featured-upgrade-title">
-            <div class="org-featured-upgrade-card">
-              <p class="org-featured-upgrade-badge">Featured listing</p>
-              <h2 class="org-section-title" id="org-featured-upgrade-title">Upgrade your listing</h2>
-              <p class="org-section-sub org-featured-upgrade-lede">
-                Feature one or more live events in the Premium Spotlight carousel and top placement across the hub. Choose as many events as you like and how long to feature each one — only <strong>12 featured events</strong> appear in the carousel at any one time.
-              </p>
-              <div id="org-featured-upgrade-root" aria-live="polite"></div>
-            </div>
+          <section class="org-linkedin-posts" id="org-linkedin-posts" aria-labelledby="org-linkedin-posts-title">
+            <h2 class="org-section-title" id="org-linkedin-posts-title">Build a LinkedIn post</h2>
+            <p class="org-section-sub">
+              Choose a category and caption (or write your own), pick a background, then download the image and copy the caption.
+            </p>
+            <div id="org-post-builder-root"></div>
           </section>
 
           <section class="org-ranking-panel org-ranking-panel--social" id="org-ranking-panel-events" hidden>
@@ -590,12 +587,29 @@
             </div>
           </section>
 
-          <section class="org-linkedin-posts" id="org-linkedin-posts" aria-labelledby="org-linkedin-posts-title">
-            <h2 class="org-section-title" id="org-linkedin-posts-title">Build a LinkedIn post</h2>
-            <p class="org-section-sub">
-              Choose a category and caption (or write your own), pick a background, then download the image and copy the caption.
-            </p>
-            <div id="org-post-builder-root"></div>
+          <section
+            class="org-featured-upgrade org-ranking-panel org-featured-upgrade-panel"
+            id="org-featured-upgrade"
+            aria-labelledby="org-featured-upgrade-title"
+          >
+            <button
+              type="button"
+              class="org-ranking-panel-toggle org-featured-upgrade-toggle"
+              aria-expanded="false"
+              aria-controls="org-featured-upgrade-body"
+            >
+              <span class="org-featured-upgrade-badge org-featured-upgrade-badge--inline">Featured listing</span>
+              <span class="org-ranking-panel-title" id="org-featured-upgrade-title">Upgrade your listing</span>
+              <span class="org-ranking-panel-summary" id="org-featured-upgrade-header-summary"></span>
+              <span class="org-ranking-panel-chev" aria-hidden="true">Show</span>
+            </button>
+            <div class="org-ranking-panel-body org-featured-upgrade-body" id="org-featured-upgrade-body" hidden>
+              <p class="org-section-sub org-featured-upgrade-lede">
+                Feature live events in the Premium Spotlight carousel and top placement across the hub — only
+                <strong>12 featured events</strong> appear in the carousel at any one time.
+              </p>
+              <div id="org-featured-upgrade-root" aria-live="polite"></div>
+            </div>
           </section>
         </section>
 
@@ -1703,31 +1717,37 @@
       <div class="org-group-drawer-backdrop" data-org-event-drawer-close tabindex="-1"></div>
       <aside class="org-group-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="org-event-drawer-title">
         <header class="org-group-drawer-head org-event-drawer-head">
-          <button
-            type="button"
-            class="org-event-drawer-back"
-            id="org-event-drawer-back"
-            hidden
-            aria-label="Back to event details"
-          >
-            ← Event details
-          </button>
-          <button
-            type="button"
-            class="org-event-drawer-help"
-            id="org-event-drawer-help"
-            aria-label="Open Hubert's help"
-          >
-            Hubert's help
-          </button>
-          <button
-            type="button"
-            class="org-group-drawer-close"
-            data-org-event-drawer-close
-            aria-label="Close event editor"
-          >
-            ×
-          </button>
+          <div class="org-event-drawer-toolbar">
+            <div class="org-event-drawer-toolbar-start">
+              <button
+                type="button"
+                class="org-event-drawer-back"
+                id="org-event-drawer-back"
+                hidden
+                aria-label="Back to event details"
+              >
+                ← Event details
+              </button>
+            </div>
+            <div class="org-event-drawer-toolbar-end">
+              <button
+                type="button"
+                class="org-event-drawer-help"
+                id="org-event-drawer-help"
+                aria-label="Open Hubert's help"
+              >
+                Hubert's help
+              </button>
+              <button
+                type="button"
+                class="org-group-drawer-close org-event-drawer-close"
+                data-org-event-drawer-close
+                aria-label="Close event editor"
+              >
+                ×
+              </button>
+            </div>
+          </div>
           <h2 class="org-group-drawer-title" id="org-event-drawer-title">Edit event</h2>
           <div class="org-event-drawer-progress" id="org-event-drawer-progress" hidden></div>
           <div class="org-event-drawer-cancel" id="org-event-drawer-cancel" hidden>
@@ -1784,7 +1804,8 @@
     <script src="../js/organiser-payment-setup.js?v=20260714link"></script>
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
+    <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-dashboard.js?v=20260716feat"></script>
+    <script src="../js/organiser-dashboard.js?v=20260716loc"></script>
   </body>
 </html>

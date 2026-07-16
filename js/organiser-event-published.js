@@ -2,14 +2,39 @@
  * Post-publish confirmation — listing preview + social share.
  */
 (function () {
-  const FEATURED_LISTING_PRICE = '£0.00';
+  const featuredPlanDuration = document.getElementById('ep-featured-plan-duration');
 
-  function applyFeaturedListingPrice() {
+  function applyFeaturedQuote(quote) {
+    if (!quote) return;
     document.querySelectorAll('.ep-featured-plan-price').forEach(function (el) {
-      el.textContent = FEATURED_LISTING_PRICE;
+      el.textContent = quote.displayPrice || '£55.00';
     });
+    if (featuredPlanDuration) {
+      featuredPlanDuration.textContent =
+        quote.pricingMode === 'prorated' ? 'until your event' : 'per month';
+    }
+    if (featuredDurationNote && quote.pricingNote) {
+      featuredDurationNote.textContent = quote.pricingNote;
+      featuredDurationNote.hidden = false;
+    }
   }
-  applyFeaturedListingPrice();
+
+  async function loadFeaturedQuote() {
+    if (!primaryId) return;
+    try {
+      const res = await fetch(
+        '/api/organiser/event-featured-quote?eventId=' +
+          encodeURIComponent(primaryId) +
+          '&planId=' +
+          encodeURIComponent(selectedPlanId()),
+        { credentials: 'include', cache: 'no-store' }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok && data.quote) applyFeaturedQuote(data.quote);
+    } catch {
+      /* non-fatal */
+    }
+  }
 
   const params = new URLSearchParams(location.search);
   const eventIds = (params.get('ids') || '')
@@ -29,6 +54,28 @@
   const featuredSkip = document.getElementById('ep-featured-skip');
   const featuredError = document.getElementById('ep-featured-error');
   const featuredSlotStatus = document.getElementById('ep-featured-slot-status');
+  const featuredDurationNote = document.getElementById('ep-featured-duration-note');
+
+  let eventStartIso = '';
+
+  function featuredStartCapFromSeries(seriesDates) {
+    if (!Array.isArray(seriesDates) || seriesDates.length <= 1) return '';
+    const now = Date.now();
+    let maxMs = null;
+    seriesDates.forEach(function (entry) {
+      const raw = entry.dateRaw || entry.date;
+      if (!raw) return;
+      const ms = new Date(raw).getTime();
+      if (Number.isNaN(ms) || ms <= now) return;
+      if (maxMs == null || ms > maxMs) maxMs = ms;
+    });
+    return maxMs != null ? new Date(maxMs).toISOString() : '';
+  }
+
+  function applyFeaturedStartIso(iso, seriesDates) {
+    eventStartIso = featuredStartCapFromSeries(seriesDates) || iso || '';
+    updateFeaturedDurationNote();
+  }
 
   const origin = location.origin;
   let listingUrl = primaryId
@@ -401,6 +448,7 @@
         const approved = String(data.event.approvalStatus || '').trim() === 'Approved';
         if (approved) markLiveOnBrowse();
         else markPendingApproval();
+        applyFeaturedStartIso(data.event.date || data.event.starts_at || '');
         renderPreview({
           id: data.event.id,
           slug: data.event.slug,
@@ -415,6 +463,19 @@
           organiserLogo: data.event.organiserLogo,
           approvalStatus: data.event.approvalStatus,
         });
+        if (data.event.seriesGroupId) {
+          try {
+            const hubRes = await fetch('/api/hub-listings?id=' + encodeURIComponent(primaryId), {
+              cache: 'no-store',
+            });
+            const hubData = await hubRes.json();
+            if (hubData.seriesDates && hubData.seriesDates.length > 1) {
+              applyFeaturedStartIso(data.event.date || data.event.starts_at || '', hubData.seriesDates);
+            }
+          } catch {
+            /* optional series enrichment */
+          }
+        }
         return;
       }
     } catch {
@@ -428,6 +489,10 @@
       const data = await res.json();
       if (data.event) {
         markLiveOnBrowse();
+        applyFeaturedStartIso(
+          data.event.date || data.event.dateRaw || data.event.starts_at || '',
+          data.seriesDates
+        );
         renderPreview(data.event);
         return;
       }
@@ -529,6 +594,16 @@
     return '1month';
   }
 
+  function updateFeaturedDurationNote() {
+    if (!featuredDurationNote) return;
+    if (!eventStartIso) {
+      featuredDurationNote.hidden = true;
+      featuredDurationNote.textContent = '';
+      return;
+    }
+    loadFeaturedQuote();
+  }
+
   const publishRow = document.querySelector('.ep-publish-row');
 
   function hideFeaturedUpsell() {
@@ -545,7 +620,7 @@
   }
   if (extendFeatured && featuredLede) {
     featuredLede.textContent =
-      'Your featured placement is ending soon. Extend for <strong>£0.00 per month</strong> to keep premium visibility.';
+      'Your featured placement is ending soon. Extend to keep premium visibility — from £55 per month, prorated when your event is sooner.';
   }
 
   if (featuredCancelled && featuredError) {
@@ -587,6 +662,9 @@
       const msg =
         data.error === 'stripe_not_configured'
           ? 'Stripe is not configured for local checkout. Add STRIPE_SECRET_KEY=sk_test_… to local.env, run npm run sync-env, restart npm start, then try again. Your event is still live.'
+          : data.error === 'event_already_started'
+            ? data.message ||
+              'This event has already started — featured placement only runs while it appears on the events browse page.'
           : data.error === 'featured_slots_full'
             ? data.message ||
               'All featured spotlight places are currently taken. Your event stays live — try again when a slot opens.'

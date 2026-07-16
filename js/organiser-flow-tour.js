@@ -371,18 +371,26 @@
       target: '#ee-card-details',
     },
     {
-      title: 'Location or online access',
-      body: 'Fill in the venue and address for in-person events, or the platform and join link for online sessions.',
-      target: '#ee-card-location',
-    },
-    {
       title: 'Pick your date(s)',
       body: 'Select one date for a single event, or click multiple days to create a series — the same start and end times apply to every date.',
       target: '#ee-card-dates',
     },
     {
+      title: 'Continue to location',
+      body: 'Save as draft anytime, or continue to add venue or online access on the next step.',
+      target: '.ee-card-actions',
+    },
+  ];
+
+  var EVENT_LOCATION_STEPS = [
+    {
+      title: 'Location or online access',
+      body: 'Fill in the venue and address for in-person events, or the platform and join link for online sessions.',
+      target: '#ee-card-location',
+    },
+    {
       title: 'Continue to tickets',
-      body: 'Save as draft anytime, or continue to tickets when the listing looks good — pricing and ticket types come next.',
+      body: 'Save your location details, or continue to ticket types and pricing.',
       target: '.ee-card-actions',
     },
   ];
@@ -455,6 +463,19 @@
       return new FlowTour({
         storageKey: 'hub_flow_tour_event_edit_v1',
         steps: EVENT_EDIT_STEPS,
+        shouldStart:
+          opts.shouldStart ||
+          function () {
+            return !opts.isEdit;
+          },
+        delay: opts.delay,
+      }).startIfNeeded();
+    },
+    startEventLocationTour: function (opts) {
+      opts = opts || {};
+      return new FlowTour({
+        storageKey: 'hub_flow_tour_event_location_v1',
+        steps: EVENT_LOCATION_STEPS,
         shouldStart:
           opts.shouldStart ||
           function () {

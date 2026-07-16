@@ -13,8 +13,9 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716drawer" />
-    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260702" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716tips" />
+    <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
+    <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260716tips" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714photo" />
   </head>
@@ -44,7 +45,7 @@
         <div class="ee-series-banner" id="ee-series-banner" hidden role="status"></div>
         <h1 class="ee-title" id="ee-page-title">New event listing</h1>
         <p class="ee-lead" id="ee-page-lead">
-          Add your event details, set the location, pick dates on the calendar, then continue to ticket setup.
+          Add your event details, pick dates on the calendar, then continue to location and tickets.
         </p>
         <div class="ee-event-stats" id="ee-event-stats" hidden>
           <div class="ee-stat gold">
@@ -72,22 +73,16 @@
       <form id="ee-form" novalidate>
         <div class="ee-grid ee-grid--create">
         <div class="ee-main-col">
-        <!-- Section 1: Group -->
-        <div class="ee-card" id="ee-card-group">
-          <h2>Which organiser is this event for?</h2>
-          <div class="ee-field">
-            <label for="ee-group">Organiser</label>
+        <!-- Event details -->
+        <div class="ee-card" id="ee-card-details">
+          <div class="ee-field ee-field-group">
+            <label for="ee-group" data-hub-tip="event-organiser">Organiser</label>
             <select id="ee-group" required></select>
-            <p class="ee-hint" id="ee-group-hint">Which organiser page this event belongs to.</p>
+            <p class="ee-hint ee-hint--status" id="ee-group-hint" hidden></p>
             <p class="ee-hint ee-group-add-row" id="ee-group-add-row" hidden>
               <a class="ee-inline-action" href="/organiser/group-edit">+ Add a new organiser page</a>
             </p>
           </div>
-        </div>
-
-        <!-- Section 2: Basic event details -->
-        <div class="ee-card" id="ee-card-details">
-          <h2>Basic event details</h2>
           <div class="ee-field">
             <div class="ee-field-label-row">
               <label for="ee-title">Event title</label>
@@ -98,37 +93,21 @@
             <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
           </div>
           <div class="ee-field">
-            <label for="ee-type">Event type</label>
-            <select id="ee-type" required aria-describedby="ee-type-hint">
-              <option value="Meeting">Meeting</option>
-              <option value="Conference">Conference</option>
-              <option value="Events">Events</option>
-              <option value="Exhibition">Exhibition</option>
-              <option value="Awards">Awards</option>
-              <option value="Webinar">Webinar</option>
-              <option value="Workshop">Workshop</option>
-              <option value="Masterclass">Masterclass</option>
-            </select>
-            <p class="ee-hint" id="ee-type-hint">
-              Meeting covers breakfasts, netwalking, women only and most networking listings. Use Conference, Exhibition or Awards for summits, trade shows and dinners. Events is for other larger formats. Webinar, Workshop and Masterclass help attendees find the right style of listing.
-            </p>
+            <label for="ee-type" data-hub-tip="event-type">Event type</label>
+            <select id="ee-type" required></select>
           </div>
           <div class="ee-field">
             <div class="ee-field-label-row">
-              <label for="ee-description">Highlights / description</label>
+              <label for="ee-description" data-hub-tip="event-description">Highlights / description</label>
               <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-desc-from-group">
                 Copy from organiser page
               </button>
             </div>
-            <p class="ee-hint" id="ee-description-hint">
-              Attendees search and filter events using this text — include who it is for, what happens, and useful keywords.
-            </p>
             <textarea id="ee-description" rows="5" maxlength="4000" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
             <p class="ee-hint"><span id="ee-word-count">0</span> / <span id="ee-word-max">500</span> words</p>
           </div>
           <div class="ee-field">
-            <label for="ee-photo-file">Event photo</label>
-            <p class="auth-lede" style="margin:0 0 8px;font-size:13px">Upload, paste (Ctrl+V), or drop an image — or use a URL below.</p>
+            <label for="ee-photo-file" data-hub-tip="event-photo">Event photo</label>
             <div class="ee-upload-zone" id="ee-photo-zone" tabindex="0" role="button" aria-label="Upload or paste event photo">
               <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
               <div class="ee-upload-placeholder" id="ee-photo-placeholder">
@@ -164,74 +143,12 @@
           </div>
         </div>
 
-        <!-- Section 3: Location -->
-        <div class="ee-card" id="ee-card-location">
-          <h2>Location</h2>
-          <div class="ee-field">
-            <p class="ee-label-block">Format</p>
-            <div class="ee-mode-toggle" role="group" aria-label="Event format">
-              <button type="button" class="ee-mode-btn" data-ee-format="in-person">In person</button>
-              <button type="button" class="ee-mode-btn" data-ee-format="online">Online</button>
-            </div>
-          </div>
-
-          <div class="ee-format-panel" id="ee-venue-block" data-format-panel="venue">
-            <h3 class="ee-subheading">Venue &amp; address</h3>
-            <p class="ee-hint" style="margin-top:0">Shown on your public listing for in-person events.</p>
-            <div class="ee-field">
-              <label for="ee-venue">Venue name</label>
-              <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
-            </div>
-            <div class="ee-field">
-              <label for="ee-address1">Address line 1</label>
-              <input type="text" id="ee-address1" placeholder="Street address" autocomplete="street-address" />
-            </div>
-            <div class="ee-row-2">
-              <div class="ee-field">
-                <label for="ee-city">City / town</label>
-                <input type="text" id="ee-city" placeholder="e.g. Liverpool" autocomplete="address-level2" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-postcode">Postcode</label>
-                <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" autocomplete="postal-code" />
-              </div>
-            </div>
-          </div>
-
-          <div class="ee-format-panel" id="ee-online-block" data-format-panel="online">
-            <h3 class="ee-subheading">Online access</h3>
-            <p class="ee-hint" style="margin-top:0">
-              Only shared with ticket holders — not shown on the public listing. You can add or update this link anytime before the event; ticket holders are emailed when a join link is first added.
-            </p>
-            <div class="ee-field">
-              <label for="ee-platform">Platform</label>
-              <select id="ee-platform">
-                <option value="">Select platform</option>
-                <option>Zoom Meeting</option>
-                <option>Zoom Webinar</option>
-                <option>Microsoft Teams</option>
-                <option>Google Meet</option>
-                <option>Hopin</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div class="ee-field">
-              <label for="ee-join-link">Meeting / join link <span class="ee-optional">(optional)</span></label>
-              <p class="ee-hint" style="margin-top:0">No link yet? Save your listing and paste the Zoom, Teams, or Meet URL here when it is ready.</p>
-              <input type="url" id="ee-join-link" placeholder="https://zoom.us/j/… or Teams link" />
-            </div>
-          </div>
-        </div>
-
         </div><!-- /.ee-main-col -->
 
         <aside class="ee-sticky-side">
         <!-- Section 4: Dates -->
         <div class="ee-card ee-card-dates" id="ee-card-dates">
-          <h2>Dates</h2>
-          <p class="ee-hint" style="margin-top:0">
-            Select <strong>one date</strong> for a single event, or click <strong>multiple days</strong> on the calendar to create a series — the same times apply to every date you pick.
-          </p>
+          <h2 data-hub-tip="event-dates">Dates</h2>
           <div class="ee-calendar" id="ee-calendar">
             <div class="ee-cal-header">
               <button type="button" id="ee-cal-prev" aria-label="Previous month">‹</button>
@@ -245,15 +162,14 @@
           </div>
           <div class="ee-row-2 ee-dates-times">
             <div class="ee-field">
-              <label for="ee-start-time-hour">Start time</label>
-              <select id="ee-start-time" required aria-describedby="ee-time-hint"></select>
+              <label for="ee-start-time-hour" data-hub-tip="event-times">Start time</label>
+              <select id="ee-start-time" required></select>
             </div>
             <div class="ee-field">
               <label for="ee-end-time-hour">End time</label>
-              <select id="ee-end-time" required aria-describedby="ee-time-hint"></select>
+              <select id="ee-end-time" required></select>
             </div>
           </div>
-          <p class="ee-hint" id="ee-time-hint">Same start and end time for every selected date. End time must be after start time. Pick the hour, then minutes in 15-minute steps.</p>
           <div class="ee-selected-dates">
             <strong><span id="ee-date-count">0</span> date(s) selected</strong>
             <ul id="ee-date-list"></ul>
@@ -266,15 +182,15 @@
         <div class="ee-card ee-card-actions">
           <div class="ee-actions ee-actions--split">
             <button type="button" class="ee-btn ee-btn-outline" id="ee-save-draft">Save as draft</button>
-            <button type="submit" class="ee-btn ee-btn-gold" id="ee-submit">Continue to tickets →</button>
+            <button type="submit" class="ee-btn ee-btn-gold" id="ee-submit">Continue to location →</button>
           </div>
           <p class="ee-hint ee-autodraft-status" id="ee-autodraft-status" aria-live="polite"></p>
-          <p class="ee-hint ee-actions-note">You'll set up ticket types on the next step.</p>
+          <p class="ee-hint ee-actions-note">Venue or online access is on the next step, then ticket setup.</p>
         </div>
       </form>
     </div>
 
-    <script src="../js/organiser-event-wizard.js?v=20260628" data-step="details"></script>
+    <script src="../js/organiser-event-wizard.js?v=20260716loc" data-step="details"></script>
     <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../"></script>
     <script src="../js/hubert-chat.js?v=20260612"></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../"></script>
@@ -285,6 +201,8 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-quarter-time.js?v=20260716endfix"></script>
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
-    <script src="../js/organiser-event-edit.js?v=20260716addr"></script>
+    <script src="../js/organiser-field-tips.js?v=20260716tips"></script>
+    <script src="../js/hub-field-tip.js?v=20260716tips"></script>
+    <script src="../js/organiser-event-edit.js?v=20260716loc"></script>
   </body>
 </html>

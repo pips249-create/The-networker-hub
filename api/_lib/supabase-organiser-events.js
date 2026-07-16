@@ -760,8 +760,8 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
     onlineLink: String(row.meeting_link || '').trim(),
     industry: Array.isArray(row.industries) ? row.industries[0] || '' : '',
     maxAttendees: row.max_attendees != null ? Number(row.max_attendees) : null,
-    recurrencePattern: row.recurrence_pattern || null,
-    recurrenceEndDate: row.recurrence_end_date || null,
+    recurrencePattern: null,
+    recurrenceEndDate: null,
     photoUrl: eventImageUrl(row) || '',
     listingStatus: 'draft',
     date: '',
@@ -1270,13 +1270,17 @@ async function fetchSeriesPeerIds(sb, row) {
 
   const { data, error } = await sb
     .from('events')
-    .select('id, title')
+    .select('id, title, series_group_id')
     .eq('organiser_id', organiserId)
     .in('status', ACTIVE_SERIES_STATUSES);
   if (error) throw new Error(error.message);
 
   const peerIds = (data || [])
-    .filter((peer) => seriesTitleKey(peer) === titleKey)
+    .filter((peer) => {
+      if (seriesTitleKey(peer) !== titleKey) return false;
+      // Title-only fallback for legacy rows — never merge into an explicit series.
+      return !String(peer.series_group_id || '').trim();
+    })
     .map((peer) => peer.id)
     .filter((id) => id && !exclude.has(id));
   return peerIds.length ? peerIds : [];

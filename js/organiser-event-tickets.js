@@ -365,7 +365,10 @@
       if (groupId && titleKey) {
         peers = allEvents.filter((ev) => {
           const peerGroup = ev.organiserGroupId || ev.groupId || '';
-          return peerGroup === groupId && String(ev.title || '').trim().toLowerCase() === titleKey;
+          if (peerGroup !== groupId) return false;
+          if (String(ev.title || '').trim().toLowerCase() !== titleKey) return false;
+          if (String(ev.seriesGroupId || '').trim()) return false;
+          return true;
         });
       }
     }
@@ -456,10 +459,10 @@
     }
   }
 
-  function goBackToEventDetailsInDrawer() {
+  function goBackToEventLocationInDrawer() {
     if (!eventIds[0] || !window.parent || window.parent === window) return;
     window.parent.postMessage(
-      { type: 'hub-event-goto-edit', eventId: eventIds[0] },
+      { type: 'hub-event-goto-location', eventIds: [eventIds[0]], title: seriesMeta.title || '' },
       window.location.origin
     );
   }
@@ -470,17 +473,18 @@
     const actionBack = document.getElementById('ee-tickets-back-edit');
     if (editLink) {
       editLink.hidden = false;
+      editLink.textContent = '← Location & access';
       editLink.href = '#';
       editLink.addEventListener('click', function (e) {
         e.preventDefault();
-        goBackToEventDetailsInDrawer();
+        goBackToEventLocationInDrawer();
       });
     }
     if (actionBack) {
       actionBack.hidden = false;
       actionBack.addEventListener('click', function (e) {
         e.preventDefault();
-        goBackToEventDetailsInDrawer();
+        goBackToEventLocationInDrawer();
       });
     }
   }
@@ -1674,7 +1678,8 @@
       if (isEmbedDrawer) {
         bindEmbedBackToEdit();
       } else {
-        editLink.href = '/organiser/event-edit?id=' + encodeURIComponent(eventIds[0]);
+        editLink.href = '/organiser/event-location?id=' + encodeURIComponent(eventIds[0]);
+        editLink.textContent = '← Location & access';
         editLink.hidden = false;
       }
     }

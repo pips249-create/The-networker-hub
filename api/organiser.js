@@ -26,6 +26,7 @@ const routes = {
   'opportunity-listing-complete': require('./_lib/routes/organiser-opportunity-listing-complete'),
   'event-featured-checkout': require('./_lib/routes/organiser-event-featured-checkout'),
   'event-featured-complete': require('./_lib/routes/organiser-event-featured-complete'),
+  'event-featured-quote': require('./_lib/routes/organiser-event-featured-quote'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
   roster: require('./_lib/routes/organiser-roster'),
   'logo-proxy': require('./_lib/routes/organiser-logo-proxy'),

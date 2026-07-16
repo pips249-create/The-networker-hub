@@ -862,7 +862,7 @@
 }
 
 .org-linkedin-posts {
-  margin: 1.25rem 0 0.5rem;
+  margin: 0 0 1.25rem;
 }
 
 .org-linkedin-posts .org-section-title {
@@ -874,17 +874,31 @@
 }
 
 .org-featured-upgrade {
-  margin: 0 0 1.25rem;
+  margin: 1.25rem 0 0.5rem;
 }
 
-.org-featured-upgrade-card {
-  padding: 24px 24px 28px;
-  border: 1px solid #e8dfd0;
-  border-radius: 14px;
+.org-featured-upgrade-panel {
+  border-color: rgba(201, 150, 31, 0.35);
   background: linear-gradient(180deg, #fff 0%, #faf6ee 100%);
-  box-shadow:
-    0 4px 20px rgba(201, 150, 31, 0.1),
-    0 1px 2px rgba(74, 68, 70, 0.04);
+}
+
+.org-featured-upgrade-toggle {
+  padding: 12px 16px;
+}
+
+.org-featured-upgrade-badge--inline {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.org-featured-upgrade-body {
+  padding: 0 16px 16px;
+}
+
+.org-featured-upgrade-body .org-featured-upgrade-lede {
+  margin: 14px 0 12px;
+  max-width: none;
+  font-size: 13px;
 }
 
 .org-featured-upgrade-badge {
@@ -903,6 +917,30 @@
 .org-featured-upgrade-lede {
   margin-bottom: 1rem;
   max-width: 52em;
+}
+
+.org-featured-upgrade-details {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--od-text-soft, #635c5e);
+}
+
+.org-featured-upgrade-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7a5f88;
+  user-select: none;
+}
+
+.org-featured-upgrade-details[open] summary {
+  margin-bottom: 8px;
+}
+
+.org-featured-upgrade-policy {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--od-text-soft, #635c5e);
 }
 
 .org-featured-upgrade-lede strong {
@@ -928,11 +966,11 @@
 }
 
 .org-featured-upgrade-features {
-  margin: 0 0 16px;
+  margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 6px;
+  gap: 4px;
   font-size: 13px;
   color: var(--od-text-soft, #635c5e);
 }
@@ -1031,6 +1069,40 @@
   color: var(--od-text-dark, #4a4446);
 }
 
+.org-featured-upgrade-events-count {
+  font-weight: 600;
+  color: var(--od-text-soft, #635c5e);
+}
+
+.org-featured-upgrade-events-search {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--od-border, #e8dfd0);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: var(--od-text-dark, #4a4446);
+}
+
+.org-featured-upgrade-events-search:focus {
+  outline: none;
+  border-color: #9a7aa8;
+  box-shadow: 0 0 0 3px rgba(154, 122, 168, 0.16);
+}
+
+.org-featured-upgrade-events-empty {
+  margin: -8px 0 12px;
+  font-size: 13px;
+  color: var(--od-text-soft, #635c5e);
+}
+
+.org-featured-upgrade-events-empty[hidden] {
+  display: none;
+}
+
 .org-featured-upgrade-select-all {
   margin: 0;
   padding: 0;
@@ -1046,23 +1118,28 @@
 
 .org-featured-upgrade-events {
   display: grid;
-  gap: 8px;
-  max-height: 280px;
+  gap: 4px;
+  max-height: 200px;
   overflow: auto;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   padding: 2px;
+  scrollbar-gutter: stable;
 }
 
 .org-featured-upgrade-event {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   margin: 0;
-  padding: 10px 12px;
+  padding: 6px 10px;
   border: 1px solid var(--od-border, #e8dfd0);
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
+}
+
+.org-featured-upgrade-event[hidden] {
+  display: none;
 }
 
 .org-featured-upgrade-event.is-disabled {
@@ -1076,37 +1153,61 @@
 }
 
 .org-featured-upgrade-event input {
-  margin-top: 3px;
+  margin: 0;
   flex-shrink: 0;
 }
 
 .org-featured-upgrade-event-body {
   min-width: 0;
+  flex: 1;
+}
+
+.org-featured-upgrade-event-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 10px;
 }
 
 .org-featured-upgrade-event-title {
-  display: block;
-  font-size: 14px;
+  flex: 1 1 120px;
+  min-width: 0;
+  font-size: 13px;
   font-weight: 600;
   color: var(--od-text-dark, #4a4446);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .org-featured-upgrade-event-meta {
+  flex: 0 1 auto;
+  margin-top: 0;
+  font-size: 11px;
+  color: var(--od-text-soft, #635c5e);
+  white-space: nowrap;
+}
+
+.org-featured-upgrade-event-duration,
+.org-featured-upgrade-event-warn {
   display: block;
   margin-top: 2px;
-  font-size: 12px;
-  color: var(--od-text-soft, #635c5e);
+  font-size: 11px;
+}
+
+.org-featured-upgrade-event-warn {
+  color: #8a3030;
 }
 
 .org-featured-upgrade-event-badge {
   display: inline-block;
-  margin-top: 4px;
-  padding: 2px 8px;
+  padding: 1px 7px;
   border-radius: 999px;
   background: #f3ebf6;
   color: #6b4f78;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .org-featured-upgrade-actions {
@@ -5530,13 +5631,41 @@ body.org-event-drawer-open {
 .org-event-drawer .org-group-drawer-panel {
   display: flex;
   flex-direction: column;
+  width: 100vw;
+  max-width: 100vw;
 }
 
 .org-event-drawer-head {
   flex-shrink: 0;
+  padding: 16px 20px;
 }
 
-.org-event-drawer-progress[hidden] {
+.org-event-drawer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  margin-bottom: 12px;
+}
+
+.org-event-drawer-toolbar-start {
+  flex: 1;
+  min-width: 0;
+}
+
+.org-event-drawer-toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.org-event-drawer-head .org-group-drawer-title {
+  padding-right: 0;
+}
+
+.org-event-drawer-progress {[hidden] {
   display: none !important;
 }
 
@@ -5572,9 +5701,7 @@ body.org-event-drawer-open {
 }
 
 .org-event-drawer-back {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+  position: static;
   border: none;
   border-radius: 999px;
   background: var(--od-bg-soft, #faf7f2);
@@ -5595,9 +5722,7 @@ body.org-event-drawer-open {
 }
 
 .org-event-drawer-help {
-  position: absolute;
-  top: 18px;
-  right: 52px;
+  position: static;
   border: 1px solid var(--od-border);
   border-radius: 999px;
   background: #fff;
@@ -5607,6 +5732,11 @@ body.org-event-drawer-open {
   padding: 7px 12px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.org-event-drawer-close {
+  position: static;
+  flex-shrink: 0;
 }
 
 .org-event-drawer-help:hover {

@@ -230,6 +230,13 @@ async function createEventFeaturedCheckoutSession(opts) {
 
   const plan = FEATURED_PLANS[planId];
   const eventTitle = String(opts.eventTitle || 'Event').trim();
+  const amountPence =
+    opts.amountPence != null && Number.isFinite(Number(opts.amountPence))
+      ? Math.max(0, Math.round(Number(opts.amountPence)))
+      : plan.amountPence;
+  const lineDescription =
+    String(opts.lineItemDescription || '').trim() ||
+    'Premium spotlight placement for "' + eventTitle + '"';
 
   return stripe.checkout.sessions.create({
     mode: 'payment',
@@ -238,29 +245,30 @@ async function createEventFeaturedCheckoutSession(opts) {
     metadata: {
       event_id: eventId,
       featured_plan: planId,
+      featured_amount_pence: String(amountPence),
       checkout_type: 'event_featured',
       owner_email: String(opts.email || '').toLowerCase(),
     },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: [
-      planId === '1month' && plan.amountPence > 0
+      amountPence > 0 && planId === '1month' && plan.amountPence > 0 && amountPence === plan.amountPence
         ? lineItemFromCatalog('event_featured_1month', {
             currency: 'gbp',
             product_data: {
               name: 'Featured event listing — ' + plan.label,
-              description: 'Premium spotlight placement for "' + eventTitle + '"',
+              description: lineDescription,
             },
-            unit_amount: plan.amountPence,
+            unit_amount: amountPence,
           })
         : {
             price_data: {
               currency: 'gbp',
               product_data: {
                 name: 'Featured event listing — ' + plan.label,
-                description: 'Premium spotlight placement for "' + eventTitle + '"',
+                description: lineDescription,
               },
-              unit_amount: plan.amountPence,
+              unit_amount: amountPence,
             },
             quantity: 1,
           },

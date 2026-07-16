@@ -18,13 +18,6 @@
 
   var FEATURED_UPGRADE_QUEUE_KEY = 'hub_featured_upgrade_queue';
 
-  var planLabels = {
-    '1week': '1 week',
-    '1month': '1 month',
-    '4weeks': '1 month',
-    '2months': '2 months',
-  };
-
   function readUpgradeQueue() {
     try {
       var raw = sessionStorage.getItem(FEATURED_UPGRADE_QUEUE_KEY);
@@ -59,25 +52,31 @@
     return queue;
   }
 
-  function showReady(featuredUntil) {
-    var planLabel = planLabels[plan] || 'your chosen period';
+  function showReady(featuredUntil, cappedByEvent) {
     if (lede) {
       lede.textContent = title
         ? '"' + title + '" is now a featured listing on The Networker Hub.'
         : 'Your event is now a featured listing on The Networker Hub.';
     }
-    var expiryNote = featuredUntil
-      ? ' Featured until ' +
-        new Date(featuredUntil).toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        }) +
-        '.'
-      : '';
     if (status) {
-      status.textContent =
-        'Premium spotlight placement is active for ' + planLabel + '.' + expiryNote + ' Thank you!';
+      if (window.HubOrganiserFeaturedDuration) {
+        status.textContent = window.HubOrganiserFeaturedDuration.successStatusText({
+          planId: plan,
+          featuredUntil: featuredUntil,
+          cappedByEvent: cappedByEvent,
+        });
+      } else if (featuredUntil) {
+        status.textContent =
+          'Premium spotlight placement is active. Featured until ' +
+          new Date(featuredUntil).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }) +
+          '. Thank you!';
+      } else {
+        status.textContent = 'Premium spotlight placement is now active. Thank you!';
+      }
     }
     if (actions) actions.hidden = false;
     if (backSocial) backSocial.hidden = !returnSocial;
@@ -184,7 +183,11 @@
           (data.result && data.result.featuredUntil) ||
           (data.event && data.event.featuredUntil) ||
           null;
-        showReady(until);
+        var cappedByEvent =
+          data.result && typeof data.result.cappedByEvent === 'boolean'
+            ? data.result.cappedByEvent
+            : null;
+        showReady(until, cappedByEvent);
         return;
       }
 

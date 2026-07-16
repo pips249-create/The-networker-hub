@@ -5,6 +5,7 @@
   var STEPS = [
     { id: 'format', label: 'Group & format' },
     { id: 'details', label: 'Event details' },
+    { id: 'location', label: 'Location & access' },
     { id: 'tickets', label: 'Set up tickets' },
     { id: 'publish', label: 'Publish' },
   ];
@@ -69,6 +70,12 @@
       if (ctx.format) return '/organiser/event-edit?format=' + encodeURIComponent(ctx.format);
       if (ctx.firstEventId) return '/organiser/event-edit?id=' + encodeURIComponent(ctx.firstEventId);
       return '/organiser/event-edit';
+    }
+    if (stepId === 'location') {
+      if (ctx.firstEventId) {
+        return '/organiser/event-location?id=' + encodeURIComponent(ctx.firstEventId);
+      }
+      return null;
     }
     if (stepId === 'tickets') {
       if (!ctx.eventIds.length) return null;

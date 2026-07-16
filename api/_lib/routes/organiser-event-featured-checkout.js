@@ -1,11 +1,17 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { getSupabaseAdmin } = require('../supabase');
 const {
   isStripeCheckoutConfigured,
   createEventFeaturedCheckoutSession,
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { normalizePlanId } = require('../event-featured-plans');
+const { buildFeaturedQuoteForEvent } = require('../event-featured-quote');
 const { assertFeaturedSpotlightSlotAvailable } = require('../event-featured-slots');
+const {
+  fetchSeriesPeerRows,
+  isSeriesLiveOnBrowse,
+} = require('../event-series-peers');
 
 function parseBody(req) {
   let body = req.body;
@@ -93,6 +99,18 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'event_not_live' });
     }
 
+    const sb = getSupabaseAdmin();
+    const { data: rawRow } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+    const peers = rawRow ? await fetchSeriesPeerRows(sb, rawRow) : [];
+    if (!isSeriesLiveOnBrowse(peers)) {
+      return json(res, 400, {
+        ok: false,
+        error: 'event_already_started',
+        message:
+          'This event has already started — featured placement only runs while it appears on the events browse page.',
+      });
+    }
+
     try {
       await assertFeaturedSpotlightSlotAvailable(eventId);
     } catch (slotErr) {
@@ -131,11 +149,15 @@ module.exports = async function handler(req, res) {
         (title ? '&title=' + title : '') +
         '&featured=cancelled';
 
+    const quote = await buildFeaturedQuoteForEvent(eventId, planId);
+
     const checkoutSession = await createEventFeaturedCheckoutSession({
       email: auth.session.email,
       eventId,
       planId,
       eventTitle: event.title,
+      amountPence: quote.amountPence,
+      lineItemDescription: quote.lineItemDescription + ' — "' + String(event.title || 'Event').trim() + '"',
       successUrl,
       cancelUrl,
     });
@@ -144,6 +166,7 @@ module.exports = async function handler(req, res) {
       ok: true,
       url: checkoutSession.url,
       sessionId: checkoutSession.id,
+      quote,
     });
   } catch (e) {
     return json(res, 500, {
