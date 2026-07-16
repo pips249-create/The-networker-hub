@@ -7,6 +7,7 @@
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const GROUP_STORAGE_KEY = 'hub_event_group_id';
   const AUTODRAFT_PREFIX = 'hub_event_autodraft_v1:';
+  const EDIT_AUTODRAFT_PREFIX = 'hub_event_edit_autodraft_v1:';
   const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
@@ -71,8 +72,20 @@
   }
 
   function autodraftKey(groupId) {
+    if (editId) return EDIT_AUTODRAFT_PREFIX + editId;
     const id = String(groupId || '').trim();
     return id ? AUTODRAFT_PREFIX + id : '';
+  }
+
+  function autodraftSavedMessage(draft) {
+    if (draft && draft.hadUploadedPhoto) {
+      return editId
+        ? 'Unsaved changes kept in this browser. Re-select the uploaded image if you leave this page.'
+        : 'Draft autosaved in this browser. Re-select the uploaded image if you close this page.';
+    }
+    return editId
+      ? 'Unsaved changes kept in this browser until you click Save changes.'
+      : 'Draft autosaved in this browser.';
   }
 
   function setAutodraftStatus(text, tone) {
@@ -90,12 +103,12 @@
   }
 
   function collectAutodraft() {
-    if (editId) return null;
     const groupId = fieldValue('ee-group').trim();
-    if (!groupId) return null;
+    if (!editId && !groupId) return null;
     return {
       version: 1,
       savedAt: new Date().toISOString(),
+      editId: editId || '',
       groupId,
       eventFormat,
       title: fieldValue('ee-title'),
@@ -134,10 +147,11 @@
   }
 
   function saveAutodraftNow() {
-    if (editId || restoringAutodraft || autodraftDisabled) return;
+    if (restoringAutodraft || autodraftDisabled) return;
     const draft = collectAutodraft();
     if (!draft) return;
     const key = autodraftKey(draft.groupId);
+    if (!key) return;
     try {
       if (!autodraftHasWork(draft)) {
         localStorage.removeItem(key);
@@ -145,31 +159,32 @@
         return;
       }
       localStorage.setItem(key, JSON.stringify(draft));
-      setAutodraftStatus(
-        draft.hadUploadedPhoto
-          ? 'Draft autosaved in this browser. Re-select the uploaded image if you close this page.'
-          : 'Draft autosaved in this browser.'
-      );
+      setAutodraftStatus(autodraftSavedMessage(draft));
     } catch {
       setAutodraftStatus('Could not autosave in this browser.', 'error');
     }
   }
 
   function scheduleAutodraft() {
-    if (editId || restoringAutodraft || autodraftDisabled) return;
+    if (restoringAutodraft || autodraftDisabled) return;
     window.clearTimeout(autodraftTimer);
     autodraftTimer = window.setTimeout(saveAutodraftNow, 700);
   }
 
   function clearAutodraft(groupId) {
     window.clearTimeout(autodraftTimer);
-    const key = autodraftKey(groupId);
-    if (!key) return;
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
+    const keys = [];
+    if (editId) keys.push(EDIT_AUTODRAFT_PREFIX + editId);
+    const createKey = autodraftKey(groupId);
+    if (createKey && (!editId || createKey !== EDIT_AUTODRAFT_PREFIX + editId)) keys.push(createKey);
+    keys.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+    });
+    setAutodraftStatus('');
   }
 
   function setDraftField(id, value) {
@@ -177,27 +192,7 @@
     if (el && value != null) el.value = String(value);
   }
 
-  function restoreAutodraft(groupId) {
-    if (editId) return false;
-    const key = autodraftKey(groupId);
-    if (!key) return false;
-    let draft;
-    try {
-      draft = JSON.parse(localStorage.getItem(key) || 'null');
-      const age = Date.now() - new Date(draft?.savedAt || 0).getTime();
-      if (!draft || !Number.isFinite(age) || age > AUTODRAFT_MAX_AGE_MS) {
-        localStorage.removeItem(key);
-        return false;
-      }
-    } catch {
-      try {
-        localStorage.removeItem(key);
-      } catch {
-        /* ignore */
-      }
-      return false;
-    }
-
+  function applyDraftToForm(draft) {
     restoringAutodraft = true;
     eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
     applyFormatUi(eventFormat);
@@ -236,6 +231,31 @@
     renderCalendar();
     renderSelectedList();
     restoringAutodraft = false;
+  }
+
+  function restoreAutodraft(groupId) {
+    if (editId) return false;
+    const key = autodraftKey(groupId);
+    if (!key) return false;
+    let draft;
+    try {
+      draft = JSON.parse(localStorage.getItem(key) || 'null');
+      const age = Date.now() - new Date(draft?.savedAt || 0).getTime();
+      if (!draft || !Number.isFinite(age) || age > AUTODRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(key);
+        return false;
+      }
+    } catch {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+      return false;
+    }
+
+    if (!autodraftHasWork(draft)) return false;
+    applyDraftToForm(draft);
     setAutodraftStatus(
       draft.hadUploadedPhoto
         ? 'Restored your autosaved draft. Please re-select its uploaded image.'
@@ -245,10 +265,41 @@
     return true;
   }
 
+  function restoreEditAutodraft() {
+    if (!editId) return false;
+    const key = EDIT_AUTODRAFT_PREFIX + editId;
+    let draft;
+    try {
+      draft = JSON.parse(localStorage.getItem(key) || 'null');
+      const age = Date.now() - new Date(draft?.savedAt || 0).getTime();
+      if (!draft || !Number.isFinite(age) || age > AUTODRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(key);
+        return false;
+      }
+    } catch {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+      return false;
+    }
+
+    if (!autodraftHasWork(draft)) return false;
+    applyDraftToForm(draft);
+    setAutodraftStatus(
+      draft.hadUploadedPhoto
+        ? 'Restored unsaved changes from this browser. Please re-select its uploaded image.'
+        : 'Restored unsaved changes from this browser.',
+      'restored'
+    );
+    return true;
+  }
+
   function bindAutodraft() {
-    if (editId) return;
     const form = document.getElementById('ee-form');
-    if (!form) return;
+    if (!form || form.dataset.autodraftBound === '1') return;
+    form.dataset.autodraftBound = '1';
     form.addEventListener('input', scheduleAutodraft);
     form.addEventListener('change', scheduleAutodraft);
     form.addEventListener('click', (event) => {
@@ -257,6 +308,46 @@
       }
     });
     window.addEventListener('pagehide', saveAutodraftNow);
+  }
+
+  let postcodeLookupTimer = null;
+
+  async function lookupCityFromPostcode() {
+    if (currentEventLocked || currentSeriesDateOnly || eventFormat === 'online') return;
+    const postcodeEl = document.getElementById('ee-postcode');
+    const cityEl = document.getElementById('ee-city');
+    if (!postcodeEl || !cityEl) return;
+    const postcode = postcodeEl.value.trim().replace(/\s+/g, '');
+    if (!postcode || cityEl.value.trim()) return;
+    try {
+      const res = await fetch(
+        'https://api.postcodes.io/postcodes/' + encodeURIComponent(postcode)
+      );
+      const data = await res.json();
+      const city =
+        data?.result?.admin_district ||
+        data?.result?.admin_ward ||
+        data?.result?.parish ||
+        '';
+      if (city) {
+        cityEl.value = String(city);
+        scheduleAutodraft();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function bindPostcodeCityLookup() {
+    const postcodeEl = document.getElementById('ee-postcode');
+    if (!postcodeEl || postcodeEl.dataset.cityLookupBound === '1') return;
+    postcodeEl.dataset.cityLookupBound = '1';
+    const scheduleLookup = () => {
+      window.clearTimeout(postcodeLookupTimer);
+      postcodeLookupTimer = window.setTimeout(lookupCityFromPostcode, 400);
+    };
+    postcodeEl.addEventListener('change', scheduleLookup);
+    postcodeEl.addEventListener('blur', scheduleLookup);
   }
 
   function bindWordCounter() {
@@ -424,7 +515,15 @@
     const banner = document.getElementById('ee-lock-banner');
     if (banner) banner.hidden = !currentEventLocked;
 
-    const lockSelectors = ['#ee-type', '#ee-start-time', '#ee-end-time', '#ee-postcode'];
+    const lockSelectors = [
+      '#ee-type',
+      '#ee-start-time',
+      '#ee-end-time',
+      '#ee-postcode',
+      '#ee-venue',
+      '#ee-address1',
+      '#ee-city',
+    ];
     lockSelectors.forEach((sel) => {
       const el = document.querySelector(sel);
       if (el) {
@@ -1932,12 +2031,16 @@
     }
     if (editId) {
       await load();
+      restoreEditAutodraft();
+      bindAutodraft();
+      bindPostcodeCityLookup();
       return;
     }
     if (!initPage()) return;
     await load();
     restoreAutodraft(fieldValue('ee-group'));
     bindAutodraft();
+    bindPostcodeCityLookup();
     renderCalendar();
     renderSelectedList();
   }

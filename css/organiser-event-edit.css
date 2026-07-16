@@ -2296,6 +2296,22 @@ body.ee-embed-drawer .ee-actions {
   z-index: 2;
 }
 
+@media (min-width: 860px) {
+  body.ee-embed-drawer .ee-grid--create {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 859px) {
+  body.ee-embed-drawer .ee-grid--create {
+    grid-template-columns: 1fr;
+  }
+
+  body.ee-embed-drawer .ee-grid--create .ee-sticky-side .ee-card {
+    position: static;
+  }
+}
+
 .hub-payment-setup-card {
   display: flex;
   gap: 16px;
