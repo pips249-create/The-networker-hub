@@ -575,7 +575,6 @@
     });
     const datesCard = document.getElementById('ee-card-dates');
     if (datesCard) datesCard.classList.toggle('is-locked', currentEventLocked);
-    applyFormatUi(eventFormat);
     refreshSeriesEditUi();
   }
 
@@ -643,6 +642,7 @@
           setSeriesFieldLocked(document.querySelector(sel), false);
         });
       }
+      applyFormatUi(eventFormat);
       return;
     }
 
@@ -693,10 +693,6 @@
       setSeriesFieldLocked(el, lockShared);
     });
 
-    document.querySelectorAll('[data-ee-format]').forEach((btn) => {
-      btn.disabled = lockShared || currentEventLocked;
-    });
-
     ['#ee-copy-title-from-group', '#ee-copy-desc-from-group'].forEach((sel) => {
       const el = document.querySelector(sel);
       if (el) el.disabled = lockShared || currentEventLocked;
@@ -725,6 +721,7 @@
         setSeriesFieldLocked(document.querySelector(sel), true);
       });
     }
+    applyFormatUi(eventFormat);
   }
 
   function applySeriesEditUi(peers, ev) {
