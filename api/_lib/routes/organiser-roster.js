@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
         const search = String(req.query?.search || req.query?.q || '').trim();
         const filter = String(req.query?.filter || req.query?.statusFilter || 'all').trim();
         const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
-        const { members, total } = await listRosterPage(organiserId, {
+        const { members, total, totalActive } = await listRosterPage(organiserId, {
           limit,
           offset,
           search,

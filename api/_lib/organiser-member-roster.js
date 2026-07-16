@@ -372,7 +372,7 @@ function memberMatchesSearch(member, search) {
 async function listRosterPage(organiserId, options = {}) {
   const sb = getSupabaseAdmin();
   const orgId = String(organiserId || '').trim();
-  if (!orgId) return { members: [], total: 0 };
+  if (!orgId) return { members: [], total: 0, totalActive: 0 };
 
   const limit = Math.min(
     Math.max(Number(options.limit) || ROSTER_PAGE_SIZE_DEFAULT, 1),
@@ -388,7 +388,7 @@ async function listRosterPage(organiserId, options = {}) {
   if (bookingFilters.includes(filter)) {
     let filtered = await listRosterForOrganiser(orgId, { status: 'active' });
     if (filter === 'booked' || filter === 'not_booked') {
-      if (!eventId) return { members: [], total: 0 };
+      if (!eventId) return { members: [], total: 0, totalActive: 0 };
       const bookedEmails = await getBookedEmailsForEvent(sb, orgId, eventId);
       filtered = filtered.filter((m) => {
         const isBooked = bookedEmails.has(m.email);
