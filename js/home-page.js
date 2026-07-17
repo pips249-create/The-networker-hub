@@ -275,11 +275,10 @@
     track.setAttribute('aria-busy', 'false');
 
     var items = partners.map(partnerItemHtml).join('');
-    var isMobile = window.matchMedia('(max-width: 640px)').matches;
     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var useMarquee = !isMobile && partners.length > 3 && !prefersReducedMotion;
-    var isStatic = !useMarquee && !isMobile && partners.length <= 3;
-    var isScrollable = !isStatic && partners.length > 1;
+    var useMarquee = partners.length > 1 && !prefersReducedMotion;
+    var isStatic = partners.length <= 1;
+    var isScrollable = !useMarquee && partners.length > 1;
 
     track.classList.toggle('home-partners-track--marquee', useMarquee);
     track.classList.toggle('home-partners-track--scroll', isScrollable);
@@ -293,9 +292,8 @@
 
     setupPartnersScroller(marquee, track, {
       scrollable: isScrollable,
-      autoScroll: useMarquee,
-      loop: useMarquee,
-      speed: 0.6,
+      autoScroll: false,
+      loop: false,
     });
   }
 

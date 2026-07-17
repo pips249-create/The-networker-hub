@@ -1716,7 +1716,6 @@ html:has(.home-page) {
   padding: 4px 0;
 }
 
-.home-partners-marquee:has(.home-partners-track--marquee),
 .home-partners-marquee:has(.home-partners-track--scroll),
 .home-partners-marquee--scrollable {
   overflow-x: auto;
@@ -1772,6 +1771,12 @@ html:has(.home-page) {
 
 .home-partners-track--marquee {
   width: max-content;
+  animation: home-partners-marquee 40s linear infinite;
+  will-change: transform;
+}
+
+.home-partners-marquee:has(.home-partners-track--marquee):hover .home-partners-track--marquee {
+  animation-play-state: paused;
 }
 
 .home-partners-track--loading {
