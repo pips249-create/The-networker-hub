@@ -204,6 +204,23 @@ body.browse-mode-organisers .events-hero-organiser-link:hover {
   height: auto;
 }
 
+.sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-logo-wrap,
+.sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-company,
+.sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-tagline,
+.sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-body,
+.sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-cta {
+  display: none !important;
+}
+
+.sponsor-hub--in-hero:not(.sponsor-hub--ready)::after {
+  content: '';
+  display: block;
+  margin: 0 -18px;
+  width: calc(100% + 36px);
+  min-height: 168px;
+  background: #f3f4f6;
+}
+
 .sponsor-hub--in-hero .sponsor-hub-head {
   margin-bottom: 10px;
   font-size: 13px;

@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260717logo" />
+    <link rel="stylesheet" href="../css/opportunities-page.css?v=20260717ready" />
     <link rel="stylesheet" href="../css/networking-regions.css?v=20260716opp" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260710" />
@@ -68,17 +68,20 @@
               <div id="sponsor-logo-placeholder" class="sponsor-logo-placeholder" hidden>Your logo</div>
             </div>
             <p class="sponsor-company" id="sponsor-company" hidden></p>
-            <p class="sponsor-tagline" id="sponsor-tagline"></p>
-            <div id="sponsor-body" class="sponsor-body"></div>
+            <p class="sponsor-tagline" id="sponsor-tagline" hidden></p>
+            <div id="sponsor-body" class="sponsor-body" hidden></div>
             <a
               class="sponsor-cta"
               id="sponsor-cta"
               href="mailto:rosie@thenetworkerhub.com?subject=Sponsor%20Hub%20enquiry"
+              hidden
               >Find out more →</a>
           </aside>
         </div>
       </div>
     </section>
+    <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
+    <script src="../js/sponsor-hub.js?v=20260717ready"></script>
 
     <main class="opp-shell" id="browse">
       <section class="networking-region-intro" id="networking-region-intro" hidden aria-labelledby="networking-region-intro-heading">
@@ -415,9 +418,7 @@
     <div id="hub-site-footer"></div>
     <script src="../js/site-footer.js?v=20260714u" data-root="../"></script>
 
-    <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="../js/cms-ad-blocks.js?v=20260716cp2"></script>
-    <script src="../js/sponsor-hub.js?v=20260717logo"></script>
     <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>
     <script src="../js/opportunities-catalog.js?v=20260716c"></script>
     <script src="../js/opportunity-listing-quality.js?v=20260710d"></script>

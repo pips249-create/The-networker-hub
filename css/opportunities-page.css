@@ -1737,6 +1737,23 @@
   height: auto;
 }
 
+.opp-browse-page .sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-logo-wrap,
+.opp-browse-page .sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-company,
+.opp-browse-page .sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-tagline,
+.opp-browse-page .sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-body,
+.opp-browse-page .sponsor-hub--in-hero:not(.sponsor-hub--ready) .sponsor-cta {
+  display: none !important;
+}
+
+.opp-browse-page .sponsor-hub--in-hero:not(.sponsor-hub--ready)::after {
+  content: '';
+  display: block;
+  margin: 0 -18px;
+  width: calc(100% + 36px);
+  min-height: 168px;
+  background: #f3f4f6;
+}
+
 .opp-browse-page .sponsor-hub--in-hero .sponsor-hub-head {
   margin-bottom: 10px;
   font-size: 13px;

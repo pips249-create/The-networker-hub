@@ -87,6 +87,27 @@
     return '<em>' + lead + '</em> ' + rest;
   }
 
+  function whenLogoReady(els, logoOnly) {
+    if (!logoOnly || !els.sponsorLogo || els.sponsorLogo.hidden) {
+      return Promise.resolve();
+    }
+    if (els.sponsorLogo.complete && els.sponsorLogo.naturalWidth) {
+      return Promise.resolve();
+    }
+    return new Promise(function (resolve) {
+      els.sponsorLogo.addEventListener('load', resolve, { once: true });
+      els.sponsorLogo.addEventListener('error', resolve, { once: true });
+    });
+  }
+
+  function markSponsorReady(els) {
+    if (els.sponsorHub) els.sponsorHub.classList.add('sponsor-hub--ready');
+  }
+
+  function markSponsorLoading(els) {
+    if (els.sponsorHub) els.sponsorHub.classList.remove('sponsor-hub--ready');
+  }
+
   function clearHeroLogoLink(els) {
     if (els.sponsorHub) els.sponsorHub.classList.remove('sponsor-hub--logo-only');
     if (!els.sponsorLogoLink) return;
@@ -265,6 +286,8 @@
     var els = getEls();
     if (!els.sponsorHub) return;
 
+    markSponsorLoading(els);
+
     var slotKey =
       String(slot || els.sponsorHub.getAttribute('data-slot') || 'events_sponsor_hub').trim() ||
       'events_sponsor_hub';
@@ -280,6 +303,9 @@
     } catch (e) {
       renderSponsorFallback(els);
     }
+
+    await whenLogoReady(els, els.sponsorHub.classList.contains('sponsor-hub--logo-only'));
+    markSponsorReady(els);
   }
 
   window.HubSponsorHub = { load: load };
@@ -287,14 +313,7 @@
 
   function scheduleAutoLoad() {
     if (!document.getElementById('sponsor-hub')) return;
-    var run = function () {
-      Promise.resolve().then(load);
-    };
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', run);
-    } else {
-      run();
-    }
+    load();
   }
 
   scheduleAutoLoad();
