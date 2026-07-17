@@ -1875,15 +1875,17 @@ async function getLeanOrganiserWorkspace(req) {
   }
 
   const groupIds = groups.map((g) => g.id);
-  const [pendingClaimGroups, eventSummaries, accessStatus] = await Promise.all([
+  const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
+  const [pendingClaimGroups, eventSummaries, accessStatus, rosterSummaries] = await Promise.all([
     pendingClaimsPromise,
     listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
     accessStatusPromise,
+    buildRosterSummariesForOrganisers(groupIds).catch(() => new Map()),
   ]);
 
   const workspaceSummary = null;
 
-  groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, new Map());
+  groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries);
 
   let stripeConnectEnabled = false;
   try {
