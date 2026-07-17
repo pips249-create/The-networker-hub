@@ -562,7 +562,9 @@ function passThroughIfGated(gated) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!api/stripe-webhook|_next/static|_next/image|favicon.ico|css/|js/|assets/|robots.txt|llms.txt|agents.txt).*)',
+  ],
 };
 
 export default async function middleware(request) {

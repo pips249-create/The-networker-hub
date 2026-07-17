@@ -50,6 +50,7 @@ function writeEnvFile(filePath, vars, headerLines) {
 const envHeader = [
   '# Local only — do not commit. Synced from local.env for vercel dev.',
   '# Edit local.env, then run: npm run sync-env',
+  '# Faster local browsing: npm run dev (static :3000 + API :3001). Optional: DISABLE_SITE_ACCESS_GATE=true',
 ];
 writeEnvFile(envPath, mergeVars(parseExisting(envPath), localVars), envHeader);
 
