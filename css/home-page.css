@@ -683,17 +683,14 @@ html:has(.home-page) {
   text-decoration: none;
   text-align: center;
   box-sizing: border-box;
-  border: 1px solid transparent;
+  background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
+  border: 1px solid rgba(184, 149, 106, 0.4);
+  color: var(--charcoal);
   box-shadow: 0 10px 24px rgba(45, 35, 50, 0.14);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.home-page .home-hero-rich-card--gold {
-  background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
-  border-color: rgba(184, 149, 106, 0.4);
-  color: var(--charcoal);
-}
-
+.home-page .home-hero-rich-card--gold,
 .home-page .home-hero-rich-card--purple {
   background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
   border-color: rgba(184, 149, 106, 0.4);
@@ -703,13 +700,10 @@ html:has(.home-page) {
 .home-page .home-hero-rich-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 34px rgba(45, 35, 50, 0.2);
-  color: inherit;
-}
-
-.home-page .home-hero-rich-card--gold:hover {
   color: var(--charcoal);
 }
 
+.home-page .home-hero-rich-card--gold:hover,
 .home-page .home-hero-rich-card--purple:hover {
   color: var(--charcoal);
 }
@@ -741,12 +735,10 @@ html:has(.home-page) {
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-}
-
-.home-page .home-hero-rich-card--gold .home-hero-rich-card-go {
   color: #6e5530;
 }
 
+.home-page .home-hero-rich-card--gold .home-hero-rich-card-go,
 .home-page .home-hero-rich-card--purple .home-hero-rich-card-go {
   color: #6e5530;
 }
