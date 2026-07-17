@@ -1698,8 +1698,14 @@ html:has(.home-page) {
   margin-bottom: 12px;
 }
 
-.home-partners .section-title {
-  margin-bottom: 0;
+.home-partners-kicker {
+  margin: 0 auto;
+  font-family: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  max-width: min(100%, 28em);
 }
 
 .home-partners-marquee {
