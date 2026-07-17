@@ -1931,6 +1931,15 @@
       }
     } else {
       addTierRow();
+      if (
+        organiserComplimentaryVisits > 0 &&
+        !restoredDraft &&
+        (!loaded.event ||
+          (loaded.event.attendanceMode !== 'category_exclusivity' &&
+            loaded.event.attendanceMode !== 'guest_programme'))
+      ) {
+        setAttendanceMode('guest_programme');
+      }
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));

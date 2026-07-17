@@ -11,7 +11,6 @@
   let eventsGroupingPromise = null;
   let bootstrapReady = false;
   let membershipsRosterLoadedFor = '';
-  let membershipsRosterLoadedFor = '';
   let attendeesLoadingPromise = null;
   let teamLoadingPromise = null;
   let eventsLoadingPromise = null;
@@ -51,6 +50,7 @@
     eventsHasMore: false,
     eventsLoading: false,
     eventsLoaded: false,
+    eventsEnrichment: 'none',
     eventsFullyLoaded: false,
     tickets: [],
     attendeesAll: [],
@@ -156,6 +156,65 @@
   function eventEndRaw(ev) {
     if (!ev) return null;
     return ev.endDate || ev.endsAt || ev.ends_at || null;
+  }
+
+  /** Matches deriveListingStatus date anchor in supabase-organiser-events.js */
+  function eventOccurrenceHasEnded(ev) {
+    const startRaw = eventOccurrenceRaw(ev);
+    const endRaw = eventEndRaw(ev);
+    const startMs = startRaw ? new Date(startRaw).getTime() : NaN;
+    const endMs = endRaw ? new Date(endRaw).getTime() : NaN;
+    const startOk = !Number.isNaN(startMs);
+    const endOk = !Number.isNaN(endMs);
+    let anchorMs = null;
+    if (endOk && startOk && endMs - startMs >= 0 && endMs - startMs <= 36 * 60 * 60 * 1000) {
+      anchorMs = endMs;
+    } else if (startOk) {
+      anchorMs = startMs;
+    } else if (endOk) {
+      anchorMs = endMs;
+    }
+    return anchorMs != null && anchorMs <= Date.now();
+  }
+
+  function summaryToEventRow(summary) {
+    if (!summary || !summary.id) return null;
+    const orgId = summary.organiserId || summary.organiserGroupId || '';
+    return {
+      id: summary.id,
+      title: summary.title || 'Untitled event',
+      date: summary.date || null,
+      endDate: summary.endDate || null,
+      organiserGroupId: orgId,
+      organiserId: orgId,
+      statusKey: summary.statusKey || 'draft',
+      statusLabel: summary.statusLabel || 'Draft',
+      ticketsSoldLabel: '…',
+      revenueDisplay: '…',
+      revenueNum: 0,
+      _fromSummary: true,
+    };
+  }
+
+  function eventsSourceList() {
+    if (state.eventsLoaded && state.events.length) return state.events;
+    if (state.eventSummaries && state.eventSummaries.length) {
+      return state.eventSummaries.map(summaryToEventRow).filter(Boolean);
+    }
+    return state.events || [];
+  }
+
+  function eventsNeedFullEnrichment() {
+    return eventsSubRoute === 'events-revenue';
+  }
+
+  function eventsBootstrapQuery(extra, wantFull) {
+    const full = wantFull != null ? wantFull : eventsNeedFullEnrichment();
+    let qs =
+      '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' + EVENTS_FETCH_SIZE + '&eventsOffset=0';
+    if (!full) qs += '&eventsLite=1';
+    if (extra) qs += extra;
+    return qs;
   }
 
   function groupNameForEvent(ev) {
@@ -988,18 +1047,6 @@
       return;
     }
 
-    if (!state.eventsFullyLoaded && state.eventsHasMore && !eventsFiltersActive()) {
-      root.innerHTML = '<p class="org-featured-upgrade-loading">Loading your events…</p>';
-      ensureAllEventsForGrouping()
-        .then(function () {
-          renderFeaturedUpgradePanel();
-        })
-        .catch(function () {
-          renderFeaturedUpgradePanel();
-        });
-      return;
-    }
-
     const liveEvents = liveEventsForFeaturedUpgrade();
     const planOptionsHtml = FEATURED_PLAN_OPTIONS.map(function (plan, index) {
       return (
@@ -1098,6 +1145,7 @@
     bindFeaturedUpgradeUi(root);
     updateFeaturedUpgradeSummary(root);
     updateFeaturedUpgradeHeaderSummary(liveEvents.length);
+    maybePrefetchEvents();
   }
 
   function ensureFeaturedUpgradePanelReady() {
@@ -1292,6 +1340,7 @@
   }
 
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
+  const GROUP_CONTINUE_KEY = 'hub_group_continue_to_event';
 
   function applyPendingGroupSave() {
     try {
@@ -1310,6 +1359,28 @@
     } catch {
       /* ignore */
     }
+  }
+
+  function applyPendingGroupContinue() {
+    try {
+      const groupId = sessionStorage.getItem(GROUP_CONTINUE_KEY);
+      if (!groupId) return;
+      sessionStorage.removeItem(GROUP_CONTINUE_KEY);
+      if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
+      requestAnimationFrame(function () {
+        openNewEventEditorDrawer({ groupId: groupId });
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function handleGroupContinueToEvent(saved) {
+    const groupId =
+      (saved && saved.id) || (state.groups.length ? state.groups[0].id : '');
+    closeGroupEditorDrawer();
+    if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
+    openNewEventEditorDrawer({ groupId: groupId });
   }
 
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
@@ -1358,8 +1429,10 @@
     if (!document.querySelector('[data-org-page="events"].is-active')) return;
     ensureAllEventsForGrouping()
       .then(function () {
+        updateMyEventsTabCounts();
         renderOverviewEvents();
         if (eventsSubRoute === 'events-list') renderEvents();
+        else if (eventsSubRoute === 'events-revenue') renderRevenue();
       })
       .catch(function () {
         /* non-fatal */
@@ -1401,6 +1474,27 @@
       }
       return { ok: res.ok, status: res.status, data };
     });
+  }
+
+  async function apiWithTimeout(path, options, timeoutMs) {
+    const ms = timeoutMs || 30000;
+    if (typeof AbortController === 'undefined') {
+      return api(path, options);
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(function () {
+      controller.abort();
+    }, ms);
+    try {
+      return await api(path, { ...(options || {}), signal: controller.signal });
+    } catch (e) {
+      if (e && e.name === 'AbortError') {
+        throw new Error('Request timed out — please refresh and try again');
+      }
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   function formatDate(raw) {
@@ -1779,6 +1873,10 @@
   function bindNotificationsPanelOnce() {
     if (notificationsPanelBound) return;
     notificationsPanelBound = true;
+    const panel = document.getElementById('org-notifications-panel');
+    if (panel && panel.parentElement !== document.body) {
+      document.body.appendChild(panel);
+    }
     document.getElementById('org-notifications-nav')?.addEventListener('click', function () {
       if (notificationsPanelOpen) closeNotificationsPanel();
       else openNotificationsPanel();
@@ -2229,7 +2327,14 @@
     if (!ev) return false;
     const st = String(ev.status || '').toLowerCase();
     const key = String(ev.statusKey || '').toLowerCase();
-    return st === 'cancelled' || key === 'cancelled';
+    const listing = String(ev.listingStatus || '').toLowerCase();
+    const label = String(ev.statusLabel || '').trim().toLowerCase();
+    return (
+      st === 'cancelled' ||
+      key === 'cancelled' ||
+      listing === 'cancelled' ||
+      label === 'cancelled'
+    );
   }
 
   function eventTicketsSoldCount(ev) {
@@ -2775,7 +2880,8 @@
     } else if (eventsSubRoute === 'events-reviews') {
       ensureReviewsLoaded().then(() => renderReviews());
     } else {
-      ensureEventsLoaded().then(() => {
+      renderEventsPanel(eventsSubRoute);
+      ensureEventsLoaded().then(function () {
         renderEventsPanel(eventsSubRoute);
         maybePrefetchEvents();
       });
@@ -2783,14 +2889,20 @@
   }
 
   function ensureEventsLoaded(options) {
-    const force = Boolean(options && options.force);
-    if (state.eventsLoaded && !force) return Promise.resolve(true);
+    const opts = options || {};
+    const force = Boolean(opts.force);
+    const wantFull = opts.full != null ? Boolean(opts.full) : eventsNeedFullEnrichment();
+    if (
+      state.eventsLoaded &&
+      !force &&
+      (wantFull ? state.eventsEnrichment === 'full' : state.eventsEnrichment !== 'none')
+    ) {
+      return Promise.resolve(true);
+    }
     if (eventsLoadingPromise && !force) return eventsLoadingPromise;
 
     state.eventsLoading = true;
-    eventsLoadingPromise = api(
-      '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' + EVENTS_FETCH_SIZE + '&eventsOffset=0'
-    )
+    eventsLoadingPromise = api(eventsBootstrapQuery('', wantFull))
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.message || data.error || 'Could not load events');
         state.events = data.events || [];
@@ -2804,6 +2916,7 @@
         state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
         state.eventsFullyLoaded = !state.eventsHasMore;
         state.eventsLoaded = true;
+        state.eventsEnrichment = wantFull ? 'full' : 'lite';
         listPages.events = 1;
         listPages.tickets = 1;
         listPages.revenue = 1;
@@ -2863,12 +2976,21 @@
     else if (sub === 'events-revenue') renderRevenue();
   }
 
+  function eventsVisibleCount() {
+    if (filters.eventsHideArchived === false) {
+      return state.eventsTotal || eventsSourceList().length;
+    }
+    return eventsSourceList().filter(function (ev) {
+      return !eventRowIsArchived(ev);
+    }).length;
+  }
+
   function updateMyEventsTabCounts() {
     const set = (id, text) => {
       const el = document.getElementById(id);
       if (el) el.textContent = text;
     };
-    set('tab-count-events', String(state.eventsTotal || state.events.length));
+    set('tab-count-events', String(eventsVisibleCount()));
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
   }
@@ -4078,32 +4200,10 @@
         return eventRowIsArchived(child);
       });
     }
-    const key = String(ev.statusKey || ev.status || '').toLowerCase();
+    if (isEventCancelled(ev)) return true;
+    const key = String(ev.statusKey || ev.status || ev.listingStatus || '').toLowerCase();
     if (key === 'archived') return true;
-    if (key === 'cancelled') return false;
-
-    const startRaw = eventOccurrenceRaw(ev);
-    if (!startRaw) return false;
-    const start = new Date(startRaw);
-    if (Number.isNaN(start.getTime())) return false;
-
-    const endRaw = eventEndRaw(ev);
-    if (endRaw) {
-      const end = new Date(endRaw);
-      if (!Number.isNaN(end.getTime())) {
-        const spanMs = end.getTime() - start.getTime();
-        // Trust a normal event end (same day / overnight). Long ends_at often means
-        // recurrence or bad data — fall through to the start-day check instead.
-        if (spanMs >= 0 && spanMs <= 36 * 60 * 60 * 1000) {
-          return end.getTime() <= Date.now();
-        }
-      }
-    }
-
-    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return startDay < today;
+    return eventOccurrenceHasEnded(ev);
   }
 
   function attendeesEventPickerOptions() {
@@ -4159,7 +4259,7 @@
   }
 
   function filteredEventsList() {
-    let list = state.events.slice();
+    let list = eventsSourceList().slice();
     const q = filters.eventsSearch.trim().toLowerCase();
     if (q) {
       list = list.filter((ev) => {
@@ -4207,11 +4307,15 @@
       try {
         let offset = state.events.length;
         while (offset < (state.eventsTotal || 0)) {
+          const liteQs = eventsNeedFullEnrichment() ? '' : '&eventsLite=1';
           const { ok, data } = await api(
             '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
               EVENTS_FETCH_SIZE +
               '&eventsOffset=' +
-              offset
+              offset +
+              '&eventsTotal=' +
+              String(state.eventsTotal || 0) +
+              liteQs
           );
           if (!ok) break;
           const chunk = data.events || [];
@@ -4386,6 +4490,7 @@
   }
 
   let eventDrawerLoadTimeout = null;
+  let eventDrawerLoadingShowRaf = null;
   let eventDrawerLoadingHideTimer = null;
   let eventDrawerCreateFlow = false;
   let eventDrawerProgressStep = '';
@@ -4442,10 +4547,18 @@
         loading.hidden = false;
         loading.setAttribute('aria-hidden', 'false');
         loading.setAttribute('aria-busy', 'true');
-        requestAnimationFrame(function () {
+        if (eventDrawerLoadingShowRaf) {
+          cancelAnimationFrame(eventDrawerLoadingShowRaf);
+        }
+        eventDrawerLoadingShowRaf = requestAnimationFrame(function () {
+          eventDrawerLoadingShowRaf = null;
           loading.classList.add('is-visible');
         });
       } else {
+        if (eventDrawerLoadingShowRaf) {
+          cancelAnimationFrame(eventDrawerLoadingShowRaf);
+          eventDrawerLoadingShowRaf = null;
+        }
         loading.classList.remove('is-visible');
         loading.setAttribute('aria-busy', 'false');
         eventDrawerLoadingHideTimer = setTimeout(function () {
@@ -4509,6 +4622,12 @@
     refreshEmbedBootstrapCache();
     frame.onload = function () {
       sendEmbedBootstrapToFrame(frame);
+      setTimeout(function () {
+        sendEmbedBootstrapToFrame(frame);
+      }, 120);
+      setTimeout(function () {
+        setEventDrawerLoading(false);
+      }, 600);
     };
     frame.src = frameUrl;
 
@@ -4986,6 +5105,13 @@
           await loadBootstrap();
           renderAll();
         },
+        onContinue: async function (saved) {
+          await loadBootstrap();
+          renderAll();
+          requestAnimationFrame(function () {
+            handleGroupContinueToEvent(saved);
+          });
+        },
       });
       groupEditReady = true;
     }
@@ -4997,6 +5123,13 @@
       onSaved: async function () {
         await loadBootstrap();
         renderAll();
+      },
+      onContinue: async function (saved) {
+        await loadBootstrap();
+        renderAll();
+        requestAnimationFrame(function () {
+          handleGroupContinueToEvent(saved);
+        });
       },
     });
 
@@ -5066,24 +5199,7 @@
   }
 
   function paginateEventsList(list, page) {
-    if (eventsFiltersActive() || state.eventsFullyLoaded) {
-      return paginateList(list, page);
-    }
-
-    const total = state.eventsTotal || list.length;
-    const totalPages = Math.max(1, Math.ceil(total / ORG_PAGE_SIZE));
-    const p = Math.min(Math.max(1, page), totalPages);
-    const globalStart = (p - 1) * ORG_PAGE_SIZE;
-    const localStart = globalStart - state.eventsChunkOffset;
-    const localEnd = localStart + ORG_PAGE_SIZE;
-    return {
-      items: list.slice(localStart, localEnd),
-      page: p,
-      totalPages,
-      total,
-      start: total ? globalStart + 1 : 0,
-      end: Math.min(globalStart + ORG_PAGE_SIZE, total),
-    };
+    return paginateList(list, page);
   }
 
   function paginateList(items, page) {
@@ -7285,16 +7401,6 @@
     const empty = document.getElementById('events-empty');
     if (!body) return;
 
-    if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
-      body.innerHTML =
-        '<tr><td colspan="8" class="org-table-loading">Loading events…</td></tr>';
-      if (empty) empty.hidden = true;
-      ensureAllEventsForGrouping()
-        .then(() => renderEvents())
-        .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
-      return;
-    }
-
     const list = filteredEventsList();
     body.innerHTML = '';
 
@@ -7309,6 +7415,7 @@
         hideActions: hasEvents,
       });
       updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      maybePrefetchEvents();
       return;
     }
     setOrgEmpty(empty, { show: false });
@@ -7327,6 +7434,7 @@
     });
     updateEventsSortHeaders();
     syncSharedEventFiltersUi();
+    maybePrefetchEvents();
   }
 
   function renderTickets() {
@@ -7586,16 +7694,6 @@
 
     renderStripeConnectBanner();
 
-    if (!eventsFiltersActive() && !state.eventsFullyLoaded && state.eventsHasMore) {
-      body.innerHTML =
-        '<tr><td colspan="5" class="org-table-loading">Loading revenue…</td></tr>';
-      if (empty) empty.hidden = true;
-      ensureAllEventsForGrouping()
-        .then(() => renderRevenue())
-        .catch((err) => showOrganiserAlert(err.message || 'Could not load events', true));
-      return;
-    }
-
     const list = filteredEventsList();
     body.innerHTML = '';
     renderPayoutHeldBanner();
@@ -7621,6 +7719,7 @@
         hideActions: true,
       });
       updatePaginationNav('revenue', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      maybePrefetchEvents();
       return;
     }
     setOrgEmpty(empty, { show: false });
@@ -7638,6 +7737,7 @@
         }
       }
     });
+    maybePrefetchEvents();
   }
 
   function renderMyEventsHub(sub) {
@@ -9840,8 +9940,9 @@
   async function loadBootstrap(options) {
     const silent = Boolean(options && options.silent);
     if (!silent) setDashboardLoading(true);
+    let postReady = null;
     try {
-    const { ok, data } = await api('/api/organiser/bootstrap');
+    const { ok, data } = await apiWithTimeout('/api/organiser/bootstrap', {}, 30000);
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
@@ -9851,8 +9952,6 @@
     state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
     state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
     state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
-    state.eventsFullyLoaded = !state.eventsHasMore;
-    state.eventsLoaded = false;
     state.tickets = data.tickets || [];
     listPages.groups = 1;
     listPages.events = 1;
@@ -9866,6 +9965,12 @@
     state.workspaceSummary =
       data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
     state.eventSummaries = data.eventSummaries || [];
+    if (!state.events.length && state.eventSummaries.length) {
+      state.eventsHasMore = state.eventSummaries.length > EVENTS_FETCH_SIZE;
+    }
+    state.eventsFullyLoaded = !state.eventsHasMore;
+    state.eventsLoaded = false;
+    state.eventsEnrichment = 'none';
     state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
     state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
     if (!silent) {
@@ -9918,20 +10023,31 @@
     if (!document.querySelector('[data-org-page="events"].is-active')) {
       renderStripeConnectBanner();
     }
-    renderGroupClaimModal();
-    updateTeamNavBadge();
-    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
-      window.HubOrganiserOnboarding.initAfterDashboardReady();
-    }
-    enforceEventsOrganiserGate();
-    if (document.querySelector('[data-org-page="events"].is-active')) {
-      setEventsSub(eventsSubRoute);
-    }
-    if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
-      maybeRedirectToSingleMemberList();
-    }
+    postReady = function () {
+      renderGroupClaimModal();
+      updateTeamNavBadge();
+      if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
+        window.HubOrganiserOnboarding.initAfterDashboardReady();
+      }
+      enforceEventsOrganiserGate();
+      if (document.querySelector('[data-org-page="events"].is-active')) {
+        setEventsSub(eventsSubRoute);
+      }
+      if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
+        maybeRedirectToSingleMemberList();
+      }
+    };
+    } catch (e) {
+      if (!silent) {
+        showOrganiserAlert('Could not load dashboard: ' + esc(e.message || 'load_failed'), true);
+      }
+      throw e;
     } finally {
       if (!silent) setDashboardLoading(false);
+    }
+    if (postReady) {
+      if (silent) postReady();
+      else requestAnimationFrame(postReady);
     }
   }
 
@@ -10386,6 +10502,7 @@
         filters.eventsHideArchived = hideArchivedEl.checked;
         listPages.events = 1;
         listPages.revenue = 1;
+        updateMyEventsTabCounts();
         renderEvents();
         if (eventsSubRoute === 'events-revenue') renderRevenue();
       });
@@ -10398,6 +10515,7 @@
         filters.eventsHideArchived = revHideArchivedEl.checked;
         listPages.events = 1;
         listPages.revenue = 1;
+        updateMyEventsTabCounts();
         renderRevenue();
         if (eventsSubRoute === 'events-list') renderEvents();
       });
@@ -10960,17 +11078,8 @@
       const p = parseInt(btn.getAttribute('data-page'), 10);
       if (!listKey || !p || p === listPages[listKey]) return;
       listPages[listKey] = p;
-      if (listKey === 'events') {
-        if (eventsFiltersActive() || state.eventsFullyLoaded) {
-          renderEvents();
-        } else {
-          ensureAllEventsForGrouping()
-            .then(() => renderEvents())
-            .catch((err) => {
-              showOrganiserAlert(err.message || 'Could not load events', true);
-            });
-        }
-      } else if (listKey === 'groups') renderGroups();
+      if (listKey === 'events') renderEvents();
+      else if (listKey === 'groups') renderGroups();
       if (listKey === 'tickets') renderTickets();
       if (listKey === 'reviews') renderReviews();
       if (listKey === 'attendees') renderAttendees();
@@ -11188,41 +11297,49 @@
   async function boot(user) {
     state.user = user;
     setDashboardLoading(true);
+    const loadingSafety = window.setTimeout(function () {
+      setDashboardLoading(false);
+      showOrganiserAlert(
+        'Dashboard is taking longer than expected. Try refreshing the page.',
+        true
+      );
+    }, 45000);
     try {
-      const hubMode = await api('/api/auth/hub-mode', {
+      state.user = user;
+      if (signin) signin.hidden = true;
+      if (shell) shell.hidden = false;
+      const payoutSubmit = document.getElementById('btn-payout-submit');
+      if (payoutSubmit) {
+        payoutSubmit.addEventListener('click', submitPayoutRequest);
+      }
+      const alumniSendBtn = document.getElementById('modal-alumni-invites-send');
+      if (alumniSendBtn) {
+        alumniSendBtn.addEventListener('click', submitAlumniInvites);
+      }
+
+      bindForms();
+      bindTeamUi();
+      bindOnboardingPipeline();
+      bindGroupClaimUi();
+      bindSetupResumeUi();
+      bindReadyEventUi();
+      bindUi();
+      const initial = resolveInitialRoute();
+      setRoute(initial.sub || initial.page);
+      await loadBootstrap({ silent: true });
+      applyPendingGroupContinue();
+      api('/api/auth/hub-mode', {
         method: 'POST',
         body: JSON.stringify({ mode: 'organiser' }),
-      });
-      if (!hubMode.ok && hubMode.data && hubMode.data.redirect) {
-        window.location.href = hubMode.data.redirect;
-        return;
-      }
-    } catch {
-      /* non-fatal for cookie set; continue if session already allows organiser UI */
-    }
-    state.user = user;
-    if (signin) signin.hidden = true;
-    shell.hidden = false;
-    const payoutSubmit = document.getElementById('btn-payout-submit');
-    if (payoutSubmit) {
-      payoutSubmit.addEventListener('click', submitPayoutRequest);
-    }
-    const alumniSendBtn = document.getElementById('modal-alumni-invites-send');
-    if (alumniSendBtn) {
-      alumniSendBtn.addEventListener('click', submitAlumniInvites);
-    }
-
-    bindForms();
-    bindTeamUi();
-    bindOnboardingPipeline();
-    bindGroupClaimUi();
-    bindSetupResumeUi();
-    bindReadyEventUi();
-    bindUi();
-    const initial = resolveInitialRoute();
-    setRoute(initial.sub || initial.page);
-    try {
-      await loadBootstrap();
+      })
+        .then(function (hubMode) {
+          if (!hubMode.ok && hubMode.data && hubMode.data.redirect) {
+            window.location.href = hubMode.data.redirect;
+          }
+        })
+        .catch(function () {
+          /* non-fatal for cookie set */
+        });
       let pendingPromoteEventId = '';
       try {
         pendingPromoteEventId = sessionStorage.getItem('hub_promote_event_id') || '';
@@ -11261,7 +11378,7 @@
         const { ok, data } = await api(
           '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(gid)
         );
-        await loadBootstrap();
+        await loadBootstrap({ silent: true });
         if (ok && data && data.ready) {
           showOrganiserAlert('Bank details saved. You can publish paid tickets now.', false);
         } else if (connectParam === 'refresh' || (data && !data.ready)) {
@@ -11282,6 +11399,8 @@
       }
     } catch (e) {
       showOrganiserAlert('Could not load dashboard: ' + esc(e.message), true);
+    } finally {
+      window.clearTimeout(loadingSafety);
       setDashboardLoading(false);
     }
   }
@@ -11297,6 +11416,7 @@
       const hasAccess =
         data.organiserUiVisible || data.user.role === 'admin';
       if (!hasAccess) {
+        setDashboardLoading(false);
         if (data.organiserAccess && !data.organiserUiVisible) {
           window.location.href = '../account/settings#organiser-workspace';
           return;

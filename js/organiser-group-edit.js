@@ -3,6 +3,7 @@
  */
 (function (global) {
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
+  const GROUP_CONTINUE_KEY = 'hub_group_continue_to_event';
   const DESCRIPTION_MAX_WORDS = 500;
 
   let logoFile = null;
@@ -328,6 +329,15 @@
     }
   }
 
+  function stashGroupContinue(groupId) {
+    if (!groupId) return;
+    try {
+      sessionStorage.setItem(GROUP_CONTINUE_KEY, String(groupId));
+    } catch {
+      /* ignore */
+    }
+  }
+
   function resetFormState() {
     currentGroup = null;
     showAlert('');
@@ -463,11 +473,21 @@
       const hasWarnings = Boolean(logoWarning || logoResolutionWarning || saveWarnings.length);
       const delay = hasWarnings ? 2200 : isEmbedded() ? 900 : 700;
 
+      const continueToEvent = isEmbedded()
+        ? mode === 'continue' || onboardReview
+        : onboardReview || (!editId && mode === 'continue');
+
       if (isEmbedded()) {
-        if (config.onSaved) config.onSaved(saved, mode);
-        if (mode === 'continue' || onboardReview) {
+        if (!(continueToEvent && config.onContinue) && config.onSaved) {
+          config.onSaved(saved, mode);
+        }
+        if (continueToEvent) {
           setTimeout(function () {
-            location.href = '/organiser/event-format';
+            if (config.onContinue) config.onContinue(saved, mode);
+            else {
+              stashGroupContinue(saved && saved.id);
+              location.href = '/organiser/#groups';
+            }
           }, delay);
         } else {
           setTimeout(function () {
@@ -477,10 +497,9 @@
         return;
       }
 
-      const redirect =
-        onboardReview || (!editId && mode === 'continue') ? '/organiser/event-format' : '/organiser/#groups';
+      if (continueToEvent) stashGroupContinue(saved && saved.id);
       setTimeout(function () {
-        location.href = redirect;
+        location.href = '/organiser/#groups';
       }, delay);
     } finally {
       [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
@@ -632,6 +651,7 @@
       embedded: Boolean(options.embedded),
       onClose: options.onClose || null,
       onSaved: options.onSaved || null,
+      onContinue: options.onContinue || null,
     };
     bindEvents();
     bindLogoUpload();
@@ -651,6 +671,7 @@
       if (options.embedded != null) config.embedded = Boolean(options.embedded);
       if (options.onClose) config.onClose = options.onClose;
       if (options.onSaved) config.onSaved = options.onSaved;
+      if (options.onContinue) config.onContinue = options.onContinue;
     }
     if (!config) init(options || {});
     resetFormState();

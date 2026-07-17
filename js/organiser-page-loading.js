@@ -33,6 +33,12 @@
 
   function setPageLoading(on, message, progressStep) {
     const el = document.getElementById('ee-page-loading');
+    const embed = isEmbedDrawer();
+    const initialEmbedLoad = embed && /^loading event/i.test(String(message || ''));
+    if (initialEmbedLoad) {
+      notifyParentBusy(on, message, progressStep);
+      return;
+    }
     if (!el) {
       notifyParentBusy(on, message, progressStep);
       return;

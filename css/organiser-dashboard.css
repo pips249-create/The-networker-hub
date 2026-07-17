@@ -3734,7 +3734,7 @@ body.org-notifications-open {
 .org-notifications-panel-sheet {
   position: absolute;
   top: 0;
-  left: 200px;
+  left: 228px;
   bottom: 0;
   width: min(100%, 420px);
   display: flex;

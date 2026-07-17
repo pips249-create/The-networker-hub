@@ -583,7 +583,7 @@
         ' remaining with this organiser.</p>';
     }
     html +=
-      '<p class="guest-visit-tier-meta">Paid member tickets unlock after you use your complimentary visits.</p>' +
+      '<p class="guest-visit-tier-meta">Paid tickets unlock after you use your complimentary visits.</p>' +
       '<div class="guest-visit-tier-price-row">' +
       '<span class="guest-visit-tier-price-label">Today</span>' +
       '<span class="guest-visit-tier-price">Free</span></div></div>';
@@ -638,6 +638,18 @@
     return html;
   }
 
+  function eventHasMembersOnlyTickets(ev) {
+    if (!ev || !ev.hasMembersOnlyTiers) return false;
+    if ((rosterMemberTickets || []).some(function (t) {
+      return t.isMembersOnly;
+    })) {
+      return true;
+    }
+    return ticketTiersForEvent(ev).some(function (t) {
+      return t.isMembersOnly;
+    });
+  }
+
   function memberTicketPriceLabel(ev) {
     if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) return 'Free';
     if (window.HubBookingFees && typeof window.HubBookingFees.listingPriceNum === 'function') {
@@ -685,7 +697,7 @@
           return;
         }
       }
-      labelEl.textContent = 'Member tickets from';
+      labelEl.textContent = 'Tickets from';
       priceEl.textContent = memberTicketPriceLabel(ev);
       return;
     }
@@ -2175,10 +2187,11 @@
     const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
 
-    if (rosterMember) {
+    if (rosterMember && eventHasMembersOnlyTickets(ev)) {
       const banner = document.createElement('p');
       banner.className = 'ticket-load-hint ticket-load-hint--member';
-      banner.textContent = 'You\u2019re in this group\u2019s membership — member tickets are shown below.';
+      banner.textContent =
+        'You\u2019re on this group\u2019s membership list — member-only tickets are included below.';
       tiersEl.appendChild(banner);
     } else if (
       isGuestProg &&
@@ -2191,10 +2204,10 @@
       hint.className = 'ticket-load-hint';
       const signedInEmail = String(guestVisitEligibility.viewerEmail || '').trim();
       hint.textContent = signedInEmail
-        ? 'Complimentary visits are for newcomers. Member tickets need the email on the organiser\u2019s membership (you\u2019re signed in as ' +
+        ? 'Complimentary visits are for newcomers. Members-only tickets need the email on this group\u2019s membership list (you\u2019re signed in as ' +
           signedInEmail +
           ').'
-        : 'Complimentary visits are for newcomers. Sign in with the email on the organiser\u2019s membership for member tickets.';
+        : 'Complimentary visits are for newcomers. Sign in with the email on this group\u2019s membership list for members-only tickets.';
       tiersEl.appendChild(hint);
     }
 
@@ -2371,8 +2384,8 @@
       tiersEl.innerHTML =
         '<p class="ticket-load-hint">' +
         (rosterMembership?.signedOut
-          ? 'Sign in with the email on this group\u2019s member list to see member tickets.'
-          : 'Member tickets are for people on this group\u2019s member list.') +
+          ? 'Sign in with the email on this group\u2019s membership list to see members-only tickets.'
+          : 'Members-only tickets are for people on this group\u2019s membership list.') +
         '</p>';
     }
 

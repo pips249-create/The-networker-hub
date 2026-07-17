@@ -1558,14 +1558,6 @@
       );
     });
 
-    const hint = document.getElementById('ee-format-hint');
-    if (hint) {
-      hint.textContent =
-        eventFormat === 'online'
-          ? 'Platform and join link on the next step — sent to ticket holders, not shown publicly.'
-          : 'Venue name, full address and postcode on the next step.';
-    }
-
     const formatField = document.getElementById('ee-format-field');
     if (formatField) {
       const locked = currentEventLocked || currentSeriesDateOnly;
@@ -1814,27 +1806,37 @@
     };
 
     const loading = window.organiserPageLoading;
-    if (loading && loading.run) {
-      await loading.run('Loading event', loadWork);
-      notifyEmbedDrawerReady();
-      return;
-    }
-
-    if (loading) loading.show('Loading event');
     try {
-      await loadWork();
+      if (loading && loading.run) {
+        await loading.run('Loading event', loadWork);
+      } else {
+        if (loading) loading.show('Loading event');
+        try {
+          await loadWork();
+        } finally {
+          if (loading) loading.hide();
+        }
+      }
+    } catch (err) {
+      console.error('[event-edit] load failed', err);
+      if (isEmbedDrawer) {
+        showAlert('Could not load the event editor. Close this panel and try again.');
+      }
     } finally {
-      if (loading) loading.hide();
+      notifyEmbedDrawerReady();
     }
-    notifyEmbedDrawerReady();
   }
 
   function notifyEmbedDrawerReady() {
-    if (window.HubFieldTip && window.HubFieldTip.init) {
-      window.HubFieldTip.init('[data-hub-tip]');
-    }
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+    }
+    try {
+      if (window.HubFieldTip && window.HubFieldTip.init) {
+        window.HubFieldTip.init('[data-hub-tip]');
+      }
+    } catch (err) {
+      console.error('[event-edit] field tips init failed', err);
     }
   }
 
@@ -2078,31 +2080,40 @@
   }
 
   async function bootEditor() {
-    bindPhotoUpload();
-    bindWordCounter();
-    bindCopyFromGroupButtons();
-    bindFormatToggleButtons();
-    const cancelBtn = document.getElementById('ee-cancel-event-btn');
-    if (cancelBtn) cancelBtn.addEventListener('click', requestEventCancellation);
-    if (QuarterTime) {
-      QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
-    }
-    bindTimeListRefresh();
-    if (!editId && window.HubFlowTour && !isEmbedDrawer) {
-      window.HubFlowTour.startEventEditTour({ isEdit: false, delay: 0 });
-    }
-    if (editId) {
+    try {
+      bindPhotoUpload();
+      bindWordCounter();
+      bindCopyFromGroupButtons();
+      bindFormatToggleButtons();
+      const cancelBtn = document.getElementById('ee-cancel-event-btn');
+      if (cancelBtn) cancelBtn.addEventListener('click', requestEventCancellation);
+      if (QuarterTime) {
+        QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
+      }
+      bindTimeListRefresh();
+      if (!editId && window.HubFlowTour && !isEmbedDrawer) {
+        window.HubFlowTour.startEventEditTour({ isEdit: false, delay: 0 });
+      }
+      if (editId) {
+        await load();
+        restoreEditAutodraft();
+        bindAutodraft();
+        return;
+      }
+      if (!initPage()) return;
       await load();
-      restoreEditAutodraft();
+      restoreAutodraft(fieldValue('ee-group'));
       bindAutodraft();
-      return;
+      renderCalendar();
+      renderSelectedList();
+    } catch (err) {
+      console.error('[event-edit] bootEditor failed', err);
+      if (isEmbedDrawer) {
+        showAlert('Could not open the event editor. Close this panel and try again.');
+      }
+    } finally {
+      if (isEmbedDrawer) notifyEmbedDrawerReady();
     }
-    if (!initPage()) return;
-    await load();
-    restoreAutodraft(fieldValue('ee-group'));
-    bindAutodraft();
-    renderCalendar();
-    renderSelectedList();
   }
 
   if (document.readyState === 'loading') {
