@@ -4964,7 +4964,8 @@ body.org-cancel-modal-open {
   margin-bottom: 14px;
 }
 
-.org-field label {
+.org-field label,
+.org-field .org-field-label {
   display: block;
   font-size: 12px;
   font-weight: 600;
