@@ -489,25 +489,16 @@
     return handleSubmit;
   }
 
-  function initHeroHubertForm() {
-    var form = document.getElementById('home-hero-hubert-form');
-    var input = document.getElementById('home-hero-hubert-input');
-    var searchWrap = form ? form.closest('.home-hero-rich-search-wrap') : null;
-    if (!form || !input) return;
+  function initHeroSearch() {
+    var form = document.getElementById('home-hero-search');
+    var input = document.getElementById('home-hero-search-input');
+    var searchWrap = form ? form.closest('.home-hero-search-block') : null;
+    if (!form || !input || !searchWrap) return;
 
     var handleSubmit = initHeroCitySearch(input, searchWrap, function (q) {
-      if (!q) {
-        if (window.HubertWidget && typeof window.HubertWidget.open === 'function') {
-          window.HubertWidget.open();
-        }
-        return;
-      }
-      if (window.HubertWidget && typeof window.HubertWidget.ask === 'function') {
-        window.HubertWidget.ask(q);
-        input.value = '';
-        return;
-      }
-      window.location.href = '/contact?q=' + encodeURIComponent(q);
+      window.location.href = q
+        ? '/events/?q=' + encodeURIComponent(q) + '#results'
+        : '/events/#results';
     });
 
     form.addEventListener('submit', function (e) {
@@ -519,5 +510,5 @@
   initHeroEntrance();
   initReveal();
   loadPartners();
-  initHeroHubertForm();
+  initHeroSearch();
 })();

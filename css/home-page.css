@@ -270,8 +270,7 @@ html:has(.home-page) {
   animation: home-hero-fade-up 0.7s ease 0.16s both;
 }
 
-.home-hero.is-entered .home-hero-search-block,
-.home-hero.is-entered .home-hero-rich {
+.home-hero.is-entered .home-hero-search-block {
   animation: home-hero-fade-up 0.7s ease 0.24s both;
 }
 
