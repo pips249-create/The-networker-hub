@@ -22,8 +22,8 @@
   function getEls() {
     return {
       sponsorHub: document.getElementById('sponsor-hub'),
-      sponsorBadge: document.getElementById('sponsor-badge'),
       sponsorLogoWrap: document.getElementById('sponsor-logo-wrap'),
+      sponsorLogoLink: document.getElementById('sponsor-logo-link'),
       sponsorLogo: document.getElementById('sponsor-logo'),
       sponsorLogoPlaceholder: document.getElementById('sponsor-logo-placeholder'),
       sponsorCompany: document.getElementById('sponsor-company'),
@@ -87,6 +87,41 @@
     return '<em>' + lead + '</em> ' + rest;
   }
 
+  function clearHeroLogoLink(els) {
+    if (els.sponsorHub) els.sponsorHub.classList.remove('sponsor-hub--logo-only');
+    if (!els.sponsorLogoLink) return;
+    els.sponsorLogoLink.hidden = true;
+    els.sponsorLogoLink.removeAttribute('href');
+    els.sponsorLogoLink.removeAttribute('aria-label');
+    els.sponsorLogoLink.removeAttribute('target');
+    els.sponsorLogoLink.removeAttribute('rel');
+  }
+
+  function applyHeroLogoLink(els, opts) {
+    var hero = isSponsorInHero(els);
+    var useLogoOnly = hero && opts.active && opts.hasLogo;
+
+    if (!useLogoOnly) {
+      clearHeroLogoLink(els);
+      return false;
+    }
+
+    if (els.sponsorHub) els.sponsorHub.classList.add('sponsor-hub--logo-only');
+    if (els.sponsorLogoLink) {
+      els.sponsorLogoLink.href = opts.ctaUrl;
+      els.sponsorLogoLink.hidden = false;
+      var label = opts.company ? 'Visit ' + opts.company : opts.ctaLabel || 'Visit sponsor';
+      els.sponsorLogoLink.setAttribute('aria-label', label);
+      if (window.CmsSponsorFields) {
+        window.CmsSponsorFields.applyCtaLink(els.sponsorLogoLink, opts.ctaUrl);
+      }
+    }
+    if (els.sponsorLogo) {
+      els.sponsorLogo.alt = opts.company || '';
+    }
+    return true;
+  }
+
   function setSponsorLogo(els, logoUrl) {
     var url = String(logoUrl || '').trim();
     var hasLogo = window.CmsSponsorFields
@@ -99,13 +134,13 @@
     if (els.sponsorLogo) {
       if (hasLogo) {
         els.sponsorLogo.src = url;
-        els.sponsorLogo.alt = '';
         els.sponsorLogo.hidden = false;
         if (window.CmsSponsorFields) {
           window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, els.sponsorLogo, true);
         }
       } else {
         els.sponsorLogo.removeAttribute('src');
+        els.sponsorLogo.alt = '';
         els.sponsorLogo.hidden = true;
         if (window.CmsSponsorFields) {
           window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, null, false);
@@ -115,15 +150,16 @@
     if (els.sponsorLogoPlaceholder) {
       els.sponsorLogoPlaceholder.hidden = hasLogo;
     }
+    return hasLogo;
   }
 
   function renderSponsorFallback(els) {
     if (!els.sponsorHub) return;
     els.sponsorHub.classList.remove('sponsor-hub--active');
     els.sponsorHub.classList.add('sponsor-hub--fallback');
+    clearHeroLogoLink(els);
 
-    if (els.sponsorBadge) els.sponsorBadge.hidden = true;
-    setSponsorLogo(els, '');
+    if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = true;
     if (els.sponsorCompany) els.sponsorCompany.hidden = true;
     if (els.sponsorTagline) {
       els.sponsorTagline.hidden = false;
@@ -163,15 +199,17 @@
       block.body,
       heroSponsor ? SPONSOR_HERO_MAX_BULLETS : 0
     );
-    var hasLogo = window.CmsSponsorFields
-      ? window.CmsSponsorFields.isLogoUrl(logoUrl)
-      : /^https?:\/\//i.test(String(logoUrl || '').trim());
-
-    if (els.sponsorBadge) els.sponsorBadge.hidden = false;
-    setSponsorLogo(els, logoUrl);
+    var hasLogo = setSponsorLogo(els, logoUrl);
+    var logoOnly = applyHeroLogoLink(els, {
+      active: true,
+      hasLogo: hasLogo,
+      ctaUrl: ctaUrl,
+      company: company,
+      ctaLabel: ctaLabel,
+    });
 
     if (els.sponsorCompany) {
-      if (company && !(heroSponsor && hasLogo)) {
+      if (company && !logoOnly) {
         els.sponsorCompany.textContent = company;
         els.sponsorCompany.hidden = false;
       } else {
@@ -181,7 +219,7 @@
     }
 
     if (els.sponsorTagline) {
-      if (tagline) {
+      if (tagline && !logoOnly) {
         els.sponsorTagline.hidden = false;
         els.sponsorTagline.innerHTML = sponsorTaglineHtml(tagline);
       } else {
@@ -191,7 +229,7 @@
     }
 
     if (els.sponsorBody) {
-      if (bulletsHtml) {
+      if (bulletsHtml && !logoOnly) {
         els.sponsorBody.hidden = false;
         els.sponsorBody.innerHTML = bulletsHtml;
       } else {
@@ -203,8 +241,8 @@
     if (els.sponsorCta) {
       els.sponsorCta.textContent = ctaLabel;
       els.sponsorCta.href = ctaUrl;
-      els.sponsorCta.hidden = false;
-      if (window.CmsSponsorFields) {
+      els.sponsorCta.hidden = logoOnly;
+      if (!logoOnly && window.CmsSponsorFields) {
         window.CmsSponsorFields.applyCtaColor(
           els.sponsorCta,
           window.CmsSponsorFields.ctaColor(block)

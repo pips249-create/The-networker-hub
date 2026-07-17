@@ -5588,12 +5588,20 @@
         return;
       }
 
+      if (hasLogo) {
+        el.innerHTML =
+          '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 pb-4 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
+          '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
+          sponsorPreviewLogoHtml(creative.logoUrl, false) +
+          '</aside>';
+        return;
+      }
+
       el.innerHTML =
         '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
-        '<span class="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">Sponsored</span>' +
-        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3 pr-16">★ Sponsor Hub</div>' +
+        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
         sponsorPreviewLogoHtml(creative.logoUrl, false) +
-        (creative.companyName && !hasLogo
+        (creative.companyName
           ? '<p class="text-sm font-extrabold mb-1">' + esc(creative.companyName) + '</p>'
           : '') +
         (taglineHtml ? '<p class="text-sm font-semibold leading-snug mb-4">' + taglineHtml + '</p>' : '') +

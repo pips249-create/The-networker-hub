@@ -1739,7 +1739,6 @@
 
 .opp-browse-page .sponsor-hub--in-hero .sponsor-hub-head {
   margin-bottom: 10px;
-  padding-right: 64px;
   font-size: 13px;
 }
 
@@ -1749,6 +1748,51 @@
   min-height: 120px;
   padding: 10px 14px;
   flex: 1 1 auto;
+}
+
+.opp-browse-page .sponsor-logo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: inherit;
+  text-decoration: none !important;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only {
+  padding-bottom: 14px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
+  margin-bottom: 8px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap {
+  margin-bottom: 0;
+  min-height: 168px;
+  padding: 16px 18px;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:hover {
+  filter: brightness(0.97);
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:focus-within {
+  outline: 2px solid var(--opp-gold);
+  outline-offset: 2px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo,
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo--full {
+  max-height: 168px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-company,
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-tagline,
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-body,
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-cta {
+  display: none !important;
 }
 
 .opp-browse-page .sponsor-hub--in-hero .sponsor-logo,
@@ -1784,7 +1828,6 @@
   font-weight: 700;
   color: var(--opp-navy);
   margin-bottom: 16px;
-  padding-right: 72px;
 }
 
 .opp-browse-page .sponsor-hub-head .icon {

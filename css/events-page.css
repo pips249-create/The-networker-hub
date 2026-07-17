@@ -206,7 +206,6 @@ body.browse-mode-organisers .events-hero-organiser-link:hover {
 
 .sponsor-hub--in-hero .sponsor-hub-head {
   margin-bottom: 10px;
-  padding-right: 64px;
   font-size: 13px;
 }
 
@@ -216,6 +215,51 @@ body.browse-mode-organisers .events-hero-organiser-link:hover {
   min-height: 120px;
   padding: 10px 14px;
   flex: 1 1 auto;
+}
+
+.sponsor-logo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: inherit;
+  text-decoration: none !important;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only {
+  padding-bottom: 14px;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
+  margin-bottom: 8px;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap {
+  margin-bottom: 0;
+  min-height: 168px;
+  padding: 16px 18px;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:hover {
+  filter: brightness(0.97);
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:focus-within {
+  outline: 2px solid var(--lavender-deep);
+  outline-offset: 2px;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo,
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo--full {
+  max-height: 168px;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-company,
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-tagline,
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-body,
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-cta {
+  display: none !important;
 }
 
 .sponsor-hub--in-hero .sponsor-logo-wrap.sponsor-logo-band {
@@ -1256,7 +1300,6 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   font-weight: 700;
   color: var(--charcoal);
   margin-bottom: 16px;
-  padding-right: 72px;
 }
 .sponsor-hub-head .icon {
   color: var(--lavender-deep);

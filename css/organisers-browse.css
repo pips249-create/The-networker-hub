@@ -417,6 +417,10 @@ body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-hub-head .icon {
   color: #2563eb;
 }
 
+body.browse-mode-organisers .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:focus-within {
+  outline-color: #2563eb;
+}
+
 body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-cta {
   background: #1e3a5f;
 }

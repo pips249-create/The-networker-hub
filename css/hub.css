@@ -1233,7 +1233,7 @@ body.hub-organiser-terms-open {
 }
 
 .sponsor-preview-logo-band--hero {
-  min-height: 120px;
+  min-height: 168px;
 }
 
 .sponsor-preview-logo-img,
@@ -1250,7 +1250,7 @@ body.hub-organiser-terms-open {
 
 .sponsor-preview-logo-band--hero .sponsor-preview-logo-img,
 .sponsor-preview-logo-band--hero .sponsor-logo--full {
-  max-height: 120px;
+  max-height: 168px;
 }
 
 /* CMS sponsor CTA — custom colour from Command Centre */
