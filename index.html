@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/home-page.css?v=20260715emoji">
+<link rel="stylesheet" href="css/home-page.css?v=20260717hero">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -31,48 +31,38 @@
     <span class="home-hero-orb home-hero-orb--2" aria-hidden="true"></span>
     <span class="home-hero-orb home-hero-orb--3" aria-hidden="true"></span>
     <div class="home-flow-inner home-hero-inner">
-      <header class="home-hero-copy">
-        <p class="home-hero-kicker">UK business networking</p>
-        <h1 class="hero-title">
-          <span class="hero-title-line">Find your next</span>
-          <span class="hero-title-accent">event, connection, or opportunity</span>
-        </h1>
-        <p class="hero-tagline">
-          Discover events, connections, and opportunities across the UK&rsquo;s business network. Browse free; sign up only when you&rsquo;re ready to book or enquire.
-        </p>
-      </header>
-      <div class="home-hero-search-block">
-        <form class="home-hero-search" id="home-hero-search" action="/events/" method="get" role="search" aria-label="Search events">
-          <div class="home-hero-search-field">
-            <label class="home-hero-search-label" for="home-hero-search-input">Find an event</label>
-            <input type="search" id="home-hero-search-input" name="q" placeholder="City, breakfast meeting, industry, organiser…" autocomplete="off" enterkeyhint="search">
-          </div>
-          <button type="submit" class="home-hero-search-btn btn btn-primary">Search events</button>
-        </form>
-        <p class="home-hero-search-note">
-          <a href="/events/?mode=organisers">Find organisers</a>
-          <span aria-hidden="true">·</span>
-          <a href="/opportunities/">Browse opportunities</a>
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <section class="home-partners home-reveal is-visible" id="home-partners" aria-labelledby="home-partners-heading">
-    <div class="home-partners-band">
-      <div class="home-flow-inner home-partners-panel">
-        <header class="home-flow-head home-flow-head--center">
-          <p class="section-kicker">Trusted by</p>
-          <h2 class="section-title" id="home-partners-heading">Our partners &amp; sponsors</h2>
+      <div class="home-hero-rich">
+        <header class="home-hero-copy home-hero-copy--rich">
+          <p class="home-hero-kicker">The Networker Hub</p>
+          <h1 class="hero-title hero-title--rich">
+            <span class="hero-title-line">Find your next&hellip;</span>
+          </h1>
+          <p class="home-hero-lede home-hero-lede--rich">Networking events and business opportunities, in one place.</p>
+          <p class="home-hero-proof">Browse free &middot; Sign up only when you book or enquire</p>
         </header>
-        <div class="home-partners-marquee" id="home-partners-marquee" tabindex="-1" aria-label="Partner and sponsor logos">
-          <div class="home-partners-track home-partners-track--loading" id="home-partners-logos" aria-live="polite" aria-busy="true">
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-          </div>
+        <div class="home-hero-rich-cards" role="group" aria-label="Choose where to start">
+          <a class="home-hero-rich-card home-hero-rich-card--gold" href="/events/">
+            <span class="home-hero-rich-card-label">Event</span>
+            <span class="home-hero-rich-card-detail">Meetings, conferences &amp; training near you</span>
+            <span class="home-hero-rich-card-go">Explore &rarr;</span>
+          </a>
+          <a class="home-hero-rich-card home-hero-rich-card--purple" href="/opportunities/">
+            <span class="home-hero-rich-card-label">Business Opportunity</span>
+            <span class="home-hero-rich-card-detail">Franchises, partnerships &amp; side hustles</span>
+            <span class="home-hero-rich-card-go">Explore &rarr;</span>
+          </a>
         </div>
+        <div class="home-hero-rich-search-wrap">
+          <form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask Hubert">
+            <img class="home-hero-rich-hubert-icon" src="assets/hubert-icon.png" alt="" width="28" height="28">
+            <label class="visually-hidden" for="home-hero-hubert-input">Ask Hubert</label>
+            <input type="search" id="home-hero-hubert-input" name="q" placeholder="Ask Hubert to find an event, opportunity, or group&hellip;" autocomplete="off" enterkeyhint="send">
+            <button type="submit" class="home-hero-rich-search-btn">Ask Hubert</button>
+          </form>
+        </div>
+        <p class="home-hero-rich-secondary">
+          <a href="/events/?mode=organisers">Find organisers</a>
+        </p>
       </div>
     </div>
   </section>
@@ -226,6 +216,25 @@
           </a>
         </li>
       </ul>
+    </div>
+  </section>
+
+  <section class="home-partners home-reveal is-visible" id="home-partners" aria-labelledby="home-partners-heading">
+    <div class="home-partners-band">
+      <div class="home-flow-inner home-partners-panel">
+        <header class="home-flow-head home-flow-head--center">
+          <p class="section-kicker">Trusted by</p>
+          <h2 class="section-title" id="home-partners-heading">Our partners &amp; sponsors</h2>
+        </header>
+        <div class="home-partners-marquee" id="home-partners-marquee" tabindex="-1" aria-label="Partner and sponsor logos">
+          <div class="home-partners-track home-partners-track--loading" id="home-partners-logos" aria-live="polite" aria-busy="true">
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+            <span class="home-partner-skeleton" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -437,8 +446,9 @@
 <script src="js/region-landmark-icons.js?v=20260714clarity"></script>
 <script src="js/networking-region-themes.js?v=20260716palette"></script>
 <script src="js/home-location-chips.js?v=20260716palette"></script>
+<script src="js/networking-region-directory.js?v=20260717search"></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="js/home-page.js?v=20260715partners"></script>
+<script src="js/home-page.js?v=20260717search"></script>
 <script src="js/hubert-chat.js?v=20260710"></script>
 <script src="js/hubert-widget.js?v=20260711" data-root=""></script>
 

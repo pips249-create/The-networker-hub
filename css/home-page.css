@@ -270,12 +270,17 @@ html:has(.home-page) {
   animation: home-hero-fade-up 0.7s ease 0.16s both;
 }
 
-.home-hero.is-entered .home-hero-search-block {
+.home-hero.is-entered .home-hero-search-block,
+.home-hero.is-entered .home-hero-rich {
   animation: home-hero-fade-up 0.7s ease 0.24s both;
 }
 
 .home-hero:not(.is-entered) .home-hero-inner > * {
   opacity: 0;
+}
+
+.home-page .home-hero:has(.home-hero-rich) .home-hero-inner {
+  max-width: 40rem;
 }
 
 .home-page .home-hero-inner {
@@ -410,6 +415,37 @@ html:has(.home-page) {
   width: min(100%, 36rem);
   margin-left: auto;
   margin-right: auto;
+}
+
+.home-page .home-hero-search-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 30;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid rgba(45, 35, 50, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(45, 35, 50, 0.18);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.home-page .home-hero-search-suggest li {
+  padding: 11px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--charcoal);
+  cursor: pointer;
+}
+
+.home-page .home-hero-search-suggest li:hover,
+.home-page .home-hero-search-suggest li.is-active {
+  background: #f5eef8;
+  color: var(--lavender-deep);
 }
 
 .home-page .home-hero-search {
@@ -557,6 +593,262 @@ html:has(.home-page) {
 .home-page .home-hero-alt-links span {
   margin: 0 6px;
   opacity: 0.65;
+}
+
+/* Hero — rich choice (Variant G) */
+.home-page .home-hero-rich {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+  padding: 4px 0 16px;
+  box-sizing: border-box;
+}
+
+.home-page .home-hero-copy--rich {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.home-page .hero-title.hero-title--rich {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(2.15rem, 6vw, 3.35rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-align: center;
+}
+
+.home-page .hero-title--rich .hero-title-line {
+  display: block;
+  color: #fff;
+  text-shadow:
+    0 1px 2px rgba(45, 35, 50, 0.4),
+    0 8px 32px rgba(45, 35, 50, 0.28);
+}
+
+.home-page .home-hero-lede--rich {
+  margin: 0;
+  max-width: 26rem;
+  font-size: clamp(0.98rem, 2vw, 1.08rem);
+  font-weight: 500;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(45, 35, 50, 0.3);
+}
+
+.home-page .home-hero-proof {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 2px rgba(45, 35, 50, 0.28);
+}
+
+.home-page .home-hero-rich-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.home-page .home-hero-rich-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 132px;
+  padding: 22px 18px;
+  border-radius: 24px;
+  text-decoration: none;
+  text-align: center;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  box-shadow: 0 12px 30px rgba(45, 35, 50, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-page .home-hero-rich-card--gold {
+  background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
+  border-color: rgba(184, 149, 106, 0.4);
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-rich-card--purple {
+  background: linear-gradient(165deg, #9a7aa8 0%, #7d6585 55%, #64506f 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.home-page .home-hero-rich-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(45, 35, 50, 0.2);
+  color: inherit;
+}
+
+.home-page .home-hero-rich-card--gold:hover {
+  color: var(--charcoal);
+}
+
+.home-page .home-hero-rich-card--purple:hover {
+  color: #fff;
+}
+
+.home-page .home-hero-rich-card:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.home-page .home-hero-rich-card-label {
+  display: block;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.45rem, 3vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.home-page .home-hero-rich-card-detail {
+  display: block;
+  max-width: 14rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.84;
+}
+
+.home-page .home-hero-rich-card-go {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.home-page .home-hero-rich-card--gold .home-hero-rich-card-go {
+  color: #6e5530;
+}
+
+.home-page .home-hero-rich-card--purple .home-hero-rich-card-go {
+  color: #fff8ec;
+}
+
+.home-page .home-hero-rich-search-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.home-page .home-hero-rich-search {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  margin-top: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 28px rgba(45, 35, 50, 0.16);
+  box-sizing: border-box;
+}
+
+.home-page .home-hero-rich-search--hubert {
+  align-items: center;
+  gap: 0;
+  padding-left: 10px;
+}
+
+.home-page .home-hero-rich-hubert-icon {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.home-page .home-hero-rich-search input[type='search'] {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 52px;
+  border: 0;
+  background: transparent;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--charcoal);
+  box-sizing: border-box;
+}
+
+.home-page .home-hero-rich-search input[type='search']::-webkit-search-decoration,
+.home-page .home-hero-rich-search input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.home-page .home-hero-rich-search input[type='search']::placeholder {
+  color: rgba(74, 68, 70, 0.5);
+}
+
+.home-page .home-hero-rich-search input[type='search']:focus {
+  outline: none;
+}
+
+.home-page .home-hero-rich-search:focus-within {
+  box-shadow:
+    0 10px 28px rgba(45, 35, 50, 0.16),
+    0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.home-page .home-hero-rich-search-btn {
+  flex: 0 0 auto;
+  height: 52px;
+  border: 0;
+  background: var(--charcoal);
+  color: #fff;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease;
+}
+
+.home-page .home-hero-rich-search-btn:hover {
+  background: #3d3548;
+}
+
+.home-page .home-hero-rich-secondary {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.home-page .home-hero-rich-secondary a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255, 255, 255, 0.45);
+}
+
+.home-page .home-hero-rich-secondary a:hover {
+  text-decoration-color: #fff;
 }
 
 /* ─── What is The Networker? ─── */
@@ -2475,6 +2767,29 @@ html:has(.home-page) {
 
   .home-page .home-hero-search-note {
     font-size: 13px;
+  }
+
+  .home-page .home-hero-rich-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .hero-title.hero-title--rich {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+  }
+
+  .home-page .home-hero-rich-card {
+    min-height: 120px;
+  }
+
+  .home-page .home-hero-rich-search {
+    flex-direction: column;
+    border-radius: 18px;
+  }
+
+  .home-page .home-hero-rich-search input[type='search'],
+  .home-page .home-hero-rich-search-btn {
+    height: 48px;
+    width: 100%;
   }
 
   .home-page .home-hero-stats {

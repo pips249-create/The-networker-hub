@@ -3,32 +3,7 @@
  * The allow-list mirrors api/_lib/networking-regions.js.
  */
 (function () {
-  var REGIONS = {
-    'central-london': { name: 'Central London', location: 'Central London' },
-    'north-london': { name: 'North London', location: 'North London' },
-    'south-london': { name: 'South London', location: 'South London' },
-    'east-london': { name: 'East London', location: 'East London' },
-    'west-london': { name: 'West London', location: 'West London' },
-    manchester: { name: 'Manchester', location: 'Manchester' },
-    birmingham: { name: 'Birmingham', location: 'Birmingham' },
-    glasgow: { name: 'Glasgow', location: 'Glasgow' },
-    edinburgh: { name: 'Edinburgh', location: 'Edinburgh' },
-    leeds: { name: 'Leeds', location: 'Leeds' },
-    liverpool: { name: 'Liverpool', location: 'Liverpool' },
-    newcastle: { name: 'Newcastle', location: 'Newcastle' },
-    bristol: { name: 'Bristol', location: 'Bristol' },
-    sheffield: { name: 'Sheffield', location: 'Sheffield' },
-    nottingham: { name: 'Nottingham', location: 'Nottingham' },
-    cardiff: { name: 'Cardiff', location: 'Cardiff' },
-    brighton: { name: 'Brighton', location: 'Brighton' },
-    cambridge: { name: 'Cambridge', location: 'Cambridge' },
-    oxford: { name: 'Oxford', location: 'Oxford' },
-    chester: { name: 'Chester', location: 'Chester' },
-    belfast: { name: 'Belfast', location: 'Belfast' },
-    reading: { name: 'Reading', location: 'Reading' },
-    leicester: { name: 'Leicester', location: 'Leicester' },
-    bournemouth: { name: 'Bournemouth', location: 'Bournemouth' },
-  };
+  var REGIONS = window.HUB_NETWORKING_REGIONS || {};
 
   var match = String(window.location.pathname || '').match(/^\/networking\/([^/]+)\/?$/);
   if (!match) return;
