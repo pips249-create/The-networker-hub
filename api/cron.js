@@ -11,6 +11,7 @@ const routes = {
   'event-featured': require('./_lib/routes/cron-event-featured'),
   'opportunity-reminders': require('./_lib/routes/cron-opportunity-reminders'),
   'engagement-emails': require('./_lib/routes/cron-engagement-emails'),
+  'post-event-reviews': require('./_lib/routes/cron-post-event-reviews'),
   'online-join-reminders': require('./_lib/routes/cron-online-join-reminders'),
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
   'roster-emails': require('./_lib/routes/cron-roster-emails'),
