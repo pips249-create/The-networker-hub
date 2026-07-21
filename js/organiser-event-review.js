@@ -49,6 +49,11 @@
 
   const LEGACY_MODERATE_REFUND_DETAILS =
     '100% refund up to 7 days before the event; 50% refund up to 48 hours before the event.';
+  const DEFAULT_PAID_REFUND = {
+    refundPolicy: 'full_refund',
+    refundCutoffDays: 7,
+    refundPolicyDetails: '',
+  };
 
   function esc(s) {
     const d = document.createElement('div');
@@ -511,25 +516,33 @@
       refundTermsAgreed: Boolean(anchorEvent?.refundTermsAgreed),
       vatTreatment: anchorEvent?.vatTreatment,
     };
-    if (fromEvent.refundTermsAgreed && fromEvent.refundPolicy) return fromEvent;
+    let merged = { ...fromEvent };
     try {
       const raw = sessionStorage.getItem(REVIEW_REFUND_KEY);
-      if (!raw) return fromEvent;
-      const stored = JSON.parse(raw);
-      const storedIds = (stored.eventIds || []).slice().sort().join(',');
-      const currentIds = eventIds.slice().sort().join(',');
-      if (storedIds !== currentIds) return fromEvent;
-      return {
-        refundPolicy: stored.refundPolicy || fromEvent.refundPolicy,
-        refundPolicyDetails: stored.refundPolicyDetails || fromEvent.refundPolicyDetails,
-        refundCutoffDays:
-          stored.refundCutoffDays != null ? stored.refundCutoffDays : fromEvent.refundCutoffDays,
-        refundTermsAgreed: Boolean(stored.refundTermsAgreed || fromEvent.refundTermsAgreed),
-        vatTreatment: stored.vatTreatment || fromEvent.vatTreatment,
-      };
+      if (raw) {
+        const stored = JSON.parse(raw);
+        const storedIds = (stored.eventIds || []).slice().sort().join(',');
+        const currentIds = eventIds.slice().sort().join(',');
+        if (storedIds === currentIds) {
+          merged = {
+            refundPolicy: stored.refundPolicy || merged.refundPolicy,
+            refundPolicyDetails: stored.refundPolicyDetails || merged.refundPolicyDetails,
+            refundCutoffDays:
+              stored.refundCutoffDays != null ? stored.refundCutoffDays : merged.refundCutoffDays,
+            refundTermsAgreed: Boolean(stored.refundTermsAgreed || merged.refundTermsAgreed),
+            vatTreatment: stored.vatTreatment || merged.vatTreatment,
+          };
+        }
+      }
     } catch {
-      return fromEvent;
+      /* ignore */
     }
+    if (!String(merged.refundPolicy || '').trim()) {
+      merged.refundPolicy = DEFAULT_PAID_REFUND.refundPolicy;
+      merged.refundPolicyDetails = DEFAULT_PAID_REFUND.refundPolicyDetails;
+      merged.refundCutoffDays = DEFAULT_PAID_REFUND.refundCutoffDays;
+    }
+    return merged;
   }
 
   function buildPublishBody() {
@@ -711,6 +724,26 @@
     location.href = publishedUrl;
   }
 
+  function resetPublishUi() {
+    const confirmBtn = document.getElementById('ee-review-confirm');
+    const backBtn = document.getElementById('ee-review-back');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm & publish';
+    }
+    if (backBtn) backBtn.removeAttribute('aria-disabled');
+  }
+
+  function setPublishUiBusy() {
+    const confirmBtn = document.getElementById('ee-review-confirm');
+    const backBtn = document.getElementById('ee-review-back');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Publishing…';
+    }
+    if (backBtn) backBtn.setAttribute('aria-disabled', 'true');
+  }
+
   async function publishListing() {
     showAlert('');
 
@@ -728,41 +761,44 @@
       }
     }
 
-    const confirmBtn = document.getElementById('ee-review-confirm');
-    const backBtn = document.getElementById('ee-review-back');
-    if (confirmBtn) {
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Publishing…';
-    }
-    if (backBtn) backBtn.setAttribute('aria-disabled', 'true');
+    setPublishUiBusy();
 
     const loading = window.organiserPageLoading;
-    const body = buildPublishBody();
-    const tiers = ticketsForPublish(loadedTickets);
-    const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
-    const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
-    if (hasPaid && !body.refundTermsAgreed) {
-      showAlert(
-        'Confirm you understand refunds are your responsibility under Stripe Connect.',
-        'warn'
-      );
-      updateReviewRefundCheck();
-      document.getElementById('ee-review-refund-check')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
-      return;
-    }
-
-    const publishWork = function () {
-      return api('/api/organiser/tickets', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-    };
-
     let result;
     try {
+      const body = buildPublishBody();
+      const tiers = ticketsForPublish(loadedTickets);
+      const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
+      const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
+
+      if (hasPaid && !String(body.refundPolicy || '').trim()) {
+        showAlert('Select a refund policy on the tickets step, then try again.', 'warn');
+        return;
+      }
+      if (hasPaid && !String(body.vatTreatment || '').trim()) {
+        showAlert('Choose how VAT applies to ticket prices on the tickets step, then try again.', 'warn');
+        return;
+      }
+      if (hasPaid && !body.refundTermsAgreed) {
+        showAlert(
+          'Confirm you understand refunds are your responsibility under Stripe Connect.',
+          'warn'
+        );
+        updateReviewRefundCheck();
+        document.getElementById('ee-review-refund-check')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+        return;
+      }
+
+      const publishWork = function () {
+        return api('/api/organiser/tickets', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+      };
+
       if (loading && loading.run) {
         result = await loading.run('Creating and publishing your event', publishWork, {
           progressStep: 'publish',
@@ -772,35 +808,31 @@
         result = await publishWork();
         if (loading) loading.hide();
       }
-    } finally {
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirm & publish';
+
+      if (!result.ok) {
+        const data = result.data || {};
+        showAlert(data.message || data.error || 'Could not publish your event', 'warn');
+        return;
       }
-      if (backBtn) backBtn.removeAttribute('aria-disabled');
-    }
 
-    if (!result.ok) {
-      const data = result.data || {};
-      showAlert(data.message || data.error || 'Could not publish your event', 'warn');
-      return;
-    }
+      const publishedRows = Array.isArray(result.data.publishedEvents) ? result.data.publishedEvents : [];
+      const allLive =
+        publishedRows.length > 0 &&
+        publishedRows.every(function (ev) {
+          return String(ev.status || ev.listingStatus || '').toLowerCase() === 'published';
+        });
+      if (!allLive) {
+        showAlert(
+          'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then try publishing again.',
+          'warn'
+        );
+        return;
+      }
 
-    const publishedRows = Array.isArray(result.data.publishedEvents) ? result.data.publishedEvents : [];
-    const allLive =
-      publishedRows.length > 0 &&
-      publishedRows.every(function (ev) {
-        return String(ev.status || ev.listingStatus || '').toLowerCase() === 'published';
-      });
-    if (!allLive) {
-      showAlert(
-        'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then try publishing again.',
-        'warn'
-      );
-      return;
+      redirectAfterPublish();
+    } finally {
+      resetPublishUi();
     }
-
-    redirectAfterPublish();
   }
 
   function bindUi() {
@@ -857,6 +889,10 @@
     }
 
     renderReview();
+
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+    }
   }
 
   init().catch(function (err) {

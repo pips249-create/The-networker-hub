@@ -129,12 +129,38 @@
         <div class="ee-card" id="ee-panel-tickets">
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 id="ee-tickets-panel-title">Public ticket types</h2>
-          <p class="ee-hint" style="margin-top:0">
+          <p class="ee-hint" id="ee-tickets-panel-lead" style="margin-top:0">
             These are the tickets everyone sees on your listing — e.g. Standard, Early bird, or Member rate.
           </p>
-          <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
-          <div id="ee-tier-rows"></div>
-          <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket type</button>
+
+          <div class="ee-members-only-event-toggle" id="ee-members-only-event-toggle" data-hub-tip="members-only-event-listing">
+            <label class="ee-check">
+              <input type="checkbox" id="ee-members-only-event-enabled" />
+              <span>This event is for my members only</span>
+            </label>
+            <p class="ee-hint">
+              Your event stays on the directory for visibility. Only people on your member list can book — no public ticket needed.
+            </p>
+          </div>
+
+          <div id="ee-public-tickets-wrap">
+            <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
+            <div id="ee-tier-rows"></div>
+            <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket type</button>
+          </div>
+
+          <div id="ee-members-only-event-wrap" hidden>
+            <div class="ee-info-box ee-members-only-event-how">
+              <strong>Members-only event</strong>
+              <p>
+                Non-members can see the listing but cannot book. Members sign in with the email on your member list to get their ticket.
+              </p>
+            </div>
+            <p class="ee-tier-summary" id="ee-members-only-event-summary" aria-live="polite">Member ticket · unlimited available · Free</p>
+            <div id="ee-members-only-event-fields-mount"></div>
+            <p class="ee-hint" id="ee-members-only-roster-status" aria-live="polite"></p>
+            <a class="ee-inline-link" id="ee-members-only-roster-link" href="/organiser/member-roster" hidden>Manage member list →</a>
+          </div>
         </div>
 
         <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras">
@@ -193,26 +219,7 @@
                 <span class="ee-addon-summary">Hidden from the public — visible to people on your member list</span>
               </span>
             </label>
-            <div class="ee-addon-body" id="ee-private-ticket-fields" hidden>
-              <div class="ee-row-2">
-                <div class="ee-field">
-                  <label for="ee-private-ticket-name">Ticket name</label>
-                  <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
-                </div>
-                <div class="ee-field">
-                  <label for="ee-private-ticket-price">Price (&pound;)</label>
-                  <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
-                  <p class="ee-hint">Enter 0 for free</p>
-                </div>
-              </div>
-              <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
-                Manage who can see this ticket under Member list on your organiser page.
-              </p>
-              <div class="ee-field ee-guest-visits-field">
-                <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
-                <input type="number" id="ee-private-ticket-qty" min="1" step="1" inputmode="numeric" placeholder="Unlimited" />
-              </div>
-            </div>
+            <div class="ee-addon-body" id="ee-private-ticket-fields-mount" hidden></div>
           </div>
 
           <div class="ee-addon-card" id="ee-alumni-addon" data-hub-tip="alumni-fast-pass">
@@ -254,6 +261,27 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div id="ee-member-ticket-config" hidden>
+          <div class="ee-row-2">
+            <div class="ee-field">
+              <label for="ee-private-ticket-name">Ticket name</label>
+              <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+            </div>
+            <div class="ee-field">
+              <label for="ee-private-ticket-price">Price (&pound;)</label>
+              <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
+              <p class="ee-hint">Enter 0 for free</p>
+            </div>
+          </div>
+          <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
+            Manage who can see this ticket under Member list on your organiser page.
+          </p>
+          <div class="ee-field ee-guest-visits-field">
+            <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
+            <input type="number" id="ee-private-ticket-qty" min="1" step="1" inputmode="numeric" placeholder="Unlimited" />
           </div>
         </div>
 
@@ -370,6 +398,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260715guest"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260716guest"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260721refund"></script>
   </body>
 </html>
