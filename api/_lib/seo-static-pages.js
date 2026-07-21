@@ -7,9 +7,9 @@ const { GUIDE_PAGES, GUIDES_HUB, getGuidePageKeys, guideSchemaKey } = require('.
 const STATIC_PAGES = {
   home: {
     path: '/',
-    title: 'Find your next event, connection, or opportunity – The Networker Hub',
+    title: 'Find events, organiser pages & opportunities – The Networker Hub',
     description:
-      'Find your next event, connection, or business opportunity across the UK. Browse free on The Networker Hub; sign up only when you are ready to book or enquire.',
+      'Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker Hub; sign up when you\'re ready to book or enquire.',
     image: '/assets/logo.png',
     ogType: 'website',
   },

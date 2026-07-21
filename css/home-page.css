@@ -338,6 +338,10 @@ html:has(.home-page) {
   text-shadow: 0 1px 3px rgba(45, 35, 50, 0.38);
 }
 
+.home-page .home-hero-intro-short {
+  display: none;
+}
+
 .home-page .hero-title {
   display: flex;
   flex-direction: column;
@@ -700,17 +704,30 @@ html:has(.home-page) {
   text-decoration: none;
   text-align: center;
   box-sizing: border-box;
-  background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
-  border: 1px solid rgba(184, 149, 106, 0.4);
   color: var(--charcoal);
   box-shadow: 0 10px 24px rgba(45, 35, 50, 0.14);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.home-page .home-hero-rich-card--events {
+  background: linear-gradient(165deg, #f3ebf7 0%, #e8dcf0 42%, #d9c4e0 100%);
+  border: 1px solid rgba(154, 122, 168, 0.45);
+}
+
+.home-page .home-hero-rich-card--opportunities {
+  background: linear-gradient(165deg, #fdf6e3 0%, #f5e6c4 42%, #ecd29a 100%);
+  border: 1px solid rgba(201, 150, 31, 0.4);
+}
+
+.home-page .home-hero-rich-card--organisers {
+  background: linear-gradient(165deg, #e8f2ff 0%, #d6e8ff 100%);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
 .home-page .home-hero-rich-card--gold,
 .home-page .home-hero-rich-card--purple {
   background: linear-gradient(165deg, #fff8ec 0%, #f5e6c4 42%, #ecd29a 100%);
-  border-color: rgba(184, 149, 106, 0.4);
+  border: 1px solid rgba(184, 149, 106, 0.4);
   color: var(--charcoal);
 }
 
@@ -765,6 +782,18 @@ html:has(.home-page) {
   font-weight: 700;
   letter-spacing: 0.01em;
   color: #6e5530;
+}
+
+.home-page .home-hero-rich-card--events .home-hero-rich-card-go {
+  color: #7a5f8a;
+}
+
+.home-page .home-hero-rich-card--opportunities .home-hero-rich-card-go {
+  color: #8a6210;
+}
+
+.home-page .home-hero-rich-card--organisers .home-hero-rich-card-go {
+  color: #1e4a8a;
 }
 
 .home-page .home-hero-rich-card--gold .home-hero-rich-card-go,
@@ -877,12 +906,7 @@ html:has(.home-page) {
   text-decoration-color: #fff;
 }
 
-/* ─── What is The Networker? ─── */
-.home-section--hidden,
-.home-what[hidden] {
-  display: none !important;
-}
-
+/* ─── What is The Networker? (site-access preview still uses .home-what) ─── */
 .home-what {
   position: relative;
   overflow: hidden;
@@ -2768,6 +2792,17 @@ html:has(.home-page) {
 @media (max-width: 640px) {
   .home-page .home-hero {
     padding: calc(var(--home-nav-height) + 10px) 20px 28px;
+  }
+
+  .home-page .home-hero-intro-full {
+    display: none;
+  }
+
+  .home-page .home-hero-intro-short {
+    display: block;
+    max-width: 22rem;
+    font-size: 0.98rem;
+    line-height: 1.5;
   }
 
   .home-page .hero-title {

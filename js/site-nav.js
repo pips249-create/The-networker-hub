@@ -146,8 +146,35 @@
     return root + path;
   }
 
+  function isLinkActive(key) {
+    if (key === 'events') {
+      if (page !== 'events') return false;
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('mode') === 'organisers') return false;
+        if (window.location.pathname.indexOf('/organisers/') !== -1) return false;
+      } catch (e) {
+        /* ignore */
+      }
+      return true;
+    }
+    if (key === 'organisers') {
+      if (page === 'organisers') return true;
+      if (page !== 'events') return false;
+      try {
+        var browseParams = new URLSearchParams(window.location.search);
+        if (browseParams.get('mode') === 'organisers') return true;
+        if (window.location.pathname.indexOf('/organisers/') !== -1) return true;
+      } catch (e) {
+        /* ignore */
+      }
+      return false;
+    }
+    return page === key;
+  }
+
   function link(path, label, key, extraClass) {
-    var isActive = page === key;
+    var isActive = isLinkActive(key);
     var active = isActive ? ' aria-current="page"' : '';
     var cls = extraClass ? ' class="' + extraClass + '"' : '';
     return '<a href="' + href(path) + '"' + cls + active + '>' + label + '</a>';
@@ -242,6 +269,7 @@
     var html = '';
     html += link('/', 'Home', 'home');
     html += link('/events/', 'Events', 'events');
+    html += link('/events/?mode=organisers', 'Organisers', 'organisers');
     html += link('/opportunities/', 'Opportunities', 'opportunities');
     html += link('/for-organisers', 'For Organisers', 'for-organisers');
     html += link('/faq', 'Help', 'faq');
@@ -274,6 +302,7 @@
     var html = '';
     html += link('/', 'Home', 'home', 'nav-mobile-item');
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
+    html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('/for-organisers', 'For Organisers', 'for-organisers', 'nav-mobile-item');
     html += link('/faq', 'Help', 'faq', 'nav-mobile-item');

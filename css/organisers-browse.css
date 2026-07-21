@@ -222,6 +222,14 @@
   transition: background 0.15s, color 0.15s;
 }
 
+a.browse-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
 .browse-mode-btn.is-active {
   background: var(--lavender-deep);
   color: #fff;

@@ -2,8 +2,8 @@
 window.HUB_SEO_STATIC = {
   "home": {
     "path": "/",
-    "title": "Find your next event, connection, or opportunity – The Networker Hub",
-    "description": "Find your next event, connection, or business opportunity across the UK. Browse free on The Networker Hub; sign up only when you are ready to book or enquire.",
+    "title": "Find events, organiser pages & opportunities – The Networker Hub",
+    "description": "Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker Hub; sign up when you're ready to book or enquire.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
@@ -52,7 +52,7 @@ window.HUB_SEO_STATIC = {
   "for-organisers": {
     "path": "/for-organisers",
     "title": "Find your next attendees – For organisers – The Networker Hub",
-    "description": "Find your next attendees, bookings, and discovery on The Networker Hub. Ticketing built for UK networking groups and repeat events, with tools generic platforms do not offer.",
+    "description": "Find your next attendees, bookings, and discovery on The Networker Hub. Ticketing built for UK networking groups with tools generic platforms do not offer.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },

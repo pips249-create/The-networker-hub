@@ -35,32 +35,9 @@
       <h1 id="events-hero-heading">
         Find your next <span class="accent">business event</span> across the UK
       </h1>
-      <div
-        class="events-hero-browse-switch browse-mode-toggle browse-mode-toggle--hero"
-        role="tablist"
-        aria-label="Browse events or organisers"
-      >
-        <button
-          type="button"
-          class="browse-mode-btn is-active"
-          data-browse-mode="events"
-          role="tab"
-          aria-selected="true"
-          id="hero-browse-tab-events"
-        >
-          Events
-        </button>
-        <button
-          type="button"
-          class="browse-mode-btn"
-          data-browse-mode="organisers"
-          role="tab"
-          aria-selected="false"
-          id="hero-browse-tab-organisers"
-        >
-          Organisers
-        </button>
-      </div>
+      <p class="events-hero-browse-link" id="events-hero-browse-link">
+        Looking for a networking group? <a href="/events/?mode=organisers">Browse organisers</a>
+      </p>
       <p class="events-hero-lede" id="events-hero-lede">
         Meetings, exhibitions, workshops, and more — filter by type, date, and location.
       </p>
@@ -365,30 +342,26 @@
   <div class="events-results-meta" id="events-results">
     <span class="events-results-count">Showing <strong id="results-count">0</strong> results<span id="events-search-query" hidden></span></span>
     <div class="events-results-actions">
-      <div
+      <nav
         class="browse-mode-toggle events-browse-switch"
-        role="tablist"
         aria-label="Browse events or organisers"
       >
-        <button
-          type="button"
+        <a
+          href="/events/"
           class="browse-mode-btn is-active"
           data-browse-mode="events"
-          role="tab"
-          aria-selected="true"
+          aria-current="page"
         >
           Events
-        </button>
-        <button
-          type="button"
+        </a>
+        <a
+          href="/events/?mode=organisers"
           class="browse-mode-btn"
           data-browse-mode="organisers"
-          role="tab"
-          aria-selected="false"
         >
           Organisers
-        </button>
-      </div>
+        </a>
+      </nav>
       <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
       <div class="events-view-sort-group">
         <div class="events-view-toggle filter-event-only" role="group" aria-label="Results view">

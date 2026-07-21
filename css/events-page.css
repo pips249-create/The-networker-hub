@@ -1570,7 +1570,38 @@ a.empty-state-btn:focus-visible {
   outline-offset: 3px;
 }
 
-/* Hero browse switch — Events | Organisers */
+/* Hero cross-link — points to the other browse mode (nav handles primary switching) */
+.events-hero-browse-link {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.45;
+}
+
+.events-hero-browse-link a {
+  color: #e8d4f4;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(232, 212, 244, 0.55);
+  text-underline-offset: 2px;
+}
+
+.events-hero-browse-link a:hover {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.9);
+}
+
+body.browse-mode-organisers .events-hero-browse-link a {
+  color: #93c5fd;
+  text-decoration-color: rgba(147, 197, 253, 0.55);
+}
+
+body.browse-mode-organisers .events-hero-browse-link a:hover {
+  color: #bfdbfe;
+  text-decoration-color: rgba(191, 219, 254, 0.9);
+}
+
+/* Hero browse switch — Events | Organisers (embed / pitch previews) */
 .events-hero-browse-switch {
   margin: 0 0 12px;
 }

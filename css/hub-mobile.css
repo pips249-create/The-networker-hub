@@ -385,6 +385,10 @@ body.nav-menu-open {
     margin-right: auto;
   }
 
+  .events-hero-browse-link {
+    text-align: center;
+  }
+
   .events-hero-organiser-cta {
     text-align: center;
   }

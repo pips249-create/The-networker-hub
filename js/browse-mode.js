@@ -2,9 +2,9 @@
  * Switch between Events and Organisers browse on /events/.
  */
 (function () {
-  var MODE_KEY = 'hubBrowseMode';
   var heroBadge = document.getElementById('events-hero-badge');
   var heroTitle = document.getElementById('events-hero-heading');
+  var heroBrowseLink = document.getElementById('events-hero-browse-link');
   var heroSub = document.getElementById('events-hero-lede');
   var listingsHeader = document.getElementById('all-heading');
   var searchInput = document.getElementById('search');
@@ -106,12 +106,46 @@
     if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
   }
 
+  function browseModeHref(mode) {
+    try {
+      var url = new URL(location.href);
+      if (mode === 'organisers') url.searchParams.set('mode', 'organisers');
+      else url.searchParams.delete('mode');
+      url.hash = '';
+      return url.pathname + url.search;
+    } catch (e) {
+      return mode === 'organisers' ? '/events/?mode=organisers' : '/events/';
+    }
+  }
+
   function syncBrowseToggles(mode) {
-    document.querySelectorAll('[data-browse-mode]').forEach(function (btn) {
-      var isActive = btn.getAttribute('data-browse-mode') === mode;
-      btn.classList.toggle('is-active', isActive);
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    document.querySelectorAll('[data-browse-mode]').forEach(function (el) {
+      var elMode = el.getAttribute('data-browse-mode');
+      var isActive = elMode === mode;
+      el.classList.toggle('is-active', isActive);
+      if (el.tagName === 'A') {
+        if (elMode) el.setAttribute('href', browseModeHref(elMode));
+        if (isActive) el.setAttribute('aria-current', 'page');
+        else el.removeAttribute('aria-current');
+      } else {
+        el.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      }
     });
+  }
+
+  function syncHeroBrowseLink(mode) {
+    if (!heroBrowseLink) return;
+    if (mode === 'organisers') {
+      heroBrowseLink.innerHTML =
+        'Looking for an event? <a href="' +
+        browseModeHref('events') +
+        '">Browse events</a>';
+    } else {
+      heroBrowseLink.innerHTML =
+        'Looking for a networking group? <a href="' +
+        browseModeHref('organisers') +
+        '">Browse organisers</a>';
+    }
   }
 
   function applyCopy(mode) {
@@ -153,6 +187,7 @@
         ' – The Networker Hub';
       initSponsorHub(mode);
       syncBrowseToggles(mode);
+      syncHeroBrowseLink(mode);
       return;
     }
     if (heroBadge) heroBadge.textContent = c.badge;
@@ -168,6 +203,7 @@
         : 'Find your next event – The Networker Hub';
     initSponsorHub(mode);
     syncBrowseToggles(mode);
+    syncHeroBrowseLink(mode);
   }
 
   function setMode(mode, options) {
@@ -200,33 +236,20 @@
       }
     }
 
-    try {
-      localStorage.setItem(MODE_KEY, mode);
-    } catch (e) {
-      /* ignore */
-    }
-
     if (options.updateHash !== false) {
-      // Events is the default for /events/ — keep the URL clean (no #events).
-      // Only organisers mode needs a hash so share links can open that tab.
-      var next =
-        (location.pathname || '/events/') +
-        (location.search || '') +
-        (isOrganisers ? '#organisers' : '');
-      var current =
-        (location.pathname || '') + (location.search || '') + (location.hash || '');
-      if (current !== next) history.replaceState(null, '', next);
+      try {
+        var url = new URL(location.href);
+        if (isOrganisers) url.searchParams.set('mode', 'organisers');
+        else url.searchParams.delete('mode');
+        url.hash = '';
+        var next = url.pathname + url.search;
+        var current = location.pathname + location.search;
+        if (current !== next) history.replaceState(null, '', next);
+      } catch (e) {
+        /* ignore */
+      }
     }
   }
-
-  document.querySelectorAll('[data-browse-mode]').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      var target = btn.getAttribute('data-browse-mode');
-      if (!target || target === currentMode()) return;
-      setMode(target);
-    });
-  });
 
   window.hubSetBrowseMode = setMode;
 
@@ -246,7 +269,15 @@
   }
 
   window.addEventListener('hashchange', function () {
-    var want = location.hash === '#organisers' ? 'organisers' : 'events';
-    if (want !== currentMode()) setMode(want, { updateHash: false });
+    if (location.hash !== '#organisers') return;
+    try {
+      var url = new URL(location.href);
+      url.searchParams.set('mode', 'organisers');
+      url.hash = '';
+      history.replaceState(null, '', url.pathname + url.search);
+    } catch (e) {
+      /* ignore */
+    }
+    if (currentMode() !== 'organisers') setMode('organisers', { updateHash: false });
   });
 })();

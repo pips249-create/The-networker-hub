@@ -252,6 +252,10 @@ function buildEventPatchFromBody(body) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
     patch.featured = Boolean(body.featured);
+    // Admin grants stay until removed — clear paid expiry metadata so the
+    // listing counts as live in the spotlight carousel again.
+    patch.featured_until = null;
+    patch.featured_expiry_reminder_sent_at = null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'vat_treatment')) {
     const vat = String(body.vat_treatment || '').trim();

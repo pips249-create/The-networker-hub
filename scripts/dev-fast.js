@@ -7,7 +7,7 @@
  *   Terminal 2: npm run dev:fast
  *
  * Or one command:
- *   npm run dev
+ *   npm run dev:all
  */
 const fs = require('fs');
 const http = require('http');
@@ -95,7 +95,7 @@ function proxyRequest(req, res) {
     res.end(
       'API backend unavailable at ' +
         apiOrigin +
-        ' — run npm run dev:api in another terminal, or use npm run dev to start both.'
+        ' — run npm run dev:api in another terminal, or use npm run dev:all to start both.'
     );
   });
 

@@ -479,6 +479,9 @@ module.exports = async function handler(req, res) {
     }
     if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
       patch.featured = Boolean(body.featured);
+      // Admin grants stay until removed — clear paid expiry so premium spotlight
+      // treats the listing as live again (matches Command Centre copy).
+      patch.featured_until = null;
     }
 
     if (!Object.keys(patch).length) {

@@ -11068,7 +11068,14 @@
       return;
     }
     adminGet('/api/admin/spotlight').then(function (data) {
-      if (!data || !data.ok || !data.slots) return;
+      if (!el) return;
+      if (!data || !data.ok || !data.slots) {
+        el.innerHTML =
+          '<p class="text-sm text-red-700 rounded-lg border border-red-200 bg-red-50 px-4 py-3">Could not load carousel slot usage. ' +
+          esc((data && data.message) || 'Try refreshing the page.') +
+          '</p>';
+        return;
+      }
       spotlightSlotsCache = data.slots;
       el.innerHTML = spotlightSlotCardsHtml(data.slots);
     });
@@ -11411,13 +11418,13 @@
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var idx = featuredSpotlightEvents.findIndex(function (ev) {
-              return ev.id === eventId;
+              return String(ev.id) === String(eventId);
             });
-            if (idx >= 0) {
+            if (idx >= 0 && data.event) {
+              featuredSpotlightEvents[idx] = Object.assign({}, featuredSpotlightEvents[idx], data.event);
+            } else if (idx >= 0) {
               featuredSpotlightEvents[idx].featured = eventToggle.checked;
-              if (data.event && data.event.featured_until) {
-                featuredSpotlightEvents[idx].featured_until = data.event.featured_until;
-              }
+              if (!eventToggle.checked) featuredSpotlightEvents[idx].featured_until = null;
             }
             invalidateSpotlightSlotsCache();
             paintFeaturedSpotlightTable();
@@ -11440,9 +11447,17 @@
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var idx = featuredSpotlightOrganisers.findIndex(function (o) {
-              return o.id === organiserId;
+              return String(o.id) === String(organiserId);
             });
-            if (idx >= 0) featuredSpotlightOrganisers[idx].featured = orgToggle.checked;
+            if (idx >= 0 && data.organiser) {
+              featuredSpotlightOrganisers[idx] = Object.assign(
+                {},
+                featuredSpotlightOrganisers[idx],
+                data.organiser
+              );
+            } else if (idx >= 0) {
+              featuredSpotlightOrganisers[idx].featured = orgToggle.checked;
+            }
             invalidateSpotlightSlotsCache();
             paintSpotlightOrganisersTable();
           })
@@ -11464,13 +11479,17 @@
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var idx = featuredSpotlightOpportunities.findIndex(function (o) {
-              return o.id === oppId;
+              return String(o.id) === String(oppId);
             });
-            if (idx >= 0) {
+            if (idx >= 0 && data.opportunity) {
+              featuredSpotlightOpportunities[idx] = Object.assign(
+                {},
+                featuredSpotlightOpportunities[idx],
+                data.opportunity
+              );
+            } else if (idx >= 0) {
               featuredSpotlightOpportunities[idx].featured = oppToggle.checked;
-              if (data.opportunity && data.opportunity.featured_until) {
-                featuredSpotlightOpportunities[idx].featured_until = data.opportunity.featured_until;
-              }
+              if (!oppToggle.checked) featuredSpotlightOpportunities[idx].featured_until = null;
             }
             invalidateSpotlightSlotsCache();
             paintSpotlightOpportunitiesTable();
