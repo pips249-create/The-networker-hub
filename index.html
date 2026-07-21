@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/home-page.css?v=20260721loc1">
+<link rel="stylesheet" href="css/home-page.css?v=20260721loc2">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -22,7 +22,7 @@
 <body class="home-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260715a" data-root="" data-page="home"></script>
+<script src="js/site-nav.js?v=20260721b" data-root="" data-page="home"></script>
 
 <main class="home-flow">
 
@@ -104,12 +104,12 @@
         <p class="section-kicker">Explore by location</p>
         <h2 class="section-title" id="home-locations-heading">Business networking across the UK</h2>
         <p class="home-flow-lede home-locations-lede">
-          Jump straight into events near you — scroll to pick a location across the UK.
+          Jump straight into events by popular location
         </p>
       </header>
       <div class="home-locations-scroller" tabindex="0" role="region" aria-label="Locations">
         <div class="home-locations-track" role="list">
-          <a class="home-location-chip" href="/events/?format=online" data-region="online" role="listitem" aria-label="Browse online networking events">
+          <a class="home-location-chip home-location-chip--online" href="/events/?format=online" data-region="online" role="listitem" aria-label="Browse online networking events">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
             <span class="home-location-chip-name home-location-chip-name--stacked">
               <span class="home-location-chip-name-line">Online</span>
@@ -128,9 +128,12 @@
             <span class="home-location-chip-icon" aria-hidden="true"></span>
             <span class="home-location-chip-name">Brighton</span>
           </a>
-          <a class="home-location-chip home-location-chip--compact-label" href="/networking/bournemouth" data-region="bournemouth" role="listitem">
+          <a class="home-location-chip" href="/networking/bournemouth" data-region="bournemouth" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
-            <span class="home-location-chip-name">Bournemouth</span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">Bourne</span>
+              <span class="home-location-chip-name-line">mouth</span>
+            </span>
           </a>
           <a class="home-location-chip" href="/networking/bristol" data-region="bristol" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
@@ -315,7 +318,7 @@
           </article>
           <article class="home-faq-box home-reveal-child">
             <h3>I&rsquo;m an organiser — how do I list an event?</h3>
-            <p>Create a free account from <a href="/for-organisers">For organisers</a> or the <a href="/login?next=/organiser/&amp;intent=organiser">organiser dashboard</a> — we enable organiser access automatically. Confirm your email, then publish events or <a href="/events/?mode=organisers">claim your page</a> if your group is already listed. The setup checklist and Hubert guide you through the rest.</p>
+            <p><a href="/register?intent=organiser">Create a free account</a> — we enable organiser access automatically. Confirm your email, then publish events or <a href="/events/?mode=organisers">claim your page</a> if your group is already listed. <a href="/for-organisers">See what&rsquo;s included for organisers</a> · <a href="/login?next=/organiser/&amp;intent=organiser">Sign in to your dashboard</a>. The setup checklist and Hubert guide you through the rest.</p>
           </article>
         </div>
       </div>
