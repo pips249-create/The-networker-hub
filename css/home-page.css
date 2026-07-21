@@ -2405,7 +2405,7 @@ html:has(.home-page) {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 36px 30px 32px;
+  padding: 28px 26px 24px;
   border-radius: 20px;
   background: #fff;
   border: 1px solid rgba(74, 68, 70, 0.1);
@@ -2505,9 +2505,9 @@ html:has(.home-page) {
 }
 
 .home-split-blurb {
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--text-body);
   max-width: 28em;
 }
@@ -2515,9 +2515,8 @@ html:has(.home-page) {
 .home-feature-groups {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   flex: 1;
-  margin-bottom: 8px;
 }
 
 .home-feature-group:last-child .home-feature-list {
@@ -2525,7 +2524,7 @@ html:has(.home-page) {
 }
 
 .home-feature-group-title {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 11px;
   font-weight: 700;
@@ -2544,17 +2543,21 @@ html:has(.home-page) {
 
 .home-feature-list {
   list-style: none;
-  margin: 0 0 16px;
+  margin: 0;
   padding: 0;
 }
 
 .home-feature-list li {
   position: relative;
-  padding-left: 24px;
-  font-size: var(--text-size-body);
+  padding-left: 22px;
+  font-size: 14px;
   color: var(--text-muted);
-  line-height: 1.6;
-  margin-bottom: 10px;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.home-feature-list li:last-child {
+  margin-bottom: 0;
 }
 
 .home-feature-list li::before {
@@ -2576,11 +2579,24 @@ html:has(.home-page) {
 
 .home-split-actions {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.home-split-actions-primary {
+  display: flex;
+  align-items: center;
+}
+
+.home-split-action-links {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 16px;
-  margin-top: auto;
-  padding-top: 8px;
+  gap: 8px 16px;
+  min-height: 32px;
 }
 
 .home-split-col--organisers .home-split-btn--org {
@@ -2598,8 +2614,8 @@ html:has(.home-page) {
 .home-split-action-link {
   display: inline-flex;
   align-items: center;
-  min-height: 48px;
-  padding: 0 4px;
+  min-height: 32px;
+  padding: 0 2px;
   font-size: 14px;
   font-weight: 600;
   color: var(--lavender-deep);
