@@ -210,3 +210,62 @@
   color: var(--ink-soft, #64748b);
   text-align: center;
 }
+
+.cms-ad-carousel-placeholder {
+  position: relative;
+  background: var(--surface, #fff);
+  border: 1px dashed rgba(122, 61, 138, 0.35);
+  border-radius: var(--radius, 12px);
+  padding: 28px 14px 14px;
+}
+
+.cms-ad-carousel-placeholder-link {
+  display: block;
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.cms-ad-carousel-placeholder-cta {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--purple-700, #7a3d8a);
+}
+
+.cms-ad-compact--available .cms-ad-compact-placeholder-link {
+  display: block;
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.cms-ad-compact-cta--placeholder {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--purple-700, #7a3d8a);
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .cms-ad-carousel-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+
+  .cms-ad-carousel-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .cms-ad-carousel-controls {
+    gap: 12px;
+    margin-top: 12px;
+  }
+}

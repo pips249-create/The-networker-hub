@@ -309,6 +309,18 @@
   margin-top: 0;
 }
 
+.org-dash-loading--membership {
+  justify-content: center;
+  margin: 28px auto 16px;
+  max-width: 360px;
+  padding: 14px 18px;
+}
+
+.omr-table-wrap.is-roster-loading {
+  position: relative;
+  min-height: 120px;
+}
+
 .omr-add-section--compact {
   display: grid;
   gap: 8px;

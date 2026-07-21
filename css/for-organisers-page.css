@@ -148,8 +148,30 @@ html:has(.for-organisers-page) {
   font-size: clamp(1rem, 2vw, 1.12rem);
   line-height: 1.65;
   color: var(--fo-muted);
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   max-width: 36em;
+}
+
+.fo-hero-tools-teaser {
+  margin: 0 0 24px;
+  padding: 12px 14px;
+  max-width: 36em;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--od-border-soft);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--fo-navy);
+}
+
+.fo-hero-tools-teaser a {
+  color: var(--fo-purple);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fo-hero-tools-teaser a:hover {
+  text-decoration: underline;
 }
 
 .fo-hero-actions {
@@ -893,6 +915,14 @@ html:has(.for-organisers-page) {
   gap: 16px;
 }
 
+.fo-cta-split {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
 .fo-cta-primary {
   min-width: min(100%, 280px);
   padding: 14px 28px;
@@ -904,6 +934,26 @@ html:has(.for-organisers-page) {
 .fo-cta-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+}
+
+.fo-cta-primary--alt {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  color: #fff;
+}
+
+.fo-cta-primary--alt:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.75);
+  color: #fff;
+}
+
+@media (min-width: 640px) {
+  .fo-cta-split .fo-cta-primary {
+    min-width: 0;
+    flex: 1 1 220px;
+    max-width: 260px;
+  }
 }
 
 .fo-cta-secondary {

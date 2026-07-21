@@ -14,6 +14,8 @@ const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
 const { HOME_PARTNERS_SLOT, parsePartnersBody, publishablePartners } = require('./_lib/home-partners');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
+  ORGANISER_PAGE_CAROUSEL_SLOT,
+  PAGE_CAROUSEL_SLOTS,
   parseCarouselBody,
   publishableCarouselAds,
 } = require('./_lib/event-page-carousel');
@@ -115,10 +117,10 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (slot === EVENT_PAGE_CAROUSEL_SLOT) {
+    if (PAGE_CAROUSEL_SLOTS.has(slot)) {
       const row = await fetchSlotRow(sb, slot);
       const sectionActive = row ? row.active !== false : false;
-      const ads = sectionActive ? publishableCarouselAds(parseCarouselBody(row?.body)) : [];
+      const ads = sectionActive ? publishableCarouselAds(parseCarouselBody(row?.body), slot) : [];
       return res.status(200).json({
         ok: true,
         configured: true,

@@ -141,7 +141,7 @@ function wrapSponsorRow(inner) {
 function buildMiniSponsorsRow(ads, options = {}) {
   const list = (ads || []).filter(Boolean).slice(0, 3);
   if (!list.length) return '';
-  const label = String(options.label || 'Our mini sponsors');
+  const label = String(options.label || 'Sponsored partners');
 
   const cells = list
     .map(function (ad) {
@@ -228,7 +228,7 @@ async function fetchMiniSponsorAds(sb, slot, limit) {
   const max = Math.max(1, Number(limit) || 3);
   const row = await fetchSponsorBlockForSlot(sb, slot);
   if (!row || row.active === false) return [];
-  const ads = publishableCarouselAds(parseCarouselBody(row.body));
+  const ads = publishableCarouselAds(parseCarouselBody(row.body), slot);
   return ads.slice(0, max);
 }
 
@@ -254,14 +254,14 @@ async function getEmailSponsorVars(slug) {
   try {
     const sb = getSupabaseAdmin();
     let mainBlock = null;
-    let label = 'Our event directory is proudly powered by';
+    let label = 'Sponsored — partner support helps keep The Networker Hub free';
 
     if (OPPORTUNITY_EMAIL_SLUGS.has(slug)) {
       mainBlock = await resolveOpportunitySponsorBlock(sb);
-      label = 'Our business opportunities directory is proudly powered by';
+      label = 'Sponsored — partner support helps keep business opportunities free to browse';
     } else if (ORGANISER_EMAIL_SLUGS.has(slug)) {
       mainBlock = await resolveOrganiserSponsorBlock(sb);
-      label = 'Our organiser directory is proudly powered by';
+      label = 'Sponsored — partner support helps keep the organiser directory free';
     } else if (EVENT_MAIN_SPONSOR_SLUGS.has(slug)) {
       mainBlock = await resolveEventsMainSponsorBlock(sb);
     }

@@ -154,7 +154,7 @@ function sampleSponsorRow(site) {
     '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:16px 20px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Sponsored — partner support helps keep The Networker Hub free</p>' +
     '<a href="' +
     site +
     '/advertising" style="display:inline-block;text-decoration:none;">' +
@@ -165,8 +165,8 @@ function sampleSponsorRow(site) {
 
 function sampleOpportunitySponsorRow(site) {
   return sampleSponsorRow(site).replace(
-    'Our event directory is proudly powered by',
-    'Our business opportunities directory is proudly powered by'
+    'Sponsored — partner support helps keep The Networker Hub free',
+    'Sponsored — partner support helps keep business opportunities free to browse'
   );
 }
 

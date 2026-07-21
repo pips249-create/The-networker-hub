@@ -16,6 +16,25 @@
   let activeLoadGroupId = '';
   const filters = { search: '', status: 'all' };
 
+  function isLoadInFlight() {
+    return Boolean(activeLoadPromise);
+  }
+
+  function getActiveGroupId() {
+    return String(activeLoadGroupId || organiserId || '').trim();
+  }
+
+  function clearStuckLoading() {
+    if (!isLoadInFlight()) setRosterLoading(false);
+  }
+
+  function setActiveGroupId(groupId) {
+    const id = String(groupId || '').trim();
+    if (!id) return;
+    organiserId = id;
+    syncGroupSelect();
+  }
+
   function getOrganiserId() {
     return String(organiserId || '').trim();
   }
@@ -161,10 +180,20 @@
     return Boolean(body && (body.children.length > 0 || (empty && !empty.hidden)));
   }
 
+  function setRosterLoading(on) {
+    const hint = document.getElementById('omr-load-hint');
+    const wrap = document.getElementById('omr-table-wrap');
+    if (hint) {
+      hint.hidden = !on;
+      hint.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+    if (wrap) wrap.classList.toggle('is-roster-loading', on);
+  }
+
   async function ensureRosterPainted(groupId) {
     if (getOrganiserId() !== groupId) return;
     if (rosterAppearsPainted()) return;
-    await fetchRosterPage(page || 1);
+    await fetchRosterPage(page || 1, { showLoader: false });
     if (getOrganiserId() === groupId && !rosterAppearsPainted()) renderRoster();
   }
 
@@ -1123,12 +1152,12 @@
     }
   }
 
-  async function fetchRosterPage(pageNum) {
+  async function fetchRosterPage(pageNum, options) {
     const groupId = getOrganiserId();
     if (!groupId) return;
+    const showLoader = !options || options.showLoader !== false;
     page = Math.max(Number(pageNum) || 1, 1);
-    const hint = document.getElementById('omr-load-hint');
-    if (hint) hint.hidden = false;
+    if (showLoader) setRosterLoading(true);
     const path =
       '/api/organiser/roster?organiserId=' +
       encodeURIComponent(groupId) +
@@ -1143,8 +1172,10 @@
       if (getOrganiserId() !== groupId) return;
       showAlert(err.message, 'error');
     } finally {
-      if (getOrganiserId() === groupId && hint) hint.hidden = true;
-      if (getOrganiserId() === groupId) renderRoster();
+      if (getOrganiserId() === groupId) {
+        if (showLoader) setRosterLoading(false);
+        renderRoster();
+      }
     }
   }
 
@@ -1152,7 +1183,7 @@
     const groupId = getOrganiserId();
     if (!groupId) return;
     page = 1;
-    await fetchRosterPage(1);
+    await fetchRosterPage(1, { showLoader: false });
     if (getOrganiserId() !== groupId) return;
     const eventId = selectedEventId();
     try {
@@ -1450,6 +1481,7 @@
 
   async function loadForGroup(groupId) {
     const id = String(groupId || '').trim();
+    bindControlsOnce();
     organiserId = id;
     syncGroupSelect();
 
@@ -1470,16 +1502,25 @@
 
     if (activeLoadGroupId === id && activeLoadPromise) return activeLoadPromise;
 
+    if (activeLoadGroupId !== id) {
+      members = [];
+      rosterTotal = 0;
+      rosterActiveTotal = 0;
+      lastReports = null;
+      page = 1;
+      renderRoster();
+    }
+
     activeLoadGroupId = id;
+    setRosterLoading(true);
     activeLoadPromise = (async function () {
-      bindControlsOnce();
       page = 1;
 
       try {
         const group = await api('/api/organiser/groups?id=' + encodeURIComponent(id));
         if (getOrganiserId() !== id) return;
         const title = document.getElementById('omr-title');
-        if (title && group.group?.name) {
+        if (title && group.group && group.group.name) {
           title.textContent = 'Membership — ' + group.group.name;
         }
       } catch {
@@ -1490,6 +1531,12 @@
       if (getOrganiserId() !== id) return;
       await refresh();
     })().finally(function () {
+      if (getOrganiserId() === id) {
+        setRosterLoading(false);
+        if (!rosterAppearsPainted()) {
+          renderRoster();
+        }
+      }
       if (activeLoadGroupId === id) activeLoadPromise = null;
       ensureRosterPainted(id);
     });
@@ -1507,7 +1554,17 @@
   window.OrganiserMemberRoster = {
     loadForGroup: loadForGroup,
     appearsPainted: rosterAppearsPainted,
+    setLoading: setRosterLoading,
+    bindControls: bindControlsOnce,
+    getActiveGroupId: getActiveGroupId,
+    isLoadInFlight: isLoadInFlight,
+    clearStuckLoading: clearStuckLoading,
+    setActiveGroupId: setActiveGroupId,
   };
+
+  if (isDashboardEmbed) {
+    bindControlsOnce();
+  }
 
   if (isStandalonePage) {
     initStandalone().catch(function (e) {

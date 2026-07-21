@@ -179,21 +179,17 @@
     initExampleGallery(document.getElementById('ad-main-sponsor-gallery'));
 
     var miniEvent = document.getElementById('ad-live-mini-event');
-    var miniOrganiser = document.getElementById('ad-live-mini-organiser');
-    if (miniEvent && miniOrganiser) {
-      Promise.all([
-        window.CmsAdBlocks.loadPageCarouselAds(miniEvent),
-        window.CmsAdBlocks.loadPageCarouselAds(miniOrganiser),
-      ]).then(function (results) {
-        if (!results[0] && !results[1]) {
-          renderEmptyPreview(miniEvent, 'Mini Sponsors not configured yet.');
-          renderEmptyPreview(miniOrganiser);
-        }
+    if (miniEvent) {
+      window.CmsAdBlocks.loadPageCarouselAds(miniEvent, {
+        slot: 'event_page_carousel_ads',
+        placeholderSubject: 'Events Mini Sponsors enquiry',
+      }).then(function (ok) {
+        if (!ok) renderEmptyPreview(miniEvent, 'Mini Sponsors not configured yet.');
       });
     }
     var miniOrganisersDir = document.getElementById('ad-live-mini-organisers-dir');
     if (miniOrganisersDir) {
-      window.CmsAdBlocks.loadPageCarouselAds(miniOrganisersDir).then(function (ok) {
+      window.CmsAdBlocks.loadOrganiserPageCarouselAds(miniOrganisersDir).then(function (ok) {
         if (!ok) renderEmptyPreview(miniOrganisersDir, 'Mini Sponsors not configured yet.');
       });
     }

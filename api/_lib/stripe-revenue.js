@@ -54,10 +54,12 @@ const PLACEMENT_CATEGORIES = {
 const CMS_SLOT_CATEGORIES = {
   events_sponsor_hub: 'events',
   event_page_carousel_ads: 'events',
+  event_page_banner_ad: 'events',
   booking_email_sponsor: 'events',
   opportunities_sponsor_hub: 'opportunities',
   opportunity_page_sidebar_ad: 'opportunities',
   organisers_sponsor_hub: 'browse_organisers',
+  organiser_page_carousel_ads: 'browse_organisers',
   organiser_page_sidebar_ad: 'browse_organisers',
 };
 

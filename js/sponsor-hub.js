@@ -308,7 +308,48 @@
     markSponsorReady(els);
   }
 
-  window.HubSponsorHub = { load: load };
+  function previewShellHtml() {
+    return (
+      '<aside class="sponsor-hub sponsor-hub--in-hero sponsor-hub--active">' +
+      '<div class="sponsor-hub-head">' +
+      '<span class="icon" aria-hidden="true">★</span><span>Sponsor Hub</span></div>' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band">' +
+      '<a class="sponsor-logo-link" hidden>' +
+      '<img class="sponsor-logo" alt="" hidden></a>' +
+      '<div class="sponsor-logo-placeholder" hidden>Your logo</div></div>' +
+      '<p class="sponsor-company" hidden></p>' +
+      '<p class="sponsor-tagline" hidden></p>' +
+      '<div class="sponsor-body" hidden></div>' +
+      '<a class="sponsor-cta" href="#" hidden>Enquire now</a></aside>'
+    );
+  }
+
+  function previewElsFromContainer(container) {
+    var hub = container.querySelector('.sponsor-hub');
+    if (!hub) return null;
+    return {
+      sponsorHub: hub,
+      sponsorLogoWrap: hub.querySelector('.sponsor-logo-wrap'),
+      sponsorLogoLink: hub.querySelector('.sponsor-logo-link'),
+      sponsorLogo: hub.querySelector('.sponsor-logo'),
+      sponsorLogoPlaceholder: hub.querySelector('.sponsor-logo-placeholder'),
+      sponsorCompany: hub.querySelector('.sponsor-company'),
+      sponsorTagline: hub.querySelector('.sponsor-tagline'),
+      sponsorBody: hub.querySelector('.sponsor-body'),
+      sponsorCta: hub.querySelector('.sponsor-cta'),
+    };
+  }
+
+  function renderPreview(container, block) {
+    if (!container) return;
+    container.innerHTML = previewShellHtml();
+    var els = previewElsFromContainer(container);
+    if (!els || !els.sponsorHub) return;
+    renderSponsorBlock(els, block);
+    markSponsorReady(els);
+  }
+
+  window.HubSponsorHub = { load: load, renderPreview: renderPreview };
   window.hubReloadSponsorBlock = load;
 
   function scheduleAutoLoad() {

@@ -272,7 +272,7 @@
       group: 'Browse pages',
       label: 'Events browse — Hero Sponsor Hub',
       preview: 'hero',
-      help: 'Hero Sponsor Hub on the Events browse page (/events/). Logo, tagline, and CTA only.',
+      help: 'Hero Sponsor Hub on the Events browse page (/events/). Large clickable logo only when a logo is uploaded.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -303,11 +303,33 @@
     {
       key: 'event_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Event & organiser pages — Mini Sponsors (3 slots)',
+      label: 'Event pages — Mini Sponsors (3 slots)',
       preview: 'carousel',
-      help: 'Up to three rotating Mini Sponsor logos in the sidebar on individual event and organiser profile pages.',
+      help: 'Up to three rotating Mini Sponsor logos in the sidebar on individual event detail pages.',
       tagline: '',
       ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'organiser_page_carousel_ads',
+      group: 'Detail pages',
+      label: 'Organiser pages — Mini Sponsors (3 slots)',
+      preview: 'carousel',
+      help: 'Up to three rotating Mini Sponsor logos on public organiser profile pages. Separate inventory from event page mini sponsors.',
+      tagline: '',
+      ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'event_page_banner_ad',
+      group: 'Detail pages',
+      label: 'Event page — In-content banner',
+      preview: 'banner',
+      help: 'Horizontal sponsored banner in the main column on individual event pages (below the about section).',
+      tagline: 'Example headline — edit to match your sponsor package',
+      ctaLabel: 'Find out more',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
@@ -345,22 +367,11 @@
       ctaColor: '#2d2636',
     },
     {
-      key: 'organiser_page_sidebar_ad',
-      group: 'Detail pages',
-      label: 'Organiser page — Sidebar ad',
-      preview: 'compact',
-      help: 'Logo and CTA button on organiser profiles. Set the button link to the sponsor website.',
-      tagline: '',
-      ctaLabel: 'Enquire now',
-      ctaUrl: 'https://',
-      ctaColor: '#2d2636',
-    },
-    {
       key: 'opportunity_page_sidebar_ad',
       group: 'Detail pages',
       label: 'Opportunity page — Sidebar ad',
       preview: 'compact',
-      help: 'Compact logo + CTA above the enquiry form on individual business opportunity pages (/opportunities/{id}).',
+      help: 'Compact logo + CTA above the enquiry form on individual business opportunity pages (/opportunities/{id}). Shows a sellable placeholder when empty.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -5051,7 +5062,12 @@
                   '</a>'
                 );
               }
-              var typeLabel = slot.preview === 'compact' ? 'Sidebar ad' : 'Hero Sponsor Hub';
+              var typeLabel =
+                slot.preview === 'compact'
+                  ? 'Sidebar ad'
+                  : slot.preview === 'banner'
+                    ? 'In-content banner'
+                    : 'Hero Sponsor Hub';
               return (
                 '<a href="#sponsorship/' +
                 esc(slot.key) +
@@ -5351,7 +5367,6 @@
       var ctaUrl = document.getElementById('sponsor-cta-url');
       var active = document.getElementById('sponsor-active');
       var includeInEmails = document.getElementById('sponsor-include-emails');
-      var previewHint = document.getElementById('sponsor-preview-hint');
       if (company) company.value = '';
       if (logoUrl) logoUrl.value = '';
       if (tagline) tagline.value = d.tagline;
@@ -5361,19 +5376,6 @@
       setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
       if (includeInEmails) includeInEmails.checked = true;
-      if (previewHint) {
-        if (d.preview === 'city_partner') {
-          previewHint.textContent =
-            'Logo + link — matches the City Partner block on ' +
-            cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
-            ' (not included in emails).';
-        } else {
-          previewHint.textContent =
-            d.preview === 'compact'
-              ? 'Logo centred above the button, as on event and organiser detail pages.'
-              : 'Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.';
-        }
-      }
       sponsorLogoBase64 = null;
       sponsorLogoMime = '';
       sponsorLogoFilename = '';
@@ -5396,6 +5398,8 @@
       '<label id="sponsor-include-emails-wrap" class="hidden items-start gap-2 text-sm text-slate-700 rounded-lg border border-violet-100 bg-violet-50 px-3 py-3">' +
       '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
       '<span><strong>Include this sponsor in matching emails</strong><span id="sponsor-email-scope" class="block text-xs text-slate-500 mt-0.5"></span></span></label>' +
+      '<p id="sponsor-hero-logo-only-note" class="hidden text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">' +
+      'With a logo uploaded, the live hero shows a large clickable logo only. The website link below is used when visitors click the logo.</p>' +
       '<div id="sponsor-hero-fields" class="space-y-5">' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-company">Company name</label>' +
       '<input type="text" id="sponsor-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Acme Ltd"></div>' +
@@ -5407,7 +5411,7 @@
       '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…">' +
       '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, wide format recommended)</label>' +
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
-      '<div class="grid sm:grid-cols-2 gap-4">' +
+      '<div class="grid sm:grid-cols-2 gap-4" id="sponsor-cta-fields">' +
       '<div><label id="sponsor-cta-label-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaLabel) +
@@ -5473,6 +5477,34 @@
       if (cta) window.CmsSponsorFields.applyCtaColor(cta, color);
     }
 
+    function creativeToBlock(active) {
+      var creative = readForm();
+      return {
+        active: active !== false && creative.active !== false,
+        company_name: creative.companyName,
+        title: creative.tagline,
+        subtitle: creative.tagline,
+        logo_url: creative.logoUrl,
+        cta_label: creative.ctaLabel,
+        cta_url: creative.ctaUrl,
+        cta_color: creative.ctaColor,
+        body: '',
+      };
+    }
+
+    function syncHeroLogoOnlyFields() {
+      var slot = slotDefaults();
+      if (slot.preview !== 'hero') return;
+      var creative = readForm();
+      var hasLogo = /^(https?:|\/|data:image\/)/i.test(String(creative.logoUrl || '').trim());
+      var heroFields = document.getElementById('sponsor-hero-fields');
+      var ctaFields = document.getElementById('sponsor-cta-fields');
+      var logoOnlyNote = document.getElementById('sponsor-hero-logo-only-note');
+      if (heroFields) heroFields.hidden = hasLogo;
+      if (ctaFields) ctaFields.hidden = hasLogo;
+      if (logoOnlyNote) logoOnlyNote.classList.toggle('hidden', !hasLogo);
+    }
+
     function syncSlotFormLayout() {
       var slot = slotDefaults();
       var heroFields = document.getElementById('sponsor-hero-fields');
@@ -5482,6 +5514,7 @@
       var previewHint = document.getElementById('sponsor-preview-hint');
       var includeWrap = document.getElementById('sponsor-include-emails-wrap');
       var emailScope = document.getElementById('sponsor-email-scope');
+      var logoOnlyNote = document.getElementById('sponsor-hero-logo-only-note');
       var emailScopes = {
         events_sponsor_hub: 'Shown in event and attendee emails selected for sponsorship.',
         organisers_sponsor_hub: 'Shown in emails sent to networking group organisers.',
@@ -5492,15 +5525,28 @@
         includeWrap.classList.toggle('flex', Boolean(emailScopes[currentSlotKey]));
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
-      if (heroFields) heroFields.hidden = slot.preview === 'compact' || slot.preview === 'city_partner';
+      if (heroFields) {
+        heroFields.hidden = slot.preview === 'compact' || slot.preview === 'city_partner';
+      }
+      if (logoOnlyNote) logoOnlyNote.classList.add('hidden');
+      if (slot.preview === 'hero') {
+        syncHeroLogoOnlyFields();
+      } else {
+        var ctaFields = document.getElementById('sponsor-cta-fields');
+        if (ctaFields) ctaFields.hidden = false;
+      }
       if (ctaColorWrap) ctaColorWrap.hidden = slot.preview === 'city_partner';
       if (ctaLabelLabel) {
         ctaLabelLabel.textContent =
-          slot.preview === 'city_partner' ? 'Link label (shown under logo)' : 'CTA button label';
+          slot.preview === 'city_partner'
+            ? 'Link label (shown under logo)'
+            : slot.preview === 'banner'
+              ? 'Button label'
+              : 'CTA button label';
       }
       if (ctaUrlLabel) {
         ctaUrlLabel.textContent =
-          slot.preview === 'compact' || slot.preview === 'city_partner'
+          slot.preview === 'compact' || slot.preview === 'city_partner' || slot.preview === 'banner'
             ? 'Sponsor website URL (https:// — opens in a new tab)'
             : 'CTA link (https:// opens in a new tab, or mailto:)';
       }
@@ -5510,11 +5556,16 @@
             'Logo + link — matches the City Partner block on ' +
             cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
             ' (not included in emails).';
+        } else if (slot.preview === 'banner') {
+          previewHint.textContent =
+            'Horizontal in-content banner — matches the sponsored block below About on event detail pages.';
         } else {
           previewHint.textContent =
             slot.preview === 'compact'
               ? 'Logo centred above the button — matches ' + slot.label.toLowerCase() + '.'
-              : 'Logo, tagline, and CTA — matches ' + slot.label.toLowerCase() + '.';
+              : 'Matches ' +
+                slot.label.toLowerCase() +
+                '. Upload a logo for logo-only hero, or leave the logo empty to show tagline and CTA.';
         }
       }
     }
@@ -5551,6 +5602,9 @@
       var slot = slotDefaults();
       if (!el) return;
 
+      el.className = 'max-w-md';
+      syncHeroLogoOnlyFields();
+
       if (slot.preview === 'city_partner') {
         renderCityPartnerPreview(el, creative, !creative.active);
         return;
@@ -5560,10 +5614,35 @@
         el.innerHTML =
           slot.preview === 'compact'
             ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this ad slot is hidden on site.</div>'
-            : '<div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
-              '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
-              '<p class="text-base font-extrabold mb-4">Your brand here</p>' +
-              '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span></div>';
+            : slot.preview === 'banner'
+              ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this banner is hidden on event pages.</div>'
+              : '<div class="events-hero-sponsor-slot"><div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
+                '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
+                '<p class="text-base font-extrabold mb-4">Your brand here</p>' +
+                '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span></div></div>';
+        return;
+      }
+
+      var block = creativeToBlock(true);
+
+      if (slot.preview === 'banner' && window.CmsAdBlocks && window.CmsAdBlocks.renderBannerAd) {
+        el.innerHTML = '';
+        el.className = 'max-w-2xl';
+        window.CmsAdBlocks.renderBannerAd(el, block);
+        return;
+      }
+
+      if (slot.preview === 'compact' && window.CmsAdBlocks && window.CmsAdBlocks.renderCompactAd) {
+        el.innerHTML = '';
+        el.className = 'max-w-xs opportunity-detail-page';
+        window.CmsAdBlocks.renderCompactAd(el, block);
+        return;
+      }
+
+      if (slot.preview === 'hero' && window.HubSponsorHub && window.HubSponsorHub.renderPreview) {
+        el.innerHTML = '';
+        el.className = 'events-hero-sponsor-slot max-w-md';
+        window.HubSponsorHub.renderPreview(el, block);
         return;
       }
 
@@ -5731,10 +5810,15 @@
       }
       if (
         creative.active &&
-        slot.preview === 'compact' &&
+        (slot.preview === 'compact' || slot.preview === 'banner') &&
         !creative.logoUrl
       ) {
-        setSponsorStatus('Upload or paste a logo before publishing an active sidebar ad.', 'error');
+        setSponsorStatus(
+          slot.preview === 'banner'
+            ? 'Upload or paste a logo before publishing an active banner.'
+            : 'Upload or paste a logo before publishing an active sidebar ad.',
+          'error'
+        );
         return;
       }
       if (creative.active && (!creative.ctaLabel || !creative.ctaUrl)) {
@@ -5743,7 +5827,7 @@
       }
       if (
         creative.active &&
-        (slot.preview === 'compact' || slot.preview === 'city_partner') &&
+        (slot.preview === 'compact' || slot.preview === 'city_partner' || slot.preview === 'banner') &&
         (!/^https?:\/\//i.test(creative.ctaUrl) ||
           !String(creative.ctaUrl || '')
             .replace(/^https?:\/\//i, '')
@@ -5758,7 +5842,8 @@
 
       var payload = {
         slot: currentSlotKey,
-        title: slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.tagline,
+        title:
+          slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.tagline,
         body: '',
         cta_label: creative.ctaLabel,
         cta_url: creative.ctaUrl,
@@ -6066,9 +6151,12 @@
 
   function renderEventCarouselPage(slotKey) {
     var slot = cmsSlotByKey(slotKey || 'event_page_carousel_ads');
-    var isEventInventory = slot.key === 'event_page_carousel_ads';
-    var detailText = isEventInventory
-      ? 'Three Mini Sponsor slots used on event and organiser detail pages.'
+    var isEventPageInventory = slot.key === 'event_page_carousel_ads';
+    var isOrganiserPageInventory = slot.key === 'organiser_page_carousel_ads';
+    var detailText = isEventPageInventory
+      ? 'Three Mini Sponsor slots used on individual event detail pages.'
+      : isOrganiserPageInventory
+        ? 'Three Mini Sponsor slots used on public organiser profile pages (separate from event page inventory).'
       : 'Three Mini Sponsor slots used on selected ' +
         (slot.key === 'event_email_mini_sponsors'
           ? 'event and attendee'

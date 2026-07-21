@@ -176,11 +176,9 @@
   }
 
   function renderCompactAd(container, block) {
-    if (!container || !block) return;
-    if (!isCompactRenderable(block)) {
-      container.hidden = true;
-      container.innerHTML = '';
-      return;
+    if (!container) return false;
+    if (!block || !isCompactRenderable(block)) {
+      return renderCompactPlaceholder(container);
     }
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
@@ -202,6 +200,7 @@
       window.CmsSponsorFields.applyCtaColor(compactCta, window.CmsSponsorFields.ctaColor(block));
       window.CmsSponsorFields.applyCtaLink(compactCta, ctaUrl);
     }
+    return true;
   }
 
   function cityPartnerLogoMarkup(logoUrl) {
@@ -316,8 +315,47 @@
     }
   }
 
-  function loadEventPageCarousel() {
-    return fetch('/api/cms-block?slot=event_page_carousel_ads')
+  function renderCarouselPlaceholder(container, enquireSubject) {
+    if (!container) return false;
+    var subject = encodeURIComponent(String(enquireSubject || 'Mini Sponsors enquiry').trim());
+    var href = '/advertising#city-partner-package';
+    if (subject.indexOf('Organiser') !== -1 || subject.indexOf('organiser') !== -1) {
+      href = '/advertising#ad-panel-organisers';
+    } else if (subject.indexOf('Opportunit') !== -1) {
+      href = '/advertising#ad-panel-opportunities';
+    } else {
+      href = '/advertising#ad-panel-events';
+    }
+    container.hidden = false;
+    container.innerHTML =
+      '<aside class="cms-ad-carousel-placeholder" aria-label="Sponsored placement available">' +
+      '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
+      '<a class="cms-ad-carousel-placeholder-link" href="' +
+      esc(href) +
+      '">' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band">' +
+      '<div class="cms-ad-logo-only-placeholder">Your logo here</div>' +
+      '</div>' +
+      '<span class="cms-ad-carousel-placeholder-cta">Advertise here →</span>' +
+      '</a></aside>';
+    return true;
+  }
+
+  function renderCompactPlaceholder(container) {
+    if (!container) return false;
+    container.hidden = false;
+    container.innerHTML =
+      '<aside class="cms-ad-compact cms-ad-compact--available" aria-label="Sponsored sidebar placement available">' +
+      '<span class="cms-ad-compact-badge">Sponsored</span>' +
+      '<a class="cms-ad-compact-placeholder-link" href="/advertising#ad-panel-opportunities">' +
+      logoMarkup('', 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
+      '<span class="cms-ad-compact-cta cms-ad-compact-cta--placeholder">Advertise here →</span>' +
+      '</a></aside>';
+    return true;
+  }
+
+  function loadCarouselAds(slot) {
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
       .then(function (res) {
         return res.json();
       })
@@ -329,6 +367,14 @@
       .catch(function () {
         return [];
       });
+  }
+
+  function loadEventPageCarousel() {
+    return loadCarouselAds('event_page_carousel_ads');
+  }
+
+  function loadOrganiserPageCarousel() {
+    return loadCarouselAds('organiser_page_carousel_ads');
   }
 
   function shuffleArray(list) {
@@ -424,13 +470,11 @@
     );
   }
 
-  function renderCarouselAd(container, ads) {
+  function renderCarouselAd(container, ads, placeholderSubject) {
     if (!container) return false;
     var list = Array.isArray(ads) ? ads : [];
     if (!list.length) {
-      container.hidden = true;
-      container.innerHTML = '';
-      return false;
+      return renderCarouselPlaceholder(container, placeholderSubject);
     }
 
     if (list.length === 1) {
@@ -551,10 +595,20 @@
     startCarouselAuto(root);
   }
 
-  function loadPageCarouselAds(container) {
+  function loadPageCarouselAds(container, options) {
     if (!container) return Promise.resolve(false);
-    return loadEventPageCarousel().then(function (ads) {
-      return renderCarouselAd(container, ads);
+    var opts = options || {};
+    var slot = String(opts.slot || 'event_page_carousel_ads').trim() || 'event_page_carousel_ads';
+    var placeholderSubject = opts.placeholderSubject || 'Events Mini Sponsors enquiry';
+    return loadCarouselAds(slot).then(function (ads) {
+      return renderCarouselAd(container, ads, placeholderSubject);
+    });
+  }
+
+  function loadOrganiserPageCarouselAds(container) {
+    return loadPageCarouselAds(container, {
+      slot: 'organiser_page_carousel_ads',
+      placeholderSubject: 'Organisers Mini Sponsors enquiry',
     });
   }
 
@@ -563,14 +617,19 @@
     renderHeroSponsorAd: renderHeroSponsorAd,
     renderBannerAd: renderBannerAd,
     renderCompactAd: renderCompactAd,
+    renderCompactPlaceholder: renderCompactPlaceholder,
     renderCityPartnerAd: renderCityPartnerAd,
     renderCityPartnerPlaceholder: renderCityPartnerPlaceholder,
     renderCarouselAd: renderCarouselAd,
+    renderCarouselPlaceholder: renderCarouselPlaceholder,
     renderLogoOnlyAd: renderLogoOnlyAd,
     isCompactRenderable: isCompactRenderable,
     loadCmsAd: loadCmsAd,
+    loadCarouselAds: loadCarouselAds,
     loadEventPageCarousel: loadEventPageCarousel,
+    loadOrganiserPageCarousel: loadOrganiserPageCarousel,
     loadPageCarouselAds: loadPageCarouselAds,
+    loadOrganiserPageCarouselAds: loadOrganiserPageCarouselAds,
     initCarousel: initCarousel,
   };
 })();

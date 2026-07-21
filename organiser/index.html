@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem5" />
-    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260716mem10" />
+    <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260717memlive" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -601,7 +601,10 @@
 
           <div id="omr-alert" class="org-alert" hidden role="status"></div>
 
-          <p class="org-load-hint" id="member-lists-loading" hidden>Loading organiser pages…</p>
+          <div class="org-dash-loading org-dash-loading--membership" id="member-lists-loading" hidden role="status" aria-live="polite" aria-busy="false">
+            <div class="org-dash-loading-spinner" aria-hidden="true"></div>
+            <span>Loading organiser pages…</span>
+          </div>
 
           <div class="org-empty-state" id="member-lists-empty" hidden role="status">
             <div class="org-empty-state-icon" aria-hidden="true">
@@ -741,8 +744,11 @@
                 <div class="omr-reports" id="omr-reports"></div>
               </div>
 
-              <p class="org-load-hint" id="omr-load-hint" hidden>Loading membership…</p>
-              <div class="org-table-wrap org-attendees-table-wrap omr-table-wrap">
+              <div class="org-dash-loading org-dash-loading--membership" id="omr-load-hint" hidden role="status" aria-live="polite" aria-busy="false">
+                <div class="org-dash-loading-spinner" aria-hidden="true"></div>
+                <span>Loading membership…</span>
+              </div>
+              <div class="org-table-wrap org-attendees-table-wrap omr-table-wrap" id="omr-table-wrap">
                 <table class="org-attendees-table omr-table">
                   <thead>
                     <tr>
@@ -2047,7 +2053,7 @@
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
-    <script src="../js/organiser-member-roster.js?v=20260716mem15"></script>
-    <script src="../js/organiser-dashboard.js?v=20260717load"></script>
+    <script src="../js/organiser-member-roster.js?v=20260721mem"></script>
+    <script src="../js/organiser-dashboard.js?v=20260721mem"></script>
   </body>
 </html>

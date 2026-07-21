@@ -56,7 +56,8 @@ function buildSponsorLogoMarkup(logo, name, logoBandBg) {
 function buildSponsorSection(block, options) {
   if (!block) return '';
   const label =
-    String(options?.label || '').trim() || 'Our event directory is proudly powered by';
+    String(options?.label || '').trim() ||
+    'Sponsored — partner support helps keep The Networker Hub free';
   const logo = toPublicAssetUrl(sponsorLogoUrl(block), process.env.SITE_URL);
   const url = String(block.cta_url || '').trim();
   const name = sponsorCompanyName(block) || 'Our sponsor';

@@ -583,7 +583,7 @@
     var el = document.getElementById('organiser-page-sidebar-ad');
     if (!el) return;
     try {
-      await window.CmsAdBlocks.loadPageCarouselAds(el);
+      await window.CmsAdBlocks.loadOrganiserPageCarouselAds(el);
     } catch (e) {
       /* non-fatal */
     }

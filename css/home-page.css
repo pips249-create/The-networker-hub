@@ -155,6 +155,7 @@ html:has(.home-page) {
   .home-pillar-preview,
   .home-pillar-card-stack > .is-front,
   .home-page .home-hero-kicker,
+  .home-page .home-hero-intro,
   .home-hub-card-icon,
   .home-what::before,
   .home-what::after,
@@ -258,7 +259,8 @@ html:has(.home-page) {
   animation: home-glow-pulse 5s ease-in-out infinite;
 }
 
-.home-hero.is-entered .home-hero-kicker {
+.home-hero.is-entered .home-hero-kicker,
+.home-hero.is-entered .home-hero-intro {
   animation: home-hero-fade-up 0.65s ease both;
 }
 
@@ -320,6 +322,20 @@ html:has(.home-page) {
   text-shadow: 0 1px 2px rgba(45, 35, 50, 0.35);
   animation: home-glow-pulse 4s ease-in-out infinite;
   white-space: nowrap;
+}
+
+.home-page .home-hero-intro {
+  margin: 0 auto 14px;
+  max-width: 38rem;
+  font-size: clamp(1rem, 2.1vw, 1.15rem);
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: normal;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.94);
+  text-align: center;
+  text-wrap: pretty;
+  text-shadow: 0 1px 3px rgba(45, 35, 50, 0.38);
 }
 
 .home-page .hero-title {
@@ -625,7 +641,7 @@ html:has(.home-page) {
   width: 100%;
   margin: 0 0 8px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.95rem, 5.5vw, 2.85rem);
+  font-size: clamp(2.25rem, 6.2vw, 3.35rem);
   font-weight: 400;
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -720,7 +736,7 @@ html:has(.home-page) {
   width: 100%;
   min-height: calc(2 * 1.15em);
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-size: clamp(1.35rem, 2.9vw, 1.85rem);
   font-weight: 400;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -730,8 +746,8 @@ html:has(.home-page) {
   display: grid;
   gap: 0.12em;
   width: 100%;
-  min-height: calc(2 * 1.35 * 0.8rem);
-  font-size: 0.8rem;
+  min-height: calc(2 * 1.35 * 0.95rem);
+  font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.35;
   opacity: 0.84;
@@ -2749,7 +2765,8 @@ html:has(.home-page) {
     margin-bottom: 10px;
   }
 
-  .home-page .home-hero-kicker {
+  .home-page .home-hero-kicker,
+  .home-page .home-hero-intro {
     margin-bottom: 8px;
   }
 
@@ -2796,7 +2813,7 @@ html:has(.home-page) {
   }
 
   .home-page .hero-title.hero-title--rich {
-    font-size: clamp(1.75rem, 8vw, 2.2rem);
+    font-size: clamp(2rem, 8.5vw, 2.65rem);
   }
 
   .home-page .home-hero-rich-card {

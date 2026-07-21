@@ -144,11 +144,24 @@ a:hover {
   .container {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "main"
       "side"
+      "main"
       "related";
     gap: 24px;
     padding: 16px 20px 60px;
+  }
+
+  .side-col {
+    position: static;
+    order: -1;
+    max-width: 380px;
+    margin: 0 auto;
+    width: 100%;
+    grid-row: auto;
+  }
+
+  .event-page-sidebar-ad {
+    margin-bottom: 16px;
   }
 }
 
@@ -2863,6 +2876,10 @@ body.modal-open {
 /* ---- Event page CMS ads (carousel styles in cms-carousel-ad.css) ---- */
 .event-page-sidebar-ad {
   margin: 0 0 18px;
+}
+
+.event-page-banner-ad {
+  margin: 0 0 28px;
 }
 
 .cms-ad-compact {

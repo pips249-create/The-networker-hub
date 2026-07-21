@@ -6614,7 +6614,7 @@
       }
     });
     let revenueLine = '';
-    if (hasWorkspaceSummary()) {
+    if (hasComputedWorkspaceSummary()) {
       revenueLine =
         ' · ' + formatGbpAmount(state.workspaceSummary.totalRevenue) + ' ticket revenue (all pages)';
     }
@@ -6665,13 +6665,19 @@
     if (!workspace) return;
 
     if (!bootstrapReady) {
-      if (loading) loading.hidden = false;
+      if (loading) {
+        loading.hidden = false;
+        loading.setAttribute('aria-busy', 'true');
+      }
       if (empty) empty.hidden = true;
       workspace.hidden = true;
       return;
     }
 
-    if (loading) loading.hidden = true;
+    if (loading) {
+      loading.hidden = true;
+      loading.setAttribute('aria-busy', 'false');
+    }
 
     const groups = memberListGroups();
     if (!groups.length) {
@@ -6706,27 +6712,30 @@
     }
 
     const groupId = filters.membershipsGroup;
-    const needsRosterLoad =
-      window.OrganiserMemberRoster &&
-      typeof window.OrganiserMemberRoster.loadForGroup === 'function' &&
-      groupId &&
-      (groupId !== membershipsRosterLoadedFor ||
-        (!membershipsRosterAppearsPainted() && !membershipsRosterLoading()));
-    if (needsRosterLoad) {
-      membershipsRosterLoadedFor = groupId;
-      window.OrganiserMemberRoster.loadForGroup(groupId)
-        .then(function () {
-          if (
-            groupId === filters.membershipsGroup &&
-            !membershipsRosterAppearsPainted()
-          ) {
+    const roster = window.OrganiserMemberRoster;
+    if (roster) {
+      if (typeof roster.bindControls === 'function') roster.bindControls();
+      if (typeof roster.clearStuckLoading === 'function') roster.clearStuckLoading();
+      if (groupId && typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
+
+      const shouldLoad =
+        typeof roster.loadForGroup === 'function' &&
+        groupId &&
+        (!membershipsRosterAppearsPainted() ||
+          (typeof roster.getActiveGroupId === 'function' && roster.getActiveGroupId() !== groupId));
+
+      if (shouldLoad) {
+        roster.loadForGroup(groupId)
+          .then(function () {
+            if (groupId === filters.membershipsGroup && membershipsRosterAppearsPainted()) {
+              membershipsRosterLoadedFor = groupId;
+            }
+          })
+          .catch(function (err) {
             membershipsRosterLoadedFor = '';
-          }
-        })
-        .catch(function (err) {
-          membershipsRosterLoadedFor = '';
-          showOrganiserAlert(err.message || 'Could not load membership', true);
-        });
+            showOrganiserAlert(err.message || 'Could not load membership', true);
+          });
+      }
     }
   }
 
@@ -6868,6 +6877,13 @@
     if (page === 'memberships') {
       if (bootstrapReady && maybeRedirectToSingleMemberList()) return;
       renderMembershipsPage();
+      if (bootstrapReady) {
+        requestAnimationFrame(function () {
+          if (document.querySelector('[data-org-page="memberships"].is-active')) {
+            renderMembershipsPage();
+          }
+        });
+      }
     }
 
     // Route lives in the hash only (/organiser/#events-list). Do not also write ?panel=
