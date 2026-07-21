@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260721c';
+  var NAV_BUILD = '20260721d';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -178,6 +178,25 @@
     var active = isActive ? ' aria-current="page"' : '';
     var cls = extraClass ? ' class="' + extraClass + '"' : '';
     return '<a href="' + href(path) + '"' + cls + active + '>' + label + '</a>';
+  }
+
+  function showListEventCta(user) {
+    return !user || !user.organiserUiVisible;
+  }
+
+  function listEventCta(extraClass) {
+    var isActive = page === 'for-organisers';
+    var active = isActive ? ' aria-current="page"' : '';
+    var cls = 'nav-organiser' + (extraClass ? ' ' + extraClass : '');
+    return (
+      '<a href="' +
+      href('/for-organisers') +
+      '" class="' +
+      cls +
+      '"' +
+      active +
+      '>List your event</a>'
+    );
   }
 
   function myHubDropdownHtml(user) {
@@ -271,7 +290,6 @@
     html += link('/events/', 'Events', 'events');
     html += link('/opportunities/', 'Opportunities', 'opportunities');
     html += link('/events/?mode=organisers', 'Organisers', 'organisers');
-    html += link('/for-organisers', 'For organisers', 'for-organisers');
     html += link('/faq', 'Help', 'faq');
     if (pending && !user) {
       html +=
@@ -280,6 +298,9 @@
         '<span class="nav-auth-pending-pill nav-auth-pending-pill--short"></span>' +
         '</span>';
       return html;
+    }
+    if (showListEventCta(user)) {
+      html += listEventCta();
     }
     if (user) {
       var hubView = user.hubView || 'attendee';
@@ -304,7 +325,6 @@
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
     html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
-    html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
     html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
     if (pending && !user) {
       html +=
@@ -313,6 +333,9 @@
         '<span class="nav-auth-pending-pill"></span>' +
         '</span>';
       return html;
+    }
+    if (showListEventCta(user)) {
+      html += listEventCta('nav-mobile-item nav-mobile-list-event');
     }
     if (user) {
       var hubView = user.hubView || 'attendee';

@@ -206,6 +206,21 @@
   font-weight: 500;
 }
 
+.nav-mobile-links a.nav-mobile-list-event {
+  margin-top: 6px;
+  text-align: center;
+  background: var(--gold-light, #faf3e8);
+  border: 1px solid rgba(184, 149, 106, 0.55);
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.nav-mobile-links a.nav-mobile-list-event[aria-current='page'] {
+  background: var(--gold, #d4a853);
+  border-color: var(--gold, #d4a853);
+  color: var(--brand-black, #1a1a2e);
+}
+
 .nav-mobile-hub-mode {
   padding: 8px 4px 12px;
 }
