@@ -532,6 +532,25 @@
     }
   }
 
+  function reportMemberLabel(m) {
+    const name = String((m && m.name) || '').trim();
+    const email = String((m && m.email) || '').trim();
+    if (name && email) return name + ' (' + email + ')';
+    return name || email || 'Member';
+  }
+
+  function selectedEventLabel() {
+    const eventId = selectedEventId();
+    if (!eventId) return '';
+    const ev = events.find(function (e) {
+      return String(e.id) === String(eventId);
+    });
+    if (!ev) return '';
+    const start = ev.startsAt || ev.starts_at || ev.date || '';
+    const date = formatShortEventDate(start);
+    return (ev.title || 'Event') + (date ? ' · ' + date : '');
+  }
+
   function renderReports(reports) {
     const mount = document.getElementById('omr-reports');
     const wrap = document.getElementById('omr-reports-wrap');
@@ -545,8 +564,10 @@
     const missed = reports.missedRecentMeetings;
     const expiry = reports.membershipExpiry || {};
 
+    const eventLabel = selectedEventLabel();
+
     let html =
-      '<p class="omr-reports-intro">Based on people you have added to this member list — not all event attendees. Download CSV or email reminders below; members are also notified by email when you publish events.</p>' +
+      '<p class="omr-reports-intro">Based on people you have added to this member list — not all event attendees. Download CSV or email reminders above; members are also emailed when you publish events (usually within 15 minutes).</p>' +
       '<div class="omr-report-card"><h3>Your member list</h3>' +
       '<p class="omr-report-stat">' +
       esc(h.totalActive || 0) +
@@ -562,6 +583,7 @@
     if (booked) {
       html +=
         '<div class="omr-report-card"><h3>Your members — booked for selected event</h3>' +
+        (eventLabel ? '<p class="omr-report-event">' + esc(eventLabel) + '</p>' : '') +
         '<p class="omr-report-stat">' +
         esc(booked.bookedCount) +
         ' booked · ' +
@@ -570,7 +592,7 @@
       if (booked.notBooked && booked.notBooked.length) {
         html += '<ul>';
         booked.notBooked.slice(0, 8).forEach(function (m) {
-          html += '<li>' + esc(m.name || m.email) + '</li>';
+          html += '<li>' + esc(reportMemberLabel(m)) + '</li>';
         });
         if (booked.notBooked.length > 8) {
           html += '<li>…and ' + (booked.notBooked.length - 8) + ' more</li>';
@@ -583,6 +605,7 @@
     if (attendance) {
       html +=
         '<div class="omr-report-card"><h3>Your members at this event</h3>' +
+        (eventLabel ? '<p class="omr-report-event">' + esc(eventLabel) + '</p>' : '') +
         '<p>' +
         esc(attendance.newCount) +
         ' new to your group · ' +
@@ -596,7 +619,7 @@
       missed.members.slice(0, 6).forEach(function (m) {
         html +=
           '<li>' +
-          esc(m.name || m.email) +
+          esc(reportMemberLabel(m)) +
           ' — missed ' +
           esc(m.missedCount) +
           ' of ' +
@@ -611,7 +634,7 @@
       expiry.within14Days.forEach(function (m) {
         html +=
           '<li>' +
-          esc(m.name || m.email) +
+          esc(reportMemberLabel(m)) +
           ' — ' +
           esc(m.expiresAt) +
           '</li>';
@@ -898,7 +921,7 @@
           ? '<span class="omr-badge-claimed">Signed up</span>'
           : '<span class="omr-badge-pending">Not yet</span>';
         const invite = isClaimed(m)
-          ? '—'
+          ? '<span class="omr-badge-muted" title="Already signed up on the Hub">Not needed</span>'
           : m.inviteSentAt
             ? '<span class="omr-badge-claimed">Sent</span>'
             : '<span class="omr-badge-pending">Not sent</span>';
@@ -908,23 +931,23 @@
             : esc(m.expiresAt)
           : '—';
         tr.innerHTML =
-          '<td class="omr-name-cell" data-id="' +
+          '<td class="org-td-name omr-name-cell" data-label="Name" data-id="' +
           esc(m.id) +
           '"><span class="omr-member-name">' +
           esc(m.name || '—') +
-          '</span></td><td>' +
+          '</span></td><td data-label="Email">' +
           esc(m.email) +
-          '</td><td class="omr-expires-cell" data-id="' +
+          '</td><td class="omr-expires-cell" data-label="Expires" data-id="' +
           esc(m.id) +
           '">' +
           exp +
-          '</td><td>' +
+          '</td><td data-label="Hub account">' +
           hub +
-          '</td><td>' +
+          '</td><td data-label="Invite">' +
           invite +
-          '</td><td class="omr-bookings-col">' +
+          '</td><td class="omr-bookings-col" data-label="Event bookings">' +
           renderBookingsCell(m) +
-          '</td><td class="org-td-actions omr-actions">' +
+          '</td><td class="org-td-actions omr-actions" data-label="Actions">' +
           memberActionsHtml(m) +
           '</td>';
         body.appendChild(tr);

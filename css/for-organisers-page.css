@@ -48,11 +48,13 @@ html:has(.for-organisers-page) {
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
 }
 
 .fo-reveal.is-visible {
   opacity: 1;
   transform: none;
+  pointer-events: auto;
 }
 
 .fo-reveal.is-visible .fo-reveal-child {
@@ -326,8 +328,10 @@ html:has(.for-organisers-page) {
   .fo-dash-mock-nav-item {
     flex: 0 0 auto;
     width: auto;
+    min-height: 44px;
     margin-bottom: 0;
     white-space: nowrap;
+    padding: 10px 14px;
   }
   .fo-dash-mock-nav-item.is-active {
     box-shadow: inset 0 -3px 0 var(--od-purple);
@@ -685,6 +689,66 @@ html:has(.for-organisers-page) {
 
 .fo-showcase-link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 899px) {
+  .fo-showcase-link--copy {
+    display: none;
+  }
+}
+
+.fo-showcase-mock-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 14px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fo-showcase-mock-link:focus-visible {
+  outline: 2px solid var(--fo-purple);
+  outline-offset: 3px;
+}
+
+.fo-showcase-mock-link:active .fo-browse-mock {
+  transform: scale(0.995);
+}
+
+.fo-showcase-mock-cta {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .fo-showcase-mock-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: var(--od-purple);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .fo-showcase-mock-link:active .fo-showcase-mock-cta {
+    background: var(--od-purple-dark);
+  }
+}
+
+@media (min-width: 900px) {
+  .fo-showcase-mock-link {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .fo-showcase-mock-link .fo-browse-mock {
+    pointer-events: auto;
+  }
 }
 
 .fo-browse-mock {

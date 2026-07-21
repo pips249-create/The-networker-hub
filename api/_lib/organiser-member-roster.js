@@ -665,6 +665,14 @@ async function importRosterCsv(organiserId, rows, options) {
     const toInvite = savedMembers.filter((m) => m.status === ROSTER_STATUS_ACTIVE && m.email);
     const queued = await queueMemberRosterInvites(orgId, toInvite);
     invitesQueued = queued.queued || 0;
+    if (invitesQueued > 0) {
+      try {
+        const { processDueRosterEmails } = require('./organiser-roster-email-queue');
+        await processDueRosterEmails(getSupabaseAdmin(), { batchSize: 20 });
+      } catch (err) {
+        console.error('[member-roster] invite queue process failed', orgId, err?.message || err);
+      }
+    }
   }
 
   return {
@@ -1183,6 +1191,21 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
   const queued = await queueNewEventAlerts(eventRow, toQueue);
   result.queued = queued.queued || 0;
   result.sent = result.queued;
+
+  if (result.queued > 0) {
+    try {
+      const { processDueRosterEmails } = require('./organiser-roster-email-queue');
+      const processed = await processDueRosterEmails(sb, { batchSize: 40 });
+      result.sent = processed.sent || 0;
+      result.skipped += processed.skipped || 0;
+      if (Array.isArray(processed.errors) && processed.errors.length) {
+        result.errors.push(...processed.errors.slice(0, 10));
+      }
+    } catch (err) {
+      result.errors.push({ message: err.message || String(err) });
+    }
+  }
+
   return result;
 }
 
