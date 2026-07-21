@@ -87,10 +87,10 @@
   const featuredHeading = document.getElementById('ep-featured-heading');
   const featuredLede = document.getElementById('ep-featured-lede');
   const featuredYes = document.getElementById('ep-featured-yes');
-  const featuredSkip = document.getElementById('ep-featured-skip');
   const featuredError = document.getElementById('ep-featured-error');
   const featuredSlotStatus = document.getElementById('ep-featured-slot-status');
   const featuredDurationNote = document.getElementById('ep-featured-duration-note');
+  const featuredPreviewCard = document.getElementById('ep-featured-preview-card');
 
   let eventStartIso = '';
 
@@ -120,29 +120,21 @@
   let sharePack = null;
   let sharePackPromise = null;
   let shareCardDataUrl = '';
-  let shareEventData = null;
-  let shareModalPlatform = '';
 
   const sharePackEl = document.getElementById('ep-share-pack');
   const shareImagePreview = document.getElementById('ep-share-image-preview');
   const shareImageLoading = document.getElementById('ep-share-image-loading');
   const downloadImageBtn = document.getElementById('ep-download-image');
-  const shareModal = document.getElementById('ep-share-modal');
-  const shareModalPreview = document.getElementById('ep-share-modal-preview');
-  const shareModalLoading = document.getElementById('ep-share-modal-loading');
-  const shareModalCaption = document.getElementById('ep-share-modal-caption');
-  const shareModalDownload = document.getElementById('ep-share-modal-download');
-  const shareModalOpen = document.getElementById('ep-share-modal-open');
-  const shareModalTitle = document.getElementById('ep-share-modal-title');
-  const shareModalSub = document.getElementById('ep-share-modal-sub');
+  const shareQuickLinkedIn = document.getElementById('ep-share-linkedin');
+  const shareQuickFacebook = document.getElementById('ep-share-facebook');
+  const shareQuickX = document.getElementById('ep-share-x');
+  const shareQuickWhatsapp = document.getElementById('ep-share-whatsapp');
+  const shareQuickEmail = document.getElementById('ep-share-email');
 
-  const PLATFORM_LABELS = {
-    linkedin: 'LinkedIn',
-    facebook: 'Facebook',
-    x: 'X',
-    whatsapp: 'WhatsApp',
-    email: 'Email',
-  };
+  const META_PIN_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+  const META_CAL_SVG =
+    '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>';
 
   function esc(s) {
     const d = document.createElement('div');
@@ -190,41 +182,100 @@
   function setShareUrls(title) {
     const urlInput = document.getElementById('ep-share-url');
     if (urlInput) urlInput.value = listingUrl;
-    syncOpenListingHref();
+    updateShareQuickLinks(title, sharePack && sharePack.caption);
   }
 
-  function syncOpenListingHref() {
-    const openListing = document.getElementById('ep-open-listing');
-    if (openListing && listingUrl) openListing.href = listingUrl;
-  }
-
-  function platformShareUrl(platform, title, caption) {
-    const encoded = encodeURIComponent(listingUrl);
+  function updateShareQuickLinks(title, caption) {
     const shareText = String(caption || title || 'My event').trim();
+    const encodedUrl = encodeURIComponent(listingUrl);
     const shortText =
       shareText.length > 240 ? shareText.slice(0, 237).trim() + '…' : shareText;
-    const text = encodeURIComponent(shortText);
-    if (platform === 'linkedin') {
-      return 'https://www.linkedin.com/feed/?shareActive=true';
+    const encodedText = encodeURIComponent(shortText);
+
+    if (shareQuickLinkedIn) {
+      shareQuickLinkedIn.href =
+        'https://www.linkedin.com/sharing/share-offsite/?url=' + encodedUrl;
     }
-    if (platform === 'facebook') {
-      return 'https://www.facebook.com/sharer/sharer.php?u=' + encoded;
+    if (shareQuickFacebook) {
+      shareQuickFacebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodedUrl;
     }
-    if (platform === 'x') {
-      return 'https://twitter.com/intent/tweet?url=' + encoded + '&text=' + text;
+    if (shareQuickX) {
+      shareQuickX.href =
+        'https://twitter.com/intent/tweet?url=' + encodedUrl + '&text=' + encodedText;
     }
-    if (platform === 'whatsapp') {
-      return 'https://wa.me/?text=' + encodeURIComponent(shareText + '\n\n' + listingUrl);
+    if (shareQuickWhatsapp) {
+      shareQuickWhatsapp.href =
+        'https://wa.me/?text=' + encodeURIComponent(shareText + '\n\n' + listingUrl);
     }
-    if (platform === 'email') {
-      return (
+    if (shareQuickEmail) {
+      shareQuickEmail.href =
         'mailto:?subject=' +
         encodeURIComponent('Join my event on The Networker Hub') +
         '&body=' +
-        encodeURIComponent(shareText + '\n\n' + listingUrl)
-      );
+        encodeURIComponent(shareText + '\n\n' + listingUrl);
+      shareQuickEmail.removeAttribute('target');
     }
-    return listingUrl;
+  }
+
+  function cardLocationForPreview(ev) {
+    const city = String(ev.city || '').trim();
+    if (city) return city.slice(0, 20);
+    const loc = String(ev.location || ev.locationShort || '').trim();
+    if (!loc) return 'TBC';
+    return (loc.split(',')[0].trim() || loc).slice(0, 20);
+  }
+
+  function priceBadgeForPreview(ev) {
+    if (ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) return 'Free';
+    const n = Number(ev.priceNum != null ? ev.priceNum : ev.price);
+    if (Number.isFinite(n) && n > 0) {
+      const amt = n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
+      return 'from ' + amt;
+    }
+    const label = String(ev.price || '').trim();
+    return label || 'See listing';
+  }
+
+  function renderFeaturedSpotlightPreview(ev) {
+    if (!featuredPreviewCard) return;
+
+    const title = ev.title || fallbackTitle || 'Your event';
+    const photo = ev.photo || ev.imageUrl || fallbackImage || '../assets/event-placeholder.svg';
+    const dateLabel = formatDateLine(ev.date || ev.dateLine) || 'Date TBC';
+    const locationLabel = cardLocationForPreview(ev);
+    const priceLabel = priceBadgeForPreview(ev);
+
+    featuredPreviewCard.innerHTML =
+      '<article class="premium-card ep-featured-preview-card">' +
+      '<div class="premium-card-link">' +
+      '<div class="premium-card-media" aria-hidden="true">' +
+      '<div class="premium-card-bg">' +
+      '<img class="ep-featured-preview-img" src="' +
+      esc(photo) +
+      '" alt="" loading="lazy" decoding="async" />' +
+      '</div>' +
+      '<div class="premium-card-overlay"></div></div>' +
+      '<div class="premium-card-top">' +
+      '<span class="premium-badge">Premium</span>' +
+      '<span class="premium-price">' +
+      esc(priceLabel) +
+      '</span></div>' +
+      '<div class="premium-card-body">' +
+      '<h3 class="premium-card-title">' +
+      esc(title) +
+      '</h3>' +
+      '<div class="premium-card-meta">' +
+      '<p class="premium-meta-row">' +
+      META_PIN_SVG +
+      '<span>' +
+      esc(locationLabel) +
+      '</span></p>' +
+      '<p class="premium-meta-row">' +
+      META_CAL_SVG +
+      '<span>' +
+      esc(dateLabel) +
+      '</span></p>' +
+      '</div></div></div></article>';
   }
 
   async function copyText(text, feedbackEl, originalLabel, copiedLabel) {
@@ -260,26 +311,14 @@
         shareImagePreview.removeAttribute('src');
       }
     }
-    if (shareModalLoading) shareModalLoading.hidden = !loading;
-    if (shareModalPreview) {
-      if (dataUrl) {
-        shareModalPreview.src = dataUrl;
-        shareModalPreview.hidden = false;
-      } else {
-        shareModalPreview.hidden = true;
-        shareModalPreview.removeAttribute('src');
-      }
-    }
     const ready = Boolean(dataUrl);
     if (downloadImageBtn) downloadImageBtn.disabled = !ready;
-    if (shareModalDownload) shareModalDownload.disabled = !ready;
   }
 
   async function ensureSharePack(ev) {
     if (!window.HubOrganiserEventShare) return null;
     if (sharePackPromise) return sharePackPromise;
     sharePackPromise = (async function () {
-      shareEventData = ev;
       listingUrl = buildListingUrl(ev);
       const title = ev.title || fallbackTitle || 'Your event';
       const caption = window.HubOrganiserEventShare.buildPromoCaption(ev, listingUrl);
@@ -291,7 +330,6 @@
         if (sharePackEl) sharePackEl.hidden = false;
         window.HubCommsPack.bindCommsPack(commsRoot, sharePack);
       }
-      if (shareModalCaption) shareModalCaption.value = caption;
 
       setShareImageState({ loading: true, dataUrl: '' });
       shareCardDataUrl = '';
@@ -309,52 +347,6 @@
       return sharePack;
     })();
     return sharePackPromise;
-  }
-
-  function openShareModal(platform) {
-    if (!shareModal) return;
-    shareModalPlatform = platform || 'linkedin';
-    const label = PLATFORM_LABELS[shareModalPlatform] || 'social media';
-    if (shareModalTitle) shareModalTitle.textContent = 'Share to ' + label;
-    if (shareModalSub) {
-      shareModalSub.textContent =
-        'Download the image, copy the caption, then paste both into your ' + label + ' post.';
-    }
-    if (shareModalOpen) {
-      shareModalOpen.textContent = 'Open ' + label;
-      shareModalOpen.href = platformShareUrl(
-        shareModalPlatform,
-        sharePack && sharePack.title,
-        sharePack && sharePack.caption
-      );
-      if (shareModalPlatform === 'email') {
-        shareModalOpen.removeAttribute('target');
-      } else {
-        shareModalOpen.setAttribute('target', '_blank');
-        shareModalOpen.setAttribute('rel', 'noopener noreferrer');
-      }
-    }
-    if (shareModalCaption && sharePack) shareModalCaption.value = sharePack.caption || '';
-    if (shareCardDataUrl) {
-      setShareImageState({ loading: false, dataUrl: shareCardDataUrl });
-    } else if (shareEventData) {
-      setShareImageState({ loading: true, dataUrl: '' });
-      window.HubOrganiserEventShare.generatePromoCardDataUrl(shareEventData)
-        .then(function (dataUrl) {
-          shareCardDataUrl = dataUrl;
-          setShareImageState({ loading: false, dataUrl });
-        })
-        .catch(function () {
-          setShareImageState({ loading: false, dataUrl: '' });
-        });
-    }
-    shareModal.hidden = false;
-    document.body.classList.add('ep-share-modal-open');
-  }
-
-  function closeShareModal() {
-    if (shareModal) shareModal.hidden = true;
-    document.body.classList.remove('ep-share-modal-open');
   }
 
   function formatDateLine(raw) {
@@ -378,7 +370,6 @@
     const titleEl = document.getElementById('ep-preview-title');
     const metaEl = document.getElementById('ep-preview-meta');
     const descEl = document.getElementById('ep-preview-desc');
-    const openListing = document.getElementById('ep-open-listing');
     const previewLink = document.getElementById('ep-preview-link');
 
     listingUrl = buildListingUrl(ev);
@@ -404,8 +395,9 @@
       descEl.textContent =
         d.length > 220 ? d.slice(0, 217) + '…' : d || 'Your published listing is live on the hub.';
     }
-    if (openListing) openListing.href = listingUrl;
     if (previewLink) previewLink.href = listingUrl;
+
+    renderFeaturedSpotlightPreview(ev);
 
     if (loading) loading.hidden = true;
     if (card) card.hidden = false;
@@ -447,7 +439,7 @@
       }
       if (lead) {
         lead.textContent =
-          'Attendees can find it on the hub. Preview your listing and choose featured placement, then share it with your network.';
+          'Attendees can find it on the hub. Share it with your network, then preview your listing or choose featured placement.';
       }
     }
 
@@ -578,49 +570,6 @@
   }
 
   downloadImageBtn?.addEventListener('click', downloadShareImage);
-  shareModalDownload?.addEventListener('click', downloadShareImage);
-
-  shareModalOpen?.addEventListener('click', async () => {
-    if (!sharePack || !sharePack.caption) return;
-    await copyText(sharePack.caption);
-    const feedback = document.getElementById('ep-copy-feedback');
-    if (feedback) {
-      feedback.hidden = false;
-      feedback.textContent = 'Caption copied — paste it into your post';
-      setTimeout(() => {
-        feedback.hidden = true;
-      }, 2500);
-    }
-  });
-
-  document.getElementById('ep-share-modal-copy-caption')?.addEventListener('click', async () => {
-    const btn = document.getElementById('ep-share-modal-copy-caption');
-    const original = btn ? btn.textContent : '';
-    await copyText(sharePack && sharePack.caption);
-    if (btn) {
-      btn.textContent = 'Copied!';
-      setTimeout(() => {
-        btn.textContent = original || 'Copy caption';
-      }, 2000);
-    }
-  });
-
-  ['ep-share-modal-backdrop', 'ep-share-modal-close'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('click', closeShareModal);
-  });
-
-  document.querySelectorAll('[data-share-platform]').forEach((btn) => {
-    btn.addEventListener('click', async function () {
-      const platform = btn.getAttribute('data-share-platform') || 'linkedin';
-      if (sharePackPromise) await sharePackPromise;
-      else if (shareEventData) await ensureSharePack(shareEventData);
-      openShareModal(platform);
-    });
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && shareModal && !shareModal.hidden) closeShareModal();
-  });
 
   function selectedPlanId() {
     const checked = document.querySelector('input[name="featured-plan"]:checked');
@@ -638,17 +587,6 @@
       return;
     }
     loadFeaturedQuote();
-  }
-
-  const publishRow = document.querySelector('.ep-publish-row');
-
-  function hideFeaturedUpsell() {
-    if (featuredUpsell) featuredUpsell.hidden = true;
-    if (publishRow) publishRow.classList.add('ep-publish-row--preview-only');
-    const previewCard = document.getElementById('ep-preview-heading');
-    if (previewCard) {
-      previewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   }
 
   if (extendFeatured && featuredHeading) {
@@ -729,7 +667,6 @@
   }
 
   if (featuredYes) featuredYes.addEventListener('click', startFeaturedCheckout);
-  if (featuredSkip) featuredSkip.addEventListener('click', hideFeaturedUpsell);
 
   async function loadFeaturedSlotStatus() {
     if (!featuredUpsell) return;
@@ -763,7 +700,6 @@
 
   loadFeaturedSlotStatus();
 
-  syncOpenListingHref();
   setShareUrls(fallbackTitle);
   fetchPreview();
 })();

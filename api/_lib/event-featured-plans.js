@@ -2,7 +2,7 @@ const { isEventStarted } = require('./event-timezone');
 
 const FEATURED_MONTH_DAYS = 30;
 const FEATURED_DEFAULT_MONTHLY_PENCE = 5500;
-const FEATURED_DEFAULT_MIN_PENCE = 2000;
+const FEATURED_DEFAULT_MIN_PENCE = 1000;
 
 function parseEnvPence(name, fallback) {
   const raw = process.env[name];
