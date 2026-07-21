@@ -15,6 +15,11 @@
   let activeLoadPromise = null;
   let activeLoadGroupId = '';
   let reportsLoading = false;
+  let activeRegisterTab = 'members';
+  let activeReportTab = 'overview';
+  let reportsLoadedKey = '';
+  let reportsStale = false;
+  let groupRosterSummary = null;
   const filters = { search: '', status: 'all' };
 
   function isLoadInFlight() {
@@ -193,13 +198,173 @@
 
   function setReportsLoading(on) {
     reportsLoading = Boolean(on);
-    const wrap = document.getElementById('omr-reports-wrap');
     const hint = document.getElementById('omr-reports-loading');
-    const hasMembers = rosterActiveTotal > 0 || rosterTotal > 0;
-    if (wrap) wrap.hidden = !hasMembers && !reportsLoading && !lastReports;
+    const empty = document.getElementById('omr-reports-empty');
+    const wrap = document.getElementById('omr-reports-wrap');
+    const tabs = document.getElementById('omr-reports-tabs');
     if (hint) {
-      hint.hidden = !reportsLoading;
-      hint.setAttribute('aria-busy', reportsLoading ? 'true' : 'false');
+      hint.hidden = !on;
+      hint.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+    if (on) {
+      if (empty) empty.hidden = true;
+      if (wrap) wrap.hidden = true;
+      if (tabs) tabs.hidden = true;
+    } else {
+      syncReportsPanelState();
+    }
+  }
+
+  function rosterSummaryStats() {
+    const summary = groupRosterSummary || {};
+    const active = Number(summary.active);
+    if (Number.isFinite(active) && active >= 0) {
+      return {
+        active: active,
+        unclaimed: Number(summary.unclaimed) || 0,
+        expiringSoon: Number(summary.expiringSoon) || 0,
+      };
+    }
+    return {
+      active: rosterActiveTotal || 0,
+      unclaimed:
+        lastReports && lastReports.rosterHealth
+          ? Number(lastReports.rosterHealth.unclaimed) || 0
+          : 0,
+      expiringSoon:
+        lastReports && lastReports.rosterHealth
+          ? Number(lastReports.rosterHealth.expiringSoon) || 0
+          : 0,
+    };
+  }
+
+  function reportsCacheKey(eventId) {
+    return getOrganiserId() + ':' + String(eventId || '');
+  }
+
+  function syncReportsPanelState() {
+    const onReportsTab = activeRegisterTab === 'reports';
+    const empty = document.getElementById('omr-reports-empty');
+    const wrap = document.getElementById('omr-reports-wrap');
+    const tabs = document.getElementById('omr-reports-tabs');
+    const refreshBtn = document.getElementById('omr-refresh-reports');
+    const runBtn = document.getElementById('omr-run-reports');
+    const stale = document.getElementById('omr-reports-stale');
+    const eventBar = document.getElementById('omr-event-bar');
+    const hasLoaded = Boolean(lastReports && reportsLoadedKey);
+    const hasMembers = rosterActiveTotal > 0 || rosterTotal > 0;
+
+    if (!onReportsTab) {
+      if (empty) empty.hidden = true;
+      if (wrap) wrap.hidden = true;
+      if (tabs) tabs.hidden = true;
+      if (stale) stale.hidden = true;
+      return;
+    }
+
+    if (reportsLoading) return;
+
+    if (!hasMembers) {
+      if (empty) {
+        empty.hidden = false;
+        const title = empty.querySelector('.org-empty-state-title');
+        const text = empty.querySelector('.org-empty-state-text');
+        if (title) title.textContent = 'Add members first';
+        if (text) {
+          text.textContent = 'Upload or add members on the Members tab, then run a report here.';
+        }
+      }
+      if (wrap) wrap.hidden = true;
+      if (tabs) tabs.hidden = true;
+      if (runBtn) runBtn.disabled = true;
+      if (refreshBtn) refreshBtn.hidden = true;
+      if (stale) stale.hidden = true;
+      return;
+    }
+
+    if (runBtn) runBtn.disabled = false;
+
+    if (!hasLoaded || reportsStale) {
+      if (empty) {
+        empty.hidden = false;
+        const title = empty.querySelector('.org-empty-state-title');
+        const text = empty.querySelector('.org-empty-state-text');
+        if (title) title.textContent = reportsStale ? 'Report out of date' : 'No report yet';
+        if (text) {
+          text.textContent = reportsStale
+            ? 'The selected event changed. Run the report again for up-to-date booking and engagement figures.'
+            : 'Run a report when you need booking, renewal, or engagement insights. Your member list loads separately.';
+        }
+      }
+      if (wrap) wrap.hidden = true;
+      if (tabs) tabs.hidden = true;
+      if (refreshBtn) refreshBtn.hidden = !reportsStale;
+      if (stale) stale.hidden = !reportsStale;
+      return;
+    }
+
+    if (empty) empty.hidden = true;
+    if (wrap) wrap.hidden = false;
+    if (tabs) tabs.hidden = false;
+    if (refreshBtn) refreshBtn.hidden = false;
+    if (stale) stale.hidden = true;
+  }
+
+  function setRegisterTab(tab) {
+    const next = tab === 'reports' ? 'reports' : 'members';
+    activeRegisterTab = next;
+    document.querySelectorAll('[data-omr-register-tab]').forEach(function (btn) {
+      const active = btn.dataset.omrRegisterTab === next;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      btn.tabIndex = active ? 0 : -1;
+    });
+    const membersPanel = document.getElementById('omr-panel-members');
+    const reportsPanel = document.getElementById('omr-panel-reports');
+    const eventBar = document.getElementById('omr-event-bar');
+    if (membersPanel) {
+      membersPanel.hidden = next !== 'members';
+      membersPanel.classList.toggle('is-active', next === 'members');
+    }
+    if (reportsPanel) {
+      reportsPanel.hidden = next !== 'reports';
+      reportsPanel.classList.toggle('is-active', next === 'reports');
+    }
+    if (eventBar) eventBar.hidden = false;
+    syncReportsPanelState();
+  }
+
+  function setReportTab(tab) {
+    const allowed = ['overview', 'bookings', 'expiring', 'engagement'];
+    activeReportTab = allowed.indexOf(tab) >= 0 ? tab : 'overview';
+    document.querySelectorAll('[data-omr-report-tab]').forEach(function (btn) {
+      const active = btn.dataset.omrReportTab === activeReportTab;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      btn.tabIndex = active ? 0 : -1;
+    });
+    renderReports(lastReports);
+  }
+
+  async function refreshGroupRosterSummary(groupId) {
+    const id = String(groupId || getOrganiserId() || '').trim();
+    if (!id) {
+      groupRosterSummary = null;
+      return;
+    }
+    try {
+      const data = await api('/api/organiser/groups?id=' + encodeURIComponent(id));
+      if (getOrganiserId() !== id) return;
+      groupRosterSummary =
+        data.group && data.group.rosterSummary
+          ? data.group.rosterSummary
+          : { active: rosterActiveTotal || 0, unclaimed: 0, expiringSoon: 0 };
+    } catch {
+      groupRosterSummary = {
+        active: rosterActiveTotal || 0,
+        unclaimed: 0,
+        expiringSoon: 0,
+      };
     }
   }
 
@@ -426,17 +591,12 @@
   }
 
   function rosterSummaryLine(totalActive) {
-    const h = lastReports && lastReports.rosterHealth ? lastReports.rosterHealth : null;
-    if (!totalActive) return 'No members yet';
-    const parts = [totalActive + (totalActive === 1 ? ' member' : ' members')];
-    if (h) {
-      if (Number(h.unclaimed) > 0) {
-        parts.push(h.unclaimed + ' not signed up');
-      }
-      if (Number(h.expiringSoon) > 0) {
-        parts.push(h.expiringSoon + ' expiring soon');
-      }
-    }
+    const stats = rosterSummaryStats();
+    const count = totalActive || stats.active || 0;
+    if (!count) return 'No members yet';
+    const parts = [count + (count === 1 ? ' member' : ' members')];
+    if (stats.unclaimed > 0) parts.push(stats.unclaimed + ' not signed up');
+    if (stats.expiringSoon > 0) parts.push(stats.expiringSoon + ' expiring soon');
     return parts.join(' · ');
   }
 
@@ -475,10 +635,8 @@
   function syncBulkResend(totalActive) {
     const btn = document.getElementById('omr-bulk-resend');
     if (!btn) return;
-    const unclaimed =
-      lastReports && lastReports.rosterHealth
-        ? Number(lastReports.rosterHealth.unclaimed) || 0
-        : 0;
+    const stats = rosterSummaryStats();
+    const unclaimed = Number(stats.unclaimed) || 0;
     btn.hidden = !(totalActive > 0 && unclaimed > 0);
     const label =
       unclaimed === 1
@@ -549,9 +707,11 @@
           }
           page = 1;
           fetchRosterPage(1).then(function () {
-            return loadReports(sel.value);
-          }).then(function () {
             renderRoster();
+            if (reportsLoadedKey && reportsLoadedKey !== reportsCacheKey(sel.value)) {
+              reportsStale = true;
+              syncReportsPanelState();
+            }
           });
         });
       }
@@ -612,95 +772,137 @@
   function renderReports(reports) {
     const mount = document.getElementById('omr-reports');
     const wrap = document.getElementById('omr-reports-wrap');
-    if (!mount || !reports) {
+    if (!mount) return;
+    if (!reports || activeRegisterTab !== 'reports' || reportsStale) {
       if (wrap) wrap.hidden = true;
+      syncReportsPanelState();
       return;
     }
+
     const h = reports.rosterHealth || {};
     const booked = reports.bookedForEvent;
     const attendance = reports.eventAttendance;
     const missed = reports.missedRecentMeetings;
     const expiry = reports.membershipExpiry || {};
-
     const eventLabel = selectedEventLabel();
     const eventSelected = Boolean(selectedEventId());
+    let html = '';
 
-    let html =
-      '<p class="omr-reports-intro">Based on people you have added to this member list — not all event attendees. Download CSV or email reminders above; members are also emailed when you publish events.</p>' +
-      (eventSelected
-        ? ''
-        : ' Choose an event in the filter bar above for booking and attendance reports.') +
-      '</p>' +
-      '<div class="omr-report-card"><h3>Your member list</h3>' +
-      '<p class="omr-report-stat">' +
-      esc(h.totalActive || 0) +
-      ' active</p>' +
-      '<p>' +
-      esc(h.claimed || 0) +
-      ' signed up · ' +
-      esc(h.unclaimed || 0) +
-      ' not yet · ' +
-      esc(h.expiringSoon || 0) +
-      ' expiring soon</p></div>';
-
-    if (booked) {
-      html +=
-        '<div class="omr-report-card"><h3>Your members — booked for selected event</h3>' +
-        (eventLabel ? '<p class="omr-report-event">' + esc(eventLabel) + '</p>' : '') +
+    if (activeReportTab === 'overview') {
+      html =
+        '<div class="omr-report-card"><h3>Your member list</h3>' +
         '<p class="omr-report-stat">' +
-        esc(booked.bookedCount) +
-        ' booked · ' +
-        esc(booked.notBookedCount) +
-        ' not yet</p>';
-      if (booked.notBooked && booked.notBooked.length) {
-        html += '<ul>';
-        booked.notBooked.slice(0, 8).forEach(function (m) {
-          html += '<li>' + esc(reportMemberLabel(m)) + '</li>';
-        });
-        if (booked.notBooked.length > 8) {
-          html += '<li>…and ' + (booked.notBooked.length - 8) + ' more</li>';
-        }
-        html += '</ul>';
-      }
-      html += '</div>';
-    }
-
-    if (attendance) {
-      html +=
-        '<div class="omr-report-card"><h3>Your members at this event</h3>' +
-        (eventLabel ? '<p class="omr-report-event">' + esc(eventLabel) + '</p>' : '') +
+        esc(h.totalActive || 0) +
+        ' active</p>' +
         '<p>' +
-        esc(attendance.newCount) +
-        ' new to your group · ' +
-        esc(attendance.returningCount) +
-        ' returning</p>' +
-        '<p class="omr-report-note">Only people on your uploaded member list who booked this event.</p></div>';
+        esc(h.claimed || 0) +
+        ' signed up · ' +
+        esc(h.unclaimed || 0) +
+        ' not yet · ' +
+        esc(h.expiringSoon || 0) +
+        ' expiring soon</p>' +
+        '<p class="omr-report-note">Use the Members tab to add people, resend invites, or download CSV.</p></div>';
     }
 
-    if (missed && missed.members && missed.members.length) {
-      html += '<div class="omr-report-card"><h3>Your members — missed recent meetings</h3><ul>';
-      missed.members.slice(0, 6).forEach(function (m) {
-        html += '<li>' + esc(formatMissedMeetingLine(m)) + '</li>';
-      });
-      html += '</ul></div>';
+    if (activeReportTab === 'bookings') {
+      if (!eventSelected) {
+        html =
+          '<div class="omr-report-card omr-report-card--empty"><h3>Event bookings</h3>' +
+          '<p>Choose an event above, then run the report to see who has booked.</p></div>';
+      } else if (booked) {
+        html =
+          '<div class="omr-report-card"><h3>Your members — booked for selected event</h3>' +
+          (eventLabel ? '<p class="omr-report-event">' + esc(eventLabel) + '</p>' : '') +
+          '<p class="omr-report-stat">' +
+          esc(booked.bookedCount) +
+          ' booked · ' +
+          esc(booked.notBookedCount) +
+          ' not yet</p>';
+        if (booked.notBooked && booked.notBooked.length) {
+          html += '<ul>';
+          booked.notBooked.slice(0, 12).forEach(function (m) {
+            html += '<li>' + esc(reportMemberLabel(m)) + '</li>';
+          });
+          if (booked.notBooked.length > 12) {
+            html += '<li>…and ' + (booked.notBooked.length - 12) + ' more</li>';
+          }
+          html += '</ul>';
+        } else {
+          html += '<p class="omr-report-note">Everyone on your membership has booked for this event.</p>';
+        }
+        html += '</div>';
+      } else {
+        html =
+          '<div class="omr-report-card omr-report-card--empty"><h3>Event bookings</h3>' +
+          '<p>No booking data for this event yet.</p></div>';
+      }
     }
 
-    if (expiry.within14Days && expiry.within14Days.length) {
-      html += '<div class="omr-report-card"><h3>Your members — expiring within 14 days</h3><ul>';
-      expiry.within14Days.forEach(function (m) {
+    if (activeReportTab === 'expiring') {
+      if (expiry.within14Days && expiry.within14Days.length) {
+        html = '<div class="omr-report-card"><h3>Expiring within 14 days</h3><ul>';
+        expiry.within14Days.forEach(function (m) {
+          html +=
+            '<li>' +
+            esc(reportMemberLabel(m)) +
+            ' — ' +
+            esc(m.expiresAt) +
+            '</li>';
+        });
+        html += '</ul></div>';
+      } else {
+        html =
+          '<div class="omr-report-card omr-report-card--empty"><h3>Expiring within 14 days</h3>' +
+          '<p>No memberships expiring in the next 14 days.</p></div>';
+      }
+    }
+
+    if (activeReportTab === 'engagement') {
+      html = '';
+      if (eventSelected && attendance) {
         html +=
-          '<li>' +
-          esc(reportMemberLabel(m)) +
-          ' — ' +
-          esc(m.expiresAt) +
-          '</li>';
-      });
-      html += '</ul></div>';
+          '<div class="omr-report-card"><h3>Your members at this event</h3>' +
+          (eventLabel ? '<p class="omr-report-event">' + esc(eventLabel) + '</p>' : '') +
+          '<p>' +
+          esc(attendance.newCount) +
+          ' new to your group · ' +
+          esc(attendance.returningCount) +
+          ' returning</p>' +
+          '<p class="omr-report-note">Only people on your uploaded member list who booked this event.</p></div>';
+      }
+      if (missed && missed.members && missed.members.length) {
+        html += '<div class="omr-report-card"><h3>Missed recent meetings</h3><ul>';
+        missed.members.slice(0, 10).forEach(function (m) {
+          html += '<li>' + esc(formatMissedMeetingLine(m)) + '</li>';
+        });
+        html += '</ul></div>';
+      } else if (!html) {
+        html =
+          '<div class="omr-report-card omr-report-card--empty"><h3>Engagement</h3>' +
+          '<p>No missed-meeting patterns to show yet. Choose an event above for attendance split.</p></div>';
+      } else if (!missed || !missed.members || !missed.members.length) {
+        html +=
+          '<div class="omr-report-card omr-report-card--empty"><h3>Missed recent meetings</h3>' +
+          '<p>Everyone on your list has booked at least one of your recent meetings.</p></div>';
+      }
     }
 
     mount.innerHTML = html;
     mount.hidden = false;
     if (wrap) wrap.hidden = false;
+    syncReportsPanelState();
+  }
+
+  async function runReports(options) {
+    const force = Boolean(options && options.force);
+    const eventId = selectedEventId();
+    const cacheKey = reportsCacheKey(eventId);
+    if (!force && lastReports && reportsLoadedKey === cacheKey && !reportsStale) {
+      renderReports(lastReports);
+      return lastReports;
+    }
+    await loadReports(eventId);
+    return lastReports;
   }
 
   async function loadReports(eventId) {
@@ -717,6 +919,8 @@
       if (recent) qs += '&recentEventIds=' + encodeURIComponent(recent);
       const data = await api(rosterUrl(qs));
       lastReports = data.reports || null;
+      reportsLoadedKey = reportsCacheKey(eventId);
+      reportsStale = false;
       renderReports(data.reports);
     } finally {
       setReportsLoading(false);
@@ -973,12 +1177,14 @@
               'Use + Add a member or Import spreadsheet, then add a Members only ticket on your event (Tickets step).';
           }
         }
-        renderPagination(rosterTotal);
-        return;
-      }
-      if (empty) empty.hidden = true;
-
       renderPagination(rosterTotal);
+      syncReportsPanelState();
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    renderPagination(rosterTotal);
+    syncReportsPanelState();
 
       rows.forEach(function (m) {
         const tr = document.createElement('tr');
@@ -1196,10 +1402,8 @@
 
   async function bulkResendInvites() {
     closeAllActionMenus();
-    const unclaimed =
-      lastReports && lastReports.rosterHealth
-        ? Number(lastReports.rosterHealth.unclaimed) || 0
-        : 0;
+    const stats = rosterSummaryStats();
+    const unclaimed = Number(stats.unclaimed) || 0;
     if (!unclaimed) {
       showAlert('Everyone on the list already has a Hub account.', 'success');
       return;
@@ -1275,17 +1479,19 @@
     await fetchRosterPage(1, { showLoader: false });
     if (getOrganiserId() !== groupId) return;
     setRosterLoading(false);
-
-    const eventId = selectedEventId();
-    loadReports(eventId)
-      .then(function () {
-        if (getOrganiserId() === groupId) renderRoster();
-      })
-      .catch(function (err) {
+    await refreshGroupRosterSummary(groupId);
+    if (getOrganiserId() !== groupId) return;
+    renderRoster();
+    if (activeRegisterTab === 'reports' && reportsLoadedKey && !reportsStale) {
+      runReports({ force: true }).catch(function (err) {
         if (getOrganiserId() === groupId) {
-          showAlert(err.message || 'Could not load member reports.', 'error');
+          showAlert(err.message || 'Could not refresh member reports.', 'error');
         }
       });
+    } else if (reportsLoadedKey) {
+      reportsStale = true;
+      syncReportsPanelState();
+    }
   }
 
   function removeDuplicateAddPanels() {
@@ -1302,6 +1508,8 @@
     removeDuplicateAddPanels();
     bindMemberActionHandlers();
 
+    setRegisterTab('members');
+
     document.getElementById('omr-jump-add')?.addEventListener('click', function () {
       jumpToAddSection('omr-add-details');
     });
@@ -1309,6 +1517,30 @@
       const details = document.getElementById('omr-import-card');
       if (details && details.tagName === 'DETAILS') details.open = true;
       jumpToAddSection('omr-import-card');
+    });
+
+    document.querySelectorAll('[data-omr-register-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setRegisterTab(btn.dataset.omrRegisterTab || 'members');
+      });
+    });
+
+    document.querySelectorAll('[data-omr-report-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setReportTab(btn.dataset.omrReportTab || 'overview');
+      });
+    });
+
+    document.getElementById('omr-run-reports')?.addEventListener('click', function () {
+      runReports({ force: reportsStale }).catch(function (err) {
+        showAlert(err.message || 'Could not run report.', 'error');
+      });
+    });
+
+    document.getElementById('omr-refresh-reports')?.addEventListener('click', function () {
+      runReports({ force: true }).catch(function (err) {
+        showAlert(err.message || 'Could not refresh report.', 'error');
+      });
     });
 
     document.getElementById('omr-add-details')?.addEventListener('toggle', function (e) {
@@ -1589,12 +1821,17 @@
       rosterActiveTotal = 0;
       events = [];
       lastReports = null;
+      reportsLoadedKey = '';
+      reportsStale = false;
+      groupRosterSummary = null;
       page = 1;
+      setRegisterTab('members');
       renderRoster();
       const mount = document.getElementById('omr-reports');
       const wrap = document.getElementById('omr-reports-wrap');
       if (mount) mount.innerHTML = '';
       if (wrap) wrap.hidden = true;
+      syncReportsPanelState();
       return;
     }
 
@@ -1605,7 +1842,11 @@
       rosterTotal = 0;
       rosterActiveTotal = 0;
       lastReports = null;
+      reportsLoadedKey = '';
+      reportsStale = false;
+      groupRosterSummary = null;
       page = 1;
+      setRegisterTab('members');
       renderRoster();
     }
 
@@ -1617,6 +1858,10 @@
       try {
         const group = await api('/api/organiser/groups?id=' + encodeURIComponent(id));
         if (getOrganiserId() !== id) return;
+        groupRosterSummary =
+          group.group && group.group.rosterSummary
+            ? group.group.rosterSummary
+            : { active: 0, unclaimed: 0, expiringSoon: 0 };
         const title = document.getElementById('omr-title');
         if (title && group.group && group.group.name) {
           title.textContent = 'Membership — ' + group.group.name;
@@ -1658,6 +1903,14 @@
     isLoadInFlight: isLoadInFlight,
     clearStuckLoading: clearStuckLoading,
     setActiveGroupId: setActiveGroupId,
+    setGroupRosterSummary: function (groupId, summary) {
+      const id = String(groupId || '').trim();
+      if (!id || getOrganiserId() !== id || !summary) return;
+      groupRosterSummary = summary;
+      if (activeRegisterTab === 'members' || document.getElementById('omr-count')) {
+        renderRoster();
+      }
+    },
   };
 
   if (isDashboardEmbed) {

@@ -262,7 +262,7 @@
             <ol class="org-getting-started-list">
               <li data-getting-step="group">
                 <strong>Create your organiser page</strong>
-                <span>Your public page on the hub.</span>
+                <span>Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first — if yours is already listed, open it and request access instead of creating a duplicate.</span>
                 <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add organiser page</button>
               </li>
               <li data-getting-step="membership">
@@ -640,6 +640,41 @@
                 </div>
               </div>
 
+              <nav class="omr-register-tabs" role="tablist" aria-label="Member register views">
+                <button
+                  type="button"
+                  role="tab"
+                  class="omr-register-tab is-active"
+                  id="omr-tab-members"
+                  data-omr-register-tab="members"
+                  aria-controls="omr-panel-members"
+                  aria-selected="true"
+                >
+                  Members
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  class="omr-register-tab"
+                  id="omr-tab-reports"
+                  data-omr-register-tab="reports"
+                  aria-controls="omr-panel-reports"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Reports
+                </button>
+              </nav>
+
+              <div class="omr-event-bar" id="omr-event-bar">
+                <label class="omr-event-bar-label" for="omr-event-select">Event</label>
+                <select id="omr-event-select" aria-label="Filter or report by event">
+                  <option value="">All events — show bookings</option>
+                </select>
+                <span class="omr-event-bar-hint">Optional — filter bookings and run event reports</span>
+              </div>
+
+              <div class="omr-register-panel is-active" id="omr-panel-members" role="tabpanel" aria-labelledby="omr-tab-members">
               <div class="org-filter-bar omr-filter-bar">
                 <input
                   type="search"
@@ -657,9 +692,6 @@
                   <option value="no_bookings">No event bookings yet</option>
                   <option value="booked">Booked for selected event</option>
                   <option value="not_booked">Not booked for selected event</option>
-                </select>
-                <select id="omr-event-select" aria-label="Filter or report by event">
-                  <option value="">All events — show bookings</option>
                 </select>
                 <div class="org-action-wrap omr-more-actions-wrap" id="omr-more-actions">
                   <button
@@ -787,14 +819,43 @@
                 </div>
               </div>
               <nav class="org-pagination omr-pagination" id="omr-pagination" aria-label="Members pages" hidden></nav>
+              </div>
 
-              <div class="omr-reports-wrap" id="omr-reports-wrap" hidden>
-                <h3 class="omr-reports-title">Member list reports</h3>
+              <div class="omr-register-panel" id="omr-panel-reports" role="tabpanel" aria-labelledby="omr-tab-reports" hidden>
+                <div class="omr-reports-toolbar">
+                  <p class="omr-reports-toolbar-lead">
+                    Based on people on <strong>your uploaded member list</strong> — not every event attendee.
+                  </p>
+                  <div class="omr-reports-toolbar-actions">
+                    <button type="button" class="org-btn org-btn-gold org-btn-sm" id="omr-run-reports">Run report</button>
+                    <button type="button" class="org-btn org-btn-outline org-btn-sm" id="omr-refresh-reports" hidden>Refresh</button>
+                    <p class="omr-reports-stale" id="omr-reports-stale" hidden role="status">Event changed — run report again.</p>
+                  </div>
+                </div>
+
+                <nav class="omr-reports-tabs" role="tablist" aria-label="Report views" id="omr-reports-tabs" hidden>
+                  <button type="button" role="tab" class="omr-reports-tab is-active" data-omr-report-tab="overview" aria-selected="true">Overview</button>
+                  <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="bookings" aria-selected="false" tabindex="-1">Event bookings</button>
+                  <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="expiring" aria-selected="false" tabindex="-1">Expiring</button>
+                  <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="engagement" aria-selected="false" tabindex="-1">Engagement</button>
+                </nav>
+
                 <div class="org-dash-loading org-dash-loading--membership omr-reports-loading" id="omr-reports-loading" hidden role="status" aria-live="polite" aria-busy="false">
                   <div class="org-dash-loading-spinner" aria-hidden="true"></div>
-                  <span>Updating reports…</span>
+                  <span>Running report…</span>
                 </div>
-                <div class="omr-reports" id="omr-reports"></div>
+
+                <div class="org-empty-state omr-reports-empty" id="omr-reports-empty" role="status">
+                  <div class="org-empty-state-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg>
+                  </div>
+                  <h3 class="org-empty-state-title">No report yet</h3>
+                  <p class="org-empty-state-text">Run a report when you need booking, renewal, or engagement insights. Your member list loads separately.</p>
+                </div>
+
+                <div class="omr-reports-wrap" id="omr-reports-wrap" hidden>
+                  <div class="omr-reports" id="omr-reports"></div>
+                </div>
               </div>
             </section>
           </div>

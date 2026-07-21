@@ -3165,6 +3165,146 @@
   margin-top: 0;
 }
 
+.omr-register-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px;
+  padding: 4px;
+  border-radius: 10px;
+  background: rgba(13, 110, 122, 0.06);
+}
+
+.omr-register-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a6272;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.omr-register-tab:hover {
+  color: #084a52;
+}
+
+.omr-register-tab.is-active {
+  background: #fff;
+  color: #084a52;
+  box-shadow: 0 1px 3px rgba(26, 46, 59, 0.08);
+}
+
+.omr-event-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(13, 110, 122, 0.04);
+  border: 1px solid rgba(13, 110, 122, 0.1);
+}
+
+.omr-event-bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #084a52;
+}
+
+.omr-event-bar-hint {
+  flex: 1 1 180px;
+  font-size: 12px;
+  color: #7a94a3;
+}
+
+.omr-register-panel[hidden] {
+  display: none !important;
+}
+
+.omr-reports-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.omr-reports-toolbar-lead {
+  margin: 0;
+  flex: 1 1 240px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #4a6272;
+}
+
+.omr-reports-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.omr-reports-stale {
+  margin: 0;
+  font-size: 12px;
+  color: #9f1239;
+}
+
+.omr-reports-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.omr-reports-tab {
+  padding: 8px 12px;
+  border: 1px solid rgba(13, 110, 122, 0.16);
+  border-radius: 999px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a6272;
+  cursor: pointer;
+}
+
+.omr-reports-tab.is-active {
+  background: #0d6e7a;
+  border-color: #0d6e7a;
+  color: #fff;
+}
+
+.omr-reports-empty {
+  margin: 8px 0 0;
+  padding: 28px 18px;
+}
+
+.org-page--memberships .omr-reports-wrap {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.org-page--memberships .omr-reports {
+  display: block;
+}
+
+.org-page--memberships .omr-report-card + .omr-report-card {
+  margin-top: 12px;
+}
+
+.omr-report-card--empty p {
+  color: #7a94a3;
+}
+
 .org-page--memberships .omr-pagination {
   margin-top: 16px;
 }

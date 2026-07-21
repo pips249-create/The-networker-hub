@@ -6702,6 +6702,14 @@
     const groupId = filters.membershipsGroup;
     const roster = window.OrganiserMemberRoster;
     if (roster) {
+      const selectedGroup = findGroupById(groupId);
+      if (
+        selectedGroup &&
+        selectedGroup.rosterSummary &&
+        typeof roster.setGroupRosterSummary === 'function'
+      ) {
+        roster.setGroupRosterSummary(groupId, selectedGroup.rosterSummary);
+      }
       if (typeof roster.bindControls === 'function') roster.bindControls();
       if (typeof roster.clearStuckLoading === 'function') roster.clearStuckLoading();
       if (groupId && typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
