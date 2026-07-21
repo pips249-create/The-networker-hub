@@ -598,10 +598,19 @@ html:has(.for-organisers-page) {
 
 .fo-benefit-list li {
   position: relative;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2px 6px;
   padding-left: 1.5em;
   font-size: 0.94rem;
   line-height: 1.45;
   color: var(--fo-navy);
+}
+
+.fo-benefit-list .hub-field-tip-inline {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .fo-benefit-list li::before {

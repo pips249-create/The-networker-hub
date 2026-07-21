@@ -9,9 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721j">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721k">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
+<link rel="stylesheet" href="css/hub-field-tip.css?v=20260721">
 <script src="js/hub-seo-static-config.js?v=20260714a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="for-organisers"></script>
 <script src="js/hub-seo-data.js?v=20260612" defer></script>
@@ -20,7 +21,7 @@
 <body class="for-organisers-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260721b" data-root="" data-page="for-organisers"></script>
+<script src="js/site-nav.js?v=20260721c" data-root="" data-page="for-organisers"></script>
 
 <main class="fo-flow">
 
@@ -97,13 +98,13 @@
           <h3>Get discovered</h3>
           <p class="fo-benefit-lede">The Networker Hub connects UK networkers to your events. With built-in marketing tools, promote your group without leaving your workspace.</p>
           <ul class="fo-benefit-list">
-            <li>Events directory &amp; organiser browse</li>
-            <li>Premium Spotlight featured listings</li>
-            <li>Organiser profile pages &amp; reviews</li>
-            <li>Business opportunities hub</li>
-            <li>Saved organiser alerts for members</li>
-            <li>Map view, filters &amp; search</li>
-            <li>Social media post creator</li>
+            <li data-hub-tip="fo-events-directory">Events directory &amp; organiser browse</li>
+            <li data-hub-tip="fo-premium-spotlight">Premium Spotlight featured listings</li>
+            <li data-hub-tip="fo-organiser-profiles">Organiser profile pages &amp; reviews</li>
+            <li data-hub-tip="fo-opportunities-hub">Business opportunities hub</li>
+            <li data-hub-tip="fo-saved-organiser-alerts">Saved organiser alerts for members</li>
+            <li data-hub-tip="fo-map-filters">Map view, filters &amp; search</li>
+            <li data-hub-tip="fo-social-post-creator">Social media post creator</li>
           </ul>
         </article>
 
@@ -143,13 +144,13 @@
           <h3>Fast-track ticket sales</h3>
           <p class="fo-benefit-lede">Ticketing built for UK networking groups. Flexible payment options and streamlined checkout so attendees buy with confidence — and you keep the full ticket price.</p>
           <ul class="fo-benefit-list">
-            <li>Custom event pages &amp; ticket types</li>
-            <li>Free and paid events</li>
-            <li>Secure Stripe Connect checkout</li>
-            <li>Keep 100% of the ticket price</li>
-            <li>Guest visit programme</li>
-            <li>Category Exclusivity applications</li>
-            <li>Members only tickets</li>
+            <li data-hub-tip="fo-event-pages">Custom event pages &amp; ticket types</li>
+            <li data-hub-tip="fo-free-paid-events">Free and paid events</li>
+            <li data-hub-tip="fo-stripe-connect">Secure Stripe Connect checkout</li>
+            <li data-hub-tip="fo-keep-ticket-price">Keep 100% of the ticket price</li>
+            <li data-hub-tip="fo-guest-visit">Guest visit programme</li>
+            <li data-hub-tip="fo-category-exclusivity">Category Exclusivity applications</li>
+            <li data-hub-tip="fo-members-only-tickets">Members only tickets</li>
           </ul>
         </article>
 
@@ -185,13 +186,13 @@
           <h3>Engage attendees</h3>
           <p class="fo-benefit-lede">Make event day and beyond a breeze with check-in tools, automated communications, and attendee feedback — so your group shines from start to finish.</p>
           <ul class="fo-benefit-list">
-            <li>Automated booking confirmations</li>
-            <li>24-hour event reminders</li>
-            <li>Automated emails to attendees</li>
-            <li>Reviews from attendees</li>
-            <li>Name badges &amp; mobile check-in</li>
-            <li>Visit tracking (1st vs returning)</li>
-            <li>Attendee CSV export</li>
+            <li data-hub-tip="fo-booking-confirmations">Automated booking confirmations</li>
+            <li data-hub-tip="fo-24hr-reminders">24-hour event reminders</li>
+            <li data-hub-tip="fo-automated-emails">Automated emails to attendees</li>
+            <li data-hub-tip="fo-reviews">Reviews from attendees</li>
+            <li data-hub-tip="fo-name-badges">Name badges &amp; mobile check-in</li>
+            <li data-hub-tip="fo-visit-tracking">Visit tracking (1st vs returning)</li>
+            <li data-hub-tip="fo-csv-export">Attendee CSV export</li>
           </ul>
         </article>
       </div>
@@ -497,7 +498,9 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260714u" data-root=""></script>
 <script src="js/find-your-next-rotate.js?v=20260714"></script>
-<script src="js/for-organisers-page.js?v=20260721e"></script>
+<script src="js/for-organisers-feature-tips.js?v=20260721"></script>
+<script src="js/hub-field-tip.js?v=20260721"></script>
+<script src="js/for-organisers-page.js?v=20260721f"></script>
 
 </body>
 </html>
