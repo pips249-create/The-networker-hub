@@ -1809,7 +1809,7 @@
             ? 'A member sent a message about one of your business opportunities. Reply from your workspace while the lead is still warm.'
             : 'Members have sent new messages about your business opportunities. Review and reply from Enquiries received.',
         actions:
-          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-overview">View enquiries</button>',
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-enquiries">View enquiries</button>',
       });
     }
 
@@ -9246,6 +9246,7 @@
       '<ul class="org-opp-coaching-list">' +
       tips.join('') +
       '</ul></div>';
+    renderOpportunityInsightsEmpty();
   }
 
   function renderOpportunityCompare() {
@@ -10017,6 +10018,7 @@
     renderOpportunityRoiInsights();
     renderOpportunityCompare();
     renderOpportunityCoaching();
+    updateBusinessTabCounts();
     handleBusinessRenewUrlParam();
   }
 
@@ -10606,6 +10608,20 @@
       });
     });
 
+    document.querySelectorAll('[data-business-tab]').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const route = tab.getAttribute('data-business-tab');
+        if (route) setRoute(route);
+      });
+    });
+
+    document.querySelectorAll('[data-business-tab-link]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const route = btn.getAttribute('data-business-tab-link');
+        if (route) setRoute(route);
+      });
+    });
+
     document.querySelectorAll('[data-org-goto]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const route = btn.getAttribute('data-org-goto');
@@ -10648,7 +10664,7 @@
             updateGettingStartedPanel();
           });
         } else if (route === 'business-overview-enquiries') {
-          scrollToBusinessEnquiries();
+          setRoute('business-enquiries');
         }
       });
     });

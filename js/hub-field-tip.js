@@ -13,6 +13,8 @@
 
   function getTip(id) {
     var registry = global.OrganiserFieldTips || {};
+    if (registry[id]) return registry[id];
+    registry = global.ForOrganisersFeatureTips || {};
     return registry[id] || null;
   }
 

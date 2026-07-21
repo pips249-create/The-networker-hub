@@ -1005,10 +1005,22 @@ body.nav-menu-open {
     height: 16px;
   }
 
-  #org-page-events .org-sub-page.is-active {
+  .organiser-dashboard-page .org-events-subnav--business {
+    background: linear-gradient(135deg, var(--opp-navy, #0d1f3c) 0%, var(--opp-navy-mid, #162847) 52%, #1e3a4f 100%);
+  }
+
+  #org-page-business-overview .org-sub-page--business.is-active {
     margin-left: -4px;
     margin-right: -4px;
     padding: 16px 12px;
+  }
+
+  .org-business-head-actions {
+    width: 100%;
+  }
+
+  .org-business-head-actions .org-btn {
+    flex: 1 1 auto;
   }
 
   .org-attendees-table-wrap {
