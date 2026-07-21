@@ -3090,6 +3090,35 @@
   }
 }
 
+.org-page--memberships .org-memberships-how {
+  margin-bottom: 18px;
+}
+
+.org-page--memberships .omr-more-actions-wrap {
+  margin-left: auto;
+}
+
+.org-page--memberships .omr-more-actions-menu .org-action-item[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.org-page--memberships .omr-filter-bar {
+  align-items: stretch;
+}
+
+@media (max-width: 767px) {
+  .org-page--memberships .omr-more-actions-wrap {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+
+  .org-page--memberships .omr-more-actions-wrap .org-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .org-page--memberships .omr-register {
   margin-top: 0;
 }

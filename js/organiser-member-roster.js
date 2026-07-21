@@ -208,6 +208,9 @@
     const eventId = sel ? sel.value : '';
     const reportBtn = document.getElementById('omr-download-report');
     const remindBtn = document.getElementById('omr-remind-not-booked');
+    document.querySelectorAll('.omr-event-action').forEach(function (el) {
+      el.hidden = !eventId;
+    });
     if (reportBtn) {
       reportBtn.disabled = !eventId;
       reportBtn.title = eventId ? '' : 'Choose an event first';
@@ -417,11 +420,24 @@
 
   function syncAddPanel(totalActive) {
     const details = document.getElementById('omr-add-details');
-    if (!document.getElementById('omr-add-panel') && !details) return;
-    if (details) {
-      if (totalActive === 0) details.open = true;
-      else if (!details.dataset.omrUserOpened) details.open = false;
+    const importDetails = document.getElementById('omr-import-card');
+    if (details && !details.dataset.omrUserOpened) details.open = false;
+    if (importDetails && !importDetails.dataset.omrUserOpened) importDetails.open = false;
+  }
+
+  function rosterSummaryLine(totalActive) {
+    const h = lastReports && lastReports.rosterHealth ? lastReports.rosterHealth : null;
+    if (!totalActive) return 'No members yet';
+    const parts = [totalActive + (totalActive === 1 ? ' member' : ' members')];
+    if (h) {
+      if (Number(h.unclaimed) > 0) {
+        parts.push(h.unclaimed + ' not signed up');
+      }
+      if (Number(h.expiringSoon) > 0) {
+        parts.push(h.expiringSoon + ' expiring soon');
+      }
     }
+    return parts.join(' · ');
   }
 
   function jumpToAddSection(targetId) {
@@ -464,10 +480,13 @@
         ? Number(lastReports.rosterHealth.unclaimed) || 0
         : 0;
     btn.hidden = !(totalActive > 0 && unclaimed > 0);
-    btn.textContent =
+    const label =
       unclaimed === 1
         ? 'Resend invite to 1 not signed up'
         : 'Resend invites to ' + unclaimed + ' not signed up';
+    btn.textContent = label;
+    const strong = btn.querySelector('.org-action-text strong');
+    if (strong) strong.textContent = label;
   }
 
   async function loadEvents() {
@@ -751,6 +770,7 @@
   }
 
   async function downloadMembersCsv() {
+    closeAllActionMenus();
     let rows = [];
     try {
       const data = await api(rosterUrl(rosterListQuery(0, 10000)));
@@ -800,6 +820,7 @@
   }
 
   function downloadReportCsv() {
+    closeAllActionMenus();
     const eventId = selectedEventId();
     if (!eventId || !lastReports) {
       showAlert('Choose an event first, then download its report.', 'error');
@@ -930,10 +951,12 @@
       const rows = members;
       if (count) {
         count.hidden = totalActive === 0 && rosterTotal === 0;
-        count.textContent =
-          rosterTotal === totalActive
-            ? totalActive + (totalActive === 1 ? ' member on this register' : ' members on this register')
-            : rosterTotal + ' of ' + totalActive + ' members shown';
+        if (rosterTotal === totalActive) {
+          count.textContent = rosterSummaryLine(totalActive);
+        } else {
+          count.textContent =
+            rosterTotal + ' of ' + totalActive + ' members shown';
+        }
       }
 
       if (!rows.length) {
@@ -947,7 +970,7 @@
           } else if (title && text) {
             title.textContent = 'No members yet';
             text.textContent =
-              'Add someone above or import a spreadsheet. Then add a Members only ticket on your event (Tickets step) so members can book member rates.';
+              'Use + Add a member or Import spreadsheet, then add a Members only ticket on your event (Tickets step).';
           }
         }
         renderPagination(rosterTotal);
@@ -1012,7 +1035,7 @@
 
     document.addEventListener('click', function (e) {
       const toggle = e.target.closest('[data-org-action-toggle]');
-      if (toggle && toggle.closest('#omr-body')) {
+      if (toggle && (toggle.closest('#omr-body') || toggle.closest('.omr-more-actions-wrap'))) {
         e.preventDefault();
         e.stopPropagation();
         const wrap = toggle.closest('.org-action-wrap');
@@ -1172,6 +1195,7 @@
   }
 
   async function bulkResendInvites() {
+    closeAllActionMenus();
     const unclaimed =
       lastReports && lastReports.rosterHealth
         ? Number(lastReports.rosterHealth.unclaimed) || 0
@@ -1340,6 +1364,7 @@
     document.getElementById('omr-download-members')?.addEventListener('click', downloadMembersCsv);
     document.getElementById('omr-download-report')?.addEventListener('click', downloadReportCsv);
     document.getElementById('omr-remind-not-booked')?.addEventListener('click', async function () {
+      closeAllActionMenus();
       const eventId = selectedEventId();
       if (!eventId || !lastReports || !lastReports.bookedForEvent) {
         showAlert('Choose an event first.', 'error');

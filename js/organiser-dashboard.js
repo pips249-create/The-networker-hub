@@ -6540,10 +6540,7 @@
   }
 
   function membershipGroupOptionLabel(g) {
-    const name = g.name || 'Organiser page';
-    const active = Number(g.rosterSummary && g.rosterSummary.active) || 0;
-    if (!active) return name;
-    return name + ' (' + active + (active === 1 ? ' member' : ' members') + ')';
+    return g.name || 'Organiser page';
   }
 
   function preferredMembershipGroupId(groups, preferredId) {
@@ -6632,16 +6629,7 @@
   }
 
   function updateMembershipGroupMeta(groupId) {
-    const meta = document.getElementById('memberships-group-meta');
-    if (!meta) return;
-    const g = findGroupById(groupId);
-    if (!g) {
-      meta.hidden = true;
-      meta.textContent = '';
-      return;
-    }
-    meta.hidden = false;
-    meta.textContent = membershipSummaryLine(g);
+    /* Summary now shown under Member register heading (omr-count). */
   }
 
   function syncMembershipGroupUrl() {

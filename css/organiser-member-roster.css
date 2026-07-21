@@ -558,6 +558,15 @@
   color: #7a94a3;
 }
 
+.omr-filter-bar .omr-more-actions-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.omr-more-actions-menu {
+  min-width: 240px;
+}
+
 .omr-filter-bar {
   display: flex;
   flex-wrap: wrap;

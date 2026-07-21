@@ -49,6 +49,19 @@ const LABEL_FORMATS = {
   l7161: LABEL_L7163,
 };
 
+/** Vertical typography on each sticker (PDF points, measured from label top/bottom). */
+const BADGE_LAYOUT = {
+  padX: 6,
+  nameSize: 14,
+  nameFromTop: 10,
+  companySize: 7,
+  nameToCompanyGap: 9,
+  detailSize: 7,
+  companyToDetailGap: 8,
+  eventSize: 6,
+  eventFromBottom: 8,
+};
+
 /** @deprecated Use LABEL_FORMATS.l7160 */
 const LABEL = LABEL_L7160;
 
@@ -141,41 +154,45 @@ function buildNameBadgesPdf(attendees, options) {
       const left = labelFormat.left + col * labelFormat.hPitch;
       const topFromBottom =
         PAGE_H - labelFormat.top - row * labelFormat.vPitch - labelFormat.height;
-      const padX = 6;
+      const padX = BADGE_LAYOUT.padX;
       const { first, last } = splitName(entry.name);
       const nameLine = clampLine([first, last].filter(Boolean).join(' '), limits.name);
       const company = clampLine(entry.company, limits.company);
       const detail = clampLine(entry.detail, limits.detail);
+      const fromTop = (offset) => topFromBottom + labelFormat.height - offset;
 
+      let lineFromTop = BADGE_LAYOUT.nameFromTop;
       items.push({
         x: left + padX,
-        y: topFromBottom + labelFormat.height - 16,
-        size: 12,
+        y: fromTop(lineFromTop),
+        size: BADGE_LAYOUT.nameSize,
         font: 'F2',
         text: nameLine,
       });
       if (company) {
+        lineFromTop += BADGE_LAYOUT.nameToCompanyGap;
         items.push({
           x: left + padX,
-          y: topFromBottom + labelFormat.height - 30,
-          size: 9,
+          y: fromTop(lineFromTop),
+          size: BADGE_LAYOUT.companySize,
           font: 'F1',
           text: company,
         });
       }
       if (detail) {
+        lineFromTop += company ? BADGE_LAYOUT.companyToDetailGap : BADGE_LAYOUT.nameToCompanyGap;
         items.push({
           x: left + padX,
-          y: topFromBottom + labelFormat.height - (company ? 42 : 30),
-          size: company ? 8 : 9,
+          y: fromTop(lineFromTop),
+          size: BADGE_LAYOUT.detailSize,
           font: 'F1',
           text: detail,
         });
       }
       items.push({
         x: left + padX,
-        y: topFromBottom + 8,
-        size: 6,
+        y: topFromBottom + BADGE_LAYOUT.eventFromBottom,
+        size: BADGE_LAYOUT.eventSize,
         font: 'F1',
         text: eventTitle,
       });

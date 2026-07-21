@@ -64,12 +64,29 @@
   };
 
   var eventsTabCopy = {
-    list: 'Browse live, draft, and archived events. Search by title or location and open any event to edit tickets or publish.',
-    attendees:
-      'Filter by first visit or returning members, export attendee CSVs, and print Avery name badges (L7160 or L7163) the night before check-in.',
-    reviews: 'Read attendee reviews after each event and reply publicly from your dashboard to build trust with new visitors.',
-    revenue:
-      'Track available balances per event after settlement and request Stripe Connect payouts — you keep the full ticket price you set.'
+    list: {
+      title: 'All events',
+      lead: 'Browse live, draft, and archived listings. Search by title or location and open any event to edit tickets or publish.',
+      detail:
+        'Browse live, draft, and archived events. Search by title or location and open any event to edit tickets or publish.'
+    },
+    attendees: {
+      title: 'Attendees & name badges',
+      lead: 'Filter your guest list, export CSVs, and print Avery sticker sheets the night before check-in.',
+      detail:
+        'Filter by first visit or returning members, export attendee CSVs, and print Avery name badges (L7160 or L7163) the night before check-in.'
+    },
+    reviews: {
+      title: 'Reviews',
+      lead: 'Read feedback after each event and reply publicly to build trust with new visitors.',
+      detail: 'Read attendee reviews after each event and reply publicly from your dashboard to build trust with new visitors.'
+    },
+    revenue: {
+      title: 'Revenue',
+      lead: 'Track balances per event after settlement and request Stripe Connect payouts.',
+      detail:
+        'Track available balances per event after settlement and request Stripe Connect payouts — you keep the full ticket price you set.'
+    }
   };
 
   function updateDetail(panelId, eventsTabId) {
@@ -77,48 +94,22 @@
     var detailText = document.getElementById('fo-workspace-detail-text');
     var copy = panelCopy[panelId] || panelCopy.overview;
 
-    if (detailTitle) detailTitle.textContent = copy.title;
-    if (!detailText) return;
-
     if (panelId === 'events' && eventsTabId && eventsTabCopy[eventsTabId]) {
-      detailText.textContent = eventsTabCopy[eventsTabId];
+      if (detailTitle) detailTitle.textContent = eventsTabCopy[eventsTabId].title;
+      if (detailText) detailText.textContent = eventsTabCopy[eventsTabId].detail;
       return;
     }
 
-    detailText.textContent = copy.text;
+    if (detailTitle) detailTitle.textContent = copy.title;
+    if (detailText) detailText.textContent = copy.text;
   }
 
-  function initEventsSubnav(mock) {
-    var tabs = mock.querySelectorAll('[data-fo-events-tab]');
-    var views = mock.querySelectorAll('[data-fo-events-view]');
-    if (!tabs.length || !views.length) return;
-
-    function activateEventsTab(tabId, focusTab) {
-      tabs.forEach(function (tab) {
-        var selected = tab.getAttribute('data-fo-events-tab') === tabId;
-        tab.classList.toggle('is-active', selected);
-        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-        tab.tabIndex = selected ? 0 : -1;
-        if (selected && focusTab) tab.focus();
-      });
-
-      views.forEach(function (view) {
-        var match = view.getAttribute('data-fo-events-view') === tabId;
-        view.classList.toggle('is-active', match);
-        if (match) view.removeAttribute('hidden');
-        else view.setAttribute('hidden', '');
-      });
-
-      updateDetail('events', tabId);
-    }
-
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        activateEventsTab(tab.getAttribute('data-fo-events-tab'), false);
-      });
-    });
-
-    activateEventsTab('list', false);
+  function updateEventsPanelHead(tabId) {
+    var meta = eventsTabCopy[tabId] || eventsTabCopy.list;
+    var titleEl = document.getElementById('fo-events-panel-title');
+    var leadEl = document.getElementById('fo-events-panel-lead');
+    if (titleEl) titleEl.textContent = meta.title;
+    if (leadEl) leadEl.textContent = meta.lead;
   }
 
   function initDashPreview() {
@@ -127,11 +118,55 @@
 
     var tabs = mock.querySelectorAll('[role="tab"][data-fo-panel]');
     var panels = mock.querySelectorAll('[data-fo-panel-view]');
+    var eventTabs = mock.querySelectorAll('[data-fo-events-tab]');
+    var eventViews = mock.querySelectorAll('[data-fo-events-view]');
     if (!tabs.length || !panels.length) return;
 
-    function activate(panelId, focusTab) {
+    function activateEventsTab(tabId, focusTab) {
+      eventTabs.forEach(function (tab) {
+        var selected = tab.getAttribute('data-fo-events-tab') === tabId;
+        tab.classList.toggle('is-active', selected);
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.tabIndex = selected ? 0 : -1;
+        if (selected && focusTab) tab.focus();
+      });
+
+      eventViews.forEach(function (view) {
+        var match = view.getAttribute('data-fo-events-view') === tabId;
+        view.classList.toggle('is-active', match);
+        if (match) view.removeAttribute('hidden');
+        else view.setAttribute('hidden', '');
+      });
+
       tabs.forEach(function (tab) {
-        var selected = tab.getAttribute('data-fo-panel') === panelId;
+        if (tab.getAttribute('data-fo-panel') !== 'events') return;
+        var selected = tab.getAttribute('data-fo-events-tab') === tabId;
+        tab.classList.toggle('is-active', selected);
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.tabIndex = selected ? 0 : -1;
+      });
+
+      updateEventsPanelHead(tabId);
+      updateDetail('events', tabId);
+    }
+
+    function activate(panelId, focusTab, eventsTabId) {
+      var nextEventsTab = eventsTabId;
+
+      if (panelId === 'events') {
+        if (!nextEventsTab) {
+          var activeSidebar = mock.querySelector('[data-fo-panel="events"].is-active');
+          nextEventsTab =
+            (activeSidebar && activeSidebar.getAttribute('data-fo-events-tab')) || 'list';
+        }
+      }
+
+      tabs.forEach(function (tab) {
+        var tabPanel = tab.getAttribute('data-fo-panel');
+        var selected = tabPanel === panelId;
+        if (tabPanel === 'events') {
+          selected = panelId === 'events' && tab.getAttribute('data-fo-events-tab') === nextEventsTab;
+        }
         tab.classList.toggle('is-active', selected);
         tab.setAttribute('aria-selected', selected ? 'true' : 'false');
         tab.tabIndex = selected ? 0 : -1;
@@ -152,16 +187,23 @@
       });
 
       if (panelId === 'events') {
-        var activeEventsTab = mock.querySelector('[data-fo-events-tab].is-active');
-        updateDetail(panelId, activeEventsTab ? activeEventsTab.getAttribute('data-fo-events-tab') : 'list');
+        activateEventsTab(nextEventsTab, false);
       } else {
         updateDetail(panelId);
       }
     }
 
+    eventTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        activate('events', false, tab.getAttribute('data-fo-events-tab'));
+      });
+    });
+
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
-        activate(tab.getAttribute('data-fo-panel'), false);
+        var panelId = tab.getAttribute('data-fo-panel');
+        var eventsTabId = tab.getAttribute('data-fo-events-tab') || null;
+        activate(panelId, false, eventsTabId);
       });
 
       tab.addEventListener('keydown', function (event) {
@@ -183,11 +225,11 @@
           next = list.length - 1;
         }
 
-        activate(list[next].getAttribute('data-fo-panel'), true);
+        var nextTab = list[next];
+        activate(nextTab.getAttribute('data-fo-panel'), true, nextTab.getAttribute('data-fo-events-tab'));
       });
     });
 
-    initEventsSubnav(mock);
     activate('overview', false);
   }
 

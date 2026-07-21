@@ -1022,11 +1022,39 @@ html:has(.for-organisers-page) {
 
 .fo-workspace-stage {
   max-width: none;
+  display: grid;
+  gap: 16px;
+}
+
+.fo-workspace-detail {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--od-border-soft);
+  box-shadow: 0 8px 24px rgba(26, 46, 59, 0.06);
+}
+
+.fo-workspace-detail-title {
+  margin: 0 0 6px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+  font-weight: 400;
+  color: var(--fo-navy);
+}
+
+.fo-workspace-detail-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--fo-muted);
+  max-width: 52em;
 }
 
 .fo-org-preview {
   max-width: 1180px;
   margin: 0 auto;
+  width: 100%;
   border-radius: 16px;
   border: 1px solid var(--od-border-soft);
   background: var(--od-bg);
@@ -1036,7 +1064,7 @@ html:has(.for-organisers-page) {
 
 .fo-org-preview-layout {
   display: grid;
-  min-height: 520px;
+  min-height: 460px;
 }
 
 @media (min-width: 900px) {
@@ -1109,6 +1137,22 @@ html:has(.for-organisers-page) {
   color: var(--od-purple);
   font-weight: 700;
   box-shadow: 0 1px 4px rgba(15, 70, 80, 0.08);
+}
+
+.fo-org-nav-link--sub {
+  margin-left: 8px;
+  padding: 9px 12px 9px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-left-width: 2px;
+  border-radius: 0 10px 10px 0;
+  opacity: 0.94;
+}
+
+.fo-org-nav-link--sub.is-active {
+  border-left-width: 3px;
+  font-weight: 700;
+  opacity: 1;
 }
 
 .fo-org-main {
@@ -1486,6 +1530,99 @@ html:has(.for-organisers-page) {
   font-size: 0.68rem;
 }
 
+.fo-org-btn--lg {
+  min-height: 42px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+}
+
+.fo-org-action-banner {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--od-border-soft);
+  background: linear-gradient(135deg, #fff 0%, var(--od-gold-light) 100%);
+  box-shadow: 0 8px 24px rgba(189, 147, 46, 0.1);
+}
+
+.fo-org-action-banner--badges {
+  border-color: rgba(189, 147, 46, 0.35);
+}
+
+.fo-org-action-banner-kicker {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fo-gold);
+}
+
+.fo-org-action-banner-copy strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1rem;
+  color: var(--fo-navy);
+}
+
+.fo-org-action-banner-copy p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--fo-muted);
+  max-width: 36em;
+}
+
+.fo-org-action-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.fo-org-badge-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fo-org-badge-sheet {
+  display: grid;
+  gap: 2px;
+  padding: 10px 8px;
+  min-height: 52px;
+  border-radius: 6px;
+  border: 1px dashed rgba(26, 46, 59, 0.18);
+  background: rgba(255, 255, 255, 0.88);
+  text-align: center;
+  align-content: center;
+}
+
+.fo-org-badge-sheet strong {
+  font-size: 0.72rem;
+  color: var(--fo-navy);
+}
+
+.fo-org-badge-sheet small {
+  font-size: 0.58rem;
+  color: var(--fo-muted);
+  line-height: 1.3;
+}
+
+@media (min-width: 760px) {
+  .fo-org-action-banner--badges {
+    grid-template-columns: 1.2fr auto;
+    align-items: center;
+  }
+
+  .fo-org-action-banner--badges .fo-org-badge-preview {
+    grid-column: 1 / -1;
+  }
+}
+
 .fo-org-table-wrap {
   border: 1px solid var(--od-border-soft);
   border-radius: 12px;
@@ -1612,20 +1749,15 @@ html:has(.for-organisers-page) {
     border-bottom-color: var(--od-purple);
   }
 
+  .fo-org-nav-link--sub {
+    margin-left: 0;
+  }
+
   .fo-org-portals,
   .fo-org-stats,
   .fo-org-report-cards {
     grid-template-columns: 1fr;
   }
-}
-
-.fo-workspace-detail {
-  margin-top: 20px;
-  padding: 20px 22px;
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid var(--od-border-soft);
-  box-shadow: 0 8px 24px rgba(26, 46, 59, 0.06);
 }
 
 .fo-workspace-detail-kicker {
@@ -1635,21 +1767,6 @@ html:has(.for-organisers-page) {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--fo-purple);
-}
-
-.fo-workspace-detail-title {
-  margin: 0 0 8px;
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.35rem;
-  font-weight: 400;
-  color: var(--fo-navy);
-}
-
-.fo-workspace-detail-text {
-  margin: 0;
-  font-size: 0.98rem;
-  line-height: 1.65;
-  color: var(--fo-muted);
 }
 
 .fo-cta .fo-pricing-callout {

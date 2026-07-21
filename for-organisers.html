@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721i">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721j">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
 <script src="js/hub-seo-static-config.js?v=20260714a"></script>
@@ -202,9 +202,14 @@
     <div class="fo-flow-inner">
       <header class="fo-section-head fo-section-head--center fo-reveal-child">
         <h2 id="fo-workspace-heading">Everything in one workspace</h2>
-        <p class="fo-section-lede">Events, tickets, attendees, opportunities, team access, and payouts — all from your organiser dashboard. Tap a section to explore.</p>
+        <p class="fo-section-lede">Events, tickets, attendees, opportunities, team access, and payouts — all from your organiser dashboard. Each sidebar item opens directly.</p>
       </header>
       <div class="fo-workspace-stage fo-reveal-child">
+        <aside class="fo-workspace-detail" id="fo-workspace-detail" aria-live="polite">
+          <p class="fo-workspace-detail-kicker">What you can do here</p>
+          <h3 class="fo-workspace-detail-title" id="fo-workspace-detail-title">Overview</h3>
+          <p class="fo-workspace-detail-text" id="fo-workspace-detail-text">See tickets sold, revenue, and shortcuts into events, memberships, and business opportunities from one home screen.</p>
+        </aside>
         <div class="fo-org-preview" id="fo-dash-mock" aria-label="Interactive preview of the organiser workspace">
           <div class="fo-org-preview-layout">
             <nav class="fo-org-sidebar" role="tablist" aria-label="Organiser workspace sections">
@@ -213,7 +218,10 @@
               <button type="button" class="fo-org-nav-link" role="tab" aria-selected="false" aria-controls="fo-panel-social" id="fo-tab-social" data-fo-panel="social" tabindex="-1">Promote &amp; social</button>
               <button type="button" class="fo-org-nav-link" role="tab" aria-selected="false" aria-controls="fo-panel-team" id="fo-tab-team" data-fo-panel="team" tabindex="-1">Team &amp; invites</button>
               <span class="fo-org-nav-divider">Events</span>
-              <button type="button" class="fo-org-nav-link" role="tab" aria-selected="false" aria-controls="fo-panel-events" id="fo-tab-events" data-fo-panel="events" tabindex="-1">My events</button>
+              <button type="button" class="fo-org-nav-link fo-org-nav-link--sub" role="tab" aria-selected="false" aria-controls="fo-panel-events" id="fo-tab-events-list" data-fo-panel="events" data-fo-events-tab="list" tabindex="-1">All events</button>
+              <button type="button" class="fo-org-nav-link fo-org-nav-link--sub" role="tab" aria-selected="false" aria-controls="fo-panel-events" id="fo-tab-events-attendees" data-fo-panel="events" data-fo-events-tab="attendees" tabindex="-1">Attendees &amp; name badges</button>
+              <button type="button" class="fo-org-nav-link fo-org-nav-link--sub" role="tab" aria-selected="false" aria-controls="fo-panel-events" id="fo-tab-events-reviews" data-fo-panel="events" data-fo-events-tab="reviews" tabindex="-1">Reviews</button>
+              <button type="button" class="fo-org-nav-link fo-org-nav-link--sub" role="tab" aria-selected="false" aria-controls="fo-panel-events" id="fo-tab-events-revenue" data-fo-panel="events" data-fo-events-tab="revenue" tabindex="-1">Revenue</button>
               <button type="button" class="fo-org-nav-link" role="tab" aria-selected="false" aria-controls="fo-panel-memberships" id="fo-tab-memberships" data-fo-panel="memberships" tabindex="-1">Memberships</button>
               <span class="fo-org-nav-divider">Business opportunities</span>
               <button type="button" class="fo-org-nav-link" role="tab" aria-selected="false" aria-controls="fo-panel-business" id="fo-tab-business" data-fo-panel="business" tabindex="-1">My business opportunities</button>
@@ -282,12 +290,12 @@
                 </div>
               </div>
 
-              <div class="fo-org-panel" role="tabpanel" id="fo-panel-events" aria-labelledby="fo-tab-events" data-fo-panel-view="events" hidden>
+              <div class="fo-org-panel" role="tabpanel" id="fo-panel-events" aria-labelledby="fo-tab-events-list" data-fo-panel-view="events" hidden>
                 <header class="fo-org-page-head fo-org-page-head--split">
                   <div>
                     <p class="fo-org-kicker">My events</p>
-                    <h3 class="fo-org-title">My Events</h3>
-                    <p class="fo-org-lead">Manage listings, tickets, attendees, reviews, and revenue from the tabs below.</p>
+                    <h3 class="fo-org-title" id="fo-events-panel-title">All events</h3>
+                    <p class="fo-org-lead" id="fo-events-panel-lead">Browse live, draft, and archived listings — or pick a section in the sidebar.</p>
                   </div>
                   <span class="fo-org-btn fo-org-btn--gold">+ New event</span>
                 </header>
@@ -316,14 +324,36 @@
                 </div>
 
                 <div class="fo-org-events-view" data-fo-events-view="attendees" hidden>
-                  <p class="fo-org-sub-lead">Filter by event, export a CSV, or print Avery name badges for check-in.</p>
+                  <div class="fo-org-action-banner fo-org-action-banner--badges">
+                    <div class="fo-org-action-banner-copy">
+                      <span class="fo-org-action-banner-kicker">Check-in ready</span>
+                      <strong>Print name badges before guests arrive</strong>
+                      <p>Export a PDF for Avery L7160 (standard) or L7163 (large). Each badge uses the guest&rsquo;s name, company, and job title from their Hub profile.</p>
+                    </div>
+                    <div class="fo-org-action-banner-actions">
+                      <span class="fo-org-select">Avery L7160 · 21 per sheet</span>
+                      <span class="fo-org-btn fo-org-btn--gold fo-org-btn--lg">⬇ Export name badges (PDF)</span>
+                    </div>
+                    <div class="fo-org-badge-preview" aria-hidden="true">
+                      <span class="fo-org-badge-sheet">
+                        <strong>Sam K.</strong>
+                        <small>Acme Ltd · Director</small>
+                      </span>
+                      <span class="fo-org-badge-sheet">
+                        <strong>Priya M.</strong>
+                        <small>Bright Co · Marketing</small>
+                      </span>
+                      <span class="fo-org-badge-sheet">
+                        <strong>Alex R.</strong>
+                        <small>Studio 12 · Designer</small>
+                      </span>
+                    </div>
+                  </div>
                   <div class="fo-org-filter-bar">
                     <span class="fo-org-search">Search name, email or company…</span>
                     <span class="fo-org-select">All events</span>
                     <span class="fo-org-select">All attendees</span>
-                    <span class="fo-org-btn fo-org-btn--gold">⬇ Download attendees CSV</span>
-                    <span class="fo-org-select">Avery L7160</span>
-                    <span class="fo-org-btn fo-org-btn--outline">⬇ Export name badges (PDF)</span>
+                    <span class="fo-org-btn fo-org-btn--outline">⬇ Download attendees CSV</span>
                   </div>
                   <div class="fo-org-table-wrap">
                     <table class="fo-org-table">
@@ -441,12 +471,7 @@
             </div>
           </div>
         </div>
-        <p class="fo-dash-mock-hint">Use the sidebar and tabs to explore the workspace</p>
-        <aside class="fo-workspace-detail" id="fo-workspace-detail" aria-live="polite">
-          <p class="fo-workspace-detail-kicker">What you can do here</p>
-          <h3 class="fo-workspace-detail-title" id="fo-workspace-detail-title">Overview</h3>
-          <p class="fo-workspace-detail-text" id="fo-workspace-detail-text">See tickets sold, revenue, and shortcuts into events, memberships, and business opportunities from one home screen.</p>
-        </aside>
+        <p class="fo-dash-mock-hint">Pick a section in the sidebar — event areas open directly, no extra clicks</p>
       </div>
     </div>
   </section>
@@ -472,7 +497,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260714u" data-root=""></script>
 <script src="js/find-your-next-rotate.js?v=20260714"></script>
-<script src="js/for-organisers-page.js?v=20260721d"></script>
+<script src="js/for-organisers-page.js?v=20260721e"></script>
 
 </body>
 </html>
