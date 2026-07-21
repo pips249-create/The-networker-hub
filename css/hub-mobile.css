@@ -985,17 +985,24 @@ body.nav-menu-open {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--od-white, #fff);
+    background: linear-gradient(135deg, var(--od-purple-deep, #1e3a4f) 0%, var(--od-purple, #0d6e7a) 52%, #1096a8 100%);
     margin-left: -4px;
     margin-right: -4px;
+    padding: 8px 8px 0;
     border-radius: var(--od-radius, 12px) var(--od-radius, 12px) 0 0;
   }
 
   .organiser-dashboard-page .org-events-tab {
     flex: 0 0 auto;
-    min-width: 92px;
-    padding: 12px 14px;
-    font-size: 13px;
+    min-width: 88px;
+    padding: 10px 12px 12px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .organiser-dashboard-page .org-events-tab-icon {
+    width: 16px;
+    height: 16px;
   }
 
   #org-page-events .org-sub-page.is-active {

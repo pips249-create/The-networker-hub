@@ -23,9 +23,9 @@
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721tabs3" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721tabs4" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260721tabs3" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260721tabs4" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem4" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -987,22 +987,28 @@
           </p>
           <nav class="org-events-subnav" id="org-events-subnav" role="tablist" aria-label="Events sections">
             <button type="button" role="tab" class="org-events-tab is-active" id="events-tab-list" data-events-tab="events-list" aria-controls="sub-events-list" aria-selected="true">
-              Events <span class="org-events-tab-count" id="tab-count-events">0</span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="org-events-tab-label">Events <span class="org-events-tab-count" id="tab-count-events">0</span></span>
             </button>
             <button type="button" role="tab" class="org-events-tab" id="events-tab-tickets" data-events-tab="events-tickets" aria-controls="sub-events-tickets" aria-selected="false" tabindex="-1">
-              Tickets <span class="org-events-tab-count" id="tab-count-tickets">0</span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18"/><path d="M7 13h.01"/><path d="M11 13h6"/><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
+              <span class="org-events-tab-label">Tickets <span class="org-events-tab-count" id="tab-count-tickets">0</span></span>
             </button>
             <button type="button" role="tab" class="org-events-tab" id="events-tab-attendees" data-events-tab="events-attendees" aria-controls="sub-events-attendees" aria-selected="false" tabindex="-1">
-              Attendees
-              <span class="org-events-tab-badge" id="org-events-tab-applications-badge" hidden>New</span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3.3 3.1-6 7-6"/><path d="M14 20c0-2.2 2.7-4.5 6-4.5"/></svg>
+              <span class="org-events-tab-label">Attendees <span class="org-events-tab-badge" id="org-events-tab-applications-badge" hidden>New</span></span>
             </button>
-            <button type="button" role="tab" class="org-events-tab" id="events-tab-cancellations" data-events-tab="events-cancellations" aria-controls="sub-events-cancellations" aria-selected="false" tabindex="-1">Cancellations</button>
+            <button type="button" role="tab" class="org-events-tab" id="events-tab-cancellations" data-events-tab="events-cancellations" aria-controls="sub-events-cancellations" aria-selected="false" tabindex="-1">
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+              <span class="org-events-tab-label">Cancellations</span>
+            </button>
             <button type="button" role="tab" class="org-events-tab" id="events-tab-reviews" data-events-tab="events-reviews" aria-controls="sub-events-reviews" aria-selected="false" tabindex="-1">
-              Reviews <span class="org-events-tab-count" id="tab-count-reviews">0</span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z"/></svg>
+              <span class="org-events-tab-label">Reviews <span class="org-events-tab-count" id="tab-count-reviews">0</span></span>
             </button>
             <button type="button" role="tab" class="org-events-tab" id="events-tab-revenue" data-events-tab="events-revenue" aria-controls="sub-events-revenue" aria-selected="false" tabindex="-1">
-              Revenue
-              <span class="org-events-tab-badge org-events-tab-badge--action" id="org-events-tab-revenue-badge" hidden>Setup</span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span class="org-events-tab-label">Revenue <span class="org-events-tab-badge org-events-tab-badge--action" id="org-events-tab-revenue-badge" hidden>Setup</span></span>
             </button>
           </nav>
 
