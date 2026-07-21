@@ -4328,7 +4328,6 @@
       }
       if (intent.qty > 1) {
         qty = Math.min(intent.qty, maxQty);
-        update();
       }
       const terms = document.getElementById('checkout-terms-agree');
       if (terms && intent.termsAgreed) terms.checked = true;
@@ -4351,12 +4350,18 @@
         return;
       }
 
+      update();
       const notice = document.getElementById('checkout-resume-notice');
       const noticeText = document.getElementById('checkout-resume-notice-text');
       if (notice && noticeText) {
-        const btnLabel = intent.action === 'free_buy' ? 'Get free ticket' : 'Buy ticket';
-        const step =
-          intent.action === 'free_buy' ? 'complete your registration' : 'continue to payment';
+        const tierEl = getSelectedTierEl();
+        const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
+        const isFreeCheckout = tierPrice <= 0;
+        const buyBtn = document.getElementById('buy-btn');
+        const btnLabel =
+          (buyBtn && buyBtn.textContent.trim()) ||
+          (isFreeCheckout ? 'Get free ticket' : 'Buy ticket');
+        const step = isFreeCheckout ? 'complete your registration' : 'continue to payment';
         noticeText.innerHTML =
           'You\u2019re signed in \u2014 your ticket selection is ready. Click <strong>' +
           btnLabel +
