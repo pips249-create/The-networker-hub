@@ -316,6 +316,12 @@
 
 .org-page--memberships .omr-register {
   margin-top: 0;
+  margin-bottom: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .org-dash-loading--membership {

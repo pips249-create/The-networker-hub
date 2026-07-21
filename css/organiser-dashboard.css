@@ -3344,6 +3344,31 @@
 
 .org-page--memberships .omr-register {
   margin-top: 0;
+  margin-bottom: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.org-page--memberships .omr-roster-head {
+  margin-bottom: 16px;
+}
+
+.org-page--memberships .omr-register-panel.is-active {
+  border: 1px solid var(--od-border);
+  border-top: none;
+  border-radius: 0 0 var(--od-radius) var(--od-radius);
+  background: var(--od-white);
+  padding: 20px;
+  box-shadow: var(--od-shadow-md);
+}
+
+.org-page--memberships .omr-register-panel.is-active > .org-filter-bar:first-child,
+.org-page--memberships .omr-register-panel.is-active > .omr-reports-lead:first-child,
+.org-page--memberships .omr-register-panel.is-active > p:first-child {
+  margin-top: 0;
 }
 
 .omr-register-tabs {
@@ -3465,6 +3490,39 @@
 
 .omr-register-tabs--reports {
   margin-top: 0;
+}
+
+.org-page--memberships .omr-reports-results {
+  margin-top: 16px;
+}
+
+.org-page--memberships .org-events-subnav--reports {
+  margin-bottom: 0;
+}
+
+.org-page--memberships .org-events-subnav--reports .org-events-tab {
+  min-width: 0;
+  padding: 10px 8px 12px;
+  font-size: 12px;
+}
+
+.org-page--memberships .omr-reports-panel {
+  border: 1px solid var(--od-border);
+  border-top: none;
+  border-radius: 0 0 var(--od-radius) var(--od-radius);
+  background: var(--od-white);
+  padding: 20px;
+  box-shadow: var(--od-shadow-md);
+}
+
+.org-page--memberships .omr-reports-panel .org-dash-loading--membership {
+  margin: 0;
+}
+
+.org-page--memberships .omr-reports-panel .omr-reports-wrap {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .omr-reports-wrap.is-reports-loading {

@@ -1048,6 +1048,16 @@ body.nav-menu-open {
     background: linear-gradient(135deg, var(--opp-navy, #0d1f3c) 0%, var(--opp-navy-mid, #162847) 52%, #1e3a4f 100%);
   }
 
+  .org-page--memberships .org-events-subnav--reports {
+    position: static;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .org-page--memberships .org-events-subnav--reports .org-events-tab {
+    min-width: 76px;
+  }
+
   #org-page-business-overview .org-sub-page--business.is-active {
     margin-left: -4px;
     margin-right: -4px;

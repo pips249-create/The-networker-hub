@@ -451,7 +451,7 @@
     const onReportsTab = activeRegisterTab === 'reports';
     const empty = document.getElementById('omr-reports-empty');
     const wrap = document.getElementById('omr-reports-wrap');
-    const tabs = document.getElementById('omr-reports-tabs');
+    const results = document.getElementById('omr-reports-results');
     const refreshBtn = document.getElementById('omr-refresh-reports');
     const runBtn = document.getElementById('omr-run-reports');
     const stale = document.getElementById('omr-reports-stale');
@@ -463,7 +463,7 @@
     if (!onReportsTab) {
       if (empty) empty.hidden = true;
       if (wrap) wrap.hidden = true;
-      if (tabs) tabs.hidden = true;
+      if (results) results.hidden = true;
       if (stale) stale.hidden = true;
       if (compact) compact.hidden = true;
       return;
@@ -474,7 +474,7 @@
     if (!hasMembers) {
       if (empty) empty.hidden = false;
       if (wrap) wrap.hidden = true;
-      if (tabs) tabs.hidden = true;
+      if (results) results.hidden = true;
       if (setup) setup.hidden = true;
       if (compact) compact.hidden = true;
       if (runBtn) runBtn.disabled = true;
@@ -489,7 +489,7 @@
     if (!hasLoaded || reportsStale) {
       expandReportsSetup();
       if (wrap) wrap.hidden = true;
-      if (tabs) tabs.hidden = true;
+      if (results) results.hidden = true;
       if (refreshBtn) refreshBtn.hidden = !reportsStale;
       if (stale) stale.hidden = !reportsStale;
       return;
@@ -497,7 +497,7 @@
 
     collapseReportsSetup();
     if (wrap) wrap.hidden = false;
-    if (tabs) tabs.hidden = false;
+    if (results) results.hidden = false;
     if (refreshBtn) refreshBtn.hidden = true;
     if (stale) stale.hidden = true;
   }
@@ -1346,6 +1346,9 @@
       const totalActive = rosterActiveTotal;
       syncAddPanel(totalActive);
       syncBulkResend(totalActive);
+
+      const tabCount = document.getElementById('omr-tab-count-members');
+      if (tabCount) tabCount.textContent = String(totalActive);
 
       const rows = members;
       if (count) {

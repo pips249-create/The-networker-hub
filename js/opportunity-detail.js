@@ -25,7 +25,6 @@
     posterLogo: document.getElementById('opp-poster-logo'),
     posterName: document.getElementById('opp-poster-name'),
     form: document.getElementById('opp-enquire-form'),
-    mailto: document.getElementById('opp-enquire-mailto'),
     submit: document.getElementById('opp-enquire-submit'),
     enquireStatus: document.getElementById('opp-enquire-status'),
     investBreakdownSection: document.getElementById('opp-investment-breakdown-section'),
@@ -283,32 +282,6 @@
     els.investBreakdownSection.hidden = false;
   }
 
-  function enquiryEmail(item) {
-    var email = String((item && item.contactEmail) || '').trim();
-    return email || 'hello@thenetworkerhub.com';
-  }
-
-  function buildMailto(item, name, email, message) {
-    var subject = 'Opportunity enquiry: ' + item.title;
-    var body =
-      'Name: ' +
-      name +
-      '\nEmail: ' +
-      email +
-      '\n\n' +
-      message +
-      '\n\n—\nSent via The Networker Hub\nListing: ' +
-      window.location.href;
-    return (
-      'mailto:' +
-      encodeURIComponent(enquiryEmail(item)) +
-      '?subject=' +
-      encodeURIComponent(subject) +
-      '&body=' +
-      encodeURIComponent(body)
-    );
-  }
-
   function render(item) {
     current = item;
     document.title = item.title + ' – The Networker Hub';
@@ -347,10 +320,6 @@
     renderSimilar(item);
     refreshSaveButton();
     applyClaimSection(item);
-
-    if (els.mailto) {
-      els.mailto.href = buildMailto(item, '', '', 'I would like to find out more about this opportunity.');
-    }
 
     if (els.notFound) els.notFound.hidden = true;
     if (els.layout) els.layout.hidden = false;
@@ -542,7 +511,7 @@
       var terms = document.getElementById('opp-enquire-terms');
       if (!name || !email || !message) return;
       if (terms && !terms.checked) {
-        showEnquireStatus('Please confirm you understand this is not investment advice.', false);
+        showEnquireStatus('Please tick the disclaimer to confirm before sending your enquiry.', false);
         terms.focus();
         return;
       }
