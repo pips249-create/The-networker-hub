@@ -130,12 +130,28 @@ function eventTypeTabCategory(raw) {
   return 'meeting';
 }
 
-function inferMeetingType(row) {
-  const fmt = String(row.meeting_type || '').trim();
-  if (fmt) return fmt;
-  if (String(row.meeting_link || '').trim()) return 'Online';
-  if (row.venue || row.postcode || row.city || row.location_label) return 'In person';
+/** Matches browse_events_index.format_tab — online when a meeting link exists. */
+function resolveFormatTab(row) {
+  const tab = String(row?.format_tab || '')
+    .trim()
+    .toLowerCase();
+  if (tab === 'online' || tab === 'hybrid' || tab === 'in-person') return tab;
+
+  const mt = String(row?.meeting_type || '').trim();
+  if (/hybrid/i.test(mt)) return 'hybrid';
+  if (/online/i.test(mt) && !/person/i.test(mt)) return 'online';
+  if (String(row?.meeting_link || '').trim()) return 'online';
+  return 'in-person';
+}
+
+function formatTabToLabel(tab) {
+  if (tab === 'online') return 'Online';
+  if (tab === 'hybrid') return 'Hybrid';
   return 'In person';
+}
+
+function inferMeetingType(row) {
+  return formatTabToLabel(resolveFormatTab(row));
 }
 
 function resolvedEventType(row, typeRaw) {
@@ -174,11 +190,11 @@ function cardLocationLabel(row) {
   if (city) return city.slice(0, 20);
   const outcode = String(row.outcode || '').trim() || ukOutcode(row.postcode);
   if (outcode) return outcode.slice(0, 20);
-  if (String(inferMeetingType(row) || '')
-    .toLowerCase()
-    .includes('online')) {
-    return 'Online';
-  }
+  const tab = resolveFormatTab(row);
+  if (tab === 'online') return 'Online';
+  if (tab === 'hybrid') return 'Hybrid';
+  const venue = String(row.venue || '').trim();
+  if (venue) return venue.slice(0, 20);
   return '';
 }
 

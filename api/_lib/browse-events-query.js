@@ -16,6 +16,16 @@ const DEFAULT_LIMIT = 12;
 const MAX_PINS = 2500;
 const IN_CHUNK = 80;
 
+function dedupeEventsById(events) {
+  const seen = new Set();
+  return (events || []).filter((ev) => {
+    const id = String(ev?.id || '').trim();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
 function applyUpcomingBrowseFilter(query, nowIso) {
   const now = nowIso || new Date().toISOString();
   return query.gt('starts_at', now);
@@ -489,7 +499,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   const pageData = await fetchBrowsePageIds(sb, params);
   const pageRows = await fetchRowsByIds(sb, pageData.ids);
-  const events = await hydrateBrowseEvents(sb, pageRows);
+  const events = dedupeEventsById(await hydrateBrowseEvents(sb, pageRows));
 
   const order = new Map(pageData.ids.map((id, i) => [id, i]));
   events.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
@@ -505,7 +515,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     const { data: featuredRows, error: fErr } = await fq;
     if (fErr) throw new Error(fErr.message);
     const liveFeatured = (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row));
-    featured = await hydrateBrowseEvents(sb, liveFeatured);
+    featured = dedupeEventsById(await hydrateBrowseEvents(sb, liveFeatured));
   }
 
   let meta = null;

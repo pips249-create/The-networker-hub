@@ -102,9 +102,19 @@
     return API_PATH + '?' + q.toString();
   }
 
+  function dedupeEventsById(list) {
+    var seen = {};
+    return (list || []).filter(function (ev) {
+      var id = ev && ev.id != null ? String(ev.id) : '';
+      if (!id || seen[id]) return false;
+      seen[id] = true;
+      return true;
+    });
+  }
+
   function applyBrowsePayload(data, page) {
-    window.hubBrowseEvents = (data.events || []).slice();
-    window.hubBrowseFeatured = (data.featured || []).slice();
+    window.hubBrowseEvents = dedupeEventsById(data.events || []);
+    window.hubBrowseFeatured = dedupeEventsById(data.featured || []);
     window.hubBrowseTotal = data.pagination ? Number(data.pagination.total) || 0 : window.hubBrowseEvents.length;
     window.hubBrowsePagination = data.pagination || null;
     if (data.meta && data.meta.typeCounts) {
