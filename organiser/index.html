@@ -719,7 +719,14 @@
                   >
                     View page ↗
                   </a>
-                  <a class="org-btn org-btn-outline org-btn-sm" id="memberships-page-edit" href="#">Edit page</a>
+                  <button
+                    type="button"
+                    class="org-btn org-btn-outline org-btn-sm"
+                    id="memberships-page-edit"
+                    data-edit-group=""
+                  >
+                    Edit page
+                  </button>
                 </div>
               </div>
             </div>
@@ -913,76 +920,85 @@
               </div>
 
               <div class="omr-register-panel" id="omr-panel-reports" role="tabpanel" aria-labelledby="omr-tab-reports" hidden>
-                <div class="omr-reports-setup" id="omr-reports-setup">
-                  <div class="omr-reports-setup-head">
-                    <h3 class="omr-reports-setup-title">Configure report</h3>
-                    <p class="omr-reports-setup-lead">
-                      Based on <strong>your uploaded member list</strong> — not every event attendee.
-                    </p>
-                  </div>
-
-                  <div class="omr-reports-setup-grid">
-                    <div class="omr-reports-field">
-                      <label class="omr-reports-label" for="omr-report-type">Report</label>
-                      <select id="omr-report-type" class="omr-reports-control" aria-describedby="omr-reports-type-hint">
-                        <option value="overview">Overview — list health &amp; sign-ups</option>
-                        <option value="bookings">Event bookings — booked vs not booked</option>
-                        <option value="expiring">Expiring soon — renewals in next 14 days</option>
-                        <option value="engagement">Engagement — attendance &amp; missed meetings</option>
-                      </select>
-                      <p class="omr-reports-field-hint" id="omr-reports-type-hint"></p>
+                <div class="omr-reports-shell">
+                  <div class="omr-reports-setup" id="omr-reports-setup">
+                    <div class="omr-reports-setup-head">
+                      <h3 class="omr-reports-setup-title">Run a report</h3>
+                      <p class="omr-reports-setup-lead">Your uploaded member list only — not every event attendee.</p>
                     </div>
 
-                    <div class="omr-reports-field" id="omr-reports-event-field" hidden>
-                      <label class="omr-reports-label" for="omr-reports-event-select">Event</label>
-                      <select id="omr-reports-event-select" class="omr-reports-control">
-                        <option value="">Choose an event…</option>
-                      </select>
-                      <p class="omr-reports-field-hint" id="omr-reports-event-hint"></p>
+                    <div class="omr-reports-setup-grid">
+                      <div class="omr-reports-field omr-reports-field--report">
+                        <label class="omr-reports-label" for="omr-report-type">Report type</label>
+                        <select id="omr-report-type" class="omr-reports-control" aria-describedby="omr-reports-type-hint">
+                          <option value="overview">Overview — list health &amp; sign-ups</option>
+                          <option value="bookings">Event bookings — booked vs not booked</option>
+                          <option value="expiring">Expiring soon — renewals in next 14 days</option>
+                          <option value="engagement">Engagement — attendance &amp; missed meetings</option>
+                        </select>
+                        <p class="omr-reports-field-hint" id="omr-reports-type-hint"></p>
+                      </div>
+
+                      <div class="omr-reports-field" id="omr-reports-event-field" hidden>
+                        <label class="omr-reports-label" for="omr-reports-event-select">Event</label>
+                        <select id="omr-reports-event-select" class="omr-reports-control">
+                          <option value="">Choose an event…</option>
+                        </select>
+                        <p class="omr-reports-field-hint" id="omr-reports-event-hint"></p>
+                      </div>
+
+                      <div class="omr-reports-field" id="omr-reports-period-field" hidden>
+                        <label class="omr-reports-label" for="omr-reports-period">Time period</label>
+                        <select id="omr-reports-period" class="omr-reports-control">
+                          <option value="3">Last 3 meetings</option>
+                          <option value="6" selected>Last 6 meetings</option>
+                          <option value="12">Last 12 meetings</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div class="omr-reports-field" id="omr-reports-period-field" hidden>
-                      <label class="omr-reports-label" for="omr-reports-period">Time period</label>
-                      <select id="omr-reports-period" class="omr-reports-control">
-                        <option value="3">Last 3 meetings</option>
-                        <option value="6" selected>Last 6 meetings</option>
-                        <option value="12">Last 12 meetings</option>
-                      </select>
-                      <p class="omr-reports-field-hint">Compares bookings across your most recent events.</p>
+                    <div class="omr-reports-setup-foot">
+                      <p class="omr-reports-setup-summary" id="omr-reports-setup-summary" role="status"></p>
+                      <div class="omr-reports-setup-actions">
+                        <button type="button" class="org-btn org-btn-gold org-btn-sm" id="omr-run-reports">Run report</button>
+                        <button type="button" class="org-btn org-btn-outline org-btn-sm" id="omr-refresh-reports" hidden>Refresh</button>
+                        <p class="omr-reports-stale" id="omr-reports-stale" hidden role="status">Settings changed — run again.</p>
+                      </div>
                     </div>
                   </div>
 
-                  <p class="omr-reports-setup-summary" id="omr-reports-setup-summary" role="status"></p>
-
-                  <div class="omr-reports-setup-actions">
-                    <button type="button" class="org-btn org-btn-gold org-btn-sm" id="omr-run-reports">Run report</button>
-                    <button type="button" class="org-btn org-btn-outline org-btn-sm" id="omr-refresh-reports" hidden>Refresh</button>
-                    <p class="omr-reports-stale" id="omr-reports-stale" hidden role="status">Settings changed — run report again.</p>
+                  <div class="omr-reports-compact" id="omr-reports-compact" hidden>
+                    <div class="omr-reports-compact-copy">
+                      <p class="omr-reports-compact-label">Current report</p>
+                      <p class="omr-reports-compact-summary" id="omr-reports-compact-summary"></p>
+                    </div>
+                    <div class="omr-reports-compact-actions">
+                      <button type="button" class="omr-inline-link-btn" id="omr-reports-edit-settings">Change settings</button>
+                      <button type="button" class="org-btn org-btn-outline org-btn-sm" id="omr-refresh-reports-compact">Refresh</button>
+                    </div>
                   </div>
-                </div>
 
-                <nav class="omr-reports-tabs" role="tablist" aria-label="Report results" id="omr-reports-tabs" hidden>
-                  <button type="button" role="tab" class="omr-reports-tab is-active" data-omr-report-tab="overview" aria-selected="true">Overview</button>
-                  <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="bookings" aria-selected="false" tabindex="-1">Event bookings</button>
-                  <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="expiring" aria-selected="false" tabindex="-1">Expiring</button>
-                  <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="engagement" aria-selected="false" tabindex="-1">Engagement</button>
-                </nav>
+                  <nav class="omr-reports-tabs" role="tablist" aria-label="Report results" id="omr-reports-tabs" hidden>
+                    <button type="button" role="tab" class="omr-reports-tab is-active" data-omr-report-tab="overview" aria-selected="true">Overview</button>
+                    <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="bookings" aria-selected="false" tabindex="-1">Event bookings</button>
+                    <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="expiring" aria-selected="false" tabindex="-1">Expiring</button>
+                    <button type="button" role="tab" class="omr-reports-tab" data-omr-report-tab="engagement" aria-selected="false" tabindex="-1">Engagement</button>
+                  </nav>
 
-                <div class="org-dash-loading org-dash-loading--membership omr-reports-loading" id="omr-reports-loading" hidden role="status" aria-live="polite" aria-busy="false">
-                  <div class="org-dash-loading-spinner" aria-hidden="true"></div>
-                  <span>Running report…</span>
-                </div>
+                  <div class="omr-reports-body" id="omr-reports-body">
+                    <div class="omr-reports-loading" id="omr-reports-loading" hidden role="status" aria-live="polite" aria-busy="false">
+                      <div class="omr-reports-loading-spinner" aria-hidden="true"></div>
+                      <span>Running report…</span>
+                    </div>
 
-                <div class="org-empty-state omr-reports-empty" id="omr-reports-empty" role="status">
-                  <div class="org-empty-state-icon" aria-hidden="true">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg>
+                    <div class="omr-reports-empty" id="omr-reports-empty" hidden role="status">
+                      <p class="omr-reports-empty-text">Add members on the Members tab before running reports.</p>
+                    </div>
+
+                    <div class="omr-reports-wrap" id="omr-reports-wrap" hidden>
+                      <div class="omr-reports" id="omr-reports"></div>
+                    </div>
                   </div>
-                  <h3 class="org-empty-state-title">No report yet</h3>
-                  <p class="org-empty-state-text">Run a report when you need booking, renewal, or engagement insights. Your member list loads separately.</p>
-                </div>
-
-                <div class="omr-reports-wrap" id="omr-reports-wrap" hidden>
-                  <div class="omr-reports" id="omr-reports"></div>
                 </div>
               </div>
             </section>

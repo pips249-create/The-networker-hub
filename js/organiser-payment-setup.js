@@ -209,7 +209,7 @@
     const steps = compact
       ? ''
       : '<ol class="hub-payment-setup-steps">' +
-        '<li><strong>Add bank details</strong> — about 5 minutes on Stripe</li>' +
+        '<li><strong>Add bank details</strong> on Stripe</li>' +
         '<li><strong>Return here</strong> and publish your paid tickets</li>' +
         '</ol>';
     const href = launcherHref(group?.id, opts.returnPath);

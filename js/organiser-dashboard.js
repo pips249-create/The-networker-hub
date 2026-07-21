@@ -6086,7 +6086,7 @@
       showOrganiserAlert(
         message ||
           (btn.dataset.stripeAction === 'setup'
-            ? 'Click Add bank details above to connect Stripe — it opens in a new tab and takes about 5 minutes.'
+            ? 'Click Add bank details above to connect Stripe — it opens in a new tab.'
             : btn.dataset.stripeAction === 'create-group'
               ? 'Create an organiser page first, then return here to add bank details.'
               : 'Use the button above to continue with bank details or the Stripe dashboard.'),
@@ -6182,7 +6182,7 @@
       btn.removeAttribute('data-stripe-dashboard');
       if (hint) {
         hint.textContent =
-          'Required before you can sell paid tickets or open the Stripe dashboard. Opens Stripe in a new tab — about 5 minutes.';
+          'Required before you can sell paid tickets or open the Stripe dashboard. Opens Stripe in a new tab.';
       }
     } else {
       btn.type = 'button';
@@ -6646,7 +6646,10 @@
       viewEl.href = '../events/organiser?id=' + encodeURIComponent(g.id);
       viewEl.hidden = g.statusKey === 'draft';
     }
-    if (editEl) editEl.href = groupEditorUrl(g);
+    if (editEl) {
+      editEl.setAttribute('data-edit-group', g.id);
+      editEl.disabled = !g.id;
+    }
   }
 
   window.updateMembershipPageCard = updateMembershipPageCard;

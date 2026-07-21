@@ -869,6 +869,17 @@
 
       if (!result.ok) {
         const data = result.data || {};
+        if (
+          data.error === 'stripe_connect_required' ||
+          /connect stripe|bank details/i.test(String(data.message || ''))
+        ) {
+          showAlert(
+            data.message ||
+              'Add bank details before publishing paid tickets — go back to ticket setup or open Revenue in your dashboard, then try again.',
+            'warn'
+          );
+          return;
+        }
         showAlert(data.message || data.error || 'Could not publish your event', 'warn');
         return;
       }

@@ -108,7 +108,19 @@
     }
   }
 
-  function getPublishBlockers(tiers) {
+  function needsBankDetailsSetup(tiers) {
+    const list = tiers || collectActiveTiers();
+    return (
+      tiersHavePaidPrice(list) &&
+      paymentSetupState &&
+      window.HubOrganiserPaymentSetup &&
+      window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries())
+    );
+  }
+
+  function getPublishBlockers(tiers, options) {
+    const opts = options || {};
+    const includeBankDetails = opts.includeBankDetails !== false;
     const list = tiers || collectActiveTiers();
     const hasPaid = tiersHavePaidPrice(list);
     const refund = hasPaid ? collectRefundPayload() : null;
@@ -127,12 +139,7 @@
     if (hasPaid && !refund.refundTermsAgreed) {
       blockers.push('Tick the refund responsibility checkbox');
     }
-    const paymentNeeded =
-      tiersHavePaidPrice(list) &&
-      paymentSetupState &&
-      window.HubOrganiserPaymentSetup &&
-      window.HubOrganiserPaymentSetup.groupNeedsSetup(paymentSetupState, paymentGroupForSeries());
-    if (paymentNeeded) {
+    if (includeBankDetails && needsBankDetailsSetup(list)) {
       blockers.push('Add bank details for paid tickets');
     }
     if (privateTicketEnabled() && !collectMembersOnlyTicket()) {
@@ -1601,8 +1608,9 @@
     payment.renderInto(mount, paymentSetupState, group, {
       returnPath: paymentSetupReturnPath(),
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
-      title: 'Add bank details before you publish paid tickets',
-      lead: 'Stripe will ask for your UK bank account (about 5 minutes). Then come back here and continue to review.',
+      title: 'Bank details needed before ticket sales go live',
+      lead:
+        'You can finish your event setup first. When you are ready, add your UK bank account via Stripe — your event stays as a draft until this is complete.',
       singleGroupOnly: true,
     });
     // Persist ticket form before leaving for Stripe, so return does not lose tiers.
@@ -1686,17 +1694,26 @@
       const tiers = collectActiveTiers();
       syncPaidOnlySections(tiers);
       const blockers = getPublishBlockers(tiers);
+      const bankPending = needsBankDetailsSetup(tiers);
       // Keep Publish clickable so incomplete setup shows a clear message instead of a dead click.
       btn.disabled = false;
       refreshPaymentSetupCard(tiers);
       if (warn) {
-        if (!blockers.length) {
+        if (!blockers.length && !bankPending) {
           warn.hidden = true;
           warn.textContent = '';
         } else {
           warn.hidden = false;
-          warn.textContent =
-            'Before this event can go live: ' + blockers.join('; ') + '.';
+          const parts = [];
+          if (blockers.length) {
+            parts.push('Before this event can go live: ' + blockers.join('; ') + '.');
+          }
+          if (bankPending && !blockers.some((b) => /bank details/i.test(b))) {
+            parts.push(
+              'Paid tickets will not go on sale until you add bank details — you can do that now or before you publish.'
+            );
+          }
+          warn.textContent = parts.join(' ');
         }
       }
     } catch {
@@ -2304,7 +2321,7 @@
       return;
     }
 
-    const blockers = getPublishBlockers(tiers);
+    const blockers = getPublishBlockers(tiers, { includeBankDetails: false });
     if (blockers.length) {
       showAlert('Before this event can go live: ' + blockers.join('; ') + '.', 'warn');
       const warn = document.getElementById('ee-publish-warn');
@@ -2324,6 +2341,13 @@
         updatePublishButton();
         return;
       }
+    }
+
+    if (needsBankDetailsSetup(tiers)) {
+      showAlert(
+        'Bank details are not set up yet — your event will stay as a draft until you add them. You can do that on this page or from Revenue in your dashboard before you publish.',
+        'warn'
+      );
     }
 
     await saveTickets(false, { redirectToReview: true });

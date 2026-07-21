@@ -355,20 +355,22 @@
   function setReportsLoading(on) {
     reportsLoading = Boolean(on);
     const hint = document.getElementById('omr-reports-loading');
-    const empty = document.getElementById('omr-reports-empty');
-    const wrap = document.getElementById('omr-reports-wrap');
-    const tabs = document.getElementById('omr-reports-tabs');
+    const body = document.getElementById('omr-reports-body');
+    const runBtn = document.getElementById('omr-run-reports');
+    const refreshBtn = document.getElementById('omr-refresh-reports');
+    const refreshCompact = document.getElementById('omr-refresh-reports-compact');
     if (hint) {
       hint.hidden = !on;
       hint.setAttribute('aria-busy', on ? 'true' : 'false');
     }
-    if (on) {
-      if (empty) empty.hidden = true;
-      if (wrap) wrap.hidden = true;
-      if (tabs) tabs.hidden = true;
-    } else {
-      syncReportsPanelState();
+    if (body) body.classList.toggle('is-loading', on);
+    if (runBtn) {
+      runBtn.disabled = on;
+      runBtn.textContent = on ? 'Running…' : 'Run report';
     }
+    if (refreshBtn) refreshBtn.disabled = on;
+    if (refreshCompact) refreshCompact.disabled = on;
+    if (!on) syncReportsPanelState();
   }
 
   function rosterSummaryStats() {
@@ -394,6 +396,45 @@
     };
   }
 
+  function reportTypeLabel(type) {
+    const map = {
+      overview: 'Overview',
+      bookings: 'Event bookings',
+      expiring: 'Expiring soon',
+      engagement: 'Engagement',
+    };
+    return map[type] || 'Report';
+  }
+
+  function reportsCompactSummaryLine() {
+    const type = selectedReportType();
+    const base = reportTypeLabel(type);
+    const eventLabel = reportsEventLabel();
+    if (type === 'bookings' && eventLabel) return base + ' · ' + eventLabel;
+    if (type === 'engagement') {
+      return base + ' · last ' + selectedReportPeriod() + ' meetings' + (eventLabel ? ' · ' + eventLabel : '');
+    }
+    if (type === 'expiring') return base + ' · next 14 days';
+    return base + ' · whole member list';
+  }
+
+  function expandReportsSetup() {
+    const setup = document.getElementById('omr-reports-setup');
+    const compact = document.getElementById('omr-reports-compact');
+    if (setup) setup.hidden = false;
+    if (compact) compact.hidden = true;
+    if (setup) setup.classList.remove('is-compact');
+  }
+
+  function collapseReportsSetup() {
+    const setup = document.getElementById('omr-reports-setup');
+    const compact = document.getElementById('omr-reports-compact');
+    const summary = document.getElementById('omr-reports-compact-summary');
+    if (setup) setup.hidden = true;
+    if (compact) compact.hidden = false;
+    if (summary) summary.textContent = reportsCompactSummaryLine();
+  }
+
   function reportsCacheKey(eventId, period) {
     return (
       getOrganiserId() +
@@ -413,6 +454,7 @@
     const runBtn = document.getElementById('omr-run-reports');
     const stale = document.getElementById('omr-reports-stale');
     const setup = document.getElementById('omr-reports-setup');
+    const compact = document.getElementById('omr-reports-compact');
     const hasLoaded = Boolean(lastReports && reportsLoadedKey);
     const hasMembers = rosterActiveTotal > 0 || rosterTotal > 0;
 
@@ -421,23 +463,18 @@
       if (wrap) wrap.hidden = true;
       if (tabs) tabs.hidden = true;
       if (stale) stale.hidden = true;
+      if (compact) compact.hidden = true;
       return;
     }
 
     if (reportsLoading) return;
 
     if (!hasMembers) {
-      if (empty) {
-        empty.hidden = false;
-        const title = empty.querySelector('.org-empty-state-title');
-        const text = empty.querySelector('.org-empty-state-text');
-        if (title) title.textContent = 'Add members first';
-        if (text) {
-          text.textContent = 'Upload or add members on the Members tab, then run a report here.';
-        }
-      }
+      if (empty) empty.hidden = false;
       if (wrap) wrap.hidden = true;
       if (tabs) tabs.hidden = true;
+      if (setup) setup.hidden = true;
+      if (compact) compact.hidden = true;
       if (runBtn) runBtn.disabled = true;
       if (refreshBtn) refreshBtn.hidden = true;
       if (stale) stale.hidden = true;
@@ -445,33 +482,22 @@
     }
 
     if (runBtn) runBtn.disabled = false;
+    if (empty) empty.hidden = true;
 
     if (!hasLoaded || reportsStale) {
-      if (empty) {
-        empty.hidden = false;
-        const title = empty.querySelector('.org-empty-state-title');
-        const text = empty.querySelector('.org-empty-state-text');
-        if (title) title.textContent = reportsStale ? 'Report out of date' : 'No report yet';
-        if (text) {
-          text.textContent = reportsStale
-            ? 'The selected event changed. Run the report again for up-to-date booking and engagement figures.'
-            : 'Run a report when you need booking, renewal, or engagement insights. Your member list loads separately.';
-        }
-      }
+      expandReportsSetup();
       if (wrap) wrap.hidden = true;
       if (tabs) tabs.hidden = true;
       if (refreshBtn) refreshBtn.hidden = !reportsStale;
       if (stale) stale.hidden = !reportsStale;
-      if (setup) setup.classList.remove('is-compact');
       return;
     }
 
-    if (empty) empty.hidden = true;
+    collapseReportsSetup();
     if (wrap) wrap.hidden = false;
     if (tabs) tabs.hidden = false;
-    if (refreshBtn) refreshBtn.hidden = false;
+    if (refreshBtn) refreshBtn.hidden = true;
     if (stale) stale.hidden = true;
-    if (setup) setup.classList.add('is-compact');
   }
 
   function setRegisterTab(tab) {
@@ -935,18 +961,22 @@
 
     if (activeReportTab === 'overview') {
       html =
-        '<div class="omr-report-card"><h3>Your member list</h3>' +
+        '<div class="omr-report-card omr-report-card--stat">' +
+        '<p class="omr-report-kicker">Member list</p>' +
         '<p class="omr-report-stat">' +
         esc(h.totalActive || 0) +
-        ' active</p>' +
-        '<p>' +
+        '<span> active members</span></p>' +
+        '<div class="omr-report-metrics">' +
+        '<span><strong>' +
         esc(h.claimed || 0) +
-        ' signed up · ' +
+        '</strong> signed up</span>' +
+        '<span><strong>' +
         esc(h.unclaimed || 0) +
-        ' not yet · ' +
+        '</strong> not yet</span>' +
+        '<span><strong>' +
         esc(h.expiringSoon || 0) +
-        ' expiring soon</p>' +
-        '<p class="omr-report-note">Use the Members tab to add people, resend invites, or download CSV.</p></div>';
+        '</strong> expiring soon</span>' +
+        '</div></div>';
     }
 
     if (activeReportTab === 'bookings') {
@@ -1713,6 +1743,17 @@
       runReports({ force: true }).catch(function (err) {
         showAlert(err.message || 'Could not refresh report.', 'error');
       });
+    });
+
+    document.getElementById('omr-refresh-reports-compact')?.addEventListener('click', function () {
+      runReports({ force: true }).catch(function (err) {
+        showAlert(err.message || 'Could not refresh report.', 'error');
+      });
+    });
+
+    document.getElementById('omr-reports-edit-settings')?.addEventListener('click', function () {
+      expandReportsSetup();
+      syncReportsPanelState();
     });
 
     document.getElementById('omr-add-details')?.addEventListener('toggle', function (e) {
