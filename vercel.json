@@ -159,7 +159,7 @@
     }
   ],
   "functions": {
-    "api/cron.js": { "maxDuration": 60 },
+    "api/cron.js": { "maxDuration": 300 },
     "api/auth.js": { "maxDuration": 15 },
     "api/admin.js": { "maxDuration": 15 },
     "api/organiser.js": { "maxDuration": 15 },

@@ -31,14 +31,17 @@ const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
 const POST_EVENT_REVIEW_HOURS = 24;
 // Catch up missed sends (e.g. if cron skipped a day) up to this age.
 const POST_EVENT_REVIEW_MAX_AGE_DAYS = 14;
+const POST_EVENT_REVIEW_BATCH_LIMIT = 75;
 const GUEST_VISIT_FOLLOWUP_HOURS = 24;
 const GUEST_VISIT_FOLLOWUP_MAX_AGE_DAYS = 14;
+const GUEST_VISIT_FOLLOWUP_BATCH_LIMIT = 50;
 const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
 const SIGNUP_NUDGE_FOLLOWUP_DAYS = 10;
 const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
 const HUBERT_CONCIERGE_BATCH_LIMIT = 50;
+const REENGAGEMENT_BATCH_LIMIT = 25;
 
 function daysAgo(days) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -331,6 +334,8 @@ async function sendDueAttendeeReengagementEmails(sb) {
   const cooldownBefore = daysAgo(REENGAGEMENT_COOLDOWN_DAYS);
 
   for (const attendee of attendees || []) {
+    if (result.sent >= REENGAGEMENT_BATCH_LIMIT) break;
+
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
       result.skipped += 1;
@@ -725,24 +730,31 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
 
   const siteUrl = siteBase();
 
+  const guestAttendeeIds = [
+    ...new Set((registrations || []).map((row) => row.attendee_id).filter(Boolean)),
+  ];
+  const guestAttendeeById = {};
+  if (guestAttendeeIds.length) {
+    const { data: guestAttendees, error: guestAttErr } = await sb
+      .from('attendees')
+      .select('id, email, name')
+      .in('id', guestAttendeeIds);
+    if (guestAttErr) throw new Error(guestAttErr.message);
+    (guestAttendees || []).forEach((row) => {
+      guestAttendeeById[row.id] = row;
+    });
+  }
+
   for (const registration of registrations) {
+    if (result.sent >= GUEST_VISIT_FOLLOWUP_BATCH_LIMIT) break;
+
     const eventRow = eventById[registration.event_id];
     if (!eventRow) {
       result.skipped += 1;
       continue;
     }
 
-    let attendee = null;
-    if (registration.attendee_id) {
-      const attendeeRes = await sb
-        .from('attendees')
-        .select('id, email, name')
-        .eq('id', registration.attendee_id)
-        .maybeSingle();
-      if (attendeeRes.error) throw new Error(attendeeRes.error.message);
-      attendee = attendeeRes.data;
-    }
-
+    const attendee = registration.attendee_id ? guestAttendeeById[registration.attendee_id] : null;
     const attendeeEmail = String(attendee?.email || '').trim().toLowerCase();
     if (!attendeeEmail) {
       result.skipped += 1;
@@ -858,38 +870,48 @@ async function sendDuePostEventReviewEmails(sb, options) {
   if (regErr) throw new Error(regErr.message);
 
   const siteUrl = siteBase();
+  const attendeeIds = [
+    ...new Set((registrations || []).map((row) => row.attendee_id).filter(Boolean)),
+  ];
+  const attendeeById = {};
+  if (attendeeIds.length) {
+    const { data: attendees, error: attErr } = await sb
+      .from('attendees')
+      .select('id, email, name')
+      .in('id', attendeeIds);
+    if (attErr) throw new Error(attErr.message);
+    (attendees || []).forEach((row) => {
+      attendeeById[row.id] = row;
+    });
+  }
+
+  const { data: existingReviews, error: reviewErr } = await sb
+    .from('reviews')
+    .select('attendee_id, event_id')
+    .in('event_id', eventIds);
+  if (reviewErr) throw new Error(reviewErr.message);
+  const reviewedPairs = new Set(
+    (existingReviews || []).map((row) => String(row.attendee_id) + ':' + String(row.event_id))
+  );
 
   for (const registration of registrations || []) {
+    if (result.sent >= POST_EVENT_REVIEW_BATCH_LIMIT) break;
+
     const eventRow = eventById[registration.event_id];
     if (!eventRow) {
       result.skipped += 1;
       continue;
     }
 
-    if (registration.attendee_id) {
-      const { data: existingReview } = await sb
-        .from('reviews')
-        .select('id')
-        .eq('attendee_id', registration.attendee_id)
-        .eq('event_id', registration.event_id)
-        .maybeSingle();
-      if (existingReview) {
-        result.skipped += 1;
-        continue;
-      }
+    if (
+      registration.attendee_id &&
+      reviewedPairs.has(String(registration.attendee_id) + ':' + String(registration.event_id))
+    ) {
+      result.skipped += 1;
+      continue;
     }
 
-    let attendee = null;
-    if (registration.attendee_id) {
-      const attendeeRes = await sb
-        .from('attendees')
-        .select('id, email, name')
-        .eq('id', registration.attendee_id)
-        .maybeSingle();
-      if (attendeeRes.error) throw new Error(attendeeRes.error.message);
-      attendee = attendeeRes.data;
-    }
-
+    const attendee = registration.attendee_id ? attendeeById[registration.attendee_id] : null;
     const attendeeEmail = String(attendee?.email || '').trim().toLowerCase();
     if (!attendeeEmail) {
       result.skipped += 1;
@@ -1195,24 +1217,24 @@ async function sendDueHubertEventConciergeEmails(sb) {
 }
 
 async function runEngagementEmailMaintenance(sb) {
+  const postReview = await sendDuePostEventReviewEmails(sb);
+  const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
+  const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
   const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const hubertConcierge = await sendDueHubertEventConciergeEmails(sb);
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
-  const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
-  const postReview = await sendDuePostEventReviewEmails(sb);
-  const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
   return {
+    postReview,
+    guestVisitFollowup,
+    categoryExclusivityPayment,
     reengagement,
     signupEventsNudge,
     signupEventsNudgeFollowup,
     hubertConcierge,
     lowEvents,
-    guestVisitFollowup,
-    postReview,
-    categoryExclusivityPayment,
     stripeConnect,
   };
 }
