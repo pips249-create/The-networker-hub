@@ -58,6 +58,8 @@
     { "source": "/guides/list-a-conference-or-exhibition.html", "destination": "/guides/list-a-conference-or-exhibition", "permanent": true },
     { "source": "/guides/list-a-business-opportunity.html", "destination": "/guides/list-a-business-opportunity", "permanent": true },
     { "source": "/guides/invite-your-team.html", "destination": "/guides/invite-your-team", "permanent": true },
+    { "source": "/guides/claim-your-organiser-page.html", "destination": "/guides/claim-your-organiser-page", "permanent": true },
+    { "source": "/guides/export-attendees-and-visits.html", "destination": "/guides/export-attendees-and-visits", "permanent": true },
     { "source": "/help/organiser-payouts.html", "destination": "/help/organiser-payouts", "permanent": true },
     { "source": "/help/pricing-fees.html", "destination": "/help/pricing-fees", "permanent": true }
   ],

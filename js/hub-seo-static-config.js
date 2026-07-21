@@ -80,7 +80,7 @@ window.HUB_SEO_STATIC = {
   "guides": {
     "path": "/guides",
     "title": "Organiser guides – The Networker Hub",
-    "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.",
+    "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, invite team members, and manage attendees on The Networker Hub.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },
@@ -107,8 +107,22 @@ window.HUB_SEO_STATIC = {
   },
   "guide-invite-your-team": {
     "path": "/guides/invite-your-team",
-    "title": "Invite your team – How-to guides – The Networker Hub",
-    "description": "How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.",
+    "title": "Invite team members – How-to guides – The Networker Hub",
+    "description": "How to invite team members to your organiser workspace on The Networker Hub — permissions, group access, limits, and accept flow.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
+  },
+  "guide-claim-your-organiser-page": {
+    "path": "/guides/claim-your-organiser-page",
+    "title": "Claim your organiser page – How-to guides – The Networker Hub",
+    "description": "How to find and claim your networking group on The Networker Hub — verify ownership, update your profile, and start listing events.",
+    "image": "/assets/logo.png",
+    "ogType": "article"
+  },
+  "guide-export-attendees-and-visits": {
+    "path": "/guides/export-attendees-and-visits",
+    "title": "Export attendees & track visits – How-to guides – The Networker Hub",
+    "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker Hub.",
     "image": "/assets/logo.png",
     "ogType": "article"
   }

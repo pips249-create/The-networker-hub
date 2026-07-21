@@ -24,6 +24,12 @@
       return 'guide-list-a-business-opportunity';
     }
     if (/\/guides\/invite-your-team(?:\.html)?\/?$/.test(path)) return 'guide-invite-your-team';
+    if (/\/guides\/claim-your-organiser-page(?:\.html)?\/?$/.test(path)) {
+      return 'guide-claim-your-organiser-page';
+    }
+    if (/\/guides\/export-attendees-and-visits(?:\.html)?\/?$/.test(path)) {
+      return 'guide-export-attendees-and-visits';
+    }
     if (/\/faq(?:\.html)?\/?$/.test(path)) return 'faq';
     if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
     if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';
