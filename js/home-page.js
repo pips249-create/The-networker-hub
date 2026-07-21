@@ -55,7 +55,7 @@
   }
 
   function initReveal() {
-    var sections = document.querySelectorAll('.home-reveal:not(.home-hero)');
+    var sections = document.querySelectorAll('.home-reveal:not(.home-hero):not([hidden]):not(.home-section--hidden)');
     if (!sections.length) return;
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

@@ -878,6 +878,11 @@ html:has(.home-page) {
 }
 
 /* ─── What is The Networker? ─── */
+.home-section--hidden,
+.home-what[hidden] {
+  display: none !important;
+}
+
 .home-what {
   position: relative;
   overflow: hidden;
