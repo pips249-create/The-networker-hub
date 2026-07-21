@@ -15,7 +15,7 @@
   var copy = {
     events: {
       badge: 'Event discovery',
-      title: 'Find your next <span class="accent">business event</span> across the UK',
+      title: 'Find your next <span class="accent">business event</span>',
       sub: 'Meetings, exhibitions, workshops, and more. Filter by type, date, and location.',
       heading: 'All listings',
       searchPlaceholder: 'Search anything — breakfast, women only, organiser, city…',
@@ -25,7 +25,7 @@
     organisers: {
       badge: 'Organiser directory',
       title:
-        'Find your next <span class="accent">networking group</span> across the UK',
+        'Find your next <span class="accent">networking group</span>',
       sub: 'Browse groups, exhibition hosts, and conference organisers, then see their events.',
       heading: 'All organisers',
       searchPlaceholder: 'Search organisers, descriptions, formats…',
