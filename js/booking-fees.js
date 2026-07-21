@@ -71,9 +71,18 @@
     return allowed === 1 ? 'up to 1 complimentary visit' : 'up to ' + allowed + ' complimentary visits';
   }
 
+  function isMembersOnlyListing(ev) {
+    return Boolean(
+      ev?.isMembersOnlyEvent || (ev?.hasMembersOnlyTiers && !(ev?.tickets || []).length)
+    );
+  }
+
   function listingPriceLabel(ev, options) {
     const opts = options || {};
     const withFrom = opts.withFrom !== false;
+    if (isMembersOnlyListing(ev)) {
+      return 'Members only';
+    }
     if (String(ev?.attendanceMode || '') === 'guest_programme') {
       const member =
         ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))

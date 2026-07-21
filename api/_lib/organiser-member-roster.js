@@ -667,8 +667,8 @@ async function importRosterCsv(organiserId, rows, options) {
     invitesQueued = queued.queued || 0;
     if (invitesQueued > 0) {
       try {
-        const { processDueRosterEmails } = require('./organiser-roster-email-queue');
-        await processDueRosterEmails(getSupabaseAdmin(), { batchSize: 20 });
+        const { drainDueRosterEmails } = require('./organiser-roster-email-queue');
+        await drainDueRosterEmails(getSupabaseAdmin(), { batchSize: 40, maxBatches: 6 });
       } catch (err) {
         console.error('[member-roster] invite queue process failed', orgId, err?.message || err);
       }
@@ -1187,17 +1187,17 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
 
   if (!toQueue.length) return result;
 
-  const { queueNewEventAlerts } = require('./organiser-roster-email-queue');
-  const queued = await queueNewEventAlerts(eventRow, toQueue);
+  const { queueNewEventAlerts, drainDueRosterEmails } = require('./organiser-roster-email-queue');
+  const queued = await queueNewEventAlerts(eventRow, toQueue, { immediate: true });
   result.queued = queued.queued || 0;
   result.sent = result.queued;
 
   if (result.queued > 0) {
     try {
-      const { processDueRosterEmails } = require('./organiser-roster-email-queue');
-      const processed = await processDueRosterEmails(sb, { batchSize: 40 });
+      const processed = await drainDueRosterEmails(sb, { batchSize: 80, maxBatches: 12 });
       result.sent = processed.sent || 0;
       result.skipped += processed.skipped || 0;
+      result.failed = processed.failed || 0;
       if (Array.isArray(processed.errors) && processed.errors.length) {
         result.errors.push(...processed.errors.slice(0, 10));
       }
@@ -1304,4 +1304,5 @@ module.exports = {
   buildRosterSummariesForOrganisers,
   sendMemberRosterBookingReminders,
   queueUnclaimedMemberInvites,
+  countActiveRosterMembers,
 };

@@ -48,6 +48,14 @@ function staggerScheduledFor(index, total, baseTime) {
   return new Date(base.getTime() + index * gap).toISOString();
 }
 
+function scheduledForQueueRow(index, total, baseTime, options) {
+  if (options?.immediate) {
+    const base = baseTime instanceof Date ? baseTime : new Date();
+    return base.toISOString();
+  }
+  return staggerScheduledFor(index, total, baseTime);
+}
+
 async function enqueueRosterEmailQueue(rows) {
   const items = (rows || []).filter((row) => row && row.roster_member_id && row.organiser_id && row.kind);
   if (!items.length) return { queued: 0 };
@@ -76,7 +84,7 @@ async function queueMemberRosterInvites(organiserId, memberRows, options) {
     organiser_id: orgId,
     roster_member_id: member.id,
     event_id: null,
-    scheduled_for: staggerScheduledFor(index, members.length, base),
+    scheduled_for: scheduledForQueueRow(index, members.length, base, options),
   }));
 
   return enqueueRosterEmailQueue(rows);
@@ -94,7 +102,7 @@ async function queueNewEventAlerts(eventRow, members, options) {
     organiser_id: organiserId,
     roster_member_id: member.id,
     event_id: eventId,
-    scheduled_for: staggerScheduledFor(index, list.length, base),
+    scheduled_for: scheduledForQueueRow(index, list.length, base, options),
   }));
 
   return enqueueRosterEmailQueue(rows);
@@ -112,7 +120,7 @@ async function queueBookingReminders(organiserId, eventId, members, options) {
     organiser_id: orgId,
     roster_member_id: member.id,
     event_id: evId,
-    scheduled_for: staggerScheduledFor(index, list.length, base),
+    scheduled_for: scheduledForQueueRow(index, list.length, base, options),
   }));
 
   return enqueueRosterEmailQueue(rows);
@@ -292,12 +300,39 @@ async function processDueRosterEmails(sb, options) {
   return result;
 }
 
+/** Process due queue rows in a loop — used on publish and by the daily cron catch-up. */
+async function drainDueRosterEmails(sb, options) {
+  const maxRuntimeMs = Math.min(Math.max(Number(options?.maxRuntimeMs) || 50000, 5000), 280000);
+  const maxBatches = Math.min(Math.max(Number(options?.maxBatches) || 12, 1), 30);
+  const batchSize = Math.min(Math.max(Number(options?.batchSize) || 80, 1), 80);
+  const startedAt = Date.now();
+  const aggregate = { sent: 0, skipped: 0, failed: 0, batches: 0, errors: [] };
+
+  for (let i = 0; i < maxBatches; i += 1) {
+    if (Date.now() - startedAt > maxRuntimeMs) break;
+    const result = await processDueRosterEmails(sb, { batchSize });
+    aggregate.batches += 1;
+    aggregate.sent += result.sent || 0;
+    aggregate.skipped += result.skipped || 0;
+    aggregate.failed += result.failed || 0;
+    if (Array.isArray(result.errors) && result.errors.length) {
+      aggregate.errors.push(...result.errors.slice(0, Math.max(0, 20 - aggregate.errors.length)));
+    }
+    const processed = (result.sent || 0) + (result.skipped || 0) + (result.failed || 0);
+    if (!processed) break;
+  }
+
+  return aggregate;
+}
+
 module.exports = {
   QUEUE_KINDS,
   staggerScheduledFor,
+  scheduledForQueueRow,
   enqueueRosterEmailQueue,
   queueMemberRosterInvites,
   queueNewEventAlerts,
   queueBookingReminders,
   processDueRosterEmails,
+  drainDueRosterEmails,
 };

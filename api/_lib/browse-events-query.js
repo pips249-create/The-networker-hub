@@ -306,11 +306,17 @@ function rowToBrowsePin(row) {
   const lat = row.latitude != null ? Number(row.latitude) : null;
   const lng = row.longitude != null ? Number(row.longitude) : null;
   const priceNum = Number(row.min_ticket_price) || 0;
+  const membersOnlyEvent = Boolean(row.members_only_event);
   const startsAt = row.starts_at ? new Date(row.starts_at) : null;
   const dateLine =
     startsAt && !Number.isNaN(startsAt.getTime())
       ? startsAt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
       : 'Date TBC';
+  const priceLabel = membersOnlyEvent
+    ? 'Members only'
+    : priceNum > 0
+      ? '£' + priceNum.toFixed(2)
+      : 'Free';
   return {
     id: row.id,
     slug: row.slug,
@@ -328,8 +334,10 @@ function rowToBrowsePin(row) {
     date: dateLine,
     dateLine: dateLine,
     priceNum,
-    priceKey: priceNum > 0 ? 'paid' : 'free',
-    price: priceNum > 0 ? '£' + priceNum.toFixed(2) : 'Free',
+    priceKey: membersOnlyEvent ? 'members_only' : priceNum > 0 ? 'paid' : 'free',
+    price: priceLabel,
+    isMembersOnlyEvent: membersOnlyEvent,
+    hasMembersOnlyTiers: membersOnlyEvent,
     outcode: row.outcode,
   };
 }

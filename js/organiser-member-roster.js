@@ -14,6 +14,7 @@
   let searchTimer = null;
   let activeLoadPromise = null;
   let activeLoadGroupId = '';
+  let reportsLoading = false;
   const filters = { search: '', status: 'all' };
 
   function isLoadInFlight() {
@@ -188,6 +189,33 @@
       hint.setAttribute('aria-busy', on ? 'true' : 'false');
     }
     if (wrap) wrap.classList.toggle('is-roster-loading', on);
+  }
+
+  function setReportsLoading(on) {
+    reportsLoading = Boolean(on);
+    const wrap = document.getElementById('omr-reports-wrap');
+    const hint = document.getElementById('omr-reports-loading');
+    const hasMembers = rosterActiveTotal > 0 || rosterTotal > 0;
+    if (wrap) wrap.hidden = !hasMembers && !reportsLoading && !lastReports;
+    if (hint) {
+      hint.hidden = !reportsLoading;
+      hint.setAttribute('aria-busy', reportsLoading ? 'true' : 'false');
+    }
+  }
+
+  function syncEventActionButtons() {
+    const sel = document.getElementById('omr-event-select');
+    const eventId = sel ? sel.value : '';
+    const reportBtn = document.getElementById('omr-download-report');
+    const remindBtn = document.getElementById('omr-remind-not-booked');
+    if (reportBtn) {
+      reportBtn.disabled = !eventId;
+      reportBtn.title = eventId ? '' : 'Choose an event first';
+    }
+    if (remindBtn) {
+      remindBtn.disabled = !eventId;
+      remindBtn.title = eventId ? '' : 'Choose an event first';
+    }
   }
 
   async function ensureRosterPainted(groupId) {
@@ -468,6 +496,7 @@
         });
       const sel = document.getElementById('omr-event-select');
       if (!sel) return;
+      const prev = sel.value || '';
       while (sel.options.length > 1) sel.remove(1);
       events.forEach(function (ev) {
         const opt = document.createElement('option');
@@ -479,38 +508,18 @@
         sel.appendChild(opt);
       });
 
-      if (!sel.value && events.length) {
-        const firstUpcoming = events.find(function (ev) {
-          const start = ev.startsAt || ev.starts_at || ev.date || '';
-          return start && new Date(start).getTime() >= now;
-        });
-        sel.value = (firstUpcoming || events[0]).id;
+      if (prev && events.some(function (ev) { return String(ev.id) === String(prev); })) {
+        sel.value = prev;
+      } else {
+        sel.value = '';
       }
 
-      const reportBtn = document.getElementById('omr-download-report');
-      const remindBtn = document.getElementById('omr-remind-not-booked');
-      if (reportBtn) {
-        reportBtn.disabled = !sel.value;
-        reportBtn.title = sel.value ? '' : 'Choose an event first';
-      }
-      if (remindBtn) {
-        remindBtn.disabled = !sel.value;
-        remindBtn.title = sel.value ? '' : 'Choose an event first';
-      }
+      syncEventActionButtons();
 
       if (sel.dataset.omrBound !== '1') {
         sel.dataset.omrBound = '1';
         sel.addEventListener('change', function () {
-          const reportBtn = document.getElementById('omr-download-report');
-          const remindBtn = document.getElementById('omr-remind-not-booked');
-          if (reportBtn) {
-            reportBtn.disabled = !sel.value;
-            reportBtn.title = sel.value ? '' : 'Choose an event first';
-          }
-          if (remindBtn) {
-            remindBtn.disabled = !sel.value;
-            remindBtn.title = sel.value ? '' : 'Choose an event first';
-          }
+          syncEventActionButtons();
           if (
             !sel.value &&
             (filters.status === 'booked' || filters.status === 'not_booked')
@@ -539,6 +548,36 @@
     return name || email || 'Member';
   }
 
+  function formatMissedMeetingLine(m) {
+    const label = reportMemberLabel(m);
+    const checked = Number(m.recentEventsChecked) || 0;
+    const missed = Number(m.missedCount) || 0;
+    if (checked <= 1) return label + ' — didn\u2019t book your last meeting';
+    return label + ' — missed ' + missed + ' of ' + checked + ' recent meetings';
+  }
+
+  function duplicateMemberConfirm(name, email) {
+    const normEmail = String(email || '').trim().toLowerCase();
+    const normName = String(name || '').trim().toLowerCase();
+    if (!normEmail) return true;
+    for (let i = 0; i < members.length; i += 1) {
+      const m = members[i];
+      if (!m || m.status !== 'active') continue;
+      const mEmail = String(m.email || '').trim().toLowerCase();
+      const mName = String(m.name || '').trim().toLowerCase();
+      if (normName && mName && mName === normName && mEmail !== normEmail) {
+        return window.confirm(
+          'Someone named "' +
+            (String(name || '').trim() || m.name || 'this member') +
+            '" is already on your list with a different email (' +
+            m.email +
+            '). Add this as a separate member anyway?'
+        );
+      }
+    }
+    return true;
+  }
+
   function selectedEventLabel() {
     const eventId = selectedEventId();
     if (!eventId) return '';
@@ -565,9 +604,14 @@
     const expiry = reports.membershipExpiry || {};
 
     const eventLabel = selectedEventLabel();
+    const eventSelected = Boolean(selectedEventId());
 
     let html =
-      '<p class="omr-reports-intro">Based on people you have added to this member list — not all event attendees. Download CSV or email reminders above; members are also emailed when you publish events (usually within 15 minutes).</p>' +
+      '<p class="omr-reports-intro">Based on people you have added to this member list — not all event attendees. Download CSV or email reminders above; members are also emailed when you publish events.</p>' +
+      (eventSelected
+        ? ''
+        : ' Choose an event in the filter bar above for booking and attendance reports.') +
+      '</p>' +
       '<div class="omr-report-card"><h3>Your member list</h3>' +
       '<p class="omr-report-stat">' +
       esc(h.totalActive || 0) +
@@ -617,14 +661,7 @@
     if (missed && missed.members && missed.members.length) {
       html += '<div class="omr-report-card"><h3>Your members — missed recent meetings</h3><ul>';
       missed.members.slice(0, 6).forEach(function (m) {
-        html +=
-          '<li>' +
-          esc(reportMemberLabel(m)) +
-          ' — missed ' +
-          esc(m.missedCount) +
-          ' of ' +
-          esc(m.recentEventsChecked) +
-          '</li>';
+        html += '<li>' + esc(formatMissedMeetingLine(m)) + '</li>';
       });
       html += '</ul></div>';
     }
@@ -648,18 +685,23 @@
   }
 
   async function loadReports(eventId) {
-    let qs = '&action=reports';
-    if (eventId) qs += '&eventId=' + encodeURIComponent(eventId);
-    const recent = events
-      .slice(0, 6)
-      .map(function (e) {
-        return e.id;
-      })
-      .join(',');
-    if (recent) qs += '&recentEventIds=' + encodeURIComponent(recent);
-    const data = await api(rosterUrl(qs));
-    lastReports = data.reports || null;
-    renderReports(data.reports);
+    setReportsLoading(true);
+    try {
+      let qs = '&action=reports';
+      if (eventId) qs += '&eventId=' + encodeURIComponent(eventId);
+      const recent = events
+        .slice(0, 6)
+        .map(function (e) {
+          return e.id;
+        })
+        .join(',');
+      if (recent) qs += '&recentEventIds=' + encodeURIComponent(recent);
+      const data = await api(rosterUrl(qs));
+      lastReports = data.reports || null;
+      renderReports(data.reports);
+    } finally {
+      setReportsLoading(false);
+    }
   }
 
   function filteredMembers() {
@@ -905,7 +947,7 @@
           } else if (title && text) {
             title.textContent = 'No members yet';
             text.textContent =
-              'Add someone above or import a spreadsheet to start your membership register.';
+              'Add someone above or import a spreadsheet. Then add a Members only ticket on your event (Tickets step) so members can book member rates.';
           }
         }
         renderPagination(rosterTotal);
@@ -1352,14 +1394,17 @@
 
     document.getElementById('omr-add-form')?.addEventListener('submit', async function (e) {
       e.preventDefault();
+      const name = document.getElementById('omr-name')?.value.trim() || '';
+      const email = document.getElementById('omr-email')?.value.trim() || '';
+      if (!duplicateMemberConfirm(name, email)) return;
       try {
         await api(rosterUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             organiserId: getOrganiserId(),
-            name: document.getElementById('omr-name')?.value.trim(),
-            email: document.getElementById('omr-email')?.value.trim(),
+            name: name,
+            email: email,
             expiresAt: document.getElementById('omr-expires')?.value || null,
             sendInvite: document.getElementById('omr-send-invite')?.checked !== false,
           }),

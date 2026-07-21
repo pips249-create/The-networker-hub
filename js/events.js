@@ -412,6 +412,9 @@
   var guestVisitLabelRefreshPromise = null;
 
   function priceBadgeLabel(ev) {
+    if (ev?.isMembersOnlyEvent || (ev?.hasMembersOnlyTiers && !(ev?.tickets || []).length)) {
+      return 'Members only';
+    }
     if (window.HubBookingFees) {
       const organiserId = String(ev.organiserId || '').trim();
       const eligibility = organiserId ? guestVisitEligibilityByOrganiser[organiserId] : null;

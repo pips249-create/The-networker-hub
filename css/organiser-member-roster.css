@@ -118,6 +118,13 @@
   margin: 16px 0;
 }
 
+.omr-reports-loading {
+  justify-content: center;
+  margin: 0 0 12px;
+  max-width: 360px;
+  padding: 10px 16px;
+}
+
 .omr-reports-wrap {
   margin: 20px 0 0;
   padding-top: 20px;

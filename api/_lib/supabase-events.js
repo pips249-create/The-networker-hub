@@ -314,6 +314,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   );
   const membersOnlyTierCount = tiers.filter((t) => t.isMembersOnly).length;
   const pricedTiers = publicTiers.length ? publicTiers : [];
+  const isMembersOnlyEvent = membersOnlyTierCount > 0 && pricedTiers.length === 0;
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
     return a.priceNum - b.priceNum;
@@ -462,6 +463,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     formatSlug: slugFormat(format),
     tickets: pricedTiers.length ? pricedTiers : [],
     hasMembersOnlyTiers: membersOnlyTierCount > 0,
+    isMembersOnlyEvent,
     attendanceMode: normalizeAttendanceMode(row.attendance_mode),
     complimentaryVisitsAllowed: organiser
       ? Math.min(3, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))

@@ -423,7 +423,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   };
 }
 
-async function sendViaResend({ to, subject, html, tags, replyTo, from }) {
+async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllowlist }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
@@ -442,7 +442,7 @@ async function sendViaResend({ to, subject, html, tags, replyTo, from }) {
     throw err;
   }
 
-  if (!isRecipientAllowed(recipient)) {
+  if (!skipAllowlist && !isRecipientAllowed(recipient)) {
     const err = new Error(
       'This recipient is not on the pre-launch email allowlist. Add them to EMAIL_RECIPIENT_ALLOWLIST in Vercel, or set EMAIL_ALLOWLIST_DISABLED=true when you launch.'
     );
@@ -529,6 +529,14 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'opportunity_saved_search_match',
 ]);
 
+/** Member-list mail — organiser-uploaded recipients; bypass pre-launch allowlist. */
+const MEMBER_ROSTER_EMAIL_SLUGS = new Set([
+  'member_roster_invite',
+  'member_roster_existing',
+  'member_roster_new_event',
+  'member_roster_booking_reminder',
+]);
+
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo, from }) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
@@ -572,6 +580,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     tags: resendTags,
     replyTo,
     from,
+    skipAllowlist: MEMBER_ROSTER_EMAIL_SLUGS.has(slug),
   });
   return {
     ...result,

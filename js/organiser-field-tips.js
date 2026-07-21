@@ -81,6 +81,12 @@
         'Adds a ticket that the public cannot see. People on your member list see it automatically when they sign in with their membership email. Use for member rates or invite-only pricing — without putting the price on the public listing.',
       hubertPrompt: 'How do I set up a members only ticket with the member list?',
     },
+    'members-only-event-listing': {
+      title: 'Members-only event',
+      body:
+        'Your event stays on the directory so members can find it, but only people on your member list can book. Add your member list first under Member list on your organiser page. Non-members see the event but not a bookable public ticket.',
+      hubertPrompt: 'How do I set up a members only ticket with the member list?',
+    },
     'category-exclusivity': {
       title: 'Category Exclusivity',
       body:

@@ -1,4 +1,4 @@
-# Membership (pre-launch)
+# Membership
 
 ## What we are building
 
@@ -7,7 +7,7 @@ Per **organiser page** (group profile), organisers maintain a **Membership** (na
 ## In scope
 
 - `organiser_member_roster` table (per `organiser_id`) — internal name; UI says **Membership**
-- Membership CRUD + CSV import (organiser dashboard)
+- Membership CRUD + CSV import (organiser dashboard at `/organiser/#memberships`)
 - Ticket visibility: `public` or `members_only` (membership unlock; no access codes)
 - Signed-in membership check at event page + checkout
 - Auto-link membership row when member registers / signs in
@@ -18,12 +18,10 @@ Per **organiser page** (group profile), organisers maintain a **Membership** (na
 
 ## Member emails — when they go out
 
-There is **no fixed launch date** (e.g. 1 September) when all members are emailed in one batch.
-
 | Trigger | When | Template |
 |---------|------|----------|
-| **Added to membership** | Immediately when organiser adds/imports with “send invite” ticked (or resend invite) | `member_roster_invite` / `member_roster_existing` |
-| **New event published** | When organiser publishes an Approved event | `member_roster_new_event` |
+| **Added to membership** | Immediately when organiser adds with “Email invite” ticked, or resend invite. CSV import queues invites (first batch sends straight away). | `member_roster_invite` / `member_roster_existing` |
+| **New event published** | Sent when you publish an Approved event (all members processed on publish; daily cron catches anything missed) | `member_roster_new_event` |
 | **Missed publish email** | Daily cron safety net for events published in the last 14 days | `member_roster_new_event` |
 | **Rejoin / reinstated** | When a member is added back to an active membership | Upcoming live events (`member_roster_new_event`) |
 | **Not booked reminder** | When organiser clicks **Email not booked** on the membership page | `member_roster_booking_reminder` |

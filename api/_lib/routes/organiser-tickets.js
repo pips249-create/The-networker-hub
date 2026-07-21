@@ -1,8 +1,10 @@
 const { getOrganiserApi } = require('../organiser-provider');
-const { normalizeTicketVisibility } = require('../ticket-visibility');
+const { normalizeTicketVisibility, isMembersOnlyTicket } = require('../ticket-visibility');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { validateRefundPublishPayload } = require('../event-refund-policy');
 const { tiersHavePaidPrice } = require('../supabase-events');
+const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { countActiveRosterMembers } = require('../organiser-member-roster');
 
 function requestHasPaidTickets(tiers, alumniFastPass) {
   if (alumniFastPass?.enabled && Number(alumniFastPass.price) > 0) return true;
@@ -122,6 +124,35 @@ module.exports = async function handler(req, res) {
           .filter((t) => t.name);
         if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });
 
+        const publish = Boolean(body.publish);
+        const publicTiers = tiers.filter((t) => !isMembersOnlyTicket(t));
+        const memberTiers = tiers.filter((t) => isMembersOnlyTicket(t));
+        const membersOnlyEvent = memberTiers.length > 0 && publicTiers.length === 0;
+
+        if (publish && membersOnlyEvent && isSupabaseConfigured()) {
+          const sb = getSupabaseAdmin();
+          const { data: eventRow, error: eventErr } = await sb
+            .from('events')
+            .select('organiser_id')
+            .eq('id', ids[0])
+            .maybeSingle();
+          if (eventErr) throw new Error(eventErr.message);
+          const organiserId = String(eventRow?.organiser_id || '').trim();
+          if (!organiserId) {
+            return json(res, 400, {
+              error: 'member_list_required',
+              message: 'Link this event to an organiser page before publishing a members-only event.',
+            });
+          }
+          const activeMembers = await countActiveRosterMembers(organiserId);
+          if (activeMembers < 1) {
+            return json(res, 400, {
+              error: 'member_list_required',
+              message: 'Add at least one person to your member list before publishing a members-only event.',
+            });
+          }
+        }
+
         const alumniRaw = body.alumniFastPass || body.alumni_fast_pass;
         const alumniFastPass =
           alumniRaw && typeof alumniRaw === 'object'
@@ -135,7 +166,6 @@ module.exports = async function handler(req, res) {
               }
             : null;
 
-        const publish = Boolean(body.publish);
         const hasPaidTickets = requestHasPaidTickets(tiers, alumniFastPass);
 
         if (publish && hasPaidTickets) {

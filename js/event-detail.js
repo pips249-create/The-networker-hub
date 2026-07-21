@@ -62,7 +62,12 @@
       }
       return window.HubBookingFees.listingPriceLabel(ev, opts);
     }
-    if (!ev || ev.priceKey === 'free') return 'Free';
+    if (!ev || ev.priceKey === 'free') {
+      if (ev?.isMembersOnlyEvent || (ev?.hasMembersOnlyTiers && !(ev?.tickets || []).length)) {
+        return 'Members only';
+      }
+      return 'Free';
+    }
     const withFrom = !options || options.withFrom !== false;
     const display = ev.price || '—';
     return withFrom ? 'from ' + display : display;
@@ -2384,8 +2389,8 @@
       tiersEl.innerHTML =
         '<p class="ticket-load-hint">' +
         (rosterMembership?.signedOut
-          ? 'Sign in with the email on this group\u2019s membership list to see members-only tickets.'
-          : 'Members-only tickets are for people on this group\u2019s membership list.') +
+          ? 'This is a members-only event. Sign in with the email on this group\u2019s membership list to book.'
+          : 'This is a members-only event — booking is for people on this group\u2019s membership list only.') +
         '</p>';
     }
 
