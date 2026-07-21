@@ -20,6 +20,7 @@
   let reportsLoadedKey = '';
   let reportsStale = false;
   let groupRosterSummary = null;
+  let reportPeriod = 6;
   const filters = { search: '', status: 'all' };
 
   function isLoadInFlight() {
@@ -118,6 +119,161 @@
 
   function selectedEventId() {
     return document.getElementById('omr-event-select')?.value || '';
+  }
+
+  function selectedReportsEventId() {
+    return document.getElementById('omr-reports-event-select')?.value || '';
+  }
+
+  function selectedReportType() {
+    return document.getElementById('omr-report-type')?.value || activeReportTab || 'overview';
+  }
+
+  function selectedReportPeriod() {
+    const raw = Number(document.getElementById('omr-reports-period')?.value || reportPeriod);
+    if (raw === 3 || raw === 12) return raw;
+    return 6;
+  }
+
+  function reportsEventLabel(eventId) {
+    const id = String(eventId || selectedReportsEventId() || '').trim();
+    if (!id) return '';
+    const ev = events.find(function (e) {
+      return String(e.id) === String(id);
+    });
+    if (!ev) return 'Selected event';
+    const start = ev.startsAt || ev.starts_at || ev.date || '';
+    const date = formatShortEventDate(start);
+    return (ev.title || 'Event') + (date ? ' · ' + date : '');
+  }
+
+  function syncMembersEventFilter() {
+    const sel = document.getElementById('omr-event-select');
+    if (!sel) return;
+    const needsEvent =
+      filters.status === 'booked' ||
+      filters.status === 'not_booked' ||
+      Boolean(sel.value);
+    sel.hidden = !needsEvent && activeRegisterTab !== 'members';
+    if (needsEvent) sel.hidden = false;
+  }
+
+  function syncReportsSetupFields() {
+    const type = selectedReportType();
+    const eventField = document.getElementById('omr-reports-event-field');
+    const periodField = document.getElementById('omr-reports-period-field');
+    const typeHint = document.getElementById('omr-reports-type-hint');
+    const eventHint = document.getElementById('omr-reports-event-hint');
+    const needsEvent = type === 'bookings' || type === 'engagement';
+    const needsPeriod = type === 'engagement';
+
+    if (eventField) eventField.hidden = !needsEvent;
+    if (periodField) periodField.hidden = !needsPeriod;
+
+    if (typeHint) {
+      if (type === 'overview') {
+        typeHint.textContent = 'Counts, sign-ups, and expiring memberships across your whole list.';
+      } else if (type === 'bookings') {
+        typeHint.textContent = 'See which members have booked a specific event — and who has not.';
+      } else if (type === 'expiring') {
+        typeHint.textContent = 'Members whose membership ends within the next 14 days.';
+      } else {
+        typeHint.textContent = 'New vs returning attendance, plus missed recent meetings.';
+      }
+    }
+
+    if (eventHint) {
+      if (type === 'bookings') {
+        eventHint.textContent = 'Required — choose the event to check bookings against.';
+      } else if (type === 'engagement') {
+        eventHint.textContent = 'Optional — include new vs returning split for one event.';
+      } else {
+        eventHint.textContent = '';
+      }
+    }
+
+    updateReportsSetupSummary();
+  }
+
+  function updateReportsSetupSummary() {
+    const el = document.getElementById('omr-reports-setup-summary');
+    if (!el) return;
+    const type = selectedReportType();
+    const eventLabel = reportsEventLabel();
+    const period = selectedReportPeriod();
+
+    if (type === 'overview') {
+      el.textContent = 'You will get a snapshot of your whole member list.';
+      return;
+    }
+    if (type === 'expiring') {
+      el.textContent = 'You will see members expiring in the next 14 days.';
+      return;
+    }
+    if (type === 'bookings') {
+      el.textContent = eventLabel
+        ? 'You will see who on your list has booked ' + eventLabel + '.'
+        : 'Choose an event above, then run the report.';
+      return;
+    }
+    el.textContent =
+      'You will see missed-meeting patterns across your last ' +
+      period +
+      ' meetings' +
+      (eventLabel ? ', plus attendance at ' + eventLabel + '.' : '.');
+  }
+
+  function markReportsStale() {
+    if (!reportsLoadedKey) return;
+    reportsStale = true;
+    syncReportsPanelState();
+  }
+
+  function populateEventSelects() {
+    const memberSel = document.getElementById('omr-event-select');
+    const reportSel = document.getElementById('omr-reports-event-select');
+    if (!memberSel && !reportSel) return;
+
+    const now = Date.now();
+    const sorted = events.slice().sort(function (a, b) {
+      const aStart = a.startsAt || a.starts_at || a.date || '';
+      const bStart = b.startsAt || b.starts_at || b.date || '';
+      const aTime = aStart ? new Date(aStart).getTime() : 0;
+      const bTime = bStart ? new Date(bStart).getTime() : 0;
+      const aUpcoming = aTime >= now;
+      const bUpcoming = bTime >= now;
+      if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+      if (aUpcoming) return aTime - bTime;
+      return bTime - aTime;
+    });
+
+    function fillSelect(sel, placeholder) {
+      if (!sel) return '';
+      const prev = sel.value || '';
+      while (sel.options.length > 1) sel.remove(1);
+      sorted.forEach(function (ev) {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        const start = ev.startsAt || ev.starts_at || ev.date || '';
+        const isPast = start && new Date(start).getTime() < now;
+        const label = (ev.title || 'Event') + (ev.dateLabel ? ' · ' + ev.dateLabel : '');
+        opt.textContent = isPast ? label + ' (past)' : label;
+        sel.appendChild(opt);
+      });
+      if (prev && sorted.some(function (ev) { return String(ev.id) === String(prev); })) {
+        sel.value = prev;
+      } else {
+        sel.value = '';
+      }
+      if (sel.options[0] && placeholder) sel.options[0].textContent = placeholder;
+      return sel.value;
+    }
+
+    fillSelect(memberSel, 'All events');
+    fillSelect(reportSel, 'Choose an event…');
+    syncMembersEventFilter();
+    syncEventActionButtons();
+    updateReportsSetupSummary();
   }
 
   function bookedEmailSet() {
@@ -238,8 +394,14 @@
     };
   }
 
-  function reportsCacheKey(eventId) {
-    return getOrganiserId() + ':' + String(eventId || '');
+  function reportsCacheKey(eventId, period) {
+    return (
+      getOrganiserId() +
+      ':' +
+      String(eventId != null ? eventId : selectedReportsEventId() || '') +
+      ':' +
+      String(period != null ? period : selectedReportPeriod())
+    );
   }
 
   function syncReportsPanelState() {
@@ -250,7 +412,7 @@
     const refreshBtn = document.getElementById('omr-refresh-reports');
     const runBtn = document.getElementById('omr-run-reports');
     const stale = document.getElementById('omr-reports-stale');
-    const eventBar = document.getElementById('omr-event-bar');
+    const setup = document.getElementById('omr-reports-setup');
     const hasLoaded = Boolean(lastReports && reportsLoadedKey);
     const hasMembers = rosterActiveTotal > 0 || rosterTotal > 0;
 
@@ -300,6 +462,7 @@
       if (tabs) tabs.hidden = true;
       if (refreshBtn) refreshBtn.hidden = !reportsStale;
       if (stale) stale.hidden = !reportsStale;
+      if (setup) setup.classList.remove('is-compact');
       return;
     }
 
@@ -308,6 +471,7 @@
     if (tabs) tabs.hidden = false;
     if (refreshBtn) refreshBtn.hidden = false;
     if (stale) stale.hidden = true;
+    if (setup) setup.classList.add('is-compact');
   }
 
   function setRegisterTab(tab) {
@@ -321,7 +485,6 @@
     });
     const membersPanel = document.getElementById('omr-panel-members');
     const reportsPanel = document.getElementById('omr-panel-reports');
-    const eventBar = document.getElementById('omr-event-bar');
     if (membersPanel) {
       membersPanel.hidden = next !== 'members';
       membersPanel.classList.toggle('is-active', next === 'members');
@@ -330,7 +493,8 @@
       reportsPanel.hidden = next !== 'reports';
       reportsPanel.classList.toggle('is-active', next === 'reports');
     }
-    if (eventBar) eventBar.hidden = false;
+    syncMembersEventFilter();
+    syncReportsSetupFields();
     syncReportsPanelState();
   }
 
@@ -366,11 +530,13 @@
         expiringSoon: 0,
       };
     }
+    if (typeof window.updateMembershipPageCard === 'function') {
+      window.updateMembershipPageCard(id, groupRosterSummary);
+    }
   }
 
   function syncEventActionButtons() {
-    const sel = document.getElementById('omr-event-select');
-    const eventId = sel ? sel.value : '';
+    const eventId = selectedReportsEventId() || selectedEventId();
     const reportBtn = document.getElementById('omr-download-report');
     const remindBtn = document.getElementById('omr-remind-not-booked');
     document.querySelectorAll('.omr-event-action').forEach(function (el) {
@@ -671,34 +837,16 @@
           if (aUpcoming) return aTime - bTime;
           return bTime - aTime;
         });
-      const sel = document.getElementById('omr-event-select');
-      if (!sel) return;
-      const prev = sel.value || '';
-      while (sel.options.length > 1) sel.remove(1);
-      events.forEach(function (ev) {
-        const opt = document.createElement('option');
-        opt.value = ev.id;
-        const start = ev.startsAt || ev.starts_at || ev.date || '';
-        const isPast = start && new Date(start).getTime() < now;
-        const label = (ev.title || 'Event') + (ev.dateLabel ? ' · ' + ev.dateLabel : '');
-        opt.textContent = isPast ? label + ' (past)' : label;
-        sel.appendChild(opt);
-      });
+      populateEventSelects();
 
-      if (prev && events.some(function (ev) { return String(ev.id) === String(prev); })) {
-        sel.value = prev;
-      } else {
-        sel.value = '';
-      }
-
-      syncEventActionButtons();
-
-      if (sel.dataset.omrBound !== '1') {
-        sel.dataset.omrBound = '1';
-        sel.addEventListener('change', function () {
+      const memberSel = document.getElementById('omr-event-select');
+      if (memberSel && memberSel.dataset.omrBound !== '1') {
+        memberSel.dataset.omrBound = '1';
+        memberSel.addEventListener('change', function () {
+          syncMembersEventFilter();
           syncEventActionButtons();
           if (
-            !sel.value &&
+            !memberSel.value &&
             (filters.status === 'booked' || filters.status === 'not_booked')
           ) {
             filters.status = 'all';
@@ -708,11 +856,16 @@
           page = 1;
           fetchRosterPage(1).then(function () {
             renderRoster();
-            if (reportsLoadedKey && reportsLoadedKey !== reportsCacheKey(sel.value)) {
-              reportsStale = true;
-              syncReportsPanelState();
-            }
           });
+        });
+      }
+
+      const reportSel = document.getElementById('omr-reports-event-select');
+      if (reportSel && reportSel.dataset.omrBound !== '1') {
+        reportSel.dataset.omrBound = '1';
+        reportSel.addEventListener('change', function () {
+          updateReportsSetupSummary();
+          markReportsStale();
         });
       }
     } catch {
@@ -758,15 +911,7 @@
   }
 
   function selectedEventLabel() {
-    const eventId = selectedEventId();
-    if (!eventId) return '';
-    const ev = events.find(function (e) {
-      return String(e.id) === String(eventId);
-    });
-    if (!ev) return '';
-    const start = ev.startsAt || ev.starts_at || ev.date || '';
-    const date = formatShortEventDate(start);
-    return (ev.title || 'Event') + (date ? ' · ' + date : '');
+    return reportsEventLabel(selectedEventId() || selectedReportsEventId());
   }
 
   function renderReports(reports) {
@@ -785,7 +930,7 @@
     const missed = reports.missedRecentMeetings;
     const expiry = reports.membershipExpiry || {};
     const eventLabel = selectedEventLabel();
-    const eventSelected = Boolean(selectedEventId());
+    const eventSelected = Boolean(selectedReportsEventId() || selectedEventId());
     let html = '';
 
     if (activeReportTab === 'overview') {
@@ -895,23 +1040,37 @@
 
   async function runReports(options) {
     const force = Boolean(options && options.force);
-    const eventId = selectedEventId();
-    const cacheKey = reportsCacheKey(eventId);
+    const type = selectedReportType();
+    const eventId = selectedReportsEventId();
+    const period = selectedReportPeriod();
+    reportPeriod = period;
+    activeReportTab = type;
+    setReportTab(type);
+
+    if (type === 'bookings' && !eventId) {
+      showAlert('Choose an event for the booking report.', 'error');
+      syncReportsSetupFields();
+      return null;
+    }
+
+    const cacheKey = reportsCacheKey(eventId, period);
     if (!force && lastReports && reportsLoadedKey === cacheKey && !reportsStale) {
       renderReports(lastReports);
+      syncReportsPanelState();
       return lastReports;
     }
-    await loadReports(eventId);
+    await loadReports(eventId, period);
     return lastReports;
   }
 
-  async function loadReports(eventId) {
+  async function loadReports(eventId, period) {
     setReportsLoading(true);
     try {
       let qs = '&action=reports';
       if (eventId) qs += '&eventId=' + encodeURIComponent(eventId);
+      const recentCount = Math.max(Number(period || selectedReportPeriod()) || 6, 1);
       const recent = events
-        .slice(0, 6)
+        .slice(0, recentCount)
         .map(function (e) {
           return e.id;
         })
@@ -919,7 +1078,7 @@
       if (recent) qs += '&recentEventIds=' + encodeURIComponent(recent);
       const data = await api(rosterUrl(qs));
       lastReports = data.reports || null;
-      reportsLoadedKey = reportsCacheKey(eventId);
+      reportsLoadedKey = reportsCacheKey(eventId, recentCount);
       reportsStale = false;
       renderReports(data.reports);
     } finally {
@@ -1025,7 +1184,7 @@
 
   function downloadReportCsv() {
     closeAllActionMenus();
-    const eventId = selectedEventId();
+    const eventId = selectedReportsEventId() || selectedEventId();
     if (!eventId || !lastReports) {
       showAlert('Choose an event first, then download its report.', 'error');
       return;
@@ -1509,6 +1668,7 @@
     bindMemberActionHandlers();
 
     setRegisterTab('members');
+    syncReportsSetupFields();
 
     document.getElementById('omr-jump-add')?.addEventListener('click', function () {
       jumpToAddSection('omr-add-details');
@@ -1529,6 +1689,18 @@
       btn.addEventListener('click', function () {
         setReportTab(btn.dataset.omrReportTab || 'overview');
       });
+    });
+
+    document.getElementById('omr-report-type')?.addEventListener('change', function () {
+      activeReportTab = selectedReportType();
+      syncReportsSetupFields();
+      markReportsStale();
+    });
+
+    document.getElementById('omr-reports-period')?.addEventListener('change', function () {
+      reportPeriod = selectedReportPeriod();
+      updateReportsSetupSummary();
+      markReportsStale();
     });
 
     document.getElementById('omr-run-reports')?.addEventListener('click', function () {
@@ -1590,6 +1762,7 @@
         filters.status = 'all';
         e.target.value = 'all';
       }
+      syncMembersEventFilter();
       page = 1;
       fetchRosterPage(1);
     });
@@ -1597,7 +1770,7 @@
     document.getElementById('omr-download-report')?.addEventListener('click', downloadReportCsv);
     document.getElementById('omr-remind-not-booked')?.addEventListener('click', async function () {
       closeAllActionMenus();
-      const eventId = selectedEventId();
+      const eventId = selectedReportsEventId() || selectedEventId();
       if (!eventId || !lastReports || !lastReports.bookedForEvent) {
         showAlert('Choose an event first.', 'error');
         return;
@@ -1907,6 +2080,9 @@
       const id = String(groupId || '').trim();
       if (!id || getOrganiserId() !== id || !summary) return;
       groupRosterSummary = summary;
+      if (typeof window.updateMembershipPageCard === 'function') {
+        window.updateMembershipPageCard(id, summary);
+      }
       if (activeRegisterTab === 'members' || document.getElementById('omr-count')) {
         renderRoster();
       }

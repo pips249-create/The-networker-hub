@@ -7,6 +7,7 @@
   const DESCRIPTION_MAX_WORDS = 500;
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, cancellations: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
+  let businessSubRoute = 'business-listings';
   const expandedSeriesKeys = new Set();
   let eventsGroupingPromise = null;
   let bootstrapReady = false;
@@ -331,6 +332,8 @@
     renderOrganiserRankingBanner();
     renderOrganiserRankingShareIfNeeded();
     if (state.opportunitiesLoaded) renderOpportunityRoiInsights();
+    updateBusinessTabCounts();
+    renderOpportunityInsightsEmpty();
   }
 
   function renderOrganiserRankingShareIfNeeded() {
@@ -2815,9 +2818,15 @@
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
     if (hash === 'business-list') return { page: 'business-list', sub: null };
-    if (hash === 'opportunity-enquiries') return { page: 'business-overview', sub: null };
+    if (hash === 'opportunity-enquiries' || hash === 'business-enquiries') {
+      return { page: 'business-overview', sub: 'business-enquiries' };
+    }
+    if (hash === 'business-insights') return { page: 'business-overview', sub: 'business-insights' };
+    if (hash === 'business-guide') return { page: 'business-overview', sub: 'business-guide' };
+    if (hash === 'business-overview' || hash === 'business-listings') {
+      return { page: 'business-overview', sub: 'business-listings' };
+    }
     if (hash === 'events-overview') return { page: 'events', sub: 'events-list' };
-    if (hash === 'business-overview') return { page: 'business-overview', sub: null };
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
@@ -6587,10 +6596,60 @@
     sel.replaceChildren(...options);
     filters.membershipsGroup = nextId;
     sel.value = nextId;
-    sel.hidden = groups.length <= 1;
-    const label = sel.closest('.org-filter-bar--memberships-group')?.querySelector('.org-filter-label');
-    if (label) label.hidden = groups.length <= 1;
+    updateMembershipPageCard(nextId);
   }
+
+  function updateMembershipPageCard(groupId, summaryOverride) {
+    const card = document.getElementById('memberships-page-card');
+    const nameEl = document.getElementById('memberships-page-name');
+    const metaEl = document.getElementById('memberships-page-meta');
+    const avatarEl = document.getElementById('memberships-page-avatar');
+    const viewEl = document.getElementById('memberships-page-view');
+    const editEl = document.getElementById('memberships-page-edit');
+    const sel = document.getElementById('filter-memberships-group');
+    if (!card) return;
+
+    const g = findGroupById(groupId);
+    if (!g) {
+      card.hidden = true;
+      return;
+    }
+
+    const groups = memberListGroups();
+    const multi = groups.length > 1;
+    card.hidden = false;
+
+    if (nameEl) {
+      nameEl.textContent = g.name || 'Organiser page';
+      nameEl.hidden = multi;
+    }
+    if (sel) sel.hidden = !multi;
+
+    if (metaEl) {
+      metaEl.textContent = membershipSummaryLine(
+        summaryOverride ? { rosterSummary: summaryOverride } : g
+      );
+    }
+
+    if (avatarEl) {
+      if (g.imageUrl) {
+        avatarEl.innerHTML =
+          '<img src="' + esc(g.imageUrl) + '" alt="" loading="lazy" decoding="async">';
+        avatarEl.classList.add('has-image');
+      } else {
+        avatarEl.textContent = groupInitial(g.name);
+        avatarEl.classList.remove('has-image');
+      }
+    }
+
+    if (viewEl) {
+      viewEl.href = '../events/organiser?id=' + encodeURIComponent(g.id);
+      viewEl.hidden = g.statusKey === 'draft';
+    }
+    if (editEl) editEl.href = groupEditorUrl(g);
+  }
+
+  window.updateMembershipPageCard = updateMembershipPageCard;
 
   function updateMembershipNetworkSummary() {
     const el = document.getElementById('memberships-network-summary');
@@ -6680,7 +6739,7 @@
 
     fillMembershipsGroupFilter();
     updateMembershipNetworkSummary();
-    updateMembershipGroupMeta(filters.membershipsGroup);
+    updateMembershipPageCard(filters.membershipsGroup);
     syncMembershipGroupUrl();
 
     const sel = document.getElementById('filter-memberships-group');
@@ -6689,7 +6748,7 @@
       sel.addEventListener('change', function () {
         filters.membershipsGroup = sel.value || '';
         membershipsRosterLoadedFor = '';
-        updateMembershipGroupMeta(filters.membershipsGroup);
+        updateMembershipPageCard(filters.membershipsGroup);
         syncMembershipGroupUrl();
         if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
           window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup).catch(function (err) {
@@ -6787,6 +6846,111 @@
     });
   }
 
+  function syncBusinessTabHighlights(sub, enabled) {
+    const activeSub = sub || 'business-listings';
+    document.querySelectorAll('[data-business-tab]').forEach((tab) => {
+      const isActive = Boolean(enabled) && tab.getAttribute('data-business-tab') === activeSub;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      tab.tabIndex = isActive ? 0 : -1;
+    });
+  }
+
+  function businessSubHash(sub) {
+    const route = sub || businessSubRoute || 'business-listings';
+    if (route === 'business-listings') return 'business-overview';
+    return route;
+  }
+
+  function updateBusinessTabCounts() {
+    const listingsEl = document.getElementById('tab-count-opp-listings');
+    const newBadge = document.getElementById('tab-badge-opp-enquiries-new');
+    const liveListings = (state.opportunities || []).filter(function (o) {
+      const status = String(o.status || o.listingStatus || '').toLowerCase();
+      return status === 'published' || status === 'live';
+    }).length;
+    if (listingsEl) listingsEl.textContent = String(liveListings);
+    const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
+    if (newBadge) {
+      newBadge.hidden = newCount < 1;
+      newBadge.textContent = String(newCount);
+    }
+  }
+
+  function renderOpportunityInsightsEmpty() {
+    const empty = document.getElementById('org-opp-insights-empty');
+    if (!empty) return;
+    const list = state.opportunities || [];
+    if (!list.length) {
+      empty.hidden = false;
+      return;
+    }
+    const roi = document.getElementById('org-opp-roi-insights');
+    const compare = document.getElementById('org-opp-compare');
+    const coaching = document.getElementById('org-opp-coaching');
+    const anyVisible = [roi, compare, coaching].some(function (el) {
+      return el && !el.hidden;
+    });
+    empty.hidden = anyVisible;
+  }
+
+  function setBusinessSub(sub) {
+    businessSubRoute = sub || 'business-listings';
+    document.querySelectorAll('[data-business-panel]').forEach((panel) => {
+      const isActive = panel.getAttribute('data-business-panel') === businessSubRoute;
+      panel.classList.toggle('is-active', isActive);
+      if (isActive) panel.removeAttribute('hidden');
+      else panel.setAttribute('hidden', '');
+      panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+    });
+    syncBusinessTabHighlights(businessSubRoute, true);
+    syncSidebarNavHighlight('business-overview', businessSubRoute);
+    const titles = {
+      'business-listings': [
+        'My business opportunities',
+        'Listings you publish on the hub — edit, renew, or promote each one.',
+      ],
+      'business-enquiries': [
+        'Enquiries received',
+        'Messages from members — reply here or via your email app.',
+      ],
+      'business-insights': [
+        'Performance insights',
+        'ROI, comparisons between listings, and tips to turn views into enquiries.',
+      ],
+      'business-guide': [
+        'How business opportunities work',
+        'Steps, pricing, and what to expect before you publish your first listing.',
+      ],
+    };
+    const t = titles[businessSubRoute] || titles['business-listings'];
+    const titleEl = document.getElementById('org-business-title');
+    const subEl = document.getElementById('org-business-sub');
+    if (titleEl) titleEl.textContent = t[0];
+    if (subEl) subEl.textContent = t[1];
+    const summary = document.getElementById('org-business-hub-summary');
+    if (summary) summary.hidden = businessSubRoute === 'business-guide';
+
+    if (!bootstrapReady) return;
+
+    if (businessSubRoute === 'business-enquiries') {
+      loadOpportunityEnquiries().then(function () {
+        renderOpportunityEnquiries();
+      });
+    } else if (businessSubRoute === 'business-listings') {
+      loadOpportunitiesList().then(function () {
+        renderOpportunitiesList();
+      });
+    } else if (businessSubRoute === 'business-insights') {
+      loadOpportunitiesList().then(function () {
+        renderOpportunityRoiInsights();
+        renderOpportunityCompare();
+        renderOpportunityCoaching();
+        renderOpportunityInsightsEmpty();
+      });
+    }
+  }
+
   function updateSharedEventFilterNotes() {
     const active = eventsFiltersActive();
     document.querySelectorAll('.org-filter-linked-note').forEach((el) => {
@@ -6804,8 +6968,21 @@
     let page = route || 'dashboard';
     if (page === 'member-lists') page = 'memberships';
     let sub = null;
-    if (route === 'opportunity-enquiries' || route === 'business-overview') {
+    let businessSub = null;
+    if (
+      route === 'business-listings' ||
+      route === 'business-enquiries' ||
+      route === 'business-insights' ||
+      route === 'business-guide'
+    ) {
       page = 'business-overview';
+      businessSub = route;
+    } else if (route === 'opportunity-enquiries') {
+      page = 'business-overview';
+      businessSub = 'business-enquiries';
+    } else if (route === 'business-overview') {
+      page = 'business-overview';
+      businessSub = 'business-listings';
     } else if (route === 'events-overview') {
       page = 'events';
       sub = 'events-list';
@@ -6830,9 +7007,12 @@
 
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
+    } else if (page === 'business-overview') {
+      setBusinessSub(businessSub || businessSubRoute || 'business-listings');
     } else {
       syncSidebarNavHighlight(page, sub);
       syncEventsTabHighlights(null, false);
+      syncBusinessTabHighlights(null, false);
     }
     if (page === 'social') {
       renderOrganiserRankingShare();
@@ -6855,8 +7035,6 @@
     }
     if (page === 'business-overview') {
       requestAnimationFrame(function () {
-        loadOpportunityEnquiries();
-        loadOpportunitiesList();
         loadOpportunityPremiumSlots();
       });
     }
@@ -6889,7 +7067,7 @@
       page === 'events'
         ? sub || 'events-list'
         : page === 'business-overview'
-          ? 'business-overview'
+          ? businessSubHash(businessSub || businessSubRoute)
           : page === 'business-list'
             ? 'business-list'
             : page === 'social'
@@ -8946,6 +9124,7 @@
     if (!listings.length) {
       mount.hidden = true;
       mount.replaceChildren();
+      renderOpportunityInsightsEmpty();
       return;
     }
     let totalSpend = 0;
@@ -8964,6 +9143,7 @@
     if (!totalEnquiries) {
       mount.hidden = true;
       mount.replaceChildren();
+      renderOpportunityInsightsEmpty();
       return;
     }
     const avgPerEnquiry = Math.round(totalSpend / totalEnquiries);
@@ -8981,6 +9161,7 @@
         ? ' ' + esc(String(saveRate)) + '% of members who saved a business opportunity also enquired.'
         : '') +
       '</p>';
+    renderOpportunityInsightsEmpty();
   }
 
   function opportunityPublicUrl(opportunity) {
@@ -9055,6 +9236,7 @@
     if (!tips.length) {
       mount.hidden = true;
       mount.innerHTML = '';
+      renderOpportunityInsightsEmpty();
       return;
     }
     mount.hidden = false;
@@ -9073,6 +9255,7 @@
     if (list.length < 2) {
       mount.hidden = true;
       mount.innerHTML = '';
+      renderOpportunityInsightsEmpty();
       return;
     }
     const ranked = list
@@ -9102,6 +9285,7 @@
       (best.per != null ? ', ' + esc(formatPenceGbp(best.per)) + ' per enquiry' : '') +
       (best.views ? ', ' + esc(String(best.views)) + ' views' : '') +
       '.</p>';
+    renderOpportunityInsightsEmpty();
   }
 
   function opportunityRenewButtonHtml(opportunity) {
@@ -9470,6 +9654,7 @@
       navBadge.hidden = newCount < 1;
       navBadge.textContent = newCount > 1 ? String(newCount) + ' new' : 'New';
     }
+    updateBusinessTabCounts();
     renderOrganiserNotices();
   }
 
@@ -9556,12 +9741,7 @@
   function scrollToBusinessEnquiries(opportunityId) {
     if (opportunityId) opportunityEnquiryFilterId = String(opportunityId);
     else opportunityEnquiryFilterId = null;
-    setRoute('business-overview');
-    requestAnimationFrame(function () {
-      renderOpportunityEnquiries();
-      const el = document.getElementById('org-opp-enquiries-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    setRoute('business-enquiries');
   }
 
   function updateBusinessListPageHead() {
@@ -9937,6 +10117,15 @@
     updateOpportunityEnquiryUi();
     updateGettingStartedPanel();
     if (state.opportunitiesLoaded) renderOpportunitiesList();
+    if (document.querySelector('[data-org-page="business-overview"].is-active') && state.opportunitiesLoaded) {
+      if (businessSubRoute === 'business-enquiries') renderOpportunityEnquiries();
+      else if (businessSubRoute === 'business-insights') {
+        renderOpportunityRoiInsights();
+        renderOpportunityCompare();
+        renderOpportunityCoaching();
+        renderOpportunityInsightsEmpty();
+      }
+    }
   }
 
   function setDashboardLoading(on) {

@@ -386,6 +386,59 @@
   margin-top: 0;
 }
 
+/* Business opportunities hub — navy/gold tab rail */
+.org-events-subnav--business {
+  background: linear-gradient(135deg, var(--opp-navy, #0d1f3c) 0%, var(--opp-navy-mid, #162847) 52%, #1e3a4f 100%);
+  box-shadow: 0 10px 28px rgba(13, 31, 60, 0.24);
+}
+
+.org-events-subnav--business .org-events-tab.is-active::after {
+  background: linear-gradient(90deg, var(--opp-gold, #c9961f) 0%, #e8b84a 100%);
+}
+
+.org-events-subnav--business .org-events-tab.is-active {
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.org-events-subnav--business .org-events-tab.is-active .org-events-tab-icon {
+  color: var(--opp-gold, #c9961f);
+}
+
+.org-events-subnav--business .org-events-tab.is-active .org-events-tab-count {
+  background: var(--opp-navy, #0d1f3c);
+  border-color: var(--opp-navy, #0d1f3c);
+}
+
+.org-page--business-ops .org-page-head--split {
+  border-bottom-color: rgba(201, 150, 31, 0.22);
+}
+
+.org-business-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#org-page-business-overview .org-sub-page--business.is-active {
+  border: 1px solid rgba(201, 150, 31, 0.28);
+  border-top: none;
+  border-radius: 0 0 var(--od-radius) var(--od-radius);
+  background: var(--od-white);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--od-shadow-md);
+}
+
+.org-business-insights-lead {
+  margin: 0 0 16px;
+}
+
+#org-page-business-overview .org-business-intro {
+  margin: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .org-events-tab {
     transition: none;
@@ -3096,6 +3149,134 @@
   margin-top: 4px;
 }
 
+.org-memberships-page-card {
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(13, 110, 122, 0.1) 0%, rgba(201, 162, 39, 0.08) 100%);
+  border: 1px solid rgba(13, 110, 122, 0.22);
+  box-shadow: 0 2px 10px rgba(8, 74, 82, 0.08);
+}
+
+.org-memberships-page-card-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.org-memberships-page-avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d6e7a;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(13, 110, 122, 0.24);
+}
+
+.org-memberships-page-avatar.has-image {
+  background: #fff;
+}
+
+.org-memberships-page-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.org-memberships-page-body {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.org-memberships-page-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0d6e7a;
+}
+
+.org-memberships-page-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.org-memberships-page-name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #084a52;
+}
+
+.org-memberships-page-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: min(100%, 320px);
+  max-width: 100%;
+  min-height: 42px;
+  padding: 8px 40px 8px 14px;
+  border: 1.5px solid rgba(13, 110, 122, 0.28);
+  border-radius: 10px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23084a52' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #084a52;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(26, 46, 59, 0.06);
+}
+
+.org-memberships-page-switch:focus {
+  outline: none;
+  border-color: #0d6e7a;
+  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.16);
+}
+
+.org-memberships-page-meta {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a6272;
+}
+
+.org-memberships-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .org-memberships-page-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .org-memberships-page-actions .org-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 .org-filter-bar--memberships-group {
   margin-bottom: 18px;
   align-items: center;
@@ -3200,61 +3381,148 @@
 }
 
 .omr-event-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(13, 110, 122, 0.04);
-  border: 1px solid rgba(13, 110, 122, 0.1);
+  display: none;
 }
 
-.omr-event-bar-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #084a52;
+.omr-filter-event {
+  min-width: 180px;
+  max-width: 260px;
 }
 
-.omr-event-bar-hint {
-  flex: 1 1 180px;
-  font-size: 12px;
-  color: #7a94a3;
+.omr-reports-setup {
+  margin-bottom: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  box-shadow: 0 1px 3px rgba(26, 46, 59, 0.05);
 }
 
-.omr-register-panel[hidden] {
-  display: none !important;
+.omr-reports-setup.is-compact {
+  padding: 14px 16px;
 }
 
-.omr-reports-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+.omr-reports-setup.is-compact .omr-reports-setup-grid,
+.omr-reports-setup.is-compact .omr-reports-setup-lead,
+.omr-reports-setup.is-compact .omr-reports-field-hint,
+.omr-reports-setup.is-compact .omr-reports-setup-summary {
+  display: none;
+}
+
+.omr-reports-setup.is-compact .omr-reports-setup-head {
+  margin-bottom: 0;
+}
+
+.omr-reports-setup.is-compact .omr-reports-setup-title {
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+.omr-reports-setup-head {
   margin-bottom: 14px;
 }
 
-.omr-reports-toolbar-lead {
+.omr-reports-setup-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #084a52;
+}
+
+.omr-reports-setup-lead {
   margin: 0;
-  flex: 1 1 240px;
   font-size: 13px;
   line-height: 1.45;
   color: #4a6272;
 }
 
-.omr-reports-toolbar-actions {
+.omr-reports-setup-grid {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 720px) {
+  .omr-reports-setup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .omr-reports-field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.omr-reports-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #7a94a3;
+}
+
+.omr-reports-control {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 36px 8px 12px;
+  border: 1.5px solid #cfe4ea;
+  border-radius: 10px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235a6a72' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a2e3b;
+}
+
+.omr-reports-control:focus {
+  outline: none;
+  border-color: #0d6e7a;
+  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.14);
+}
+
+.omr-reports-field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #7a94a3;
+}
+
+.omr-reports-setup-summary {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(13, 110, 122, 0.06);
+  font-size: 13px;
+  line-height: 1.45;
+  color: #084a52;
+}
+
+.omr-reports-setup-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-top: 14px;
 }
 
 .omr-reports-stale {
   margin: 0;
   font-size: 12px;
   color: #9f1239;
+}
+
+.omr-reports-toolbar {
+  display: none;
+}
+
+.omr-register-panel[hidden] {
+  display: none !important;
 }
 
 .omr-reports-tabs {
