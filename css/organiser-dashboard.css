@@ -238,12 +238,17 @@
   color: #8a6508;
 }
 
-/* My Events hub — sidebar + in-page tabs (sub-links hidden on mobile) */
+/* My Events hub — full-width underline tabs */
 .org-events-subnav {
   display: flex;
   gap: 0;
-  border-bottom: 2px solid var(--od-border-soft);
-  margin-bottom: 20px;
+  padding: 0;
+  margin-bottom: 0;
+  background: var(--od-white);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius) var(--od-radius) 0 0;
+  border-bottom: 2px solid var(--od-border);
+  box-shadow: var(--od-shadow-sm);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -256,41 +261,64 @@
 .org-events-tab {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  padding: 12px 18px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 14px 10px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--od-text-soft);
-  background: none;
+  color: var(--od-text-mid);
+  background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
+  border-radius: 0;
   margin-bottom: -2px;
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.org-events-tab + .org-events-tab {
+  border-left: 1px solid var(--od-border-soft);
 }
 
 .org-events-tab:hover {
-  color: var(--od-purple);
+  color: var(--od-purple-dark);
+  background: var(--od-purple-pale);
+}
+
+.org-events-tab:focus-visible {
+  outline: 2px solid var(--od-purple);
+  outline-offset: -2px;
+  z-index: 1;
 }
 
 .org-events-tab.is-active {
   color: var(--od-purple-dark);
+  background: linear-gradient(180deg, var(--od-purple-pale) 0%, var(--od-white) 100%);
   border-bottom-color: var(--od-purple);
+  font-weight: 700;
 }
 
 .org-events-tab-count {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   background: var(--od-purple-pale);
   color: var(--od-purple-dark);
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
+  border: 1px solid var(--od-border-soft);
 }
 
 .org-events-tab.is-active .org-events-tab-count {
   background: var(--od-purple);
   color: #fff;
+  border-color: var(--od-purple);
 }
 
 .org-events-tab-badge {
@@ -302,6 +330,28 @@
   color: #fff;
   padding: 2px 6px;
   border-radius: 999px;
+}
+
+.org-events-tab.is-active .org-events-tab-badge {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+/* Tab panel sits flush under the tab bar */
+#org-page-events .org-sub-page.is-active {
+  border: 1px solid var(--od-border);
+  border-top: none;
+  border-radius: 0 0 var(--od-radius) var(--od-radius);
+  background: var(--od-white);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--od-shadow-sm);
+}
+
+#org-page-events .org-sub-page.is-active > .org-filter-bar:first-child,
+#org-page-events .org-sub-page.is-active > .org-filter-linked-note:first-child,
+#org-page-events .org-sub-page.is-active > .org-status-glossary:first-child,
+#org-page-events .org-sub-page.is-active > p:first-child {
+  margin-top: 0;
 }
 
 .org-events-tab-badge[hidden] {

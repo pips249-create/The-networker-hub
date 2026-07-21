@@ -117,12 +117,13 @@ a:hover {
 
 .event-detail-page #event-detail-load-overlay .hub-page-buffer-visual.is-event-photo {
   width: min(100%, 280px);
-  height: 156px;
+  height: auto;
+  aspect-ratio: 16 / 10;
 }
 
 @media (max-width: 560px) {
   .event-detail-page #event-detail-load-overlay .hub-page-buffer-visual.is-event-photo {
-    height: 140px;
+    width: min(100%, 100%);
   }
 }
 

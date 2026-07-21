@@ -23,9 +23,9 @@
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260715nav" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721tabs3" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260716mem5" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260721tabs3" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem4" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -578,26 +578,30 @@
             <p class="org-page-kicker">My events</p>
             <h1 class="org-page-title">Memberships</h1>
             <p class="org-page-lead org-member-list-intro">
-              Your private member register for each organiser page — upload members, then add a
-              <strong>Members only</strong> ticket on your events. Members see the rate when signed in with their membership email; everyone else never sees it.
+              Upload members for each organiser page, then add a <strong>Members only</strong> ticket on your events.
             </p>
           </header>
 
-          <div class="org-toolbar org-toolbar--section">
-            <p class="org-section-sub org-sub-lead org-sub-lead--flush">
-              Reports cover only people on <strong>your uploaded member list</strong> — not every event attendee (use Attendees for that).
-              Members are emailed when you publish events and when you send booking reminders, so they do not need to keep checking the Hub.
-              Export CSV anytime for your own records.
-            </p>
-          </div>
-
-          <div class="org-attendee-data-notice org-notice org-notice--info" role="note">
-            <p class="org-notice-title">Using member contact details</p>
-            <p class="org-notice-text">
-              Use this list for membership and event booking only.
-              Please do not add members to marketing lists or contact them about unrelated services without their consent.
-            </p>
-          </div>
+          <details class="org-revenue-info-panel org-memberships-how">
+            <summary class="org-revenue-info-summary">
+              <span class="org-revenue-info-icon" aria-hidden="true">i</span>
+              How membership works
+            </summary>
+            <div class="org-revenue-info-body">
+              <p>
+                Members see the member rate when signed in with their membership email; everyone else never sees it.
+                Add people here, then set a <strong>Members only</strong> ticket on your event (Tickets step).
+              </p>
+              <p>
+                Reports cover only people on <strong>your uploaded member list</strong> — not every event attendee (use Attendees for that).
+                Members are emailed when you publish events and when you send booking reminders.
+                Export CSV anytime for your own records.
+              </p>
+              <p>
+                Use member contact details for membership and event booking only — not for unrelated marketing without consent.
+              </p>
+            </div>
+          </details>
 
           <div id="omr-alert" class="org-alert" hidden role="status"></div>
 
@@ -622,7 +626,6 @@
             <div class="org-filter-bar org-filter-bar--memberships-group">
               <label class="org-filter-label" for="filter-memberships-group">Organiser page</label>
               <select id="filter-memberships-group" aria-label="Organiser page for membership register"></select>
-              <p class="org-memberships-group-meta" id="memberships-group-meta" hidden></p>
             </div>
 
             <section class="omr-register" aria-label="Member register">
@@ -658,18 +661,35 @@
                 <select id="omr-event-select" aria-label="Filter or report by event">
                   <option value="">All events — show bookings</option>
                 </select>
-                <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-bulk-resend" hidden>
-                  Resend invites to not signed up
-                </button>
-                <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-remind-not-booked" disabled title="Choose an event first">
-                  Email not booked
-                </button>
-                <button type="button" class="org-btn org-btn-gold omr-bar-btn" id="omr-download-members">
-                  ⬇ Download members CSV
-                </button>
-                <button type="button" class="org-btn org-btn-outline omr-bar-btn" id="omr-download-report" disabled title="Choose an event first">
-                  ⬇ Download event report CSV
-                </button>
+                <div class="org-action-wrap omr-more-actions-wrap" id="omr-more-actions">
+                  <button
+                    type="button"
+                    class="org-btn org-btn-outline omr-bar-btn"
+                    data-org-action-toggle
+                    aria-expanded="false"
+                    aria-haspopup="menu"
+                  >
+                    More actions <span class="chev">▾</span>
+                  </button>
+                  <div class="org-action-menu omr-more-actions-menu" role="menu">
+                    <button type="button" class="org-action-item" id="omr-bulk-resend" hidden role="menuitem">
+                      <span class="org-action-icon">✉</span>
+                      <span class="org-action-text"><strong>Resend invites to not signed up</strong></span>
+                    </button>
+                    <button type="button" class="org-action-item omr-event-action" id="omr-remind-not-booked" hidden disabled role="menuitem">
+                      <span class="org-action-icon">✉</span>
+                      <span class="org-action-text"><strong>Email not booked</strong><span>Remind members who have not booked</span></span>
+                    </button>
+                    <button type="button" class="org-action-item" id="omr-download-members" role="menuitem">
+                      <span class="org-action-icon">⬇</span>
+                      <span class="org-action-text"><strong>Download members CSV</strong></span>
+                    </button>
+                    <button type="button" class="org-action-item omr-event-action" id="omr-download-report" hidden disabled role="menuitem">
+                      <span class="org-action-icon">⬇</span>
+                      <span class="org-action-text"><strong>Download event report CSV</strong></span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div class="omr-add-section omr-add-section--compact" id="omr-add-section" aria-label="Add or import members">
@@ -763,7 +783,7 @@
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                   </div>
                   <h3 class="org-empty-state-title">No members yet</h3>
-                  <p class="org-empty-state-text">Add someone above or import a spreadsheet. Then add a <strong>Members only</strong> ticket on your event (Tickets step) so members can book member rates.</p>
+                  <p class="org-empty-state-text">Use <strong>+ Add a member</strong> or <strong>Import spreadsheet</strong>, then add a <strong>Members only</strong> ticket on your event (Tickets step).</p>
                 </div>
               </div>
               <nav class="org-pagination omr-pagination" id="omr-pagination" aria-label="Members pages" hidden></nav>

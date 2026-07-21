@@ -4448,6 +4448,10 @@
         hero.fetchPriority = 'high';
         hero.src = preview.image;
         hero.alt = preview.title || 'Event';
+        const pos = String(preview.imagePosition || '').trim();
+        if (/^\d{1,3}%\s+\d{1,3}%$/.test(pos)) {
+          hero.style.objectPosition = pos;
+        }
       }
       return true;
     }
@@ -4548,6 +4552,7 @@
           if (window.hubEventPreview && resolvedImage) {
             window.hubEventPreview.applyToOverlay('event-detail-load-overlay', {
               image: resolvedImage,
+              imagePosition: displayEv.photoPosition || '',
               title: displayEv.title,
             });
           }

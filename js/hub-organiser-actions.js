@@ -16,6 +16,9 @@
     return root + relative.replace(/^\.\//, '');
   }
 
+  var CLAIM_PROFILE_LOGIN =
+    '/login?next=' + encodeURIComponent('/organiser/?onboard=claim') + '&intent=organiser-claim';
+
   function loginUrl(nextPath) {
     var next = nextPath || '/organiser/';
     var pathOnly = next.split('?')[0];
@@ -208,6 +211,16 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !modal.hidden) closeListEventPrimer();
     });
+  }
+
+  async function goToClaimProfile() {
+    saveBrowseReturn();
+    var data = await fetchSession();
+    if (data.ok && data.user) {
+      global.location.href = path('/organiser/?onboard=claim');
+      return;
+    }
+    global.location.href = path(CLAIM_PROFILE_LOGIN);
   }
 
   async function goToGroupProfile(options) {
@@ -456,6 +469,8 @@
   global.HubOrganiserActions = {
     GROUP_STORAGE_KEY: GROUP_STORAGE_KEY,
     BROWSE_RETURN_KEY: BROWSE_RETURN_KEY,
+    CLAIM_PROFILE_LOGIN: CLAIM_PROFILE_LOGIN,
+    goToClaimProfile: goToClaimProfile,
     goToGroupProfile: goToGroupProfile,
     goToAddEvent: goToAddEvent,
     goToAddOpportunity: goToAddOpportunity,

@@ -985,11 +985,23 @@ body.nav-menu-open {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--od-bg, #f4f8fa);
+    background: var(--od-white, #fff);
     margin-left: -4px;
     margin-right: -4px;
-    padding-left: 4px;
-    padding-right: 4px;
+    border-radius: var(--od-radius, 12px) var(--od-radius, 12px) 0 0;
+  }
+
+  .organiser-dashboard-page .org-events-tab {
+    flex: 0 0 auto;
+    min-width: 92px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  #org-page-events .org-sub-page.is-active {
+    margin-left: -4px;
+    margin-right: -4px;
+    padding: 16px 12px;
   }
 
   .org-attendees-table-wrap {

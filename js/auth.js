@@ -395,27 +395,48 @@
     var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
     if (loginLede) {
       loginLede.textContent =
-        'Use the same email address this invitation was sent to. After signing in you can confirm your organiser page and add events.';
+        'Sign in with the email linked to your group on the Hub — or create a free account below if you are new. Next you will confirm your organiser page.';
     }
 
     var registerTitle = document.querySelector('#register-form') && document.querySelector('.auth-card--wizard h1');
     if (registerTitle) {
-      registerTitle.textContent = 'Create your organiser password';
+      registerTitle.textContent = 'Create your organiser account';
     }
 
     var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
     if (registerLede) {
       registerLede.textContent =
-        'Step 1 — create a password for the email this invite was sent to. You will confirm your organiser page and add events next (about 2 minutes).';
+        'Use the same email address your group listing is linked to on the Hub. After sign-up you will confirm your organiser page (about 2 minutes).';
     }
 
     var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
     if (registerWizard) {
-      registerWizard.textContent = 'Create password';
+      registerWizard.textContent = 'Create account';
     }
+  }
+
+  function maybeRedirectAuthenticatedClaimEntry() {
+    var params = new URLSearchParams(window.location.search);
+    var next = params.get('next') || '';
+    var intent = params.get('intent') || '';
+    var isClaimEntry = intent === 'organiser-claim' || next.indexOf('onboard=claim') !== -1;
+    if (!isClaimEntry) return;
+
+    fetch('/api/auth/session', { credentials: 'include' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.ok || !data.user) return;
+        window.location.replace(next || '/organiser/?onboard=claim');
+      })
+      .catch(function () {
+        /* stay on auth form */
+      });
   }
 
   applyCheckoutContext();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
+  maybeRedirectAuthenticatedClaimEntry();
 })();

@@ -22,14 +22,21 @@ function isOrganiserAuthIntent({ next, intent } = {}) {
   const value = String(intent || '')
     .trim()
     .toLowerCase();
-  if (value === 'organiser') return true;
+  if (value === 'organiser' || value === 'organiser-claim') return true;
   const path = organiserPathFromNext(next);
   return /^\/organiser(\/|$)/.test(path);
 }
 
+function isOrganiserClaimNext(next) {
+  return String(next || '').indexOf('onboard=claim') !== -1;
+}
+
 async function resolveOrganiserRedirect(session) {
   const status = await getOrganiserAccessStatus(session);
-  if (status.organiserEmailVerified || status.pendingClaimCount > 0) {
+  if (status.pendingClaimCount > 0) {
+    return '/organiser/?onboard=claim';
+  }
+  if (status.organiserEmailVerified) {
     return '/organiser/';
   }
   return '/organiser/verify-email';
@@ -53,7 +60,7 @@ async function maybeAutoEnableOrganiserAccess(session, res) {
     return {
       enabled: false,
       bootstrapped: true,
-      redirect: '/organiser/',
+      redirect: '/organiser/?onboard=claim',
     };
   }
 
@@ -82,8 +89,12 @@ function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect 
   if (!isOrganiserAuthIntent({ next, intent })) {
     return defaultRedirect;
   }
-  if (autoResult?.redirect) return autoResult.redirect;
   const trimmedNext = String(next || '').trim();
+  const claimIntent = String(intent || '').trim().toLowerCase() === 'organiser-claim';
+  if (claimIntent || isOrganiserClaimNext(trimmedNext)) {
+    return trimmedNext || '/organiser/?onboard=claim';
+  }
+  if (autoResult?.redirect) return autoResult.redirect;
   return trimmedNext || '/organiser/';
 }
 
