@@ -6,6 +6,7 @@
   var checkInPerson = document.getElementById('check-inperson');
   var checkOnline = document.getElementById('check-online');
   var checkFreeOnly = document.getElementById('filter-free-only');
+  var checkFiveStarsOnly = document.getElementById('filter-five-stars-only');
   var priceMinInput = document.getElementById('price-min-input');
   var priceMaxInput = document.getElementById('price-max-input');
   var toggleNearMe = document.getElementById('toggle-nearme');
@@ -485,6 +486,13 @@
     return null;
   }
 
+  function eventShowsFiveStars(ev) {
+    var reviews = Number(ev.reviews) || 0;
+    var rating = Number(ev.rating);
+    if (reviews <= 0 || Number.isNaN(rating)) return false;
+    return Math.round(rating) >= 5;
+  }
+
   function eventMatchesFilters(ev) {
     if (!isUpcomingBrowseEvent(ev)) return false;
 
@@ -533,6 +541,10 @@
     var listingPrice = eventListingPrice(ev);
     if (bounds.minVal != null && listingPrice < bounds.minVal) return false;
     if (bounds.maxVal != null && listingPrice > bounds.maxVal) return false;
+
+    if (checkFiveStarsOnly && checkFiveStarsOnly.checked && !eventShowsFiveStars(ev)) {
+      return false;
+    }
 
     return true;
   }
@@ -648,6 +660,7 @@
           locationRadius: String(getLocationRadiusMiles()),
           nearRadius: String(getLocationRadiusMiles()),
           freeOnly: !!(checkFreeOnly && checkFreeOnly.checked),
+          fiveStarsOnly: !!(checkFiveStarsOnly && checkFiveStarsOnly.checked),
           inPerson: !!(checkInPerson && checkInPerson.checked),
           online: !!(checkOnline && checkOnline.checked),
           priceMin: priceMinInput ? priceMinInput.value : '',
@@ -733,6 +746,7 @@
       if (searchInput && prefs.search) searchInput.value = prefs.search;
       if (postcodeInput && prefs.postcode) postcodeInput.value = prefs.postcode;
       if (checkFreeOnly) checkFreeOnly.checked = !!prefs.freeOnly;
+      if (checkFiveStarsOnly) checkFiveStarsOnly.checked = !!prefs.fiveStarsOnly;
       if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;
       if (checkOnline && prefs.online === false) checkOnline.checked = false;
       if (priceMinInput && prefs.priceMin) priceMinInput.value = prefs.priceMin;
@@ -823,6 +837,7 @@
     if (searchInput && String(searchInput.value || '').trim()) return true;
     if (dateFromTs || dateToTs) return true;
     if (checkFreeOnly && checkFreeOnly.checked) return true;
+    if (checkFiveStarsOnly && checkFiveStarsOnly.checked) return true;
     if (priceMinInput && String(priceMinInput.value || '').trim()) return true;
     if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
     if (activeTypeTabs && activeTypeTabs.length) return true;
@@ -855,6 +870,7 @@
     if (checkInPerson) checkInPerson.checked = true;
     if (checkOnline) checkOnline.checked = true;
     if (checkFreeOnly) checkFreeOnly.checked = false;
+    if (checkFiveStarsOnly) checkFiveStarsOnly.checked = false;
     if (priceMinInput) priceMinInput.value = '';
     if (priceMaxInput) priceMaxInput.value = '';
     if (toggleNearMe) toggleNearMe.checked = false;
@@ -990,7 +1006,7 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [searchInput, sortSelect, checkInPerson, checkOnline, checkFreeOnly].forEach(bindFilter);
+  [searchInput, sortSelect, checkInPerson, checkOnline, checkFreeOnly, checkFiveStarsOnly].forEach(bindFilter);
 
   [priceMinInput, priceMaxInput].forEach(function (el) {
     if (!el) return;

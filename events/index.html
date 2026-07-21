@@ -229,7 +229,8 @@
       </div>
       <div class="filter-bar-row filter-bar-row-bottom">
         <div class="filter-bar-cluster">
-        <div class="filter-bar-quick filter-event-only">
+        <div class="filter-bar-primary filter-event-only">
+        <div class="filter-bar-quick">
           <div class="filter-date-wrap">
             <span class="filter-date-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -238,25 +239,43 @@
             <input type="text" id="date-range" placeholder="Any date" readonly aria-label="Filter by date range">
           </div>
         </div>
-        <button type="button" class="filter-more-toggle filter-event-only" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
+        <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline">
+          <legend class="filter-bar-chip-label filter-format-legend">Format</legend>
+          <div class="filter-format-pills">
+            <label class="filter-format-pill">
+              <input type="checkbox" id="check-inperson" checked>
+              <span class="filter-format-pill-face">
+                <svg class="filter-format-pill-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                In person
+              </span>
+            </label>
+            <label class="filter-format-pill">
+              <input type="checkbox" id="check-online" checked>
+              <span class="filter-format-pill-face">
+                <svg class="filter-format-pill-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                Online
+              </span>
+            </label>
+          </div>
+        </fieldset>
+        <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
+          <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
           More filters <span class="filter-more-chevron" aria-hidden="true">▾</span>
         </button>
+        </div>
         <div class="filter-more-panel filter-event-only" id="filter-more-panel" hidden>
           <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested filter-event-only">
-            <fieldset class="filter-format-group filter-format-group--with-chips">
-              <legend class="filter-bar-chip-label">Format</legend>
-              <label class="filter-checkbox">
-                <input type="checkbox" id="check-inperson" checked>
-                <span class="filter-checkbox-box" aria-hidden="true"></span>
-                In person
-              </label>
-              <label class="filter-checkbox">
-                <input type="checkbox" id="check-online" checked>
-                <span class="filter-checkbox-box" aria-hidden="true"></span>
-                Online
-              </label>
-            </fieldset>
             <nav class="event-type-chips" id="event-type-chips" aria-label="Event type"></nav>
+          </div>
+          <div class="filter-rating-filter filter-event-only" id="filter-rating-filter">
+            <span class="filter-bar-chip-label">Rating</span>
+            <label class="filter-format-pill filter-rating-pill">
+              <input type="checkbox" id="filter-five-stars-only">
+              <span class="filter-format-pill-face">
+                <span class="filter-rating-stars" aria-hidden="true">★★★★★</span>
+                5 stars only
+              </span>
+            </label>
           </div>
           <div class="filter-price-range" id="filter-price-range">
             <span class="filter-bar-chip-label">Price</span>
@@ -337,16 +356,6 @@
             </label>
           </fieldset>
         </div>
-        <div class="events-view-toggle filter-event-only" role="group" aria-label="Results view">
-          <button type="button" class="events-view-toggle-btn is-active" id="list-view-btn" aria-pressed="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-            List
-          </button>
-          <button type="button" class="events-view-toggle-btn" id="map-view-btn" aria-pressed="false">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6"/><line x1="8" y1="3" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="21"/></svg>
-            Map
-          </button>
-        </div>
         <button type="button" class="filter-clear-btn" id="clear-filters-bar">Clear filters</button>
         </div>
       </div>
@@ -381,16 +390,28 @@
         </button>
       </div>
       <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
-      <div class="events-sort-wrap">
-        <label for="sort">Sort by</label>
-        <select id="sort">
-          <option value="recommended">Recommended</option>
-          <option value="date">Date</option>
-          <option value="price-asc">Price ascending</option>
-          <option value="price-desc">Price descending</option>
-          <option value="rating-asc">Rating ascending</option>
-          <option value="rating-desc">Rating descending</option>
-        </select>
+      <div class="events-view-sort-group">
+        <div class="events-view-toggle filter-event-only" role="group" aria-label="Results view">
+          <button type="button" class="events-view-toggle-btn is-active" id="list-view-btn" aria-pressed="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            List
+          </button>
+          <button type="button" class="events-view-toggle-btn" id="map-view-btn" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6"/><line x1="8" y1="3" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="21"/></svg>
+            Map
+          </button>
+        </div>
+        <div class="events-sort-wrap">
+          <label for="sort">Sort by</label>
+          <select id="sort">
+            <option value="recommended">Recommended</option>
+            <option value="date">Date</option>
+            <option value="price-asc">Price ascending</option>
+            <option value="price-desc">Price descending</option>
+            <option value="rating-asc">Rating ascending</option>
+            <option value="rating-desc">Rating descending</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>

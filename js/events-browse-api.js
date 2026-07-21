@@ -36,6 +36,7 @@
     var checkInPerson = el('check-inperson');
     var checkOnline = el('check-online');
     var checkFreeOnly = el('filter-free-only');
+    var checkFiveStarsOnly = el('filter-five-stars-only');
     var priceMinInput = el('price-min-input');
     var priceMaxInput = el('price-max-input');
     var locationRadius = el('location-radius');
@@ -49,6 +50,7 @@
       inPerson: checkInPerson && checkInPerson.checked ? '1' : '0',
       online: checkOnline && checkOnline.checked ? '1' : '0',
       free: checkFreeOnly && checkFreeOnly.checked ? '1' : '0',
+      fiveStars: checkFiveStarsOnly && checkFiveStarsOnly.checked ? '1' : '0',
       location: postcodeInput ? postcodeInput.value.trim() : '',
     };
 

@@ -68,6 +68,7 @@ function parseBrowseQuery(query) {
     inPerson: q.inPerson !== '0' && q.inPerson !== 'false',
     online: q.online !== '0' && q.online !== 'false',
     freeOnly: q.free === '1' || q.freeOnly === '1',
+    fiveStarsOnly: q.fiveStars === '1' || q.fiveStarsOnly === '1',
     priceMin:
       q.priceMin != null && String(q.priceMin).trim() !== ''
         ? Number(q.priceMin)
@@ -208,6 +209,10 @@ function applyBrowseFilters(query, params) {
   }
   if (params.dateTo) {
     next = next.lte('starts_at', params.dateTo);
+  }
+
+  if (params.fiveStarsOnly) {
+    next = next.gte('review_count', 1).gte('average_rating', 4.5);
   }
 
   return next;
