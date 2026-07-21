@@ -453,6 +453,27 @@
   border-color: var(--lavender-deep);
 }
 
+.auth-split--register {
+  max-width: 980px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+}
+
+.auth-main--register {
+  align-items: stretch;
+}
+
+.auth-wizard-shell--in-split {
+  max-width: none;
+  width: 100%;
+}
+
+.auth-panel--form .auth-card--wizard {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  background: transparent;
+}
+
 @media (max-width: 760px) {
   .auth-split {
     grid-template-columns: 1fr;

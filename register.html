@@ -12,15 +12,31 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="css/auth.css?v=20260708" />
+    <link rel="stylesheet" href="css/auth.css?v=20260721" />
     <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
   </head>
   <body class="auth-page">
     <div id="hub-site-nav"></div>
     <script src="js/site-nav.js?v=20260715a" data-root="" data-page="auth"></script>
 
-    <main class="auth-main auth-main--wizard">
-      <div class="auth-wizard-shell">
+    <main class="auth-main auth-main--split auth-main--register">
+      <div class="auth-split auth-split--register">
+        <aside class="auth-panel auth-panel--brand" aria-label="For organisers">
+          <p class="auth-panel-kicker">For organisers</p>
+          <h2 class="auth-panel-title">Find your next attendees</h2>
+          <p class="auth-panel-lede">
+            Ticketing and discovery for UK networking groups — from weekly breakfasts to annual conferences.
+          </p>
+          <ul class="auth-panel-points">
+            <li>List events, manage bookings &amp; payouts</li>
+            <li>Guest visits, member-only tickets &amp; visit tracking</li>
+            <li>Organiser access enabled automatically when you sign up</li>
+          </ul>
+          <a class="auth-panel-cta" href="/for-organisers">See what&rsquo;s included →</a>
+        </aside>
+
+        <div class="auth-panel auth-panel--form">
+          <div class="auth-wizard-shell auth-wizard-shell--in-split">
         <ol class="auth-wizard-steps" aria-label="Account setup progress">
           <li class="auth-wizard-step is-current" aria-current="step">
             <span class="auth-wizard-num">1</span>
@@ -118,6 +134,8 @@
           <div class="auth-links">
             <a href="/login" id="register-signin-link">Already have an account? Sign in</a>
             <a href="/events/">← Back to events</a>
+          </div>
+        </div>
           </div>
         </div>
       </div>
