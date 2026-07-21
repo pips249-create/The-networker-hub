@@ -905,6 +905,10 @@ body.nav-menu-open {
     border-radius: 999px;
   }
 
+  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-bottom {
+    display: contents;
+  }
+
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-util {
     display: contents;
   }

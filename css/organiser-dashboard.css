@@ -3389,168 +3389,54 @@
   max-width: 260px;
 }
 
-.omr-reports-shell {
-  padding: 16px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(13, 110, 122, 0.04) 0%, rgba(255, 255, 255, 0.92) 100%);
-  border: 1px solid rgba(13, 110, 122, 0.12);
+.omr-register.is-reports-view .omr-roster-quick-actions {
+  display: none;
 }
 
-.omr-reports-setup {
-  margin-bottom: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.omr-reports-setup-head {
-  margin-bottom: 16px;
-}
-
-.omr-reports-setup-title {
-  margin: 0 0 4px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #084a52;
-}
-
-.omr-reports-setup-lead {
-  margin: 0;
+.omr-reports-lead {
+  margin: 0 0 14px;
   font-size: 13px;
   line-height: 1.45;
-  color: #4a6272;
+  color: var(--od-text-soft);
 }
 
-.omr-reports-setup-grid {
-  display: grid;
-  gap: 12px;
+.omr-reports-bar {
+  margin-bottom: 8px;
 }
 
-@media (min-width: 820px) {
-  .omr-reports-setup-grid {
-    grid-template-columns: 1.4fr 1fr 0.9fr;
-    align-items: start;
-  }
-
-  .omr-reports-field--report {
-    grid-column: 1 / -1;
-  }
-
-  .omr-reports-setup-foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 14px;
-  }
-
-  .omr-reports-setup-summary {
-    margin: 0;
-    flex: 1 1 240px;
-  }
-
-  .omr-reports-setup-actions {
-    margin-top: 0;
-    flex-shrink: 0;
-  }
+.omr-reports-bar select {
+  flex: 1 1 180px;
+  min-width: min(100%, 220px);
+  max-width: 360px;
 }
 
-.omr-reports-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #7a94a3;
+.omr-reports-bar .org-btn {
+  flex-shrink: 0;
 }
 
-.omr-reports-control {
-  width: 100%;
-  min-height: 40px;
-  padding: 8px 36px 8px 12px;
-  border: 1.5px solid #cfe4ea;
-  border-radius: 10px;
-  background-color: #fff;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235a6a72' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 14px;
-  appearance: none;
-  -webkit-appearance: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a2e3b;
-}
-
-.omr-reports-control:focus {
-  outline: none;
-  border-color: #0d6e7a;
-  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.14);
-}
-
-.omr-reports-field-hint {
-  margin: 6px 0 0;
+.omr-reports-bar-hint {
+  margin: 0 0 6px;
   font-size: 12px;
   line-height: 1.4;
-  color: #7a94a3;
+  color: var(--od-text-soft);
 }
 
 .omr-reports-setup-summary {
-  margin: 14px 0 0;
-  padding: 0;
-  background: transparent;
+  margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.45;
-  color: #084a52;
-}
-
-.omr-reports-setup-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
+  color: var(--od-text-mid);
 }
 
 .omr-reports-stale {
-  margin: 0;
+  margin: 8px 0 0;
   font-size: 12px;
   font-weight: 600;
   color: #9f1239;
 }
 
 .omr-reports-compact {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 16px;
-  margin-bottom: 14px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #fff;
-  border: 1px solid rgba(13, 110, 122, 0.14);
-}
-
-.omr-reports-compact-label {
-  margin: 0 0 2px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #7a94a3;
-}
-
-.omr-reports-compact-summary {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #084a52;
+  margin-bottom: 12px;
 }
 
 .omr-reports-compact-actions {
@@ -3577,85 +3463,13 @@
   color: #084a52;
 }
 
-.omr-reports-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 12px;
-  padding: 4px;
-  border-radius: 10px;
-  background: rgba(13, 110, 122, 0.06);
+.omr-register-tabs--reports {
+  margin-top: 0;
 }
 
-.omr-reports-tab {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 8px 10px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4a6272;
-  cursor: pointer;
-}
-
-.omr-reports-tab.is-active {
-  background: #fff;
-  color: #084a52;
-  box-shadow: 0 1px 2px rgba(26, 46, 59, 0.08);
-}
-
-.omr-reports-body {
-  min-height: 48px;
-}
-
-.omr-reports-body.is-loading .omr-reports-wrap {
+.omr-reports-wrap.is-reports-loading {
   opacity: 0.45;
   pointer-events: none;
-}
-
-.omr-reports-loading {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(13, 110, 122, 0.08);
-  font-size: 13px;
-  font-weight: 500;
-  color: #084a52;
-}
-
-.omr-reports-loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(13, 110, 122, 0.18);
-  border-top-color: #0d6e7a;
-  border-radius: 50%;
-  animation: omr-spin 0.75s linear infinite;
-}
-
-@keyframes omr-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.omr-reports-empty {
-  margin: 0;
-  padding: 16px;
-  border-radius: 10px;
-  background: rgba(13, 110, 122, 0.05);
-  text-align: center;
-}
-
-.omr-reports-empty-text {
-  margin: 0;
-  font-size: 13px;
-  color: #4a6272;
 }
 
 .org-page--memberships .omr-reports-wrap {
@@ -3721,9 +3535,9 @@
   color: #7a94a3;
 }
 
-.omr-reports-setup.is-compact,
-.omr-reports-toolbar {
-  display: none;
+.omr-reports-setup[hidden],
+.omr-reports-compact[hidden] {
+  display: none !important;
 }
 
 .omr-register-panel[hidden] {

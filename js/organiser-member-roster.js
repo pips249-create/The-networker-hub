@@ -160,15 +160,15 @@
 
   function syncReportsSetupFields() {
     const type = selectedReportType();
-    const eventField = document.getElementById('omr-reports-event-field');
-    const periodField = document.getElementById('omr-reports-period-field');
+    const eventSel = document.getElementById('omr-reports-event-select');
+    const periodSel = document.getElementById('omr-reports-period');
     const typeHint = document.getElementById('omr-reports-type-hint');
     const eventHint = document.getElementById('omr-reports-event-hint');
     const needsEvent = type === 'bookings' || type === 'engagement';
     const needsPeriod = type === 'engagement';
 
-    if (eventField) eventField.hidden = !needsEvent;
-    if (periodField) periodField.hidden = !needsPeriod;
+    if (eventSel) eventSel.hidden = !needsEvent;
+    if (periodSel) periodSel.hidden = !needsPeriod;
 
     if (typeHint) {
       if (type === 'overview') {
@@ -184,10 +184,13 @@
 
     if (eventHint) {
       if (type === 'bookings') {
+        eventHint.hidden = false;
         eventHint.textContent = 'Required — choose the event to check bookings against.';
       } else if (type === 'engagement') {
+        eventHint.hidden = false;
         eventHint.textContent = 'Optional — include new vs returning split for one event.';
       } else {
+        eventHint.hidden = true;
         eventHint.textContent = '';
       }
     }
@@ -355,7 +358,7 @@
   function setReportsLoading(on) {
     reportsLoading = Boolean(on);
     const hint = document.getElementById('omr-reports-loading');
-    const body = document.getElementById('omr-reports-body');
+    const wrap = document.getElementById('omr-reports-wrap');
     const runBtn = document.getElementById('omr-run-reports');
     const refreshBtn = document.getElementById('omr-refresh-reports');
     const refreshCompact = document.getElementById('omr-refresh-reports-compact');
@@ -363,7 +366,7 @@
       hint.hidden = !on;
       hint.setAttribute('aria-busy', on ? 'true' : 'false');
     }
-    if (body) body.classList.toggle('is-loading', on);
+    if (wrap) wrap.classList.toggle('is-reports-loading', on);
     if (runBtn) {
       runBtn.disabled = on;
       runBtn.textContent = on ? 'Running…' : 'Run report';
@@ -423,7 +426,6 @@
     const compact = document.getElementById('omr-reports-compact');
     if (setup) setup.hidden = false;
     if (compact) compact.hidden = true;
-    if (setup) setup.classList.remove('is-compact');
   }
 
   function collapseReportsSetup() {
@@ -519,6 +521,10 @@
       reportsPanel.hidden = next !== 'reports';
       reportsPanel.classList.toggle('is-active', next === 'reports');
     }
+    const register = document.querySelector('.omr-register');
+    if (register) register.classList.toggle('is-reports-view', next === 'reports');
+    const countEl = document.getElementById('omr-count');
+    if (countEl) countEl.hidden = next === 'reports';
     syncMembersEventFilter();
     syncReportsSetupFields();
     syncReportsPanelState();

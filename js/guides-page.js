@@ -1,8 +1,34 @@
 /**
- * Guides page — inline Hubert for organiser questions.
+ * Guides page — inline Hubert + category filter tabs.
  */
 (function () {
   var hubertCard = document.getElementById('guides-hubert-card');
+
+  function initCategoryFilter() {
+    var tabs = document.querySelectorAll('.guides-category-tab');
+    var items = document.querySelectorAll('#guides-grid > li[data-category]');
+    if (!tabs.length || !items.length) return;
+
+    function setCategory(category) {
+      tabs.forEach(function (tab) {
+        var isActive = tab.getAttribute('data-category') === category;
+        tab.classList.toggle('is-active', isActive);
+        tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      items.forEach(function (item) {
+        var categories = (item.getAttribute('data-category') || '').split(/\s+/);
+        var show = category === 'all' || categories.indexOf(category) !== -1;
+        item.hidden = !show;
+      });
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        setCategory(tab.getAttribute('data-category') || 'all');
+      });
+    });
+  }
 
   function initHubert() {
     if (!window.HubertChat) return;
@@ -46,9 +72,14 @@
     return chat;
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHubert);
-  } else {
+  function init() {
+    initCategoryFilter();
     initHubert();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();

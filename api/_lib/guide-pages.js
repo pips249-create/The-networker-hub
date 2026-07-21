@@ -50,18 +50,48 @@ const GUIDE_PAGES = {
   },
   'invite-your-team': {
     path: '/guides/invite-your-team',
-    title: 'Invite your team – How-to guides – The Networker Hub',
+    title: 'Invite team members – How-to guides – The Networker Hub',
     description:
-      'How to invite editor team members to your organiser workspace on The Networker Hub — permissions, limits, and accept flow.',
-    name: 'Invite editors',
-    howToName: 'How to invite editors to your organiser workspace on The Networker Hub',
+      'How to invite team members to your organiser workspace on The Networker Hub — permissions, group access, limits, and accept flow.',
+    name: 'Invite team members',
+    howToName: 'How to invite team members to your organiser workspace on The Networker Hub',
     steps: [
-      { id: 'who-can-invite', name: 'Who can invite', text: 'Only the account owner can send or remove team invites. Editors can see the team list but cannot invite others.' },
-      { id: 'send-invite', name: 'Send an invite', text: 'In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, and send. You can invite up to 100 editors per organiser account.' },
+      { id: 'who-can-invite', name: 'Who can invite', text: 'Only the account owner can send or remove team invites. Team members can see the team list but cannot invite others.' },
+      { id: 'send-invite', name: 'Send an invite', text: 'In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, choose All groups or specific networking groups, and send. You can invite up to 100 team members per organiser account.' },
       { id: 'accept', name: 'They accept by signing in', text: 'Your colleague opens the email and signs in with that exact email address. Once signed in, their status changes to Active on your team list.' },
-      { id: 'permissions', name: 'What editors can do', text: 'Editors can view all networking groups, create and edit events and tickets, view revenue and registrations, and manage business opportunity listings.' },
-      { id: 'restrictions', name: 'What editors cannot do', text: 'Editors cannot invite or remove team members or delete events. Access is account-wide across every group on your organiser account.' },
-      { id: 'remove', name: 'Remove someone', text: 'From the team table, choose Remove next to an editor or resend a pending invite if they did not receive the email.' },
+      { id: 'permissions', name: 'What team members can do', text: 'Team members can view assigned networking groups, create and edit events and tickets, view revenue and registrations, and manage business opportunity listings.' },
+      { id: 'restrictions', name: 'What team members cannot do', text: 'Team members cannot invite or remove colleagues, create new networking groups, add bank details, request payouts, or delete events.' },
+      { id: 'remove', name: 'Remove someone', text: 'From the team table, choose Remove next to a team member or resend a pending invite if they did not receive the email.' },
+    ],
+  },
+  'claim-your-organiser-page': {
+    path: '/guides/claim-your-organiser-page',
+    title: 'Claim your organiser page – How-to guides – The Networker Hub',
+    description:
+      'How to find and claim your networking group on The Networker Hub — verify ownership, update your profile, and start listing events.',
+    name: 'Claim your organiser page',
+    howToName: 'How to claim your organiser page on The Networker Hub',
+    steps: [
+      { id: 'find-page', name: 'Find your group in the directory', text: 'Browse organisers on /events/ or search your group name. Many UK networking groups already have a page from the legacy Networker directory.' },
+      { id: 'sign-in', name: 'Sign in with the right email', text: 'Sign in or create an account using the email address linked to your group. The claim prompt appears when the hub recognises your address.' },
+      { id: 'confirm-claim', name: 'Confirm the claim', text: 'Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group.' },
+      { id: 'update-profile', name: 'Update your public profile', text: 'Add or refresh your logo, description, contact email, social links, and guest visit settings on your organiser page.' },
+      { id: 'next-steps', name: 'List your next event', text: 'From My events choose List event, or open the getting started checklist on Overview. Connect Stripe under Revenue before publishing paid tickets.' },
+    ],
+  },
+  'export-attendees-and-visits': {
+    path: '/guides/export-attendees-and-visits',
+    title: 'Export attendees & track visits – How-to guides – The Networker Hub',
+    description:
+      'How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker Hub.',
+    name: 'Export attendees & track visits',
+    howToName: 'How to export attendees and track visits on The Networker Hub',
+    steps: [
+      { id: 'open-attendees', name: 'Open the attendee list', text: 'Sign in to the organiser dashboard and go to Events → Attendees. Pick a networking group and event, or view all upcoming registrations.' },
+      { id: 'visit-tracking', name: 'See visit counts', text: 'Each attendee shows their visit count (1st visit, 2 visits, returning member, etc.). Filter by new or returning to focus on guests vs members.' },
+      { id: 'export-csv', name: 'Download attendees CSV', text: 'Apply filters if needed, then click Download attendees CSV. The export includes names, companies, ticket types, visit counts, and dietary notes where collected.' },
+      { id: 'name-badges', name: 'Print name badges', text: 'From the same screen, export printable name badges (PDF, Avery 7160). Badges use each guest name, company, and job title from their Hub account when set.' },
+      { id: 'guest-visits', name: 'Set up the guest visit programme', text: 'On the event tickets step, tick Enable guest visit programme to offer complimentary trial visits before paid member tickets. Configure visit limits on your organiser page.' },
     ],
   },
 };
@@ -70,7 +100,7 @@ const GUIDES_HUB = {
   path: '/guides',
   title: 'Organiser guides – The Networker Hub',
   description:
-    'Step-by-step onboarding checklists for organisers — list events, publish business opportunities, and invite team editors on The Networker Hub.',
+    'Step-by-step onboarding checklists for organisers — list events, publish business opportunities, invite team members, and manage attendees on The Networker Hub.',
   name: 'Organiser guides',
 };
 
