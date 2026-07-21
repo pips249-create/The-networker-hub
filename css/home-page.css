@@ -2512,11 +2512,40 @@ html:has(.home-page) {
   max-width: 28em;
 }
 
+.home-feature-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+  margin-bottom: 8px;
+}
+
+.home-feature-group:last-child .home-feature-list {
+  margin-bottom: 0;
+}
+
+.home-feature-group-title {
+  margin: 0 0 8px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-split-col--members .home-feature-group-title {
+  color: #6a4f78;
+}
+
+.home-split-col--organisers .home-feature-group-title {
+  color: #084a52;
+}
+
 .home-feature-list {
   list-style: none;
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   padding: 0;
-  flex: 1;
 }
 
 .home-feature-list li {
