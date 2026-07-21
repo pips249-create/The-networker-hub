@@ -679,10 +679,10 @@ html:has(.home-page) {
 
 .home-page .home-hero-rich-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 14px;
-  width: min(100%, 60rem);
+  width: min(100%, 72rem);
   margin: 0 auto;
   padding: 0;
   box-sizing: border-box;
@@ -2752,6 +2752,13 @@ html:has(.home-page) {
   }
 }
 
+@media (max-width: 960px) {
+  .home-page .home-hero-rich-cards {
+    grid-template-columns: 1fr;
+    width: min(100%, 32rem);
+  }
+}
+
 @media (max-width: 768px) {
   .home-page {
     --home-nav-height: 64px;
@@ -2810,11 +2817,6 @@ html:has(.home-page) {
 
   .home-page .home-hero-search-note {
     font-size: 13px;
-  }
-
-  .home-page .home-hero-rich-cards {
-    grid-template-columns: 1fr;
-    width: min(100%, 32rem);
   }
 
   .home-page .hero-title.hero-title--rich {
