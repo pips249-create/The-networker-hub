@@ -281,6 +281,45 @@
     });
   }
 
+  function reviewEventImageUrl() {
+    const fromMeta = String(seriesMeta.imageUrl || '').trim();
+    if (fromMeta) return fromMeta;
+    const fromAnchor = String(anchorEvent?.imageUrl || '').trim();
+    if (fromAnchor) return fromAnchor;
+    const firstEvent =
+      seriesMeta.events && seriesMeta.events.length ? seriesMeta.events[0] : null;
+    return String(firstEvent?.imageUrl || '').trim();
+  }
+
+  function reviewEventImagePosition() {
+    const pos =
+      seriesMeta.imagePosition ||
+      anchorEvent?.imagePosition ||
+      (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imagePosition) ||
+      '';
+    const normalized = String(pos || '').trim();
+    return /^\d{1,3}% \d{1,3}%$/.test(normalized) ? normalized : '';
+  }
+
+  function reviewEventImageHtml() {
+    const imageUrl = reviewEventImageUrl();
+    if (!imageUrl) return '';
+    const title = seriesMeta.title || anchorEvent?.title || 'Event photo';
+    const position = reviewEventImagePosition();
+    const style = position ? ' style="object-position:' + esc(position) + '"' : '';
+    return (
+      '<div class="ee-publish-review-event-media">' +
+      '<img src="' +
+      esc(imageUrl) +
+      '" alt="' +
+      esc(title) +
+      ' photo"' +
+      style +
+      ' width="240" height="150" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'../assets/event-placeholder.svg\'" />' +
+      '</div>'
+    );
+  }
+
   function reviewSection(title, valueHtml, editPath, editLabel) {
     const editHref = editPath ? reviewEditHref(editPath) : '';
     const editLink = editHref
@@ -382,18 +421,26 @@
           '</ul>'
         : '<p class="ee-publish-review-value">No ticket types</p>';
 
-    let html = '';
-    html += reviewSection(
-      'Event',
+    const eventImageHtml = reviewEventImageHtml();
+    const eventCopyHtml =
+      '<div class="ee-publish-review-event-copy">' +
       '<p class="ee-publish-review-value">' +
-        esc(seriesMeta.title || anchorEvent?.title || 'Untitled event') +
-        '</p>' +
-        (organiserGroupName
-          ? '<p class="ee-publish-review-sub">Organiser page: ' + esc(organiserGroupName) + '</p>'
-          : ''),
-      '/organiser/event-edit',
-      'Edit details'
-    );
+      esc(seriesMeta.title || anchorEvent?.title || 'Untitled event') +
+      '</p>' +
+      (organiserGroupName
+        ? '<p class="ee-publish-review-sub">Organiser page: ' + esc(organiserGroupName) + '</p>'
+        : '') +
+      '</div>';
+    const eventBodyHtml =
+      '<div class="ee-publish-review-event' +
+      (eventImageHtml ? ' ee-publish-review-event--has-image' : '') +
+      '">' +
+      eventImageHtml +
+      eventCopyHtml +
+      '</div>';
+
+    let html = '';
+    html += reviewSection('Event', eventBodyHtml, '/organiser/event-edit', 'Edit details');
     html += reviewSection(
       dateCount === 1 ? 'Date' : 'Dates (' + dateCount + ')',
       '<ul class="ee-publish-review-dates">' + dateItems + '</ul>',
@@ -558,6 +605,9 @@
       seriesMeta.organiserGroupId = anchorEvent.organiserGroupId;
     }
     if (anchorEvent.imageUrl && !seriesMeta.imageUrl) seriesMeta.imageUrl = anchorEvent.imageUrl;
+    if (anchorEvent.imagePosition && !seriesMeta.imagePosition) {
+      seriesMeta.imagePosition = anchorEvent.imagePosition;
+    }
 
     await hydrateSeriesEvents();
     await loadOrganiserGroup(seriesMeta.organiserGroupId || anchorEvent.organiserGroupId);

@@ -2393,19 +2393,39 @@ body.ee-modal-open {
   overflow: auto;
 }
 
-.ee-publish-review-title {
-  margin: 0 0 8px;
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.45rem;
-  font-weight: 400;
-  color: var(--ee-navy, #0d1f3c);
-}
-
 .ee-publish-review-lede {
   margin: 0 0 18px;
-  color: var(--ee-muted, #635c5e);
-  font-size: 0.95rem;
-  line-height: 1.5;
+}
+
+.ee-publish-review-event {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 420px) {
+  .ee-publish-review-event--has-image {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+}
+
+.ee-publish-review-event-media {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(13, 31, 60, 0.1);
+  background: #fff;
+}
+
+.ee-publish-review-event-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.ee-publish-review-event-copy {
+  min-width: 0;
 }
 
 .ee-publish-review-body {
@@ -2510,10 +2530,6 @@ body.ee-modal-open {
 
 .organiser-event-review-page .ee-review-card {
   padding: 28px 24px 24px;
-}
-
-.organiser-event-review-page .ee-publish-review-title {
-  font-size: 1.75rem;
 }
 
 .organiser-event-review-page .ee-publish-review-actions {
