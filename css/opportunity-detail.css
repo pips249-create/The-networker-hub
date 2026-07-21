@@ -477,22 +477,18 @@
   cursor: default;
 }
 
-.opportunity-detail-page .opp-enquire-terms.opp-legal-disclaimer {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  font-size: 12px;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
+.opportunity-detail-page .opp-enquire-terms {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
 }
 
-.opportunity-detail-page .opp-enquire-terms.opp-legal-disclaimer span {
+.opportunity-detail-page .opp-enquire-terms span {
   display: inline;
   font-weight: 400;
   margin-bottom: 0;

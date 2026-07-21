@@ -511,7 +511,7 @@
       var terms = document.getElementById('opp-enquire-terms');
       if (!name || !email || !message) return;
       if (terms && !terms.checked) {
-        showEnquireStatus('Please tick the disclaimer to confirm before sending your enquiry.', false);
+        showEnquireStatus('Please confirm you understand this is not investment advice.', false);
         terms.focus();
         return;
       }
