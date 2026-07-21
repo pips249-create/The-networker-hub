@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716ux" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260721details" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260716tips" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -84,30 +84,25 @@
               <a class="ee-inline-action" href="/organiser/group-edit">+ Add a new organiser page</a>
             </p>
           </div>
-          <div class="ee-field" id="ee-format-field">
-            <label>Event format</label>
-            <div class="ee-mode-toggle" role="group" aria-label="Event format">
-              <button type="button" class="ee-mode-btn" data-ee-format="in-person">In person</button>
-              <button type="button" class="ee-mode-btn" data-ee-format="online">Online</button>
+          <div class="ee-row-2 ee-details-meta">
+            <div class="ee-field">
+              <div class="ee-field-top">
+                <label for="ee-title">Event title</label>
+                <button type="button" class="ee-copy-link" id="ee-copy-title-from-group">
+                  Copy from organiser page
+                </button>
+              </div>
+              <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
+            </div>
+            <div class="ee-field">
+              <label for="ee-type" data-hub-tip="event-type">Event type</label>
+              <select id="ee-type" required></select>
             </div>
           </div>
           <div class="ee-field">
-            <div class="ee-field-label-row">
-              <label for="ee-title">Event title</label>
-              <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-title-from-group">
-                Copy from organiser page
-              </button>
-            </div>
-            <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
-          </div>
-          <div class="ee-field">
-            <label for="ee-type" data-hub-tip="event-type">Event type</label>
-            <select id="ee-type" required></select>
-          </div>
-          <div class="ee-field">
-            <div class="ee-field-label-row">
+            <div class="ee-field-top">
               <label for="ee-description" data-hub-tip="event-description">Highlights / description</label>
-              <button type="button" class="ee-btn ee-btn-outline ee-btn-compact" id="ee-copy-desc-from-group">
+              <button type="button" class="ee-copy-link" id="ee-copy-desc-from-group">
                 Copy from organiser page
               </button>
             </div>
@@ -218,6 +213,6 @@
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
     <script src="../js/organiser-field-tips.js?v=20260716tips"></script>
     <script src="../js/hub-field-tip.js?v=20260716tips"></script>
-    <script src="../js/organiser-event-edit.js?v=20260716hint"></script>
+    <script src="../js/organiser-event-edit.js?v=20260721details"></script>
   </body>
 </html>

@@ -1449,6 +1449,12 @@
       }
     }
     if (addRow) addRow.hidden = false;
+    if (!lockSelection) {
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select an organiser page…';
+      sel.appendChild(placeholder);
+    }
     groups.forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g.id;
@@ -1462,6 +1468,8 @@
           break;
         }
       }
+    } else if (!lockSelection && groups.length === 1) {
+      sel.value = groups[0].id;
     }
     syncCopyFromGroupButtons();
   }
@@ -1749,7 +1757,8 @@
           initEventTypeSelect('Meeting');
           return;
         }
-        location.href = '/organiser/event-format';
+        fillGroupsSelect('', false);
+        initEventTypeSelect('Meeting');
         return;
       }
 
@@ -1761,7 +1770,8 @@
           initEventTypeSelect('Meeting');
           return;
         }
-        location.href = '/organiser/event-format';
+        fillGroupsSelect('', false);
+        initEventTypeSelect('Meeting');
         return;
       }
 
@@ -2068,12 +2078,7 @@
       }
     }
     if (!eventFormat) {
-      if (isEmbedDrawer || params.get('groupId') || params.get('format')) {
-        eventFormat = 'in-person';
-      } else {
-        location.replace('/organiser/event-format');
-        return false;
-      }
+      eventFormat = 'in-person';
     }
     applyFormatUi(eventFormat);
     return true;

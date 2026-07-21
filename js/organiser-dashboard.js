@@ -10385,7 +10385,7 @@
       el.addEventListener('click', goToNewEventEditor);
     });
 
-    document.querySelectorAll('.org-add-menu-item[href="/organiser/event-format"]').forEach((el) => {
+    document.querySelectorAll('.org-add-menu-item[href="/organiser/event-edit"]').forEach((el) => {
       el.addEventListener('click', goToNewEventEditor);
     });
 

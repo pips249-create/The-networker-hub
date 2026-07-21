@@ -225,7 +225,7 @@
 
   function continueGoToAddEvent(data) {
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/event-format');
+      global.location.href = loginUrl('/organiser/event-edit');
       return;
     }
     if (!hasGroupProfile(data)) {
@@ -237,13 +237,13 @@
     } catch (e) {
       /* ignore */
     }
-    global.location.href = path('/organiser/event-format');
+    global.location.href = path('/organiser/event-edit');
   }
 
   async function goToAddEvent(options) {
     options = options || {};
     saveBrowseReturn();
-    var data = await ensureOrganiserAccess('/organiser/event-format');
+    var data = await ensureOrganiserAccess('/organiser/event-edit');
     if (!data) return;
     if (hasGroupProfile(data)) {
       continueGoToAddEvent(data);
@@ -443,7 +443,7 @@
   async function requireGroupProfileForEventFlow() {
     var data = await fetchSession();
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl('/organiser/event-format');
+      global.location.href = loginUrl('/organiser/event-edit');
       return false;
     }
     if (!hasGroupProfile(data)) {
