@@ -57,7 +57,7 @@ async function testCronEligibility() {
   const result = await sendDueGuestVisitFollowupEmails(sb, { dryRun: true });
 
   console.log('');
-  console.log('Cron window: events ended ~18–30 hours ago (24h ± 6h)');
+  console.log('Cron eligibility: guest visits for events ended 24h–14 days ago, unsent follow-up');
   console.log('Candidates:', result.candidates.length, '| Skipped:', result.skipped);
   if (result.candidates.length) {
     result.candidates.slice(0, 5).forEach(function (row, i) {
@@ -77,7 +77,7 @@ async function testCronEligibility() {
     }
   } else {
     console.log(
-      '  No eligible guest visit registrations in the window. Set a past event ends_at to ~24 hours ago with a guest_visit registration and guest_visit_followup_sent_at null.'
+      '  No eligible guest visit registrations. Need a past event (ended 24h+ ago) with a guest_visit registration and guest_visit_followup_sent_at null.'
     );
   }
   pass('dry-run cron completed');

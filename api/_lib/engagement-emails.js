@@ -29,11 +29,10 @@ const REENGAGEMENT_COOLDOWN_DAYS = 60;
 const LOW_EVENTS_MAX_UPCOMING = 3;
 const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
 const POST_EVENT_REVIEW_HOURS = 24;
-// This job runs daily. A 26-hour window avoids gaps between runs; the
-// review-request sent timestamp prevents duplicate emails.
-const POST_EVENT_REVIEW_WINDOW_HOURS = 26;
+// Catch up missed sends (e.g. if cron skipped a day) up to this age.
+const POST_EVENT_REVIEW_MAX_AGE_DAYS = 14;
 const GUEST_VISIT_FOLLOWUP_HOURS = 24;
-const GUEST_VISIT_FOLLOWUP_WINDOW_HOURS = 12;
+const GUEST_VISIT_FOLLOWUP_MAX_AGE_DAYS = 14;
 const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
@@ -670,24 +669,35 @@ async function fetchNextOrganiserEvents(sb, organiserIds) {
 async function sendDueGuestVisitFollowupEmails(sb, options) {
   const opts = options && typeof options === 'object' ? options : {};
   const dryRun = opts.dryRun === true;
-  const windowStart = hoursAgo(
-    GUEST_VISIT_FOLLOWUP_HOURS + GUEST_VISIT_FOLLOWUP_WINDOW_HOURS / 2
-  );
-  const windowEnd = hoursAgo(
-    GUEST_VISIT_FOLLOWUP_HOURS - GUEST_VISIT_FOLLOWUP_WINDOW_HOURS / 2
-  );
+  const followupDueBefore = hoursAgo(GUEST_VISIT_FOLLOWUP_HOURS);
+  const followupDueAfter = daysAgo(GUEST_VISIT_FOLLOWUP_MAX_AGE_DAYS);
   const result = { sent: 0, skipped: 0, errors: [], candidates: [] };
 
-  const { data: events, error: evErr } = await sb
-    .from('events')
-    .select('id, title, slug, ends_at, starts_at, organiser_id')
-    .gte('ends_at', windowStart)
-    .lte('ends_at', windowEnd)
-    .neq('status', 'cancelled');
-  if (evErr) throw new Error(evErr.message);
-  if (!events?.length) return result;
+  const eventSelect = 'id, title, slug, ends_at, starts_at, organiser_id';
+  const [endedWithEndRes, endedWithoutEndRes] = await Promise.all([
+    sb
+      .from('events')
+      .select(eventSelect)
+      .lte('ends_at', followupDueBefore)
+      .gte('ends_at', followupDueAfter)
+      .neq('status', 'cancelled'),
+    sb
+      .from('events')
+      .select(eventSelect)
+      .is('ends_at', null)
+      .lte('starts_at', followupDueBefore)
+      .gte('starts_at', followupDueAfter)
+      .neq('status', 'cancelled'),
+  ]);
+  if (endedWithEndRes.error) throw new Error(endedWithEndRes.error.message);
+  if (endedWithoutEndRes.error) throw new Error(endedWithoutEndRes.error.message);
 
-  const eventById = Object.fromEntries(events.map((e) => [e.id, e]));
+  const eventById = {};
+  for (const row of [...(endedWithEndRes.data || []), ...(endedWithoutEndRes.data || [])]) {
+    if (row?.id) eventById[row.id] = row;
+  }
+  const events = Object.values(eventById);
+  if (!events.length) return result;
   const eventIds = events.map((e) => e.id);
   const organiserIds = [...new Set(events.map((e) => e.organiser_id).filter(Boolean))];
 
@@ -804,20 +814,35 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
 async function sendDuePostEventReviewEmails(sb, options) {
   const opts = options && typeof options === 'object' ? options : {};
   const dryRun = opts.dryRun === true;
-  const windowStart = hoursAgo(POST_EVENT_REVIEW_HOURS + POST_EVENT_REVIEW_WINDOW_HOURS / 2);
-  const windowEnd = hoursAgo(POST_EVENT_REVIEW_HOURS - POST_EVENT_REVIEW_WINDOW_HOURS / 2);
+  const reviewDueBefore = hoursAgo(POST_EVENT_REVIEW_HOURS);
+  const reviewDueAfter = daysAgo(POST_EVENT_REVIEW_MAX_AGE_DAYS);
   const result = { sent: 0, skipped: 0, errors: [], candidates: [] };
 
-  const { data: events, error: evErr } = await sb
-    .from('events')
-    .select('id, title, slug, ends_at, starts_at, organiser_id')
-    .gte('ends_at', windowStart)
-    .lte('ends_at', windowEnd)
-    .neq('status', 'cancelled');
-  if (evErr) throw new Error(evErr.message);
-  if (!events?.length) return result;
+  const eventSelect = 'id, title, slug, ends_at, starts_at, organiser_id';
+  const [endedWithEndRes, endedWithoutEndRes] = await Promise.all([
+    sb
+      .from('events')
+      .select(eventSelect)
+      .lte('ends_at', reviewDueBefore)
+      .gte('ends_at', reviewDueAfter)
+      .neq('status', 'cancelled'),
+    sb
+      .from('events')
+      .select(eventSelect)
+      .is('ends_at', null)
+      .lte('starts_at', reviewDueBefore)
+      .gte('starts_at', reviewDueAfter)
+      .neq('status', 'cancelled'),
+  ]);
+  if (endedWithEndRes.error) throw new Error(endedWithEndRes.error.message);
+  if (endedWithoutEndRes.error) throw new Error(endedWithoutEndRes.error.message);
 
-  const eventById = Object.fromEntries(events.map((e) => [e.id, e]));
+  const eventById = {};
+  for (const row of [...(endedWithEndRes.data || []), ...(endedWithoutEndRes.data || [])]) {
+    if (row?.id) eventById[row.id] = row;
+  }
+  const events = Object.values(eventById);
+  if (!events.length) return result;
   const eventIds = events.map((e) => e.id);
 
   const { data: registrations, error: regErr } = await sb

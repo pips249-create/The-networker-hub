@@ -2,35 +2,52 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const { buildAttendeeEmailVars } = require('./registration-emails');
 
 const REMINDER_HOURS = 24;
-const REMINDER_WINDOW_HOURS = 1;
+const REMINDER_WINDOW_HOURS = 2;
+// Last-chance catch-up if an hourly cron run was missed.
+const REMINDER_CATCHUP_HOURS = 2;
 
 /**
  * Find confirmed registrations for events starting ~24 hours from now and send reminders.
+ * Runs hourly — primary window is 24h ± 1h; unsent reminders also send up to 2h before start.
  */
 async function sendDueBookingReminders(sb) {
   const now = Date.now();
-  const windowStart = new Date(now + (REMINDER_HOURS - REMINDER_WINDOW_HOURS / 2) * 60 * 60 * 1000);
-  const windowEnd = new Date(now + (REMINDER_HOURS + REMINDER_WINDOW_HOURS / 2) * 60 * 60 * 1000);
+  const nowIso = new Date(now).toISOString();
+  const primaryStart = new Date(
+    now + (REMINDER_HOURS - REMINDER_WINDOW_HOURS / 2) * 60 * 60 * 1000
+  ).toISOString();
+  const primaryEnd = new Date(
+    now + (REMINDER_HOURS + REMINDER_WINDOW_HOURS / 2) * 60 * 60 * 1000
+  ).toISOString();
+  const catchupEnd = new Date(now + REMINDER_CATCHUP_HOURS * 60 * 60 * 1000).toISOString();
 
   const { data: events, error: eventsError } = await sb
     .from('events')
     .select(
       'id, title, slug, starts_at, organiser_id, meeting_link, meeting_type, venue, location_label, city, status, refund_policy, refund_policy_details, refund_cutoff_days'
     )
-    .gte('starts_at', windowStart.toISOString())
-    .lte('starts_at', windowEnd.toISOString())
+    .gt('starts_at', nowIso)
+    .lte('starts_at', primaryEnd)
     .neq('status', 'cancelled');
 
   if (eventsError) throw new Error(eventsError.message);
-  if (!events || !events.length) {
+
+  const dueEvents = (events || []).filter(function (eventRow) {
+    const startsAt = String(eventRow.starts_at || '');
+    return (
+      (startsAt >= primaryStart && startsAt <= primaryEnd) ||
+      (startsAt > nowIso && startsAt <= catchupEnd)
+    );
+  });
+  if (!dueEvents.length) {
     return { sent: 0, skipped: 0, errors: [], eventsChecked: 0 };
   }
 
-  const eventIds = events.map(function (e) {
+  const eventIds = dueEvents.map(function (e) {
     return e.id;
   });
   const eventById = {};
-  events.forEach(function (e) {
+  dueEvents.forEach(function (e) {
     eventById[e.id] = e;
   });
 
@@ -46,7 +63,7 @@ async function sendDueBookingReminders(sb) {
   if (regsError) throw new Error(regsError.message);
 
   const rows = registrations || [];
-  const result = { sent: 0, skipped: 0, errors: [], eventsChecked: events.length };
+  const result = { sent: 0, skipped: 0, errors: [], eventsChecked: dueEvents.length };
 
   for (const registration of rows) {
     const eventRow = eventById[registration.event_id];

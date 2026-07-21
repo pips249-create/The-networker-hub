@@ -9,7 +9,9 @@ const { enrichBookingReminderVars } = require('./booking-email-sections');
 const { getEmailSponsorVars } = require('./email-sponsor-sections');
 
 const REMINDER_HOURS = 1;
-const REMINDER_WINDOW_HOURS = 0.5;
+const REMINDER_WINDOW_HOURS = 1;
+// Last-chance catch-up if an hourly cron run was missed.
+const REMINDER_CATCHUP_HOURS = 0.5;
 
 function resolveMeetingLink(registration, eventRow) {
   return String(registration?.meeting_link || eventRow?.meeting_link || '').trim();
@@ -17,40 +19,48 @@ function resolveMeetingLink(registration, eventRow) {
 
 /**
  * Send join-link reminders ~1 hour before online events start.
+ * Runs hourly — primary window is 1h ± 30m; unsent reminders also send up to 30m before start.
  */
 async function sendDueOnlineJoinReminders(sb) {
   const now = Date.now();
-  const windowStart = new Date(
-    now + (REMINDER_HOURS - REMINDER_WINDOW_HOURS) * 60 * 60 * 1000
-  );
-  const windowEnd = new Date(
-    now + (REMINDER_HOURS + REMINDER_WINDOW_HOURS) * 60 * 60 * 1000
-  );
+  const nowIso = new Date(now).toISOString();
+  const primaryStart = new Date(
+    now + (REMINDER_HOURS - REMINDER_WINDOW_HOURS / 2) * 60 * 60 * 1000
+  ).toISOString();
+  const primaryEnd = new Date(
+    now + (REMINDER_HOURS + REMINDER_WINDOW_HOURS / 2) * 60 * 60 * 1000
+  ).toISOString();
+  const catchupEnd = new Date(now + REMINDER_CATCHUP_HOURS * 60 * 60 * 1000).toISOString();
 
   const { data: events, error: eventsError } = await sb
     .from('events')
     .select(
       'id, title, slug, starts_at, organiser_id, meeting_link, meeting_type, venue, location_label, city, status, refund_policy, refund_policy_details, refund_cutoff_days'
     )
-    .gte('starts_at', windowStart.toISOString())
-    .lte('starts_at', windowEnd.toISOString())
+    .gt('starts_at', nowIso)
+    .lte('starts_at', primaryEnd)
     .neq('status', 'cancelled');
 
   if (eventsError) throw new Error(eventsError.message);
 
-  const onlineEvents = (events || []).filter(function (eventRow) {
+  const dueEvents = (events || []).filter(function (eventRow) {
+    const startsAt = String(eventRow.starts_at || '');
     const link = resolveMeetingLink(null, eventRow);
-    return link && isOnlineEvent(eventRow, link);
+    if (!link || !isOnlineEvent(eventRow, link)) return false;
+    return (
+      (startsAt >= primaryStart && startsAt <= primaryEnd) ||
+      (startsAt > nowIso && startsAt <= catchupEnd)
+    );
   });
 
-  if (!onlineEvents.length) {
+  if (!dueEvents.length) {
     return { sent: 0, skipped: 0, errors: [], eventsChecked: 0 };
   }
 
-  const eventIds = onlineEvents.map(function (e) {
+  const eventIds = dueEvents.map(function (e) {
     return e.id;
   });
-  const eventById = Object.fromEntries(onlineEvents.map((e) => [e.id, e]));
+  const eventById = Object.fromEntries(dueEvents.map((e) => [e.id, e]));
 
   const { data: registrations, error: regsError } = await sb
     .from('registrations')
@@ -66,7 +76,7 @@ async function sendDueOnlineJoinReminders(sb) {
   if (regsError) throw new Error(regsError.message);
 
   const sponsorVars = await getEmailSponsorVars('online_join_reminder');
-  const result = { sent: 0, skipped: 0, errors: [], eventsChecked: onlineEvents.length };
+  const result = { sent: 0, skipped: 0, errors: [], eventsChecked: dueEvents.length };
 
   for (const registration of registrations || []) {
     const eventRow = eventById[registration.event_id];
