@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/home-page.css?v=20260721hero5">
+<link rel="stylesheet" href="css/home-page.css?v=20260721loc1">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -109,11 +109,18 @@
       </header>
       <div class="home-locations-scroller" tabindex="0" role="region" aria-label="Locations">
         <div class="home-locations-track" role="list">
+          <a class="home-location-chip" href="/events/?format=online" data-region="online" role="listitem" aria-label="Browse online networking events">
+            <span class="home-location-chip-icon" aria-hidden="true"></span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">Online</span>
+              <span class="home-location-chip-name-line">Events</span>
+            </span>
+          </a>
           <a class="home-location-chip" href="/networking/belfast" data-region="belfast" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
             <span class="home-location-chip-name">Belfast</span>
           </a>
-          <a class="home-location-chip" href="/networking/birmingham" data-region="birmingham" role="listitem">
+          <a class="home-location-chip home-location-chip--compact-label" href="/networking/birmingham" data-region="birmingham" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
             <span class="home-location-chip-name">Birmingham</span>
           </a>
@@ -121,7 +128,7 @@
             <span class="home-location-chip-icon" aria-hidden="true"></span>
             <span class="home-location-chip-name">Brighton</span>
           </a>
-          <a class="home-location-chip" href="/networking/bournemouth" data-region="bournemouth" role="listitem">
+          <a class="home-location-chip home-location-chip--compact-label" href="/networking/bournemouth" data-region="bournemouth" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
             <span class="home-location-chip-name">Bournemouth</span>
           </a>
@@ -139,7 +146,10 @@
           </a>
           <a class="home-location-chip" href="/networking/central-london" data-region="central-london" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
-            <span class="home-location-chip-name">Central London</span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">Central</span>
+              <span class="home-location-chip-name-line">London</span>
+            </span>
           </a>
           <a class="home-location-chip" href="/networking/chester" data-region="chester" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
@@ -147,7 +157,10 @@
           </a>
           <a class="home-location-chip" href="/networking/east-london" data-region="east-london" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
-            <span class="home-location-chip-name">East London</span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">East</span>
+              <span class="home-location-chip-name-line">London</span>
+            </span>
           </a>
           <a class="home-location-chip" href="/networking/edinburgh" data-region="edinburgh" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
@@ -179,7 +192,10 @@
           </a>
           <a class="home-location-chip" href="/networking/north-london" data-region="north-london" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
-            <span class="home-location-chip-name">North London</span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">North</span>
+              <span class="home-location-chip-name-line">London</span>
+            </span>
           </a>
           <a class="home-location-chip" href="/networking/nottingham" data-region="nottingham" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
@@ -199,11 +215,17 @@
           </a>
           <a class="home-location-chip" href="/networking/south-london" data-region="south-london" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
-            <span class="home-location-chip-name">South London</span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">South</span>
+              <span class="home-location-chip-name-line">London</span>
+            </span>
           </a>
           <a class="home-location-chip" href="/networking/west-london" data-region="west-london" role="listitem">
             <span class="home-location-chip-icon" aria-hidden="true"></span>
-            <span class="home-location-chip-name">West London</span>
+            <span class="home-location-chip-name home-location-chip-name--stacked">
+              <span class="home-location-chip-name-line">West</span>
+              <span class="home-location-chip-name-line">London</span>
+            </span>
           </a>
         </div>
       </div>
@@ -304,9 +326,9 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260714u" data-root=""></script>
-<script src="js/region-landmark-icons.js?v=20260714clarity"></script>
-<script src="js/networking-region-themes.js?v=20260716palette"></script>
-<script src="js/home-location-chips.js?v=20260716palette"></script>
+<script src="js/region-landmark-icons.js?v=20260721loc1"></script>
+<script src="js/networking-region-themes.js?v=20260721loc1"></script>
+<script src="js/home-location-chips.js?v=20260721loc1"></script>
 <script src="js/networking-region-directory.js?v=20260717search"></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/home-page.js?v=20260721hero2"></script>

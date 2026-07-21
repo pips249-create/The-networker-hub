@@ -139,6 +139,11 @@
     "label": "Bournemouth Pier",
     "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M10 72V58h12v14M58 72V58h12v14\" stroke-width=\"1.4\"/><path d=\"M22 58h36\" stroke-width=\"1.5\"/><path d=\"M26 58V48h28v10\" stroke-width=\"1.35\"/><path d=\"M24 48l16-8 16 8\" stroke-width=\"1.3\"/><path d=\"M36 40v8M44 40v8\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M14 62h4M62 62h4\" opacity=\".4\" stroke-width=\"1\"/>",
     "hero": "<path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M40 82h160\" opacity=\".35\"/><path d=\"M48 82V56h24v26M168 82V56h24v26\"/><path d=\"M72 56h96\" stroke-width=\"2\"/><path d=\"M80 56V42h80v14\"/><path d=\"M72 42l48-16 48 16\"/><path d=\"M104 30v12M128 30v12\" opacity=\".45\"/>"
+  },
+  "online-events": {
+    "label": "Online events",
+    "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><rect x=\"18\" y=\"22\" width=\"44\" height=\"32\" rx=\"2\" stroke-width=\"1.45\"/><rect x=\"22\" y=\"26\" width=\"36\" height=\"24\" rx=\"1\" opacity=\".45\" stroke-width=\"1\"/><circle cx=\"40\" cy=\"38\" r=\"9\" stroke-width=\"1.25\"/><ellipse cx=\"40\" cy=\"38\" rx=\"9\" ry=\"3.5\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M31 38h18M40 29v18\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M33 32c3 2 6 3 7 3s4-1 7-3M33 44c3-2 6-3 7-3s4 1 7 3\" opacity=\".4\" stroke-width=\"1\"/><path d=\"M30 58h20\" stroke-width=\"1.35\"/><path d=\"M40 54v4M36 58h8\" stroke-width=\"1.25\"/><path d=\"M52 30c4 2 7 5 9 9M52 46c4-2 7-5 9-9\" opacity=\".45\" stroke-width=\"1.1\"/><path d=\"M56 34c2 1 3 3 3 4M56 42c2-1 3-3 3-4\" opacity=\".45\" stroke-width=\"1.1\"/>",
+    "hero": "<path d=\"M20 82h200\" opacity=\".35\"/><rect x=\"56\" y=\"16\" width=\"128\" height=\"56\" rx=\"3\" stroke-width=\"2\"/><rect x=\"64\" y=\"24\" width=\"112\" height=\"40\" rx=\"2\" opacity=\".45\"/><circle cx=\"120\" cy=\"44\" r=\"16\" stroke-width=\"1.8\"/><ellipse cx=\"120\" cy=\"44\" rx=\"16\" ry=\"6\" opacity=\".45\"/><path d=\"M96 44h48M120 28v32\" opacity=\".45\"/><path d=\"M88 82h64\" stroke-width=\"2\"/><path d=\"M120 74v8M108 82h24\"/>"
   }
 };
 
@@ -166,7 +171,8 @@
   "belfast": "belfast-city-hall",
   "reading": "reading-blade",
   "leicester": "leicester-clock-tower",
-  "bournemouth": "bournemouth-pier"
+  "bournemouth": "bournemouth-pier",
+  "online": "online-events"
 };
 
   function landmarkKeyForRegion(slug) {

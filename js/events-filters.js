@@ -682,6 +682,25 @@
     }
   }
 
+  function getUrlFormatFilter() {
+    try {
+      return String(new URLSearchParams(location.search).get('format') || '').trim().toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function applyOnlineFormatFilter() {
+    if (checkInPerson) checkInPerson.checked = false;
+    if (checkOnline) checkOnline.checked = true;
+    if (postcodeInput) postcodeInput.value = '';
+    if (toggleNearMe) toggleNearMe.checked = false;
+    if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
+    window.hubLocationFilterState = null;
+    window.hubLocationFilterCoords = null;
+    syncNearRadiusUi();
+  }
+
   var pendingResultsScroll = false;
 
   function shouldScrollToBrowseResults() {
@@ -735,6 +754,11 @@
       if (urlQ) {
         if (searchInput) searchInput.value = urlQ;
         // Homepage / shared search links should not inherit stale session filters.
+        return Promise.resolve();
+      }
+
+      if (getUrlFormatFilter() === 'online') {
+        applyOnlineFormatFilter();
         return Promise.resolve();
       }
 

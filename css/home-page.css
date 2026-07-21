@@ -3072,6 +3072,26 @@ html:has(.home-page) {
   font-weight: 650;
   line-height: 1.2;
   letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.home-location-chip-name--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  max-width: 5.4em;
+  line-height: 1.05;
+}
+
+.home-location-chip-name-line {
+  display: block;
+}
+
+.home-location-chip--compact-label .home-location-chip-name:not(.home-location-chip-name--stacked) {
+  font-size: 10px;
+  max-width: 6.2em;
+  letter-spacing: -0.01em;
 }
 
 .home-locations-more {
@@ -3112,6 +3132,14 @@ html:has(.home-page) {
 
   .home-location-chip-name {
     font-size: 10.5px;
+  }
+
+  .home-location-chip-name--stacked {
+    font-size: 10px;
+  }
+
+  .home-location-chip--compact-label .home-location-chip-name:not(.home-location-chip-name--stacked) {
+    font-size: 9.5px;
   }
 
   .home-locations-scroller::after {
