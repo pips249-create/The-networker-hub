@@ -5,7 +5,7 @@ const { publicOrganiserSlug } = require('../organiser-slug');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
-const { resolveClaimDispute, clearDisputedProfileEmail } = require('../admin-supabase-data');
+const { resolveClaimDispute, clearDisputedProfileEmail, resolveOrganiserClaimRequest, approveOrganiserClaimRequest } = require('../admin-supabase-data');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
@@ -982,6 +982,57 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'clear_dispute_email_failed',
         message: messages[e.message] || e.message || 'Could not clear profile email.',
+      });
+    }
+  }
+
+  if (body.action === 'resolve_organiser_claim_request') {
+    try {
+      const request = await resolveOrganiserClaimRequest(body.requestId || body.id);
+      return json(res, 200, {
+        ok: true,
+        request,
+        message: 'Claim request marked resolved.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_request_id: 'Missing request id.',
+        request_not_found: 'This claim request is already resolved or could not be found.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'resolve_claim_request_failed',
+        message: messages[e.message] || e.message || 'Could not resolve claim request.',
+      });
+    }
+  }
+
+  if (body.action === 'approve_organiser_claim_request') {
+    try {
+      const result = await approveOrganiserClaimRequest(body.requestId || body.id);
+      invalidateIncompleteOrganiserCount();
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message:
+          'Contact email updated and claim invite sent to ' +
+          String(result.claimantEmail || 'the claimant') +
+          '.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_request_id: 'Missing request id.',
+        request_not_found: 'This claim request is already resolved or could not be found.',
+        organiser_not_found: 'The linked group profile could not be found.',
+        already_claimed: 'This profile is already claimed — no invite was sent.',
+        invalid_claimant_email: 'The claim request is missing a valid claimant email.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'approve_claim_request_failed',
+        message: messages[e.message] || e.message || 'Could not approve claim request.',
       });
     }
   }

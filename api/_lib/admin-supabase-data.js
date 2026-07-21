@@ -47,6 +47,10 @@ async function fetchAdminActionCounts(sb, options) {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'open'),
     sb
+      .from('organiser_claim_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open'),
+    sb
       .from('complaints')
       .select('id', { count: 'exact', head: true })
       .not('status', 'in', '("resolved","closed")'),
@@ -68,6 +72,7 @@ async function fetchAdminActionCounts(sb, options) {
       openReviewReportsRes,
       pendingOpportunitiesRes,
       claimDisputesRes,
+      openOrganiserClaimRequestsRes,
       openComplaintsRes,
       incompleteOrgsRes,
       pendingPayoutsRes,
@@ -79,6 +84,9 @@ async function fetchAdminActionCounts(sb, options) {
       openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
       pendingOpportunities: pendingOpportunitiesRes.error ? 0 : pendingOpportunitiesRes.count || 0,
       openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
+      openOrganiserClaimRequests: openOrganiserClaimRequestsRes.error
+        ? 0
+        : openOrganiserClaimRequestsRes.count || 0,
       openComplaints: openComplaintsRes.error ? 0 : openComplaintsRes.count || 0,
       spamReviews: 0,
       incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
@@ -92,6 +100,7 @@ async function fetchAdminActionCounts(sb, options) {
     openReviewReportsRes,
     pendingOpportunitiesRes,
     claimDisputesRes,
+    openOrganiserClaimRequestsRes,
     openComplaintsRes,
     incompleteOrgsRes,
     pendingPayoutsRes,
@@ -109,6 +118,9 @@ async function fetchAdminActionCounts(sb, options) {
     openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
     pendingOpportunities: pendingOpportunitiesRes.error ? 0 : pendingOpportunitiesRes.count || 0,
     openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
+    openOrganiserClaimRequests: openOrganiserClaimRequestsRes.error
+      ? 0
+      : openOrganiserClaimRequestsRes.count || 0,
     openComplaints: openComplaintsRes.error ? 0 : openComplaintsRes.count || 0,
     spamReviews,
     incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
@@ -125,6 +137,7 @@ function sumAdminNotificationCounts(counts) {
     (counts.spamReviews || 0) +
     (counts.pendingOpportunities || 0) +
     (counts.openClaimDisputes || 0) +
+    (counts.openOrganiserClaimRequests || 0) +
     (counts.openComplaints || 0) +
     (counts.pendingPayouts || 0)
   );
@@ -207,6 +220,17 @@ function buildAlertsFromCounts(counts) {
       title: `${counts.openClaimDisputes} group profile dispute${counts.openClaimDisputes === 1 ? '' : 's'}`,
       detail: 'An organiser rejected a matched profile — resolve on the dashboard overview.',
       href: '#dashboard',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.openOrganiserClaimRequests > 0) {
+    alerts.push({
+      id: 'organiser-claim-requests',
+      severity: 'high',
+      title: `${counts.openOrganiserClaimRequests} organiser claim request${counts.openOrganiserClaimRequests === 1 ? '' : 's'}`,
+      detail: 'Someone asked to claim a public group profile — verify and send a claim invite in Group cleanup.',
+      href: '#cleanup/groups',
       time: new Date().toISOString(),
     });
   }
@@ -351,6 +375,7 @@ async function fetchAttentionQueueLight(sb, counts) {
     incompleteOrganisers: action.incompleteOrganisers || 0,
     spamReviews: action.spamReviews || 0,
     openClaimDisputes: [],
+    openOrganiserClaimRequests: [],
     openListingReports: action.openListingReports || 0,
     openListingReportItems: [],
     openReviewReports: action.openReviewReports || 0,
@@ -363,7 +388,7 @@ async function fetchAttentionQueueLight(sb, counts) {
 }
 
 async function fetchAttentionQueue(sb, counts) {
-  const [pendingOppsRes, claimDisputesRes, openReportsRes, reviewReportsRes, pendingClaimsRes] =
+  const [pendingOppsRes, claimDisputesRes, claimRequestsRes, openReportsRes, reviewReportsRes, pendingClaimsRes] =
     await Promise.all([
       sb
         .from('business_opportunities')
@@ -374,6 +399,14 @@ async function fetchAttentionQueue(sb, counts) {
       sb
         .from('organiser_claim_disputes')
         .select('id, organiser_id, organiser_name, profile_email, reporter_email, notes, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      sb
+        .from('organiser_claim_requests')
+        .select(
+          'id, organiser_id, organiser_name, profile_email, claimant_name, claimant_email, claimant_role, message, created_at'
+        )
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(10),
@@ -410,6 +443,17 @@ async function fetchAttentionQueue(sb, counts) {
     notes: String(d.notes || '').trim(),
     createdAt: d.created_at,
   }));
+  const openOrganiserClaimRequests = (claimRequestsRes.error ? [] : claimRequestsRes.data || []).map((r) => ({
+    id: r.id,
+    organiserId: r.organiser_id,
+    organiserName: String(r.organiser_name || '').trim() || 'Group profile',
+    profileEmail: String(r.profile_email || '').trim(),
+    claimantName: String(r.claimant_name || '').trim(),
+    claimantEmail: String(r.claimant_email || '').trim(),
+    claimantRole: String(r.claimant_role || '').trim(),
+    message: String(r.message || '').trim(),
+    createdAt: r.created_at,
+  }));
   const openListingReportItems = (openReportsRes.error ? [] : openReportsRes.data || []).map((r) => ({
     id: r.id,
     listingType: r.listing_type,
@@ -437,6 +481,7 @@ async function fetchAttentionQueue(sb, counts) {
     incompleteOrganisers: action.incompleteOrganisers || 0,
     spamReviews: action.spamReviews || 0,
     openClaimDisputes,
+    openOrganiserClaimRequests,
     openListingReports: action.openListingReports || 0,
     openListingReportItems,
     openReviewReports: action.openReviewReports || 0,
@@ -1056,6 +1101,149 @@ async function clearDisputedProfileEmail(disputeId) {
   return resolveClaimDispute(id);
 }
 
+async function resolveOrganiserClaimRequest(requestId) {
+  const id = String(requestId || '').trim();
+  if (!id) {
+    const err = new Error('missing_request_id');
+    err.status = 400;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organiser_claim_requests')
+    .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('status', 'open')
+    .select('id, organiser_id, organiser_name, claimant_email')
+    .maybeSingle();
+  if (error) {
+    if (isMissingTableError(error)) {
+      const err = new Error('request_not_found');
+      err.status = 404;
+      throw err;
+    }
+    throw new Error(error.message);
+  }
+  if (!data) {
+    const err = new Error('request_not_found');
+    err.status = 404;
+    throw err;
+  }
+  return data;
+}
+
+async function approveOrganiserClaimRequest(requestId) {
+  const id = String(requestId || '').trim();
+  if (!id) {
+    const err = new Error('missing_request_id');
+    err.status = 400;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const { data: request, error: requestErr } = await sb
+    .from('organiser_claim_requests')
+    .select('*')
+    .eq('id', id)
+    .eq('status', 'open')
+    .maybeSingle();
+  if (requestErr) {
+    if (isMissingTableError(requestErr)) {
+      const err = new Error('request_not_found');
+      err.status = 404;
+      throw err;
+    }
+    throw new Error(requestErr.message);
+  }
+  if (!request) {
+    const err = new Error('request_not_found');
+    err.status = 404;
+    throw err;
+  }
+  if (!request.organiser_id) {
+    const err = new Error('organiser_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const claimantEmail = String(request.claimant_email || '')
+    .trim()
+    .toLowerCase();
+  if (!claimantEmail) {
+    const err = new Error('invalid_claimant_email');
+    err.status = 400;
+    throw err;
+  }
+
+  const { data: organiser, error: organiserErr } = await sb
+    .from('organisers')
+    .select('id, name, ownership_claim_status')
+    .eq('id', request.organiser_id)
+    .maybeSingle();
+  if (organiserErr) throw new Error(organiserErr.message);
+  if (!organiser) {
+    const err = new Error('organiser_not_found');
+    err.status = 404;
+    throw err;
+  }
+  if (String(organiser.ownership_claim_status || '').toLowerCase() === 'claimed') {
+    const err = new Error('already_claimed');
+    err.status = 400;
+    throw err;
+  }
+
+  const { error: updateErr } = await sb
+    .from('organisers')
+    .update({
+      email: claimantEmail,
+      contact_email: claimantEmail,
+      ownership_claim_status: 'pending',
+      supabase_user_id: null,
+      organiser_account_id: null,
+      ownership_disputed_at: null,
+      ownership_disputed_by_email: null,
+    })
+    .eq('id', organiser.id);
+  if (updateErr) throw new Error(updateErr.message);
+
+  const { resolveOrganiserClaimUrl } = require('./organiser-claim-url');
+  const { sendTemplatedEmail } = require('./send-template-email');
+  const { campaignSiteVars } = require('./organiser-campaign-defaults');
+  const host = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const claimUrl = await resolveOrganiserClaimUrl(claimantEmail, host);
+  const organiserName =
+    String(organiser.name || request.organiser_name || 'your group').trim() || 'your group';
+
+  await sendTemplatedEmail({
+    slug: 'organiser_claim_invite',
+    to: claimantEmail,
+    variables: {
+      ...campaignSiteVars(host),
+      organiser_name: organiserName,
+      claim_url: claimUrl,
+    },
+    skipEmailCheck: true,
+  });
+
+  const { data: resolved, error: resolveErr } = await sb
+    .from('organiser_claim_requests')
+    .update({
+      status: 'resolved',
+      resolved_at: new Date().toISOString(),
+      admin_notes: 'Approved — contact email updated and claim invite sent.',
+    })
+    .eq('id', id)
+    .select('id, organiser_id, organiser_name, claimant_email')
+    .maybeSingle();
+  if (resolveErr) throw new Error(resolveErr.message);
+
+  return {
+    request: resolved || request,
+    organiserId: organiser.id,
+    claimantEmail,
+    claimUrl,
+  };
+}
+
 async function getAdminDashboard(options) {
   if (!isSupabaseConfigured()) {
     return { configured: false, provider: 'supabase' };
@@ -1148,5 +1336,7 @@ module.exports = {
   fetchSponsorBlock,
   resolveClaimDispute,
   clearDisputedProfileEmail,
+  resolveOrganiserClaimRequest,
+  approveOrganiserClaimRequest,
   sumAdminNotificationCounts,
 };

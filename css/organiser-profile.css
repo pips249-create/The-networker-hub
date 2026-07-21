@@ -854,3 +854,64 @@ body.hub-rm-modal-open {
 .org-review-action-status.is-success {
   color: #027a48;
 }
+
+.organiser-profile-page .org-claim-card {
+  margin-top: 8px;
+  padding: 22px 24px;
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  background: linear-gradient(180deg, #eef4ff 0%, #fff 100%);
+}
+
+.organiser-profile-page .org-claim-card h2 {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: #1e3a5f;
+}
+
+.organiser-profile-page .org-claim-lede {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3d4557;
+}
+
+.organiser-profile-page .org-claim-form {
+  display: grid;
+  gap: 12px;
+}
+
+.organiser-profile-page .org-claim-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e3a5f;
+}
+
+.organiser-profile-page .org-claim-form input,
+.organiser-profile-page .org-claim-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 10px;
+  font: inherit;
+  color: #1e293b;
+  background: #fff;
+}
+
+.organiser-profile-page .org-claim-status {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.organiser-profile-page .org-claim-status.is-ok {
+  color: #027a48;
+}
+
+.organiser-profile-page .org-claim-status.is-error {
+  color: #b42318;
+}

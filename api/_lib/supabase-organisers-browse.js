@@ -31,6 +31,12 @@ function isPublicOrganiser(row) {
   return verified || published;
 }
 
+function isOrganiserClaimable(row) {
+  if (!isPublicOrganiser(row)) return false;
+  const status = String(row.ownership_claim_status || '').toLowerCase();
+  return status !== 'claimed';
+}
+
 function resolvePhotoUrl(raw) {
   const url = String(raw || '').trim();
   if (!url) return '';
@@ -112,6 +118,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
       .filter(Boolean)
       .join(' ')
       .toLowerCase(),
+    claimable: isOrganiserClaimable(row),
   };
 
   if (options.includeEvents && Array.isArray(options.events)) {
@@ -340,4 +347,6 @@ module.exports = {
   rowToPublicOrganiser,
   fetchOrganiserReviews,
   resolvePhotoUrl,
+  isPublicOrganiser,
+  isOrganiserClaimable,
 };

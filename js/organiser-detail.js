@@ -3,6 +3,8 @@
  */
 (function () {
   var API = '/api/organisers';
+  var currentOrganiser = null;
+  var claimFormBound = false;
 
   var MOCK_REVIEWS = [
     {
@@ -395,6 +397,7 @@
   }
 
   function renderOrganiser(org) {
+    currentOrganiser = org;
     document.getElementById('org-profile-content').hidden = false;
     document.title = (org.name || 'Organiser') + ' – The Networker Hub';
 
@@ -576,6 +579,95 @@
     }
 
     bindReviewButton(org);
+    applyClaimSection(org);
+  }
+
+  function applyClaimSection(org) {
+    var section = document.getElementById('org-claim-section');
+    if (!section) return;
+    var claimable = Boolean(org && org.claimable);
+    section.hidden = !claimable;
+    if (!claimable) return;
+    bindClaimForm();
+  }
+
+  function showClaimStatus(msg, ok) {
+    var el = document.getElementById('org-claim-status');
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = msg;
+    el.className = 'org-claim-status' + (ok ? ' is-ok' : ' is-error');
+  }
+
+  function bindClaimForm() {
+    if (claimFormBound) return;
+    var form = document.getElementById('org-claim-form');
+    if (!form) return;
+    claimFormBound = true;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!currentOrganiser || !currentOrganiser.claimable) return;
+
+      var name = (document.getElementById('org-claim-name').value || '').trim();
+      var email = (document.getElementById('org-claim-email').value || '').trim();
+      var role = (document.getElementById('org-claim-role').value || '').trim();
+      var message = (document.getElementById('org-claim-message').value || '').trim();
+      if (!name || !email) return;
+
+      var submitBtn = document.getElementById('org-claim-submit');
+      var statusEl = document.getElementById('org-claim-status');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending request…';
+      }
+      if (statusEl) statusEl.hidden = true;
+
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'claim_request',
+          organiserId: currentOrganiser.id,
+          name: name,
+          email: email,
+          role: role,
+          message: message,
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok) {
+            showClaimStatus(
+              'Request sent — our team will email you to verify your details and send a claim link.',
+              true
+            );
+            if (submitBtn) submitBtn.textContent = 'Request sent';
+            form.reset();
+            return;
+          }
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Request access to this profile';
+          }
+          showClaimStatus(
+            (result.data && (result.data.message || result.data.error)) ||
+              'Could not send your request. Please email hello@thenetworkerhub.com instead.',
+            false
+          );
+        })
+        .catch(function () {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Request access to this profile';
+          }
+          showClaimStatus('Could not send your request. Please try again later.', false);
+        });
+    });
   }
 
   async function loadOrganiserPageAd() {

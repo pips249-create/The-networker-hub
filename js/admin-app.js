@@ -665,7 +665,8 @@
         (Number(counts.openReviewReports) || 0) +
         (Number(counts.spamReviews) || 0) +
         (Number(counts.pendingOpportunities) || 0) +
-        (Number(counts.openClaimDisputes) || 0)
+        (Number(counts.openClaimDisputes) || 0) +
+        (Number(counts.openOrganiserClaimRequests) || 0)
       );
     }
     return Number(data && data.notificationCount) || 0;
@@ -810,6 +811,22 @@
         if (disputesSection) {
           var hasDisputes = data.attention && data.attention.openClaimDisputes && data.attention.openClaimDisputes.length;
           disputesSection.hidden = !hasDisputes;
+        }
+      }
+    }
+
+    var claimRequestsEl =
+      document.getElementById('group-claim-requests') || document.getElementById('dashboard-claim-requests');
+    if (claimRequestsEl) {
+      claimRequestsEl.innerHTML = renderClaimRequestsPanel(data.attention);
+      if (claimRequestsEl.id === 'dashboard-claim-requests') {
+        var claimRequestsSection = document.getElementById('dashboard-claim-requests-section');
+        if (claimRequestsSection) {
+          var hasClaimRequests =
+            data.attention &&
+            data.attention.openOrganiserClaimRequests &&
+            data.attention.openOrganiserClaimRequests.length;
+          claimRequestsSection.hidden = !hasClaimRequests;
         }
       }
     }
@@ -1027,6 +1044,61 @@
               : '') +
             '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-slate-700 hover:bg-slate-100" data-resolve-claim-dispute="' +
             esc(d.id) +
+            '">Mark resolved</button></div></div>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  function renderClaimRequestsPanel(attention) {
+    var requests = (attention && attention.openOrganiserClaimRequests) || [];
+    if (!requests.length) {
+      return '<p class="text-sm text-emerald-700">No open organiser claim requests.</p>';
+    }
+    return (
+      '<div class="space-y-3">' +
+      requests
+        .map(function (r) {
+          var profileEmail = r.profileEmail || '—';
+          return (
+            '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">' +
+            '<p class="font-semibold text-sm text-amber-950">' +
+            esc(r.organiserName || 'Group profile') +
+            '</p>' +
+            '<dl class="mt-2 grid sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-amber-950/90">' +
+            '<div><dt class="font-semibold">Claimant</dt><dd>' +
+            esc(r.claimantName || '—') +
+            ' · ' +
+            esc(r.claimantEmail || '—') +
+            '</dd></div>' +
+            '<div><dt class="font-semibold">Profile email on file</dt><dd>' +
+            esc(profileEmail) +
+            '</dd></div>' +
+            (r.claimantRole
+              ? '<div class="sm:col-span-2"><dt class="font-semibold">Role</dt><dd>' +
+                esc(r.claimantRole) +
+                '</dd></div>'
+              : '') +
+            '</dl>' +
+            (r.message
+              ? '<p class="text-xs text-amber-900/85 mt-2 italic">“' + esc(r.message) + '”</p>'
+              : '') +
+            '<p class="text-xs text-amber-900/85 mt-2">Verify the claimant, then approve to update the profile email and send the claim invite.</p>' +
+            '<div class="flex flex-wrap gap-2 mt-3">' +
+            (r.organiserId
+              ? '<a href="' +
+                attrEsc(groupCleanupHref(r.organiserId)) +
+                '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Edit profile</a>'
+              : '') +
+            '<button type="button" class="text-xs font-semibold rounded-lg bg-amber-700 text-white px-2.5 py-1 hover:bg-amber-800" data-approve-organiser-claim-request="' +
+            attrEsc(r.id) +
+            '" data-claim-organiser-name="' +
+            attrEsc(r.organiserName || 'this group') +
+            '">Approve &amp; send claim link</button>' +
+            '<button type="button" class="text-xs font-semibold rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-slate-700 hover:bg-slate-100" data-resolve-organiser-claim-request="' +
+            esc(r.id) +
             '">Mark resolved</button></div></div>'
           );
         })
@@ -3769,6 +3841,10 @@
         '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
         '<p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p></div>' +
         '<div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
+        '<section class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm space-y-3" id="dashboard-claim-requests-section" hidden>' +
+        '<div><h3 class="font-bold text-brand-900">Organiser claim requests</h3>' +
+        '<p class="text-xs text-slate-500 mt-0.5">Someone asked to claim a public group profile — verify the claimant, then approve to update the contact email and send the claim invite.</p></div>' +
+        '<div id="dashboard-claim-requests"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
         '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
         '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
         '<p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p></div>' +
@@ -9083,6 +9159,61 @@
   }
 
   function handleGroupCleanupClick(e) {
+    var approveClaimBtn = e.target.closest('[data-approve-organiser-claim-request]');
+    if (approveClaimBtn) {
+      var approveRequestId = approveClaimBtn.getAttribute('data-approve-organiser-claim-request');
+      var approveOrganiserName = approveClaimBtn.getAttribute('data-claim-organiser-name') || 'this group';
+      if (!approveRequestId) return;
+      if (
+        !window.confirm(
+          'Approve this claim request for “' +
+            approveOrganiserName +
+            '”? The claimant email will become the profile contact and they will receive the claim invite email.'
+        )
+      ) {
+        return;
+      }
+      approveClaimBtn.disabled = true;
+      adminPost('/api/admin/organisers', {
+        action: 'approve_organiser_claim_request',
+        requestId: approveRequestId,
+      })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Could not approve claim request');
+          return refreshAdminNotifications().then(function () {
+            if (document.getElementById('group-cleanup-list')) return refreshGroupCleanupPage();
+          });
+        })
+        .catch(function (err) {
+          approveClaimBtn.disabled = false;
+          window.alert(err.message || 'Could not approve claim request.');
+        });
+      return;
+    }
+
+    var resolveClaimRequestBtn = e.target.closest('[data-resolve-organiser-claim-request]');
+    if (resolveClaimRequestBtn) {
+      var claimRequestId = resolveClaimRequestBtn.getAttribute('data-resolve-organiser-claim-request');
+      if (!claimRequestId) return;
+      if (!window.confirm('Mark this claim request as resolved without sending an invite?')) return;
+      resolveClaimRequestBtn.disabled = true;
+      adminPost('/api/admin/organisers', {
+        action: 'resolve_organiser_claim_request',
+        requestId: claimRequestId,
+      })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Could not resolve claim request');
+          return refreshAdminNotifications().then(function () {
+            if (document.getElementById('group-cleanup-list')) return refreshGroupCleanupPage();
+          });
+        })
+        .catch(function (err) {
+          resolveClaimRequestBtn.disabled = false;
+          window.alert(err.message || 'Could not resolve claim request.');
+        });
+      return;
+    }
+
     var resolveDisputeBtn = e.target.closest('[data-resolve-claim-dispute]');
     if (resolveDisputeBtn) {
       var disputeId = resolveDisputeBtn.getAttribute('data-resolve-claim-dispute');
@@ -9738,6 +9869,10 @@
     groupCleanupState.loading = false;
     main.innerHTML =
       '<div class="space-y-4">' +
+      '<section class="rounded-xl border border-amber-200 bg-white p-4 shadow-sm space-y-3">' +
+      '<div><h3 class="font-bold text-brand-900">Organiser claim requests</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Public claim requests — approve to update the profile email and send the claim invite, or mark resolved once handled.</p></div>' +
+      '<div id="group-claim-requests"><p class="text-sm text-slate-500">Loading claim requests…</p></div></section>' +
       '<section class="rounded-xl border border-red-200 bg-white p-4 shadow-sm space-y-3">' +
       '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
       '<p class="text-xs text-slate-500 mt-0.5">When an organiser says a pre-imported profile is not theirs, use Edit profile, Clear profile email, or Delete profile — then Mark resolved if needed.</p></div>' +

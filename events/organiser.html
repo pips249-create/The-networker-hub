@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
   <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260707">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260710">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260721">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f">
 </head>
 <body class="organiser-profile-page">
@@ -124,6 +124,36 @@
       <p class="org-review-action-status" id="org-review-status" hidden role="status"></p>
       <button type="button" class="org-profile-btn org-profile-btn--primary" id="org-review-btn">Leave a review</button>
     </section>
+
+    <section class="org-profile-section" id="org-claim-section" hidden>
+      <div class="org-claim-card">
+        <h2>Do you run this group?</h2>
+        <p class="org-claim-lede">
+          This profile may already be on The Networker Hub. If you run this networking group but your email doesn&rsquo;t match what we have on file,
+          request access — we&rsquo;ll verify your details and send you a link to claim the profile.
+        </p>
+        <form class="org-claim-form" id="org-claim-form">
+          <label>
+            <span>Your name</span>
+            <input type="text" name="name" id="org-claim-name" required autocomplete="name" />
+          </label>
+          <label>
+            <span>Your email</span>
+            <input type="email" name="email" id="org-claim-email" required autocomplete="email" />
+          </label>
+          <label>
+            <span>Your role (optional)</span>
+            <input type="text" name="role" id="org-claim-role" placeholder="e.g. Group founder, Chapter director" autocomplete="organization-title" />
+          </label>
+          <label>
+            <span>Message (optional)</span>
+            <textarea name="message" id="org-claim-message" rows="3" placeholder="Anything that helps us verify you represent this group"></textarea>
+          </label>
+          <button type="submit" class="org-profile-btn org-profile-btn--primary" id="org-claim-submit">Request access to this profile</button>
+          <p class="org-claim-status" id="org-claim-status" hidden role="status"></p>
+        </form>
+      </div>
+    </section>
       </div>
 
       <aside class="org-profile-side" aria-label="Sponsored">
@@ -191,6 +221,6 @@
 <script src="../js/review-report.js?v=20260609"></script>
 <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
 <script src="../js/hub-review-modal.js?v=20260710"></script>
-<script src="../js/organiser-detail.js?v=20260714a"></script>
+<script src="../js/organiser-detail.js?v=20260721c"></script>
 </body>
 </html>
