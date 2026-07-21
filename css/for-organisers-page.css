@@ -1321,6 +1321,10 @@ a.fo-hero-badge:hover {
   background: var(--od-bg);
 }
 
+.fo-workspace-full.fo-section {
+  padding-bottom: clamp(28px, 4vw, 40px);
+}
+
 .fo-section-head--center {
   max-width: 42em;
   margin-left: auto;
@@ -2077,9 +2081,6 @@ a.fo-hero-badge:hover {
   color: var(--fo-purple);
 }
 
-.fo-cta .fo-pricing-callout {
-  margin: 0 0 24px;
-}
 
 /* Section heads */
 .fo-section {
@@ -2540,7 +2541,7 @@ a.fo-hero-badge:hover {
 
 /* CTA */
 .fo-cta {
-  padding: clamp(48px, 7vw, 72px) 0 clamp(64px, 9vw, 88px);
+  padding: clamp(28px, 4vw, 40px) 0 clamp(64px, 9vw, 88px);
 }
 
 .fo-cta-panel {
@@ -2553,19 +2554,42 @@ a.fo-hero-badge:hover {
   box-shadow: 0 24px 48px rgba(26, 46, 59, 0.18);
 }
 
+.fo-cta-pricing {
+  margin: 0 auto 24px;
+  padding: 14px 18px;
+  max-width: 42em;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.fo-cta-pricing strong {
+  color: #fff;
+}
+
+.fo-cta-pricing-links {
+  display: inline;
+}
+
+.fo-cta-pricing a {
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fo-cta-pricing a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .fo-cta-panel h2 {
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: clamp(1.65rem, 3.5vw, 2.2rem);
   font-weight: 400;
-  margin: 0 0 12px;
-}
-
-.fo-cta-panel p {
-  font-size: 1rem;
-  line-height: 1.6;
-  opacity: 0.9;
-  max-width: 36em;
-  margin: 0 auto 24px;
+  margin: 0 0 20px;
 }
 
 .fo-cta-actions {
