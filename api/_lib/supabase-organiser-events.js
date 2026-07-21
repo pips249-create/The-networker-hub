@@ -1216,6 +1216,27 @@ async function updateEventVatTreatment(eventIds, vatTreatment) {
   if (error) throw new Error(error.message);
 }
 
+/** Persist refund policy and organiser terms when saving tickets before publish (review step). */
+async function saveRefundPolicyForEvents(eventIds, refundPayload) {
+  const policy = String(refundPayload?.refundPolicy || '').trim();
+  if (!policy) return;
+  const sb = getSupabaseAdmin();
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) return;
+  const patch = {
+    refund_policy: policy,
+    refund_policy_details: String(refundPayload.refundPolicyDetails || '').trim() || null,
+    refund_cutoff_days:
+      refundPayload.refundCutoffDays != null ? Number(refundPayload.refundCutoffDays) : null,
+  };
+  if (refundPayload.refundTermsAgreed) {
+    patch.refund_terms_agreed = true;
+    patch.refund_terms_agreed_at = new Date().toISOString();
+  }
+  const { error } = await sb.from('events').update(patch).in('id', ids);
+  if (error) throw new Error(error.message);
+}
+
 async function assertEventsHaveTicketsForPublish(sb, eventIds) {
   const ids = (eventIds || []).filter(Boolean);
   if (!ids.length) return;
@@ -1606,6 +1627,12 @@ async function createTicketsForEvents({
     await updateEventVatTreatment(ids, vatTreatment);
   }
 
+  const { tiersHavePaidPrice } = require('./supabase-events');
+  const hasPaidTickets = tiersHavePaidPrice(tiers);
+  if (!publish && hasPaidTickets && refund && String(refund.refundPolicy || '').trim()) {
+    await saveRefundPolicyForEvents(ids, refund);
+  }
+
   const { error: deleteErr } = await sb.from('tickets').delete().in('event_id', ids);
   if (deleteErr) throw new Error(deleteErr.message);
 
@@ -1648,10 +1675,9 @@ async function createTicketsForEvents({
 
   let publishedEvents = null;
   if (publish) {
-    const { tiersHavePaidPrice } = require('./supabase-events');
-    const hasPaidTickets = tiersHavePaidPrice(out);
-    const refundPayload = hasPaidTickets ? refund : {};
-    if (hasPaidTickets && (!refund || !String(refund.refundPolicy || '').trim())) {
+    const hasPaidTicketsAfterCreate = tiersHavePaidPrice(out);
+    const refundPayload = hasPaidTicketsAfterCreate ? refund : {};
+    if (hasPaidTicketsAfterCreate && (!refund || !String(refund.refundPolicy || '').trim())) {
       const e = new Error('Select a refund policy before publishing paid tickets.');
       e.status = 400;
       e.code = 'refund_policy_required';

@@ -41,6 +41,10 @@
         <div id="ee-review-alert" class="ee-alert" hidden></div>
         <div class="ee-publish-review-body" id="ee-publish-review-body"></div>
         <p class="ee-publish-review-next" id="ee-publish-review-next"></p>
+        <label class="ee-check ee-refund-check" id="ee-review-refund-check" hidden>
+          <input type="checkbox" id="ee-review-refund-terms-agreed" />
+          <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
+        </label>
         <div class="ee-actions ee-publish-review-actions">
           <a class="ee-btn ee-btn-outline" id="ee-review-back" href="#">Back to edit</a>
           <button type="button" class="ee-btn ee-btn-primary" id="ee-review-confirm">Confirm &amp; publish</button>
@@ -53,6 +57,6 @@
     <script src="../js/organiser-event-wizard.js?v=20260716review" data-step="review"></script>
     <script src="../js/organiser-page-loading.js?v=20260716progress"></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../"></script>
-    <script src="../js/organiser-event-review.js?v=20260721review"></script>
+    <script src="../js/organiser-event-review.js?v=20260721refund"></script>
   </body>
 </html>

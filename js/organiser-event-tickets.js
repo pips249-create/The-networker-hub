@@ -6,6 +6,7 @@
   const PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const TICKET_DRAFT_KEY = 'hub_ticket_setup_draft';
+  const REVIEW_REFUND_KEY = 'hub_event_review_refund';
   const params = new URLSearchParams(location.search);
   const idsParam = params.get('ids') || '';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
@@ -2323,6 +2324,23 @@
     if (!publish) {
       existingTicketsLoaded = true;
       clearTicketDraft();
+      if (options.redirectToReview && hasPaidTickets) {
+        try {
+          sessionStorage.setItem(
+            REVIEW_REFUND_KEY,
+            JSON.stringify({
+              eventIds: eventIds.slice(),
+              refundPolicy: refund.refundPolicy,
+              refundPolicyDetails: refund.refundPolicyDetails || '',
+              refundCutoffDays: refund.refundCutoffDays,
+              refundTermsAgreed: refund.refundTermsAgreed,
+              vatTreatment: body.vatTreatment,
+            })
+          );
+        } catch {
+          /* ignore quota / private mode */
+        }
+      }
       if (options.redirectToReview) {
         location.href = reviewPageUrl();
         return;

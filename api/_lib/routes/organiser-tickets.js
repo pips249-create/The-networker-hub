@@ -157,6 +157,16 @@ module.exports = async function handler(req, res) {
           return json(res, 400, { error: 'vat_treatment_required' });
         }
 
+        const refundPayload = hasPaidTickets
+          ? {
+              refundPolicy: body.refundPolicy,
+              refundPolicyDetails: body.refundPolicyDetails || '',
+              refundCutoffDays: body.refundCutoffDays,
+              refundTermsAgreed: body.refundTermsAgreed,
+              vatTreatment: vatTreatment || null,
+            }
+          : null;
+
         const result = await createTicketsForEvents({
           eventIds: ids,
           tickets: tiers,
@@ -171,18 +181,7 @@ module.exports = async function handler(req, res) {
             body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
               ? body.attendeeExtras
               : null,
-          refund:
-            publish && hasPaidTickets
-              ? {
-                  refundPolicy: body.refundPolicy,
-                  refundPolicyDetails: body.refundPolicyDetails || '',
-                  refundCutoffDays: body.refundCutoffDays,
-                  refundTermsAgreed: body.refundTermsAgreed,
-                  vatTreatment: vatTreatment || null,
-                }
-              : publish
-                ? {}
-                : null,
+          refund: publish ? refundPayload || {} : refundPayload,
         });
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {

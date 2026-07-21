@@ -4,6 +4,7 @@
 (function () {
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
+  const REVIEW_REFUND_KEY = 'hub_event_review_refund';
   const params = new URLSearchParams(location.search);
   const idsParam = params.get('ids') || '';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
@@ -502,10 +503,40 @@
     if (nextEl) nextEl.textContent = text;
   }
 
+  function reviewRefundContext() {
+    const fromEvent = {
+      refundPolicy: anchorEvent?.refundPolicy,
+      refundPolicyDetails: anchorEvent?.refundPolicyDetails || '',
+      refundCutoffDays: anchorEvent?.refundCutoffDays,
+      refundTermsAgreed: Boolean(anchorEvent?.refundTermsAgreed),
+      vatTreatment: anchorEvent?.vatTreatment,
+    };
+    if (fromEvent.refundTermsAgreed && fromEvent.refundPolicy) return fromEvent;
+    try {
+      const raw = sessionStorage.getItem(REVIEW_REFUND_KEY);
+      if (!raw) return fromEvent;
+      const stored = JSON.parse(raw);
+      const storedIds = (stored.eventIds || []).slice().sort().join(',');
+      const currentIds = eventIds.slice().sort().join(',');
+      if (storedIds !== currentIds) return fromEvent;
+      return {
+        refundPolicy: stored.refundPolicy || fromEvent.refundPolicy,
+        refundPolicyDetails: stored.refundPolicyDetails || fromEvent.refundPolicyDetails,
+        refundCutoffDays:
+          stored.refundCutoffDays != null ? stored.refundCutoffDays : fromEvent.refundCutoffDays,
+        refundTermsAgreed: Boolean(stored.refundTermsAgreed || fromEvent.refundTermsAgreed),
+        vatTreatment: stored.vatTreatment || fromEvent.vatTreatment,
+      };
+    } catch {
+      return fromEvent;
+    }
+  }
+
   function buildPublishBody() {
     const tiers = ticketsForPublish(loadedTickets);
     const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
     const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
+    const refund = hasPaid ? reviewRefundContext() : null;
     const body = {
       eventIds: eventIds.slice(),
       tickets: tiers,
@@ -513,20 +544,34 @@
       attendanceMode: String(anchorEvent?.attendanceMode || 'tickets').trim(),
       guestPassesDisabled: Boolean(anchorEvent?.guestPassesDisabled),
       alumniFastPass: alumniFastPass,
-      vatTreatment: hasPaid ? String(anchorEvent?.vatTreatment || '').trim() : '',
+      vatTreatment: hasPaid ? String(refund?.vatTreatment || anchorEvent?.vatTreatment || '').trim() : '',
       attendeeExtras: {
         foodIncluded: Boolean(anchorEvent?.foodIncluded),
         collectDietary: Boolean(anchorEvent?.collectDietary),
         collectAccessibility: Boolean(anchorEvent?.collectAccessibility),
       },
     };
-    if (hasPaid) {
-      body.refundPolicy = anchorEvent?.refundPolicy;
-      body.refundPolicyDetails = anchorEvent?.refundPolicyDetails || '';
-      body.refundCutoffDays = anchorEvent?.refundCutoffDays;
-      body.refundTermsAgreed = Boolean(anchorEvent?.refundTermsAgreed);
+    if (hasPaid && refund) {
+      body.refundPolicy = refund.refundPolicy;
+      body.refundPolicyDetails = refund.refundPolicyDetails || '';
+      body.refundCutoffDays = refund.refundCutoffDays;
+      const reviewAgreed = document.getElementById('ee-review-refund-terms-agreed')?.checked;
+      body.refundTermsAgreed = Boolean(refund.refundTermsAgreed || reviewAgreed);
     }
     return body;
+  }
+
+  function updateReviewRefundCheck() {
+    const tiers = displayTiers();
+    const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
+    const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
+    const refund = hasPaid ? reviewRefundContext() : null;
+    const wrap = document.getElementById('ee-review-refund-check');
+    const agree = document.getElementById('ee-review-refund-terms-agreed');
+    if (!wrap || !agree) return;
+    const needsConfirm = hasPaid && !refund?.refundTermsAgreed;
+    wrap.hidden = !needsConfirm;
+    if (!needsConfirm) agree.checked = false;
   }
 
   async function hydrateSeriesEvents() {
@@ -627,6 +672,11 @@
       /* ignore */
     }
     try {
+      sessionStorage.removeItem(REVIEW_REFUND_KEY);
+    } catch {
+      /* ignore */
+    }
+    try {
       sessionStorage.setItem(
         PUBLISHED_PREVIEW_KEY,
         JSON.stringify({
@@ -688,6 +738,21 @@
 
     const loading = window.organiserPageLoading;
     const body = buildPublishBody();
+    const tiers = ticketsForPublish(loadedTickets);
+    const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
+    const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
+    if (hasPaid && !body.refundTermsAgreed) {
+      showAlert(
+        'Confirm you understand refunds are your responsibility under Stripe Connect.',
+        'warn'
+      );
+      updateReviewRefundCheck();
+      document.getElementById('ee-review-refund-check')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+      return;
+    }
 
     const publishWork = function () {
       return api('/api/organiser/tickets', {
@@ -748,12 +813,16 @@
     }
     if (backEdit) backEdit.href = ticketsUrl;
     document.getElementById('ee-review-confirm')?.addEventListener('click', publishListing);
+    document.getElementById('ee-review-refund-terms-agreed')?.addEventListener('change', function () {
+      if (this.checked) showAlert('');
+    });
   }
 
   function renderReview() {
     const body = document.getElementById('ee-publish-review-body');
     if (body) body.innerHTML = renderReviewBody();
     renderReviewNext();
+    updateReviewRefundCheck();
   }
 
   async function init() {
