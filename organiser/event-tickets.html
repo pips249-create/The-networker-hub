@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260613" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260716review" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260721moe2" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -157,7 +157,28 @@
               </p>
             </div>
             <p class="ee-tier-summary" id="ee-members-only-event-summary" aria-live="polite">Member ticket · unlimited available · Free</p>
-            <div id="ee-members-only-event-fields-mount"></div>
+            <div id="ee-members-only-event-fields-mount">
+              <div id="ee-member-ticket-config">
+                <div class="ee-row-2">
+                  <div class="ee-field">
+                    <label for="ee-private-ticket-name">Ticket name</label>
+                    <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+                  </div>
+                  <div class="ee-field">
+                    <label for="ee-private-ticket-price">Price (&pound;)</label>
+                    <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
+                    <p class="ee-hint">Enter 0 for free</p>
+                  </div>
+                </div>
+                <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
+                  Manage who can see this ticket under Member list on your organiser page.
+                </p>
+                <div class="ee-field ee-guest-visits-field">
+                  <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
+                  <input type="number" id="ee-private-ticket-qty" min="1" step="1" inputmode="numeric" placeholder="Unlimited" />
+                </div>
+              </div>
+            </div>
             <p class="ee-hint" id="ee-members-only-roster-status" aria-live="polite"></p>
             <a class="ee-inline-link" id="ee-members-only-roster-link" href="/organiser/member-roster" hidden>Manage member list →</a>
           </div>
@@ -261,27 +282,6 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div id="ee-member-ticket-config" hidden>
-          <div class="ee-row-2">
-            <div class="ee-field">
-              <label for="ee-private-ticket-name">Ticket name</label>
-              <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
-            </div>
-            <div class="ee-field">
-              <label for="ee-private-ticket-price">Price (&pound;)</label>
-              <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
-              <p class="ee-hint">Enter 0 for free</p>
-            </div>
-          </div>
-          <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
-            Manage who can see this ticket under Member list on your organiser page.
-          </p>
-          <div class="ee-field ee-guest-visits-field">
-            <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
-            <input type="number" id="ee-private-ticket-qty" min="1" step="1" inputmode="numeric" placeholder="Unlimited" />
           </div>
         </div>
 
@@ -398,6 +398,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260714a"></script>
     <script src="../js/organiser-field-tips.js?v=20260715guest"></script>
     <script src="../js/hub-field-tip.js?v=20260711"></script>
-    <script src="../js/organiser-event-tickets.js?v=20260721refund"></script>
+    <script src="../js/organiser-event-tickets.js?v=20260721review3"></script>
   </body>
 </html>

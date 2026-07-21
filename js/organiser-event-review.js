@@ -5,6 +5,7 @@
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
   const REVIEW_REFUND_KEY = 'hub_event_review_refund';
+  const TICKET_DRAFT_KEY = 'hub_ticket_setup_draft';
   const params = new URLSearchParams(location.search);
   const idsParam = params.get('ids') || '';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
@@ -394,13 +395,9 @@
     const tiers = displayTiers();
     const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
     const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
-    const refundPreset = hasPaid
-      ? inferRefundPresetFromStored(
-          anchorEvent?.refundPolicy,
-          anchorEvent?.refundCutoffDays,
-          anchorEvent?.refundPolicyDetails
-        )
-      : '';
+    const refund = hasPaid ? reviewRefundContext() : null;
+    const refundLabel = hasPaid ? reviewRefundPresetLabel(refund) : '';
+    const vatLabel = hasPaid ? reviewVatLabel(refund?.vatTreatment || anchorEvent?.vatTreatment) : '';
     const events =
       seriesMeta.events && seriesMeta.events.length
         ? seriesMeta.events.slice().sort(function (a, b) {
@@ -476,11 +473,12 @@
         (hasPaid
           ? '<p class="ee-publish-review-sub">' +
             'VAT: ' +
-            esc(
-              anchorEvent?.vatTreatment === 'added' ? 'added at checkout' : 'included in ticket price'
-            ) +
+            esc(vatLabel) +
             ' · Refund policy: ' +
-            esc(REFUND_LABELS[refundPreset] || 'Selected') +
+            esc(refundLabel) +
+            (refund?.usedDefaultRefund
+              ? ' · <span class="ee-publish-review-note">Default policy — edit tickets to change</span>'
+              : '') +
             '</p>'
           : '<p class="ee-publish-review-sub">Free event — no VAT or refund policy required</p>'),
       ticketsPageUrl(),
@@ -506,6 +504,50 @@
     text += '. You can still edit most details from My Events before the first date.';
     const nextEl = document.getElementById('ee-publish-review-next');
     if (nextEl) nextEl.textContent = text;
+  }
+
+  function ticketDraftStorageKey() {
+    return TICKET_DRAFT_KEY + ':' + (eventIds.slice().sort().join(',') || 'none');
+  }
+
+  function readTicketDraftRefund() {
+    try {
+      const raw = sessionStorage.getItem(ticketDraftStorageKey());
+      if (!raw) return null;
+      const draft = JSON.parse(raw);
+      const draftIds = (draft.eventIds || []).slice().sort().join(',');
+      const currentIds = eventIds.slice().sort().join(',');
+      if (draftIds !== currentIds) return null;
+      const refund = draft.refund;
+      if (!refund || typeof refund !== 'object') return null;
+      return {
+        refundPolicy: refund.refundPolicy,
+        refundPolicyDetails: refund.refundPolicyDetails || '',
+        refundCutoffDays: refund.refundCutoffDays,
+        refundTermsAgreed: Boolean(refund.refundTermsAgreed),
+        vatTreatment: draft.vatTreatment || '',
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function reviewRefundPresetLabel(refund) {
+    const preset = inferRefundPresetFromStored(
+      refund?.refundPolicy,
+      refund?.refundCutoffDays,
+      refund?.refundPolicyDetails
+    );
+    if (preset && REFUND_LABELS[preset]) return REFUND_LABELS[preset];
+    if (refund?.refundPolicy === 'no_refunds') return REFUND_LABELS.non_refundable;
+    if (refund?.usedDefaultRefund) return 'Standard (default)';
+    return 'Selected';
+  }
+
+  function reviewVatLabel(vatTreatment) {
+    return String(vatTreatment || '').trim() === 'added'
+      ? 'added at checkout'
+      : 'included in ticket price';
   }
 
   function reviewRefundContext() {
@@ -538,10 +580,26 @@
       /* ignore */
     }
     if (!String(merged.refundPolicy || '').trim()) {
+      const draft = readTicketDraftRefund();
+      if (draft) {
+        merged = {
+          refundPolicy: draft.refundPolicy || merged.refundPolicy,
+          refundPolicyDetails: draft.refundPolicyDetails || merged.refundPolicyDetails,
+          refundCutoffDays:
+            draft.refundCutoffDays != null ? draft.refundCutoffDays : merged.refundCutoffDays,
+          refundTermsAgreed: Boolean(draft.refundTermsAgreed || merged.refundTermsAgreed),
+          vatTreatment: draft.vatTreatment || merged.vatTreatment,
+        };
+      }
+    }
+    let usedDefaultRefund = false;
+    if (!String(merged.refundPolicy || '').trim()) {
       merged.refundPolicy = DEFAULT_PAID_REFUND.refundPolicy;
       merged.refundPolicyDetails = DEFAULT_PAID_REFUND.refundPolicyDetails;
       merged.refundCutoffDays = DEFAULT_PAID_REFUND.refundCutoffDays;
+      usedDefaultRefund = true;
     }
+    merged.usedDefaultRefund = usedDefaultRefund;
     return merged;
   }
 
@@ -847,6 +905,7 @@
     document.getElementById('ee-review-confirm')?.addEventListener('click', publishListing);
     document.getElementById('ee-review-refund-terms-agreed')?.addEventListener('change', function () {
       if (this.checked) showAlert('');
+      renderReview();
     });
   }
 

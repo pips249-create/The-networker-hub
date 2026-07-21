@@ -1248,7 +1248,9 @@ a.ee-wizard-link:hover {
 }
 
 #ee-tickets-form .ee-card[hidden],
-#ee-paid-setup-wrap[hidden] {
+#ee-paid-setup-wrap[hidden],
+#ee-public-tickets-wrap[hidden],
+#ee-members-only-event-wrap[hidden] {
   display: none !important;
 }
 
@@ -1260,6 +1262,43 @@ a.ee-wizard-link:hover {
 
 .ee-optional-extras > .ee-hint {
   margin-bottom: 2px;
+}
+
+.ee-members-only-event-toggle {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ee-border);
+  border-radius: calc(var(--ee-radius) - 2px);
+  background: #faf9fd;
+}
+
+.ee-members-only-event-toggle.is-enabled {
+  border-color: var(--ee-purple);
+  background: #f5f2fb;
+}
+
+.ee-members-only-event-how {
+  margin-bottom: 12px;
+}
+
+.ee-members-only-event-how p {
+  margin: 6px 0 0;
+}
+
+#ee-members-only-roster-status.ee-hint-warn {
+  color: #9a3412;
+}
+
+.ee-inline-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--ee-purple);
+  text-decoration: none;
+}
+
+.ee-inline-link:hover {
+  text-decoration: underline;
 }
 
 .ee-addon-card {
@@ -2481,6 +2520,10 @@ body.ee-modal-open {
   font-size: 0.92rem;
   line-height: 1.45;
   color: var(--ee-muted, #635c5e);
+}
+
+.ee-publish-review-note {
+  color: var(--ee-warn-text, #8a6d00);
 }
 
 .ee-publish-review-list {

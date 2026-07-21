@@ -24,11 +24,13 @@
   let attendanceMode = 'tickets';
   let selectedRefundPolicy = '';
   let existingTicketsLoaded = false;
+  let savedTicketsSnapshot = '';
   let paymentSetupState = null;
   let returnedFromStripe = false;
   let ticketsLocked = false;
   let organiserComplimentaryVisits = 0;
   let anchorEvent = null;
+  let memberRosterActiveCount = null;
   let organiserGroupName = '';
 
   const FORMAT_LABELS = {
@@ -135,6 +137,13 @@
     }
     if (privateTicketEnabled() && !collectMembersOnlyTicket()) {
       blockers.push('Add a name for your members-only ticket');
+    }
+    if (membersOnlyEventEnabled()) {
+      if (memberRosterActiveCount === 0) {
+        blockers.push('Add at least one person to your member list before publishing');
+      } else if (memberRosterActiveCount == null) {
+        blockers.push('Could not verify your member list — refresh and try again');
+      }
     }
     const alumni = collectAlumniFastPass();
     if (alumni.enabled && !alumni.saleEnd) {
@@ -672,14 +681,23 @@
     const guestOn = attendanceMode === 'guest_programme';
 
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-    if (optionalExtras) optionalExtras.hidden = !openBooking;
+    if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
     if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
     syncAddonCard('ee-guest-addon', guestOn);
     if (panelTitle) {
-      panelTitle.textContent = guestOn ? 'Member ticket types' : 'Public ticket types';
+      panelTitle.textContent = guestOn
+        ? 'Member ticket types'
+        : membersOnlyEventEnabled()
+          ? 'Member ticket'
+          : 'Public ticket types';
     }
+    const panelLead = document.getElementById('ee-tickets-panel-lead');
+    if (panelLead) {
+      panelLead.hidden = membersOnlyEventEnabled();
+    }
+    syncMembersOnlyEventMode();
     syncGuestVisitsInput();
     updateTierSummary();
     syncTicketStepLabels();
@@ -777,6 +795,12 @@
   function updateTierSummary() {
     const summary = document.getElementById('ee-tier-summary');
     if (!summary || !isOpenBookingMode(attendanceMode)) return;
+    if (membersOnlyEventEnabled()) {
+      summary.hidden = true;
+      updateMembersOnlyEventSummary();
+      return;
+    }
+    summary.hidden = false;
     const rows = document.querySelectorAll('.ee-tier-row');
     let count = 0;
     let totalQty = 0;
@@ -932,8 +956,198 @@
     return String(ticket?.visibility || '').toLowerCase() === 'members_only';
   }
 
+  function membersOnlyEventEnabled() {
+    return Boolean(document.getElementById('ee-members-only-event-enabled')?.checked);
+  }
+
+  function setMembersOnlyEventEnabled(enabled) {
+    const el = document.getElementById('ee-members-only-event-enabled');
+    if (!el) return;
+    el.checked = Boolean(enabled);
+    syncMembersOnlyEventMode();
+  }
+
+  function ticketsAreMembersOnlyEvent(tickets) {
+    const list = tickets || [];
+    if (!list.length) return false;
+    const hasMember = list.some(isMembersOnlyTicket);
+    const hasPublic = list.some(function (t) {
+      return !isMembersOnlyTicket(t) && !isGuestVisitTicket(t) && !isAlumniTicket(t);
+    });
+    return hasMember && !hasPublic;
+  }
+
+  function memberTicketConfigMount() {
+    if (membersOnlyEventEnabled()) {
+      return document.getElementById('ee-members-only-event-fields-mount');
+    }
+    if (Boolean(document.getElementById('ee-private-ticket-enabled')?.checked)) {
+      return document.getElementById('ee-private-ticket-fields-mount');
+    }
+    return document.getElementById('ee-members-only-event-fields-mount');
+  }
+
+  function handleMembersOnlyEventToggle() {
+    if (membersOnlyEventEnabled()) {
+      const guestEl = document.getElementById('ee-guest-programme-enabled');
+      if (guestEl && guestEl.checked) {
+        guestEl.checked = false;
+        setAttendanceMode('tickets');
+      }
+      const alumniEl = document.getElementById('ee-alumni-enabled');
+      if (alumniEl && alumniEl.checked) {
+        alumniEl.checked = false;
+        alumniEl.dispatchEvent(new Event('change'));
+      }
+      const addonEl = document.getElementById('ee-private-ticket-enabled');
+      if (addonEl) addonEl.checked = false;
+      loadMemberRosterStatus();
+    } else {
+      setMemberRosterStatusMessage('');
+    }
+    syncMembersOnlyEventMode();
+    updatePublishButton();
+  }
+
+  function bindMembersOnlyEventToggle() {
+    const el = document.getElementById('ee-members-only-event-enabled');
+    if (!el || el.dataset.boundMembersOnlyEvent) return;
+    el.dataset.boundMembersOnlyEvent = '1';
+    el.addEventListener('change', handleMembersOnlyEventToggle);
+  }
+
+  function syncMembersOnlyEventMode() {
+    const on = membersOnlyEventEnabled();
+    const addonOnly = !on && Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
+    const toggleWrap = document.getElementById('ee-members-only-event-toggle');
+    const publicWrap = document.getElementById('ee-public-tickets-wrap');
+    const membersWrap = document.getElementById('ee-members-only-event-wrap');
+    const privateAddon = document.getElementById('ee-private-ticket-addon');
+    const optionalExtras = document.getElementById('ee-panel-optional-extras');
+    const config = document.getElementById('ee-member-ticket-config');
+    const targetMount = memberTicketConfigMount();
+    const panelTitle = document.getElementById('ee-tickets-panel-title');
+    const panelLead = document.getElementById('ee-tickets-panel-lead');
+    const infoBox = membersWrap ? membersWrap.querySelector('.ee-members-only-event-how') : null;
+    const moeSummary = document.getElementById('ee-members-only-event-summary');
+    const addonMount = document.getElementById('ee-private-ticket-fields-mount');
+
+    if (toggleWrap) toggleWrap.classList.toggle('is-enabled', on);
+    if (toggleWrap) {
+      toggleWrap.hidden =
+        !isOpenBookingMode(attendanceMode) || attendanceMode === 'guest_programme';
+    }
+    if (publicWrap) publicWrap.hidden = on;
+    if (membersWrap) membersWrap.hidden = !on;
+    if (privateAddon) privateAddon.hidden = on;
+    if (optionalExtras && isOpenBookingMode(attendanceMode)) optionalExtras.hidden = on;
+    const guestAddon = document.getElementById('ee-guest-addon');
+    if (guestAddon) guestAddon.hidden = on;
+    const alumniAddon = document.getElementById('ee-alumni-addon');
+    if (alumniAddon) alumniAddon.hidden = on;
+    if (panelTitle) {
+      panelTitle.textContent =
+        on ? 'Member ticket' : attendanceMode === 'guest_programme' ? 'Member ticket types' : 'Public ticket types';
+    }
+    if (panelLead) panelLead.hidden = on;
+    if (infoBox) infoBox.hidden = !on;
+    if (moeSummary) moeSummary.hidden = !on;
+
+    if (config && targetMount && config.parentElement !== targetMount) {
+      targetMount.appendChild(config);
+    }
+    if (addonMount) addonMount.hidden = !addonOnly;
+
+    const rosterLink = document.getElementById('ee-members-only-roster-link');
+    const groupId = String(seriesMeta.organiserGroupId || '').trim();
+    if (rosterLink) {
+      rosterLink.hidden = !on || !groupId;
+      if (groupId) rosterLink.href = '/organiser/member-roster?id=' + encodeURIComponent(groupId);
+    }
+
+    if (on) {
+      setMembersOnlyTicketHint(
+        'Members on your list see this ticket when signed in with their membership email.',
+        'ok'
+      );
+    }
+
+    updateMembersOnlyEventSummary();
+    updateTierSummary();
+    syncTicketStepLabels();
+  }
+
+  function updateMembersOnlyEventSummary() {
+    const summary = document.getElementById('ee-members-only-event-summary');
+    if (!summary || !membersOnlyEventEnabled()) return;
+    const tier = collectMembersOnlyTicket([]);
+    if (!tier) {
+      summary.textContent = 'Member ticket · add a name below';
+      return;
+    }
+    const qtyRaw = tier.quantityAvailable;
+    const qtyLabel =
+      qtyRaw == null || qtyRaw === '' ? 'unlimited' : String(Math.max(0, Number(qtyRaw) || 0));
+    const priceNum = Number(tier.price);
+    const priceLabel = !Number.isFinite(priceNum) || priceNum <= 0 ? 'Free' : '£' + priceNum.toFixed(2);
+    summary.textContent =
+      (tier.name || 'Member ticket') + ' · ' + qtyLabel + ' available · ' + priceLabel;
+  }
+
+  function setMemberRosterStatusMessage(msg, tone) {
+    const el = document.getElementById('ee-members-only-roster-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('ee-hint-warn', tone === 'warn');
+    el.classList.toggle('ee-hint-ok', tone === 'ok');
+  }
+
+  async function loadMemberRosterStatus() {
+    const groupId = String(seriesMeta.organiserGroupId || '').trim();
+    if (!groupId) {
+      memberRosterActiveCount = 0;
+      setMemberRosterStatusMessage(
+        membersOnlyEventEnabled()
+          ? 'Link this event to an organiser page before publishing a members-only event.'
+          : '',
+        'warn'
+      );
+      return;
+    }
+    const { ok, data } = await api(
+      '/api/organiser/member-roster?organiserId=' +
+        encodeURIComponent(groupId) +
+        '&limit=1&offset=0'
+    );
+    if (!ok) {
+      memberRosterActiveCount = null;
+      if (membersOnlyEventEnabled()) {
+        setMemberRosterStatusMessage('Could not load your member list — refresh and try again.', 'warn');
+      }
+      return;
+    }
+    memberRosterActiveCount = Math.max(0, Number(data.totalActive) || 0);
+    if (membersOnlyEventEnabled()) {
+      if (memberRosterActiveCount > 0) {
+        setMemberRosterStatusMessage(
+          memberRosterActiveCount === 1
+            ? '1 active member on your list — ready to publish.'
+            : memberRosterActiveCount + ' active members on your list — ready to publish.',
+          'ok'
+        );
+      } else {
+        setMemberRosterStatusMessage(
+          'Add at least one person to your member list before you publish.',
+          'warn'
+        );
+      }
+    } else {
+      setMemberRosterStatusMessage('');
+    }
+  }
+
   function privateTicketEnabled() {
-    return Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
+    return membersOnlyEventEnabled() || Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
   }
 
   function setMembersOnlyTicketHint(msg, tone) {
@@ -945,16 +1159,15 @@
   }
 
   function syncPrivateTicketFields() {
-    const fields = document.getElementById('ee-private-ticket-fields');
     const enabled = privateTicketEnabled();
-    if (fields) fields.hidden = !enabled;
-    syncAddonCard('ee-private-ticket-addon', enabled);
-    if (enabled) {
+    syncAddonCard('ee-private-ticket-addon', enabled && !membersOnlyEventEnabled());
+    syncMembersOnlyEventMode();
+    if (enabled && !membersOnlyEventEnabled()) {
       setMembersOnlyTicketHint(
         'Members on your list see this ticket when signed in with their membership email.',
         'ok'
       );
-    } else {
+    } else if (!membersOnlyEventEnabled()) {
       setMembersOnlyTicketHint('');
     }
     updatePublishButton();
@@ -992,15 +1205,13 @@
   function prefillMembersOnlyTicket(tickets) {
     const tier = (tickets || []).find(isMembersOnlyTicket);
     const enabledEl = document.getElementById('ee-private-ticket-enabled');
-    const fields = document.getElementById('ee-private-ticket-fields');
     if (!tier) {
-      if (enabledEl) enabledEl.checked = false;
-      if (fields) fields.hidden = true;
-      setMembersOnlyTicketHint('');
+      if (enabledEl && !membersOnlyEventEnabled()) enabledEl.checked = false;
+      if (!membersOnlyEventEnabled()) setMembersOnlyTicketHint('');
+      syncPrivateTicketFields();
       return;
     }
-    if (enabledEl) enabledEl.checked = true;
-    if (fields) fields.hidden = false;
+    if (enabledEl && !membersOnlyEventEnabled()) enabledEl.checked = true;
     const nameEl = document.getElementById('ee-private-ticket-name');
     if (nameEl) nameEl.value = tier.name || 'Member ticket';
     const priceEl = document.getElementById('ee-private-ticket-price');
@@ -1028,8 +1239,14 @@
       (id) => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.addEventListener('input', updatePublishButton);
-        el.addEventListener('change', updatePublishButton);
+        el.addEventListener('input', function () {
+          updateMembersOnlyEventSummary();
+          updatePublishButton();
+        });
+        el.addEventListener('change', function () {
+          updateMembersOnlyEventSummary();
+          updatePublishButton();
+        });
       }
     );
     syncPrivateTicketFields();
@@ -1141,6 +1358,10 @@
   }
 
   function collectTiers() {
+    if (membersOnlyEventEnabled()) {
+      const privateTier = collectMembersOnlyTicket([]);
+      return privateTier ? [privateTier] : [];
+    }
     const rows = document.querySelectorAll('.ee-tier-row');
     const tiers = [];
     const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
@@ -1226,6 +1447,33 @@
     return TICKET_DRAFT_KEY + ':' + (eventIds.slice().sort().join(',') || 'none');
   }
 
+  function ticketsChangeSignature(tiers) {
+    const normalized = (tiers || []).map(function (t) {
+      return {
+        name: String(t.name || '').trim(),
+        price: String(t.price ?? ''),
+        quantityAvailable:
+          t.quantityAvailable == null || t.quantityAvailable === ''
+            ? null
+            : Number(t.quantityAvailable),
+        saleEnd: t.saleEnd || '',
+        saleStart: t.saleStart || '',
+        ticketType: String(t.ticketType || '').trim(),
+        visibility: String(t.visibility || 'public').trim(),
+        categoryExclusivity: Boolean(t.categoryExclusivity),
+      };
+    });
+    return JSON.stringify({ attendanceMode: attendanceMode, tiers: normalized });
+  }
+
+  function captureSavedTicketsSnapshot(tiers) {
+    savedTicketsSnapshot = ticketsChangeSignature(tiers || collectActiveTiers());
+  }
+
+  function ticketsChangedFromSnapshot(tiers) {
+    return ticketsChangeSignature(tiers) !== savedTicketsSnapshot;
+  }
+
   function saveTicketDraft() {
     try {
       const payload = {
@@ -1233,6 +1481,7 @@
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
         guestPassesDisabled: collectGuestPassesDisabled(),
+        membersOnlyEvent: membersOnlyEventEnabled(),
         tiers: collectActiveTiers(),
         vatTreatment: collectVatTreatment(),
         refund: collectRefundPayload(),
@@ -1274,11 +1523,17 @@
       if (Array.isArray(draft.tiers) && draft.tiers.length) prefillTiers(draft.tiers);
     } else if (Array.isArray(draft.tiers) && draft.tiers.length) {
       setAttendanceMode('tickets');
-      prefillTiers(draft.tiers);
+      if (draft.membersOnlyEvent) {
+        setMembersOnlyEventEnabled(true);
+        prefillMembersOnlyTicket(draft.tiers);
+      } else {
+        prefillTiers(draft.tiers);
+        prefillMembersOnlyTicket(draft.tiers);
+      }
     } else {
       return false;
     }
-    if (Array.isArray(draft.tiers)) prefillMembersOnlyTicket(draft.tiers);
+    if (!draft.membersOnlyEvent) syncMembersOnlyEventMode();
     if (draft.guestPassesDisabled != null) {
       const guestEl = document.getElementById('ee-guest-passes-disabled');
       if (guestEl) guestEl.checked = Boolean(draft.guestPassesDisabled);
@@ -1892,6 +2147,7 @@
     }
 
     await loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId);
+    await loadMemberRosterStatus();
     setAttendanceMode(attendanceMode);
 
     await loadPaymentSetupState();
@@ -1923,12 +2179,17 @@
       } else if (categoryExclusivityTicket) {
         prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
       } else {
-        if (memberTickets.length) {
-          prefillTiers(memberTickets);
+        if (ticketsAreMembersOnlyEvent(loaded.tickets)) {
+          prefillMembersOnlyTicket(loaded.tickets);
+          setMembersOnlyEventEnabled(true);
         } else {
-          addTierRow();
+          if (memberTickets.length) {
+            prefillTiers(memberTickets);
+          } else {
+            addTierRow();
+          }
+          prefillMembersOnlyTicket(loaded.tickets);
         }
-        prefillMembersOnlyTicket(loaded.tickets);
       }
     } else {
       addTierRow();
@@ -1953,7 +2214,11 @@
       updatePublishButton();
     });
     bindPrivateTicketFields();
+    bindMembersOnlyEventToggle();
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
+      if (document.getElementById('ee-guest-programme-enabled')?.checked) {
+        setMembersOnlyEventEnabled(false);
+      }
       if (attendanceMode === 'category_exclusivity') return;
       setAttendanceMode(resolveOpenBookingMode());
       updatePublishButton();
@@ -1981,7 +2246,9 @@
       if (defaultRadio) selectRefundCard(defaultRadio);
     }
     bindVatOptions();
+    syncMembersOnlyEventMode();
     updatePublishButton();
+    captureSavedTicketsSnapshot(collectActiveTiers());
 
     if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
       window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 0 });
@@ -2159,8 +2426,8 @@
       }
     }
 
-    // Confirm overwrite only after publish requirements are met, so "OK" means it will go live.
-    if (existingTicketsLoaded) {
+    // Confirm overwrite only when ticket setup changed since last save/load.
+    if (existingTicketsLoaded && ticketsChangedFromSnapshot(tiers)) {
       const scopeText =
         eventIds.length === 1
           ? 'this event only'
@@ -2299,6 +2566,8 @@
       return;
     }
 
+    captureSavedTicketsSnapshot(tiers);
+
     if (publish) {
       const publishedRows = Array.isArray(data.publishedEvents) ? data.publishedEvents : [];
       const allLive =
@@ -2418,6 +2687,8 @@
   if (saveDraftBtn) {
     saveDraftBtn.addEventListener('click', () => saveTickets(false));
   }
+
+  bindMembersOnlyEventToggle();
 
   init().catch(function (err) {
     console.error(err);
