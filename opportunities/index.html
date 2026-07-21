@@ -15,9 +15,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260717cities" />
-    <link rel="stylesheet" href="/css/networking-regions.css?v=20260717grid" />
-    <link rel="stylesheet" href="/css/hub-mobile.css?v=20260714cls" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260721hero" />
+    <link rel="stylesheet" href="/css/home-page.css?v=20260721cities" />
+    <link rel="stylesheet" href="/css/networking-regions.css?v=20260721locdir" />
+    <link rel="stylesheet" href="/css/hub-mobile.css?v=20260721hero" />
     <link rel="stylesheet" href="/css/hubert-widget.css?v=20260710" />
     <script src="/js/hub-seo-static-config.js?v=20260612"></script>
     <script src="/js/hub-seo-static.js?v=20260612" data-page="opportunities"></script>
@@ -32,12 +33,16 @@
     <section class="opp-browse-hero" aria-labelledby="opp-hero-heading">
       <div class="opp-hero-inner opp-hero-layout">
         <div class="opp-hero-copy">
-          <p class="opp-hero-badge">Opportunity discovery</p>
+          <p class="opp-hero-badge" id="opp-hero-badge">Opportunity discovery</p>
           <h1 id="opp-hero-heading">
             Find your next <span class="accent">business opportunity</span>
           </h1>
-          <p class="opp-hero-lede">
-            Franchises, side hustles, partnerships and more. Filter by type, investment, and location.
+          <p class="opp-hero-browse-link" id="opp-hero-browse-link">
+            Looking for networking events? <a href="/events/">Browse events</a>
+          </p>
+          <p class="opp-hero-lede" id="opp-hero-lede">
+            Franchises, side hustles, partnerships and more.<br />
+            Filter by type, investment, and location.
           </p>
           <p class="opp-hero-provider-cta">
             Provider?
@@ -88,10 +93,10 @@
         <div class="networking-region-intro-accent" aria-hidden="true"></div>
         <div class="networking-region-intro-inner">
           <div class="networking-region-intro-copy">
-            <p class="networking-region-kicker">Local business opportunities</p>
+            <p class="networking-region-kicker">Your local business community</p>
             <h2 id="networking-region-intro-heading">Business opportunities near you</h2>
             <p id="networking-region-intro-copy">Browse franchises, side hustles, and partnerships in your area.</p>
-            <p class="networking-region-organiser-link" id="networking-region-provider-link">
+            <p class="networking-region-organiser-link" id="networking-region-organiser-link" hidden>
               <a href="/organiser/opportunity-edit">Providers — list your opportunity →</a>
             </p>
           </div>
@@ -267,6 +272,7 @@
       </aside>
 
       <div class="opp-listings-area" id="results">
+        <h2 class="listings-header" id="opp-listings-heading" hidden>All opportunities</h2>
         <div class="opp-listings-toolbar">
           <p class="opp-results-info" id="opp-results-count" aria-live="polite">Loading listings…</p>
           <div class="opp-toolbar-actions">
@@ -375,35 +381,139 @@
       </div>
       </div>
 
-      <section class="networking-location-directory" id="networking-location-directory" aria-labelledby="networking-location-directory-heading">
-        <p class="networking-region-kicker">Explore by location</p>
-        <h2 id="networking-location-directory-heading">Business opportunities across the UK</h2>
-        <div class="networking-location-groups">
-          <div class="networking-location-links">
-            <a href="/opportunities/networking/belfast" data-region="belfast">Belfast</a>
-            <a href="/opportunities/networking/birmingham" data-region="birmingham">Birmingham</a>
-            <a href="/opportunities/networking/bournemouth" data-region="bournemouth">Bournemouth</a>
-            <a href="/opportunities/networking/brighton" data-region="brighton">Brighton</a>
-            <a href="/opportunities/networking/bristol" data-region="bristol">Bristol</a>
-            <a href="/opportunities/networking/cambridge" data-region="cambridge">Cambridge</a>
-            <a href="/opportunities/networking/cardiff" data-region="cardiff">Cardiff</a>
-            <a href="/opportunities/networking/central-london" data-region="central-london">Central London</a>
-            <a href="/opportunities/networking/chester" data-region="chester">Chester</a>
-            <a href="/opportunities/networking/east-london" data-region="east-london">East London</a>
-            <a href="/opportunities/networking/edinburgh" data-region="edinburgh">Edinburgh</a>
-            <a href="/opportunities/networking/glasgow" data-region="glasgow">Glasgow</a>
-            <a href="/opportunities/networking/leeds" data-region="leeds">Leeds</a>
-            <a href="/opportunities/networking/leicester" data-region="leicester">Leicester</a>
-            <a href="/opportunities/networking/liverpool" data-region="liverpool">Liverpool</a>
-            <a href="/opportunities/networking/manchester" data-region="manchester">Manchester</a>
-            <a href="/opportunities/networking/newcastle" data-region="newcastle">Newcastle</a>
-            <a href="/opportunities/networking/north-london" data-region="north-london">North London</a>
-            <a href="/opportunities/networking/nottingham" data-region="nottingham">Nottingham</a>
-            <a href="/opportunities/networking/oxford" data-region="oxford">Oxford</a>
-            <a href="/opportunities/networking/reading" data-region="reading">Reading</a>
-            <a href="/opportunities/networking/sheffield" data-region="sheffield">Sheffield</a>
-            <a href="/opportunities/networking/south-london" data-region="south-london">South London</a>
-            <a href="/opportunities/networking/west-london" data-region="west-london">West London</a>
+      <section class="home-locations networking-location-directory" id="networking-location-directory" aria-labelledby="networking-location-directory-heading">
+        <div class="home-flow-inner">
+          <header class="home-flow-head">
+            <p class="section-kicker">Explore by location</p>
+            <h2 class="section-title" id="networking-location-directory-heading">Business opportunities across the UK</h2>
+            <p class="home-flow-lede home-locations-lede">
+              Jump straight into opportunities by popular location
+            </p>
+          </header>
+          <div class="home-locations-scroller" tabindex="0" role="region" aria-label="Locations">
+            <div class="home-locations-track" role="list">
+              <a class="home-location-chip home-location-chip--online" href="/opportunities/?location=remote" data-region="online" role="listitem" aria-label="Browse remote and online opportunities">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">Remote</span>
+                  <span class="home-location-chip-name-line">/ Online</span>
+                </span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/belfast" data-region="belfast" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Belfast</span>
+              </a>
+              <a class="home-location-chip home-location-chip--compact-label" href="/opportunities/networking/birmingham" data-region="birmingham" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Birmingham</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/brighton" data-region="brighton" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Brighton</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/bournemouth" data-region="bournemouth" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">Bourne</span>
+                  <span class="home-location-chip-name-line">mouth</span>
+                </span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/bristol" data-region="bristol" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Bristol</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/cambridge" data-region="cambridge" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Cambridge</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/cardiff" data-region="cardiff" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Cardiff</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/central-london" data-region="central-london" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">Central</span>
+                  <span class="home-location-chip-name-line">London</span>
+                </span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/chester" data-region="chester" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Chester</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/east-london" data-region="east-london" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">East</span>
+                  <span class="home-location-chip-name-line">London</span>
+                </span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/edinburgh" data-region="edinburgh" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Edinburgh</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/glasgow" data-region="glasgow" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Glasgow</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/leeds" data-region="leeds" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Leeds</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/leicester" data-region="leicester" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Leicester</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/liverpool" data-region="liverpool" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Liverpool</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/manchester" data-region="manchester" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Manchester</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/newcastle" data-region="newcastle" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Newcastle</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/north-london" data-region="north-london" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">North</span>
+                  <span class="home-location-chip-name-line">London</span>
+                </span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/nottingham" data-region="nottingham" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Nottingham</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/oxford" data-region="oxford" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Oxford</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/reading" data-region="reading" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Reading</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/sheffield" data-region="sheffield" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Sheffield</span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/south-london" data-region="south-london" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">South</span>
+                  <span class="home-location-chip-name-line">London</span>
+                </span>
+              </a>
+              <a class="home-location-chip" href="/opportunities/networking/west-london" data-region="west-london" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">West</span>
+                  <span class="home-location-chip-name-line">London</span>
+                </span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -425,9 +535,10 @@
     <script src="/js/opportunity-investment-breakdown.js?v=20260710"></script>
     <script src="/js/opportunities-saves.js?v=20260714a"></script>
     <script src="/js/region-landmark-icons.js?v=20260714clarity"></script>
+    <script src="/js/networking-region-directory.js?v=20260721cities"></script>
     <script src="/js/networking-region-themes.js?v=20260716palette"></script>
-    <script src="/js/home-location-chips.js?v=20260716palette"></script>
-    <script src="/js/opportunities-regions.js?v=20260716palette"></script>
+    <script src="/js/home-location-chips.js?v=20260721cities"></script>
+    <script src="/js/opportunities-regions.js?v=20260721hero"></script>
     <script src="/js/postcode-geo.js?v=20260609b"></script>
     <script src="/js/opportunities-page.js?v=20260721cities"></script>
     <script src="/js/opportunities-map.js?v=20260611"></script>

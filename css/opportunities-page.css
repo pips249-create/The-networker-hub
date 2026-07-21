@@ -1577,7 +1577,7 @@
 }
 
 .opp-browse-page .opp-browse-hero {
-  background: linear-gradient(135deg, var(--opp-navy) 0%, var(--opp-navy-mid) 70%, #1c3050 100%);
+  background: var(--opp-navy);
   color: #fff;
   padding: 32px 24px 36px;
   position: relative;
@@ -1587,25 +1587,15 @@
 .opp-browse-page .opp-browse-hero::before {
   content: '';
   position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(201, 150, 31, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 40%, rgba(201, 150, 31, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(201, 150, 31, 0.08), transparent 50%);
   pointer-events: none;
 }
 
 .opp-browse-page .opp-browse-hero::after {
-  content: '';
-  position: absolute;
-  bottom: -60px;
-  left: 12%;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, rgba(201, 150, 31, 0.07) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
+  display: none;
 }
 
 .opp-browse-page .opp-hero-inner {
@@ -1628,9 +1618,9 @@
 .opp-browse-page .opp-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--opp-gold-dim);
-  border: 1px solid var(--opp-gold-border);
+  gap: 8px;
+  background: transparent;
+  border: 1px solid rgba(232, 184, 75, 0.45);
   color: var(--opp-gold-light);
   font-size: 11px;
   font-weight: 700;
@@ -1678,6 +1668,26 @@
   color: rgba(255, 255, 255, 0.85);
   max-width: 34em;
   margin: 0;
+}
+
+.opp-browse-page .opp-hero-browse-link {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.45;
+}
+
+.opp-browse-page .opp-hero-browse-link a {
+  color: var(--opp-gold-light);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(232, 184, 75, 0.55);
+  text-underline-offset: 2px;
+}
+
+.opp-browse-page .opp-hero-browse-link a:hover {
+  color: #f5d88a;
+  text-decoration-color: rgba(245, 216, 138, 0.9);
 }
 
 .opp-browse-page .opp-hero-provider-cta,
@@ -4403,8 +4413,62 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   color: #fff;
 }
 
-/* City directory — flat footer inside browse shell (not a nested card) */
-.opp-browse-page .networking-location-directory {
+/* City directory chip scroller — base styles in networking-regions.css */
+.opp-browse-page .listings-header {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.15rem;
+  margin: 0 0 10px;
+  color: var(--charcoal, #1c2040);
+}
+
+/* City landing hero — match events networking pages (lavender accent) */
+.opportunities-page.networking-region-page {
+  --ev-navy: #1a1a2e;
+  --ev-lavender: #d4b8e8;
+  --ev-lavender-dim: rgba(194, 153, 209, 0.14);
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero {
+  background: var(--ev-navy);
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero::before {
+  inset: 0;
+  top: auto;
+  right: auto;
+  width: auto;
+  height: auto;
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 40%, var(--ev-lavender-dim), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(195, 151, 195, 0.08), transparent 50%);
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero::after {
+  display: none;
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero .opp-hero-badge {
+  background: transparent;
+  border-color: rgba(212, 184, 232, 0.45);
+  color: var(--ev-lavender);
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero .opp-hero-badge::before {
+  background: var(--ev-lavender);
+  box-shadow: 0 0 8px var(--ev-lavender);
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero h1 .accent {
+  color: var(--ev-lavender);
+}
+
+.opportunities-page.networking-region-page .opp-browse-hero .opp-hero-provider-link,
+.opportunities-page.networking-region-page .opp-browse-hero .opp-hero-enquiry-cta a {
+  color: var(--ev-lavender);
+}
+
+/* Legacy flat link grid fallback (if present without chip scroller) */
+.opp-browse-page .networking-location-directory:not(.home-locations) {
   --region-accent: var(--opp-gold);
   margin: 36px 0 0;
   padding: 28px 0 0;
@@ -4415,15 +4479,15 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   background: transparent;
 }
 
-.opp-browse-page .networking-location-directory h2 {
+.opp-browse-page .networking-location-directory:not(.home-locations) h2 {
   color: var(--opp-navy);
 }
 
-.opp-browse-page .networking-location-directory .networking-region-kicker {
+.opp-browse-page .networking-location-directory:not(.home-locations) .networking-region-kicker {
   color: var(--opp-gold);
 }
 
-.opp-browse-page .networking-location-directory .networking-region-kicker::before {
+.opp-browse-page .networking-location-directory:not(.home-locations) .networking-region-kicker::before {
   background: var(--opp-gold);
   box-shadow: 0 0 0 3px var(--opp-gold-dim);
 }

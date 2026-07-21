@@ -25,8 +25,9 @@
     organisers: {
       badge: 'Organiser directory',
       title:
-        'Find your next <span class="accent">event host</span>',
-      sub: 'Browse groups, exhibition hosts, and conference organisers, then see their events.',
+        'Find your next <span class="accent">organisers</span>',
+      sub:
+        'Browse groups, exhibition hosts, and conference organisers.<br>Filter by city, format, guest visits, and rating.',
       heading: 'All organisers',
       searchPlaceholder: 'Search organisers, descriptions, formats…',
       searchLabel: 'Search organisers',
@@ -161,14 +162,14 @@
         if (accent) accent.textContent = regional.name + ' ' + year;
       }
       if (heroSub) {
-        heroSub.textContent =
+        heroSub.innerHTML =
           mode === 'organisers'
-            ? 'Discover the organiser communities running business networking across ' +
+            ? 'Discover organiser communities and networking groups across ' +
               regional.name +
-              '.'
+              '.<br>Filter by city, format, guest visits, and rating.'
             : 'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
               regional.name +
-              '.';
+              '.<br>Filter by online/in person, date, location and price.';
       }
       if (listingsHeader) {
         listingsHeader.textContent =

@@ -1,35 +1,10 @@
 /**
  * City landing pages for business opportunities — /opportunities/networking/:region
- * (rewrites to /opportunities/?city=:region). Mirrors js/networking-regions.js slugs.
+ * (rewrites to /opportunities/?city=:region). Mirrors js/networking-regions.js.
  * City Partner ads reuse the same CMS slots as event city pages (networking_city_partner_*).
  */
 (function () {
-  var REGIONS = {
-    'central-london': { name: 'Central London' },
-    'north-london': { name: 'North London' },
-    'south-london': { name: 'South London' },
-    'east-london': { name: 'East London' },
-    'west-london': { name: 'West London' },
-    manchester: { name: 'Manchester' },
-    birmingham: { name: 'Birmingham' },
-    glasgow: { name: 'Glasgow' },
-    edinburgh: { name: 'Edinburgh' },
-    leeds: { name: 'Leeds' },
-    liverpool: { name: 'Liverpool' },
-    newcastle: { name: 'Newcastle' },
-    bristol: { name: 'Bristol' },
-    sheffield: { name: 'Sheffield' },
-    nottingham: { name: 'Nottingham' },
-    cardiff: { name: 'Cardiff' },
-    brighton: { name: 'Brighton' },
-    cambridge: { name: 'Cambridge' },
-    oxford: { name: 'Oxford' },
-    chester: { name: 'Chester' },
-    belfast: { name: 'Belfast' },
-    reading: { name: 'Reading' },
-    leicester: { name: 'Leicester' },
-    bournemouth: { name: 'Bournemouth' },
-  };
+  var REGIONS = window.HUB_NETWORKING_REGIONS || {};
 
   var params = new URLSearchParams(window.location.search);
   var cityParam = String(params.get('city') || '').trim().toLowerCase();
@@ -59,12 +34,10 @@
     accent: theme.accent || '',
   };
 
+  document.body.classList.add('networking-region-page');
   document.body.classList.add('opp-regional-landing');
   document.body.setAttribute('data-opp-region', slug);
   document.body.setAttribute('data-region', slug);
-  if (theme.accentHero || theme.accent) {
-    document.body.style.setProperty('--opp-region-accent', theme.accentHero || theme.accent);
-  }
 
   function setText(id, text) {
     var el = document.getElementById(id);
@@ -75,14 +48,24 @@
   var heading = document.getElementById('opp-hero-heading');
   if (heading) {
     heading.innerHTML =
-      'Business opportunities in <span class="accent">' + region.name + ' ' + year + '</span>';
+      'The best business opportunities in <span class="accent"></span>';
+    var accent = heading.querySelector('.accent');
+    if (accent) {
+      accent.textContent = region.name + ' ' + year;
+      if (theme.accentHero) accent.style.color = theme.accentHero;
+    }
   }
-  setText(
-    'opp-hero-lede',
-    'Franchises, side hustles, partnerships and more across ' +
+  var lede = document.getElementById('opp-hero-lede');
+  if (lede) {
+    lede.innerHTML =
+      'Franchises, side hustles, partnerships and more across ' +
       region.name +
-      '. Browse free and enquire directly with providers.'
-  );
+      '.<br>Browse free and enquire directly with providers.';
+  }
+  setText('opp-listings-heading', 'Business opportunities in ' + region.name);
+
+  var listingsHeading = document.getElementById('opp-listings-heading');
+  if (listingsHeading) listingsHeading.hidden = false;
 
   var intro = document.getElementById('networking-region-intro');
   if (intro) {
@@ -119,13 +102,13 @@
   }
 
   var currentLink = document.querySelector(
-    '.networking-location-links a[data-region="' + slug + '"]'
+    '.home-location-chip[data-region="' + slug + '"], .networking-location-links a[data-region="' + slug + '"]'
   );
   if (currentLink) {
     currentLink.hidden = true;
   }
 
-  var providerLink = document.getElementById('networking-region-provider-link');
+  var providerLink = document.getElementById('networking-region-organiser-link');
   if (providerLink) providerLink.hidden = false;
 
   var partnerShell = document.getElementById('networking-region-city-partner');

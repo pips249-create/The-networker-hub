@@ -47,12 +47,13 @@
       if (theme.accentHero) accent.style.color = theme.accentHero;
     }
   }
-  setText(
-    'events-hero-lede',
-    'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
+  var lede = document.getElementById('events-hero-lede');
+  if (lede) {
+    lede.innerHTML =
+      'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
       region.name +
-      '.'
-  );
+      '.<br>Filter by online/in person, date, location and price.';
+  }
   setText('all-heading', 'Upcoming networking events in ' + region.name);
 
   var intro = document.getElementById('networking-region-intro');

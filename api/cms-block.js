@@ -32,7 +32,6 @@ const HERO_SPONSOR_SLOTS = new Set([
 const DETAIL_PAGE_SLOTS = new Set([
   'event_page_sidebar_ad',
   'organiser_page_sidebar_ad',
-  'event_page_banner_ad',
   'opportunity_page_sidebar_ad',
 ]);
 
@@ -45,7 +44,6 @@ const DETAIL_FALLBACK_CHAINS = {
   ],
   event_page_sidebar_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
   organiser_page_sidebar_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
-  event_page_banner_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
 };
 
 const DEFAULT_DETAIL_FALLBACK_CHAIN = ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT];

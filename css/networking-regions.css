@@ -1,9 +1,9 @@
 .networking-region-intro,
-.networking-location-directory {
+.networking-location-directory:not(.home-locations) {
   box-shadow: 0 16px 40px rgba(31, 28, 70, 0.07);
 }
 
-.networking-location-directory {
+.networking-location-directory:not(.home-locations) {
   border-radius: 22px;
 }
 
@@ -80,7 +80,7 @@
   line-height: 1.2;
 }
 
-.networking-location-directory h2 {
+.networking-location-directory:not(.home-locations) h2 {
   margin: 0;
   color: #1c2040;
   font-family: "DM Serif Display", Georgia, serif;
@@ -273,7 +273,7 @@
   object-position: right bottom;
 }
 
-.networking-location-directory {
+.networking-location-directory:not(.home-locations) {
   border: 1px solid rgba(50, 43, 120, 0.12);
   background: #fff;
   margin: 40px 0 52px;
@@ -395,12 +395,57 @@
   height: 24px;
 }
 
-body.opp-regional-landing .networking-region-intro {
-  margin: 0 0 20px;
+body.opp-regional-landing .networking-region-intro,
+body.networking-region-page .networking-region-intro {
+  margin: 16px 0 4px;
 }
 
-body.opp-regional-landing .opp-hero-copy h1 .accent {
-  color: var(--opp-region-accent, inherit);
+/* Chip scroller directory — shared by events + opportunities browse pages */
+.home-locations.networking-location-directory {
+  margin: 40px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.home-locations.networking-location-directory .home-flow-inner {
+  padding: 0;
+}
+
+.home-locations.networking-location-directory .section-kicker {
+  display: inline-block;
+  color: var(--charcoal-soft, #625f73);
+  background: var(--gold-light, #f5efe6);
+  border: 1px solid rgba(184, 149, 106, 0.2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.home-locations.networking-location-directory .section-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  text-align: left;
+  margin: 0 0 10px;
+  font-size: clamp(1.65rem, 3.5vw, 2.15rem);
+  letter-spacing: -0.02em;
+  color: var(--charcoal, #1c2040);
+}
+
+.home-locations.networking-location-directory .home-locations-scroller::after {
+  background: linear-gradient(90deg, transparent, #fff);
+}
+
+.home-locations.networking-location-directory.is-regional-landing .section-kicker {
+  color: #625f73;
+  background: rgba(98, 95, 115, 0.08);
+  border-color: rgba(98, 95, 115, 0.15);
 }
 
 .networking-location-links a:hover,
@@ -458,7 +503,7 @@ body.opp-regional-landing .opp-hero-copy h1 .accent {
     justify-self: end;
   }
 
-  .networking-location-directory {
+  .networking-location-directory:not(.home-locations) {
     padding: 25px 20px;
   }
 

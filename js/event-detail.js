@@ -4500,22 +4500,12 @@
   async function loadEventPageAds() {
     if (!window.CmsAdBlocks) return;
     const sidebarEl = document.getElementById('event-page-sidebar-ad');
-    const bannerEl = document.getElementById('event-page-banner-ad');
     try {
       if (sidebarEl) {
         await window.CmsAdBlocks.loadPageCarouselAds(sidebarEl, {
           slot: 'event_page_carousel_ads',
           placeholderSubject: 'Events Mini Sponsors enquiry',
         });
-      }
-      if (bannerEl && window.CmsAdBlocks.loadCmsAd) {
-        const block = await window.CmsAdBlocks.loadCmsAd('event_page_banner_ad');
-        if (block && block.active !== false) {
-          window.CmsAdBlocks.renderBannerAd(bannerEl, block);
-        } else {
-          bannerEl.hidden = true;
-          bannerEl.innerHTML = '';
-        }
       }
     } catch {
       /* non-fatal */

@@ -412,6 +412,29 @@ body.nav-menu-open {
     justify-content: center;
   }
 
+  .opp-browse-page .opp-browse-hero {
+    padding: 20px 16px 28px;
+  }
+
+  .opp-browse-page .opp-browse-hero h1 {
+    font-size: clamp(1.85rem, 8vw, 2.35rem);
+  }
+
+  .opp-browse-page .opp-hero-inner {
+    text-align: center;
+  }
+
+  .opp-browse-page .opp-hero-lede {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .opp-browse-page .opp-hero-browse-link,
+  .opp-browse-page .opp-hero-provider-cta,
+  .opp-browse-page .opp-hero-enquiry-cta {
+    text-align: center;
+  }
+
   .events-page .shell {
     padding-left: 16px;
     padding-right: 16px;
