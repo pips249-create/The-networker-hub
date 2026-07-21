@@ -72,14 +72,20 @@
 
   function isEventsBrowsePage() {
     var p = String(global.location.pathname || '');
-    return /\/events\/?(index\.html)?$/i.test(p) || p.endsWith('/events/');
+    return (
+      /\/events\/?(index\.html)?$/i.test(p) ||
+      p.endsWith('/events/') ||
+      /^\/networking\/[^/]+\/?$/i.test(p)
+    );
   }
 
   function saveBrowseReturn() {
     if (!isEventsBrowsePage()) return;
-    var hash = global.location.hash || '#events';
     try {
-      global.sessionStorage.setItem(BROWSE_RETURN_KEY, '/events/' + hash);
+      global.sessionStorage.setItem(
+        BROWSE_RETURN_KEY,
+        global.location.pathname + global.location.search
+      );
     } catch (e) {
       /* ignore */
     }
@@ -106,7 +112,7 @@
     var stored = getBrowseReturnPath();
     if (stored) {
       linkEl.href = path(stored);
-      linkEl.textContent = '← Back to browse events';
+      linkEl.textContent = '← Back to browse';
       return;
     }
     linkEl.href = fallbackHref || '/organiser/#events-list';

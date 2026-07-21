@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721a">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721b">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
 <script src="js/hub-seo-static-config.js?v=20260714a"></script>
@@ -30,12 +30,18 @@
         <p class="fo-hero-kicker">For organisers</p>
         <h1 id="fo-hero-heading">Find your next <span class="fo-hero-accent" id="fo-hero-word">attendees</span></h1>
         <p class="fo-hero-lede">
-          Ticketing for UK networking groups. Free to list — you keep the full ticket price.
+          Ticketing and discovery for UK networking groups — from weekly breakfasts to annual conferences. One workspace for events, opportunities, and attendees.
+        </p>
+        <p class="fo-hero-tools-teaser">
+          Including <a href="#networking-tools">guest visits, visit tracking, and member-only tickets</a> — tools generic platforms don&rsquo;t offer.
         </p>
         <div class="fo-hero-actions">
           <a class="btn btn-primary" href="/guides/list-an-event">List your first event</a>
           <a class="btn btn-secondary" href="/login?next=/organiser/">Open organiser dashboard</a>
         </div>
+        <p class="fo-hero-note">
+          Free to list. You receive the full ticket price. <a href="/faq">Organiser FAQs →</a>
+        </p>
       </div>
       <div class="fo-hero-visual fo-reveal-child">
         <div class="fo-dash-mock" id="fo-dash-mock" aria-label="Interactive preview of the organiser workspace">
@@ -202,7 +208,61 @@
             </div>
           </div>
         </div>
+        <p class="fo-dash-mock-hint">Click a section to preview the workspace</p>
       </div>
+    </div>
+  </section>
+
+  <section class="fo-section fo-reveal" id="workspace" aria-labelledby="fo-workspace-heading">
+    <div class="fo-flow-inner">
+      <header class="fo-section-head fo-reveal-child">
+        <h2 id="fo-workspace-heading">Everything in one workspace</h2>
+        <p class="fo-section-lede">Events, tickets, attendees, opportunities, team access, and payouts — all from your organiser dashboard.</p>
+      </header>
+      <ul class="fo-feature-grid fo-feature-grid--3">
+        <li class="fo-reveal-child">
+          <article class="fo-feature-card">
+            <div class="fo-feature-icon" aria-hidden="true">📅</div>
+            <h3>Event listings &amp; series</h3>
+            <p>Publish one-off or recurring events. Draft, duplicate, and manage tickets in minutes.</p>
+          </article>
+        </li>
+        <li class="fo-reveal-child">
+          <article class="fo-feature-card">
+            <div class="fo-feature-icon" aria-hidden="true">💳</div>
+            <h3>Stripe Connect payouts</h3>
+            <p>Keep the full ticket price. Request payouts per event after a 7-day settlement (<a href="/help/organiser-payouts">guide</a>).</p>
+          </article>
+        </li>
+        <li class="fo-reveal-child">
+          <article class="fo-feature-card">
+            <div class="fo-feature-icon" aria-hidden="true">💼</div>
+            <h3>Business opportunities</h3>
+            <p>List franchises and partnerships. Enquiries land in the same workspace as your events.</p>
+          </article>
+        </li>
+        <li class="fo-reveal-child">
+          <article class="fo-feature-card">
+            <div class="fo-feature-icon" aria-hidden="true">👤</div>
+            <h3>Organiser pages &amp; team</h3>
+            <p>Your group&rsquo;s profile, reviews, and events. Invite team editors without sharing login.</p>
+          </article>
+        </li>
+        <li class="fo-reveal-child">
+          <article class="fo-feature-card">
+            <div class="fo-feature-icon" aria-hidden="true">⭐</div>
+            <h3>Reviews &amp; ranking badges</h3>
+            <p>Attendee reviews, ranking badges, and LinkedIn-ready images from the Promote tab.</p>
+          </article>
+        </li>
+        <li class="fo-reveal-child">
+          <article class="fo-feature-card">
+            <div class="fo-feature-icon" aria-hidden="true">🔔</div>
+            <h3>Notifications &amp; featured boosts</h3>
+            <p>Alerts for bookings and enquiries. Premium Spotlight when you need more visibility.</p>
+          </article>
+        </li>
+      </ul>
     </div>
   </section>
 
@@ -210,10 +270,13 @@
     <div class="fo-flow-inner">
       <header class="fo-section-head fo-reveal-child">
         <h2 id="fo-discovery-heading">Get discovered</h2>
+        <p class="fo-section-lede">Members find you through the events directory, organiser browse, and opportunities hub.</p>
       </header>
       <div class="fo-showcase fo-reveal-child">
         <div class="fo-showcase-copy">
-          <a class="fo-showcase-link" href="/events/">Events directory →</a>
+          <h3>Events &amp; organiser directory</h3>
+          <p>Search by location, date, and type. List and map views, save favourites, and Premium Spotlight for featured listings.</p>
+          <a class="fo-showcase-link" href="/events/">Preview events directory →</a>
         </div>
         <div class="fo-showcase-visual" aria-hidden="true">
           <div class="fo-browse-mock">
@@ -257,7 +320,9 @@
       </div>
       <div class="fo-showcase fo-showcase--reverse fo-reveal-child">
         <div class="fo-showcase-copy">
-          <a class="fo-showcase-link" href="/opportunities/">Opportunities browse →</a>
+          <h3>Business opportunities</h3>
+          <p>List franchises, partnerships, and more. Enquiries from members route straight to your dashboard.</p>
+          <a class="fo-showcase-link" href="/opportunities/">Preview opportunities browse →</a>
         </div>
         <div class="fo-showcase-visual" aria-hidden="true">
           <div class="fo-browse-mock">
@@ -301,21 +366,58 @@
     </div>
   </section>
 
-  <section class="fo-section fo-section--alt fo-reveal" id="networking-tools" aria-labelledby="fo-tools-heading">
+  <section class="fo-section fo-reveal" id="networking-tools" aria-labelledby="fo-tools-heading">
     <div class="fo-flow-inner">
       <header class="fo-section-head fo-reveal-child">
         <h2 id="fo-tools-heading">Built for networking groups</h2>
+        <p class="fo-section-lede">Six features for how UK networking groups actually grow — not just dates and payments.</p>
       </header>
-      <ul class="fo-tools-compact fo-reveal-child">
-        <li>Guest visit programme</li>
-        <li>Visit tracking</li>
-        <li>Category Exclusivity</li>
-        <li>Previous Attendees</li>
-        <li>Membership register</li>
-        <li>Name badges &amp; check-in</li>
-      </ul>
+      <div class="fo-usp-grid fo-reveal-child">
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🎫</span>
+            <h3>Guest visit programme</h3>
+          </div>
+          <p class="fo-usp-lede">Complimentary trial visits for newcomers before paid member tickets.</p>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">📊</span>
+            <h3>Visit tracking</h3>
+          </div>
+          <p class="fo-usp-lede">1st visit vs returning on every attendee list, with filter and CSV export.</p>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🪑</span>
+            <h3>Category Exclusivity</h3>
+          </div>
+          <p class="fo-usp-lede">Approve applicants before they pay — ideal when seat mix matters.</p>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🎓</span>
+            <h3>Previous Attendees</h3>
+          </div>
+          <p class="fo-usp-lede">Invite-only rates for past attendees on repeat conferences and annual events.</p>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">📋</span>
+            <h3>Membership register</h3>
+          </div>
+          <p class="fo-usp-lede">Member-only tickets without access codes or manual check-in lists.</p>
+        </article>
+        <article class="fo-usp-card">
+          <div class="fo-usp-card-head">
+            <span class="fo-usp-icon" aria-hidden="true">🏷️</span>
+            <h3>Name badges &amp; check-in</h3>
+          </div>
+          <p class="fo-usp-lede">Printable Avery badges from your attendee list, using Hub profile details.</p>
+        </article>
+      </div>
       <div class="fo-pricing-callout fo-reveal-child">
-        <p><a href="/help/pricing-fees">Pricing &amp; fees →</a> · <a href="/faq">Organiser FAQs →</a></p>
+        <p><strong>Free to list.</strong> No monthly subscription. You receive the full ticket price; attendees pay one booking fee at checkout. <a href="/help/pricing-fees">Pricing &amp; fees →</a> · <a href="/faq">Organiser FAQs →</a></p>
       </div>
     </div>
   </section>
@@ -324,6 +426,7 @@
     <div class="fo-flow-inner">
       <div class="fo-cta-panel fo-reveal-child">
         <h2 id="fo-cta-heading">Ready to get started?</h2>
+        <p>Claim your organiser page and publish your first event — weekly group or annual conference.</p>
         <div class="fo-cta-actions">
           <div class="fo-cta-split">
             <a class="btn btn-primary fo-cta-primary" href="/guides/list-an-event">List your group</a>

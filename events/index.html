@@ -41,15 +41,11 @@
       <p class="events-hero-lede" id="events-hero-lede">
         Meetings, exhibitions, workshops, and more — filter by type, date, and location.
       </p>
-      <p class="events-hero-organiser-cta events-list-cta-event-only">
+      <p class="events-hero-organiser-cta">
         Organiser?
         <button type="button" class="events-hero-organiser-link" data-hub-action="add-event">
           List an event
-        </button>
-      </p>
-      <p class="events-hero-organiser-cta events-list-cta-organiser-only">
-        Running a group?
-        <button type="button" class="events-hero-organiser-link" data-hub-action="add-group">
+        </button><span class="events-hero-organiser-sep" aria-hidden="true"> · </span><button type="button" class="events-hero-organiser-link" data-hub-action="add-group">
           Add an organiser page
         </button>
       </p>
@@ -442,9 +438,8 @@
         <h2 class="listings-header" id="all-heading">All listings</h2>
         <div class="event-listings" id="event-listings"></div>
         <p class="events-organiser-footnote">
-          <span class="events-organiser-footnote-label events-organiser-footnote-label--events">Organiser?</span>
-          <span class="events-organiser-footnote-label events-organiser-footnote-label--organisers">Running a group?</span>
-          <button type="button" class="events-organiser-footnote-link events-organiser-footnote-link--events" data-hub-action="add-event">List an event</button><button type="button" class="events-organiser-footnote-link events-organiser-footnote-link--organisers" data-hub-action="add-group">Add an organiser page</button>
+          Organiser?
+          <button type="button" class="events-organiser-footnote-link" data-hub-action="add-event">List an event</button><span class="events-organiser-footnote-sep" aria-hidden="true"> · </span><button type="button" class="events-organiser-footnote-link" data-hub-action="add-group">Add an organiser page</button>
         </p>
       </section>
     </div>
