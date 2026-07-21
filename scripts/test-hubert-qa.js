@@ -58,7 +58,7 @@ const MEMBER_QUESTIONS = [
     expect: /Ticket types.*Category Exclusivity.*optional add-on/is,
   },
   { q: 'My event photo is cropped badly on the listing — how do I fix it?', expect: /drag.*preview|recentre|1200/i },
-  { q: 'How do I print name badges for my event?', expect: /Attendees.*badge|Avery 7160/i },
+  { q: 'How do I print name badges for my event?', expect: /Attendees.*badge|standard A4 sticker|63\.5/i },
   { q: 'Can I save business opportunities to review later?', expect: /My Hub|Saved Opportunities/i },
   { q: 'How do I get alerts when new opportunities match my search?', expect: /saved search|email alert/i },
   { q: 'How do I add more than one date to a recurring event series?', expect: /calendar|selected dates|series/i },

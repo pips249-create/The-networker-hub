@@ -148,7 +148,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How do organisers download attendee lists?',
     answer:
-      'Sign in to /organiser/, open Events → Attendees. See each person\'s visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest\'s name, company, and job title from their Hub account when set.',
+      'Sign in to /organiser/, open Events → Attendees. See each person\'s visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, standard A4 sticker sheets) from the same screen — badges use each guest\'s name, company, and job title from their Hub account when set.',
     category: 'organisers',
     icon: '📊',
   },

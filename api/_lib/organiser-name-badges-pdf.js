@@ -1,5 +1,5 @@
 /**
- * Avery-compatible name badge PDFs (UK A4 sticker sheets).
+ * Printable name badge PDFs for UK A4 sticker sheets.
  * Populates name, company, and job title / industry when available.
  */
 const { buildPositionedPdf } = require('./simple-pdf');
@@ -8,7 +8,7 @@ const MM = 2.834645669;
 const PAGE_W = 210 * MM;
 const PAGE_H = 297 * MM;
 
-/** Avery L7160 — standard address labels (63.5 × 38.1 mm, 21 per sheet). */
+/** Standard address labels (63.5 × 38.1 mm, 21 per sheet). */
 const LABEL_L7160 = {
   id: 'l7160',
   code: 'L7160',
@@ -25,7 +25,7 @@ const LABEL_L7160 = {
   textLimits: { name: 26, company: 30, detail: 32, event: 36, guestOf: 28 },
 };
 
-/** Avery L7163 — large address labels (99.1 × 38.1 mm, 14 per sheet, UK). */
+/** Large address labels (99.1 × 38.1 mm, 14 per sheet, UK). */
 const LABEL_L7163 = {
   id: 'l7163',
   code: 'L7163',

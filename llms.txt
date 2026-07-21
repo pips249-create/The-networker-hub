@@ -103,7 +103,7 @@ Public browse only shows events that are Published (not Draft), Approved, and li
 Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.
 
 ## How do organisers download attendee lists?
-Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.
+Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, standard A4 sticker sheets) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.
 
 ## What is the guest visit programme?
 An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available.

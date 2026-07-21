@@ -96,7 +96,7 @@
     'fo-name-badges': {
       title: 'Name badges & mobile check-in',
       body:
-        'Export Avery name-badge PDFs from your attendee list and check people in on the day from your phone — company and job title from account settings can print on badges.',
+        'Export printable name-badge PDFs from your attendee list and check people in on the day from your phone — company and job title from account settings can print on badges.',
     },
     'fo-visit-tracking': {
       title: 'Visit tracking (1st vs returning)',

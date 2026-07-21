@@ -2,7 +2,7 @@
 
 ## What we are building
 
-Per **organiser page** (group profile), organisers maintain a **Membership** (name, email, optional membership expiry). Members sign in with that email to unlock **Members only** ticket tiers at checkout. The hub enforces access server-side, flags expiring memberships for the organiser, and surfaces five practical reports (membership health, booked vs not booked for an event, new vs returning at an event, members who missed recent meetings, memberships expiring soon). Confirmed bookings flow straight into the attendee register and **Avery label PDF** export. Organisers renew members off-platform and update expiry dates on the membership.
+Per **organiser page** (group profile), organisers maintain a **Membership** (name, email, optional membership expiry). Members sign in with that email to unlock **Members only** ticket tiers at checkout. The hub enforces access server-side, flags expiring memberships for the organiser, and surfaces five practical reports (membership health, booked vs not booked for an event, new vs returning at an event, members who missed recent meetings, memberships expiring soon). Confirmed bookings flow straight into the attendee register and **name badge PDF** export. Organisers renew members off-platform and update expiry dates on the membership.
 
 ## In scope
 

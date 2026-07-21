@@ -47,7 +47,7 @@
     },
     events: {
       title: 'My events',
-      text: 'Create and manage events, then switch tabs for attendees, reviews, and revenue — including CSV export, Avery name badge PDFs, and Stripe payouts.'
+      text: 'Create and manage events, then switch tabs for attendees, reviews, and revenue — including CSV export, printable name badge PDFs, and Stripe payouts.'
     },
     memberships: {
       title: 'Memberships',
@@ -72,9 +72,9 @@
     },
     attendees: {
       title: 'Attendees & name badges',
-      lead: 'Filter your guest list, export CSVs, and print Avery sticker sheets the night before check-in.',
+      lead: 'Filter your guest list, export CSVs, and print name badges on A4 sticker sheets the night before check-in.',
       detail:
-        'Filter by first visit or returning members, export attendee CSVs, and print Avery name badges (L7160 or L7163) the night before check-in.'
+        'Filter by first visit or returning members, export attendee CSVs, and print name badges on standard or large sticker sheets the night before check-in.'
     },
     reviews: {
       title: 'Reviews',

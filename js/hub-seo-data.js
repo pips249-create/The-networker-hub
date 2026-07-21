@@ -123,7 +123,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How do organisers download attendee lists?",
-      "answer": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.",
+      "answer": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, standard A4 sticker sheets) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.",
       "category": "organisers",
       "icon": "📊"
     },
@@ -498,7 +498,7 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers download attendee lists?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, Avery 7160) from the same screen — badges use each guest's name, company, and job title from their Hub account when set."
+                "text": "Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, standard A4 sticker sheets) from the same screen — badges use each guest's name, company, and job title from their Hub account when set."
               }
             },
             {
@@ -1703,7 +1703,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 4,
               "name": "Print name badges",
-              "text": "From the same screen, export printable name badges (PDF, Avery 7160). Badges use each guest name, company, and job title from their Hub account when set.",
+              "text": "From the same screen, export printable name badges (PDF for standard A4 sticker sheets). Badges use each guest name, company, and job title from their Hub account when set.",
               "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#name-badges"
             },
             {

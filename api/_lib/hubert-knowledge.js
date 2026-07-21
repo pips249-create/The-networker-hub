@@ -68,7 +68,7 @@ const KNOWLEDGE_SECTIONS = [
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe onboarding required for payouts. ' +
       'Listing events on the hub is part of organiser onboarding — email hello@thenetworkerhub.com with your group name, format, and location for setup help. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkerhub.com with the event title. ' +
-      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF, Avery L7160 or L7163) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
+      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
       'PAYOUTS: With Stripe Connect, you receive the full ticket price in your connected account when attendees pay. Legacy manual payouts (if Connect is off) pay out your gross ticket sales after the event is archived and a 7-day settlement period. Minimum payout £1. ' +
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions.',
   },
@@ -202,7 +202,7 @@ const FALLBACK_REPLIES = [
   {
     match: /download.*attendee|export.*attendee|attendee.*csv|attendees csv|get.*attendee list/i,
     reply:
-      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, visit count, and booking date. Export printable name badges (PDF, Avery L7160 or L7163) from the same screen.',
+      'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, visit count, and booking date. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen.',
   },
   {
     match: /payout|when do i get paid|settlement|instant payout|how long.*paid/i,
@@ -445,9 +445,9 @@ const FALLBACK_REPLIES = [
       'On the tickets step, enable the guest visit programme, then tick “Member-only for this event”. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
   },
   {
-    match: /name badge|printable badge|avery l?7160|avery l?7163|badge pdf/i,
+    match: /name badge|printable badge|avery l?7160|avery l?7163|sticker sheet|badge pdf/i,
     reply:
-      'Sign in → /organiser/ → Events → Attendees, then choose your Avery sheet (L7160 standard 21-per-sheet, or L7163 large 14-per-sheet) and click Export name badges (PDF). Each badge shows the guest’s name, company, and job title from their Hub account when set — ask attendees to update these in account settings before the event.',
+      'Sign in → /organiser/ → Events → Attendees, then choose your sheet size (standard — 63.5 × 38.1 mm, 21 per sheet; or large — 99.1 × 38.1 mm, 14 per sheet) and click Export name badges (PDF). Each badge shows the guest’s name, company, and job title from their Hub account when set — ask attendees to update these in account settings before the event.',
   },
   {
     match: /job title.*(badge|profile|account)|update.*job title|company.*badge/i,
