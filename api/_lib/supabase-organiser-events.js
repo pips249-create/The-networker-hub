@@ -158,6 +158,7 @@ function parseDateIso(dateStr, endStr) {
 
 const {
   plainEventDescription,
+  resolveEventDescription,
   mapAttendeeExtrasToRow,
   composeEventDescription,
 } = require('./event-description');
@@ -178,7 +179,7 @@ function rowToEvent(row) {
     ownerEmail: '',
     organiserGroupIds: row.organiser_id ? [row.organiser_id] : [],
     organiserGroupId: row.organiser_id || '',
-    description: plainEventDescription(row.description),
+    description: resolveEventDescription(row),
     slug: row.slug ? String(row.slug).trim() : null,
     foodIncluded: Boolean(row.food_included),
     collectDietary: Boolean(row.collect_dietary),
@@ -862,7 +863,7 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
     title,
     duplicatedFromEventId: id,
     type: normalizeEventType(row.event_type || ''),
-    description: plainEventDescription(row.description),
+    description: resolveEventDescription(row),
     location: String(row.location_label || row.city || row.venue || '').trim(),
     venue: String(row.venue || '').trim(),
     addressLine1: String(row.address || '').trim(),

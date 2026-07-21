@@ -232,19 +232,24 @@
     setAutodraftStatus('');
   }
 
-  function setDraftField(id, value) {
+  function setDraftField(id, value, options) {
     const el = document.getElementById(id);
-    if (el && value != null) el.value = String(value);
+    if (!el || value == null) return;
+    const next = String(value);
+    if (options && options.keepIfLoaded && !next.trim() && String(el.value || '').trim()) return;
+    el.value = next;
   }
 
-  function applyDraftToForm(draft) {
+  function applyDraftToForm(draft, options) {
+    options = options || {};
+    const keepLoaded = Boolean(options.keepLoadedDescription);
     restoringAutodraft = true;
     eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
     applyFormatUi(eventFormat);
-    setDraftField('ee-title', draft.title);
-    setDraftField('ee-type', draft.type);
-    setDraftField('ee-description', draft.description);
-    setDraftField('ee-photo-url', draft.photoUrl);
+    setDraftField('ee-title', draft.title, { keepIfLoaded: keepLoaded });
+    setDraftField('ee-type', draft.type, { keepIfLoaded: keepLoaded });
+    setDraftField('ee-description', draft.description, { keepIfLoaded: keepLoaded });
+    setDraftField('ee-photo-url', draft.photoUrl, { keepIfLoaded: keepLoaded });
     setPhotoPosition(draft.photoPosition || '');
 
     if (draft.photoUrl) {
@@ -325,7 +330,7 @@
     }
 
     if (!autodraftHasWork(draft)) return false;
-    applyDraftToForm(draft);
+    applyDraftToForm(draft, { keepLoadedDescription: true });
     setAutodraftStatus(
       draft.hadUploadedPhoto
         ? 'Restored unsaved changes from this browser. Please re-select its uploaded image.'
@@ -895,6 +900,21 @@
       data = {};
     }
     return { ok: res.ok, status: res.status, data };
+  }
+
+  async function fetchEventForEdit(eventId, bootstrapEvents) {
+    const res = await api('/api/organiser/events?id=' + encodeURIComponent(eventId));
+    if (res.ok && res.data.event) return res.data.event;
+
+    const cached = (bootstrapEvents || []).find((e) => e.id === eventId) || null;
+    if (cached && String(cached.description || '').trim()) return cached;
+
+    if (!res.ok) {
+      const retry = await api('/api/organiser/events?id=' + encodeURIComponent(eventId));
+      if (retry.ok && retry.data.event) return retry.data.event;
+    }
+
+    return cached;
   }
 
   async function loadOrganiserBootstrapData() {
@@ -1784,12 +1804,7 @@
         if (draftBtn) draftBtn.textContent = 'Save changes';
 
         let ev = null;
-        const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(editId));
-        if (evRes.ok && evRes.data.event) {
-          ev = evRes.data.event;
-        } else {
-          ev = (data.events || []).find((e) => e.id === editId) || null;
-        }
+        ev = await fetchEventForEdit(editId, data.events || []);
         fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
         if (ev) {
           const peers = findSeriesPeers(ev, data.events || []);

@@ -11,6 +11,20 @@ function isAttendeeExtrasJson(obj) {
   );
 }
 
+function highlightsToDescription(highlights) {
+  if (!Array.isArray(highlights)) return '';
+  return highlights
+    .map((line) => String(line || '').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+function resolveEventDescription(row) {
+  const fromColumn = plainEventDescription(row && row.description);
+  if (fromColumn) return fromColumn;
+  return highlightsToDescription(row && row.highlights);
+}
+
 function plainEventDescription(text) {
   let s = String(text || '').trim();
   if (!s) return '';
@@ -84,6 +98,8 @@ function composeEventDescription(description, extras) {
 
 module.exports = {
   plainEventDescription,
+  highlightsToDescription,
+  resolveEventDescription,
   mapAttendeeExtrasToRow,
   attendeeExtrasFromRow,
   composeEventDescription,
