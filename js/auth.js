@@ -25,11 +25,35 @@
     return p.get('next') || '';
   }
 
+  function getIntentParam() {
+    var p = new URLSearchParams(window.location.search);
+    return p.get('intent') || '';
+  }
+
+  function isOrganiserAuthIntentFromPage() {
+    var intent = getIntentParam();
+    if (intent === 'organiser') return true;
+    var next = getNextParam();
+    if (!next) return false;
+    try {
+      var path = /^https?:\/\//i.test(next) ? new URL(next).pathname : next.split('?')[0];
+      return /^\/organiser(\/|$)/.test(path);
+    } catch (e) {
+      return /^\/organiser(\/|$)/.test(next.split('?')[0]);
+    }
+  }
+
   function withNextParam(baseUrl) {
     var next = getNextParam();
-    if (!next) return baseUrl;
-    var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
-    return baseUrl + sep + 'next=' + encodeURIComponent(next);
+    var intent = getIntentParam();
+    var url = baseUrl;
+    if (next) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(next);
+    }
+    if (intent) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + 'intent=' + encodeURIComponent(intent);
+    }
+    return url;
   }
 
   var createAccountLink = document.getElementById('login-create-account');
@@ -99,6 +123,7 @@
         password: password,
         next: next,
         rememberMe: rememberMe,
+        intent: getIntentParam(),
       };
 
       fetch('/api/auth/login', {
@@ -184,6 +209,7 @@
           password: password,
           name: name,
           next: next,
+          intent: getIntentParam(),
           marketingOptIn: marketingEl ? marketingEl.checked : false,
         }),
       })
@@ -335,6 +361,33 @@
     }
   }
 
+  function applyOrganiserIntentContext() {
+    if (getIntentParam() === 'organiser-claim') return;
+    if (!isOrganiserAuthIntentFromPage()) return;
+
+    var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
+    if (loginLede) {
+      loginLede.textContent =
+        'Sign in to open your organiser workspace — list events, manage attendees, and reach members browsing the Hub.';
+    }
+
+    var registerTitle = document.querySelector('#register-form') && document.querySelector('.auth-card--wizard h1');
+    if (registerTitle) {
+      registerTitle.textContent = 'Create your organiser account';
+    }
+
+    var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
+    if (registerLede) {
+      registerLede.textContent =
+        'Step 1 of 2 — create your account to list events and manage your group. We enable organiser access automatically; confirm your email before publishing.';
+    }
+
+    var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
+    if (registerWizard) {
+      registerWizard.textContent = 'Create organiser account';
+    }
+  }
+
   function applyOrganiserClaimContext() {
     var params = new URLSearchParams(window.location.search);
     if (params.get('intent') !== 'organiser-claim') return;
@@ -363,5 +416,6 @@
   }
 
   applyCheckoutContext();
+  applyOrganiserIntentContext();
   applyOrganiserClaimContext();
 })();

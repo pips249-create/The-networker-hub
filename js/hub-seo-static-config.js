@@ -87,7 +87,7 @@ window.HUB_SEO_STATIC = {
   "guide-list-an-event": {
     "path": "/guides/list-an-event",
     "title": "List an event – How-to guides – The Networker Hub",
-    "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
+    "description": "Start listing events on The Networker Hub — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
     "image": "/assets/logo.png",
     "ogType": "article"
   },

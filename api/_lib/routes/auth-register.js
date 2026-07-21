@@ -3,6 +3,11 @@ const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { sendAccountWelcomeEmail } = require('../account-emails');
 const { enforceRateLimit } = require('../rate-limit');
+const {
+  isOrganiserAuthIntent,
+  maybeAutoEnableOrganiserAccess,
+  redirectAfterOrganiserAuth,
+} = require('../organiser-auth-intent');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -98,6 +103,22 @@ module.exports = async function handler(req, res) {
     } catch {
       /* registration succeeds even if bootstrap fails */
     }
+
+    let autoEnable = { enabled: false, redirect: null };
+    if (isOrganiserAuthIntent({ next: body.next, intent: body.intent })) {
+      try {
+        autoEnable = await maybeAutoEnableOrganiserAccess(sessionUser, res);
+      } catch {
+        /* registration succeeds even if auto-enable fails */
+      }
+    }
+
+    redirect = redirectAfterOrganiserAuth({
+      next: body.next,
+      intent: body.intent,
+      autoResult: autoEnable,
+      defaultRedirect: redirect,
+    });
 
     return json(res, 201, {
       ok: true,

@@ -10,6 +10,11 @@ const {
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { enforceRateLimit } = require('../rate-limit');
+const {
+  isOrganiserAuthIntent,
+  maybeAutoEnableOrganiserAccess,
+  redirectAfterOrganiserAuth,
+} = require('../organiser-auth-intent');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -132,12 +137,28 @@ module.exports = async function handler(req, res) {
       /* login succeeds even if bootstrap fails */
     }
 
+    let autoEnable = { enabled: false, redirect: null };
+    if (isOrganiserAuthIntent({ next: body.next, intent: body.intent })) {
+      try {
+        autoEnable = await maybeAutoEnableOrganiserAccess(sessionUser, res);
+      } catch {
+        /* login succeeds even if auto-enable fails */
+      }
+    }
+
     let redirect = body.next || '/events/';
     if (isAdminRole(role) && !body.next) {
       redirect = '/admin/';
     } else if (hubViewFromRequest(req) === 'organiser') {
       redirect = body.next || '/organiser/';
     }
+
+    redirect = redirectAfterOrganiserAuth({
+      next: body.next,
+      intent: body.intent,
+      autoResult: autoEnable,
+      defaultRedirect: redirect,
+    });
 
     return json(res, 200, {
       ok: true,

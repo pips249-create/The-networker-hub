@@ -25,7 +25,7 @@
   }
 
   function clearStuckLoading() {
-    if (!isLoadInFlight()) setRosterLoading(false);
+    if (rosterAppearsPainted() || !isLoadInFlight()) setRosterLoading(false);
   }
 
   function setActiveGroupId(groupId) {
@@ -1185,13 +1185,18 @@
     page = 1;
     await fetchRosterPage(1, { showLoader: false });
     if (getOrganiserId() !== groupId) return;
+    setRosterLoading(false);
+
     const eventId = selectedEventId();
-    try {
-      await loadReports(eventId);
-    } catch (err) {
-      showAlert(err.message || 'Could not load member reports.', 'error');
-    }
-    if (getOrganiserId() === groupId) renderRoster();
+    loadReports(eventId)
+      .then(function () {
+        if (getOrganiserId() === groupId) renderRoster();
+      })
+      .catch(function (err) {
+        if (getOrganiserId() === groupId) {
+          showAlert(err.message || 'Could not load member reports.', 'error');
+        }
+      });
   }
 
   function removeDuplicateAddPanels() {
@@ -1531,13 +1536,13 @@
       if (getOrganiserId() !== id) return;
       await refresh();
     })().finally(function () {
-      if (getOrganiserId() === id) {
+      if (activeLoadGroupId === id) {
         setRosterLoading(false);
-        if (!rosterAppearsPainted()) {
+        if (getOrganiserId() === id && !rosterAppearsPainted()) {
           renderRoster();
         }
+        activeLoadPromise = null;
       }
-      if (activeLoadGroupId === id) activeLoadPromise = null;
       ensureRosterPainted(id);
     });
     return activeLoadPromise;

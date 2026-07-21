@@ -372,7 +372,7 @@ async function runGatedSmoke() {
     { path: '/login', expect: /log\s*in|sign\s*in|password/i },
     { path: '/register', expect: /register|sign\s*up|create/i },
     { path: '/organiser/', expect: /organis|dashboard|sign\s*in|log\s*in/i },
-    { path: '/guides/list-an-event', expect: /list|event|organis/i },
+    { path: '/guides/list-an-event', expect: /organiser dashboard|Open organiser dashboard/i },
   ];
   for (const page of organiserPaths) {
     const r = await probeHtml(page);

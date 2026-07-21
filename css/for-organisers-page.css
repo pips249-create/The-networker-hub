@@ -192,6 +192,21 @@ html:has(.for-organisers-page) {
   font-weight: 600;
 }
 
+.fo-path-hint {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--fo-muted);
+  margin: 14px 0 0;
+  max-width: 32em;
+}
+
+.fo-path-hint--cta {
+  margin: 16px auto 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: none;
+}
+
 .fo-hero-badges {
   display: flex;
   flex-wrap: wrap;
@@ -817,7 +832,7 @@ html:has(.for-organisers-page) {
 
 .fo-usp-card-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 10px;
 }
@@ -841,6 +856,14 @@ html:has(.for-organisers-page) {
   font-weight: 700;
   color: var(--fo-navy);
   margin: 0;
+}
+
+.fo-usp-tagline {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--fo-muted);
+  margin: 4px 0 0;
+  line-height: 1.35;
 }
 
 .fo-tools-compact {
@@ -931,7 +954,15 @@ html:has(.for-organisers-page) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .fo-cta-actions {
+    flex-direction: row;
+  }
 }
 
 .fo-cta-split {

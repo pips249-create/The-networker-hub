@@ -17,7 +17,13 @@
   }
 
   function loginUrl(nextPath) {
-    return path('/login?next=' + encodeURIComponent(nextPath));
+    var next = nextPath || '/organiser/';
+    var pathOnly = next.split('?')[0];
+    var intent =
+      /^\/organiser(\/|$)/.test(pathOnly) || String(next).indexOf('/organiser/') >= 0
+        ? '&intent=organiser'
+        : '';
+    return path('/login?next=' + encodeURIComponent(next) + intent);
   }
 
   async function fetchSession() {

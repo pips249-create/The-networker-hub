@@ -6,17 +6,14 @@ const GUIDE_PAGES = {
     path: '/guides/list-an-event',
     title: 'List an event – How-to guides – The Networker Hub',
     description:
-      'Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.',
+      'Start listing events on The Networker Hub — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.',
     name: 'List an event',
     howToName: 'How to list an event on The Networker Hub',
     steps: [
       { id: 'sign-in', name: 'Sign in to the organiser dashboard', text: 'Sign in and open the organiser dashboard at /organiser/. If your networking group is already listed, search the organiser directory and claim your page when prompted.' },
-      { id: 'organiser-page', name: 'Create or update your organiser page', text: 'Under Organiser pages, add your public group profile: name, logo, description, contact email, and social links.' },
-      { id: 'new-event', name: 'Start a new event listing', text: 'From My events, choose List event. Add title, event type, description, cover photo, format (in person, online, or hybrid), venue, and dates.' },
-      { id: 'tickets', name: 'Set up tickets', text: 'Choose standard tickets, guest visit programme, Category Exclusivity, or Previous Attendees. Set prices, quantities, VAT if applicable, and your refund policy.' },
-      { id: 'stripe', name: 'Connect Stripe for paid tickets', text: 'For paid events, complete Connect Stripe under Revenue so ticket money reaches your bank account. Free events do not require Stripe.' },
-      { id: 'publish', name: 'Publish', text: 'When details and tickets are complete, publish the event. Once Published, Approved, linked to a published organiser page, and has ticket types, it appears on Browse events.' },
-      { id: 'manage-bookings', name: 'Manage bookings after publish', text: 'Use the dashboard to view attendees, revenue and payout status, reviews, and handle cancellations or refunds.' },
+      { id: 'organiser-page', name: 'Create or claim your organiser page', text: 'Follow the setup checklist on Overview — add your public group profile or confirm the claim prompt for an existing page.' },
+      { id: 'membership', name: 'Optional: set up membership', text: 'Upload your member register if you sell members-only tickets or track renewals. Skip this step if you only need open booking.' },
+      { id: 'list-event', name: 'List your event in the dashboard', text: 'Choose List event from My events. Hubert walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.' },
     ],
   },
   'list-a-conference-or-exhibition': {

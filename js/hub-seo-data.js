@@ -1230,7 +1230,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkerhub.com/guides/list-an-event#webpage",
           "url": "https://www.thenetworkerhub.com/guides/list-an-event",
           "name": "List an event – How-to guides – The Networker Hub",
-          "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
+          "description": "Start listing events on The Networker Hub — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
@@ -1242,7 +1242,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkerhub.com/guides/list-an-event#howto",
           "url": "https://www.thenetworkerhub.com/guides/list-an-event",
           "name": "How to list an event on The Networker Hub",
-          "description": "Step-by-step guide for organisers: create your organiser page, add event details, set up tickets, connect Stripe, and publish on The Networker Hub.",
+          "description": "Start listing events on The Networker Hub — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
           "step": [
             {
               "@type": "HowToStep",
@@ -1254,44 +1254,23 @@ window.HUB_SEO_DATA = {
             {
               "@type": "HowToStep",
               "position": 2,
-              "name": "Create or update your organiser page",
-              "text": "Under Organiser pages, add your public group profile: name, logo, description, contact email, and social links.",
+              "name": "Create or claim your organiser page",
+              "text": "Follow the setup checklist on Overview — add your public group profile or confirm the claim prompt for an existing page.",
               "url": "https://www.thenetworkerhub.com/guides/list-an-event#organiser-page"
             },
             {
               "@type": "HowToStep",
               "position": 3,
-              "name": "Start a new event listing",
-              "text": "From My events, choose List event. Add title, event type, description, cover photo, format (in person, online, or hybrid), venue, and dates.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#new-event"
+              "name": "Optional: set up membership",
+              "text": "Upload your member register if you sell members-only tickets or track renewals. Skip this step if you only need open booking.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#membership"
             },
             {
               "@type": "HowToStep",
               "position": 4,
-              "name": "Set up tickets",
-              "text": "Choose standard tickets, guest visit programme, Category Exclusivity, or Previous Attendees. Set prices, quantities, VAT if applicable, and your refund policy.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#tickets"
-            },
-            {
-              "@type": "HowToStep",
-              "position": 5,
-              "name": "Connect Stripe for paid tickets",
-              "text": "For paid events, complete Connect Stripe under Revenue so ticket money reaches your bank account. Free events do not require Stripe.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#stripe"
-            },
-            {
-              "@type": "HowToStep",
-              "position": 6,
-              "name": "Publish",
-              "text": "When details and tickets are complete, publish the event. Once Published, Approved, linked to a published organiser page, and has ticket types, it appears on Browse events.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#publish"
-            },
-            {
-              "@type": "HowToStep",
-              "position": 7,
-              "name": "Manage bookings after publish",
-              "text": "Use the dashboard to view attendees, revenue and payout status, reviews, and handle cancellations or refunds.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#manage-bookings"
+              "name": "List your event in the dashboard",
+              "text": "Choose List event from My events. Hubert walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.",
+              "url": "https://www.thenetworkerhub.com/guides/list-an-event#list-event"
             }
           ]
         },
