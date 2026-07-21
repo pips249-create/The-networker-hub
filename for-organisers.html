@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721k">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260721m">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
 <link rel="stylesheet" href="css/hub-field-tip.css?v=20260721">
@@ -26,6 +26,9 @@
 <main class="fo-flow">
 
   <section class="fo-hero fo-reveal is-visible" aria-labelledby="fo-hero-heading">
+    <span class="fo-hero-orb fo-hero-orb--1" aria-hidden="true"></span>
+    <span class="fo-hero-orb fo-hero-orb--2" aria-hidden="true"></span>
+    <span class="fo-hero-orb fo-hero-orb--3" aria-hidden="true"></span>
     <div class="fo-flow-inner fo-hero-inner">
       <div class="fo-hero-copy fo-reveal-child">
         <p class="fo-hero-kicker">For organisers</p>
@@ -33,17 +36,56 @@
         <p class="fo-hero-lede">
           Ticketing and discovery for UK networking groups — from weekly breakfasts to annual conferences.
         </p>
-        <p class="fo-hero-tools-teaser">
-          Including <a href="#benefits">guest visits, visit tracking, and member-only tickets</a> — tools generic platforms don&rsquo;t offer.
-        </p>
+        <ul class="fo-hero-badges" aria-label="Tools built for networking groups">
+          <li><a class="fo-hero-badge" href="#benefits">Guest visit programme</a></li>
+          <li><a class="fo-hero-badge" href="#benefits">Visit tracking</a></li>
+          <li><a class="fo-hero-badge" href="#benefits">Member-only tickets</a></li>
+        </ul>
         <div class="fo-hero-actions">
           <a class="btn btn-primary" href="/login?next=/organiser/&amp;intent=organiser">List your first event</a>
           <a class="btn btn-secondary" href="/login?next=/organiser/?onboard=claim&amp;intent=organiser-claim">Claim your page</a>
         </div>
         <p class="fo-path-hint">New group? List your first event. Already listed on the Hub? Claim your page.</p>
+        <p class="fo-hero-trust">Free to list · Keep 100% of ticket price · Built for UK networking</p>
         <p class="fo-hero-note">
           <a href="/guides/list-an-event">Getting started guide</a> · <a href="/faq">Organiser FAQs →</a>
         </p>
+      </div>
+      <div class="fo-hero-visual fo-reveal-child" aria-hidden="true">
+        <div class="fo-hero-mock">
+          <div class="fo-hero-mock-bar">
+            <span class="fo-hero-mock-dots"><span></span><span></span><span></span></span>
+            <span>Your organiser workspace</span>
+          </div>
+          <div class="fo-hero-mock-body">
+            <p class="fo-hero-mock-kicker">Overview</p>
+            <div class="fo-hero-mock-stats">
+              <div class="fo-hero-mock-stat"><b>12</b><small>Live events</small></div>
+              <div class="fo-hero-mock-stat fo-hero-mock-stat--green"><b>148</b><small>Tickets sold</small></div>
+              <div class="fo-hero-mock-stat fo-hero-mock-stat--gold"><b>£2.4k</b><small>Revenue</small></div>
+            </div>
+            <div class="fo-hero-mock-events">
+              <div class="fo-hero-mock-event">
+                <span class="fo-hero-mock-event-main">
+                  <strong>Friday breakfast networking</strong>
+                  <small>Manchester · Fri 7:30am</small>
+                </span>
+                <span class="fo-hero-mock-event-meta">£15 · 24 booked</span>
+              </div>
+              <div class="fo-hero-mock-event fo-hero-mock-event--guest">
+                <span class="fo-hero-mock-event-main">
+                  <strong>Women in business lunch</strong>
+                  <small>Leeds · Guest visit available</small>
+                </span>
+                <span class="fo-hero-mock-event-meta">Free · 8 booked</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fo-hero-float">
+          <span class="fo-hero-float-icon" aria-hidden="true">✓</span>
+          <span class="fo-hero-float-text"><strong>New booking</strong> Friday breakfast · £15</span>
+        </div>
       </div>
     </div>
   </section>

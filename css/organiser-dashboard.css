@@ -3726,6 +3726,10 @@
   display: none;
 }
 
+.omr-register-panel[hidden] {
+  display: none !important;
+}
+
 .org-page--memberships .omr-pagination {
   margin-top: 16px;
 }

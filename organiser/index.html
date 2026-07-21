@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
     <link rel="stylesheet" href="../css/hub.css?v=20260714skip" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260715nav" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260721nav" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
@@ -61,7 +61,6 @@
       <div class="org-dashboard-layout">
         <aside class="org-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal org-dash-bar" aria-label="Organiser workspace">
-            <span class="hub-side-nav-divider hub-side-nav-divider--first">Workspace</span>
             <a href="#dashboard" class="hub-side-nav-link is-active" data-org-route="dashboard">Overview</a>
             <button
               type="button"
@@ -80,22 +79,22 @@
             </a>
 
             <span class="hub-side-nav-divider">Events</span>
-            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">
+            <a href="#events-list" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="events-list">
               My events
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
-            <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
-            <a href="#memberships" class="hub-side-nav-link" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
+            <a href="#groups" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="groups">Organiser pages</a>
+            <a href="#memberships" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
               Memberships
             </a>
 
             <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
+            <a href="#business-overview" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="business-overview">
               My business opportunities
               <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>New</span>
             </a>
-            <a href="#business-list" class="hub-side-nav-link" data-org-route="business-list">List a business opportunity</a>
+            <a href="#business-list" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="business-list">List a business opportunity</a>
 
             <div class="hub-side-nav-util">
               <a href="../guides">Organiser guides</a>

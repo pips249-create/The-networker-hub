@@ -898,6 +898,7 @@ body.nav-menu-open {
     padding-left: 2px;
   }
 
+  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link--nested,
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link--events-sub {
     margin-left: 0;
     border-left: none;
@@ -915,10 +916,6 @@ body.nav-menu-open {
     scroll-snap-align: start;
     border: none;
     font-size: 12px;
-  }
-
-  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link--events-sub {
-    display: none !important;
   }
 
   .hub-side-nav.hub-side-nav--minimal .org-notifications-nav {
