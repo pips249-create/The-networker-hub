@@ -529,8 +529,13 @@ body.nav-menu-open {
   }
 
   .filter-bar-primary .filter-format-group--inline {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
+    width: auto;
+  }
+
+  .filter-bar-primary .filter-format-pill {
+    flex: 0 0 auto;
   }
 
   .filter-bar-primary .filter-more-toggle {
@@ -552,7 +557,12 @@ body.nav-menu-open {
     width: 100%;
   }
 
-  .filter-format-group {
+  .filter-format-group.filter-format-group--inline {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .filter-format-group:not(.filter-format-group--inline) {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;

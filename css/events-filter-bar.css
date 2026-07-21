@@ -224,13 +224,17 @@
 
 .filter-format-group--inline {
   flex: 0 0 auto;
-  flex-wrap: nowrap;
+  display: inline-grid;
+  grid-template-columns: auto auto;
   align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
   padding: 0;
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  min-width: max-content;
 }
 
 .filter-format-group--prominent.filter-format-group--inline {
@@ -274,9 +278,10 @@
 
 .filter-format-pills {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
+  min-width: max-content;
 }
 
 .filter-format-pill {
@@ -406,6 +411,10 @@
   margin-bottom: 14px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--border-soft);
+}
+
+.filter-bar-row-location .filter-location-near {
+  align-self: center;
 }
 
 .filter-bar-row-location .filter-field-postcode {
@@ -760,14 +769,13 @@
 }
 
 .filter-bar-primary .filter-format-group--inline {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  min-width: max-content;
 }
 
 .filter-bar-primary .filter-format-group--inline > legend {
   width: auto;
-  margin-bottom: 0;
-  margin-right: 8px;
+  margin: 0;
 }
 
 .filter-bar-primary .filter-date-wrap,
@@ -788,7 +796,7 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   accent-color: #2563eb;
 }
 
-.filter-format-group legend {
+.filter-format-group:not(.filter-format-group--inline):not(.filter-format-group--with-chips) legend {
   width: 100%;
   padding: 0;
   margin-bottom: 2px;
@@ -1151,7 +1159,7 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 @media (min-width: 901px) {
   .events-filter-bar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
     grid-template-rows: auto auto;
     column-gap: 12px;
     row-gap: 0;
@@ -1204,7 +1212,27 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   }
 
   .filter-bar-cluster {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
     width: 100%;
+  }
+
+  .filter-bar-primary {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .filter-bar-primary .filter-format-pill {
+    flex: 0 0 auto;
+  }
+
+  .filter-clear-btn {
+    margin-left: 0;
   }
 
   .filter-more-panel:not([hidden]) {
@@ -1224,8 +1252,8 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 
   .filter-format-group--prominent.filter-format-group--inline {
     width: auto;
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 0 0 auto;
+    min-width: max-content;
   }
 
   .filter-bar-primary {
@@ -1238,12 +1266,11 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   }
 
   .filter-bar-primary .filter-format-pill {
-    flex: 1 1 calc(50% - 4px);
+    flex: 0 0 auto;
   }
 
   .filter-bar-primary .filter-format-pill-face {
     justify-content: center;
-    width: 100%;
   }
 
   .events-filter-shell .filter-format-group--with-chips {
@@ -1358,7 +1385,23 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 12px 16px;
+}
+
+@media (min-width: 769px) {
+  .events-results-meta {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .events-results-actions {
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .events-view-sort-group {
+    margin-left: 0;
+  }
 }
 
 .events-results-actions .browse-mode-toggle {
@@ -1366,6 +1409,7 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 }
 
 .clear-filters-link {
+  display: none;
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
