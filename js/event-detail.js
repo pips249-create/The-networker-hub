@@ -357,13 +357,45 @@
     return Boolean(guestVisitEligibility?.isRosterMember || rosterMembership?.isMember);
   }
 
+  function syncGuestVisitStateForRosterMember() {
+    const fromGuest = Boolean(guestVisitEligibility?.isRosterMember);
+    const fromRoster = Boolean(rosterMembership?.isMember);
+    if (!fromGuest && !fromRoster) return;
+
+    if (!rosterMembership) rosterMembership = { isMember: true };
+    else rosterMembership.isMember = true;
+
+    if (guestVisitEligibility) {
+      guestVisitEligibility.isRosterMember = true;
+      guestVisitEligibility.eligible = false;
+      guestVisitEligibility.remaining = 0;
+      guestVisitEligibility.used = guestVisitEligibility.allowed || 0;
+    }
+  }
+
+  async function ensureRosterMemberTickets(ev) {
+    if (!ev || !ev.hasMembersOnlyTiers || !isRosterMemberForEvent()) return;
+    if ((rosterMemberTickets || []).length) return;
+    await loadRosterEligibility(ev);
+    syncGuestVisitStateForRosterMember();
+  }
+
+  function syncTicketPanelSelectionFromDom() {
+    if (typeof window.hubTicketPanelResync === 'function') {
+      window.hubTicketPanelResync();
+    }
+  }
+
   async function refreshGuestProgrammeTicketPanel(ev) {
     if (!ev || !eventIsGuestProgramme(ev)) return;
     await Promise.all([loadGuestVisitEligibility(ev), loadRosterEligibility(ev)]);
+    syncGuestVisitStateForRosterMember();
+    await ensureRosterMemberTickets(ev);
     renderTicketPanel(ev);
     setText('ev-price', publicListingPriceLabel(ev));
     syncTicketHeader(ev);
     applyTicketPanelState(ev);
+    syncTicketPanelSelectionFromDom();
   }
 
   async function loadGuestVisitEligibility(ev) {
@@ -695,12 +727,14 @@
         const memberOnly = (rosterMemberTickets || []).find(function (t) {
           return t.isMembersOnly;
         });
+        labelEl.textContent = 'Member ticket';
         if (memberOnly) {
-          labelEl.textContent = 'Member ticket';
           priceEl.textContent =
             memberOnly.priceKey === 'free' ? 'Free' : memberOnly.price || memberTicketPriceLabel(ev);
-          return;
+        } else {
+          priceEl.textContent = memberTicketPriceLabel(ev);
         }
+        return;
       }
       labelEl.textContent = 'Tickets from';
       priceEl.textContent = memberTicketPriceLabel(ev);
@@ -1606,7 +1640,9 @@
     applyHostBlock(ev);
     renderAboutSection(ev);
 
-    renderTicketPanel(ev);
+    if (!eventIsGuestProgramme(ev)) {
+      renderTicketPanel(ev);
+    }
     renderRefundPolicy(ev);
     setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
     renderOrganiserReviews(ev);
@@ -2103,10 +2139,17 @@
       (tier) => !base.some((existing) => existing.id === tier.id)
     );
     let combined = base.concat(extras);
-    if (rosterMembership?.isMember) {
+    const rosterMember = isRosterMemberForEvent();
+    if (rosterMember) {
       combined = combined.filter(function (t) {
         return !tierIsGuestVisit(t);
       });
+      const memberOnlyTiers = combined.filter(function (t) {
+        return t.isMembersOnly;
+      });
+      if (memberOnlyTiers.length > 0) {
+        combined = memberOnlyTiers;
+      }
       combined.sort(function (a, b) {
         return (a.isMembersOnly ? 0 : 1) - (b.isMembersOnly ? 0 : 1);
       });
@@ -2192,18 +2235,20 @@
     const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
 
-    if (rosterMember && eventHasMembersOnlyTickets(ev)) {
+    if (rosterMember && (eventHasMembersOnlyTickets(ev) || isGuestProg)) {
       const banner = document.createElement('p');
       banner.className = 'ticket-load-hint ticket-load-hint--member';
-      banner.textContent =
-        'You\u2019re on this group\u2019s membership list — member-only tickets are included below.';
+      banner.textContent = eventHasMembersOnlyTickets(ev)
+        ? 'You\u2019re on this group\u2019s membership list — member-only tickets are included below.'
+        : 'You\u2019re on this group\u2019s membership list — book with your member rate below.';
       tiersEl.appendChild(banner);
     } else if (
       isGuestProg &&
       ev.hasMembersOnlyTiers &&
       guestVisitEligibility &&
       !guestVisitEligibility.signedOut &&
-      guestVisitEligibility.eligible
+      guestVisitEligibility.eligible &&
+      !rosterMember
     ) {
       const hint = document.createElement('p');
       hint.className = 'ticket-load-hint';
@@ -2310,6 +2355,8 @@
         : isPass
           ? 'All dates included — one checkout'
           : isMemberTier
+          ? 'Member rate — your membership'
+          : rosterMember && isGuestProg
           ? 'Member rate — your membership'
           : remainingLabel || t.description || '';
 
@@ -2428,6 +2475,7 @@
     }
 
     updateSeriesBundleOption(ev);
+    syncTicketPanelSelectionFromDom();
   }
 
   function escapeHtml(str) {
@@ -3331,7 +3379,11 @@
       buy.textContent = 'Apply for a Seat';
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
-    } else if (eventAllowsGuestPasses(ev) && guestVisitEligibility?.eligible && !rosterMembership?.isMember) {
+    } else if (
+      eventAllowsGuestPasses(ev) &&
+      guestVisitEligibility?.eligible &&
+      !isRosterMemberForEvent()
+    ) {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
       buy.textContent = 'Book complimentary visit';
@@ -3918,6 +3970,17 @@
     });
     update();
 
+    window.hubTicketPanelResync = function hubTicketPanelResync() {
+      const sel = document.querySelector('#ticket-tiers .tier.selected:not(.sold-out):not(.tier-disabled)');
+      if (sel) {
+        price = parseFloat(sel.getAttribute('data-price')) || 0;
+        label = sel.getAttribute('data-label') || label;
+        maxQty = maxQtyForTier(sel);
+        if (qty > maxQty) qty = maxQty;
+      }
+      update();
+    };
+
     const buy = document.getElementById('buy-btn');
     const appForm = document.getElementById('seat-application-form');
     const appBack = document.getElementById('application-back-btn');
@@ -4490,6 +4553,8 @@
               loadGuestVisitEligibility(displayEv),
               loadRosterEligibility(displayEv),
             ]);
+            syncGuestVisitStateForRosterMember();
+            await ensureRosterMemberTickets(displayEv);
             renderTicketPanel(displayEv);
             setText('ev-price', publicListingPriceLabel(displayEv));
             syncTicketHeader(displayEv);
@@ -4498,7 +4563,10 @@
             renderTicketPanel(displayEv);
           } else if (displayEv.hasMembersOnlyTiers) {
             await loadRosterEligibility(displayEv);
+            syncGuestVisitStateForRosterMember();
+            await ensureRosterMemberTickets(displayEv);
             renderTicketPanel(displayEv);
+            syncTicketHeader(displayEv);
           }
           initTicketPanel(displayEv);
           initSeriesDatePicker(displayEv);

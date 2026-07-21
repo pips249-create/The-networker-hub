@@ -260,6 +260,7 @@ module.exports = async function handler(req, res) {
         await assertMembersOnlyBookingAllowed(sb, {
           organiserId: evRes.data.organiser_id,
           email: sessionEmail,
+          userId: session?.sub || null,
         });
       } catch (memberErr) {
         const code = memberErr.message || 'members_only_not_eligible';
@@ -447,6 +448,7 @@ module.exports = async function handler(req, res) {
       const rosterMembership = await getActiveRosterMembership(sb, {
         organiserId: evRes.data.organiser_id,
         email: checkoutEmail,
+        userId: session?.sub || null,
       });
       if (!rosterMembership.active) {
         try {

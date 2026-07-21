@@ -15,7 +15,9 @@ const {
   logoNavUrl,
   logoFooterUrl,
   browseEventsUrl,
+  toPublicAssetUrl,
 } = require('./hub-email-urls');
+const { resolvePhotoUrl } = require('./supabase-organisers-browse');
 const { formatEventDateTime } = require('./favourite-sales-emails');
 const { emailGreetingName } = require('./email-display-name');
 
@@ -58,51 +60,125 @@ async function resolveAttendeeIdByEmail(sb, email) {
   return data?.id || null;
 }
 
-async function getActiveRosterMembership(sb, { organiserId, email }) {
-  const orgId = String(organiserId || '').trim();
-  const em = normalizeRosterEmail(email);
-  if (!orgId || !em) {
-    return { active: false, row: null };
+async function resolveAttendeeIdForRoster(sb, { attendeeId, userId, email }) {
+  const directId = String(attendeeId || '').trim();
+  if (directId) {
+    const byId = await sb.from('attendees').select('id').eq('id', directId).maybeSingle();
+    if (byId.error) throw new Error(byId.error.message);
+    if (byId.data?.id) return byId.data.id;
   }
-  const { data, error } = await sb
-    .from('organiser_member_roster')
-    .select('*')
-    .eq('organiser_id', orgId)
-    .eq('status', ROSTER_STATUS_ACTIVE)
-    .eq('email', em)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  const active = rosterRowIsActive(data);
-  return { active, row: data || null };
+
+  const uid = String(userId || '').trim();
+  if (uid) {
+    const byUser = await sb
+      .from('attendees')
+      .select('id')
+      .eq('supabase_user_id', uid)
+      .maybeSingle();
+    if (byUser.error) throw new Error(byUser.error.message);
+    if (byUser.data?.id) return byUser.data.id;
+
+    const byAuthId = await sb.from('attendees').select('id').eq('id', uid).maybeSingle();
+    if (byAuthId.error) throw new Error(byAuthId.error.message);
+    if (byAuthId.data?.id) return byAuthId.data.id;
+  }
+
+  return resolveAttendeeIdByEmail(sb, email);
 }
 
-async function assertMembersOnlyBookingAllowed(sb, { organiserId, email }) {
+async function findActiveRosterRow(sb, { organiserId, email, attendeeId, userId }) {
   const orgId = String(organiserId || '').trim();
+  if (!orgId) return null;
+
   const em = normalizeRosterEmail(email);
-  if (!orgId || !em) {
+  const resolvedAttendeeId = await resolveAttendeeIdForRoster(sb, {
+    attendeeId,
+    userId,
+    email: em,
+  });
+
+  if (em) {
+    const byEmail = await sb
+      .from('organiser_member_roster')
+      .select('*')
+      .eq('organiser_id', orgId)
+      .eq('status', ROSTER_STATUS_ACTIVE)
+      .ilike('email', em)
+      .maybeSingle();
+    if (byEmail.error) throw new Error(byEmail.error.message);
+    if (byEmail.data && rosterRowIsActive(byEmail.data)) return byEmail.data;
+  }
+
+  if (resolvedAttendeeId) {
+    const byAttendee = await sb
+      .from('organiser_member_roster')
+      .select('*')
+      .eq('organiser_id', orgId)
+      .eq('status', ROSTER_STATUS_ACTIVE)
+      .eq('attendee_id', resolvedAttendeeId)
+      .maybeSingle();
+    if (byAttendee.error) throw new Error(byAttendee.error.message);
+    if (byAttendee.data && rosterRowIsActive(byAttendee.data)) return byAttendee.data;
+  }
+
+  return null;
+}
+
+async function getActiveRosterMembership(sb, { organiserId, email, attendeeId, userId }) {
+  const row = await findActiveRosterRow(sb, { organiserId, email, attendeeId, userId });
+  return { active: Boolean(row), row: row || null };
+}
+
+async function assertMembersOnlyBookingAllowed(sb, { organiserId, email, attendeeId, userId }) {
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) {
     const err = new Error('members_only_not_eligible');
     err.status = 403;
     throw err;
   }
-  const { data, error } = await sb
-    .from('organiser_member_roster')
-    .select('*')
-    .eq('organiser_id', orgId)
-    .eq('status', ROSTER_STATUS_ACTIVE)
-    .eq('email', em)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) {
+
+  const em = normalizeRosterEmail(email);
+  const resolvedAttendeeId = await resolveAttendeeIdForRoster(sb, {
+    attendeeId,
+    userId,
+    email: em,
+  });
+
+  let row = null;
+  if (em) {
+    const byEmail = await sb
+      .from('organiser_member_roster')
+      .select('*')
+      .eq('organiser_id', orgId)
+      .eq('status', ROSTER_STATUS_ACTIVE)
+      .ilike('email', em)
+      .maybeSingle();
+    if (byEmail.error) throw new Error(byEmail.error.message);
+    row = byEmail.data || null;
+  }
+  if (!row && resolvedAttendeeId) {
+    const byAttendee = await sb
+      .from('organiser_member_roster')
+      .select('*')
+      .eq('organiser_id', orgId)
+      .eq('status', ROSTER_STATUS_ACTIVE)
+      .eq('attendee_id', resolvedAttendeeId)
+      .maybeSingle();
+    if (byAttendee.error) throw new Error(byAttendee.error.message);
+    row = byAttendee.data || null;
+  }
+
+  if (!row) {
     const err = new Error('members_only_not_eligible');
     err.status = 403;
     throw err;
   }
-  if (!rosterRowIsActive(data)) {
+  if (!rosterRowIsActive(row)) {
     const err = new Error('membership_expired');
     err.status = 403;
     throw err;
   }
-  return { active: true, row: data };
+  return { active: true, row };
 }
 
 async function ensureOrganiserFavouritesForRoster(sb, attendeeId, organiserIds) {
@@ -142,6 +218,76 @@ async function fetchNextUpcomingEventForOrganiser(sb, organiserId) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data || null;
+}
+
+function escapeRosterEmailHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;');
+}
+
+function organiserLogoUrlForEmail(organiserRow, siteUrl) {
+  const raw = resolvePhotoUrl(organiserRow?.photo_url);
+  if (!raw) return '';
+  return toPublicAssetUrl(raw, siteUrl);
+}
+
+function buildOrganiserAvatarMarkup(organiserRow, siteUrl) {
+  const name = String(organiserRow?.name || 'Your networking group').trim();
+  const logoUrl = organiserLogoUrlForEmail(organiserRow, siteUrl);
+  const organiserUrl = organiserPublicUrl(organiserRow, siteUrl);
+  const initial = escapeRosterEmailHtml(name.charAt(0).toUpperCase() || '?');
+
+  if (logoUrl) {
+    return (
+      '<a href="' +
+      escapeRosterEmailHtml(organiserUrl) +
+      '" style="text-decoration:none;display:inline-block;">' +
+      '<img src="' +
+      escapeRosterEmailHtml(logoUrl) +
+      '" alt="' +
+      escapeRosterEmailHtml(name) +
+      '" width="72" height="72" style="display:block;width:72px;height:72px;object-fit:cover;border:0;border-radius:50%;margin:0 auto;" />' +
+      '</a>'
+    );
+  }
+
+  return (
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
+    '<tr><td style="width:72px;height:72px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:700;color:#9a7aa8;line-height:72px;">' +
+    initial +
+    '</td></tr></table>'
+  );
+}
+
+function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, variant }) {
+  const name = String(organiserRow?.name || 'Your networking group').trim();
+  const safeName = escapeRosterEmailHtml(name);
+  const safeUser = escapeRosterEmailHtml(userName);
+  const avatar = buildOrganiserAvatarMarkup(organiserRow, siteUrl);
+  const bodyCopy =
+    variant === 'existing'
+      ? 'Hi ' +
+        safeUser +
+        ', you&apos;ve been added to their membership on The Networker Hub. Sign in with this email address to book member-only ticket rates — no access codes needed.'
+      : 'Hi ' +
+        safeUser +
+        ', you&apos;ve been added to their membership on The Networker Hub. Create your free account with this email address to book member meetings and see member-only ticket rates.';
+
+  return (
+    '<tr><td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">' +
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;"><tr><td style="text-align:center;vertical-align:middle;">' +
+    avatar +
+    '</td></tr></table>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#6b4c9a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Membership invite</p>' +
+    '<h1 class="hero-title" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">' +
+    safeName +
+    ' invited you</h1>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">' +
+    bodyCopy +
+    '</p></td></tr>'
+  );
 }
 
 function buildRosterUpcomingEventSection(eventRow) {
@@ -195,11 +341,14 @@ async function sendMemberRosterInviteEmail({
   const organiserUrl = organiserPublicUrl(organiserRow, site);
   const organiserName = String(organiserRow.name || 'your networking group').trim();
   const destinationUrl = nextEvent ? eventPublicUrl(nextEvent, site) : organiserUrl;
+  const greetingName = emailGreetingName(memberName, email);
+  const organiserLogoUrl = organiserLogoUrlForEmail(organiserRow, site);
   const sharedVars = {
-    user_name: emailGreetingName(memberName, email),
+    user_name: greetingName,
     user_email: email,
     organiser_name: organiserName,
     organiser_url: organiserUrl,
+    organiser_logo_url: organiserLogoUrl,
     hub_account_url: hubAccountUrl(site),
     site_url: site,
     logo_url: logoNavUrl(site),
@@ -216,7 +365,11 @@ async function sendMemberRosterInviteEmail({
     slug = 'member_roster_existing';
     variables = {
       ...sharedVars,
-      hub_groups_url: hubAccountUrl(site) + '#saved',
+      organiser_invite_intro_section: buildOrganiserInviteIntroSection(organiserRow, site, {
+        userName: greetingName,
+        variant: 'existing',
+      }),
+      hub_groups_url: hubAccountUrl(site) + '#memberships',
       cta_url: loginUrlWithNext(site, email, destinationUrl),
       cta_label: nextEvent ? 'Book member tickets' : 'View upcoming meetings',
       upcoming_event_section: buildRosterUpcomingEventSection(nextEvent),
@@ -232,6 +385,10 @@ async function sendMemberRosterInviteEmail({
     slug = 'member_roster_invite';
     variables = {
       ...sharedVars,
+      organiser_invite_intro_section: buildOrganiserInviteIntroSection(organiserRow, site, {
+        userName: greetingName,
+        variant: 'invite',
+      }),
       register_url:
         site +
         '/register?email=' +
@@ -969,7 +1126,7 @@ async function listRosterGroupsForAttendee(email) {
       'id, expires_at, claimed_at, invite_sent_at, status, organisers(id, name, slug, photo_url, industries, average_rating)'
     )
     .eq('status', ROSTER_STATUS_ACTIVE)
-    .eq('email', em)
+    .ilike('email', em)
     .order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
 
@@ -1297,6 +1454,9 @@ module.exports = {
   listRosterGroupsForAttendee,
   sendMemberRosterInviteEmail,
   sendMemberRosterNewEventAlert,
+  buildOrganiserInviteIntroSection,
+  buildRosterUpcomingEventSection,
+  organiserLogoUrlForEmail,
   rosterRowToClient,
   ensureOrganiserFavouritesForRoster,
   notifyRosterMembersOfPublishedEvent,

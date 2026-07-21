@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260714e" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260721mem" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
@@ -121,6 +121,7 @@
                 </div>
               </div>
               <div class="ad-refund-alert" id="ad-refund-alert-overview" hidden role="status"></div>
+              <div class="ad-overview-membership-nudge" id="ad-overview-membership-nudge" hidden></div>
               <div class="ad-overview-review-nudge" id="ad-overview-review-nudge" hidden></div>
               <div class="ad-overview-feed" id="ad-overview-feed" hidden>
                 <h2 class="ad-section-title ad-section-title--spaced">Saved events happening soon</h2>
@@ -220,7 +221,7 @@
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope" role="tablist" aria-label="Saved items">
-                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">My groups</button>
+                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">My memberships</button>
                   <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-saved-scope="events">Saved Events</button>
                   <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">Saved Organisers</button>
                   <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="opportunities">Saved Opportunities</button>
@@ -245,7 +246,7 @@
                     </div>
                   </div>
                   <p class="ad-empty" id="ad-my-groups-empty" hidden>
-                    No member lists yet. When a networking group adds your email, it will appear here.
+                    No memberships yet. When a networking group adds your email to their member list, it will appear here.
                   </p>
                 </div>
 
@@ -656,6 +657,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260716pass"></script>
+    <script src="../js/attendee-dashboard.js?v=20260721mem"></script>
   </body>
 </html>

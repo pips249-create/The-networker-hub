@@ -2175,6 +2175,7 @@
       if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
         prefillTiers(memberTickets);
+        prefillMembersOnlyTicket(loaded.tickets);
         prefillGuestPassesDisabled(loaded.event);
       } else if (categoryExclusivityTicket) {
         prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);

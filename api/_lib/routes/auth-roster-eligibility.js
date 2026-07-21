@@ -63,7 +63,11 @@ module.exports = async function handler(req, res) {
 
     const membershipByOrganiser = {};
     for (const orgId of organiserIds.slice(0, 40)) {
-      const membership = await getActiveRosterMembership(sb, { organiserId: orgId, email });
+      const membership = await getActiveRosterMembership(sb, {
+        organiserId: orgId,
+        email,
+        userId: session.sub || null,
+      });
       membershipByOrganiser[orgId] = {
         active: membership.active,
         expiresAt: membership.row?.expires_at || null,

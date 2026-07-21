@@ -39,6 +39,7 @@ async function eligibilityForOrganiser(sb, organiserId, session) {
   return getGuestVisitEligibility(sb, {
     organiserId,
     attendeeId: session.sub || null,
+    userId: session.sub || null,
     email,
     allowed,
   });

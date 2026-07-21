@@ -339,4 +339,5 @@ module.exports = {
   getPublicOrganiserById,
   rowToPublicOrganiser,
   fetchOrganiserReviews,
+  resolvePhotoUrl,
 };

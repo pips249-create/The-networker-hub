@@ -82,32 +82,31 @@ async function countUsedGuestVisits(sb, { organiserId, attendeeId, email }) {
   return (data || []).reduce((sum, row) => sum + Math.max(1, Number(row.quantity) || 1), 0);
 }
 
-async function getGuestVisitEligibility(sb, { organiserId, attendeeId, email, allowed }) {
+async function getGuestVisitEligibility(sb, { organiserId, attendeeId, userId, email, allowed }) {
   const allowedVisits = clampComplimentaryVisitsAllowed(allowed);
   const orgId = String(organiserId || '').trim();
   const normalizedEmail = String(email || '')
     .trim()
     .toLowerCase();
+  const sessionUserId = String(userId || attendeeId || '').trim() || null;
 
-  if (orgId && normalizedEmail) {
-    try {
-      const { getActiveRosterMembership } = require('./organiser-member-roster');
-      const membership = await getActiveRosterMembership(sb, {
-        organiserId: orgId,
-        email: normalizedEmail,
-      });
-      if (membership.active) {
-        return {
-          allowed: allowedVisits,
-          used: allowedVisits,
-          remaining: 0,
-          eligible: false,
-          isRosterMember: true,
-          platformMax: PLATFORM_MAX_COMPLIMENTARY_VISITS,
-        };
-      }
-    } catch {
-      /* roster lookup optional */
+  if (orgId && (normalizedEmail || sessionUserId)) {
+    const { getActiveRosterMembership } = require('./organiser-member-roster');
+    const membership = await getActiveRosterMembership(sb, {
+      organiserId: orgId,
+      email: normalizedEmail,
+      attendeeId: sessionUserId,
+      userId: sessionUserId,
+    });
+    if (membership.active) {
+      return {
+        allowed: allowedVisits,
+        used: allowedVisits,
+        remaining: 0,
+        eligible: false,
+        isRosterMember: true,
+        platformMax: PLATFORM_MAX_COMPLIMENTARY_VISITS,
+      };
     }
   }
 
@@ -151,6 +150,7 @@ async function assertGuestVisitBookingAllowed(
   const eligibility = await getGuestVisitEligibility(sb, {
     organiserId,
     attendeeId,
+    userId: attendeeId,
     email,
     allowed,
   });
@@ -179,6 +179,7 @@ async function assertPaidMemberBookingAllowed(
   const eligibility = await getGuestVisitEligibility(sb, {
     organiserId,
     attendeeId,
+    userId: attendeeId,
     email,
     allowed,
   });

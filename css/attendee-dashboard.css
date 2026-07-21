@@ -1826,6 +1826,72 @@ tr.ad-row-highlight td {
   margin-bottom: 20px;
 }
 
+.ad-overview-membership-nudge {
+  margin-bottom: 20px;
+}
+
+.ad-overview-membership-nudge-card {
+  padding: 16px 18px;
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius);
+}
+
+.ad-overview-membership-nudge-card.ad-overview-membership-nudge--warn {
+  background: #fff8ef;
+  border-color: #f0d2a6;
+}
+
+.ad-overview-membership-nudge-head {
+  margin-bottom: 12px;
+}
+
+.ad-overview-membership-nudge-head .ad-section-title {
+  margin: 0 0 4px;
+}
+
+.ad-overview-membership-nudge-summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ad-text-soft);
+  line-height: 1.45;
+}
+
+.ad-overview-membership-nudge-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ad-overview-membership-nudge-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ad-overview-membership-nudge-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ad-teal-dark);
+  text-decoration: none;
+}
+
+.ad-overview-membership-nudge-name:hover {
+  text-decoration: underline;
+}
+
+.ad-overview-membership-nudge-footnote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ad-text-soft);
+}
+
 .ad-feed-scroll {
   display: flex;
   gap: 12px;

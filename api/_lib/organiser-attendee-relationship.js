@@ -4,12 +4,13 @@
  */
 
 function normalizeAttendeeKey(attendeeId, email) {
-  const id = String(attendeeId || '').trim();
-  if (id) return `id:${id}`;
+  // Email first — duplicate attendees rows for the same person must still share visit history.
   const em = String(email || '')
     .trim()
     .toLowerCase();
   if (em) return `email:${em}`;
+  const id = String(attendeeId || '').trim();
+  if (id) return `id:${id}`;
   return null;
 }
 

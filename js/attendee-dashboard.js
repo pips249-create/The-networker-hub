@@ -36,7 +36,7 @@
     },
     saved: {
       title: 'Saved',
-      sub: 'Events, organisers, and business opportunities you have saved while browsing. Opportunity search alerts live under Saved Opportunities.',
+      sub: 'Saved events, organisers, and opportunities — plus your group memberships and expiry dates under My memberships.',
     },
     past: {
       title: 'Past events',
@@ -67,6 +67,41 @@
     const d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
     return d.innerHTML;
+  }
+
+  function membershipStatusLabel(item) {
+    if (!item.membershipActive) return 'Expired';
+    if (item.expiringSoon) return 'Expiring soon';
+    if (item.expiresAt) return 'Until ' + formatDateShort(item.expiresAt);
+    return 'Active';
+  }
+
+  function membershipStatusBadge(item) {
+    const label = membershipStatusLabel(item);
+    let cls = 'ad-badge ad-badge-green';
+    if (!item.membershipActive) cls = 'ad-badge ad-badge-grey';
+    else if (item.expiringSoon) cls = 'ad-badge ad-badge-gold';
+    return '<span class="' + cls + '">' + esc(label) + '</span>';
+  }
+
+  function goToMemberships() {
+    setSavedScope('groups');
+    setRoute('saved');
+  }
+
+  function routeHash() {
+    if (currentRoute === 'overview') return '';
+    if (currentRoute === 'saved' && savedScope === 'groups') return '#memberships';
+    return '#' + currentRoute;
+  }
+
+  function syncRouteHash() {
+    const url = new URL(window.location.href);
+    const wantHash = routeHash();
+    if ((url.hash || '') !== wantHash) {
+      url.hash = wantHash;
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
   }
 
   function formatDateShort(iso) {
@@ -1068,6 +1103,9 @@
     if (toolbar) {
       toolbar.hidden = savedScope !== 'opportunities' || !savedOpportunities.length;
     }
+    if (currentRoute === 'saved') {
+      syncRouteHash();
+    }
   }
 
   function bindSavedScope() {
@@ -1424,6 +1462,7 @@
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
     if (hash.startsWith('review/')) return 'reviews-pending';
+    if (hash === 'memberships') return 'memberships';
     const allowed = [
       'overview',
       'upcoming',
@@ -1997,6 +2036,10 @@
 
   function setRoute(route) {
     let nextRoute = route || 'overview';
+    if (nextRoute === 'memberships') {
+      setSavedScope('groups');
+      nextRoute = 'saved';
+    }
     if (nextRoute === 'reviews') nextRoute = 'reviews-pending';
     if (isReviewsRoute(nextRoute)) {
       setReviewsScope(reviewsScopeFromRoute(nextRoute));
@@ -2014,13 +2057,10 @@
       const active = isReviewsRoute(currentRoute) ? navRoute === 'reviews' : navRoute === currentRoute;
       a.classList.toggle('is-active', active);
     });
-    const url = new URL(window.location.href);
-    // Overview is the default for /account/ — keep the address bar clean.
-    const wantHash = currentRoute === 'overview' ? '' : '#' + currentRoute;
-    if ((url.hash || '') !== wantHash) {
-      url.hash = wantHash;
-      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    if (currentRoute === 'saved' && savedScope === 'events') {
+      maybeDefaultSavedScope();
     }
+    syncRouteHash();
     if (dashboardReady) renderRouteTables(routeTablesKey(currentRoute));
   }
 
@@ -2399,6 +2439,71 @@
     );
   }
 
+  function renderOverviewMembershipNudge() {
+    const el = document.getElementById('ad-overview-membership-nudge');
+    if (!el) return;
+    if (!myGroups.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+
+    const expiring = myGroups.filter((item) => item.expiringSoon && item.membershipActive);
+    const expired = myGroups.filter((item) => !item.membershipActive);
+    const summaryParts = [myGroups.length + (myGroups.length === 1 ? ' membership' : ' memberships')];
+    if (expiring.length) {
+      summaryParts.push(expiring.length + ' expiring soon');
+    } else if (expired.length) {
+      summaryParts.push(expired.length + ' expired');
+    }
+
+    const warnClass = expiring.length ? ' ad-overview-membership-nudge--warn' : '';
+    el.hidden = false;
+    el.innerHTML =
+      '<div class="ad-overview-membership-nudge-card' +
+      warnClass +
+      '">' +
+      '<div class="ad-overview-membership-nudge-head">' +
+      '<h2 class="ad-section-title">Your memberships</h2>' +
+      '<p class="ad-overview-membership-nudge-summary">' +
+      esc(summaryParts.join(' · ')) +
+      '</p>' +
+      '</div>' +
+      '<ul class="ad-overview-membership-nudge-list">' +
+      myGroups
+        .slice(0, 3)
+        .map((item) => {
+          const href =
+            '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');
+          return (
+            '<li class="ad-overview-membership-nudge-item">' +
+            '<a class="ad-overview-membership-nudge-name" href="' +
+            esc(href) +
+            '">' +
+            esc(item.organiserName || 'Group') +
+            '</a>' +
+            membershipStatusBadge(item) +
+            '</li>'
+          );
+        })
+        .join('') +
+      '</ul>' +
+      (myGroups.length > 3
+        ? '<p class="ad-overview-more"><a href="#memberships">View all ' +
+          myGroups.length +
+          ' memberships →</a></p>'
+        : '<p class="ad-overview-more"><a href="#memberships">View memberships →</a></p>') +
+      '<p class="ad-overview-membership-nudge-footnote">Renewals are handled by your networking group — contact them directly, not through the Hub.</p>' +
+      '</div>';
+
+    el.querySelectorAll('a[href="#memberships"]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToMemberships();
+      });
+    });
+  }
+
   function renderOverviewReviewNudge() {
     const el = document.getElementById('ad-overview-review-nudge');
     if (!el) return;
@@ -2426,6 +2531,7 @@
   }
 
   function renderOverviewFeed() {
+    renderOverviewMembershipNudge();
     renderOverviewReviewNudge();
 
     const feed = document.getElementById('ad-overview-feed');
@@ -2874,13 +2980,7 @@
         title: item.organiserName || item.name,
         imageUrl: item.organiserPhotoUrl || '',
       };
-      const membership = !item.membershipActive
-        ? 'Expired'
-        : item.expiringSoon
-          ? 'Expiring soon'
-          : item.expiresAt
-            ? 'Until ' + formatDateShort(item.expiresAt)
-            : 'Active';
+      const membership = membershipStatusLabel(item);
       const account = item.claimedAt || item.attendeeId ? 'Signed up' : 'Invite sent';
       const href =
         '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');

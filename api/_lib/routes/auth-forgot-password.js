@@ -11,6 +11,7 @@ const {
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { enforceRateLimit } = require('../rate-limit');
+const { isRecipientAllowed } = require('../email-allowlist');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
   const f = recordFields || {};
@@ -36,7 +37,7 @@ async function handleSupabaseForgot(email) {
   }
 
   const emailsAllowed = await sbAuth.getEmailsEnabledForEmail(email);
-  if (!emailsAllowed) {
+  if (!emailsAllowed && !isRecipientAllowed(email)) {
     return {
       status: 200,
       body: {

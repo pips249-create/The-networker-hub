@@ -76,7 +76,7 @@ const MEMBER_QUESTIONS = [
   { q: 'How do I import my member list as CSV?', expect: /Import CSV|email.*required|expires/i },
   {
     q: 'A networking group added me to their member list — what does that mean?',
-    expect: /member-only|\/account\/|sign in|My groups/i,
+    expect: /member-only|\/account\/|sign in|My memberships/i,
   },
 ];
 

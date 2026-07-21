@@ -275,9 +275,14 @@ async function createRegistrationFromPayment(input) {
       inviteToken: alumniInviteToken,
     });
   } else if (ticketRow && isMembersOnlyTicket(ticketRow)) {
-    await assertMembersOnlyBookingAllowed(sb, { organiserId, email });
+    await assertMembersOnlyBookingAllowed(sb, { organiserId, email, attendeeId, userId: attendeeId });
   } else if (amountPaid > 0 || String(paymentStatus).trim() === 'Paid') {
-    const rosterMembership = await getActiveRosterMembership(sb, { organiserId, email });
+    const rosterMembership = await getActiveRosterMembership(sb, {
+      organiserId,
+      email,
+      attendeeId,
+      userId: attendeeId,
+    });
     if (!rosterMembership.active) {
       await assertPaidMemberBookingAllowed(sb, {
         organiserId,

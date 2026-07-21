@@ -376,6 +376,48 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.verify_url = site + '/organiser/verify-email?token=sample';
   }
 
+  if (slug === 'member_roster_invite' || slug === 'member_roster_existing') {
+    const {
+      buildOrganiserInviteIntroSection,
+      buildRosterUpcomingEventSection,
+      organiserLogoUrlForEmail,
+    } = require('./organiser-member-roster');
+    const rosterSite = siteBase(siteUrl);
+    const previewOrganiser = {
+      id: '00000000-0000-4000-8000-000000000020',
+      name: vars.organiser_name,
+      slug: 'city-connectors',
+      photo_url: 'https://placehold.co/144x144/png?text=CC',
+    };
+    vars.organiser_logo_url = organiserLogoUrlForEmail(previewOrganiser, rosterSite);
+    vars.organiser_invite_intro_section = buildOrganiserInviteIntroSection(previewOrganiser, rosterSite, {
+      userName: vars.user_name,
+      variant: slug === 'member_roster_existing' ? 'existing' : 'invite',
+    });
+    vars.upcoming_event_section = buildRosterUpcomingEventSection({
+      title: vars.event_name,
+      starts_at: '2026-08-12T08:00:00.000Z',
+      location_label: vars.event_location,
+    });
+    if (slug === 'member_roster_invite') {
+      vars.register_url =
+        rosterSite +
+        '/register?email=' +
+        encodeURIComponent(vars.user_email) +
+        '&next=' +
+        encodeURIComponent(vars.event_url);
+    } else {
+      vars.cta_url =
+        rosterSite +
+        '/login?email=' +
+        encodeURIComponent(vars.user_email) +
+        '&next=' +
+        encodeURIComponent(vars.event_url);
+      vars.cta_label = 'Book member tickets';
+      vars.hub_groups_url = vars.hub_account_url + '#memberships';
+    }
+  }
+
   return vars;
 }
 

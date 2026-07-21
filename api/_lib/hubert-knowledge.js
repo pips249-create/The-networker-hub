@@ -98,7 +98,7 @@ const KNOWLEDGE_SECTIONS = [
       'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
       'When you publish a new Approved event, people on the member list are emailed automatically (Members only rates apply when they sign in with that email). ' +
       'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning among your uploaded members only, members who missed recent meetings, memberships expiring within 14 days. Reports never include non-members who booked the event — use Attendees for full event lists. Download members CSV or an event report CSV. Email booking reminders to members who have not booked; members are also auto-emailed when you publish Approved events. ' +
-      'MEMBERS: when added, they see the group under My Hub → My groups (/account/). Sign in with the membership email to book member-only tickets. ' +
+      'MEMBERS: when added, they see the group under My Hub → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
       'RENEWALS: Stripe membership billing is not on the Hub yet — renew off-platform and update expiry dates on the member list. ' +
       'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
   },
@@ -412,7 +412,7 @@ const FALLBACK_REPLIES = [
   {
     match: /added (me|to my).*member (list|roster)|on (a|the) member (list|roster)|member (lists|rosters) in my hub|why.*member (list|roster) email|group added me/i,
     reply:
-      'A networking group added your email to their member list so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My Hub → My groups (/account/). Open their event and you will see member tickets the public cannot.',
+      'A networking group added your email to their member list so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My Hub → My memberships (/account/#memberships). Open their event and you will see member tickets the public cannot.',
   },
   {
     match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)|import.*(spreadsheet|excel).*member/i,
