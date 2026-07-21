@@ -1855,3 +1855,51 @@ body.events-list-primer-open {
     justify-content: center;
   }
 }
+
+/* Location chips — match homepage circular scroller inside events shell */
+.events-page .networking-location-directory.home-locations {
+  margin: 40px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.events-page .home-locations .home-flow-inner {
+  padding: 0;
+}
+
+.events-page .home-locations .section-kicker {
+  display: inline-block;
+  color: var(--charcoal-soft, #625f73);
+  background: var(--gold-light, #f5efe6);
+  border: 1px solid rgba(184, 149, 106, 0.2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.events-page .home-locations .section-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  text-align: left;
+  margin: 0 0 10px;
+  font-size: clamp(1.65rem, 3.5vw, 2.15rem);
+  letter-spacing: -0.02em;
+  color: var(--charcoal, #1c2040);
+}
+
+.events-page .home-locations-scroller::after {
+  background: linear-gradient(90deg, transparent, #fff);
+}
+
+.events-page .networking-location-directory.is-regional-landing .section-kicker {
+  color: #625f73;
+  background: rgba(98, 95, 115, 0.08);
+  border-color: rgba(98, 95, 115, 0.15);
+}

@@ -3023,6 +3023,10 @@ html:has(.home-page) {
   background: rgba(50, 43, 120, 0.22);
 }
 
+.home-location-chip[hidden] {
+  display: none;
+}
+
 .home-location-chip {
   --chip-accent: #493f95;
   display: flex;

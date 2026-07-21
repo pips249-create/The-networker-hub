@@ -95,7 +95,7 @@
   }
 
   var currentLink = document.querySelector(
-    '.networking-location-links a[data-region="' + slug + '"]'
+    '.home-location-chip[data-region="' + slug + '"], .networking-location-links a[data-region="' + slug + '"]'
   );
   if (currentLink) {
     currentLink.hidden = true;
