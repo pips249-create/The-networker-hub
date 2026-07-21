@@ -1294,7 +1294,7 @@
       .then(function (res) {
         if (res.status === 401) {
           window.location.href =
-            '../register?return=' + encodeURIComponent(window.location.pathname + window.location.search);
+            '/register?return=' + encodeURIComponent(window.location.pathname + window.location.search);
           return;
         }
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.message) || 'Could not save alert');
