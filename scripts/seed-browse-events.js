@@ -18,10 +18,13 @@ dotenv.config({ path: path.join(root, '.env') });
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../api/_lib/supabase');
 const { MEETING_TYPES } = require('../api/_lib/event-types');
 const { slugifyEventTitle } = require('../api/_lib/event-slug');
+const { computeFeaturedUntil } = require('../api/_lib/event-featured-plans');
+const { SPOTLIGHT_CAROUSEL_MAX } = require('../api/_lib/spotlight-carousel-limits');
 
 const SEED_PREFIX = 'seed-browse-';
 const DEFAULT_COUNT = 300;
 const BATCH_SIZE = 25;
+const SEED_SPOTLIGHT_MAX = SPOTLIGHT_CAROUSEL_MAX;
 
 const UNSPLASH = {
   'Networking meeting': [
@@ -252,7 +255,7 @@ function buildEventRow({ index, eventType, organiserId, existingSlugs }) {
     approval_status: 'Approved',
     status: 'published',
     ticket_sales_enabled: true,
-    featured: index % 17 === 0,
+    featured: false,
     organiser_id: organiserId,
     airtable_id: `${SEED_PREFIX}${String(index + 1).padStart(4, '0')}`,
   };
@@ -291,7 +294,7 @@ async function ensureOrganisers(sb) {
         meeting_formats: ['In person', 'Online'],
         verification_status: 'Verified',
         listing_status: 'published',
-        featured: i < 3,
+        featured: false,
       })
       .select('id')
       .single();
@@ -299,6 +302,49 @@ async function ensureOrganisers(sb) {
     ids.push(created.id);
   }
   return ids;
+}
+
+function pickSpread(rows, max) {
+  if (!rows.length) return [];
+  if (rows.length <= max) return rows;
+  const picks = [];
+  for (let i = 0; i < max; i++) {
+    const idx = Math.min(rows.length - 1, Math.floor((i * rows.length) / max));
+    picks.push(rows[idx]);
+  }
+  return [...new Map(picks.map((row) => [row.id, row])).values()].slice(0, max);
+}
+
+/** Feature up to 12 upcoming seed listings for Premium Spotlight demo carousel. */
+async function ensureSeedSpotlightDemo(sb) {
+  await sb
+    .from('events')
+    .update({ featured: false, featured_until: null })
+    .like('airtable_id', `${SEED_PREFIX}%`)
+    .eq('featured', true);
+
+  const { data: candidates, error } = await sb
+    .from('events')
+    .select('id, starts_at, title')
+    .like('airtable_id', `${SEED_PREFIX}%`)
+    .eq('status', 'published')
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(300);
+  if (error) throw new Error(error.message);
+
+  const picks = pickSpread(candidates || [], SEED_SPOTLIGHT_MAX);
+  for (const row of picks) {
+    const { error: updErr } = await sb
+      .from('events')
+      .update({
+        featured: true,
+        featured_until: computeFeaturedUntil(null, 30, row.starts_at),
+      })
+      .eq('id', row.id);
+    if (updErr) throw new Error(updErr.message);
+  }
+  return picks;
 }
 
 async function main() {
@@ -318,6 +364,10 @@ async function main() {
   if (countErr) throw new Error(countErr.message);
   if (existingCount && !force) {
     console.log(`Already seeded ${existingCount} browse events (${SEED_PREFIX}*). Use --force to add more.`);
+    const spotlight = await ensureSeedSpotlightDemo(sb);
+    console.log(
+      `Premium Spotlight demo: ${spotlight.length} seed events featured (max ${SEED_SPOTLIGHT_MAX}).`
+    );
     return;
   }
 
@@ -371,6 +421,10 @@ async function main() {
 
   console.log(`\nDone. Inserted ${inserted} browse events with photos.`);
   console.log('By type:', typeCounts);
+  const spotlight = await ensureSeedSpotlightDemo(sb);
+  console.log(
+    `Premium Spotlight demo: ${spotlight.length} seed events featured (max ${SEED_SPOTLIGHT_MAX}).`
+  );
   console.log('Refresh /events/ — Sport & social and Women\'s networking filters should now show counts.');
 }
 

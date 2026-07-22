@@ -182,7 +182,7 @@
   const promoteSection = document.getElementById('ep-promote-section');
   const viewListingLink = document.getElementById('ep-view-listing');
   const promoteJump = document.getElementById('ep-promote-jump');
-  const justPublished = Boolean(previewStash);
+  const justPublished = Boolean(previewStash) || params.get('published') === '1';
 
   function isApprovedListing(ev) {
     const approval = String(
@@ -204,13 +204,19 @@
   }
 
   function listingIsLive(ev) {
-    return isApprovedListing(ev) && isPublishedListing(ev);
+    if (!ev) return false;
+    if (isApprovedListing(ev) && isPublishedListing(ev)) return true;
+    // Just published — trust publish flow until API catches up.
+    if (justPublished && isPublishedListing(ev)) return true;
+    if (justPublished && isApprovedListing(ev)) return true;
+    return false;
   }
 
-  function setPromoteVisibility(isLive) {
+  function setPromoteVisibility(isLive, options) {
+    options = options || {};
     if (promoteSection) promoteSection.hidden = !isLive;
     if (promoteJump) promoteJump.hidden = !isLive;
-    if (isLive && justPublished && promoteSection) {
+    if (isLive && options.scrollIntoView && promoteSection) {
       requestAnimationFrame(function () {
         promoteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
@@ -466,37 +472,41 @@
     });
   }
 
-  async function fetchPreview() {
+  function markLiveOnBrowse(options) {
+    options = options || {};
+    const title = document.getElementById('ep-title');
     const previewHint = document.getElementById('ep-preview-hint');
     const lead = document.getElementById('ep-lead');
-
-    function markLiveOnBrowse() {
-      const title = document.getElementById('ep-title');
-      if (title) title.textContent = 'Your listing is live';
-      if (previewHint) {
-        previewHint.textContent = 'This is how your event appears on the browse page.';
-      }
-      if (lead) {
-        lead.textContent =
-          'Attendees can find your event on the hub. Preview your listing below — then share it or choose featured placement if you like.';
-      }
-      setPromoteVisibility(true);
+    if (title) title.textContent = 'Your listing is live';
+    if (previewHint) {
+      previewHint.textContent = 'This is how your event appears on the browse page.';
     }
-
-    function markPendingApproval() {
-      const title = document.getElementById('ep-title');
-      if (title) title.textContent = 'Finish your listing to go live';
-      if (previewHint) {
-        previewHint.textContent =
-          'Complete any missing event details and publish again to appear on the browse page.';
-      }
-      if (lead) {
-        lead.textContent =
-          'Your event is saved but is not on the public browse page yet. Check tickets, refund policy, VAT, and event details, then publish again.';
-      }
-      setPromoteVisibility(false);
+    if (lead) {
+      lead.textContent =
+        'Attendees can find your event on the hub. Preview your listing below — then share it or choose featured placement if you like.';
     }
+    setPromoteVisibility(true, {
+      scrollIntoView: options.scrollIntoView != null ? options.scrollIntoView : justPublished,
+    });
+  }
 
+  function markPendingApproval() {
+    const title = document.getElementById('ep-title');
+    const previewHint = document.getElementById('ep-preview-hint');
+    const lead = document.getElementById('ep-lead');
+    if (title) title.textContent = 'Finish your listing to go live';
+    if (previewHint) {
+      previewHint.textContent =
+        'Complete any missing event details and publish again to appear on the browse page.';
+    }
+    if (lead) {
+      lead.textContent =
+        'Your event is saved but is not on the public browse page yet. Check tickets, refund policy, VAT, and event details, then publish again.';
+    }
+    setPromoteVisibility(false);
+  }
+
+  async function fetchPreview() {
     if (!primaryId) {
       renderPreview({
         title: fallbackTitle,
@@ -507,39 +517,52 @@
       return;
     }
 
-    try {
-      const res = await fetch(
-        '/api/organiser/events?id=' + encodeURIComponent(primaryId),
-        { credentials: 'include', cache: 'no-store' }
-      );
+    async function loadOrganiserEvent() {
+      const res = await fetch('/api/organiser/events?id=' + encodeURIComponent(primaryId), {
+        credentials: 'include',
+        cache: 'no-store',
+      });
       const data = await res.json();
-      if (data.event) {
-        const approved = listingIsLive(data.event);
-        if (approved) markLiveOnBrowse();
-        else markPendingApproval();
-        applyFeaturedStartIso(data.event.date || data.event.starts_at || '');
-        renderPreview({
-          id: data.event.id,
-          slug: data.event.slug,
-          title: data.event.title,
-          description: data.event.description,
-          date: data.event.date,
-          location: data.event.location,
-          imageUrl: data.event.imageUrl,
-          photo: data.event.imageUrl,
-          imagePosition: data.event.imagePosition,
-          organiserName: data.event.organiserName || data.event.groupName,
-          organiserLogo: data.event.organiserLogo,
-          approvalStatus: data.event.approvalStatus,
+      return data && data.event ? data.event : null;
+    }
+
+    try {
+      let organiserEvent = await loadOrganiserEvent();
+      if (justPublished && organiserEvent && !listingIsLive(organiserEvent)) {
+        await new Promise(function (resolve) {
+          setTimeout(resolve, 600);
         });
-        if (data.event.seriesGroupId) {
+        organiserEvent = await loadOrganiserEvent();
+      }
+      if (organiserEvent) {
+        if (listingIsLive(organiserEvent)) markLiveOnBrowse();
+        else markPendingApproval();
+        applyFeaturedStartIso(organiserEvent.date || organiserEvent.starts_at || '');
+        renderPreview({
+          id: organiserEvent.id,
+          slug: organiserEvent.slug,
+          title: organiserEvent.title,
+          description: organiserEvent.description,
+          date: organiserEvent.date,
+          location: organiserEvent.location,
+          imageUrl: organiserEvent.imageUrl,
+          photo: organiserEvent.imageUrl,
+          imagePosition: organiserEvent.imagePosition,
+          organiserName: organiserEvent.organiserName || organiserEvent.groupName,
+          organiserLogo: organiserEvent.organiserLogo,
+          approvalStatus: organiserEvent.approvalStatus,
+        });
+        if (organiserEvent.seriesGroupId) {
           try {
             const hubRes = await fetch('/api/hub-listings?id=' + encodeURIComponent(primaryId), {
               cache: 'no-store',
             });
             const hubData = await hubRes.json();
             if (hubData.seriesDates && hubData.seriesDates.length > 1) {
-              applyFeaturedStartIso(data.event.date || data.event.starts_at || '', hubData.seriesDates);
+              applyFeaturedStartIso(
+                organiserEvent.date || organiserEvent.starts_at || '',
+                hubData.seriesDates
+              );
             }
           } catch {
             /* optional series enrichment */
@@ -742,5 +765,10 @@
   loadFeaturedSlotStatus();
 
   setShareUrls(fallbackTitle);
+  if (justPublished && primaryId) {
+    markLiveOnBrowse({ scrollIntoView: true });
+  } else {
+    setPromoteVisibility(false);
+  }
   fetchPreview();
 })();

@@ -773,6 +773,7 @@
     }
     const publishedQs = new URLSearchParams();
     publishedQs.set('ids', eventIds.join(','));
+    publishedQs.set('published', '1');
     if (publishedTitle) publishedQs.set('title', publishedTitle);
     const publishedUrl = '/organiser/event-published?' + publishedQs.toString();
 
@@ -888,23 +889,6 @@
           return;
         }
         showAlert(data.message || data.error || 'Could not publish your event', 'warn');
-        return;
-      }
-
-      const published = Boolean(result.data.published);
-      const publishedRows = Array.isArray(result.data.publishedEvents) ? result.data.publishedEvents : [];
-      const allLive =
-        published &&
-        (publishedRows.length === 0 ||
-          publishedRows.every(function (ev) {
-            const status = String(ev.status || ev.listingStatus || '').toLowerCase();
-            return status === 'published' || status === 'live';
-          }));
-      if (!allLive) {
-        showAlert(
-          'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then try publishing again.',
-          'warn'
-        );
         return;
       }
 

@@ -2386,6 +2386,24 @@
     return key === 'draft' || st === 'draft' || key === 'unpublished';
   }
 
+  function eventCanPromote(ev) {
+    const resolved = resolveEventRecord(ev);
+    if (!resolved || !resolved.id || isEventCancelled(resolved)) return false;
+    if (isEventDraftListing(resolved)) return false;
+    const key = String(resolved.statusKey || '').toLowerCase();
+    const st = String(resolved.status || resolved.listingStatus || '').toLowerCase();
+    return key === 'live' || st === 'published' || st === 'live';
+  }
+
+  function eventPromoteActionHtml(ev) {
+    if (!eventCanPromote(ev)) return '';
+    return (
+      '<button type="button" class="org-action-item" data-promote-event="' +
+      esc(ev.id) +
+      '"><span class="org-action-icon">📣</span><span class="org-action-text"><strong>Share &amp; promote</strong><span>Social share and featured listing</span></span></button>'
+    );
+  }
+
   function eventPaidBookingsFromAttendees(eventId) {
     if (!eventId || !state.attendeesAll || !state.attendeesAll.length) return null;
     let count = 0;
@@ -2656,6 +2674,7 @@
       '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
       '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
+      eventPromoteActionHtml(ev) +
       '<button type="button" class="org-action-item" data-duplicate-event="' +
       esc(id) +
       '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
@@ -5678,6 +5697,16 @@
       const ev = findEventById(eid);
       if (ev) goToEventTickets(ev);
       else if (eid) location.href = '/organiser/event-tickets?ids=' + encodeURIComponent(eid);
+      return true;
+    }
+
+    const promoteEventBtn = e.target.closest('[data-promote-event]');
+    if (promoteEventBtn && !promoteEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = promoteEventBtn.getAttribute('data-promote-event');
+      if (eid) location.href = '/organiser/event-published?ids=' + encodeURIComponent(eid);
       return true;
     }
 
@@ -11434,6 +11463,7 @@
           }
           const qs = new URLSearchParams();
           qs.set('ids', publishedIds);
+          qs.set('published', '1');
           if (publishedTitle) qs.set('title', publishedTitle);
           location.href = '/organiser/event-published?' + qs.toString();
           return;
