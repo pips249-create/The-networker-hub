@@ -1902,7 +1902,7 @@ body.advertising-page {
   padding: 22px 20px 20px;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
-  background: var(--surface-card);
+  background: var(--ad-soft);
   box-shadow: 0 6px 22px rgba(194, 153, 209, 0.08);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
