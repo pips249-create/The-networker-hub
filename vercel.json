@@ -197,6 +197,10 @@
       "destination": "/events/booking-success.html"
     },
     {
+      "source": "/events/organiser",
+      "destination": "/events/organiser.html"
+    },
+    {
       "source": "/events/:slug",
       "destination": "/events/event.html?slug=:slug"
     },

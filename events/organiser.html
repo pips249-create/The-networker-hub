@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Organiser – The Networker Hub</title>
   <meta name="description" content="Networking organiser page on The Networker Hub — browse events and book tickets." />
+  <style id="org-page-boot-style">
+    html:not(.org-page-ready) #org-profile-shell { visibility: hidden; }
+    html:not(.org-page-ready) #org-load-overlay {
+      display: flex !important;
+    }
+  </style>
   <script src="../js/hub-seo-head.js?v=20260612"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,15 +23,14 @@
   <link rel="stylesheet" href="../css/organiser-profile.css?v=20260721">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f">
 </head>
-<body class="organiser-profile-page">
+<body class="organiser-profile-page hub-is-page-loading">
 
 <div id="hub-site-nav"></div>
 <script src="../js/site-nav.js?v=20260721d" data-root="../" data-page="events"></script>
 
 <div
-  class="hub-page-buffer hub-page-buffer--modal"
+  class="hub-page-buffer hub-page-buffer--modal is-active"
   id="org-load-overlay"
-  hidden
   role="status"
   aria-live="polite"
   aria-busy="true"
@@ -221,6 +226,6 @@
 <script src="../js/review-report.js?v=20260609"></script>
 <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
 <script src="../js/hub-review-modal.js?v=20260710"></script>
-<script src="../js/organiser-detail.js?v=20260721c"></script>
+<script src="../js/organiser-detail.js?v=20260722load"></script>
 </body>
 </html>

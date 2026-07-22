@@ -936,6 +936,22 @@
       if (href) {
         profileLink.href = href;
         profileLink.hidden = false;
+        if (!profileLink.dataset.organiserPrefetchBound) {
+          profileLink.dataset.organiserPrefetchBound = '1';
+          profileLink.addEventListener(
+            'mouseenter',
+            function prefetchOrganiserPage() {
+              if (profileLink.dataset.prefetched) return;
+              profileLink.dataset.prefetched = '1';
+              const link = document.createElement('link');
+              link.rel = 'prefetch';
+              link.as = 'document';
+              link.href = href;
+              document.head.appendChild(link);
+            },
+            { once: true, passive: true }
+          );
+        }
       } else {
         profileLink.removeAttribute('href');
         profileLink.hidden = true;

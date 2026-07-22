@@ -82,14 +82,21 @@
     return '/events/event?id=' + encodeURIComponent(ev.id);
   }
 
+  function markOrganiserPageReady() {
+    document.documentElement.classList.add('org-page-ready');
+  }
+
   function setLoading(on) {
     var overlay = document.getElementById('org-load-overlay');
     if (window.hubLoading) {
       if (on) window.hubLoading.show('org-load-overlay');
       else window.hubLoading.hide('org-load-overlay');
-      return;
+    } else if (overlay) {
+      overlay.classList.toggle('is-active', !!on);
+      overlay.hidden = !on;
     }
-    if (overlay) overlay.hidden = !on;
+    document.body.classList.toggle('hub-is-page-loading', !!on);
+    if (!on) markOrganiserPageReady();
   }
 
   function setStatus(msg, isError) {
@@ -687,9 +694,12 @@
     if (q.slug) url += '?slug=' + encodeURIComponent(q.slug);
     else if (q.id) url += '?id=' + encodeURIComponent(q.id);
     else {
+      setLoading(false);
       setStatus('Missing organiser link.', true);
       return;
     }
+
+    setLoading(true);
 
     const fetchOrganiser = async () => {
       setStatus('', false);
@@ -707,14 +717,12 @@
       }
     };
 
-    if (window.FactLoader) {
-      await window.FactLoader.run(fetchOrganiser);
-      return;
-    }
-
-    setLoading(true);
     try {
-      await fetchOrganiser();
+      if (window.FactLoader) {
+        await window.FactLoader.run(fetchOrganiser);
+      } else {
+        await fetchOrganiser();
+      }
     } finally {
       setLoading(false);
     }
