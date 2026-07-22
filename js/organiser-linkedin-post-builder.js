@@ -60,10 +60,11 @@
   var TEMPLATES = [
     {
       id: 'new_event',
-      label: 'New event announcement',
+      label: 'Event photo',
       group: 'events',
       groupLabel: 'Events & group',
-      theme: 'event_spotlight',
+      theme: 'event_photo_hero',
+      styleHint: 'Large event photo with your logo in the corner',
       accent: '#9a7aa8',
       kicker: 'NEW EVENT',
       line1: 'We have just added',
@@ -77,6 +78,7 @@
       label: 'Room full of referrals',
       group: 'events',
       groupLabel: 'Events & group',
+      styleHint: 'Bold quote on a soft background',
       accent: '#9a7aa8',
       kicker: 'NETWORKING EVENT',
       line1: 'A room full',
@@ -90,6 +92,7 @@
       label: 'Coffee before inboxes',
       group: 'events',
       groupLabel: 'Events & group',
+      styleHint: 'Bold quote on a soft background',
       accent: '#4a4446',
       kicker: 'REAL CONNECTIONS',
       line1: 'Coffee first',
@@ -103,6 +106,7 @@
       label: 'Bring a business friend',
       group: 'events',
       groupLabel: 'Events & group',
+      styleHint: 'Bold quote on a soft background',
       accent: '#c299d1',
       kicker: 'GUEST INVITE',
       line1: 'Bring a business',
@@ -116,6 +120,7 @@
       label: 'Seat at the table',
       group: 'events',
       groupLabel: 'Events & group',
+      styleHint: 'Bold quote on a soft background',
       accent: '#b8956a',
       kicker: 'TICKETS OPEN',
       line1: 'Save your seat',
@@ -340,9 +345,85 @@
     var hubLogo = opts.hubLogoImg || null;
     var eventImage = opts.eventImageImg || null;
     var isEventSpotlight = tpl.theme === 'event_spotlight';
+    var isPhotoHero = tpl.theme === 'event_photo_hero';
     var isEventGroup = tpl.group === 'events';
     var quietBrand = Boolean(opts.quietBrand);
     var isDark = Boolean(bg.dark);
+
+    if (isPhotoHero && !quietBrand) {
+      ctx.clearRect(0, 0, W, H);
+      if (eventImage) {
+        drawCoverImage(ctx, eventImage, 0, 0, W, H, opts.eventImagePosition);
+      } else {
+        var ph = ctx.createLinearGradient(0, 0, W, H);
+        ph.addColorStop(0, bg.stops[0]);
+        ph.addColorStop(1, bg.stops[2] || bg.stops[1] || bg.stops[0]);
+        ctx.fillStyle = ph;
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.font = '600 28px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Your event photo will appear here', W / 2, H / 2 - 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = '400 20px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.fillText('Pick an event with a photo for the best result', W / 2, H / 2 + 28);
+        ctx.textAlign = 'left';
+      }
+
+      var overlay = ctx.createLinearGradient(0, H * 0.32, 0, H);
+      overlay.addColorStop(0, 'rgba(8, 12, 18, 0)');
+      overlay.addColorStop(0.45, 'rgba(8, 12, 18, 0.55)');
+      overlay.addColorStop(1, 'rgba(8, 12, 18, 0.9)');
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = bg.accent || tpl.accent || '#9a7aa8';
+      ctx.fillRect(0, 0, W, 12);
+
+      var logoBoxW = 168;
+      var logoBoxH = 88;
+      var logoBoxX = W - logoBoxW - 36;
+      var logoBoxY = 40;
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      roundRect(ctx, logoBoxX, logoBoxY, logoBoxW, logoBoxH, 12);
+      ctx.fill();
+      if (orgLogo) {
+        drawContainedImage(ctx, orgLogo, logoBoxX + 12, logoBoxY + 8, logoBoxW - 24, logoBoxH - 16);
+      } else {
+        drawLogoPlaceholder(ctx, logoBoxX + 12, logoBoxY + 8, logoBoxW - 24, logoBoxH - 16, '#9a7aa8');
+      }
+
+      var textBaseY = H - 250;
+      ctx.fillStyle = '#e8b84b';
+      ctx.font = '700 20px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillText(String(tpl.kicker || 'NEW EVENT').toUpperCase(), 56, textBaseY);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '400 58px "DM Serif Display", Georgia, "Times New Roman", serif';
+      var heroTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 920);
+      var heroY = textBaseY + 62;
+      for (var hi = 0; hi < Math.min(3, heroTitle.length); hi++) {
+        ctx.fillText(heroTitle[hi], 56, heroY);
+        heroY += 64;
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '400 24px "DM Sans", Arial, Helvetica, sans-serif';
+      var heroSub = wrapText(ctx, line3, 880);
+      heroY += 10;
+      for (var hs = 0; hs < Math.min(2, heroSub.length); hs++) {
+        ctx.fillText(heroSub[hs], 56, heroY);
+        heroY += 34;
+      }
+
+      if (hubLogo) drawContainedImage(ctx, hubLogo, W - 210, H - 82, 170, 46);
+      ctx.fillStyle = 'rgba(255,255,255,0.78)';
+      ctx.font = '400 16px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('on The Networker Hub', W - 56, H - 28);
+      ctx.textAlign = 'left';
+      return;
+    }
 
     var g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, bg.stops[0]);
@@ -735,12 +816,12 @@
       '</label>' +
       '</div>' +
       '<div class="org-post-field">' +
-      '<span class="org-post-label">Pick ready-made words</span>' +
-      '<div class="org-post-caption-options" id="post-caption-options" role="listbox" aria-label="Caption options"></div>' +
-      '<p class="org-post-hint">Tap one of the options above, or write your own text in the box below.</p>' +
+      '<span class="org-post-label">Choose a picture style</span>' +
+      '<div class="org-post-caption-options" id="post-caption-options" role="listbox" aria-label="Picture styles"></div>' +
+      '<p class="org-post-hint">Each style changes the picture layout. You can edit the words below.</p>' +
       '</div>' +
       '<label class="org-post-field">' +
-      '<span class="org-post-label">Your post text</span>' +
+      '<span class="org-post-label">Your post message</span>' +
       '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="6" maxlength="1200" aria-label="Post text"></textarea>' +
       '</label>' +
       '<details class="org-post-advanced org-post-advanced--picture">' +
@@ -859,18 +940,28 @@
       );
     }
 
-    function captionBlurb(tpl) {
-      return String(tpl.line1 || '')
-        .trim()
-        .concat(tpl.line2 ? ' ' + String(tpl.line2).trim() : '');
-    }
-
     function syncCategoryTabs() {
       root.querySelectorAll('.org-post-category-tab').forEach(function (btn) {
         var on = btn.getAttribute('data-category-id') === state.categoryId;
         btn.classList.toggle('is-selected', on);
         btn.setAttribute('aria-selected', on ? 'true' : 'false');
       });
+    }
+
+    function styleHintFor(tpl) {
+      if (tpl.styleHint) return tpl.styleHint;
+      if (tpl.theme === 'event_photo_hero') return 'Large event photo with your logo in the corner';
+      if (tpl.theme === 'event_spotlight') return 'Event photo with headline underneath';
+      if (tpl.theme === 'opportunity') return 'Professional layout for business listings';
+      return 'Text on a coloured background';
+    }
+
+    function styleThumbClass(tpl) {
+      if (tpl.theme === 'event_photo_hero' || tpl.theme === 'event_spotlight') {
+        return 'org-post-caption-option-thumb--photo';
+      }
+      if (tpl.theme === 'opportunity') return 'org-post-caption-option-thumb--listing';
+      return 'org-post-caption-option-thumb--quote';
     }
 
     function syncCaptionOptions() {
@@ -891,11 +982,16 @@
             '"' +
             (locked ? ' disabled aria-disabled="true"' : '') +
             '>' +
+            '<span class="org-post-caption-option-thumb ' +
+            styleThumbClass(t) +
+            '" aria-hidden="true"></span>' +
+            '<span class="org-post-caption-option-copy">' +
             '<span class="org-post-caption-option-title">' +
             esc(t.label) +
             '</span>' +
             '<span class="org-post-caption-option-blurb">' +
-            esc(captionBlurb(t)) +
+            esc(styleHintFor(t)) +
+            '</span>' +
             '</span>' +
             '</button>'
           );
@@ -907,8 +1003,11 @@
         '" role="option" data-caption-custom="1" aria-selected="' +
         (state.customCaption ? 'true' : 'false') +
         '">' +
-        '<span class="org-post-caption-option-title">Write your own</span>' +
-        '<span class="org-post-caption-option-blurb">Keep the image layout and type a custom LinkedIn caption</span>' +
+        '<span class="org-post-caption-option-thumb org-post-caption-option-thumb--custom" aria-hidden="true"></span>' +
+        '<span class="org-post-caption-option-copy">' +
+        '<span class="org-post-caption-option-title">Write your own message</span>' +
+        '<span class="org-post-caption-option-blurb">Keep the picture layout and type your own words</span>' +
+        '</span>' +
         '</button>';
       elCaptionOptions.innerHTML = html;
     }
@@ -920,7 +1019,7 @@
 
     function isEventTemplate(tpl) {
       tpl = tpl || currentTemplate();
-      return tpl.theme === 'event_spotlight';
+      return tpl.theme === 'event_spotlight' || tpl.theme === 'event_photo_hero';
     }
 
     function publishedListings() {
