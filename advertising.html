@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad18">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad20">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -75,27 +75,6 @@
       Guide rates · min. 1 month unless stated · <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>
     </p>
 
-    <details class="ad-pricing-glance ad-reveal ad-pricing-glance--events" id="ad-pricing-glance">
-      <summary class="ad-pricing-glance-toggle">
-        <span class="ad-pricing-glance-toggle-label">At-a-glance pricing</span>
-        <span class="ad-pricing-glance-toggle-hint">Guide rates for this section</span>
-      </summary>
-      <div class="ad-pricing-glance-body">
-        <div class="ad-table-scroll">
-          <table class="ad-pricing-table" id="ad-pricing-table">
-            <thead>
-              <tr>
-                <th scope="col">Placement</th>
-                <th scope="col">Guide price</th>
-                <th scope="col">Type</th>
-              </tr>
-            </thead>
-            <tbody id="ad-pricing-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-
     <!-- Events -->
     <div class="ad-tab-panel ad-tab-panel--events is-active" id="ad-panel-events" data-ad-panel="events" role="tabpanel" aria-labelledby="ad-tab-events">
       <div class="ad-section-head">
@@ -108,44 +87,113 @@
 
       <div class="ad-package-browser">
       <div class="ad-packages">
-        <article class="ad-package ad-package--featured ad-package-split" id="ad-pkg-events-main" data-ad-package-label="Main Sponsor">
+        <article class="ad-package ad-package--featured ad-package-split" id="city-partner-package" data-ad-package-label="City Partner">
+          <div class="ad-package-main">
+            <span class="ad-package-badge">City Partner</span>
+            <h3 class="ad-package-title">City Partner</h3>
+            <p class="ad-package-placement">Logo + CTA on city pages · <strong>/networking/:city</strong> &amp; <strong>/opportunities/networking/:city</strong></p>
+            <p class="ad-package-price">£29 <span>/ city / month + VAT</span> · £75 <span>for 3 cities + VAT</span></p>
+            <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
+            <ul>
+              <li>Logo + CTA beside local intro copy — <strong>website only</strong>, not in emails.</li>
+              <li>One partner per city — rolling monthly subscription · 3-city pack available.</li>
+              <li><strong>Self-serve checkout</strong> for open cities · join the waitlist when a city is sponsored.</li>
+            </ul>
+            <p class="ad-package-note"><strong>Available now:</strong> <span id="city-partner-available-list">Loading cities…</span></p>
+            <p class="ad-package-note city-partner-booked-summary" id="city-partner-booked-summary" hidden><strong>Currently sponsored:</strong> <span id="city-partner-booked-summary-list"></span></p>
+          </div>
+          <div class="ad-package-preview ad-package-preview--city-partner">
+            <p class="ad-preview-label">Example</p>
+            <div class="ad-mock-page ad-mock-page--city-partner" aria-hidden="true">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/networking/manchester</em></div>
+              <div class="ad-mock-city-partner-intro">
+                <div class="ad-mock-city-partner-accent"></div>
+                <div class="ad-mock-city-partner-inner">
+                  <div class="ad-mock-city-partner-copy">
+                    <span class="ad-mock-city-partner-kicker">Your local business community</span>
+                    <p class="ad-mock-city-partner-title">Business networking in <em>Manchester</em></p>
+                    <span class="ad-mock-city-partner-line"></span>
+                    <span class="ad-mock-city-partner-line ad-mock-city-partner-line--short"></span>
+                    <p class="ad-mock-city-partner-organiser-link">Organisers — list your group →</p>
+                  </div>
+                  <aside class="ad-mock-city-partner-ad">
+                    <span class="ad-mock-city-partner-badge">City Sponsor</span>
+                    <span class="ad-mock-city-partner-logo">Your logo</span>
+                    <span class="ad-mock-city-partner-cta">Find out more →</span>
+                  </aside>
+                </div>
+              </div>
+            </div>
+            <p class="ad-preview-label ad-preview-label--checkout">Checkout</p>
+            <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout · monthly subscription.</p>
+            <div class="city-partner-checkout" id="city-partner-checkout">
+              <p class="city-partner-section-label" id="city-partner-available-heading">Available now</p>
+              <div class="city-partner-city-grid" id="city-partner-city-list"></div>
+              <div class="city-partner-quote" id="city-partner-quote">
+                <p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>
+              </div>
+              <label class="ad-enquiry-field city-partner-email-field">
+                <span>Work email</span>
+                <input type="email" id="city-partner-email" placeholder="you@company.com" autocomplete="email">
+              </label>
+              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Checkout securely →</button>
+              <div class="city-partner-booked-wrap" id="city-partner-booked-wrap" hidden>
+                <p class="city-partner-section-label">Currently sponsored</p>
+                <ul class="city-partner-booked-list" id="city-partner-booked-list"></ul>
+                <p class="city-partner-booked-note">City taken? Enter your email above and join the waitlist on any sponsored city — we’ll email you when checkout opens, including the date if the current partner has given notice.</p>
+              </div>
+              <p class="city-partner-status" id="city-partner-status" role="status"></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="ad-package ad-package-split" id="ad-pkg-events-main" data-ad-package-label="Main Sponsor">
           <div class="ad-package-main">
             <span class="ad-package-badge">Main Sponsor</span>
             <h3 class="ad-package-title">Main Events Directory Sponsor</h3>
-            <p class="ad-package-placement">Main Sponsor banner at the top of <strong>/events/</strong></p>
+            <p class="ad-package-placement">Main Sponsor banner at the top of the events directory</p>
             <p class="ad-package-price">£2,000 <span>/ month · min. 1 month</span></p>
             <ul>
-              <li>Logo in Main Sponsor banner on <strong>/events/</strong> — one partner per month.</li>
-              <li>Logo + link in header of <strong>every attendee booking email</strong> (20+ templates).</li>
+              <li>Logo in Main Sponsor banner on the events directory — one partner per month.</li>
+              <li>Logo + link in header of <strong>every attendee booking email</strong> (21 templates).</li>
             </ul>
-            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Events Main Sponsor reach planning ranges">
+            <details class="ad-email-inventory">
+              <summary>View all attendee emails with Main Sponsor placement</summary>
+              <ul class="ad-email-inventory-list">
+                <li>Booking confirmation</li>
+                <li>Event reminder</li>
+                <li>Online join reminder</li>
+                <li>Saved event — tickets open</li>
+                <li>Saved organiser — new listing</li>
+                <li>Application received</li>
+                <li>Application approved</li>
+                <li>Application denied</li>
+                <li>Meeting link added</li>
+                <li>Event details updated</li>
+                <li>Post-event review request</li>
+                <li>Guest visit follow-up</li>
+                <li>Category exclusivity payment reminder</li>
+                <li>Alumni fast pass invite</li>
+                <li>Attendee re-engagement</li>
+                <li>Sign-up events nudge</li>
+                <li>Sign-up events nudge (follow-up)</li>
+                <li>Hubert event concierge</li>
+                <li>Booking cancelled</li>
+                <li>Event cancelled</li>
+                <li>Refund processed</li>
+              </ul>
+            </details>
+            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Events Main Sponsor expected views">
               <div class="ad-email-reach-head">
-                <h4 class="ad-email-reach-heading">Planning reach</h4>
+                <h4 class="ad-email-reach-heading">Expected views</h4>
                 <p class="ad-email-reach-sub">Guide ranges — not guaranteed</p>
               </div>
               <div class="ad-reach-tier-grid ad-reach-tier-grid--wide">
                 <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Launch</h5>
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Directory views</span><strong>2k – 5k / mo</strong></li>
-                    <li><span>Attendee emails</span><strong>800 – 2.5k / mo</strong></li>
-                    <li><span>Total impressions</span><strong>3k – 7.5k / mo</strong></li>
-                  </ul>
-                </article>
-                <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Growth</h5>
                   <ul class="ad-reach-tier-stats">
                     <li><span>Directory views</span><strong>8k – 18k / mo</strong></li>
                     <li><span>Attendee emails</span><strong>4k – 12k / mo</strong></li>
                     <li><span>Total impressions</span><strong>12k – 30k / mo</strong></li>
-                  </ul>
-                </article>
-                <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Scale</h5>
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Directory views</span><strong>20k – 45k / mo</strong></li>
-                    <li><span>Attendee emails</span><strong>12k – 35k / mo</strong></li>
-                    <li><span>Total impressions</span><strong>32k – 80k / mo</strong></li>
                   </ul>
                 </article>
               </div>
@@ -206,9 +254,21 @@
                   <span class="ad-example-thumb-frame ad-example-thumb-frame--events" aria-hidden="true"></span>
                   <span class="ad-example-thumb-label">Events directory</span>
                 </button>
-                <button type="button" class="ad-example-thumb" role="tab" data-example="email" aria-selected="false" tabindex="-1">
+                <button type="button" class="ad-example-thumb" role="tab" data-example="email" data-email-preview="booking" aria-selected="false" tabindex="-1">
                   <span class="ad-example-thumb-frame ad-example-thumb-frame--email" aria-hidden="true"></span>
-                  <span class="ad-example-thumb-label">Booking email</span>
+                  <span class="ad-example-thumb-label">Booking confirmed</span>
+                </button>
+                <button type="button" class="ad-example-thumb" role="tab" data-example="email" data-email-preview="reminder" aria-selected="false" tabindex="-1">
+                  <span class="ad-example-thumb-frame ad-example-thumb-frame--email" aria-hidden="true"></span>
+                  <span class="ad-example-thumb-label">Event reminder</span>
+                </button>
+                <button type="button" class="ad-example-thumb" role="tab" data-example="email" data-email-preview="application" aria-selected="false" tabindex="-1">
+                  <span class="ad-example-thumb-frame ad-example-thumb-frame--email" aria-hidden="true"></span>
+                  <span class="ad-example-thumb-label">Application approved</span>
+                </button>
+                <button type="button" class="ad-example-thumb" role="tab" data-example="email" data-email-preview="refund" aria-selected="false" tabindex="-1">
+                  <span class="ad-example-thumb-frame ad-example-thumb-frame--email" aria-hidden="true"></span>
+                  <span class="ad-example-thumb-label">Refund processed</span>
                 </button>
               </div>
             </div>
@@ -272,66 +332,6 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split" id="city-partner-package" data-ad-package-label="City Partner">
-          <div class="ad-package-main">
-            <span class="ad-package-badge">City Partner</span>
-            <h3 class="ad-package-title">City Partner</h3>
-            <p class="ad-package-placement">Logo + CTA on city pages · <strong>/networking/:city</strong> &amp; <strong>/opportunities/networking/:city</strong></p>
-            <p class="ad-package-price">£29 <span>/ city / month + VAT</span> · £75 <span>for 3 cities + VAT</span></p>
-            <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
-            <ul>
-              <li>Logo + CTA beside local intro copy — <strong>website only</strong>, not in emails.</li>
-              <li>One partner per city — rolling monthly subscription · 3-city pack available.</li>
-              <li><strong>Self-serve checkout</strong> for open cities · join the waitlist when a city is sponsored.</li>
-            </ul>
-            <p class="ad-package-note"><strong>Available now:</strong> <span id="city-partner-available-list">Loading cities…</span></p>
-            <p class="ad-package-note city-partner-booked-summary" id="city-partner-booked-summary" hidden><strong>Currently sponsored:</strong> <span id="city-partner-booked-summary-list"></span></p>
-          </div>
-          <div class="ad-package-preview ad-package-preview--city-partner">
-            <p class="ad-preview-label">Example</p>
-            <div class="ad-mock-page ad-mock-page--city-partner" aria-hidden="true">
-              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/networking/manchester</em></div>
-              <div class="ad-mock-city-partner-intro">
-                <div class="ad-mock-city-partner-accent"></div>
-                <div class="ad-mock-city-partner-inner">
-                  <div class="ad-mock-city-partner-copy">
-                    <span class="ad-mock-city-partner-kicker">Your local business community</span>
-                    <p class="ad-mock-city-partner-title">Business networking in <em>Manchester</em></p>
-                    <span class="ad-mock-city-partner-line"></span>
-                    <span class="ad-mock-city-partner-line ad-mock-city-partner-line--short"></span>
-                    <p class="ad-mock-city-partner-organiser-link">Organisers — list your group →</p>
-                  </div>
-                  <aside class="ad-mock-city-partner-ad">
-                    <span class="ad-mock-city-partner-badge">City Sponsor</span>
-                    <span class="ad-mock-city-partner-logo">Your logo</span>
-                    <span class="ad-mock-city-partner-cta">Find out more →</span>
-                  </aside>
-                </div>
-              </div>
-            </div>
-            <p class="ad-preview-label ad-preview-label--checkout">Checkout</p>
-            <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout · monthly subscription.</p>
-            <div class="city-partner-checkout" id="city-partner-checkout">
-              <p class="city-partner-section-label" id="city-partner-available-heading">Available now</p>
-              <div class="city-partner-city-grid" id="city-partner-city-list"></div>
-              <div class="city-partner-quote" id="city-partner-quote">
-                <p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>
-              </div>
-              <label class="ad-enquiry-field city-partner-email-field">
-                <span>Work email</span>
-                <input type="email" id="city-partner-email" placeholder="you@company.com" autocomplete="email">
-              </label>
-              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Checkout securely →</button>
-              <div class="city-partner-booked-wrap" id="city-partner-booked-wrap" hidden>
-                <p class="city-partner-section-label">Currently sponsored</p>
-                <ul class="city-partner-booked-list" id="city-partner-booked-list"></ul>
-                <p class="city-partner-booked-note">City taken? Enter your email above and join the waitlist on any sponsored city — we’ll email you when checkout opens, including the date if the current partner has given notice.</p>
-              </div>
-              <p class="city-partner-status" id="city-partner-status" role="status"></p>
-            </div>
-          </div>
-        </article>
-
         <article class="ad-package ad-package-split" id="ad-pkg-events-spotlight" data-ad-package-label="Featured Listing">
           <div class="ad-package-main">
             <h3 class="ad-package-title">Featured Listing — Events</h3>
@@ -367,10 +367,6 @@
     <div class="ad-tab-panel ad-tab-panel--organisers" id="ad-panel-organisers" data-ad-panel="organisers" role="tabpanel" aria-labelledby="ad-tab-organisers" hidden>
       <div class="ad-section-head">
         <h2>Organisers directory advertising</h2>
-        <a href="/events/#organisers">View organisers browse →</a>
-      </div>
-      <div class="ad-section-intro-band">
-        <p class="ad-section-lede"><strong>Main Sponsor</strong> — organisers browse + every organiser email. <strong>Mini Sponsors</strong> — profile pages + selected emails.</p>
       </div>
 
       <div class="ad-package-browser">
@@ -385,28 +381,15 @@
               <li>Logo, copy &amp; link in Main Sponsor banner on organisers browse.</li>
               <li>Logo + link in header of <strong>every organiser email</strong>.</li>
             </ul>
-            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Organiser email reach planning ranges">
+            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Organiser email expected views">
               <div class="ad-email-reach-head">
-                <h4 class="ad-email-reach-heading">Planning reach</h4>
+                <h4 class="ad-email-reach-heading">Expected views</h4>
                 <p class="ad-email-reach-sub">Guide ranges — not guaranteed</p>
               </div>
               <div class="ad-reach-tier-grid">
                 <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Launch</h5>
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Organiser emails</span><strong>400 – 1,200 / mo</strong></li>
-                  </ul>
-                </article>
-                <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Growth</h5>
                   <ul class="ad-reach-tier-stats">
                     <li><span>Organiser emails</span><strong>2k – 6k / mo</strong></li>
-                  </ul>
-                </article>
-                <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Scale</h5>
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Organiser emails</span><strong>6k – 18k / mo</strong></li>
                   </ul>
                 </article>
               </div>
@@ -523,10 +506,6 @@
     <div class="ad-tab-panel ad-tab-panel--opportunities" id="ad-panel-opportunities" data-ad-panel="opportunities" role="tabpanel" aria-labelledby="ad-tab-opportunities" hidden>
       <div class="ad-section-head">
         <h2>Opportunities advertising</h2>
-        <a href="/opportunities/">View live browse →</a>
-      </div>
-      <div class="ad-section-intro-band">
-        <p class="ad-section-lede"><strong>Main Sponsor</strong> — browse page + every opportunity email. <strong>Mini Sponsors</strong> — detail pages + selected emails. <strong>City Partner</strong> — shared city inventory · checkout on the Events tab.</p>
       </div>
 
       <div class="ad-package-browser">
@@ -541,28 +520,15 @@
               <li>Logo, copy &amp; link in Main Sponsor banner on <strong>/opportunities/</strong>.</li>
               <li>Logo + link in header of <strong>every business opportunity email</strong>.</li>
             </ul>
-            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Business opportunity email reach planning ranges">
+            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Business opportunity email expected views">
               <div class="ad-email-reach-head">
-                <h4 class="ad-email-reach-heading">Planning reach</h4>
+                <h4 class="ad-email-reach-heading">Expected views</h4>
                 <p class="ad-email-reach-sub">Guide ranges — not guaranteed</p>
               </div>
               <div class="ad-reach-tier-grid">
                 <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Launch</h5>
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Opportunity emails</span><strong>250 – 750 / mo</strong></li>
-                  </ul>
-                </article>
-                <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Growth</h5>
                   <ul class="ad-reach-tier-stats">
                     <li><span>Opportunity emails</span><strong>1.2k – 3.5k / mo</strong></li>
-                  </ul>
-                </article>
-                <article class="ad-reach-tier">
-                  <h5 class="ad-reach-tier-name">Scale</h5>
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Opportunity emails</span><strong>4k – 12k / mo</strong></li>
                   </ul>
                 </article>
               </div>
@@ -867,7 +833,7 @@
 <script src="js/site-footer.js?v=20260722a" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp11"></script>
-<script src="js/advertising-page.js?v=20260722ad20"></script>
+<script src="js/advertising-page.js?v=20260722ad22"></script>
 <script src="js/city-partner-advertising.js?v=20260722cp12"></script>
 
 </body>
