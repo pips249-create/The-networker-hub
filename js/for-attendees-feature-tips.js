@@ -16,17 +16,17 @@
     'fa-ask-hubert': {
       title: 'Ask Hubert',
       body:
-        'Hubert is the hub\'s AI concierge. Ask in plain English for events, organisers, or Business Opps near you — signed in from My Hub.',
+        'Hubert is the hub\'s AI concierge. Ask in plain English for events, organisers, or Business Opportunities near you — signed in from My Hub.',
     },
     'fa-business-opps-directory': {
-      title: 'Business Opps directory',
+      title: 'Business Opportunities directory',
       body:
-        'The Business Opps section lists franchises, side hustles, and partnerships across the UK. Compare listings and send enquiries from your account.',
+        'The Business Opportunities section lists franchises, side hustles, and partnerships across the UK. Compare listings and send enquiries from your account.',
     },
     'fa-saved-opp-search': {
       title: 'Saved opportunity searches',
       body:
-        'Save a search on the Business Opps browse page. We email you when new listings match your filters — handy for franchises or sectors you are watching.',
+        'Save a search on the Business Opportunities browse page. We email you when new listings match your filters — handy for franchises or sectors you are watching.',
     },
     'fa-member-rates': {
       title: 'Member rates',

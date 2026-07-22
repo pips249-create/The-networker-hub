@@ -1,17 +1,7 @@
 /**
- * Organiser workspace — larger text toggle and step-by-step page guides.
+ * Organiser workspace — step-by-step page guides.
  */
 (function () {
-  var LARGE_TEXT_KEY = 'tnh_org_large_text_v1';
-
-  try {
-    if (localStorage.getItem(LARGE_TEXT_KEY) === '1') {
-      document.body.classList.add('organiser-large-text');
-    }
-  } catch (e) {
-    /* private mode */
-  }
-
   var GUIDES = {
     dashboard: {
       title: 'How to use Overview',
@@ -145,22 +135,6 @@
     return hash;
   }
 
-  function readLargeTextPref() {
-    try {
-      return localStorage.getItem(LARGE_TEXT_KEY) === '1';
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function applyLargeText(enabled) {
-    document.body.classList.toggle('organiser-large-text', !!enabled);
-    var btn = document.getElementById('org-large-text-toggle');
-    if (!btn) return;
-    btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-    btn.textContent = enabled ? 'Normal text' : 'Larger text';
-  }
-
   function setGuideOpen(open) {
     var wrap = document.getElementById('org-page-guide-wrap');
     var toggle = document.getElementById('org-guide-toggle');
@@ -199,22 +173,6 @@
       .join('');
   }
 
-  function bindLargeTextToggle() {
-    applyLargeText(readLargeTextPref());
-    var btn = document.getElementById('org-large-text-toggle');
-    if (!btn || btn.dataset.comfortBound) return;
-    btn.dataset.comfortBound = '1';
-    btn.addEventListener('click', function () {
-      var next = !readLargeTextPref();
-      try {
-        localStorage.setItem(LARGE_TEXT_KEY, next ? '1' : '0');
-      } catch (e) {
-        /* private mode */
-      }
-      applyLargeText(next);
-    });
-  }
-
   function bindPageGuides() {
     var toggle = document.getElementById('org-guide-toggle');
     var closeBtn = document.getElementById('org-page-guide-close');
@@ -245,7 +203,6 @@
   }
 
   function init() {
-    bindLargeTextToggle();
     bindPageGuides();
     hookRouteChanges();
     syncPageGuide();

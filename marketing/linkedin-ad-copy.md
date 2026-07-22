@@ -6,17 +6,17 @@ Square PDFs for LinkedIn document posts, carousels, or DMs. All hosted at `/asse
 
 | PDF | Audience | What it covers |
 |-----|----------|----------------|
-| **`attendee-benefits-linkedin.pdf`** | Attendees | Why browse here: events, organisers, Business Opps in one place |
-| **`business-opps-explainer-linkedin.pdf`** | Entrepreneurs / browsers | **What is the Business Opps page?** Types, filters, browse free |
+| **`attendee-benefits-linkedin.pdf`** | Attendees | Why browse here: events, organisers, Business Opportunities in one place |
+| **`business-opportunities-explainer-linkedin.pdf`** | Entrepreneurs / browsers | **What is the Business Opportunities page?** Types, filters, browse free |
 | **`organiser-benefits-linkedin.pdf`** | Organisers | Why switch: pricing, discovery, dashboard, memberships, networking tools |
 | **`list-business-opportunity-linkedin.pdf`** | Providers | How to list an opportunity: steps and pricing |
 | `list-business-opportunity-guide.pdf` | Providers | A4 printable: full how-to-list guide |
 
 **Downloads folder copies:**
 - `Networker Hub - Why Browse Here (LinkedIn).pdf`
-- `Networker Hub - What is Business Opps (LinkedIn).pdf`
+- `Networker Hub - What is Business Opportunities (LinkedIn).pdf`
 - `Networker Hub - Organiser Benefits (LinkedIn).pdf`
-- `Networker Hub - How to List Business Opps (LinkedIn).pdf`
+- `Networker Hub - How to List Business Opportunities (LinkedIn).pdf`
 
 Re-export all LinkedIn PDFs:
 
@@ -28,14 +28,14 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 
 ---
 
-## What is the Business Opps page? (LinkedIn post copy)
+## What is the Business Opportunities page? (LinkedIn post copy)
 
 **Intro text**
 > Looking for a franchise, side hustle, or partnership, but tired of scrolling generic job boards?
 >
-> **Business Opps** on The Networker Hub is a free-to-browse UK directory for franchises, side hustles, partnerships, distributorships, and networking openings. Filter by type, investment budget, and location, then enquire directly with providers. No per-lead fees. Browse free; sign up only when you're ready to enquire.
+> **Business Opportunities** on The Networker Hub is a free-to-browse UK directory for franchises, side hustles, partnerships, distributorships, and networking openings. Filter by type, investment budget, and location, then enquire directly with providers. No per-lead fees. Browse free; sign up only when you're ready to enquire.
 
-**Headline:** What is Business Opps?  
+**Headline:** What are Business Opportunities?  
 **CTA:** Learn more  
 **URL:** https://thenetworkerhub.com/opportunities
 
@@ -73,11 +73,11 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 
 | File | Use for |
 |------|---------|
-| **`marketing/exports/business-opps-browse.mp4`** | Business Opps browse ad, navy/gold |
+| **`marketing/exports/business-opps-browse.mp4`** | Business Opportunities browse ad, navy/gold |
 | **`marketing/exports/organiser-why-switch.mp4`** | Organiser “Why switch” ad |
 | `marketing/exports/find-your-next-attendee-dark-15s.mp4` | Attendee “Find your next…” ad |
 
-Also in Downloads: Business Opps Ad, Why Switch Organiser Ad, Find Your Next.
+Also in Downloads: Business Opportunities Ad, Why Switch Organiser Ad, Find Your Next.
 
 Re-export videos:
 
@@ -90,7 +90,7 @@ node export-ad-video.mjs attendee dark
 
 ---
 
-## Business Opps browse ad
+## Business Opportunities browse ad
 
 **Intro text**
 > Looking for your next business move?
@@ -147,5 +147,5 @@ node export-ad-video.mjs attendee dark
 | **Campaign hook** | Find your next… |
 | **Attendee end card** | Where useful business conversations begin. |
 | **Organiser end card** | List where networkers already browse. |
-| **Business Opps** | Franchises, side hustles and partnerships: browse free |
+| **Business Opportunities** | Franchises, side hustles and partnerships: browse free |
 | **Platform** | Connect and grow across the UK's business network |

@@ -8475,7 +8475,7 @@ body.org-event-drawer-open {
   }
 }
 
-/* Workspace comfort — larger text + step-by-step guides */
+/* Workspace comfort — step-by-step guides */
 .org-workspace-comfort {
   width: 100%;
   max-width: 1200px;
@@ -8584,62 +8584,3 @@ body.org-event-drawer-open {
   font-weight: 700;
 }
 
-.organiser-dashboard-page .org-large-text-toggle {
-  width: 100%;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-}
-
-.organiser-dashboard-page .org-large-text-toggle[aria-pressed='true'] {
-  color: var(--od-purple-dark, #2d1b3d);
-  font-weight: 700;
-}
-
-body.organiser-dashboard-page.organiser-large-text .hub-side-nav--minimal .hub-side-nav-link {
-  font-size: 1rem;
-  padding-top: 0.65rem;
-  padding-bottom: 0.65rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-page-title {
-  font-size: clamp(1.55rem, 4vw, 2rem);
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-page-lead,
-body.organiser-dashboard-page.organiser-large-text .org-workspace-map,
-body.organiser-dashboard-page.organiser-large-text .org-section-sub {
-  font-size: 1.0625rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-guide-toggle {
-  font-size: 1.0625rem;
-  min-height: 2.75rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-page-guide-head h2 {
-  font-size: 1.25rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-page-guide-steps li {
-  font-size: 1.0625rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-btn {
-  font-size: 1rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-table th,
-body.organiser-dashboard-page.organiser-large-text .org-table td {
-  font-size: 1rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-kpi-value {
-  font-size: 1.75rem;
-}
-
-body.organiser-dashboard-page.organiser-large-text .org-kpi-label {
-  font-size: 0.9375rem;
-}

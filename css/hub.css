@@ -467,6 +467,31 @@ a:hover { color: var(--charcoal); }
   color: var(--charcoal);
 }
 
+.nav-more-dropdown .nav-dropdown-toggle {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  min-height: 40px;
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  gap: 3px;
+}
+.nav-more-dropdown .nav-dropdown-toggle:hover,
+.nav-more-dropdown.is-open .nav-dropdown-toggle {
+  background: transparent;
+  border-color: transparent;
+  color: var(--lavender-deep);
+}
+
+.nav-signin {
+  color: var(--lavender-deep) !important;
+}
+.nav-signin:hover {
+  color: var(--charcoal) !important;
+}
+
 /*
  * Fixed nav offset from first paint — mirrors site-nav.js (has-site-nav branch).
  * Reserve space before JS runs so public pages (FAQ, events, etc.) don't CLS.

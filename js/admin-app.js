@@ -345,7 +345,6 @@
   var adminMetricsInflight = null;
   var ADMIN_METRICS_CACHE_KEY = 'tnh_admin_metrics_v2';
   var ADMIN_NAV_SECTIONS_KEY = 'tnh_admin_nav_sections_v1';
-  var ADMIN_LARGE_TEXT_KEY = 'tnh_admin_large_text_v1';
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'moderation'],
@@ -925,38 +924,6 @@
         return '<li>' + esc(step) + '</li>';
       })
       .join('');
-  }
-
-  function readAdminLargeTextPref() {
-    try {
-      return localStorage.getItem(ADMIN_LARGE_TEXT_KEY) === '1';
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function applyAdminLargeText(enabled) {
-    document.body.classList.toggle('admin-large-text', !!enabled);
-    var btn = document.getElementById('admin-large-text-toggle');
-    if (!btn) return;
-    btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-    btn.textContent = enabled ? 'Normal text' : 'Larger text';
-  }
-
-  function bindAdminLargeTextToggle() {
-    applyAdminLargeText(readAdminLargeTextPref());
-    var btn = document.getElementById('admin-large-text-toggle');
-    if (!btn || btn.dataset.bound) return;
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', function () {
-      var next = !readAdminLargeTextPref();
-      try {
-        localStorage.setItem(ADMIN_LARGE_TEXT_KEY, next ? '1' : '0');
-      } catch (e) {
-        /* private mode */
-      }
-      applyAdminLargeText(next);
-    });
   }
 
   function bindAdminPageGuides() {
@@ -15047,7 +15014,6 @@
     setTimeout(syncAdminLayoutOffset, 0);
     bindAdminMobileNav();
     bindAdminSidebarGroups();
-    bindAdminLargeTextToggle();
     bindAdminPageGuides();
     bindEventHealthForms();
     bindGroupCleanupForms();
@@ -15087,8 +15053,6 @@
     });
   });
 
-  applyAdminLargeText(readAdminLargeTextPref());
-  bindAdminLargeTextToggle();
   bindAdminPageGuides();
 
   adminMetricsCache = readCachedAdminMetrics();

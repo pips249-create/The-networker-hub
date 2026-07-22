@@ -14,7 +14,7 @@
           id: 'announce',
           label: 'New listing announce',
           caption:
-            '🆕 New on Business Opps — {{title}}\n\n{{description}}\n\nBrowse and enquire free: {{url}}',
+            '🆕 New on Business Opportunities — {{title}}\n\n{{description}}\n\nBrowse and enquire free: {{url}}',
           image: 'listing',
         },
         {
@@ -49,7 +49,7 @@
           id: 'premium',
           label: 'Premium spotlight',
           caption:
-            '⭐ Featured on Business Opps — {{title}}\n\n{{description}}\n\nExplore now: {{url}}',
+            '⭐ Featured on Business Opportunities — {{title}}\n\n{{description}}\n\nExplore now: {{url}}',
           image: 'listing',
         },
         {
@@ -237,7 +237,7 @@
           id: 'directory',
           label: 'Opportunities directory',
           caption:
-            'Browse franchises, side hustles, partnerships and more on Business Opps — free on The Networker Hub.\n\n{{url}}',
+            'Browse franchises, side hustles, partnerships and more on Business Opportunities — free on The Networker Hub.\n\n{{url}}',
           image: 'hub',
         },
         {
@@ -262,7 +262,7 @@
         },
         {
           id: 'three_things',
-          label: 'Events · Opps',
+          label: 'Events · Opportunities',
           caption:
             'The Networker Hub — your place for UK networking events and business opportunities.\n\nStart here: {{url}}',
           image: 'hub',

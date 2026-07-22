@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260722a';
+  var NAV_BUILD = '20260722b';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -291,20 +291,62 @@
     }
   }
 
+  function isMoreNavActive() {
+    return isLinkActive('organisers') || isLinkActive('faq') || isLinkActive('contact');
+  }
+
+  function moreNavDropdownHtml() {
+    var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
+    var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
+    var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
+    return (
+      '<div class="nav-dropdown nav-more-dropdown" id="nav-more">' +
+      '<button type="button" class="nav-dropdown-toggle' +
+      (isMoreNavActive() ? ' is-active' : '') +
+      '" id="nav-more-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-more-menu">' +
+      'More <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
+      '<div class="nav-dropdown-menu" id="nav-more-menu" role="menu" hidden>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('/events/?mode=organisers') +
+      '"' +
+      organiserActive +
+      '>Organisers</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('/faq') +
+      '"' +
+      faqActive +
+      '>Help</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('/contact') +
+      '"' +
+      contactActive +
+      '>Contact</a>' +
+      '</div></div>'
+    );
+  }
+
   function buildNavLinks(user, pending) {
     var html = '';
-    html += link('/', 'Home', 'home');
+    if (user) {
+      html += link('/', 'Home', 'home');
+    }
     html += link('/events/', 'Events', 'events');
     html += link('/opportunities/', 'Opportunities', 'opportunities');
-    html += link('/events/?mode=organisers', 'Organisers', 'organisers');
-    html += link('/faq', 'Help', 'faq');
+    if (user) {
+      html += link('/events/?mode=organisers', 'Organisers', 'organisers');
+      html += link('/faq', 'Help', 'faq');
+    }
     if (pending && !user) {
       html +=
         '<span class="nav-auth-pending" aria-hidden="true">' +
+        '<span class="nav-auth-pending-pill nav-auth-pending-pill--short"></span>' +
         '<span class="nav-auth-pending-pill"></span>' +
         '<span class="nav-auth-pending-pill nav-auth-pending-pill--short"></span>' +
         '</span>';
       return html;
+    }
+    if (!user) {
+      html += moreNavDropdownHtml();
     }
     if (showListEventCta(user)) {
       html += listEventCta();
@@ -320,19 +362,27 @@
       }
       html += myHubDropdownHtml(user);
     } else {
-      html += link('/contact', 'Contact', 'contact');
-      html += link('/login', 'Sign in', 'auth');
+      html += link('/login', 'Sign in', 'auth', 'nav-signin');
     }
     return html;
   }
 
   function buildMobileDrawerLinks(user, pending) {
     var html = '';
-    html += link('/', 'Home', 'home', 'nav-mobile-item');
+    if (user) {
+      html += link('/', 'Home', 'home', 'nav-mobile-item');
+    }
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
-    html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
-    html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+    if (user) {
+      html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+      html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+    } else {
+      html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
+      html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+      html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+      html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
+    }
     if (pending && !user) {
       html +=
         '<span class="nav-mobile-auth-pending" aria-hidden="true">' +
@@ -367,8 +417,7 @@
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
     } else {
-      html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
-      html += link('/login', 'Sign in', 'auth', 'nav-mobile-item');
+      html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     }
     return html;
   }
@@ -436,13 +485,13 @@
     }
   }
 
-  function bindMyHubDropdown(nav) {
-    var wrap = nav.querySelector('#nav-my-hub');
+  function bindNavDropdown(nav, wrapId, toggleId, menuId) {
+    var wrap = nav.querySelector('#' + wrapId);
     if (!wrap || wrap.dataset.bound) return;
     wrap.dataset.bound = '1';
 
-    var toggle = wrap.querySelector('#nav-my-hub-toggle');
-    var menu = wrap.querySelector('#nav-my-hub-menu');
+    var toggle = wrap.querySelector('#' + toggleId);
+    var menu = wrap.querySelector('#' + menuId);
     if (!toggle || !menu) return;
 
     function closeMenu() {
@@ -470,6 +519,14 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeMenu();
     });
+  }
+
+  function bindMyHubDropdown(nav) {
+    bindNavDropdown(nav, 'nav-my-hub', 'nav-my-hub-toggle', 'nav-my-hub-menu');
+  }
+
+  function bindMoreDropdown(nav) {
+    bindNavDropdown(nav, 'nav-more', 'nav-more-toggle', 'nav-more-menu');
   }
 
   function renderImpersonationBanner(sessionData) {
@@ -616,6 +673,7 @@
     }
 
     bindMyHubDropdown(nav);
+    bindMoreDropdown(nav);
 
     var signOut = document.getElementById('nav-signout');
     if (signOut) {

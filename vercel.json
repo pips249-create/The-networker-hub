@@ -29,6 +29,11 @@
     { "source": "/account/index.html", "destination": "/account/", "permanent": true },
     { "source": "/organiser/index.html", "destination": "/organiser/", "permanent": true },
     { "source": "/admin/index.html", "destination": "/admin/", "permanent": true },
+    {
+      "source": "/assets/guides/business-opps-explainer-linkedin.pdf",
+      "destination": "/assets/guides/business-opportunities-explainer-linkedin.pdf",
+      "permanent": true
+    },
     { "source": "/advertising.html", "destination": "/advertising", "permanent": true },
     { "source": "/advertising-cta-preview.html", "destination": "/advertising-cta-preview", "permanent": true },
     { "source": "/p-tnh-ev-hub-k7m2.html", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },

@@ -18,9 +18,9 @@ fs.mkdirSync(assetsDir, { recursive: true });
 
 const LINKEDIN_PDFS = [
   {
-    html: 'linkedin-pdf-business-opps-explainer.html',
-    file: 'business-opps-explainer-linkedin.pdf',
-    download: 'Networker Hub - What is Business Opps (LinkedIn).pdf',
+    html: 'linkedin-pdf-business-opportunities-explainer.html',
+    file: 'business-opportunities-explainer-linkedin.pdf',
+    download: 'Networker Hub - What is Business Opportunities (LinkedIn).pdf',
   },
   {
     html: 'linkedin-pdf-organiser-benefits.html',
@@ -35,7 +35,7 @@ const LINKEDIN_PDFS = [
   {
     html: 'list-business-opportunity-linkedin.html',
     file: 'list-business-opportunity-linkedin.pdf',
-    download: 'Networker Hub - How to List Business Opps (LinkedIn).pdf',
+    download: 'Networker Hub - How to List Business Opportunities (LinkedIn).pdf',
   },
 ];
 

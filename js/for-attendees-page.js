@@ -63,7 +63,7 @@
     },
     enquiries: {
       title: 'My enquiries',
-      text: 'Track enquiries you sent to franchise, side hustle, and partnership listings on Business Opps.'
+      text: 'Track enquiries you sent to franchise, side hustle, and partnership listings on Business Opportunities.'
     }
   };
 
