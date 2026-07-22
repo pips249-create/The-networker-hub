@@ -370,7 +370,16 @@ async function fetchMatchingRows(sb, params, select, options) {
 }
 
 async function fetchBrowseTypeCounts(sb, params) {
-  const types = ['meeting', 'events', 'exhibition', 'awards', 'webinar', 'workshop', 'masterclass'];
+  const types = [
+    'meeting',
+    'conference',
+    'events',
+    'exhibition',
+    'awards',
+    'webinar',
+    'workshop',
+    'masterclass',
+  ];
   const base = { ...params, types: [] };
   let query = sb.from(BROWSE_VIEW).select('type_tab, latitude, longitude, format_tab');
   query = applyBrowseFilters(query, base);
