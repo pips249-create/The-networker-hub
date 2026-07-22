@@ -130,6 +130,8 @@
   const shareQuickX = document.getElementById('ep-share-x');
   const shareQuickWhatsapp = document.getElementById('ep-share-whatsapp');
   const shareQuickEmail = document.getElementById('ep-share-email');
+  const shareLinkedInPrimary = document.getElementById('ep-share-linkedin-primary');
+  const shareCustomiseLink = document.getElementById('ep-share-customise');
 
   const META_PIN_SVG =
     '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
@@ -216,6 +218,86 @@
         promoteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
+  }
+
+  function markShareDone() {
+    if (window.HubCommsPack && window.HubCommsPack.markEventShareDone) {
+      window.HubCommsPack.markEventShareDone();
+    }
+  }
+
+  function applyShareCaption(caption) {
+    if (!sharePack) return;
+    sharePack.caption = caption || '';
+    const captionEl = document.getElementById('ep-comms-caption');
+    if (captionEl) captionEl.textContent = sharePack.caption;
+    updateShareQuickLinks(sharePack.title, sharePack.caption);
+  }
+
+  function renderCaptionVariants(pack) {
+    const wrap = document.getElementById('ep-caption-variants');
+    const list = document.getElementById('ep-caption-variant-list');
+    const variants = (pack && pack.variants) || [];
+    if (!wrap || !list || variants.length < 2) {
+      if (wrap) wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    list.innerHTML = variants
+      .map(function (variant, index) {
+        const checked = index === 0 ? ' checked' : '';
+        return (
+          '<label class="ep-caption-variant">' +
+          '<input type="radio" name="ep-caption-variant" value="' +
+          esc(variant.id) +
+          '"' +
+          checked +
+          ' />' +
+          '<span>' +
+          esc(variant.label) +
+          '</span></label>'
+        );
+      })
+      .join('');
+
+    list.querySelectorAll('input[name="ep-caption-variant"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        const selected = variants.find(function (variant) {
+          return variant.id === input.value;
+        });
+        if (selected) applyShareCaption(selected.caption);
+      });
+    });
+  }
+
+  let commsPackBound = false;
+
+  function bindShareCommsPack(root, pack) {
+    if (!root || !pack) return;
+    const urlEl = root.querySelector('[data-comms-url]');
+    if (urlEl) urlEl.textContent = pack.url || '';
+    renderCaptionVariants(pack);
+    applyShareCaption(pack.caption || '');
+    if (commsPackBound) return;
+    commsPackBound = true;
+
+    root.querySelectorAll('[data-comms-copy]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        const kind = btn.getAttribute('data-comms-copy') || 'caption';
+        const text = kind === 'url' ? listingUrl : sharePack && sharePack.caption;
+        if (!text) return;
+        const feedback = document.getElementById('ep-copy-feedback');
+        const original = btn.textContent;
+        const copied = await copyText(text, feedback, '', 'Copied to clipboard');
+        if (copied) {
+          markShareDone();
+          btn.textContent = 'Copied!';
+          setTimeout(function () {
+            btn.textContent = original;
+          }, 2000);
+        }
+      });
+    });
   }
 
   function setShareUrls(title) {
@@ -356,19 +438,23 @@
   }
 
   async function ensureSharePack(ev) {
-    if (!window.HubOrganiserEventShare) return null;
+    if (!window.HubOrganiserEventShare && !window.HubCommsPack) return null;
     if (sharePackPromise) return sharePackPromise;
     sharePackPromise = (async function () {
       listingUrl = buildListingUrl(ev);
       const title = ev.title || fallbackTitle || 'Your event';
-      const caption = window.HubOrganiserEventShare.buildPromoCaption(ev, listingUrl);
-      sharePack = { title, url: listingUrl, caption };
+      if (window.HubCommsPack && window.HubCommsPack.buildEventCommsPack) {
+        sharePack = window.HubCommsPack.buildEventCommsPack(ev, listingUrl);
+        sharePack.title = title;
+      } else {
+        const caption = window.HubOrganiserEventShare.buildPromoCaption(ev, listingUrl);
+        sharePack = { title, url: listingUrl, caption };
+      }
       setShareUrls(title);
 
       const commsRoot = document.getElementById('ep-comms-preview');
-      if (window.HubCommsPack && commsRoot) {
-        if (sharePackEl) sharePackEl.hidden = false;
-        window.HubCommsPack.bindCommsPack(commsRoot, sharePack);
+      if (commsRoot) {
+        bindShareCommsPack(commsRoot, sharePack);
       }
 
       setShareImageState({ loading: true, dataUrl: '' });
@@ -447,7 +533,7 @@
       lead.textContent =
         'Your ' +
         eventIds.length +
-        ' dates are live on the hub. Share your listing or feature it in Premium Spotlight to reach more attendees.';
+        ' dates are live on the hub. Share your listing now to start filling seats.';
     }
 
     setShareUrls(title);
@@ -459,12 +545,44 @@
       date: ev.date || ev.dateLine,
       starts_at: ev.starts_at || ev.date || ev.dateLine,
       location: ev.location,
+      type: ev.type || ev.eventType,
+      eventType: ev.eventType || ev.type,
+      priceKey: ev.priceKey,
+      priceNum: ev.priceNum,
+      price: ev.price,
       imageUrl: photo,
       photo,
       imagePosition: ev.imagePosition || ev.photoPosition,
       organiserName: ev.organiserName || ev.groupName,
       organiserLogo: ev.organiserLogo,
     });
+  }
+
+  function sharePackEventFromSources(organiserEvent, hubEvent) {
+    const base = organiserEvent || hubEvent || {};
+    const hub = hubEvent || {};
+    return {
+      id: base.id || primaryId,
+      slug: base.slug || hub.slug,
+      title: base.title || hub.title || fallbackTitle,
+      description: plainDescription(base.description || hub.description),
+      date: base.date || hub.date || hub.dateLine,
+      starts_at: base.starts_at || base.date || hub.starts_at || hub.date,
+      location: base.location || hub.location,
+      type: base.type || hub.type || hub.eventType,
+      eventType: base.eventType || hub.eventType || base.type || hub.type,
+      priceKey: hub.priceKey || base.priceKey,
+      priceNum: hub.priceNum != null ? hub.priceNum : base.priceNum,
+      price: hub.price || base.price,
+      imageUrl: base.imageUrl || hub.imageUrl || hub.photo,
+      photo: base.imageUrl || hub.photo || hub.imageUrl,
+      imagePosition: base.imagePosition || hub.imagePosition || hub.photoPosition,
+      organiserName: base.organiserName || base.groupName || hub.organiserName || hub.groupName,
+      organiserLogo: base.organiserLogo || hub.organiserLogo,
+      approvalStatus: base.approvalStatus,
+      status: base.status,
+      listingStatus: base.listingStatus,
+    };
   }
 
   function markLiveOnBrowse(options) {
@@ -478,7 +596,7 @@
     }
     if (lead) {
       lead.textContent =
-        'Share your event now or feature it in Premium Spotlight to reach more attendees in your area.';
+        'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the hub.';
     }
     setPromoteVisibility(true, {
       scrollIntoView: options.scrollIntoView != null ? options.scrollIntoView : justPublished,
@@ -498,7 +616,7 @@
       }
       if (lead) {
         lead.textContent =
-          'You can still share your listing link now, or feature it in Premium Spotlight while we complete review.';
+          'You can share your listing link now while we finish a quick review.';
       }
       setPromoteVisibility(true);
       return;
@@ -547,38 +665,24 @@
         if (canPromoteEvent(organiserEvent)) markLiveOnBrowse();
         else markPendingApproval(organiserEvent);
         applyFeaturedStartIso(organiserEvent.date || organiserEvent.starts_at || '');
-        renderPreview({
-          id: organiserEvent.id,
-          slug: organiserEvent.slug,
-          title: organiserEvent.title,
-          description: organiserEvent.description,
-          date: organiserEvent.date,
-          location: organiserEvent.location,
-          imageUrl: organiserEvent.imageUrl,
-          photo: organiserEvent.imageUrl,
-          imagePosition: organiserEvent.imagePosition,
-          organiserName: organiserEvent.organiserName || organiserEvent.groupName,
-          organiserLogo: organiserEvent.organiserLogo,
-          approvalStatus: organiserEvent.approvalStatus,
-          status: organiserEvent.status,
-          listingStatus: organiserEvent.listingStatus,
-        });
-        if (organiserEvent.seriesGroupId) {
-          try {
-            const hubRes = await fetch('/api/hub-listings?id=' + encodeURIComponent(primaryId), {
-              cache: 'no-store',
-            });
-            const hubData = await hubRes.json();
-            if (hubData.seriesDates && hubData.seriesDates.length > 1) {
-              applyFeaturedStartIso(
-                organiserEvent.date || organiserEvent.starts_at || '',
-                hubData.seriesDates
-              );
-            }
-          } catch {
-            /* optional series enrichment */
+        let hubEvent = null;
+        try {
+          const hubRes = await fetch('/api/hub-listings?id=' + encodeURIComponent(primaryId), {
+            cache: 'no-store',
+          });
+          const hubData = await hubRes.json();
+          hubEvent = hubData && hubData.event ? hubData.event : null;
+          if (hubData.seriesDates && hubData.seriesDates.length > 1) {
+            applyFeaturedStartIso(
+              organiserEvent.date || organiserEvent.starts_at || '',
+              hubData.seriesDates
+            );
           }
+        } catch {
+          /* optional hub enrichment */
         }
+        const merged = sharePackEventFromSources(organiserEvent, hubEvent);
+        renderPreview(merged);
         return;
       }
     } catch {
@@ -615,6 +719,7 @@
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
     const copied = await copyText(listingUrl, feedback, '', 'Link copied to clipboard');
+    if (copied) markShareDone();
     if (!copied) {
       const input = document.getElementById('ep-share-url');
       if (input) {
@@ -630,11 +735,53 @@
     const btn = document.getElementById('ep-copy-caption');
     const original = btn ? btn.textContent : '';
     const copied = await copyText(sharePack && sharePack.caption, feedback, '', 'Caption copied to clipboard');
+    if (copied) {
+      markShareDone();
+      if (btn) {
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.textContent = original || 'Copy social post';
+        }, 2000);
+      }
+    }
+  });
+
+  async function copyPostAndOpenLinkedIn() {
+    const feedback = document.getElementById('ep-copy-feedback');
+    const btn = shareLinkedInPrimary;
+    const original = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Copying…';
+    }
+    const caption = (sharePack && sharePack.caption) || listingUrl;
+    const copied = await copyText(
+      caption,
+      feedback,
+      '',
+      'Post copied — paste it into LinkedIn'
+    );
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = copied ? 'Copied — opening LinkedIn…' : original || 'Copy post & open LinkedIn';
+    }
+    window.open('https://www.linkedin.com/feed/', '_blank', 'noopener,noreferrer');
+    if (copied) markShareDone();
     if (copied && btn) {
-      btn.textContent = 'Copied!';
-      setTimeout(() => {
-        btn.textContent = original || 'Copy social post';
-      }, 2000);
+      setTimeout(function () {
+        btn.textContent = original || 'Copy post & open LinkedIn';
+      }, 2500);
+    }
+  }
+
+  shareLinkedInPrimary?.addEventListener('click', copyPostAndOpenLinkedIn);
+
+  shareCustomiseLink?.addEventListener('click', function () {
+    if (!primaryId) return;
+    try {
+      sessionStorage.setItem('hub_promote_event_id', primaryId);
+    } catch {
+      /* ignore private mode */
     }
   });
 
@@ -643,6 +790,7 @@
     const name =
       window.HubOrganiserEventShare.safeFilename(sharePack && sharePack.title) + '-event-promo.png';
     window.HubOrganiserEventShare.downloadPngDataUrl(shareCardDataUrl, name);
+    markShareDone();
   }
 
   downloadImageBtn?.addEventListener('click', downloadShareImage);

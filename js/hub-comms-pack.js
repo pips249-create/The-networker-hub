@@ -2,6 +2,8 @@
  * Organiser comms pack — social caption + link for publish success pages.
  */
 (function (global) {
+  var SHARE_DONE_KEY = 'hub_getting_started_share_done';
+
   function trimText(text, max) {
     var s = String(text || '')
       .replace(/\s+/g, ' ')
@@ -10,19 +12,157 @@
     return s.slice(0, max - 1).trim() + '…';
   }
 
-  function buildEventCommsPack(ev, listingUrl) {
-    var title = String((ev && ev.title) || 'Our event').trim();
-    var url = String(listingUrl || '').trim();
+  function normalizeEventKind(ev) {
+    var raw = String(
+      (ev && (ev.eventType || ev.type || ev.event_type || ev.meetingType || ev.format)) || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (/conference|summit/.test(raw)) return 'conference';
+    if (/exhibition|exhibit/.test(raw)) return 'conference';
+    if (/webinar|workshop|masterclass|awards/.test(raw)) return 'conference';
+    return 'networking';
+  }
+
+  function isFreeEvent(ev) {
+    if (ev && ev.priceKey === 'free') return true;
+    if (ev && ev.isFree === true) return true;
+    var priceRaw = ev && (ev.priceNum != null ? ev.priceNum : ev.price);
+    var n = Number(priceRaw);
+    if (Number.isFinite(n)) return n <= 0;
+    var label = String((ev && ev.price) || '').trim().toLowerCase();
+    return !label || label === 'free' || label === '£0' || label === '£0.00';
+  }
+
+  function eventMetaLine(ev) {
     var date = String((ev && (ev.date || ev.dateLine)) || '').trim();
     var location = String((ev && ev.location) || '').trim();
-    var meta = [date, location].filter(Boolean).join(' · ');
-    var caption =
-      "We've just added a new event:\n\n📅 " +
-      title +
-      (meta ? '\n\n' + meta : '') +
-      '\n\nBuy tickets now on The Networker Hub:\n' +
-      url;
-    return { title: title, url: url, caption: caption };
+    return [date, location].filter(Boolean).join(' · ');
+  }
+
+  function buildEventCaptionVariants(ev, listingUrl) {
+    var title = String((ev && ev.title) || 'Our event').trim();
+    var url = String(listingUrl || '').trim();
+    var meta = eventMetaLine(ev);
+    var kind = normalizeEventKind(ev);
+    var free = isFreeEvent(ev);
+    var metaBlock = meta ? '\n\n' + meta : '';
+
+    var variants = [];
+
+    if (kind === 'networking') {
+      if (free) {
+        variants.push({
+          id: 'networking_free',
+          label: 'Networking meetup — free',
+          caption:
+            "We're hosting a networking meetup — come and meet local business owners.\n\n📅 " +
+            title +
+            metaBlock +
+            '\n\nFree to attend — save your place on The Networker Hub:\n' +
+            url,
+        });
+        variants.push({
+          id: 'networking_free_warm',
+          label: 'Warm invite — free meetup',
+          caption:
+            'Looking for a friendly room of business owners to connect with?\n\n📅 ' +
+            title +
+            metaBlock +
+            '\n\nIt is free to join — register on The Networker Hub:\n' +
+            url,
+        });
+      } else {
+        variants.push({
+          id: 'networking_paid',
+          label: 'Networking meetup — tickets',
+          caption:
+            'Our next networking meetup is open for booking.\n\n📅 ' +
+            title +
+            metaBlock +
+            '\n\nGet your ticket on The Networker Hub:\n' +
+            url,
+        });
+        variants.push({
+          id: 'networking_paid_short',
+          label: 'Short & direct — tickets',
+          caption:
+            '📅 ' +
+            title +
+            metaBlock +
+            '\n\nBook your place on The Networker Hub:\n' +
+            url,
+        });
+      }
+    } else if (free) {
+      variants.push({
+        id: 'conference_free',
+        label: 'Conference / exhibition — free entry',
+        caption:
+          'Join us at ' +
+          title +
+          ' — a chance to connect with peers in your industry.' +
+          metaBlock +
+          '\n\nRegister free on The Networker Hub:\n' +
+          url,
+      });
+      variants.push({
+        id: 'conference_free_announce',
+        label: 'Announcement — free event',
+        caption:
+          "We've just opened registration for:\n\n📅 " +
+          title +
+          metaBlock +
+          '\n\nFree entry — save your place on The Networker Hub:\n' +
+          url,
+      });
+    } else {
+      variants.push({
+        id: 'conference_paid',
+        label: 'Conference / exhibition — tickets',
+        caption:
+          'Tickets are now available for ' +
+          title +
+          '.' +
+          metaBlock +
+          '\n\nBook on The Networker Hub:\n' +
+          url,
+      });
+      variants.push({
+        id: 'conference_paid_announce',
+        label: 'Now on sale',
+        caption:
+          "We've just added a new event:\n\n📅 " +
+          title +
+          metaBlock +
+          '\n\nGet your ticket on The Networker Hub:\n' +
+          url,
+      });
+    }
+
+    var defaultId = variants[0] ? variants[0].id : 'default';
+    return {
+      title: title,
+      url: url,
+      caption: variants[0] ? variants[0].caption : '',
+      variants: variants,
+      defaultVariantId: defaultId,
+      kind: kind,
+      free: free,
+    };
+  }
+
+  function buildEventCommsPack(ev, listingUrl) {
+    var pack = buildEventCaptionVariants(ev, listingUrl);
+    return {
+      title: pack.title,
+      url: pack.url,
+      caption: pack.caption,
+      variants: pack.variants,
+      defaultVariantId: pack.defaultVariantId,
+      kind: pack.kind,
+      free: pack.free,
+    };
   }
 
   function buildOpportunityCommsPack(opp, listingUrl) {
@@ -58,6 +198,7 @@
         var original = btn.textContent;
         function done() {
           btn.textContent = 'Copied!';
+          markEventShareDone();
           window.setTimeout(function () {
             btn.textContent = original;
           }, 2000);
@@ -74,9 +215,33 @@
     });
   }
 
+  function markEventShareDone() {
+    try {
+      localStorage.setItem(SHARE_DONE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    if (global.orgDashUpdateGettingStarted) {
+      global.orgDashUpdateGettingStarted();
+    }
+  }
+
+  function isEventShareDone() {
+    try {
+      return localStorage.getItem(SHARE_DONE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
   global.HubCommsPack = {
     buildEventCommsPack: buildEventCommsPack,
+    buildEventCaptionVariants: buildEventCaptionVariants,
     buildOpportunityCommsPack: buildOpportunityCommsPack,
     bindCommsPack: bindCommsPack,
+    markEventShareDone: markEventShareDone,
+    isEventShareDone: isEventShareDone,
+    normalizeEventKind: normalizeEventKind,
+    isFreeEvent: isFreeEvent,
   };
 })(typeof window !== 'undefined' ? window : global);

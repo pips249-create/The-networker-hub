@@ -1521,6 +1521,193 @@ a.ee-wizard-link:hover {
   margin-top: 0;
   padding-top: 0;
   border-top: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.organiser-published-page .ep-promote-split {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 960px) {
+  .organiser-published-page .ep-promote-split {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: start;
+  }
+}
+
+.organiser-published-page .ep-promote-split-col {
+  min-width: 0;
+}
+
+.organiser-published-page .ep-share-card--hero {
+  margin-bottom: 0;
+  border: 1px solid rgba(154, 122, 168, 0.28);
+  box-shadow: 0 10px 32px rgba(154, 122, 168, 0.1);
+}
+
+.organiser-published-page .ep-spotlight-secondary {
+  margin-bottom: 0;
+  border-color: rgba(201, 150, 31, 0.4);
+  background: linear-gradient(180deg, #fffdf8 0%, #fff 52%, #faf6ee 100%);
+}
+
+.ep-caption-variants {
+  margin: 0 0 12px;
+}
+
+.ep-caption-variant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ep-caption-variant {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  background: #faf8f4;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ee-text-mid);
+  cursor: pointer;
+}
+
+.ep-caption-variant:has(input:checked) {
+  border-color: rgba(154, 122, 168, 0.55);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(154, 122, 168, 0.12);
+}
+
+.ep-caption-variant input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.ep-instagram-tip {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--ee-radius);
+  border: 1px solid rgba(154, 122, 168, 0.22);
+  background: linear-gradient(180deg, #faf6fc 0%, #fff 100%);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ee-text-mid);
+}
+
+.ep-instagram-tip strong {
+  color: var(--ee-purple-dark);
+}
+
+.organiser-published-page .ep-share-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ee-purple-dark);
+}
+
+.organiser-published-page .ep-share-heading {
+  margin: 0 0 8px;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: var(--ee-text);
+}
+
+.organiser-published-page .ep-share-lead {
+  margin: 0 0 18px;
+  max-width: 40em;
+  line-height: 1.55;
+}
+
+.organiser-published-page .ep-share-primary-action {
+  margin: 0 0 20px;
+}
+
+.organiser-published-page .ep-share-quick-label {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-text-soft);
+}
+
+.ep-linkedin-next {
+  margin: 12px 0 0;
+  max-width: 36em;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ee-text-mid);
+}
+
+.ep-linkedin-next kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--ee-border);
+  background: #fff;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.ep-share-more {
+  margin: 16px 0 0;
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+  background: #faf8f4;
+}
+
+.ep-share-more summary {
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-text-mid);
+  cursor: pointer;
+  list-style: none;
+}
+
+.ep-share-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.ep-share-more summary::after {
+  content: ' ▾';
+  font-size: 12px;
+}
+
+.ep-share-more[open] summary::after {
+  content: ' ▴';
+}
+
+.ep-share-more-body {
+  padding: 0 14px 14px;
+}
+
+.ep-share-more .ep-share-quick {
+  margin: 0;
+}
+
+.organiser-published-page .ep-share-customise {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--ee-text-mid);
+}
+
+.organiser-published-page .ep-share-customise a {
+  font-weight: 600;
+  color: var(--ee-purple);
+  text-decoration: none;
+}
+
+.organiser-published-page .ep-share-customise a:hover {
+  text-decoration: underline;
 }
 
 .organiser-published-page .ep-promote-kicker {
@@ -1574,6 +1761,10 @@ a.ee-wizard-link:hover {
 
 .organiser-published-page .ep-promote-row .ep-share-pack {
   grid-template-columns: 1fr;
+}
+
+.organiser-published-page .ep-share-card--hero .ep-share-pack {
+  margin-top: 0;
 }
 
 .organiser-published-page .ep-promote-skip {

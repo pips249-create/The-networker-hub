@@ -55,9 +55,9 @@
       beforeShow: goDashboard,
     },
     {
-      title: 'Promote & social',
-      body: 'Boost visibility with Premium Spotlight, build LinkedIn post images, and share your ranking badge when you earn one.',
-      target: '.org-social-nav',
+      title: 'Share your event',
+      body: 'Make a free LinkedIn post with ready-made words and a picture, or pay for extra visibility on the hub.',
+      target: '.org-social-tabs',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('social');
       },
@@ -311,6 +311,10 @@
         }
         if (action === 'event' && typeof window.orgDashSetRoute === 'function') {
           window.orgDashSetRoute('events-list');
+          return;
+        }
+        if (action === 'share') {
+          if (window.orgDashOpenShareEvent) window.orgDashOpenShareEvent();
           return;
         }
         if (action === 'team' && typeof window.orgDashSetRoute === 'function') {

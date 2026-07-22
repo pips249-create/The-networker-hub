@@ -301,22 +301,14 @@
 
   function buildOrganiserPromoCaption(ev, listingUrl) {
     if (global.HubCommsPack && global.HubCommsPack.buildEventCommsPack) {
-      return global.HubCommsPack.buildEventCommsPack(
-        {
-          title: ev && ev.title,
-          date: formatShareDate(ev && (ev.starts_at || ev.date || ev.dateLine)),
-          location: ev && ev.location,
-          description: ev && ev.description,
-        },
-        listingUrl
-      ).caption;
+      return global.HubCommsPack.buildEventCommsPack(ev, listingUrl).caption;
     }
     const title = String((ev && ev.title) || 'Our event').trim();
     const url = String(listingUrl || '').trim();
     return (
       "We've just added a new event:\n\n📅 " +
       title +
-      '\n\nBuy tickets now on The Networker Hub:\n' +
+      '\n\nBook your place on The Networker Hub:\n' +
       url
     );
   }

@@ -455,7 +455,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id, g.slug)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="#org-social-linkedin">Make a LinkedIn picture</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="#social" data-org-route="social">Make a LinkedIn picture</a>' +
       '</div></article>'
     );
   }
@@ -543,7 +543,6 @@
     const cardsEl = document.getElementById('org-ranking-share-cards');
     const examplesEl = document.getElementById('org-ranking-tier-examples');
     const groupsMount = document.getElementById('org-ranking-share-groups-mount');
-    const eventsPanel = document.getElementById('org-social-ranking');
 
     const periodLabel =
       (bestGroupRanking() && bestGroupRanking().periodLabel) ||
@@ -1185,6 +1184,84 @@
 
   let linkedInPostBuilder = null;
 
+  const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
+  let socialTabsBound = false;
+
+  function setSocialTab(tabId, options) {
+    options = options || {};
+    const tab = String(tabId || 'linkedin').toLowerCase();
+    const tabs = document.querySelectorAll('[data-social-tab]');
+    const panels = document.querySelectorAll('[data-social-panel]');
+    const hint = document.getElementById('org-social-tab-hint');
+
+    tabs.forEach(function (btn) {
+      const id = btn.getAttribute('data-social-tab');
+      const on = id === tab && !btn.hidden;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;
+    });
+
+    panels.forEach(function (panel) {
+      const id = panel.getAttribute('data-social-panel');
+      const on = id === tab;
+      panel.classList.toggle('is-active', on);
+      panel.hidden = !on;
+    });
+
+    if (hint) {
+      hint.hidden = tab !== 'linkedin';
+    }
+
+    if (tab === 'spotlight') ensureFeaturedUpgradePanelReady();
+    if (tab === 'linkedin') ensureLinkedInPostBuilder({ force: true });
+    if (tab === 'ranking') renderOrganiserRankingShare();
+
+    if (!options.skipStore) {
+      try {
+        sessionStorage.setItem(SOCIAL_TAB_STORAGE_KEY, tab);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  function socialTabFromHash() {
+    const hash = String(location.hash || '').toLowerCase();
+    if (hash.includes('spotlight') || hash.includes('featured')) return 'spotlight';
+    if (hash.includes('ranking') || hash.includes('badge')) return 'ranking';
+    if (hash.includes('linkedin') || hash.includes('social')) return 'linkedin';
+    return '';
+  }
+
+  function initSocialPageTabs() {
+    if (!socialTabsBound) {
+      socialTabsBound = true;
+      document.querySelectorAll('[data-social-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          setSocialTab(btn.getAttribute('data-social-tab'));
+        });
+      });
+    }
+
+    let tab = socialTabFromHash() || 'linkedin';
+    if (!socialTabFromHash()) {
+      try {
+        const stored = sessionStorage.getItem(SOCIAL_TAB_STORAGE_KEY);
+        if (stored === 'spotlight' || stored === 'ranking' || stored === 'linkedin') {
+          tab = stored;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const rankingTab = document.getElementById('org-social-tab-ranking');
+    if (tab === 'ranking' && rankingTab && rankingTab.hidden) tab = 'linkedin';
+
+    setSocialTab(tab, { skipStore: true });
+  }
+
   function isSocialPageActive() {
     return Boolean(document.querySelector('[data-org-page="social"].is-active'));
   }
@@ -1256,7 +1333,6 @@
       banner.innerHTML = html;
     });
 
-    const eventsPanel = document.getElementById('org-social-ranking');
     const hasRanking = Boolean(best);
     updateSocialRankingNav(hasRanking);
     if (hasRanking) {
@@ -7106,6 +7182,7 @@
       syncBusinessTabHighlights(null, false);
     }
     if (page === 'social') {
+      initSocialPageTabs();
       renderOrganiserRankingShare();
       ensureFeaturedUpgradePanelReady();
       requestAnimationFrame(function () {
@@ -11396,6 +11473,7 @@
       applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
       setRoute(r.sub || r.page);
+      if (r.page === 'social') initSocialPageTabs();
       if (
         r.page === 'groups' ||
         r.page === 'memberships' ||

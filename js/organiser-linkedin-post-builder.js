@@ -712,48 +712,48 @@
       '<div class="org-post-workspace">' +
       '<div class="org-post-builder-controls">' +
       '<div class="org-post-field">' +
-      '<span class="org-post-label">Category</span>' +
+      '<span class="org-post-label">What is this post about?</span>' +
       categoryTabsHtml +
-      '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity to unlock opportunity captions. <a href="#business-list">List a business opportunity →</a></p>' +
+      '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity first to unlock these options. <a href="#business-list">List a business opportunity →</a></p>' +
       '</div>' +
       '<div class="org-post-field">' +
-      '<span class="org-post-label">Caption</span>' +
+      '<span class="org-post-label">Pick ready-made words</span>' +
       '<div class="org-post-caption-options" id="post-caption-options" role="listbox" aria-label="Caption options"></div>' +
-      '<p class="org-post-hint">Pick a ready-made caption for this category, or write your own below.</p>' +
+      '<p class="org-post-hint">Tap one of the options above, or write your own text in the box below.</p>' +
       '</div>' +
       '<label class="org-post-field">' +
-      '<span class="org-post-label">Your caption</span>' +
-      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="7" maxlength="1200" aria-label="Post caption"></textarea>' +
+      '<span class="org-post-label">Your post text</span>' +
+      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="7" maxlength="1200" aria-label="Post text"></textarea>' +
       '</label>' +
       '<div class="org-post-field">' +
-      '<span class="org-post-label">Background</span>' +
+      '<span class="org-post-label">Choose a background colour</span>' +
       backgroundPickerHtml +
       '</div>' +
       '<label class="org-post-field">' +
-      '<span class="org-post-label">Organiser page</span>' +
+      '<span class="org-post-label">Your organiser page</span>' +
       '<select id="post-group" aria-label="Organiser page"></select>' +
       '</label>' +
       '<label class="org-post-field" id="post-event-field" hidden>' +
-      '<span class="org-post-label">Published event</span>' +
+      '<span class="org-post-label">Which event?</span>' +
       '<select id="post-event" aria-label="Published event"></select>' +
-      '<span class="org-post-hint">Uses the event photo, listing link and event details.</span>' +
+      '<span class="org-post-hint">We add your event photo, date, and booking link automatically.</span>' +
       '</label>' +
       '<label class="org-post-field" id="post-listing-field" hidden style="display:none">' +
-      '<span class="org-post-label">Live listing</span>' +
+      '<span class="org-post-label">Which business opportunity?</span>' +
       '<select id="post-listing" aria-label="Business opportunity listing"></select>' +
-      '<span class="org-post-hint">Caption links to this listing on The Networker Hub.</span>' +
+      '<span class="org-post-hint">The post will link to this listing on The Networker Hub.</span>' +
       '</label>' +
       '<label class="org-post-field">' +
-      '<span class="org-post-label">Display name</span>' +
-      '<input type="text" id="post-name" maxlength="60" placeholder="Your group or brand name" />' +
+      '<span class="org-post-label">Name shown on the picture</span>' +
+      '<input type="text" id="post-name" maxlength="60" placeholder="Your group or business name" />' +
       '</label>' +
       '<label class="org-post-field">' +
-      '<span class="org-post-label">Logo</span>' +
+      '<span class="org-post-label">Your logo (optional)</span>' +
       '<input type="file" id="post-logo-file" accept="image/*" />' +
-      '<span class="org-post-hint" id="post-logo-hint">Uses your organiser page logo when available. Upload to override.</span>' +
+      '<span class="org-post-hint" id="post-logo-hint">We use your organiser page logo when you have one. Upload a file here to use a different logo.</span>' +
       '</label>' +
       '<details class="org-post-advanced">' +
-      '<summary>Edit image headlines</summary>' +
+      '<summary>Change the words on the picture (optional)</summary>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Headline line 1</span>' +
       '<input type="text" id="post-line1" maxlength="48" />' +
@@ -763,19 +763,22 @@
       '<input type="text" id="post-line2" maxlength="48" />' +
       '</label>' +
       '<label class="org-post-field">' +
-      '<span class="org-post-label">Supporting line</span>' +
+      '<span class="org-post-label">Smaller line underneath</span>' +
       '<input type="text" id="post-line3" maxlength="90" />' +
       '</label>' +
       '</details>' +
+      '<div class="org-post-actions org-post-actions-primary">' +
+      '<button type="button" class="org-btn org-btn-gold" id="post-linkedin-primary">Copy text &amp; open LinkedIn</button>' +
+      '</div>' +
       '<div class="org-post-actions">' +
-      '<button type="button" class="org-btn org-btn-gold" id="post-download">Download image</button>' +
-      '<button type="button" class="org-btn org-btn-outline" id="post-copy-caption">Copy caption</button>' +
-      '<button type="button" class="org-btn org-btn-outline" id="post-reset">Reset caption</button>' +
+      '<button type="button" class="org-btn org-btn-outline" id="post-download">Download picture</button>' +
+      '<button type="button" class="org-btn org-btn-outline" id="post-copy-caption">Copy post text only</button>' +
+      '<button type="button" class="org-btn org-btn-outline" id="post-reset">Start again</button>' +
       '</div>' +
       '<p class="org-post-status" id="post-status" role="status"></p>' +
       '</div>' +
       '<div class="org-post-preview-wrap">' +
-      '<p class="org-post-label">Live preview</p>' +
+      '<p class="org-post-label">Preview — your LinkedIn picture</p>' +
       '<div class="org-post-preview-frame">' +
       '<canvas id="post-preview-canvas" width="' +
       W +
@@ -783,7 +786,7 @@
       H +
       '" aria-label="LinkedIn post image preview"></canvas>' +
       '</div>' +
-      '<p class="org-post-hint">1200×1200 — download the PNG, then paste your caption on LinkedIn.</p>' +
+      '<p class="org-post-hint">Download the picture, then paste your text when you create a post on LinkedIn. The picture is square — ideal for LinkedIn.</p>' +
       '</div>' +
       '</div>' +
       '</div>';
@@ -1410,7 +1413,7 @@
           return;
         }
         link.click();
-        setStatus('Downloaded — attach this image to your LinkedIn post with the caption.');
+        setStatus('Downloaded — attach this picture when you post on LinkedIn.');
       });
     }
 
@@ -1441,7 +1444,38 @@
         window.prompt('Copy this caption:', text);
         done();
       }
-      setStatus('Caption copied — paste it with your downloaded image on LinkedIn.');
+      setStatus('Text copied — paste it into your LinkedIn post along with the picture.');
+    }
+
+    function copyCaptionAndOpenLinkedIn() {
+      if (isOppTemplate() && !hasLiveListings()) {
+        setStatus('Publish a live business opportunity listing before copying this post.', true);
+        return;
+      }
+      var text = currentCaptionText();
+      if (!text) {
+        setStatus('Add some post text first — pick a ready-made option or type your own.', true);
+        return;
+      }
+      var btn = root.querySelector('#post-linkedin-primary');
+      var done = function () {
+        if (!btn) return;
+        var prev = btn.textContent;
+        btn.textContent = 'Copied — opening LinkedIn…';
+        setTimeout(function () {
+          btn.textContent = prev;
+        }, 2500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () {
+          window.prompt('Copy this text:', text);
+        });
+      } else {
+        window.prompt('Copy this text:', text);
+        done();
+      }
+      window.open('https://www.linkedin.com/feed/', '_blank', 'noopener,noreferrer');
+      setStatus('Text copied. On LinkedIn, click Start a post, paste the text, and attach your downloaded picture.');
     }
 
     function selectCategory(categoryId) {
@@ -1587,6 +1621,7 @@
     });
     root.querySelector('#post-download').addEventListener('click', downloadPng);
     root.querySelector('#post-copy-caption').addEventListener('click', copyCaption);
+    root.querySelector('#post-linkedin-primary').addEventListener('click', copyCaptionAndOpenLinkedIn);
     root.querySelector('#post-reset').addEventListener('click', function () {
       state.customCaption = false;
       applyGroupToFields(true);
