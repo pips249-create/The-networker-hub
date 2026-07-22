@@ -148,6 +148,14 @@
     <div class="events-filter-bar" role="search" aria-label="Filter events">
       <p class="events-filter-inbox-title filter-organiser-only" id="events-filter-inbox-heading">Filter organisers</p>
       <div class="filter-bar-row filter-bar-row-top">
+        <div class="filter-field filter-field-search filter-field-grow">
+          <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+          </span>
+          <label class="visually-hidden" for="search">Search events</label>
+          <input type="search" id="search" placeholder="Search anything — breakfast, women only, organiser, city…" autocomplete="off" aria-describedby="search-hint">
+          <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
+        </div>
         <div class="filter-bar-location-group filter-event-only">
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
@@ -195,14 +203,6 @@
             </select>
           </label>
         </div>
-        </div>
-        <div class="filter-field filter-field-search filter-field-grow">
-          <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-          </span>
-          <label class="visually-hidden" for="search">Search events</label>
-          <input type="search" id="search" placeholder="Search anything — breakfast, women only, organiser, city…" autocomplete="off" aria-describedby="search-hint">
-          <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
         </div>
       </div>
       <div class="filter-bar-row filter-bar-row-bottom">
