@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
-    <link rel="stylesheet" href="css/auth.css?v=20260722">
+    <link rel="stylesheet" href="css/auth.css?v=20260722c">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
 </head>
 <body class="auth-page">
@@ -20,24 +20,30 @@
 <main class="auth-main auth-main--split">
   <div class="auth-split">
     <aside class="auth-panel auth-panel--brand" aria-label="Events, Business Opps, and organisers">
-      <p class="auth-panel-kicker">For networkers</p>
-      <h1 class="auth-panel-title">Find your next <span class="auth-panel-accent" id="login-hero-word">event</span></h1>
-      <p class="auth-panel-lede">
+      <p class="auth-panel-kicker" id="auth-panel-kicker">For networkers</p>
+      <h1 class="auth-panel-title" id="auth-panel-title">Find your next <span class="auth-panel-accent" id="login-hero-word">event</span></h1>
+      <p class="auth-panel-lede" id="auth-panel-lede">
         Stop wasting time searching for your next event, business opportunities, or organisers — they can all be found on your Networker Hub.
       </p>
-      <ul class="auth-panel-points">
+      <ul class="auth-panel-points" id="auth-panel-points">
         <li>Browse &amp; book UK networking events</li>
         <li>Compare &amp; enquire on Business Opps</li>
         <li>Discover organisers &amp; read reviews</li>
         <li>My Hub dashboard &amp; smart alerts</li>
         <li>Guest visits &amp; member rates when signed in</li>
       </ul>
-      <a class="auth-panel-cta" href="/for-attendees">See what&rsquo;s included for networkers →</a>
+      <a class="auth-panel-cta" id="auth-panel-cta" href="/for-attendees">See what&rsquo;s included for networkers →</a>
     </aside>
 
     <div class="auth-panel auth-panel--form">
       <div class="auth-card auth-card--flat">
-        <h2 class="auth-form-title">Sign in</h2>
+        <div id="auth-intent-callout" class="auth-intent-callout" hidden>
+          <p class="auth-intent-callout-kicker" id="auth-intent-callout-kicker">Claim your organiser page</p>
+          <p class="auth-intent-callout-text" id="auth-intent-callout-text">
+            Step 1 of 2 — sign in with the email linked to your group. After sign-in you&rsquo;ll confirm your page in the organiser dashboard.
+          </p>
+        </div>
+        <h2 class="auth-form-title" id="login-form-title">Sign in</h2>
         <p class="auth-lede">Welcome back — use the email and password for your Hub account.</p>
 
         <div id="auth-message" class="auth-message" role="alert"></div>
@@ -67,9 +73,9 @@
         </form>
 
         <div class="auth-register-cta">
-          <p class="auth-register-text">New to The Networker Hub?</p>
+          <p class="auth-register-text" id="login-create-account-lead">New to The Networker Hub?</p>
           <a href="/register" class="auth-register-btn" id="login-create-account">Create a free account</a>
-          <p class="auth-register-hint">Free to join · about 2 minutes</p>
+          <p class="auth-register-hint" id="login-create-account-hint">Free to join · about 2 minutes</p>
         </div>
 
         <div class="auth-links">
@@ -81,6 +87,6 @@
 </main>
 
 <script src="js/find-your-next-rotate.js?v=20260722"></script>
-<script src="js/auth.js?v=20260722"></script>
+<script src="js/auth.js?v=20260722c"></script>
 </body>
 </html>

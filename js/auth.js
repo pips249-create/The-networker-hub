@@ -392,13 +392,63 @@
     var params = new URLSearchParams(window.location.search);
     if (params.get('intent') !== 'organiser-claim') return;
 
+    document.title = loginForm
+      ? 'Claim your organiser page – Sign in – The Networker Hub'
+      : 'Claim your organiser page – Create account – The Networker Hub';
+
+    var callout = document.getElementById('auth-intent-callout');
+    if (callout) callout.hidden = false;
+
+    var loginTitle = document.getElementById('login-form-title');
+    if (loginTitle) {
+      loginTitle.textContent = 'Sign in to claim your page';
+    }
+
     var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
     if (loginLede) {
       loginLede.textContent =
-        'Sign in with the email linked to your group on the Hub — or create a free account below if you are new. Next you will confirm your organiser page.';
+        'Use the email address your group listing is linked to on the Hub. If you are new here, create a free account below instead.';
     }
 
-    var registerTitle = document.querySelector('#register-form') && document.querySelector('.auth-card--wizard h1');
+    var panelKicker = document.getElementById('auth-panel-kicker');
+    if (panelKicker) panelKicker.textContent = 'For organisers';
+
+    var panelTitle = document.getElementById('auth-panel-title');
+    if (panelTitle) panelTitle.textContent = 'Claim your organiser page';
+
+    var panelLede = document.getElementById('auth-panel-lede');
+    if (panelLede) {
+      panelLede.textContent =
+        'Many UK networking groups are already listed from the legacy Networker directory. Sign in to verify ownership and take control of your profile.';
+    }
+
+    var panelPoints = document.getElementById('auth-panel-points');
+    if (panelPoints) {
+      panelPoints.innerHTML =
+        '<li>Sign in with your group\u2019s contact email</li>' +
+        '<li>Confirm the claim prompt on your organiser dashboard</li>' +
+        '<li>Update your logo, description, and contact details</li>' +
+        '<li>List your next event and manage bookings</li>';
+    }
+
+    var panelCta = document.getElementById('auth-panel-cta');
+    if (panelCta) {
+      panelCta.textContent = 'Read the full claim guide \u2192';
+      panelCta.setAttribute('href', '/guides/claim-your-organiser-page');
+    }
+
+    var createLead = document.getElementById('login-create-account-lead');
+    if (createLead) createLead.textContent = 'No Hub account yet?';
+
+    var createBtn = document.getElementById('login-create-account');
+    if (createBtn) createBtn.textContent = 'Create a free organiser account';
+
+    var createHint = document.getElementById('login-create-account-hint');
+    if (createHint) {
+      createHint.textContent = 'Use the same email your group listing is linked to';
+    }
+
+    var registerTitle = document.getElementById('register-form-title');
     if (registerTitle) {
       registerTitle.textContent = 'Create your organiser account';
     }
@@ -412,6 +462,18 @@
     var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
     if (registerWizard) {
       registerWizard.textContent = 'Create account';
+    }
+
+    var wizardStep2 = document.getElementById('auth-wizard-step-2');
+    if (wizardStep2) {
+      var wizardStep2Label = wizardStep2.querySelector('.auth-wizard-label');
+      if (wizardStep2Label) wizardStep2Label.textContent = 'Confirm your page';
+    }
+
+    var calloutText = document.getElementById('auth-intent-callout-text');
+    if (calloutText && registerForm && !loginForm) {
+      calloutText.textContent =
+        'Step 1 of 2 — create an account with the email linked to your group. Next you\u2019ll confirm your page in the organiser dashboard.';
     }
   }
 
@@ -436,6 +498,7 @@
   }
 
   function initLoginHeroSlogan() {
+    if (getIntentParam() === 'organiser-claim') return;
     var wordEl = document.getElementById('login-hero-word');
     if (!wordEl || !window.HubFindYourNextRotate) return;
 

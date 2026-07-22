@@ -456,6 +456,30 @@
   color: var(--charcoal);
 }
 
+.auth-intent-callout {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(124, 92, 191, 0.22);
+  background: linear-gradient(135deg, rgba(237, 231, 250, 0.95) 0%, rgba(255, 251, 245, 0.95) 100%);
+}
+
+.auth-intent-callout-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+}
+
+.auth-intent-callout-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
 .auth-secondary-btn--prominent {
   background: var(--lavender-light);
 }

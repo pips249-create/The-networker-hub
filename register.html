@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="css/auth.css?v=20260722" />
+    <link rel="stylesheet" href="css/auth.css?v=20260722c" />
     <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
   </head>
   <body class="auth-page">
@@ -26,14 +26,20 @@
             <span class="auth-wizard-num">1</span>
             <span class="auth-wizard-label">Create account</span>
           </li>
-          <li class="auth-wizard-step">
+          <li class="auth-wizard-step" id="auth-wizard-step-2">
             <span class="auth-wizard-num">2</span>
             <span class="auth-wizard-label">Choose your path</span>
           </li>
         </ol>
 
         <div class="auth-card auth-card--wizard">
-          <h1>Create your account</h1>
+          <div id="auth-intent-callout" class="auth-intent-callout" hidden>
+            <p class="auth-intent-callout-kicker" id="auth-intent-callout-kicker">Claim your organiser page</p>
+            <p class="auth-intent-callout-text" id="auth-intent-callout-text">
+              Step 1 of 2 — create an account with the email linked to your group. Next you&rsquo;ll confirm your page in the organiser dashboard.
+            </p>
+          </div>
+          <h1 id="register-form-title">Create your account</h1>
           <p class="auth-lede">
             Step 1 of 2 — tell us who you are. Creating your account only takes about 2 minutes. You need an account to buy tickets or enquire about business opportunities — browsing is always free.
           </p>
@@ -123,6 +129,6 @@
       </div>
     </main>
 
-    <script src="js/auth.js?v=20260722b"></script>
+    <script src="js/auth.js?v=20260722c"></script>
   </body>
 </html>
