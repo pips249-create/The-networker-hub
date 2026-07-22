@@ -187,7 +187,7 @@
   };
 
   var ENQUIRY_PACKAGES = {
-    events: ['Main Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
+    events: ['Headline Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
     organisers: ['Main Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
     opportunities: [
       'Main Sponsor',
@@ -339,7 +339,9 @@
 
     function syncCityPartnerEnquiryNote() {
       if (!cityPartnerNote || !packageEl) return;
-      var isCityPartner = String(packageEl.value || '').trim() === 'City Partner';
+      var pkg = String(packageEl.value || '').trim();
+      var isCityPartner =
+        pkg === 'City Partner' || pkg === 'Hyperlocal Authority Partner';
       cityPartnerNote.hidden = !isCityPartner;
     }
 

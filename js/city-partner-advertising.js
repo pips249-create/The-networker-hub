@@ -69,24 +69,43 @@
   }
 
   function bookedCitySummaryLabel(city) {
+    var name = String(city.name || '').toUpperCase();
     if (city.availableFrom) {
-      return city.name + ' (from ' + formatAvailableFrom(city.availableFrom) + ')';
+      return (
+        '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
+        '<strong>' +
+        esc(name) +
+        ':</strong> (EXCLUSIVELY CLAIMED) — Waitlist open for re-entry from ' +
+        esc(formatAvailableFrom(city.availableFrom)) +
+        '.'
+      );
     }
-    return city.name;
+    return (
+      '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
+      '<strong>' +
+      esc(name) +
+      ':</strong> (EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.'
+    );
   }
 
   function bookedCityStatusText(city) {
     if (city.availableFrom) {
       return (
-        'Currently sponsored · available from ' +
+        '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry from ' +
         formatAvailableFrom(city.availableFrom) +
-        '. Join the waitlist and we’ll email you when checkout opens.'
+        '.'
       );
     }
     if (city.live) {
-      return 'Live on site · reopens when the current subscription ends.';
+      return '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.';
     }
-    return 'Subscription active · slot held until the current partner’s subscription ends.';
+    return '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.';
+  }
+
+  function cityAvailabilitySuffix(city) {
+    if (city.available) return '';
+    if (city.availableFrom) return ' (WAITLIST ONLY)';
+    return ' (CLAIMED)';
   }
 
   function isOnWaitlist(slug) {
@@ -172,34 +191,54 @@
 
   function renderCities(cities) {
     if (!cityListEl) return;
-    var available = sortCitiesByName(
-      (cities || []).filter(function (city) {
-        return city.available;
-      })
-    );
-    if (!available.length) {
+    var sorted = sortCitiesByName(cities || []);
+    var available = sorted.filter(function (city) {
+      return city.available;
+    });
+
+    if (!sorted.length) {
       cityListEl.innerHTML =
-        '<p class="city-partner-empty">No cities are open for checkout right now. Join the waitlist on a sponsored city below and we’ll email you when it opens.</p>';
+        '<p class="city-partner-empty">No cities are configured yet — check back soon.</p>';
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
 
-    cityListEl.innerHTML = available
-      .map(function (city) {
-        return (
-          '<label class="city-partner-city">' +
-          '<input type="checkbox" name="city-partner-city" value="' +
-          esc(city.slug) +
-          '">' +
-          '<span>' +
-          esc(city.name) +
-          '</span>' +
-          '</label>'
-        );
-      })
-      .join('');
+    if (!available.length) {
+      cityListEl.innerHTML =
+        '<p class="city-partner-empty">No cities are open for checkout right now. Claimed cities are listed below — join the waitlist when a slot is held.</p>';
+    } else {
+      cityListEl.innerHTML = '';
+    }
 
-    cityListEl.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+    cityListEl.innerHTML +=
+      sorted
+        .map(function (city) {
+          if (city.available) {
+            return (
+              '<label class="city-partner-city">' +
+              '<input type="checkbox" name="city-partner-city" value="' +
+              esc(city.slug) +
+              '">' +
+              '<span>' +
+              esc(city.name) +
+              '</span>' +
+              '</label>'
+            );
+          }
+          return (
+            '<label class="city-partner-city city-partner-city--unavailable">' +
+            '<input type="checkbox" disabled aria-disabled="true">' +
+            '<span>' +
+            esc(city.name) +
+            '<em class="city-partner-city-status">' +
+            esc(cityAvailabilitySuffix(city)) +
+            '</em></span>' +
+            '</label>'
+          );
+        })
+        .join('');
+
+    cityListEl.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(function (input) {
       input.addEventListener('change', updateQuote);
     });
     updateQuote();
@@ -219,7 +258,7 @@
     var countLabel = formatAvailableCount(available.length);
 
     if (availableCountCheckoutEl) availableCountCheckoutEl.textContent = countLabel;
-    if (availablePanelEl) availablePanelEl.hidden = !available.length;
+    if (availablePanelEl) availablePanelEl.hidden = !(cities || []).length;
   }
 
   function renderBookedCities(cities) {
@@ -236,7 +275,11 @@
     if (!hasBooked) return;
 
     if (bookedSummaryListEl) {
-      bookedSummaryListEl.textContent = booked.map(bookedCitySummaryLabel).join(', ');
+      bookedSummaryListEl.innerHTML = booked
+        .map(function (city) {
+          return '<li class="city-partner-exclusivity-item">' + bookedCitySummaryLabel(city) + '</li>';
+        })
+        .join('');
     }
 
     if (bookedListEl) {
@@ -246,9 +289,10 @@
           return (
             '<li class="city-partner-booked-item">' +
             '<span class="city-partner-booked-name">' +
-            esc(city.name) +
-            '</span>' +
-            '<span class="city-partner-booked-status">' +
+            '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
+            '<strong>' +
+            esc(String(city.name || '').toUpperCase()) +
+            ':</strong> ' +
             esc(bookedCityStatusText(city)) +
             '</span>' +
             '<button type="button" class="city-partner-booked-waitlist' +
@@ -368,18 +412,10 @@
             year: 'numeric',
             timeZone: 'UTC',
           });
-          launchNoteEl.innerHTML =
-            '<strong>Launch offer until ' +
-            esc(label) +
-            ':</strong> ' +
-            esc(state.pricing.singleLabel) +
-            '/month + VAT per city or ' +
-            esc(state.pricing.bundle3Label) +
-            '/month + VAT for any 3 cities. Thereafter ' +
-            esc(state.pricing.regularSingleLabel) +
-            '/city + VAT and ' +
-            esc(state.pricing.regularBundle3Label) +
-            '/3-city pack + VAT.';
+          var endEl = document.getElementById('city-partner-launch-end');
+          var endFootEl = document.getElementById('city-partner-launch-end-foot');
+          if (endEl) endEl.textContent = label;
+          if (endFootEl) endFootEl.textContent = label;
           launchNoteEl.hidden = false;
         } else if (launchNoteEl) {
           launchNoteEl.hidden = true;

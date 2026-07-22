@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad30">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722cp15">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -84,19 +84,53 @@
 
       <div class="ad-package-browser">
       <div class="ad-packages">
-        <article class="ad-package ad-package--featured ad-package-split" id="city-partner-package" data-ad-package-label="City Partner">
+        <article class="ad-package ad-package--featured ad-package-split" id="city-partner-package" data-ad-package-label="Hyperlocal Authority Partner">
           <div class="ad-package-main">
-            <span class="ad-package-badge">City Partner</span>
-            <h3 class="ad-package-title">City Partner</h3>
-            <p class="ad-package-placement">Your logo and link on regional city pages — Events and Opportunities directories</p>
+            <span class="ad-package-badge">Hyperlocal Authority Partner</span>
+            <h3 class="ad-package-title">Hyperlocal Authority Partner</h3>
+            <p class="ad-package-placement">Own your local market by partnering with specific regional cities across the UK.</p>
+            <p class="ad-package-pitch">Position your brand as a trusted leader in your specific region. The Hyperlocal Authority Partner provides unmatched visibility to a dedicated audience of local business owners, startup founders, and event organisers. This is your place to build exclusive, high-trust local connection, exactly where they are already looking to network and grow.</p>
             <p class="ad-package-price">£29 <span>/ city / month + VAT</span> · £75 <span>for 3 cities + VAT</span></p>
-            <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
+            <div class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden>
+              <p class="city-partner-launch-kicker"><strong>Launch offer</strong> until <span id="city-partner-launch-end">1 Dec 2026</span></p>
+              <div class="ad-reach-table-wrap">
+                <table class="ad-reach-table city-partner-launch-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Partner tier</th>
+                      <th scope="col">Description</th>
+                      <th scope="col">Exclusive launch price</th>
+                      <th scope="col">Standard rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Single City Partner</th>
+                      <td>100% exclusivity for your selected city.</td>
+                      <td class="city-partner-launch-active">£29 / mo (+ VAT)</td>
+                      <td class="city-partner-launch-standard">£79 / mo (+ VAT)</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Regional Power Pack</th>
+                      <td>Secure authority in any 3 cities of your choice.</td>
+                      <td class="city-partner-launch-active">£75 / mo (+ VAT)</td>
+                      <td class="city-partner-launch-standard">£199 / mo (+ VAT)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="city-partner-launch-footnote">Standard rates apply after <span id="city-partner-launch-end-foot">1 Dec 2026</span>.</p>
+            </div>
             <ul>
-              <li>Your logo and link beside local intro copy — <strong>website only</strong>, not in emails.</li>
-              <li>One partner per city — rolling monthly subscription · 3-city pack available.</li>
-              <li><strong>Self-serve checkout</strong> for open cities · join the waitlist when a city is sponsored.</li>
+              <li><strong>100% hyperlocal exclusivity:</strong> Secure prime placement beside our local intro copy — strictly limited to one single partner per city for unmatched share-of-voice.</li>
+              <li><strong>Targeted connection:</strong> Engage a highly relevant audience actively seeking local business opportunities and regional networking.</li>
+              <li><strong>Build local trust:</strong> Cement your status as an integral part of your local business ecosystem.</li>
+              <li><strong>Effectively targeted spend:</strong> Only pay for visibility in the specific cities where your business operates, maximizing your local ROI.</li>
             </ul>
-            <p class="ad-package-note city-partner-booked-summary" id="city-partner-booked-summary" hidden><strong>Currently sponsored:</strong> <span id="city-partner-booked-summary-list"></span></p>
+            <div class="city-partner-exclusivity-summary" id="city-partner-booked-summary" hidden>
+              <p class="city-partner-exclusivity-heading"><strong>Exclusivity Status: High-Value Cities</strong></p>
+              <ul class="city-partner-exclusivity-list" id="city-partner-booked-summary-list"></ul>
+            </div>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
             <p class="ad-preview-label">Example</p>
@@ -112,7 +146,9 @@
                   </div>
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">City Sponsor</span>
-                    <span class="ad-mock-city-partner-logo">Your logo here</span>
+                    <span class="ad-mock-city-partner-logo">
+                      <img src="/assets/advertising-example-everlasting-build.png" alt="Everlasting Build" class="ad-mock-city-partner-logo-img" loading="lazy" decoding="async">
+                    </span>
                   </aside>
                 </div>
               </div>
@@ -136,7 +172,7 @@
               </label>
               <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Checkout securely →</button>
               <div class="city-partner-booked-wrap" id="city-partner-booked-wrap" hidden>
-                <p class="city-partner-section-label">Currently sponsored</p>
+                <p class="city-partner-section-label">Exclusivity Status: High-Value Cities</p>
                 <ul class="city-partner-booked-list" id="city-partner-booked-list"></ul>
                 <p class="city-partner-booked-note">City taken? Enter your email above and join the waitlist on any sponsored city — we’ll email you when checkout opens, including the date if the current partner has given notice.</p>
               </div>
@@ -145,18 +181,21 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split" id="ad-pkg-events-main" data-ad-package-label="Main Sponsor">
+        <article class="ad-package ad-package-split" id="ad-pkg-events-main" data-ad-package-label="Headline Sponsor">
           <div class="ad-package-main">
-            <span class="ad-package-badge">Main Sponsor</span>
-            <h3 class="ad-package-title">Main Events Directory Sponsor</h3>
-            <p class="ad-package-placement">Main Sponsor banner at the top of the events directory</p>
+            <span class="ad-package-badge">Headline Sponsor</span>
+            <h3 class="ad-package-title">Headline Sponsor: UK Events Directory</h3>
+            <p class="ad-package-placement">Own the premier placement across our entire event discovery hub and high-intent attendee communications.</p>
+            <p class="ad-package-pitch">Position your brand front-and-center in front of thousands of active UK founders, event organisers, and ambitious professionals every month. As our exclusive Headline Sponsor, you secure 100% share-of-voice across the platform&rsquo;s highest-trafficked directory and every single transaction email we send.</p>
             <p class="ad-package-price">£2,000 <span>/ month · min. 1 month</span></p>
             <ul>
-              <li>Logo in Main Sponsor banner on the events directory — one partner per month.</li>
-              <li>Logo + link in header of <strong>every attendee booking email</strong> (21 templates).</li>
+              <li><strong>100% category exclusivity:</strong> Prime hero placement at the top of the main UK Events Directory — strictly limited to one single partner per month for maximum impact.</li>
+              <li><strong>Direct-to-inbox reach:</strong> Your logo, message, and direct tracking link featured in the header of every attendee email (confirmation passes, event reminders, application approvals, and calendar updates across 21 templates).</li>
+              <li><strong>High-intent B2B audience:</strong> Engage active buyers at the exact moment they are booking tickets, planning networking, or expanding their business presence.</li>
+              <li><strong>Uncluttered visibility:</strong> No competing ad networks or third-party banner chaos — just clean, high-status integration alongside our core platform brand.</li>
             </ul>
             <details class="ad-email-inventory">
-              <summary>View all attendee emails with Main Sponsor placement</summary>
+              <summary>View all attendee emails with Headline Sponsor placement</summary>
               <ul class="ad-email-inventory-list">
                 <li>Booking confirmation</li>
                 <li>Event reminder</li>
@@ -181,23 +220,42 @@
                 <li>Refund processed</li>
               </ul>
             </details>
-            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Events Main Sponsor expected views">
+            <div class="ad-email-reach ad-email-reach--table" aria-label="Events Headline Sponsor estimated reach">
               <div class="ad-email-reach-head">
-                <h4 class="ad-email-reach-heading">Expected views</h4>
+                <h4 class="ad-email-reach-heading">Estimated reach</h4>
                 <p class="ad-email-reach-sub">Guide ranges — not guaranteed</p>
               </div>
-              <div class="ad-reach-tier-grid ad-reach-tier-grid--wide">
-                <article class="ad-reach-tier">
-                  <ul class="ad-reach-tier-stats">
-                    <li><span>Directory views</span><strong>8k – 18k / mo</strong></li>
-                    <li><span>Attendee emails</span><strong>4k – 12k / mo</strong></li>
-                    <li><span>Total impressions</span><strong>12k – 30k / mo</strong></li>
-                  </ul>
-                </article>
+              <div class="ad-reach-table-wrap">
+                <table class="ad-reach-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Metric</th>
+                      <th scope="col">Estimated monthly reach</th>
+                      <th scope="col">Strategic value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Directory impressions</th>
+                      <td>8,000 – 18,000 / mo</td>
+                      <td>High-visibility web traffic browsing regional &amp; UK events.</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Attendee email reach</th>
+                      <td>4,000 – 12,000 / mo</td>
+                      <td>Direct-to-inbox exposure with 90%+ open rates (transactional).</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Total brand touchpoints</th>
+                      <td>12,000 – 30,000 / mo</td>
+                      <td>Complete brand saturation across web + email.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not networking groups or organisers promoting their own events. We check relevance to our professional audience before any placement goes live.</p></details></div>
-            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Main%20Events%20Directory%20Sponsor%20enquiry">Enquire →</a>
+            <div class="ad-package-note"><strong>Eligibility:</strong> Open exclusively to non-competing B2B brands, financial providers, and enterprise partners. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Headline Sponsor slots are for vetted third-party brands — not networking groups or organisers promoting their own events. We check relevance to our professional audience before any placement goes live.</p></details></div>
+            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Headline%20Sponsor%20-%20UK%20Events%20Directory%20enquiry">Apply for exclusivity →</a>
           </div>
           <div class="ad-package-preview">
             <p class="ad-preview-label">Examples</p>
@@ -749,15 +807,15 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split" id="ad-pkg-opportunities-city-partner" data-ad-package-label="City Partner">
+        <article class="ad-package ad-package-split" id="ad-pkg-opportunities-city-partner" data-ad-package-label="Hyperlocal Authority Partner">
           <div class="ad-package-main">
-            <span class="ad-package-badge">City Partner</span>
-            <h3 class="ad-package-title">City Partner</h3>
-            <p class="ad-package-placement">Same as Events — your logo and link on matching regional city pages</p>
+            <span class="ad-package-badge">Hyperlocal Authority Partner</span>
+            <h3 class="ad-package-title">Hyperlocal Authority Partner</h3>
+            <p class="ad-package-placement">Same as Events — own your local market on matching regional city pages</p>
             <p class="ad-package-price">£29 <span>/ city / month + VAT</span> · £75 <span>for 3 cities + VAT</span></p>
             <ul>
               <li>Your logo and link on matching Events and Opportunities city pages — website only.</li>
-              <li>Same cities and pricing as Events — one partner per city · monthly subscription.</li>
+              <li>Same cities, exclusivity, and pricing as Events — one partner per city · monthly subscription.</li>
             </ul>
             <a class="ad-package-cta" href="#city-partner-package" data-ad-tab-jump="events">Checkout on Events tab →</a>
           </div>
@@ -774,7 +832,9 @@
                   </div>
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">City Sponsor</span>
-                    <span class="ad-mock-city-partner-logo">Your logo here</span>
+                    <span class="ad-mock-city-partner-logo">
+                      <img src="/assets/advertising-example-everlasting-build.png" alt="Everlasting Build" class="ad-mock-city-partner-logo-img" loading="lazy" decoding="async">
+                    </span>
                   </aside>
                 </div>
               </div>
@@ -959,7 +1019,7 @@
               <select name="package" id="ad-enquiry-package">
                 <option value="Main Sponsor">Main Sponsor</option>
                 <option value="Mini Sponsors">Mini Sponsors</option>
-                <option value="City Partner">City Partner</option>
+                <option value="Hyperlocal Authority Partner">Hyperlocal Authority Partner</option>
                 <option value="Featured Listing">Featured Listing</option>
                 <option value="Not sure yet">Not sure yet</option>
               </select>
@@ -973,7 +1033,7 @@
             <span>Message (optional)</span>
             <textarea name="message" rows="3" placeholder="Preferred start month, cities, or questions"></textarea>
           </label>
-          <p class="ad-enquiry-note" id="ad-enquiry-city-partner-note" hidden>City Partner uses <a href="#city-partner-package">online checkout</a> on the Events tab when cities are available — use this form for Main/Mini Sponsor enquiries or general questions.</p>
+          <p class="ad-enquiry-note" id="ad-enquiry-city-partner-note" hidden>Hyperlocal Authority Partner uses <a href="#city-partner-package">online checkout</a> on the Events tab when cities are available — use this form for Main/Mini Sponsor enquiries or general questions.</p>
           <button type="submit" class="ad-package-cta ad-enquiry-submit">Send enquiry →</button>
           <p class="ad-enquiry-note">Opens your email app — rosie@thenetworkerhub.com</p>
         </form>
@@ -987,8 +1047,8 @@
 <script src="js/site-footer.js?v=20260722a" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
-<script src="js/advertising-page.js?v=20260722ad25"></script>
-<script src="js/city-partner-advertising.js?v=20260722cp14"></script>
+<script src="js/advertising-page.js?v=20260722cp15"></script>
+<script src="js/city-partner-advertising.js?v=20260722cp15"></script>
 
 </body>
 </html>

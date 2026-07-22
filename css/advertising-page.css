@@ -1171,6 +1171,60 @@ body.advertising-page {
   padding-bottom: 0;
 }
 
+.ad-reach-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--ad-section-accent-border, var(--ad-line));
+  background: linear-gradient(180deg, var(--surface) 0%, var(--ad-section-accent-soft, var(--ad-soft)) 100%);
+}
+
+.ad-reach-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.ad-reach-table th,
+.ad-reach-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px dashed rgba(45, 38, 54, 0.08);
+}
+
+.ad-reach-table thead th {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ad-section-accent, var(--ad-ink));
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.ad-reach-table tbody th {
+  font-weight: 700;
+  color: var(--ad-ink);
+  white-space: nowrap;
+}
+
+.ad-reach-table tbody td:nth-child(2) {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ad-ink);
+  white-space: nowrap;
+}
+
+.ad-reach-table tbody td:nth-child(3) {
+  color: var(--ad-muted);
+  min-width: 140px;
+}
+
+.ad-reach-table tbody tr:last-child th,
+.ad-reach-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 @media (max-width: 720px) {
   .ad-reach-tier-grid,
   .ad-reach-tier-grid--wide {
@@ -1601,6 +1655,13 @@ body.advertising-page {
   margin: 0;
   font-size: 0.92rem;
   color: var(--text-muted);
+}
+
+.ad-package-pitch {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text-secondary, #4a5568);
 }
 
 .ad-package-main ul {
@@ -4167,6 +4228,65 @@ body.advertising-page {
   color: #8a6d42;
 }
 
+.city-partner-launch-kicker {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+}
+
+.city-partner-launch-footnote {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #7a6538;
+}
+
+.city-partner-launch-table .city-partner-launch-active {
+  font-weight: 700;
+  color: #5c4a1a;
+  white-space: nowrap;
+}
+
+.city-partner-launch-table .city-partner-launch-standard {
+  font-weight: 500;
+  color: #8a7a55;
+  white-space: nowrap;
+}
+
+.city-partner-exclusivity-summary {
+  margin-top: 0.75rem;
+}
+
+.city-partner-exclusivity-heading {
+  margin: 0 0 0.45rem;
+  font-size: 0.92rem;
+}
+
+.city-partner-exclusivity-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.city-partner-exclusivity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #4a5568);
+}
+
+.city-partner-claimed-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.45em;
+  border-radius: 50%;
+  background: #d64545;
+  box-shadow: 0 0 0 2px rgba(214, 69, 69, 0.18);
+}
+
 .ad-package-preview--city-partner {
   display: flex;
   flex-direction: column;
@@ -4283,10 +4403,14 @@ body.advertising-page {
   padding: 8px 10px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.75);
-  color: #9a97ab;
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
+}
+
+.ad-mock-city-partner-logo-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 48px;
+  object-fit: contain;
 }
 
 @media (max-width: 520px) {
@@ -4460,7 +4584,16 @@ body.advertising-page {
 }
 
 .city-partner-booked-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: #625f73;
+}
+
+.city-partner-booked-name strong {
   font-weight: 700;
   color: #2b2648;
 }
@@ -4551,6 +4684,23 @@ body.advertising-page {
 .city-partner-city:has(input:checked) {
   border-color: rgba(109, 92, 232, 0.45);
   box-shadow: 0 0 0 2px rgba(109, 92, 232, 0.12);
+}
+
+.city-partner-city--unavailable {
+  opacity: 0.72;
+  cursor: not-allowed;
+  border-style: dashed;
+  background: #fafafa;
+}
+
+.city-partner-city-status {
+  margin-left: 0.35rem;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b45309;
 }
 
 .city-partner-city input {
