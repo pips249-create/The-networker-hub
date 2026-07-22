@@ -131,11 +131,18 @@
   if (!mount) return;
 
   if (!document.querySelector('link[rel="icon"]')) {
-    var icon = document.createElement('link');
-    icon.rel = 'icon';
-    icon.type = 'image/png';
-    icon.href = (script && script.getAttribute('data-root') || '') + 'assets/hubert-icon.png';
-    document.head.appendChild(icon);
+    var rootPrefix = script && script.getAttribute('data-root') || '/';
+    if (rootPrefix && rootPrefix.charAt(rootPrefix.length - 1) !== '/') rootPrefix += '/';
+    [
+      { rel: 'icon', href: rootPrefix + 'favicon.ico?v=20260722fav', sizes: 'any' },
+      { rel: 'icon', href: rootPrefix + 'assets/favicon.svg?v=20260722fav', type: 'image/svg+xml' },
+      { rel: 'icon', href: rootPrefix + 'assets/favicon-32.png?v=20260722fav', type: 'image/png', sizes: '32x32' },
+      { rel: 'apple-touch-icon', href: rootPrefix + 'assets/apple-touch-icon.png?v=20260722fav' },
+    ].forEach(function (attrs) {
+      var link = document.createElement('link');
+      Object.keys(attrs).forEach(function (key) { link[key] = attrs[key]; });
+      document.head.appendChild(link);
+    });
   }
 
   var scrollBound = false;
