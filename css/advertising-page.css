@@ -87,7 +87,14 @@ body.advertising-page {
 }
 
 .ad-page-body {
+  position: relative;
   padding-bottom: 48px;
+  overflow: hidden;
+}
+
+.ad-page-body > .content-body.ad-content-body {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Audience proof ─── */
@@ -588,7 +595,7 @@ body.advertising-page {
   padding: 14px 16px;
   border: 1px solid var(--ad-line);
   border-radius: 12px;
-  background: var(--ad-panel);
+  background: var(--ad-soft-muted);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -603,7 +610,7 @@ body.advertising-page {
 .ad-section-pick.is-active {
   border-color: var(--ad-ink);
   box-shadow: inset 0 0 0 1px var(--ad-ink);
-  background: var(--ad-panel);
+  background: var(--ad-soft);
 }
 
 .ad-section-pick[data-ad-tab="events"].is-active {
@@ -1153,10 +1160,10 @@ body.advertising-page {
 }
 
 .ad-package {
-  border: 1px solid var(--ad-line);
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
-  background: var(--ad-panel);
-  box-shadow: 0 2px 8px rgba(45, 38, 54, 0.04);
+  background: var(--ad-soft);
+  box-shadow: 0 2px 8px rgba(45, 38, 54, 0.03);
   overflow: hidden;
   scroll-margin-top: 120px;
 }
@@ -1180,7 +1187,7 @@ body.advertising-page {
 }
 
 .ad-package--featured .ad-package-main {
-  background: #faf8f5;
+  background: var(--surface-warm);
   border-bottom: 1px solid var(--ad-line);
 }
 
@@ -1191,14 +1198,14 @@ body.advertising-page {
 .ad-package-preview {
   padding: 18px 20px 22px;
   border-top: 1px solid var(--ad-line);
-  background: #f8f7f5;
+  background: rgba(237, 225, 245, 0.14);
 }
 
 @media (min-width: 860px) {
   .ad-package-preview {
     border-top: 0;
     border-left: 1px solid var(--ad-line);
-    background: #f8f7f5;
+    background: rgba(237, 225, 245, 0.14);
   }
 }
 
