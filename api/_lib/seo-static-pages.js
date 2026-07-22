@@ -69,6 +69,14 @@ const STATIC_PAGES = {
     image: '/assets/logo.png',
     ogType: 'website',
   },
+  'for-attendees': {
+    path: '/for-attendees',
+    title: 'Find your next event – For attendees – The Networker Hub',
+    description:
+      'Find UK networking events, organiser communities, and business opportunities in one place. Browse free on The Networker Hub — My Hub dashboard, smart alerts, member rates, and booking reminders.',
+    image: '/assets/logo.png',
+    ogType: 'website',
+  },
   contact: {
     path: '/contact',
     title: 'Contact us – The Networker Hub',

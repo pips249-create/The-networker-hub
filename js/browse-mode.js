@@ -11,6 +11,8 @@
   var searchLabel = document.querySelector('label[for="search"]');
   var sortSelect = document.getElementById('sort');
   var filterBar = document.querySelector('.events-filter-bar');
+  var filterHeading = document.getElementById('events-filter-heading');
+  var filterInboxHeading = document.getElementById('events-filter-inbox-heading');
 
   var copy = {
     events: {
@@ -18,6 +20,7 @@
       title: 'Find your next <span class="accent">business event</span>',
       sub: 'Meetings, exhibitions, workshops &amp; more.<br>Filter by online/in person, date, location and price.',
       heading: 'All listings',
+      filterTitle: 'Filter events',
       searchPlaceholder: 'Search anything — breakfast, women only, organiser, city…',
       searchLabel: 'Search events',
       filterLabel: 'Filter events',
@@ -29,6 +32,7 @@
       sub:
         'Browse groups, exhibition hosts, and conference organisers.<br>Filter by city, format, guest visits, and rating.',
       heading: 'All organisers',
+      filterTitle: 'Filter organisers',
       searchPlaceholder: 'Search organisers, descriptions, formats…',
       searchLabel: 'Search organisers',
       filterLabel: 'Filter organisers',
@@ -180,6 +184,8 @@
       if (searchInput) searchInput.placeholder = c.searchPlaceholder;
       if (searchLabel) searchLabel.textContent = c.searchLabel;
       if (filterBar) filterBar.setAttribute('aria-label', c.filterLabel);
+      if (filterHeading) filterHeading.textContent = c.filterTitle;
+      if (filterInboxHeading) filterInboxHeading.textContent = c.filterTitle;
       document.title =
         'Business Networking Events in ' +
         regional.name +
@@ -198,6 +204,8 @@
     if (searchInput) searchInput.placeholder = c.searchPlaceholder;
     if (searchLabel) searchLabel.textContent = c.searchLabel;
     if (filterBar) filterBar.setAttribute('aria-label', c.filterLabel);
+    if (filterHeading) filterHeading.textContent = c.filterTitle;
+    if (filterInboxHeading) filterInboxHeading.textContent = c.filterTitle;
     document.title =
       mode === 'organisers'
         ? 'Find networking groups – The Networker Hub'

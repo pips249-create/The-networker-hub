@@ -43,6 +43,7 @@ const PUBLIC_PAGES = [
   { path: '/about', expect: /about|networker/i },
   { path: '/contact', expect: /contact|hubert/i },
   { path: '/for-organisers', expect: /organis/i },
+  { path: '/for-attendees', expect: /My Hub|attendee/i },
   { path: '/guides', expect: /guide/i },
   { path: '/advertising', expect: /advertis|sponsor/i },
   { path: '/legal-policies', expect: /privacy|terms|legal/i },

@@ -63,7 +63,9 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 
 **Headline:** Find your next event, connection, or opportunity  
 **CTA:** Visit website  
-**URL:** https://thenetworkerhub.com/events
+**URL:** https://thenetworkerhub.com/for-attendees
+
+**Key benefits to mention:** My Hub dashboard · Smart alerts · Member rates · Booking reminders · Guest visits · Reviews & share cards
 
 ---
 

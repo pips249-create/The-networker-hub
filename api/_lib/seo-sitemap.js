@@ -24,6 +24,7 @@ const STATIC_PATHS = [
   '/contact',
   '/about',
   '/for-organisers',
+  '/for-attendees',
   '/advertising',
   '/legal-policies',
   ...NETWORKING_REGION_SLUGS.map((slug) => '/networking/' + slug),

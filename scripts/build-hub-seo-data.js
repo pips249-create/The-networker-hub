@@ -15,6 +15,7 @@ const pages = [
   'contact',
   'about',
   'for-organisers',
+  'for-attendees',
   'advertising',
   'events',
   'opportunities',

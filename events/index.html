@@ -9,13 +9,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260722search">
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
 <script src="../js/fact-loader.js?v=20260613"></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-<link rel="stylesheet" href="../css/events-page.css?v=20260721hero2">
+<link rel="stylesheet" href="../css/events-page.css?v=20260722lede">
 <link rel="stylesheet" href="../css/home-page.css?v=20260721loc2">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260722format">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260722orgtitle">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260717logo">
 <link rel="stylesheet" href="../css/networking-regions.css?v=20260721hero">
 <script src="../js/hub-lazy-vendor.js?v=20260716fp"></script>
@@ -142,18 +142,11 @@
     </section>
   </div>
 
-  <div class="events-filter-shell">
+  <div class="events-filter-wrap">
+    <h2 class="events-filter-heading filter-event-only" id="events-filter-heading">Filter events</h2>
+    <div class="events-filter-shell">
     <div class="events-filter-bar" role="search" aria-label="Filter events">
-      <div class="filter-bar-row filter-bar-row-top">
-        <div class="filter-field filter-field-grow filter-field-search">
-          <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-          </span>
-          <label class="visually-hidden" for="search">Search events</label>
-          <input type="search" id="search" placeholder="Search anything — breakfast, women only, organiser, city…" autocomplete="off" aria-describedby="search-hint">
-          <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
-        </div>
-      </div>
+      <p class="events-filter-inbox-title filter-organiser-only" id="events-filter-inbox-heading">Filter organisers</p>
       <div class="filter-bar-row filter-bar-row-location filter-event-only">
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
@@ -326,9 +319,20 @@
             </label>
           </fieldset>
         </div>
-        <button type="button" class="filter-clear-btn" id="clear-filters-bar">Clear filters</button>
+        <div class="filter-bar-actions">
+          <div class="filter-field filter-field-search">
+            <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+            </span>
+            <label class="visually-hidden" for="search">Search events</label>
+            <input type="search" id="search" placeholder="Search anything — breakfast, women only, organiser, city…" autocomplete="off" aria-describedby="search-hint">
+            <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
+          </div>
+          <button type="button" class="filter-clear-btn" id="clear-filters-bar">Clear filters</button>
+        </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 
@@ -666,6 +670,6 @@
 <script src="../js/organisers-filters.js?v=20260714b"></script>
 <script src="../js/organisers.js?v=20260721spotlight"></script>
 <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260721hero"></script>
+<script src="../js/browse-mode.js?v=20260722orgtitle"></script>
 </body>
 </html>

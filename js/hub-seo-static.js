@@ -36,6 +36,7 @@
     if (/\/contact(?:\.html)?\/?$/.test(path)) return 'contact';
     if (/\/about(?:\.html)?\/?$/.test(path)) return 'about';
     if (/\/for-organisers(?:\.html)?\/?$/.test(path)) return 'for-organisers';
+    if (/\/for-attendees(?:\.html)?\/?$/.test(path)) return 'for-attendees';
     if (/\/advertising(?:\.html)?\/?$/.test(path)) return 'advertising';
     if (/\/legal-policies(?:\.html)?\/?$/.test(path)) return 'legal';
     if (/index\.html$/.test(path) || /\/$/.test(path)) return 'home';

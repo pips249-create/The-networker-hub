@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721biz" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722team" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722comfort" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -97,6 +97,14 @@
             <a href="#business-list" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="business-list">List a business opportunity</a>
 
             <div class="hub-side-nav-bottom">
+              <button
+                type="button"
+                class="hub-side-nav-link hub-side-nav-link--nested org-large-text-toggle"
+                id="org-large-text-toggle"
+                aria-pressed="false"
+              >
+                Larger text
+              </button>
               <span class="hub-side-nav-divider">Help</span>
               <a href="../guides" class="hub-side-nav-link hub-side-nav-link--nested">Organiser guides</a>
               <a href="../faq" class="hub-side-nav-link hub-side-nav-link--nested">FAQ</a>
@@ -148,6 +156,27 @@
         </aside>
 
         <div class="org-main" id="org-main" tabindex="-1">
+          <div class="org-workspace-comfort">
+            <button
+              type="button"
+              id="org-guide-toggle"
+              class="org-guide-toggle hidden"
+              hidden
+              aria-expanded="false"
+              aria-controls="org-page-guide-wrap"
+            >
+              How to use this page
+            </button>
+          </div>
+          <div id="org-page-guide-wrap" class="org-page-guide-wrap hidden" hidden aria-label="Step-by-step guide">
+            <div class="org-page-guide">
+              <div class="org-page-guide-head">
+                <h2 id="org-page-guide-title">How to use this page</h2>
+                <button type="button" id="org-page-guide-close" class="org-page-guide-close" aria-label="Close guide">&times;</button>
+              </div>
+              <ol id="org-page-guide-steps" class="org-page-guide-steps"></ol>
+            </div>
+          </div>
           <div class="org-wrap">
         <div id="org-dashboard-alert" class="org-alert" hidden></div>
 
@@ -2458,5 +2487,6 @@
     <script src="../js/organiser-member-roster.js?v=20260721mem4"></script>
     <script src="../js/hub-comms-pack.js?v=20260722share"></script>
     <script src="../js/organiser-dashboard.js?v=20260722team"></script>
+    <script src="../js/organiser-workspace-comfort.js?v=20260722comfort"></script>
   </body>
 </html>

@@ -813,6 +813,92 @@ window.HUB_SEO_DATA = {
         }
       ]
     },
+    "for-attendees": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
+          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@thenetworkerhub.com",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "url": "https://www.thenetworkerhub.com/for-attendees",
+          "name": "For Attendees – The Networker Hub",
+          "description": "Browse UK networking events, organiser pages, and business opportunities. My Hub dashboard, saved alerts, member rates, booking reminders, reviews, and guest visits.",
+          "about": {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "The Networker Hub",
+            "legalName": "The Networker Group Ltd",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
+            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+              "addressLocality": "Huntingdon",
+              "addressRegion": "Cambridgeshire",
+              "postalCode": "PE28 4YF",
+              "addressCountry": "GB"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "hello@thenetworkerhub.com",
+              "availableLanguage": [
+                "English"
+              ]
+            },
+            "founder": [
+              {
+                "@type": "Person",
+                "name": "Rosie"
+              },
+              {
+                "@type": "Person",
+                "name": "Catherine Hancher"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "advertising": {
       "@context": "https://schema.org",
       "@graph": [
@@ -1127,7 +1213,7 @@ window.HUB_SEO_DATA = {
               "name": "When do organisers receive payouts for ticket sales?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe Connect onboarding is required."
+                "text": "With Stripe Connect, paid ticket revenue goes to your connected account at checkout — open Stripe Express for balance and bank payouts. Legacy manual Hub payouts (if Connect is off) require archiving the event and a 7-day settlement before requesting payout from Revenue."
               }
             }
           ]

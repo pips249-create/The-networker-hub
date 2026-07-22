@@ -1,0 +1,131 @@
+/* Attendee marketing page — lavender palette overrides on shared fo- layout */
+.for-attendees-page.for-organisers-page {
+  --od-purple: #9a7aa8;
+  --od-purple-dark: #7a5a98;
+  --od-purple-deep: #4a4446;
+  --od-purple-light: #c299d1;
+  --od-purple-pale: #ebe0f0;
+  --od-gold: #9a7aa8;
+  --od-gold-light: #f5eef8;
+  --od-text-dark: #4a4446;
+  --od-text-mid: #635c5e;
+  --od-text-soft: #7a7274;
+  --od-bg: #faf6ee;
+  --od-border: rgba(194, 153, 209, 0.45);
+  --od-border-soft: rgba(194, 153, 209, 0.28);
+}
+
+.for-attendees-page .fo-hero {
+  background: linear-gradient(155deg, #fff 0%, var(--od-purple-pale) 42%, var(--od-bg) 100%);
+}
+
+.for-attendees-page .fo-hero-orb--1 {
+  background: radial-gradient(circle, rgba(154, 122, 168, 0.2) 0%, transparent 68%);
+}
+
+.for-attendees-page .fo-hero-orb--2 {
+  background: radial-gradient(circle, rgba(194, 153, 209, 0.16) 0%, transparent 70%);
+}
+
+.for-attendees-page .fo-hero-mock-stat--green b {
+  color: #7a5a98;
+}
+
+.for-attendees-page .fo-hero-float {
+  border-color: rgba(194, 153, 209, 0.45);
+}
+
+.for-attendees-page .fo-hero-float-icon {
+  background: linear-gradient(135deg, #9a7aa8 0%, #7a5a98 100%);
+}
+
+.for-attendees-page .fo-benefit-browse-spotlight {
+  background: linear-gradient(90deg, #7a5a98 0%, #9a7aa8 100%);
+}
+
+.for-attendees-page .fo-benefit-receipt-badge,
+.for-attendees-page .fo-org-pill--live {
+  background: #ebe0f0;
+  color: #7a5a98;
+}
+
+.for-attendees-page .fo-benefit-social-btn,
+.for-attendees-page .fo-benefit-checkout-btn {
+  background: linear-gradient(135deg, #9a7aa8 0%, #7a5a98 100%);
+}
+
+.for-attendees-page .fo-benefit-list li::before {
+  color: #9a7aa8;
+}
+
+.for-attendees-page .btn-primary {
+  background: linear-gradient(135deg, #9a7aa8 0%, #7a5a98 100%);
+  border-color: #7a5a98;
+}
+
+.for-attendees-page .fo-cta-panel {
+  background: linear-gradient(135deg, #4a4446 0%, #7a5a98 100%);
+}
+
+.for-attendees-page .fo-org-stat--green .fo-org-stat-value {
+  color: #7a5a98;
+}
+
+.for-attendees-page .fo-org-stat--gold .fo-org-stat-value {
+  color: #9a7aa8;
+}
+
+.for-attendees-page .fo-org-btn--gold {
+  background: linear-gradient(135deg, #9a7aa8 0%, #7a5a98 100%);
+  border-color: #7a5a98;
+}
+
+/* Attendee dashboard mock extras */
+.fa-alert-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f5eef8;
+  border: 1px solid rgba(194, 153, 209, 0.35);
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a5a98;
+}
+
+.fa-saved-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--od-border-soft);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.fa-saved-card-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ebe0f0 0%, #faf6ee 100%);
+  flex-shrink: 0;
+}
+
+.fa-saved-card-meta strong {
+  display: block;
+  font-size: 14px;
+  color: var(--od-text-dark);
+}
+
+.fa-saved-card-meta small {
+  display: block;
+  font-size: 12px;
+  color: var(--od-text-soft);
+  margin-top: 2px;
+}
+
+.fa-review-stars {
+  color: #bd932e;
+  letter-spacing: 1px;
+}
