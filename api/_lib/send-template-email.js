@@ -283,7 +283,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged = enrichBookingCancelledVars(merged, sponsorSection);
   } else if (slug === 'event_cancelled') {
     merged = enrichEventCancelledVars(merged, sponsorSection);
-  } else if (slug === 'event_removed_by_hub' || slug === 'event_unpublished_by_hub') {
+  } else if (slug === 'event_removed_by_hub' || slug === 'event_unpublished_by_hub' || slug === 'organiser_listing_unpublished_by_hub') {
     merged = enrichEventRemovedByHubVars(merged, sponsorSection);
   } else if (slug === 'organiser_hub_warning') {
     merged = enrichOrganiserHubWarningVars(merged, sponsorSection);
@@ -388,7 +388,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   } else if (slug === 'event_cancelled') {
     html = stripEventCancelledPlaceholders(html);
     html = replacePlaceholders(html, merged);
-  } else if (slug === 'event_removed_by_hub' || slug === 'event_unpublished_by_hub') {
+  } else if (slug === 'event_removed_by_hub' || slug === 'event_unpublished_by_hub' || slug === 'organiser_listing_unpublished_by_hub') {
     html = stripEventRemovedByHubPlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'organiser_hub_warning' || slug === 'organiser_hub_suspended') {

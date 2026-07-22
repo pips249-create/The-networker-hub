@@ -1,6 +1,13 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getAdminModeration } = require('../admin-supabase-data');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { notifyListingReportUphold } = require('../listing-report-uphold');
+
+function isUuid(v) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(v || '')
+  );
+}
 
 function parseBody(req) {
   let body = req.body;
@@ -60,7 +67,9 @@ module.exports = async function handler(req, res) {
       if (action === 'unpublish_from_report') {
         const { data: report, error: loadErr } = await sb
           .from('listing_reports')
-          .select('id, listing_type, event_id, organiser_id, opportunity_id, listing_title, status')
+          .select(
+            'id, listing_type, event_id, organiser_id, opportunity_id, listing_title, reason, details, reporter_email, status'
+          )
           .eq('id', id)
           .maybeSingle();
         if (loadErr) throw new Error(loadErr.message);
@@ -77,7 +86,7 @@ module.exports = async function handler(req, res) {
             .from('events')
             .update({ status: 'unpublished', ticket_sales_enabled: false })
             .eq('id', report.event_id)
-            .select('id, title, status')
+            .select('id, title, status, organiser_id, starts_at')
             .maybeSingle();
           if (error) throw new Error(error.message);
           listing = data ? { type: 'event', ...data } : null;
@@ -99,25 +108,38 @@ module.exports = async function handler(req, res) {
               updated_at: new Date().toISOString(),
             })
             .eq('id', report.opportunity_id)
-            .select('id, title, status, approval_status')
+            .select('id, title, status, approval_status, owner_email, contact_email, owner_name')
             .maybeSingle();
           if (error) throw new Error(error.message);
           listing = data ? { type: 'opportunity', ...data } : null;
         }
 
+        const reviewedAt = new Date().toISOString();
         const { data: updatedReport, error: reportErr } = await sb
           .from('listing_reports')
-          .update({ status: 'reviewed' })
+          .update({
+            status: 'reviewed',
+            reviewed_at: reviewedAt,
+            reviewed_by: isUuid(session?.userId) ? session.userId : null,
+          })
           .eq('id', id)
-          .select('id, status')
+          .select('id, status, reviewed_at')
           .single();
         if (reportErr) throw new Error(reportErr.message);
+
+        let upholdResult = null;
+        try {
+          upholdResult = await notifyListingReportUphold(sb, report, listing, session?.userId || null);
+        } catch (e) {
+          upholdResult = { error: e.message || String(e) };
+        }
 
         return json(res, 200, {
           ok: true,
           report: updatedReport,
           listing,
           listingMissing: !listing && Boolean(report.event_id || report.organiser_id || report.opportunity_id),
+          upholdResult,
         });
       }
 

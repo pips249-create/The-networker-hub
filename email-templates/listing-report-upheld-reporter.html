@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report reviewed – The Networker Hub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+    body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
+    img { border:0; display:block; max-width:100%; height:auto; }
+    body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#e8ecf5; }
+    table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    @media only screen and (max-width:600px) {
+      .email-outer-pad { padding:8px 0 !important; }
+      .email-wrapper { width:100% !important; max-width:100% !important; border-radius:0 !important; box-shadow:none !important; }
+      .hero-title { font-size:24px !important; line-height:1.2 !important; }
+      .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
+      .mobile-header-pad { padding:24px 16px 0 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
+<!-- hub-email-layout-v2 -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
+  <tr>
+    <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
+      <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(28,32,64,0.12);">
+        <tr>
+          <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker Hub" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;">
+            </a>
+          </td>
+        </tr>
+        {{sponsor_row}}
+        <tr>
+          <td style="background:#f5f0e8;padding:0;text-align:center;">
+            <div style="line-height:0;font-size:0;margin-top:8px;">
+              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
+                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
+              </svg>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#047857;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Report reviewed</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Thank you for helping keep the Hub trustworthy</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">
+              Hi {{reporter_name}}, we reviewed your report about <strong style="color:#4aa8f0;">{{listing_title}}</strong> and took action on the listing.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 28px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;text-align:center;">
+              We do not share who reported a listing with the organiser or poster. If you see another issue, you can report it from the listing page any time.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+            </a>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+              <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{contact_url}}" style="color:#4aa8f0;text-decoration:none;">Contact</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{terms_url}}" style="color:#4aa8f0;text-decoration:none;">Terms</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

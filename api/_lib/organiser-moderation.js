@@ -241,6 +241,13 @@ async function suspendOrganiserFromHub(sb, opts) {
   return { suspended: true, action, emailResult, warningCount };
 }
 
+function mapListingReportReasonToConductReason(reportReason) {
+  const key = String(reportReason || '').trim().toLowerCase();
+  if (key === 'misleading' || key === 'wrong_details') return 'Misleading listing';
+  if (key === 'duplicate') return 'Quality issue';
+  return 'Breach of Hub rules';
+}
+
 async function recordConductWarning(sb, opts) {
   const organiserId = String(opts.organiserId || '').trim();
   const reason = String(opts.reason || '').trim();
@@ -248,6 +255,7 @@ async function recordConductWarning(sb, opts) {
   const adminUserId = isUuid(opts.adminUserId) ? opts.adminUserId : null;
   const eventId = opts.eventId || null;
   const eventCancellationId = opts.eventCancellationId || null;
+  const listingReportId = opts.listingReportId || null;
 
   if (!organiserId) {
     const e = new Error('Organiser id is required');
@@ -278,6 +286,24 @@ async function recordConductWarning(sb, opts) {
     }
   }
 
+  if (listingReportId) {
+    const { data: existingReport, error: reportFindErr } = await sb
+      .from('organiser_moderation_actions')
+      .select('id')
+      .eq('listing_report_id', listingReportId)
+      .maybeSingle();
+    if (reportFindErr) throw new Error(reportFindErr.message);
+    if (existingReport) {
+      const warningCount = await countConductWarnings(sb, organiserId);
+      return {
+        skipped: true,
+        reason: 'already_recorded',
+        warningCount,
+        hubSuspended: await isOrganiserHubSuspended(sb, organiserId),
+      };
+    }
+  }
+
   const { data: action, error: insertErr } = await sb
     .from('organiser_moderation_actions')
     .insert({
@@ -287,6 +313,7 @@ async function recordConductWarning(sb, opts) {
       details: details || null,
       event_id: eventId,
       event_cancellation_id: eventCancellationId,
+      listing_report_id: listingReportId,
       created_by: adminUserId,
     })
     .select('*')
@@ -406,6 +433,40 @@ async function recordConductWarningFromAdminRemoval(sb, opts) {
   return recordConductWarning(sb, opts);
 }
 
+async function recordConductWarningFromListingReport(sb, opts) {
+  const organiserId = String(opts.organiserId || '').trim();
+  const report = opts.report || {};
+  const reportId = report.id || opts.listingReportId || null;
+  const reportReason = String(report.reason || opts.reportReason || '').trim();
+  const conductReason = mapListingReportReasonToConductReason(reportReason);
+
+  if (!organiserId) {
+    return { skipped: true, reason: 'missing_organiser' };
+  }
+  if (!reportId) {
+    return { skipped: true, reason: 'missing_report' };
+  }
+
+  const listingTitle = String(report.listing_title || 'Listing').trim() || 'Listing';
+  const details =
+    'Uphold listing report: ' +
+    listingTitle +
+    ' (' +
+    String(report.listing_type || 'listing') +
+    ', ' +
+    reportReason +
+    ').';
+
+  return recordConductWarning(sb, {
+    organiserId,
+    reason: conductReason,
+    details,
+    eventId: opts.eventId || report.event_id || null,
+    listingReportId: reportId,
+    adminUserId: opts.adminUserId || null,
+  });
+}
+
 module.exports = {
   CONDUCT_WARNING_LIMIT,
   CONDUCT_REMOVAL_REASONS: [...CONDUCT_REMOVAL_REASONS],
@@ -417,6 +478,8 @@ module.exports = {
   moderationSummariesForOrganisers,
   recordConductWarning,
   recordConductWarningFromAdminRemoval,
+  recordConductWarningFromListingReport,
+  mapListingReportReasonToConductReason,
   issueManualConductWarning,
   suspendOrganiserFromHub,
   reinstateOrganiser,

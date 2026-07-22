@@ -182,6 +182,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'organiser-email-layout-v2',
     subject: 'Your event {{event_name}} has been unpublished on The Networker Hub',
   },
+  organiser_listing_unpublished_by_hub: {
+    file: 'organiser-listing-unpublished-by-hub.html',
+    marker: 'organiser-email-layout-v2',
+    subject: 'Your organiser page has been unpublished on The Networker Hub',
+  },
+  listing_report_upheld_reporter: {
+    file: 'listing-report-upheld-reporter.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'We reviewed your report — thank you',
+  },
   organiser_hub_warning: {
     file: 'organiser-hub-warning.html',
     marker: 'organiser-email-layout-v2',

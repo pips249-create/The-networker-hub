@@ -711,11 +711,109 @@ function mapEventToListing(e, soldByEvent) {
   };
 }
 
+const LISTING_REPORT_SELECT =
+  'id, listing_type, listing_title, reason, details, reporter_email, created_at, reviewed_at, status, event_id, organiser_id, opportunity_id, events(slug), organisers(slug), business_opportunities(slug)';
+
+function mapListingReportRow(r, options = {}) {
+  const readOnly = Boolean(options.readOnly);
+  const title = String(r.listing_title || '').trim() || '—';
+  const eventId = r.event_id || null;
+  const organiserId = r.organiser_id || null;
+  const opportunityId = r.opportunity_id || null;
+  const eventSlug = r.events?.slug ? String(r.events.slug).trim() : '';
+  const organiserSlug = r.organisers?.slug ? String(r.organisers.slug).trim() : '';
+  const opportunitySlug = r.business_opportunities?.slug
+    ? String(r.business_opportunities.slug).trim()
+    : '';
+  let viewUrl = null;
+  let adminUrl = null;
+  if (r.listing_type === 'event' && eventId) {
+    viewUrl = eventSlug
+      ? `../events/event?slug=${encodeURIComponent(eventSlug)}`
+      : `../events/event?id=${encodeURIComponent(eventId)}`;
+    adminUrl = `#cleanup/events?q=${encodeURIComponent(title)}`;
+  } else if (r.listing_type === 'organiser' && organiserId) {
+    viewUrl = organiserSlug
+      ? `../events/organiser?slug=${encodeURIComponent(organiserSlug)}`
+      : `../events/organiser?id=${encodeURIComponent(organiserId)}`;
+    adminUrl = `#cleanup/groups?organiser=${encodeURIComponent(organiserId)}`;
+  } else if (r.listing_type === 'opportunity' && opportunityId) {
+    viewUrl = opportunitySlug
+      ? `../opportunities/${encodeURIComponent(opportunitySlug)}`
+      : `../opportunities/opportunity?id=${encodeURIComponent(opportunityId)}`;
+    adminUrl = `#cleanup/opportunities?q=${encodeURIComponent(title)}`;
+  }
+  return {
+    id: r.id,
+    listingType: r.listing_type,
+    title,
+    reason: r.reason,
+    details: String(r.details || '').trim(),
+    reporterEmail: r.reporter_email || '',
+    time: r.created_at,
+    reviewedAt: r.reviewed_at || null,
+    status: r.status,
+    eventId,
+    organiserId,
+    opportunityId,
+    viewUrl,
+    adminUrl,
+    canUnpublish: !readOnly && Boolean(eventId || organiserId || opportunityId),
+    conductWarning: r.conductWarning || null,
+    hubSuspended: Boolean(r.hubSuspended),
+  };
+}
+
+async function attachConductWarningsToReports(sb, reports) {
+  const ids = (reports || []).map((r) => r.id).filter(Boolean);
+  if (!ids.length) return reports;
+
+  const { data, error } = await sb
+    .from('organiser_moderation_actions')
+    .select('listing_report_id, action_type, reason, created_at, organiser_id')
+    .in('listing_report_id', ids);
+  if (error) {
+    return reports.map((r) => ({ ...r, conductWarning: null, hubSuspended: false }));
+  }
+
+  const byReport = new Map();
+  for (const row of data || []) {
+    if (!row.listing_report_id) continue;
+    byReport.set(row.listing_report_id, row);
+  }
+
+  const organiserIds = [...new Set((data || []).map((row) => row.organiser_id).filter(Boolean))];
+  const { moderationSummariesForOrganisers } = require('./organiser-moderation');
+  const summaries = organiserIds.length
+    ? await moderationSummariesForOrganisers(sb, organiserIds)
+    : new Map();
+
+  return reports.map((r) => {
+    const action = byReport.get(r.id) || null;
+    const summaryOrganiserId = r.organiserId || action?.organiser_id || null;
+    const summary = summaryOrganiserId ? summaries.get(summaryOrganiserId) : null;
+    return {
+      ...r,
+      organiserId: summaryOrganiserId || r.organiserId || null,
+      conductWarning: action
+        ? {
+            reason: action.reason,
+            createdAt: action.created_at,
+            warningCount: summary?.warning_count || null,
+            warningLimit: summary?.warning_limit || 3,
+          }
+        : null,
+      hubSuspended: Boolean(summary?.hub_suspended),
+    };
+  });
+}
+
 async function fetchModeration(sb) {
   const eventSelect =
     'id, title, event_type, city, approval_status, organiser_id, organisers(name)';
 
-  const [eventsRes, reviewsRes, regCountsRes, reportsRes, reviewReportsRes] = await Promise.all([
+  const [eventsRes, reviewsRes, regCountsRes, reportsRes, validatedReportsRes, reviewReportsRes] =
+    await Promise.all([
     sb.from('events').select(eventSelect).order('created_at', { ascending: false }).limit(80),
     sb
       .from('reviews')
@@ -725,12 +823,16 @@ async function fetchModeration(sb) {
     sb.from('registrations').select('event_id'),
     sb
       .from('listing_reports')
-      .select(
-        'id, listing_type, listing_title, reason, details, reporter_email, created_at, status, event_id, organiser_id, opportunity_id, events(slug), organisers(slug), business_opportunities(slug)'
-      )
+      .select(LISTING_REPORT_SELECT)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
       .limit(30),
+    sb
+      .from('listing_reports')
+      .select(LISTING_REPORT_SELECT)
+      .eq('status', 'reviewed')
+      .order('reviewed_at', { ascending: false, nullsFirst: false })
+      .limit(50),
     sb
       .from('review_reports')
       .select('id, review_id, review_snippet, reason, details, reporter_email, created_at, status')
@@ -763,51 +865,14 @@ async function fetchModeration(sb) {
     };
   });
 
-  const listingReports = (reportsRes.error ? [] : reportsRes.data || []).map((r) => {
-    const title = String(r.listing_title || '').trim() || '—';
-    const eventId = r.event_id || null;
-    const organiserId = r.organiser_id || null;
-    const opportunityId = r.opportunity_id || null;
-    const eventSlug = r.events?.slug ? String(r.events.slug).trim() : '';
-    const organiserSlug = r.organisers?.slug ? String(r.organisers.slug).trim() : '';
-    const opportunitySlug = r.business_opportunities?.slug
-      ? String(r.business_opportunities.slug).trim()
-      : '';
-    let viewUrl = null;
-    let adminUrl = null;
-    if (r.listing_type === 'event' && eventId) {
-      viewUrl = eventSlug
-        ? `../events/event?slug=${encodeURIComponent(eventSlug)}`
-        : `../events/event?id=${encodeURIComponent(eventId)}`;
-      adminUrl = `#cleanup/events?q=${encodeURIComponent(title)}`;
-    } else if (r.listing_type === 'organiser' && organiserId) {
-      viewUrl = organiserSlug
-        ? `../events/organiser?slug=${encodeURIComponent(organiserSlug)}`
-        : `../events/organiser?id=${encodeURIComponent(organiserId)}`;
-      adminUrl = `#cleanup/groups?organiser=${encodeURIComponent(organiserId)}`;
-    } else if (r.listing_type === 'opportunity' && opportunityId) {
-      viewUrl = opportunitySlug
-        ? `../opportunities/${encodeURIComponent(opportunitySlug)}`
-        : `../opportunities/opportunity?id=${encodeURIComponent(opportunityId)}`;
-      adminUrl = `#cleanup/opportunities?q=${encodeURIComponent(title)}`;
-    }
-    return {
-      id: r.id,
-      listingType: r.listing_type,
-      title,
-      reason: r.reason,
-      details: String(r.details || '').trim(),
-      reporterEmail: r.reporter_email || '',
-      time: r.created_at,
-      status: r.status,
-      eventId,
-      organiserId,
-      opportunityId,
-      viewUrl,
-      adminUrl,
-      canUnpublish: Boolean(eventId || organiserId || opportunityId),
-    };
-  });
+  const listingReports = (reportsRes.error ? [] : reportsRes.data || []).map((r) =>
+    mapListingReportRow(r)
+  );
+
+  let validatedListingReports = (validatedReportsRes.error ? [] : validatedReportsRes.data || []).map(
+    (r) => mapListingReportRow(r, { readOnly: true })
+  );
+  validatedListingReports = await attachConductWarningsToReports(sb, validatedListingReports);
 
   const reviewReports = (reviewReportsRes.error ? [] : reviewReportsRes.data || []).map((r) => ({
     id: r.id,
@@ -824,8 +889,12 @@ async function fetchModeration(sb) {
     listings,
     reviews,
     listingReports,
+    validatedListingReports,
     reviewReports,
     listingReportsError: reportsRes.error ? reportsRes.error.message : null,
+    validatedListingReportsError: validatedReportsRes.error
+      ? validatedReportsRes.error.message
+      : null,
     reviewReportsError: reviewReportsRes.error ? reviewReportsRes.error.message : null,
   };
 }

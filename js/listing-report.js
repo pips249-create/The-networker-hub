@@ -95,7 +95,7 @@
     var form = document.getElementById('listing-report-form');
     if (lead) {
       lead.textContent =
-        'Reports are reviewed by The Networker team. Abuse of reporting may result in account action.';
+        'Tell us what seems wrong — reports are reviewed by The Networker team.';
     }
     if (msg) {
       msg.hidden = true;

@@ -2400,7 +2400,7 @@
         if (!unpublishReportId) return;
         if (
           !window.confirm(
-            'Unpublish this listing on the Hub? Ticket sales will stop and the report will be marked reviewed.'
+            'Unpublish this listing on the Hub? The poster and reporter will be emailed, a conduct warning may apply, and the report will be marked upheld.'
           )
         ) {
           return;
@@ -2409,8 +2409,24 @@
         adminPatch('/api/admin/moderation', { action: 'unpublish_from_report', id: unpublishReportId })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Unpublish failed');
+            var notes = [];
             if (data.listingMissing) {
-              window.alert('Report closed — the listing was already removed from Supabase.');
+              notes.push('The listing was already removed from Supabase.');
+            }
+            var uphold = data.upholdResult || {};
+            if (uphold.moderation && uphold.moderation.hubSuspended) {
+              notes.push('Organiser account suspended after repeated conduct warnings.');
+            } else if (uphold.moderation && uphold.moderation.warningCount) {
+              notes.push(
+                'Conduct warning ' +
+                  uphold.moderation.warningCount +
+                  ' of ' +
+                  (uphold.moderation.warningLimit || 3) +
+                  ' recorded.'
+              );
+            }
+            if (notes.length) {
+              window.alert('Report upheld. ' + notes.join(' '));
             }
             renderModeration();
             refreshAdminNotifications();
@@ -4782,9 +4798,14 @@
       .join('');
   }
 
-  function listingReportsHtml(reports) {
+  function listingReportsHtml(reports, options) {
+    options = options || {};
+    var readOnly = Boolean(options.readOnly);
+    var emptyMessage =
+      options.emptyMessage ||
+      (readOnly ? 'No upheld listing reports yet.' : 'No open listing reports.');
     if (!reports.length) {
-      return '<p class="text-sm text-slate-500">No open listing reports.</p>';
+      return '<p class="text-sm text-slate-500">' + esc(emptyMessage) + '</p>';
     }
     var reasonLabels = {
       misleading: 'Misleading',
@@ -4794,35 +4815,83 @@
       duplicate: 'Duplicate',
       other: 'Other',
     };
+    var borderClass = readOnly ? 'border-emerald-200 bg-emerald-50/50' : 'border-amber-200 bg-amber-50/50';
+    var reasonClass = readOnly ? 'text-emerald-900' : 'text-amber-900';
     return reports
       .map(function (r) {
+        var typeLabel =
+          r.listingType === 'organiser'
+            ? 'Group'
+            : r.listingType === 'opportunity'
+              ? 'Opportunity'
+              : 'Event';
+        var meta =
+          esc(reasonLabels[r.reason] || r.reason) +
+          (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '');
+        var upheldMeta = '';
+        if (readOnly) {
+          upheldMeta =
+            '<p class="text-xs text-emerald-800 mt-1 font-semibold">Uphold' +
+            (r.reviewedAt ? ' · ' + esc(fmtTime(r.reviewedAt)) : '') +
+            '</p>';
+          if (r.conductWarning && r.conductWarning.warningCount != null) {
+            upheldMeta +=
+              '<p class="text-xs text-slate-600 mt-1">Conduct warning ' +
+              esc(String(r.conductWarning.warningCount)) +
+              ' of ' +
+              esc(String(r.conductWarning.warningLimit || 3)) +
+              (r.hubSuspended ? ' · organiser suspended' : '') +
+              '</p>';
+          } else if (r.hubSuspended) {
+            upheldMeta += '<p class="text-xs text-red-700 mt-1 font-semibold">Organiser suspended</p>';
+          }
+        }
         return (
-          '<div class="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-sm">' +
+          '<div class="rounded-lg border ' +
+          borderClass +
+          ' p-3 text-sm">' +
           '<div class="flex flex-wrap items-start justify-between gap-2">' +
           '<p class="font-semibold text-brand-900">' +
           esc(r.title) +
           ' <span class="text-xs font-normal text-slate-500">(' +
-          esc(
-            r.listingType === 'organiser'
-              ? 'Group'
-              : r.listingType === 'opportunity'
-                ? 'Opportunity'
-                : 'Event'
-          ) +
+          esc(typeLabel) +
           ')</span></p>' +
           '<time class="text-xs text-slate-400 shrink-0">' +
-          esc(fmtTime(r.time)) +
+          esc(fmtTime(readOnly && r.reviewedAt ? r.reviewedAt : r.time)) +
           '</time></div>' +
-          '<p class="text-xs text-amber-900 mt-1">' +
-          esc(reasonLabels[r.reason] || r.reason) +
-          (r.reporterEmail ? ' · ' + esc(r.reporterEmail) : '') +
+          upheldMeta +
+          '<p class="text-xs ' +
+          reasonClass +
+          ' mt-1">' +
+          meta +
           '</p>' +
           (r.details ? '<p class="text-xs text-slate-600 mt-1">' + esc(r.details) + '</p>' : '') +
-          listingReportActionsHtml(r) +
+          (readOnly ? listingReportReadOnlyActionsHtml(r) : listingReportActionsHtml(r)) +
           '</div>'
         );
       })
       .join('');
+  }
+
+  function listingReportReadOnlyActionsHtml(r) {
+    var parts = [];
+    if (r.adminUrl) {
+      parts.push(
+        '<a href="' +
+          attrEsc(r.adminUrl) +
+          '" class="rounded-lg border border-slate-200 bg-white text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50">Edit listing</a>'
+      );
+    }
+    if (r.organiserId) {
+      parts.push(
+        '<a href="#cleanup/groups?organiser=' +
+          attrEsc(r.organiserId) +
+          '" class="rounded-lg border border-slate-200 bg-white text-slate-700 px-2.5 py-1 text-xs font-semibold hover:bg-slate-50">View organiser</a>'
+      );
+    }
+    return parts.length
+      ? '<div class="mt-3 flex flex-wrap gap-2">' + parts.join('') + '</div>'
+      : '';
   }
 
   function reviewsHtml(reviews) {
@@ -4862,11 +4931,15 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Events go live automatically when organisers publish. For reports: view the listing, edit it in cleanup, unpublish if needed, or dismiss if it looks fine.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Events go live automatically when organisers publish. For reports: view the listing, edit it in cleanup, unpublish to uphold (emails the poster and reporter), or dismiss if it looks fine. Three upheld listing breaches on the same organiser profile trigger automatic suspension.</p>' +
       '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm" id="moderation-reports-panel">' +
-      '<h3 class="font-bold text-amber-900 mb-1">Listing reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from event and group profile pages — view, unpublish, or dismiss when reviewed.</p>' +
+      '<h3 class="font-bold text-amber-900 mb-1">Open listing reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from event, group, and opportunity pages — view, unpublish, or dismiss when reviewed.</p>' +
       '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
+      '<div class="bg-white rounded-xl border border-emerald-200 p-5 shadow-sm" id="moderation-validated-reports-panel">' +
+      '<h3 class="font-bold text-emerald-900 mb-1">Uphold history</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Reports you validated by unpublishing — includes conduct warnings and suspensions.</p>' +
+      '<div class="space-y-3" id="moderation-validated-reports">Loading…</div></div>' +
       '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm" id="moderation-review-reports-panel">' +
       '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
       '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — remove the review or dismiss when reviewed.</p>' +
@@ -4890,6 +4963,7 @@
       var listingsEl = document.getElementById('moderation-listings');
       var reviewsEl = document.getElementById('moderation-reviews');
       var reportsEl = document.getElementById('moderation-reports');
+      var validatedReportsEl = document.getElementById('moderation-validated-reports');
       var reviewReportsEl = document.getElementById('moderation-review-reports');
       if (!data || data.error || data.configured === false) {
         liveListings = [];
@@ -4898,19 +4972,23 @@
         if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
         if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
         if (reportsEl) reportsEl.innerHTML = listingReportsHtml([]);
+        if (validatedReportsEl) validatedReportsEl.innerHTML = listingReportsHtml([], { readOnly: true });
         if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml([]);
         return;
       }
       liveListings = data.listings || [];
       liveReviews = data.reviews || [];
       var listingReports = data.listingReports || [];
+      var validatedListingReports = data.validatedListingReports || [];
       var reviewReports = data.reviewReports || [];
       if (status) {
         status.textContent =
           liveListings.length +
           ' events · ' +
           listingReports.length +
-          ' listing reports · ' +
+          ' open listing reports · ' +
+          validatedListingReports.length +
+          ' upheld · ' +
           reviewReports.length +
           ' review reports · ' +
           liveReviews.length +
@@ -4922,12 +5000,22 @@
         }
       }
       if (reportsEl) reportsEl.innerHTML = listingReportsHtml(listingReports);
+      if (validatedReportsEl) {
+        validatedReportsEl.innerHTML = listingReportsHtml(validatedListingReports, { readOnly: true });
+      }
       if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml(reviewReports);
       if (data.listingReportsError && status) {
         status.innerHTML =
           esc(status.textContent) +
-          ' <span class="text-red-700">(Could not load listing reports: ' +
+          ' <span class="text-red-700">(Could not load open listing reports: ' +
           esc(data.listingReportsError) +
+          ')</span>';
+      }
+      if (data.validatedListingReportsError && status) {
+        status.innerHTML =
+          esc(status.textContent) +
+          ' <span class="text-red-700">(Could not load uphold history: ' +
+          esc(data.validatedListingReportsError) +
           ')</span>';
       }
       var reportsPanel = document.getElementById('moderation-reports-panel');
