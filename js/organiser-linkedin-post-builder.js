@@ -711,24 +711,14 @@
       '<div class="org-post-builder">' +
       '<div class="org-post-workspace">' +
       '<div class="org-post-builder-controls">' +
-      '<div class="org-post-field">' +
+      '<div class="org-post-field org-post-field--category">' +
       '<span class="org-post-label">What is this post about?</span>' +
+      '<div class="org-post-category-tabs-wrap">' +
       categoryTabsHtml +
+      '</div>' +
       '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity first to unlock these options. <a href="#business-list">List a business opportunity →</a></p>' +
       '</div>' +
-      '<div class="org-post-field">' +
-      '<span class="org-post-label">Pick ready-made words</span>' +
-      '<div class="org-post-caption-options" id="post-caption-options" role="listbox" aria-label="Caption options"></div>' +
-      '<p class="org-post-hint">Tap one of the options above, or write your own text in the box below.</p>' +
-      '</div>' +
-      '<label class="org-post-field">' +
-      '<span class="org-post-label">Your post text</span>' +
-      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="7" maxlength="1200" aria-label="Post text"></textarea>' +
-      '</label>' +
-      '<div class="org-post-field">' +
-      '<span class="org-post-label">Choose a background colour</span>' +
-      backgroundPickerHtml +
-      '</div>' +
+      '<div class="org-post-pick-block">' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Your organiser page</span>' +
       '<select id="post-group" aria-label="Organiser page"></select>' +
@@ -743,6 +733,22 @@
       '<select id="post-listing" aria-label="Business opportunity listing"></select>' +
       '<span class="org-post-hint">The post will link to this listing on The Networker Hub.</span>' +
       '</label>' +
+      '</div>' +
+      '<div class="org-post-field">' +
+      '<span class="org-post-label">Pick ready-made words</span>' +
+      '<div class="org-post-caption-options" id="post-caption-options" role="listbox" aria-label="Caption options"></div>' +
+      '<p class="org-post-hint">Tap one of the options above, or write your own text in the box below.</p>' +
+      '</div>' +
+      '<label class="org-post-field">' +
+      '<span class="org-post-label">Your post text</span>' +
+      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="6" maxlength="1200" aria-label="Post text"></textarea>' +
+      '</label>' +
+      '<details class="org-post-advanced org-post-advanced--picture">' +
+      '<summary>Customise your picture (optional)</summary>' +
+      '<div class="org-post-field">' +
+      '<span class="org-post-label">Choose a background colour</span>' +
+      backgroundPickerHtml +
+      '</div>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Name shown on the picture</span>' +
       '<input type="text" id="post-name" maxlength="60" placeholder="Your group or business name" />' +
@@ -752,8 +758,6 @@
       '<input type="file" id="post-logo-file" accept="image/*" />' +
       '<span class="org-post-hint" id="post-logo-hint">We use your organiser page logo when you have one. Upload a file here to use a different logo.</span>' +
       '</label>' +
-      '<details class="org-post-advanced">' +
-      '<summary>Change the words on the picture (optional)</summary>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Headline line 1</span>' +
       '<input type="text" id="post-line1" maxlength="48" />' +

@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721biz" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722layout" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722tabs" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -1108,42 +1108,36 @@
             </p>
           </header>
 
-          <div class="org-social-tabs" role="tablist" aria-label="Share your event options">
+          <nav class="org-events-subnav" id="org-social-subnav" role="tablist" aria-label="Share your event options">
             <button
               type="button"
-              class="org-social-tab is-active"
               role="tab"
+              class="org-events-tab is-active"
               id="org-social-tab-linkedin"
               aria-selected="true"
               aria-controls="org-social-panel-linkedin"
               data-social-tab="linkedin"
             >
-              <span class="org-social-tab-num" aria-hidden="true">1</span>
-              <span class="org-social-tab-body">
-                <strong class="org-social-tab-title">LinkedIn post</strong>
-                <span class="org-social-tab-meta org-social-tab-meta--free">Free</span>
-              </span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-12h4v2"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+              <span class="org-events-tab-label">LinkedIn post <span class="org-events-tab-badge org-events-tab-badge--free">Free</span></span>
             </button>
             <button
               type="button"
-              class="org-social-tab"
               role="tab"
+              class="org-events-tab"
               id="org-social-tab-spotlight"
               aria-selected="false"
               aria-controls="org-social-panel-spotlight"
               data-social-tab="spotlight"
               tabindex="-1"
             >
-              <span class="org-social-tab-num" aria-hidden="true">2</span>
-              <span class="org-social-tab-body">
-                <strong class="org-social-tab-title">Extra visibility</strong>
-                <span class="org-social-tab-meta org-social-tab-meta--paid">£55/mo · optional</span>
-              </span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a2 2 0 0 0 2 2h1l4 4V5L6 9H5a2 2 0 0 0-2 2z"/><path d="M13 8.5a4 4 0 0 1 0 7"/><path d="M17 6a7 7 0 0 1 0 12"/></svg>
+              <span class="org-events-tab-label">Extra visibility <span class="org-events-tab-count org-events-tab-count--paid">£55/mo</span></span>
             </button>
             <button
               type="button"
-              class="org-social-tab"
               role="tab"
+              class="org-events-tab"
               id="org-social-tab-ranking"
               aria-selected="false"
               aria-controls="org-social-panel-ranking"
@@ -1151,53 +1145,45 @@
               tabindex="-1"
               hidden
             >
-              <span class="org-social-tab-num" aria-hidden="true">3</span>
-              <span class="org-social-tab-body">
-                <strong class="org-social-tab-title">Your badge</strong>
-                <span class="org-social-tab-meta">When you earn one</span>
-              </span>
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z"/></svg>
+              <span class="org-events-tab-label">Your badge</span>
             </button>
-          </div>
-
-          <p class="org-social-tab-hint" id="org-social-tab-hint">
-            Not sure where to start? Use <strong>LinkedIn post</strong> — it is free and takes about two minutes.
-          </p>
+          </nav>
 
           <div
-            class="org-social-panel is-active"
+            class="org-sub-page org-sub-page--social is-active"
             id="org-social-panel-linkedin"
             role="tabpanel"
             aria-labelledby="org-social-tab-linkedin"
             data-social-panel="linkedin"
           >
-            <div class="org-social-panel-card org-social-panel-card--linkedin">
-              <header class="org-social-panel-head">
-                <h2 class="org-section-title" id="org-linkedin-posts-title">Make a LinkedIn post</h2>
-                <ol class="org-social-quick-steps">
-                  <li>Pick your event below</li>
-                  <li>Check the words — change them if you like</li>
-                  <li>Download the picture, then click <strong>Copy text &amp; open LinkedIn</strong></li>
-                </ol>
-                <p class="org-social-panel-note">
-                  When LinkedIn opens, click <strong>Start a post</strong>, paste your text (<kbd>Ctrl+V</kbd> or <kbd>⌘V</kbd>), and attach your downloaded picture.
-                </p>
-              </header>
-              <div class="org-social-panel-body">
-                <div id="org-post-builder-root"></div>
-              </div>
+            <p class="org-social-tab-hint" id="org-social-tab-hint">
+              Not sure where to start? Use <strong>LinkedIn post</strong> — it is free and takes about two minutes.
+            </p>
+            <div class="org-social-intro">
+              <h2 class="org-section-title org-social-intro-title" id="org-linkedin-posts-title">Make a LinkedIn post</h2>
+              <ol class="org-social-quick-steps org-social-quick-steps--inline">
+                <li>Pick your event</li>
+                <li>Check the words</li>
+                <li>Download the picture &amp; open LinkedIn</li>
+              </ol>
+              <p class="org-social-panel-note">
+                When LinkedIn opens, click <strong>Start a post</strong>, paste your text (<kbd>Ctrl+V</kbd> or <kbd>⌘V</kbd>), and attach your downloaded picture.
+              </p>
             </div>
+            <div id="org-post-builder-root"></div>
           </div>
 
           <div
-            class="org-social-panel"
+            class="org-sub-page org-sub-page--social"
             id="org-social-panel-spotlight"
             role="tabpanel"
             aria-labelledby="org-social-tab-spotlight"
             data-social-panel="spotlight"
             hidden
           >
-            <div class="org-social-panel-card org-social-panel-card--spotlight" id="org-social-spotlight">
-              <header class="org-social-panel-head">
+            <div class="org-social-spotlight-panel" id="org-social-spotlight">
+              <header class="org-social-panel-head org-social-panel-head--flush">
                 <div class="org-social-panel-head-row">
                   <h2 class="org-section-title" id="org-social-spotlight-title">Get extra visibility on the hub</h2>
                   <p class="org-social-tool-price">£55 <span>per month, per event</span></p>
@@ -1207,33 +1193,33 @@
                 </p>
                 <p class="org-social-tool-status" id="org-featured-upgrade-status" role="status"></p>
               </header>
-              <div class="org-social-panel-body" id="org-featured-upgrade-body">
-                <ol class="org-social-quick-steps org-social-quick-steps--compact">
-                  <li>Tick the event you want more people to see</li>
-                  <li>Click <strong>Continue to payment</strong></li>
-                </ol>
+              <ol class="org-social-quick-steps org-social-quick-steps--compact">
+                <li>Tick the event you want more people to see</li>
+                <li>Click <strong>Continue to payment</strong></li>
+              </ol>
+              <div id="org-featured-upgrade-body">
                 <div id="org-featured-upgrade-root" aria-live="polite"></div>
               </div>
             </div>
           </div>
 
           <div
-            class="org-social-panel"
+            class="org-sub-page org-sub-page--social"
             id="org-social-panel-ranking"
             role="tabpanel"
             aria-labelledby="org-social-tab-ranking"
             data-social-panel="ranking"
             hidden
           >
-            <div class="org-social-panel-card org-social-panel-card--ranking org-ranking-panel org-ranking-panel--social" id="org-social-ranking">
-              <header class="org-social-panel-head">
+            <div class="org-ranking-panel org-ranking-panel--social" id="org-social-ranking">
+              <header class="org-social-panel-head org-social-panel-head--flush">
                 <h2 class="org-section-title" id="org-social-ranking-title">Share your review badge</h2>
                 <p class="org-section-sub" id="org-ranking-panel-events-summary">
                   If your group ranks highly on the hub, copy a ready-made post and share it on LinkedIn or Facebook.
                 </p>
                 <p class="org-social-ranking-badge" id="org-social-ranking-badge" hidden></p>
               </header>
-              <div class="org-social-panel-body" id="org-ranking-panel-events-body">
+              <div id="org-ranking-panel-events-body">
                 <aside class="org-ranking-banner" id="org-events-ranking-banner" role="status"></aside>
                 <div class="org-ranking-share" id="org-ranking-share-events">
                   <div class="org-ranking-share-cards" id="org-ranking-share-cards"></div>
@@ -1253,19 +1239,19 @@
             <div class="org-page-head-text">
               <p class="org-page-kicker">Team</p>
               <h1 class="org-page-title">Team &amp; invites</h1>
-              <p class="org-page-lead">Invite editors to help manage events. Choose which organiser pages each editor can access. Only the account owner can invite or remove team members.</p>
+              <p class="org-page-lead">Give colleagues access to help run your organiser pages. Choose which pages each team member can see. Only the account owner can send invites, change bank details, or remove people.</p>
               <p class="org-section-sub org-team-limit-note" id="team-limit-note" hidden></p>
-              <p class="org-section-sub org-team-editor-note" id="team-editor-note" hidden>
-                You&apos;re signed in as an <strong>editor</strong>. You can manage events for your assigned groups, but only the account owner can send invites or change bank details.
+              <p class="org-section-sub org-team-editor-note" id="team-member-note" hidden>
+                You&apos;re signed in as a <strong>team member</strong>. You can manage events for your assigned organiser pages. Only the account owner can invite colleagues or change bank details.
               </p>
             </div>
             <button type="button" class="org-btn org-btn-gold" id="btn-invite-team">Invite team member</button>
           </header>
           <div class="org-team-permissions" id="org-team-permissions">
-            <h2 class="org-team-permissions-title">What editors can do</h2>
+            <h2 class="org-team-permissions-title">What team members can do</h2>
             <div class="org-team-permissions-grid">
               <div class="org-team-permissions-col">
-                <p class="org-team-permissions-label">Editors can</p>
+                <p class="org-team-permissions-label">Team members can</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--can">
                   <li>View and manage assigned organiser pages (or all pages if you choose)</li>
                   <li>Create and edit events, tickets, and attendee lists for those pages</li>
@@ -1274,14 +1260,18 @@
                 </ul>
               </div>
               <div class="org-team-permissions-col">
-                <p class="org-team-permissions-label">Editors cannot</p>
+                <p class="org-team-permissions-label">Team members cannot</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--cannot">
-                  <li>Invite or remove team members</li>
+                  <li>Invite or remove colleagues</li>
                   <li>Create new organiser pages or duplicate existing ones</li>
                   <li>Add bank details, request payouts, or delete events</li>
                 </ul>
               </div>
             </div>
+            <p class="org-team-permissions-foot">
+              <a class="org-inline-link" href="../guides/invite-your-team" target="_blank" rel="noopener noreferrer">Full team guide</a>
+              — invite flow, limits, and what happens when someone accepts.
+            </p>
           </div>
           <div class="org-table-wrap">
             <table>
@@ -1301,7 +1291,7 @@
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3.3 3.1-6 7-6"/><path d="M14 20c0-2.2 2.7-4.5 6-4.5"/></svg>
               </div>
               <h3 class="org-empty-state-title">No team members yet</h3>
-              <p class="org-empty-state-text">Invite colleagues as editors so they can help manage your events.</p>
+              <p class="org-empty-state-text">Invite colleagues as team members so they can help manage events, tickets, and attendees on your organiser pages.</p>
               <div class="org-empty-state-actions">
                 <button type="button" class="org-btn org-btn-gold org-btn-sm" id="btn-invite-team-empty">Invite team member</button>
               </div>
@@ -1838,17 +1828,13 @@
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
         <h2 id="modal-team-title">Invite team member</h2>
-        <p>Editors can create and edit events, manage attendees, and view revenue for the groups you assign. They cannot invite others, add bank details, or delete events.</p>
+        <p class="org-modal-sub">They&apos;ll get <strong>team member</strong> access to the organiser pages you choose — create and edit events, manage attendees, and view revenue. They cannot invite others, add bank details, request payouts, or delete events.</p>
         <p class="org-modal-note" id="modal-team-limit-note"></p>
         <form id="form-team-invite">
           <div class="org-field">
             <label for="team-invite-email">Email address</label>
-            <input type="email" id="team-invite-email" required placeholder="colleague@company.com" />
-          </div>
-          <div class="org-field">
-            <label for="team-invite-role">Role</label>
-            <input type="text" id="team-invite-role" value="Editor" readonly aria-readonly="true" />
-            <p class="org-field-hint">Team invites are editors only. Owners cannot be invited — there is one account owner.</p>
+            <input type="email" id="team-invite-email" required placeholder="colleague@company.com" autocomplete="email" />
+            <p class="org-field-hint">They must sign in with this exact email address to activate their access.</p>
           </div>
           <fieldset class="org-team-group-fieldset" id="team-invite-groups-fieldset">
             <legend class="org-team-group-legend">Organiser page access</legend>
@@ -1857,7 +1843,7 @@
               All organiser pages on this account
             </label>
             <div class="org-team-group-list" id="team-invite-group-list" hidden></div>
-            <p class="org-field-hint">Uncheck &ldquo;All organiser pages&rdquo; to limit this editor to specific pages.</p>
+            <p class="org-field-hint">Uncheck &ldquo;All organiser pages&rdquo; to limit this person to specific pages only.</p>
           </fieldset>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
@@ -2446,7 +2432,7 @@
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
-    <script src="../js/organiser-linkedin-post-builder.js?v=20260722social"></script>
+    <script src="../js/organiser-linkedin-post-builder.js?v=20260722tabs"></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4"></script>
     <script src="../js/hub-comms-pack.js?v=20260722share"></script>
     <script src="../js/organiser-dashboard.js?v=20260722layout"></script>

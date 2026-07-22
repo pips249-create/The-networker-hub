@@ -50,14 +50,14 @@
     },
     {
       title: 'Team & invites',
-      body: 'Invite colleagues as editors to help manage events — assign which organiser pages they can access. Only the account owner can change bank details.',
+      body: 'Invite colleagues as team members to help manage events — assign which organiser pages they can access. Only the account owner can change bank details.',
       target: '#org-nav-team',
       beforeShow: goDashboard,
     },
     {
       title: 'Share your event',
       body: 'Make a free LinkedIn post with ready-made words and a picture, or pay for extra visibility on the hub.',
-      target: '.org-social-tabs',
+      target: '#org-social-subnav',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('social');
       },
