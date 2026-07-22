@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722cp20">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722cp23">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -716,21 +716,74 @@
           </div>
           <div class="ad-package-preview">
             <p class="ad-preview-label">Example</p>
-            <div class="ad-mock-page ad-mock-page--detail">
+            <div class="ad-mock-page ad-mock-page--organiser-detail">
               <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/organiser/manchester-business-network</em></div>
-              <div class="ad-mock-detail-layout">
-                <div class="ad-mock-detail-main">
-                  <span class="ad-mock-detail-badge">Networking group · Manchester</span>
-                  <h4 class="ad-mock-detail-title">Manchester Business Network</h4>
-                  <p class="ad-mock-detail-meta">Weekly breakfast meetings · 240+ members</p>
-                  <div class="ad-mock-detail-body">
-                    <p class="ad-mock-lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                    <p class="ad-mock-lorem ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+              <div class="ad-organiser-detail-scale">
+                <div class="ad-organiser-detail-mock" aria-hidden="true">
+                  <p class="ad-org-mock-back">← Back to organisers</p>
+                  <section class="ad-org-mock-showcase">
+                    <div class="ad-org-mock-showcase-visual">
+                      <div class="ad-org-mock-photo">
+                        <span class="ad-org-mock-photo-mark" aria-hidden="true">MBN</span>
+                      </div>
+                      <p class="ad-org-mock-kicker">Organiser</p>
+                      <h4 class="ad-org-mock-name">Manchester Business Network</h4>
+                      <p class="ad-org-mock-rating"><span class="ad-org-mock-stars" aria-hidden="true">★★★★★</span> 4.8 · 42 reviews</p>
+                      <div class="ad-org-mock-actions">
+                        <span class="ad-org-mock-btn">Save</span>
+                        <span class="ad-org-mock-btn">Share</span>
+                        <span class="ad-org-mock-btn ad-org-mock-btn--primary">Visit website</span>
+                      </div>
+                    </div>
+                    <div class="ad-org-mock-reviews">
+                      <h5 class="ad-org-mock-reviews-title">What people are saying</h5>
+                      <div class="ad-org-mock-review">
+                        <span class="ad-org-mock-review-stars" aria-hidden="true">★★★★★</span>
+                        <p>Great hosts and a welcoming room — ideal for making local connections.</p>
+                      </div>
+                      <div class="ad-org-mock-review">
+                        <span class="ad-org-mock-review-stars" aria-hidden="true">★★★★☆</span>
+                        <p>Consistent breakfast meetings with a strong mix of founders and professionals.</p>
+                      </div>
+                    </div>
+                  </section>
+                  <div class="ad-org-mock-layout">
+                    <div class="ad-org-mock-main">
+                      <section class="ad-org-mock-section">
+                        <h5>About this group</h5>
+                        <p class="ad-mock-lorem ad-mock-lorem--detail">Weekly breakfast networking for founders, professionals and business owners across Greater Manchester. Open, friendly meetings with structured introductions and plenty of time to connect.</p>
+                      </section>
+                      <section class="ad-org-mock-section">
+                        <h5>Meeting formats</h5>
+                        <div class="ad-org-mock-pills">
+                          <span>Breakfast</span>
+                          <span>In person</span>
+                          <span>Monthly</span>
+                        </div>
+                      </section>
+                      <section class="ad-org-mock-section ad-org-mock-section--last">
+                        <h5>Upcoming listings</h5>
+                        <div class="ad-org-mock-event-row">
+                          <div>
+                            <strong>Women in Business Breakfast</strong>
+                            <span>Wed 14 Aug · Manchester · Free</span>
+                          </div>
+                          <em>View →</em>
+                        </div>
+                        <div class="ad-org-mock-event-row">
+                          <div>
+                            <strong>Founders Roundtable</strong>
+                            <span>Thu 22 Aug · Manchester · £12</span>
+                          </div>
+                          <em>View →</em>
+                        </div>
+                      </section>
+                    </div>
+                    <aside class="ad-org-mock-sidebar">
+                      <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-organisers-dir"></div>
+                    </aside>
                   </div>
                 </div>
-                <aside class="ad-mock-detail-sidebar">
-                  <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-organisers-dir"></div>
-                </aside>
               </div>
             </div>
           </div>
@@ -934,16 +987,23 @@
             <div class="ad-example-gallery" id="ad-opportunities-main-gallery">
               <div class="ad-example-stage">
                 <div class="ad-example-panel is-active" data-example-panel="browse" role="tabpanel">
-                  <div class="ad-mock-page ad-mock-page--opportunities" id="ad-preview-opportunities-hero">
+                  <div class="ad-mock-page ad-mock-page--opp-browse" id="ad-preview-opportunities-hero">
                     <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/</em></div>
-                    <div class="ad-mock-page-body">
-                      <div class="ad-mock-hero-row">
-                        <div class="ad-mock-copy-block ad-mock-copy-block--rich ad-mock-copy-block--navy">
-                          <span class="ad-mock-page-kicker">Business opportunities</span>
-                          <h4 class="ad-mock-page-title">Franchises, partnerships &amp; investments</h4>
-                          <p class="ad-mock-page-sub">Browse deals for members exploring their next move. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                        </div>
-                        <div class="ad-live-preview ad-live-preview--hero" id="ad-live-opportunities-hero"></div>
+                    <div class="ad-opp-dir-scale">
+                      <div class="ad-opp-dir-mock" aria-hidden="true">
+                        <section class="ad-opp-dir-hero">
+                          <div class="ad-opp-dir-hero-inner">
+                            <div class="ad-opp-dir-hero-copy">
+                              <span class="ad-opp-dir-badge">Opportunity discovery</span>
+                              <h3 class="ad-opp-dir-headline">Find your next <em>business opportunity</em></h3>
+                              <p class="ad-opp-dir-sub">Franchises, side hustles, partnerships and more.<br>Filter by type, investment, and location.</p>
+                              <p class="ad-opp-dir-provider">Want to be included in The Networker Hub? <span>Find out more</span></p>
+                            </div>
+                            <div class="ad-opp-dir-sponsor-col">
+                              <div class="ad-opp-dir-sponsor-slot ad-live-preview ad-live-preview--hero" id="ad-live-opportunities-hero"></div>
+                            </div>
+                          </div>
+                        </section>
                       </div>
                     </div>
                   </div>
@@ -1005,20 +1065,50 @@
             </ul>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example</p>
-            <div class="ad-mock-page ad-mock-page--sidebar">
-              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/example-listing</em></div>
-              <div class="ad-mock-sidebar-layout">
-                <div class="ad-mock-detail-main ad-mock-detail-main--compact">
-                  <span class="ad-mock-detail-badge">Franchise · North West</span>
-                  <h4 class="ad-mock-detail-title">Coffee shop franchise — Manchester territory</h4>
-                  <p class="ad-mock-detail-meta">Investment from £85k · Training included</p>
-                  <div class="ad-mock-detail-body">
-                    <p class="ad-mock-lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                    <p class="ad-mock-lorem ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+            <p class="ad-preview-label">Examples</p>
+            <div class="ad-example-gallery ad-example-gallery--mini" id="ad-opportunity-mini-gallery">
+              <div class="ad-example-stage ad-example-stage--tall">
+                <div class="ad-example-panel is-active" data-example-panel="page" role="tabpanel">
+                  <div class="ad-mock-page ad-mock-page--sidebar">
+                    <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/coffee-shop-franchise-manchester</em></div>
+                    <div class="ad-mock-sidebar-layout">
+                      <div class="ad-mock-detail-main ad-mock-detail-main--compact">
+                        <span class="ad-mock-detail-badge">Franchise · North West</span>
+                        <h4 class="ad-mock-detail-title">Coffee shop franchise — Manchester territory</h4>
+                        <p class="ad-mock-detail-meta">Investment from £85k · Training included</p>
+                        <div class="ad-mock-detail-body">
+                          <p class="ad-mock-lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                          <p class="ad-mock-lorem ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                        </div>
+                      </div>
+                      <aside class="ad-opp-detail-sidebar">
+                        <div class="ad-live-preview ad-live-preview--compact" id="ad-live-opportunity-sidebar"></div>
+                        <div class="ad-opp-mock-enquire">
+                          <h5>Enquire about this opportunity</h5>
+                          <p>Send a message and this business lister will get back in touch with you.</p>
+                          <span class="ad-opp-mock-enquire-btn">Send enquiry</span>
+                        </div>
+                      </aside>
+                    </div>
                   </div>
                 </div>
-                <div class="ad-live-preview ad-live-preview--compact" id="ad-live-opportunity-sidebar"></div>
+                <div class="ad-example-panel" data-example-panel="email" role="tabpanel" hidden>
+                  <div class="ad-email-preview-wrap">
+                    <div class="ad-email-preview-scale">
+                      <div class="ad-email-preview-inner" id="ad-live-opportunity-mini-email"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="ad-example-thumbs" role="tablist" aria-label="Opportunity Page Partner examples">
+                <button type="button" class="ad-example-thumb is-active" role="tab" data-example="page" aria-selected="true">
+                  <span class="ad-example-thumb-frame ad-example-thumb-frame--opportunities" aria-hidden="true"></span>
+                  <span class="ad-example-thumb-label">Opportunity page</span>
+                </button>
+                <button type="button" class="ad-example-thumb" role="tab" data-example="email" aria-selected="false" tabindex="-1">
+                  <span class="ad-example-thumb-frame ad-example-thumb-frame--email" aria-hidden="true"></span>
+                  <span class="ad-example-thumb-label">Opportunity email</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1348,7 +1438,7 @@
 <script src="js/site-footer.js?v=20260722a" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
-<script src="js/advertising-page.js?v=20260722cp17"></script>
+<script src="js/advertising-page.js?v=20260722cp23"></script>
 <script src="js/city-partner-advertising.js?v=20260722cp18"></script>
 
 </body>

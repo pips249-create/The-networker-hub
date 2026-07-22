@@ -17,18 +17,22 @@
     cta_url: 'https://example.com',
   };
 
+  var DEMO_OPPORTUNITIES_SPONSOR = {
+    active: true,
+    logo_url: DEMO_SPONSOR.logo_url,
+    company_name: DEMO_SPONSOR.company_name,
+    title: 'Renovations and construction for commercial premises across the North West.',
+    cta_label: 'Find out more →',
+    cta_url: DEMO_SPONSOR.cta_url,
+  };
+
   var DEMO_MINI_SPONSORS = [
     DEMO_SPONSOR,
     {
       active: true,
-      logo_url: '',
+      logo_url: '/assets/advertising-example-hub-logo.png',
       company_name: 'North West IT',
-      cta_url: 'https://example.com',
-    },
-    {
-      active: true,
-      logo_url: '',
-      company_name: 'Summit Finance',
+      cta_label: 'Find out more →',
       cta_url: 'https://example.com',
     },
   ];
@@ -384,10 +388,8 @@
     });
   }
 
-  function renderMiniSponsorEmailPreview(container) {
-    if (!container) return;
-    var sponsors = DEMO_MINI_SPONSORS.slice();
-    var logoCells = sponsors
+  function buildMiniSponsorsRowHtml() {
+    return DEMO_MINI_SPONSORS.slice()
       .map(function (item) {
         var logo = String(item.logo_url || '').trim();
         var company = String(item.company_name || '').trim();
@@ -407,9 +409,25 @@
         );
       })
       .join('');
+  }
 
-    renderSponsorEmailPreview(container, null, {
+  function renderMiniSponsorsRowEmailShell(container, config) {
+    if (!container) return;
+    renderSponsorEmailPreview(container, null, Object.assign({}, config, {
       skipMainSponsor: true,
+      beforeFooterHtml:
+        '<div class="ad-full-email-mini-row">' +
+        '<p class="ad-full-email-mini-row-label">Sponsored partners</p>' +
+        '<div class="ad-full-email-mini-row-logos">' +
+        buildMiniSponsorsRowHtml() +
+        '</div>' +
+        '</div>',
+    }));
+  }
+
+  function renderMiniSponsorEmailPreview(container) {
+    if (!container) return;
+    renderMiniSponsorsRowEmailShell(container, {
       kicker: 'Booking confirmed',
       title: 'You\u2019re booked in',
       lede: 'Your place is reserved. We\u2019ve sent the details below. ' + LOREM_SHORT,
@@ -424,11 +442,31 @@
         '</p>' +
         '</div>' +
         '</div>',
-      beforeFooterHtml:
-        '<div class="ad-full-email-mini-row">' +
-        '<p class="ad-full-email-mini-row-label">Sponsored partners</p>' +
-        '<div class="ad-full-email-mini-row-logos">' +
-        logoCells +
+    });
+  }
+
+  function renderOpportunityMiniSponsorEmailPreview(container) {
+    if (!container) return;
+    renderMiniSponsorsRowEmailShell(container, {
+      kicker: 'Listing live',
+      title: 'Your opportunity is now live',
+      lede:
+        'Your business opportunity listing is published and visible to members browsing the directory. ' +
+        LOREM_SHORT,
+      detailHtml:
+        '<div class="ad-full-email-event-wrap">' +
+        '<div class="ad-full-email-event">' +
+        '<p class="ad-full-email-event-kicker">Your listing</p>' +
+        '<p class="ad-full-email-event-name">Coffee shop franchise — Manchester</p>' +
+        '<p class="ad-full-email-event-date"><span>Category</span><strong>Franchise · North West</strong></p>' +
+        '<p class="ad-full-email-event-desc">' +
+        LOREM_MEDIUM +
+        '</p>' +
+        '<div class="ad-full-email-event-meta">' +
+        '<div><span>Status</span><strong>Live</strong></div>' +
+        '<div><span>Enquiries</span><strong>Open</strong></div>' +
+        '</div>' +
+        '<span class="ad-full-email-event-cta">View listing</span>' +
         '</div>' +
         '</div>',
     });
@@ -531,22 +569,80 @@
       '</aside>';
   }
 
-  function renderDemoMiniSponsor(container, block) {
+  function renderDemoMiniSponsor(container, blocks) {
     if (!container) return;
-    block = block || DEMO_SPONSOR;
-    var logo = String(block.logo_url || '').trim();
+    var list = (Array.isArray(blocks) ? blocks : [blocks || DEMO_SPONSOR]).filter(Boolean);
+    if (!list.length) list = [DEMO_SPONSOR];
+
+    if (list.length === 1) {
+      var single = list[0];
+      var logo = String(single.logo_url || '').trim();
+      container.innerHTML =
+        '<aside class="ad-mock-carousel">' +
+        '<span class="ad-mock-carousel-badge">Sponsored</span>' +
+        '<div class="ad-mock-carousel-logos ad-mock-carousel-logos--single">' +
+        (logo
+          ? '<img src="' +
+            esc(logo) +
+            '" alt="" class="ad-mock-carousel-logo-img" loading="lazy" decoding="async">'
+          : '<span class="is-active">Your logo</span>') +
+        '</div>' +
+        '<div class="ad-mock-carousel-dots" aria-hidden="true"><i class="is-active"></i></div>' +
+        '</aside>';
+      return;
+    }
+
+    var dots = list
+      .map(function (_block, index) {
+        return '<i' + (index === 0 ? ' class="is-active"' : '') + '></i>';
+      })
+      .join('');
+    var slides = list
+      .map(function (block, index) {
+        var slideLogo = String(block.logo_url || '').trim();
+        var company = String(block.company_name || 'Partner').trim();
+        var inner = slideLogo
+          ? '<img src="' +
+            esc(slideLogo) +
+            '" alt="' +
+            esc(company) +
+            '" class="ad-mock-carousel-logo-img" loading="lazy" decoding="async">'
+          : '<span>' + esc(company) + '</span>';
+        return (
+          '<div class="ad-mock-carousel-slide' +
+          (index === 0 ? ' is-active' : '') +
+          '" data-demo-slide="' +
+          index +
+          '">' +
+          inner +
+          '</div>'
+        );
+      })
+      .join('');
+
     container.innerHTML =
-      '<aside class="ad-mock-carousel">' +
+      '<aside class="ad-mock-carousel ad-mock-carousel--live">' +
       '<span class="ad-mock-carousel-badge">Sponsored</span>' +
-      '<div class="ad-mock-carousel-logos ad-mock-carousel-logos--single">' +
-      (logo
-        ? '<img src="' +
-          esc(logo) +
-          '" alt="" class="ad-mock-carousel-logo-img" loading="lazy" decoding="async">'
-        : '<span class="is-active">Your logo</span>') +
+      '<div class="ad-mock-carousel-logos ad-mock-carousel-logos--carousel">' +
+      slides +
       '</div>' +
-      '<div class="ad-mock-carousel-dots" aria-hidden="true"><i class="is-active"></i><i></i><i></i></div>' +
+      '<div class="ad-mock-carousel-dots" aria-hidden="true">' +
+      dots +
+      '</div>' +
       '</aside>';
+
+    var slidesEls = container.querySelectorAll('[data-demo-slide]');
+    var dotEls = container.querySelectorAll('.ad-mock-carousel-dots i');
+    dotEls.forEach(function (dot, index) {
+      dot.addEventListener('click', function () {
+        slidesEls.forEach(function (slide, slideIndex) {
+          slide.classList.toggle('is-active', slideIndex === index);
+        });
+        dotEls.forEach(function (item, dotIndex) {
+          item.classList.toggle('is-active', dotIndex === index);
+        });
+      });
+    });
   }
 
   function renderDemoCompactAd(container, block) {
@@ -593,7 +689,7 @@
       });
       return;
     }
-    renderDemoMiniSponsor(shell, payloads[0]);
+    renderDemoMiniSponsor(shell, payloads);
   }
 
   function renderCompactInShell(shell, block, slot) {
@@ -604,6 +700,11 @@
       return;
     }
     renderDemoCompactAd(shell, payload);
+  }
+
+  function renderAdvertisingHeroPreview(shell, block) {
+    if (!shell) return;
+    renderHeroInShell(shell, demoSponsorBlock(block || DEMO_SPONSOR));
   }
 
   function loadHeroPreview(shell, slot, fallbackBlock) {
@@ -749,30 +850,34 @@
     var emailShell = document.getElementById('ad-live-full-email');
     if (!eventsShell && !emailShell) return;
 
-    loadHeroPreview(eventsShell, 'events_sponsor_hub', DEMO_SPONSOR);
+    renderAdvertisingHeroPreview(eventsShell, DEMO_SPONSOR);
     renderEventMainEmailPreview(emailShell, 'booking');
   }
 
   function loadSectionHeroPreviews() {
-    loadHeroPreview(
+    renderAdvertisingHeroPreview(
       document.getElementById('ad-live-opportunities-hero'),
-      'opportunities_sponsor_hub',
-      DEMO_SPONSOR
+      DEMO_OPPORTUNITIES_SPONSOR
     );
-    loadHeroPreview(
+    renderAdvertisingHeroPreview(
       document.getElementById('ad-live-organisers-hero'),
-      'organisers_sponsor_hub',
       DEMO_SPONSOR
     );
     renderOrganiserEmailPreview(document.getElementById('ad-live-organisers-email'), DEMO_SPONSOR);
-    renderOpportunityEmailPreview(document.getElementById('ad-live-opportunities-email'), DEMO_SPONSOR);
+    renderOpportunityEmailPreview(
+      document.getElementById('ad-live-opportunities-email'),
+      DEMO_OPPORTUNITIES_SPONSOR
+    );
   }
 
   function loadOpportunitySidebarPreview() {
     renderCompactInShell(
       document.getElementById('ad-live-opportunity-sidebar'),
-      DEMO_SPONSOR,
+      DEMO_OPPORTUNITIES_SPONSOR,
       'opportunity_page_sidebar_ad'
+    );
+    renderOpportunityMiniSponsorEmailPreview(
+      document.getElementById('ad-live-opportunity-mini-email')
     );
   }
 
@@ -791,6 +896,7 @@
     initExampleGallery(document.getElementById('ad-opportunities-main-gallery'));
 
     initExampleGallery(document.getElementById('ad-events-mini-gallery'));
+    initExampleGallery(document.getElementById('ad-opportunity-mini-gallery'));
     initExampleGallery(document.getElementById('ad-opp-listing-gallery'));
 
     renderMiniInShell(document.getElementById('ad-live-mini-event'), DEMO_MINI_SPONSORS, 'event_page_carousel_ads');
