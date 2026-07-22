@@ -324,7 +324,9 @@
     var mediaInner = cover
       ? '<img class="opp-premium-card-img" src="' +
         escapeHtml(cover) +
-        '" alt="" loading="lazy" decoding="async" />'
+        '" alt="' +
+        escapeHtml(item.title || 'Opportunity cover') +
+        '" loading="lazy" decoding="async" />'
       : '<span class="opp-premium-thumb-emoji" aria-hidden="true">' + thumb.emoji + '</span>';
 
     return (
@@ -522,7 +524,9 @@
         logoClass +
         '" src="' +
         escapeHtml(item.imageUrl) +
-        '" alt="" loading="lazy" decoding="async" />'
+        '" alt="' +
+        escapeHtml(item.title || 'Opportunity cover') +
+        '" loading="lazy" decoding="async" />'
       );
     }
     return (
@@ -704,7 +708,7 @@
         '<div class="opp-co-avatar opp-co-avatar--logo" aria-hidden="true">' +
         '<img src="' +
         escapeHtml(logo) +
-        '" alt="" width="24" height="24" loading="lazy" decoding="async" />' +
+        '" alt="" width="24" height="24" loading="lazy" decoding="async" aria-hidden="true" />' +
         '</div>'
       );
     }
@@ -779,7 +783,9 @@
         '<div class="opp-card-media opp-card-media--image">' +
         '<img class="opp-card-media-img" src="' +
         escapeHtml(item.imageUrl) +
-        '" alt="" loading="lazy" decoding="async" />' +
+        '" alt="' +
+        escapeHtml(item.title || 'Opportunity cover') +
+        '" loading="lazy" decoding="async" />' +
         '</div>'
       );
     }

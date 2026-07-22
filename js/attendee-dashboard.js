@@ -824,7 +824,6 @@
       if (loading) loading.hidden = true;
       if (downloadBtn) downloadBtn.disabled = !shareCardDataUrl;
     } catch (err) {
-      console.warn('[attendee-dashboard] share card failed', err);
       if (loading) {
         loading.hidden = false;
         loading.textContent = 'Could not create image. You can still copy the caption.';
@@ -3248,27 +3247,27 @@
       try {
         renderMyGroupsTable();
       } catch (err) {
-        console.warn('[attendee-dashboard] my groups render failed', err);
+        /* non-fatal */
       }
       try {
         renderSavedTable();
       } catch (err) {
-        console.warn('[attendee-dashboard] saved events render failed', err);
+        /* non-fatal */
       }
       try {
         renderSavedOrganisersTable();
       } catch (err) {
-        console.warn('[attendee-dashboard] saved organisers render failed', err);
+        /* non-fatal */
       }
       try {
         renderSavedOpportunitiesTable();
       } catch (err) {
-        console.warn('[attendee-dashboard] saved opportunities render failed', err);
+        /* non-fatal */
       }
       try {
         renderSavedOpportunitySearchesTable();
       } catch (err) {
-        console.warn('[attendee-dashboard] saved searches render failed', err);
+        /* non-fatal */
       }
     } else if (key === 'opportunity-enquiries') {
       renderOpportunityEnquiries();

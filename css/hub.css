@@ -225,6 +225,12 @@ a:hover { color: var(--charcoal); }
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .nav-auth-pending-pill {
+    animation: none;
+    background: rgba(194, 153, 209, 0.24);
+  }
+}
 .hub-mode-switch {
   display: inline-flex;
   align-items: center;
@@ -986,12 +992,9 @@ body.hub-page-account .site-nav {
   flex-shrink: 0;
 }
 .footer-logo {
-  height: 40px;
+  height: 56px;
   width: auto;
   display: block;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--charcoal);
 }
 .footer-columns {
   display: flex;

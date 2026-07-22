@@ -402,13 +402,6 @@
       .then(function (result) {
         var data = result.data;
         if (!result.ok || !data || !data.ok || !Array.isArray(data.opportunities)) {
-          if (data && data.error === 'site_private') {
-            console.warn(
-              '[opportunities] Browse API blocked by preview gate — reload after entering the site password.'
-            );
-          } else if (!result.ok || (data && data.error)) {
-            console.warn('[opportunities] Failed to load listings:', (data && data.error) || 'request_failed');
-          }
           return loadedCatalog.slice();
         }
         loadedCatalog = data.opportunities.map(function (row, i) {

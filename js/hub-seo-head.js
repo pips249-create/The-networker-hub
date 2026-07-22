@@ -1,5 +1,5 @@
 /**
- * Injects dynamic title, meta, canonical, Open Graph, and JSON-LD for event/organiser pages.
+ * Injects dynamic title, meta, canonical, Open Graph, and JSON-LD for event, organiser, and opportunity pages.
  */
 (function () {
   if (document.documentElement.hasAttribute('data-hub-seo-injected')) return;
@@ -15,6 +15,9 @@
     if (slug && /organiser\.html$/i.test(path)) {
       return { type: 'organiser', slug: slug };
     }
+    if (slug && /opportunity\.html$/i.test(path)) {
+      return { type: 'opportunity', slug: slug };
+    }
 
     var eventMatch = path.match(/\/events\/([^/]+)$/);
     if (eventMatch && eventMatch[1] && eventMatch[1] !== 'index.html' && eventMatch[1] !== 'booking-success') {
@@ -24,6 +27,17 @@
     var orgMatch = path.match(/\/organisers\/([^/]+)$/);
     if (orgMatch && orgMatch[1]) {
       return { type: 'organiser', slug: decodeURIComponent(orgMatch[1]) };
+    }
+
+    var oppMatch = path.match(/\/opportunities\/([^/]+)$/);
+    if (
+      oppMatch &&
+      oppMatch[1] &&
+      oppMatch[1] !== 'index.html' &&
+      oppMatch[1] !== 'list' &&
+      oppMatch[1] !== 'browse.html'
+    ) {
+      return { type: 'opportunity', slug: decodeURIComponent(oppMatch[1]) };
     }
 
     return null;

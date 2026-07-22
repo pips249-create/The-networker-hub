@@ -3,7 +3,7 @@
  * FOOTER_BUILD=20260722a
  */
 (function () {
-  var FOOTER_BUILD = '20260722a';
+  var FOOTER_BUILD = '20260722b';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -24,7 +24,7 @@
     '" class="footer-brand" aria-label="Home">' +
     '<img class="footer-logo" src="' +
     href('/assets/logo.png') +
-    '" alt="" width="160" height="60">' +
+    '" alt="" width="187" height="70" aria-hidden="true">' +
     '</a>' +
     '<div class="footer-columns">' +
     '<div class="footer-col">' +

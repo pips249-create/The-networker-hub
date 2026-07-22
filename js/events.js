@@ -366,7 +366,7 @@
     const logoCoverClass = isLogoStyleCover(ev, resolved) ? ' is-logo-cover' : '';
     const positionStyle = photoPositionStyle(ev, resolved);
     return (
-      `<img class="${className}${placeholderClass}${logoCoverClass}"${positionStyle} src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
+      `<img class="${className}${placeholderClass}${logoCoverClass}"${positionStyle} src="${src}" alt="${escapeHtml(eventTitle || 'Event cover')}" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
       `onload="window.hubMarkSmallEventCover&&window.hubMarkSmallEventCover(this)" ` +
       `onerror="this.onerror=null;this.src='${errorFallback}';this.classList.add('is-placeholder');this.style.objectPosition=''">`
     );

@@ -20,11 +20,7 @@
       insights.dataset.sdkn = '@vercel/analytics';
       insights.dataset.sdkv = '2.0.1';
       insights.onerror = function () {
-        console.log(
-          '[Vercel Web Analytics] Failed to load ' +
-            insightsSrc +
-            '. Enable Web Analytics in Vercel and redeploy.'
-        );
+        /* non-fatal — analytics optional in preview/local */
       };
       document.head.appendChild(insights);
     },
