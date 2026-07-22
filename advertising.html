@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad8">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad10">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
@@ -38,13 +38,6 @@
   </header>
 
   <div class="ad-page-body">
-    <section class="ad-partners-strip" id="ad-partners-strip" hidden aria-labelledby="ad-partners-heading">
-      <div class="ad-partners-panel">
-        <h2 class="ad-partners-kicker" id="ad-partners-heading">Trusted by our partners &amp; sponsors</h2>
-        <div class="ad-partners-logos" id="ad-partners-logos" aria-live="polite"></div>
-      </div>
-    </section>
-
     <div class="content-body ad-content-body">
     <p class="ad-pricing-note">
       Prices are guide rates for a minimum 1-month term unless stated otherwise. VAT may apply.
@@ -58,7 +51,7 @@
         <span class="ad-section-pick-body">
           <strong>Events</strong>
           <span>Main Sponsor, Mini Sponsors &amp; City Partner</span>
-          <em>From £29/mo</em>
+          <em>From £29/mo + VAT</em>
         </span>
       </button>
       <button type="button" class="ad-section-pick" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" data-ad-pick="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">
@@ -78,7 +71,7 @@
       </div>
     </div>
 
-    <details class="ad-pricing-glance ad-reveal" id="ad-pricing-glance" open>
+    <details class="ad-pricing-glance ad-reveal" id="ad-pricing-glance">
       <summary class="ad-pricing-glance-toggle">
         <span class="ad-pricing-glance-toggle-label">At-a-glance pricing</span>
         <span class="ad-pricing-glance-toggle-hint">Guide rates for this section</span>
@@ -123,6 +116,7 @@
             <ul>
               <li>Your logo in the Main Sponsor banner — a large clickable logo beside the page heading on the <strong>Events</strong> browse page.</li>
               <li>Logo and link in booking emails to <strong>attendees and organisers</strong> (confirmations, reminders, cancellations, refunds).</li>
+              <li>Reach an average of <strong>~8,000 transactional booking emails per month</strong> — your logo in the header of every send.</li>
               <li>One exclusive Main Sponsor per calendar month on the events directory.</li>
             </ul>
             <p class="ad-package-note">
@@ -232,7 +226,7 @@
             <span class="ad-package-badge">City Partner</span>
             <h3 class="ad-package-title">City Partner</h3>
             <p class="ad-package-placement">Logo + CTA in the regional intro block on city pages such as <strong>/networking/manchester</strong> and <strong>/opportunities/networking/manchester</strong></p>
-            <p class="ad-package-price">£29 <span>per city / month</span> · £75 <span>for any 3 cities / month</span></p>
+            <p class="ad-package-price">£29 <span>per city / month + VAT</span> · £75 <span>for any 3 cities / month + VAT</span></p>
             <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
             <ul>
               <li><strong>Logo and CTA button only</strong> — compact placement beside the local intro copy on regional landing pages.</li>
@@ -270,10 +264,11 @@
               </div>
             </div>
             <p class="ad-preview-label ad-preview-label--checkout">Check availability &amp; apply</p>
+            <p class="city-partner-vat-note">All City Partner prices are shown excluding VAT. VAT at 20% is added at checkout.</p>
             <div class="city-partner-checkout" id="city-partner-checkout">
               <div class="city-partner-city-grid" id="city-partner-city-list"></div>
               <div class="city-partner-quote" id="city-partner-quote">
-                <p class="city-partner-quote-empty">Select one or more available cities to see the estimated monthly price.</p>
+                <p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>
               </div>
               <label class="city-partner-duration-label" for="city-partner-duration">How many months would you like?</label>
               <select class="city-partner-duration" id="city-partner-duration">
@@ -614,8 +609,8 @@
 <script src="js/site-footer.js?v=20260612" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260612g"></script>
-<script src="js/advertising-page.js?v=20260722ad8"></script>
-<script src="js/city-partner-advertising.js?v=20260715cp5"></script>
+<script src="js/advertising-page.js?v=20260722ad10"></script>
+<script src="js/city-partner-advertising.js?v=20260722cp6"></script>
 
 </body>
 </html>

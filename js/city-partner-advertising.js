@@ -1,4 +1,6 @@
 (function () {
+  var VAT_RATE = 0.2;
+
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
@@ -9,6 +11,17 @@
     var n = Number(amount);
     if (!Number.isFinite(n)) return '£0';
     return '£' + (n % 1 === 0 ? n.toFixed(0) : n.toFixed(2));
+  }
+
+  function priceWithVat(netAmount) {
+    var net = Number(netAmount);
+    if (!Number.isFinite(net)) net = 0;
+    var vat = net * VAT_RATE;
+    return {
+      net: net,
+      vat: vat,
+      gross: net + vat,
+    };
   }
 
   var root = document.getElementById('city-partner-checkout');
@@ -75,7 +88,8 @@
     if (!quoteEl) return;
 
     if (!slugs.length) {
-      quoteEl.innerHTML = '<p class="city-partner-quote-empty">Select one or more available cities to see the estimated monthly price.</p>';
+      quoteEl.innerHTML =
+        '<p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>';
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
@@ -84,15 +98,21 @@
     var bundles = Math.floor(count / 3);
     var singles = count % 3;
     var pricing = state.pricing || { singleMonthlyGbp: 29, bundle3MonthlyGbp: 75 };
-    var monthly = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
+    var monthlyNet = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
+    var priced = priceWithVat(monthlyNet);
     var parts = [];
-    if (bundles) parts.push(bundles + ' × 3-city pack (' + formatGbp(pricing.bundle3MonthlyGbp) + ')');
-    if (singles) parts.push(singles + ' × single city (' + formatGbp(pricing.singleMonthlyGbp) + ')');
+    if (bundles) parts.push(bundles + ' × 3-city pack (' + formatGbp(pricing.bundle3MonthlyGbp) + ' + VAT)');
+    if (singles) parts.push(singles + ' × single city (' + formatGbp(pricing.singleMonthlyGbp) + ' + VAT)');
 
     quoteEl.innerHTML =
       '<p class="city-partner-quote-total"><strong>' +
-      formatGbp(monthly) +
-      '</strong> <span>per month</span></p>' +
+      formatGbp(priced.net) +
+      '</strong> <span>per month + VAT</span></p>' +
+      '<p class="city-partner-quote-vat">VAT (20%): ' +
+      formatGbp(priced.vat) +
+      ' · <strong>' +
+      formatGbp(priced.gross) +
+      ' incl. VAT</strong> per month</p>' +
       '<p class="city-partner-quote-breakdown">' +
       esc(parts.join(' + ')) +
       '</p>' +
@@ -100,16 +120,7 @@
       count +
       ' ' +
       (count === 1 ? 'city' : 'cities') +
-      ' selected</p>' +
-      (months
-        ? '<p class="city-partner-quote-campaign"><strong>' +
-          formatGbp(monthly * months) +
-          '</strong> estimated total for ' +
-          months +
-          ' ' +
-          (months === 1 ? 'month' : 'months') +
-          '</p>'
-        : '<p class="city-partner-quote-campaign">Choose a duration to see the campaign total.</p>');
+      ' selected</p>';
 
     if (submitBtn) submitBtn.disabled = !months;
   }
@@ -190,13 +201,13 @@
             esc(label) +
             ':</strong> ' +
             esc(state.pricing.singleLabel) +
-            '/month per city or ' +
+            '/month + VAT per city or ' +
             esc(state.pricing.bundle3Label) +
-            '/month for any 3 cities. Thereafter ' +
+            '/month + VAT for any 3 cities. Thereafter ' +
             esc(state.pricing.regularSingleLabel) +
-            '/city and ' +
+            '/city + VAT and ' +
             esc(state.pricing.regularBundle3Label) +
-            '/3-city pack.';
+            '/3-city pack + VAT.';
           launchNoteEl.hidden = false;
         } else if (launchNoteEl) {
           launchNoteEl.hidden = true;
@@ -234,7 +245,8 @@
       var bundles = Math.floor(count / 3);
       var singles = count % 3;
       var pricing = state.pricing || { singleMonthlyGbp: 29, bundle3MonthlyGbp: 75 };
-      var monthly = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
+      var monthlyNet = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
+      var priced = priceWithVat(monthlyNet);
       var names = selected.map(function (city) {
         return city.name;
       });
@@ -246,8 +258,9 @@
         '',
         'Selected cities: ' + names.join(', '),
         'Requested duration: ' + months + ' ' + (months === 1 ? 'month' : 'months'),
-        'Estimated monthly price: ' + formatGbp(monthly),
-        'Estimated campaign total: ' + formatGbp(monthly * months),
+        'Monthly price (ex VAT): ' + formatGbp(priced.net),
+        'VAT (20%): ' + formatGbp(priced.vat),
+        'Monthly price (incl. VAT): ' + formatGbp(priced.gross),
         '',
         'Organisation:',
         'Website:',

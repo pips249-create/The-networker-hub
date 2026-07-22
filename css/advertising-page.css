@@ -14,7 +14,7 @@
 
 /* ─── Page header ─── */
 .ad-page-header {
-  padding: clamp(40px, 6vw, 56px) 24px clamp(36px, 5vw, 48px);
+  padding: clamp(28px, 4vw, 40px) 24px clamp(24px, 3.5vw, 32px);
   background: var(--ad-panel);
   border-bottom: 1px solid var(--ad-line);
 }
@@ -597,8 +597,31 @@
   .ad-package-preview {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    min-height: 0;
   }
+}
+
+.ad-package-preview .ad-mock-page,
+.ad-package-preview .ad-mock-spotlight,
+.ad-package-preview .ad-mock-detail-layout {
+  max-width: 100%;
+}
+
+.ad-package-preview .ad-mock-sponsor,
+.ad-package-preview .ad-mock-carousel,
+.ad-package-preview .ad-mock-compact {
+  max-width: 100%;
+}
+
+.ad-package-preview .ad-mock-hero-row {
+  align-items: stretch;
+}
+
+.ad-package-preview .ad-live-preview--hero .ad-mock-sponsor,
+.ad-package-preview .ad-mock-sponsor {
+  transform: scale(0.94);
+  transform-origin: top center;
 }
 
 .ad-preview-label {
@@ -1511,13 +1534,21 @@
 .ad-example-gallery {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .ad-example-stage {
-  min-height: 0;
-  max-height: none;
-  overflow: visible;
+  height: 196px;
+  max-height: 196px;
+  overflow: hidden;
+}
+
+.ad-example-panel {
+  height: 100%;
+}
+
+.ad-example-panel.is-active {
+  height: 100%;
 }
 
 /* Events directory mock — scaled miniature of /events/ */
@@ -1532,7 +1563,7 @@
 .ad-events-dir-scale {
   width: 100%;
   max-width: 100%;
-  height: 188px;
+  height: 176px;
   overflow: hidden;
   margin: 0 auto;
   display: flex;
@@ -1542,7 +1573,7 @@
 .ad-events-dir-mock {
   width: 680px;
   flex-shrink: 0;
-  transform: scale(0.48);
+  transform: scale(0.44);
   transform-origin: top center;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
@@ -1908,35 +1939,28 @@
 
 /* Full booking email preview */
 .ad-email-preview-wrap {
+  height: 100%;
   border-radius: 12px;
   border: 1px solid var(--border-soft);
   background: #faf7f2;
-  padding: 6px;
+  padding: 4px 4px 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
 }
 
 .ad-email-preview-scale {
-  max-height: 420px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(154, 122, 168, 0.45) transparent;
-}
-
-.ad-email-preview-scale::-webkit-scrollbar {
-  width: 6px;
-}
-
-.ad-email-preview-scale::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(154, 122, 168, 0.45);
+  width: 300px;
+  flex-shrink: 0;
+  transform: scale(0.58);
+  transform-origin: top center;
+  overflow: visible;
 }
 
 .ad-email-preview-inner {
-  width: 100%;
+  width: 300px;
   max-width: 300px;
   margin: 0 auto;
-  padding-bottom: 4px;
 }
 
 .ad-email-preview-inner .ad-full-email-card {
@@ -2635,6 +2659,13 @@
   }
 }
 
+.city-partner-vat-note {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #625f73;
+}
+
 .city-partner-checkout {
   display: flex;
   flex-direction: column;
@@ -2655,13 +2686,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(50, 43, 120, 0.12);
   background: #fff;
   font-size: 13px;
   color: #2b2648;
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.city-partner-city:has(input:checked) {
+  border-color: rgba(109, 92, 232, 0.45);
+  box-shadow: 0 0 0 2px rgba(109, 92, 232, 0.12);
 }
 
 .city-partner-city input {
@@ -2689,15 +2726,21 @@
 
 .city-partner-quote-breakdown,
 .city-partner-quote-cities,
-.city-partner-quote-campaign,
+.city-partner-quote-vat,
 .city-partner-quote-empty {
   margin: 4px 0 0;
   font-size: 12px;
   color: #625f73;
 }
 
-.city-partner-quote-campaign {
-  margin-top: 8px;
+.city-partner-quote-vat {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #4a4560;
+}
+
+.city-partner-quote-vat strong {
+  color: #1c2040;
 }
 
 .city-partner-duration-label {

@@ -62,73 +62,11 @@
     });
   }
 
-  function fetchCmsSlot(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
-      .then(function (r) {
-        return r.json();
-      })
-      .catch(function () {
-        return null;
-      });
-  }
-
-  function loadPartnersStrip() {
-    var section = document.getElementById('ad-partners-strip');
-    var logosEl = document.getElementById('ad-partners-logos');
-    if (!section || !logosEl) return;
-
-    fetchCmsSlot('home_partners').then(function (data) {
-      var partners = [];
-      var seen = new Set();
-
-      if (data && data.ok && data.active !== false && Array.isArray(data.partners)) {
-        data.partners.forEach(function (p) {
-          var logo = String((p && p.logo_url) || '').trim();
-          if (!logo || seen.has(logo)) return;
-          seen.add(logo);
-          partners.push({
-            name: String((p && p.company_name) || '').trim() || 'Partner',
-            logo: logo,
-            url: String((p && p.cta_url) || '').trim(),
-          });
-        });
-      }
-
-      if (!partners.length) return;
-
-      logosEl.innerHTML = partners
-        .map(function (p) {
-          var img =
-            '<img src="' +
-            esc(p.logo) +
-            '" alt="' +
-            esc(p.name) +
-            '" loading="lazy" decoding="async" onerror="this.closest(\'a,span\').hidden=true">';
-          if (/^https?:/i.test(p.url)) {
-            return (
-              '<a href="' +
-              esc(p.url) +
-              '" target="_blank" rel="noopener noreferrer" title="' +
-              esc(p.name) +
-              '">' +
-              img +
-              '</a>'
-            );
-          }
-          return '<span title="' + esc(p.name) + '">' + img + '</span>';
-        })
-        .join('');
-
-      section.hidden = false;
-      section.classList.add('is-visible');
-    });
-  }
-
   var PRICING_GLANCE = {
     events: [
       {
         name: 'Main Events Directory Sponsor',
-        detail: 'Main Sponsor banner + booking emails',
+        detail: 'Main Sponsor banner + ~8,000 booking emails/mo avg.',
         price: '£2,000/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
@@ -144,8 +82,8 @@
       },
       {
         name: 'City Partner',
-        detail: 'Regional city landing pages',
-        price: 'From £29/city/mo',
+        detail: 'Regional city landing pages (+ VAT)',
+        price: 'From £29/city/mo + VAT',
         type: 'Third-party brand',
         typeClass: 'brand',
         anchor: 'city-partner-package',
@@ -490,8 +428,6 @@
     var thumbs = root.querySelectorAll('.ad-example-thumb');
     var panels = root.querySelectorAll('[data-example-panel]');
     var examples = [];
-    var rotateTimer = null;
-    var rotateIndex = 0;
 
     thumbs.forEach(function (btn) {
       examples.push(btn.getAttribute('data-example'));
@@ -509,44 +445,15 @@
         panel.hidden = !show;
         panel.classList.toggle('is-active', show);
       });
-      rotateIndex = Math.max(0, examples.indexOf(example));
-    }
-
-    function stopRotate() {
-      if (rotateTimer) {
-        window.clearInterval(rotateTimer);
-        rotateTimer = null;
-      }
-      root.classList.add('is-paused');
-    }
-
-    function startRotate() {
-      if (examples.length < 2) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      stopRotate();
-      root.classList.remove('is-paused');
-      rotateTimer = window.setInterval(function () {
-        rotateIndex = (rotateIndex + 1) % examples.length;
-        activate(examples[rotateIndex]);
-      }, 5500);
     }
 
     thumbs.forEach(function (btn) {
       btn.addEventListener('click', function () {
-        stopRotate();
         activate(btn.getAttribute('data-example'));
-        window.setTimeout(startRotate, 12000);
       });
     });
 
-    root.addEventListener('mouseenter', stopRotate);
-    root.addEventListener('mouseleave', startRotate);
-    root.addEventListener('focusin', stopRotate);
-    root.addEventListener('focusout', function (e) {
-      if (!root.contains(e.relatedTarget)) startRotate();
-    });
-
-    startRotate();
+    activate(examples[0] || 'events');
   }
 
 
@@ -695,7 +602,6 @@
       initTabs();
       initPackageReveal();
       initPricingGlanceLinks();
-      loadPartnersStrip();
       loadLivePreviews();
     });
   } else {
@@ -704,7 +610,6 @@
     initTabs();
     initPackageReveal();
     initPricingGlanceLinks();
-    loadPartnersStrip();
     loadLivePreviews();
   }
 })();
