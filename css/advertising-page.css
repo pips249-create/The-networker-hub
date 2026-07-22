@@ -1532,6 +1532,32 @@ body.advertising-page {
   border-bottom: 1px solid var(--ad-line);
 }
 
+.ad-package-foot {
+  padding: 0 24px 24px;
+}
+
+.ad-package-foot .ad-package-note {
+  margin-bottom: 0.75rem;
+}
+
+.ad-package-span-full.ad-email-reach--table {
+  margin-top: 0;
+  padding: 0 24px 4px;
+}
+
+.ad-package-span-full .ad-reach-table {
+  font-size: 0.85rem;
+}
+
+.ad-package-span-full .ad-reach-table-wrap {
+  overflow-x: visible;
+}
+
+.ad-package-span-full .ad-reach-table tbody td:nth-child(3) {
+  min-width: 0;
+  white-space: normal;
+}
+
 .ad-package-main {
   padding: 22px 24px 24px;
 }
@@ -1595,6 +1621,27 @@ body.advertising-page {
 @media (min-width: 860px) {
   .ad-package-split {
     grid-template-columns: minmax(0, 1.05fr) minmax(260px, 0.95fr);
+  }
+
+  .ad-package-split > .ad-package-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ad-package-split > .ad-package-preview {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .ad-package-split > .ad-package-span-full {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .ad-package-split > .ad-package-foot {
+    grid-column: 1;
+    grid-row: 3;
   }
 
   .ad-package-preview {

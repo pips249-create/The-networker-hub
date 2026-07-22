@@ -187,13 +187,13 @@
   };
 
   var ENQUIRY_PACKAGES = {
-    events: ['Headline Sponsor', 'Event Page Partner', 'Featured Listing', 'Not sure yet'],
-    organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Listing', 'Not sure yet'],
+    events: ['Headline Sponsor', 'Event Page Partner', 'Featured Event Boost', 'Not sure yet'],
+    organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Organiser Boost', 'Not sure yet'],
     opportunities: [
       'Headline Sponsor',
       'Opportunity Page Partner',
       'Directory Listing',
-      'Featured Listing',
+      'Featured Opportunity Boost',
       'Not sure yet',
     ],
   };
@@ -341,7 +341,7 @@
       if (!cityPartnerNote || !packageEl) return;
       var pkg = String(packageEl.value || '').trim();
       var isCityPartner =
-        pkg === 'City Partner' || pkg === 'Hyperlocal Authority Partner';
+        pkg === 'City Partner' || pkg === 'City Sponsor';
       cityPartnerNote.hidden = !isCityPartner;
     }
 
