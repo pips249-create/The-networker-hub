@@ -44,18 +44,11 @@
             Franchises, side hustles, partnerships and more.<br />
             Filter by type, investment, and location.
           </p>
-          <p class="opp-hero-browse-link" id="opp-hero-browse-link">
-            Looking for networking events? <a href="/events/">Browse events</a>
-          </p>
           <p class="opp-hero-provider-cta">
-            Provider?
+            Have an opportunity to list?
             <a href="/organiser/opportunity-edit" class="opp-hero-provider-link" data-hub-action="add-opportunity"
               >List an opportunity</a
             >
-          </p>
-          <p class="opp-hero-enquiry-cta">
-            Browse for free. To enquire,
-            <a href="/register">create a free account</a> — it only takes 2 minutes.
           </p>
         </div>
         <div class="opp-hero-sponsor-slot" id="hero-sponsor-slot">
@@ -140,7 +133,14 @@
         <h2 class="events-filter-heading" id="events-filter-heading">Filter opportunities</h2>
         <div class="events-filter-shell">
           <div class="events-filter-bar" role="search" aria-label="Filter opportunities">
-            <div class="filter-bar-row filter-bar-row-location">
+            <div class="filter-bar-row filter-bar-row-top">
+              <div class="filter-field filter-field-search filter-field-grow">
+                <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                </span>
+                <label class="visually-hidden" for="opp-search">Search opportunities</label>
+                <input type="search" id="opp-search" placeholder="Search franchises, side hustles, providers…" autocomplete="off">
+              </div>
               <div class="filter-field filter-field-postcode">
                 <span class="filter-field-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -234,13 +234,6 @@
                   </div>
                 </div>
                 <div class="filter-bar-actions">
-                  <div class="filter-field filter-field-search">
-                    <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-                    </span>
-                    <label class="visually-hidden" for="opp-search">Search opportunities</label>
-                    <input type="search" id="opp-search" placeholder="Search franchises, side hustles, providers…" autocomplete="off">
-                  </div>
                   <button type="button" class="filter-clear-btn" id="clear-filters-bar">Clear filters</button>
                 </div>
               </div>
