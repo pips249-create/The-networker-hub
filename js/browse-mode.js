@@ -144,16 +144,6 @@
     });
   }
 
-  var eventsHeroOrganiserHtml =
-    'Organiser? <button type="button" class="events-hero-organiser-link" data-hub-action="add-event">List an event</button>' +
-    '<span class="events-hero-organiser-sep" aria-hidden="true"> · </span>' +
-    '<button type="button" class="events-hero-organiser-link" data-hub-action="add-group">Add an organiser page</button>';
-
-  var eventsFootnoteOrganiserHtml =
-    'Organiser? <button type="button" class="events-organiser-footnote-link" data-hub-action="add-event">List an event</button>' +
-    '<span class="events-organiser-footnote-sep" aria-hidden="true"> · </span>' +
-    '<button type="button" class="events-organiser-footnote-link" data-hub-action="add-group">Add an organiser page</button>';
-
   var organisersHubCtaHtml =
     'Want to be part of the hub? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>';
 
@@ -171,17 +161,9 @@
     }
   }
 
-  function syncOrganiserCta(mode) {
-    if (mode === 'organisers') {
-      if (heroOrganiserCta) heroOrganiserCta.innerHTML = organisersHubCtaHtml;
-      if (organiserFootnote) organiserFootnote.innerHTML = organisersHubCtaHtml;
-      return;
-    }
-    if (heroOrganiserCta) heroOrganiserCta.innerHTML = eventsHeroOrganiserHtml;
-    if (organiserFootnote) organiserFootnote.innerHTML = eventsFootnoteOrganiserHtml;
-    if (window.HubOrganiserActions && window.HubOrganiserActions.bindActions) {
-      window.HubOrganiserActions.bindActions(document);
-    }
+  function syncOrganiserCta() {
+    if (heroOrganiserCta) heroOrganiserCta.innerHTML = organisersHubCtaHtml;
+    if (organiserFootnote) organiserFootnote.innerHTML = organisersHubCtaHtml;
   }
 
   function applyCopy(mode) {
@@ -226,7 +208,7 @@
       initSponsorHub(mode);
       syncBrowseToggles(mode);
       syncHeroBrowseLink(mode);
-      syncOrganiserCta(mode);
+      syncOrganiserCta();
       return;
     }
     if (heroBadge) heroBadge.textContent = c.badge;
@@ -245,7 +227,7 @@
     initSponsorHub(mode);
     syncBrowseToggles(mode);
     syncHeroBrowseLink(mode);
-    syncOrganiserCta(mode);
+    syncOrganiserCta();
   }
 
   function setMode(mode, options) {
