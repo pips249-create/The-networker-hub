@@ -337,175 +337,32 @@
     });
   }
 
-  function initHeroCitySearch(input, searchWrap, onNonCitySubmit) {
-    if (!input || !searchWrap) return;
-
-    var hero = document.querySelector('.home-hero');
-    var resolveSlug = window.HUB_resolveNetworkingRegionSlug;
-    var searchRegions = window.HUB_searchNetworkingRegions;
-    var regionPath = window.HUB_networkingRegionPath;
-    var suggestTimer = null;
-    var activeIndex = -1;
-    var currentItems = [];
-    var list = null;
-
-    function escAttr(s) {
-      return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;');
-    }
-
-    function hideSuggest() {
-      if (!list) return;
-      list.hidden = true;
-      list.innerHTML = '';
-      activeIndex = -1;
-      currentItems = [];
-      input.setAttribute('aria-expanded', 'false');
-    }
-
-    function ensureSuggestList() {
-      if (list) return list;
-      list = document.createElement('ul');
-      list.id = input.id + '-suggest';
-      list.className = 'home-hero-search-suggest';
-      list.setAttribute('role', 'listbox');
-      list.hidden = true;
-      searchWrap.appendChild(list);
-      return list;
-    }
-
-    function navigateToRegion(slug) {
-      if (!slug || !regionPath) return;
-      hideSuggest();
-      window.location.href = regionPath(slug);
-    }
-
-    function handleSubmit() {
-      var q = String(input.value || '').trim();
-      if (!q) {
-        if (onNonCitySubmit) onNonCitySubmit(q);
-        return;
-      }
-      var slug = resolveSlug ? resolveSlug(q) : '';
-      if (slug) {
-        navigateToRegion(slug);
-        return;
-      }
-      if (onNonCitySubmit) onNonCitySubmit(q);
-    }
-
-    function renderSuggest(items) {
-      ensureSuggestList();
-      if (!list) return;
-      currentItems = items;
-      if (!items.length) {
-        hideSuggest();
-        return;
-      }
-      list.innerHTML = items
-        .map(function (item, i) {
-          return (
-            '<li role="option" data-index="' +
-            i +
-            '" data-slug="' +
-            escAttr(item.slug) +
-            '" tabindex="-1">' +
-            escAttr(item.name) +
-            '</li>'
-          );
-        })
-        .join('');
-      list.hidden = false;
-      input.setAttribute('aria-expanded', 'true');
-    }
-
-    function refreshSuggest() {
-      if (!searchRegions) return;
-      var q = String(input.value || '').trim();
-      if (q.length < 2) {
-        hideSuggest();
-        return;
-      }
-      renderSuggest(searchRegions(q, 8));
-    }
-
-    input.setAttribute('role', 'combobox');
-    input.setAttribute('aria-autocomplete', 'list');
-    input.setAttribute('aria-expanded', 'false');
-    input.setAttribute('aria-controls', input.id + '-suggest');
-
-    input.addEventListener('focus', function () {
-      if (hero) hero.classList.add('is-entered');
-      if (String(input.value || '').trim().length >= 2) refreshSuggest();
-    });
-
-    input.addEventListener('input', function () {
-      clearTimeout(suggestTimer);
-      suggestTimer = setTimeout(refreshSuggest, 180);
-    });
-
-    input.addEventListener('keydown', function (e) {
-      if (!list || list.hidden || !currentItems.length) return;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        activeIndex = Math.min(activeIndex + 1, currentItems.length - 1);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        activeIndex = Math.max(activeIndex - 1, 0);
-      } else if (e.key === 'Enter' && activeIndex >= 0) {
-        e.preventDefault();
-        navigateToRegion(currentItems[activeIndex].slug);
-        return;
-      } else if (e.key === 'Escape') {
-        hideSuggest();
-        return;
-      } else {
-        return;
-      }
-      Array.prototype.forEach.call(list.children, function (li, i) {
-        li.classList.toggle('is-active', i === activeIndex);
-      });
-      var active = list.children[activeIndex];
-      if (active) active.scrollIntoView({ block: 'nearest' });
-    });
-
-    searchWrap.addEventListener('mousedown', function (e) {
-      var li = e.target.closest('.home-hero-search-suggest li[role="option"]');
-      if (!li) return;
-      e.preventDefault();
-      var slug = li.getAttribute('data-slug');
-      if (slug) navigateToRegion(slug);
-    });
-
-    document.addEventListener('click', function (e) {
-      if (e.target === input || (list && list.contains(e.target))) return;
-      hideSuggest();
-    });
-
-    return handleSubmit;
-  }
-
   function initHeroHubertForm() {
     var form = document.getElementById('home-hero-hubert-form');
     var input = document.getElementById('home-hero-hubert-input');
     var searchWrap = form ? form.closest('.home-hero-rich-search-wrap') : null;
-    if (!form || !input || !searchWrap) return;
+    if (!form || !input || !searchWrap || !window.HUB_initNetworkingRegionSearch) return;
 
-    var handleSubmit = initHeroCitySearch(input, searchWrap, function (q) {
-      if (!q) {
-        if (window.HubertWidget && typeof window.HubertWidget.open === 'function') {
-          window.HubertWidget.open();
+    var hero = document.querySelector('.home-hero');
+    var handleSubmit = window.HUB_initNetworkingRegionSearch(input, searchWrap, {
+      suggestClass: 'home-hero-search-suggest',
+      onFocus: function () {
+        if (hero) hero.classList.add('is-entered');
+      },
+      onNonCitySubmit: function (q) {
+        if (!q) {
+          if (window.HubertWidget && typeof window.HubertWidget.open === 'function') {
+            window.HubertWidget.open();
+          }
+          return;
         }
-        return;
-      }
-      if (window.HubertWidget && typeof window.HubertWidget.ask === 'function') {
-        window.HubertWidget.ask(q);
-        input.value = '';
-        return;
-      }
-      window.location.href = '/contact?q=' + encodeURIComponent(q);
+        if (window.HubertWidget && typeof window.HubertWidget.ask === 'function') {
+          window.HubertWidget.ask(q);
+          input.value = '';
+          return;
+        }
+        window.location.href = '/contact?q=' + encodeURIComponent(q);
+      },
     });
 
     form.addEventListener('submit', function (e) {

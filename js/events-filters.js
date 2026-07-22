@@ -1304,4 +1304,16 @@
   }
 
   syncLocationFieldForFormat();
+
+  function initEventsFilterCitySearch() {
+    if (!searchInput || !window.HUB_initNetworkingRegionSearch) return;
+    var searchWrap = searchInput.closest('.filter-field-search');
+    if (!searchWrap) return;
+    window.HUB_initNetworkingRegionSearch(searchInput, searchWrap, {
+      suggestClass: 'events-filter-search-suggest',
+      preserveParams: ['mode'],
+    });
+  }
+
+  initEventsFilterCitySearch();
 })();
