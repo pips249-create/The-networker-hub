@@ -31,7 +31,7 @@
       title:
         'Find your next <span class="accent">organisers</span>',
       sub:
-        'Browse networking groups, exhibition hosts, conference organisers and more.<br>Filter by city, format, guest visits, and rating.',
+        'Browse networking groups, exhibition hosts, conference organisers and more.<br>Filter by guest visits and listings, or sort by rating.',
       heading: 'All organisers',
       filterTitle: 'Filter organisers',
       searchPlaceholder: 'Search organisers, descriptions, formats…',

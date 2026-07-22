@@ -1,15 +1,8 @@
 (function () {
   var searchInput = document.getElementById('search');
   var sortSelect = document.getElementById('sort');
-  var formatInPerson = document.getElementById('org-format-inperson');
-  var formatOnline = document.getElementById('org-format-online');
   var hasListings = document.getElementById('org-has-listings');
   var guestVisits = document.getElementById('org-guest-visits');
-  var rating4 = document.getElementById('org-rating-4');
-  var rating3 = document.getElementById('org-rating-3');
-  var rating2 = document.getElementById('org-rating-2');
-  var rating1 = document.getElementById('org-rating-1');
-  var ratingNone = document.getElementById('org-rating-none');
   var resultsCount = document.getElementById('results-count');
   var typeTabs = document.querySelectorAll('.org-type-tab[data-org-tab]');
 
@@ -31,18 +24,6 @@
     return copy;
   }
 
-  function formatFiltersActive() {
-    var allOn =
-      (!formatInPerson || formatInPerson.checked) &&
-      (!formatOnline || formatOnline.checked);
-    var allOff =
-      formatInPerson &&
-      !formatInPerson.checked &&
-      formatOnline &&
-      !formatOnline.checked;
-    return !allOn && !allOff;
-  }
-
   function hasActiveOrganiserFilters() {
     var q = (searchInput && searchInput.value) || '';
     if (q.trim()) return true;
@@ -50,11 +31,6 @@
     if (getActiveTab() !== 'all') return true;
     if (hasListings && hasListings.checked) return true;
     if (guestVisits && guestVisits.checked) return true;
-    if (formatFiltersActive()) return true;
-    var ratingEls = [rating4, rating3, rating2, rating1, ratingNone];
-    for (var i = 0; i < ratingEls.length; i++) {
-      if (ratingEls[i] && !ratingEls[i].checked) return true;
-    }
     return false;
   }
 
@@ -79,52 +55,6 @@
       ordered.push(byId[id]);
     });
     return ordered;
-  }
-
-  function organiserRating(org) {
-    return Number(org.rating) || 0;
-  }
-
-  function organiserHasNoRatings(org) {
-    var rating = organiserRating(org);
-    var reviews = Number(org.reviews) || 0;
-    return rating <= 0 || reviews <= 0;
-  }
-
-  function matchesRatingFilter(org) {
-    var want4 = rating4 && rating4.checked;
-    var want3 = rating3 && rating3.checked;
-    var want2 = rating2 && rating2.checked;
-    var want1 = rating1 && rating1.checked;
-    var wantNone = ratingNone && ratingNone.checked;
-
-    if (!want4 && !want3 && !want2 && !want1 && !wantNone) return false;
-
-    var rating = organiserRating(org);
-    if (wantNone && organiserHasNoRatings(org)) return true;
-    if (want4 && rating >= 4) return true;
-    if (want3 && rating >= 3) return true;
-    if (want2 && rating >= 2) return true;
-    if (want1 && rating >= 1) return true;
-    return false;
-  }
-
-  function matchesFormatFilter(org) {
-    var wantInPerson = !formatInPerson || formatInPerson.checked;
-    var wantOnline = !formatOnline || formatOnline.checked;
-
-    if (wantInPerson && wantOnline) return true;
-    if (!wantInPerson && !wantOnline) return false;
-
-    var slugs = org.formatSlugs || [];
-    if (!slugs.length) return false;
-
-    for (var i = 0; i < slugs.length; i++) {
-      var slug = slugs[i];
-      if (wantInPerson && slug === 'in-person') return true;
-      if (wantOnline && slug === 'online') return true;
-    }
-    return false;
   }
 
   function organiserMatchesFilters(org) {
@@ -154,8 +84,6 @@
 
     if (hasListings && hasListings.checked && !(Number(org.eventCount) > 0)) return false;
     if (guestVisits && guestVisits.checked && !(Number(org.guestVisitsAllowed) > 0)) return false;
-    if (!matchesFormatFilter(org)) return false;
-    if (!matchesRatingFilter(org)) return false;
 
     return true;
   }
@@ -172,7 +100,7 @@
     var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
     copy.sort(function (a, b) {
-      if (sort === 'rating' || sort === 'rating-desc') {
+      if (sort === 'best-rated' || sort === 'rating' || sort === 'rating-desc') {
         return (Number(b.rating) || 0) - (Number(a.rating) || 0);
       }
       if (sort === 'rating-asc') {
@@ -213,14 +141,8 @@
   function resetFilters() {
     if (searchInput) searchInput.value = '';
     if (sortSelect) sortSelect.value = 'recommended';
-    [formatInPerson, formatOnline].forEach(function (el) {
-      if (el) el.checked = true;
-    });
     if (hasListings) hasListings.checked = false;
     if (guestVisits) guestVisits.checked = false;
-    [rating4, rating3, rating2, rating1, ratingNone].forEach(function (el) {
-      if (el) el.checked = true;
-    });
     browseRandomOrder = null;
     setActiveTab('all');
     applyFilters();
@@ -247,19 +169,7 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [
-    searchInput,
-    sortSelect,
-    formatInPerson,
-    formatOnline,
-    hasListings,
-    guestVisits,
-    rating4,
-    rating3,
-    rating2,
-    rating1,
-    ratingNone,
-  ].forEach(bindFilter);
+  [searchInput, sortSelect, hasListings, guestVisits].forEach(bindFilter);
 
   typeTabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
