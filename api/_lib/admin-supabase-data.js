@@ -968,16 +968,28 @@ async function fetchFinancials(sb) {
 
   const pendingPayouts = payoutQueue.filter((p) => p.status === 'pending_review').length;
 
+  let refundsPending = [];
+  let refundsPendingWarning = null;
+  try {
+    const { listRefundsPendingEvents } = require('./admin-refunds-pending');
+    refundsPending = await listRefundsPendingEvents(sb, 50);
+  } catch (e) {
+    refundsPendingWarning = e.message || String(e);
+  }
+
   return {
     summary: {
       totalTicketRevenue: round2(totalTicketRevenue),
       totalBookingFees: round2(totalBookingFees),
       paidRegistrationCount: (paidRegsRes.data || []).length,
       pendingPayoutCount: pendingPayouts,
+      refundsPendingCount: refundsPending.length,
       organiserCount: (orgsRes.data || []).length,
     },
     stripeAccounts,
     payoutQueue,
+    refundsPending,
+    refundsPendingWarning,
     automationLog,
     payoutWarning,
   };

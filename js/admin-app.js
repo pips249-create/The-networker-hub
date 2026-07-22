@@ -1594,12 +1594,189 @@
       });
   }
 
+  function summarizeEventCommerceRows(rows) {
+    var summary = {
+      count: (rows || []).length,
+      withBookings: 0,
+      totalRegistrations: 0,
+      totalPaidBookings: 0,
+      pastOrArchived: 0,
+      deletable: 0,
+    };
+    (rows || []).forEach(function (ev) {
+      var regCount = Math.max(0, Number(ev.registration_count) || 0);
+      var paid = Math.max(0, Number(ev.paid_booking_count) || 0);
+      var locked = Boolean(ev.locked);
+      if (regCount > 0 || locked) summary.withBookings += 1;
+      else summary.deletable += 1;
+      summary.totalRegistrations += regCount;
+      summary.totalPaidBookings += paid;
+      var status = String(ev.status || '').toLowerCase();
+      var anchor = ev.ends_at || ev.starts_at;
+      var ended = anchor && !Number.isNaN(new Date(anchor).getTime()) && new Date(anchor) < new Date();
+      if (status === 'archived' || ended) summary.pastOrArchived += 1;
+    });
+    return summary;
+  }
+
+  function applyEventModerationButtonStates(prefix, rows) {
+    var summary = summarizeEventCommerceRows(rows);
+    var unpublishBtn = document.getElementById(prefix + '-unpublish-btn');
+    var deleteBtn = document.getElementById(prefix + '-delete-btn');
+    var cancelBtn = document.getElementById(prefix + '-force-delete-btn');
+    if (unpublishBtn) {
+      unpublishBtn.disabled = summary.count === 0;
+      unpublishBtn.title = 'Hide from browse and stop ticket sales — bookings and revenue stay intact';
+    }
+    if (deleteBtn) {
+      deleteBtn.disabled = summary.withBookings > 0;
+      deleteBtn.title =
+        summary.withBookings > 0
+          ? 'Only available when no selected events have registrations or ticket sales'
+          : 'Permanently delete draft events with no registrations';
+    }
+    if (cancelBtn) {
+      cancelBtn.disabled = summary.withBookings === 0;
+      cancelBtn.title =
+        summary.withBookings === 0
+          ? 'Only needed when selected events have registrations or ticket sales'
+          : 'Cancel the event, refund every paid attendee, and email the organiser';
+    }
+  }
+
+  function unpublishSelectedEvents(options) {
+    var getIds = options && options.getIds;
+    var clearSelection = options && options.clearSelection;
+    var refresh = options && options.refresh;
+    var msgEl = document.getElementById((options && options.msgId) || 'event-unpublish-msg');
+    var btn = document.getElementById((options && options.btnId) || 'event-unpublish-btn');
+    var ids = getIds ? getIds() : [];
+    if (!ids.length) return;
+
+    promptAdminUnpublish(ids.length)
+      .then(function (payload) {
+        if (btn) btn.disabled = true;
+        if (msgEl) {
+          msgEl.textContent = 'Unpublishing…';
+          msgEl.className = 'text-xs text-slate-500';
+        }
+        return adminPost('/api/admin/events', {
+          action: 'bulk_unpublish',
+          ids: ids,
+          reason: payload.reason,
+          details: payload.details,
+          notify_organiser: payload.notifyOrganiser !== false,
+        }).then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Unpublish failed');
+          if (clearSelection) clearSelection();
+          var parts = [
+            'Unpublished ' +
+              (data.unpublished || 0) +
+              ' event' +
+              ((data.unpublished || 0) === 1 ? '' : 's') +
+              '.',
+          ];
+          if (data.skipped && data.skipped.length) {
+            parts.push('Skipped ' + data.skipped.length + '.');
+          }
+          if (msgEl) {
+            msgEl.textContent = parts.join(' ');
+            msgEl.className = 'text-xs text-emerald-700 font-semibold';
+          }
+          return refresh ? refresh() : null;
+        });
+      })
+      .catch(function (err) {
+        if (err && err.message === 'cancelled') return;
+        if (msgEl) {
+          msgEl.textContent = (err && err.message) || 'Could not unpublish events';
+          msgEl.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function reinstateSelectedEvent(eventId, targetStatus, msgEl, btn) {
+    if (!eventId) return;
+    var statusLabel = targetStatus === 'published' ? 'republish' : 'restore as unpublished';
+    if (
+      !window.confirm(
+        'Reinstate this event and ' +
+          statusLabel +
+          '?\n\nOnly available when refunds have not been confirmed. Existing bookings will be restored.'
+      )
+    ) {
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msgEl) {
+      msgEl.textContent = 'Reinstating…';
+      msgEl.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/events', {
+      action: 'reinstate_event',
+      event_id: eventId,
+      status: targetStatus,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Reinstate failed');
+        if (msgEl) {
+          msgEl.textContent = 'Event reinstated.';
+          msgEl.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshEventCleanupData();
+      })
+      .then(function () {
+        updateEventBulkBar();
+      })
+      .catch(function (err) {
+        if (msgEl) {
+          msgEl.textContent = err.message || 'Could not reinstate event';
+          msgEl.className = 'text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function retryEventRefunds(eventId, btn) {
+    if (!eventId) return;
+    if (
+      !window.confirm(
+        'Retry automatic Stripe refunds for this cancelled event?\n\nUse this when refunds failed or are still processing.'
+      )
+    ) {
+      return;
+    }
+    if (btn) btn.disabled = true;
+    adminPost('/api/admin/events', { action: 'retry_event_refunds', event_id: eventId })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Refund retry failed');
+        var msg = data.refundsConfirmed
+          ? 'Refunds confirmed in Stripe.'
+          : 'Refund attempt sent — check Stripe and retry if needed.';
+        window.alert(msg);
+        if (typeof renderFinancials === 'function') renderFinancials();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not retry refunds');
+      })
+      .then(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function rememberSelectedHealthEvent(ev) {
     if (!ev || ev.id == null) return;
     eventHealthState.selected[String(ev.id)] = {
       id: ev.id,
       title: ev.title || 'Untitled',
       organiser_name: ev.organiser_name || '',
+      status: ev.status || '',
+      starts_at: ev.starts_at || '',
+      ends_at: ev.ends_at || '',
+      locked: Boolean(ev.locked),
+      registration_count: Math.max(0, Number(ev.registration_count) || 0),
+      paid_booking_count: Math.max(0, Number(ev.paid_booking_count) || 0),
     };
   }
 
@@ -1626,11 +1803,13 @@
     var countEl = document.getElementById('health-bulk-count');
     var chipsEl = document.getElementById('health-selected-chips');
     var deleteSection = document.getElementById('health-delete-section');
+    var moderationSection = document.getElementById('health-moderation-section');
     var ids = getSelectedHealthEventIds();
     var rows = selectedHealthRows();
     if (countEl) countEl.textContent = String(ids.length);
     if (bar) bar.classList.toggle('hidden', ids.length === 0);
     if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    if (moderationSection) moderationSection.classList.toggle('hidden', ids.length === 0);
     if (chipsEl) {
       chipsEl.innerHTML = rows
         .map(function (ev) {
@@ -1661,6 +1840,7 @@
       });
       if (selectPage) selectPage.checked = allPageChecked;
     }
+    applyEventModerationButtonStates('health', rows);
   }
 
   function deleteSelectedHealthEvents(force) {
@@ -1674,7 +1854,7 @@
     function runDelete(extra) {
       if (btn) btn.disabled = true;
       if (msg) {
-        msg.textContent = force ? 'Removing…' : 'Deleting…';
+        msg.textContent = force ? 'Cancelling & refunding…' : 'Deleting…';
         msg.className = 'text-xs text-slate-500';
       }
       postAdminEventBulkDelete(ids, {
@@ -1704,7 +1884,7 @@
     }
 
     if (force) {
-      promptAdminForceRemove(ids.length)
+      promptAdminForceRemove(selectedHealthRows())
         .then(function (payload) {
           runDelete(payload);
         })
@@ -1723,7 +1903,7 @@
       !window.confirm(
         'Permanently delete “' +
           (title || 'this event') +
-          '”?\n\nEvents with registrations are skipped unless you force delete from the bulk bar.'
+          '”?\n\nOnly empty events with no registrations can be deleted. If it has bookings, unpublish the listing or use Cancel & refund bookings from the bulk bar.'
       )
     ) {
       return;
@@ -2064,6 +2244,48 @@
         updateHealthBulkBar();
         return;
       }
+      if (e.target.closest('#health-unpublish-btn')) {
+        unpublishSelectedEvents({
+          getIds: getSelectedHealthEventIds,
+          clearSelection: clearSelectedHealthEvents,
+          refresh: function () {
+            return fetchEventHealth().then(function () {
+              renderEventHealth();
+            });
+          },
+          msgId: 'health-unpublish-msg',
+          btnId: 'health-unpublish-btn',
+        });
+        return;
+      }
+      var unpublishHealthBtn = e.target.closest('[data-unpublish-health-event]');
+      if (unpublishHealthBtn) {
+        var unpublishHealthId = unpublishHealthBtn.getAttribute('data-unpublish-health-event');
+        promptAdminUnpublish(1)
+          .then(function (payload) {
+            unpublishHealthBtn.disabled = true;
+            return adminPost('/api/admin/events', {
+              action: 'bulk_unpublish',
+              ids: [unpublishHealthId],
+              reason: payload.reason,
+              details: payload.details,
+              notify_organiser: payload.notifyOrganiser !== false,
+            });
+          })
+          .then(function (data) {
+            if (!data.ok) throw new Error(data.message || data.error || 'Unpublish failed');
+            return fetchEventHealth();
+          })
+          .then(function () {
+            renderEventHealth();
+          })
+          .catch(function (err) {
+            if (err && err.message === 'cancelled') return;
+            window.alert(err.message || 'Could not unpublish event');
+            unpublishHealthBtn.disabled = false;
+          });
+        return;
+      }
       if (e.target.closest('#health-delete-btn')) {
         deleteSelectedHealthEvents(false);
         return;
@@ -2293,12 +2515,18 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply fixes to selected</button>' +
       '<span id="health-bulk-msg" class="text-xs"></span></div></form>' +
-      '<div id="health-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
-      '<p class="text-sm font-semibold text-brand-900">Delete selected events</p>' +
-      '<p class="text-xs text-slate-600">Events with registrations or active ticket sales are skipped unless you force remove (cancels, refunds attendees, emails organiser).</p>' +
+      '<div id="health-moderation-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Hide listing (default for moderation)</p>' +
+      '<p class="text-xs text-slate-600">Unpublish removes the event from browse and stops ticket sales. Bookings, revenue, and organiser payouts are kept.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="health-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
-      '<button type="button" id="health-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force remove</button>' +
+      '<button type="button" id="health-unpublish-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Unpublish listing</button>' +
+      '<span id="health-unpublish-msg" class="text-xs"></span></div></div>' +
+      '<div id="health-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Danger zone</p>' +
+      '<p class="text-xs text-slate-600">Only use when the event is genuinely off. Cancel &amp; refund unwinds every paid booking. Delete permanently removes empty drafts with no registrations.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="health-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">Cancel event &amp; refund bookings</button>' +
+      '<button type="button" id="health-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">Delete empty events</button>' +
       '<span id="health-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div id="event-health-list" class="space-y-3"></div>' +
       '<div id="event-health-completed"></div></div>';
@@ -2700,11 +2928,17 @@
             '<a href="../events/' +
             esc(ev.slug || '') +
             '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View event page</a>' +
-            '<button type="button" class="text-xs font-semibold text-red-700 hover:underline" data-delete-health-event="' +
-            attrEsc(ev.id) +
-            '" data-event-title="' +
-            attrEsc(ev.title || 'Untitled') +
-            '">Delete event</button>' +
+            (eventHasCommerce(ev)
+              ? '<button type="button" class="text-xs font-semibold text-amber-800 hover:underline" data-unpublish-health-event="' +
+                attrEsc(ev.id) +
+                '" data-event-title="' +
+                attrEsc(ev.title || 'Untitled') +
+                '">Unpublish</button>'
+              : '<button type="button" class="text-xs font-semibold text-red-700 hover:underline" data-delete-health-event="' +
+                attrEsc(ev.id) +
+                '" data-event-title="' +
+                attrEsc(ev.title || 'Untitled') +
+                '">Delete</button>') +
             '</div></div>' +
             '<form class="event-health-form p-4 grid sm:grid-cols-2 gap-4 text-sm">' +
             eventFieldsHtml +
@@ -4728,6 +4962,15 @@
           '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</section>' +
+      '<section id="financials-refunds-section" class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden hidden">' +
+      '<div class="px-4 py-3 border-b border-amber-100 bg-amber-50"><h3 class="font-bold text-amber-950">Refunds pending</h3>' +
+      '<p class="text-xs text-amber-900/80 mt-0.5">Cancelled events where Stripe refunds were not confirmed — retry or check Stripe manually.</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-amber-50/80 text-xs uppercase text-amber-900/70">' +
+          '<tr><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Paid bookings</th><th class="px-4 py-3">Cancelled</th><th class="px-4 py-3">Reason</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="financials-refunds-pending"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Payout queue</h3>' +
       '<p class="text-xs text-slate-500 mt-0.5">Organiser payout requests from the dashboard — approve then mark paid after transfer.</p></div>' +
@@ -4759,8 +5002,11 @@
       var stripe = data.stripeAccounts || [];
       var log = data.automationLog || [];
       var queue = data.payoutQueue || [];
+      var refundsPending = data.refundsPending || [];
       var summary = data.summary || {};
       var queueEl = document.getElementById('financials-queue');
+      var refundsSectionEl = document.getElementById('financials-refunds-section');
+      var refundsEl = document.getElementById('financials-refunds-pending');
 
       function money(n) {
         var v = Number(n) || 0;
@@ -4780,7 +5026,12 @@
           '</p></div>' +
           '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Payouts pending</p><p class="text-xl font-bold text-brand-900 mt-1">' +
           String(summary.pendingPayoutCount || 0) +
-          '</p></div>';
+          '</p></div>' +
+          (summary.refundsPendingCount
+            ? '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"><p class="text-xs text-amber-900/80 uppercase tracking-wide">Refunds pending</p><p class="text-xl font-bold text-amber-950 mt-1">' +
+              String(summary.refundsPendingCount) +
+              '</p></div>'
+            : '');
       }
 
       if (status) {
@@ -4794,16 +5045,71 @@
           stripe.length +
           ' organiser' +
           (stripe.length === 1 ? '' : 's');
-        if (data.payoutWarning) {
+        if (summary.refundsPendingCount) {
+          statusLine =
+            summary.refundsPendingCount +
+            ' refund' +
+            (summary.refundsPendingCount === 1 ? '' : 's') +
+            ' pending · ' +
+            statusLine;
+        }
+        if (data.payoutWarning || data.refundsPendingWarning) {
           status.innerHTML =
-            '<span class="text-amber-800 font-medium">' +
-            esc(data.payoutWarning) +
-            '</span><br><span class="text-slate-500">' +
+            (data.refundsPendingWarning
+              ? '<span class="text-red-700 font-medium">' +
+                esc(data.refundsPendingWarning) +
+                '</span><br>'
+              : '') +
+            (data.payoutWarning
+              ? '<span class="text-amber-800 font-medium">' +
+                esc(data.payoutWarning) +
+                '</span><br>'
+              : '') +
+            '<span class="text-slate-500">' +
             esc(statusLine) +
             '</span>';
         } else {
           status.textContent = statusLine;
         }
+      }
+
+      if (refundsSectionEl) {
+        refundsSectionEl.classList.toggle('hidden', !refundsPending.length && !data.refundsPendingWarning);
+      }
+      if (refundsEl) {
+        refundsEl.innerHTML = refundsPending.length
+          ? refundsPending
+              .map(function (row) {
+                return (
+                  '<tr class="border-t border-amber-100">' +
+                  '<td class="px-4 py-3 font-medium">' +
+                  esc(row.title) +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  esc(row.organiserName || '—') +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  String(row.paidBookings || 0) +
+                  '</td>' +
+                  '<td class="px-4 py-3 text-xs text-slate-500">' +
+                  esc(fmtTime(row.cancelledAt)) +
+                  '</td>' +
+                  '<td class="px-4 py-3 text-xs">' +
+                  esc(row.reason || '—') +
+                  '</td>' +
+                  '<td class="px-4 py-3 whitespace-nowrap">' +
+                  '<button type="button" class="retry-refunds-btn rounded-lg bg-amber-800 text-white px-2 py-1 text-xs font-semibold hover:bg-amber-900" data-retry-refunds-event="' +
+                  attrEsc(row.eventId) +
+                  '">Retry refunds</button>' +
+                  '</td></tr>'
+                );
+              })
+              .join('')
+          : '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
+            (data.refundsPendingWarning
+              ? 'Could not load refunds pending: ' + esc(data.refundsPendingWarning)
+              : 'No pending refunds.') +
+            '</td></tr>';
       }
 
       if (queueEl) {
@@ -7976,8 +8282,12 @@
       '"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      eventStatusOptions(ev.status || 'draft') +
-      '</select></div>' +
+      eventStatusOptions(ev.status || 'draft', { hideCancelled: eventHasCommerce(ev) }) +
+      '</select>' +
+      (eventHasCommerce(ev)
+        ? '<p class="text-[11px] text-amber-800 mt-1">To cancel with refunds, use Cancel event &amp; refund bookings in the bulk bar.</p>'
+        : '') +
+      '</div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
       '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="">—</option>' +
@@ -7994,11 +8304,26 @@
       '" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
-      '<button type="button" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50" data-delete-event="' +
-      attrEsc(ev.id) +
-      '" data-event-title="' +
-      attrEsc(ev.title || 'Untitled') +
-      '">Delete event</button>' +
+      (ev.can_reinstate
+        ? '<button type="button" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-4 py-2 hover:bg-emerald-100" data-reinstate-event="' +
+          attrEsc(ev.id) +
+          '" data-reinstate-status="unpublished">Reinstate (unpublished)</button>' +
+          '<button type="button" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-4 py-2 hover:bg-emerald-100" data-reinstate-event="' +
+          attrEsc(ev.id) +
+          '" data-reinstate-status="published">Reinstate &amp; republish</button>'
+        : ev.status === 'cancelled' && ev.reinstate_blocked_reason
+          ? '<span class="text-xs text-amber-800">' + esc(ev.reinstate_blocked_reason) + '</span>'
+          : eventHasCommerce(ev)
+            ? '<button type="button" class="rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-2 hover:bg-amber-100" data-unpublish-event="' +
+              attrEsc(ev.id) +
+              '" data-event-title="' +
+              attrEsc(ev.title || 'Untitled') +
+              '">Unpublish listing</button>'
+            : '<button type="button" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50" data-delete-event="' +
+              attrEsc(ev.id) +
+              '" data-event-title="' +
+              attrEsc(ev.title || 'Untitled') +
+              '">Delete event</button>') +
       '<span class="event-cleanup-msg text-xs"></span></div></form>'
     );
   }
@@ -9544,12 +9869,67 @@
       updateEventBulkBar();
       return;
     }
+    if (e.target.closest('#event-unpublish-btn')) {
+      unpublishSelectedEvents({
+        getIds: getSelectedEventIds,
+        clearSelection: clearSelectedEvents,
+        refresh: function () {
+          return refreshEventCleanupData().then(function () {
+            updateEventBulkBar();
+          });
+        },
+        msgId: 'event-unpublish-msg',
+        btnId: 'event-unpublish-btn',
+      });
+      return;
+    }
     if (e.target.closest('#event-delete-btn')) {
       deleteSelectedEvents(false);
       return;
     }
     if (e.target.closest('#event-force-delete-btn')) {
       deleteSelectedEvents(true);
+      return;
+    }
+    var unpublishEventBtn = e.target.closest('[data-unpublish-event]');
+    if (unpublishEventBtn) {
+      var unpublishId = unpublishEventBtn.getAttribute('data-unpublish-event');
+      promptAdminUnpublish(1)
+        .then(function (payload) {
+          unpublishEventBtn.disabled = true;
+          return adminPost('/api/admin/events', {
+            action: 'bulk_unpublish',
+            ids: [unpublishId],
+            reason: payload.reason,
+            details: payload.details,
+            notify_organiser: payload.notifyOrganiser !== false,
+          });
+        })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Unpublish failed');
+          forgetSelectedEvent(unpublishId);
+          return refreshEventCleanupData();
+        })
+        .then(function () {
+          updateEventBulkBar();
+        })
+        .catch(function (err) {
+          if (err && err.message === 'cancelled') return;
+          unpublishEventBtn.disabled = false;
+          window.alert(err.message || 'Could not unpublish event');
+        });
+      return;
+    }
+    var reinstateBtn = e.target.closest('[data-reinstate-event]');
+    if (reinstateBtn) {
+      var form = reinstateBtn.closest('.event-cleanup-form');
+      var msg = form && form.querySelector('.event-cleanup-msg');
+      reinstateSelectedEvent(
+        reinstateBtn.getAttribute('data-reinstate-event'),
+        reinstateBtn.getAttribute('data-reinstate-status') || 'unpublished',
+        msg,
+        reinstateBtn
+      );
       return;
     }
     var deleteEventBtn = e.target.closest('[data-delete-event]');
@@ -9560,7 +9940,7 @@
         !window.confirm(
           'Permanently delete “' +
             (delTitle || 'this event') +
-            '”?\n\nUse force delete in the bulk bar if it has registrations.'
+            '”?\n\nOnly use for empty drafts with no registrations.'
         )
       ) {
         return;
@@ -9683,14 +10063,7 @@
       if (e.target.classList && e.target.classList.contains('event-select-checkbox')) {
         var evId = e.target.value;
         if (e.target.checked) {
-          var row = e.target.closest('[data-event-id-row]');
-          var titleEl = row && row.querySelector('.font-semibold');
-          rememberSelectedEvent({
-            id: evId,
-            title: titleEl ? titleEl.textContent : 'Event',
-            organiser_name: '',
-            status: '',
-          });
+          rememberSelectedEvent(lookupEventFromCleanupCache(evId) || { id: evId, title: 'Event' });
         } else {
           forgetSelectedEvent(evId);
         }
@@ -9985,8 +10358,10 @@
     }).join('');
   }
 
-  function eventStatusOptions(selected) {
-    var statuses = ['draft', 'published', 'unpublished', 'archived', 'cancelled'];
+  function eventStatusOptions(selected, options) {
+    var opts = options || {};
+    var statuses = ['draft', 'published', 'unpublished', 'archived'];
+    if (!opts.hideCancelled) statuses.push('cancelled');
     return statuses
       .map(function (s) {
         return (
@@ -10029,7 +10404,27 @@
       title: ev.title || 'Untitled',
       organiser_name: ev.organiser_name || '',
       status: ev.status || '',
+      starts_at: ev.starts_at || '',
+      ends_at: ev.ends_at || '',
+      locked: Boolean(ev.locked),
+      registration_count: Math.max(0, Number(ev.registration_count) || 0),
+      paid_booking_count: Math.max(0, Number(ev.paid_booking_count) || 0),
+      can_reinstate: Boolean(ev.can_reinstate),
+      reinstate_blocked_reason: ev.reinstate_blocked_reason || '',
     };
+  }
+
+  function lookupEventFromCleanupCache(eventId) {
+    var events = (eventCleanupCache && eventCleanupCache.events) || [];
+    for (var i = 0; i < events.length; i += 1) {
+      if (String(events[i].id) === String(eventId)) return events[i];
+    }
+    return null;
+  }
+
+  function eventHasCommerce(ev) {
+    if (!ev) return false;
+    return Boolean(ev.locked) || Math.max(0, Number(ev.registration_count) || 0) > 0;
   }
 
   function forgetSelectedEvent(id) {
@@ -10055,11 +10450,13 @@
     var countEl = document.getElementById('event-bulk-count');
     var chipsEl = document.getElementById('event-selected-chips');
     var deleteSection = document.getElementById('event-delete-section');
+    var moderationSection = document.getElementById('event-moderation-section');
     var ids = getSelectedEventIds();
     var rows = selectedEventRows();
     if (countEl) countEl.textContent = String(ids.length);
     if (bar) bar.classList.toggle('hidden', ids.length === 0);
     if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    if (moderationSection) moderationSection.classList.toggle('hidden', ids.length === 0);
     if (chipsEl) {
       chipsEl.innerHTML = rows
         .map(function (ev) {
@@ -10110,24 +10507,25 @@
       });
       if (selectPage) selectPage.checked = allPageChecked;
     }
+    applyEventModerationButtonStates('event', rows);
   }
 
   function eventDeleteConfirmMsg(count, force) {
-    var base =
-      'Permanently delete ' +
-      count +
-      ' selected event' +
-      (count === 1 ? '' : 's') +
-      '?';
     if (force) {
       return (
-        base +
-        '\n\nEvents with registrations or ticket sales will be cancelled, attendees refunded, and the organiser notified. Draft events with no bookings are deleted immediately.'
+        'Cancel ' +
+        count +
+        ' selected event' +
+        (count === 1 ? '' : 's') +
+        ' and refund all paid bookings?\n\nThis cannot be undone. Attendees are refunded and organisers lose ticket revenue for those bookings.'
       );
     }
     return (
-      base +
-      '\n\nEvents with registrations or active ticket sales will be skipped. Use force remove if you need to cancel and refund bookings.'
+      'Permanently delete ' +
+      count +
+      ' selected empty event' +
+      (count === 1 ? '' : 's') +
+      '?\n\nOnly events with no registrations are removed. If any selected event has bookings, use Unpublish listing or Cancel & refund bookings instead.'
     );
   }
 
@@ -10151,8 +10549,9 @@
     modal.setAttribute('aria-labelledby', 'admin-force-remove-title');
     modal.innerHTML =
       '<div class="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">' +
-      '<div><h2 id="admin-force-remove-title" class="text-lg font-semibold text-brand-900">Force remove events</h2>' +
-      '<p id="admin-force-remove-sub" class="text-sm text-slate-600 mt-1">Events with bookings will be cancelled. Paying attendees are refunded automatically and the organiser is emailed.</p></div>' +
+      '<div><h2 id="admin-force-remove-title" class="text-lg font-semibold text-brand-900">Cancel event &amp; refund bookings</h2>' +
+      '<p id="admin-force-remove-sub" class="text-sm text-slate-600 mt-1">Only use when the event is genuinely off. Paying attendees are refunded automatically and the organiser is emailed.</p></div>' +
+      '<div id="admin-force-remove-summary" class="hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 space-y-1"></div>' +
       '<div><label for="admin-force-remove-reason" class="block text-xs font-semibold text-slate-500 mb-1">Reason</label>' +
       '<select id="admin-force-remove-reason" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">' +
       '<option value="">Select a reason…</option>' +
@@ -10165,7 +10564,7 @@
       '<p id="admin-force-remove-error" class="text-xs text-red-700 font-semibold hidden"></p>' +
       '<div class="flex justify-end gap-2 pt-1">' +
       '<button type="button" id="admin-force-remove-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>' +
-      '<button type="button" id="admin-force-remove-confirm" class="rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-semibold hover:bg-red-700">Remove events</button>' +
+      '<button type="button" id="admin-force-remove-confirm" class="rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-semibold hover:bg-red-700">Cancel &amp; refund</button>' +
       '</div></div>';
     document.body.appendChild(modal);
 
@@ -10196,22 +10595,150 @@
     });
   }
 
-  function promptAdminForceRemove(count) {
+  function promptAdminForceRemove(rows) {
     ensureAdminForceRemoveModal();
     var modal = document.getElementById('admin-force-remove-modal');
     var sub = document.getElementById('admin-force-remove-sub');
+    var summaryEl = document.getElementById('admin-force-remove-summary');
     var reasonEl = document.getElementById('admin-force-remove-reason');
     var detailsEl = document.getElementById('admin-force-remove-details');
     var errEl = document.getElementById('admin-force-remove-error');
+    var list = Array.isArray(rows) ? rows : [];
+    var count = list.length || 0;
+    var commerce = summarizeEventCommerceRows(list);
     if (sub) {
       sub.textContent =
         count === 1
-          ? 'This event will be cancelled if it has bookings. Paying attendees are refunded automatically and the organiser is emailed.'
+          ? 'This event will be cancelled. Paying attendees are refunded automatically and the organiser is emailed.'
           : count +
-            ' events will be cancelled where they have bookings. Paying attendees are refunded automatically and organisers are emailed.';
+            ' events with bookings will be cancelled. Paying attendees are refunded automatically and organisers are emailed.';
+    }
+    if (summaryEl) {
+      var lines = [];
+      if (commerce.totalRegistrations > 0) {
+        lines.push(
+          '<p><strong>' +
+            commerce.totalRegistrations +
+            '</strong> registration' +
+            (commerce.totalRegistrations === 1 ? '' : 's') +
+            ' across ' +
+            commerce.withBookings +
+            ' event' +
+            (commerce.withBookings === 1 ? '' : 's') +
+            (commerce.totalPaidBookings
+              ? ' · <strong>' + commerce.totalPaidBookings + '</strong> paid booking' +
+                (commerce.totalPaidBookings === 1 ? '' : 's')
+              : '') +
+            '.</p>'
+        );
+      }
+      if (commerce.pastOrArchived > 0) {
+        lines.push(
+          '<p class="font-semibold">Warning: ' +
+            commerce.pastOrArchived +
+            ' selected event' +
+            (commerce.pastOrArchived === 1 ? ' has' : 's have') +
+            ' already ended or is archived. Confirm the event is genuinely off before refunding.</p>'
+        );
+      }
+      lines.push('<p>Organisers will not keep ticket revenue for refunded bookings.</p>');
+      if (lines.length) {
+        summaryEl.innerHTML = lines.join('');
+        summaryEl.classList.remove('hidden');
+      } else {
+        summaryEl.innerHTML = '';
+        summaryEl.classList.add('hidden');
+      }
     }
     if (reasonEl) reasonEl.value = '';
     if (detailsEl) detailsEl.value = '';
+    if (errEl) errEl.classList.add('hidden');
+    modal.hidden = false;
+    return new Promise(function (resolve, reject) {
+      modal._resolve = resolve;
+      modal._reject = reject;
+    });
+  }
+
+  function ensureAdminUnpublishModal() {
+    if (document.getElementById('admin-unpublish-modal')) return;
+    var modal = document.createElement('div');
+    modal.id = 'admin-unpublish-modal';
+    modal.hidden = true;
+    modal.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'admin-unpublish-title');
+    modal.innerHTML =
+      '<div class="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">' +
+      '<div><h2 id="admin-unpublish-title" class="text-lg font-semibold text-brand-900">Unpublish listing</h2>' +
+      '<p id="admin-unpublish-sub" class="text-sm text-slate-600 mt-1">Hide from browse and stop ticket sales. Bookings and organiser revenue stay intact.</p></div>' +
+      '<div><label for="admin-unpublish-reason" class="block text-xs font-semibold text-slate-500 mb-1">Reason</label>' +
+      '<select id="admin-unpublish-reason" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">' +
+      '<option value="">Select a reason…</option>' +
+      ADMIN_EVENT_REMOVAL_REASONS.map(function (r) {
+        return '<option value="' + attrEsc(r) + '">' + esc(r) + '</option>';
+      }).join('') +
+      '</select></div>' +
+      '<div><label for="admin-unpublish-details" class="block text-xs font-semibold text-slate-500 mb-1">Note for organiser (optional)</label>' +
+      '<textarea id="admin-unpublish-details" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Included in the email to the organiser"></textarea></div>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">' +
+      '<input type="checkbox" id="admin-unpublish-notify" class="rounded border-slate-300" checked> Email organiser</label>' +
+      '<p id="admin-unpublish-error" class="text-xs text-red-700 font-semibold hidden"></p>' +
+      '<div class="flex justify-end gap-2 pt-1">' +
+      '<button type="button" id="admin-unpublish-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>' +
+      '<button type="button" id="admin-unpublish-confirm" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Unpublish</button>' +
+      '</div></div>';
+    document.body.appendChild(modal);
+
+    document.getElementById('admin-unpublish-cancel').addEventListener('click', function () {
+      modal.hidden = true;
+      if (modal._reject) modal._reject(new Error('cancelled'));
+    });
+    document.getElementById('admin-unpublish-confirm').addEventListener('click', function () {
+      var reasonEl = document.getElementById('admin-unpublish-reason');
+      var detailsEl = document.getElementById('admin-unpublish-details');
+      var notifyEl = document.getElementById('admin-unpublish-notify');
+      var errEl = document.getElementById('admin-unpublish-error');
+      var reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+      if (!reason) {
+        if (errEl) {
+          errEl.textContent = 'Select an unpublish reason.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      if (errEl) errEl.classList.add('hidden');
+      modal.hidden = true;
+      if (modal._resolve) {
+        modal._resolve({
+          reason: reason,
+          details: detailsEl ? String(detailsEl.value || '').trim() : '',
+          notifyOrganiser: notifyEl ? !!notifyEl.checked : true,
+        });
+      }
+    });
+  }
+
+  function promptAdminUnpublish(count) {
+    ensureAdminUnpublishModal();
+    var modal = document.getElementById('admin-unpublish-modal');
+    var sub = document.getElementById('admin-unpublish-sub');
+    var reasonEl = document.getElementById('admin-unpublish-reason');
+    var detailsEl = document.getElementById('admin-unpublish-details');
+    var notifyEl = document.getElementById('admin-unpublish-notify');
+    var errEl = document.getElementById('admin-unpublish-error');
+    if (sub) {
+      sub.textContent =
+        count === 1
+          ? 'Hide this listing from browse and stop ticket sales. Bookings and organiser revenue stay intact.'
+          : 'Hide ' +
+            count +
+            ' listings from browse and stop ticket sales. Bookings and organiser revenue stay intact.';
+    }
+    if (reasonEl) reasonEl.value = '';
+    if (detailsEl) detailsEl.value = '';
+    if (notifyEl) notifyEl.checked = true;
     if (errEl) errEl.classList.add('hidden');
     modal.hidden = false;
     return new Promise(function (resolve, reject) {
@@ -10224,11 +10751,11 @@
     var parts = [];
         if (data.removed) {
           parts.push(
-            'Removed ' +
+            'Cancelled ' +
               data.removed +
               ' event' +
               (data.removed === 1 ? '' : 's') +
-              ' (cancelled, refunds processing, organiser notified)'
+              ' (refunds processing, organiser notified)'
           );
           var removedRows = data.removedEvents || data.removedSummaries || [];
           if (removedRows.length) {
@@ -10246,7 +10773,7 @@
           }
         }
     if (data.deleted) {
-      parts.push('Deleted ' + data.deleted + ' event' + (data.deleted === 1 ? '' : 's') + '.');
+      parts.push('Deleted ' + data.deleted + ' empty event' + (data.deleted === 1 ? '' : 's') + '.');
     }
     if (data.skipped && data.skipped.length) {
       parts.push('Skipped ' + data.skipped.length + ': ' + formatEventBulkSkipped(data.skipped) + '.');
@@ -10266,7 +10793,7 @@
     var labels = {
       locked: 'locked (active ticket sales)',
       has_registrations: 'has registrations',
-      reason_required: 'reason required for force remove',
+      reason_required: 'reason required to cancel and refund',
       not_found: 'not found',
     };
     return skipped
@@ -10293,7 +10820,7 @@
     function runDelete(extra) {
       if (btn) btn.disabled = true;
       if (msg) {
-        msg.textContent = force ? 'Removing…' : 'Deleting…';
+        msg.textContent = force ? 'Cancelling & refunding…' : 'Deleting…';
         msg.className = 'text-xs text-slate-500';
       }
       postAdminEventBulkDelete(ids, {
@@ -10323,7 +10850,7 @@
     }
 
     if (force) {
-      promptAdminForceRemove(ids.length)
+      promptAdminForceRemove(selectedEventRows())
         .then(function (payload) {
           runDelete(payload);
         })
@@ -10521,6 +11048,13 @@
           '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
           listingStatusBadge(ev.status) +
           approvalStatusBadge(ev.approval_status) +
+          (Math.max(0, Number(ev.registration_count) || 0) > 0
+            ? '<span class="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">' +
+              esc(String(ev.registration_count)) +
+              ' booking' +
+              (Number(ev.registration_count) === 1 ? '' : 's') +
+              '</span>'
+            : '') +
           '</div></td>' +
           '<td class="py-2.5 text-right whitespace-nowrap">' +
           '<div class="flex flex-wrap justify-end gap-2">' +
@@ -10575,7 +11109,7 @@
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="event-bulk-count">0</span> events selected</p>' +
       '<button type="button" id="event-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
-      '<p class="text-xs text-slate-600">Filter and load more to add events — your selection is kept until you apply changes, delete, or clear.</p>' +
+      '<p class="text-xs text-slate-600">Filter and load more to add events — your selection is kept until you apply changes, unpublish, or clear.</p>' +
       '<div id="event-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
       '<p class="text-xs text-slate-600">Only fields you set below are applied to every selected event.</p>' +
       '<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">' +
@@ -10585,8 +11119,9 @@
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="bulk_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="">— Leave unchanged —</option>' +
-      eventStatusOptions('') +
-      '</select></div>' +
+      eventStatusOptions('', { hideCancelled: true }) +
+      '</select>' +
+      '<p class="text-[11px] text-slate-500 mt-1">To cancel with refunds, use Cancel event &amp; refund bookings below.</p></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Approval</label>' +
       '<select name="bulk_approval_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="">— Leave unchanged —</option>' +
@@ -10601,12 +11136,18 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
       '<span id="event-bulk-msg" class="text-xs"></span></div></form>' +
-      '<div id="event-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
-      '<p class="text-sm font-semibold text-brand-900">Delete selected events</p>' +
-      '<p class="text-xs text-slate-600">Draft and test events without registrations are removed immediately. Events with registrations or active ticket sales are skipped unless you force remove (cancels, refunds attendees, emails organiser).</p>' +
+      '<div id="event-moderation-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Hide listing (default for moderation)</p>' +
+      '<p class="text-xs text-slate-600">Unpublish removes the event from browse and stops ticket sales. Bookings, revenue, and organiser payouts are kept.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="event-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
-      '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Force remove</button>' +
+      '<button type="button" id="event-unpublish-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Unpublish listing</button>' +
+      '<span id="event-unpublish-msg" class="text-xs"></span></div></div>' +
+      '<div id="event-delete-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Danger zone</p>' +
+      '<p class="text-xs text-slate-600">Only use when the event is genuinely off. Cancel &amp; refund unwinds every paid booking. Delete permanently removes empty drafts with no registrations.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">Cancel event &amp; refund bookings</button>' +
+      '<button type="button" id="event-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">Delete empty events</button>' +
       '<span id="event-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +

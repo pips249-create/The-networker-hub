@@ -3,6 +3,7 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const { isStripeConnectEnabled } = require('./stripe-connect');
 const {
   registrationTicketRevenue,
   registrationBookingFee,
@@ -285,6 +286,9 @@ async function assertOwnedEvent(sb, session, eventId) {
   return { row, access };
 }
 
+const CONNECT_PAYOUT_INELIGIBLE =
+  'With Stripe Connect, ticket payments go to your connected account at checkout. Open your Stripe dashboard to view balance and bank payouts.';
+
 function evaluatePayoutEligibility(ev, payout, cancellation, breakdown) {
   const payoutHeld = Boolean(ev.payoutHeld);
   const cancelled = String(ev.status || '').toLowerCase() === 'cancelled';
@@ -294,8 +298,10 @@ function evaluatePayoutEligibility(ev, payout, cancellation, breakdown) {
   const pendingPayout =
     payout && (payout.status === 'pending_review' || payout.status === 'approved');
   const aboveMinimum = breakdown.amount_net > MIN_PAYOUT_NET;
+  const connectPayoutMode = isStripeConnectEnabled();
 
   const canRequestPayout =
+    !connectPayoutMode &&
     archived &&
     !cancelled &&
     !payoutHeld &&
@@ -304,7 +310,9 @@ function evaluatePayoutEligibility(ev, payout, cancellation, breakdown) {
     aboveMinimum;
 
   let ineligibleReason = null;
-  if (!archived) {
+  if (connectPayoutMode) {
+    ineligibleReason = CONNECT_PAYOUT_INELIGIBLE;
+  } else if (!archived) {
     ineligibleReason = 'Event must be archived before you can request a payout.';
   } else if (!settlementComplete && earliestPayoutDate) {
     ineligibleReason =
@@ -336,6 +344,7 @@ function evaluatePayoutEligibility(ev, payout, cancellation, breakdown) {
     canRequestPayout,
     ineligibleReason,
     pendingPayout: Boolean(pendingPayout),
+    connectPayoutMode,
   };
 }
 
@@ -370,6 +379,7 @@ function enrichEventPayoutFields(ev, payout, cancellation, breakdown) {
     payoutId: payout ? payout.id : null,
     canRequestPayout: eligibility.canRequestPayout,
     payoutIneligibleReason: eligibility.ineligibleReason,
+    connectPayoutMode: eligibility.connectPayoutMode,
     cancellationId: cancellation ? cancellation.id : null,
     refundsConfirmedAt: cancellation?.refunds_confirmed_at || null,
     needsRefundConfirmation: eligibility.payoutHeld && !cancellation?.refunds_confirmed_at,
@@ -618,6 +628,12 @@ async function getPayoutPreview(session, eventId) {
 }
 
 async function requestPayout(session, eventId) {
+  if (isStripeConnectEnabled()) {
+    const e = new Error(CONNECT_PAYOUT_INELIGIBLE);
+    e.status = 400;
+    throw e;
+  }
+
   const preview = await getPayoutPreview(session, eventId);
   if (!preview.canRequestPayout) {
     const e = new Error(preview.ineligibleReason || 'This event is not eligible for payout');

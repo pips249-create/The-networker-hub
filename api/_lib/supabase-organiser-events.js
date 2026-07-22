@@ -1161,6 +1161,9 @@ async function deleteEventForSession(session, eventId, groupIds) {
     throw e;
   }
 
+  const { snapshotPayoutHistoryBeforeEventDelete } = require('./event-delete-audit');
+  await snapshotPayoutHistoryBeforeEventDelete(sb, eventId, row.title || '');
+
   const { error: ticketErr } = await sb.from('tickets').delete().eq('event_id', eventId);
   if (ticketErr) throw new Error(ticketErr.message);
 

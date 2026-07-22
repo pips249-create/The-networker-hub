@@ -440,7 +440,7 @@
       esc(String(row.reviewCount)) +
       ' reviews</p>' +
       '<div class="org-ranking-share-preview">' +
-      '<p class="org-ranking-share-preview-label">Social post preview</p>' +
+      '<p class="org-ranking-share-preview-label">Your post will look like this</p>' +
       '<div class="org-ranking-share-preview-card" role="group" aria-label="Social post preview">' +
       '<p class="org-ranking-share-preview-text">' +
       esc(shareText) +
@@ -448,14 +448,14 @@
       '<div class="org-ranking-share-actions">' +
       '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-share="' +
       esc(shareText) +
-      '">Copy social post</button>' +
+      '">Copy post text</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
       esc(profileUrl) +
       '">Copy profile link</button>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id, g.slug)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="#org-social-linkedin">Build a LinkedIn post image</a>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="#org-social-linkedin">Make a LinkedIn picture</a>' +
       '</div></article>'
     );
   }
@@ -534,7 +534,7 @@
   }
 
   function updateSocialRankingNav(hasRanking) {
-    const navRanking = document.getElementById('org-social-nav-ranking');
+    const navRanking = document.getElementById('org-social-tab-ranking');
     if (navRanking) navRanking.hidden = !hasRanking;
   }
 
@@ -589,8 +589,6 @@
 
     const summaryText = ranked.length ? rankingBadgeText(ranked[0].row) : '';
     updateRankingPanelSummaries(summaryText);
-
-    if (eventsPanel) eventsPanel.hidden = !ranked.length;
     updateSocialRankingNav(ranked.length > 0);
 
     if (shareRoot) {
@@ -801,9 +799,9 @@
     if (summary) {
       if (!ids.length) {
         summary.textContent =
-          'Select one or more upcoming live events to upgrade. From ' +
+          'Tick one or more events above to continue. From ' +
           FEATURED_LISTING_PRICE +
-          '/month, prorated when your event is sooner.';
+          ' per month, per event.';
       } else if (ids.length === 1) {
         summary.textContent = '1 event selected — loading price…';
         fetchFeaturedQuote(ids[0], planId)
@@ -813,26 +811,26 @@
               summary.textContent =
                 '1 event selected — ' + quote.displayPrice + '. ' + quote.pricingNote;
             } else {
-              summary.textContent = '1 event selected — checkout opens for this event.';
+              summary.textContent = '1 event selected — payment opens on the next screen.';
             }
           })
           .catch(function () {
-            if (summary) summary.textContent = '1 event selected — checkout opens for this event.';
+            if (summary) summary.textContent = '1 event selected — payment opens on the next screen.';
           });
       } else {
         summary.textContent =
           ids.length +
-          ' events selected — you will check out separately for each event, one after another. Prices are prorated when an event is sooner than 1 month.';
+          ' events selected — you pay separately for each one. Prices are adjusted if your event is sooner than one month away.';
       }
     }
     if (btn) {
       btn.disabled = !ids.length || blocked;
       btn.textContent =
         ids.length > 1
-          ? 'Upgrade ' + ids.length + ' events'
+          ? 'Continue to payment (' + ids.length + ' events)'
           : ids.length === 1
-            ? 'Upgrade selected event'
-            : 'Upgrade selected events';
+            ? 'Continue to payment'
+            : 'Continue to payment';
     }
   }
 
@@ -1120,17 +1118,16 @@
 
     root.innerHTML =
       featuredUpgradeSlotStatusHtml() +
-      '<p class="org-featured-upgrade-policy">Placement runs until your event starts when that is sooner than your chosen period. Still visible when attendees filter by event type or ticket price.</p>' +
       '<div class="org-featured-upgrade-plan">' +
-      '<span class="org-featured-upgrade-plan-label">How long to feature each event</span>' +
+      '<span class="org-featured-upgrade-plan-label">How long should it stay featured?</span>' +
       '<div class="org-featured-upgrade-plan-options">' +
       planOptionsHtml +
       '</div></div>' +
       '<div class="org-featured-upgrade-events-head">' +
-      '<p class="org-featured-upgrade-events-title">Select events to upgrade <span class="org-featured-upgrade-events-count">(' +
+      '<p class="org-featured-upgrade-events-title">Tick the events you want more people to see <span class="org-featured-upgrade-events-count">(' +
       liveEvents.length +
-      ')</span></p>' +
-      '<button type="button" class="org-featured-upgrade-select-all" id="org-featured-upgrade-select-all">Select all</button>' +
+      ' live)</span></p>' +
+      '<button type="button" class="org-featured-upgrade-select-all" id="org-featured-upgrade-select-all">Tick all</button>' +
       '</div>' +
       (showEventSearch
         ? '<input type="search" class="org-featured-upgrade-events-search" id="org-featured-upgrade-events-search" placeholder="Search by title, type or date…" aria-label="Search events to upgrade" />'
@@ -1141,9 +1138,10 @@
       '<p class="org-featured-upgrade-events-empty" id="org-featured-upgrade-events-empty" hidden role="status">No events match your search.</p>' +
       '<p class="org-featured-upgrade-note" id="org-featured-upgrade-error" hidden role="alert"></p>' +
       '<div class="org-featured-upgrade-actions">' +
-      '<button type="button" class="org-btn org-btn-gold" id="org-featured-upgrade-submit" disabled>Upgrade selected events</button>' +
-      '<p class="org-featured-upgrade-summary" id="org-featured-upgrade-summary">Select one or more live events to upgrade.</p>' +
-      '</div>';
+      '<button type="button" class="org-btn org-btn-gold" id="org-featured-upgrade-submit" disabled>Continue to payment</button>' +
+      '<p class="org-featured-upgrade-summary" id="org-featured-upgrade-summary">Tick one or more events above to continue.</p>' +
+      '</div>' +
+      '<p class="org-featured-upgrade-policy">Featured placement runs until your event starts if that is sooner than one month. Your event stays visible when people filter by type or ticket price.</p>';
 
     bindFeaturedUpgradeUi(root);
     updateFeaturedUpgradeSummary(root);
@@ -1260,7 +1258,6 @@
 
     const eventsPanel = document.getElementById('org-social-ranking');
     const hasRanking = Boolean(best);
-    if (eventsPanel) eventsPanel.hidden = !hasRanking;
     updateSocialRankingNav(hasRanking);
     if (hasRanking) {
       updateRankingPanelSummaries(rankingBadgeText(best));
@@ -2400,7 +2397,7 @@
     return (
       '<button type="button" class="org-action-item" data-promote-event="' +
       esc(ev.id) +
-      '"><span class="org-action-icon">📣</span><span class="org-action-text"><strong>Share &amp; promote</strong><span>Social share and featured listing</span></span></button>'
+      '"><span class="org-action-icon">📣</span><span class="org-action-text"><strong>Share your event</strong><span>Social post, image and listing link</span></span></button>'
     );
   }
 
@@ -2500,21 +2497,80 @@
     return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
   }
 
+  function eventOrganiserConnectReady(ev) {
+    const gid = ev && (ev.organiserId || ev.organiser_id);
+    if (!gid) return false;
+    const group = (state.groups || []).find(function (g) {
+      return String(g.id) === String(gid);
+    });
+    return Boolean(group && group.stripeConnectReady);
+  }
+
+  function usesConnectPayoutFlow() {
+    return Boolean(state.stripeConnectEnabled);
+  }
+
+  function renderRevenueConnectCopy() {
+    const connect = usesConnectPayoutFlow();
+    const readyLabel = document.getElementById('rev-stat-ready-label');
+    const paidLabel = document.getElementById('rev-stat-paid-label');
+    const payoutColLabel = document.getElementById('rev-payout-col-label');
+    const payoutTip = document.getElementById('rev-payout-col-tip');
+    const payoutInfo = document.getElementById('org-revenue-info-payout');
+    const modalLead = document.getElementById('modal-payout-lead');
+
+    if (readyLabel) {
+      readyLabel.textContent = connect ? 'Events with sales' : 'Ready to request';
+    }
+    if (paidLabel) {
+      paidLabel.textContent = connect ? 'Legacy payouts paid' : 'Paid out';
+    }
+    if (payoutColLabel) {
+      payoutColLabel.textContent = connect ? 'Stripe status' : 'Payout';
+    }
+    if (payoutTip) {
+      payoutTip.title = connect
+        ? 'With Stripe Connect, ticket payments land in your connected account at checkout. Open Stripe Express to view balance, refunds, and bank payouts.'
+        : 'Shows whether a payout was requested or paid. After an event ends and is archived, use Request payout when the net amount is above £1. If refunds are still processing, use Retry automatic refunds.';
+    }
+    if (payoutInfo) {
+      payoutInfo.innerHTML = connect
+        ? '<strong>Stripe Connect:</strong> paid ticket revenue goes to your connected Stripe account when attendees checkout — not to the Hub. Use <strong>Open Stripe dashboard</strong> above to view balance, issue refunds, and manage bank payouts. The column here shows legacy Hub payout requests (if any) or <strong>In Stripe</strong> for ticket sales.'
+        : '<strong>Payout column:</strong> shows whether a payout was requested or paid. After an event ends it is archived automatically — then you can use <strong>Request payout</strong> when the net amount is above £1. If refunds are still processing, use <strong>Retry automatic refunds</strong>.';
+    }
+    if (modalLead) {
+      modalLead.textContent = connect
+        ? 'Manual Hub payouts are not used with Stripe Connect. Ticket revenue is already in your connected Stripe account.'
+        : 'Request a manual Hub payout after your event is archived and the 7-day settlement period has passed.';
+    }
+  }
+
   function payoutStatusBadgeHtml(ev) {
     const key = ev.payoutStatusKey || (ev.payoutHeld ? 'held' : null);
     const label = ev.payoutStatusLabel || (ev.payoutHeld ? 'Held' : '—');
-    if (!key || label === '—') return '<span class="org-payout-muted">—</span>';
-    const cls =
-      key === 'paid'
-        ? 'org-badge-green'
-        : key === 'approved'
-          ? 'org-badge-blue'
-          : key === 'pending_review'
-            ? 'org-badge-gold'
-            : key === 'held'
-              ? 'org-badge-red'
-              : 'org-badge-purple';
-    return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
+    if (key && label !== '—') {
+      const cls =
+        key === 'paid'
+          ? 'org-badge-green'
+          : key === 'approved'
+            ? 'org-badge-blue'
+            : key === 'pending_review'
+              ? 'org-badge-gold'
+              : key === 'held'
+                ? 'org-badge-red'
+                : 'org-badge-purple';
+      return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
+    }
+    if (
+      usesConnectPayoutFlow() &&
+      eventOrganiserConnectReady(ev) &&
+      (Number(ev.revenueNum) || 0) > 0 &&
+      !ev.payoutHeld &&
+      String(ev.statusKey || ev.status || '').toLowerCase() !== 'cancelled'
+    ) {
+      return '<span class="org-badge org-badge-green">In Stripe</span>';
+    }
+    return '<span class="org-payout-muted">—</span>';
   }
 
   function payoutActionsHtml(ev) {
@@ -2526,7 +2582,7 @@
           '">Retry automatic refunds</button>'
       );
     }
-    if (ev.canRequestPayout && state.canManagePayments !== false) {
+    if (!usesConnectPayoutFlow() && ev.canRequestPayout && state.canManagePayments !== false) {
       parts.push(
         '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-request-payout="' +
           esc(ev.id) +
@@ -2884,7 +2940,9 @@
       'events-reviews': ['Reviews', 'Read and reply to attendee feedback.'],
       'events-revenue': [
         'Revenue',
-        'Ticket sales and payout status per event. Request a payout after an event has finished and been archived.',
+        usesConnectPayoutFlow()
+          ? 'Ticket sales per event. Paid tickets are collected in your connected Stripe account — open Stripe Express for balance and bank payouts.'
+          : 'Ticket sales and payout status per event. Request a payout after an event has finished and been archived.',
       ],
     };
     const t = titles[eventsSubRoute] || titles['events-list'];
@@ -6196,7 +6254,7 @@
       btn.removeAttribute('data-stripe-setup');
       if (hint) {
         hint.textContent =
-          'Issue refunds, view payouts, and manage ticket payments in Stripe Express.';
+          'Ticket payments go to your connected account at checkout. Issue refunds, view balance, and manage bank payouts in Stripe Express.';
       }
     } else if (setupGroup) {
       const label =
@@ -6448,6 +6506,7 @@
     }
 
     renderRevenueStripeBar();
+    renderRevenueConnectCopy();
     syncRevenueSetupLayout();
   }
 
@@ -7315,7 +7374,11 @@
     let paidOut = 0;
     let onHold = 0;
     (state.events || []).forEach(function (ev) {
-      if (ev.canRequestPayout) readyToRequest++;
+      if (usesConnectPayoutFlow()) {
+        if ((Number(ev.revenueNum) || 0) > 0) readyToRequest++;
+      } else if (ev.canRequestPayout) {
+        readyToRequest++;
+      }
       if (ev.payoutStatusKey === 'paid') paidOut++;
       if (ev.needsRefundConfirmation || ev.payoutHeld || ev.payoutStatusKey === 'held') onHold++;
     });
@@ -7915,6 +7978,7 @@
     if (!body) return;
 
     renderStripeConnectBanner();
+    renderRevenueConnectCopy();
 
     const list = filteredEventsList();
     body.innerHTML = '';
@@ -8547,14 +8611,42 @@
   function gettingStartedProgress() {
     const hasGroup = state.groups.length > 0;
     const hasEvent = hasListedEvents();
+    const hasShared =
+      window.HubCommsPack &&
+      typeof window.HubCommsPack.isEventShareDone === 'function' &&
+      window.HubCommsPack.isEventShareDone();
     const hasMembership = (state.groups || []).some(function (g) {
       return g && g.rosterSummary && Number(g.rosterSummary.active) > 0;
     });
     const hasTeam = (state.teamMembers || []).some(function (m) {
       return m.role === 'editor' || (m.status === 'pending' && !m.isAccountOwner);
     });
-    return { hasGroup, hasEvent, hasMembership, hasTeam };
+    return { hasGroup, hasEvent, hasShared, hasMembership, hasTeam };
   }
+
+  function firstLiveEventForShare() {
+    const events = (state.events || []).concat(state.upcomingEvents || []);
+    return (
+      events.find(function (ev) {
+        const status = String(ev.status || ev.listingStatus || '').toLowerCase();
+        return status === 'published' || status === 'live';
+      }) || events[0] ||
+      null
+    );
+  }
+
+  function openShareEventFlow() {
+    const ev = firstLiveEventForShare();
+    if (ev && ev.id) {
+      location.href =
+        '/organiser/event-published?ids=' + encodeURIComponent(ev.id) + '&published=1';
+      return;
+    }
+    if (window.orgDashSetRoute) window.orgDashSetRoute('social');
+  }
+
+  window.orgDashOpenShareEvent = openShareEventFlow;
+  window.orgDashUpdateGettingStarted = updateGettingStartedPanel;
 
   function updateGettingStartedPanel() {
     const panel = document.getElementById('org-getting-started');
@@ -8577,8 +8669,9 @@
     }
 
     const progress = gettingStartedProgress();
-    const coreDone = progress.hasGroup && progress.hasEvent;
-    const requiredDone = [progress.hasGroup, progress.hasEvent].filter(Boolean).length;
+    const coreDone = progress.hasGroup && progress.hasEvent && progress.hasShared;
+    const requiredSteps = [progress.hasGroup, progress.hasEvent, progress.hasShared];
+    const requiredDone = requiredSteps.filter(Boolean).length;
 
     if (coreDone) {
       panel.hidden = true;
@@ -8605,10 +8698,10 @@
 
     const progressHint = document.getElementById('org-getting-started-progress');
     if (progressHint) {
-      const remaining = 2 - requiredDone;
+      const remaining = 3 - requiredDone;
       progressHint.textContent =
         requiredDone === 0
-          ? '2 steps to get your workspace ready.'
+          ? '3 steps to get your workspace ready.'
           : remaining === 1
             ? '1 step left on your setup checklist.'
             : remaining + ' steps left on your setup checklist.';
@@ -8618,6 +8711,7 @@
       group: progress.hasGroup,
       membership: progress.hasMembership,
       event: progress.hasEvent,
+      share: progress.hasShared,
       team: progress.hasTeam,
     };
     let nextMarked = false;
@@ -8627,8 +8721,12 @@
       const done = Boolean(stepDone[key]);
       li.classList.toggle('is-done', done);
       li.classList.toggle('is-next', !done && !nextMarked);
-      li.hidden = done;
-      if (!done && !nextMarked) nextMarked = true;
+      if (key === 'share') {
+        li.hidden = !progress.hasEvent || done;
+      } else {
+        li.hidden = done;
+      }
+      if (!done && !nextMarked && !(key === 'share' && (!progress.hasEvent || done))) nextMarked = true;
 
       const btn = li.querySelector('[data-org-getting-action]');
       if (btn) btn.hidden = done;
@@ -8665,7 +8763,7 @@
     }
 
     const progress = gettingStartedProgress();
-    if (progress.hasGroup && progress.hasEvent) {
+    if (progress.hasGroup && progress.hasEvent && progress.hasShared) {
       banner.hidden = true;
       return;
     }
@@ -8689,14 +8787,19 @@
     const titleEl = document.getElementById('org-setup-resume-title');
     const bodyEl = document.getElementById('org-setup-resume-body');
     if (!progress.hasGroup) {
-      if (titleEl) titleEl.textContent = 'Step 1 of 2 — organiser page';
+      if (titleEl) titleEl.textContent = 'Step 1 of 3 — organiser page';
       if (bodyEl) {
         bodyEl.textContent = 'Create or claim your organiser page to get started on the hub.';
       }
-    } else {
-      if (titleEl) titleEl.textContent = 'Step 2 of 2 — list an event';
+    } else if (!progress.hasEvent) {
+      if (titleEl) titleEl.textContent = 'Step 2 of 3 — list an event';
       if (bodyEl) {
         bodyEl.textContent = 'Your organiser page is ready — publish your first meeting, exhibition, or conference.';
+      }
+    } else {
+      if (titleEl) titleEl.textContent = 'Step 3 of 3 — share your event';
+      if (bodyEl) {
+        bodyEl.textContent = 'Your event is live — copy the ready-made post and picture to spread the word.';
       }
     }
 
@@ -8721,9 +8824,13 @@
           window.location.href = '/organiser/group-edit';
           return;
         }
-        if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
-        const groupId = state.groups.length ? state.groups[0].id : '';
-        openNewEventEditorDrawer({ groupId: groupId });
+        if (!progress.hasEvent) {
+          if (window.HubFlowTour) window.HubFlowTour.markEventTourPending();
+          const groupId = state.groups.length ? state.groups[0].id : '';
+          openNewEventEditorDrawer({ groupId: groupId });
+          return;
+        }
+        openShareEventFlow();
       });
     }
   }
@@ -10151,6 +10258,7 @@
     updateOpportunityEnquiryUi();
     updateGettingStartedPanel();
     if (state.opportunitiesLoaded) renderOpportunitiesList();
+    renderRevenueConnectCopy();
     if (document.querySelector('[data-org-page="business-overview"].is-active') && state.opportunitiesLoaded) {
       if (businessSubRoute === 'business-enquiries') renderOpportunityEnquiries();
       else if (businessSubRoute === 'business-insights') {

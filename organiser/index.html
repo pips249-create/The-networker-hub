@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721biz" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260721mem5" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722social" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -72,7 +72,7 @@
               <span class="org-notifications-nav-label">Notifications</span>
               <span class="org-notifications-count" id="org-notifications-count" hidden aria-hidden="true">0</span>
             </button>
-            <a href="#social" class="hub-side-nav-link" data-org-route="social">Promote &amp; social</a>
+            <a href="#social" class="hub-side-nav-link" data-org-route="social">Share your event</a>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
@@ -166,7 +166,7 @@
                 <span class="org-workspace-map-sep" aria-hidden="true">·</span>
                 <a href="#events-revenue" data-org-route="events-revenue">Revenue tab</a>
                 <span class="org-workspace-map-sep" aria-hidden="true">·</span>
-                <a href="#social" data-org-route="social">Promote &amp; social</a>
+                <a href="#social" data-org-route="social">Share your event</a>
                 <span class="org-workspace-map-sep" aria-hidden="true">·</span>
                 <a href="#team" data-org-route="team">Team</a>
               </p>
@@ -254,7 +254,7 @@
               <div>
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
                 <p class="org-section-sub org-getting-started-sub">
-                  <span id="org-getting-started-progress">2 steps to get your workspace ready.</span>
+                  <span id="org-getting-started-progress">3 steps to get your workspace ready.</span>
                   <a href="../guides/list-a-conference-or-exhibition" class="org-getting-started-guides">Conferences guide</a>
                   ·
                   <a href="../guides" class="org-getting-started-guides">All guides</a>
@@ -1098,89 +1098,153 @@
           </div>
         </section>
 
-        <!-- Promote & social -->
+        <!-- Share your event -->
         <section class="org-page" id="org-page-social" data-org-page="social">
-          <header class="org-page-head">
-            <p class="org-page-kicker">Grow your reach</p>
-            <h1 class="org-page-title">Promote &amp; social</h1>
-            <p class="org-page-lead">
-              Three ways to get more eyes on your events: upgrade to <strong>Premium Spotlight</strong>, build a LinkedIn post, or share your ranking badge when you earn one.
+          <header class="org-page-head org-page-head--social">
+            <p class="org-page-kicker">Spread the word</p>
+            <h1 class="org-page-title">Share your event</h1>
+            <p class="org-page-lead org-page-lead--social">
+              Start with a <strong>free LinkedIn post</strong> — we write the words and make the picture for you. Extra visibility on the hub is optional.
             </p>
           </header>
 
-          <nav class="org-social-nav" aria-label="Promotion tools">
-            <a class="org-social-nav-link" href="#org-social-spotlight">Premium Spotlight</a>
-            <a class="org-social-nav-link" href="#org-social-linkedin">LinkedIn post</a>
-            <a class="org-social-nav-link" href="#org-social-ranking" id="org-social-nav-ranking" hidden>Ranking badge</a>
-          </nav>
+          <div class="org-social-tabs" role="tablist" aria-label="Share your event options">
+            <button
+              type="button"
+              class="org-social-tab is-active"
+              role="tab"
+              id="org-social-tab-linkedin"
+              aria-selected="true"
+              aria-controls="org-social-panel-linkedin"
+              data-social-tab="linkedin"
+            >
+              <span class="org-social-tab-num" aria-hidden="true">1</span>
+              <span class="org-social-tab-body">
+                <strong class="org-social-tab-title">LinkedIn post</strong>
+                <span class="org-social-tab-meta org-social-tab-meta--free">Free</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="org-social-tab"
+              role="tab"
+              id="org-social-tab-spotlight"
+              aria-selected="false"
+              aria-controls="org-social-panel-spotlight"
+              data-social-tab="spotlight"
+              tabindex="-1"
+            >
+              <span class="org-social-tab-num" aria-hidden="true">2</span>
+              <span class="org-social-tab-body">
+                <strong class="org-social-tab-title">Extra visibility</strong>
+                <span class="org-social-tab-meta org-social-tab-meta--paid">£55/mo · optional</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="org-social-tab"
+              role="tab"
+              id="org-social-tab-ranking"
+              aria-selected="false"
+              aria-controls="org-social-panel-ranking"
+              data-social-tab="ranking"
+              tabindex="-1"
+              hidden
+            >
+              <span class="org-social-tab-num" aria-hidden="true">3</span>
+              <span class="org-social-tab-body">
+                <strong class="org-social-tab-title">Your badge</strong>
+                <span class="org-social-tab-meta">When you earn one</span>
+              </span>
+            </button>
+          </div>
 
-          <section
-            class="org-social-tool org-social-tool--spotlight"
-            id="org-social-spotlight"
-            aria-labelledby="org-social-spotlight-title"
+          <p class="org-social-tab-hint" id="org-social-tab-hint">
+            Not sure where to start? Use <strong>LinkedIn post</strong> — it is free and takes about two minutes.
+          </p>
+
+          <div
+            class="org-social-panel is-active"
+            id="org-social-panel-linkedin"
+            role="tabpanel"
+            aria-labelledby="org-social-tab-linkedin"
+            data-social-panel="linkedin"
           >
-            <header class="org-social-tool-head">
-              <div class="org-social-tool-head-row">
-                <span class="org-featured-upgrade-badge org-featured-upgrade-badge--section">Premium Spotlight</span>
-                <p class="org-social-tool-price">£55 <span>/ month per event</span></p>
+            <div class="org-social-panel-card org-social-panel-card--linkedin">
+              <header class="org-social-panel-head">
+                <h2 class="org-section-title" id="org-linkedin-posts-title">Make a LinkedIn post</h2>
+                <ol class="org-social-quick-steps">
+                  <li>Pick your event below</li>
+                  <li>Check the words — change them if you like</li>
+                  <li>Download the picture, then click <strong>Copy text &amp; open LinkedIn</strong></li>
+                </ol>
+                <p class="org-social-panel-note">
+                  When LinkedIn opens, click <strong>Start a post</strong>, paste your text (<kbd>Ctrl+V</kbd> or <kbd>⌘V</kbd>), and attach your downloaded picture.
+                </p>
+              </header>
+              <div class="org-social-panel-body">
+                <div id="org-post-builder-root"></div>
               </div>
-              <h2 class="org-section-title" id="org-social-spotlight-title">Upgrade your listing</h2>
-              <p class="org-section-sub org-social-tool-lede">
-                Feature live events in the Premium Spotlight carousel and top placement across the hub — only
-                <strong>12 featured events</strong> appear in the carousel at any one time.
-              </p>
-              <ul class="org-social-tool-features">
-                <li>Featured in the Premium Spotlight carousel on Browse events</li>
-                <li>Top placement in search and category results</li>
-                <li>Featured badge on your listing card</li>
-              </ul>
-              <p class="org-social-tool-status" id="org-featured-upgrade-status" role="status"></p>
-            </header>
-            <div class="org-social-tool-body" id="org-featured-upgrade-body">
-              <div id="org-featured-upgrade-root" aria-live="polite"></div>
             </div>
-          </section>
+          </div>
 
-          <section
-            class="org-social-tool org-social-tool--linkedin"
-            id="org-social-linkedin"
-            aria-labelledby="org-linkedin-posts-title"
-          >
-            <header class="org-social-tool-head">
-              <h2 class="org-section-title" id="org-linkedin-posts-title">Build a LinkedIn post</h2>
-              <p class="org-section-sub">
-                Choose a category and caption (or write your own), pick a background, then download the image and copy the caption.
-              </p>
-            </header>
-            <div class="org-social-tool-body">
-              <div id="org-post-builder-root"></div>
-            </div>
-          </section>
-
-          <section
-            class="org-social-tool org-social-tool--ranking org-ranking-panel org-ranking-panel--social"
-            id="org-social-ranking"
-            aria-labelledby="org-social-ranking-title"
+          <div
+            class="org-social-panel"
+            id="org-social-panel-spotlight"
+            role="tabpanel"
+            aria-labelledby="org-social-tab-spotlight"
+            data-social-panel="spotlight"
             hidden
           >
-            <header class="org-social-tool-head">
-              <h2 class="org-section-title" id="org-social-ranking-title">Share your ranking badge</h2>
-              <p class="org-section-sub" id="org-ranking-panel-events-summary">
-                Monthly badges are based on attendee reviews. Preview your social post, then copy it or your profile link.
-              </p>
-              <p class="org-social-ranking-badge" id="org-social-ranking-badge" hidden></p>
-            </header>
-            <div class="org-social-tool-body" id="org-ranking-panel-events-body">
-              <aside class="org-ranking-banner" id="org-events-ranking-banner" role="status"></aside>
-              <div class="org-ranking-share" id="org-ranking-share-events">
-                <div class="org-ranking-share-cards" id="org-ranking-share-cards"></div>
-                <details class="org-ranking-tier-guide">
-                  <summary>Badge tiers — what Top 10, 25 and 50 look like</summary>
-                  <div class="org-ranking-tier-examples" id="org-ranking-tier-examples"></div>
-                </details>
+            <div class="org-social-panel-card org-social-panel-card--spotlight" id="org-social-spotlight">
+              <header class="org-social-panel-head">
+                <div class="org-social-panel-head-row">
+                  <h2 class="org-section-title" id="org-social-spotlight-title">Get extra visibility on the hub</h2>
+                  <p class="org-social-tool-price">£55 <span>per month, per event</span></p>
+                </div>
+                <p class="org-section-sub org-social-tool-lede">
+                  Optional paid upgrade. Your event appears at the top when people browse and search — only <strong>12 places</strong> available at once.
+                </p>
+                <p class="org-social-tool-status" id="org-featured-upgrade-status" role="status"></p>
+              </header>
+              <div class="org-social-panel-body" id="org-featured-upgrade-body">
+                <ol class="org-social-quick-steps org-social-quick-steps--compact">
+                  <li>Tick the event you want more people to see</li>
+                  <li>Click <strong>Continue to payment</strong></li>
+                </ol>
+                <div id="org-featured-upgrade-root" aria-live="polite"></div>
               </div>
             </div>
-          </section>
+          </div>
+
+          <div
+            class="org-social-panel"
+            id="org-social-panel-ranking"
+            role="tabpanel"
+            aria-labelledby="org-social-tab-ranking"
+            data-social-panel="ranking"
+            hidden
+          >
+            <div class="org-social-panel-card org-social-panel-card--ranking org-ranking-panel org-ranking-panel--social" id="org-social-ranking">
+              <header class="org-social-panel-head">
+                <h2 class="org-section-title" id="org-social-ranking-title">Share your review badge</h2>
+                <p class="org-section-sub" id="org-ranking-panel-events-summary">
+                  If your group ranks highly on the hub, copy a ready-made post and share it on LinkedIn or Facebook.
+                </p>
+                <p class="org-social-ranking-badge" id="org-social-ranking-badge" hidden></p>
+              </header>
+              <div class="org-social-panel-body" id="org-ranking-panel-events-body">
+                <aside class="org-ranking-banner" id="org-events-ranking-banner" role="status"></aside>
+                <div class="org-ranking-share" id="org-ranking-share-events">
+                  <div class="org-ranking-share-cards" id="org-ranking-share-cards"></div>
+                  <details class="org-ranking-tier-guide">
+                    <summary>What do Top 10, Top 25 and Top 50 badges look like?</summary>
+                    <div class="org-ranking-tier-examples" id="org-ranking-tier-examples"></div>
+                  </details>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- Team members -->
@@ -1275,8 +1339,8 @@
             <div id="org-payment-setup-overview" hidden></div>
 
             <p class="org-section-sub org-sub-lead">
-              Need a LinkedIn post image, ranking caption, or opportunity graphic?
-              <a class="org-inline-link" href="#social" data-org-route="social">Open Promote &amp; social</a>
+              Need a LinkedIn picture or post text for an event?
+              <a class="org-inline-link" href="#social" data-org-route="social">Open Share your event</a>
             </p>
           </div>
 
@@ -1641,22 +1705,22 @@
                 <span class="org-revenue-info-icon" aria-hidden="true">i</span>
                 How revenue &amp; payouts work
               </summary>
-              <div class="org-revenue-info-body">
+              <div class="org-revenue-info-body" id="org-revenue-info-body">
                 <p>
                   Revenue shows your ticket sales (full ticket price). Attendees pay a separate booking fee at checkout (4.5% + 20p per ticket) which covers platform and payment processing.
                 </p>
-                <p>
+                <p id="org-revenue-info-payout">
                   <strong>Payout column:</strong> shows whether a payout was requested or paid. After an event ends it is archived automatically — then you can use <strong>Request payout</strong> when the net amount is above £1. If refunds are still processing, use <strong>Retry automatic refunds</strong>.
                 </p>
               </div>
             </details>
             <div class="org-revenue-stats org-stats org-stats--three">
               <div class="org-stat gold">
-                <div class="org-stat-label">Ready to request</div>
+                <div class="org-stat-label" id="rev-stat-ready-label">Ready to request</div>
                 <div class="org-stat-value" id="rev-stat-ready">0</div>
               </div>
               <div class="org-stat green">
-                <div class="org-stat-label">Paid out</div>
+                <div class="org-stat-label" id="rev-stat-paid-label">Paid out</div>
                 <div class="org-stat-value" id="rev-stat-paid">0</div>
               </div>
               <div class="org-stat purple">
@@ -1694,9 +1758,10 @@
                     <th>Tickets sold</th>
                     <th>Revenue</th>
                     <th class="org-payout-col">
-                      Payout
+                      <span id="rev-payout-col-label">Payout</span>
                       <abbr
                         class="org-revenue-th-tip"
+                        id="rev-payout-col-tip"
                         title="Shows whether a payout was requested or paid. After an event ends and is archived, use Request payout when the net amount is above £1. If refunds are still processing, use Retry automatic refunds."
                       >i</abbr>
                     </th>
@@ -1831,6 +1896,7 @@
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
         <h2 id="modal-payout-title">Request payout</h2>
+        <p id="modal-payout-lead" class="org-modal-sub">Request a manual Hub payout after your event is archived and the settlement period has passed.</p>
         <p id="modal-payout-event" class="org-modal-sub"></p>
         <div class="org-payout-breakdown" id="modal-payout-breakdown" hidden>
           <div class="org-payout-line">
@@ -2374,14 +2440,15 @@
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard"></script>
     <script src="../js/organiser-image-upload.js?v=20260605"></script>
     <script src="../js/organiser-flow-tour.js?v=20260703"></script>
-    <script src="../js/organiser-onboarding.js?v=20260716nav"></script>
+    <script src="../js/organiser-onboarding.js?v=20260722share"></script>
     <script src="../js/organiser-group-edit.js?v=20260621"></script>
     <script src="../js/organiser-payment-setup.js?v=20260714link"></script>
     <script src="../js/review-report.js?v=20260708"></script>
     <script src="../js/hub-event-timezone.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
-    <script src="../js/organiser-linkedin-post-builder.js?v=20260714logo"></script>
+    <script src="../js/organiser-linkedin-post-builder.js?v=20260722social"></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4"></script>
-    <script src="../js/organiser-dashboard.js?v=20260721biz"></script>
+    <script src="../js/hub-comms-pack.js?v=20260722share"></script>
+    <script src="../js/organiser-dashboard.js?v=20260722share"></script>
   </body>
 </html>

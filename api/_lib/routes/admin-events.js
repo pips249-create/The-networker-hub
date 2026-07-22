@@ -5,6 +5,8 @@ const { publicOrganiserSlug } = require('../organiser-slug');
 const { normalizeEventType } = require('../event-types');
 const { eventImageUrl, eventImageDbValue } = require('../event-image');
 const { eventHasTicketsOnSale } = require('../ticket-sales');
+const { fetchEventRegistrationStats, fetchLatestCancellationsByEventId } = require('../admin-event-commerce');
+const { evaluateReinstateEligibility } = require('../admin-event-reinstate');
 
 function parseBody(req) {
   let body = req.body;
@@ -78,8 +80,12 @@ async function fetchOrganiserOptions(sb) {
   return all.map(mapOrganiserOptionRow);
 }
 
-function mapEventRow(row, orgById) {
+function mapEventRow(row, orgById, commerceStats, cancellationRow) {
   const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
+  const stats = commerceStats && commerceStats[row.id] ? commerceStats[row.id] : null;
+  const registrationCount = stats ? stats.registration_count : 0;
+  const paidBookingCount = stats ? stats.paid_booking_count : 0;
+  const reinstateEligibility = evaluateReinstateEligibility(row, cancellationRow || null, stats || null);
   return {
     id: row.id,
     title: String(row.title || '').trim(),
@@ -100,6 +106,15 @@ function mapEventRow(row, orgById) {
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
+    locked: Boolean(row.locked),
+    registration_count: registrationCount,
+    paid_booking_count: paidBookingCount,
+    cancellation_id: cancellationRow?.id || null,
+    refunds_confirmed_at: cancellationRow?.refunds_confirmed_at || null,
+    reinstated_at: cancellationRow?.reinstated_at || null,
+    removed_by_admin: Boolean(cancellationRow?.removed_by_admin),
+    can_reinstate: reinstateEligibility.canReinstate,
+    reinstate_blocked_reason: reinstateEligibility.reason || null,
   };
 }
 
@@ -119,7 +134,7 @@ async function listEventsForAdmin(query) {
   let dbQuery = sb
     .from('events')
     .select(
-      'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, featured_until, created_at',
+      'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, featured_until, created_at, locked',
       { count: 'exact' }
     );
 
@@ -177,7 +192,17 @@ async function listEventsForAdmin(query) {
   const orgById = new Map(
     organisers.map((o) => [o.id, { id: o.id, name: o.name, slug: o.slug, listing_status: o.listing_status }])
   );
-  const events = rows.map((row) => mapEventRow(row, orgById));
+  const commerceStats = await fetchEventRegistrationStats(
+    sb,
+    rows.map((row) => row.id)
+  );
+  const cancellationsByEvent = await fetchLatestCancellationsByEventId(
+    sb,
+    rows.map((row) => row.id)
+  );
+  const events = rows.map((row) =>
+    mapEventRow(row, orgById, commerceStats, cancellationsByEvent[row.id] || null)
+  );
   const total = eventsRes.count != null ? eventsRes.count : rows.length;
 
   const unlinkedCountRes = await sb
@@ -269,6 +294,21 @@ function buildEventPatchFromBody(body) {
   return patch;
 }
 
+async function assertCancelledStatusAllowed(sb, eventId) {
+  const { data: row, error } = await sb.from('events').select('locked').eq('id', eventId).maybeSingle();
+  if (error) throw new Error(error.message);
+  const statsMap = await fetchEventRegistrationStats(sb, [eventId]);
+  const stats = statsMap[eventId] || { registration_count: 0 };
+  if ((stats.registration_count || 0) > 0 || row?.locked) {
+    const err = new Error(
+      'Cannot set status to cancelled while registrations exist. Use Cancel event & refund bookings instead.'
+    );
+    err.status = 400;
+    err.code = 'cancelled_requires_refund_flow';
+    throw err;
+  }
+}
+
 async function applyEventPatch(sb, id, patch) {
   const { data: current, error: currentErr } = await sb
     .from('events')
@@ -312,6 +352,10 @@ async function applyEventPatch(sb, id, patch) {
     patch.ticket_sales_enabled = eventHasTicketsOnSale(ticketRows);
   }
 
+  if (patch.status === 'cancelled') {
+    await assertCancelledStatusAllowed(sb, id);
+  }
+
   const wasLive =
     String(current.status || '').trim() === 'published' &&
     String(current.approval_status || '').trim() === 'Approved';
@@ -342,7 +386,9 @@ async function applyEventPatch(sb, id, patch) {
 
   const organisers = await fetchOrganisersByIds(sb, [data.organiser_id]);
   const orgById = new Map(organisers.map((o) => [o.id, o]));
-  return mapEventRow(data, orgById);
+  const commerceStats = await fetchEventRegistrationStats(sb, [data.id]);
+  const cancellationsByEvent = await fetchLatestCancellationsByEventId(sb, [data.id]);
+  return mapEventRow(data, orgById, commerceStats, cancellationsByEvent[data.id] || null);
 }
 
 async function adminDeleteEvent(sb, eventId, opts) {
@@ -383,6 +429,9 @@ async function adminDeleteEvent(sb, eventId, opts) {
     }
   }
 
+  const { snapshotPayoutHistoryBeforeEventDelete } = require('../event-delete-audit');
+  await snapshotPayoutHistoryBeforeEventDelete(sb, eventId, title);
+
   const { error: ticketErr } = await sb.from('tickets').delete().eq('event_id', eventId);
   if (ticketErr) throw new Error(ticketErr.message);
 
@@ -418,6 +467,77 @@ async function bulkUpdateEvents(ids, body) {
   }
 
   return { updated: updated.length, skipped, events: updated };
+}
+
+async function bulkUnpublishEvents(ids, opts) {
+  const sb = getSupabaseAdmin();
+  const { ADMIN_REMOVAL_REASONS } = require('../admin-event-removal');
+  const { sendOrganiserEventUnpublishedEmail } = require('../admin-event-unpublish-emails');
+  const reason = String(opts?.reason || '').trim();
+  const details = String(opts?.details || '').trim();
+  const notifyOrganiser = opts?.notifyOrganiser !== false;
+  if (!reason || !ADMIN_REMOVAL_REASONS.includes(reason)) {
+    const e = new Error('Select an unpublish reason');
+    e.status = 400;
+    throw e;
+  }
+
+  const updated = [];
+  const skipped = [];
+
+  for (const id of ids) {
+    try {
+      const { data: row, error: fetchErr } = await sb
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (fetchErr) throw new Error(fetchErr.message);
+      if (!row) {
+        skipped.push({ id, skipped: true, reason: 'not_found', title: '' });
+        continue;
+      }
+
+      const { error: updateErr } = await sb
+        .from('events')
+        .update({
+          status: 'unpublished',
+          ticket_sales_enabled: false,
+        })
+        .eq('id', id);
+      if (updateErr) throw new Error(updateErr.message);
+
+      let organiserEmailResult = null;
+      if (notifyOrganiser && reason) {
+        try {
+          organiserEmailResult = await sendOrganiserEventUnpublishedEmail(sb, {
+            eventId: id,
+            eventRow: row,
+            reason,
+            details,
+          });
+        } catch (e) {
+          organiserEmailResult = { sent: false, error: e.message || String(e) };
+        }
+      }
+
+      updated.push({
+        id,
+        title: String(row.title || '').trim() || 'Untitled',
+        previous_status: row.status || '',
+        organiserEmailResult,
+      });
+    } catch (e) {
+      skipped.push({ id, skipped: true, reason: e.message || 'unpublish_failed', title: '' });
+    }
+  }
+
+  return {
+    unpublished: updated.length,
+    skipped,
+    events: updated,
+    titles: updated.map((row) => row.title),
+  };
 }
 
 async function bulkDeleteEvents(ids, opts) {
@@ -498,6 +618,68 @@ module.exports = async function handler(req, res) {
         return json(res, 201, { ok: true, event });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'create_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'bulk_unpublish') {
+      const ids = [
+        ...new Set(
+          (Array.isArray(body.ids) ? body.ids : [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (!ids.length) return json(res, 400, { error: 'missing_ids' });
+      try {
+        const result = await bulkUnpublishEvents(ids, {
+          reason: body.reason,
+          details: body.details,
+          notifyOrganiser: body.notify_organiser !== false,
+        });
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          ok: false,
+          error: 'bulk_unpublish_failed',
+          message: e.message,
+        });
+      }
+    }
+
+    if (body.action === 'reinstate_event') {
+      const eventId = String(body.event_id || body.id || '').trim();
+      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      try {
+        const sb = getSupabaseAdmin();
+        const { reinstateCancelledEvent } = require('../admin-event-reinstate');
+        const result = await reinstateCancelledEvent(sb, eventId, {
+          status: body.status,
+          adminUserId: session.sub,
+        });
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          ok: false,
+          error: e.code || 'reinstate_failed',
+          message: e.message,
+        });
+      }
+    }
+
+    if (body.action === 'retry_event_refunds') {
+      const eventId = String(body.event_id || body.id || '').trim();
+      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      try {
+        const sb = getSupabaseAdmin();
+        const { retryEventRefunds } = require('../admin-refunds-pending');
+        const result = await retryEventRefunds(sb, eventId);
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          ok: false,
+          error: e.code || 'retry_refunds_failed',
+          message: e.message,
+        });
       }
     }
 

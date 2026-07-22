@@ -5,6 +5,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { normalizeEventType } = require('./event-types');
+const { fetchEventRegistrationStats } = require('./admin-event-commerce');
 
 const ISSUE_DEFS = {
   missing_date: { label: 'Missing event date', severity: 'high' },
@@ -224,6 +225,21 @@ async function scanEventHealth() {
       issues: codes.map(issuePayload),
     });
   }
+
+  const commerceStats = await fetchEventRegistrationStats(
+    sb,
+    flagged.map((row) => row.id)
+  );
+  const eventById = new Map(events.map((eventRow) => [eventRow.id, eventRow]));
+  flagged.forEach((row) => {
+    const source = eventById.get(row.id);
+    const stats = commerceStats[row.id] || { registration_count: 0, paid_booking_count: 0 };
+    row.locked = Boolean(source && source.locked);
+    row.ends_at = (source && source.ends_at) || row.starts_at || '';
+    row.status = (source && source.status) || 'published';
+    row.registration_count = stats.registration_count;
+    row.paid_booking_count = stats.paid_booking_count;
+  });
 
   return {
     configured: true,

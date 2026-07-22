@@ -11,9 +11,9 @@ const HELP_PAGES = {
     ogType: 'article',
     faqQuestion: 'When do organisers receive payouts for ticket sales?',
     faqAnswer:
-      'Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe Connect onboarding is required.',
+      'With Stripe Connect, paid ticket revenue goes to your connected account at checkout — open Stripe Express for balance and bank payouts. Legacy manual Hub payouts (if Connect is off) require archiving the event and a 7-day settlement before requesting payout from Revenue.',
     llmsSummary:
-      'Organisers receive the full ticket price they set. After an event ends, a 7-day settlement period applies before a payout can be requested. Archive the event in /organiser/, complete Stripe Connect onboarding, then request payout from Revenue when eligible. Payouts are reviewed before transfer to the organiser bank account.',
+      'Organisers receive the full ticket price they set. With Stripe Connect enabled, that revenue is collected in the organiser connected Stripe account when attendees pay; use Stripe Express for refunds, balance, and bank payouts. Legacy mode (Connect off): archive the event in /organiser/, wait 7 days after the event ends, then request payout from Revenue — requests are reviewed before transfer.',
   },
   'pricing-fees': {
     path: '/help/pricing-fees',

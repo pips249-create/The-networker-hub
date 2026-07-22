@@ -99,6 +99,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_new_application',
   'organiser_booking_cancelled',
   'event_removed_by_hub',
+  'event_unpublished_by_hub',
   'organiser_hub_warning',
   'organiser_hub_suspended',
   'organiser_ticket_sales_nudge',
@@ -282,7 +283,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged = enrichBookingCancelledVars(merged, sponsorSection);
   } else if (slug === 'event_cancelled') {
     merged = enrichEventCancelledVars(merged, sponsorSection);
-  } else if (slug === 'event_removed_by_hub') {
+  } else if (slug === 'event_removed_by_hub' || slug === 'event_unpublished_by_hub') {
     merged = enrichEventRemovedByHubVars(merged, sponsorSection);
   } else if (slug === 'organiser_hub_warning') {
     merged = enrichOrganiserHubWarningVars(merged, sponsorSection);
@@ -387,7 +388,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   } else if (slug === 'event_cancelled') {
     html = stripEventCancelledPlaceholders(html);
     html = replacePlaceholders(html, merged);
-  } else if (slug === 'event_removed_by_hub') {
+  } else if (slug === 'event_removed_by_hub' || slug === 'event_unpublished_by_hub') {
     html = stripEventRemovedByHubPlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'organiser_hub_warning' || slug === 'organiser_hub_suspended') {

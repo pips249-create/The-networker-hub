@@ -277,4 +277,5 @@ module.exports = {
   ADMIN_REMOVAL_REASONS,
   eventNeedsAdminRemovalFlow,
   adminRemoveEvent,
+  finalizeEventRefundsConfirmed,
 };
