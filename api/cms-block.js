@@ -43,7 +43,7 @@ const DETAIL_FALLBACK_CHAINS = {
     LEGACY_SPONSOR_HUB_SLOT,
   ],
   event_page_sidebar_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
-  organiser_page_sidebar_ad: ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
+  organiser_page_sidebar_ad: ['organisers_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT],
 };
 
 const DEFAULT_DETAIL_FALLBACK_CHAIN = ['events_sponsor_hub', LEGACY_SPONSOR_HUB_SLOT];

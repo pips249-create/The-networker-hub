@@ -298,28 +298,35 @@
     renderSponsorAd(els, block);
   }
 
+  var loadGeneration = 0;
+
   async function load(slot) {
     var els = getEls();
     if (!els.sponsorHub) return;
 
-    markSponsorLoading(els);
-
     var slotKey =
       String(slot || els.sponsorHub.getAttribute('data-slot') || 'events_sponsor_hub').trim() ||
       'events_sponsor_hub';
+    var generation = ++loadGeneration;
+
+    markSponsorLoading(els);
 
     try {
       var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey));
+      if (generation !== loadGeneration) return;
       var data = await res.json();
+      if (generation !== loadGeneration) return;
       if (data && data.ok && data.block) {
         renderSponsorBlock(els, data.block);
       } else {
         renderSponsorFallback(els, slotKey);
       }
     } catch (e) {
+      if (generation !== loadGeneration) return;
       renderSponsorFallback(els, slotKey);
     }
 
+    if (generation !== loadGeneration) return;
     await whenLogoReady(els, els.sponsorHub.classList.contains('sponsor-hub--logo-only'));
     markSponsorReady(els);
   }
@@ -370,6 +377,8 @@
 
   function scheduleAutoLoad() {
     if (!document.getElementById('sponsor-hub')) return;
+    // /events/ switches hero sponsor by browse mode — browse-mode.js loads the correct slot.
+    if (document.body.classList.contains('events-page')) return;
     load();
   }
 

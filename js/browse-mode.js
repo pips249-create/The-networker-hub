@@ -4,7 +4,6 @@
 (function () {
   var heroBadge = document.getElementById('events-hero-badge');
   var heroTitle = document.getElementById('events-hero-heading');
-  var heroBrowseLink = document.getElementById('events-hero-browse-link');
   var heroOrganiserCta = document.getElementById('events-hero-organiser-cta');
   var organiserFootnote = document.getElementById('events-organiser-footnote');
   var heroSub = document.getElementById('events-hero-lede');
@@ -32,7 +31,7 @@
       title:
         'Find your next <span class="accent">organisers</span>',
       sub:
-        'Browse groups, exhibition hosts, and conference organisers.<br>Filter by city, format, guest visits, and rating.',
+        'Browse networking groups, exhibition hosts, conference organisers and more.<br>Filter by city, format, guest visits, and rating.',
       heading: 'All organisers',
       filterTitle: 'Filter organisers',
       searchPlaceholder: 'Search organisers, descriptions, formats…',
@@ -114,7 +113,9 @@
 
   function reloadSponsorHub(mode) {
     initSponsorHub(mode);
-    if (window.hubReloadSponsorBlock) window.hubReloadSponsorBlock();
+    if (window.hubReloadSponsorBlock) {
+      window.hubReloadSponsorBlock(sponsorSlotForMode(mode || currentMode()));
+    }
   }
 
   function browseModeHref(mode) {
@@ -145,21 +146,7 @@
   }
 
   var organisersHubCtaHtml =
-    'Want to be part of the hub? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>';
-
-  function syncHeroBrowseLink(mode) {
-    if (!heroBrowseLink) return;
-    if (mode === 'organisers') {
-      heroBrowseLink.hidden = true;
-      heroBrowseLink.innerHTML = '';
-    } else {
-      heroBrowseLink.hidden = false;
-      heroBrowseLink.innerHTML =
-        'Looking for a networking group? <a href="' +
-        browseModeHref('organisers') +
-        '">Browse organisers</a>';
-    }
-  }
+    'Want to be included in The Networker Hub? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>';
 
   function syncOrganiserCta() {
     if (heroOrganiserCta) heroOrganiserCta.innerHTML = organisersHubCtaHtml;
@@ -207,7 +194,6 @@
         ' – The Networker Hub';
       initSponsorHub(mode);
       syncBrowseToggles(mode);
-      syncHeroBrowseLink(mode);
       syncOrganiserCta();
       return;
     }
@@ -226,7 +212,6 @@
         : 'Find your next event – The Networker Hub';
     initSponsorHub(mode);
     syncBrowseToggles(mode);
-    syncHeroBrowseLink(mode);
     syncOrganiserCta();
   }
 
