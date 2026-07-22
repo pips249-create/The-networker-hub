@@ -188,9 +188,9 @@
 
   var ENQUIRY_PACKAGES = {
     events: ['Headline Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
-    organisers: ['Main Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
+    organisers: ['Headline Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
     opportunities: [
-      'Main Sponsor',
+      'Headline Sponsor',
       'Mini Sponsors',
       'Directory Listing',
       'Featured Listing',
