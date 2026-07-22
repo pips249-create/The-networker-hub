@@ -187,11 +187,11 @@
   };
 
   var ENQUIRY_PACKAGES = {
-    events: ['Headline Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
-    organisers: ['Headline Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
+    events: ['Headline Sponsor', 'Event Page Partner', 'Featured Listing', 'Not sure yet'],
+    organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Listing', 'Not sure yet'],
     opportunities: [
       'Headline Sponsor',
-      'Mini Sponsors',
+      'Opportunity Page Partner',
       'Directory Listing',
       'Featured Listing',
       'Not sure yet',

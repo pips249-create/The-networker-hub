@@ -1215,6 +1215,12 @@ body.advertising-page {
   white-space: nowrap;
 }
 
+.ad-package-spec-table tbody td:nth-child(2) {
+  font-weight: 600;
+  color: var(--ad-ink);
+  white-space: normal;
+}
+
 .ad-reach-table tbody td:nth-child(3) {
   color: var(--ad-muted);
   min-width: 140px;
