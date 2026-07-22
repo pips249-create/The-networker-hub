@@ -8108,7 +8108,19 @@
   }
 
   function teamRoleLabel(role) {
-    return role === 'owner' ? 'Owner' : 'Editor';
+    return role === 'owner' ? 'Owner' : 'Team member';
+  }
+
+  function teamRoleBadgeHtml(role) {
+    const label = teamRoleLabel(role);
+    const cls = role === 'owner' ? 'org-badge-purple' : 'org-badge-blue';
+    return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
+  }
+
+  function teamStatusBadgeHtml(status) {
+    const label = teamStatusLabel(status);
+    const cls = status === 'active' ? 'org-badge-green' : 'org-badge-gold';
+    return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
   }
 
   function teamStatusLabel(status) {
@@ -8270,12 +8282,13 @@
     const atCap = state.canManageTeam && state.teamSlotsRemaining <= 0;
     const summary =
       state.canManageTeam && state.teamMax
-        ? state.teamCount + ' of ' + state.teamMax + ' editor slots used'
+        ? state.teamCount + ' of ' + state.teamMax + ' team member slots used'
         : '';
 
     if (note) {
       if (summary) {
-        note.textContent = summary + (atCap ? ' — remove someone to invite another editor.' : '');
+        note.textContent =
+          summary + (atCap ? ' — remove someone before inviting another team member.' : '');
         note.hidden = false;
       } else {
         note.hidden = true;
@@ -8283,8 +8296,9 @@
     }
     if (modalNote) {
       modalNote.textContent = summary
-        ? summary + '. Invites are sent by email; editors become Active when they sign in with that address.'
-        : 'Invites are sent by email; editors become Active when they sign in with that address.';
+        ? summary +
+          '. We email the invite link; they become Active when they sign in with that address.'
+        : 'We email the invite link; they become Active when they sign in with that address.';
     }
     if (inviteBtn) {
       inviteBtn.disabled = atCap;
@@ -8304,9 +8318,13 @@
     if (!body) return;
     body.innerHTML = '';
     if (inviteBtn) inviteBtn.hidden = !state.canManageTeam;
-    const editorNote = document.getElementById('team-editor-note');
-    if (editorNote) {
-      editorNote.hidden = state.organiserRole !== 'editor';
+    const memberNote = document.getElementById('team-member-note');
+    if (memberNote) {
+      memberNote.hidden = state.organiserRole !== 'editor';
+    }
+    const permissionsPanel = document.getElementById('org-team-permissions');
+    if (permissionsPanel) {
+      permissionsPanel.hidden = !state.canManageTeam;
     }
     updateTeamLimitUi();
     if (teamPage) {
@@ -8364,11 +8382,11 @@
         '<td>' +
         esc(m.email) +
         '</td><td>' +
-        esc(teamRoleLabel(m.role)) +
+        teamRoleBadgeHtml(m.role) +
         '</td><td class="org-team-group-access">' +
         esc(teamGroupAccessLabel(m)) +
         '</td><td>' +
-        esc(teamStatusLabel(m.status)) +
+        teamStatusBadgeHtml(m.status) +
         '</td><td class="org-td-actions">' +
         (actions.join(' ') || '—') +
         '</td>';
@@ -8389,7 +8407,7 @@
     const openInvite = () => {
       if (state.teamSlotsRemaining <= 0) {
         showOrganiserAlert(
-          'You can invite up to ' + state.teamMax + ' editors. Remove someone to invite another.',
+          'You can invite up to ' + state.teamMax + ' team members. Remove someone before inviting another.',
           true
         );
         return;
