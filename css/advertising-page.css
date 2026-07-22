@@ -4267,6 +4267,29 @@ body.advertising-page {
   }
 }
 
+.ad-package-span-full.ad-package-note--launch {
+  margin: 0;
+  padding: 0 24px 20px;
+}
+
+.ad-package-span-full.ad-package-note--launch .ad-reach-table-wrap {
+  overflow-x: visible;
+}
+
+.ad-package-span-full .city-partner-launch-table {
+  font-size: 0.85rem;
+}
+
+.ad-package-span-full .city-partner-launch-table td:nth-child(2) {
+  white-space: normal;
+  min-width: 140px;
+}
+
+.ad-package-span-full .city-partner-launch-table .city-partner-launch-active,
+.ad-package-span-full .city-partner-launch-table .city-partner-launch-standard {
+  white-space: nowrap;
+}
+
 .ad-package-note--launch {
   margin-bottom: 1rem;
   padding: 12px 14px;
