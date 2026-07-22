@@ -151,8 +151,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'pending-opportunities',
       severity: 'medium',
-      title: `${counts.pendingOpportunities} business opportunit${counts.pendingOpportunities === 1 ? 'y' : 'ies'} pending review`,
-      detail: 'Open Listing cleanup → Opportunities to approve or reject listings.',
+      title: `${counts.pendingOpportunities} business opportunit${counts.pendingOpportunities === 1 ? 'y' : 'ies'} waiting for approval`,
+      detail: 'Review and approve or reject each listing.',
       href: '#cleanup/opportunities?approval=pending',
       time: new Date().toISOString(),
     });
@@ -162,8 +162,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'incomplete-organisers',
       severity: 'low',
-      title: `${counts.incompleteOrganisers} organiser profile${counts.incompleteOrganisers === 1 ? '' : 's'} missing data`,
-      detail: 'Add description, photo, or website in Group profile cleanup.',
+      title: `${counts.incompleteOrganisers} group page${counts.incompleteOrganisers === 1 ? '' : 's'} need a photo or description`,
+      detail: 'Add a logo, description, or website link.',
       href: '#cleanup/groups',
       time: new Date().toISOString(),
     });
@@ -173,8 +173,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'spam-reviews',
       severity: 'medium',
-      title: `${counts.spamReviews} spam-like review${counts.spamReviews === 1 ? '' : 's'} detected`,
-      detail: 'Highlighted on Content Moderation — remove in Supabase if needed.',
+      title: `${counts.spamReviews} review${counts.spamReviews === 1 ? '' : 's'} look like spam`,
+      detail: 'Check and remove if needed.',
       href: '#moderation',
       time: new Date().toISOString(),
     });
@@ -184,8 +184,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'listing-reports',
       severity: 'medium',
-      title: `${counts.openListingReports} listing report${counts.openListingReports === 1 ? '' : 's'} from users`,
-      detail: 'Review reports on Content Moderation.',
+      title: `${counts.openListingReports} listing${counts.openListingReports === 1 ? '' : 's'} reported by a user`,
+      detail: 'Read the report and decide what to do.',
       href: '#moderation',
       time: new Date().toISOString(),
     });
@@ -195,8 +195,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'review-reports',
       severity: 'medium',
-      title: `${counts.openReviewReports} review report${counts.openReviewReports === 1 ? '' : 's'} from users`,
-      detail: 'Review reports on Content Moderation.',
+      title: `${counts.openReviewReports} review${counts.openReviewReports === 1 ? '' : 's'} reported by a user`,
+      detail: 'Read the report and decide what to do.',
       href: '#moderation',
       time: new Date().toISOString(),
     });
@@ -206,8 +206,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'open-complaints',
       severity: 'high',
-      title: `${counts.openComplaints} open complaint${counts.openComplaints === 1 ? '' : 's'}`,
-      detail: 'Log and track complaints from hello@thenetworkerhub.com in Support → Complaints.',
+      title: `${counts.openComplaints} complaint${counts.openComplaints === 1 ? '' : 's'} need a response`,
+      detail: 'Log and reply to emails sent to hello@thenetworkerhub.com.',
       href: '#support/complaints',
       time: new Date().toISOString(),
     });
@@ -217,8 +217,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'claim-disputes',
       severity: 'high',
-      title: `${counts.openClaimDisputes} group profile dispute${counts.openClaimDisputes === 1 ? '' : 's'}`,
-      detail: 'An organiser rejected a matched profile — resolve on the dashboard overview.',
+      title: `${counts.openClaimDisputes} group page dispute${counts.openClaimDisputes === 1 ? '' : 's'}`,
+      detail: 'An organiser said a profile is not theirs — resolve on the home page.',
       href: '#dashboard',
       time: new Date().toISOString(),
     });
@@ -228,8 +228,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'organiser-claim-requests',
       severity: 'high',
-      title: `${counts.openOrganiserClaimRequests} organiser claim request${counts.openOrganiserClaimRequests === 1 ? '' : 's'}`,
-      detail: 'Someone asked to claim a public group profile — verify and send a claim invite in Group cleanup.',
+      title: `${counts.openOrganiserClaimRequests} request${counts.openOrganiserClaimRequests === 1 ? '' : 's'} to claim a group page`,
+      detail: 'Check who they are, then approve and send the invite.',
       href: '#cleanup/groups',
       time: new Date().toISOString(),
     });
@@ -239,8 +239,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'pending-payouts',
       severity: 'high',
-      title: `${counts.pendingPayouts} payout request${counts.pendingPayouts === 1 ? '' : 's'} awaiting review`,
-      detail: 'Approve organiser payout requests in Financials, then mark paid after transfer.',
+      title: `${counts.pendingPayouts} payout request${counts.pendingPayouts === 1 ? '' : 's'} waiting for approval`,
+      detail: 'Approve the payout, then mark it paid once the money has been sent.',
       href: '#financials',
       time: new Date().toISOString(),
     });
@@ -250,8 +250,8 @@ function buildAlertsFromCounts(counts) {
     alerts.push({
       id: 'stripe-onboarding',
       severity: 'medium',
-      title: `${counts.stripeOnboarding} organiser${counts.stripeOnboarding === 1 ? '' : 's'} stuck in Stripe Connect onboarding`,
-      detail: 'They started Connect but cannot receive charges yet — check Financials.',
+      title: `${counts.stripeOnboarding} organiser${counts.stripeOnboarding === 1 ? '' : 's'} has not finished payment setup`,
+      detail: 'They cannot receive ticket money until Stripe setup is complete.',
       href: '#financials',
       time: new Date().toISOString(),
     });

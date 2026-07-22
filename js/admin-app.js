@@ -35,40 +35,40 @@
 
   var PAGE_META = {
     dashboard: {
-      title: 'Overview',
-      subtitle: 'Platform health, action queue, and recent activity',
+      title: 'Home',
+      subtitle: 'Your to-do list, key numbers, and recent activity',
     },
     analytics: {
-      title: 'Web Analytics',
-      subtitle: 'Visitor traffic on Vercel · platform insights and top performers from Supabase',
+      title: 'Website visitors',
+      subtitle: 'How many people visit the site, and which pages they view',
     },
     'event-health': {
       title: 'Event data issues',
       subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
     },
     cleanup: {
-      title: 'Listing cleanup',
-      subtitle: 'Fix group profiles, edit events and business opportunities, and resolve published event data issues',
+      title: 'Fix listings',
+      subtitle: 'Edit group pages, events, and business opportunities',
     },
     'group-cleanup': {
-      title: 'Listing cleanup',
-      subtitle: 'Expand a row to edit website, logo and description — or fill from the group website',
+      title: 'Fix listings',
+      subtitle: 'Click a row to add a photo, description, or website',
     },
     'event-cleanup': {
-      title: 'Listing cleanup',
-      subtitle: 'Search and filter events, then expand a row to edit — built for large catalogues',
+      title: 'Fix listings',
+      subtitle: 'Search events, then click a row to edit details',
     },
     'opportunity-cleanup': {
-      title: 'Listing cleanup',
-      subtitle: 'Search, filter, and approve business opportunity listings — toggle featured for the spotlight carousel',
+      title: 'Fix listings',
+      subtitle: 'Review and approve business opportunity listings',
     },
     accounts: {
-      title: 'Accounts',
-      subtitle: 'Manage featured organisers and impersonate users for debugging',
+      title: 'User accounts',
+      subtitle: 'View accounts and manage featured organisers',
     },
     email: {
-      title: 'Email',
-      subtitle: 'Bulk campaigns and transactional template copy',
+      title: 'Send emails',
+      subtitle: 'Email campaigns and template wording',
     },
     impersonate: {
       title: 'Impersonate user',
@@ -79,12 +79,12 @@
       subtitle: 'Manage featured organiser status and open account details',
     },
     system: {
-      title: 'System health',
-      subtitle: 'Environment checks, Supabase connection, and go-live checklist',
+      title: 'Site settings',
+      subtitle: 'Check the site is running correctly before go-live',
     },
     rankings: {
-      title: 'Group rankings',
-      subtitle: 'Monthly Top 10 / 25 / 50 badges, snapshot history, and congratulation emails',
+      title: 'Top performers',
+      subtitle: 'Monthly top groups and congratulation emails',
     },
     featured: {
       title: 'Premium Spotlight',
@@ -95,8 +95,8 @@
       subtitle: 'Manage featured events, organisers, and opportunities for the public browse carousels',
     },
     support: {
-      title: 'Support',
-      subtitle: 'Look up bookings, log complaints from hello@thenetworkerhub.com, and track the 14-day response deadline',
+      title: 'Help requests',
+      subtitle: 'Look up bookings and log complaints from hello@thenetworkerhub.com',
     },
     campaigns: {
       title: 'Email campaigns',
@@ -107,20 +107,20 @@
       subtitle: 'Upload CSV to add organisers or attendee records (no automatic emails)',
     },
     moderation: {
-      title: 'Content moderation',
-      subtitle: 'Triage listing reports and remove spam reviews — events go live when organisers publish',
+      title: 'Reported items',
+      subtitle: 'Review reports from users and remove spam reviews',
     },
     financials: {
-      title: 'Financial hub',
-      subtitle: 'Payout queue, ticket revenue, and Stripe Connect status per organiser',
+      title: 'Payments',
+      subtitle: 'Payout requests, ticket income, and organiser payment setup',
     },
     'revenue-targets': {
-      title: 'Revenue targets',
-      subtitle: 'Progress to September 2027 — auto-tracked fees, forecasting, and manual sponsorship entries',
+      title: 'Sales targets',
+      subtitle: 'Track progress towards your revenue goal',
     },
     sponsorship: {
-      title: 'Sponsorship & ads',
-      subtitle: 'Choose an ad placement or the home page partners strip to edit',
+      title: 'Ads & sponsors',
+      subtitle: 'Manage sponsor logos and advert placements',
     },
     emails: {
       title: 'Email templates',
@@ -129,6 +129,202 @@
     social: {
       title: 'Social posts',
       subtitle: 'Draft captions from Hub listings — copy or open share links for LinkedIn, Facebook, and X',
+    },
+  };
+
+  var ADMIN_GUIDES = {
+    dashboard: {
+      title: 'How to use Home',
+      steps: [
+        'Glance at the numbers at the top — revenue, events, organisers, and member accounts.',
+        'Use Quick links if you already know where you want to go.',
+        'If Things to do appears, start with Urgent items and click Go there on each row.',
+        'Recent activity shows new sign-ups, events, and reviews.',
+        'At a glance lists the same key counts in more detail.',
+      ],
+    },
+    system: {
+      title: 'How to check site settings',
+      steps: [
+        'Review each checklist item — green means OK, amber or red needs attention.',
+        'Open any failed check to see what is missing (usually an environment variable).',
+        'Fix issues in Vercel or Supabase, then refresh this page.',
+      ],
+    },
+    analytics: {
+      title: 'How to view website visitors',
+      steps: [
+        'Click View stats or Open analytics to see visitor charts on Vercel.',
+        'Use Hub platform activity below for sign-ups and events — that is separate from anonymous traffic.',
+        'Change the time period (7 days, 30 days, all time) to compare trends.',
+      ],
+    },
+    rankings: {
+      title: 'How to manage top performers',
+      steps: [
+        'Review the current month\'s top groups list.',
+        'Send congratulation emails when you are ready — preview first if unsure.',
+        'Past snapshots are kept for reference.',
+      ],
+    },
+    users: {
+      title: 'How to manage user accounts',
+      steps: [
+        'Search or scroll to find an account.',
+        'Click a row to open details — featured status, email preferences, and dates.',
+        'Toggle featured organiser only when you have agreed it with the group.',
+      ],
+    },
+    impersonate: {
+      title: 'How to sign in as another user',
+      steps: [
+        'Search for the account you need to debug.',
+        'Click Impersonate — you will be signed in as that user on the public Hub.',
+        'When finished, stop impersonating from the banner at the top of the site.',
+        'Never impersonate without a clear support reason.',
+      ],
+    },
+    support: {
+      title: 'How to look up bookings',
+      steps: [
+        'Search by attendee email, name, or booking reference.',
+        'Open a booking to see tickets, payment status, and event details.',
+        'Use this when someone emails asking about their registration.',
+      ],
+    },
+    'support-complaints': {
+      title: 'How to log a complaint',
+      steps: [
+        'Click Log complaint and enter details from the email to hello@thenetworkerhub.com.',
+        'Note the date received — you have 14 days to respond.',
+        'Update status as you work on it: acknowledged, in progress, resolved.',
+        'Add notes so someone else can pick it up if needed.',
+      ],
+    },
+    'group-cleanup': {
+      title: 'How to fix group pages',
+      steps: [
+        'Find the group — search by name or filter to incomplete profiles.',
+        'Click the row to expand it.',
+        'Add a logo URL, description, and website, then Save.',
+        'Use Fill from website if the group already has a site listed.',
+      ],
+    },
+    'event-cleanup': {
+      title: 'How to edit events',
+      steps: [
+        'Search or filter to find the event.',
+        'Click the row to expand the editor.',
+        'Update details, organiser, or dates, then Save.',
+        'Open the public event page link to check it looks right.',
+      ],
+    },
+    'event-health': {
+      title: 'How to fix event data issues',
+      steps: [
+        'Each row is a published event missing something important.',
+        'Expand the event and fill in the highlighted fields.',
+        'Click Save fixes when done — the event drops off this list.',
+        'For many events with the same issue, tick several and use bulk fix at the top.',
+      ],
+    },
+    'opportunity-cleanup': {
+      title: 'How to review business opportunities',
+      steps: [
+        'Filter to Pending review to see new listings.',
+        'Open a row to read the full details.',
+        'Approve to publish on the site, or reject if it does not meet standards.',
+        'Toggle Featured to show it in the opportunities carousel.',
+      ],
+    },
+    moderation: {
+      title: 'How to handle reported items',
+      steps: [
+        'Listing reports — read what the user reported and open the listing.',
+        'Review reports — check the quoted review and reporter note.',
+        'Spam reviews — remove only if clearly fake or abusive.',
+        'Dismiss a report once you have handled it.',
+      ],
+    },
+    import: {
+      title: 'How to import data from CSV',
+      steps: [
+        'Choose organiser or attendee import.',
+        'Download the template CSV if you need the correct column layout.',
+        'Upload your file and review the preview row count.',
+        'Confirm import — no automatic emails are sent.',
+      ],
+    },
+    financials: {
+      title: 'How to manage payments',
+      steps: [
+        'Payout requests — approve when ready to pay the organiser, then mark paid after bank transfer.',
+        'Stripe status — organisers in amber have not finished payment setup; they cannot sell paid tickets yet.',
+        'Revenue summary shows ticket income and estimated Hub fees.',
+      ],
+    },
+    'revenue-targets': {
+      title: 'How to track sales targets',
+      steps: [
+        'Check progress bars against your monthly and overall goals.',
+        'Add manual sponsorship entries if money came in outside Stripe.',
+        'Switch chart views to compare forecast vs actual.',
+      ],
+    },
+    spotlight: {
+      title: 'How to feature events',
+      steps: [
+        'Browse approved upcoming events.',
+        'Toggle Featured on events you want in the Premium Spotlight carousel.',
+        'Order matters — featured items appear in list order on the public site.',
+      ],
+    },
+    'spotlight-organisers': {
+      title: 'How to feature organisers',
+      steps: [
+        'Find the networking group you want to highlight.',
+        'Toggle Featured — they appear on the Events browse page carousel.',
+        'Remove featured status when the promotion ends.',
+      ],
+    },
+    'spotlight-opportunities': {
+      title: 'How to feature opportunities',
+      steps: [
+        'Only approved opportunities can be featured.',
+        'Toggle Featured to add them to the /opportunities/ carousel.',
+      ],
+    },
+    sponsorship: {
+      title: 'How to manage ads and sponsors',
+      steps: [
+        'Pick a placement from the list — home page, city pages, event pages, and so on.',
+        'Each slot needs a logo image and a click-through link.',
+        'Save and check the live page to confirm it appears.',
+      ],
+    },
+    campaigns: {
+      title: 'How to send email campaigns',
+      steps: [
+        'Choose a campaign type (e.g. organiser claim invites).',
+        'Review the recipient list carefully before sending.',
+        'Send a test to yourself first if the list is large.',
+      ],
+    },
+    emails: {
+      title: 'How to edit email templates',
+      steps: [
+        'Pick the template you want to change.',
+        'Edit the subject and body — use the variable names shown in the help text.',
+        'Send a test email to check formatting before relying on it in production.',
+      ],
+    },
+    social: {
+      title: 'How to draft social posts',
+      steps: [
+        'Pick an event, organiser, or opportunity as the source.',
+        'Review the generated caption and edit if needed.',
+        'Copy the text or open the share link for LinkedIn, Facebook, or X.',
+      ],
     },
   };
 
@@ -148,6 +344,14 @@
   var adminMetricsCache = null;
   var adminMetricsInflight = null;
   var ADMIN_METRICS_CACHE_KEY = 'tnh_admin_metrics_v2';
+  var ADMIN_NAV_SECTIONS_KEY = 'tnh_admin_nav_sections_v1';
+  var ADMIN_LARGE_TEXT_KEY = 'tnh_admin_large_text_v1';
+  var NAV_SECTION_ROUTES = {
+    platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
+    listings: ['cleanup', 'moderation'],
+    revenue: ['financials', 'revenue-targets', 'spotlight', 'sponsorship'],
+    comms: ['email', 'social'],
+  };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
   var METRICS_POLL_MS = 90000;
   var adminNotificationsTimer = null;
@@ -654,7 +858,188 @@
     }
     document.getElementById('page-title').textContent = title;
     document.getElementById('page-subtitle').textContent = subtitle;
+    expandNavSectionForRoute(navKey);
+    syncAdminPageGuide(route, fullHash || route);
     syncAdminLayoutOffset();
+  }
+
+  function adminGuideKey(route, fullHash) {
+    var hash = String(fullHash || route || 'dashboard');
+    if (route === 'cleanup' || hash.indexOf('cleanup/') === 0) {
+      if (hash.indexOf('issues') !== -1 || hash === 'event-health') return 'event-health';
+      if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') return 'event-cleanup';
+      if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') return 'opportunity-cleanup';
+      return 'group-cleanup';
+    }
+    if (route === 'accounts') {
+      return hash.indexOf('impersonate') !== -1 ? 'impersonate' : 'users';
+    }
+    if (route === 'email') {
+      return hash.indexOf('templates') !== -1 ? 'emails' : 'campaigns';
+    }
+    if (route === 'moderation' && hash.indexOf('import') !== -1) return 'import';
+    if (route === 'support') {
+      return hash.indexOf('complaints') !== -1 ? 'support-complaints' : 'support';
+    }
+    if (route === 'spotlight') {
+      if (hash.indexOf('organisers') !== -1) return 'spotlight-organisers';
+      if (hash.indexOf('opportunities') !== -1) return 'spotlight-opportunities';
+      return 'spotlight';
+    }
+    return route || 'dashboard';
+  }
+
+  function setAdminGuideOpen(open) {
+    var wrap = document.getElementById('admin-page-guide-wrap');
+    var toggle = document.getElementById('admin-guide-toggle');
+    if (!wrap || !toggle) return;
+    var show = !!open;
+    wrap.classList.toggle('hidden', !show);
+    wrap.hidden = !show;
+    toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
+    toggle.textContent = show ? 'Hide guide' : 'How to use this page';
+  }
+
+  function syncAdminPageGuide(route, fullHash) {
+    var guideKey = adminGuideKey(route, fullHash);
+    var guide = ADMIN_GUIDES[guideKey];
+    var toggle = document.getElementById('admin-guide-toggle');
+    var titleEl = document.getElementById('admin-page-guide-title');
+    var stepsEl = document.getElementById('admin-page-guide-steps');
+    if (!toggle || !titleEl || !stepsEl) return;
+
+    setAdminGuideOpen(false);
+
+    if (!guide || !guide.steps || !guide.steps.length) {
+      toggle.classList.add('hidden');
+      toggle.hidden = true;
+      stepsEl.innerHTML = '';
+      return;
+    }
+
+    toggle.classList.remove('hidden');
+    toggle.hidden = false;
+    titleEl.textContent = guide.title || 'How to use this page';
+    stepsEl.innerHTML = guide.steps
+      .map(function (step) {
+        return '<li>' + esc(step) + '</li>';
+      })
+      .join('');
+  }
+
+  function readAdminLargeTextPref() {
+    try {
+      return localStorage.getItem(ADMIN_LARGE_TEXT_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function applyAdminLargeText(enabled) {
+    document.body.classList.toggle('admin-large-text', !!enabled);
+    var btn = document.getElementById('admin-large-text-toggle');
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    btn.textContent = enabled ? 'Normal text' : 'Larger text';
+  }
+
+  function bindAdminLargeTextToggle() {
+    applyAdminLargeText(readAdminLargeTextPref());
+    var btn = document.getElementById('admin-large-text-toggle');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      var next = !readAdminLargeTextPref();
+      try {
+        localStorage.setItem(ADMIN_LARGE_TEXT_KEY, next ? '1' : '0');
+      } catch (e) {
+        /* private mode */
+      }
+      applyAdminLargeText(next);
+    });
+  }
+
+  function bindAdminPageGuides() {
+    if (document.body.dataset.adminGuidesBound) return;
+    document.body.dataset.adminGuidesBound = '1';
+    var toggle = document.getElementById('admin-guide-toggle');
+    var closeBtn = document.getElementById('admin-page-guide-close');
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var wrap = document.getElementById('admin-page-guide-wrap');
+        var isOpen = wrap && !wrap.hidden;
+        setAdminGuideOpen(!isOpen);
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        setAdminGuideOpen(false);
+      });
+    }
+  }
+
+  function readNavSectionState() {
+    try {
+      var raw = localStorage.getItem(ADMIN_NAV_SECTIONS_KEY);
+      var state = raw ? JSON.parse(raw) : {};
+      return state && typeof state === 'object' ? state : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeNavSectionState(state) {
+    try {
+      localStorage.setItem(ADMIN_NAV_SECTIONS_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* quota / private mode */
+    }
+  }
+
+  function navSectionForRoute(routeKey) {
+    var key = String(routeKey || '');
+    var sectionId;
+    for (sectionId in NAV_SECTION_ROUTES) {
+      if (NAV_SECTION_ROUTES[sectionId].indexOf(key) !== -1) return sectionId;
+    }
+    return null;
+  }
+
+  function setNavSectionExpanded(sectionId, expanded, persist) {
+    var section = document.querySelector('[data-nav-section="' + sectionId + '"]');
+    if (!section) return;
+    var toggle = section.querySelector('.admin-nav-group-toggle');
+    var links = section.querySelector('.admin-nav-section-links');
+    if (!toggle || !links) return;
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    section.classList.toggle('is-collapsed', !expanded);
+    if (persist !== false) {
+      var state = readNavSectionState();
+      state[sectionId] = expanded;
+      writeNavSectionState(state);
+    }
+  }
+
+  function expandNavSectionForRoute(routeKey) {
+    var sectionId = navSectionForRoute(routeKey);
+    if (sectionId) setNavSectionExpanded(sectionId, true);
+  }
+
+  function bindAdminSidebarGroups() {
+    if (document.body.dataset.adminNavGroupsBound) return;
+    document.body.dataset.adminNavGroupsBound = '1';
+    var state = readNavSectionState();
+    document.querySelectorAll('[data-nav-section]').forEach(function (section) {
+      var id = section.getAttribute('data-nav-section');
+      var expanded = state[id] !== false;
+      setNavSectionExpanded(id, expanded, false);
+      var toggle = section.querySelector('.admin-nav-group-toggle');
+      if (!toggle) return;
+      toggle.addEventListener('click', function () {
+        var isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+        setNavSectionExpanded(id, !isExpanded);
+      });
+    });
   }
 
   function sumActionNotificationCounts(data) {
@@ -695,16 +1080,16 @@
   function updateAdminDataBadge(updatedAt) {
     var badge = document.getElementById('admin-data-badge');
     if (!badge) return;
-    badge.textContent = updatedAt ? 'Updated ' + fmtTime(updatedAt) : 'Supabase';
+    badge.textContent = updatedAt ? 'Last updated ' + fmtTime(updatedAt) : 'Last updated';
     badge.title = updatedAt
-      ? 'Counts and alerts last refreshed at ' + fmtTime(updatedAt)
-      : 'Counts and lists load from Supabase when you open each page';
+      ? 'Numbers last refreshed at ' + fmtTime(updatedAt) + '. Click to refresh.'
+      : 'Click to refresh the numbers below';
   }
 
   function actionPriorityLabel(severity) {
-    if (severity === 'high') return 'High';
-    if (severity === 'medium') return 'Medium';
-    return 'Low';
+    if (severity === 'high') return 'Urgent';
+    if (severity === 'medium') return 'Soon';
+    return 'Later';
   }
 
   function actionPriorityClass(severity) {
@@ -726,7 +1111,7 @@
       '</span>' +
       (a.detail ? '<span class="admin-action-detail">' + esc(a.detail) + '</span>' : '') +
       '</span>';
-    var go = a.href ? '<span class="admin-action-go">Open →</span>' : '';
+    var go = a.href ? '<span class="admin-action-btn">Go there</span>' : '';
     if (a.href) {
       return (
         '<a href="' +
@@ -754,10 +1139,10 @@
         severity: 'high',
         title:
           healthCount +
-          ' published event' +
+          ' event' +
           (healthCount === 1 ? '' : 's') +
-          ' missing data',
-        detail: 'Fix dates, organisers, VAT, or profile fields.',
+          ' missing important details',
+        detail: 'Add the date, organiser, VAT, or profile details.',
         href: '#cleanup/issues',
         time: new Date().toISOString(),
       });
@@ -770,26 +1155,21 @@
   }
 
   function renderActionQueueHtml(data) {
-    var rows = collectDashboardAlerts(data).map(actionQueueRow);
-    var attention = data && data.attention;
-    var claims = attention ? Number(attention.pendingOwnershipClaims) || 0 : 0;
-    if (claims > 0) {
-      rows.push(
-        '<div class="admin-action-row admin-action-row--static">' +
-          '<span class="admin-action-priority admin-action-priority--info">Info</span>' +
-          '<span class="admin-action-body">' +
-          '<span class="admin-action-title">' +
-          claims +
-          ' group profile' +
-          (claims === 1 ? '' : 's') +
-          ' awaiting organiser claim on first login</span>' +
-          '<span class="admin-action-detail">Organisers confirm ownership when they sign in — disputes appear below if they reject a match.</span>' +
-          '</span></div>'
-      );
+    return collectDashboardAlerts(data).map(actionQueueRow).join('');
+  }
+
+  function syncDashboardActionSection(data) {
+    var actionSection = document.getElementById('dashboard-action-section');
+    var queueEl = document.getElementById('dashboard-action-queue');
+    if (!actionSection || !queueEl) return;
+    if (!data || data.error || data.configured === false) return;
+
+    var alerts = collectDashboardAlerts(data);
+    var hasActions = alerts.length > 0;
+    actionSection.hidden = !hasActions;
+    if (hasActions) {
+      queueEl.innerHTML = alerts.map(actionQueueRow).join('');
     }
-    return rows.length
-      ? rows.join('')
-      : '<p class="text-sm text-emerald-700 py-2">All clear — nothing needs action right now.</p>';
   }
 
   function dashboardAlertsHtml(data) {
@@ -861,7 +1241,7 @@
 
     var queueEl = document.getElementById('dashboard-action-queue');
     if (queueEl) {
-      queueEl.innerHTML = renderActionQueueHtml(data);
+      syncDashboardActionSection(data);
     }
 
     var alertsEl = document.getElementById('dashboard-alerts');
@@ -3555,7 +3935,7 @@
             (listings.exhibitions || 0)
         ) +
         card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles') +
-        card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles');
+        card('Member accounts', String(m.attendees || 0), 'People signed up on the Hub');
     }
 
     if (preEl) preEl.innerHTML = renderMetricsSummary(data);
@@ -4132,11 +4512,20 @@
         card('Paid ticket revenue', '…', 'Loading…') +
         card('Approved events', '…', 'Loading…') +
         card('Organisers', '…', 'Loading…') +
-        card('Hub accounts', '…', 'Loading…') +
+        card('Member accounts', '…', 'Loading…') +
         '</section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Quick links</h3>' +
+        '<p>Jump straight to the pages you use most often.</p></div>' +
+        '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
+        '<a href="#cleanup/groups" class="admin-shortcut"><span class="admin-shortcut-label">Fix listings</span><span class="admin-shortcut-desc">Group pages and events</span></a>' +
+        '<a href="#financials" class="admin-shortcut"><span class="admin-shortcut-label">Payments</span><span class="admin-shortcut-desc">Payouts and Stripe</span></a>' +
+        '<a href="#moderation" class="admin-shortcut"><span class="admin-shortcut-label">Reported items</span><span class="admin-shortcut-desc">Reviews and listings</span></a>' +
+        '<a href="#analytics" class="admin-shortcut"><span class="admin-shortcut-label">Website visitors</span><span class="admin-shortcut-desc">Traffic and pages</span></a>' +
+        '</div></div></section>' +
         '<section class="admin-dash-section" id="dashboard-action-section">' +
-        '<div class="admin-dash-section-head"><h3>Action queue</h3>' +
-        '<p>Items that need a decision or follow-up — sorted by priority.</p></div>' +
+        '<div class="admin-dash-section-head"><h3>Things to do</h3>' +
+        '<p>Work through these in order — urgent items are listed first.</p></div>' +
         '<div class="admin-dash-section-body">' +
         '<div class="admin-action-queue min-h-[6rem]" id="dashboard-action-queue">' +
         '<div class="admin-action-row admin-action-row--static" aria-hidden="true">' +
@@ -4154,18 +4543,18 @@
         '<section class="grid lg:grid-cols-2 gap-5">' +
         '<div class="admin-dash-section min-w-0">' +
         '<div class="admin-dash-section-head"><h3>Recent activity</h3>' +
-        '<p>Registrations, events, and reviews — test data excluded.</p></div>' +
+        '<p>New sign-ups, events, and reviews.</p></div>' +
         '<div class="admin-dash-section-body pt-0">' +
-        '<ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]"><li class="text-sm text-slate-500">Loading…</li></ul></div></div>' +
+        '<ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]"><li class="text-base text-slate-500">Loading…</li></ul></div></div>' +
         '<div class="admin-dash-section min-w-0">' +
-        '<div class="admin-dash-section-head"><h3>Platform snapshot</h3>' +
-        '<p>Key counts from Supabase — not visitor traffic.</p></div>' +
+        '<div class="admin-dash-section-head"><h3>At a glance</h3>' +
+        '<p>Key numbers from the database.</p></div>' +
         '<div class="admin-dash-section-body pt-0">' +
-        '<div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div></div></div></section>' +
+        '<div id="live-metrics" class="text-base text-slate-600 min-h-[10rem]">Loading…</div></div></div></section>' +
         '<a href="#analytics" class="admin-quick-link group">' +
-        '<div><p class="admin-quick-link-title">Web Analytics on Vercel</p>' +
-        '<p class="admin-quick-link-desc">Visitors, top pages, referrers, and device breakdown.</p></div>' +
-        '<span class="admin-action-go group-hover:text-brand-900">Open →</span></a></div>';
+        '<div><p class="admin-quick-link-title">Website visitor stats</p>' +
+        '<p class="admin-quick-link-desc">See how many people visit the site, which pages they view, and where they come from.</p></div>' +
+        '<span class="admin-action-btn">View stats</span></a></div>';
     }
 
     var cached = adminMetricsCache || readCachedAdminMetrics();
@@ -4189,26 +4578,26 @@
     var listings = m.listings || {};
     var updated = data.updatedAt ? fmtTime(data.updatedAt) : '—';
     return (
-      '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">' +
-      '<div><dt class="text-slate-500">Approved events</dt><dd class="font-semibold text-brand-900">' +
+      '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">' +
+      '<div><dt>Approved events</dt><dd>' +
       esc(String(listings.total || 0)) +
       '</dd></div>' +
-      '<div><dt class="text-slate-500">Upcoming live events (24h+)</dt><dd class="font-semibold text-brand-900">' +
+      '<div><dt>Upcoming events</dt><dd>' +
       esc(String(m.liveEvents || 0)) +
       '</dd></div>' +
-      '<div><dt class="text-slate-500">Organisers</dt><dd class="font-semibold text-brand-900">' +
+      '<div><dt>Organisers</dt><dd>' +
       esc(String(m.organisers || 0)) +
       '</dd></div>' +
-      '<div><dt class="text-slate-500">Workshop listings</dt><dd class="font-semibold text-brand-900">' +
+      '<div><dt>Workshops listed</dt><dd>' +
       esc(String(m.providers || 0)) +
       '</dd></div>' +
-      '<div><dt class="text-slate-500">Hub accounts</dt><dd class="font-semibold text-brand-900">' +
+      '<div><dt>Member accounts</dt><dd>' +
       esc(String(m.attendees || 0)) +
       '</dd></div>' +
-      '<div><dt class="text-slate-500">Paid ticket revenue</dt><dd class="font-semibold text-brand-900">' +
+      '<div><dt>Paid ticket revenue</dt><dd>' +
       esc(fmtMoney(m.revenue || 0)) +
       '</dd></div>' +
-      '<div class="sm:col-span-2 text-xs text-slate-400 pt-1">Last loaded ' +
+      '<div class="sm:col-span-2 text-sm text-slate-500 pt-1">Last updated ' +
       esc(updated) +
       ' · <details class="inline"><summary class="cursor-pointer text-brand-700">Raw JSON</summary>' +
       '<pre class="mt-2 text-[11px] bg-slate-50 p-3 rounded-lg overflow-auto max-h-40 text-slate-600">' +
@@ -14351,6 +14740,9 @@
     bindAdminLayoutSync();
     setTimeout(syncAdminLayoutOffset, 0);
     bindAdminMobileNav();
+    bindAdminSidebarGroups();
+    bindAdminLargeTextToggle();
+    bindAdminPageGuides();
     bindEventHealthForms();
     bindGroupCleanupForms();
     bindEventCleanupForms();
@@ -14388,6 +14780,10 @@
       window.location.href = '../login';
     });
   });
+
+  applyAdminLargeText(readAdminLargeTextPref());
+  bindAdminLargeTextToggle();
+  bindAdminPageGuides();
 
   adminMetricsCache = readCachedAdminMetrics();
   if (adminMetricsCache && document.getElementById('dashboard-action-queue')) {

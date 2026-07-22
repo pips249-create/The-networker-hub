@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
   <link rel="stylesheet" href="../css/hub.css?v=20260714clsb">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260722a">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260722d">
   <link rel="stylesheet" href="../css/networking-regions.css?v=20260716cp2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260721a">
   <link rel="stylesheet" href="../css/events-page.css?v=20260721a">
@@ -35,56 +35,103 @@
     <div id="admin-sidebar-backdrop" class="hidden fixed inset-0 z-40 bg-slate-900/40 lg:hidden" aria-hidden="true"></div>
     <aside id="admin-sidebar" class="bg-brand-900 text-white shadow-xl" aria-label="Command Center navigation">
       <div class="admin-sidebar-head">
-        <h1 class="text-base font-bold tracking-tight">Command Center</h1>
-        <p class="text-[11px] text-brand-100/70 mt-0.5 truncate" id="sidebar-user">—</p>
+        <h1>Command Center</h1>
+        <p class="admin-sidebar-user truncate" id="sidebar-user">—</p>
       </div>
       <nav class="flex-1 admin-sidebar-nav overflow-y-auto" aria-label="Admin">
-        <a href="#dashboard" data-route="dashboard" class="admin-nav-link">Overview</a>
+        <a href="#dashboard" data-route="dashboard" class="admin-nav-link">Home</a>
 
-        <span class="admin-nav-group">Platform</span>
-        <a href="#system" data-route="system" class="admin-nav-link">System</a>
-        <a href="#analytics" data-route="analytics" class="admin-nav-link">Analytics</a>
-        <a href="#rankings" data-route="rankings" class="admin-nav-link">Rankings</a>
-        <a href="#accounts/users" data-route="accounts" class="admin-nav-link">Accounts</a>
-        <a href="#support/bookings" data-route="support" class="admin-nav-link">Support</a>
+        <div class="admin-nav-section" data-nav-section="platform">
+          <button type="button" class="admin-nav-group-toggle" aria-expanded="true" aria-controls="admin-nav-section-platform">
+            <span>Platform</span>
+            <span class="admin-nav-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div id="admin-nav-section-platform" class="admin-nav-section-links">
+            <a href="#system" data-route="system" class="admin-nav-link">Site settings</a>
+            <a href="#analytics" data-route="analytics" class="admin-nav-link">Website visitors</a>
+            <a href="#rankings" data-route="rankings" class="admin-nav-link">Top performers</a>
+            <a href="#accounts/users" data-route="accounts" class="admin-nav-link">User accounts</a>
+            <a href="#support/bookings" data-route="support" class="admin-nav-link">Help requests</a>
+          </div>
+        </div>
 
-        <span class="admin-nav-group">Listings</span>
-        <a href="#cleanup/groups" data-route="cleanup" class="admin-nav-link relative">
-          Listing cleanup
-          <span id="admin-health-badge" class="hidden admin-nav-badge" aria-label="Events needing fixes">0</span>
-        </a>
-        <a href="#moderation" data-route="moderation" class="admin-nav-link">Moderation</a>
+        <div class="admin-nav-section" data-nav-section="listings">
+          <button type="button" class="admin-nav-group-toggle" aria-expanded="true" aria-controls="admin-nav-section-listings">
+            <span>Listings</span>
+            <span class="admin-nav-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div id="admin-nav-section-listings" class="admin-nav-section-links">
+            <a href="#cleanup/groups" data-route="cleanup" class="admin-nav-link relative">
+              Fix listings
+              <span id="admin-health-badge" class="hidden admin-nav-badge" aria-label="Events needing fixes">0</span>
+            </a>
+            <a href="#moderation" data-route="moderation" class="admin-nav-link">Reported items</a>
+          </div>
+        </div>
 
-        <span class="admin-nav-group">Revenue</span>
-        <a href="#financials" data-route="financials" class="admin-nav-link">Financials</a>
-        <a href="#revenue-targets" data-route="revenue-targets" class="admin-nav-link">Revenue targets</a>
-        <a href="#spotlight/events" data-route="spotlight" class="admin-nav-link">Spotlight</a>
-        <a href="#sponsorship" data-route="sponsorship" class="admin-nav-link">Sponsorship</a>
+        <div class="admin-nav-section" data-nav-section="revenue">
+          <button type="button" class="admin-nav-group-toggle" aria-expanded="true" aria-controls="admin-nav-section-revenue">
+            <span>Revenue</span>
+            <span class="admin-nav-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div id="admin-nav-section-revenue" class="admin-nav-section-links">
+            <a href="#financials" data-route="financials" class="admin-nav-link">Payments</a>
+            <a href="#revenue-targets" data-route="revenue-targets" class="admin-nav-link">Sales targets</a>
+            <a href="#spotlight/events" data-route="spotlight" class="admin-nav-link">Featured events</a>
+            <a href="#sponsorship" data-route="sponsorship" class="admin-nav-link">Ads &amp; sponsors</a>
+          </div>
+        </div>
 
-        <span class="admin-nav-group">Comms</span>
-        <a href="#email/campaigns" data-route="email" class="admin-nav-link">Email</a>
-        <a href="#social" data-route="social" class="admin-nav-link">Social posts</a>
+        <div class="admin-nav-section" data-nav-section="comms">
+          <button type="button" class="admin-nav-group-toggle" aria-expanded="true" aria-controls="admin-nav-section-comms">
+            <span>Email &amp; social</span>
+            <span class="admin-nav-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div id="admin-nav-section-comms" class="admin-nav-section-links">
+            <a href="#email/campaigns" data-route="email" class="admin-nav-link">Send emails</a>
+            <a href="#social" data-route="social" class="admin-nav-link">Social posts</a>
+          </div>
+        </div>
       </nav>
       <div class="admin-sidebar-foot">
+        <button type="button" id="admin-large-text-toggle" class="admin-nav-link admin-nav-link--button admin-large-text-toggle w-full text-left" aria-pressed="false">
+          Larger text
+        </button>
         <button type="button" id="admin-signout" class="admin-nav-link admin-nav-link--button w-full text-left">Sign out</button>
       </div>
     </aside>
 
     <div class="admin-main-column">
-      <header class="admin-page-header px-4 lg:px-5 py-2.5 flex items-center justify-between gap-3">
+      <header class="admin-page-header px-4 lg:px-5 flex items-center justify-between gap-3">
         <div class="flex items-start gap-3 min-w-0 flex-1">
-          <button type="button" id="admin-nav-toggle" class="lg:hidden shrink-0 mt-0.5 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-brand-900 hover:bg-slate-50" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open Command Center menu">
+          <button type="button" id="admin-nav-toggle" class="lg:hidden shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-lg border border-slate-200 bg-white text-brand-900 hover:bg-slate-50 text-xl" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open menu">
             <span aria-hidden="true">☰</span>
           </button>
           <div class="min-w-0">
-            <h2 class="text-base lg:text-lg font-bold text-brand-900 truncate" id="page-title">Overview</h2>
-            <p class="text-xs text-slate-500 line-clamp-2 admin-page-subtitle" id="page-subtitle">Platform health, action queue, and recent activity</p>
+            <h2 class="admin-page-title truncate" id="page-title">Home</h2>
+            <p class="admin-page-subtitle line-clamp-2" id="page-subtitle">Your to-do list, key numbers, and recent activity</p>
           </div>
         </div>
-        <button type="button" id="admin-data-badge" class="hidden sm:inline-flex shrink-0 items-center text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full hover:bg-slate-200 transition" title="Click to refresh counts and alerts from Supabase">
-          Supabase
-        </button>
+        <div class="admin-page-header-actions">
+          <button type="button" id="admin-guide-toggle" class="admin-guide-toggle hidden" hidden aria-expanded="false" aria-controls="admin-page-guide-wrap">
+            How to use this page
+          </button>
+          <button type="button" id="admin-data-badge" class="hidden sm:inline-flex shrink-0 admin-data-badge" title="Click to refresh the numbers below">
+            Last updated
+          </button>
+        </div>
       </header>
+      <div id="admin-page-guide-wrap" class="admin-page-guide-wrap hidden" hidden aria-label="Step-by-step guide">
+        <div class="admin-page-guide-inner px-4 lg:px-5">
+          <div class="admin-page-guide">
+            <div class="admin-page-guide-head">
+              <h3 id="admin-page-guide-title">How to use this page</h3>
+              <button type="button" id="admin-page-guide-close" class="admin-page-guide-close" aria-label="Close guide">&times;</button>
+            </div>
+            <ol id="admin-page-guide-steps" class="admin-page-guide-steps"></ol>
+          </div>
+        </div>
+      </div>
       <div id="admin-main" class="p-3 lg:p-5 max-w-7xl mx-auto min-w-0 w-full">
         <div class="space-y-5" id="dashboard-boot">
           <section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">
@@ -104,16 +151,43 @@
               <p class="admin-stat-card-sub">Loading…</p>
             </article>
             <article class="admin-stat-card min-w-0">
-              <p class="admin-stat-card-label">Hub accounts</p>
+              <p class="admin-stat-card-label">Member accounts</p>
               <p class="admin-stat-card-value">…</p>
               <p class="admin-stat-card-sub">Loading…</p>
             </article>
           </section>
 
+          <section class="admin-dash-section">
+            <div class="admin-dash-section-head">
+              <h3>Quick links</h3>
+              <p>Jump straight to the pages you use most often.</p>
+            </div>
+            <div class="admin-dash-section-body">
+              <div class="admin-shortcut-grid">
+                <a href="#cleanup/groups" class="admin-shortcut">
+                  <span class="admin-shortcut-label">Fix listings</span>
+                  <span class="admin-shortcut-desc">Group pages and events</span>
+                </a>
+                <a href="#financials" class="admin-shortcut">
+                  <span class="admin-shortcut-label">Payments</span>
+                  <span class="admin-shortcut-desc">Payouts and Stripe</span>
+                </a>
+                <a href="#moderation" class="admin-shortcut">
+                  <span class="admin-shortcut-label">Reported items</span>
+                  <span class="admin-shortcut-desc">Reviews and listings</span>
+                </a>
+                <a href="#analytics" class="admin-shortcut">
+                  <span class="admin-shortcut-label">Website visitors</span>
+                  <span class="admin-shortcut-desc">Traffic and pages</span>
+                </a>
+              </div>
+            </div>
+          </section>
+
           <section class="admin-dash-section" id="dashboard-action-section">
             <div class="admin-dash-section-head">
-              <h3>Action queue</h3>
-              <p>Items that need a decision or follow-up — sorted by priority.</p>
+              <h3>Things to do</h3>
+              <p>Work through these in order — urgent items are listed first.</p>
             </div>
             <div class="admin-dash-section-body">
               <div class="admin-action-queue min-h-[6rem]" id="dashboard-action-queue">
@@ -149,7 +223,7 @@
             <div class="admin-dash-section min-w-0">
               <div class="admin-dash-section-head">
                 <h3>Recent activity</h3>
-                <p>Registrations, events, and reviews — test data excluded.</p>
+                <p>New sign-ups, events, and reviews.</p>
               </div>
               <div class="admin-dash-section-body pt-0">
                 <ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]">
@@ -159,8 +233,8 @@
             </div>
             <div class="admin-dash-section min-w-0">
               <div class="admin-dash-section-head">
-                <h3>Platform snapshot</h3>
-                <p>Key counts from Supabase — not visitor traffic.</p>
+                <h3>At a glance</h3>
+                <p>Key numbers from the database.</p>
               </div>
               <div class="admin-dash-section-body pt-0">
                 <div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div>
@@ -170,10 +244,10 @@
 
           <a href="#analytics" class="admin-quick-link group">
             <div>
-              <p class="admin-quick-link-title">Web Analytics on Vercel</p>
-              <p class="admin-quick-link-desc">Visitors, top pages, referrers, and device breakdown.</p>
+              <p class="admin-quick-link-title">Website visitor stats</p>
+              <p class="admin-quick-link-desc">See how many people visit the site, which pages they view, and where they come from.</p>
             </div>
-            <span class="admin-action-go group-hover:text-brand-900">Open →</span>
+            <span class="admin-action-btn">View stats</span>
           </a>
         </div>
       </div>
@@ -200,6 +274,6 @@
   <script src="../js/sponsor-hub.js?v=20260721a" defer></script>
   <script src="../js/cms-ad-blocks.js?v=20260721a" defer></script>
   <script src="../js/admin-social-posts.js?v=20260730" defer></script>
-  <script src="../js/admin-app.js?v=20260722a" defer></script>
+  <script src="../js/admin-app.js?v=20260722d" defer></script>
 </body>
 </html>
