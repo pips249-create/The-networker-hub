@@ -37,7 +37,12 @@
   background: var(--filter-surface);
   border: none;
   box-shadow: 0 12px 36px rgba(74, 44, 92, 0.28);
-  overflow: hidden;
+  overflow: visible;
+}
+
+.events-filter-shell:has(.filter-field-search:focus-within) {
+  position: relative;
+  z-index: 30;
 }
 
 .events-results-meta {
@@ -215,6 +220,8 @@
   margin-bottom: 14px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--border-soft);
+  position: relative;
+  z-index: 2;
 }
 
 .filter-bar-location-group {
