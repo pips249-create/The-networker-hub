@@ -373,6 +373,7 @@ body.advertising-page {
   margin: 0;
   padding: 14px 16px 18px;
   background: #fff;
+  border-top: 1px solid #e6e0e2;
 }
 
 .ad-full-email-mini-row-label {
@@ -386,10 +387,16 @@ body.advertising-page {
 }
 
 .ad-full-email-mini-row-logos {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  flex-wrap: wrap;
+  align-items: center;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e6e0e2;
+  background: #fff;
 }
 
 .ad-full-email-mini-row-logos img {

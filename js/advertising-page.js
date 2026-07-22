@@ -384,9 +384,8 @@
     });
   }
 
-  function renderMiniSponsorEmailPreview(container, block) {
+  function renderMiniSponsorEmailPreview(container) {
     if (!container) return;
-    block = block || DEMO_SPONSOR;
     var sponsors = DEMO_MINI_SPONSORS.slice();
     var logoCells = sponsors
       .map(function (item) {
@@ -409,7 +408,8 @@
       })
       .join('');
 
-    renderSponsorEmailPreview(container, block, {
+    renderSponsorEmailPreview(container, null, {
+      skipMainSponsor: true,
       kicker: 'Booking confirmed',
       title: 'You\u2019re booked in',
       lede: 'Your place is reserved. We\u2019ve sent the details below. ' + LOREM_SHORT,
@@ -423,7 +423,8 @@
         LOREM_MEDIUM +
         '</p>' +
         '</div>' +
-        '</div>' +
+        '</div>',
+      beforeFooterHtml:
         '<div class="ad-full-email-mini-row">' +
         '<p class="ad-full-email-mini-row-label">Sponsored partners</p>' +
         '<div class="ad-full-email-mini-row-logos">' +
@@ -642,13 +643,13 @@
 
   function renderSponsorEmailPreview(container, block, config) {
     if (!container) return;
-    if (!block || block.active === false) {
+    config = config || {};
+    if (!config.skipMainSponsor && (!block || block.active === false)) {
       renderEmptyPreview(container);
       return;
     }
 
-    config = config || {};
-    var sponsorRow = buildSponsorEmailRow(block);
+    var sponsorRow = config.skipMainSponsor ? '' : buildSponsorEmailRow(block);
     container.innerHTML =
       '<div class="ad-full-email-card">' +
       '<div class="ad-full-email-header">' +
@@ -674,6 +675,7 @@
       '</p>' +
       '</div>' +
       (config.detailHtml || '') +
+      (config.beforeFooterHtml || '') +
       '<div class="ad-full-email-footer">' +
       '<p class="ad-full-email-footer-note">Questions? Lorem ipsum dolor sit amet — reply to this email or visit your account.</p>' +
       '</div>' +
@@ -792,7 +794,7 @@
     initExampleGallery(document.getElementById('ad-opp-listing-gallery'));
 
     renderMiniInShell(document.getElementById('ad-live-mini-event'), DEMO_MINI_SPONSORS, 'event_page_carousel_ads');
-    renderMiniSponsorEmailPreview(document.getElementById('ad-live-mini-event-email'), DEMO_SPONSOR);
+    renderMiniSponsorEmailPreview(document.getElementById('ad-live-mini-event-email'));
     renderMiniInShell(
       document.getElementById('ad-live-mini-organisers-dir'),
       DEMO_MINI_SPONSORS,
