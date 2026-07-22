@@ -179,9 +179,17 @@
     return origin + '/events/';
   }
 
+  const promoteSection = document.getElementById('ep-promote-section');
+  const viewListingLink = document.getElementById('ep-view-listing');
+
+  function setPromoteVisibility(isLive) {
+    if (promoteSection) promoteSection.hidden = !isLive;
+  }
+
   function setShareUrls(title) {
     const urlInput = document.getElementById('ep-share-url');
     if (urlInput) urlInput.value = listingUrl;
+    if (viewListingLink) viewListingLink.href = listingUrl;
     updateShareQuickLinks(title, sharePack && sharePack.caption);
   }
 
@@ -407,7 +415,7 @@
       lead.textContent =
         'Your ' +
         eventIds.length +
-        ' dates are live on the hub. Preview the main listing below, then share it with your network.';
+        ' dates are live on the hub. Preview the main listing below — then share it or choose featured placement if you like.';
     }
 
     setShareUrls(title);
@@ -433,14 +441,15 @@
 
     function markLiveOnBrowse() {
       const title = document.getElementById('ep-title');
-      if (title) title.textContent = 'Your event is now published';
+      if (title) title.textContent = 'Your listing is live';
       if (previewHint) {
         previewHint.textContent = 'This is how your event appears on the browse page.';
       }
       if (lead) {
         lead.textContent =
-          'Attendees can find it on the hub. Share it with your network, then preview your listing or choose featured placement.';
+          'Attendees can find your event on the hub. Preview your listing below — then share it or choose featured placement if you like.';
       }
+      setPromoteVisibility(true);
     }
 
     function markPendingApproval() {
@@ -454,6 +463,7 @@
         lead.textContent =
           'Your event is saved but is not on the public browse page yet. Check tickets, refund policy, VAT, and event details, then publish again.';
       }
+      setPromoteVisibility(false);
     }
 
     if (!primaryId) {
