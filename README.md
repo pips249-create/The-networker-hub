@@ -10,7 +10,7 @@ Member and organiser platform for networking events, exhibitions, and training a
 |---------------|---------|
 | **`PIPS-TODO.md`** | **Pip's to-do list** — tabbed checklist for things to do later (migrations, Resend, etc.) |
 | `index.html` | Hub home |
-| `events/index.html` | Events & exhibitions (filters, Premium Spotlight, Sponsor Hub) |
+| `events/index.html` | Events & exhibitions (filters, Premium Spotlight, Powered by hero) |
 | `api/events.js` | Vercel function — loads events from Airtable |
 | `js/events.js` | Renders listings from the API |
 | `css/hub.css` | Shared styles |

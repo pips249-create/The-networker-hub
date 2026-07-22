@@ -3,7 +3,7 @@
  */
 (function () {
   var SPONSOR_ENQUIRE_MAILTO =
-    'mailto:rosie@thenetworkerhub.com?subject=' + encodeURIComponent('Sponsor Hub enquiry');
+    'mailto:rosie@thenetworkerhub.com?subject=' + encodeURIComponent('Powered by hero enquiry');
 
   var SPONSOR_SLOT_AD_PATHS = {
     events_sponsor_hub: '/advertising#ad-panel-events',
@@ -58,7 +58,7 @@
   function sponsorTaglineFromBlock(block) {
     if (window.CmsSponsorFields) return window.CmsSponsorFields.tagline(block);
     var title = String(block.title || '').trim();
-    if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    if (title && title.toLowerCase() !== 'sponsor hub' && title.toLowerCase() !== 'powered by') return title;
     var subtitle = String(block.subtitle || '').trim();
     if (subtitle) return subtitle;
     var temp = document.createElement('div');

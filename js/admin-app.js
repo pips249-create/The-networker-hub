@@ -474,9 +474,9 @@
     {
       key: 'events_sponsor_hub',
       group: 'Browse pages',
-      label: 'Events browse — Hero Sponsor Hub',
+      label: 'Events browse — Powered by hero',
       preview: 'hero',
-      help: 'Hero Sponsor Hub on the Events browse page (/events/). Large clickable logo only when a logo is uploaded.',
+      help: 'Powered by hero on the Events browse page (/events/). Large clickable logo only when a logo is uploaded.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -485,9 +485,9 @@
     {
       key: 'organisers_sponsor_hub',
       group: 'Browse pages',
-      label: 'Organisers browse — Hero Sponsor Hub',
+      label: 'Organisers browse — Powered by hero',
       preview: 'hero',
-      help: 'Hero Sponsor Hub when visitors switch to Organisers on /events/. Separate from the Events browse ad.',
+      help: 'Powered by hero when visitors switch to Organisers on /events/. Separate from the Events browse ad.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -496,9 +496,9 @@
     {
       key: 'opportunities_sponsor_hub',
       group: 'Browse pages',
-      label: 'Opportunities browse — Hero Sponsor Hub',
+      label: 'Opportunities browse — Powered by hero',
       preview: 'hero',
-      help: 'Hero Sponsor Hub on the Business opportunities browse page.',
+      help: 'Powered by hero on the Business opportunities browse page.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -5748,7 +5748,7 @@
   function sponsorTaglineFromBlock(block) {
     if (window.CmsSponsorFields) return window.CmsSponsorFields.tagline(block);
     var title = String(block.title || '').trim();
-    if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    if (title && title.toLowerCase() !== 'sponsor hub' && title.toLowerCase() !== 'powered by') return title;
     var subtitle = String(block.subtitle || '').trim();
     if (subtitle) return subtitle;
     var temp = document.createElement('div');
@@ -5959,7 +5959,7 @@
                   ? 'Sidebar ad'
                   : slot.preview === 'banner'
                     ? 'In-content banner'
-                    : 'Hero Sponsor Hub';
+                    : 'Powered by hero';
               return (
                 '<a href="#sponsorship/' +
                 esc(slot.key) +
@@ -6328,7 +6328,7 @@
       '</div></form>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 min-w-0">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
-      '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Logo, tagline, and CTA — matches the browse page hero Sponsor Hub block.</p>' +
+      '<p id="sponsor-preview-hint" class="text-xs text-slate-500 mb-4">Logo, tagline, and CTA — matches the browse page Powered by hero block.</p>' +
       '<div id="sponsor-preview" class="max-w-md"></div>' +
       '</section></div></div>';
 
@@ -6782,7 +6782,7 @@
           renderPreview();
         })
         .catch(function (err) {
-          setSponsorStatus(err.message || 'Could not publish Sponsor Hub.', 'error');
+          setSponsorStatus(err.message || 'Could not publish Powered by hero.', 'error');
         })
         .finally(function () {
           if (btn) btn.disabled = false;

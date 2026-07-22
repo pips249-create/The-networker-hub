@@ -141,7 +141,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How can I advertise my business on The Networker Hub?',
     answer:
-      'Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.',
+      'Paid hero sponsor placements are available on the events directory, organisers browse, and business opportunities — labelled Powered by on browse pages — see /advertising for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.',
     category: 'organisers',
     icon: '📣',
   },

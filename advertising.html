@@ -278,9 +278,10 @@
             <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
             <ul>
               <li>Logo + CTA beside local intro copy — <strong>website only</strong>, not in emails.</li>
-              <li>One partner per city per month · 3-city pack available.</li>
+              <li>One partner per city — rolling monthly subscription · 3-city pack available.</li>
             </ul>
-            <p class="ad-package-note"><strong>Available:</strong> <span id="city-partner-available-list">Loading cities…</span></p>
+            <p class="ad-package-note"><strong>Available now:</strong> <span id="city-partner-available-list">Loading cities…</span></p>
+            <p class="ad-package-note city-partner-booked-summary" id="city-partner-booked-summary" hidden><strong>Currently sponsored:</strong> <span id="city-partner-booked-summary-list"></span></p>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
             <p class="ad-preview-label">Example</p>
@@ -304,23 +305,22 @@
                 </div>
               </div>
             </div>
-            <p class="ad-preview-label ad-preview-label--checkout">Apply</p>
-            <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout.</p>
+            <p class="ad-preview-label ad-preview-label--checkout">Checkout</p>
+            <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout · monthly subscription.</p>
             <div class="city-partner-checkout" id="city-partner-checkout">
+              <p class="city-partner-section-label" id="city-partner-available-heading">Available now</p>
               <div class="city-partner-city-grid" id="city-partner-city-list"></div>
+              <div class="city-partner-booked-wrap" id="city-partner-booked-wrap" hidden>
+                <p class="city-partner-section-label">Currently sponsored</p>
+                <ul class="city-partner-booked-list" id="city-partner-booked-list"></ul>
+                <p class="city-partner-booked-note">These cities reopen when the current partner’s subscription ends. <a href="mailto:rosie@thenetworkerhub.com?subject=City%20Partner%20waitlist">Join the waitlist</a> and we’ll email you when a city opens up.</p>
+              </div>
               <div class="city-partner-quote" id="city-partner-quote">
                 <p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>
               </div>
-              <label class="city-partner-duration-label" for="city-partner-duration">How many months would you like?</label>
-              <select class="city-partner-duration" id="city-partner-duration">
-                <option value="">Choose a duration</option>
-                <option value="1">1 month</option>
-                <option value="3">3 months</option>
-                <option value="6">6 months</option>
-                <option value="12">12 months</option>
-              </select>
-              <p class="city-partner-review-note">Reviewed before payment — not reserved until approved.</p>
-              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Apply for selected cities →</button>
+              <label class="city-partner-email-label" for="city-partner-email">Work email</label>
+              <input type="email" id="city-partner-email" class="city-partner-email" placeholder="you@company.com" autocomplete="email">
+              <button type="button" class="ad-package-cta city-partner-submit" id="city-partner-submit" disabled>Checkout securely →</button>
               <p class="city-partner-status" id="city-partner-status" role="status"></p>
             </div>
           </div>
@@ -860,7 +860,7 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260612g"></script>
 <script src="js/advertising-page.js?v=20260722ad18"></script>
-<script src="js/city-partner-advertising.js?v=20260722cp6"></script>
+<script src="js/city-partner-advertising.js?v=20260722cp8"></script>
 
 </body>
 </html>

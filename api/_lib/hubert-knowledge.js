@@ -126,7 +126,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid Sponsor Hub placements appear on event and opportunity pages — clearly labelled Sponsored. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
+      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list). Featured placement may be available — ask rosie@thenetworkerhub.com.',
   },
   {

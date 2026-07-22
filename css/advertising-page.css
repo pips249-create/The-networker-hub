@@ -3844,6 +3844,90 @@ body.advertising-page {
   border: 1px solid rgba(109, 92, 232, 0.15);
 }
 
+.city-partner-section-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #625f73;
+}
+
+.city-partner-booked-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(50, 43, 120, 0.1);
+}
+
+.city-partner-booked-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.city-partner-booked-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(50, 43, 120, 0.1);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.city-partner-booked-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b2648;
+}
+
+.city-partner-booked-status {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #625f73;
+}
+
+.city-partner-booked-waitlist {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6d5ce8;
+  text-decoration: none;
+}
+
+.city-partner-booked-waitlist:hover,
+.city-partner-booked-waitlist:focus-visible {
+  text-decoration: underline;
+}
+
+.city-partner-booked-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #625f73;
+}
+
+.city-partner-booked-note a {
+  color: #6d5ce8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.city-partner-booked-note a:hover,
+.city-partner-booked-note a:focus-visible {
+  text-decoration: underline;
+}
+
+.city-partner-booked-summary {
+  color: #625f73;
+}
+
 .city-partner-city-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3911,13 +3995,13 @@ body.advertising-page {
   color: #1c2040;
 }
 
-.city-partner-duration-label {
+.city-partner-email-label {
   font-size: 12px;
   font-weight: 700;
   color: #4a4560;
 }
 
-.city-partner-duration {
+.city-partner-email {
   width: 100%;
   box-sizing: border-box;
   border-radius: 10px;
@@ -3926,13 +4010,7 @@ body.advertising-page {
   background: var(--surface-warm);
   color: #2b2648;
   font: inherit;
-}
-
-.city-partner-review-note {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #625f73;
+  font-size: 14px;
 }
 
 .city-partner-submit {

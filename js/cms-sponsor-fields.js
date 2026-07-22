@@ -7,7 +7,7 @@
   function tagline(block) {
     if (!block) return '';
     var title = String(block.title || '').trim();
-    if (title && title.toLowerCase() !== 'sponsor hub') return title;
+    if (title && title.toLowerCase() !== 'sponsor hub' && title.toLowerCase() !== 'powered by') return title;
     var subtitle = String(block.subtitle || '').trim();
     if (subtitle) return subtitle;
     var temp = document.createElement('div');

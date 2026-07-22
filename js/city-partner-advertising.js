@@ -29,11 +29,16 @@
 
   var cityListEl = document.getElementById('city-partner-city-list');
   var quoteEl = document.getElementById('city-partner-quote');
-  var durationEl = document.getElementById('city-partner-duration');
+  var emailEl = document.getElementById('city-partner-email');
   var submitBtn = document.getElementById('city-partner-submit');
   var statusEl = document.getElementById('city-partner-status');
   var launchNoteEl = document.getElementById('city-partner-launch-note');
   var availableListEl = document.getElementById('city-partner-available-list');
+  var bookedSummaryEl = document.getElementById('city-partner-booked-summary');
+  var bookedSummaryListEl = document.getElementById('city-partner-booked-summary-list');
+  var bookedWrapEl = document.getElementById('city-partner-booked-wrap');
+  var bookedListEl = document.getElementById('city-partner-booked-list');
+  var availableHeadingEl = document.getElementById('city-partner-available-heading');
 
   var state = {
     cities: [],
@@ -77,14 +82,8 @@
       .filter(Boolean);
   }
 
-  function selectedMonths() {
-    var months = durationEl ? Number(durationEl.value) : 0;
-    return [1, 3, 6, 12].indexOf(months) !== -1 ? months : 0;
-  }
-
   function updateQuote() {
     var slugs = selectedSlugs();
-    var months = selectedMonths();
     if (!quoteEl) return;
 
     if (!slugs.length) {
@@ -122,7 +121,7 @@
       (count === 1 ? 'city' : 'cities') +
       ' selected</p>';
 
-    if (submitBtn) submitBtn.disabled = !months;
+    if (submitBtn) submitBtn.disabled = !slugs.length;
   }
 
   function renderCities(cities) {
@@ -164,12 +163,52 @@
       return city.available;
     });
     if (!available.length) {
-      availableListEl.textContent = 'No cities available right now — join the waitlist.';
+      availableListEl.textContent = 'None right now — see sponsored cities below or join the waitlist.';
       return;
     }
     availableListEl.textContent = available.map(function (city) {
       return city.name;
     }).join(', ');
+  }
+
+  function renderBookedCities(cities) {
+    var booked = (cities || []).filter(function (city) {
+      return city.live;
+    });
+    var hasBooked = booked.length > 0;
+
+    if (bookedSummaryEl) bookedSummaryEl.hidden = !hasBooked;
+    if (bookedWrapEl) bookedWrapEl.hidden = !hasBooked;
+    if (availableHeadingEl) availableHeadingEl.hidden = !hasBooked;
+
+    if (!hasBooked) return;
+
+    var labels = booked.map(function (city) {
+      return city.name;
+    });
+
+    if (bookedSummaryListEl) {
+      bookedSummaryListEl.textContent = labels.join(', ');
+    }
+
+    if (bookedListEl) {
+      bookedListEl.innerHTML = booked
+        .map(function (city) {
+          var waitlistSubject = 'City Partner waitlist — ' + city.name;
+          return (
+            '<li class="city-partner-booked-item">' +
+            '<span class="city-partner-booked-name">' +
+            esc(city.name) +
+            '</span>' +
+            '<span class="city-partner-booked-status">Sponsored · reopens when subscription ends</span>' +
+            '<a class="city-partner-booked-waitlist" href="mailto:rosie@thenetworkerhub.com?subject=' +
+            encodeURIComponent(waitlistSubject) +
+            '">Waitlist</a>' +
+            '</li>'
+          );
+        })
+        .join('');
+    }
   }
 
   function loadAvailability() {
@@ -215,6 +254,7 @@
 
         renderCities(state.cities);
         renderAvailableList(state.cities);
+        renderBookedCities(state.cities);
         setStatus('');
       })
       .catch(function (err) {
@@ -222,59 +262,43 @@
       });
   }
 
-  if (durationEl) durationEl.addEventListener('change', updateQuote);
-
   if (submitBtn) {
     submitBtn.addEventListener('click', function () {
       var slugs = selectedSlugs();
-      var months = selectedMonths();
+      var email = emailEl ? String(emailEl.value || '').trim() : '';
       if (!slugs.length) {
         setStatus('Select at least one city.', 'error');
         return;
       }
-      if (!months) {
-        setStatus('Choose how many months you would like.', 'error');
-        if (durationEl) durationEl.focus();
+      if (!email) {
+        setStatus('Enter your work email to continue.', 'error');
+        if (emailEl) emailEl.focus();
         return;
       }
 
-      var selected = state.cities.filter(function (city) {
-        return slugs.indexOf(city.slug) !== -1;
-      });
-      var count = slugs.length;
-      var bundles = Math.floor(count / 3);
-      var singles = count % 3;
-      var pricing = state.pricing || { singleMonthlyGbp: 29, bundle3MonthlyGbp: 75 };
-      var monthlyNet = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
-      var priced = priceWithVat(monthlyNet);
-      var names = selected.map(function (city) {
-        return city.name;
-      });
-      var subject = 'City Partner application — ' + names.join(', ');
-      var body = [
-        'Hello Rosie,',
-        '',
-        'I would like to apply for City Partner placement.',
-        '',
-        'Selected cities: ' + names.join(', '),
-        'Requested duration: ' + months + ' ' + (months === 1 ? 'month' : 'months'),
-        'Monthly price (ex VAT): ' + formatGbp(priced.net),
-        'VAT (20%): ' + formatGbp(priced.vat),
-        'Monthly price (incl. VAT): ' + formatGbp(priced.gross),
-        '',
-        'Organisation:',
-        'Website:',
-        'What we would like to promote:',
-        '',
-        'I understand that applications are reviewed before payment and that the cities are not reserved until approved.',
-      ].join('\n');
+      submitBtn.disabled = true;
+      setStatus('Redirecting to secure checkout…');
 
-      setStatus('Opening your email app…');
-      window.location.href =
-        'mailto:rosie@thenetworkerhub.com?subject=' +
-        encodeURIComponent(subject) +
-        '&body=' +
-        encodeURIComponent(body);
+      fetch('/api/city-partner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, cities: slugs }),
+      })
+        .then(readJsonResponse)
+        .then(function (result) {
+          if (!result.ok || !result.data || !result.data.checkoutUrl) {
+            throw new Error(
+              (result.data && (result.data.message || result.data.error)) ||
+                'Checkout could not be started'
+            );
+          }
+          window.location.href = result.data.checkoutUrl;
+        })
+        .catch(function (err) {
+          submitBtn.disabled = false;
+          updateQuote();
+          setStatus(err.message || 'Checkout failed — try again or email rosie@thenetworkerhub.com', 'error');
+        });
     });
   }
 

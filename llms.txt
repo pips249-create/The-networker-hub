@@ -101,7 +101,7 @@ There is no monthly subscription to list events. Use the organiser dashboard at 
 Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.
 
 ## How can I advertise my business on The Networker Hub?
-Paid Sponsor Hub placements are available on the events directory, organisers browse, and business opportunities — see /advertising for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.
+Paid hero sponsor placements are available on the events directory, organisers browse, and business opportunities — labelled Powered by on browse pages — see /advertising for guide pricing. Email rosie@thenetworkerhub.com. You can also list events or business opportunities to reach the network organically.
 
 ## How do organisers download attendee lists?
 Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, standard A4 sticker sheets) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.

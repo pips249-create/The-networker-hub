@@ -6,7 +6,7 @@
 function sponsorTagline(block) {
   if (!block) return '';
   const title = String(block.title || '').trim();
-  if (title && title.toLowerCase() !== 'sponsor hub') return title;
+  if (title && title.toLowerCase() !== 'sponsor hub' && title.toLowerCase() !== 'powered by') return title;
   const subtitle = String(block.subtitle || '').trim();
   if (subtitle) return subtitle;
   const body = String(block.body || '');

@@ -130,7 +130,7 @@
     container.innerHTML =
       '<aside class="cms-ad-sidebar sponsor-hub sponsor-hub--active">' +
       '<span class="sponsor-hub-badge">Sponsored</span>' +
-      '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Sponsor Hub</span></div>' +
+      '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Powered by</span></div>' +
       logoMarkup(logo, 'sponsor-logo', 'sponsor-logo-placeholder') +
       (company ? '<p class="sponsor-company">' + esc(company) + '</p>' : '') +
       (tagline ? '<p class="sponsor-tagline">' + taglineHtml(tagline) + '</p>' : '') +

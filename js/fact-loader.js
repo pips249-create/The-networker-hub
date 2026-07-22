@@ -129,12 +129,7 @@
       ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'Glasgow ranks as the UK\u2019s second-best city for networking, with an index score of 6.71 out of 10.',
-      label: 'insight',
-      ...AVID_PANDA_SOURCE,
-    },
-    {
-      text: 'Over \u00a3205 million passed through Glasgow networking groups in 2024.',
+      text: 'Glasgow ranks as the UK\u2019s second-best city for networking, with an index score of 6.71 out of 10 in 2024.',
       label: 'insight',
       ...AVID_PANDA_SOURCE,
     },
