@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722tbl2">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722cp16">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -126,10 +126,14 @@
             <p class="ad-preview-label ad-preview-label--checkout">Checkout</p>
             <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout · monthly subscription.</p>
             <div class="city-partner-checkout" id="city-partner-checkout">
-              <details class="city-partner-available-panel" id="city-partner-available-panel">
-                <summary class="city-partner-section-label city-partner-section-label--toggle">
-                  <span>Available now</span>
+              <details class="city-partner-available-panel" id="city-partner-available-panel" open>
+                <summary class="city-partner-city-picker-trigger">
+                  <span class="city-partner-city-picker-copy">
+                    <strong>Select your cities</strong>
+                    <span class="city-partner-city-picker-hint">Click to browse, select one or more, then see pricing below</span>
+                  </span>
                   <span class="city-partner-available-count" id="city-partner-available-count-checkout">…</span>
+                  <span class="city-partner-city-picker-chevron" aria-hidden="true"></span>
                 </summary>
                 <div class="city-partner-city-grid" id="city-partner-city-list"></div>
               </details>
@@ -1358,7 +1362,7 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
 <script src="js/advertising-page.js?v=20260722tbl1"></script>
-<script src="js/city-partner-advertising.js?v=20260722tbl2"></script>
+<script src="js/city-partner-advertising.js?v=20260722cp16"></script>
 
 </body>
 </html>

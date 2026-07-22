@@ -245,8 +245,8 @@
   }
 
   function formatAvailableCount(count) {
-    if (!count) return '(none open)';
-    return '(' + count + ' ' + (count === 1 ? 'city' : 'cities') + ')';
+    if (!count) return 'None open';
+    return count + ' available';
   }
 
   function renderAvailableList(cities) {
@@ -258,7 +258,10 @@
     var countLabel = formatAvailableCount(available.length);
 
     if (availableCountCheckoutEl) availableCountCheckoutEl.textContent = countLabel;
-    if (availablePanelEl) availablePanelEl.hidden = !(cities || []).length;
+    if (availablePanelEl) {
+      availablePanelEl.hidden = !(cities || []).length;
+      if (available.length) availablePanelEl.open = true;
+    }
   }
 
   function renderBookedCities(cities) {
