@@ -33,6 +33,20 @@
     online: 'Online',
   };
 
+  const SUPPORT_EMAIL = 'hello@thenetworkerhub.com';
+
+  function ticketSalesLockBannerHtml() {
+    return (
+      '🔒 <strong>Ticket sales are live.</strong> Venue, date, format, and address are locked. ' +
+      'You can still update the online join link — ticket holders are emailed when it changes. ' +
+      'For other changes, contact <a href="mailto:' +
+      SUPPORT_EMAIL +
+      '">' +
+      SUPPORT_EMAIL +
+      '</a> or cancel the event from My Events.'
+    );
+  }
+
   function normalizeEventFormat(raw) {
     const s = String(raw || '')
       .toLowerCase()
@@ -265,7 +279,7 @@
     if (venueBlock) venueBlock.classList.toggle('is-visible', showVenue);
     if (onlineBlock) onlineBlock.classList.toggle('is-visible', showOnline);
     setFormatPanelFieldsDisabled(venueBlock, !showVenue || currentEventLocked || currentSeriesDateOnly);
-    setFormatPanelFieldsDisabled(onlineBlock, !showOnline || currentEventLocked || currentSeriesDateOnly);
+    setFormatPanelFieldsDisabled(onlineBlock, !showOnline || currentSeriesDateOnly);
     syncFormatToggleButtons();
   }
 
@@ -411,17 +425,18 @@
   function applyLockUi(locked) {
     currentEventLocked = Boolean(locked);
     const banner = document.getElementById('ee-lock-banner');
-    if (banner) banner.hidden = !currentEventLocked;
-    ['#ee-venue', '#ee-address1', '#ee-city', '#ee-postcode', '#ee-platform', '#ee-join-link'].forEach(
-      (sel) => {
-        const el = document.querySelector(sel);
-        if (el) {
-          el.disabled = currentEventLocked || currentSeriesDateOnly;
-          const field = el.closest('.ee-field');
-          if (field) field.classList.toggle('is-locked', currentEventLocked || currentSeriesDateOnly);
-        }
+    if (banner) {
+      banner.hidden = !currentEventLocked;
+      if (currentEventLocked) banner.innerHTML = ticketSalesLockBannerHtml();
+    }
+    ['#ee-venue', '#ee-address1', '#ee-city', '#ee-postcode'].forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.disabled = currentEventLocked || currentSeriesDateOnly;
+        const field = el.closest('.ee-field');
+        if (field) field.classList.toggle('is-locked', currentEventLocked || currentSeriesDateOnly);
       }
-    );
+    });
     document.querySelectorAll('[data-ee-format]').forEach((btn) => {
       btn.disabled = currentEventLocked || currentSeriesDateOnly;
     });

@@ -182,13 +182,24 @@
     return blockers;
   }
 
+  function eventTicketsSoldCount(ev) {
+    if (!ev) return 0;
+    const label = String(ev.ticketsSoldLabel || '').trim();
+    if (label) {
+      const slash = label.match(/^(\d+)\s*\/\s*(\d+|—|-)/);
+      if (slash) return Number(slash[1]) || 0;
+      const soldWord = label.match(/^(\d+)\s+sold$/i);
+      if (soldWord) return Number(soldWord[1]) || 0;
+      if (/^\d+$/.test(label)) return Number(label) || 0;
+    }
+    const direct = Number(ev.ticketsSold);
+    return Number.isFinite(direct) && direct > 0 ? direct : 0;
+  }
+
   function eventHasTicketSales(ev) {
     if (!ev) return false;
     if (ev.locked) return true;
-    const sold = Number(ev.ticketsSold);
-    if (Number.isFinite(sold) && sold > 0) return true;
-    const label = String(ev.ticketsSoldLabel || '').trim();
-    return /^\d+\s+sold/i.test(label) || /^\d+\/\d+/.test(label);
+    return eventTicketsSoldCount(ev) > 0;
   }
 
   function applyTicketsLockUi(ev) {
@@ -221,18 +232,42 @@
   }
 
   async function api(path, opts) {
-    const res = await fetch(path, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...(opts && opts.headers) },
-      ...opts,
-    });
-    let data = {};
-    try {
-      data = await res.json();
-    } catch {
-      data = {};
+    opts = opts || {};
+    const timeoutMs = Number(opts.timeoutMs) || 0;
+    const controller = timeoutMs > 0 ? new AbortController() : null;
+    let timer = null;
+    if (controller) {
+      timer = setTimeout(function () {
+        controller.abort();
+      }, timeoutMs);
     }
-    return { ok: res.ok, status: res.status, data };
+    try {
+      const res = await fetch(path, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+        method: opts.method,
+        body: opts.body,
+        signal: controller ? controller.signal : opts.signal,
+      });
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+      return { ok: res.ok, status: res.status, data };
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        return {
+          ok: false,
+          status: 0,
+          data: { error: 'timeout', message: 'Request timed out. Try again.' },
+        };
+      }
+      throw err;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 
   function formatDateShort(iso) {
@@ -344,15 +379,30 @@
   }
 
   function loadSeriesMeta() {
-    const hadUrlIds = eventIds.length > 0;
+    const urlIds = eventIds.slice();
+    const hadUrlIds = urlIds.length > 0;
     try {
       const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
-      if (raw) seriesMeta = { ...seriesMeta, ...JSON.parse(raw) };
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (hadUrlIds) {
+        const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
+          .map((id) => String(id).trim())
+          .filter(Boolean);
+        const sameIds =
+          storedIds.length === urlIds.length &&
+          urlIds.every((id) => storedIds.includes(id));
+        if (sameIds) {
+          seriesMeta = { ...seriesMeta, ...parsed };
+        }
+      } else {
+        seriesMeta = { ...seriesMeta, ...parsed };
+        if (parsed.eventIds && parsed.eventIds.length) {
+          eventIds = parsed.eventIds;
+        }
+      }
     } catch {
       /* ignore */
-    }
-    if (!hadUrlIds && seriesMeta.eventIds && seriesMeta.eventIds.length) {
-      eventIds = seriesMeta.eventIds;
     }
   }
 
@@ -455,59 +505,16 @@
     const anchorId = eventIds[0];
     if (!anchorId) return;
 
-    const anchor = anchorEvent || (seriesMeta.events && seriesMeta.events[0]) || { id: anchorId };
+    const anchor = anchorEvent || { id: anchorId };
     const seriesGroupId = String(anchor.seriesGroupId || '').trim();
-    if (seriesGroupId) {
-      const res = await api(
-        '/api/organiser/events?seriesGroupId=' + encodeURIComponent(seriesGroupId)
-      );
-      if (res.ok && Array.isArray(res.data.events) && res.data.events.length > 1) {
-        applyExpandedSeriesPeers(res.data.events);
-        return;
-      }
+    if (!seriesGroupId) return;
+
+    const res = await api(
+      '/api/organiser/events?seriesGroupId=' + encodeURIComponent(seriesGroupId)
+    );
+    if (res.ok && Array.isArray(res.data.events) && res.data.events.length > 1) {
+      applyExpandedSeriesPeers(res.data.events);
     }
-
-    let allEvents = [];
-    const embedBootstrap = window.HubOrganiserEmbedBootstrap;
-    if (embedBootstrap && embedBootstrap.readCache) {
-      const cached = embedBootstrap.readCache();
-      if (cached) allEvents = cached.events || [];
-    } else {
-      try {
-        const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
-        if (raw) {
-          const cached = JSON.parse(raw);
-          const at = Number(cached && (cached.at || cached.ts) ? cached.at || cached.ts : 0);
-          if (at && Date.now() - at < 300000) {
-            allEvents = cached.events || [];
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-
-    if (!allEvents.length) return;
-
-    let peers = [];
-    if (seriesGroupId) {
-      peers = allEvents.filter((ev) => String(ev.seriesGroupId || '').trim() === seriesGroupId);
-    } else {
-      const groupId = seriesMeta.organiserGroupId || anchor.organiserGroupId || anchor.groupId || '';
-      const titleKey = String(seriesMeta.title || anchor.title || '').trim().toLowerCase();
-      if (groupId && titleKey) {
-        peers = allEvents.filter((ev) => {
-          const peerGroup = ev.organiserGroupId || ev.groupId || '';
-          if (peerGroup !== groupId) return false;
-          if (String(ev.title || '').trim().toLowerCase() !== titleKey) return false;
-          if (String(ev.seriesGroupId || '').trim()) return false;
-          if (String(ev.duplicatedFromEventId || '').trim()) return false;
-          return true;
-        });
-      }
-    }
-
-    applyExpandedSeriesPeers(peers);
   }
 
   async function hydrateSeriesEvents() {
@@ -2498,6 +2505,14 @@
       }
     }
 
+    if (!publish && existingTicketsLoaded && !ticketsChangedFromSnapshot(tiers)) {
+      showAlert(
+        'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
+        'ok'
+      );
+      return;
+    }
+
     // Confirm overwrite only when ticket setup changed since last save/load.
     if (existingTicketsLoaded && ticketsChangedFromSnapshot(tiers)) {
       const scopeText =
@@ -2570,6 +2585,7 @@
       const { ok, data } = await api('/api/organiser/tickets', {
         method: 'POST',
         body: JSON.stringify(body),
+        timeoutMs: 120000,
       });
 
       return { ok, data };
@@ -2592,9 +2608,19 @@
         result = await saveWork();
         if (loading) loading.hide();
       }
+    } catch (err) {
+      console.error(err);
+      if (loading) loading.hide();
+      showAlert('Could not save tickets. Check your connection and try again.', 'warn');
+      return;
     } finally {
       if (saveBtn) saveBtn.disabled = false;
       updatePublishButton();
+    }
+
+    if (!result) {
+      showAlert('Could not save tickets. Check your connection and try again.', 'warn');
+      return;
     }
 
     const ok = result.ok;

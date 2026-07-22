@@ -2192,6 +2192,12 @@ body.ee-is-new-listing #ee-event-stats {
   font-weight: 600;
 }
 
+.ee-lock-editable-hint {
+  color: var(--ee-muted, #5a6472);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
 .ee-series-banner {
   background: #eef6ff;
   border: 1px solid #b8d4f0;

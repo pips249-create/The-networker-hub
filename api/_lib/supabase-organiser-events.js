@@ -801,11 +801,15 @@ async function buildEventRow(payload, eventId, mode) {
   if (approval_status !== undefined) row.approval_status = approval_status;
   else if (mode === 'create') row.approval_status = 'Pending Review';
 
-  if (image_url !== undefined) row.image_url = eventImageDbValue(image_url);
-  else if (mode === 'create') row.image_url = null;
+  if (!isLocked) {
+    if (image_url !== undefined) row.image_url = eventImageDbValue(image_url);
+    else if (mode === 'create') row.image_url = null;
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'imagePosition')) {
-    row.image_position = normalizeEventImagePosition(payload.imagePosition) || null;
+    if (Object.prototype.hasOwnProperty.call(payload, 'imagePosition')) {
+      row.image_position = normalizeEventImagePosition(payload.imagePosition) || null;
+    }
+  } else if (mode === 'create') {
+    row.image_url = null;
   }
 
   // Only demote when this write explicitly sets a missing date.
@@ -1006,6 +1010,7 @@ async function updateEvent(eventId, payload) {
       await lockEventOnFirstSale(sb, eventId);
     }
     patchPayload._locked = true;
+    patchPayload.groupId = existing.organiser_id;
     patchPayload.type = existing.event_type;
     patchPayload.eventFormat = existing.meeting_type;
     patchPayload.venue = existing.venue;
@@ -1015,6 +1020,13 @@ async function updateEvent(eventId, payload) {
     patchPayload.date = existing.starts_at;
     patchPayload.endDate = existing.ends_at;
     patchPayload.location = existing.location_label;
+    if (!String(patchPayload.onlineLink || '').trim()) {
+      patchPayload.onlineLink = existing.meeting_link;
+    }
+    delete patchPayload.photoBase64;
+    delete patchPayload.photoUrl;
+    delete patchPayload.imagePosition;
+    patchPayload.clearPhoto = false;
   }
   const deferImage = Boolean(payload.photoBase64);
   const row = await buildEventRow(
@@ -1040,7 +1052,7 @@ async function updateEvent(eventId, payload) {
   }
   await propagateSeriesEventDetails(sb, data);
 
-  if (payload.photoBase64) {
+  if (payload.photoBase64 && !saleLocked) {
     const updated = await applyEventPhotoAfterSave(eventId, payload);
     if (updated) {
       const event = rowToEvent(updated);
@@ -1467,48 +1479,19 @@ async function filterOwnedEventIds(eventIds, groupIds, adminView) {
 
 const ACTIVE_SERIES_STATUSES = ['draft', 'published', 'unpublished'];
 
-function seriesTitleKey(row) {
-  return String(row?.title || '')
-    .trim()
-    .toLowerCase();
-}
-
 async function fetchSeriesPeerIds(sb, row) {
   if (!row?.id) return [];
   if (row.duplicated_from_event_id) return [];
+  if (!row.series_group_id) return [];
   const exclude = new Set([row.id]);
-
-  if (row.series_group_id) {
-    const { data, error } = await sb
-      .from('events')
-      .select('id')
-      .eq('series_group_id', row.series_group_id)
-      .in('status', ACTIVE_SERIES_STATUSES);
-    if (error) throw new Error(error.message);
-    return (data || []).map((peer) => peer.id).filter((id) => id && !exclude.has(id));
-  }
-
-  const titleKey = seriesTitleKey(row);
-  const organiserId = row.organiser_id || '';
-  if (!titleKey || !organiserId) return [];
 
   const { data, error } = await sb
     .from('events')
-    .select('id, title, series_group_id, duplicated_from_event_id')
-    .eq('organiser_id', organiserId)
+    .select('id')
+    .eq('series_group_id', row.series_group_id)
     .in('status', ACTIVE_SERIES_STATUSES);
   if (error) throw new Error(error.message);
-
-  const peerIds = (data || [])
-    .filter((peer) => {
-      if (seriesTitleKey(peer) !== titleKey) return false;
-      if (String(peer.duplicated_from_event_id || '').trim()) return false;
-      // Title-only fallback for legacy rows — never merge into an explicit series.
-      return !String(peer.series_group_id || '').trim();
-    })
-    .map((peer) => peer.id)
-    .filter((id) => id && !exclude.has(id));
-  return peerIds.length ? peerIds : [];
+  return (data || []).map((peer) => peer.id).filter((id) => id && !exclude.has(id));
 }
 
 /** Include every date in the same listing when tickets are saved for one series event. */

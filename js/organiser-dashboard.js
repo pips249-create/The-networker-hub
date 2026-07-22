@@ -11365,6 +11365,10 @@
       }
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
         setEventDrawerLoading(false);
+        if (e.data.progressStep && eventDrawerCreateFlow) {
+          eventDrawerProgressStep = e.data.progressStep;
+          renderEventDrawerProgress(eventDrawerProgressStep);
+        }
         return;
       }
       if (e.data && e.data.type === 'hub-event-drawer-busy') {

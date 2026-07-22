@@ -904,7 +904,12 @@
     document.getElementById('ee-review-confirm')?.addEventListener('click', publishListing);
   }
 
+  function removeStaleReviewRefundCheck() {
+    document.getElementById('ee-review-refund-check')?.remove();
+  }
+
   function renderReview() {
+    removeStaleReviewRefundCheck();
     const body = document.getElementById('ee-publish-review-body');
     if (body) body.innerHTML = renderReviewBody();
     renderReviewNext();
@@ -918,6 +923,7 @@
     }
 
     bindUi();
+    removeStaleReviewRefundCheck();
 
     const loading = window.organiserPageLoading;
     let ok = false;
@@ -944,7 +950,10 @@
     renderReview();
 
     if (isEmbedDrawer && window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+      window.parent.postMessage(
+        { type: 'hub-event-drawer-ready', progressStep: 'publish' },
+        window.location.origin
+      );
     }
   }
 

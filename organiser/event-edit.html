@@ -38,10 +38,7 @@
         <div id="ee-wizard-mount"></div>
         <p class="ee-format-badge" id="ee-format-badge" hidden></p>
         <p class="ee-status-badge" id="ee-status-badge" hidden></p>
-        <div class="ee-lock-banner" id="ee-lock-banner" hidden role="status">
-          🔒 This event has active ticket sales — to make changes contact
-          <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>
-        </div>
+        <div class="ee-lock-banner" id="ee-lock-banner" hidden role="status"></div>
         <div class="ee-series-banner" id="ee-series-banner" hidden role="status"></div>
         <div class="ee-duplicate-banner" id="ee-duplicate-banner" hidden role="status"></div>
         <h1 class="ee-title" id="ee-page-title">New event listing</h1>
@@ -108,6 +105,9 @@
             </div>
             <textarea id="ee-description" rows="5" maxlength="4000" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
             <p class="ee-hint"><span id="ee-word-count">0</span> / <span id="ee-word-max">500</span> words</p>
+            <p class="ee-hint ee-lock-editable-hint" id="ee-lock-editable-hint" hidden>
+              Title and description can still be updated — ticket holders are emailed when these change.
+            </p>
           </div>
           <div class="ee-field">
             <label for="ee-photo-file" data-hub-tip="event-photo">Event photo</label>
@@ -213,6 +213,6 @@
     <script src="../js/organiser-image-upload.js?v=20260611"></script>
     <script src="../js/organiser-field-tips.js?v=20260716tips"></script>
     <script src="../js/hub-field-tip.js?v=20260716tips"></script>
-    <script src="../js/organiser-event-edit.js?v=20260721details"></script>
+    <script src="../js/organiser-event-edit.js?v=20260722lock"></script>
   </body>
 </html>

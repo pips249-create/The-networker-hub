@@ -560,7 +560,14 @@
   function applyLockUi(locked) {
     currentEventLocked = Boolean(locked);
     const banner = document.getElementById('ee-lock-banner');
-    if (banner) banner.hidden = !currentEventLocked;
+    if (banner) {
+      banner.hidden = !currentEventLocked;
+      if (currentEventLocked) banner.innerHTML = ticketSalesLockBannerHtml('details');
+    }
+    const editableHint = document.getElementById('ee-lock-editable-hint');
+    if (editableHint) editableHint.hidden = !currentEventLocked;
+
+    setSeriesFieldLocked(document.getElementById('ee-group'), currentEventLocked);
 
     const lockSelectors = [
       '#ee-type',
@@ -577,6 +584,7 @@
     });
     const datesCard = document.getElementById('ee-card-dates');
     if (datesCard) datesCard.classList.toggle('is-locked', currentEventLocked);
+    setPhotoLockUi(currentEventLocked);
     refreshSeriesEditUi();
   }
 
@@ -591,6 +599,56 @@
   ];
 
   const SERIES_SHARED_CARD_IDS = ['ee-card-details'];
+
+  const SUPPORT_EMAIL = 'hello@thenetworkerhub.com';
+
+  function ticketSalesLockBannerHtml(page) {
+    if (page === 'location') {
+      return (
+        '🔒 <strong>Ticket sales are live.</strong> Venue, date, format, and address are locked. ' +
+        'You can still update the online join link — ticket holders are emailed when it changes. ' +
+        'For other changes, contact <a href="mailto:' +
+        SUPPORT_EMAIL +
+        '">' +
+        SUPPORT_EMAIL +
+        '</a> or cancel the event from My Events.'
+      );
+    }
+    return (
+      '🔒 <strong>Ticket sales are live.</strong> Date, time, type, location, and cover photo are locked. ' +
+      'You can still edit the title and description — ticket holders are emailed when those change. ' +
+      'For date, venue, or ticket changes, contact <a href="mailto:' +
+      SUPPORT_EMAIL +
+      '">' +
+      SUPPORT_EMAIL +
+      '</a> or cancel the event.'
+    );
+  }
+
+  function setPhotoLockUi(locked) {
+    const photoZone = document.getElementById('ee-photo-zone');
+    const photoFileInput = document.getElementById('ee-photo-file');
+    const photoClear = document.getElementById('ee-photo-clear');
+    const photoChange = document.getElementById('ee-photo-change');
+    const photoRecentre = document.getElementById('ee-photo-recentre');
+    const photoFrame = document.getElementById('ee-photo-frame');
+    const photoUrl = document.getElementById('ee-photo-url');
+    if (photoZone) photoZone.classList.toggle('is-locked', locked);
+    if (photoFrame) {
+      photoFrame.classList.toggle('is-locked', locked);
+      photoFrame.style.cursor = locked ? 'default' : '';
+      photoFrame.tabIndex = locked ? -1 : 0;
+    }
+    if (photoFileInput) photoFileInput.disabled = locked;
+    if (photoClear) photoClear.disabled = locked;
+    if (photoChange) photoChange.disabled = locked;
+    if (photoRecentre) photoRecentre.disabled = locked;
+    if (photoUrl) {
+      photoUrl.disabled = locked;
+      const field = photoUrl.closest('.ee-field');
+      if (field) field.classList.toggle('is-locked', locked);
+    }
+  }
 
   function pickPrimarySeriesEvent(peers) {
     const sorted = sortEventsByDate(peers);
@@ -644,6 +702,7 @@
           setSeriesFieldLocked(document.querySelector(sel), false);
         });
       }
+      setPhotoLockUi(currentEventLocked);
       applyFormatUi(eventFormat);
       return;
     }
@@ -700,23 +759,7 @@
       if (el) el.disabled = lockShared || currentEventLocked;
     });
 
-    const photoZone = document.getElementById('ee-photo-zone');
-    const photoFileInput = document.getElementById('ee-photo-file');
-    const photoClear = document.getElementById('ee-photo-clear');
-    const photoChange = document.getElementById('ee-photo-change');
-    const photoRecentre = document.getElementById('ee-photo-recentre');
-    const photoFrame = document.getElementById('ee-photo-frame');
-    const photoLocked = lockShared || currentEventLocked;
-    if (photoZone) photoZone.classList.toggle('is-locked', photoLocked);
-    if (photoFrame) {
-      photoFrame.classList.toggle('is-locked', photoLocked);
-      photoFrame.style.cursor = photoLocked ? 'default' : '';
-      photoFrame.tabIndex = photoLocked ? -1 : 0;
-    }
-    if (photoFileInput) photoFileInput.disabled = photoLocked;
-    if (photoClear) photoClear.disabled = photoLocked;
-    if (photoChange) photoChange.disabled = photoLocked;
-    if (photoRecentre) photoRecentre.disabled = photoLocked;
+    setPhotoLockUi(lockShared || currentEventLocked);
 
     if (lockShared) {
       ['#ee-start-time', '#ee-end-time'].forEach((sel) => {
@@ -1938,15 +1981,17 @@
     if (editId) payload = preserveLocationOnPayload(payload);
     if (!editId) payload.listingStatus = 'draft';
 
-    const photoUrl = document.getElementById('ee-photo-url').value.trim();
-    if (photoUrl) payload.photoUrl = photoUrl;
+    if (!currentEventLocked) {
+      const photoUrl = document.getElementById('ee-photo-url').value.trim();
+      if (photoUrl) payload.photoUrl = photoUrl;
 
-    if (photoFile) {
-      payload.photoBase64 = await readFileAsBase64(photoFile);
-      payload.photoMime = photoFile.type;
-      payload.photoFilename = photoFile.name;
+      if (photoFile) {
+        payload.photoBase64 = await readFileAsBase64(photoFile);
+        payload.photoMime = photoFile.type;
+        payload.photoFilename = photoFile.name;
+      }
+      payload.imagePosition = photoPosition || '';
     }
-    payload.imagePosition = photoPosition || '';
 
     const submitBtn = document.getElementById('ee-submit');
     const draftBtn = document.getElementById('ee-save-draft');
