@@ -5,14 +5,31 @@
   --od-purple-deep: #4a4446;
   --od-purple-light: #c299d1;
   --od-purple-pale: #ebe0f0;
-  --od-gold: #9a7aa8;
-  --od-gold-light: #f5eef8;
+  --od-gold: #c9961f;
+  --od-gold-light: #fdf3df;
   --od-text-dark: #4a4446;
   --od-text-mid: #635c5e;
   --od-text-soft: #7a7274;
   --od-bg: #faf6ee;
   --od-border: rgba(194, 153, 209, 0.45);
   --od-border-soft: rgba(194, 153, 209, 0.28);
+  --fo-purple: #9a7aa8;
+  --fo-navy: #4a4446;
+  --fo-gold: #c9961f;
+  --fo-gold-light: #fdf3df;
+  --fa-events: #9a7aa8;
+  --fa-events-bg: linear-gradient(165deg, #f3ebf7 0%, #e8dcf0 42%, #d9c4e0 100%);
+  --fa-events-border: rgba(154, 122, 168, 0.45);
+  --fa-opps: #8a6210;
+  --fa-opps-bg: linear-gradient(165deg, #fdf6e3 0%, #f5e6c4 42%, #ecd29a 100%);
+  --fa-opps-border: rgba(201, 150, 31, 0.4);
+  --fa-organisers: #1e4a8a;
+  --fa-organisers-bg: linear-gradient(165deg, #e8f2ff 0%, #d6e8ff 100%);
+  --fa-organisers-border: rgba(59, 130, 246, 0.35);
+}
+
+.for-attendees-page .fo-flow {
+  background: linear-gradient(180deg, var(--od-bg) 0%, #fff 18%, #fff 72%, var(--od-purple-pale) 100%);
 }
 
 .for-attendees-page .fo-hero {
@@ -97,15 +114,130 @@
   border-color: #7a5a98;
 }
 
-.for-attendees-page .fo-hero-benefits {
-  margin: 0 0 24px;
-  max-width: 34em;
-}
-
 .for-attendees-page .fo-hero-kicker {
   color: var(--od-purple-dark);
   background: rgba(194, 153, 209, 0.12);
   border-color: rgba(194, 153, 209, 0.28);
+}
+
+.for-attendees-page .fa-pillar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.for-attendees-page .fa-pillar-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(45, 35, 50, 0.06);
+}
+
+.for-attendees-page .fa-pillar-chip--events {
+  background: var(--fa-events-bg);
+  border-color: var(--fa-events-border);
+  color: #7a5f8a;
+}
+
+.for-attendees-page .fa-pillar-chip--organisers {
+  background: var(--fa-organisers-bg);
+  border-color: var(--fa-organisers-border);
+  color: var(--fa-organisers);
+}
+
+.for-attendees-page .fa-pillar-chip--opps {
+  background: var(--fa-opps-bg);
+  border-color: var(--fa-opps-border);
+  color: var(--fa-opps);
+}
+
+.for-attendees-page .fo-hero-benefits {
+  margin: 0 0 24px;
+  max-width: 34em;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--od-border-soft);
+  box-shadow: 0 8px 24px rgba(154, 122, 168, 0.08);
+}
+
+.for-attendees-page .fo-benefits {
+  background: linear-gradient(180deg, #fff 0%, var(--od-bg) 100%);
+  border-bottom-color: rgba(194, 153, 209, 0.22);
+}
+
+.for-attendees-page .fa-benefit-col {
+  padding: 18px 16px 20px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  box-shadow: 0 10px 28px rgba(45, 35, 50, 0.06);
+}
+
+.for-attendees-page .fa-benefit-col--events {
+  background: var(--fa-events-bg);
+  border-color: var(--fa-events-border);
+}
+
+.for-attendees-page .fa-benefit-col--events h3 {
+  color: #6b5280;
+}
+
+.for-attendees-page .fa-benefit-col--events .fo-benefit-list li::before {
+  color: var(--fa-events);
+}
+
+.for-attendees-page .fa-benefit-col--opps {
+  background: var(--fa-opps-bg);
+  border-color: var(--fa-opps-border);
+}
+
+.for-attendees-page .fa-benefit-col--opps h3 {
+  color: #7a5710;
+}
+
+.for-attendees-page .fa-benefit-col--opps .fo-benefit-list li::before {
+  color: var(--fa-opps);
+}
+
+.for-attendees-page .fa-benefit-col--hub {
+  background: linear-gradient(165deg, #fff 0%, var(--od-purple-pale) 100%);
+  border-color: var(--od-border);
+}
+
+.for-attendees-page .fa-benefit-col--hub h3 {
+  color: var(--od-purple-dark);
+}
+
+.for-attendees-page .fa-benefit-col--hub .fo-benefit-list li::before {
+  color: var(--fa-events);
+}
+
+.for-attendees-page .fa-benefit-col .fo-benefit-visual {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(45, 35, 50, 0.08);
+}
+
+.for-attendees-page .fo-section.fo-workspace-full {
+  background: linear-gradient(180deg, var(--od-purple-pale) 0%, var(--od-bg) 100%);
+  border-top: 1px solid var(--od-border-soft);
+  border-bottom: 1px solid var(--od-border-soft);
+}
+
+.for-attendees-page .fo-path-hint {
+  color: var(--od-purple-dark);
+}
+
+.for-attendees-page .fo-hero-trust {
+  color: var(--fa-opps);
 }
 
 @media (min-width: 720px) {
@@ -120,6 +252,10 @@
     margin-left: auto;
     margin-right: auto;
     text-align: left;
+  }
+
+  .for-attendees-page .fa-pillar-chips {
+    justify-content: center;
   }
 }
 
