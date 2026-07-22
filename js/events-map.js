@@ -55,7 +55,6 @@
   function formatClass(ev) {
     var raw = String(ev.formatSlug || ev.format || ev.meetingType || '').toLowerCase();
     if (raw.indexOf('online') !== -1 && raw.indexOf('person') === -1) return 'online';
-    if (raw.indexOf('hybrid') !== -1) return 'hybrid';
     return 'in-person';
   }
 
@@ -85,7 +84,6 @@
   function formatLabel(ev) {
     var cls = formatClass(ev);
     if (cls === 'online') return 'Online';
-    if (cls === 'hybrid') return 'Hybrid';
     return 'In person';
   }
 

@@ -28,7 +28,6 @@
       .replace(/\s+/g, '-');
     if (s === 'inperson' || s === 'in-person' || s === 'in_person') return 'in-person';
     if (s === 'online' || s === 'virtual') return 'online';
-    if (s === 'hybrid') return 'in-person';
     return s || '';
   }
 

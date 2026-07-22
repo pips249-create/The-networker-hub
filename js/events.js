@@ -394,14 +394,12 @@
   function formatTagClass(fmt) {
     const s = String(fmt || '').toLowerCase();
     if (s.includes('online') && !s.includes('person')) return 'online';
-    if (s.includes('hybrid')) return 'hybrid';
     return 'in-person';
   }
 
   function formatTagLabel(fmt) {
     const c = formatTagClass(fmt);
     if (c === 'online') return 'Online';
-    if (c === 'hybrid') return 'Hybrid';
     return 'In-person';
   }
 

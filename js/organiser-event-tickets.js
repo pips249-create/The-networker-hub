@@ -36,7 +36,6 @@
   const FORMAT_LABELS = {
     'in-person': 'In person',
     online: 'Online',
-    hybrid: 'Hybrid',
   };
 
   const REFUND_LABELS = {
@@ -118,6 +117,30 @@
     );
   }
 
+  function refundTermsAlreadyAgreed() {
+    return Boolean(anchorEvent?.refundTermsAgreed || anchorEvent?.refundTermsAgreedAt);
+  }
+
+  function lockRefundTermsCheckbox() {
+    const agree = document.getElementById('refund-terms-agreed');
+    if (!agree) return;
+    agree.checked = true;
+    agree.disabled = true;
+    const label = agree.closest('.ee-refund-check');
+    if (label) label.classList.add('is-locked');
+    let note = document.getElementById('ee-refund-terms-locked-note');
+    if (!note && label) {
+      note = document.createElement('p');
+      note.id = 'ee-refund-terms-locked-note';
+      note.className = 'ee-hint ee-refund-terms-locked-note';
+      note.textContent =
+        'You confirmed this when paid tickets were first set up — it cannot be changed.';
+      label.insertAdjacentElement('afterend', note);
+    } else if (note) {
+      note.hidden = false;
+    }
+  }
+
   function getPublishBlockers(tiers, options) {
     const opts = options || {};
     const includeBankDetails = opts.includeBankDetails !== false;
@@ -136,7 +159,7 @@
     if (hasPaid && !refund.refundPolicy) {
       blockers.push('Select a refund policy');
     }
-    if (hasPaid && !refund.refundTermsAgreed) {
+    if (hasPaid && !refund.refundTermsAgreed && !refundTermsAlreadyAgreed()) {
       blockers.push('Tick the refund responsibility checkbox');
     }
     if (includeBankDetails && needsBankDetailsSetup(list)) {
@@ -405,10 +428,44 @@
       .join('');
   }
 
-  async function expandSeriesEventIds() {
+  function applyExpandedSeriesPeers(peers) {
+    if (!peers || peers.length <= 1) return;
+    const sorted = peers.slice().sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return da - db;
+    });
+    eventIds = sorted.map((ev) => ev.id).filter(Boolean);
+    seriesMeta.events = sorted.map((ev) => ({
+      id: ev.id,
+      title: ev.title,
+      date: ev.date,
+      endDate: ev.endDate || '',
+      imageUrl: ev.imageUrl || seriesMeta.imageUrl || '',
+      imagePosition: ev.imagePosition || seriesMeta.imagePosition || '',
+    }));
+    if (!seriesMeta.imagePosition && seriesMeta.events[0] && seriesMeta.events[0].imagePosition) {
+      seriesMeta.imagePosition = seriesMeta.events[0].imagePosition;
+    }
+    seriesMeta.eventIds = eventIds.slice();
+  }
+
+  async function expandSeriesEventIds(anchorEvent) {
     if (eventIds.length > 1) return;
     const anchorId = eventIds[0];
     if (!anchorId) return;
+
+    const anchor = anchorEvent || (seriesMeta.events && seriesMeta.events[0]) || { id: anchorId };
+    const seriesGroupId = String(anchor.seriesGroupId || '').trim();
+    if (seriesGroupId) {
+      const res = await api(
+        '/api/organiser/events?seriesGroupId=' + encodeURIComponent(seriesGroupId)
+      );
+      if (res.ok && Array.isArray(res.data.events) && res.data.events.length > 1) {
+        applyExpandedSeriesPeers(res.data.events);
+        return;
+      }
+    }
 
     let allEvents = [];
     const embedBootstrap = window.HubOrganiserEmbedBootstrap;
@@ -430,13 +487,8 @@
       }
     }
 
-    if (!allEvents.length) {
-      const res = await api('/api/organiser/events');
-      if (res.ok && Array.isArray(res.data.events)) allEvents = res.data.events;
-    }
+    if (!allEvents.length) return;
 
-    const anchor = (seriesMeta.events && seriesMeta.events[0]) || { id: anchorId };
-    const seriesGroupId = String(anchor.seriesGroupId || '').trim();
     let peers = [];
     if (seriesGroupId) {
       peers = allEvents.filter((ev) => String(ev.seriesGroupId || '').trim() === seriesGroupId);
@@ -455,25 +507,7 @@
       }
     }
 
-    if (peers.length <= 1) return;
-    const sorted = peers.slice().sort((a, b) => {
-      const da = a.date ? new Date(a.date).getTime() : 0;
-      const db = b.date ? new Date(b.date).getTime() : 0;
-      return da - db;
-    });
-    eventIds = sorted.map((ev) => ev.id).filter(Boolean);
-    seriesMeta.events = sorted.map((ev) => ({
-      id: ev.id,
-      title: ev.title,
-      date: ev.date,
-      endDate: ev.endDate || '',
-      imageUrl: ev.imageUrl || seriesMeta.imageUrl || '',
-      imagePosition: ev.imagePosition || seriesMeta.imagePosition || '',
-    }));
-    if (!seriesMeta.imagePosition && seriesMeta.events[0] && seriesMeta.events[0].imagePosition) {
-      seriesMeta.imagePosition = seriesMeta.events[0].imagePosition;
-    }
-    seriesMeta.eventIds = eventIds.slice();
+    applyExpandedSeriesPeers(peers);
   }
 
   async function hydrateSeriesEvents() {
@@ -1014,6 +1048,7 @@
 
   function handleMembersOnlyEventToggle() {
     if (membersOnlyEventEnabled()) {
+      loadMemberRosterStatus();
       const guestEl = document.getElementById('ee-guest-programme-enabled');
       if (guestEl && guestEl.checked) {
         guestEl.checked = false;
@@ -1317,9 +1352,8 @@
       const defaultRadio = document.getElementById('refund-policy-standard');
       if (defaultRadio) selectRefundCard(defaultRadio);
     }
-    if (ev.refundTermsAgreed) {
-      const agree = document.getElementById('refund-terms-agreed');
-      if (agree) agree.checked = true;
+    if (ev.refundTermsAgreed || ev.refundTermsAgreedAt) {
+      lockRefundTermsCheckbox();
     }
     const food = document.getElementById('ee-food-included');
     const dietary = document.getElementById('ee-collect-dietary');
@@ -1439,7 +1473,8 @@
       selectedRefundPolicy ||
       document.querySelector('input[name="refund-policy"]:checked')?.value ||
       '';
-    const agreed = document.getElementById('refund-terms-agreed')?.checked;
+    const agreed =
+      refundTermsAlreadyAgreed() || Boolean(document.getElementById('refund-terms-agreed')?.checked);
     const preset = REFUND_PRESETS[presetKey];
     return {
       ...(preset || {}),
@@ -1585,8 +1620,12 @@
         (el) => el.value === policyVal
       );
       if (policyRadio) selectRefundCard(policyRadio);
-      const agree = document.getElementById('refund-terms-agreed');
-      if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
+      if (refundTermsAlreadyAgreed()) {
+        lockRefundTermsCheckbox();
+      } else {
+        const agree = document.getElementById('refund-terms-agreed');
+        if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
+      }
     }
     const food = document.getElementById('ee-food-included');
     if (food) food.checked = !!draft.foodOrDrinkIncluded;
@@ -2045,38 +2084,6 @@
     };
   }
 
-  async function applyAttendeeExtrasToEvents() {
-    const extras = attendeeExtras();
-    let lastError = '';
-    for (const id of eventIds) {
-      const res = await api('/api/organiser/events?id=' + encodeURIComponent(id));
-      if (!res.ok || !res.data.event) {
-        lastError = res.data?.message || res.data?.error || 'Could not load event';
-        continue;
-      }
-      const ev = res.data.event;
-      const patch = await api('/api/organiser/events', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          id,
-          title: ev.title,
-          organiserGroupId: ev.organiserGroupId || seriesMeta.organiserGroupId,
-          type: ev.type,
-          description: ev.description,
-          location: ev.location,
-          venue: ev.venue,
-          ...(ev.imageUrl ? { photoUrl: ev.imageUrl } : {}),
-          attendeeExtras: extras,
-        }),
-      });
-      if (!patch.ok) {
-        lastError = patch.data?.message || patch.data?.error || 'Could not save attendee booking questions';
-      }
-    }
-    if (lastError) return { ok: false, message: lastError };
-    return { ok: true };
-  }
-
   function renderSalesPendingBanner() {
     const el = document.getElementById('ee-tickets-alert');
     if (!el || !eventIds[0]) return;
@@ -2128,9 +2135,35 @@
 
     const loading = window.organiserPageLoading;
     const bootWork = async () => {
+      const loaded = await loadExistingData();
+      if (loaded.authFailed) return loaded;
+
+      if (loaded.event) {
+        if (loaded.event.title && !seriesMeta.title) seriesMeta.title = loaded.event.title;
+        if (loaded.event.organiserGroupId && !seriesMeta.organiserGroupId) {
+          seriesMeta.organiserGroupId = loaded.event.organiserGroupId;
+        }
+        if (loaded.event.imageUrl && !seriesMeta.imageUrl) {
+          seriesMeta.imageUrl = loaded.event.imageUrl;
+        }
+        if (loaded.event.imagePosition && !seriesMeta.imagePosition) {
+          seriesMeta.imagePosition = loaded.event.imagePosition;
+        }
+      }
+
+      await expandSeriesEventIds(loaded.event);
       await hydrateSeriesEvents();
-      await expandSeriesEventIds();
-      return loadExistingData();
+
+      const secondary = [loadPaymentSetupState()];
+      if (seriesMeta.organiserGroupId) {
+        secondary.push(loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId));
+      }
+      if (loaded.tickets && ticketsAreMembersOnlyEvent(loaded.tickets)) {
+        secondary.push(loadMemberRosterStatus());
+      }
+      await Promise.all(secondary);
+
+      return loaded;
     };
     let loaded;
     if (loading && loading.run) {
@@ -2181,13 +2214,9 @@
       prefillMembersOnlyTicket(loaded.tickets);
     }
 
-    await loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId);
-    await loadMemberRosterStatus();
-    setAttendanceMode(attendanceMode);
-
-    await loadPaymentSetupState();
     await handleStripeConnectReturn();
 
+    setAttendanceMode(attendanceMode);
     renderSeriesSummary();
 
     if (loaded.event && loaded.event.status === 'published' && !loaded.event.ticketSalesEnabled) {
@@ -2543,21 +2572,6 @@
         body: JSON.stringify(body),
       });
 
-      if (!ok) return { ok, data };
-
-      const extrasResult = await applyAttendeeExtrasToEvents();
-      if (extrasResult && !extrasResult.ok) {
-        return {
-          ok: false,
-          data: {
-            error: 'attendee_extras_failed',
-            message:
-              extrasResult.message ||
-              'Tickets saved but attendee booking questions could not be updated. Try saving again.',
-          },
-        };
-      }
-
       return { ok, data };
     };
 
@@ -2635,7 +2649,6 @@
 
     if (!publish) {
       existingTicketsLoaded = true;
-      clearTicketDraft();
       if (options.redirectToReview && hasPaidTickets) {
         try {
           sessionStorage.setItem(
@@ -2645,7 +2658,7 @@
               refundPolicy: refund.refundPolicy,
               refundPolicyDetails: refund.refundPolicyDetails || '',
               refundCutoffDays: refund.refundCutoffDays,
-              refundTermsAgreed: refund.refundTermsAgreed,
+              refundTermsAgreed: Boolean(refund.refundTermsAgreed),
               vatTreatment: body.vatTreatment,
             })
           );
@@ -2653,6 +2666,7 @@
           /* ignore quota / private mode */
         }
       }
+      clearTicketDraft();
       if (options.redirectToReview) {
         location.href = reviewPageUrl();
         return;

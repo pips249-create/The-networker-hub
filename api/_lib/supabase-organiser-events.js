@@ -126,8 +126,7 @@ function mapEventType(type) {
 
 function mapMeetingType(format) {
   const s = String(format || '').toLowerCase();
-  if (s.includes('online') && !s.includes('hybrid')) return 'Online';
-  if (s.includes('hybrid')) return 'Hybrid';
+  if (s.includes('online') && !s.includes('person')) return 'Online';
   if (s.includes('person') || s.includes('in ')) return 'In person';
   return format ? String(format).trim() : 'In person';
 }
@@ -209,7 +208,8 @@ function rowToEvent(row) {
     refundPolicy: row.refund_policy || null,
     refundPolicyDetails: row.refund_policy_details || null,
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
-    refundTermsAgreed: Boolean(row.refund_terms_agreed),
+    refundTermsAgreed: Boolean(row.refund_terms_agreed || row.refund_terms_agreed_at),
+    refundTermsAgreedAt: row.refund_terms_agreed_at || null,
     vatTreatment: row.vat_treatment || null,
     lat: row.latitude != null ? Number(row.latitude) : null,
     lng: row.longitude != null ? Number(row.longitude) : null,
@@ -390,6 +390,25 @@ async function listEventIdsForOrganiserGroups(groupIds, allEvents) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data || []).map((row) => row.id).filter(Boolean);
+}
+
+async function listEventsForSeriesGroup(groupIds, seriesGroupId) {
+  const groups = (groupIds || []).filter(Boolean);
+  const gid = String(seriesGroupId || '').trim();
+  if (!groups.length || !gid) return [];
+
+  const sb = getSupabaseAdmin();
+  let query = sb
+    .from('events')
+    .select('id, title, starts_at, ends_at, image_url, image_position, series_group_id, organiser_id, status')
+    .eq('series_group_id', gid)
+    .in('status', ['draft', 'published', 'unpublished'])
+    .order('starts_at', { ascending: true });
+  if (groups.length === 1) query = query.eq('organiser_id', groups[0]);
+  else query = query.in('organiser_id', groups);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data || []).map(rowToEvent);
 }
 
 async function listEventSummariesForOrganiserGroups(groupIds, allEvents) {
@@ -697,14 +716,21 @@ async function buildEventRow(payload, eventId, mode) {
 
   const row = {
     title: payload.title,
-    description: plainEventDescription(payload.description) || null,
     organiser_id: payload.groupId || null,
   };
 
+  if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
+    row.description = plainEventDescription(payload.description) || null;
+  } else if (mode === 'create') {
+    row.description = null;
+  }
+
   if (payload.attendeeExtras && typeof payload.attendeeExtras === 'object') {
     Object.assign(row, mapAttendeeExtrasToRow(payload.attendeeExtras));
-    row.description =
-      composeEventDescription(payload.description ?? row.description, payload.attendeeExtras) || null;
+    if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
+      row.description =
+        composeEventDescription(payload.description, payload.attendeeExtras) || null;
+    }
   }
 
   if (!isLocked) {
@@ -1139,6 +1165,62 @@ function mapTicketStatus(status) {
   return 'Active';
 }
 
+const ALLOWED_TICKET_TYPES = new Set(['Standard', 'Application-based', 'Guest-visit', 'Alumni']);
+
+function buildTicketInsertRow({
+  eventId,
+  name,
+  price,
+  description,
+  status,
+  quantityAvailable,
+  saleEnd,
+  saleStart,
+  categoryExclusivity,
+  displayOrder,
+  ticketType,
+  visibility,
+  seriesScope,
+}) {
+  const priceNum = parseFloat(String(price || '0').replace(/[^0-9.]/g, '')) || 0;
+  const qty =
+    quantityAvailable != null && quantityAvailable !== ''
+      ? Number(quantityAvailable)
+      : null;
+  let type =
+    ticketType ||
+    (categoryExclusivity || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
+  type = String(type || '').trim();
+  if (!ALLOWED_TICKET_TYPES.has(type)) {
+    type =
+      categoryExclusivity || /application/i.test(String(name || ''))
+        ? 'Application-based'
+        : 'Standard';
+  }
+  return {
+    event_id: eventId,
+    name: name || 'Ticket',
+    description: description || null,
+    price: priceNum,
+    quantity: Number.isFinite(qty) ? qty : null,
+    status: mapTicketStatus(status),
+    sale_starts_at: saleStart || null,
+    sale_ends_at: saleEnd || null,
+    ticket_type: type,
+    display_order: displayOrder != null ? Number(displayOrder) : 0,
+    visibility: normalizeTicketVisibility(visibility),
+    series_scope: String(seriesScope || 'date').trim() === 'series_pass' ? 'series_pass' : 'date',
+  };
+}
+
+async function insertTicketsBatch(rows) {
+  if (!rows.length) return [];
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.from('tickets').insert(rows).select('*');
+  if (error) throw new Error(error.message);
+  return (data || []).map(rowToTicket);
+}
+
 async function createTicket({
   eventId,
   name,
@@ -1156,37 +1238,21 @@ async function createTicket({
 }) {
   const sb = getSupabaseAdmin();
   await assertTicketsEditableForEvents(sb, [eventId]);
-  const priceNum = parseFloat(String(price || '0').replace(/[^0-9.]/g, '')) || 0;
-  const qty =
-    quantityAvailable != null && quantityAvailable !== ''
-      ? Number(quantityAvailable)
-      : null;
-  // DB check constraint allows Alumni when migration 142 is applied.
-  const ALLOWED_TICKET_TYPES = new Set(['Standard', 'Application-based', 'Guest-visit', 'Alumni']);
-  let type =
-    ticketType ||
-    (categoryExclusivity || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
-  type = String(type || '').trim();
-  if (!ALLOWED_TICKET_TYPES.has(type)) {
-    type =
-      categoryExclusivity || /application/i.test(String(name || ''))
-        ? 'Application-based'
-        : 'Standard';
-  }
-  const row = {
-    event_id: eventId,
-    name: name || 'Ticket',
-    description: description || null,
-    price: priceNum,
-    quantity: Number.isFinite(qty) ? qty : null,
-    status: mapTicketStatus(status),
-    sale_starts_at: saleStart || null,
-    sale_ends_at: saleEnd || null,
-    ticket_type: type,
-    display_order: displayOrder != null ? Number(displayOrder) : 0,
-    visibility: normalizeTicketVisibility(visibility),
-    series_scope: String(seriesScope || 'date').trim() === 'series_pass' ? 'series_pass' : 'date',
-  };
+  const row = buildTicketInsertRow({
+    eventId,
+    name,
+    price,
+    description,
+    status,
+    quantityAvailable,
+    saleEnd,
+    saleStart,
+    categoryExclusivity,
+    displayOrder,
+    ticketType,
+    visibility,
+    seriesScope,
+  });
   const { data, error } = await sb.from('tickets').insert(row).select('*').single();
   if (error) throw new Error(error.message);
   return rowToTicket(data);
@@ -1322,6 +1388,10 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
       slug,
       ticket_sales_enabled: eventHasTicketsOnSale(eventTickets, undefined, row.starts_at),
     };
+    if (row.refund_terms_agreed || row.refund_terms_agreed_at) {
+      rowPatch.refund_terms_agreed = true;
+      rowPatch.refund_terms_agreed_at = row.refund_terms_agreed_at || new Date().toISOString();
+    }
     const mergedRow = { ...row, ...rowPatch };
     const organiser = row.organiser_id ? orgById.get(row.organiser_id) : null;
     if (eventRowReadyForAutoApproval(mergedRow, organiser, eventTickets, refundPayload)) {
@@ -1369,14 +1439,30 @@ async function saveAttendeeExtrasForEvents(eventIds, attendeeExtras) {
     .in('id', ids);
   if (loadErr) throw new Error(loadErr.message);
 
-  for (const row of rows || []) {
-    const description = composeEventDescription(row.description, attendeeExtras);
-    const { error } = await sb
-      .from('events')
-      .update({ ...extrasRow, description: description || null })
-      .eq('id', row.id);
-    if (error) throw new Error(error.message);
-  }
+  await Promise.all(
+    (rows || []).map(async (row) => {
+      const description = composeEventDescription(row.description, attendeeExtras);
+      const { error } = await sb
+        .from('events')
+        .update({ ...extrasRow, description: description || null })
+        .eq('id', row.id);
+      if (error) throw new Error(error.message);
+    })
+  );
+}
+
+/** Check ownership for specific event ids without loading the full organiser catalogue. */
+async function filterOwnedEventIds(eventIds, groupIds, adminView) {
+  const ids = [...new Set((eventIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!ids.length) return [];
+  if (adminView) return ids;
+  const groups = groupIds || [];
+  if (!groups.length) return [];
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.from('events').select('id').in('id', ids).in('organiser_id', groups);
+  if (error) throw new Error(error.message);
+  return (data || []).map((row) => row.id).filter(Boolean);
 }
 
 const ACTIVE_SERIES_STATUSES = ['draft', 'published', 'unpublished'];
@@ -1640,28 +1726,30 @@ async function createTicketsForEvents({
   const { error: alumniFlagErr } = await sb.from('events').update(alumniEventUpdate).in('id', ids);
   if (alumniFlagErr) throw new Error(alumniFlagErr.message);
 
-  const out = [];
+  const insertRows = [];
   for (const eventId of ids) {
     const eventStartsAt = startsByEventId.get(eventId) || null;
     for (const tier of tiers) {
-      const created = await createTicket({
-        eventId,
-        name: tier.name,
-        price: tier.price,
-        description: tier.description,
-        status: tier.status,
-        quantityAvailable: tier.quantityAvailable,
-        saleEnd: resolveTierSaleEnd(tier, eventStartsAt),
-        saleStart: tier.saleStart,
-        categoryExclusivity: tier.categoryExclusivity,
-        displayOrder: tier.displayOrder,
-        ticketType: tier.ticketType,
-        visibility: tier.visibility,
-        seriesScope: tier.seriesScope || tier.series_scope || 'date',
-      });
-      out.push(created);
+      insertRows.push(
+        buildTicketInsertRow({
+          eventId,
+          name: tier.name,
+          price: tier.price,
+          description: tier.description,
+          status: tier.status,
+          quantityAvailable: tier.quantityAvailable,
+          saleEnd: resolveTierSaleEnd(tier, eventStartsAt),
+          saleStart: tier.saleStart,
+          categoryExclusivity: tier.categoryExclusivity,
+          displayOrder: tier.displayOrder,
+          ticketType: tier.ticketType,
+          visibility: tier.visibility,
+          seriesScope: tier.seriesScope || tier.series_scope || 'date',
+        })
+      );
     }
   }
+  const out = await insertTicketsBatch(insertRows);
 
   const hasCategoryExclusivity =
     mode === 'category_exclusivity' ||
@@ -2234,6 +2322,7 @@ module.exports = {
   loadOrganiserEventsPage,
   listEventsForSession,
   listEventsForOrganiser,
+  listEventsForSeriesGroup,
   listEventIdsForOrganiserGroups,
   listEventSummariesForOrganiserGroups,
   applyGroupSalesSummary,
@@ -2247,6 +2336,7 @@ module.exports = {
   enableTicketSalesForEvent,
   createTicket,
   createTicketsForEvents,
+  filterOwnedEventIds,
   publishEventsWithRefund,
   enrichGroupForDashboard,
   enrichOrganiserOverview,

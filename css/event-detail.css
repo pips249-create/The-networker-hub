@@ -718,10 +718,6 @@ a:hover {
   margin-bottom: 5px;
 }
 
-.related-body .format-tag.hybrid-tag {
-  color: var(--purple-700);
-}
-
 .related-body .format-tag.online-tag {
   color: #2563eb;
 }

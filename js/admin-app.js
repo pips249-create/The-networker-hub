@@ -142,7 +142,7 @@
     'Workshop',
     'Masterclass',
   ];
-  var MEETING_FORMATS = ['In person', 'Online', 'Hybrid'];
+  var MEETING_FORMATS = ['In person', 'Online'];
   var healthCache = null;
   var healthCacheFetchedAt = 0;
   var adminMetricsCache = null;

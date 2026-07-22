@@ -271,21 +271,18 @@
 
   function formatHeroLabel(fmt) {
     const m = String(fmt || '').toLowerCase();
-    if (m.includes('hybrid')) return 'Hybrid event';
     if (m.includes('online') && !m.includes('person')) return 'Online event';
     return 'In-person event';
   }
 
   function formatTagClass(fmt) {
     const m = String(fmt || '').toLowerCase();
-    if (m.includes('hybrid')) return 'hybrid-tag';
     if (m.includes('online') && !m.includes('person')) return 'online-tag';
     return '';
   }
 
   function formatTagLabel(fmt) {
     const m = String(fmt || '').toLowerCase();
-    if (m.includes('hybrid')) return 'HYBRID';
     if (m.includes('online') && !m.includes('person')) return 'ONLINE';
     return 'IN-PERSON';
   }
@@ -848,7 +845,7 @@
 
   function isOnlineOnlyEvent(ev) {
     const m = String((ev && (ev.format || ev.meetingType || ev.meeting_type)) || '').toLowerCase();
-    return m.includes('online') && !m.includes('person') && !m.includes('hybrid');
+    return m.includes('online') && !m.includes('person');
   }
 
   function applyLocationBlock(ev) {

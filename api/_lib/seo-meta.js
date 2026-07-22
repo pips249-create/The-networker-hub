@@ -60,11 +60,6 @@ function isOnlineAttendance(ev) {
   return fmt.includes('online') || fmt.includes('virtual');
 }
 
-function isHybridAttendance(ev) {
-  const fmt = String(ev.meetingType || ev.format || '').toLowerCase();
-  return fmt.includes('hybrid');
-}
-
 function isoDateValue(value) {
   if (!value) return '';
   const raw = String(value).trim();
@@ -174,12 +169,10 @@ function buildEventSchema(ev, origin) {
   const slug = ev.slug || publicEventSlug({ slug: ev.slug, title: ev.title });
   const url = absoluteUrl(origin, '/events/' + encodeURIComponent(slug));
   const online = isOnlineAttendance(ev);
-  const hybrid = isHybridAttendance(ev);
   const place = buildEventPlaceLocation(ev);
 
   let eventAttendanceMode = 'https://schema.org/OfflineEventAttendanceMode';
-  if (hybrid) eventAttendanceMode = 'https://schema.org/MixedEventAttendanceMode';
-  else if (online) eventAttendanceMode = 'https://schema.org/OnlineEventAttendanceMode';
+  if (online) eventAttendanceMode = 'https://schema.org/OnlineEventAttendanceMode';
 
   const schema = {
     '@context': 'https://schema.org',
@@ -197,12 +190,7 @@ function buildEventSchema(ev, origin) {
   if (startDate) schema.startDate = startDate;
   if (endDate) schema.endDate = endDate;
 
-  if (hybrid && place) {
-    schema.location = [
-      place,
-      { '@type': 'VirtualLocation', url },
-    ];
-  } else if (online && !place) {
+  if (online && !place) {
     schema.location = { '@type': 'VirtualLocation', url };
   } else if (place) {
     schema.location = place;

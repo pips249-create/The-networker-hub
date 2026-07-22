@@ -121,7 +121,6 @@
   function meetingTypeSlug(ev) {
     var raw = String(ev.format || ev.meetingType || '').trim().toLowerCase();
     if (!raw) return '';
-    if (raw.indexOf('hybrid') !== -1) return 'hybrid';
     if (raw.indexOf('online') !== -1 && raw.indexOf('person') === -1) return 'online';
     if (raw.indexOf('person') !== -1 || raw.indexOf('in person') !== -1) return 'in-person';
     return ev.formatSlug || '';
@@ -523,7 +522,6 @@
         if (!wantInPerson) return false;
       } else if (fmt === 'in-person' && !wantInPerson) return false;
       else if (fmt === 'online' && !wantOnline) return false;
-      else if (fmt === 'hybrid' && !wantInPerson && !wantOnline) return false;
     }
 
     if (dateFromTs || dateToTs) {

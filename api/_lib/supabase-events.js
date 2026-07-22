@@ -113,7 +113,6 @@ function slugFormat(fmt) {
   const raw = String(fmt || '').trim().toLowerCase();
   if (!raw) return '';
   if (raw.includes('online') && !raw.includes('person')) return 'online';
-  if (raw.includes('hybrid')) return 'hybrid';
   if (raw.includes('person') || raw.includes('in-person') || raw.includes('in person')) return 'in-person';
   return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -135,10 +134,9 @@ function resolveFormatTab(row) {
   const tab = String(row?.format_tab || '')
     .trim()
     .toLowerCase();
-  if (tab === 'online' || tab === 'hybrid' || tab === 'in-person') return tab;
+  if (tab === 'online' || tab === 'in-person') return tab;
 
   const mt = String(row?.meeting_type || '').trim();
-  if (/hybrid/i.test(mt)) return 'hybrid';
   if (/online/i.test(mt) && !/person/i.test(mt)) return 'online';
   if (String(row?.meeting_link || '').trim()) return 'online';
   return 'in-person';
@@ -146,7 +144,6 @@ function resolveFormatTab(row) {
 
 function formatTabToLabel(tab) {
   if (tab === 'online') return 'Online';
-  if (tab === 'hybrid') return 'Hybrid';
   return 'In person';
 }
 
@@ -192,7 +189,6 @@ function cardLocationLabel(row) {
   if (outcode) return outcode.slice(0, 20);
   const tab = resolveFormatTab(row);
   if (tab === 'online') return 'Online';
-  if (tab === 'hybrid') return 'Hybrid';
   const venue = String(row.venue || '').trim();
   if (venue) return venue.slice(0, 20);
   return '';

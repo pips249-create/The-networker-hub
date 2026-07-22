@@ -2078,10 +2078,6 @@ body.browse-mode-organisers .events-toolbar {
   color: #3b6fd4;
 }
 
-.map-event-card-format.hybrid {
-  color: var(--lavender-deep);
-}
-
 .map-event-card-price {
   margin-left: auto;
   font-size: 11px;

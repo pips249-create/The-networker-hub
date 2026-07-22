@@ -10,39 +10,43 @@
     return d.innerHTML;
   }
 
+  function buildStateFromGroups(groups, stripeConnectEnabled) {
+    const enabled = Boolean(stripeConnectEnabled);
+    const list = Array.isArray(groups) ? groups : [];
+    const pendingGroups = list.filter(function (g) {
+      return enabled && !g.stripeConnectReady;
+    });
+    return {
+      enabled: enabled,
+      groups: list,
+      pendingGroups: pendingGroups,
+      needsSetup: enabled && pendingGroups.length > 0,
+      primaryGroup: pendingGroups[0] || list[0] || null,
+    };
+  }
+
   async function fetchState() {
     try {
-      const res = await fetch('/api/organiser/bootstrap', { credentials: 'include', cache: 'no-store' });
+      const embedBootstrap = global.HubOrganiserEmbedBootstrap;
+      if (embedBootstrap && embedBootstrap.readCache) {
+        const cached = embedBootstrap.readCache();
+        if (cached && Array.isArray(cached.groups) && cached.groups.length) {
+          return buildStateFromGroups(cached.groups, true);
+        }
+      }
+
+      const res = await fetch('/api/organiser/bootstrap?groupsOnly=1', {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const data = await res.json();
       if (!data.ok) {
-        return {
-          enabled: false,
-          groups: [],
-          pendingGroups: [],
-          needsSetup: false,
-          primaryGroup: null,
-        };
+        return buildStateFromGroups([], false);
       }
-      const enabled = Boolean(data.stripeConnectEnabled);
-      const groups = Array.isArray(data.groups) ? data.groups : [];
-      const pendingGroups = groups.filter(function (g) {
-        return enabled && !g.stripeConnectReady;
-      });
-      return {
-        enabled: enabled,
-        groups: groups,
-        pendingGroups: pendingGroups,
-        needsSetup: enabled && pendingGroups.length > 0,
-        primaryGroup: pendingGroups[0] || groups[0] || null,
-      };
+      return buildStateFromGroups(data.groups, data.stripeConnectEnabled);
     } catch {
-      return {
-        enabled: false,
-        groups: [],
-        pendingGroups: [],
-        needsSetup: false,
-        primaryGroup: null,
-      };
+      return buildStateFromGroups([], false);
     }
   }
 

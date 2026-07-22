@@ -1569,7 +1569,7 @@
 
   function eventIsOnlineFormat(ev) {
     const fmt = String(ev.eventFormat || ev.meetingType || ev.format || '').toLowerCase();
-    return /online|virtual|hybrid/.test(fmt);
+    return /online|virtual/.test(fmt);
   }
 
   function eventIsUpcomingLive(ev) {

@@ -35,6 +35,7 @@ module.exports = async function handler(req, res) {
     isPlatformAdmin,
     createTicket,
     createTicketsForEvents,
+    filterOwnedEventIds,
     enableTicketSalesForEvent,
     airtableSetupHint,
   } = api;
@@ -72,15 +73,21 @@ module.exports = async function handler(req, res) {
       [],
       adminView
     );
-    return new Set(events.map((e) => e.id));
+    return { groups, groupIds: groups.map((g) => g.id), adminView, allowed: new Set(events.map((e) => e.id)) };
   }
 
   if (req.method === 'GET') {
     const eventId = String(req.query?.eventId || '').trim();
     try {
-      const allowed = await ownedEventIds();
-      const ids = eventId ? [eventId].filter((id) => allowed.has(id)) : [...allowed];
-      const tickets = await listTicketsForSession(auth.session, ids);
+      if (eventId) {
+        const { groups, groupIds, adminView } = await ownedEventIds();
+        const ids = await filterOwnedEventIds([eventId], groupIds, adminView);
+        if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
+        const tickets = await listTicketsForSession(auth.session, ids);
+        return json(res, 200, { ok: true, tickets });
+      }
+      const { allowed } = await ownedEventIds();
+      const tickets = await listTicketsForSession(auth.session, [...allowed]);
       return json(res, 200, { ok: true, tickets });
     } catch (e) {
       return json(res, e.status || 500, {
@@ -100,10 +107,12 @@ module.exports = async function handler(req, res) {
 
     if (eventIds.length && tickets.length) {
       try {
-        const allowed = await ownedEventIds();
-        const ids = isPlatformAdmin(auth.session)
-          ? eventIds
-          : eventIds.filter((id) => allowed.has(id));
+        const groups = await listGroupsForSession(auth.session);
+        const groupIds = groups.map((g) => g.id);
+        const { organiserPersonalScopeFromRequest } = require('../auth');
+        const adminView =
+          isPlatformAdmin(auth.session) && !organiserPersonalScopeFromRequest(req);
+        const ids = await filterOwnedEventIds(eventIds, groupIds, adminView);
         if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
         const tiers = tickets
           .map((t, idx) => ({

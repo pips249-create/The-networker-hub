@@ -520,13 +520,17 @@
 
   function buildPatchPayload(locFields) {
     const ev = loadedEvent || {};
-    return {
+    const payload = {
       organiserGroupId: ev.organiserGroupId || ev.groupId || '',
       title: ev.title || '',
       type: ev.type || ev.eventType || 'Meeting',
       listingStatus: 'draft',
       ...locFields,
     };
+    if (Object.prototype.hasOwnProperty.call(ev, 'description')) {
+      payload.description = ev.description || '';
+    }
+    return payload;
   }
 
   async function saveLocation(options) {
@@ -677,16 +681,18 @@
     }
 
     let ev = null;
-    const embedBootstrap = window.HubOrganiserEmbedBootstrap;
-    if (embedBootstrap && embedBootstrap.readCache) {
-      const cached = embedBootstrap.readCache();
-      if (cached) {
-        ev = (cached.events || []).find((e) => e.id === eventIds[0]) || null;
-      }
+    const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(eventIds[0]));
+    if (evRes.ok && evRes.data.event) {
+      ev = evRes.data.event;
     }
     if (!ev) {
-      const evRes = await api('/api/organiser/events?id=' + encodeURIComponent(eventIds[0]));
-      if (evRes.ok && evRes.data.event) ev = evRes.data.event;
+      const embedBootstrap = window.HubOrganiserEmbedBootstrap;
+      if (embedBootstrap && embedBootstrap.readCache) {
+        const cached = embedBootstrap.readCache();
+        if (cached) {
+          ev = (cached.events || []).find((e) => e.id === eventIds[0]) || null;
+        }
+      }
     }
     if (!ev) {
       showAlert('Event not found. It may have been deleted.');

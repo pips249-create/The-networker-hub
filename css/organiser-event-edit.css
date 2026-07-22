@@ -2392,6 +2392,16 @@ body.ee-is-new-listing #ee-event-stats {
   border-radius: var(--ee-radius);
 }
 
+.ee-refund-check.is-locked {
+  opacity: 0.9;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ee-refund-terms-locked-note {
+  margin: 8px 0 0;
+}
+
 .ee-datetime-split {
   display: grid;
   grid-template-columns: 1fr auto;

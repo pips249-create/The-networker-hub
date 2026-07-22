@@ -30,7 +30,7 @@ Member and organiser platform for networking events, exhibitions, and training a
 | Price | 18 or Free |
 | Location | Cambridge |
 | Industry | Professional services |
-| Meeting Format | In person / Online / Hybrid |
+| Meeting Format | In person / Online |
 | Type | Meeting or Exhibition |
 | Featured | Yes (for Premium Spotlight) |
 | Photo | Attachment (cover image) |

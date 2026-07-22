@@ -158,7 +158,7 @@ function injectSeoIntoHtml(html, meta) {
 /** Edge-safe copy of api/_lib/networking-region-themes.js accents + landmarks. */
 const NETWORKING_REGION_THEMES = {
   "online": {
-    "tagline": "Webinars, virtual meetings, and hybrid sessions you can join from anywhere.",
+    "tagline": "Webinars and virtual meetings you can join from anywhere.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><rect x=\"56\" y=\"16\" width=\"128\" height=\"56\" rx=\"3\" stroke-width=\"2\"/><rect x=\"64\" y=\"24\" width=\"112\" height=\"40\" rx=\"2\" opacity=\".45\"/><circle cx=\"120\" cy=\"44\" r=\"16\" stroke-width=\"1.8\"/><ellipse cx=\"120\" cy=\"44\" rx=\"16\" ry=\"6\" opacity=\".45\"/><path d=\"M96 44h48M120 28v32\" opacity=\".45\"/><path d=\"M88 82h64\" stroke-width=\"2\"/><path d=\"M120 74v8M108 82h24\"/></svg>"
   },
   "central-london": {

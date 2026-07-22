@@ -286,7 +286,7 @@
 
   function isOnlineOnlyEvent(ev) {
     const m = String((ev && (ev.format || ev.meetingType)) || '').toLowerCase();
-    return m.includes('online') && !m.includes('person') && !m.includes('hybrid');
+    return m.includes('online') && !m.includes('person');
   }
 
   function normalizePhotoPosition(value) {

@@ -120,10 +120,10 @@ function applyFormatFilter(query, params) {
     return query.eq('id', '00000000-0000-0000-0000-000000000000');
   }
   if (wantInPerson && !wantOnline) {
-    return query.in('format_tab', ['in-person', 'hybrid']);
+    return query.eq('format_tab', 'in-person');
   }
   if (!wantInPerson && wantOnline) {
-    return query.in('format_tab', ['online', 'hybrid']);
+    return query.eq('format_tab', 'online');
   }
   return query;
 }

@@ -37,7 +37,6 @@ function eventPayloadFromBody(body, email) {
     groupId: String(body.organiserGroupId || body.groupId || '').trim(),
     title: String(body.title || '').trim(),
     type: String(body.type || body.format || 'Meeting').trim(),
-    description: String(body.description || '').trim(),
     location: String(body.location || '').trim(),
     venue: String(body.venue || '').trim(),
     addressLine1: String(body.addressLine1 || '').trim(),
@@ -56,6 +55,9 @@ function eventPayloadFromBody(body, email) {
     photoMime: body.photoMime || body.imageMime || null,
     photoFilename: body.photoFilename || body.imageFilename || null,
   };
+  if (Object.prototype.hasOwnProperty.call(body, 'description')) {
+    payload.description = String(body.description || '').trim();
+  }
   if (Object.prototype.hasOwnProperty.call(body, 'photoUrl') || Object.prototype.hasOwnProperty.call(body, 'imageUrl')) {
     payload.photoUrl = String(body.photoUrl || body.imageUrl || '').trim();
   }
@@ -84,6 +86,7 @@ module.exports = async function handler(req, res) {
     requireOrganiserSession,
     listGroupsForSession,
     listEventsForSession,
+    listEventsForSeriesGroup,
     groupOwnedBySession,
     createEvent,
     updateEvent,
@@ -128,7 +131,17 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     const eventId = String(req.query?.id || req.query?.eventId || '').trim();
+    const seriesGroupId = String(req.query?.seriesGroupId || req.query?.series_group_id || '').trim();
     try {
+      if (seriesGroupId) {
+        const groups = await listGroupsForSession(auth.session);
+        const groupIds = groups.map((g) => g.id);
+        const { organiserPersonalScopeFromRequest } = require('../auth');
+        const adminView =
+          isPlatformAdmin(auth.session) && !organiserPersonalScopeFromRequest(req);
+        const events = await listEventsForSeriesGroup(groupIds, seriesGroupId);
+        return json(res, 200, { ok: true, events });
+      }
       if (eventId) {
         const { groups, allowed } = await ownedEventIds();
         if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {

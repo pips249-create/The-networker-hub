@@ -54,6 +54,14 @@ module.exports = async function handler(req, res) {
         groups,
         events: [],
         groupsError,
+        stripeConnectEnabled: (() => {
+          try {
+            const { isStripeConnectEnabled } = require('../stripe-connect');
+            return isStripeConnectEnabled();
+          } catch {
+            return false;
+          }
+        })(),
         organiserAccess: accessStatus.organiserAccess,
         organiserEmailVerified: accessStatus.organiserEmailVerified,
       });

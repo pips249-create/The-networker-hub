@@ -667,7 +667,6 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 .event-grid-format.in-person { color: #2d8a4e; }
 .event-grid-format.online { color: #3b6fd4; }
-.event-grid-format.hybrid { color: var(--lavender-deep); }
 .event-grid-title {
   font-size: 15px;
   font-weight: 700;

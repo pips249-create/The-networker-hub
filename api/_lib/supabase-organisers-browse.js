@@ -17,7 +17,6 @@ function slugFormat(fmt) {
   const raw = String(fmt || '').trim().toLowerCase();
   if (!raw) return '';
   if (raw.includes('online') && !raw.includes('person')) return 'online';
-  if (raw.includes('hybrid')) return 'hybrid';
   if (raw.includes('person') || raw.includes('in-person') || raw.includes('in person')) return 'in-person';
   return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }

@@ -31,7 +31,7 @@ function issuePayload(code) {
 function normalizeMeetingType(raw) {
   const s = String(raw || '').trim();
   if (!s) return '';
-  const formats = ['In person', 'Online', 'Hybrid'];
+  const formats = ['In person', 'Online'];
   const exact = formats.find((f) => f.toLowerCase() === s.toLowerCase());
   return exact || s;
 }

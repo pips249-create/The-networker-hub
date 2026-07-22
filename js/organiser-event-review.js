@@ -30,7 +30,6 @@
   const FORMAT_LABELS = {
     'in-person': 'In person',
     online: 'Online',
-    hybrid: 'Hybrid',
   };
 
   const REFUND_LABELS = {
@@ -217,8 +216,7 @@
       .trim()
       .toLowerCase()
       .replace(/\s+/g, '-');
-    if (key.includes('online') && !key.includes('hybrid') && !key.includes('person')) return 'online';
-    if (key.includes('hybrid')) return 'hybrid';
+    if (key.includes('online') && !key.includes('person')) return 'online';
     return 'in-person';
   }
 
@@ -233,9 +231,6 @@
     const city = String(anchorEvent?.city || '').trim();
     const postcode = String(anchorEvent?.postcode || '').trim();
     const parts = [venue, city, postcode].filter(Boolean);
-    if (formatKey === 'hybrid') {
-      return parts.length ? label + ' — ' + parts.join(', ') : label + ' — venue and online link';
-    }
     return parts.length ? parts.join(', ') : label + ' — location saved';
   }
 
@@ -550,12 +545,26 @@
       : 'included in ticket price';
   }
 
+  function storedRefundMatchesCurrent(stored) {
+    if (!stored || !Array.isArray(stored.eventIds) || !stored.eventIds.length) return false;
+    const storedSet = new Set(
+      stored.eventIds.map(function (id) {
+        return String(id || '').trim();
+      })
+    );
+    return eventIds.some(function (id) {
+      return storedSet.has(String(id || '').trim());
+    });
+  }
+
   function reviewRefundContext() {
     const fromEvent = {
       refundPolicy: anchorEvent?.refundPolicy,
       refundPolicyDetails: anchorEvent?.refundPolicyDetails || '',
       refundCutoffDays: anchorEvent?.refundCutoffDays,
-      refundTermsAgreed: Boolean(anchorEvent?.refundTermsAgreed),
+      refundTermsAgreed: Boolean(
+        anchorEvent?.refundTermsAgreed || anchorEvent?.refundTermsAgreedAt
+      ),
       vatTreatment: anchorEvent?.vatTreatment,
     };
     let merged = { ...fromEvent };
@@ -563,9 +572,7 @@
       const raw = sessionStorage.getItem(REVIEW_REFUND_KEY);
       if (raw) {
         const stored = JSON.parse(raw);
-        const storedIds = (stored.eventIds || []).slice().sort().join(',');
-        const currentIds = eventIds.slice().sort().join(',');
-        if (storedIds === currentIds) {
+        if (storedRefundMatchesCurrent(stored)) {
           merged = {
             refundPolicy: stored.refundPolicy || merged.refundPolicy,
             refundPolicyDetails: stored.refundPolicyDetails || merged.refundPolicyDetails,
@@ -626,23 +633,9 @@
       body.refundPolicy = refund.refundPolicy;
       body.refundPolicyDetails = refund.refundPolicyDetails || '';
       body.refundCutoffDays = refund.refundCutoffDays;
-      const reviewAgreed = document.getElementById('ee-review-refund-terms-agreed')?.checked;
-      body.refundTermsAgreed = Boolean(refund.refundTermsAgreed || reviewAgreed);
+      body.refundTermsAgreed = Boolean(refund.refundTermsAgreed);
     }
     return body;
-  }
-
-  function updateReviewRefundCheck() {
-    const tiers = displayTiers();
-    const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
-    const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
-    const refund = hasPaid ? reviewRefundContext() : null;
-    const wrap = document.getElementById('ee-review-refund-check');
-    const agree = document.getElementById('ee-review-refund-terms-agreed');
-    if (!wrap || !agree) return;
-    const needsConfirm = hasPaid && !refund?.refundTermsAgreed;
-    wrap.hidden = !needsConfirm;
-    if (!needsConfirm) agree.checked = false;
   }
 
   async function hydrateSeriesEvents() {
@@ -839,14 +832,9 @@
       }
       if (hasPaid && !body.refundTermsAgreed) {
         showAlert(
-          'Confirm you understand refunds are your responsibility under Stripe Connect.',
+          'Go back to ticket setup, choose your refund policy, and tick the refund responsibility checkbox — then return here to publish.',
           'warn'
         );
-        updateReviewRefundCheck();
-        document.getElementById('ee-review-refund-check')?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
         return;
       }
 
@@ -914,17 +902,12 @@
     }
     if (backEdit) backEdit.href = ticketsUrl;
     document.getElementById('ee-review-confirm')?.addEventListener('click', publishListing);
-    document.getElementById('ee-review-refund-terms-agreed')?.addEventListener('change', function () {
-      if (this.checked) showAlert('');
-      renderReview();
-    });
   }
 
   function renderReview() {
     const body = document.getElementById('ee-publish-review-body');
     if (body) body.innerHTML = renderReviewBody();
     renderReviewNext();
-    updateReviewRefundCheck();
   }
 
   async function init() {

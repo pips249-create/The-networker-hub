@@ -3,7 +3,6 @@
   var sortSelect = document.getElementById('sort');
   var formatInPerson = document.getElementById('org-format-inperson');
   var formatOnline = document.getElementById('org-format-online');
-  var formatHybrid = document.getElementById('org-format-hybrid');
   var hasListings = document.getElementById('org-has-listings');
   var guestVisits = document.getElementById('org-guest-visits');
   var rating4 = document.getElementById('org-rating-4');
@@ -35,15 +34,12 @@
   function formatFiltersActive() {
     var allOn =
       (!formatInPerson || formatInPerson.checked) &&
-      (!formatOnline || formatOnline.checked) &&
-      (!formatHybrid || formatHybrid.checked);
+      (!formatOnline || formatOnline.checked);
     var allOff =
       formatInPerson &&
       !formatInPerson.checked &&
       formatOnline &&
-      !formatOnline.checked &&
-      formatHybrid &&
-      !formatHybrid.checked;
+      !formatOnline.checked;
     return !allOn && !allOff;
   }
 
@@ -116,10 +112,9 @@
   function matchesFormatFilter(org) {
     var wantInPerson = !formatInPerson || formatInPerson.checked;
     var wantOnline = !formatOnline || formatOnline.checked;
-    var wantHybrid = !formatHybrid || formatHybrid.checked;
 
-    if (wantInPerson && wantOnline && wantHybrid) return true;
-    if (!wantInPerson && !wantOnline && !wantHybrid) return false;
+    if (wantInPerson && wantOnline) return true;
+    if (!wantInPerson && !wantOnline) return false;
 
     var slugs = org.formatSlugs || [];
     if (!slugs.length) return false;
@@ -128,7 +123,6 @@
       var slug = slugs[i];
       if (wantInPerson && slug === 'in-person') return true;
       if (wantOnline && slug === 'online') return true;
-      if (wantHybrid && slug === 'hybrid') return true;
     }
     return false;
   }
@@ -219,7 +213,7 @@
   function resetFilters() {
     if (searchInput) searchInput.value = '';
     if (sortSelect) sortSelect.value = 'recommended';
-    [formatInPerson, formatOnline, formatHybrid].forEach(function (el) {
+    [formatInPerson, formatOnline].forEach(function (el) {
       if (el) el.checked = true;
     });
     if (hasListings) hasListings.checked = false;
@@ -258,7 +252,6 @@
     sortSelect,
     formatInPerson,
     formatOnline,
-    formatHybrid,
     hasListings,
     guestVisits,
     rating4,

@@ -21,7 +21,7 @@ function theme(accent, tagline, slug, accentHero) {
 }
 
 const REGION_THEMES = {
-  online: theme('#2a5580', 'Webinars, virtual meetings, and hybrid sessions you can join from anywhere.', 'online', '#93c5fd'),
+  online: theme('#2a5580', 'Webinars and virtual meetings you can join from anywhere.', 'online', '#93c5fd'),
   // London family
   'central-london': theme('#1c2040', 'From the City to Westminster and the West End.', 'central-london', '#c5cee8'),
   'north-london': theme('#2e4a8a', 'From Camden and Islington to Hampstead and Highgate.', 'north-london', '#a8c4f0'),
