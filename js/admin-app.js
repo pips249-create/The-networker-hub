@@ -6509,7 +6509,7 @@
             : slot.preview === 'banner'
               ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this banner is hidden on event pages.</div>'
               : '<div class="events-hero-sponsor-slot"><div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
-                '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
+                '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
                 '<p class="text-base font-extrabold mb-4">Your brand here</p>' +
                 '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span></div></div>';
         return;
@@ -6562,7 +6562,7 @@
       if (hasLogo) {
         el.innerHTML =
           '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 pb-4 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
-          '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
+          '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
           sponsorPreviewLogoHtml(creative.logoUrl, false) +
           '</aside>';
         return;
@@ -6570,7 +6570,7 @@
 
       el.innerHTML =
         '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
-        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Sponsor Hub</div>' +
+        '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
         sponsorPreviewLogoHtml(creative.logoUrl, false) +
         (creative.companyName
           ? '<p class="text-sm font-extrabold mb-1">' + esc(creative.companyName) + '</p>'

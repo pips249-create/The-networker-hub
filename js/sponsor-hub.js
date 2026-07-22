@@ -335,7 +335,7 @@
     return (
       '<aside class="sponsor-hub sponsor-hub--in-hero sponsor-hub--active">' +
       '<div class="sponsor-hub-head">' +
-      '<span class="icon" aria-hidden="true">★</span><span>Sponsor Hub</span></div>' +
+      '<span class="icon" aria-hidden="true">★</span><span>Powered by</span></div>' +
       '<div class="sponsor-logo-wrap sponsor-logo-band">' +
       '<a class="sponsor-logo-link" hidden>' +
       '<img class="sponsor-logo" alt="" hidden></a>' +

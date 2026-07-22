@@ -27,146 +27,156 @@
     insight: 'Networking insight',
   };
 
+  const AVID_PANDA_SOURCE = {
+    source: 'Avid Panda, 2025',
+    sourceUrl: 'https://avidpanda.com/insights/networking-rankings/',
+  };
+
   const networkingFacts = [
     {
-      text: 'The Networker Hub is a UK directory for networking meetings, exhibitions, conferences, and business opportunities.',
+      text: 'Opportunity listings are reviewed before they go live.',
       label: 'hub',
     },
     {
-      text: '85% of jobs are filled through personal and professional networks, not online applications alone.',
-      label: 'research',
-      source: 'HubSpot',
-      sourceUrl: 'https://blog.hubspot.com/marketing/marketing-statistics',
-    },
-    {
-      text: 'Every business host on the hub is reviewed before they can list, to keep events focused on genuine networking.',
+      text: 'Compare organiser reviews before you book a guest visit.',
       label: 'hub',
     },
     {
-      text: 'You can browse live listings and filter by format, industry, date, and location. No account required.',
+      text: 'Many UK networking groups are actively looking for people to host. Look at the business opportunities page.',
       label: 'hub',
     },
     {
-      text: 'Organiser reviews on the hub reflect real attendee feedback, so you can compare hosts before you book.',
+      text: 'Every organiser gets a profile page — find them on the Events page.',
       label: 'hub',
     },
     {
-      text: 'Save events to your favourites and return when you are ready to register.',
+      text: 'Filter by date, location, format, and price — map view included.',
       label: 'hub',
     },
     {
-      text: 'Many UK networking groups are actively looking for people to open new chapters and groups across the country. Browse current openings on the hub\u2019s business opportunities page.',
-      label: 'hub',
-    },
-    {
-      text: 'Do you know all organisers get a profile page with logo, reviews, social links, and all their events? Find them under the Organisers tab on the events page.',
-      label: 'hub',
-    },
-    {
-      text: 'UK business networking spans breakfast clubs, chamber events, sector meetups, and exhibitions.',
+      text: 'UK networking spans breakfast clubs, chamber events, sector meetups, and exhibitions.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'In the UK, networking is more about collaboration than competition. Business owners often refer clients to one another and share practical operational advice.',
+      text: 'In the UK, networking is more about collaboration than competition.',
       label: 'research',
       source: 'Mosaic Digital Media',
       sourceUrl: 'https://mosaicdigitalmedia.co.uk/benefits-of-networking-for-uk-businesses/',
     },
     {
-      text: '95% of professionals consider face-to-face meetings essential for building long-term business relationships.',
+      text: 'Business owners often refer clients to one another and share practical operational advice.',
+      label: 'research',
+      source: 'Mosaic Digital Media',
+      sourceUrl: 'https://mosaicdigitalmedia.co.uk/benefits-of-networking-for-uk-businesses/',
+    },
+    {
+      text: '95% of professionals say face-to-face meetings build lasting relationships.',
       label: 'research',
       source: 'StandOut CV, 2025',
       sourceUrl: 'https://standout-cv.com/stats/networking-statistics',
     },
     {
-      text: 'Trust usually needs 10 or more interactions over several months to form. A single meeting or business card exchange rarely builds a real connection.',
+      text: 'Trust usually takes 10+ meetings over months — one card swap rarely sticks.',
       label: 'research',
       source: 'BNI Breaking Boundaries',
       sourceUrl: 'https://bnibreakingboundaries.com/business-networking-roi/',
     },
     {
-      text: '77% of people prefer face-to-face networking events because they can read body language and facial expressions.',
+      text: '77% prefer in-person events to read body language.',
       label: 'research',
       source: 'Forbes (via Freshminds)',
       sourceUrl: 'https://www.freshminds.co.uk/blog/2023/09/online-networking-vs-in-person-which-is-most-effective-for-growing-your-career',
     },
     {
-      text: 'The average UK professional attends around seven formal networking events each year.',
+      text: 'UK professionals attend around seven networking events a year.',
       label: 'research',
       source: 'StandOut CV, 2025',
       sourceUrl: 'https://standout-cv.com/stats/networking-statistics',
     },
     {
-      text: '47% of networkers attend events mainly to learn and share industry knowledge, while only 23% go exclusively to seek new job opportunities.',
+      text: '47% of networkers attend events mainly to learn and share industry knowledge.',
       label: 'research',
       source: 'StandOut CV, 2025',
       sourceUrl: 'https://standout-cv.com/stats/networking-statistics',
     },
     {
-      text: 'Corporate executives and small business owners estimate they would lose around 28% of their business if they stopped networking actively.',
+      text: 'Only 23% go exclusively to seek new job opportunities.',
+      label: 'research',
+      source: 'StandOut CV, 2025',
+      sourceUrl: 'https://standout-cv.com/stats/networking-statistics',
+    },
+    {
+      text: 'Small business owners estimate they would lose around 28% of their business if they stopped networking.',
       label: 'research',
       source: 'Novor\u00e9sum\u00e9',
       sourceUrl: 'https://novoresume.com/career-blog/networking-statistics',
     },
     {
-      text: 'Between 5% and 20% of new small business clients come directly from trade shows and exhibitions.',
+      text: '5\u201320% of new small business clients come from exhibitions.',
       label: 'research',
       source: 'Novor\u00e9sum\u00e9',
       sourceUrl: 'https://novoresume.com/career-blog/networking-statistics',
     },
     {
-      text: 'Listings are managed by verified organisers. Dates, venues, and prices on each event page are kept up to date.',
-      label: 'hub',
-    },
-    {
-      text: 'Most hiring still starts with referrals and warm introductions.',
-      label: 'research',
-      source: 'LinkedIn Talent Research',
-      sourceUrl: 'https://www.linkedin.com/business/talent/blog',
-    },
-    {
-      text: 'The UK\u2019s best cities for networking can help you build long-lasting business partnerships and take your career to the next level.',
+      text: 'London ranks as the UK\u2019s top city for networkers, with an index score of 7.35 out of 10.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'London ranks as the UK\u2019s top city for networkers, with an index score of 7.35 out of 10 and over \u00a378 million passed through networking groups in the past year.',
+      text: 'Over \u00a378 million passed through London networking groups in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'Glasgow is the UK\u2019s second-best city for networking, with over \u00a3205 million passed through local groups last year.',
+      text: 'Glasgow ranks as the UK\u2019s second-best city for networking, with an index score of 6.71 out of 10.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'Birmingham ranks third for UK networking, with 16+ groups and members passing over \u00a319 million in business last year.',
+      text: 'Over \u00a3205 million passed through Glasgow networking groups in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'Chester ranks fourth among UK networking cities, with around 285 active networking members.',
+      text: 'Birmingham ranks third for UK networking, with 16+ groups and over \u00a319 million passed through in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'Manchester rounds out the UK\u2019s top five networking cities, with over \u00a331 million passed through local groups in the past year.',
+      text: 'Chester ranks fourth among UK networking cities, with around 285 active networking members in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'The South East is the UK\u2019s top region for networking, with an index score of 6.20 out of 10.',
+      text: 'Manchester rounds out the UK\u2019s top five networking cities, with over \u00a331 million passed through in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'The North West ranks second among UK networking regions, scoring 5.43 out of 10.',
+      text: 'The South East leads UK networking regions, with an index score of 6.20 out of 10 in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'London ranks third among UK networking regions, with an index score of 5.25 out of 10.',
+      text: 'The North West ranks second among UK networking regions, scoring 5.43 out of 10 in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'The West Midlands is the UK\u2019s fourth-best region for networking, with an index score of 4.95 out of 10.',
+      text: 'London is third among UK networking regions, with an index score of 5.25 out of 10 in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
     {
-      text: 'Scotland rounds out the UK\u2019s top five networking regions, scoring 3.67 out of 10.',
+      text: 'The West Midlands is fourth for UK networking, scoring 4.95 out of 10 in 2024.',
       label: 'insight',
+      ...AVID_PANDA_SOURCE,
+    },
+    {
+      text: 'Scotland rounds out the top five UK networking regions, scoring 3.67 out of 10 in 2024.',
+      label: 'insight',
+      ...AVID_PANDA_SOURCE,
     },
   ];
 
