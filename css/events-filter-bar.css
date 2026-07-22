@@ -246,23 +246,35 @@
 }
 
 .filter-format-group--inline .filter-format-pill-face {
-  background: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.45);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.34);
   box-shadow: none;
 }
 
+.filter-format-group--inline .filter-format-pill-icon {
+  opacity: 0.72;
+}
+
 .filter-format-group--inline .filter-format-pill:hover .filter-format-pill-face {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.65);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.filter-format-group--inline .filter-format-pill:hover .filter-format-pill-icon {
+  opacity: 0.92;
 }
 
 .filter-format-group--inline .filter-format-pill input:checked + .filter-format-pill-face {
   background: #fff;
   border-color: #fff;
   color: var(--filter-surface-deep, var(--lavender-deep));
-  box-shadow: none;
+  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.28);
+}
+
+.filter-format-group--inline .filter-format-pill input:checked + .filter-format-pill-face .filter-format-pill-icon {
+  opacity: 1;
 }
 
 .filter-format-group--inline .filter-format-legend {
@@ -304,9 +316,9 @@
   min-height: 40px;
   padding: 8px 16px;
   border-radius: 999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid rgba(255, 255, 255, 0.34);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   font-weight: 700;
   line-height: 1;
@@ -320,16 +332,24 @@
 }
 
 .filter-format-pill:hover .filter-format-pill-face {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.65);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .filter-format-pill input:checked + .filter-format-pill-face {
   background: #fff;
   border-color: #fff;
   color: var(--filter-surface-deep, var(--lavender-deep));
-  box-shadow: 0 2px 10px rgba(36, 18, 48, 0.22);
+  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.28);
+}
+
+.filter-format-pill input:checked + .filter-format-pill-face .filter-format-pill-icon {
+  opacity: 1;
+}
+
+.filter-format-pill input:not(:checked) + .filter-format-pill-face .filter-format-pill-icon {
+  opacity: 0.72;
 }
 
 .filter-format-pill input:focus-visible + .filter-format-pill-face {
