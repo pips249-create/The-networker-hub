@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
   <link rel="stylesheet" href="../css/hub.css?v=20260714clsb">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260714d">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260722a">
   <link rel="stylesheet" href="../css/networking-regions.css?v=20260716cp2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260721a">
   <link rel="stylesheet" href="../css/events-page.css?v=20260721a">
@@ -78,7 +78,7 @@
           </button>
           <div class="min-w-0">
             <h2 class="text-base lg:text-lg font-bold text-brand-900 truncate" id="page-title">Overview</h2>
-            <p class="text-xs text-slate-500 line-clamp-2 admin-page-subtitle" id="page-subtitle">Supabase counts, alerts, and recent genuine platform activity</p>
+            <p class="text-xs text-slate-500 line-clamp-2 admin-page-subtitle" id="page-subtitle">Platform health, action queue, and recent activity</p>
           </div>
         </div>
         <button type="button" id="admin-data-badge" class="hidden sm:inline-flex shrink-0 items-center text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full hover:bg-slate-200 transition" title="Click to refresh counts and alerts from Supabase">
@@ -86,88 +86,95 @@
         </button>
       </header>
       <div id="admin-main" class="p-3 lg:p-5 max-w-7xl mx-auto min-w-0 w-full">
-        <div class="space-y-6" id="dashboard-boot">
-          <section class="space-y-3">
-            <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>
-            <div class="grid gap-3 min-h-[12rem]" id="dashboard-alerts">
-              <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>
-              <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>
-            </div>
+        <div class="space-y-5" id="dashboard-boot">
+          <section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">
+            <article class="admin-stat-card min-w-0">
+              <p class="admin-stat-card-label">Paid ticket revenue</p>
+              <p class="admin-stat-card-value">…</p>
+              <p class="admin-stat-card-sub">Loading…</p>
+            </article>
+            <article class="admin-stat-card min-w-0">
+              <p class="admin-stat-card-label">Approved events</p>
+              <p class="admin-stat-card-value">…</p>
+              <p class="admin-stat-card-sub">Loading…</p>
+            </article>
+            <article class="admin-stat-card min-w-0">
+              <p class="admin-stat-card-label">Organisers</p>
+              <p class="admin-stat-card-value">…</p>
+              <p class="admin-stat-card-sub">Loading…</p>
+            </article>
+            <article class="admin-stat-card min-w-0">
+              <p class="admin-stat-card-label">Hub accounts</p>
+              <p class="admin-stat-card-value">…</p>
+              <p class="admin-stat-card-sub">Loading…</p>
+            </article>
           </section>
-          <section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>
-            <div>
-              <h3 class="font-bold text-brand-900">Group profile disputes</h3>
-              <p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p>
+
+          <section class="admin-dash-section" id="dashboard-action-section">
+            <div class="admin-dash-section-head">
+              <h3>Action queue</h3>
+              <p>Items that need a decision or follow-up — sorted by priority.</p>
             </div>
-            <div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div>
-          </section>
-          <section class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm space-y-3" id="dashboard-claim-requests-section" hidden>
-            <div>
-              <h3 class="font-bold text-brand-900">Organiser claim requests</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Someone asked to claim a public group profile — verify the claimant, then approve to update the contact email and send the claim invite.</p>
-            </div>
-            <div id="dashboard-claim-requests"><p class="text-sm text-slate-500">Loading…</p></div>
-          </section>
-          <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-            <div>
-              <h3 class="font-bold text-brand-900">Needs your attention</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p>
-            </div>
-            <!-- Stable LCP node: never destroy #attention-ownership-lcp when refreshing data -->
-            <div id="dashboard-attention" class="min-h-[14rem] space-y-3">
-              <div id="attention-ownership" class="rounded-lg border border-brand-200 bg-brand-50 p-4">
-                <p id="attention-ownership-title" class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>
-                <p id="attention-ownership-lcp" class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>
+            <div class="admin-dash-section-body">
+              <div class="admin-action-queue min-h-[6rem]" id="dashboard-action-queue">
+                <div class="admin-action-row admin-action-row--static" aria-hidden="true">
+                  <span class="admin-action-priority admin-action-priority--low">—</span>
+                  <span class="admin-action-body"><span class="admin-action-title">Loading queue…</span></span>
+                </div>
               </div>
-              <div id="attention-extra" class="space-y-3"></div>
             </div>
           </section>
-          <a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>
-                <p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>
-                <p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p>
-              </div>
-              <span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span>
+
+          <section class="admin-dash-section" id="dashboard-disputes-section" hidden>
+            <div class="admin-dash-section-head">
+              <h3>Group profile disputes</h3>
+              <p>An organiser signed in and said a pre-imported profile is not theirs.</p>
             </div>
+            <div class="admin-dash-section-body" id="dashboard-disputes">
+              <p class="text-sm text-slate-500">Loading…</p>
+            </div>
+          </section>
+
+          <section class="admin-dash-section" id="dashboard-claim-requests-section" hidden>
+            <div class="admin-dash-section-head">
+              <h3>Organiser claim requests</h3>
+              <p>Someone asked to claim a public group profile — verify the claimant, then approve.</p>
+            </div>
+            <div class="admin-dash-section-body" id="dashboard-claim-requests">
+              <p class="text-sm text-slate-500">Loading…</p>
+            </div>
+          </section>
+
+          <section class="grid lg:grid-cols-2 gap-5">
+            <div class="admin-dash-section min-w-0">
+              <div class="admin-dash-section-head">
+                <h3>Recent activity</h3>
+                <p>Registrations, events, and reviews — test data excluded.</p>
+              </div>
+              <div class="admin-dash-section-body pt-0">
+                <ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]">
+                  <li class="text-sm text-slate-500">Loading…</li>
+                </ul>
+              </div>
+            </div>
+            <div class="admin-dash-section min-w-0">
+              <div class="admin-dash-section-head">
+                <h3>Platform snapshot</h3>
+                <p>Key counts from Supabase — not visitor traffic.</p>
+              </div>
+              <div class="admin-dash-section-body pt-0">
+                <div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div>
+              </div>
+            </div>
+          </section>
+
+          <a href="#analytics" class="admin-quick-link group">
+            <div>
+              <p class="admin-quick-link-title">Web Analytics on Vercel</p>
+              <p class="admin-quick-link-desc">Visitors, top pages, referrers, and device breakdown.</p>
+            </div>
+            <span class="admin-action-go group-hover:text-brand-900">Open →</span>
           </a>
-          <section class="admin-metric-grid admin-metric-grid--4" id="dashboard-metrics">
-            <article class="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-200 rounded-xl p-4 shadow-sm min-w-0">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Paid ticket revenue</p>
-              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
-              <p class="text-xs text-slate-500 mt-2">Loading…</p>
-            </article>
-            <article class="bg-gradient-to-br from-brand-500/10 to-brand-500/5 border border-brand-200 rounded-xl p-4 shadow-sm min-w-0">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Approved events</p>
-              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
-              <p class="text-xs text-slate-500 mt-2">Loading…</p>
-            </article>
-            <article class="bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-200 rounded-xl p-4 shadow-sm min-w-0">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Organisers</p>
-              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
-              <p class="text-xs text-slate-500 mt-2">Loading…</p>
-            </article>
-            <article class="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-200 rounded-xl p-4 shadow-sm min-w-0">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Hub accounts</p>
-              <p class="text-2xl font-bold text-brand-900 mt-2">…</p>
-              <p class="text-xs text-slate-500 mt-2">Loading…</p>
-            </article>
-          </section>
-          <section class="grid lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">
-              <h3 class="font-bold text-brand-900 mb-1">Recent genuine activity</h3>
-              <p class="text-xs text-slate-500 mb-3">Registrations, events, and reviews — test/E2E data excluded.</p>
-              <ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]">
-                <li class="text-sm text-slate-500">Loading…</li>
-              </ul>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">
-              <h3 class="font-bold text-brand-900 mb-2">Platform snapshot</h3>
-              <p class="text-sm text-slate-500 mb-4">Key counts from Supabase (not visitor traffic — see Web Analytics).</p>
-              <div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div>
-            </div>
-          </section>
         </div>
       </div>
     </div>
@@ -193,6 +200,6 @@
   <script src="../js/sponsor-hub.js?v=20260721a" defer></script>
   <script src="../js/cms-ad-blocks.js?v=20260721a" defer></script>
   <script src="../js/admin-social-posts.js?v=20260730" defer></script>
-  <script src="../js/admin-app.js?v=20260721b" defer></script>
+  <script src="../js/admin-app.js?v=20260722a" defer></script>
 </body>
 </html>

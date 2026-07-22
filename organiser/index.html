@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260721biz" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722styles" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260722team" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -1239,31 +1239,48 @@
             <div class="org-page-head-text">
               <p class="org-page-kicker">Team</p>
               <h1 class="org-page-title">Team &amp; invites</h1>
-              <p class="org-page-lead">Give colleagues access to help run your organiser pages. Choose which pages each team member can see. Only the account owner can send invites, change bank details, or remove people.</p>
-              <p class="org-section-sub org-team-limit-note" id="team-limit-note" hidden></p>
+              <p class="org-page-lead">Share your organiser workspace with colleagues. You choose which pages each person can access.</p>
               <p class="org-section-sub org-team-editor-note" id="team-member-note" hidden>
                 You&apos;re signed in as a <strong>team member</strong>. You can manage events for your assigned organiser pages. Only the account owner can invite colleagues or change bank details.
               </p>
             </div>
             <button type="button" class="org-btn org-btn-gold" id="btn-invite-team">Invite team member</button>
           </header>
+          <div class="org-team-owner-panel" id="org-team-owner-panel">
+            <div class="org-team-summary org-stats org-stats--three org-stats--compact" id="org-team-summary" aria-label="Team summary">
+              <div class="org-stat gold">
+                <div class="org-stat-label">Active</div>
+                <div class="org-stat-value" id="team-stat-active">0</div>
+              </div>
+              <div class="org-stat purple">
+                <div class="org-stat-label">Pending invites</div>
+                <div class="org-stat-value" id="team-stat-pending">0</div>
+              </div>
+              <div class="org-stat green">
+                <div class="org-stat-label">Invites remaining</div>
+                <div class="org-stat-value" id="team-stat-slots">100</div>
+              </div>
+            </div>
+            <p class="org-team-cap-banner" id="team-cap-banner" hidden role="status">
+              Team limit reached — remove someone before sending another invite.
+            </p>
           <div class="org-team-permissions" id="org-team-permissions">
-            <h2 class="org-team-permissions-title">What team members can do</h2>
+            <h2 class="org-team-permissions-title">Permissions at a glance</h2>
             <div class="org-team-permissions-grid">
-              <div class="org-team-permissions-col">
+              <div class="org-team-permissions-card org-team-permissions-card--can">
                 <p class="org-team-permissions-label">Team members can</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--can">
-                  <li>View and manage assigned organiser pages (or all pages if you choose)</li>
-                  <li>Create and edit events, tickets, and attendee lists for those pages</li>
-                  <li>View revenue, registrations, and reviews for those pages</li>
+                  <li>View and manage assigned organiser pages</li>
+                  <li>Create and edit events, tickets, and attendee lists</li>
+                  <li>View revenue, registrations, and reviews</li>
                   <li>Manage business opportunity listings</li>
                 </ul>
               </div>
-              <div class="org-team-permissions-col">
+              <div class="org-team-permissions-card org-team-permissions-card--cannot">
                 <p class="org-team-permissions-label">Team members cannot</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--cannot">
                   <li>Invite or remove colleagues</li>
-                  <li>Create new organiser pages or duplicate existing ones</li>
+                  <li>Create or duplicate organiser pages</li>
                   <li>Add bank details, request payouts, or delete events</li>
                 </ul>
               </div>
@@ -1273,7 +1290,11 @@
               — invite flow, limits, and what happens when someone accepts.
             </p>
           </div>
-          <div class="org-table-wrap">
+          </div>
+          <div class="org-team-table-section">
+            <h2 class="org-team-table-title">People on this account</h2>
+            <p class="org-team-table-sub" id="team-table-sub" hidden></p>
+          <div class="org-table-wrap org-table-wrap--team">
             <table>
               <thead>
                 <tr>
@@ -1296,6 +1317,7 @@
                 <button type="button" class="org-btn org-btn-gold org-btn-sm" id="btn-invite-team-empty">Invite team member</button>
               </div>
             </div>
+          </div>
           </div>
         </section>
 
@@ -2435,6 +2457,6 @@
     <script src="../js/organiser-linkedin-post-builder.js?v=20260722styles"></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4"></script>
     <script src="../js/hub-comms-pack.js?v=20260722share"></script>
-    <script src="../js/organiser-dashboard.js?v=20260722layout"></script>
+    <script src="../js/organiser-dashboard.js?v=20260722team"></script>
   </body>
 </html>

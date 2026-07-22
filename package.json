@@ -19,6 +19,7 @@
     "seed-admin": "node scripts/seed-admin.js",
     "seed-sample-event": "node scripts/seed-sample-event.js",
     "seed-browse-events": "node scripts/seed-browse-events.js",
+    "delete-seed-events": "node scripts/delete-seed-events.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",

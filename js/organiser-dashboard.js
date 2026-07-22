@@ -8142,6 +8142,96 @@
     return names.join(', ');
   }
 
+  function teamGroupAccessHtml(member) {
+    if (!member || member.role === 'owner' || member.isAccountOwner || member.allGroups) {
+      return '<span class="org-team-access-pill org-team-access-pill--all">All pages</span>';
+    }
+    const ids = member.groupIds || [];
+    if (!ids.length) {
+      return '<span class="org-team-access-pill org-team-access-pill--none">None assigned</span>';
+    }
+    const names = ids.map(function (id) {
+      const g = state.groups.find(function (x) {
+        return x.id === id;
+      });
+      const name = g && g.name ? g.name : 'Organiser page';
+      return (
+        '<span class="org-team-access-pill" title="' +
+        attrEsc(name) +
+        '">' +
+        esc(name) +
+        '</span>'
+      );
+    });
+    return '<div class="org-team-access-pills">' + names.join('') + '</div>';
+  }
+
+  function teamEmailCellHtml(member) {
+    const email = esc(member.email || '—');
+    const isSelf =
+      state.user &&
+      state.user.email &&
+      String(state.user.email).toLowerCase() === String(member.email || '').toLowerCase();
+    const pending = member.status === 'pending';
+    let meta = '';
+    if (isSelf) meta = '<span class="org-team-email-meta">You</span>';
+    else if (pending) meta = '<span class="org-team-email-meta org-team-email-meta--pending">Invite sent</span>';
+    return (
+      '<div class="org-team-email-cell"><span class="org-team-email">' +
+      email +
+      '</span>' +
+      (meta ? meta : '') +
+      '</div>'
+    );
+  }
+
+  function teamSummaryMetrics(members) {
+    const list = members || state.teamMembers || [];
+    let active = 0;
+    let pending = 0;
+    list.forEach(function (m) {
+      if (m.role === 'owner' || m.isAccountOwner) return;
+      if (m.status === 'pending') pending += 1;
+      else if (m.status === 'active') active += 1;
+    });
+    const max = Math.max(0, Number(state.teamMax) || 100);
+    const count = Math.max(0, Number(state.teamCount) || 0);
+    const remaining = Number.isFinite(state.teamSlotsRemaining)
+      ? Math.max(0, state.teamSlotsRemaining)
+      : Math.max(0, max - count);
+    return { active, pending, remaining, max, count };
+  }
+
+  function renderTeamSummaryStats(members) {
+    const metrics = teamSummaryMetrics(members);
+    const set = function (id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(val);
+    };
+    set('team-stat-active', metrics.active);
+    set('team-stat-pending', metrics.pending);
+    set('team-stat-slots', metrics.remaining);
+
+    const tableSub = document.getElementById('team-table-sub');
+    if (tableSub && state.canManageTeam) {
+      const totalPeople = (members || state.teamMembers || []).length;
+      if (totalPeople > 0) {
+        tableSub.textContent =
+          metrics.count +
+          ' on this account · ' +
+          metrics.remaining +
+          ' invite' +
+          (metrics.remaining === 1 ? '' : 's') +
+          ' remaining';
+        tableSub.hidden = false;
+      } else {
+        tableSub.hidden = true;
+      }
+    } else if (tableSub) {
+      tableSub.hidden = true;
+    }
+  }
+
   function renderTeamGroupCheckboxes(listEl, selectedIds, options) {
     if (!listEl) return;
     const opts = options || {};
@@ -8275,30 +8365,26 @@
   }
 
   function updateTeamLimitUi() {
-    const note = document.getElementById('team-limit-note');
     const modalNote = document.getElementById('modal-team-limit-note');
     const inviteBtn = document.getElementById('btn-invite-team');
     const inviteEmptyBtn = document.getElementById('btn-invite-team-empty');
+    const capBanner = document.getElementById('team-cap-banner');
     const atCap = state.canManageTeam && state.teamSlotsRemaining <= 0;
-    const summary =
-      state.canManageTeam && state.teamMax
-        ? state.teamCount + ' of ' + state.teamMax + ' team member slots used'
-        : '';
+    const metrics = teamSummaryMetrics();
 
-    if (note) {
-      if (summary) {
-        note.textContent =
-          summary + (atCap ? ' — remove someone before inviting another team member.' : '');
-        note.hidden = false;
-      } else {
-        note.hidden = true;
-      }
+    renderTeamSummaryStats();
+
+    if (capBanner) {
+      capBanner.hidden = !(state.canManageTeam && atCap);
     }
     if (modalNote) {
-      modalNote.textContent = summary
-        ? summary +
-          '. We email the invite link; they become Active when they sign in with that address.'
-        : 'We email the invite link; they become Active when they sign in with that address.';
+      modalNote.textContent =
+        metrics.count +
+        ' on this account · ' +
+        metrics.remaining +
+        ' invite' +
+        (metrics.remaining === 1 ? '' : 's') +
+        ' remaining. We email the invite link; they become Active when they sign in with that address.';
     }
     if (inviteBtn) {
       inviteBtn.disabled = atCap;
@@ -8321,6 +8407,10 @@
     const memberNote = document.getElementById('team-member-note');
     if (memberNote) {
       memberNote.hidden = state.organiserRole !== 'editor';
+    }
+    const ownerPanel = document.getElementById('org-team-owner-panel');
+    if (ownerPanel) {
+      ownerPanel.hidden = !state.canManageTeam;
     }
     const permissionsPanel = document.getElementById('org-team-permissions');
     if (permissionsPanel) {
@@ -8358,6 +8448,8 @@
     list.forEach((m) => {
       const tr = document.createElement('tr');
       const isOwner = m.role === 'owner' || m.isAccountOwner;
+      if (isOwner) tr.classList.add('org-team-row--owner');
+      if (m.status === 'pending') tr.classList.add('org-team-row--pending');
       const actions = [];
       if (!isOwner && state.canManageTeam) {
         actions.push(
@@ -8369,29 +8461,32 @@
           actions.push(
             '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-resend="' +
               esc(m.id) +
-              '">Resend invite</button>'
+              '">Resend</button>'
           );
         }
         actions.push(
-          '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-team-remove="' +
+          '<button type="button" class="org-btn org-btn-outline org-btn-sm org-btn-danger-text" data-team-remove="' +
             esc(m.id) +
             '">Remove</button>'
         );
       }
       tr.innerHTML =
         '<td>' +
-        esc(m.email) +
+        teamEmailCellHtml(m) +
         '</td><td>' +
         teamRoleBadgeHtml(m.role) +
         '</td><td class="org-team-group-access">' +
-        esc(teamGroupAccessLabel(m)) +
+        teamGroupAccessHtml(m) +
         '</td><td>' +
         teamStatusBadgeHtml(m.status) +
         '</td><td class="org-td-actions">' +
-        (actions.join(' ') || '—') +
+        (actions.length
+          ? '<div class="org-team-actions">' + actions.join('') + '</div>'
+          : '<span class="org-team-actions-empty">—</span>') +
         '</td>';
       body.appendChild(tr);
     });
+    renderTeamSummaryStats(list);
     updateTeamNavBadge();
   }
 

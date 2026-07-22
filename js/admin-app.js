@@ -36,7 +36,7 @@
   var PAGE_META = {
     dashboard: {
       title: 'Overview',
-      subtitle: 'Supabase counts, alerts, and recent genuine platform activity',
+      subtitle: 'Platform health, action queue, and recent activity',
     },
     analytics: {
       title: 'Web Analytics',
@@ -701,7 +701,49 @@
       : 'Counts and lists load from Supabase when you open each page';
   }
 
-  function dashboardAlertsHtml(data) {
+  function actionPriorityLabel(severity) {
+    if (severity === 'high') return 'High';
+    if (severity === 'medium') return 'Medium';
+    return 'Low';
+  }
+
+  function actionPriorityClass(severity) {
+    if (severity === 'high') return 'admin-action-priority--high';
+    if (severity === 'medium') return 'admin-action-priority--medium';
+    return 'admin-action-priority--low';
+  }
+
+  function actionQueueRow(a) {
+    var priority =
+      '<span class="admin-action-priority ' +
+      actionPriorityClass(a.severity) +
+      '">' +
+      esc(actionPriorityLabel(a.severity)) +
+      '</span>';
+    var body =
+      '<span class="admin-action-body"><span class="admin-action-title">' +
+      esc(a.title) +
+      '</span>' +
+      (a.detail ? '<span class="admin-action-detail">' + esc(a.detail) + '</span>' : '') +
+      '</span>';
+    var go = a.href ? '<span class="admin-action-go">Open →</span>' : '';
+    if (a.href) {
+      return (
+        '<a href="' +
+        esc(a.href) +
+        '" class="admin-action-row">' +
+        priority +
+        body +
+        go +
+        '</a>'
+      );
+    }
+    return (
+      '<div class="admin-action-row admin-action-row--static">' + priority + body + go + '</div>'
+    );
+  }
+
+  function collectDashboardAlerts(data) {
     var alerts = data && data.alerts ? data.alerts.slice() : [];
     var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
     if (healthCount > 0 && !alerts.some(function (a) {
@@ -715,14 +757,43 @@
           ' published event' +
           (healthCount === 1 ? '' : 's') +
           ' missing data',
-        detail: 'Open Event data issues to fix dates, organisers, VAT, or profile fields.',
+        detail: 'Fix dates, organisers, VAT, or profile fields.',
         href: '#cleanup/issues',
         time: new Date().toISOString(),
       });
     }
-    return alerts.length
-      ? alerts.map(alertCard).join('')
-      : '<p class="text-sm text-emerald-700">No critical alerts right now.</p>';
+    var severityOrder = { high: 0, medium: 1, low: 2 };
+    alerts.sort(function (a, b) {
+      return (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3);
+    });
+    return alerts;
+  }
+
+  function renderActionQueueHtml(data) {
+    var rows = collectDashboardAlerts(data).map(actionQueueRow);
+    var attention = data && data.attention;
+    var claims = attention ? Number(attention.pendingOwnershipClaims) || 0 : 0;
+    if (claims > 0) {
+      rows.push(
+        '<div class="admin-action-row admin-action-row--static">' +
+          '<span class="admin-action-priority admin-action-priority--info">Info</span>' +
+          '<span class="admin-action-body">' +
+          '<span class="admin-action-title">' +
+          claims +
+          ' group profile' +
+          (claims === 1 ? '' : 's') +
+          ' awaiting organiser claim on first login</span>' +
+          '<span class="admin-action-detail">Organisers confirm ownership when they sign in — disputes appear below if they reject a match.</span>' +
+          '</span></div>'
+      );
+    }
+    return rows.length
+      ? rows.join('')
+      : '<p class="text-sm text-emerald-700 py-2">All clear — nothing needs action right now.</p>';
+  }
+
+  function dashboardAlertsHtml(data) {
+    return renderActionQueueHtml(data);
   }
 
   function shouldRefreshHealth() {
@@ -788,9 +859,14 @@
     }
     updateAdminDataBadge(data.updatedAt);
 
+    var queueEl = document.getElementById('dashboard-action-queue');
+    if (queueEl) {
+      queueEl.innerHTML = renderActionQueueHtml(data);
+    }
+
     var alertsEl = document.getElementById('dashboard-alerts');
     if (alertsEl) {
-      alertsEl.innerHTML = dashboardAlertsHtml(data);
+      alertsEl.innerHTML = renderActionQueueHtml(data);
     }
 
     var attentionEl = document.getElementById('dashboard-attention');
@@ -958,33 +1034,6 @@
           message: (err && err.message) || 'Request failed',
         };
       });
-  }
-
-  function alertCard(a) {
-    var bg =
-      a.severity === 'high'
-        ? 'bg-red-50 border-red-200 text-red-800'
-        : a.severity === 'medium'
-          ? 'bg-amber-50 border-amber-200 text-amber-900'
-          : 'bg-slate-50 border-slate-200 text-slate-700';
-    var inner =
-      '<p class="font-semibold text-sm">' +
-      esc(a.title) +
-      '</p><p class="text-xs mt-1 opacity-90">' +
-      esc(a.detail) +
-      '</p>';
-    if (a.href) {
-      return (
-        '<a href="' +
-        esc(a.href) +
-        '" class="block rounded-lg border p-4 transition hover:opacity-90 ' +
-        bg +
-        '">' +
-        inner +
-        '</a>'
-      );
-    }
-    return '<div class="rounded-lg border p-4 ' + bg + '">' + inner + '</div>';
   }
 
   function renderClaimDisputesPanel(attention) {
@@ -3495,8 +3544,7 @@
         card(
           'Paid ticket revenue',
           fmtMoney(m.revenue || 0),
-          'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations',
-          'emerald'
+          'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations'
         ) +
         card(
           'Approved events',
@@ -3504,11 +3552,10 @@
           'Meetings ' +
             (listings.meetings || 0) +
             ' · Exhibitions ' +
-            (listings.exhibitions || 0),
-          'brand'
+            (listings.exhibitions || 0)
         ) +
-        card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles', 'violet') +
-        card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue');
+        card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles') +
+        card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles');
     }
 
     if (preEl) preEl.innerHTML = renderMetricsSummary(data);
@@ -4078,53 +4125,47 @@
   }
 
   function renderDashboard() {
-    if (!document.getElementById('dashboard-alerts')) {
+    if (!document.getElementById('dashboard-action-queue') && !document.getElementById('dashboard-alerts')) {
       main.innerHTML =
-        '<div class="space-y-6">' +
-        '<section class="space-y-3">' +
-        '<h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Critical alerts</h3>' +
-        '<div class="grid gap-3 min-h-[12rem]" id="dashboard-alerts">' +
-        '<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 min-h-[4.5rem]" aria-hidden="true"></div>' +
-        '</div></section>' +
-        '<section class="bg-white rounded-xl border border-red-200 p-5 shadow-sm space-y-3" id="dashboard-disputes-section" hidden>' +
-        '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +
-        '<p class="text-xs text-slate-500 mt-0.5">An organiser signed in and said a pre-imported profile is not theirs — use the actions below to fix or dismiss.</p></div>' +
-        '<div id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
-        '<section class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm space-y-3" id="dashboard-claim-requests-section" hidden>' +
-        '<div><h3 class="font-bold text-brand-900">Organiser claim requests</h3>' +
-        '<p class="text-xs text-slate-500 mt-0.5">Someone asked to claim a public group profile — verify the claimant, then approve to update the contact email and send the claim invite.</p></div>' +
-        '<div id="dashboard-claim-requests"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
-        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">' +
-        '<div><h3 class="font-bold text-brand-900">Needs your attention</h3>' +
-        '<p class="text-xs text-slate-500 mt-0.5">Queues and quick links — counts also appear in Critical alerts above.</p></div>' +
-        '<div id="dashboard-attention" class="min-h-[14rem] space-y-3">' +
-        '<div id="attention-ownership" class="rounded-lg border border-brand-200 bg-brand-50 p-4">' +
-        '<p id="attention-ownership-title" class="font-semibold text-sm text-brand-900">Group profiles awaiting organiser claim on first login</p>' +
-        '<p id="attention-ownership-lcp" class="text-xs text-brand-800/90 mt-1">Organisers will confirm ownership when they sign in — disputes appear here if they reject a match.</p>' +
-        '</div><div id="attention-extra" class="space-y-3"></div></div></section>' +
-        '<a href="#analytics" class="block rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-5 shadow-sm hover:border-brand-300 transition group">' +
-        '<div class="flex flex-wrap items-center justify-between gap-3">' +
-        '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Traffic</p>' +
-        '<p class="font-bold text-brand-900 mt-1">Web Analytics on Vercel</p>' +
-        '<p class="text-sm text-slate-600 mt-1">View visitors, top pages, referrers, and device breakdown.</p></div>' +
-        '<span class="text-sm font-semibold text-brand-700 group-hover:text-brand-900">Open →</span></div></a>' +
-        '<section class="admin-metric-grid admin-metric-grid--4" id="dashboard-metrics">' +
-        card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
-        card('Approved events', '…', 'Loading…', 'brand') +
-        card('Organisers', '…', 'Loading…', 'violet') +
-        card('Hub accounts', '…', 'Loading…', 'blue') +
+        '<div class="space-y-5">' +
+        '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
+        card('Paid ticket revenue', '…', 'Loading…') +
+        card('Approved events', '…', 'Loading…') +
+        card('Organisers', '…', 'Loading…') +
+        card('Hub accounts', '…', 'Loading…') +
         '</section>' +
-        '<section class="grid lg:grid-cols-2 gap-6">' +
-        '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
-        '<h3 class="font-bold text-brand-900 mb-1">Recent genuine activity</h3>' +
-        '<p class="text-xs text-slate-500 mb-3">Registrations, events, and reviews — test/E2E data excluded.</p>' +
-        '<ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]"><li class="text-sm text-slate-500">Loading…</li></ul></div>' +
-        '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm min-w-0">' +
-        '<h3 class="font-bold text-brand-900 mb-2">Platform snapshot</h3>' +
-        '<p class="text-sm text-slate-500 mb-4">Key counts from Supabase (not visitor traffic — see Web Analytics).</p>' +
-        '<div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div>' +
-        '</div></section></div>';
+        '<section class="admin-dash-section" id="dashboard-action-section">' +
+        '<div class="admin-dash-section-head"><h3>Action queue</h3>' +
+        '<p>Items that need a decision or follow-up — sorted by priority.</p></div>' +
+        '<div class="admin-dash-section-body">' +
+        '<div class="admin-action-queue min-h-[6rem]" id="dashboard-action-queue">' +
+        '<div class="admin-action-row admin-action-row--static" aria-hidden="true">' +
+        '<span class="admin-action-priority admin-action-priority--low">—</span>' +
+        '<span class="admin-action-body"><span class="admin-action-title">Loading queue…</span></span>' +
+        '</div></div></div></section>' +
+        '<section class="admin-dash-section" id="dashboard-disputes-section" hidden>' +
+        '<div class="admin-dash-section-head"><h3>Group profile disputes</h3>' +
+        '<p>An organiser signed in and said a pre-imported profile is not theirs.</p></div>' +
+        '<div class="admin-dash-section-body" id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
+        '<section class="admin-dash-section" id="dashboard-claim-requests-section" hidden>' +
+        '<div class="admin-dash-section-head"><h3>Organiser claim requests</h3>' +
+        '<p>Someone asked to claim a public group profile — verify the claimant, then approve.</p></div>' +
+        '<div class="admin-dash-section-body" id="dashboard-claim-requests"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
+        '<section class="grid lg:grid-cols-2 gap-5">' +
+        '<div class="admin-dash-section min-w-0">' +
+        '<div class="admin-dash-section-head"><h3>Recent activity</h3>' +
+        '<p>Registrations, events, and reviews — test data excluded.</p></div>' +
+        '<div class="admin-dash-section-body pt-0">' +
+        '<ul id="dashboard-activity" class="admin-activity-feed min-h-[12rem]"><li class="text-sm text-slate-500">Loading…</li></ul></div></div>' +
+        '<div class="admin-dash-section min-w-0">' +
+        '<div class="admin-dash-section-head"><h3>Platform snapshot</h3>' +
+        '<p>Key counts from Supabase — not visitor traffic.</p></div>' +
+        '<div class="admin-dash-section-body pt-0">' +
+        '<div id="live-metrics" class="text-sm text-slate-600 min-h-[10rem]">Loading…</div></div></div></section>' +
+        '<a href="#analytics" class="admin-quick-link group">' +
+        '<div><p class="admin-quick-link-title">Web Analytics on Vercel</p>' +
+        '<p class="admin-quick-link-desc">Visitors, top pages, referrers, and device breakdown.</p></div>' +
+        '<span class="admin-action-go group-hover:text-brand-900">Open →</span></a></div>';
     }
 
     var cached = adminMetricsCache || readCachedAdminMetrics();
@@ -4176,24 +4217,16 @@
     );
   }
 
-  function card(title, value, sub, color) {
-    var accents = {
-      emerald: 'from-emerald-500/10 to-emerald-500/5 border-emerald-200',
-      brand: 'from-brand-500/10 to-brand-500/5 border-brand-200',
-      violet: 'from-violet-500/10 to-violet-500/5 border-violet-200',
-      blue: 'from-blue-500/10 to-blue-500/5 border-blue-200',
-    };
+  function card(title, value, sub) {
     return (
-      '<article class="bg-gradient-to-br ' +
-      (accents[color] || accents.brand) +
-      ' border rounded-xl p-4 shadow-sm min-w-0">' +
-      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
+      '<article class="admin-stat-card min-w-0">' +
+      '<p class="admin-stat-card-label">' +
       esc(title) +
       '</p>' +
-      '<p class="text-2xl font-bold text-brand-900 mt-2">' +
+      '<p class="admin-stat-card-value">' +
       esc(value) +
       '</p>' +
-      '<p class="text-xs text-slate-500 mt-2">' +
+      '<p class="admin-stat-card-sub">' +
       esc(sub) +
       '</p></article>'
     );
@@ -14357,7 +14390,7 @@
   });
 
   adminMetricsCache = readCachedAdminMetrics();
-  if (adminMetricsCache && document.getElementById('attention-ownership-lcp')) {
+  if (adminMetricsCache && document.getElementById('dashboard-action-queue')) {
     applyDashboardMetrics(adminMetricsCache);
     applyDashboardNotifications(adminMetricsCache);
   }
