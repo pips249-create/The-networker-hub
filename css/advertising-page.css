@@ -97,6 +97,10 @@ body.advertising-page {
   z-index: 1;
 }
 
+.ad-page-body .content-flow-orb {
+  z-index: 0;
+}
+
 /* ─── Audience proof ─── */
 .ad-audience {
   margin-bottom: 1.75rem;
@@ -3411,7 +3415,7 @@ body.advertising-page {
   gap: 12px;
   padding: 14px;
   border-radius: 14px;
-  background: #faf9fc;
+  background: var(--ad-soft-muted);
   border: 1px solid rgba(109, 92, 232, 0.15);
 }
 
@@ -3428,7 +3432,7 @@ body.advertising-page {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(50, 43, 120, 0.12);
-  background: #fff;
+  background: var(--surface-warm);
   font-size: 13px;
   color: #2b2648;
   cursor: pointer;
@@ -3447,7 +3451,7 @@ body.advertising-page {
 .city-partner-quote {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-warm);
   border: 1px solid rgba(50, 43, 120, 0.1);
 }
 
@@ -3494,7 +3498,7 @@ body.advertising-page {
   border-radius: 10px;
   border: 1px solid rgba(50, 43, 120, 0.18);
   padding: 10px 12px;
-  background: #fff;
+  background: var(--surface-warm);
   color: #2b2648;
   font: inherit;
 }
