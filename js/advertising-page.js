@@ -16,20 +16,15 @@
     return d.innerHTML;
   }
 
-  function initHeroEntrance() {
-    var hero = document.querySelector('.ad-hero');
-    if (!hero) return;
+  function initHeroEntrance() {}
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      hero.classList.add('is-entered');
-      return;
-    }
-
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        hero.classList.add('is-entered');
-      });
-    });
+  function scrollToAnchor(id) {
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    window.setTimeout(function () {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
   }
 
   function initReveal() {
@@ -129,6 +124,166 @@
     });
   }
 
+  var PRICING_GLANCE = {
+    events: [
+      {
+        name: 'Main Events Directory Sponsor',
+        detail: 'Main Sponsor banner + booking emails',
+        price: '£2,000/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'ad-pkg-events-main',
+      },
+      {
+        name: 'Mini Sponsors',
+        detail: 'Event page sidebar',
+        price: '£600/slot/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'ad-pkg-events-mini',
+      },
+      {
+        name: 'City Partner',
+        detail: 'Regional city landing pages',
+        price: 'From £29/city/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'city-partner-package',
+      },
+      {
+        name: 'Featured Listing — Events',
+        detail: 'Pinned to top of events directory',
+        price: '£55/mo',
+        type: 'Organiser self-serve',
+        typeClass: 'self',
+        anchor: 'ad-pkg-events-spotlight',
+      },
+    ],
+    organisers: [
+      {
+        name: 'Main Organisers Directory Sponsor',
+        detail: 'Main Sponsor banner on organisers browse',
+        price: '£1,000/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'ad-pkg-organisers-main',
+      },
+      {
+        name: 'Mini Sponsors',
+        detail: 'Organiser profile sidebar',
+        price: '£300/slot/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'ad-pkg-organisers-mini',
+      },
+      {
+        name: 'Featured Listing — Organisers',
+        detail: 'Pinned to top of organisers browse',
+        price: '£27.50/mo',
+        type: 'Organiser self-serve',
+        typeClass: 'self',
+        anchor: 'ad-pkg-organisers-spotlight',
+      },
+    ],
+    opportunities: [
+      {
+        name: 'Main Opportunities Directory Sponsor',
+        detail: 'Main Sponsor banner on /opportunities/',
+        price: '£2,000/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'ad-pkg-opportunities-main',
+      },
+      {
+        name: 'Mini Sponsors',
+        detail: 'Opportunity detail sidebar',
+        price: '£600/slot/mo',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'ad-pkg-opportunities-mini',
+      },
+      {
+        name: 'Directory Listing',
+        detail: 'Standard opportunity listing',
+        price: '£25/mo + VAT',
+        type: 'Lister self-serve',
+        typeClass: 'self',
+        anchor: 'ad-pkg-opportunities-listing',
+      },
+      {
+        name: 'Featured Listing — Opportunities',
+        detail: 'Pinned to top of opportunities browse',
+        price: '£55/mo',
+        type: 'Lister self-serve',
+        typeClass: 'self',
+        anchor: 'ad-pkg-opportunities-spotlight',
+      },
+    ],
+  };
+
+  function renderPricingGlance(section) {
+    var body = document.getElementById('ad-pricing-table-body');
+    var hint = document.querySelector('.ad-pricing-glance-toggle-hint');
+    if (!body) return;
+
+    var rows = PRICING_GLANCE[section] || PRICING_GLANCE.events;
+    var labels = {
+      events: 'Events directory packages',
+      organisers: 'Organisers directory packages',
+      opportunities: 'Opportunities directory packages',
+    };
+
+    if (hint) hint.textContent = labels[section] || 'Guide rates for this section';
+
+    body.innerHTML = rows
+      .map(function (row) {
+        return (
+          '<tr>' +
+          '<td><a class="ad-pricing-row-link" href="#' +
+          esc(row.anchor) +
+          '" data-ad-pricing-jump="' +
+          esc(row.anchor) +
+          '"><strong>' +
+          esc(row.name) +
+          '</strong><span>' +
+          esc(row.detail) +
+          '</span></a></td>' +
+          '<td class="ad-pricing-price">' +
+          esc(row.price) +
+          '</td>' +
+          '<td><span class="ad-pricing-type ad-pricing-type--' +
+          esc(row.typeClass) +
+          '">' +
+          esc(row.type) +
+          '</span></td>' +
+          '</tr>'
+        );
+      })
+      .join('');
+
+    body.querySelectorAll('[data-ad-pricing-jump]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        jumpToPackage(link.getAttribute('data-ad-pricing-jump'));
+      });
+    });
+  }
+
+  function jumpToPackage(id) {
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('ad-package--highlight');
+    window.setTimeout(function () {
+      el.classList.remove('ad-package--highlight');
+    }, 1800);
+  }
+
+  function initPricingGlanceLinks() {
+    renderPricingGlance('events');
+  }
+
   function logoFromBlock(block) {
     if (!block || !window.CmsSponsorFields) return '';
     return window.CmsSponsorFields.logoUrl(block);
@@ -151,13 +306,81 @@
       '<p class="ad-live-empty">' + esc(message || 'Live example not configured yet.') + '</p>';
   }
 
+  function renderDemoHeroSponsor(container, block) {
+    if (!container) return;
+    block = block || DEMO_SPONSOR;
+    var logo = String(block.logo_url || '').trim();
+    var company = String(block.company_name || '').trim();
+    var tagline = String(block.title || block.tagline || '').trim();
+    var ctaLabel = String(block.cta_label || 'Find out more →').trim();
+
+    container.innerHTML =
+      '<aside class="ad-mock-sponsor">' +
+      '<span class="ad-mock-sponsor-badge">Sponsored</span>' +
+      '<div class="ad-mock-logo-band">' +
+      (logo
+        ? '<img src="' +
+          esc(logo) +
+          '" alt="' +
+          esc(company) +
+          '" class="ad-mock-sponsor-logo-img" loading="lazy" decoding="async">'
+        : '<span class="ad-mock-logo">' + esc(company || 'Your logo') + '</span>') +
+      '</div>' +
+      (company ? '<p class="ad-mock-tagline"><strong>' + esc(company) + '</strong></p>' : '') +
+      (tagline ? '<p class="ad-mock-tagline-desc">' + esc(tagline) + '</p>' : '') +
+      '<span class="ad-mock-cta">' +
+      esc(ctaLabel) +
+      '</span>' +
+      '</aside>';
+  }
+
+  function renderDemoMiniSponsor(container, block) {
+    if (!container) return;
+    block = block || DEMO_SPONSOR;
+    var logo = String(block.logo_url || '').trim();
+    container.innerHTML =
+      '<aside class="ad-mock-carousel">' +
+      '<span class="ad-mock-carousel-badge">Sponsored</span>' +
+      '<div class="ad-mock-carousel-logos ad-mock-carousel-logos--single">' +
+      (logo
+        ? '<img src="' +
+          esc(logo) +
+          '" alt="" class="ad-mock-carousel-logo-img" loading="lazy" decoding="async">'
+        : '<span class="is-active">Your logo</span>') +
+      '</div>' +
+      '<div class="ad-mock-carousel-dots" aria-hidden="true"><i class="is-active"></i><i></i><i></i></div>' +
+      '</aside>';
+  }
+
+  function renderDemoCompactAd(container, block) {
+    if (!container) return;
+    block = block || DEMO_SPONSOR;
+    var logo = String(block.logo_url || '').trim();
+    var ctaLabel = String(block.cta_label || 'Find out more →').trim();
+
+    container.innerHTML =
+      '<aside class="ad-mock-compact">' +
+      '<span class="ad-mock-compact-badge">Sponsored</span>' +
+      '<div class="ad-mock-compact-logo-wrap">' +
+      (logo
+        ? '<img src="' +
+          esc(logo) +
+          '" alt="" class="ad-mock-compact-logo-img" loading="lazy" decoding="async">'
+        : '<span class="ad-mock-compact-logo-placeholder">Your logo</span>') +
+      '</div>' +
+      '<span class="ad-mock-compact-cta">' +
+      esc(ctaLabel) +
+      '</span>' +
+      '</aside>';
+  }
+
   function renderHeroInShell(shell, block) {
-    if (!shell || !window.CmsAdBlocks) return;
+    if (!shell) return;
     if (!block || block.active === false) {
       renderEmptyPreview(shell);
       return;
     }
-    window.CmsAdBlocks.renderHeroSponsorAd(shell, block);
+    renderDemoHeroSponsor(shell, block);
   }
 
   function buildSponsorEmailRow(block) {
@@ -191,48 +414,45 @@
     container.innerHTML =
       '<div class="ad-full-email-card">' +
       '<div class="ad-full-email-header">' +
-      '<img src="' + DEMO_HUB_LOGO + '" alt="" class="ad-full-email-hub-logo">' +
+      '<img src="' +
+      DEMO_HUB_LOGO +
+      '" alt="" class="ad-full-email-hub-logo">' +
       sponsorRow +
       '<div class="ad-full-email-wave" aria-hidden="true"></div>' +
       '</div>' +
       '<div class="ad-full-email-body">' +
       '<div class="ad-full-email-check" aria-hidden="true"></div>' +
-      '<span class="ad-email-line ad-email-line--kicker"></span>' +
-      '<span class="ad-email-line ad-email-line--title"></span>' +
-      '<span class="ad-email-line"></span>' +
-      '<span class="ad-email-line ad-email-line--short"></span>' +
+      '<p class="ad-full-email-kicker">Booking confirmed</p>' +
+      '<p class="ad-full-email-title">You&rsquo;re booked in</p>' +
+      '<p class="ad-full-email-lede">Your place is reserved. We&rsquo;ve sent the details below.</p>' +
       '</div>' +
       '<div class="ad-full-email-event-wrap">' +
       '<div class="ad-full-email-event">' +
-      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--xs"></span>' +
-      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--title"></span>' +
-      '<span class="ad-email-line ad-email-line--on-dark"></span>' +
-      '<div class="ad-email-line-row">' +
-      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--meta"></span>' +
-      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--meta"></span>' +
-      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--meta"></span>' +
+      '<p class="ad-full-email-event-kicker">Your event</p>' +
+      '<p class="ad-full-email-event-name">Women in Business Breakfast</p>' +
+      '<p class="ad-full-email-event-date"><span>When &amp; where</span><strong>Wed 14 Aug · Manchester · In person</strong></p>' +
+      '<div class="ad-full-email-event-meta">' +
+      '<div><span>Ticket</span><strong>General admission</strong></div>' +
+      '<div><span>Price</span><strong>Free</strong></div>' +
+      '<div><span>Status</span><strong>Confirmed</strong></div>' +
       '</div>' +
-      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--btn"></span>' +
+      '<span class="ad-full-email-event-cta">View event details</span>' +
       '</div>' +
       '</div>' +
       '<div class="ad-full-email-upsell-wrap">' +
       '<div class="ad-full-email-upsell">' +
-      '<span class="ad-email-line ad-email-line--upsell"></span>' +
-      '<span class="ad-email-line ad-email-line--upsell ad-email-line--title"></span>' +
-      '<span class="ad-email-line ad-email-line--upsell ad-email-line--short"></span>' +
+      '<p class="ad-full-email-upsell-kicker">While you&rsquo;re here</p>' +
+      '<p class="ad-full-email-upsell-title">Discover more events near you</p>' +
       '</div>' +
       '</div>' +
       '<div class="ad-full-email-footer">' +
-      '<div class="ad-full-email-footer-links">' +
-      '<span class="ad-email-line ad-email-line--footer"></span>' +
-      '<span class="ad-email-line ad-email-line--footer"></span>' +
-      '<span class="ad-email-line ad-email-line--footer"></span>' +
-      '</div>' +
+      '<p class="ad-full-email-footer-note">Questions? Reply to this email or visit your account.</p>' +
       '</div>' +
       '<div class="ad-full-email-brand">' +
-      '<img src="' + DEMO_HUB_LOGO + '" alt="" class="ad-full-email-hub-logo ad-full-email-hub-logo--sm">' +
-      '<span class="ad-email-line ad-email-line--brand"></span>' +
-      '<span class="ad-email-line ad-email-line--brand-short"></span>' +
+      '<img src="' +
+      DEMO_HUB_LOGO +
+      '" alt="" class="ad-full-email-hub-logo ad-full-email-hub-logo--sm">' +
+      '<p class="ad-full-email-brand-name">The Networker Hub</p>' +
       '</div>' +
       '</div>';
   }
@@ -252,15 +472,30 @@
   }
 
   function loadOpportunitySidebarPreview() {
-    var compactEl = document.getElementById('ad-live-opportunity-sidebar');
-    if (!compactEl || !window.CmsAdBlocks) return;
-    window.CmsAdBlocks.renderCompactAd(compactEl, DEMO_SPONSOR);
+    renderDemoCompactAd(document.getElementById('ad-live-opportunity-sidebar'), DEMO_SPONSOR);
+  }
+
+  function loadLivePreviews() {
+    loadMainSponsorGallery();
+    loadSectionHeroPreviews();
+    loadOpportunitySidebarPreview();
+    initExampleGallery(document.getElementById('ad-main-sponsor-gallery'));
+
+    renderDemoMiniSponsor(document.getElementById('ad-live-mini-event'), DEMO_SPONSOR);
+    renderDemoMiniSponsor(document.getElementById('ad-live-mini-organisers-dir'), DEMO_SPONSOR);
   }
 
   function initExampleGallery(root) {
     if (!root) return;
     var thumbs = root.querySelectorAll('.ad-example-thumb');
     var panels = root.querySelectorAll('[data-example-panel]');
+    var examples = [];
+    var rotateTimer = null;
+    var rotateIndex = 0;
+
+    thumbs.forEach(function (btn) {
+      examples.push(btn.getAttribute('data-example'));
+    });
 
     function activate(example) {
       thumbs.forEach(function (btn) {
@@ -274,40 +509,46 @@
         panel.hidden = !show;
         panel.classList.toggle('is-active', show);
       });
+      rotateIndex = Math.max(0, examples.indexOf(example));
+    }
+
+    function stopRotate() {
+      if (rotateTimer) {
+        window.clearInterval(rotateTimer);
+        rotateTimer = null;
+      }
+      root.classList.add('is-paused');
+    }
+
+    function startRotate() {
+      if (examples.length < 2) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      stopRotate();
+      root.classList.remove('is-paused');
+      rotateTimer = window.setInterval(function () {
+        rotateIndex = (rotateIndex + 1) % examples.length;
+        activate(examples[rotateIndex]);
+      }, 5500);
     }
 
     thumbs.forEach(function (btn) {
       btn.addEventListener('click', function () {
+        stopRotate();
         activate(btn.getAttribute('data-example'));
+        window.setTimeout(startRotate, 12000);
       });
     });
+
+    root.addEventListener('mouseenter', stopRotate);
+    root.addEventListener('mouseleave', startRotate);
+    root.addEventListener('focusin', stopRotate);
+    root.addEventListener('focusout', function (e) {
+      if (!root.contains(e.relatedTarget)) startRotate();
+    });
+
+    startRotate();
   }
 
-  function loadLivePreviews() {
-    if (!window.CmsAdBlocks) return;
-
-    loadMainSponsorGallery();
-    loadSectionHeroPreviews();
-    loadOpportunitySidebarPreview();
-    initExampleGallery(document.getElementById('ad-main-sponsor-gallery'));
-
-    var miniEvent = document.getElementById('ad-live-mini-event');
-    if (miniEvent) {
-      window.CmsAdBlocks.loadPageCarouselAds(miniEvent, {
-        slot: 'event_page_carousel_ads',
-        placeholderSubject: 'Events Mini Sponsors enquiry',
-      }).then(function (ok) {
-        if (!ok) renderEmptyPreview(miniEvent, 'Mini Sponsors not configured yet.');
-      });
-    }
-    var miniOrganisersDir = document.getElementById('ad-live-mini-organisers-dir');
-    if (miniOrganisersDir) {
-      window.CmsAdBlocks.loadOrganiserPageCarouselAds(miniOrganisersDir).then(function (ok) {
-        if (!ok) renderEmptyPreview(miniOrganisersDir, 'Mini Sponsors not configured yet.');
-      });
-    }
-
-  }
 
   var packageRevealIo = null;
 
@@ -356,24 +597,16 @@
   }
 
   function syncSectionPicks(target) {
-    document.querySelectorAll('[data-ad-pick]').forEach(function (pick) {
-      var active = pick.getAttribute('data-ad-pick') === target;
+    document.querySelectorAll('[data-ad-tab]').forEach(function (pick) {
+      var active = pick.getAttribute('data-ad-tab') === target;
       pick.classList.toggle('is-active', active);
-      pick.setAttribute('aria-pressed', active ? 'true' : 'false');
+      pick.setAttribute('aria-selected', active ? 'true' : 'false');
+      pick.tabIndex = active ? 0 : -1;
     });
   }
 
-  function scrollToAnchor(id) {
-    if (!id) return;
-    var el = document.getElementById(id);
-    if (!el) return;
-    window.setTimeout(function () {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 120);
-  }
-
   function initTabs() {
-    var tabsRoot = document.getElementById('ad-section-tabs');
+    var tabsRoot = document.getElementById('ad-section-picks');
     if (!tabsRoot) return;
 
     var tabs = tabsRoot.querySelectorAll('[role="tab"]');
@@ -383,12 +616,7 @@
       var target = tab.getAttribute('data-ad-tab');
       if (!target) return;
 
-      tabs.forEach(function (btn) {
-        var active = btn === tab;
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-selected', active ? 'true' : 'false');
-        btn.tabIndex = active ? 0 : -1;
-      });
+      syncSectionPicks(target);
 
       panels.forEach(function (panel) {
         var show = panel.getAttribute('data-ad-panel') === target;
@@ -397,7 +625,7 @@
         if (show) refreshPackageReveal(panel);
       });
 
-      syncSectionPicks(target);
+      renderPricingGlance(target);
 
       var preserveHash = options && options.preserveHash;
       var anchor = options && options.anchor;
@@ -427,22 +655,6 @@
           tabs[next].focus();
           activateTab(tabs[next]);
         }
-      });
-    });
-
-    document.querySelectorAll('[data-ad-pick]').forEach(function (pick) {
-      pick.addEventListener('click', function () {
-        activateByName(pick.getAttribute('data-ad-pick'));
-        tabsRoot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-    });
-
-    document.querySelectorAll('[data-ad-jump]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        activateByName(btn.getAttribute('data-ad-jump'), {
-          anchor: btn.getAttribute('data-ad-anchor') || '',
-        });
-        document.getElementById('ad-section-picks').scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
 
@@ -482,6 +694,7 @@
       initReveal();
       initTabs();
       initPackageReveal();
+      initPricingGlanceLinks();
       loadPartnersStrip();
       loadLivePreviews();
     });
@@ -490,6 +703,7 @@
     initReveal();
     initTabs();
     initPackageReveal();
+    initPricingGlanceLinks();
     loadPartnersStrip();
     loadLivePreviews();
   }

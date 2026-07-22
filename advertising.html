@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad3">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad8">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
@@ -25,62 +25,20 @@
 <script src="js/site-nav.js?v=20260721d" data-root="" data-page="advertising"></script>
 
 <main class="content-page-main advertising-page-main">
-  <header class="ad-hero" aria-label="Advertising and sponsorship">
-    <span class="ad-hero-orb ad-hero-orb--1" aria-hidden="true"></span>
-    <span class="ad-hero-orb ad-hero-orb--2" aria-hidden="true"></span>
-    <span class="ad-hero-orb ad-hero-orb--3" aria-hidden="true"></span>
-    <div class="ad-hero-inner">
-      <p class="ad-hero-kicker">Advertising &amp; sponsorship</p>
+  <header class="ad-page-header" aria-label="Advertising and sponsorship">
+    <div class="ad-page-header-inner">
+      <p class="ad-page-kicker">Advertising &amp; sponsorship</p>
       <h1>Reach UK business owners where they discover events &amp; opportunities</h1>
-      <p class="ad-hero-lede">
-        Choose the section you want to advertise in, see example placements, and view guide pricing.
-        All units are clearly labelled <strong>Sponsored</strong> or <strong>Sponsor Hub</strong> and vetted before go-live.
+      <p class="ad-page-lede">
+        Choose where you want to advertise, see example placements, and view guide pricing.
+        Paid spots are clearly labelled <strong>Sponsored</strong> on the site and vetted before go-live.
       </p>
-      <ul class="ad-hero-stats" aria-label="Placement highlights">
-        <li>
-          <button type="button" class="ad-hero-stat" data-ad-jump="events">
-            <span class="ad-hero-stat-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-            </span>
-            <span class="ad-hero-stat-text">
-              <strong>Events directory</strong>
-              <span>Hero Sponsor Hub + mini sponsors</span>
-            </span>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="ad-hero-stat" data-ad-jump="events" data-ad-anchor="ad-main-sponsor-gallery">
-            <span class="ad-hero-stat-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
-            </span>
-            <span class="ad-hero-stat-text">
-              <strong>Transactional emails</strong>
-              <span>Logos in booking confirmations</span>
-            </span>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="ad-hero-stat" data-ad-jump="events" data-ad-anchor="city-partner-package">
-            <span class="ad-hero-stat-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
-            </span>
-            <span class="ad-hero-stat-text">
-              <strong>Regional reach</strong>
-              <span>City Partner from £29/month</span>
-            </span>
-          </button>
-        </li>
-      </ul>
-      <a class="ad-hero-scroll" href="#ad-section-picks">Explore packages ↓</a>
+      <a class="ad-page-header-cta" href="#ad-section-nav">View packages &amp; prices</a>
     </div>
   </header>
 
-  <div class="ad-flow">
-    <span class="ad-flow-orb ad-flow-orb--1" aria-hidden="true"></span>
-    <span class="ad-flow-orb ad-flow-orb--2" aria-hidden="true"></span>
-    <span class="ad-flow-orb ad-flow-orb--3" aria-hidden="true"></span>
-
-    <section class="ad-partners-strip ad-reveal" id="ad-partners-strip" hidden aria-labelledby="ad-partners-heading">
+  <div class="ad-page-body">
+    <section class="ad-partners-strip" id="ad-partners-strip" hidden aria-labelledby="ad-partners-heading">
       <div class="ad-partners-panel">
         <h2 class="ad-partners-kicker" id="ad-partners-heading">Trusted by our partners &amp; sponsors</h2>
         <div class="ad-partners-logos" id="ad-partners-logos" aria-live="polite"></div>
@@ -93,58 +51,53 @@
       For bespoke bundles, email <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>.
     </p>
 
-    <div class="ad-section-picks ad-reveal" id="ad-section-picks" role="group" aria-label="Choose a directory to advertise in">
-      <button type="button" class="ad-section-pick is-active" data-ad-pick="events" aria-pressed="true">
-        <span class="ad-section-pick-accent ad-section-pick-accent--events" aria-hidden="true"></span>
-        <span class="ad-section-pick-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        </span>
+    <div class="ad-section-nav ad-reveal" id="ad-section-nav">
+      <p class="ad-section-nav-label">Choose a section to advertise in</p>
+      <div class="ad-section-picks" id="ad-section-picks" role="tablist" aria-label="Choose a section to advertise in">
+      <button type="button" class="ad-section-pick is-active" role="tab" id="ad-tab-events" data-ad-tab="events" data-ad-pick="events" aria-controls="ad-panel-events" aria-selected="true">
         <span class="ad-section-pick-body">
           <strong>Events</strong>
-          <span>Directory hero, mini sponsors &amp; emails</span>
+          <span>Main Sponsor, Mini Sponsors &amp; City Partner</span>
           <em>From £29/mo</em>
         </span>
       </button>
-      <button type="button" class="ad-section-pick" data-ad-pick="organisers" aria-pressed="false">
-        <span class="ad-section-pick-accent ad-section-pick-accent--organisers" aria-hidden="true"></span>
-        <span class="ad-section-pick-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </span>
+      <button type="button" class="ad-section-pick" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" data-ad-pick="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">
         <span class="ad-section-pick-body">
           <strong>Organisers</strong>
-          <span>Browse page hero &amp; profile sidebar</span>
+          <span>Main Sponsor, Mini Sponsors &amp; Featured Listing</span>
           <em>From £27.50/mo</em>
         </span>
       </button>
-      <button type="button" class="ad-section-pick" data-ad-pick="opportunities" aria-pressed="false">
-        <span class="ad-section-pick-accent ad-section-pick-accent--opportunities" aria-hidden="true"></span>
-        <span class="ad-section-pick-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </span>
+      <button type="button" class="ad-section-pick" role="tab" id="ad-tab-opportunities" data-ad-tab="opportunities" data-ad-pick="opportunities" aria-controls="ad-panel-opportunities" aria-selected="false" tabindex="-1">
         <span class="ad-section-pick-body">
           <strong>Opportunities</strong>
-          <span>Franchises, deals &amp; investments</span>
+          <span>Main Sponsor, Mini Sponsors &amp; Directory Listing</span>
           <em>From £25/mo</em>
         </span>
       </button>
-    </div>
-
-    <div class="ad-tabs-wrap ad-tabs-wrap--sticky">
-      <div class="ad-tabs" id="ad-section-tabs" role="tablist" aria-label="Choose a section to advertise in">
-        <button type="button" role="tab" id="ad-tab-events" data-ad-tab="events" aria-controls="ad-panel-events" aria-selected="true">
-          <span class="ad-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-          Events
-        </button>
-        <button type="button" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">
-          <span class="ad-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
-          Organisers
-        </button>
-        <button type="button" role="tab" id="ad-tab-opportunities" data-ad-tab="opportunities" aria-controls="ad-panel-opportunities" aria-selected="false" tabindex="-1">
-          <span class="ad-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-          Opportunities
-        </button>
       </div>
     </div>
+
+    <details class="ad-pricing-glance ad-reveal" id="ad-pricing-glance" open>
+      <summary class="ad-pricing-glance-toggle">
+        <span class="ad-pricing-glance-toggle-label">At-a-glance pricing</span>
+        <span class="ad-pricing-glance-toggle-hint">Guide rates for this section</span>
+      </summary>
+      <div class="ad-pricing-glance-body">
+        <div class="ad-table-scroll">
+          <table class="ad-pricing-table" id="ad-pricing-table">
+            <thead>
+              <tr>
+                <th scope="col">Placement</th>
+                <th scope="col">Guide price</th>
+                <th scope="col">Type</th>
+              </tr>
+            </thead>
+            <tbody id="ad-pricing-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
 
     <!-- Events -->
     <div class="ad-tab-panel is-active" id="ad-panel-events" data-ad-panel="events" role="tabpanel" aria-labelledby="ad-tab-events">
@@ -152,23 +105,25 @@
         <h2>Events advertising</h2>
         <a href="/events/">View live directory →</a>
       </div>
-      <p class="ad-section-lede">
-        The events directory is the hub&rsquo;s highest-traffic browse experience — meetings, exhibitions,
-        awards, and organiser profiles. Placements appear on the public directory, detail pages, and in
-        transactional emails.
-      </p>
+      <div class="ad-section-intro-band">
+        <p class="ad-section-lede">
+          The events directory is the hub&rsquo;s highest-traffic browse experience — meetings, exhibitions,
+          awards, and organiser profiles. Placements appear on the public directory, detail pages, and in
+          transactional emails.
+        </p>
+      </div>
 
       <div class="ad-packages">
-        <article class="ad-package ad-package--featured ad-package-split">
+        <article class="ad-package ad-package--featured ad-package-split" id="ad-pkg-events-main">
           <div class="ad-package-main">
-            <span class="ad-package-badge">Flagship placement</span>
+            <span class="ad-package-badge">Main Sponsor</span>
             <h3 class="ad-package-title">Main Events Directory Sponsor</h3>
-            <p class="ad-package-placement">Hero Sponsor Hub on <strong>/events/</strong> — Events &amp; Organisers tabs</p>
+            <p class="ad-package-placement">Main Sponsor banner at the top of <strong>/events/</strong></p>
             <p class="ad-package-price">£2,000 <span>per month</span></p>
             <ul>
-              <li>Your logo in the hero Sponsor Hub — a large clickable logo beside the directory header on the <strong>Events</strong> browse page.</li>
-              <li>Logo and link in transactional emails to <strong>attendees and organisers</strong> (confirmations, reminders, cancellations, refunds).</li>
-              <li>One exclusive sponsor per calendar month on the events directory.</li>
+              <li>Your logo in the Main Sponsor banner — a large clickable logo beside the page heading on the <strong>Events</strong> browse page.</li>
+              <li>Logo and link in booking emails to <strong>attendees and organisers</strong> (confirmations, reminders, cancellations, refunds).</li>
+              <li>One exclusive Main Sponsor per calendar month on the events directory.</li>
             </ul>
             <p class="ad-package-note">
               <strong>Eligibility:</strong> vetted business brands only. Networking groups and event organisers cannot take this slot.
@@ -187,11 +142,9 @@
                         <section class="ad-events-dir-hero">
                           <div class="ad-events-dir-hero-inner">
                             <div class="ad-events-dir-hero-copy">
-                              <span class="ad-events-dir-line ad-events-dir-line--badge"></span>
-                              <span class="ad-events-dir-line ad-events-dir-line--title"></span>
-                              <span class="ad-events-dir-line ad-events-dir-line--title2"></span>
-                              <span class="ad-events-dir-line"></span>
-                              <span class="ad-events-dir-line ad-events-dir-line--short"></span>
+                              <span class="ad-events-dir-badge">Events directory</span>
+                              <h3 class="ad-events-dir-headline">Find your next business event</h3>
+                              <p class="ad-events-dir-sub">Meetings, exhibitions, workshops &amp; more.</p>
                               <div class="ad-events-dir-line-row">
                                 <span class="ad-events-dir-line ad-events-dir-line--btn"></span>
                                 <span class="ad-events-dir-line ad-events-dir-line--btn ad-events-dir-line--btn-ghost"></span>
@@ -203,8 +156,15 @@
                           </div>
                         </section>
                         <div class="ad-events-dir-shell">
-                          <span class="ad-events-dir-line ad-events-dir-line--shell"></span>
-                          <span class="ad-events-dir-line ad-events-dir-line--shell-short"></span>
+                          <div class="ad-events-dir-shell-tabs">
+                            <span class="is-active">Events</span>
+                            <span>Organisers</span>
+                          </div>
+                          <div class="ad-events-dir-shell-cards">
+                            <div class="ad-events-dir-shell-card"></div>
+                            <div class="ad-events-dir-shell-card"></div>
+                            <div class="ad-events-dir-shell-card ad-events-dir-shell-card--short"></div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -232,24 +192,36 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-events-mini">
           <div class="ad-package-main">
             <h3 class="ad-package-title">Mini Sponsors</h3>
             <p class="ad-package-placement">Sidebar on individual event pages</p>
             <p class="ad-package-price">£600 <span>per slot / month</span></p>
             <ul>
               <li>Up to <strong>three Mini Sponsor logos</strong> in the sidebar on every public event detail page.</li>
-              <li>Separate inventory from organiser profile mini sponsors (see Organisers tab).</li>
+              <li>Separate inventory from organiser Mini Sponsors (see Organisers section).</li>
               <li>Each slot links to your website; logos rotate automatically.</li>
             </ul>
             <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Mini%20Sponsors%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Live example — event page mini sponsors</p>
-            <div class="ad-mini-sponsor-dual">
-              <div class="ad-mini-sponsor-col">
-                <p class="ad-mini-page-label">Event page</p>
-                <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-event"></div>
+            <p class="ad-preview-label">Example — Mini Sponsors on an event page</p>
+            <div class="ad-mock-page ad-mock-page--detail">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/women-in-business-breakfast</em></div>
+              <div class="ad-mock-detail-layout">
+                <div class="ad-mock-detail-main">
+                  <span class="ad-mock-detail-badge">In person · Manchester</span>
+                  <h4 class="ad-mock-detail-title">Women in Business Breakfast</h4>
+                  <p class="ad-mock-detail-meta">Wed 14 Aug · 7:30am · Free entry</p>
+                  <div class="ad-mock-detail-body">
+                    <span class="line"></span>
+                    <span class="line"></span>
+                    <span class="line line--short"></span>
+                  </div>
+                </div>
+                <aside class="ad-mock-detail-sidebar">
+                  <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-event"></div>
+                </aside>
               </div>
             </div>
           </div>
@@ -257,7 +229,7 @@
 
         <article class="ad-package ad-package-split" id="city-partner-package">
           <div class="ad-package-main">
-            <span class="ad-package-badge">Regional placement</span>
+            <span class="ad-package-badge">City Partner</span>
             <h3 class="ad-package-title">City Partner</h3>
             <p class="ad-package-placement">Logo + CTA in the regional intro block on city pages such as <strong>/networking/manchester</strong> and <strong>/opportunities/networking/manchester</strong></p>
             <p class="ad-package-price">£29 <span>per city / month</span> · £75 <span>for any 3 cities / month</span></p>
@@ -266,7 +238,7 @@
               <li><strong>Logo and CTA button only</strong> — compact placement beside the local intro copy on regional landing pages.</li>
               <li><strong>Website only</strong> — City Partners do <em>not</em> appear in hub emails (hence the lower rate vs Mini Sponsors).</li>
               <li><strong>3-city pack pricing</strong> — select any three available cities and the bundle price is applied; larger orders combine packs + singles (e.g. 5 cities = 1 pack + 2 singles).</li>
-              <li>One exclusive partner per city per month. The main Events Directory Sponsor above the listings is unchanged.</li>
+              <li>One exclusive City Partner per city per month. The Main Events Directory Sponsor above the listings is unchanged.</li>
             </ul>
             <p class="ad-package-note">
               <strong>Eligibility:</strong> Applications are reviewed for relevance and fairness before payment. Complementary B2B brands are welcome. Networking brands recruiting a new branch or chapter leader may also apply; promotion of an existing local group may not be accepted where it would disadvantage competing listings.
@@ -292,6 +264,7 @@
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">Sponsored</span>
                     <span class="ad-mock-city-partner-logo">Your logo</span>
+                    <span class="ad-mock-city-partner-cta">Find out more →</span>
                   </aside>
                 </div>
               </div>
@@ -317,31 +290,31 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-events-spotlight">
           <div class="ad-package-main">
-            <h3 class="ad-package-title">Premium Spotlight — featured event</h3>
-            <p class="ad-package-placement">Premium carousel at the top of the events directory</p>
+            <h3 class="ad-package-title">Featured Listing — Events</h3>
+            <p class="ad-package-placement">Featured Listing pinned to the top of the events directory</p>
             <p class="ad-package-price">£55 <span>per month</span></p>
             <ul>
               <li>For <strong>organisers promoting their own event</strong> — not third-party advertising.</li>
-              <li>Self-serve checkout: <strong>£55 per month</strong> in the Premium Spotlight carousel (max. <strong>12 featured events</strong> at a time).</li>
+              <li>Self-serve checkout: <strong>£55 per month</strong> for a Featured Listing (max. <strong>12 events</strong> at a time).</li>
             </ul>
             <a class="ad-package-cta" href="organiser/">List your event →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — Premium Spotlight</p>
-            <div class="ad-mock-spotlight" aria-hidden="true">
-              <div class="ad-mock-spotlight-head"><span>★ Premium Spotlight</span><span>View all</span></div>
-              <div class="ad-mock-spotlight-card">
-                <div class="ad-mock-spotlight-thumb"></div>
+            <p class="ad-preview-label">Example — Featured Listing</p>
+            <div class="ad-mock-spotlight ad-mock-spotlight--featured" aria-hidden="true">
+              <div class="ad-mock-spotlight-head"><span>Featured Listing</span><span>View all</span></div>
+              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich">
+                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--event"></div>
                 <div class="ad-mock-spotlight-meta">
-                  <span class="line line--title"></span>
-                  <span class="line"></span>
-                  <span class="line" style="width:60%"></span>
+                  <strong>Women in Business Breakfast</strong>
+                  <span>Wed 14 Aug · Manchester</span>
+                  <span class="ad-mock-spotlight-tag">In person · Free</span>
                 </div>
               </div>
             </div>
-            <p class="ad-mock-context">Your own event card featured in the carousel — purchased from the organiser dashboard.</p>
+            <p class="ad-mock-context">Your event as a Featured Listing — purchased from the organiser dashboard.</p>
           </div>
         </article>
       </div>
@@ -353,34 +326,36 @@
         <h2>Organisers directory advertising</h2>
         <a href="/events/#organisers">View organisers browse →</a>
       </div>
-      <p class="ad-section-lede">
-        When visitors switch to <strong>Browse organisers</strong> on <strong>/events/</strong>, they explore networking groups and communities.
-        Reach them with hero sponsorship, sidebar placements, or featured organiser profiles.
-      </p>
+      <div class="ad-section-intro-band">
+        <p class="ad-section-lede">
+          When visitors switch to <strong>Browse organisers</strong> on <strong>/events/</strong>, they explore networking groups and communities.
+          Reach them with a Main Sponsor banner, Mini Sponsors in the sidebar, or a Featured Listing.
+        </p>
+      </div>
 
       <div class="ad-packages">
-        <article class="ad-package ad-package--featured ad-package-split">
+        <article class="ad-package ad-package--featured ad-package-split" id="ad-pkg-organisers-main">
           <div class="ad-package-main">
-            <span class="ad-package-badge">Primary placement</span>
-            <h3 class="ad-package-title">Organisers Directory Sponsor</h3>
-            <p class="ad-package-placement">Hero Sponsor Hub on <strong>/events/</strong> — Organisers tab</p>
+            <span class="ad-package-badge">Main Sponsor</span>
+            <h3 class="ad-package-title">Main Organisers Directory Sponsor</h3>
+            <p class="ad-package-placement">Main Sponsor banner at the top of the organisers browse page</p>
             <p class="ad-package-price">£1,000 <span>per month</span></p>
             <ul>
-              <li>Logo, tagline, and CTA in the hero Sponsor Hub when visitors browse organisers.</li>
-              <li>Exclusive third-party sponsor for the organisers directory each calendar month.</li>
+              <li>Your logo, short description, and link in the Main Sponsor banner when visitors browse organisers.</li>
+              <li>One exclusive Main Sponsor per calendar month on the organisers directory.</li>
             </ul>
-            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Organisers%20Directory%20Sponsor%20enquiry">Enquire →</a>
+            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Main%20Organisers%20Directory%20Sponsor%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — organisers browse hero</p>
-            <div class="ad-mock-page" id="ad-preview-organisers-hero">
+            <p class="ad-preview-label">Example — Main Sponsor</p>
+            <div class="ad-mock-page ad-mock-page--organisers" id="ad-preview-organisers-hero">
               <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/ · Organisers</em></div>
               <div class="ad-mock-page-body">
                 <div class="ad-mock-hero-row">
-                  <div class="ad-mock-copy-block">
-                    <span class="line line--title"></span>
-                    <span class="line"></span>
-                    <span class="line line--short"></span>
+                  <div class="ad-mock-copy-block ad-mock-copy-block--rich">
+                    <span class="ad-mock-page-kicker">Browse organisers</span>
+                    <h4 class="ad-mock-page-title">Networking groups &amp; communities</h4>
+                    <p class="ad-mock-page-sub">Find a group that fits your industry and location.</p>
                   </div>
                   <div class="ad-live-preview ad-live-preview--hero" id="ad-live-organisers-hero"></div>
                 </div>
@@ -389,48 +364,65 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-organisers-mini">
           <div class="ad-package-main">
             <h3 class="ad-package-title">Mini Sponsors</h3>
             <p class="ad-package-placement">Sidebar on organiser profile pages</p>
             <p class="ad-package-price">£300 <span>per slot / month</span></p>
             <ul>
-              <li>Up to <strong>three Mini Sponsor logos</strong> on public organiser profiles (organisers directory inventory).</li>
+              <li>Up to <strong>three Mini Sponsor logos</strong> on public organiser profiles.</li>
               <li>Each slot links to your website; logos rotate automatically.</li>
             </ul>
             <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Organisers%20Mini%20Sponsors%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — organiser profile sidebar</p>
-            <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-organisers-dir"></div>
+            <p class="ad-preview-label">Example — Mini Sponsors on an organiser profile</p>
+            <div class="ad-mock-page ad-mock-page--detail">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/organiser/manchester-business-network</em></div>
+              <div class="ad-mock-detail-layout">
+                <div class="ad-mock-detail-main">
+                  <span class="ad-mock-detail-badge">Networking group · Manchester</span>
+                  <h4 class="ad-mock-detail-title">Manchester Business Network</h4>
+                  <p class="ad-mock-detail-meta">Weekly breakfast meetings · 240+ members</p>
+                  <div class="ad-mock-detail-body">
+                    <span class="line"></span>
+                    <span class="line"></span>
+                    <span class="line line--short"></span>
+                  </div>
+                </div>
+                <aside class="ad-mock-detail-sidebar">
+                  <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-organisers-dir"></div>
+                </aside>
+              </div>
+            </div>
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-organisers-spotlight">
           <div class="ad-package-main">
-            <h3 class="ad-package-title">Premium Spotlight — featured organiser</h3>
-            <p class="ad-package-placement">Featured carousel on the organisers browse page</p>
+            <h3 class="ad-package-title">Featured Listing — Organisers</h3>
+            <p class="ad-package-placement">Featured Listing pinned to the top of the organisers browse page</p>
             <p class="ad-package-price">£27.50 <span>per month</span></p>
             <ul>
               <li>For <strong>organisers promoting their own group profile</strong> — not third-party advertising.</li>
-              <li>Max. <strong>12 featured organiser profiles</strong> in the carousel at any one time.</li>
+              <li>Max. <strong>12 Featured Listings</strong> on the organisers browse page at any one time.</li>
             </ul>
-            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Featured%20organiser%20profile%20enquiry">Enquire →</a>
+            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Featured%20Listing%20-%20Organisers%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — Organisers Premium Spotlight</p>
-            <div class="ad-mock-spotlight" aria-hidden="true">
-              <div class="ad-mock-spotlight-head"><span>★ Premium Spotlight</span><span>View all</span></div>
-              <div class="ad-mock-spotlight-card">
-                <div class="ad-mock-spotlight-thumb"></div>
+            <p class="ad-preview-label">Example — Featured Listing</p>
+            <div class="ad-mock-spotlight ad-mock-spotlight--featured" aria-hidden="true">
+              <div class="ad-mock-spotlight-head"><span>Featured Listing</span><span>View all</span></div>
+              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich ad-mock-spotlight-card--organiser">
+                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--organiser"></div>
                 <div class="ad-mock-spotlight-meta">
-                  <span class="line line--title"></span>
-                  <span class="line"></span>
-                  <span class="line" style="width:55%"></span>
+                  <strong>Manchester Business Network</strong>
+                  <span>Weekly breakfast · Manchester</span>
+                  <span class="ad-mock-spotlight-tag">240+ members</span>
                 </div>
               </div>
             </div>
-            <p class="ad-mock-context">Your organiser profile featured in the carousel — contact sales to go live.</p>
+            <p class="ad-mock-context">Your organiser profile as a Featured Listing — contact us to go live.</p>
           </div>
         </article>
       </div>
@@ -442,34 +434,36 @@
         <h2>Opportunities advertising</h2>
         <a href="/opportunities/">View live browse →</a>
       </div>
-      <p class="ad-section-lede">
-        The business opportunities section lists franchises, partnerships, investments, and deals for
-        members exploring their next move.
-      </p>
+      <div class="ad-section-intro-band">
+        <p class="ad-section-lede">
+          The business opportunities section lists franchises, partnerships, investments, and deals for
+          members exploring their next move.
+        </p>
+      </div>
 
       <div class="ad-packages">
-        <article class="ad-package ad-package--featured ad-package-split">
+        <article class="ad-package ad-package--featured ad-package-split" id="ad-pkg-opportunities-main">
           <div class="ad-package-main">
-            <span class="ad-package-badge">Primary placement</span>
-            <h3 class="ad-package-title">Opportunities Directory Sponsor</h3>
-            <p class="ad-package-placement">Hero Sponsor Hub on <strong>/opportunities/</strong></p>
+            <span class="ad-package-badge">Main Sponsor</span>
+            <h3 class="ad-package-title">Main Opportunities Directory Sponsor</h3>
+            <p class="ad-package-placement">Main Sponsor banner at the top of <strong>/opportunities/</strong></p>
             <p class="ad-package-price">£2,000 <span>per month</span></p>
             <ul>
-              <li>Logo, tagline, and CTA in the hero Sponsor Hub on the opportunities browse page.</li>
-              <li>Reach visitors searching franchises, side hustles, partnerships, and investments.</li>
+              <li>Your logo, short description, and link in the Main Sponsor banner on the opportunities browse page.</li>
+              <li>One exclusive Main Sponsor per calendar month on the opportunities directory.</li>
             </ul>
-            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Opportunities%20Directory%20Sponsor%20enquiry">Enquire →</a>
+            <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Main%20Opportunities%20Directory%20Sponsor%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — opportunities browse hero</p>
-            <div class="ad-mock-page" id="ad-preview-opportunities-hero">
+            <p class="ad-preview-label">Example — Main Sponsor</p>
+            <div class="ad-mock-page ad-mock-page--opportunities" id="ad-preview-opportunities-hero">
               <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/</em></div>
               <div class="ad-mock-page-body">
                 <div class="ad-mock-hero-row">
-                  <div class="ad-mock-copy-block">
-                    <span class="line line--title"></span>
-                    <span class="line"></span>
-                    <span class="line line--short"></span>
+                  <div class="ad-mock-copy-block ad-mock-copy-block--rich ad-mock-copy-block--navy">
+                    <span class="ad-mock-page-kicker">Business opportunities</span>
+                    <h4 class="ad-mock-page-title">Franchises, partnerships &amp; investments</h4>
+                    <p class="ad-mock-page-sub">Browse deals for members exploring their next move.</p>
                   </div>
                   <div class="ad-live-preview ad-live-preview--hero" id="ad-live-opportunities-hero"></div>
                 </div>
@@ -478,7 +472,7 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-opportunities-mini">
           <div class="ad-package-main">
             <h3 class="ad-package-title">Mini Sponsors</h3>
             <p class="ad-package-placement">Sidebar on individual opportunity detail pages</p>
@@ -490,15 +484,18 @@
             <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Opportunities%20Mini%20Sponsors%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — opportunity detail sidebar</p>
+            <p class="ad-preview-label">Example — Mini Sponsors</p>
             <div class="ad-mock-page ad-mock-page--sidebar">
               <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/example-listing</em></div>
               <div class="ad-mock-sidebar-layout">
-                <div class="ad-mock-copy-block ad-mock-copy-block--detail">
-                  <span class="line line--title"></span>
-                  <span class="line"></span>
-                  <span class="line"></span>
-                  <span class="line line--short"></span>
+                <div class="ad-mock-detail-main ad-mock-detail-main--compact">
+                  <span class="ad-mock-detail-badge">Franchise · North West</span>
+                  <h4 class="ad-mock-detail-title">Coffee shop franchise — Manchester territory</h4>
+                  <p class="ad-mock-detail-meta">Investment from £85k · Training included</p>
+                  <div class="ad-mock-detail-body">
+                    <span class="line"></span>
+                    <span class="line line--short"></span>
+                  </div>
                 </div>
                 <div class="ad-live-preview ad-live-preview--compact" id="ad-live-opportunity-sidebar"></div>
               </div>
@@ -506,9 +503,9 @@
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-opportunities-listing">
           <div class="ad-package-main">
-            <h3 class="ad-package-title">Directory listing</h3>
+            <h3 class="ad-package-title">Directory Listing</h3>
             <p class="ad-package-placement">Standard business opportunity listing</p>
             <p class="ad-package-price">£25 <span>per month + VAT</span></p>
             <ul>
@@ -518,50 +515,57 @@
             <a class="ad-package-cta" href="/opportunities/list">List an opportunity →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — standard listing card</p>
-            <div class="ad-mock-spotlight" aria-hidden="true">
+            <p class="ad-preview-label">Example — Directory Listing</p>
+            <div class="ad-mock-spotlight ad-mock-spotlight--directory" aria-hidden="true">
               <div class="ad-mock-spotlight-head"><span>Directory</span><span>Browse</span></div>
-              <div class="ad-mock-spotlight-card">
-                <div class="ad-mock-spotlight-thumb"></div>
+              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich ad-mock-spotlight-card--directory">
+                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--opp"></div>
                 <div class="ad-mock-spotlight-meta">
-                  <span class="line line--title"></span>
-                  <span class="line"></span>
-                  <span class="line" style="width:50%"></span>
+                  <strong>Coffee shop franchise — Manchester</strong>
+                  <span>Franchise · North West</span>
+                  <span class="ad-mock-spotlight-tag">From £85k investment</span>
                 </div>
               </div>
             </div>
           </div>
         </article>
 
-        <article class="ad-package ad-package-split">
+        <article class="ad-package ad-package-split" id="ad-pkg-opportunities-spotlight">
           <div class="ad-package-main">
-            <h3 class="ad-package-title">Premium Spotlight — featured opportunity</h3>
-            <p class="ad-package-placement">Featured carousel on the opportunities browse page</p>
+            <h3 class="ad-package-title">Featured Listing — Opportunities</h3>
+            <p class="ad-package-placement">Featured Listing pinned to the top of the opportunities browse page</p>
             <p class="ad-package-price">£55 <span>per month</span></p>
             <ul>
               <li>For <strong>listers promoting their own opportunity</strong> — not third-party advertising.</li>
-              <li>Self-serve upgrade after listing goes live — max. <strong>12 premium listings</strong> in the carousel.</li>
+              <li>Self-serve upgrade after your Directory Listing goes live — max. <strong>12 Featured Listings</strong> at a time.</li>
             </ul>
             <a class="ad-package-cta" href="/opportunities/list">List an opportunity →</a>
           </div>
           <div class="ad-package-preview">
-            <p class="ad-preview-label">Example — Premium Spotlight</p>
-            <div class="ad-mock-spotlight" aria-hidden="true">
-              <div class="ad-mock-spotlight-head"><span>★ Premium Spotlight</span><span>View all</span></div>
-              <div class="ad-mock-spotlight-card">
-                <div class="ad-mock-spotlight-thumb"></div>
+            <p class="ad-preview-label">Example — Featured Listing</p>
+            <div class="ad-mock-spotlight ad-mock-spotlight--featured" aria-hidden="true">
+              <div class="ad-mock-spotlight-head"><span>Featured Listing</span><span>View all</span></div>
+              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich ad-mock-spotlight-card--featured-opp">
+                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--opp"></div>
                 <div class="ad-mock-spotlight-meta">
-                  <span class="line line--title"></span>
-                  <span class="line"></span>
-                  <span class="line" style="width:55%"></span>
+                  <strong>Coffee shop franchise — Manchester</strong>
+                  <span>Franchise · North West</span>
+                  <span class="ad-mock-spotlight-tag ad-mock-spotlight-tag--featured">Featured</span>
                 </div>
               </div>
             </div>
-            <p class="ad-mock-context">Your own opportunity card featured in the browse carousel.</p>
+            <p class="ad-mock-context">Your opportunity as a Featured Listing at the top of the browse page.</p>
           </div>
         </article>
       </div>
     </div>
+
+    <ul class="ad-trust-badges ad-reveal" aria-label="Advertising standards">
+      <li>Vetted before go-live</li>
+      <li>Clearly labelled Sponsored</li>
+      <li>ASA compliance monitored</li>
+      <li>Professional B2B audience</li>
+    </ul>
 
     <section class="ad-section ad-reveal" id="how-it-works" aria-labelledby="how-title">
       <header class="ad-section-intro">
@@ -571,19 +575,16 @@
       </header>
       <div class="ad-how-grid">
         <div class="ad-how-step">
-          <span class="ad-how-step-num" aria-hidden="true">1</span>
-          <strong>Choose your section</strong>
-          <p>Use the tabs above to pick Events, Organisers, or Opportunities — then email us the placement you want.</p>
+          <strong>1. Choose your section</strong>
+          <p>Use the options above to pick Events, Organisers, or Opportunities — then email us the placement you want.</p>
         </div>
         <div class="ad-how-step">
-          <span class="ad-how-step-num" aria-hidden="true">2</span>
-          <strong>Vetting &amp; creative</strong>
-          <p>We review fit with our audience, confirm eligibility, and collect your logo, copy, and CTA link.</p>
+          <strong>2. Vetting &amp; creative</strong>
+          <p>We review fit with our audience, confirm eligibility, and collect your logo, copy, and link.</p>
         </div>
         <div class="ad-how-step">
-          <span class="ad-how-step-num" aria-hidden="true">3</span>
-          <strong>Go live</strong>
-          <p>We publish your placement in Command Centre. Sponsored units are labelled clearly and monitored for ASA compliance.</p>
+          <strong>3. Go live</strong>
+          <p>We publish your placement in Command Centre. All paid spots are labelled Sponsored and monitored for ASA compliance.</p>
         </div>
       </div>
 
@@ -592,8 +593,8 @@
         <ul>
           <li>All advertising partners are reviewed before publication — we only accept brands relevant to a professional business audience.</li>
           <li>The <strong>Main Events Directory Sponsor</strong> is reserved for vetted third-party brands. Networking groups and event organisers cannot hold this slot.</li>
-          <li><strong>City Partners</strong> are website-only (not in emails). Networking groups cannot sponsor the city page where other groups&rsquo; events appear below.</li>
-          <li>Paid placements are labelled <strong>Sponsored</strong> or <strong>Sponsor Hub</strong>. See our <a href="/legal-policies#advertising">advertising policy</a>.</li>
+          <li><strong>City Partners</strong> are website-only (not in emails). Networking groups cannot take a City Partner slot on the page where other groups&rsquo; events appear below.</li>
+          <li>Paid placements are clearly labelled <strong>Sponsored</strong> on the website. See our <a href="/legal-policies#advertising">advertising policy</a>.</li>
         </ul>
       </div>
     </section>
@@ -601,7 +602,7 @@
     <div class="ad-page-cta ad-reveal">
       <div class="ad-page-cta-inner">
         <h2>Ready to discuss a package?</h2>
-        <p>Tell us which tab section and placement you want — we&rsquo;ll confirm availability and send a proposal.</p>
+        <p>Tell us which section and placement you want — we&rsquo;ll confirm availability and send a proposal.</p>
         <a class="btn btn-primary ad-page-cta-btn" href="mailto:rosie@thenetworkerhub.com?subject=Networker%20Hub%20advertising%20enquiry">Email rosie@thenetworkerhub.com</a>
       </div>
     </div>
@@ -613,7 +614,7 @@
 <script src="js/site-footer.js?v=20260612" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260612g"></script>
-<script src="js/advertising-page.js?v=20260722ad3"></script>
+<script src="js/advertising-page.js?v=20260722ad8"></script>
 <script src="js/city-partner-advertising.js?v=20260715cp5"></script>
 
 </body>
