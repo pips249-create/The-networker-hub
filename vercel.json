@@ -30,6 +30,7 @@
     { "source": "/organiser/index.html", "destination": "/organiser/", "permanent": true },
     { "source": "/admin/index.html", "destination": "/admin/", "permanent": true },
     { "source": "/advertising.html", "destination": "/advertising", "permanent": true },
+    { "source": "/advertising-cta-preview.html", "destination": "/advertising-cta-preview", "permanent": true },
     { "source": "/p-tnh-ev-hub-k7m2.html", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },
     { "source": "/p/tnh-ev-hub-k7m2", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },
     { "source": "/p-tnh-org-onboard-x4n7.html", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
@@ -214,6 +215,10 @@
     {
       "source": "/testing-bo",
       "destination": "/testing-bo.html"
+    },
+    {
+      "source": "/advertising-cta-preview",
+      "destination": "/advertising-cta-preview.html"
     },
     {
       "source": "/advertising",

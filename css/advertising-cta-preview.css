@@ -1,0 +1,246 @@
+/* Static preview — advertising & sponsorship empty-slot CTAs */
+.ad-cta-preview-banner {
+  margin: 0;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5b2f99;
+  background: #f6effa;
+  border-bottom: 1px solid rgba(122, 61, 138, 0.18);
+}
+
+.ad-cta-preview-banner a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.ad-cta-preview-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+}
+
+.ad-cta-preview-intro {
+  max-width: 46rem;
+  margin-bottom: 32px;
+}
+
+.ad-cta-preview-intro h1 {
+  font-family: var(--font-serif, 'DM Serif Display', Georgia, serif);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  color: var(--charcoal);
+}
+
+.ad-cta-preview-intro p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-section {
+  margin-bottom: 40px;
+}
+
+.ad-cta-preview-section-head {
+  margin-bottom: 14px;
+}
+
+.ad-cta-preview-section-head h2 {
+  margin: 0 0 6px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.ad-cta-preview-section-head p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-section-head code {
+  font-size: 12px;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.ad-cta-preview-frame {
+  border: 1px solid var(--border-soft, #e8e4ed);
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(45, 38, 54, 0.06);
+}
+
+.ad-cta-preview-hero-mock {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 340px);
+  gap: 20px;
+  align-items: stretch;
+  padding: 24px;
+  background: linear-gradient(180deg, #faf8fc 0%, #fff 100%);
+}
+
+.ad-cta-preview-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.ad-cta-preview-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lavender-deep, #7a3d8a);
+}
+
+.ad-cta-preview-hero-copy h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-serif, 'DM Serif Display', Georgia, serif);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  line-height: 1.2;
+  color: var(--charcoal);
+}
+
+.ad-cta-preview-hero-copy p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-sponsor-slot {
+  min-width: 0;
+  display: flex;
+}
+
+.ad-cta-preview-sponsor-slot .sponsor-hub {
+  flex: 1;
+  width: 100%;
+}
+
+.ad-cta-preview-detail-mock {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  gap: 24px;
+  padding: 24px;
+}
+
+.ad-cta-preview-detail-main {
+  min-width: 0;
+}
+
+.ad-cta-preview-detail-main h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.ad-cta-preview-detail-main p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-detail-side {
+  min-width: 0;
+}
+
+.ad-cta-preview-faux-panel {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: var(--radius, 12px);
+  border: 1px solid var(--border-soft, #e8e4ed);
+  background: #faf9fc;
+}
+
+.ad-cta-preview-faux-panel strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: var(--charcoal);
+}
+
+.ad-cta-preview-faux-panel span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-partners {
+  padding: 20px 24px 24px;
+  background: linear-gradient(180deg, #f8f5fb 0%, #fff 100%);
+}
+
+.ad-cta-preview-partners .home-partners-kicker {
+  font-size: 12px;
+}
+
+.ad-cta-preview-partners-logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 8px;
+}
+
+.ad-cta-preview-partners-logos span {
+  width: 96px;
+  height: 40px;
+  border-radius: 8px;
+  background: #ece8f0;
+}
+
+.ad-cta-preview-city-wrap {
+  padding: 24px;
+  max-width: 360px;
+}
+
+.ad-cta-preview-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.ad-cta-preview-compare-col h4 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.ad-cta-preview-note a {
+  font-weight: 600;
+}
+
+@media (max-width: 820px) {
+  .ad-cta-preview-hero-mock,
+  .ad-cta-preview-detail-mock,
+  .ad-cta-preview-compare {
+    grid-template-columns: 1fr;
+  }
+
+  .ad-cta-preview-sponsor-slot {
+    max-width: 360px;
+  }
+}

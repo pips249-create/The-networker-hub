@@ -62,11 +62,26 @@
     });
   }
 
+  var PACKAGE_PANEL = {
+    'ad-pkg-events-main': 'events',
+    'ad-pkg-events-mini': 'events',
+    'city-partner-package': 'events',
+    'ad-pkg-events-spotlight': 'events',
+    'ad-pkg-organisers-main': 'organisers',
+    'ad-pkg-organisers-mini': 'organisers',
+    'ad-pkg-organisers-spotlight': 'organisers',
+    'ad-pkg-opportunities-main': 'opportunities',
+    'ad-pkg-opportunities-mini': 'opportunities',
+    'ad-pkg-opportunities-city-partner': 'opportunities',
+    'ad-pkg-opportunities-listing': 'opportunities',
+    'ad-pkg-opportunities-spotlight': 'opportunities',
+  };
+
   var PRICING_GLANCE = {
     events: [
       {
         name: 'Main Events Directory Sponsor',
-        detail: 'Main Sponsor banner + ~8,000 booking emails/mo avg.',
+        detail: 'Browse hero + 3k–80k total impressions/mo',
         price: '£2,000/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
@@ -74,7 +89,7 @@
       },
       {
         name: 'Mini Sponsors',
-        detail: 'Event page sidebar',
+        detail: 'Event pages + selected attendee emails',
         price: '£600/slot/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
@@ -100,7 +115,7 @@
     organisers: [
       {
         name: 'Main Organisers Directory Sponsor',
-        detail: 'Main Sponsor banner on organisers browse',
+        detail: 'Main Sponsor banner + 400–18k organiser emails/mo',
         price: '£1,000/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
@@ -108,7 +123,7 @@
       },
       {
         name: 'Mini Sponsors',
-        detail: 'Organiser profile sidebar',
+        detail: 'Organiser profiles + selected organiser emails',
         price: '£300/slot/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
@@ -126,7 +141,7 @@
     opportunities: [
       {
         name: 'Main Opportunities Directory Sponsor',
-        detail: 'Main Sponsor banner on /opportunities/',
+        detail: 'Main Sponsor banner + 250–12k opportunity emails/mo',
         price: '£2,000/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
@@ -134,11 +149,19 @@
       },
       {
         name: 'Mini Sponsors',
-        detail: 'Opportunity detail sidebar',
+        detail: 'Detail pages + selected opportunity emails',
         price: '£600/slot/mo',
         type: 'Third-party brand',
         typeClass: 'brand',
         anchor: 'ad-pkg-opportunities-mini',
+      },
+      {
+        name: 'City Partner',
+        detail: 'Regional city pages incl. /opportunities/networking/:city (+ VAT)',
+        price: 'From £29/city/mo + VAT',
+        type: 'Third-party brand',
+        typeClass: 'brand',
+        anchor: 'city-partner-package',
       },
       {
         name: 'Directory Listing',
@@ -159,10 +182,386 @@
     ],
   };
 
+  var PACKAGE_COMPARE = {
+    events: [
+      {
+        name: 'Main Sponsor',
+        website: 'Browse hero on /events/',
+        emails: 'Every attendee email header',
+        from: '£2,000/mo',
+        best: 'Flagship brand awareness',
+        anchor: 'ad-pkg-events-main',
+      },
+      {
+        name: 'Mini Sponsors',
+        website: 'Event detail sidebar',
+        emails: 'Selected attendee emails',
+        from: '£600/slot/mo',
+        best: 'Targeted event audience',
+        anchor: 'ad-pkg-events-mini',
+      },
+      {
+        name: 'City Partner',
+        website: 'Regional city landing pages',
+        emails: 'None — website only',
+        from: '£29/city/mo + VAT',
+        best: 'Local / regional brands',
+        anchor: 'city-partner-package',
+      },
+      {
+        name: 'Featured Listing',
+        website: 'Pinned on events browse',
+        emails: 'None',
+        from: '£55/mo',
+        best: 'Organisers promoting own events',
+        anchor: 'ad-pkg-events-spotlight',
+      },
+    ],
+    organisers: [
+      {
+        name: 'Main Sponsor',
+        website: 'Organisers browse hero',
+        emails: 'Every organiser email header',
+        from: '£1,000/mo',
+        best: 'B2B brands reaching organisers',
+        anchor: 'ad-pkg-organisers-main',
+      },
+      {
+        name: 'Mini Sponsors',
+        website: 'Organiser profile sidebar',
+        emails: 'Selected organiser emails',
+        from: '£300/slot/mo',
+        best: 'Targeted organiser audience',
+        anchor: 'ad-pkg-organisers-mini',
+      },
+      {
+        name: 'Featured Listing',
+        website: 'Pinned on organisers browse',
+        emails: 'None',
+        from: '£27.50/mo',
+        best: 'Groups promoting own profile',
+        anchor: 'ad-pkg-organisers-spotlight',
+      },
+    ],
+    opportunities: [
+      {
+        name: 'Main Sponsor',
+        website: 'Opportunities browse hero',
+        emails: 'Every opportunity email header',
+        from: '£2,000/mo',
+        best: 'Flagship B2B deal audience',
+        anchor: 'ad-pkg-opportunities-main',
+      },
+      {
+        name: 'Mini Sponsors',
+        website: 'Opportunity detail sidebar',
+        emails: 'Selected opportunity emails',
+        from: '£600/slot/mo',
+        best: 'High-intent deal seekers',
+        anchor: 'ad-pkg-opportunities-mini',
+      },
+      {
+        name: 'City Partner',
+        website: 'Opportunity city landing pages',
+        emails: 'None — website only',
+        from: '£29/city/mo + VAT',
+        best: 'Regional local presence',
+        anchor: 'city-partner-package',
+      },
+      {
+        name: 'Directory Listing',
+        website: 'Standard listing',
+        emails: 'None',
+        from: '£25/mo + VAT',
+        best: 'Businesses listing own deal',
+        anchor: 'ad-pkg-opportunities-listing',
+      },
+      {
+        name: 'Featured Listing',
+        website: 'Pinned on opportunities browse',
+        emails: 'None',
+        from: '£55/mo',
+        best: 'Listers promoting own deal',
+        anchor: 'ad-pkg-opportunities-spotlight',
+      },
+    ],
+  };
+
+  var MAIN_SPONSOR_SLOTS = [
+    {
+      section: 'events',
+      slot: 'events_sponsor_hub',
+      label: 'Events Main Sponsor',
+      price: '£2,000/mo',
+      anchor: 'ad-pkg-events-main',
+    },
+    {
+      section: 'organisers',
+      slot: 'organisers_sponsor_hub',
+      label: 'Organisers Main Sponsor',
+      price: '£1,000/mo',
+      anchor: 'ad-pkg-organisers-main',
+    },
+    {
+      section: 'opportunities',
+      slot: 'opportunities_sponsor_hub',
+      label: 'Opportunities Main Sponsor',
+      price: '£2,000/mo',
+      anchor: 'ad-pkg-opportunities-main',
+    },
+  ];
+
+  var ENQUIRY_SECTION_LABELS = {
+    events: 'Events',
+    organisers: 'Organisers',
+    opportunities: 'Opportunities',
+  };
+
+  var ENQUIRY_PACKAGES = {
+    events: ['Main Sponsor', 'Mini Sponsors', 'City Partner', 'Featured Listing', 'Not sure yet'],
+    organisers: ['Main Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
+    opportunities: [
+      'Main Sponsor',
+      'Mini Sponsors',
+      'City Partner',
+      'Directory Listing',
+      'Featured Listing',
+      'Not sure yet',
+    ],
+  };
+
+  function renderPackageCompare(section) {
+    var body = document.getElementById('ad-compare-table-body');
+    if (!body) return;
+
+    var rows = PACKAGE_COMPARE[section] || PACKAGE_COMPARE.events;
+    body.innerHTML = rows
+      .map(function (row) {
+        return (
+          '<tr>' +
+          '<td><a class="ad-compare-link" href="#' +
+          esc(row.anchor) +
+          '" data-ad-pricing-jump="' +
+          esc(row.anchor) +
+          '">' +
+          esc(row.name) +
+          '</a></td>' +
+          '<td>' +
+          esc(row.website) +
+          '</td>' +
+          '<td>' +
+          esc(row.emails) +
+          '</td>' +
+          '<td>' +
+          esc(row.from) +
+          '</td>' +
+          '<td>' +
+          esc(row.best) +
+          '</td>' +
+          '</tr>'
+        );
+      })
+      .join('');
+
+    body.querySelectorAll('[data-ad-pricing-jump]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        jumpToPackage(link.getAttribute('data-ad-pricing-jump'));
+      });
+    });
+  }
+
+  function syncEnquiryFormSection(section) {
+    var sectionEl = document.getElementById('ad-enquiry-section');
+    var packageEl = document.getElementById('ad-enquiry-package');
+    if (!sectionEl || !packageEl) return;
+
+    var label = ENQUIRY_SECTION_LABELS[section] || 'Events';
+    Array.prototype.forEach.call(sectionEl.options, function (opt) {
+      opt.selected = opt.value === label;
+    });
+
+    var packages = ENQUIRY_PACKAGES[section] || ENQUIRY_PACKAGES.events;
+    packageEl.innerHTML = packages
+      .map(function (name) {
+        return '<option value="' + esc(name) + '">' + esc(name) + '</option>';
+      })
+      .join('');
+  }
+
+  function initEnquiryForm() {
+    var form = document.getElementById('ad-enquiry-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fd = new FormData(form);
+      var company = String(fd.get('company') || '').trim();
+      var name = String(fd.get('name') || '').trim();
+      var email = String(fd.get('email') || '').trim();
+      var section = String(fd.get('section') || '').trim();
+      var pkg = String(fd.get('package') || '').trim();
+      var budget = String(fd.get('budget') || '').trim();
+      var message = String(fd.get('message') || '').trim();
+
+      var subject = 'Advertising enquiry — ' + (pkg || 'package') + ' (' + section + ')';
+      var body =
+        'Company: ' +
+        company +
+        '\nContact: ' +
+        name +
+        '\nEmail: ' +
+        email +
+        '\nSection: ' +
+        section +
+        '\nPackage: ' +
+        pkg +
+        (budget ? '\nBudget: ' + budget : '') +
+        (message ? '\n\nMessage:\n' + message : '');
+
+      window.location.href =
+        'mailto:rosie@thenetworkerhub.com?subject=' +
+        encodeURIComponent(subject) +
+        '&body=' +
+        encodeURIComponent(body);
+    });
+  }
+
+  function sponsorBlockIsLive(block) {
+    if (!block) return false;
+    if (block.active === false) return false;
+    var logo = String(block.logo_url || '').trim();
+    var company = String(block.company_name || '').trim();
+    return !!(logo || company);
+  }
+
+  function companyFromSponsorBlock(block) {
+    if (!block) return '';
+    if (window.CmsSponsorFields && window.CmsSponsorFields.companyName) {
+      return String(window.CmsSponsorFields.companyName(block) || '').trim();
+    }
+    return String(block.company_name || '').trim();
+  }
+
+  function loadMainSponsorAvailability() {
+    var list = document.getElementById('ad-availability-list');
+    if (!list) return;
+
+    var monthLabel = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+    Promise.all(
+      MAIN_SPONSOR_SLOTS.map(function (entry) {
+        return fetch('/api/cms-block?slot=' + encodeURIComponent(entry.slot), { credentials: 'same-origin' })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            return { entry: entry, block: data && data.block ? data.block : null };
+          })
+          .catch(function () {
+            return { entry: entry, block: null, error: true };
+          });
+      })
+    ).then(function (results) {
+      list.innerHTML = results
+        .map(function (result) {
+          var entry = result.entry;
+          if (result.error) {
+            return (
+              '<li class="ad-availability-item ad-availability-item--error">' +
+              '<div><strong>' +
+              esc(entry.label) +
+              '</strong> <span>' +
+              esc(entry.price) +
+              '</span></div>' +
+              '<em>Status unavailable</em>' +
+              '</li>'
+            );
+          }
+
+          var live = sponsorBlockIsLive(result.block);
+          var company = companyFromSponsorBlock(result.block);
+          var statusClass = live ? 'booked' : 'available';
+          var statusLabel = live ? 'Live now' : 'Available';
+          var detail = live
+            ? 'Currently showing ' + (company || 'a partner') + ' — enquire for ' + monthLabel + ' or later'
+            : 'Open for ' + monthLabel + ' — one exclusive partner per month';
+
+          return (
+            '<li class="ad-availability-item ad-availability-item--' +
+            statusClass +
+            '">' +
+            '<div><strong>' +
+            esc(entry.label) +
+            '</strong> <span>' +
+            esc(entry.price) +
+            ' · ' +
+            esc(detail) +
+            '</span></div>' +
+            '<em>' +
+            esc(statusLabel) +
+            '</em>' +
+            '</li>'
+          );
+        })
+        .join('');
+    });
+  }
+
+  function renderMiniSponsorEmailPreview(container, block) {
+    if (!container) return;
+    block = block || DEMO_SPONSOR;
+    var logo = String(block.logo_url || DEMO_SPONSOR.logo_url).trim();
+    var company = String(block.company_name || DEMO_SPONSOR.company_name).trim();
+    var logoCell =
+      '<img src="' +
+      esc(logo) +
+      '" alt="' +
+      esc(company) +
+      '" loading="lazy" decoding="async">';
+
+    renderSponsorEmailPreview(container, block, {
+      kicker: 'Booking confirmed',
+      title: 'You\u2019re booked in',
+      lede: 'Your place is reserved. We\u2019ve sent the details below.',
+      detailHtml:
+        '<div class="ad-full-email-event-wrap">' +
+        '<div class="ad-full-email-event">' +
+        '<p class="ad-full-email-event-kicker">Your event</p>' +
+        '<p class="ad-full-email-event-name">Women in Business Breakfast</p>' +
+        '<p class="ad-full-email-event-date"><span>When &amp; where</span><strong>Wed 14 Aug · Manchester</strong></p>' +
+        '</div>' +
+        '</div>' +
+        '<div class="ad-full-email-mini-row">' +
+        '<p class="ad-full-email-mini-row-label">Sponsored partners</p>' +
+        '<div class="ad-full-email-mini-row-logos">' +
+        logoCell +
+        logoCell +
+        logoCell +
+        '</div>' +
+        '</div>',
+    });
+  }
+
+  function initCompareAndEnquiry(section) {
+    renderPackageCompare(section);
+    syncEnquiryFormSection(section);
+  }
+
   function renderPricingGlance(section) {
     var body = document.getElementById('ad-pricing-table-body');
     var hint = document.querySelector('.ad-pricing-glance-toggle-hint');
+    var glance = document.getElementById('ad-pricing-glance');
     if (!body) return;
+
+    if (glance) {
+      glance.classList.remove(
+        'ad-pricing-glance--events',
+        'ad-pricing-glance--organisers',
+        'ad-pricing-glance--opportunities'
+      );
+      glance.classList.add('ad-pricing-glance--' + section);
+    }
 
     var rows = PRICING_GLANCE[section] || PRICING_GLANCE.events;
     var labels = {
@@ -209,16 +608,47 @@
 
   function jumpToPackage(id) {
     if (!id) return;
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    el.classList.add('ad-package--highlight');
+    var panelName = PACKAGE_PANEL[id];
+    if (panelName) {
+      var tabsRoot = document.getElementById('ad-section-picks');
+      var tab = tabsRoot && tabsRoot.querySelector('[data-ad-tab="' + panelName + '"]');
+      if (tab && !tab.classList.contains('is-active')) {
+        tab.click();
+      }
+    }
+
     window.setTimeout(function () {
-      el.classList.remove('ad-package--highlight');
-    }, 1800);
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.add('ad-package--highlight');
+      window.setTimeout(function () {
+        el.classList.remove('ad-package--highlight');
+      }, 1800);
+    }, panelName ? 60 : 0);
+  }
+
+  function initTabJumpLinks() {
+    document.querySelectorAll('[data-ad-tab-jump]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var targetTab = link.getAttribute('data-ad-tab-jump');
+        var hash = String(link.getAttribute('href') || '').replace(/^#/, '');
+        if (!targetTab || !hash) return;
+        e.preventDefault();
+        var tabsRoot = document.getElementById('ad-section-picks');
+        var tab = tabsRoot && tabsRoot.querySelector('[data-ad-tab="' + targetTab + '"]');
+        if (tab && !tab.classList.contains('is-active')) {
+          tab.click();
+        }
+        window.setTimeout(function () {
+          jumpToPackage(hash);
+        }, 80);
+      });
+    });
   }
 
   function initPricingGlanceLinks() {
+    initCompareAndEnquiry('events');
     renderPricingGlance('events');
   }
 
@@ -341,13 +771,14 @@
     );
   }
 
-  function renderFullBookingEmail(container, block) {
+  function renderSponsorEmailPreview(container, block, config) {
     if (!container) return;
     if (!block || block.active === false) {
       renderEmptyPreview(container);
       return;
     }
 
+    config = config || {};
     var sponsorRow = buildSponsorEmailRow(block);
     container.innerHTML =
       '<div class="ad-full-email-card">' +
@@ -360,29 +791,17 @@
       '</div>' +
       '<div class="ad-full-email-body">' +
       '<div class="ad-full-email-check" aria-hidden="true"></div>' +
-      '<p class="ad-full-email-kicker">Booking confirmed</p>' +
-      '<p class="ad-full-email-title">You&rsquo;re booked in</p>' +
-      '<p class="ad-full-email-lede">Your place is reserved. We&rsquo;ve sent the details below.</p>' +
+      '<p class="ad-full-email-kicker">' +
+      esc(config.kicker || 'Update from The Networker Hub') +
+      '</p>' +
+      '<p class="ad-full-email-title">' +
+      esc(config.title || 'You have a new notification') +
+      '</p>' +
+      '<p class="ad-full-email-lede">' +
+      esc(config.lede || 'Details are included below for your records.') +
+      '</p>' +
       '</div>' +
-      '<div class="ad-full-email-event-wrap">' +
-      '<div class="ad-full-email-event">' +
-      '<p class="ad-full-email-event-kicker">Your event</p>' +
-      '<p class="ad-full-email-event-name">Women in Business Breakfast</p>' +
-      '<p class="ad-full-email-event-date"><span>When &amp; where</span><strong>Wed 14 Aug · Manchester · In person</strong></p>' +
-      '<div class="ad-full-email-event-meta">' +
-      '<div><span>Ticket</span><strong>General admission</strong></div>' +
-      '<div><span>Price</span><strong>Free</strong></div>' +
-      '<div><span>Status</span><strong>Confirmed</strong></div>' +
-      '</div>' +
-      '<span class="ad-full-email-event-cta">View event details</span>' +
-      '</div>' +
-      '</div>' +
-      '<div class="ad-full-email-upsell-wrap">' +
-      '<div class="ad-full-email-upsell">' +
-      '<p class="ad-full-email-upsell-kicker">While you&rsquo;re here</p>' +
-      '<p class="ad-full-email-upsell-title">Discover more events near you</p>' +
-      '</div>' +
-      '</div>' +
+      (config.detailHtml || '') +
       '<div class="ad-full-email-footer">' +
       '<p class="ad-full-email-footer-note">Questions? Reply to this email or visit your account.</p>' +
       '</div>' +
@@ -393,6 +812,75 @@
       '<p class="ad-full-email-brand-name">The Networker Hub</p>' +
       '</div>' +
       '</div>';
+  }
+
+  function renderFullBookingEmail(container, block) {
+    renderSponsorEmailPreview(container, block, {
+      kicker: 'Booking confirmed',
+      title: 'You\u2019re booked in',
+      lede: 'Your place is reserved. We\u2019ve sent the details below.',
+      detailHtml:
+        '<div class="ad-full-email-event-wrap">' +
+        '<div class="ad-full-email-event">' +
+        '<p class="ad-full-email-event-kicker">Your event</p>' +
+        '<p class="ad-full-email-event-name">Women in Business Breakfast</p>' +
+        '<p class="ad-full-email-event-date"><span>When &amp; where</span><strong>Wed 14 Aug · Manchester · In person</strong></p>' +
+        '<div class="ad-full-email-event-meta">' +
+        '<div><span>Ticket</span><strong>General admission</strong></div>' +
+        '<div><span>Price</span><strong>Free</strong></div>' +
+        '<div><span>Status</span><strong>Confirmed</strong></div>' +
+        '</div>' +
+        '<span class="ad-full-email-event-cta">View event details</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="ad-full-email-upsell-wrap">' +
+        '<div class="ad-full-email-upsell">' +
+        '<p class="ad-full-email-upsell-kicker">While you\u2019re here</p>' +
+        '<p class="ad-full-email-upsell-title">Discover more events near you</p>' +
+        '</div>' +
+        '</div>',
+    });
+  }
+
+  function renderOrganiserEmailPreview(container, block) {
+    renderSponsorEmailPreview(container, block, {
+      kicker: 'Payout approved',
+      title: 'Your payout is on its way',
+      lede: 'We\u2019ve approved your payout request. Funds should arrive within 3\u20135 working days.',
+      detailHtml:
+        '<div class="ad-full-email-event-wrap">' +
+        '<div class="ad-full-email-event">' +
+        '<p class="ad-full-email-event-kicker">Payout summary</p>' +
+        '<p class="ad-full-email-event-name">Manchester Business Network</p>' +
+        '<p class="ad-full-email-event-date"><span>Amount</span><strong>£420.00</strong></p>' +
+        '<div class="ad-full-email-event-meta">' +
+        '<div><span>Reference</span><strong>PO-10482</strong></div>' +
+        '<div><span>Status</span><strong>Approved</strong></div>' +
+        '</div>' +
+        '</div>' +
+        '</div>',
+    });
+  }
+
+  function renderOpportunityEmailPreview(container, block) {
+    renderSponsorEmailPreview(container, block, {
+      kicker: 'Listing live',
+      title: 'Your opportunity is now live',
+      lede: 'Your business opportunity listing is published and visible to members browsing the directory.',
+      detailHtml:
+        '<div class="ad-full-email-event-wrap">' +
+        '<div class="ad-full-email-event">' +
+        '<p class="ad-full-email-event-kicker">Your listing</p>' +
+        '<p class="ad-full-email-event-name">Coffee shop franchise — Manchester</p>' +
+        '<p class="ad-full-email-event-date"><span>Category</span><strong>Franchise · North West</strong></p>' +
+        '<div class="ad-full-email-event-meta">' +
+        '<div><span>Status</span><strong>Live</strong></div>' +
+        '<div><span>Enquiries</span><strong>Open</strong></div>' +
+        '</div>' +
+        '<span class="ad-full-email-event-cta">View listing</span>' +
+        '</div>' +
+        '</div>',
+    });
   }
 
   function loadMainSponsorGallery() {
@@ -407,6 +895,8 @@
   function loadSectionHeroPreviews() {
     renderHeroInShell(document.getElementById('ad-live-opportunities-hero'), DEMO_SPONSOR);
     renderHeroInShell(document.getElementById('ad-live-organisers-hero'), DEMO_SPONSOR);
+    renderOrganiserEmailPreview(document.getElementById('ad-live-organisers-email'), DEMO_SPONSOR);
+    renderOpportunityEmailPreview(document.getElementById('ad-live-opportunities-email'), DEMO_SPONSOR);
   }
 
   function loadOpportunitySidebarPreview() {
@@ -418,8 +908,13 @@
     loadSectionHeroPreviews();
     loadOpportunitySidebarPreview();
     initExampleGallery(document.getElementById('ad-main-sponsor-gallery'));
+    initExampleGallery(document.getElementById('ad-organisers-main-gallery'));
+    initExampleGallery(document.getElementById('ad-opportunities-main-gallery'));
+
+    initExampleGallery(document.getElementById('ad-events-mini-gallery'));
 
     renderDemoMiniSponsor(document.getElementById('ad-live-mini-event'), DEMO_SPONSOR);
+    renderMiniSponsorEmailPreview(document.getElementById('ad-live-mini-event-email'), DEMO_SPONSOR);
     renderDemoMiniSponsor(document.getElementById('ad-live-mini-organisers-dir'), DEMO_SPONSOR);
   }
 
@@ -533,6 +1028,7 @@
       });
 
       renderPricingGlance(target);
+      initCompareAndEnquiry(target);
 
       var preserveHash = options && options.preserveHash;
       var anchor = options && options.anchor;
@@ -602,7 +1098,10 @@
       initTabs();
       initPackageReveal();
       initPricingGlanceLinks();
+      initTabJumpLinks();
+      initEnquiryForm();
       loadLivePreviews();
+      loadMainSponsorAvailability();
     });
   } else {
     initHeroEntrance();
@@ -610,6 +1109,9 @@
     initTabs();
     initPackageReveal();
     initPricingGlanceLinks();
+    initTabJumpLinks();
+    initEnquiryForm();
     loadLivePreviews();
+    loadMainSponsorAvailability();
   }
 })();
