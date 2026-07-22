@@ -9,13 +9,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260722search">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260722barfix">
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
 <script src="../js/fact-loader.js?v=20260613"></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
 <link rel="stylesheet" href="../css/events-page.css?v=20260722lede">
 <link rel="stylesheet" href="../css/home-page.css?v=20260721loc2">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260722orgtitle">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260722barfix">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260717logo">
 <link rel="stylesheet" href="../css/networking-regions.css?v=20260721hero">
 <script src="../js/hub-lazy-vendor.js?v=20260716fp"></script>
@@ -67,13 +67,13 @@
         <p class="sponsor-company" id="sponsor-company" hidden></p>
         <p class="sponsor-tagline" id="sponsor-tagline" hidden></p>
         <div id="sponsor-body" class="sponsor-body" hidden></div>
-        <a class="sponsor-cta" id="sponsor-cta" href="mailto:rosie@thenetworkerhub.com?subject=Sponsor%20Hub%20enquiry" hidden>Find out more →</a>
+        <a class="sponsor-cta" id="sponsor-cta" href="/advertising#ad-panel-events" hidden>View sponsorship options →</a>
       </aside>
     </div>
   </div>
 </section>
 <script src="../js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="../js/sponsor-hub.js?v=20260717ready"></script>
+<script src="../js/sponsor-hub.js?v=20260722adcta"></script>
 
 <main class="shell" id="events-shell">
   <p class="load-status" id="load-status" hidden>Loading…</p>
@@ -147,7 +147,8 @@
     <div class="events-filter-shell">
     <div class="events-filter-bar" role="search" aria-label="Filter events">
       <p class="events-filter-inbox-title filter-organiser-only" id="events-filter-inbox-heading">Filter organisers</p>
-      <div class="filter-bar-row filter-bar-row-location filter-event-only">
+      <div class="filter-bar-row filter-bar-row-top">
+        <div class="filter-bar-location-group filter-event-only">
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -193,6 +194,15 @@
               <option value="50">Within 50 miles</option>
             </select>
           </label>
+        </div>
+        </div>
+        <div class="filter-field filter-field-search filter-field-grow">
+          <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+          </span>
+          <label class="visually-hidden" for="search">Search events</label>
+          <input type="search" id="search" placeholder="Search anything — breakfast, women only, organiser, city…" autocomplete="off" aria-describedby="search-hint">
+          <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
         </div>
       </div>
       <div class="filter-bar-row filter-bar-row-bottom">
@@ -320,14 +330,6 @@
           </fieldset>
         </div>
         <div class="filter-bar-actions">
-          <div class="filter-field filter-field-search">
-            <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-            </span>
-            <label class="visually-hidden" for="search">Search events</label>
-            <input type="search" id="search" placeholder="Search anything — breakfast, women only, organiser, city…" autocomplete="off" aria-describedby="search-hint">
-            <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
-          </div>
           <button type="button" class="filter-clear-btn" id="clear-filters-bar">Clear filters</button>
         </div>
         </div>

@@ -1,9 +1,9 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260714u
+ * FOOTER_BUILD=20260722a
  */
 (function () {
-  var FOOTER_BUILD = '20260714u';
+  var FOOTER_BUILD = '20260722a';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -66,7 +66,7 @@
     '">About us</a>' +
     '<a href="' +
     href('/advertising') +
-    '">Advertising</a>' +
+    '">Advertising &amp; sponsorship</a>' +
     '</nav>' +
     '</div>' +
     '<div class="footer-col">' +

@@ -1753,6 +1753,23 @@ html:has(.home-page) {
   max-width: min(100%, 28em);
 }
 
+.home-partners-cta {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 0.9375rem;
+}
+
+.home-partners-cta a {
+  color: #5b2f99;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-partners-cta a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .home-partners-marquee {
   overflow: hidden;
   margin-left: calc(-1 * var(--home-partners-panel-x));

@@ -4503,7 +4503,6 @@
       if (sidebarEl) {
         await window.CmsAdBlocks.loadPageCarouselAds(sidebarEl, {
           slot: 'event_page_carousel_ads',
-          placeholderSubject: 'Events Mini Sponsors enquiry',
         });
       }
     } catch {

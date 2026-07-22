@@ -5,11 +5,22 @@
   var SPONSOR_ENQUIRE_MAILTO =
     'mailto:rosie@thenetworkerhub.com?subject=' + encodeURIComponent('Sponsor Hub enquiry');
 
+  var SPONSOR_SLOT_AD_PATHS = {
+    events_sponsor_hub: '/advertising#ad-panel-events',
+    organisers_sponsor_hub: '/advertising#ad-panel-organisers',
+    opportunities_sponsor_hub: '/advertising#ad-panel-opportunities',
+    sponsor_hub: '/advertising#ad-panel-events',
+  };
+
   var SPONSOR_FALLBACK = {
     headline: 'Your brand here',
-    ctaLabel: 'Find out more →',
-    ctaUrl: SPONSOR_ENQUIRE_MAILTO,
+    ctaLabel: 'View sponsorship options →',
   };
+
+  function advertisingUrlForSlot(slot) {
+    var key = String(slot || '').trim().toLowerCase();
+    return SPONSOR_SLOT_AD_PATHS[key] || '/advertising';
+  }
 
   var SPONSOR_HERO_MAX_BULLETS = 0;
 
@@ -174,11 +185,16 @@
     return hasLogo;
   }
 
-  function renderSponsorFallback(els) {
+  function renderSponsorFallback(els, slot) {
     if (!els.sponsorHub) return;
     els.sponsorHub.classList.remove('sponsor-hub--active');
     els.sponsorHub.classList.add('sponsor-hub--fallback');
     clearHeroLogoLink(els);
+
+    var slotKey =
+      String(slot || els.sponsorHub.getAttribute('data-slot') || 'events_sponsor_hub').trim() ||
+      'events_sponsor_hub';
+    var ctaUrl = advertisingUrlForSlot(slotKey);
 
     if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = true;
     if (els.sponsorCompany) els.sponsorCompany.hidden = true;
@@ -192,11 +208,11 @@
     }
     if (els.sponsorCta) {
       els.sponsorCta.textContent = SPONSOR_FALLBACK.ctaLabel;
-      els.sponsorCta.href = SPONSOR_FALLBACK.ctaUrl;
+      els.sponsorCta.href = ctaUrl;
       els.sponsorCta.hidden = false;
       if (window.CmsSponsorFields) {
         window.CmsSponsorFields.applyCtaColor(els.sponsorCta, '');
-        window.CmsSponsorFields.applyCtaLink(els.sponsorCta, SPONSOR_FALLBACK.ctaUrl);
+        window.CmsSponsorFields.applyCtaLink(els.sponsorCta, ctaUrl);
       }
     }
   }
@@ -298,10 +314,10 @@
       if (data && data.ok && data.block) {
         renderSponsorBlock(els, data.block);
       } else {
-        renderSponsorFallback(els);
+        renderSponsorFallback(els, slotKey);
       }
     } catch (e) {
-      renderSponsorFallback(els);
+      renderSponsorFallback(els, slotKey);
     }
 
     await whenLogoReady(els, els.sponsorHub.classList.contains('sponsor-hub--logo-only'));

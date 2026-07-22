@@ -581,7 +581,7 @@
 
     window.CmsAdBlocks.loadCmsAd('opportunity_page_sidebar_ad')
       .then(function (block) {
-        window.CmsAdBlocks.renderCompactAd(el, block);
+        window.CmsAdBlocks.renderCompactAd(el, block, 'opportunity_page_sidebar_ad');
       })
       .catch(function () {});
   }

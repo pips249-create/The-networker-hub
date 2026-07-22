@@ -16,6 +16,119 @@
     return d.innerHTML;
   }
 
+  function initHeroEntrance() {
+    var hero = document.querySelector('.ad-hero');
+    if (!hero) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      hero.classList.add('is-entered');
+      return;
+    }
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        hero.classList.add('is-entered');
+      });
+    });
+  }
+
+  function initReveal() {
+    var sections = document.querySelectorAll('.ad-reveal:not([hidden])');
+    if (!sections.length) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      sections.forEach(function (el) {
+        el.classList.add('is-visible');
+      });
+      return;
+    }
+
+    if (!window.IntersectionObserver) {
+      sections.forEach(function (el) {
+        el.classList.add('is-visible');
+      });
+      return;
+    }
+
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+    );
+
+    sections.forEach(function (el) {
+      io.observe(el);
+    });
+  }
+
+  function fetchCmsSlot(slot) {
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+      .then(function (r) {
+        return r.json();
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function loadPartnersStrip() {
+    var section = document.getElementById('ad-partners-strip');
+    var logosEl = document.getElementById('ad-partners-logos');
+    if (!section || !logosEl) return;
+
+    fetchCmsSlot('home_partners').then(function (data) {
+      var partners = [];
+      var seen = new Set();
+
+      if (data && data.ok && data.active !== false && Array.isArray(data.partners)) {
+        data.partners.forEach(function (p) {
+          var logo = String((p && p.logo_url) || '').trim();
+          if (!logo || seen.has(logo)) return;
+          seen.add(logo);
+          partners.push({
+            name: String((p && p.company_name) || '').trim() || 'Partner',
+            logo: logo,
+            url: String((p && p.cta_url) || '').trim(),
+          });
+        });
+      }
+
+      if (!partners.length) return;
+
+      logosEl.innerHTML = partners
+        .map(function (p) {
+          var img =
+            '<img src="' +
+            esc(p.logo) +
+            '" alt="' +
+            esc(p.name) +
+            '" loading="lazy" decoding="async" onerror="this.closest(\'a,span\').hidden=true">';
+          if (/^https?:/i.test(p.url)) {
+            return (
+              '<a href="' +
+              esc(p.url) +
+              '" target="_blank" rel="noopener noreferrer" title="' +
+              esc(p.name) +
+              '">' +
+              img +
+              '</a>'
+            );
+          }
+          return '<span title="' + esc(p.name) + '">' + img + '</span>';
+        })
+        .join('');
+
+      section.hidden = false;
+      section.classList.add('is-visible');
+    });
+  }
+
   function logoFromBlock(block) {
     if (!block || !window.CmsSponsorFields) return '';
     return window.CmsSponsorFields.logoUrl(block);
@@ -196,12 +309,77 @@
 
   }
 
-  var tabsRoot = document.getElementById('ad-section-tabs');
-  if (tabsRoot) {
+  var packageRevealIo = null;
+
+  function initPackageReveal() {
+    var packages = document.querySelectorAll('.ad-package');
+    packages.forEach(function (pkg) {
+      pkg.classList.add('ad-package-reveal');
+    });
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      packages.forEach(function (pkg) {
+        pkg.classList.add('is-visible');
+      });
+      return;
+    }
+
+    if (!window.IntersectionObserver) {
+      packages.forEach(function (pkg) {
+        pkg.classList.add('is-visible');
+      });
+      return;
+    }
+
+    packageRevealIo = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            packageRevealIo.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -6% 0px', threshold: 0.06 }
+    );
+
+    packages.forEach(function (pkg) {
+      packageRevealIo.observe(pkg);
+    });
+  }
+
+  function refreshPackageReveal(panel) {
+    if (!packageRevealIo || !panel) return;
+    panel.querySelectorAll('.ad-package-reveal:not(.is-visible)').forEach(function (pkg) {
+      packageRevealIo.observe(pkg);
+    });
+  }
+
+  function syncSectionPicks(target) {
+    document.querySelectorAll('[data-ad-pick]').forEach(function (pick) {
+      var active = pick.getAttribute('data-ad-pick') === target;
+      pick.classList.toggle('is-active', active);
+      pick.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function scrollToAnchor(id) {
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    window.setTimeout(function () {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+
+  function initTabs() {
+    var tabsRoot = document.getElementById('ad-section-tabs');
+    if (!tabsRoot) return;
+
     var tabs = tabsRoot.querySelectorAll('[role="tab"]');
     var panels = document.querySelectorAll('[data-ad-panel]');
 
-    function activateTab(tab) {
+    function activateTab(tab, options) {
       var target = tab.getAttribute('data-ad-tab');
       if (!target) return;
 
@@ -216,11 +394,23 @@
         var show = panel.getAttribute('data-ad-panel') === target;
         panel.hidden = !show;
         panel.classList.toggle('is-active', show);
+        if (show) refreshPackageReveal(panel);
       });
 
-      if (history.replaceState) {
-        history.replaceState(null, '', '#' + target);
+      syncSectionPicks(target);
+
+      var preserveHash = options && options.preserveHash;
+      var anchor = options && options.anchor;
+      if (history.replaceState && !preserveHash) {
+        history.replaceState(null, '', anchor ? '#' + anchor : '#ad-panel-' + target);
       }
+
+      if (anchor) scrollToAnchor(anchor);
+    }
+
+    function activateByName(name, options) {
+      var tab = tabsRoot.querySelector('[data-ad-tab="' + name + '"]');
+      if (tab) activateTab(tab, options || {});
     }
 
     tabs.forEach(function (tab) {
@@ -240,23 +430,67 @@
       });
     });
 
-    var hash = (location.hash || '').replace(/^#/, '');
-    var initial =
-      hash === 'opportunities' || hash === 'organisers' ? hash : 'events';
+    document.querySelectorAll('[data-ad-pick]').forEach(function (pick) {
+      pick.addEventListener('click', function () {
+        activateByName(pick.getAttribute('data-ad-pick'));
+        tabsRoot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+
+    document.querySelectorAll('[data-ad-jump]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activateByName(btn.getAttribute('data-ad-jump'), {
+          anchor: btn.getAttribute('data-ad-anchor') || '',
+        });
+        document.getElementById('ad-section-picks').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    var initial = tabFromHash(location.hash) || 'events';
+    var hashAnchor = String(location.hash || '').replace(/^#/, '');
     var startTab = tabsRoot.querySelector('[data-ad-tab="' + initial + '"]') || tabs[0];
-    if (startTab) activateTab(startTab);
+    if (startTab) {
+      activateTab(startTab, {
+        preserveHash: true,
+        anchor: hashAnchor === 'city-partner-package' ? hashAnchor : '',
+      });
+    }
 
     window.addEventListener('hashchange', function () {
-      var want = (location.hash || '').replace(/^#/, '');
-      if (want !== 'events' && want !== 'opportunities' && want !== 'organisers') return;
-      var tab = tabsRoot.querySelector('[data-ad-tab="' + want + '"]');
-      if (tab) activateTab(tab);
+      var want = tabFromHash(location.hash);
+      if (!want) return;
+      var hashId = String(location.hash || '').replace(/^#/, '');
+      activateByName(want, {
+        anchor: hashId === 'city-partner-package' ? hashId : '',
+      });
     });
   }
 
+  function tabFromHash(hash) {
+    var want = String(hash || '').replace(/^#/, '').trim().toLowerCase();
+    if (!want || want === 'events' || want === 'ad-panel-events' || want === 'city-partner-package') {
+      return 'events';
+    }
+    if (want === 'organisers' || want === 'ad-panel-organisers') return 'organisers';
+    if (want === 'opportunities' || want === 'ad-panel-opportunities') return 'opportunities';
+    return null;
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadLivePreviews);
+    document.addEventListener('DOMContentLoaded', function () {
+      initHeroEntrance();
+      initReveal();
+      initTabs();
+      initPackageReveal();
+      loadPartnersStrip();
+      loadLivePreviews();
+    });
   } else {
+    initHeroEntrance();
+    initReveal();
+    initTabs();
+    initPackageReveal();
+    loadPartnersStrip();
     loadLivePreviews();
   }
 })();

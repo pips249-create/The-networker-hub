@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260715cp8">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad3">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
@@ -19,34 +19,130 @@
 <script src="js/hub-seo-data.js?v=20260612" defer></script>
 <script src="js/hub-seo-schema.js?v=20260612" defer></script>
 </head>
-<body>
+<body class="advertising-page">
 
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260721d" data-root="" data-page="advertising"></script>
 
-<main class="content-page-main">
-  <header class="content-hero">
-    <div class="content-hero-inner">
-      <p class="section-kicker">Advertising &amp; sponsorship</p>
+<main class="content-page-main advertising-page-main">
+  <header class="ad-hero" aria-label="Advertising and sponsorship">
+    <span class="ad-hero-orb ad-hero-orb--1" aria-hidden="true"></span>
+    <span class="ad-hero-orb ad-hero-orb--2" aria-hidden="true"></span>
+    <span class="ad-hero-orb ad-hero-orb--3" aria-hidden="true"></span>
+    <div class="ad-hero-inner">
+      <p class="ad-hero-kicker">Advertising &amp; sponsorship</p>
       <h1>Reach UK business owners where they discover events &amp; opportunities</h1>
-      <p class="content-hero-lede">
+      <p class="ad-hero-lede">
         Choose the section you want to advertise in, see example placements, and view guide pricing.
         All units are clearly labelled <strong>Sponsored</strong> or <strong>Sponsor Hub</strong> and vetted before go-live.
       </p>
+      <ul class="ad-hero-stats" aria-label="Placement highlights">
+        <li>
+          <button type="button" class="ad-hero-stat" data-ad-jump="events">
+            <span class="ad-hero-stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </span>
+            <span class="ad-hero-stat-text">
+              <strong>Events directory</strong>
+              <span>Hero Sponsor Hub + mini sponsors</span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="ad-hero-stat" data-ad-jump="events" data-ad-anchor="ad-main-sponsor-gallery">
+            <span class="ad-hero-stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+            </span>
+            <span class="ad-hero-stat-text">
+              <strong>Transactional emails</strong>
+              <span>Logos in booking confirmations</span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="ad-hero-stat" data-ad-jump="events" data-ad-anchor="city-partner-package">
+            <span class="ad-hero-stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
+            </span>
+            <span class="ad-hero-stat-text">
+              <strong>Regional reach</strong>
+              <span>City Partner from £29/month</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+      <a class="ad-hero-scroll" href="#ad-section-picks">Explore packages ↓</a>
     </div>
   </header>
 
-  <div class="content-body ad-content-body">
-    <p>
+  <div class="ad-flow">
+    <span class="ad-flow-orb ad-flow-orb--1" aria-hidden="true"></span>
+    <span class="ad-flow-orb ad-flow-orb--2" aria-hidden="true"></span>
+    <span class="ad-flow-orb ad-flow-orb--3" aria-hidden="true"></span>
+
+    <section class="ad-partners-strip ad-reveal" id="ad-partners-strip" hidden aria-labelledby="ad-partners-heading">
+      <div class="ad-partners-panel">
+        <h2 class="ad-partners-kicker" id="ad-partners-heading">Trusted by our partners &amp; sponsors</h2>
+        <div class="ad-partners-logos" id="ad-partners-logos" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <div class="content-body ad-content-body">
+    <p class="ad-pricing-note">
       Prices are guide rates for a minimum 1-month term unless stated otherwise. VAT may apply.
       For bespoke bundles, email <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>.
     </p>
 
-    <div class="ad-tabs-wrap">
+    <div class="ad-section-picks ad-reveal" id="ad-section-picks" role="group" aria-label="Choose a directory to advertise in">
+      <button type="button" class="ad-section-pick is-active" data-ad-pick="events" aria-pressed="true">
+        <span class="ad-section-pick-accent ad-section-pick-accent--events" aria-hidden="true"></span>
+        <span class="ad-section-pick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </span>
+        <span class="ad-section-pick-body">
+          <strong>Events</strong>
+          <span>Directory hero, mini sponsors &amp; emails</span>
+          <em>From £29/mo</em>
+        </span>
+      </button>
+      <button type="button" class="ad-section-pick" data-ad-pick="organisers" aria-pressed="false">
+        <span class="ad-section-pick-accent ad-section-pick-accent--organisers" aria-hidden="true"></span>
+        <span class="ad-section-pick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </span>
+        <span class="ad-section-pick-body">
+          <strong>Organisers</strong>
+          <span>Browse page hero &amp; profile sidebar</span>
+          <em>From £27.50/mo</em>
+        </span>
+      </button>
+      <button type="button" class="ad-section-pick" data-ad-pick="opportunities" aria-pressed="false">
+        <span class="ad-section-pick-accent ad-section-pick-accent--opportunities" aria-hidden="true"></span>
+        <span class="ad-section-pick-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </span>
+        <span class="ad-section-pick-body">
+          <strong>Opportunities</strong>
+          <span>Franchises, deals &amp; investments</span>
+          <em>From £25/mo</em>
+        </span>
+      </button>
+    </div>
+
+    <div class="ad-tabs-wrap ad-tabs-wrap--sticky">
       <div class="ad-tabs" id="ad-section-tabs" role="tablist" aria-label="Choose a section to advertise in">
-        <button type="button" role="tab" id="ad-tab-events" data-ad-tab="events" aria-controls="ad-panel-events" aria-selected="true">Events</button>
-        <button type="button" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">Organisers</button>
-        <button type="button" role="tab" id="ad-tab-opportunities" data-ad-tab="opportunities" aria-controls="ad-panel-opportunities" aria-selected="false" tabindex="-1">Opportunities</button>
+        <button type="button" role="tab" id="ad-tab-events" data-ad-tab="events" aria-controls="ad-panel-events" aria-selected="true">
+          <span class="ad-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+          Events
+        </button>
+        <button type="button" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">
+          <span class="ad-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+          Organisers
+        </button>
+        <button type="button" role="tab" id="ad-tab-opportunities" data-ad-tab="opportunities" aria-controls="ad-panel-opportunities" aria-selected="false" tabindex="-1">
+          <span class="ad-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          Opportunities
+        </button>
       </div>
     </div>
 
@@ -467,19 +563,26 @@
       </div>
     </div>
 
-    <section class="ad-section" id="how-it-works" aria-labelledby="how-title">
-      <h2 id="how-title">How it works</h2>
+    <section class="ad-section ad-reveal" id="how-it-works" aria-labelledby="how-title">
+      <header class="ad-section-intro">
+        <p class="ad-section-kicker">Simple process</p>
+        <h2 id="how-title">How it works</h2>
+        <p class="ad-section-intro-lede">From first enquiry to go-live — every placement is reviewed, labelled clearly, and managed in Command Centre.</p>
+      </header>
       <div class="ad-how-grid">
         <div class="ad-how-step">
-          <strong>1. Choose your section</strong>
+          <span class="ad-how-step-num" aria-hidden="true">1</span>
+          <strong>Choose your section</strong>
           <p>Use the tabs above to pick Events, Organisers, or Opportunities — then email us the placement you want.</p>
         </div>
         <div class="ad-how-step">
-          <strong>2. Vetting &amp; creative</strong>
+          <span class="ad-how-step-num" aria-hidden="true">2</span>
+          <strong>Vetting &amp; creative</strong>
           <p>We review fit with our audience, confirm eligibility, and collect your logo, copy, and CTA link.</p>
         </div>
         <div class="ad-how-step">
-          <strong>3. Go live</strong>
+          <span class="ad-how-step-num" aria-hidden="true">3</span>
+          <strong>Go live</strong>
           <p>We publish your placement in Command Centre. Sponsored units are labelled clearly and monitored for ASA compliance.</p>
         </div>
       </div>
@@ -495,10 +598,13 @@
       </div>
     </section>
 
-    <div class="ad-page-cta">
-      <h2>Ready to discuss a package?</h2>
-      <p>Tell us which tab section and placement you want — we&rsquo;ll confirm availability and send a proposal.</p>
-      <a class="btn btn-primary" href="mailto:rosie@thenetworkerhub.com?subject=Networker%20Hub%20advertising%20enquiry">Email rosie@thenetworkerhub.com</a>
+    <div class="ad-page-cta ad-reveal">
+      <div class="ad-page-cta-inner">
+        <h2>Ready to discuss a package?</h2>
+        <p>Tell us which tab section and placement you want — we&rsquo;ll confirm availability and send a proposal.</p>
+        <a class="btn btn-primary ad-page-cta-btn" href="mailto:rosie@thenetworkerhub.com?subject=Networker%20Hub%20advertising%20enquiry">Email rosie@thenetworkerhub.com</a>
+      </div>
+    </div>
     </div>
   </div>
 </main>
@@ -507,7 +613,7 @@
 <script src="js/site-footer.js?v=20260612" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260612g"></script>
-<script src="js/advertising-page.js?v=20260734"></script>
+<script src="js/advertising-page.js?v=20260722ad3"></script>
 <script src="js/city-partner-advertising.js?v=20260715cp5"></script>
 
 </body>

@@ -1,0 +1,433 @@
+/* /testing-bo — events layout with business opportunities (navy + gold) palette */
+
+.testing-bo-page {
+  --opp-navy: #0d1f3c;
+  --opp-navy-mid: #162847;
+  --opp-gold: #c9961f;
+  --opp-gold-light: #e8b84b;
+  --opp-gold-pale: #fdf6e3;
+  --opp-gold-dim: rgba(201, 150, 31, 0.15);
+  --opp-gold-border: rgba(201, 150, 31, 0.3);
+  --opp-off-white: #f8f9fb;
+  --opp-light-gray: #eef1f5;
+  --opp-mid-gray: #8d99ae;
+  --opp-dark-gray: #3d4557;
+  --opp-text: #1a2336;
+  --opp-border: #dde3ed;
+  background: var(--opp-off-white);
+  color: var(--opp-text);
+}
+
+.testing-bo-page .testing-bo-banner {
+  background: linear-gradient(90deg, var(--opp-navy) 0%, var(--opp-navy-mid) 100%);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  text-align: center;
+  padding: 10px 16px;
+}
+
+.testing-bo-page .testing-bo-banner a {
+  color: var(--opp-gold-light);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Filter bar — navy shell, gold accents */
+.testing-bo-page .events-filter-heading {
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-filter-shell {
+  --filter-surface: var(--opp-navy);
+  --filter-surface-deep: var(--opp-navy-mid);
+  background: var(--filter-surface);
+  box-shadow: 0 12px 36px rgba(13, 31, 60, 0.28);
+}
+
+.testing-bo-page .events-filter-bar {
+  background: transparent;
+  border-color: transparent;
+}
+
+.testing-bo-page .events-filter-shell .filter-field-icon,
+.testing-bo-page .events-filter-shell .filter-date-icon {
+  color: var(--opp-gold-light);
+}
+
+.testing-bo-page .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box {
+  background: #fff;
+  border-color: #fff;
+}
+
+.testing-bo-page .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box::after {
+  border-color: var(--opp-navy);
+}
+
+.testing-bo-page .events-filter-shell .event-type-chip.is-active {
+  background: var(--opp-gold);
+  border-color: var(--opp-gold);
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-filter-shell .event-type-chip:hover:not(.is-active) {
+  border-color: var(--opp-gold-border);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.testing-bo-page .events-filter-shell .filter-format-pill input:checked + .filter-format-pill-face,
+.testing-bo-page .events-filter-shell .filter-format-pill-face:hover {
+  border-color: var(--opp-gold-light);
+}
+
+.testing-bo-page .events-filter-shell .filter-format-pill input:checked + .filter-format-pill-face {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-filter-shell .filter-more-toggle[aria-expanded='true'],
+.testing-bo-page .events-filter-shell .filter-more-toggle:hover {
+  border-color: var(--opp-gold-border);
+  color: #fff;
+}
+
+.testing-bo-page .events-filter-shell .filter-clear-btn {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.testing-bo-page .events-filter-shell .filter-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--opp-gold-border);
+}
+
+.testing-bo-page .filter-opp-invest-group .filter-format-pill-face {
+  min-width: 7.5rem;
+  justify-content: center;
+}
+
+.testing-bo-page .filter-opp-commitment-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.testing-bo-page .filter-opp-category-wrap select {
+  min-width: 11rem;
+}
+
+/* Results bar */
+.testing-bo-page .events-results-meta {
+  border-color: var(--opp-border);
+}
+
+.testing-bo-page .events-results-count {
+  color: var(--opp-dark-gray);
+}
+
+.testing-bo-page .clear-filters-link {
+  color: var(--opp-gold);
+}
+
+.testing-bo-page .clear-filters-link:hover {
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-sort-wrap label,
+.testing-bo-page .listings-header {
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-sort-wrap select {
+  border-color: var(--opp-border);
+  color: var(--opp-text);
+}
+
+.testing-bo-page .events-sort-wrap select:focus {
+  border-color: var(--opp-gold);
+  box-shadow: 0 0 0 3px var(--opp-gold-dim);
+}
+
+.testing-bo-page .opp-browse-disclaimer {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--opp-mid-gray);
+  margin: 0 0 18px;
+  max-width: 72rem;
+}
+
+/* Listing cards — opp accents on event-grid shell */
+.testing-bo-page .event-grid-card {
+  border-color: var(--opp-border);
+}
+
+.testing-bo-page .event-grid-card:hover {
+  border-color: var(--opp-gold-border);
+  box-shadow: 0 8px 24px rgba(13, 31, 60, 0.1);
+}
+
+.testing-bo-page .event-grid-card.is-premium {
+  border-color: var(--opp-gold);
+  box-shadow: 0 4px 18px rgba(201, 150, 31, 0.18);
+}
+
+.testing-bo-page .event-grid-media {
+  background: var(--opp-light-gray);
+}
+
+.testing-bo-page .event-grid-category {
+  background: var(--opp-navy);
+  color: #fff;
+}
+
+.testing-bo-page .event-grid-premium {
+  background: var(--opp-gold);
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .event-grid-price {
+  color: var(--opp-navy);
+  font-weight: 700;
+}
+
+.testing-bo-page .event-grid-format.investment-low {
+  color: #2d8a4e;
+}
+
+.testing-bo-page .event-grid-format.investment-mid {
+  color: #2563eb;
+}
+
+.testing-bo-page .event-grid-format.investment-high {
+  color: #9a3412;
+}
+
+.testing-bo-page .event-grid-title {
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .event-grid-host {
+  font-size: 12px;
+  color: var(--opp-mid-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.testing-bo-page .event-grid-meta {
+  color: var(--opp-dark-gray);
+}
+
+.testing-bo-page .event-grid-rating .opp-fav-btn {
+  margin-left: auto;
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.testing-bo-page .event-grid-rating .fav-btn.is-active,
+.testing-bo-page .event-grid-rating .opp-fav-btn.is-active {
+  color: var(--opp-gold);
+}
+
+.testing-bo-page .event-grid-card-link:focus-visible {
+  outline-color: var(--opp-gold);
+}
+
+.testing-bo-page .event-grid-img.is-logo-cover {
+  object-fit: contain;
+  object-position: center;
+  background: linear-gradient(145deg, var(--opp-gold-pale) 0%, var(--opp-light-gray) 100%);
+}
+
+.testing-bo-page .page-btn.is-active {
+  background: var(--opp-navy);
+  border-color: var(--opp-navy);
+}
+
+.testing-bo-page .page-btn:hover:not(:disabled):not(.is-active) {
+  border-color: var(--opp-gold-border);
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-organiser-footnote-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--opp-gold);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.testing-bo-page .events-organiser-footnote-link:hover {
+  color: var(--opp-navy);
+}
+
+.testing-bo-page .events-empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--opp-mid-gray);
+}
+
+/* Expandable card detail — old opp design on demand */
+.testing-bo-page .bo-opp-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.testing-bo-page .bo-opp-compact {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.testing-bo-page .bo-opp-compact .event-grid-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.testing-bo-page .bo-opp-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 12px;
+  border: 0;
+  border-top: 1px solid var(--opp-border);
+  background: var(--opp-off-white);
+  color: var(--opp-navy);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.testing-bo-page .bo-opp-expand-btn:hover {
+  background: var(--opp-gold-pale);
+  color: var(--opp-gold);
+}
+
+.testing-bo-page .bo-opp-expand-icon {
+  transition: transform 0.2s ease;
+}
+
+.testing-bo-page .bo-opp-card.is-expanded .bo-opp-expand-icon {
+  transform: rotate(180deg);
+}
+
+.testing-bo-page .bo-opp-card.is-expanded {
+  border-color: var(--opp-gold);
+  box-shadow: 0 10px 28px rgba(13, 31, 60, 0.12);
+}
+
+.testing-bo-page .bo-opp-card.is-expanded .event-grid-card-link {
+  pointer-events: none;
+}
+
+.testing-bo-page .bo-opp-detail {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--opp-border);
+  background: #fff;
+  pointer-events: auto;
+}
+
+.testing-bo-page .bo-opp-detail-inner {
+  padding: 14px 16px 16px;
+}
+
+.testing-bo-page .bo-opp-detail-inner .opp-company {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.testing-bo-page .bo-opp-detail-inner .opp-card-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--opp-dark-gray);
+  margin: 0 0 12px;
+}
+
+.testing-bo-page .bo-opp-detail-inner .opp-meta-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.testing-bo-page .bo-opp-detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--opp-light-gray);
+}
+
+.testing-bo-page .bo-opp-detail-footer .opp-enquire-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--opp-navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.testing-bo-page .bo-opp-detail-footer .opp-enquire-btn:hover {
+  background: var(--opp-gold);
+  color: var(--opp-navy);
+}
+
+@media (min-width: 900px) {
+  .testing-bo-page .bo-opp-card.is-expanded {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .testing-bo-page .bo-opp-card.is-expanded .bo-opp-compact {
+    flex: 0 0 min(320px, 34%);
+    border-right: 1px solid var(--opp-border);
+  }
+
+  .testing-bo-page .bo-opp-card.is-expanded .bo-opp-detail {
+    flex: 1;
+    border-top: 0;
+    display: flex;
+    align-items: stretch;
+  }
+
+  .testing-bo-page .bo-opp-card.is-expanded .bo-opp-detail-inner {
+    padding: 18px 20px;
+    width: 100%;
+  }
+
+  .testing-bo-page .bo-opp-card.is-expanded .bo-opp-detail-inner .opp-meta-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 899px) {
+  .testing-bo-page .bo-opp-detail-inner .opp-meta-row {
+    grid-template-columns: 1fr;
+  }
+}

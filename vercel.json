@@ -44,6 +44,7 @@
     { "source": "/guides.html", "destination": "/guides", "permanent": true },
     { "source": "/for-organisers.html", "destination": "/for-organisers", "permanent": true },
     { "source": "/for-attendees.html", "destination": "/for-attendees", "permanent": true },
+    { "source": "/testing-bo.html", "destination": "/testing-bo", "permanent": true },
     { "source": "/legal-policies.html", "destination": "/legal-policies", "permanent": true },
     { "source": "/login.html", "destination": "/login", "permanent": true },
     { "source": "/register.html", "destination": "/register", "permanent": true },
@@ -209,6 +210,10 @@
     {
       "source": "/for-attendees",
       "destination": "/for-attendees.html"
+    },
+    {
+      "source": "/testing-bo",
+      "destination": "/testing-bo.html"
     },
     {
       "source": "/advertising",
