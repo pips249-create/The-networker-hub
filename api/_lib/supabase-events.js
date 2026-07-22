@@ -715,14 +715,17 @@ async function fetchRelatedPublishedRows(sb, organiserId, excludeIds, limit) {
   const exclude = new Set((excludeIds || []).filter(Boolean));
   if (!organiserId) return [];
 
-  const { data, error } = await sb
-    .from('events')
-    .select('*')
-    .eq('organiser_id', organiserId)
-    .eq('approval_status', 'Approved')
-    .eq('status', 'published')
+  const fetchLimit = Math.min(Math.max(limit + exclude.size + 2, limit), 24);
+  const { data, error } = await applyUpcomingBrowseFilter(
+    sb
+      .from('events')
+      .select('*')
+      .eq('organiser_id', organiserId)
+      .eq('approval_status', 'Approved')
+      .eq('status', 'published')
+  )
     .order('starts_at', { ascending: true })
-    .limit(Math.min(Math.max(limit + exclude.size + 4, limit), 24));
+    .limit(fetchLimit);
   if (error) throw new Error(error.message);
 
   return (data || [])
