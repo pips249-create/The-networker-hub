@@ -70,21 +70,19 @@
 
   function bookedCitySummaryLabel(city) {
     var name = String(city.name || '').toUpperCase();
-    if (city.availableFrom) {
-      return (
-        '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
-        '<strong>' +
-        esc(name) +
-        ':</strong> (EXCLUSIVELY CLAIMED) — Waitlist open for re-entry from ' +
+    var status = city.availableFrom
+      ? '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry from ' +
         esc(formatAvailableFrom(city.availableFrom)) +
         '.'
-      );
-    }
+      : '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.';
     return (
       '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
-      '<strong>' +
+      '<span class="city-partner-exclusivity-text">' +
+      '<strong class="city-partner-exclusivity-city">' +
       esc(name) +
-      ':</strong> (EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.'
+      ':</strong> ' +
+      status +
+      '</span>'
     );
   }
 
@@ -293,10 +291,12 @@
             '<li class="city-partner-booked-item">' +
             '<span class="city-partner-booked-name">' +
             '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
+            '<span class="city-partner-booked-copy">' +
             '<strong>' +
             esc(String(city.name || '').toUpperCase()) +
             ':</strong> ' +
             esc(bookedCityStatusText(city)) +
+            '</span>' +
             '</span>' +
             '<button type="button" class="city-partner-booked-waitlist' +
             (onWaitlist ? ' city-partner-booked-waitlist--joined' : '') +

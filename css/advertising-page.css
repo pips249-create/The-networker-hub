@@ -1490,7 +1490,7 @@ body.advertising-page {
 }
 
 .ad-package-browser .ad-package-main {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .ad-package-browser .ad-package-preview {
@@ -3081,6 +3081,27 @@ body.advertising-page {
   color: var(--lavender-deep);
 }
 
+.ad-email-inventory--preview {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.ad-email-inventory-heading {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted, #7a7274);
+}
+
+.ad-package-preview .ad-email-inventory-list {
+  columns: 1;
+  font-size: 0.82rem;
+  padding-left: 1rem;
+}
+
 .ad-email-inventory-list {
   margin: 10px 0 0;
   padding-left: 1.15rem;
@@ -4360,6 +4381,17 @@ body.advertising-page {
   color: var(--text-secondary, #4a5568);
 }
 
+.city-partner-exclusivity-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.city-partner-exclusivity-city {
+  font-weight: 700;
+  color: #2b2648;
+  white-space: nowrap;
+}
+
 .city-partner-claimed-dot {
   flex: 0 0 auto;
   width: 8px;
@@ -4725,11 +4757,18 @@ body.advertising-page {
   font-weight: 400;
   line-height: 1.45;
   color: #625f73;
+  min-width: 0;
 }
 
-.city-partner-booked-name strong {
+.city-partner-booked-copy {
+  min-width: 0;
+}
+
+.city-partner-booked-name strong,
+.city-partner-booked-copy strong {
   font-weight: 700;
   color: #2b2648;
+  white-space: nowrap;
 }
 
 .city-partner-booked-status {
