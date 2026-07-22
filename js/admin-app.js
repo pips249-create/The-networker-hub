@@ -6159,6 +6159,232 @@
     });
   }
 
+  function cityPartnerSlotStatusLabel(status, availableFromLabel) {
+    if (status === 'available') return 'Available';
+    if (status === 'live') return 'Live';
+    if (status === 'booked_until') {
+      return availableFromLabel ? 'Opens ' + availableFromLabel : 'Opening soon';
+    }
+    return 'Subscribed';
+  }
+
+  function cityPartnerSlotStatusClass(status) {
+    if (status === 'available') return 'admin-ad-picker-badge admin-ad-picker-badge--empty';
+    if (status === 'live') return 'admin-ad-picker-badge admin-ad-picker-badge--live';
+    return 'admin-ad-picker-badge admin-ad-picker-badge--hidden';
+  }
+
+  function formatAdminDateTime(value) {
+    if (!value) return '—';
+    var d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  function initCityPartnerWaitlistAdmin() {
+    var statusEl = document.getElementById('city-partner-waitlist-status');
+    var bodyEl = document.getElementById('city-partner-waitlist-body');
+
+    function setWaitlistStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text || '';
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function renderWaitlistOverview(data) {
+      if (!bodyEl) return;
+      var totals = data.totals || {};
+      var cities = (data.cities || []).slice().sort(function (a, b) {
+        if (b.waitlistPending !== a.waitlistPending) return b.waitlistPending - a.waitlistPending;
+        if (a.available !== b.available) return a.available ? 1 : -1;
+        return a.name.localeCompare(b.name);
+      });
+
+      var summaryHtml =
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Pending waitlist</p><p class="text-lg font-bold text-brand-900">' +
+        esc(String(totals.pending || 0)) +
+        '</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Available cities</p><p class="text-lg font-bold text-brand-900">' +
+        esc(String(totals.available || 0)) +
+        '</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Sponsored / held</p><p class="text-lg font-bold text-brand-900">' +
+        esc(String((totals.booked || 0) + (totals.openingSoon || 0))) +
+        '</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Notified (all time)</p><p class="text-lg font-bold text-brand-900">' +
+        esc(String(totals.notified || 0)) +
+        '</p></div>' +
+        '</div>';
+
+      if (!cities.length) {
+        bodyEl.innerHTML = summaryHtml + '<p class="text-sm text-slate-500">No city slots found.</p>';
+        return;
+      }
+
+      var rows = cities
+        .map(function (city) {
+          var statusLabel = cityPartnerSlotStatusLabel(city.status, city.availableFromLabel);
+          var statusClass = cityPartnerSlotStatusClass(city.status);
+          var waitlistRows = (city.waitlist || [])
+            .map(function (entry) {
+              return (
+                '<tr class="border-t border-slate-100">' +
+                '<td class="px-3 py-2 text-sm">' +
+                esc(entry.email) +
+                (entry.companyName ? ' <span class="text-slate-500">(' + esc(entry.companyName) + ')</span>' : '') +
+                '</td>' +
+                '<td class="px-3 py-2 text-sm text-slate-600">' +
+                esc(formatAdminDateTime(entry.createdAt)) +
+                '</td>' +
+                '<td class="px-3 py-2 text-right">' +
+                '<button type="button" class="rounded border border-slate-200 text-slate-600 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-city-waitlist-remove="' +
+                attrEsc(entry.id) +
+                '">Remove</button>' +
+                '</td></tr>'
+              );
+            })
+            .join('');
+
+          var waitlistBlock =
+            city.waitlistPending > 0
+              ? '<div class="mt-3 overflow-x-auto rounded-lg border border-slate-200">' +
+                '<table class="min-w-full text-left">' +
+                '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
+                '<tr><th class="px-3 py-2">Email</th><th class="px-3 py-2">Joined</th><th class="px-3 py-2 text-right">Action</th></tr></thead>' +
+                '<tbody>' +
+                waitlistRows +
+                '</tbody></table></div>'
+              : '<p class="mt-2 text-sm text-slate-500">No pending waitlist sign-ups.</p>';
+
+          var recentNotified = (city.recentNotified || [])
+            .map(function (entry) {
+              return (
+                '<li class="text-sm text-slate-600">' +
+                esc(entry.email) +
+                ' · notified ' +
+                esc(formatAdminDateTime(entry.notifiedAt)) +
+                '</li>'
+              );
+            })
+            .join('');
+
+          return (
+            '<details class="rounded-xl border border-slate-200 bg-white"' +
+            (city.waitlistPending > 0 ? ' open' : '') +
+            '>' +
+            '<summary class="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-3">' +
+            '<div class="min-w-0">' +
+            '<p class="font-semibold text-brand-900">' +
+            esc(city.name) +
+            '</p>' +
+            '<p class="text-xs text-slate-500 mt-0.5">' +
+            esc(cityPartnerPlacementPaths(city.slug)) +
+            '</p></div>' +
+            '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
+            '<span class="' +
+            statusClass +
+            '">' +
+            esc(statusLabel) +
+            '</span>' +
+            (city.waitlistPending
+              ? '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' +
+                city.waitlistPending +
+                ' waiting</span>'
+              : '') +
+            '<a class="text-xs font-semibold text-brand-700 hover:underline" href="#sponsorship/' +
+            esc(city.slot) +
+            '">Edit slot →</a>' +
+            '</div></summary>' +
+            '<div class="border-t border-slate-100 px-4 py-3 space-y-3">' +
+            '<dl class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">' +
+            '<div><dt class="text-slate-500">Checkout</dt><dd class="font-medium text-slate-800">' +
+            (city.available ? 'Open now' : 'Closed') +
+            '</dd></div>' +
+            '<div><dt class="text-slate-500">Opens</dt><dd class="font-medium text-slate-800">' +
+            esc(city.availableFromLabel || '—') +
+            '</dd></div>' +
+            '<div><dt class="text-slate-500">Sponsor email</dt><dd class="font-medium text-slate-800 break-all">' +
+            esc(city.sponsorEmail || '—') +
+            '</dd></div></dl>' +
+            '<div><p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Pending waitlist</p>' +
+            waitlistBlock +
+            '</div>' +
+            (recentNotified
+              ? '<div><p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Recently notified</p><ul class="space-y-1">' +
+                recentNotified +
+                '</ul></div>'
+              : '') +
+            '</div></details>'
+          );
+        })
+        .join('');
+
+      bodyEl.innerHTML =
+        summaryHtml + '<div class="space-y-3" id="city-partner-waitlist-list">' + rows + '</div>';
+
+      bodyEl.querySelectorAll('[data-city-waitlist-remove]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var id = btn.getAttribute('data-city-waitlist-remove');
+          if (!id || !window.confirm('Remove this waitlist entry?')) return;
+          btn.disabled = true;
+          adminPost('/api/admin/city-partner-waitlist', { action: 'remove', id: id })
+            .then(function (data) {
+              if (!data || data.error) {
+                throw new Error((data && data.message) || data.error || 'remove_failed');
+              }
+              loadCityPartnerWaitlistAdmin();
+            })
+            .catch(function (err) {
+              btn.disabled = false;
+              setWaitlistStatus((err && err.message) || 'Could not remove waitlist entry', 'error');
+            });
+        });
+      });
+    }
+
+    function loadCityPartnerWaitlistAdmin() {
+      setWaitlistStatus('Loading waitlist…');
+      adminGet('/api/admin/city-partner-waitlist')
+        .then(function (data) {
+          if (!data || data.error) {
+            throw new Error((data && data.message) || data.error || 'waitlist_load_failed');
+          }
+          renderWaitlistOverview(data);
+          setWaitlistStatus(
+            data.totals && data.totals.pending
+              ? data.totals.pending + ' pending waitlist sign-up' + (data.totals.pending === 1 ? '' : 's') + ' across all cities.'
+              : 'No pending waitlist sign-ups right now.',
+            'ok'
+          );
+        })
+        .catch(function (err) {
+          if (bodyEl) {
+            bodyEl.innerHTML =
+              '<p class="text-sm text-red-700">' +
+              esc((err && err.message) || 'Could not load waitlist') +
+              '</p>';
+          }
+          setWaitlistStatus((err && err.message) || 'Could not load waitlist', 'error');
+        });
+    }
+
+    loadCityPartnerWaitlistAdmin();
+  }
+
   function renderCityPartnersPage() {
     var cards = NETWORKING_CITY_PARTNER_SLUGS.map(function (region) {
       var slotKey = cityPartnerSlotFromSlug(region.slug);
@@ -6194,9 +6420,22 @@
       '<h3 class="font-bold text-brand-900">City Partner placements</h3>' +
       '<p class="text-sm text-slate-600">Logo + link on regional landing pages (/networking/:city and /opportunities/networking/:city). Website only — never included in hub emails. When a city is live, the organiser/provider CTA stays as a text link under the intro copy.</p>' +
       '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3" id="city-partner-waitlist-admin">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h4 class="font-bold text-brand-900">Waitlist &amp; availability</h4>' +
+      '<p class="text-xs text-slate-500 mt-1">Sign-ups from the advertising page — notified automatically when a slot opens after Stripe subscription ends.</p></div>' +
+      '</div>' +
+      '<p id="city-partner-waitlist-status" class="text-sm text-slate-500">Loading waitlist…</p>' +
+      '<div id="city-partner-waitlist-body"></div>' +
+      '</section>' +
+      '<section class="space-y-3">' +
+      '<h4 class="font-semibold text-brand-900">Edit city slots</h4>' +
+      '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +
       '</div></div>';
+
+    initCityPartnerWaitlistAdmin();
 
     NETWORKING_CITY_PARTNER_SLUGS.forEach(function (region) {
       var slotKey = cityPartnerSlotFromSlug(region.slug);
@@ -6287,6 +6526,7 @@
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
       'Ad active (uncheck to hide this placement on site)</label>' +
+      '<div id="city-partner-subscription-meta" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm space-y-1"></div>' +
       '<label id="sponsor-include-emails-wrap" class="hidden items-start gap-2 text-sm text-slate-700 rounded-lg border border-violet-100 bg-violet-50 px-3 py-3">' +
       '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
       '<span><strong>Include this sponsor in matching emails</strong><span id="sponsor-email-scope" class="block text-xs text-slate-500 mt-0.5"></span></span></label>' +
@@ -6598,6 +6838,31 @@
           }
           if (data.block) {
             applySponsorBlockToForm(data.block);
+            var metaEl = document.getElementById('city-partner-subscription-meta');
+            if (metaEl && isCityPartnerSlotKey(currentSlotKey)) {
+              var block = data.block;
+              var metaLines = [];
+              if (block.sponsor_email) metaLines.push('Billing email: ' + block.sponsor_email);
+              if (block.sponsor_subscription_id) {
+                metaLines.push('Stripe subscription: ' + block.sponsor_subscription_id);
+              }
+              if (block.sponsor_available_from) {
+                metaLines.push('Opens: ' + formatAdminDateTime(block.sponsor_available_from));
+              }
+              if (metaLines.length) {
+                metaEl.classList.remove('hidden');
+                metaEl.innerHTML =
+                  '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Subscription</p>' +
+                  metaLines
+                    .map(function (line) {
+                      return '<p class="text-slate-700 break-all">' + esc(line) + '</p>';
+                    })
+                    .join('');
+              } else {
+                metaEl.classList.add('hidden');
+                metaEl.innerHTML = '';
+              }
+            }
             if (data.block.active === false) {
               setSponsorStatus(
                 'Saved draft for ' +

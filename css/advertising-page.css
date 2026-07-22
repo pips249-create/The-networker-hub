@@ -3857,7 +3857,8 @@ body.advertising-page {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 4px;
+  margin-top: 4px;
+  padding-top: 12px;
   border-top: 1px solid rgba(50, 43, 120, 0.1);
 }
 
@@ -3895,15 +3896,27 @@ body.advertising-page {
 }
 
 .city-partner-booked-waitlist {
+  justify-self: end;
+  border: 1px solid rgba(109, 92, 232, 0.35);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: #fff;
   font-size: 12px;
   font-weight: 700;
   color: #6d5ce8;
-  text-decoration: none;
+  cursor: pointer;
 }
 
-.city-partner-booked-waitlist:hover,
-.city-partner-booked-waitlist:focus-visible {
-  text-decoration: underline;
+.city-partner-booked-waitlist:hover:not(:disabled),
+.city-partner-booked-waitlist:focus-visible:not(:disabled) {
+  background: rgba(109, 92, 232, 0.08);
+}
+
+.city-partner-booked-waitlist:disabled,
+.city-partner-booked-waitlist--joined {
+  border-color: rgba(2, 122, 72, 0.25);
+  color: #027a48;
+  cursor: default;
 }
 
 .city-partner-booked-note {

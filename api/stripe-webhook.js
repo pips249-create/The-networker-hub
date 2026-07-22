@@ -13,6 +13,11 @@ const { handleOpportunityPremiumCheckout, handleOpportunityListingCheckout } = r
 const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
 const { handleInvoicePaid, handleSponsorshipCheckoutCompleted } = require('./_lib/stripe-revenue');
+const {
+  handleCityPartnerCheckoutCompleted,
+  handleCityPartnerSubscriptionUpdated,
+  handleCityPartnerSubscriptionDeleted,
+} = require('./_lib/city-partner-subscriptions');
 
 const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
 
@@ -114,6 +119,7 @@ async function handler(req, res) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object || {};
       const sponsorshipResult = await handleSponsorshipCheckoutCompleted(session);
+      const cityPartnerResult = await handleCityPartnerCheckoutCompleted(session);
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
       const featuredResult = await handleEventFeaturedCheckout(session);
@@ -123,12 +129,27 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           sponsorshipResult,
+          cityPartnerResult,
           premiumResult,
           listingResult,
           featuredResult,
           registrationResult,
         })
       );
+    }
+
+    if (event.type === 'customer.subscription.updated') {
+      const subscription = event.data.object || {};
+      const cityPartnerResult = await handleCityPartnerSubscriptionUpdated(subscription);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ ok: true, cityPartnerResult }));
+    }
+
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object || {};
+      const cityPartnerResult = await handleCityPartnerSubscriptionDeleted(subscription);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ ok: true, cityPartnerResult }));
     }
 
     if (event.type === 'invoice.paid') {

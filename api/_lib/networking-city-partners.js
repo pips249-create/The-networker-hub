@@ -99,9 +99,51 @@ async function fetchCityPartnerRows(sb) {
   return bySlot;
 }
 
-function cityPartnerStatus(row) {
+function parseAvailableFrom(row) {
+  const raw = row?.sponsor_available_from;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function hasActiveCityHold(row, now = new Date()) {
+  if (!row) return false;
+  if (isPublishableSponsorBlock(row, row.slot)) return true;
+
+  const subscriptionId = String(row.sponsor_subscription_id || '').trim();
+  if (!subscriptionId) return false;
+
+  const availableFrom = parseAvailableFrom(row);
+  if (!availableFrom) return true;
+  return availableFrom.getTime() > now.getTime();
+}
+
+function cityPartnerStatus(row, now = new Date()) {
   if (isPublishableSponsorBlock(row, row?.slot)) return 'live';
-  return 'available';
+  if (!hasActiveCityHold(row, now)) return 'available';
+
+  const availableFrom = parseAvailableFrom(row);
+  if (availableFrom && availableFrom.getTime() > now.getTime()) {
+    return 'booked_until';
+  }
+  return 'booked';
+}
+
+function cityPartnerAvailabilityFields(row, status, now = new Date()) {
+  const availableFrom = parseAvailableFrom(row);
+  const availableFromIso =
+    availableFrom && availableFrom.getTime() > now.getTime()
+      ? availableFrom.toISOString()
+      : null;
+
+  return {
+    status,
+    live: status === 'live',
+    available: status === 'available',
+    booked: status === 'live' || status === 'booked' || status === 'booked_until',
+    availableFrom: availableFromIso,
+    sponsorEmail: row?.sponsor_email || null,
+  };
 }
 
 async function getCityPartnerAvailability(sb) {
@@ -112,9 +154,7 @@ async function getCityPartnerAvailability(sb) {
     const status = cityPartnerStatus(row);
     return {
       ...region,
-      status,
-      live: status === 'live',
-      available: status === 'available',
+      ...cityPartnerAvailabilityFields(row, status),
     };
   });
 
@@ -133,6 +173,8 @@ async function getCityPartnerAvailability(sb) {
     cities,
     availableCities: cities.filter((c) => c.available),
     liveCities: cities.filter((c) => c.live),
+    bookedCities: cities.filter((c) => c.booked),
+    openingSoonCities: cities.filter((c) => c.status === 'booked_until'),
   };
 }
 
@@ -178,4 +220,7 @@ module.exports = {
   getCityPartnerAvailability,
   validateCheckoutCities,
   cityPartnerStatus,
+  cityPartnerAvailabilityFields,
+  hasActiveCityHold,
+  parseAvailableFrom,
 };

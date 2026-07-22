@@ -45,7 +45,45 @@
     pricing: null,
     isLaunch: true,
     launchEnds: '2026-12-01T00:00:00.000Z',
+    waitlist: {},
   };
+
+  function formatAvailableFrom(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+  }
+
+  function bookedCitySummaryLabel(city) {
+    if (city.availableFrom) {
+      return city.name + ' (from ' + formatAvailableFrom(city.availableFrom) + ')';
+    }
+    return city.name;
+  }
+
+  function bookedCityStatusText(city) {
+    if (city.availableFrom) {
+      return (
+        'Currently sponsored · available from ' +
+        formatAvailableFrom(city.availableFrom) +
+        '. Join the waitlist and we’ll email you when checkout opens.'
+      );
+    }
+    if (city.live) {
+      return 'Live on site · reopens when the current subscription ends.';
+    }
+    return 'Subscription active · slot held until the current partner’s subscription ends.';
+  }
+
+  function isOnWaitlist(slug) {
+    return Boolean(state.waitlist && state.waitlist[slug]);
+  }
 
   function setStatus(text, tone) {
     if (!statusEl) return;
@@ -131,7 +169,7 @@
     });
     if (!available.length) {
       cityListEl.innerHTML =
-        '<p class="city-partner-empty">All city slots are currently live. Email <a href="mailto:rosie@thenetworkerhub.com?subject=City%20Partner%20waitlist">rosie@thenetworkerhub.com</a> to join the waitlist.</p>';
+        '<p class="city-partner-empty">No cities are open for checkout right now. Join the waitlist on a sponsored city below and we’ll email you when it opens.</p>';
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
@@ -173,7 +211,7 @@
 
   function renderBookedCities(cities) {
     var booked = (cities || []).filter(function (city) {
-      return city.live;
+      return city.booked;
     });
     var hasBooked = booked.length > 0;
 
@@ -183,32 +221,113 @@
 
     if (!hasBooked) return;
 
-    var labels = booked.map(function (city) {
-      return city.name;
-    });
-
     if (bookedSummaryListEl) {
-      bookedSummaryListEl.textContent = labels.join(', ');
+      bookedSummaryListEl.textContent = booked.map(bookedCitySummaryLabel).join(', ');
     }
 
     if (bookedListEl) {
       bookedListEl.innerHTML = booked
         .map(function (city) {
-          var waitlistSubject = 'City Partner waitlist — ' + city.name;
+          var onWaitlist = isOnWaitlist(city.slug);
           return (
             '<li class="city-partner-booked-item">' +
             '<span class="city-partner-booked-name">' +
             esc(city.name) +
             '</span>' +
-            '<span class="city-partner-booked-status">Sponsored · reopens when subscription ends</span>' +
-            '<a class="city-partner-booked-waitlist" href="mailto:rosie@thenetworkerhub.com?subject=' +
-            encodeURIComponent(waitlistSubject) +
-            '">Waitlist</a>' +
+            '<span class="city-partner-booked-status">' +
+            esc(bookedCityStatusText(city)) +
+            '</span>' +
+            '<button type="button" class="city-partner-booked-waitlist' +
+            (onWaitlist ? ' city-partner-booked-waitlist--joined' : '') +
+            '" data-city-waitlist="' +
+            esc(city.slug) +
+            '"' +
+            (onWaitlist ? ' disabled' : '') +
+            '>' +
+            (onWaitlist ? 'On waitlist ✓' : 'Join waitlist') +
+            '</button>' +
             '</li>'
           );
         })
         .join('');
+
+      bookedListEl.querySelectorAll('[data-city-waitlist]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          joinWaitlistForCity(btn.getAttribute('data-city-waitlist'), btn);
+        });
+      });
     }
+  }
+
+  function applyWaitlistStatus(onWaitlist) {
+    state.waitlist = {};
+    (onWaitlist || []).forEach(function (slug) {
+      state.waitlist[slug] = true;
+    });
+    renderBookedCities(state.cities);
+  }
+
+  function refreshWaitlistStatus() {
+    var email = emailEl ? String(emailEl.value || '').trim().toLowerCase() : '';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      applyWaitlistStatus([]);
+      return Promise.resolve();
+    }
+
+    return fetch(
+      '/api/city-partner?waitlistEmail=' + encodeURIComponent(email)
+    )
+      .then(readJsonResponse)
+      .then(function (result) {
+        var data = result.data;
+        if (!result.ok || !data || !data.waitlist) return;
+        applyWaitlistStatus(data.waitlist.onWaitlist || []);
+      })
+      .catch(function () {
+        applyWaitlistStatus([]);
+      });
+  }
+
+  function joinWaitlistForCity(slug, btn) {
+    var email = emailEl ? String(emailEl.value || '').trim() : '';
+    if (!email) {
+      setStatus('Enter your work email above to join the waitlist.', 'error');
+      if (emailEl) emailEl.focus();
+      return;
+    }
+
+    if (btn) btn.disabled = true;
+    setStatus('Adding you to the waitlist…');
+
+    fetch('/api/city-partner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'waitlist', email: email, cities: [slug] }),
+    })
+      .then(readJsonResponse)
+      .then(function (result) {
+        if (!result.ok || !result.data || result.data.ok === false) {
+          throw new Error(
+            (result.data && (result.data.message || result.data.error)) ||
+              'Could not join the waitlist'
+          );
+        }
+        state.waitlist[slug] = true;
+        renderBookedCities(state.cities);
+        var city = state.cities.find(function (item) {
+          return item.slug === slug;
+        });
+        setStatus(
+          'You’re on the waitlist — we’ll email you when ' +
+            (city ? city.name : slug) +
+            ' opens.',
+          'ok'
+        );
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        setStatus(err.message || 'Could not join the waitlist', 'error');
+      });
   }
 
   function loadAvailability() {
@@ -255,11 +374,18 @@
         renderCities(state.cities);
         renderAvailableList(state.cities);
         renderBookedCities(state.cities);
-        setStatus('');
+        refreshWaitlistStatus().finally(function () {
+          setStatus('');
+        });
       })
       .catch(function (err) {
         setStatus(err.message || 'Could not load available cities', 'error');
       });
+  }
+
+  if (emailEl) {
+    emailEl.addEventListener('change', refreshWaitlistStatus);
+    emailEl.addEventListener('blur', refreshWaitlistStatus);
   }
 
   if (submitBtn) {
@@ -297,7 +423,7 @@
         .catch(function (err) {
           submitBtn.disabled = false;
           updateQuote();
-          setStatus(err.message || 'Checkout failed — try again or email rosie@thenetworkerhub.com', 'error');
+          setStatus(err.message || 'Checkout failed — try again in a moment.', 'error');
         });
     });
   }
@@ -322,12 +448,12 @@
   var returnState = params.get('city-partner');
   if (returnState === 'success') {
     setStatus(
-      'Thanks — your City Partner subscription is processing. We will publish your logo and CTA once creative is confirmed.',
+      'Thanks — payment received. Your cities are reserved. Send logo and link to rosie@thenetworkerhub.com and we will publish your placement once creative is approved.',
       'ok'
     );
     focusCityPartnerPackage();
   } else if (returnState === 'cancelled') {
-    setStatus('Checkout cancelled — your cities are still available.', '');
+    setStatus('Checkout cancelled — selected cities are still available if open.', '');
     focusCityPartnerPackage();
   }
 

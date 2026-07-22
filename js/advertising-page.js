@@ -97,10 +97,10 @@
       },
       {
         name: 'City Partner',
-        detail: 'Regional city landing pages (+ VAT)',
+        detail: 'City pages — self-serve checkout when available (+ VAT)',
         price: 'From £29/city/mo + VAT',
-        type: 'Third-party brand',
-        typeClass: 'brand',
+        type: 'Self-serve checkout',
+        typeClass: 'self',
         anchor: 'city-partner-package',
       },
       {
@@ -157,10 +157,10 @@
       },
       {
         name: 'City Partner',
-        detail: 'Regional city pages incl. /opportunities/networking/:city (+ VAT)',
+        detail: 'Shared city inventory — checkout on Events tab (+ VAT)',
         price: 'From £29/city/mo + VAT',
-        type: 'Third-party brand',
-        typeClass: 'brand',
+        type: 'Self-serve checkout',
+        typeClass: 'self',
         anchor: 'city-partner-package',
       },
       {
@@ -360,6 +360,20 @@
   function initEnquiryForm() {
     var form = document.getElementById('ad-enquiry-form');
     if (!form) return;
+
+    var packageEl = document.getElementById('ad-enquiry-package');
+    var cityPartnerNote = document.getElementById('ad-enquiry-city-partner-note');
+
+    function syncCityPartnerEnquiryNote() {
+      if (!cityPartnerNote || !packageEl) return;
+      var isCityPartner = String(packageEl.value || '').trim() === 'City Partner';
+      cityPartnerNote.hidden = !isCityPartner;
+    }
+
+    if (packageEl) {
+      packageEl.addEventListener('change', syncCityPartnerEnquiryNote);
+      syncCityPartnerEnquiryNote();
+    }
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();

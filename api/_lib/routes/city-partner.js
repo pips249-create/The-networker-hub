@@ -16,6 +16,8 @@ const {
   isStripeCheckoutConfigured,
   siteBaseUrl,
 } = require('../stripe-checkout');
+const { joinCityPartnerWaitlist, cityPartnerWaitlistStatus } = require('../city-partner-waitlist');
+const { enforceRateLimit } = require('../rate-limit');
 
 function parseBody(req) {
   let body = req.body;
@@ -57,15 +59,52 @@ module.exports = async function handler(req, res) {
       const slugs = normalizeCitySlugs(req.query?.cities || req.query?.city || '');
       const quote =
         slugs.length > 0 ? calculateCityPartnerQuote(slugs.length) : null;
+      const waitlistEmail = String(req.query?.waitlistEmail || req.query?.email || '')
+        .trim()
+        .toLowerCase();
+      let waitlist = null;
+      if (waitlistEmail) {
+        waitlist = await cityPartnerWaitlistStatus(
+          waitlistEmail,
+          slugs.length ? slugs : (availability.bookedCities || []).map((c) => c.slug)
+        );
+      }
       return res.status(200).json({
         ok: true,
         configured: true,
         ...availability,
         quote,
+        waitlist,
       });
     }
 
     if (req.method === 'POST') {
+      const body = parseBody(req);
+      const action = String(body.action || body.intent || 'checkout').trim().toLowerCase();
+
+      if (action === 'waitlist') {
+        const limited = enforceRateLimit(req, res, 'city_partner_waitlist', {
+          max: 8,
+          windowMs: 300_000,
+        });
+        if (!limited.allowed) {
+          return res.status(429).json({
+            ok: false,
+            error: 'rate_limited',
+            message: 'Too many waitlist attempts. Please try again shortly.',
+            retryAfterSec: limited.retryAfterSec,
+          });
+        }
+
+        const result = await joinCityPartnerWaitlist(body.email, body.cities || body.city, {
+          companyName: body.companyName || body.company_name,
+        });
+        if (!result.ok) {
+          return res.status(400).json(result);
+        }
+        return res.status(200).json(result);
+      }
+
       if (!isStripeCheckoutConfigured()) {
         return res.status(503).json({
           ok: false,
@@ -74,7 +113,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const body = parseBody(req);
       const email = String(body.email || '').trim().toLowerCase();
       const cities = normalizeCitySlugs(body.cities);
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
