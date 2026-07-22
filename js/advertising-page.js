@@ -312,6 +312,7 @@
           if (history.replaceState) {
             history.replaceState(null, '', '#' + id);
           }
+          window.dispatchEvent(new CustomEvent('ad-package-tab-change', { detail: { id: id } }));
         });
 
         nav.appendChild(btn);
@@ -880,6 +881,7 @@
     initExampleGallery(document.getElementById('ad-opportunities-main-gallery'));
 
     initExampleGallery(document.getElementById('ad-events-mini-gallery'));
+    initExampleGallery(document.getElementById('ad-opp-listing-gallery'));
 
     renderDemoMiniSponsor(document.getElementById('ad-live-mini-event'), DEMO_SPONSOR);
     renderMiniSponsorEmailPreview(document.getElementById('ad-live-mini-event-email'), DEMO_SPONSOR);

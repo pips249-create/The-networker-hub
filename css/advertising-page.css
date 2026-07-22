@@ -573,9 +573,9 @@ body.advertising-page {
   position: sticky;
   top: 72px;
   z-index: 10;
-  margin-bottom: 1.25rem;
-  padding: 0 0 12px;
-  background: linear-gradient(180deg, var(--ad-canvas) 88%, transparent);
+  margin-bottom: 1rem;
+  padding: 0 0 8px;
+  background: linear-gradient(180deg, var(--ad-canvas) 90%, transparent);
 }
 
 .ad-section-nav-label {
@@ -617,51 +617,75 @@ body.advertising-page {
 }
 
 .ad-section-pick[data-ad-tab="events"] {
-  background: linear-gradient(165deg, rgba(194, 153, 209, 0.42) 0%, rgba(235, 224, 240, 0.72) 100%);
-  border-color: rgba(122, 61, 138, 0.32);
+  background: linear-gradient(165deg, #9a5aad 0%, #c299d1 42%, #ebe0f0 100%);
+  border-color: rgba(122, 61, 138, 0.45);
+  color: #3f1f4a;
 }
 
 .ad-section-pick[data-ad-tab="organisers"] {
-  background: linear-gradient(165deg, rgba(147, 197, 253, 0.45) 0%, rgba(219, 234, 254, 0.78) 100%);
-  border-color: rgba(37, 99, 235, 0.28);
+  background: linear-gradient(165deg, #2563eb 0%, #93c5fd 45%, #dbeafe 100%);
+  border-color: rgba(37, 99, 235, 0.4);
+  color: #0f2d6e;
 }
 
 .ad-section-pick[data-ad-tab="opportunities"] {
-  background: linear-gradient(165deg, rgba(253, 230, 138, 0.42) 0%, rgba(255, 247, 224, 0.82) 100%);
-  border-color: rgba(201, 150, 31, 0.34);
+  background: linear-gradient(165deg, #0d1f3c 0%, #1a3358 38%, #c9961f 115%);
+  border-color: rgba(201, 150, 31, 0.45);
+  color: #fff;
 }
 
 .ad-section-pick[data-ad-tab="events"].is-active {
-  background: linear-gradient(165deg, #7a3d8a 0%, #9a5aad 100%);
-  border-color: #6b3479;
-  box-shadow: 0 10px 28px rgba(122, 61, 138, 0.28);
+  background: linear-gradient(165deg, #6b3479 0%, #7a3d8a 55%, #9a5aad 100%);
+  border-color: #5c2d6a;
+  box-shadow: 0 10px 28px rgba(122, 61, 138, 0.32);
   color: #fff;
 }
 
 .ad-section-pick[data-ad-tab="organisers"].is-active {
-  background: linear-gradient(165deg, #1d4ed8 0%, #2563eb 100%);
-  border-color: #1e40af;
-  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.24);
+  background: linear-gradient(165deg, #1e40af 0%, #2563eb 55%, #3b82f6 100%);
+  border-color: #1d4ed8;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.28);
   color: #fff;
 }
 
 .ad-section-pick[data-ad-tab="opportunities"].is-active {
-  background: linear-gradient(165deg, #0d1f3c 0%, #1a3358 55%, #c9961f 160%);
-  border-color: rgba(201, 150, 31, 0.55);
-  box-shadow: 0 10px 28px rgba(13, 31, 60, 0.22);
+  background: linear-gradient(165deg, #081528 0%, #0d1f3c 42%, #c9961f 130%);
+  border-color: rgba(232, 184, 74, 0.65);
+  box-shadow: 0 10px 28px rgba(13, 31, 60, 0.28);
   color: #fff;
 }
 
+.ad-section-pick[data-ad-tab="events"] .ad-section-pick-body strong {
+  color: #4a2058;
+}
+
+.ad-section-pick[data-ad-tab="organisers"] .ad-section-pick-body strong {
+  color: #0f2d6e;
+}
+
+.ad-section-pick[data-ad-tab="opportunities"] .ad-section-pick-body strong,
+.ad-section-pick[data-ad-tab="opportunities"] .ad-section-pick-body > span {
+  color: rgba(255, 255, 255, 0.94);
+}
+
 .ad-section-pick[data-ad-tab="events"] em {
-  color: var(--ad-events-accent);
+  color: #6b3479;
 }
 
 .ad-section-pick[data-ad-tab="organisers"] em {
-  color: var(--ad-organisers-accent);
+  color: #1d4ed8;
 }
 
 .ad-section-pick[data-ad-tab="opportunities"] em {
-  color: #9a7209;
+  color: #f0d48a;
+}
+
+.ad-section-pick[data-ad-tab="events"] .ad-section-pick-body > span {
+  color: rgba(74, 32, 88, 0.82);
+}
+
+.ad-section-pick[data-ad-tab="organisers"] .ad-section-pick-body > span {
+  color: rgba(15, 45, 110, 0.82);
 }
 
 .ad-section-pick.is-active .ad-section-pick-body strong,
@@ -740,16 +764,56 @@ body.advertising-page {
   color: var(--ad-section-accent);
 }
 
-.ad-tab-panel .ad-package--featured .ad-package-price {
+.ad-tab-panel .ad-package--featured .ad-package-price,
+.ad-tab-panel .ad-package-price {
+  background: var(--ad-section-price-bg);
+  color: #fff;
+}
+
+.ad-tab-panel .ad-package-cta {
+  background: var(--ad-section-accent);
+  color: #fff;
+}
+
+.ad-tab-panel .ad-package--featured .ad-package-cta {
   background: var(--ad-section-price-bg);
 }
 
+.ad-tab-panel--opportunities .ad-package-cta {
+  background: var(--ad-opportunities-navy);
+}
+
 .ad-tab-panel .ad-package-cta:hover {
-  background: var(--ad-section-accent);
+  filter: brightness(1.06);
+  color: #fff;
+}
+
+.ad-tab-panel .ad-package-main {
+  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--ad-section-accent-soft) 72%, var(--surface)) 100%);
+}
+
+.ad-tab-panel .ad-package-preview {
+  background: color-mix(in srgb, var(--ad-section-accent-soft) 38%, var(--surface));
+}
+
+.ad-tab-panel--organisers .ad-package-preview {
+  background: color-mix(in srgb, var(--ad-organisers-accent-soft) 42%, var(--surface));
+}
+
+.ad-tab-panel--opportunities .ad-package-preview {
+  background: color-mix(in srgb, var(--ad-opportunities-accent-soft) 40%, var(--surface));
 }
 
 .ad-tab-panel--opportunities .ad-package-tab.is-active::after {
   background: linear-gradient(90deg, var(--ad-opportunities-accent) 0%, #e8b84a 100%);
+}
+
+.ad-tab-panel--organisers .ad-package-tab.is-active::after {
+  background: var(--ad-organisers-accent);
+}
+
+.ad-tab-panel--events .ad-package-tab.is-active::after {
+  background: var(--ad-events-accent);
 }
 
 .ad-tab-panel .ad-email-reach {
@@ -792,10 +856,6 @@ body.advertising-page {
   color: var(--ad-opportunities-accent);
 }
 
-.ad-tab-panel .ad-package--featured .ad-package-cta {
-  background: var(--ad-section-price-bg);
-}
-
 .ad-tab-panel .ad-package--highlight {
   animation: adPackageHighlightSection 1.8s ease;
 }
@@ -812,12 +872,12 @@ body.advertising-page {
 }
 
 .ad-pricing-note {
-  margin: 0 0 1.75rem;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: var(--ad-soft-muted);
-  border: 1px solid var(--border-soft);
-  font-size: 0.88rem;
+  margin: 0.75rem 0 1.25rem;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: transparent;
+  border: 0;
+  font-size: 0.84rem;
   color: var(--text-muted);
   line-height: 1.55;
   text-align: center;
@@ -1102,11 +1162,15 @@ body.advertising-page {
 .ad-reach-tier-grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
-.ad-reach-tier-grid--wide .ad-reach-tier-stats li {
-  padding: 6px 0;
+.ad-package-main .ad-reach-tier-grid {
+  grid-template-columns: 1fr;
+}
+
+.ad-reach-tier-grid--wide {
+  grid-template-columns: 1fr;
 }
 
 .ad-reach-tier {
@@ -1134,23 +1198,19 @@ body.advertising-page {
 }
 
 .ad-reach-tier-stats li {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 5px 0;
+  gap: 12px;
+  padding: 6px 0;
   border-bottom: 1px dashed rgba(45, 38, 54, 0.08);
-}
-
-.ad-reach-tier-stats li:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
 }
 
 .ad-reach-tier-stats span {
   font-size: 0.76rem;
   color: var(--ad-muted);
   line-height: 1.35;
+  min-width: 0;
 }
 
 .ad-reach-tier-stats strong {
@@ -1159,6 +1219,12 @@ body.advertising-page {
   font-variant-numeric: tabular-nums;
   color: var(--ad-ink);
   text-align: right;
+  white-space: nowrap;
+}
+
+.ad-reach-tier-stats li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 @media (max-width: 720px) {
@@ -1403,6 +1469,17 @@ body.advertising-page {
 
 .ad-package-browser .ad-package.is-active-package {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.ad-package-main,
+.ad-package-preview {
+  min-width: 0;
+}
+
+.ad-package-browser .ad-package-main {
+  overflow-wrap: anywhere;
 }
 
 .ad-package-browser .ad-package-preview {
@@ -2142,6 +2219,91 @@ body.advertising-page {
   font-size: 0.9375rem;
   line-height: 1.55;
   color: var(--text-secondary, #4a5568);
+}
+
+.ad-help-mark {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.ad-help-mark summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-left: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(122, 61, 138, 0.35);
+  background: rgba(194, 153, 209, 0.18);
+  color: var(--lavender-deep);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ad-help-mark summary::-webkit-details-marker {
+  display: none;
+}
+
+.ad-help-mark[open] summary {
+  background: var(--lavender-deep);
+  border-color: var(--lavender-deep);
+  color: #fff;
+}
+
+.ad-help-mark-body {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(122, 61, 138, 0.22);
+  background: #fff;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--ad-muted);
+  box-shadow: 0 8px 24px rgba(45, 38, 54, 0.08);
+}
+
+.ad-help-mark-body p {
+  margin: 0 0 8px;
+}
+
+.ad-help-mark-body p:last-child {
+  margin-bottom: 0;
+}
+
+.ad-help-mark--inline {
+  margin-left: 2px;
+}
+
+.ad-help-mark--inline .ad-help-mark-body {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  width: min(280px, 72vw);
+}
+
+.ad-mock-page--opp-detail .ad-mock-detail-cta {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #0d1f3c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ad-mock-spotlight-card--directory {
+  border-color: rgba(201, 150, 31, 0.28);
+}
+
+.ad-mock-spotlight--directory .ad-mock-spotlight-head {
+  color: #0d1f3c;
 }
 
 .ad-vetting-callout ul {
