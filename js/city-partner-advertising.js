@@ -60,6 +60,14 @@
     });
   }
 
+  function sortCitiesByName(cities) {
+    return (cities || []).slice().sort(function (a, b) {
+      return String(a.name || '').localeCompare(String(b.name || ''), 'en-GB', {
+        sensitivity: 'base',
+      });
+    });
+  }
+
   function bookedCitySummaryLabel(city) {
     if (city.availableFrom) {
       return city.name + ' (from ' + formatAvailableFrom(city.availableFrom) + ')';
@@ -164,9 +172,11 @@
 
   function renderCities(cities) {
     if (!cityListEl) return;
-    var available = (cities || []).filter(function (city) {
-      return city.available;
-    });
+    var available = sortCitiesByName(
+      (cities || []).filter(function (city) {
+        return city.available;
+      })
+    );
     if (!available.length) {
       cityListEl.innerHTML =
         '<p class="city-partner-empty">No cities are open for checkout right now. Join the waitlist on a sponsored city below and we’ll email you when it opens.</p>';
@@ -210,9 +220,11 @@
   }
 
   function renderBookedCities(cities) {
-    var booked = (cities || []).filter(function (city) {
-      return city.booked;
-    });
+    var booked = sortCitiesByName(
+      (cities || []).filter(function (city) {
+        return city.booked;
+      })
+    );
     var hasBooked = booked.length > 0;
 
     if (bookedSummaryEl) bookedSummaryEl.hidden = !hasBooked;

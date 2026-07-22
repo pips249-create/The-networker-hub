@@ -3897,26 +3897,36 @@ body.advertising-page {
 
 .city-partner-booked-waitlist {
   justify-self: end;
-  border: 1px solid rgba(109, 92, 232, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 8px 14px;
+  border: none;
   border-radius: 999px;
-  padding: 6px 12px;
-  background: #fff;
+  background: var(--ad-section-accent, var(--lavender-deep));
+  font: inherit;
   font-size: 12px;
   font-weight: 700;
-  color: #6d5ce8;
+  letter-spacing: 0.02em;
+  color: #fff;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: filter 0.15s ease;
 }
 
 .city-partner-booked-waitlist:hover:not(:disabled),
 .city-partner-booked-waitlist:focus-visible:not(:disabled) {
-  background: rgba(109, 92, 232, 0.08);
+  filter: brightness(1.06);
 }
 
 .city-partner-booked-waitlist:disabled,
 .city-partner-booked-waitlist--joined {
-  border-color: rgba(2, 122, 72, 0.25);
+  background: rgba(2, 122, 72, 0.12);
   color: #027a48;
   cursor: default;
+  filter: none;
 }
 
 .city-partner-booked-note {
@@ -4008,22 +4018,9 @@ body.advertising-page {
   color: #1c2040;
 }
 
-.city-partner-email-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #4a4560;
-}
-
-.city-partner-email {
-  width: 100%;
-  box-sizing: border-box;
-  border-radius: 10px;
-  border: 1px solid rgba(50, 43, 120, 0.18);
-  padding: 10px 12px;
-  background: var(--surface-warm);
-  color: #2b2648;
-  font: inherit;
-  font-size: 14px;
+.city-partner-email-field {
+  margin: 0;
+  gap: 6px;
 }
 
 .city-partner-submit {
