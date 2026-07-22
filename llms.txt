@@ -4,39 +4,39 @@
 Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkerhub.com
 
 ## Canonical URLs
-- Home: http://localhost:3000/
-- Events: http://localhost:3000/events/
-- Business opportunities: http://localhost:3000/opportunities/
-- FAQ: http://localhost:3000/faq
-- Contact (Hubert assistant): http://localhost:3000/contact
-- About: http://localhost:3000/about
-- For Organisers: http://localhost:3000/for-organisers
-- For Attendees: http://localhost:3000/for-attendees
-- Organiser guides: http://localhost:3000/guides
-- Advertising & sponsorship: http://localhost:3000/advertising
-- Legal: http://localhost:3000/legal-policies
-- Organiser payouts: http://localhost:3000/help/organiser-payouts
-- Ticket pricing & fees: http://localhost:3000/help/pricing-fees
-- Sitemap: http://localhost:3000/sitemap.xml
+- Home: https://www.thenetworkerhub.com/
+- Events: https://www.thenetworkerhub.com/events/
+- Business opportunities: https://www.thenetworkerhub.com/opportunities/
+- FAQ: https://www.thenetworkerhub.com/faq
+- Contact (Hubert assistant): https://www.thenetworkerhub.com/contact
+- About: https://www.thenetworkerhub.com/about
+- For Organisers: https://www.thenetworkerhub.com/for-organisers
+- For Attendees: https://www.thenetworkerhub.com/for-attendees
+- Organiser guides: https://www.thenetworkerhub.com/guides
+- Advertising & sponsorship: https://www.thenetworkerhub.com/advertising
+- Legal: https://www.thenetworkerhub.com/legal-policies
+- Organiser payouts: https://www.thenetworkerhub.com/help/organiser-payouts
+- Ticket pricing & fees: https://www.thenetworkerhub.com/help/pricing-fees
+- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
 
 ## Organiser help articles
 
 ### When do organisers receive payouts?
 Organisers receive the full ticket price they set. With Stripe Connect enabled, that revenue is collected in the organiser connected Stripe account when attendees pay; use Stripe Express for refunds, balance, and bank payouts. Legacy mode (Connect off): archive the event in /organiser/, wait 7 days after the event ends, then request payout from Revenue — requests are reviewed before transfer.
 
-Full page: http://localhost:3000/help/organiser-payouts
+Full page: https://www.thenetworkerhub.com/help/organiser-payouts
 
 ### What fees does The Networker Hub charge on tickets?
 There is no monthly subscription to list events. For paid tickets, attendees pay one booking fee at checkout: 4.5% + 20p per ticket, shown before payment. Organisers receive the full ticket price they set. Free events do not require Stripe.
 
-Full page: http://localhost:3000/help/pricing-fees
+Full page: https://www.thenetworkerhub.com/help/pricing-fees
 
 ## Machine discovery
-- Sitemap: http://localhost:3000/sitemap.xml
-- AI crawler policy: http://localhost:3000/agents.txt
-- Dynamic page meta API: http://localhost:3000/api/seo-meta?type=event&slug={slug}
-- Organiser meta API: http://localhost:3000/api/seo-meta?type=organiser&slug={slug}
-- Opportunity meta API: http://localhost:3000/api/seo-meta?type=opportunity&slug={slug}
+- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
+- AI crawler policy: https://www.thenetworkerhub.com/agents.txt
+- Dynamic page meta API: https://www.thenetworkerhub.com/api/seo-meta?type=event&slug={slug}
+- Organiser meta API: https://www.thenetworkerhub.com/api/seo-meta?type=organiser&slug={slug}
+- Opportunity meta API: https://www.thenetworkerhub.com/api/seo-meta?type=opportunity&slug={slug}
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.
@@ -53,7 +53,7 @@ Use Browse events in the top navigation or visit the events listing at /events/.
 No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes.
 
 ## How do I book a ticket on The Networker Hub?
-Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My tickets.
+Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My Hub.
 
 ## How do I enquire about a business opportunity?
 Browse opportunities for free at /opportunities/. When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page.
@@ -77,7 +77,7 @@ Yes — browsing events and business opportunities is completely free with no si
 Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.
 
 ## I did not receive my booking confirmation email
-Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.
+Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My Hub at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.
 
 ## Can I transfer my ticket to someone else?
 Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.
