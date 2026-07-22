@@ -80,20 +80,30 @@
   border-color: #7a5a98;
 }
 
-.for-attendees-page .fo-hero-actions--pillars {
-  gap: 10px;
+.for-attendees-page .fo-hero-benefits {
+  margin: 0 0 24px;
+  max-width: 34em;
 }
 
-.for-attendees-page .fo-hero-actions--pillars .btn-secondary {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(194, 153, 209, 0.45);
+.for-attendees-page .fo-hero-kicker {
   color: var(--od-purple-dark);
+  background: rgba(194, 153, 209, 0.12);
+  border-color: rgba(194, 153, 209, 0.28);
 }
 
-.for-attendees-page .fo-hero-actions--pillars .btn-secondary:hover {
-  background: #fff;
-  border-color: rgba(154, 122, 168, 0.55);
-  color: var(--od-purple-deep);
+@media (min-width: 720px) {
+  .for-attendees-page .fo-hero-benefits {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20px;
+  }
+}
+
+@media (max-width: 960px) {
+  .for-attendees-page .fo-hero-benefits {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+  }
 }
 
 /* Attendee dashboard mock extras */
