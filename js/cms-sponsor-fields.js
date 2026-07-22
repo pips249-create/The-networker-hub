@@ -186,7 +186,6 @@
     }
 
     img.classList.add('sponsor-logo--full');
-    if (!img.crossOrigin) img.crossOrigin = 'anonymous';
 
     function paint() {
       var bg = sampleBackgroundFromImage(img);

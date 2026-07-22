@@ -2,6 +2,27 @@
  * CMS ad blocks — sidebar and horizontal banner placements from cms_blocks.
  */
 (function () {
+  var PLACEMENT_AD_PATHS = {
+    events_sponsor_hub: '/advertising#ad-panel-events',
+    organisers_sponsor_hub: '/advertising#ad-panel-organisers',
+    opportunities_sponsor_hub: '/advertising#ad-panel-opportunities',
+    event_page_carousel_ads: '/advertising#ad-panel-events',
+    organiser_page_carousel_ads: '/advertising#ad-panel-organisers',
+    opportunity_page_sidebar_ad: '/advertising#ad-panel-opportunities',
+    event_page_banner_ad: '/advertising#ad-panel-events',
+  };
+
+  var PLACEHOLDER_CTA = 'View sponsorship options →';
+
+  function advertisingPathForSlot(slotOrSubject) {
+    var key = String(slotOrSubject || '').trim().toLowerCase();
+    if (PLACEMENT_AD_PATHS[key]) return PLACEMENT_AD_PATHS[key];
+    var subject = String(slotOrSubject || '');
+    if (/organiser/i.test(subject)) return PLACEMENT_AD_PATHS.organiser_page_carousel_ads;
+    if (/opportunit/i.test(subject)) return PLACEMENT_AD_PATHS.opportunity_page_sidebar_ad;
+    return PLACEMENT_AD_PATHS.event_page_carousel_ads;
+  }
+
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
@@ -71,7 +92,7 @@
         imgClass +
         ' sponsor-logo--full" src="' +
         esc(url) +
-        '" alt="" loading="lazy" decoding="async" crossorigin="anonymous" ' +
+        '" alt="" loading="lazy" decoding="async" ' +
         'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)">' +
         '</div>'
       );
@@ -175,10 +196,10 @@
     return hasLogo && ctaLabel && hasCtaUrl;
   }
 
-  function renderCompactAd(container, block) {
+  function renderCompactAd(container, block, slot) {
     if (!container) return false;
     if (!block || !isCompactRenderable(block)) {
-      return renderCompactPlaceholder(container);
+      return renderCompactPlaceholder(container, slot);
     }
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
@@ -315,17 +336,9 @@
     }
   }
 
-  function renderCarouselPlaceholder(container, enquireSubject) {
+  function renderCarouselPlaceholder(container, slotOrSubject) {
     if (!container) return false;
-    var subject = encodeURIComponent(String(enquireSubject || 'Mini Sponsors enquiry').trim());
-    var href = '/advertising#city-partner-package';
-    if (subject.indexOf('Organiser') !== -1 || subject.indexOf('organiser') !== -1) {
-      href = '/advertising#ad-panel-organisers';
-    } else if (subject.indexOf('Opportunit') !== -1) {
-      href = '/advertising#ad-panel-opportunities';
-    } else {
-      href = '/advertising#ad-panel-events';
-    }
+    var href = advertisingPathForSlot(slotOrSubject);
     container.hidden = false;
     container.innerHTML =
       '<aside class="cms-ad-carousel-placeholder" aria-label="Sponsored placement available">' +
@@ -336,20 +349,27 @@
       '<div class="sponsor-logo-wrap sponsor-logo-band">' +
       '<div class="cms-ad-logo-only-placeholder">Your logo here</div>' +
       '</div>' +
-      '<span class="cms-ad-carousel-placeholder-cta">Advertise here →</span>' +
+      '<span class="cms-ad-carousel-placeholder-cta">' +
+      esc(PLACEHOLDER_CTA) +
+      '</span>' +
       '</a></aside>';
     return true;
   }
 
-  function renderCompactPlaceholder(container) {
+  function renderCompactPlaceholder(container, slot) {
     if (!container) return false;
+    var href = advertisingPathForSlot(slot || 'opportunity_page_sidebar_ad');
     container.hidden = false;
     container.innerHTML =
       '<aside class="cms-ad-compact cms-ad-compact--available" aria-label="Sponsored sidebar placement available">' +
       '<span class="cms-ad-compact-badge">Sponsored</span>' +
-      '<a class="cms-ad-compact-placeholder-link" href="/advertising#ad-panel-opportunities">' +
+      '<a class="cms-ad-compact-placeholder-link" href="' +
+      esc(href) +
+      '">' +
       logoMarkup('', 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
-      '<span class="cms-ad-compact-cta cms-ad-compact-cta--placeholder">Advertise here →</span>' +
+      '<span class="cms-ad-compact-cta cms-ad-compact-cta--placeholder">' +
+      esc(PLACEHOLDER_CTA) +
+      '</span>' +
       '</a></aside>';
     return true;
   }
@@ -399,7 +419,7 @@
         imgClass +
         '" src="' +
         esc(url) +
-        '" alt="" loading="lazy" decoding="async" crossorigin="anonymous">'
+        '" alt="" loading="lazy" decoding="async">'
       : '<div class="cms-ad-logo-only-placeholder">Your logo here</div>';
     return (
       '<a class="cms-ad-logo-link' +
@@ -430,6 +450,14 @@
     window.CmsSponsorFields.applyCtaLink(el, normalizeCta(linkUrl));
   }
 
+  function wireCarouselLogoBands(container) {
+    if (!container || !window.CmsSponsorFields) return;
+    container.querySelectorAll('.cms-ad-logo-link img').forEach(function (img) {
+      var wrap = img.closest('.sponsor-logo-wrap');
+      if (wrap) window.CmsSponsorFields.applyLogoBand(wrap, img, true);
+    });
+  }
+
   function renderLogoOnlyAd(container, block) {
     if (!container || !block) return false;
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
@@ -446,6 +474,7 @@
       logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true) +
       '</aside>';
     applyLogoLink(container.querySelector('.cms-ad-logo-link'), block.cta_url);
+    wireCarouselLogoBands(container);
     return true;
   }
 
@@ -470,11 +499,11 @@
     );
   }
 
-  function renderCarouselAd(container, ads, placeholderSubject) {
+  function renderCarouselAd(container, ads, slotOrSubject) {
     if (!container) return false;
     var list = Array.isArray(ads) ? ads : [];
     if (!list.length) {
-      return renderCarouselPlaceholder(container, placeholderSubject);
+      return renderCarouselPlaceholder(container, slotOrSubject);
     }
 
     if (list.length === 1) {
@@ -522,6 +551,7 @@
       applyLogoLink(slide.querySelector('.cms-ad-logo-link'), block.cta_url);
     });
 
+    wireCarouselLogoBands(container);
     initCarousel(container.querySelector('.cms-ad-carousel'));
     return true;
   }
@@ -599,16 +629,14 @@
     if (!container) return Promise.resolve(false);
     var opts = options || {};
     var slot = String(opts.slot || 'event_page_carousel_ads').trim() || 'event_page_carousel_ads';
-    var placeholderSubject = opts.placeholderSubject || 'Events Mini Sponsors enquiry';
     return loadCarouselAds(slot).then(function (ads) {
-      return renderCarouselAd(container, ads, placeholderSubject);
+      return renderCarouselAd(container, ads, slot);
     });
   }
 
   function loadOrganiserPageCarouselAds(container) {
     return loadPageCarouselAds(container, {
       slot: 'organiser_page_carousel_ads',
-      placeholderSubject: 'Organisers Mini Sponsors enquiry',
     });
   }
 
