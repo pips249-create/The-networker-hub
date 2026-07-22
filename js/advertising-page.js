@@ -334,18 +334,81 @@
       .join('');
   }
 
+  function prefillEnquiryForm(sectionLabel, packageName) {
+    var sectionEl = document.getElementById('ad-enquiry-section');
+    var packageEl = document.getElementById('ad-enquiry-package');
+    if (!sectionEl || !packageEl) return;
+
+    var sectionKey = 'events';
+    if (sectionLabel === 'Organisers') sectionKey = 'organisers';
+    if (sectionLabel === 'Opportunities') sectionKey = 'opportunities';
+
+    if (sectionLabel) {
+      Array.prototype.forEach.call(sectionEl.options, function (opt) {
+        opt.selected = opt.value === sectionLabel;
+      });
+      syncEnquiryFormSection(sectionKey);
+    }
+
+    if (packageName) {
+      var found = false;
+      Array.prototype.forEach.call(packageEl.options, function (opt) {
+        if (opt.value === packageName) found = true;
+      });
+      if (!found) {
+        var extra = document.createElement('option');
+        extra.value = packageName;
+        extra.textContent = packageName;
+        packageEl.appendChild(extra);
+      }
+      packageEl.value = packageName;
+    }
+
+    if (packageEl) {
+      packageEl.dispatchEvent(new Event('change'));
+    }
+  }
+
+  function setEnquiryStatus(message, type) {
+    var statusEl = document.getElementById('ad-enquiry-status');
+    if (!statusEl) return;
+    if (!message) {
+      statusEl.hidden = true;
+      statusEl.textContent = '';
+      statusEl.classList.remove('is-ok', 'is-error');
+      return;
+    }
+    statusEl.hidden = false;
+    statusEl.textContent = message;
+    statusEl.classList.toggle('is-ok', type === 'ok');
+    statusEl.classList.toggle('is-error', type === 'error');
+  }
+
+  function initEnquiryJumps() {
+    document.querySelectorAll('.ad-enquiry-jump').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var section = link.getAttribute('data-ad-enquiry-section');
+        var pkg = link.getAttribute('data-ad-enquiry-package');
+        if (!section && !pkg) return;
+        e.preventDefault();
+        prefillEnquiryForm(section, pkg);
+        scrollToAnchor('ad-enquiry');
+      });
+    });
+  }
+
   function initEnquiryForm() {
     var form = document.getElementById('ad-enquiry-form');
     if (!form) return;
 
     var packageEl = document.getElementById('ad-enquiry-package');
     var cityPartnerNote = document.getElementById('ad-enquiry-city-partner-note');
+    var submitBtn = document.getElementById('ad-enquiry-submit');
 
     function syncCityPartnerEnquiryNote() {
       if (!cityPartnerNote || !packageEl) return;
       var pkg = String(packageEl.value || '').trim();
-      var isCityPartner =
-        pkg === 'City Partner' || pkg === 'City Sponsor';
+      var isCityPartner = pkg === 'City Partner' || pkg === 'City Sponsor';
       cityPartnerNote.hidden = !isCityPartner;
     }
 
@@ -356,36 +419,156 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      setEnquiryStatus('', '');
+
       var fd = new FormData(form);
-      var company = String(fd.get('company') || '').trim();
-      var name = String(fd.get('name') || '').trim();
-      var email = String(fd.get('email') || '').trim();
-      var section = String(fd.get('section') || '').trim();
-      var pkg = String(fd.get('package') || '').trim();
-      var budget = String(fd.get('budget') || '').trim();
-      var message = String(fd.get('message') || '').trim();
+      var payload = {
+        company: String(fd.get('company') || '').trim(),
+        name: String(fd.get('name') || '').trim(),
+        email: String(fd.get('email') || '').trim(),
+        section: String(fd.get('section') || '').trim(),
+        package: String(fd.get('package') || '').trim(),
+        budget: String(fd.get('budget') || '').trim(),
+        message: String(fd.get('message') || '').trim(),
+        website: String(fd.get('website') || '').trim(),
+      };
 
-      var subject = 'Advertising enquiry — ' + (pkg || 'package') + ' (' + section + ')';
-      var body =
-        'Company: ' +
-        company +
-        '\nContact: ' +
-        name +
-        '\nEmail: ' +
-        email +
-        '\nSection: ' +
-        section +
-        '\nPackage: ' +
-        pkg +
-        (budget ? '\nBudget: ' + budget : '') +
-        (message ? '\n\nMessage:\n' + message : '');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
 
-      window.location.href =
-        'mailto:rosie@thenetworkerhub.com?subject=' +
-        encodeURIComponent(subject) +
-        '&body=' +
-        encodeURIComponent(body);
+      fetch('/api/advertising', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok) {
+            setEnquiryStatus(result.data.message || 'Thanks — Rosie will reply within one business day.', 'ok');
+            form.reset();
+            syncCityPartnerEnquiryNote();
+            return;
+          }
+          setEnquiryStatus(
+            (result.data && result.data.message) ||
+              'Could not send your enquiry. Email rosie@thenetworkerhub.com instead.',
+            'error'
+          );
+        })
+        .catch(function () {
+          setEnquiryStatus(
+            'Could not send your enquiry. Email rosie@thenetworkerhub.com instead.',
+            'error'
+          );
+        })
+        .finally(function () {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send enquiry →';
+          }
+        });
     });
+  }
+
+  function formatHeadlineSlotStatus(info) {
+    if (!info) return '';
+    if (info.available > 0) return 'Headline slot currently available';
+    return 'Headline slot currently reserved — enquire to join the waitlist';
+  }
+
+  function formatPageSlotStatus(info) {
+    if (!info) return '';
+    if (info.available <= 0) {
+      return 'All ' + info.max + ' slots currently taken — enquire to join the waitlist';
+    }
+    if (info.available === 1) return '1 of ' + info.max + ' slots available';
+    return info.available + ' of ' + info.max + ' slots available';
+  }
+
+  function renderSlotAvailability(availability) {
+    if (!availability) return;
+
+    document.querySelectorAll('[data-ad-slot-key]').forEach(function (el) {
+      var key = el.getAttribute('data-ad-slot-key');
+      var text = '';
+      if (key === 'headline-events') text = formatHeadlineSlotStatus(availability.headline && availability.headline.events);
+      else if (key === 'headline-organisers') {
+        text = formatHeadlineSlotStatus(availability.headline && availability.headline.organisers);
+      } else if (key === 'headline-opportunities') {
+        text = formatHeadlineSlotStatus(availability.headline && availability.headline.opportunities);
+      } else if (key === 'page-events') text = formatPageSlotStatus(availability.pagePartner && availability.pagePartner.events);
+      else if (key === 'page-organisers') {
+        text = formatPageSlotStatus(availability.pagePartner && availability.pagePartner.organisers);
+      } else if (key === 'page-opportunities') {
+        text = formatPageSlotStatus(availability.pagePartner && availability.pagePartner.opportunities);
+      }
+
+      if (!text) {
+        el.hidden = true;
+        return;
+      }
+
+      el.hidden = false;
+      el.textContent = text;
+      el.classList.toggle('is-available', /available/i.test(text) && !/waitlist/i.test(text));
+      el.classList.toggle('is-waitlist', /waitlist|taken|reserved/i.test(text));
+    });
+  }
+
+  function loadSlotAvailability() {
+    fetch('/api/advertising?route=availability')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !data.availability) return;
+        renderSlotAvailability(data.availability);
+      })
+      .catch(function () {});
+  }
+
+  function initStickyCta() {
+    var bar = document.getElementById('ad-sticky-cta');
+    var header = document.querySelector('.ad-page-header');
+    var enquiry = document.getElementById('ad-enquiry');
+    if (!bar || !header) return;
+
+    var showBar = false;
+    var hideForEnquiry = false;
+
+    function updateBar() {
+      bar.hidden = !showBar || hideForEnquiry;
+    }
+
+    if ('IntersectionObserver' in window) {
+      var headerObserver = new IntersectionObserver(
+        function (entries) {
+          showBar = !entries[0].isIntersecting;
+          updateBar();
+        },
+        { threshold: 0 }
+      );
+      headerObserver.observe(header);
+
+      if (enquiry) {
+        var enquiryObserver = new IntersectionObserver(
+          function (entries) {
+            hideForEnquiry = entries[0].isIntersecting;
+            updateBar();
+          },
+          { threshold: 0.12 }
+        );
+        enquiryObserver.observe(enquiry);
+      }
+    } else {
+      bar.hidden = false;
+    }
   }
 
   function buildMiniSponsorsRowHtml() {
@@ -440,6 +623,29 @@
         '<p class="ad-full-email-event-desc">' +
         LOREM_MEDIUM +
         '</p>' +
+        '</div>' +
+        '</div>',
+    });
+  }
+
+  function renderOrganiserMiniSponsorEmailPreview(container) {
+    if (!container) return;
+    renderMiniSponsorsRowEmailShell(container, {
+      kicker: 'New registration',
+      title: 'Welcome to your organiser workspace',
+      lede:
+        'Your organiser account is ready. You can start listing events and managing your group from the dashboard. ' +
+        LOREM_SHORT,
+      detailHtml:
+        '<div class="ad-full-email-event-wrap">' +
+        '<div class="ad-full-email-event">' +
+        '<p class="ad-full-email-event-kicker">Your account</p>' +
+        '<p class="ad-full-email-event-name">Manchester Business Network</p>' +
+        '<p class="ad-full-email-event-date"><span>Next step</span><strong>Publish your first event</strong></p>' +
+        '<p class="ad-full-email-event-desc">' +
+        LOREM_MEDIUM +
+        '</p>' +
+        '<span class="ad-full-email-event-cta">Open organiser dashboard</span>' +
         '</div>' +
         '</div>',
     });
@@ -896,6 +1102,7 @@
     initExampleGallery(document.getElementById('ad-opportunities-main-gallery'));
 
     initExampleGallery(document.getElementById('ad-events-mini-gallery'));
+    initExampleGallery(document.getElementById('ad-organisers-mini-gallery'));
     initExampleGallery(document.getElementById('ad-opportunity-mini-gallery'));
     initExampleGallery(document.getElementById('ad-opp-listing-gallery'));
 
@@ -906,6 +1113,7 @@
       DEMO_MINI_SPONSORS,
       'organiser_page_carousel_ads'
     );
+    renderOrganiserMiniSponsorEmailPreview(document.getElementById('ad-live-mini-organisers-email'));
   }
 
   function initExampleGallery(root, options) {
@@ -1076,7 +1284,10 @@
       initPackageTabs();
       initPackageReveal();
       initTabJumpLinks();
+      initEnquiryJumps();
       initEnquiryForm();
+      initStickyCta();
+      loadSlotAvailability();
       loadLivePreviews();
     });
   } else {
@@ -1086,7 +1297,10 @@
     initPackageTabs();
     initPackageReveal();
     initTabJumpLinks();
+    initEnquiryJumps();
     initEnquiryForm();
+    initStickyCta();
+    loadSlotAvailability();
     loadLivePreviews();
   }
 })();
