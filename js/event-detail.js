@@ -847,7 +847,7 @@
   }
 
   function isOnlineOnlyEvent(ev) {
-    const m = String((ev && ev.format) || '').toLowerCase();
+    const m = String((ev && (ev.format || ev.meetingType || ev.meeting_type)) || '').toLowerCase();
     return m.includes('online') && !m.includes('person') && !m.includes('hybrid');
   }
 
@@ -857,13 +857,15 @@
       ? 'Online'
       : ev.city || ev.outcode || ev.locationShort || 'Location TBC';
     setText('ev-meta-city', cityLabel);
+
+    const section = document.getElementById('ev-location-section');
+    if (section) section.hidden = online;
+    if (online) return;
+
     const vn = String(ev.venue || ev.venueName || '').trim();
     const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
-    setText('ev-venue-name', online ? vn || 'Online event' : vn || 'Venue TBC');
-    setText(
-      'ev-venue-addr',
-      online ? 'Join from anywhere — the joining link is shared with your booking confirmation.' : va
-    );
+    setText('ev-venue-name', vn || 'Venue TBC');
+    setText('ev-venue-addr', va);
     applyMapAndDirections(ev);
   }
 

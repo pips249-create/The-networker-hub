@@ -747,6 +747,24 @@
   }
 
   const DEFAULT_TIER_NAME = 'General admission';
+  const TICKET_ORDER_WORDS = [
+    'one',
+    'two',
+    'three',
+    'four',
+    'five',
+    'six',
+    'seven',
+    'eight',
+    'nine',
+    'ten',
+  ];
+
+  function ticketOrderLabel(index) {
+    const n = index + 1;
+    const word = TICKET_ORDER_WORDS[n - 1] || String(n);
+    return 'Ticket ' + word;
+  }
 
   function tierRowHtml(index) {
     return (
@@ -757,8 +775,8 @@
       '<div class="ee-tier-order">' +
       '<button type="button" class="ee-btn ee-btn-outline ee-tier-up" aria-label="Move up">↑</button>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-tier-down" aria-label="Move down">↓</button>' +
-      '<span class="ee-tier-order-label">Tier ' +
-      String(index + 1) +
+      '<span class="ee-tier-order-label">' +
+      ticketOrderLabel(index) +
       '</span>' +
       '</div>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-tier-remove">Remove</button>' +
@@ -815,7 +833,7 @@
     let minPrice = null;
     rows.forEach((row, i) => {
       const orderLabel = row.querySelector('.ee-tier-order-label');
-      if (orderLabel) orderLabel.textContent = 'Tier ' + String(i + 1);
+      if (orderLabel) orderLabel.textContent = ticketOrderLabel(i);
       const name = row.querySelector('.ee-tier-name')?.value.trim();
       if (!name) return;
       count += 1;

@@ -126,7 +126,26 @@
   }
 
   function selectedReportType() {
-    return document.getElementById('omr-report-type')?.value || activeReportTab || 'overview';
+    const selected = document.querySelector('[data-omr-report-type].is-selected');
+    return selected?.dataset.omrReportType || activeReportTab || 'overview';
+  }
+
+  function syncReportTypePicker(type) {
+    const next = type || activeReportTab || 'overview';
+    document.querySelectorAll('[data-omr-report-type]').forEach(function (btn) {
+      const active = btn.dataset.omrReportType === next;
+      btn.classList.toggle('is-selected', active);
+      btn.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+  }
+
+  function setReportType(type) {
+    const allowed = ['overview', 'upcoming', 'bookings', 'expiring', 'lapsed', 'engagement'];
+    const next = allowed.indexOf(type) >= 0 ? type : 'overview';
+    activeReportTab = next;
+    syncReportTypePicker(next);
+    syncReportsSetupFields();
+    markReportsStale();
   }
 
   function selectedReportPeriod() {
@@ -168,32 +187,16 @@
     const eventSel = document.getElementById('omr-reports-event-select');
     const periodSel = document.getElementById('omr-reports-period');
     const upcomingLimitSel = document.getElementById('omr-reports-upcoming-limit');
-    const typeHint = document.getElementById('omr-reports-type-hint');
     const eventHint = document.getElementById('omr-reports-event-hint');
     const needsEvent = type === 'bookings' || type === 'engagement';
     const needsPeriod = type === 'engagement';
     const needsUpcomingLimit = type === 'upcoming';
 
+    syncReportTypePicker(type);
+
     if (eventSel) eventSel.hidden = !needsEvent;
     if (periodSel) periodSel.hidden = !needsPeriod;
     if (upcomingLimitSel) upcomingLimitSel.hidden = !needsUpcomingLimit;
-
-    if (typeHint) {
-      if (type === 'overview') {
-        typeHint.textContent = 'Counts, sign-ups, expiring, and lapsed memberships across your whole list.';
-      } else if (type === 'upcoming') {
-        typeHint.textContent =
-          'See what share of your members have booked each of your next upcoming events.';
-      } else if (type === 'bookings') {
-        typeHint.textContent = 'See which members have booked a specific event — and who has not.';
-      } else if (type === 'expiring') {
-        typeHint.textContent = 'Members whose membership ends within the next 14 days.';
-      } else if (type === 'lapsed') {
-        typeHint.textContent = 'Members whose membership expiry date has passed.';
-      } else {
-        typeHint.textContent = 'New vs returning attendance, plus missed recent meetings.';
-      }
-    }
 
     if (eventHint) {
       if (type === 'bookings') {
@@ -561,6 +564,7 @@
   function setReportTab(tab) {
     const allowed = ['overview', 'upcoming', 'bookings', 'expiring', 'lapsed', 'engagement'];
     activeReportTab = allowed.indexOf(tab) >= 0 ? tab : 'overview';
+    syncReportTypePicker(activeReportTab);
     document.querySelectorAll('[data-omr-report-tab]').forEach(function (btn) {
       const active = btn.dataset.omrReportTab === activeReportTab;
       btn.classList.toggle('is-active', active);
@@ -1862,10 +1866,10 @@
       });
     });
 
-    document.getElementById('omr-report-type')?.addEventListener('change', function () {
-      activeReportTab = selectedReportType();
-      syncReportsSetupFields();
-      markReportsStale();
+    document.querySelectorAll('[data-omr-report-type]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setReportType(btn.dataset.omrReportType || 'overview');
+      });
     });
 
     document.getElementById('omr-reports-period')?.addEventListener('change', function () {

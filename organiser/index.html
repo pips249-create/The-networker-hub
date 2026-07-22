@@ -928,15 +928,94 @@
                 <p class="omr-reports-lead">Reports use your uploaded member list only — not every event attendee.</p>
 
                 <div class="omr-reports-setup" id="omr-reports-setup">
-                  <div class="org-filter-bar omr-filter-bar omr-reports-bar">
-                    <select id="omr-report-type" aria-label="Report type" aria-describedby="omr-reports-type-hint">
-                      <option value="overview">Overview — list health &amp; sign-ups</option>
-                      <option value="upcoming">Upcoming events — booking rates across next events</option>
-                      <option value="bookings">Event bookings — booked vs not booked</option>
-                      <option value="expiring">Expiring soon — renewals in next 14 days</option>
-                      <option value="lapsed">Lapsed — expired memberships</option>
-                      <option value="engagement">Engagement — attendance &amp; missed meetings</option>
-                    </select>
+                  <div class="omr-report-picker" role="radiogroup" aria-label="Choose a report">
+                    <button
+                      type="button"
+                      class="omr-report-choice is-selected"
+                      data-omr-report-type="overview"
+                      aria-checked="true"
+                    >
+                      <span class="omr-report-choice-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                      </span>
+                      <span class="omr-report-choice-body">
+                        <strong class="omr-report-choice-title">Overview</strong>
+                        <span class="omr-report-choice-desc">List health, sign-ups, expiring &amp; lapsed counts</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="omr-report-choice"
+                      data-omr-report-type="upcoming"
+                      aria-checked="false"
+                    >
+                      <span class="omr-report-choice-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      </span>
+                      <span class="omr-report-choice-body">
+                        <strong class="omr-report-choice-title">Upcoming events</strong>
+                        <span class="omr-report-choice-desc">Member booking rates across your next events</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="omr-report-choice"
+                      data-omr-report-type="bookings"
+                      aria-checked="false"
+                    >
+                      <span class="omr-report-choice-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18"/><path d="M7 13h.01"/><path d="M11 13h6"/><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
+                      </span>
+                      <span class="omr-report-choice-body">
+                        <strong class="omr-report-choice-title">Event bookings</strong>
+                        <span class="omr-report-choice-desc">Who has booked a specific event — and who has not</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="omr-report-choice"
+                      data-omr-report-type="expiring"
+                      aria-checked="false"
+                    >
+                      <span class="omr-report-choice-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                      </span>
+                      <span class="omr-report-choice-body">
+                        <strong class="omr-report-choice-title">Expiring soon</strong>
+                        <span class="omr-report-choice-desc">Renewals due in the next 14 days</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="omr-report-choice"
+                      data-omr-report-type="lapsed"
+                      aria-checked="false"
+                    >
+                      <span class="omr-report-choice-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="22" y2="11"/></svg>
+                      </span>
+                      <span class="omr-report-choice-body">
+                        <strong class="omr-report-choice-title">Lapsed</strong>
+                        <span class="omr-report-choice-desc">Members whose membership expiry date has passed</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="omr-report-choice"
+                      data-omr-report-type="engagement"
+                      aria-checked="false"
+                    >
+                      <span class="omr-report-choice-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg>
+                      </span>
+                      <span class="omr-report-choice-body">
+                        <strong class="omr-report-choice-title">Engagement</strong>
+                        <span class="omr-report-choice-desc">Attendance patterns and missed recent meetings</span>
+                      </span>
+                    </button>
+                  </div>
+
+                  <div class="org-filter-bar omr-filter-bar omr-reports-bar omr-reports-options">
                     <select id="omr-reports-event-select" class="omr-filter-event" aria-label="Event for report" hidden>
                       <option value="">Choose an event…</option>
                     </select>
@@ -952,7 +1031,6 @@
                     <button type="button" class="org-btn org-btn-gold org-btn-sm" id="omr-run-reports">Run report</button>
                     <button type="button" class="org-btn org-btn-outline org-btn-sm" id="omr-refresh-reports" hidden>Refresh</button>
                   </div>
-                  <p class="omr-reports-bar-hint" id="omr-reports-type-hint"></p>
                   <p class="omr-reports-bar-hint" id="omr-reports-event-hint" hidden></p>
                   <p class="omr-reports-setup-summary" id="omr-reports-setup-summary" role="status"></p>
                   <p class="omr-reports-stale" id="omr-reports-stale" hidden role="status">Settings changed — run again.</p>

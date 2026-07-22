@@ -3425,6 +3425,105 @@
   color: var(--od-text-soft);
 }
 
+.omr-report-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.omr-report-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 100%;
+  padding: 14px 14px 13px;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  background: var(--od-white);
+  border: 1.5px solid var(--od-border-soft);
+  border-radius: calc(var(--od-radius) + 2px);
+  box-shadow: var(--od-shadow-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.omr-report-choice:hover {
+  transform: translateY(-1px);
+  border-color: rgba(13, 110, 122, 0.35);
+  box-shadow: var(--od-shadow-md);
+}
+
+.omr-report-choice:focus-visible {
+  outline: 2px solid var(--od-gold);
+  outline-offset: 2px;
+}
+
+.omr-report-choice.is-selected {
+  border-color: var(--od-purple);
+  background: linear-gradient(180deg, rgba(13, 110, 122, 0.06) 0%, #fff 100%);
+  box-shadow: 0 0 0 1px rgba(13, 110, 122, 0.12), var(--od-shadow-md);
+}
+
+.omr-report-choice-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(13, 110, 122, 0.1);
+  color: var(--od-purple);
+}
+
+.omr-report-choice.is-selected .omr-report-choice-icon {
+  background: var(--od-purple);
+  color: #fff;
+}
+
+.omr-report-choice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.omr-report-choice-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #084a52;
+}
+
+.omr-report-choice-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--od-text-soft);
+}
+
+.omr-reports-options {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .omr-report-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .omr-report-picker {
+    grid-template-columns: 1fr;
+  }
+}
+
 .omr-reports-bar {
   margin-bottom: 8px;
 }
