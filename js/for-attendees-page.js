@@ -145,7 +145,7 @@
 
     window.HubFindYourNextRotate(
       wordEl,
-      ['event', 'connection', 'opportunity', 'breakfast', 'community'],
+      ['opportunity', 'organiser', 'event', 'connection', 'community'],
       3000
     );
   }

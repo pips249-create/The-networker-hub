@@ -372,6 +372,19 @@
   margin: 0 0 14px;
 }
 
+.auth-panel-accent {
+  color: #e8ddf5;
+  font-style: normal;
+  display: inline-block;
+  min-width: 9ch;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.auth-panel-accent.is-fading {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
 .auth-panel-lede {
   font-size: 15px;
   line-height: 1.55;

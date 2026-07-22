@@ -435,8 +435,16 @@
       });
   }
 
+  function initLoginHeroSlogan() {
+    var wordEl = document.getElementById('login-hero-word');
+    if (!wordEl || !window.HubFindYourNextRotate) return;
+
+    window.HubFindYourNextRotate(wordEl, ['event', 'Business Opp', 'organiser'], 3000);
+  }
+
   applyCheckoutContext();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
   maybeRedirectAuthenticatedClaimEntry();
+  initLoginHeroSlogan();
 })();

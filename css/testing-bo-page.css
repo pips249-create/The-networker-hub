@@ -431,3 +431,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+.testing-bo-page .events-empty .clear-filters-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--opp-gold);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
