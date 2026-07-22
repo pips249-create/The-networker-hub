@@ -148,6 +148,45 @@
     }
   }
 
+  function isBannerRenderable(block) {
+    if (!block || block.active === false) return false;
+    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
+    var hasLogo = window.CmsSponsorFields
+      ? window.CmsSponsorFields.isLogoUrl(logo)
+      : /^https?:\/\//i.test(String(logo || '').trim());
+    var company = window.CmsSponsorFields
+      ? window.CmsSponsorFields.companyName(block)
+      : String(block.company_name || '').trim();
+    var tagline = taglineFromBlock(block);
+    var ctaLabel = String(block.cta_label || '').trim();
+    var ctaUrl = String(block.cta_url || '').trim();
+    var hasCtaUrl = /^https?:\/\//i.test(ctaUrl) && ctaUrl.replace(/^https?:\/\//i, '').trim().length > 0;
+    return (hasLogo || company || tagline) && ctaLabel && hasCtaUrl;
+  }
+
+  function renderBannerPlaceholder(container, slot) {
+    if (!container) return false;
+    var href = advertisingPathForSlot(slot || 'event_page_banner_ad');
+    container.hidden = false;
+    container.innerHTML =
+      '<aside class="cms-ad-banner cms-ad-banner--available" aria-label="Sponsored banner placement available">' +
+      '<span class="cms-ad-banner-badge">Sponsored</span>' +
+      '<a class="cms-ad-banner-placeholder-link" href="' +
+      esc(href) +
+      '">' +
+      '<div class="cms-ad-banner-logo">' +
+      '<div class="cms-ad-banner-logo-placeholder">Your logo here</div>' +
+      '</div>' +
+      '<div class="cms-ad-banner-copy">' +
+      '<p class="cms-ad-banner-title">Promote your brand on event pages</p>' +
+      '</div>' +
+      '<span class="cms-ad-banner-cta cms-ad-banner-cta--placeholder">' +
+      esc(PLACEHOLDER_CTA) +
+      '</span>' +
+      '</a></aside>';
+    return true;
+  }
+
   function renderBannerAd(container, block) {
     if (!container || !block) return;
     var company = window.CmsSponsorFields
@@ -640,10 +679,29 @@
     });
   }
 
+  function loadBannerAd(container, options) {
+    if (!container) return Promise.resolve(false);
+    var opts = options || {};
+    var slot = String(opts.slot || 'event_page_banner_ad').trim() || 'event_page_banner_ad';
+    return loadCmsAd(slot)
+      .then(function (block) {
+        if (!block || !isBannerRenderable(block)) {
+          return renderBannerPlaceholder(container, slot);
+        }
+        renderBannerAd(container, block);
+        return true;
+      })
+      .catch(function () {
+        return renderBannerPlaceholder(container, slot);
+      });
+  }
+
   window.CmsAdBlocks = {
     renderSidebarAd: renderSidebarAd,
     renderHeroSponsorAd: renderHeroSponsorAd,
     renderBannerAd: renderBannerAd,
+    renderBannerPlaceholder: renderBannerPlaceholder,
+    isBannerRenderable: isBannerRenderable,
     renderCompactAd: renderCompactAd,
     renderCompactPlaceholder: renderCompactPlaceholder,
     renderCityPartnerAd: renderCityPartnerAd,
@@ -658,6 +716,7 @@
     loadOrganiserPageCarousel: loadOrganiserPageCarousel,
     loadPageCarouselAds: loadPageCarouselAds,
     loadOrganiserPageCarouselAds: loadOrganiserPageCarouselAds,
+    loadBannerAd: loadBannerAd,
     initCarousel: initCarousel,
   };
 })();

@@ -1,5 +1,5 @@
 /**
- * Opportunities — browse page with sidebar filters, tabs, sort & pagination.
+ * Opportunities — browse page with events-style filter bar, grid cards & map view.
  */
 (function () {
   var PAGE_SIZE = 12;
@@ -7,8 +7,24 @@
   var SPOTLIGHT_MAX = 12; /* sync with api/_lib/spotlight-carousel-limits.js */
   var SPOTLIGHT_AUTO_MS = 2800;
   var VIEW_MODE_KEY = 'hubOppViewMode';
-  var VIEW_MODES = ['grid', 'list', 'map'];
+  var VIEW_MODES = ['grid', 'map'];
   var DEFAULT_VIEW_MODE = 'grid';
+
+  var TYPE_CHIPS = [
+    { id: 'all', label: 'All' },
+    { id: 'franchise', label: 'Franchise' },
+    { id: 'side-hustle', label: 'Side hustle' },
+    { id: 'partnership', label: 'Partnership' },
+    { id: 'networking', label: 'Networking' },
+    { id: 'distributorship', label: 'Distributorship' },
+    { id: 'business-opportunity', label: 'Business opportunity' },
+  ];
+
+  var COMMITMENTS = [
+    { id: 'full-time', label: 'Full-time' },
+    { id: 'part-time', label: 'Part-time / Flexible' },
+    { id: 'event-based', label: 'Event-based' },
+  ];
 
   var META_PIN_SVG =
     '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
@@ -20,7 +36,7 @@
   var quality = window.HubOpportunityQuality;
 
   var FAV_ICON =
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
     '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>' +
     '</svg>';
 
@@ -35,9 +51,12 @@
   ];
 
   var allListings = [];
-  var activeType = 'all';
+  var activeTypes = [];
+  var activeInvestTier = 'all';
   var activeCategory = '';
-  var sidebarFilters = [];
+  var activeCommitments = [];
+  var activeLocationTag = '';
+  var locationQ = '';
   var FILTER_OPTION_LABELS = {};
   var searchQ = '';
   var sortBy = 'recommended';
@@ -116,22 +135,19 @@
   function cacheEls() {
     els.mount = document.getElementById('opp-listings-mount');
     els.resultsCount = document.getElementById('opp-results-count');
-    els.stripFilters = document.getElementById('opp-strip-filters');
-    els.investPills = document.getElementById('opp-invest-pills');
     els.search = document.getElementById('opp-search');
     els.sort = document.getElementById('opp-sort');
-    els.sidebar = document.querySelector('.opp-sidebar');
-    els.catPills = document.getElementById('opp-cat-pills');
-    els.viewGrid = document.getElementById('opp-view-grid');
-    els.viewList = document.getElementById('opp-view-list');
-    els.viewMap = document.getElementById('opp-view-map');
+    els.postcode = document.getElementById('opp-postcode');
+    els.typeChipsRoot = document.getElementById('opp-type-chips');
     els.minInvest = document.getElementById('opp-min-invest');
     els.maxInvest = document.getElementById('opp-max-invest');
-    els.filterInvest = document.getElementById('opp-filter-invest');
-    els.filterLocation = document.getElementById('opp-filter-location');
-    els.filterCommitment = document.getElementById('opp-filter-commitment');
     els.filterCategory = document.getElementById('opp-filter-category');
-    els.sidebarClear = document.getElementById('opp-sidebar-clear');
+    els.moreToggle = document.getElementById('filter-more-toggle');
+    els.morePanel = document.getElementById('filter-more-panel');
+    els.clearBar = document.getElementById('clear-filters-bar');
+    els.clearResults = document.getElementById('clear-filters');
+    els.viewGrid = document.getElementById('opp-view-grid');
+    els.viewMap = document.getElementById('opp-view-map');
     els.spotlightTrack = document.getElementById('opp-spotlight-track');
     els.spotlightSection = document.querySelector('.opp-premium-spotlight');
     els.saveSearchBtn = document.getElementById('opp-save-search-btn');
@@ -449,41 +465,119 @@
   }
 
   function hasTag(item, tag) {
-    var tags = (item.filterTags || []).concat(item.tags || []);
-    return tags.indexOf(tag) !== -1;
+    if (!tag) return true;
+    if (item.type === tag) return true;
+    return (item.filterTags || []).concat(item.tags || []).indexOf(tag) !== -1;
   }
 
-  function sidebarSelectValue(el) {
-    return el && el.value ? el.value : '';
+  function investmentLabel(item) {
+    if (catalog && catalog.cardDisplayMeta) {
+      var meta = catalog.cardDisplayMeta(item);
+      for (var i = 0; i < meta.length; i++) {
+        if (/investment/i.test(meta[i].key) && meta[i].val) return String(meta[i].val);
+      }
+    }
+    if (item.investAmount != null && !isNaN(item.investAmount)) {
+      if (item.investAmount <= 0) return 'Enquire';
+      if (item.investAmount >= 1000) return 'From £' + Math.round(item.investAmount / 1000) + 'k';
+      return 'From £' + item.investAmount;
+    }
+    return 'Enquire';
+  }
+
+  function commitmentLabel(item) {
+    var tags = item.filterTags || [];
+    for (var i = 0; i < COMMITMENTS.length; i++) {
+      if (tags.indexOf(COMMITMENTS[i].id) !== -1) return COMMITMENTS[i].label;
+    }
+    return 'Flexible';
+  }
+
+  function investTierClass(tier) {
+    if (tier === 'low-invest') return 'investment-low';
+    if (tier === 'mid-invest') return 'investment-mid';
+    if (tier === 'high-invest') return 'investment-high';
+    return 'investment-mid';
+  }
+
+  function detectInvestTier(item) {
+    var amount = item.investAmount;
+    if (amount == null || isNaN(amount)) {
+      if (hasTag(item, 'low-invest')) return 'low-invest';
+      if (hasTag(item, 'mid-invest')) return 'mid-invest';
+      if (hasTag(item, 'high-invest')) return 'high-invest';
+      return 'mid-invest';
+    }
+    if (amount <= 2500) return 'low-invest';
+    if (amount <= 10000) return 'mid-invest';
+    return 'high-invest';
+  }
+
+  function mediaHtml(item, thumb) {
+    if (item.imageUrl) {
+      var logoClass = item.logoUrl ? ' is-logo-cover' : '';
+      return (
+        '<img class="event-grid-img' +
+        logoClass +
+        '" src="' +
+        escapeHtml(item.imageUrl) +
+        '" alt="" loading="lazy" decoding="async" />'
+      );
+    }
+    return (
+      '<div class="event-grid-img is-placeholder" style="display:flex;align-items:center;justify-content:center;background:' +
+      escapeHtml(thumb.gradient) +
+      ';font-size:2.4rem">' +
+      thumb.emoji +
+      '</div>'
+    );
+  }
+
+  function matchesLocation(item) {
+    if (activeLocationTag && !hasTag(item, activeLocationTag)) return false;
+    if (!locationQ) return true;
+    var hay = [item.locationLabel, item.searchText, item.title, item.host, (item.tags || []).join(' ')]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return hay.indexOf(locationQ) !== -1;
+  }
+
+  function matchesInvestTier(item) {
+    if (!activeInvestTier || activeInvestTier === 'all') return true;
+    return hasTag(item, activeInvestTier);
+  }
+
+  function matchesCommitments(item) {
+    if (!activeCommitments.length) return true;
+    for (var i = 0; i < activeCommitments.length; i++) {
+      if (hasTag(item, activeCommitments[i])) return true;
+    }
+    return false;
+  }
+
+  function matchesTypes(item) {
+    if (!activeTypes.length) return true;
+    for (var i = 0; i < activeTypes.length; i++) {
+      if (hasTag(item, activeTypes[i])) return true;
+    }
+    return false;
   }
 
   function hasCustomInvestRange() {
     return minInvest !== null || maxInvest !== null;
   }
 
-  function matchesSidebar(item) {
-    var invest = sidebarSelectValue(els.filterInvest);
-    var location = sidebarSelectValue(els.filterLocation);
-    var commitment = sidebarSelectValue(els.filterCommitment);
-    var hasSidebarSelect = invest || location || commitment;
-
-    if (!hasSidebarSelect && !hasCustomInvestRange()) return true;
-
-    if (invest && !hasTag(item, invest)) return false;
-    if (location && !hasTag(item, location)) return false;
-    if (commitment && !hasTag(item, commitment)) return false;
-
-    if (minInvest !== null && (item.investAmount === null || item.investAmount < minInvest)) return false;
-    if (maxInvest !== null && (item.investAmount === null || item.investAmount > maxInvest)) return false;
-    return true;
-  }
-
   function matchesFilter(item) {
     if (activeCitySlug && !matchesCityRegion(item)) return false;
-    if (activeType !== 'all' && item.type !== activeType && !hasTag(item, activeType)) return false;
+    if (!matchesTypes(item)) return false;
     if (activeCategory && item.category !== activeCategory) return false;
-    if (!matchesSidebar(item)) return false;
+    if (!matchesInvestTier(item)) return false;
+    if (!matchesCommitments(item)) return false;
+    if (!matchesLocation(item)) return false;
     if (searchQ && item.searchText.indexOf(searchQ) === -1) return false;
+    if (minInvest !== null && (item.investAmount === null || item.investAmount < minInvest)) return false;
+    if (maxInvest !== null && (item.investAmount === null || item.investAmount > maxInvest)) return false;
     return true;
   }
 
@@ -528,9 +622,8 @@
   }
 
   function rememberFilterOptionLabels() {
-    if (!els.sidebar) return;
-    els.sidebar.querySelectorAll('.opp-filter-select option[data-count-for], .opp-filter-select option[data-count-category]').forEach(function (opt) {
-      var key = opt.getAttribute('data-count-for') || opt.getAttribute('data-count-category');
+    document.querySelectorAll('#opp-filter-category option[data-count-category]').forEach(function (opt) {
+      var key = opt.getAttribute('data-count-category');
       if (key && !FILTER_OPTION_LABELS[key]) {
         FILTER_OPTION_LABELS[key] = opt.textContent.replace(/\s*\(\d+\)\s*$/, '').trim();
       }
@@ -551,7 +644,8 @@
   function updateFilterCounts() {
     updateListingsStat();
     rememberFilterOptionLabels();
-    document.querySelectorAll('[data-count-for], [data-count-category]').forEach(function (el) {
+    updateTypeChipCounts();
+    document.querySelectorAll('[data-count-category]').forEach(function (el) {
       var key = el.getAttribute('data-count-for');
       var categoryKey = el.getAttribute('data-count-category');
       var n;
@@ -656,27 +750,47 @@
     );
   }
 
-  function cardHtml(item) {
+  function gridCard(item) {
     var href = detailHref(item);
     var typeLabels = catalog ? catalog.TYPE_LABELS : {};
-    var typeClassFn = catalog ? catalog.typeClass.bind(catalog) : function () {
-      return 'opp-type-franchise';
-    };
-    var displayMeta = catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 4);
+    var typeLabel = typeLabels[item.type] || item.type || 'Opportunity';
     var thumb = item.thumb || { emoji: '✦', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' };
-    var locIcon = /remote/i.test(item.locationLabel || '') ? '🌐' : '📍';
-
-    while (displayMeta.length < 4) {
-      displayMeta.push({ key: '\u00a0', val: '—' });
-    }
+    var invest = investmentLabel(item);
+    var commitment = commitmentLabel(item);
+    var tier = detectInvestTier(item);
+    var metaLine = [item.locationLabel || 'UK', invest].filter(Boolean).join(' · ');
+    var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
 
     return (
-      '<article class="opp-card' +
-      (item.featured ? ' featured' : '') +
-      '" data-type="' +
-      escapeHtml(item.type) +
+      '<article class="event-grid-card' +
+      (item.featured ? ' is-premium' : '') +
+      '" data-id="' +
+      escapeHtml(item.id) +
       '">' +
-      '<button type="button" class="opp-fav-btn' +
+      '<div class="event-grid-media">' +
+      mediaHtml(item, thumb) +
+      premiumBadge +
+      '<span class="event-grid-category">' +
+      escapeHtml(typeLabel) +
+      '</span></div>' +
+      '<div class="event-grid-body">' +
+      '<div class="event-grid-body-top">' +
+      '<span class="event-grid-format ' +
+      investTierClass(tier) +
+      '">' +
+      escapeHtml(commitment) +
+      '</span>' +
+      '<span class="event-grid-price">' +
+      escapeHtml(invest) +
+      '</span></div>' +
+      '<h3 class="event-grid-title">' +
+      escapeHtml(item.title) +
+      '</h3>' +
+      '<div class="event-grid-rating">' +
+      '<span class="event-grid-host">' +
+      escapeHtml(item.host || 'Provider') +
+      '</span>' +
+      '<button type="button" class="fav-btn opp-fav-btn' +
       (saves && saves.isSaved(item.id) ? ' is-active' : '') +
       '" data-opp-id="' +
       escapeHtml(item.id) +
@@ -686,44 +800,15 @@
       (saves && saves.isSaved(item.id) ? 'true' : 'false') +
       '">' +
       FAV_ICON +
-      '</button>' +
-      cardBadgesHtml(item, typeClassFn, typeLabels) +
-      mediaBlockHtml(item, thumb) +
-      '<div class="opp-card-body">' +
-      '<div class="opp-company">' +
-      companyAvatarHtml(item) +
-      '<span class="opp-co-name">' +
-      escapeHtml(item.host) +
-      '</span></div>' +
-      '<h3 class="opp-card-title">' +
-      escapeHtml(item.title) +
-      '</h3>' +
-      '<p class="opp-card-desc">' +
-      escapeHtml(item.desc) +
-      '</p>' +
-      (quality && quality.trustBadgesHtml ? quality.trustBadgesHtml(item, 'opp-trust-badges opp-trust-badges--card') : '') +
-      '<div class="opp-meta-row">' +
-      displayMeta.map(function (m) {
-        return metaCellHtml(m, item);
-      }).join('') +
-      '</div>' +
-      '</div>' +
-      '<div class="opp-card-footer">' +
-      '<span class="opp-location">' +
-      locIcon +
-      ' ' +
-      escapeHtml(item.locationLabel || 'UK') +
-      '</span>' +
-      '<a href="' +
-      escapeHtml(href) +
-      '" class="opp-enquire-btn">Enquire →</a>' +
-      '</div>' +
-      '<a class="opp-card-link" href="' +
+      '</button></div>' +
+      '<p class="event-grid-meta">' +
+      escapeHtml(metaLine) +
+      '</p></div>' +
+      '<a class="event-grid-card-link" href="' +
       escapeHtml(href) +
       '" aria-label="View ' +
       escapeHtml(item.title) +
-      '"></a>' +
-      '</article>'
+      '"></a></article>'
     );
   }
 
@@ -737,21 +822,16 @@
     start = Math.max(1, end - maxVisible + 1);
 
     items.push(
-      '<button type="button" class="opp-page-btn opp-page-prev" data-page="' +
+      '<button type="button" class="page-btn page-prev" data-page="' +
         (page - 1) +
         '"' +
         (page <= 1 ? ' disabled' : '') +
         ' aria-label="Previous page">‹</button>'
     );
 
-    if (start > 1) {
-      items.push('<button type="button" class="opp-page-btn" data-page="1">1</button>');
-      if (start > 2) items.push('<span class="opp-page-ellipsis" aria-hidden="true">…</span>');
-    }
-
     for (var p = start; p <= end; p++) {
       items.push(
-        '<button type="button" class="opp-page-btn' +
+        '<button type="button" class="page-btn' +
           (p === page ? ' is-active' : '') +
           '" data-page="' +
           p +
@@ -763,20 +843,15 @@
       );
     }
 
-    if (end < totalPages) {
-      if (end < totalPages - 1) items.push('<span class="opp-page-ellipsis" aria-hidden="true">…</span>');
-      items.push('<button type="button" class="opp-page-btn" data-page="' + totalPages + '">' + totalPages + '</button>');
-    }
-
     items.push(
-      '<button type="button" class="opp-page-btn opp-page-next" data-page="' +
+      '<button type="button" class="page-btn page-next" data-page="' +
         (page + 1) +
         '"' +
         (page >= totalPages ? ' disabled' : '') +
         ' aria-label="Next page">›</button>'
     );
 
-    return '<nav class="opp-pagination" aria-label="Opportunity pages">' + items.join('') + '</nav>';
+    return '<nav class="listings-pagination" aria-label="Opportunity pages">' + items.join('') + '</nav>';
   }
 
   function resetListingPagination() {
@@ -854,27 +929,9 @@
     );
   }
 
-  function updateResultsCount(shown, total, rangeStart, rangeEnd) {
+  function updateResultsCount(total) {
     if (!els.resultsCount) return;
-    if (!total) {
-      els.resultsCount.innerHTML = activeCityName
-        ? 'No opportunities in ' + activeCityName + ' match your filters'
-        : 'No listings match your filters';
-      return;
-    }
-    if (total <= PAGE_SIZE) {
-      els.resultsCount.innerHTML =
-        'Showing <strong>' + shown + '</strong> of <strong>' + total + '</strong> opportunities';
-      return;
-    }
-    els.resultsCount.innerHTML =
-      'Showing <strong>' +
-      rangeStart +
-      '–' +
-      rangeEnd +
-      '</strong> of <strong>' +
-      total +
-      '</strong> opportunities';
+    els.resultsCount.textContent = String(total);
   }
 
   function updateLoadMoreControls(filtered, shown, hasMore) {
@@ -932,10 +989,10 @@
     }
 
     var newItems = filtered.slice(prevShown, nextShown);
-    var grid = els.mount.querySelector('.opp-opps-grid');
+    var grid = els.mount.querySelector('.event-grid');
 
     if (grid && newItems.length) {
-      grid.insertAdjacentHTML('beforeend', newItems.map(cardHtml).join(''));
+      grid.insertAdjacentHTML('beforeend', newItems.map(gridCard).join(''));
       lastRenderedCount = nextShown;
       if (saves) saves.refreshButtons(els.mount);
 
@@ -944,7 +1001,7 @@
         rangeEl.textContent =
           'Showing ' + visibleRangeStart + '–' + nextShown + ' of ' + filtered.length;
       } else if (filtered.length > PAGE_SIZE) {
-        var gridEl = els.mount.querySelector('.opp-opps-grid');
+        var gridEl = els.mount.querySelector('.event-grid');
         if (gridEl) {
           gridEl.insertAdjacentHTML(
             'beforebegin',
@@ -959,12 +1016,7 @@
         }
       }
 
-      updateResultsCount(
-        nextShown - visibleRangeStart + 1,
-        filtered.length,
-        visibleRangeStart,
-        nextShown
-      );
+      updateResultsCount(filtered.length);
       updateLoadMoreControls(filtered, nextShown, nextShown < filtered.length);
       loadingMore = false;
       return;
@@ -974,79 +1026,110 @@
     renderListings();
   }
 
-  function syncTabUI() {
-    if (!els.stripFilters) return;
-    els.stripFilters.querySelectorAll('.opp-tab-btn').forEach(function (btn) {
-      var on = btn.getAttribute('data-filter') === activeType;
-      btn.classList.toggle('active', on);
-      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  function syncTypeChipUi() {
+    if (!els.typeChipsRoot) return;
+    var hasSelection = activeTypes.length > 0;
+    els.typeChipsRoot.querySelectorAll('.event-type-chip[data-type]').forEach(function (chip) {
+      var type = chip.getAttribute('data-type') || 'all';
+      var active = type === 'all' ? !hasSelection : activeTypes.indexOf(type) !== -1;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function toggleType(type) {
+    type = type || 'all';
+    if (type === 'all') {
+      activeTypes = [];
+    } else {
+      var idx = activeTypes.indexOf(type);
+      if (idx >= 0) activeTypes.splice(idx, 1);
+      else activeTypes.push(type);
+    }
+    syncTypeChipUi();
+  }
+
+  function buildTypeChips() {
+    if (!els.typeChipsRoot) return;
+    els.typeChipsRoot.innerHTML = TYPE_CHIPS.map(function (chip, index) {
+      return (
+        '<button type="button" class="event-type-chip' +
+        (index === 0 ? ' is-active' : '') +
+        '" data-type="' +
+        escapeHtml(chip.id) +
+        '" aria-pressed="' +
+        (index === 0 ? 'true' : 'false') +
+        '">' +
+        escapeHtml(chip.label) +
+        ' <span class="event-type-chip-count">(0)</span></button>'
+      );
+    }).join('');
+    els.typeChipsRoot.querySelectorAll('.event-type-chip[data-type]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        toggleType(chip.getAttribute('data-type') || 'all');
+        applyFilters();
+      });
+    });
+    updateTypeChipCounts();
+  }
+
+  function updateTypeChipCounts() {
+    if (!els.typeChipsRoot) return;
+    els.typeChipsRoot.querySelectorAll('.event-type-chip[data-type]').forEach(function (chip) {
+      var type = chip.getAttribute('data-type') || 'all';
+      var countEl = chip.querySelector('.event-type-chip-count');
+      if (!countEl) return;
+      var n =
+        type === 'all'
+          ? allListings.length
+          : countBy(function (item) {
+              return hasTag(item, type);
+            });
+      countEl.textContent = '(' + n + ')';
     });
   }
 
   function syncCategorySelect() {
     if (!els.filterCategory) return;
     els.filterCategory.value = activeCategory || '';
-    els.filterCategory.classList.toggle('is-active', Boolean(activeCategory));
-  }
-
-  function syncCatPills() {
-    syncCategorySelect();
   }
 
   function renderListings() {
     if (!els.mount) return;
 
     var filtered = sortListings(getFilteredList());
+    var listingsBlock = document.getElementById('listings-view');
+    if (listingsBlock) listingsBlock.hidden = viewMode === 'map';
 
     if (viewMode === 'map') {
-      if (!filtered.length) {
-        updateResultsCount(0, 0, 0, 0);
-      } else if (els.resultsCount) {
-        els.resultsCount.innerHTML =
-          'Showing <strong>' + filtered.length + '</strong> opportunities';
-      }
+      updateResultsCount(filtered.length);
       if (window.hubRefreshOpportunitiesMap) window.hubRefreshOpportunitiesMap(filtered);
       return;
     }
 
     if (!filtered.length) {
       disconnectLazyObserver();
-      var emptyTitle = activeCityName
-        ? 'No opportunities in ' + escapeHtml(activeCityName) + ' yet'
-        : 'No opportunities match your filters';
-      var emptyLead = activeCityName
-        ? 'Try clearing filters or browse all UK listings.'
-        : 'Try adjusting your search or clear all filters.';
       els.mount.innerHTML =
-        '<div class="opp-no-results is-visible" role="status">' +
-        '<div class="opp-no-results-icon" aria-hidden="true">🔍</div>' +
-        '<h3>' +
-        emptyTitle +
-        '</h3>' +
-        '<p>' +
-        emptyLead +
-        ' <button type="button" class="opp-clear-btn" id="opp-clear-filters">Clear filters</button>.</p>' +
-        '</div>';
-      updateResultsCount(0, 0, 0, 0);
+        '<div class="events-empty" role="status"><p>No opportunities match your filters. <button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button></p></div>';
+      updateResultsCount(0);
+      updateTypeChipCounts();
       bindClearFilters();
       return;
     }
 
     var slice = getListingSlice(filtered);
-    var gridClass = 'opp-opps-grid' + (viewMode === 'list' ? ' list-view' : '');
 
     els.mount.innerHTML =
       listingsRangeHtml(slice.rangeStart, slice.rangeEnd, filtered.length) +
-      '<div class="' +
-      gridClass +
-      '">' +
-      slice.items.map(cardHtml).join('') +
+      '<div class="event-grid">' +
+      slice.items.map(gridCard).join('') +
       '</div>' +
       (slice.hasMore ? loadMoreHtml(filtered, slice.rangeEnd) : '') +
       paginationHtml(currentPage, slice.totalPages);
 
     lastRenderedCount = slice.rangeEnd;
-    updateResultsCount(slice.items.length, filtered.length, slice.rangeStart, slice.rangeEnd);
+    updateResultsCount(filtered.length);
+    updateTypeChipCounts();
     if (saves) saves.refreshButtons(els.mount);
     if (slice.hasMore) observeLazySentinel();
     else disconnectLazyObserver();
@@ -1059,61 +1142,42 @@
     btn.addEventListener('click', resetFilters);
   }
 
-  function readSidebarFilters() {
-    sidebarFilters = [];
-    var invest = sidebarSelectValue(els.filterInvest);
-    var location = sidebarSelectValue(els.filterLocation);
-    var commitment = sidebarSelectValue(els.filterCommitment);
-    if (invest) sidebarFilters.push(invest);
-    if (location) sidebarFilters.push(location);
-    if (commitment) sidebarFilters.push(commitment);
-  }
-
   function readInvestRange() {
-    minInvest = els.minInvest && els.minInvest.value !== '' ? parseInt(els.minInvest.value, 10) : null;
-    maxInvest = els.maxInvest && els.maxInvest.value !== '' ? parseInt(els.maxInvest.value, 10) : null;
-    if (isNaN(minInvest)) minInvest = null;
-    if (isNaN(maxInvest)) maxInvest = null;
+    minInvest = els.minInvest && els.minInvest.value !== '' ? Number(els.minInvest.value) : null;
+    maxInvest = els.maxInvest && els.maxInvest.value !== '' ? Number(els.maxInvest.value) : null;
+    if (minInvest != null && isNaN(minInvest)) minInvest = null;
+    if (maxInvest != null && isNaN(maxInvest)) maxInvest = null;
   }
 
-  function syncSidebarSelectUI() {
-    [els.filterCategory, els.filterInvest, els.filterLocation, els.filterCommitment].forEach(function (select) {
-      if (!select) return;
-      select.classList.toggle('is-active', Boolean(select.value));
+  function readFiltersFromControls() {
+    searchQ = els.search ? String(els.search.value || '').trim().toLowerCase() : '';
+    sortBy = els.sort ? els.sort.value : 'recommended';
+    locationQ = els.postcode ? String(els.postcode.value || '').trim().toLowerCase() : '';
+    activeCategory = els.filterCategory ? String(els.filterCategory.value || '').trim() : '';
+    readInvestRange();
+  }
+
+  function syncInvestPills() {
+    document.querySelectorAll('input[data-invest-tier]').forEach(function (input) {
+      var tier = input.getAttribute('data-invest-tier') || 'all';
+      input.checked = tier === activeInvestTier;
     });
   }
 
-  function syncInvestPillsUI() {
-    if (!els.investPills) return;
-    var tier = '';
-    var hasCustomRange = hasCustomInvestRange();
-    if (!hasCustomRange && els.filterInvest) tier = els.filterInvest.value || '';
-    els.investPills.querySelectorAll('.opp-invest-pill').forEach(function (btn) {
-      var key = btn.getAttribute('data-invest-tier') || '';
-      var pillTier = key === 'all' ? '' : key;
-      var on = !hasCustomRange && pillTier === tier;
-      btn.classList.toggle('active', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  function syncCommitmentChecks() {
+    document.querySelectorAll('[data-commitment]').forEach(function (input) {
+      var id = input.getAttribute('data-commitment');
+      input.checked = activeCommitments.indexOf(id) !== -1;
     });
-  }
-
-  function setInvestTier(tier) {
-    if (els.minInvest) els.minInvest.value = '';
-    if (els.maxInvest) els.maxInvest.value = '';
-    minInvest = null;
-    maxInvest = null;
-    if (els.filterInvest) els.filterInvest.value = tier || '';
-    syncInvestPillsUI();
-    applyFilters();
   }
 
   function currentFilterCriteria() {
     return {
-      type: activeType,
+      type: activeTypes.length === 1 ? activeTypes[0] : activeTypes.length ? activeTypes.join(',') : 'all',
       category: activeCategory || '',
-      invest: els.filterInvest ? els.filterInvest.value || '' : '',
-      location: els.filterLocation ? els.filterLocation.value || '' : '',
-      commitment: els.filterCommitment ? els.filterCommitment.value || '' : '',
+      invest: activeInvestTier === 'all' ? '' : activeInvestTier,
+      location: activeLocationTag || '',
+      commitment: activeCommitments.length === 1 ? activeCommitments[0] : activeCommitments.join(','),
       q: searchQ || '',
       sort: sortBy || 'recommended',
       minInvest: minInvest != null ? minInvest : '',
@@ -1125,21 +1189,26 @@
     syncRegionalLanding();
     var params = new URLSearchParams(window.location.search);
     var type = params.get('type');
-    if (type && TAB_TYPES.indexOf(type) !== -1) activeType = type;
+    activeTypes = type && TAB_TYPES.indexOf(type) !== -1 && type !== 'all' ? [type] : [];
 
     activeCategory = params.get('category') || '';
     searchQ = String(params.get('q') || '').trim().toLowerCase();
     sortBy = params.get('sort') || 'recommended';
+    activeInvestTier = params.get('invest') || 'all';
+    activeLocationTag = params.get('location') || '';
+    var commitment = params.get('commitment') || '';
+    activeCommitments = commitment ? commitment.split(',').filter(Boolean) : [];
 
     if (els.search && searchQ) els.search.value = searchQ;
     if (els.sort) els.sort.value = sortBy;
     if (els.filterCategory && activeCategory) els.filterCategory.value = activeCategory;
-    if (els.filterInvest) els.filterInvest.value = params.get('invest') || '';
-    if (els.filterLocation) els.filterLocation.value = params.get('location') || '';
-    if (els.filterCommitment) els.filterCommitment.value = params.get('commitment') || '';
+    if (params.get('location') === 'remote' && els.postcode && !params.get('q')) {
+      els.postcode.value = 'Remote';
+    }
 
     var viewParam = params.get('view');
     viewMode = viewParam ? normalizeViewMode(viewParam) : loadStoredViewMode();
+    if (viewMode === 'list') viewMode = 'grid';
 
     var min = params.get('min');
     var max = params.get('max');
@@ -1149,9 +1218,8 @@
     if (isNaN(maxInvest)) maxInvest = null;
     if (els.minInvest && minInvest != null) els.minInvest.value = String(minInvest);
     if (els.maxInvest && maxInvest != null) els.maxInvest.value = String(maxInvest);
+    if (hasCustomInvestRange()) activeInvestTier = 'all';
 
-    readSidebarFilters();
-    updateSearchClearVisibility();
     pendingResultsScroll = Boolean(searchQ || window.location.hash === '#results');
   }
 
@@ -1171,7 +1239,7 @@
   function writeFiltersToUrl() {
     var params = new URLSearchParams();
     var c = currentFilterCriteria();
-    if (c.type && c.type !== 'all') params.set('type', c.type);
+    if (c.type && c.type !== 'all') params.set('type', c.type.split(',')[0]);
     if (c.category) params.set('category', c.category);
     if (c.invest) params.set('invest', c.invest);
     if (c.location) params.set('location', c.location);
@@ -1195,66 +1263,62 @@
   }
 
   function applyFilters() {
-    readSidebarFilters();
-    readInvestRange();
-    syncSidebarSelectUI();
-    syncInvestPillsUI();
+    readFiltersFromControls();
+    syncCategorySelect();
+    syncTypeChipUi();
+    syncInvestPills();
+    syncCommitmentChecks();
     resetListingPagination();
     writeFiltersToUrl();
     renderListings();
-  }
-
-  function setType(type) {
-    activeType = type || 'all';
-    syncTabUI();
-    applyFilters();
+    renderSpotlight();
   }
 
   function resetFilters() {
     var regional = window.hubOppRegionalLanding;
-    if (regional && regional.slug && !searchQ && !activeCategory && activeType === 'all') {
-      var hasExtra =
-        (els.filterInvest && els.filterInvest.value) ||
-        (els.filterLocation && els.filterLocation.value) ||
-        (els.filterCommitment && els.filterCommitment.value) ||
-        minInvest !== null ||
-        maxInvest !== null;
+    if (
+      regional &&
+      regional.slug &&
+      !searchQ &&
+      !activeCategory &&
+      !activeTypes.length &&
+      activeInvestTier === 'all' &&
+      !activeCommitments.length &&
+      !activeLocationTag
+    ) {
+      var hasExtra = minInvest !== null || maxInvest !== null || locationQ;
       if (!hasExtra) {
         window.location.href = '/opportunities/';
         return;
       }
     }
 
-    activeType = 'all';
+    activeTypes = [];
+    activeInvestTier = 'all';
     activeCategory = '';
+    activeCommitments = [];
+    activeLocationTag = '';
+    locationQ = '';
     searchQ = '';
     sortBy = 'recommended';
-    sidebarFilters = [];
     minInvest = null;
     maxInvest = null;
     resetListingPagination();
 
     if (els.search) els.search.value = '';
     if (els.sort) els.sort.value = 'recommended';
+    if (els.postcode) els.postcode.value = '';
     if (els.minInvest) els.minInvest.value = '';
     if (els.maxInvest) els.maxInvest.value = '';
-    if (els.filterInvest) els.filterInvest.value = '';
-    if (els.filterLocation) els.filterLocation.value = '';
-    if (els.filterCommitment) els.filterCommitment.value = '';
     if (els.filterCategory) els.filterCategory.value = '';
-    if (els.sidebar) {
-      els.sidebar.querySelectorAll('details.opp-filter-details').forEach(function (details) {
-        details.open = false;
-      });
-    }
 
-    updateSearchClearVisibility();
-    syncTabUI();
-    syncCatPills();
-    syncSidebarSelectUI();
-    syncInvestPillsUI();
+    syncTypeChipUi();
+    syncCategorySelect();
+    syncInvestPills();
+    syncCommitmentChecks();
     writeFiltersToUrl();
     renderListings();
+    renderSpotlight();
   }
 
   function setSaveSearchStatus(msg, isError) {
@@ -1372,123 +1436,25 @@
     });
   }
 
-  function updateSearchClearVisibility() {
-    var clearBtn = document.getElementById('opp-search-clear');
-    if (!clearBtn || !els.search) return;
-    clearBtn.hidden = !els.search.value.trim();
-  }
-
-  function initStripTabs() {
-    if (!els.stripFilters || els.stripFilters.dataset.bound) return;
-    els.stripFilters.dataset.bound = '1';
-    els.stripFilters.addEventListener('click', function (e) {
-      var btn = e.target.closest('.opp-tab-btn');
-      if (!btn) return;
-      setType(btn.getAttribute('data-filter') || 'all');
-    });
-  }
-
-  function initInvestPills() {
-    if (!els.investPills || els.investPills.dataset.bound) return;
-    els.investPills.dataset.bound = '1';
-    els.investPills.addEventListener('click', function (e) {
-      var btn = e.target.closest('.opp-invest-pill');
-      if (!btn) return;
-      var tier = btn.getAttribute('data-invest-tier') || '';
-      if (tier === 'all') tier = '';
-      else if (els.filterInvest && els.filterInvest.value === tier && !hasCustomInvestRange()) {
-        tier = '';
-      }
-      setInvestTier(tier);
-    });
-  }
-
-  function initSidebar() {
-    if (!els.sidebar || els.sidebar.dataset.bound) return;
-    els.sidebar.dataset.bound = '1';
-    rememberFilterOptionLabels();
-
-    els.sidebar.addEventListener('change', function (e) {
-      if (e.target === els.filterCategory) {
-        activeCategory = e.target.value || '';
-        applyFilters();
-        return;
-      }
-      if (e.target.matches('.opp-filter-select')) {
-        if (e.target === els.filterInvest && e.target.value) {
-          if ((els.minInvest && els.minInvest.value !== '') || (els.maxInvest && els.maxInvest.value !== '')) {
-            if (els.minInvest) els.minInvest.value = '';
-            if (els.maxInvest) els.maxInvest.value = '';
-            minInvest = null;
-            maxInvest = null;
-          }
-        }
-        applyFilters();
-      }
-    });
-
-    [els.minInvest, els.maxInvest].forEach(function (input) {
-      if (!input) return;
-      input.addEventListener('input', function () {
-        if (input.value !== '' && els.filterInvest) els.filterInvest.value = '';
-        clearTimeout(rangeTimer);
-        rangeTimer = setTimeout(applyFilters, SEARCH_DEBOUNCE_MS);
-      });
-    });
-
-    if (els.sidebarClear) {
-      els.sidebarClear.addEventListener('click', resetFilters);
-    }
-  }
-
   function initSearch() {
     if (!els.search) return;
 
     els.search.addEventListener('input', function () {
-      var val = els.search.value.trim().toLowerCase();
-      updateSearchClearVisibility();
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(function () {
-        searchQ = val;
-        resetListingPagination();
-        writeFiltersToUrl();
-        renderListings();
-      }, SEARCH_DEBOUNCE_MS);
+      searchTimer = setTimeout(applyFilters, SEARCH_DEBOUNCE_MS);
     });
-
-    var clearBtn = document.getElementById('opp-search-clear');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', function () {
-        els.search.value = '';
-        els.search.focus();
-        searchQ = '';
-        resetListingPagination();
-        updateSearchClearVisibility();
-        writeFiltersToUrl();
-        renderListings();
-      });
-    }
   }
 
   function initSort() {
     if (!els.sort || els.sort.dataset.bound) return;
     els.sort.dataset.bound = '1';
-    els.sort.addEventListener('change', function () {
-      sortBy = els.sort.value || 'recommended';
-      resetListingPagination();
-      writeFiltersToUrl();
-      renderListings();
-    });
+    els.sort.addEventListener('change', applyFilters);
   }
 
   function syncViewToggleUI() {
     if (els.viewGrid) {
       els.viewGrid.classList.toggle('is-active', viewMode === 'grid');
       els.viewGrid.setAttribute('aria-pressed', viewMode === 'grid' ? 'true' : 'false');
-    }
-    if (els.viewList) {
-      els.viewList.classList.toggle('is-active', viewMode === 'list');
-      els.viewList.setAttribute('aria-pressed', viewMode === 'list' ? 'true' : 'false');
     }
     if (els.viewMap) {
       els.viewMap.classList.toggle('is-active', viewMode === 'map');
@@ -1500,6 +1466,7 @@
     function setView(mode) {
       var wasMap = viewMode === 'map';
       viewMode = normalizeViewMode(mode);
+      if (viewMode === 'list') viewMode = 'grid';
       saveViewMode(viewMode);
       syncViewToggleUI();
       if (mode === 'map') {
@@ -1511,20 +1478,75 @@
       renderListings();
     }
 
-    if (els.viewGrid) els.viewGrid.addEventListener('click', function () {
-      setView('grid');
-    });
-    if (els.viewList) els.viewList.addEventListener('click', function () {
-      setView('list');
-    });
-    if (els.viewMap) els.viewMap.addEventListener('click', function () {
-      setView('map');
-    });
+    if (els.viewGrid) {
+      els.viewGrid.addEventListener('click', function () {
+        setView('grid');
+      });
+    }
+    if (els.viewMap) {
+      els.viewMap.addEventListener('click', function () {
+        setView('map');
+      });
+    }
     syncViewToggleUI();
   }
 
-  function initCatPills() {
-    syncCategorySelect();
+  function initFilterBar() {
+    rememberFilterOptionLabels();
+    buildTypeChips();
+
+    document.querySelectorAll('input[data-invest-tier]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        if (!input.checked) return;
+        activeInvestTier = input.getAttribute('data-invest-tier') || 'all';
+        if (els.minInvest) els.minInvest.value = '';
+        if (els.maxInvest) els.maxInvest.value = '';
+        minInvest = null;
+        maxInvest = null;
+        syncInvestPills();
+        applyFilters();
+      });
+    });
+
+    document.querySelectorAll('[data-commitment]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var id = input.getAttribute('data-commitment');
+        var idx = activeCommitments.indexOf(id);
+        if (input.checked && idx === -1) activeCommitments.push(id);
+        if (!input.checked && idx !== -1) activeCommitments.splice(idx, 1);
+        applyFilters();
+      });
+    });
+
+    if (els.filterCategory) {
+      els.filterCategory.addEventListener('change', applyFilters);
+    }
+    if (els.postcode) {
+      els.postcode.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyFilters, SEARCH_DEBOUNCE_MS);
+      });
+    }
+    [els.minInvest, els.maxInvest].forEach(function (input) {
+      if (!input) return;
+      input.addEventListener('change', function () {
+        if (input.value !== '') activeInvestTier = 'all';
+        syncInvestPills();
+        applyFilters();
+      });
+    });
+
+    if (els.moreToggle && els.morePanel) {
+      els.moreToggle.addEventListener('click', function () {
+        var open = els.morePanel.hasAttribute('hidden');
+        if (open) els.morePanel.removeAttribute('hidden');
+        else els.morePanel.setAttribute('hidden', '');
+        els.moreToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+
+    if (els.clearBar) els.clearBar.addEventListener('click', resetFilters);
+    if (els.clearResults) els.clearResults.addEventListener('click', resetFilters);
   }
 
   function findListingById(id) {
@@ -1575,7 +1597,7 @@
         return;
       }
 
-      var btn = e.target.closest('.opp-page-btn');
+      var btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
       var filtered = getFilteredList();
       var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -1586,15 +1608,15 @@
       currentPage = p;
       visibleRangeStart = (p - 1) * PAGE_SIZE + 1;
       renderListings();
-      var listingsArea = document.querySelector('.opp-listings-area');
-      if (listingsArea) listingsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var block = document.getElementById('listings-view');
+      if (block) block.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 
   function bootListings(listings) {
     allListings = listings || [];
     updateFilterCounts();
-    syncTabUI();
+    syncTypeChipUi();
     resetSpotlightOrder();
     renderSpotlight();
     renderListings();
@@ -1613,19 +1635,19 @@
       });
     }
     updateFilterCounts();
-    initStripTabs();
-    initInvestPills();
-    initSidebar();
+    initFilterBar();
     initSearch();
     initSort();
     initViewToggle();
-    initCatPills();
     initPagination();
     initFavClicks();
     initCopyLink();
     initSaveSearch();
     initHubertStrip();
-    syncTabUI();
+    syncTypeChipUi();
+    syncInvestPills();
+    syncCommitmentChecks();
+    syncCategorySelect();
     resetSpotlightOrder();
     renderSpotlight();
     renderListings();

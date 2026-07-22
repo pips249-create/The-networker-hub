@@ -443,3 +443,61 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+.testing-bo-page .events-results-actions .opp-copy-link-btn,
+.testing-bo-page .events-results-actions .opp-save-search-btn {
+  border: 1px solid var(--opp-border);
+  background: #fff;
+  color: var(--opp-navy);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.testing-bo-page .events-results-actions .opp-copy-link-btn:hover,
+.testing-bo-page .events-results-actions .opp-save-search-btn:hover {
+  border-color: var(--opp-gold-border);
+  color: var(--opp-gold);
+}
+
+.testing-bo-page .events-results-actions .opp-save-search-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--opp-mid-gray);
+}
+
+.testing-bo-page .events-results-actions .opp-save-search-status.is-error {
+  color: #b42318;
+}
+
+.testing-bo-page .events-view-sort-group .opp-view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.testing-bo-page .events-view-sort-group .opp-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--opp-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--opp-mid-gray);
+  cursor: pointer;
+}
+
+.testing-bo-page .events-view-sort-group .opp-view-btn.is-active {
+  border-color: var(--opp-gold);
+  color: var(--opp-navy);
+  background: var(--opp-gold-pale);
+}
+
+.testing-bo-page .opp-map-wrap {
+  margin-bottom: 24px;
+}

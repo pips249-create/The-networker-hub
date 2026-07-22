@@ -2570,6 +2570,12 @@ a.fo-hero-badge:hover {
   color: #fff;
 }
 
+.fo-cta-pricing--sponsor {
+  margin-top: -8px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .fo-cta-pricing-links {
   display: inline;
 }

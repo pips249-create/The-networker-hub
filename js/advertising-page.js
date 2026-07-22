@@ -182,111 +182,6 @@
     ],
   };
 
-  var PACKAGE_COMPARE = {
-    events: [
-      {
-        name: 'Main Sponsor',
-        website: 'Browse hero on /events/',
-        emails: 'Every attendee email header',
-        from: '£2,000/mo',
-        best: 'Flagship brand awareness',
-        anchor: 'ad-pkg-events-main',
-      },
-      {
-        name: 'Mini Sponsors',
-        website: 'Event detail sidebar',
-        emails: 'Selected attendee emails',
-        from: '£600/slot/mo',
-        best: 'Targeted event audience',
-        anchor: 'ad-pkg-events-mini',
-      },
-      {
-        name: 'City Partner',
-        website: 'Regional city landing pages',
-        emails: 'None — website only',
-        from: '£29/city/mo + VAT',
-        best: 'Local / regional brands',
-        anchor: 'city-partner-package',
-      },
-      {
-        name: 'Featured Listing',
-        website: 'Pinned on events browse',
-        emails: 'None',
-        from: '£55/mo',
-        best: 'Organisers promoting own events',
-        anchor: 'ad-pkg-events-spotlight',
-      },
-    ],
-    organisers: [
-      {
-        name: 'Main Sponsor',
-        website: 'Organisers browse hero',
-        emails: 'Every organiser email header',
-        from: '£1,000/mo',
-        best: 'B2B brands reaching organisers',
-        anchor: 'ad-pkg-organisers-main',
-      },
-      {
-        name: 'Mini Sponsors',
-        website: 'Organiser profile sidebar',
-        emails: 'Selected organiser emails',
-        from: '£300/slot/mo',
-        best: 'Targeted organiser audience',
-        anchor: 'ad-pkg-organisers-mini',
-      },
-      {
-        name: 'Featured Listing',
-        website: 'Pinned on organisers browse',
-        emails: 'None',
-        from: '£27.50/mo',
-        best: 'Groups promoting own profile',
-        anchor: 'ad-pkg-organisers-spotlight',
-      },
-    ],
-    opportunities: [
-      {
-        name: 'Main Sponsor',
-        website: 'Opportunities browse hero',
-        emails: 'Every opportunity email header',
-        from: '£2,000/mo',
-        best: 'Flagship B2B deal audience',
-        anchor: 'ad-pkg-opportunities-main',
-      },
-      {
-        name: 'Mini Sponsors',
-        website: 'Opportunity detail sidebar',
-        emails: 'Selected opportunity emails',
-        from: '£600/slot/mo',
-        best: 'High-intent deal seekers',
-        anchor: 'ad-pkg-opportunities-mini',
-      },
-      {
-        name: 'City Partner',
-        website: 'Opportunity city landing pages',
-        emails: 'None — website only',
-        from: '£29/city/mo + VAT',
-        best: 'Regional local presence',
-        anchor: 'city-partner-package',
-      },
-      {
-        name: 'Directory Listing',
-        website: 'Standard listing',
-        emails: 'None',
-        from: '£25/mo + VAT',
-        best: 'Businesses listing own deal',
-        anchor: 'ad-pkg-opportunities-listing',
-      },
-      {
-        name: 'Featured Listing',
-        website: 'Pinned on opportunities browse',
-        emails: 'None',
-        from: '£55/mo',
-        best: 'Listers promoting own deal',
-        anchor: 'ad-pkg-opportunities-spotlight',
-      },
-    ],
-  };
-
   var MAIN_SPONSOR_SLOTS = [
     {
       section: 'events',
@@ -330,43 +225,115 @@
     ],
   };
 
-  function renderPackageCompare(section) {
-    var body = document.getElementById('ad-compare-table-body');
-    if (!body) return;
+  function packageLabelFromArticle(article) {
+    var custom = article.getAttribute('data-ad-package-label');
+    if (custom) return custom.trim();
+    var badge = article.querySelector('.ad-package-badge');
+    if (badge) return badge.textContent.trim();
+    var title = article.querySelector('.ad-package-title');
+    return title ? title.textContent.trim() : 'Package';
+  }
 
-    var rows = PACKAGE_COMPARE[section] || PACKAGE_COMPARE.events;
-    body.innerHTML = rows
-      .map(function (row) {
-        return (
-          '<tr>' +
-          '<td><a class="ad-compare-link" href="#' +
-          esc(row.anchor) +
-          '" data-ad-pricing-jump="' +
-          esc(row.anchor) +
-          '">' +
-          esc(row.name) +
-          '</a></td>' +
-          '<td>' +
-          esc(row.website) +
-          '</td>' +
-          '<td>' +
-          esc(row.emails) +
-          '</td>' +
-          '<td>' +
-          esc(row.from) +
-          '</td>' +
-          '<td>' +
-          esc(row.best) +
-          '</td>' +
-          '</tr>'
-        );
-      })
-      .join('');
+  function packagePriceFromArticle(article) {
+    var priceEl = article.querySelector('.ad-package-price');
+    if (!priceEl) return '';
+    var first = priceEl.childNodes[0];
+    return first && first.nodeType === 3 ? first.textContent.trim() : priceEl.textContent.trim().split('\n')[0];
+  }
 
-    body.querySelectorAll('[data-ad-pricing-jump]').forEach(function (link) {
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        jumpToPackage(link.getAttribute('data-ad-pricing-jump'));
+  function activatePackageInPanel(panel, packageId, options) {
+    if (!panel || !packageId) return false;
+    var browser = panel.querySelector('.ad-package-browser');
+    if (!browser) return false;
+
+    var tabs = browser.querySelectorAll('.ad-package-tab');
+    var articles = browser.querySelectorAll('.ad-package');
+    var found = false;
+
+    articles.forEach(function (article) {
+      var active = article.id === packageId;
+      article.hidden = !active;
+      article.classList.toggle('is-active-package', active);
+      if (active) found = true;
+    });
+
+    tabs.forEach(function (tab) {
+      var active = tab.getAttribute('data-ad-package-target') === packageId;
+      tab.classList.toggle('is-active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      tab.tabIndex = active ? 0 : -1;
+    });
+
+    if (found && options && options.scroll) {
+      browser.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    return found;
+  }
+
+  function initPackageTabs() {
+    document.querySelectorAll('.ad-tab-panel').forEach(function (panel) {
+      var browser = panel.querySelector('.ad-package-browser');
+      if (!browser) return;
+
+      var packagesWrap = browser.querySelector('.ad-packages');
+      if (!packagesWrap) return;
+
+      var articles = packagesWrap.querySelectorAll('.ad-package');
+      if (!articles.length) return;
+
+      var nav = document.createElement('nav');
+      nav.className = 'ad-package-tabs';
+      nav.setAttribute('role', 'tablist');
+      nav.setAttribute('aria-label', 'Packages');
+
+      articles.forEach(function (article, index) {
+        var id = article.id;
+        if (!id) return;
+
+        var label = packageLabelFromArticle(article);
+        var price = packagePriceFromArticle(article);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ad-package-tab' + (index === 0 ? ' is-active' : '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('data-ad-package-target', id);
+        btn.setAttribute('aria-controls', id);
+        btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+        btn.tabIndex = index === 0 ? 0 : -1;
+        btn.innerHTML =
+          '<span class="ad-package-tab-label">' +
+          esc(label) +
+          '</span>' +
+          (price ? '<span class="ad-package-tab-price">' + esc(price) + '</span>' : '');
+
+        btn.addEventListener('click', function () {
+          activatePackageInPanel(panel, id);
+          if (history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        });
+
+        nav.appendChild(btn);
+        article.hidden = index !== 0;
+        article.classList.toggle('is-active-package', index === 0);
+      });
+
+      browser.insertBefore(nav, packagesWrap);
+
+      nav.addEventListener('keydown', function (e) {
+        var tabs = Array.prototype.slice.call(nav.querySelectorAll('.ad-package-tab'));
+        var current = document.activeElement;
+        var idx = tabs.indexOf(current);
+        if (idx < 0) return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          var next = e.key === 'ArrowRight' ? idx + 1 : idx - 1;
+          if (next < 0) next = tabs.length - 1;
+          if (next >= tabs.length) next = 0;
+          tabs[next].focus();
+          tabs[next].click();
+        }
       });
     });
   }
@@ -484,8 +451,8 @@
           var statusClass = live ? 'booked' : 'available';
           var statusLabel = live ? 'Live now' : 'Available';
           var detail = live
-            ? 'Currently showing ' + (company || 'a partner') + ' — enquire for ' + monthLabel + ' or later'
-            : 'Open for ' + monthLabel + ' — one exclusive partner per month';
+            ? 'Showing ' + (company || 'a partner') + ' — enquire for ' + monthLabel + '+'
+            : 'Open for ' + monthLabel;
 
           return (
             '<li class="ad-availability-item ad-availability-item--' +
@@ -543,8 +510,7 @@
     });
   }
 
-  function initCompareAndEnquiry(section) {
-    renderPackageCompare(section);
+  function syncSectionPackages(section) {
     syncEnquiryFormSection(section);
   }
 
@@ -618,14 +584,16 @@
     }
 
     window.setTimeout(function () {
+      var panel = panelName
+        ? document.querySelector('[data-ad-panel="' + panelName + '"]')
+        : null;
+      if (panel && activatePackageInPanel(panel, id, { scroll: true })) {
+        return;
+      }
       var el = document.getElementById(id);
       if (!el) return;
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      el.classList.add('ad-package--highlight');
-      window.setTimeout(function () {
-        el.classList.remove('ad-package--highlight');
-      }, 1800);
-    }, panelName ? 60 : 0);
+    }, panelName ? 80 : 0);
   }
 
   function initTabJumpLinks() {
@@ -648,7 +616,7 @@
   }
 
   function initPricingGlanceLinks() {
-    initCompareAndEnquiry('events');
+    syncSectionPackages('events');
     renderPricingGlance('events');
   }
 
@@ -952,49 +920,16 @@
   }
 
 
-  var packageRevealIo = null;
-
   function initPackageReveal() {
-    var packages = document.querySelectorAll('.ad-package');
-    packages.forEach(function (pkg) {
-      pkg.classList.add('ad-package-reveal');
-    });
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      packages.forEach(function (pkg) {
-        pkg.classList.add('is-visible');
-      });
-      return;
-    }
-
-    if (!window.IntersectionObserver) {
-      packages.forEach(function (pkg) {
-        pkg.classList.add('is-visible');
-      });
-      return;
-    }
-
-    packageRevealIo = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            packageRevealIo.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: '0px 0px -6% 0px', threshold: 0.06 }
-    );
-
-    packages.forEach(function (pkg) {
-      packageRevealIo.observe(pkg);
+    document.querySelectorAll('.ad-package').forEach(function (pkg) {
+      pkg.classList.add('ad-package-reveal', 'is-visible');
     });
   }
 
   function refreshPackageReveal(panel) {
-    if (!packageRevealIo || !panel) return;
-    panel.querySelectorAll('.ad-package-reveal:not(.is-visible)').forEach(function (pkg) {
-      packageRevealIo.observe(pkg);
+    if (!panel) return;
+    panel.querySelectorAll('.ad-package.is-active-package').forEach(function (pkg) {
+      pkg.classList.add('is-visible');
     });
   }
 
@@ -1028,7 +963,7 @@
       });
 
       renderPricingGlance(target);
-      initCompareAndEnquiry(target);
+      syncSectionPackages(target);
 
       var preserveHash = options && options.preserveHash;
       var anchor = options && options.anchor;
@@ -1036,7 +971,15 @@
         history.replaceState(null, '', anchor ? '#' + anchor : '#ad-panel-' + target);
       }
 
-      if (anchor) scrollToAnchor(anchor);
+      if (anchor) {
+        window.setTimeout(function () {
+          activatePackageInPanel(
+            document.querySelector('[data-ad-panel="' + target + '"]'),
+            anchor,
+            { scroll: true }
+          );
+        }, 40);
+      }
     }
 
     function activateByName(name, options) {
@@ -1062,33 +1005,39 @@
     });
 
     var initial = tabFromHash(location.hash) || 'events';
-    var hashAnchor = String(location.hash || '').replace(/^#/, '');
+    var hashAnchor = packageFromHash(location.hash);
     var startTab = tabsRoot.querySelector('[data-ad-tab="' + initial + '"]') || tabs[0];
     if (startTab) {
       activateTab(startTab, {
-        preserveHash: true,
-        anchor: hashAnchor === 'city-partner-package' ? hashAnchor : '',
+        preserveHash: !!hashAnchor,
+        anchor: hashAnchor,
       });
     }
 
     window.addEventListener('hashchange', function () {
       var want = tabFromHash(location.hash);
       if (!want) return;
-      var hashId = String(location.hash || '').replace(/^#/, '');
+      var hashId = packageFromHash(location.hash);
       activateByName(want, {
-        anchor: hashId === 'city-partner-package' ? hashId : '',
+        anchor: hashId,
       });
     });
   }
 
   function tabFromHash(hash) {
-    var want = String(hash || '').replace(/^#/, '').trim().toLowerCase();
-    if (!want || want === 'events' || want === 'ad-panel-events' || want === 'city-partner-package') {
-      return 'events';
-    }
-    if (want === 'organisers' || want === 'ad-panel-organisers') return 'organisers';
-    if (want === 'opportunities' || want === 'ad-panel-opportunities') return 'opportunities';
+    var want = String(hash || '').replace(/^#/, '').trim();
+    if (!want) return null;
+    if (PACKAGE_PANEL[want]) return PACKAGE_PANEL[want];
+    var lower = want.toLowerCase();
+    if (lower === 'events' || lower === 'ad-panel-events') return 'events';
+    if (lower === 'organisers' || lower === 'ad-panel-organisers') return 'organisers';
+    if (lower === 'opportunities' || lower === 'ad-panel-opportunities') return 'opportunities';
     return null;
+  }
+
+  function packageFromHash(hash) {
+    var want = String(hash || '').replace(/^#/, '').trim();
+    return PACKAGE_PANEL[want] ? want : '';
   }
 
   if (document.readyState === 'loading') {
@@ -1096,6 +1045,7 @@
       initHeroEntrance();
       initReveal();
       initTabs();
+      initPackageTabs();
       initPackageReveal();
       initPricingGlanceLinks();
       initTabJumpLinks();
@@ -1107,6 +1057,7 @@
     initHeroEntrance();
     initReveal();
     initTabs();
+    initPackageTabs();
     initPackageReveal();
     initPricingGlanceLinks();
     initTabJumpLinks();

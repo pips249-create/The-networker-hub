@@ -15,7 +15,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/hub.css?v=20260714cls" />
+    <link rel="stylesheet" href="/css/events-page.css?v=20260722lede" />
     <link rel="stylesheet" href="/css/opportunities-page.css?v=20260722lede" />
+    <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260722orgtitle" />
+    <link rel="stylesheet" href="/css/testing-bo-page.css?v=20260722d" />
     <link rel="stylesheet" href="/css/home-page.css?v=20260721cities" />
     <link rel="stylesheet" href="/css/networking-regions.css?v=20260721locdir" />
     <link rel="stylesheet" href="/css/hub-mobile.css?v=20260721hero" />
@@ -26,7 +29,7 @@
     <script src="/js/hub-seo-schema.js?v=20260612" defer></script>
     <script src="/js/hub-lazy-vendor.js?v=20260716fp"></script>
   </head>
-  <body class="opportunities-page opp-browse-page">
+  <body class="events-page opportunities-page opp-browse-page testing-bo-page">
     <div id="hub-site-nav"></div>
     <script src="/js/site-nav.js?v=20260721d" data-root="/" data-page="opportunities"></script>
 
@@ -88,7 +91,7 @@
     <script src="/js/cms-sponsor-fields.js?v=20260609c"></script>
     <script src="/js/sponsor-hub.js?v=20260722adcta"></script>
 
-    <main class="opp-shell" id="browse">
+    <main class="opp-shell shell" id="browse">
       <section class="networking-region-intro" id="networking-region-intro" hidden aria-labelledby="networking-region-intro-heading">
         <div class="networking-region-intro-accent" aria-hidden="true"></div>
         <div class="networking-region-intro-inner">
@@ -122,7 +125,7 @@
               Premium Spotlight
             </div>
             <div class="spotlight-nav">
-              <a href="#opp-listings-mount" class="spotlight-view-all">View all</a>
+              <a href="#listings-view" class="spotlight-view-all">View all</a>
               <button type="button" id="opp-spotlight-prev" aria-label="Previous">‹</button>
               <button type="button" id="opp-spotlight-next" aria-label="Next">›</button>
             </div>
@@ -133,179 +136,163 @@
         </section>
       </div>
 
-      <div class="opp-strip-filters" id="opp-strip-filters" role="tablist" aria-label="Opportunity type">
-          <button type="button" class="opp-tab-btn active" role="tab" aria-selected="true" data-filter="all">
-            All <span class="opp-tab-count" data-count-for="all">0</span>
-          </button>
-          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="franchise">
-            Franchise <span class="opp-tab-count" data-count-for="franchise">0</span>
-          </button>
-          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="side-hustle">
-            Side hustle <span class="opp-tab-count" data-count-for="side-hustle">0</span>
-          </button>
-          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="partnership">
-            Partnership <span class="opp-tab-count" data-count-for="partnership">0</span>
-          </button>
-          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="networking">
-            Networking <span class="opp-tab-count" data-count-for="networking">0</span>
-          </button>
-          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="distributorship">
-            Distributorship <span class="opp-tab-count" data-count-for="distributorship">0</span>
-          </button>
-          <button type="button" class="opp-tab-btn" role="tab" aria-selected="false" data-filter="business-opportunity">
-            Business opportunity <span class="opp-tab-count" data-count-for="business-opportunity">0</span>
-          </button>
-        </div>
-        <div class="opp-invest-pills" id="opp-invest-pills" role="group" aria-label="Investment budget">
-          <button type="button" class="opp-invest-pill active" data-invest-tier="all" aria-pressed="true">
-            All budgets
-          </button>
-          <button type="button" class="opp-invest-pill" data-invest-tier="low-invest" aria-pressed="false">
-            Under £2.5k <span class="opp-invest-pill-count" data-count-for="low-invest">0</span>
-          </button>
-          <button type="button" class="opp-invest-pill" data-invest-tier="mid-invest" aria-pressed="false">
-            £2.5k–£10k <span class="opp-invest-pill-count" data-count-for="mid-invest">0</span>
-          </button>
-          <button type="button" class="opp-invest-pill" data-invest-tier="high-invest" aria-pressed="false">
-            £10k+ <span class="opp-invest-pill-count" data-count-for="high-invest">0</span>
-          </button>
-        </div>
-        <p class="opp-browse-disclaimer" role="note">
-          Listings are informational only — not FCA-regulated and not investment advice. Conduct your own due diligence before any commercial arrangement.
-        </p>
-
-        <section class="opp-hubert-strip" id="opp-hubert-strip" aria-label="Need help choosing?">
-          <div class="opp-hubert-strip-inner">
-            <div class="opp-hubert-strip-copy">
-              <img src="/assets/hubert-icon.png" alt="" width="36" height="36" class="opp-hubert-strip-icon" />
-              <div>
-                <strong>Not sure where to start?</strong>
-                <span>Ask Hubert to narrow down franchises, side hustles, or partnerships for you.</span>
+      <div class="events-filter-wrap">
+        <h2 class="events-filter-heading" id="events-filter-heading">Filter opportunities</h2>
+        <div class="events-filter-shell">
+          <div class="events-filter-bar" role="search" aria-label="Filter opportunities">
+            <div class="filter-bar-row filter-bar-row-location">
+              <div class="filter-field filter-field-postcode">
+                <span class="filter-field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                </span>
+                <label class="visually-hidden" for="opp-postcode">Location</label>
+                <input type="text" id="opp-postcode" placeholder="City or region" autocomplete="address-level2" title="Filter by city or region">
               </div>
             </div>
-            <div class="opp-hubert-strip-actions">
-              <button type="button" class="opp-hubert-chip" data-hubert-prompt="Help me find a low-investment side hustle opportunity on the hub.">
-                Low-investment side hustles
-              </button>
-              <button type="button" class="opp-hubert-chip" data-hubert-prompt="What franchise opportunities are available under £10k investment?">
-                Franchises under £10k
-              </button>
-              <button type="button" class="opp-hubert-chip" data-hubert-prompt="How do I enquire about a business opportunity on The Networker Hub?">
-                How enquiries work
-              </button>
-            </div>
-          </div>
-        </section>
-
-      <div class="opp-browse-layout">
-      <aside class="opp-sidebar" aria-label="Filters">
-        <div class="opp-sidebar-panel">
-          <div class="opp-sidebar-filters">
-            <h3>Refine results</h3>
-
-          <label class="opp-filter-field" for="opp-filter-category">
-            <span class="opp-filter-field-label">Category</span>
-            <select id="opp-filter-category" class="opp-filter-select">
-              <option value="">All categories</option>
-              <option value="cleaning" data-count-category="cleaning">Cleaning</option>
-              <option value="food" data-count-category="food">Food &amp; Drink</option>
-              <option value="tech" data-count-category="tech">Tech &amp; Digital</option>
-              <option value="health" data-count-category="health">Health &amp; Fitness</option>
-              <option value="property" data-count-category="property">Property</option>
-              <option value="education" data-count-category="education">Education &amp; Coaching</option>
-              <option value="pets" data-count-category="pets">Pets &amp; Animals</option>
-              <option value="finance" data-count-category="finance">Finance &amp; Admin</option>
-              <option value="mlm" data-count-category="mlm">MLM &amp; Network Marketing</option>
-            </select>
-          </label>
-
-          <div class="opp-filter-field">
-            <label class="opp-filter-field-label" for="opp-filter-invest">Investment</label>
-            <select id="opp-filter-invest" class="opp-filter-select">
-              <option value="">Any investment</option>
-              <option value="low-invest" data-count-for="low-invest">£0 – £2,500</option>
-              <option value="mid-invest" data-count-for="mid-invest">£2,500 – £10k</option>
-              <option value="high-invest" data-count-for="high-invest">£10k+</option>
-            </select>
-            <details class="opp-filter-details">
-              <summary>Custom range</summary>
-              <div class="opp-range-inputs">
-                <input type="number" id="opp-min-invest" placeholder="Min £" min="0" step="100" aria-label="Minimum investment" />
-                <input type="number" id="opp-max-invest" placeholder="Max £" min="0" step="100" aria-label="Maximum investment" />
+            <div class="filter-bar-row filter-bar-row-bottom">
+              <div class="filter-bar-cluster">
+                <div class="filter-bar-primary">
+                  <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group">
+                    <legend class="filter-bar-chip-label">Investment</legend>
+                    <div class="filter-format-pills">
+                      <label class="filter-format-pill">
+                        <input type="radio" name="invest-tier" data-invest-tier="all" checked>
+                        <span class="filter-format-pill-face">All budgets</span>
+                      </label>
+                      <label class="filter-format-pill">
+                        <input type="radio" name="invest-tier" data-invest-tier="low-invest">
+                        <span class="filter-format-pill-face">Under £2.5k</span>
+                      </label>
+                      <label class="filter-format-pill">
+                        <input type="radio" name="invest-tier" data-invest-tier="mid-invest">
+                        <span class="filter-format-pill-face">£2.5k–£10k</span>
+                      </label>
+                      <label class="filter-format-pill">
+                        <input type="radio" name="invest-tier" data-invest-tier="high-invest">
+                        <span class="filter-format-pill-face">£10k+</span>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
+                    <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                    More filters <span class="filter-more-chevron" aria-hidden="true">▾</span>
+                  </button>
+                </div>
+                <div class="filter-more-panel" id="filter-more-panel" hidden>
+                  <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested">
+                    <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity type"></nav>
+                  </div>
+                  <div class="filter-opp-category-wrap">
+                    <label class="filter-bar-select" for="opp-filter-category">
+                      <span class="filter-bar-chip-label">Category</span>
+                      <select id="opp-filter-category">
+                        <option value="">All categories</option>
+                        <option value="cleaning" data-count-category="cleaning">Cleaning</option>
+                        <option value="food" data-count-category="food">Food &amp; Drink</option>
+                        <option value="tech" data-count-category="tech">Tech &amp; Digital</option>
+                        <option value="health" data-count-category="health">Health &amp; Fitness</option>
+                        <option value="property" data-count-category="property">Property</option>
+                        <option value="education" data-count-category="education">Education &amp; Coaching</option>
+                        <option value="pets" data-count-category="pets">Pets &amp; Animals</option>
+                        <option value="finance" data-count-category="finance">Finance &amp; Admin</option>
+                        <option value="mlm" data-count-category="mlm">MLM &amp; Network Marketing</option>
+                      </select>
+                    </label>
+                  </div>
+                  <fieldset class="filter-opp-commitment-group">
+                    <legend class="filter-bar-chip-label">Commitment</legend>
+                    <label class="filter-checkbox">
+                      <input type="checkbox" data-commitment="full-time">
+                      <span class="filter-checkbox-box" aria-hidden="true"></span>
+                      Full-time
+                    </label>
+                    <label class="filter-checkbox">
+                      <input type="checkbox" data-commitment="part-time">
+                      <span class="filter-checkbox-box" aria-hidden="true"></span>
+                      Part-time / Flexible
+                    </label>
+                    <label class="filter-checkbox">
+                      <input type="checkbox" data-commitment="event-based">
+                      <span class="filter-checkbox-box" aria-hidden="true"></span>
+                      Event-based
+                    </label>
+                  </fieldset>
+                  <div class="filter-price-range">
+                    <span class="filter-bar-chip-label">Investment range</span>
+                    <div class="filter-price-range-controls">
+                      <div class="filter-price-bounds">
+                        <label class="filter-price-bound">
+                          <span class="filter-price-bound-label">Min (£)</span>
+                          <input type="number" id="opp-min-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Minimum investment in pounds">
+                        </label>
+                        <label class="filter-price-bound">
+                          <span class="filter-price-bound-label">Max (£)</span>
+                          <input type="number" id="opp-max-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Maximum investment in pounds">
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-bar-actions">
+                  <div class="filter-field filter-field-search">
+                    <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                    </span>
+                    <label class="visually-hidden" for="opp-search">Search opportunities</label>
+                    <input type="search" id="opp-search" placeholder="Search franchises, side hustles, providers…" autocomplete="off">
+                  </div>
+                  <button type="button" class="filter-clear-btn" id="clear-filters-bar">Clear filters</button>
+                </div>
               </div>
-            </details>
-          </div>
-
-          <label class="opp-filter-field" for="opp-filter-location">
-            <span class="opp-filter-field-label">Location</span>
-            <select id="opp-filter-location" class="opp-filter-select">
-              <option value="">Any location</option>
-              <option value="remote" data-count-for="remote">Remote / Online</option>
-              <option value="yorkshire" data-count-for="yorkshire">Yorkshire</option>
-              <option value="north" data-count-for="north">North England</option>
-              <option value="midlands" data-count-for="midlands">Midlands</option>
-              <option value="south" data-count-for="south">South England</option>
-              <option value="uk-wide" data-count-for="uk-wide">UK-wide</option>
-            </select>
-          </label>
-
-          <label class="opp-filter-field" for="opp-filter-commitment">
-            <span class="opp-filter-field-label">Commitment</span>
-            <select id="opp-filter-commitment" class="opp-filter-select">
-              <option value="">Any commitment</option>
-              <option value="full-time" data-count-for="full-time">Full-time</option>
-              <option value="part-time" data-count-for="part-time">Part-time / Flexible</option>
-              <option value="event-based" data-count-for="event-based">Event-based</option>
-            </select>
-          </label>
-
-          <button type="button" class="opp-sidebar-clear" id="opp-sidebar-clear">Clear filters</button>
-          </div>
-
-          <div class="opp-sidebar-sponsor">
-            <p class="opp-sidebar-sponsor-tag">Featured placement</p>
-            <h4>Get your opportunity seen first</h4>
-            <p>Reach thousands of UK business professionals. Featured listings sit top of every relevant search.</p>
-            <a href="/organiser/opportunity-edit" class="opp-btn-gold-sm" data-hub-action="add-opportunity">List your opportunity →</a>
+            </div>
           </div>
         </div>
-      </aside>
+      </div>
 
-      <div class="opp-listings-area" id="results">
-        <h2 class="listings-header" id="opp-listings-heading" hidden>All opportunities</h2>
-        <div class="opp-listings-toolbar">
-          <p class="opp-results-info" id="opp-results-count" aria-live="polite">Loading listings…</p>
-          <div class="opp-toolbar-actions">
-            <button type="button" class="opp-copy-link-btn" id="opp-copy-link-btn" title="Copy a link to this filtered view">
-              Copy link
-            </button>
-            <button type="button" class="opp-save-search-btn" id="opp-save-search-btn" title="Email me when new listings match these filters">
-              Alert me
-            </button>
-            <p class="opp-save-search-status" id="opp-save-search-status" hidden role="status"></p>
-          </div>
-          <div class="opp-toolbar-right">
-            <div class="opp-toolbar-search">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4" />
-                <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-              </svg>
-              <input
-                type="search"
-                id="opp-search"
-                placeholder="Search opportunities…"
-                autocomplete="off"
-                enterkeyhint="search"
-                aria-label="Search opportunities"
-              />
-              <button type="button" id="opp-search-clear" class="opp-search-clear" aria-label="Clear search" hidden>×</button>
+      <p class="opp-browse-disclaimer" role="note">
+        Listings are informational only — not FCA-regulated and not investment advice. Conduct your own due diligence before any commercial arrangement.
+      </p>
+
+      <section class="opp-hubert-strip" id="opp-hubert-strip" aria-label="Need help choosing?">
+        <div class="opp-hubert-strip-inner">
+          <div class="opp-hubert-strip-copy">
+            <img src="/assets/hubert-icon.png" alt="" width="36" height="36" class="opp-hubert-strip-icon" />
+            <div>
+              <strong>Not sure where to start?</strong>
+              <span>Ask Hubert to narrow down franchises, side hustles, or partnerships for you.</span>
             </div>
-            <select class="opp-sort-select" id="opp-sort" aria-label="Sort opportunities">
-              <option value="recommended">Recommended</option>
-              <option value="invest-asc">Investment: low–high</option>
-              <option value="invest-desc">Investment: high–low</option>
-              <option value="alpha">Name A–Z</option>
-            </select>
+          </div>
+          <div class="opp-hubert-strip-actions">
+            <button type="button" class="opp-hubert-chip" data-hubert-prompt="Help me find a low-investment side hustle opportunity on the hub.">
+              Low-investment side hustles
+            </button>
+            <button type="button" class="opp-hubert-chip" data-hubert-prompt="What franchise opportunities are available under £10k investment?">
+              Franchises under £10k
+            </button>
+            <button type="button" class="opp-hubert-chip" data-hubert-prompt="How do I enquire about a business opportunity on The Networker Hub?">
+              How enquiries work
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="events-results-meta" id="results">
+        <span class="events-results-count" aria-live="polite">Showing <strong id="opp-results-count">0</strong> results</span>
+        <div class="events-results-actions">
+          <button type="button" class="opp-copy-link-btn" id="opp-copy-link-btn" title="Copy a link to this filtered view">Copy link</button>
+          <button type="button" class="opp-save-search-btn" id="opp-save-search-btn" title="Email me when new listings match these filters">Alert me</button>
+          <p class="opp-save-search-status" id="opp-save-search-status" hidden role="status"></p>
+          <button type="button" id="clear-filters" class="clear-filters-link">Clear filters</button>
+          <div class="events-view-sort-group">
+            <div class="events-sort-wrap">
+              <label for="opp-sort">Sort by</label>
+              <select id="opp-sort">
+                <option value="recommended">Recommended</option>
+                <option value="invest-asc">Investment: low–high</option>
+                <option value="invest-desc">Investment: high–low</option>
+                <option value="alpha">Name A–Z</option>
+              </select>
+            </div>
             <div class="opp-view-toggle" role="group" aria-label="Results view">
               <button type="button" class="opp-view-btn is-active" id="opp-view-grid" aria-pressed="true" title="Grid view">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -313,13 +300,6 @@
                   <rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor" />
                   <rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor" />
                   <rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor" />
-                </svg>
-              </button>
-              <button type="button" class="opp-view-btn" id="opp-view-list" aria-pressed="false" title="List view">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <rect x="1" y="2" width="12" height="2" rx="1" fill="currentColor" />
-                  <rect x="1" y="6" width="12" height="2" rx="1" fill="currentColor" />
-                  <rect x="1" y="10" width="12" height="2" rx="1" fill="currentColor" />
                 </svg>
               </button>
               <button type="button" class="opp-view-btn" id="opp-view-map" aria-pressed="false" title="Map view">
@@ -332,53 +312,55 @@
             </div>
           </div>
         </div>
-
-        <div class="opp-featured-banner" id="opp-featured-banner">
-          <p>
-            <strong>Featured placement available</strong> — put your opportunity at the top of every relevant search
-            result.
-          </p>
-          <a href="/opportunities/list">Find out more →</a>
-        </div>
-
-        <div class="opp-map-wrap" id="opp-map-wrap" hidden>
-          <aside class="opp-map-sidebar" id="opp-map-sidebar" aria-label="Opportunities on map">
-            <div class="opp-map-sidebar-head" id="opp-map-sidebar-head">
-              <div class="opp-map-sidebar-head-row">
-                <button
-                  type="button"
-                  class="opp-map-sidebar-count-btn"
-                  id="opp-map-sidebar-count-btn"
-                  aria-expanded="true"
-                  aria-controls="opp-map-sidebar-list"
-                >
-                  <strong id="opp-map-sidebar-count">0</strong>
-                  <span>on map</span>
-                  <span class="opp-map-sidebar-count-hint" id="opp-map-sidebar-count-hint">Tap to show listings</span>
-                </button>
-                <button
-                  type="button"
-                  class="opp-map-list-toggle"
-                  id="opp-map-list-toggle"
-                  aria-expanded="true"
-                  aria-controls="opp-map-sidebar-list"
-                >
-                  <span id="opp-map-list-toggle-label">Hide list</span>
-                </button>
-              </div>
-              <p class="opp-map-sidebar-sub" id="opp-map-sidebar-sub"></p>
-            </div>
-            <ul class="opp-map-sidebar-list" id="opp-map-sidebar-list"></ul>
-            <div class="opp-map-sidebar-foot" id="opp-map-sidebar-foot" hidden>
-              <button type="button" class="opp-map-sidebar-load-more" id="opp-map-sidebar-load-more">Load more</button>
-            </div>
-          </aside>
-          <div id="opp-map-panel" class="opp-map-panel" aria-label="Opportunities map"></div>
-        </div>
-        <p class="opp-map-hint" id="opp-map-hint" hidden></p>
-
-        <div class="opp-listings-mount" id="opp-listings-mount"></div>
       </div>
+
+      <div class="events-body">
+        <div class="events-main">
+          <div class="opp-map-wrap" id="opp-map-wrap" hidden>
+            <aside class="opp-map-sidebar" id="opp-map-sidebar" aria-label="Opportunities on map">
+              <div class="opp-map-sidebar-head" id="opp-map-sidebar-head">
+                <div class="opp-map-sidebar-head-row">
+                  <button
+                    type="button"
+                    class="opp-map-sidebar-count-btn"
+                    id="opp-map-sidebar-count-btn"
+                    aria-expanded="true"
+                    aria-controls="opp-map-sidebar-list"
+                  >
+                    <strong id="opp-map-sidebar-count">0</strong>
+                    <span>on map</span>
+                    <span class="opp-map-sidebar-count-hint" id="opp-map-sidebar-count-hint">Tap to show listings</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="opp-map-list-toggle"
+                    id="opp-map-list-toggle"
+                    aria-expanded="true"
+                    aria-controls="opp-map-sidebar-list"
+                  >
+                    <span id="opp-map-list-toggle-label">Hide list</span>
+                  </button>
+                </div>
+                <p class="opp-map-sidebar-sub" id="opp-map-sidebar-sub"></p>
+              </div>
+              <ul class="opp-map-sidebar-list" id="opp-map-sidebar-list"></ul>
+              <div class="opp-map-sidebar-foot" id="opp-map-sidebar-foot" hidden>
+                <button type="button" class="opp-map-sidebar-load-more" id="opp-map-sidebar-load-more">Load more</button>
+              </div>
+            </aside>
+            <div id="opp-map-panel" class="opp-map-panel" aria-label="Opportunities map"></div>
+          </div>
+          <p class="opp-map-hint" id="opp-map-hint" hidden></p>
+
+          <section class="listings-block" id="listings-view" aria-labelledby="opp-listings-heading">
+            <h2 class="listings-header" id="opp-listings-heading">All opportunities</h2>
+            <div class="event-listings" id="opp-listings-mount"></div>
+            <p class="events-organiser-footnote">
+              Provider?
+              <a href="/organiser/opportunity-edit" class="events-organiser-footnote-link" data-hub-action="add-opportunity">List an opportunity</a>
+            </p>
+          </section>
+        </div>
       </div>
 
       <section class="home-locations networking-location-directory" id="networking-location-directory" aria-labelledby="networking-location-directory-heading">
@@ -528,7 +510,7 @@
     <div id="hub-site-footer"></div>
     <script src="/js/site-footer.js?v=20260714u" data-root="/"></script>
 
-    <script src="/js/cms-ad-blocks.js?v=20260716cp2"></script>
+    <script src="/js/cms-ad-blocks.js?v=20260722adcta"></script>
     <script src="/js/hub-organiser-actions.js?v=20260710" data-root="/"></script>
     <script src="/js/opportunities-catalog.js?v=20260716c"></script>
     <script src="/js/opportunity-listing-quality.js?v=20260710d"></script>
@@ -541,7 +523,7 @@
     <script src="/js/opportunities-regions.js?v=20260721hero"></script>
     <script src="/js/postcode-geo.js?v=20260609b"></script>
     <script src="/js/hub-spotlight-carousel.js?v=20260721"></script>
-    <script src="/js/opportunities-page.js?v=20260721spotlight"></script>
+    <script src="/js/opportunities-page.js?v=20260722bo"></script>
     <script src="/js/opportunities-map.js?v=20260611"></script>
     <script src="/js/hubert-chat.js?v=20260710"></script>
     <script src="/js/hubert-widget.js?v=20260710" data-root="/"></script>

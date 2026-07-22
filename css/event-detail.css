@@ -3214,7 +3214,33 @@ body.modal-open {
   color: #fff !important;
 }
 
+.cms-ad-banner--available {
+  border-style: dashed;
+}
+
+.cms-ad-banner-placeholder-link {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.cms-ad-banner-cta--placeholder {
+  background: transparent !important;
+  color: var(--purple-700, #7a3d8a) !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 12px;
+}
+
 @media (max-width: 720px) {
+  .cms-ad-banner-placeholder-link {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
   .cms-ad-banner {
     grid-template-columns: 1fr;
     gap: 14px;
