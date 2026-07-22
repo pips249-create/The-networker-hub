@@ -1547,9 +1547,31 @@ body.advertising-page {
   margin-bottom: 0.75rem;
 }
 
+.ad-package-main .ad-email-reach--table {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ad-line);
+}
+
+.ad-package-main .ad-reach-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ad-package-main .ad-reach-table {
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.ad-package-main .ad-reach-table tbody td:nth-child(3) {
+  min-width: 0;
+  white-space: normal;
+}
+
 .ad-package-span-full.ad-email-reach--table {
   margin-top: 0;
-  padding: 0 24px 4px;
+  padding: 18px 24px 4px;
+  border-top: 1px solid var(--ad-line);
 }
 
 .ad-package-span-full .ad-reach-table {
