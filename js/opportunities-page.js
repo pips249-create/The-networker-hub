@@ -78,6 +78,7 @@
   var pendingResultsScroll = false;
   var activeCitySlug = '';
   var activeCityName = '';
+  var expandedCardId = null;
 
   var els = {};
 
@@ -730,6 +731,48 @@
     );
   }
 
+  function cardDetailHtml(item) {
+    var href = detailHref(item);
+    var displayMeta = catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 4);
+    var locIcon = /remote/i.test(item.locationLabel || '') ? '🌐' : '📍';
+
+    while (displayMeta.length < 4) {
+      displayMeta.push({ key: '\u00a0', val: '—' });
+    }
+
+    return (
+      '<div class="bo-opp-detail-inner">' +
+      '<div class="opp-company">' +
+      companyAvatarHtml(item) +
+      '<span class="opp-co-name">' +
+      escapeHtml(item.host || 'Provider') +
+      '</span></div>' +
+      '<p class="opp-card-desc">' +
+      escapeHtml(item.desc || '') +
+      '</p>' +
+      (quality && quality.trustBadgesHtml
+        ? quality.trustBadgesHtml(item, 'opp-trust-badges opp-trust-badges--card')
+        : '') +
+      '<div class="opp-meta-row">' +
+      displayMeta
+        .map(function (m) {
+          return metaCellHtml(m, item);
+        })
+        .join('') +
+      '</div>' +
+      '<div class="bo-opp-detail-footer">' +
+      '<span class="opp-location">' +
+      locIcon +
+      ' ' +
+      escapeHtml(item.locationLabel || 'UK') +
+      '</span>' +
+      '<a href="' +
+      escapeHtml(href) +
+      '" class="opp-enquire-btn">Enquire →</a>' +
+      '</div></div>'
+    );
+  }
+
   function mediaBlockHtml(item, thumb) {
     if (item.imageUrl) {
       return (
@@ -760,13 +803,15 @@
     var tier = detectInvestTier(item);
     var metaLine = [item.locationLabel || 'UK', invest].filter(Boolean).join(' · ');
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
+    var detailId = 'bo-opp-detail-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
 
     return (
-      '<article class="event-grid-card' +
+      '<article class="event-grid-card bo-opp-card' +
       (item.featured ? ' is-premium' : '') +
       '" data-id="' +
       escapeHtml(item.id) +
       '">' +
+      '<div class="bo-opp-compact">' +
       '<div class="event-grid-media">' +
       mediaHtml(item, thumb) +
       premiumBadge +
@@ -803,13 +848,76 @@
       '</button></div>' +
       '<p class="event-grid-meta">' +
       escapeHtml(metaLine) +
-      '</p></div>' +
+      '</p>' +
+      '<button type="button" class="bo-opp-expand-btn" aria-expanded="false" aria-controls="' +
+      escapeHtml(detailId) +
+      '">' +
+      '<span class="bo-opp-expand-label">Show full details</span>' +
+      '<svg class="bo-opp-expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</button></div></div>' +
+      '<div class="bo-opp-detail" id="' +
+      escapeHtml(detailId) +
+      '" hidden>' +
+      cardDetailHtml(item) +
+      '</div>' +
       '<a class="event-grid-card-link" href="' +
       escapeHtml(href) +
       '" aria-label="View ' +
       escapeHtml(item.title) +
       '"></a></article>'
     );
+  }
+
+  function setCardExpanded(card, expand) {
+    if (!card) return;
+    var btn = card.querySelector('.bo-opp-expand-btn');
+    var detail = card.querySelector('.bo-opp-detail');
+    var label = btn && btn.querySelector('.bo-opp-expand-label');
+    var id = card.getAttribute('data-id');
+
+    card.classList.toggle('is-expanded', expand);
+    if (detail) detail.hidden = !expand;
+    if (btn) {
+      btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
+      if (label) label.textContent = expand ? 'Hide full details' : 'Show full details';
+    }
+    expandedCardId = expand ? id : null;
+  }
+
+  function bindCardExpand() {
+    if (!els.mount || els.mount.dataset.expandBound === '1') return;
+    els.mount.dataset.expandBound = '1';
+
+    els.mount.addEventListener('click', function (e) {
+      var btn = e.target.closest('.bo-opp-expand-btn');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      var card = btn.closest('.bo-opp-card');
+      if (!card) return;
+
+      var willExpand = !card.classList.contains('is-expanded');
+      els.mount.querySelectorAll('.bo-opp-card.is-expanded').forEach(function (openCard) {
+        if (openCard !== card) setCardExpanded(openCard, false);
+      });
+      setCardExpanded(card, willExpand);
+
+      if (willExpand && window.HubOpportunityInvestment && window.HubOpportunityInvestment.bindCardPopovers) {
+        window.HubOpportunityInvestment.bindCardPopovers(function (lookupId) {
+          for (var i = 0; i < allListings.length; i++) {
+            if (String(allListings[i].id) === String(lookupId)) return allListings[i];
+          }
+          return null;
+        });
+      }
+    });
+  }
+
+  function restoreExpandedCard() {
+    if (!expandedCardId || !els.mount) return;
+    var card = els.mount.querySelector('.bo-opp-card[data-id="' + expandedCardId + '"]');
+    if (card) setCardExpanded(card, true);
   }
 
   function paginationHtml(page, totalPages) {
@@ -1019,6 +1127,7 @@
       updateResultsCount(filtered.length);
       updateLoadMoreControls(filtered, nextShown, nextShown < filtered.length);
       loadingMore = false;
+      restoreExpandedCard();
       return;
     }
 
@@ -1133,6 +1242,7 @@
     if (saves) saves.refreshButtons(els.mount);
     if (slice.hasMore) observeLazySentinel();
     else disconnectLazyObserver();
+    restoreExpandedCard();
   }
 
   function bindClearFilters() {
@@ -1640,6 +1750,7 @@
     initSort();
     initViewToggle();
     initPagination();
+    bindCardExpand();
     initFavClicks();
     initCopyLink();
     initSaveSearch();
