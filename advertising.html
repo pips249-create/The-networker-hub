@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad26">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad30">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -88,38 +88,31 @@
           <div class="ad-package-main">
             <span class="ad-package-badge">City Partner</span>
             <h3 class="ad-package-title">City Partner</h3>
-            <p class="ad-package-placement">Logo + CTA on city pages · <strong>/networking/:city</strong> &amp; <strong>/opportunities/networking/:city</strong></p>
+            <p class="ad-package-placement">Your logo and link on regional city pages — Events and Opportunities directories</p>
             <p class="ad-package-price">£29 <span>/ city / month + VAT</span> · £75 <span>for 3 cities + VAT</span></p>
             <p class="ad-package-note ad-package-note--launch" id="city-partner-launch-note" hidden></p>
             <ul>
-              <li>Logo + CTA beside local intro copy — <strong>website only</strong>, not in emails.</li>
+              <li>Your logo and link beside local intro copy — <strong>website only</strong>, not in emails.</li>
               <li>One partner per city — rolling monthly subscription · 3-city pack available.</li>
               <li><strong>Self-serve checkout</strong> for open cities · join the waitlist when a city is sponsored.</li>
             </ul>
-            <details class="city-partner-available-details" id="city-partner-available-details">
-              <summary><strong>Available now</strong> <span class="city-partner-available-count" id="city-partner-available-count">…</span></summary>
-              <ul class="city-partner-available-names" id="city-partner-available-list"></ul>
-            </details>
             <p class="ad-package-note city-partner-booked-summary" id="city-partner-booked-summary" hidden><strong>Currently sponsored:</strong> <span id="city-partner-booked-summary-list"></span></p>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
             <p class="ad-preview-label">Example</p>
             <div class="ad-mock-page ad-mock-page--city-partner" aria-hidden="true">
-              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/networking/manchester</em></div>
               <div class="ad-mock-city-partner-intro">
                 <div class="ad-mock-city-partner-accent"></div>
                 <div class="ad-mock-city-partner-inner">
                   <div class="ad-mock-city-partner-copy">
                     <span class="ad-mock-city-partner-kicker">Your local business community</span>
                     <p class="ad-mock-city-partner-title">Business networking in <em>Manchester</em></p>
-                    <p class="ad-mock-lorem ad-mock-lorem--city">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                    <p class="ad-mock-lorem ad-mock-lorem--city ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                    <p class="ad-mock-city-partner-copyline">Browse live business networking events and organiser communities across Manchester.</p>
                     <p class="ad-mock-city-partner-organiser-link">Organisers — list your group →</p>
                   </div>
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">City Sponsor</span>
-                    <span class="ad-mock-city-partner-logo">Your logo</span>
-                    <span class="ad-mock-city-partner-cta">Find out more →</span>
+                    <span class="ad-mock-city-partner-logo">Your logo here</span>
                   </aside>
                 </div>
               </div>
@@ -203,7 +196,7 @@
                 </article>
               </div>
             </div>
-            <p class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not networking groups or organisers promoting their own events. We check relevance to our professional audience before any placement goes live.</p></details></p>
+            <div class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not networking groups or organisers promoting their own events. We check relevance to our professional audience before any placement goes live.</p></details></div>
             <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Main%20Events%20Directory%20Sponsor%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
@@ -445,7 +438,8 @@
     <!-- Organisers -->
     <div class="ad-tab-panel ad-tab-panel--organisers" id="ad-panel-organisers" data-ad-panel="organisers" role="tabpanel" aria-labelledby="ad-tab-organisers" hidden>
       <div class="ad-section-head">
-        <h2>Organisers directory advertising</h2>
+        <h2><a href="/events/?tab=organisers">Organisers directory advertising</a></h2>
+        <a href="/events/?tab=organisers">View live directory →</a>
       </div>
 
       <div class="ad-package-browser">
@@ -457,23 +451,51 @@
             <p class="ad-package-placement">Main Sponsor banner at the top of the organisers browse page</p>
             <p class="ad-package-price">£1,000 <span>/ month</span></p>
             <ul>
-              <li>Logo, copy &amp; link in Main Sponsor banner on organisers browse.</li>
-              <li>Logo + link in header of <strong>every organiser email</strong>.</li>
+              <li>Logo in Main Sponsor banner on the organisers browse page — one partner per month.</li>
+              <li>Logo + link in header of <strong>every organiser email</strong> (21 templates).</li>
             </ul>
-            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Organiser email expected views">
+            <details class="ad-email-inventory">
+              <summary>View all organiser emails with Main Sponsor placement</summary>
+              <ul class="ad-email-inventory-list">
+                <li>New registration</li>
+                <li>New application</li>
+                <li>Booking cancelled</li>
+                <li>Event removed by hub</li>
+                <li>Event unpublished by hub</li>
+                <li>Listing unpublished by hub</li>
+                <li>Hub warning</li>
+                <li>Hub suspended</li>
+                <li>Ranking badge</li>
+                <li>Low upcoming events</li>
+                <li>Ticket sales nudge</li>
+                <li>Featured expiry reminder</li>
+                <li>Claim invite</li>
+                <li>Launch invite</li>
+                <li>Team invite</li>
+                <li>Email verify</li>
+                <li>Stripe Connect nudge</li>
+                <li>Payout requested</li>
+                <li>Payout approved</li>
+                <li>Payout paid</li>
+                <li>Event almost full</li>
+              </ul>
+            </details>
+            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Organisers Main Sponsor expected views">
               <div class="ad-email-reach-head">
                 <h4 class="ad-email-reach-heading">Expected views</h4>
                 <p class="ad-email-reach-sub">Guide ranges — not guaranteed</p>
               </div>
-              <div class="ad-reach-tier-grid">
+              <div class="ad-reach-tier-grid ad-reach-tier-grid--wide">
                 <article class="ad-reach-tier">
                   <ul class="ad-reach-tier-stats">
+                    <li><span>Directory views</span><strong>3k – 8k / mo</strong></li>
                     <li><span>Organiser emails</span><strong>2k – 6k / mo</strong></li>
+                    <li><span>Total impressions</span><strong>5k – 14k / mo</strong></li>
                   </ul>
                 </article>
               </div>
             </div>
-            <p class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not networking groups promoting their own profile. We check relevance to our professional audience before any placement goes live.</p></details></p>
+            <div class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not networking groups promoting their own profile. We check relevance to our professional audience before any placement goes live.</p></details></div>
             <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Main%20Organisers%20Directory%20Sponsor%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
@@ -605,7 +627,8 @@
     <!-- Opportunities -->
     <div class="ad-tab-panel ad-tab-panel--opportunities" id="ad-panel-opportunities" data-ad-panel="opportunities" role="tabpanel" aria-labelledby="ad-tab-opportunities" hidden>
       <div class="ad-section-head">
-        <h2>Opportunities advertising</h2>
+        <h2><a href="/opportunities/">Opportunities advertising</a></h2>
+        <a href="/opportunities/">View live directory →</a>
       </div>
 
       <div class="ad-package-browser">
@@ -617,23 +640,41 @@
             <p class="ad-package-placement">Main Sponsor banner at the top of <strong>/opportunities/</strong></p>
             <p class="ad-package-price">£2,000 <span>/ month</span></p>
             <ul>
-              <li>Logo, copy &amp; link in Main Sponsor banner on <strong>/opportunities/</strong>.</li>
-              <li>Logo + link in header of <strong>every business opportunity email</strong>.</li>
+              <li>Logo in Main Sponsor banner on the opportunities directory — one partner per month.</li>
+              <li>Logo + link in header of <strong>every business opportunity email</strong> (11 templates).</li>
             </ul>
-            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Business opportunity email expected views">
+            <details class="ad-email-inventory">
+              <summary>View all opportunity emails with Main Sponsor placement</summary>
+              <ul class="ad-email-inventory-list">
+                <li>Listing live</li>
+                <li>Listing expiry reminder</li>
+                <li>Premium expiry reminder</li>
+                <li>Premium live</li>
+                <li>Enquiry received</li>
+                <li>Enquiry sent</li>
+                <li>Listing expired</li>
+                <li>Premium expired</li>
+                <li>Listing rejected</li>
+                <li>Saved opportunity closing soon</li>
+                <li>Saved search match</li>
+              </ul>
+            </details>
+            <div class="ad-email-reach ad-email-reach--tiers" aria-label="Opportunities Main Sponsor expected views">
               <div class="ad-email-reach-head">
                 <h4 class="ad-email-reach-heading">Expected views</h4>
                 <p class="ad-email-reach-sub">Guide ranges — not guaranteed</p>
               </div>
-              <div class="ad-reach-tier-grid">
+              <div class="ad-reach-tier-grid ad-reach-tier-grid--wide">
                 <article class="ad-reach-tier">
                   <ul class="ad-reach-tier-stats">
+                    <li><span>Directory views</span><strong>2k – 5k / mo</strong></li>
                     <li><span>Opportunity emails</span><strong>1.2k – 3.5k / mo</strong></li>
+                    <li><span>Total impressions</span><strong>3k – 8.5k / mo</strong></li>
                   </ul>
                 </article>
               </div>
             </div>
-            <p class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not listers promoting their own opportunity. We check relevance to our professional audience before any placement goes live.</p></details></p>
+            <div class="ad-package-note"><strong>Eligibility:</strong> third-party brands only. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we vet eligibility">?</summary><p class="ad-help-mark-body">Main Sponsor slots are for vetted third-party brands — not listers promoting their own opportunity. We check relevance to our professional audience before any placement goes live.</p></details></div>
             <a class="ad-package-cta" href="mailto:rosie@thenetworkerhub.com?subject=Main%20Opportunities%20Directory%20Sponsor%20enquiry">Enquire →</a>
           </div>
           <div class="ad-package-preview">
@@ -712,10 +753,10 @@
           <div class="ad-package-main">
             <span class="ad-package-badge">City Partner</span>
             <h3 class="ad-package-title">City Partner</h3>
-            <p class="ad-package-placement">Same as Events — city pages incl. <strong>/opportunities/networking/:city</strong></p>
+            <p class="ad-package-placement">Same as Events — your logo and link on matching regional city pages</p>
             <p class="ad-package-price">£29 <span>/ city / month + VAT</span> · £75 <span>for 3 cities + VAT</span></p>
             <ul>
-              <li>Logo + CTA on matching events &amp; opportunities city pages — website only.</li>
+              <li>Your logo and link on matching Events and Opportunities city pages — website only.</li>
               <li>Same cities and pricing as Events — one partner per city · monthly subscription.</li>
             </ul>
             <a class="ad-package-cta" href="#city-partner-package" data-ad-tab-jump="events">Checkout on Events tab →</a>
@@ -723,20 +764,17 @@
           <div class="ad-package-preview">
             <p class="ad-preview-label">Example</p>
             <div class="ad-mock-page ad-mock-page--city-partner" aria-hidden="true">
-              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/networking/manchester</em></div>
               <div class="ad-mock-city-partner-intro">
                 <div class="ad-mock-city-partner-accent"></div>
                 <div class="ad-mock-city-partner-inner">
                   <div class="ad-mock-city-partner-copy">
-                    <span class="ad-mock-city-partner-kicker">Business opportunities in Manchester</span>
-                    <p class="ad-mock-city-partner-title">Franchises &amp; deals in <em>Manchester</em></p>
-                    <p class="ad-mock-lorem ad-mock-lorem--city">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                    <p class="ad-mock-lorem ad-mock-lorem--city ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                    <span class="ad-mock-city-partner-kicker">Your local business community</span>
+                    <p class="ad-mock-city-partner-title">Business opportunities in <em>Manchester</em></p>
+                    <p class="ad-mock-city-partner-copyline">Browse franchises, side hustles, and partnerships in Manchester.</p>
                   </div>
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">City Sponsor</span>
-                    <span class="ad-mock-city-partner-logo">Your logo</span>
-                    <span class="ad-mock-city-partner-cta">Find out more →</span>
+                    <span class="ad-mock-city-partner-logo">Your logo here</span>
                   </aside>
                 </div>
               </div>
@@ -858,11 +896,11 @@
       </div>
     </div>
 
-    <ul class="ad-trust-badges ad-reveal" aria-label="Advertising standards">
-      <li>Creative reviewed before go-live</li>
-      <li>Clearly labelled Sponsored</li>
-      <li>ASA compliance monitored</li>
-      <li>Professional B2B audience</li>
+    <ul class="ad-trust-badges ad-reveal" aria-label="Why advertise on The Networker Hub">
+      <li>UK business owners browsing events &amp; opportunities</li>
+      <li>Placements at the point of intent — browse, detail pages &amp; emails</li>
+      <li>Limited slots — one Main Sponsor per directory</li>
+      <li>Professional networking context — not a general ad network</li>
     </ul>
 
     <section class="ad-section ad-reveal" id="how-it-works" aria-labelledby="how-title">
@@ -870,20 +908,21 @@
       <div class="ad-how-grid">
         <div class="ad-how-step">
           <strong>1. Choose a package</strong>
-          <p><strong>City Partner</strong> — pick open cities and checkout below. <strong>Main Sponsor</strong> &amp; <strong>Mini Sponsors</strong> — send an enquiry.</p>
+          <p>Compare tabs above for reach, pricing and examples. <strong>City Partner</strong> checkout lives on the Events tab when cities are open.</p>
         </div>
         <div class="ad-how-step">
-          <strong>2. Reserve your slot</strong>
-          <p>City Partner payment reserves your city immediately. Sponsored cities are waitlist-only until the current subscription ends.</p>
+          <strong>2. Reserve your place</strong>
+          <p>Pay online for City Partner, or email Rosie to hold Main or Mini Sponsor dates. Sponsored cities stay waitlist-only until the current partner’s subscription ends.</p>
         </div>
         <div class="ad-how-step">
-          <strong>3. Creative &amp; go live</strong>
-          <p>Send logo, link, and copy — we check fit and ASA compliance, then publish labelled <strong>Sponsored</strong>.</p>
+          <strong>3. Share your creative</strong>
+          <p>Send logo, destination URL and optional copy. We confirm your go-live date — usually within a few working days.</p>
         </div>
       </div>
 
       <div class="ad-vetting-callout">
-        <p><strong>City Partners</strong> — self-serve checkout on this page; one partner per city; website only. <strong>Main Sponsors</strong> — third-party brands only; browse + every email in that section. <strong>Mini Sponsors</strong> — detail pages + selected emails. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Why we review advertising">?</summary><div class="ad-help-mark-body"><p>Creative for every paid placement is reviewed before go-live. We only accept brands relevant to a professional UK business audience, clearly label spots as <strong>Sponsored</strong>, and monitor ASA compliance. Main Sponsor slots cannot be used by networking groups to promote their own events or profiles.</p><p><a href="/legal-policies#advertising">Read our advertising policy →</a></p></div></details></p>
+        <h3 class="ad-vetting-callout-title">Where each package appears</h3>
+        <div class="ad-vetting-callout-note"><strong>City Partner</strong> — regional city pages only (website, not emails). <strong>Main Sponsor</strong> — directory hero + every email in that section. <strong>Mini Sponsors</strong> — up to three logos on detail pages + selected emails. <strong>Featured Listing</strong> — self-promotion pinned to the top of browse results. <details class="ad-help-mark ad-help-mark--inline"><summary aria-label="Eligibility and advertising standards">?</summary><div class="ad-help-mark-body"><p>Main Sponsor is for vetted third-party brands — not networking groups or listers promoting their own events, profiles or opportunities. Every paid placement is reviewed before go-live, clearly labelled <strong>Sponsored</strong>, and monitored for ASA compliance.</p><p><a href="/legal-policies#advertising">Read our advertising policy →</a></p></div></details></div>
       </div>
     </section>
 
@@ -949,7 +988,7 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
 <script src="js/advertising-page.js?v=20260722ad25"></script>
-<script src="js/city-partner-advertising.js?v=20260722cp13"></script>
+<script src="js/city-partner-advertising.js?v=20260722cp14"></script>
 
 </body>
 </html>

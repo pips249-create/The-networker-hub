@@ -33,10 +33,7 @@
   var submitBtn = document.getElementById('city-partner-submit');
   var statusEl = document.getElementById('city-partner-status');
   var launchNoteEl = document.getElementById('city-partner-launch-note');
-  var availableListEl = document.getElementById('city-partner-available-list');
-  var availableCountEl = document.getElementById('city-partner-available-count');
   var availableCountCheckoutEl = document.getElementById('city-partner-available-count-checkout');
-  var availableDetailsEl = document.getElementById('city-partner-available-details');
   var availablePanelEl = document.getElementById('city-partner-available-panel');
   var bookedSummaryEl = document.getElementById('city-partner-booked-summary');
   var bookedSummaryListEl = document.getElementById('city-partner-booked-summary-list');
@@ -221,25 +218,8 @@
     );
     var countLabel = formatAvailableCount(available.length);
 
-    if (availableCountEl) availableCountEl.textContent = countLabel;
     if (availableCountCheckoutEl) availableCountCheckoutEl.textContent = countLabel;
-
-    if (availableDetailsEl) availableDetailsEl.hidden = !available.length;
     if (availablePanelEl) availablePanelEl.hidden = !available.length;
-
-    if (!availableListEl) return;
-
-    if (!available.length) {
-      availableListEl.innerHTML =
-        '<li class="city-partner-available-empty">None right now — see sponsored cities below or join the waitlist.</li>';
-      return;
-    }
-
-    availableListEl.innerHTML = available
-      .map(function (city) {
-        return '<li>' + esc(city.name) + '</li>';
-      })
-      .join('');
   }
 
   function renderBookedCities(cities) {
