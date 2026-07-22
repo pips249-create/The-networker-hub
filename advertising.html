@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad20">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260722ad26">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -78,11 +78,8 @@
     <!-- Events -->
     <div class="ad-tab-panel ad-tab-panel--events is-active" id="ad-panel-events" data-ad-panel="events" role="tabpanel" aria-labelledby="ad-tab-events">
       <div class="ad-section-head">
-        <h2>Events advertising</h2>
+        <h2><a href="/events/">Events advertising</a></h2>
         <a href="/events/">View live directory →</a>
-      </div>
-      <div class="ad-section-intro-band">
-        <p class="ad-section-lede"><strong>Main Sponsor</strong> — browse page + every attendee email. <strong>Mini Sponsors</strong> — event pages + selected emails. <strong>City Partner</strong> — regional city pages · self-serve checkout when available.</p>
       </div>
 
       <div class="ad-package-browser">
@@ -99,7 +96,10 @@
               <li>One partner per city — rolling monthly subscription · 3-city pack available.</li>
               <li><strong>Self-serve checkout</strong> for open cities · join the waitlist when a city is sponsored.</li>
             </ul>
-            <p class="ad-package-note"><strong>Available now:</strong> <span id="city-partner-available-list">Loading cities…</span></p>
+            <details class="city-partner-available-details" id="city-partner-available-details">
+              <summary><strong>Available now</strong> <span class="city-partner-available-count" id="city-partner-available-count">…</span></summary>
+              <ul class="city-partner-available-names" id="city-partner-available-list"></ul>
+            </details>
             <p class="ad-package-note city-partner-booked-summary" id="city-partner-booked-summary" hidden><strong>Currently sponsored:</strong> <span id="city-partner-booked-summary-list"></span></p>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
@@ -112,8 +112,8 @@
                   <div class="ad-mock-city-partner-copy">
                     <span class="ad-mock-city-partner-kicker">Your local business community</span>
                     <p class="ad-mock-city-partner-title">Business networking in <em>Manchester</em></p>
-                    <span class="ad-mock-city-partner-line"></span>
-                    <span class="ad-mock-city-partner-line ad-mock-city-partner-line--short"></span>
+                    <p class="ad-mock-lorem ad-mock-lorem--city">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    <p class="ad-mock-lorem ad-mock-lorem--city ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
                     <p class="ad-mock-city-partner-organiser-link">Organisers — list your group →</p>
                   </div>
                   <aside class="ad-mock-city-partner-ad">
@@ -127,8 +127,13 @@
             <p class="ad-preview-label ad-preview-label--checkout">Checkout</p>
             <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout · monthly subscription.</p>
             <div class="city-partner-checkout" id="city-partner-checkout">
-              <p class="city-partner-section-label" id="city-partner-available-heading">Available now</p>
-              <div class="city-partner-city-grid" id="city-partner-city-list"></div>
+              <details class="city-partner-available-panel" id="city-partner-available-panel">
+                <summary class="city-partner-section-label city-partner-section-label--toggle">
+                  <span>Available now</span>
+                  <span class="city-partner-available-count" id="city-partner-available-count-checkout">…</span>
+                </summary>
+                <div class="city-partner-city-grid" id="city-partner-city-list"></div>
+              </details>
               <div class="city-partner-quote" id="city-partner-quote">
                 <p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>
               </div>
@@ -215,7 +220,7 @@
                             <div class="ad-events-dir-hero-copy">
                               <span class="ad-events-dir-badge">Events directory</span>
                               <h3 class="ad-events-dir-headline">Find your next business event</h3>
-                              <p class="ad-events-dir-sub">Meetings, exhibitions, workshops &amp; more.</p>
+                              <p class="ad-events-dir-sub">Meetings, exhibitions, workshops &amp; more. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
                               <div class="ad-events-dir-line-row">
                                 <span class="ad-events-dir-line ad-events-dir-line--btn"></span>
                                 <span class="ad-events-dir-line ad-events-dir-line--btn ad-events-dir-line--btn-ghost"></span>
@@ -232,9 +237,18 @@
                             <span>Organisers</span>
                           </div>
                           <div class="ad-events-dir-shell-cards">
-                            <div class="ad-events-dir-shell-card"></div>
-                            <div class="ad-events-dir-shell-card"></div>
-                            <div class="ad-events-dir-shell-card ad-events-dir-shell-card--short"></div>
+                            <div class="ad-events-dir-shell-card">
+                              <strong>Leadership workshop</strong>
+                              <span>Lorem ipsum dolor sit amet, consectetur.</span>
+                            </div>
+                            <div class="ad-events-dir-shell-card">
+                              <strong>Founders breakfast</strong>
+                              <span>Sed do eiusmod tempor incididunt ut labore.</span>
+                            </div>
+                            <div class="ad-events-dir-shell-card ad-events-dir-shell-card--short">
+                              <strong>Online roundtable</strong>
+                              <span>Ut enim ad minim veniam, quis nostrud.</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -288,25 +302,47 @@
           </div>
           <div class="ad-package-preview">
             <p class="ad-preview-label">Examples</p>
-            <div class="ad-example-gallery" id="ad-events-mini-gallery">
-              <div class="ad-example-stage">
+            <div class="ad-example-gallery ad-example-gallery--mini" id="ad-events-mini-gallery">
+              <div class="ad-example-stage ad-example-stage--tall">
                 <div class="ad-example-panel is-active" data-example-panel="page" role="tabpanel">
-                  <div class="ad-mock-page ad-mock-page--detail">
+                  <div class="ad-mock-page ad-mock-page--event-detail">
                     <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/women-in-business-breakfast</em></div>
-                    <div class="ad-mock-detail-layout">
-                      <div class="ad-mock-detail-main">
-                        <span class="ad-mock-detail-badge">In person · Manchester</span>
-                        <h4 class="ad-mock-detail-title">Women in Business Breakfast</h4>
-                        <p class="ad-mock-detail-meta">Wed 14 Aug · 7:30am · Free entry</p>
-                        <div class="ad-mock-detail-body">
-                          <span class="line"></span>
-                          <span class="line"></span>
-                          <span class="line line--short"></span>
+                    <div class="ad-event-detail-scale">
+                      <div class="ad-event-detail-mock" aria-hidden="true">
+                        <div class="ad-event-detail-hero">
+                          <span class="ad-event-detail-hero-badge">In person · Breakfast</span>
+                        </div>
+                        <div class="ad-event-detail-layout">
+                          <div class="ad-event-detail-main">
+                            <h4 class="ad-event-detail-title">Women in Business Breakfast</h4>
+                            <p class="ad-event-detail-meta">Wed 14 Aug · 7:30am · Manchester · Free entry</p>
+                            <div class="ad-event-detail-host">
+                              <span class="ad-event-detail-host-avatar"></span>
+                              <span class="ad-event-detail-host-copy">
+                                <strong>Hosted by Manchester Business Network</strong>
+                                <em>240+ members · ★ 4.8</em>
+                                <span class="ad-mock-lorem ad-mock-lorem--host">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span>
+                              </span>
+                            </div>
+                            <div class="ad-event-detail-section">
+                              <span class="ad-event-detail-section-title">About this event</span>
+                              <p class="ad-mock-lorem ad-mock-lorem--detail">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                              <p class="ad-mock-lorem ad-mock-lorem--detail ad-mock-lorem--short">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                            </div>
+                          </div>
+                          <aside class="ad-event-detail-sidebar">
+                            <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-event"></div>
+                            <div class="ad-event-detail-tickets">
+                              <div class="ad-event-detail-tickets-head">
+                                <span>Tickets from</span>
+                                <strong>Free</strong>
+                              </div>
+                              <span class="ad-event-detail-ticket-row">General admission · Free</span>
+                              <span class="ad-event-detail-ticket-cta">Register →</span>
+                            </div>
+                          </aside>
                         </div>
                       </div>
-                      <aside class="ad-mock-detail-sidebar">
-                        <div class="ad-live-preview ad-live-preview--mini page-sidebar-ad" id="ad-live-mini-event"></div>
-                      </aside>
                     </div>
                   </div>
                 </div>
@@ -345,14 +381,57 @@
           </div>
           <div class="ad-package-preview">
             <p class="ad-preview-label">Example</p>
-            <div class="ad-mock-spotlight ad-mock-spotlight--featured" aria-hidden="true">
-              <div class="ad-mock-spotlight-head"><span>Featured Listing</span><span>View all</span></div>
-              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich">
-                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--event"></div>
-                <div class="ad-mock-spotlight-meta">
-                  <strong>Women in Business Breakfast</strong>
-                  <span>Wed 14 Aug · Manchester</span>
-                  <span class="ad-mock-spotlight-tag">In person · Free</span>
+            <div class="ad-mock-page ad-mock-page--events-browse" aria-hidden="true">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/</em></div>
+              <div class="ad-featured-listing-scale">
+                <div class="ad-featured-listing-mock">
+                  <div class="ad-featured-listing-filters">
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--wide ad-featured-listing-filter--text">Search events, organisers, cities…</span>
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--text">Location</span>
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--text">15 mi</span>
+                  </div>
+                  <p class="ad-featured-listing-pin">Pinned to top of browse results</p>
+                  <div class="ad-featured-listing-grid">
+                    <article class="ad-featured-event-card is-premium">
+                      <div class="ad-featured-event-media">
+                        <span class="ad-featured-event-category">Breakfast networking</span>
+                        <span class="ad-featured-event-premium">Premium</span>
+                      </div>
+                      <div class="ad-featured-event-body">
+                        <div class="ad-featured-event-top">
+                          <span class="ad-featured-event-format">In person</span>
+                          <span class="ad-featured-event-price">Free</span>
+                        </div>
+                        <strong class="ad-featured-event-title">Women in Business Breakfast</strong>
+                        <span class="ad-featured-event-meta">Manchester · Wed 14 Aug · 7:30am</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span>
+                      </div>
+                    </article>
+                    <article class="ad-featured-event-card">
+                      <div class="ad-featured-event-media ad-featured-event-media--muted"></div>
+                      <div class="ad-featured-event-body">
+                        <div class="ad-featured-event-top">
+                          <span class="ad-featured-event-format">Online</span>
+                          <span class="ad-featured-event-price">£12</span>
+                        </div>
+                        <strong class="ad-featured-event-title">Leadership roundtable</strong>
+                        <span class="ad-featured-event-meta">Thu 22 Aug · 12:00pm</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Sed do eiusmod tempor incididunt ut labore et dolore.</span>
+                      </div>
+                    </article>
+                    <article class="ad-featured-event-card">
+                      <div class="ad-featured-event-media ad-featured-event-media--muted"></div>
+                      <div class="ad-featured-event-body">
+                        <div class="ad-featured-event-top">
+                          <span class="ad-featured-event-format">In person</span>
+                          <span class="ad-featured-event-price">£18</span>
+                        </div>
+                        <strong class="ad-featured-event-title">Founders coffee morning</strong>
+                        <span class="ad-featured-event-meta">Leeds · Fri 23 Aug</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Ut enim ad minim veniam, quis nostrud exercitation.</span>
+                      </div>
+                    </article>
+                  </div>
                 </div>
               </div>
             </div>
@@ -409,7 +488,7 @@
                         <div class="ad-mock-copy-block ad-mock-copy-block--rich">
                           <span class="ad-mock-page-kicker">Browse organisers</span>
                           <h4 class="ad-mock-page-title">Networking groups &amp; communities</h4>
-                          <p class="ad-mock-page-sub">Find a group that fits your industry and location.</p>
+                          <p class="ad-mock-page-sub">Find a group that fits your industry and location. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
                         </div>
                         <div class="ad-live-preview ad-live-preview--hero" id="ad-live-organisers-hero"></div>
                       </div>
@@ -459,9 +538,8 @@
                   <h4 class="ad-mock-detail-title">Manchester Business Network</h4>
                   <p class="ad-mock-detail-meta">Weekly breakfast meetings · 240+ members</p>
                   <div class="ad-mock-detail-body">
-                    <span class="line"></span>
-                    <span class="line"></span>
-                    <span class="line line--short"></span>
+                    <p class="ad-mock-lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    <p class="ad-mock-lorem ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
                   </div>
                 </div>
                 <aside class="ad-mock-detail-sidebar">
@@ -485,14 +563,36 @@
           </div>
           <div class="ad-package-preview">
             <p class="ad-preview-label">Example</p>
-            <div class="ad-mock-spotlight ad-mock-spotlight--featured" aria-hidden="true">
-              <div class="ad-mock-spotlight-head"><span>Featured Listing</span><span>View all</span></div>
-              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich ad-mock-spotlight-card--organiser">
-                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--organiser"></div>
-                <div class="ad-mock-spotlight-meta">
-                  <strong>Manchester Business Network</strong>
-                  <span>Weekly breakfast · Manchester</span>
-                  <span class="ad-mock-spotlight-tag">240+ members</span>
+            <div class="ad-mock-page ad-mock-page--organisers-browse" aria-hidden="true">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/?tab=organisers</em></div>
+              <div class="ad-featured-listing-scale">
+                <div class="ad-featured-listing-mock">
+                  <div class="ad-featured-listing-filters">
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--wide ad-featured-listing-filter--text">Search organisers…</span>
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--text">Location</span>
+                  </div>
+                  <p class="ad-featured-listing-pin">Pinned to top of browse results</p>
+                  <div class="ad-featured-listing-grid ad-featured-listing-grid--organisers">
+                    <article class="ad-featured-event-card ad-featured-event-card--organiser is-premium">
+                      <div class="ad-featured-event-media ad-featured-event-media--organiser">
+                        <span class="ad-featured-event-premium">Premium</span>
+                      </div>
+                      <div class="ad-featured-event-body">
+                        <strong class="ad-featured-event-title">Manchester Business Network</strong>
+                        <span class="ad-featured-event-meta">Weekly breakfast · Manchester</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span>
+                        <span class="ad-featured-event-tag">240+ members</span>
+                      </div>
+                    </article>
+                    <article class="ad-featured-event-card ad-featured-event-card--organiser">
+                      <div class="ad-featured-event-media ad-featured-event-media--organiser ad-featured-event-media--muted"></div>
+                      <div class="ad-featured-event-body">
+                        <strong class="ad-featured-event-title">Leeds Enterprise Club</strong>
+                        <span class="ad-featured-event-meta">Fortnightly · Leeds</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Sed do eiusmod tempor incididunt ut labore.</span>
+                      </div>
+                    </article>
+                  </div>
                 </div>
               </div>
             </div>
@@ -548,7 +648,7 @@
                         <div class="ad-mock-copy-block ad-mock-copy-block--rich ad-mock-copy-block--navy">
                           <span class="ad-mock-page-kicker">Business opportunities</span>
                           <h4 class="ad-mock-page-title">Franchises, partnerships &amp; investments</h4>
-                          <p class="ad-mock-page-sub">Browse deals for members exploring their next move.</p>
+                          <p class="ad-mock-page-sub">Browse deals for members exploring their next move. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
                         </div>
                         <div class="ad-live-preview ad-live-preview--hero" id="ad-live-opportunities-hero"></div>
                       </div>
@@ -598,8 +698,8 @@
                   <h4 class="ad-mock-detail-title">Coffee shop franchise — Manchester territory</h4>
                   <p class="ad-mock-detail-meta">Investment from £85k · Training included</p>
                   <div class="ad-mock-detail-body">
-                    <span class="line"></span>
-                    <span class="line line--short"></span>
+                    <p class="ad-mock-lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    <p class="ad-mock-lorem ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
                   </div>
                 </div>
                 <div class="ad-live-preview ad-live-preview--compact" id="ad-live-opportunity-sidebar"></div>
@@ -630,8 +730,8 @@
                   <div class="ad-mock-city-partner-copy">
                     <span class="ad-mock-city-partner-kicker">Business opportunities in Manchester</span>
                     <p class="ad-mock-city-partner-title">Franchises &amp; deals in <em>Manchester</em></p>
-                    <span class="ad-mock-city-partner-line"></span>
-                    <span class="ad-mock-city-partner-line ad-mock-city-partner-line--short"></span>
+                    <p class="ad-mock-lorem ad-mock-lorem--city">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    <p class="ad-mock-lorem ad-mock-lorem--city ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
                   </div>
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">City Sponsor</span>
@@ -668,6 +768,7 @@
                       <div class="ad-mock-spotlight-meta">
                         <strong>Coffee shop franchise — Manchester</strong>
                         <span>Franchise · North West</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.</span>
                         <span class="ad-mock-spotlight-tag">From £85k investment</span>
                       </div>
                     </div>
@@ -682,9 +783,8 @@
                         <h4 class="ad-mock-detail-title">Coffee shop franchise — Manchester territory</h4>
                         <p class="ad-mock-detail-meta">Investment from £85k · Training included</p>
                         <div class="ad-mock-detail-body">
-                          <span class="line"></span>
-                          <span class="line"></span>
-                          <span class="line line--short"></span>
+                          <p class="ad-mock-lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                          <p class="ad-mock-lorem ad-mock-lorem--short">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
                         </div>
                         <span class="ad-mock-detail-cta">Send enquiry →</span>
                       </div>
@@ -719,14 +819,36 @@
           </div>
           <div class="ad-package-preview">
             <p class="ad-preview-label">Example</p>
-            <div class="ad-mock-spotlight ad-mock-spotlight--featured" aria-hidden="true">
-              <div class="ad-mock-spotlight-head"><span>Featured Listing</span><span>View all</span></div>
-              <div class="ad-mock-spotlight-card ad-mock-spotlight-card--rich ad-mock-spotlight-card--featured-opp">
-                <div class="ad-mock-spotlight-thumb ad-mock-spotlight-thumb--opp"></div>
-                <div class="ad-mock-spotlight-meta">
-                  <strong>Coffee shop franchise — Manchester</strong>
-                  <span>Franchise · North West</span>
-                  <span class="ad-mock-spotlight-tag ad-mock-spotlight-tag--featured">Featured</span>
+            <div class="ad-mock-page ad-mock-page--opportunities-browse" aria-hidden="true">
+              <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/opportunities/</em></div>
+              <div class="ad-featured-listing-scale">
+                <div class="ad-featured-listing-mock">
+                  <div class="ad-featured-listing-filters">
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--wide ad-featured-listing-filter--text">Search opportunities…</span>
+                    <span class="ad-featured-listing-filter ad-featured-listing-filter--text">Category</span>
+                  </div>
+                  <p class="ad-featured-listing-pin">Pinned to top of browse results</p>
+                  <div class="ad-featured-listing-grid ad-featured-listing-grid--opportunities">
+                    <article class="ad-featured-event-card ad-featured-event-card--opp is-premium">
+                      <div class="ad-featured-event-media ad-featured-event-media--opp">
+                        <span class="ad-featured-event-premium">Premium</span>
+                      </div>
+                      <div class="ad-featured-event-body">
+                        <strong class="ad-featured-event-title">Coffee shop franchise — Manchester</strong>
+                        <span class="ad-featured-event-meta">Franchise · North West</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span>
+                        <span class="ad-featured-event-tag ad-featured-event-tag--gold">Featured</span>
+                      </div>
+                    </article>
+                    <article class="ad-featured-event-card ad-featured-event-card--opp">
+                      <div class="ad-featured-event-media ad-featured-event-media--opp ad-featured-event-media--muted"></div>
+                      <div class="ad-featured-event-body">
+                        <strong class="ad-featured-event-title">Accountancy practice — Yorkshire</strong>
+                        <span class="ad-featured-event-meta">Business sale · Yorkshire</span>
+                        <span class="ad-mock-lorem ad-mock-lorem--card">Ut enim ad minim veniam, quis nostrud exercitation.</span>
+                      </div>
+                    </article>
+                  </div>
                 </div>
               </div>
             </div>
@@ -735,13 +857,6 @@
       </div>
       </div>
     </div>
-
-    <section class="ad-availability ad-reveal" aria-labelledby="ad-availability-title">
-      <h2 id="ad-availability-title" class="ad-availability-head">Main Sponsor availability</h2>
-      <ul class="ad-availability-list" id="ad-availability-list">
-        <li class="ad-availability-item ad-availability-item--loading">Checking availability…</li>
-      </ul>
-    </section>
 
     <ul class="ad-trust-badges ad-reveal" aria-label="Advertising standards">
       <li>Creative reviewed before go-live</li>
@@ -832,9 +947,9 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260722a" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
-<script src="js/cms-ad-blocks.js?v=20260722cp11"></script>
-<script src="js/advertising-page.js?v=20260722ad22"></script>
-<script src="js/city-partner-advertising.js?v=20260722cp12"></script>
+<script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
+<script src="js/advertising-page.js?v=20260722ad25"></script>
+<script src="js/city-partner-advertising.js?v=20260722cp13"></script>
 
 </body>
 </html>

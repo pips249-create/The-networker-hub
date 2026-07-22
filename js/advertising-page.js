@@ -1,26 +1,52 @@
 (function () {
   var DEMO_HUB_LOGO = '/assets/advertising-example-hub-logo.png';
 
+  var LOREM_SHORT =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+  var LOREM_MEDIUM =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
+  var LOREM_LONG =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
+
   var DEMO_SPONSOR = {
     active: true,
     logo_url: '/assets/advertising-example-everlasting-build.png',
     company_name: 'Everlasting Build',
-    title: 'Renovations & construction you can trust',
+    title: LOREM_SHORT,
     cta_label: 'Find out more →',
     cta_url: 'https://example.com',
   };
+
+  var DEMO_MINI_SPONSORS = [
+    DEMO_SPONSOR,
+    {
+      active: true,
+      logo_url: '',
+      company_name: 'North West IT',
+      cta_url: 'https://example.com',
+    },
+    {
+      active: true,
+      logo_url: '',
+      company_name: 'Summit Finance',
+      cta_url: 'https://example.com',
+    },
+  ];
 
   var EVENT_MAIN_EMAIL_PREVIEWS = {
     booking: {
       kicker: 'Booking confirmed',
       title: 'You\u2019re booked in',
-      lede: 'Your place is reserved. We\u2019ve sent the details below.',
+      lede: 'Your place is reserved. We\u2019ve sent the details below. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
         '<p class="ad-full-email-event-kicker">Your event</p>' +
         '<p class="ad-full-email-event-name">Women in Business Breakfast</p>' +
         '<p class="ad-full-email-event-date"><span>When &amp; where</span><strong>Wed 14 Aug · Manchester · In person</strong></p>' +
+        '<p class="ad-full-email-event-desc">' +
+        LOREM_MEDIUM +
+        '</p>' +
         '<div class="ad-full-email-event-meta">' +
         '<div><span>Ticket</span><strong>General admission</strong></div>' +
         '<div><span>Price</span><strong>Free</strong></div>' +
@@ -32,7 +58,7 @@
     reminder: {
       kicker: 'Event reminder',
       title: 'Your event is coming up',
-      lede: 'A quick reminder about the event you booked on The Networker Hub.',
+      lede: 'A quick reminder about the event you booked on The Networker Hub. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
@@ -45,7 +71,7 @@
     application: {
       kicker: 'Application approved',
       title: 'You\u2019re approved to attend',
-      lede: 'The organiser has approved your application. Your place is confirmed.',
+      lede: 'The organiser has approved your application. Your place is confirmed. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
@@ -58,7 +84,7 @@
     refund: {
       kicker: 'Refund processed',
       title: 'Your refund is on its way',
-      lede: 'We\u2019ve processed your refund for the booking below.',
+      lede: 'We\u2019ve processed your refund for the booking below. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
@@ -153,30 +179,6 @@
   var DEFAULT_PACKAGE = {
     events: 'city-partner-package',
   };
-
-  var MAIN_SPONSOR_SLOTS = [
-    {
-      section: 'events',
-      slot: 'events_sponsor_hub',
-      label: 'Events Main Sponsor',
-      price: '£2,000/mo',
-      anchor: 'ad-pkg-events-main',
-    },
-    {
-      section: 'organisers',
-      slot: 'organisers_sponsor_hub',
-      label: 'Organisers Main Sponsor',
-      price: '£1,000/mo',
-      anchor: 'ad-pkg-organisers-main',
-    },
-    {
-      section: 'opportunities',
-      slot: 'opportunities_sponsor_hub',
-      label: 'Opportunities Main Sponsor',
-      price: '£2,000/mo',
-      anchor: 'ad-pkg-opportunities-main',
-    },
-  ];
 
   var ENQUIRY_SECTION_LABELS = {
     events: 'Events',
@@ -380,117 +382,50 @@
     });
   }
 
-  function sponsorBlockIsLive(block) {
-    if (!block) return false;
-    if (block.active === false) return false;
-    var logo = String(block.logo_url || '').trim();
-    var company = String(block.company_name || '').trim();
-    return !!(logo || company);
-  }
-
-  function companyFromSponsorBlock(block) {
-    if (!block) return '';
-    if (window.CmsSponsorFields && window.CmsSponsorFields.companyName) {
-      return String(window.CmsSponsorFields.companyName(block) || '').trim();
-    }
-    return String(block.company_name || '').trim();
-  }
-
-  function loadMainSponsorAvailability() {
-    var list = document.getElementById('ad-availability-list');
-    if (!list) return;
-
-    var monthLabel = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-
-    Promise.all(
-      MAIN_SPONSOR_SLOTS.map(function (entry) {
-        return fetch('/api/cms-block?slot=' + encodeURIComponent(entry.slot), { credentials: 'same-origin' })
-          .then(function (res) {
-            return res.json();
-          })
-          .then(function (data) {
-            return { entry: entry, block: data && data.block ? data.block : null };
-          })
-          .catch(function () {
-            return { entry: entry, block: null, error: true };
-          });
-      })
-    ).then(function (results) {
-      list.innerHTML = results
-        .map(function (result) {
-          var entry = result.entry;
-          if (result.error) {
-            return (
-              '<li class="ad-availability-item ad-availability-item--error">' +
-              '<div><strong>' +
-              esc(entry.label) +
-              '</strong> <span>' +
-              esc(entry.price) +
-              '</span></div>' +
-              '<em>Status unavailable</em>' +
-              '</li>'
-            );
-          }
-
-          var live = sponsorBlockIsLive(result.block);
-          var company = companyFromSponsorBlock(result.block);
-          var statusClass = live ? 'booked' : 'available';
-          var statusLabel = live ? 'Live now' : 'Available';
-          var detail = live
-            ? 'Showing ' + (company || 'a partner') + ' — enquire for ' + monthLabel + '+'
-            : 'Open for ' + monthLabel;
-
-          return (
-            '<li class="ad-availability-item ad-availability-item--' +
-            statusClass +
-            '">' +
-            '<div><strong>' +
-            esc(entry.label) +
-            '</strong> <span>' +
-            esc(entry.price) +
-            ' · ' +
-            esc(detail) +
-            '</span></div>' +
-            '<em>' +
-            esc(statusLabel) +
-            '</em>' +
-            '</li>'
-          );
-        })
-        .join('');
-    });
-  }
-
   function renderMiniSponsorEmailPreview(container, block) {
     if (!container) return;
     block = block || DEMO_SPONSOR;
-    var logo = String(block.logo_url || DEMO_SPONSOR.logo_url).trim();
-    var company = String(block.company_name || DEMO_SPONSOR.company_name).trim();
-    var logoCell =
-      '<img src="' +
-      esc(logo) +
-      '" alt="' +
-      esc(company) +
-      '" loading="lazy" decoding="async">';
+    var sponsors = DEMO_MINI_SPONSORS.slice();
+    var logoCells = sponsors
+      .map(function (item) {
+        var logo = String(item.logo_url || '').trim();
+        var company = String(item.company_name || '').trim();
+        if (logo) {
+          return (
+            '<img src="' +
+            esc(logo) +
+            '" alt="' +
+            esc(company) +
+            '" loading="lazy" decoding="async">'
+          );
+        }
+        return (
+          '<span class="ad-full-email-mini-row-placeholder" aria-hidden="true">' +
+          esc(company || 'Partner') +
+          '</span>'
+        );
+      })
+      .join('');
 
     renderSponsorEmailPreview(container, block, {
       kicker: 'Booking confirmed',
       title: 'You\u2019re booked in',
-      lede: 'Your place is reserved. We\u2019ve sent the details below.',
+      lede: 'Your place is reserved. We\u2019ve sent the details below. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
         '<p class="ad-full-email-event-kicker">Your event</p>' +
         '<p class="ad-full-email-event-name">Women in Business Breakfast</p>' +
         '<p class="ad-full-email-event-date"><span>When &amp; where</span><strong>Wed 14 Aug · Manchester</strong></p>' +
+        '<p class="ad-full-email-event-desc">' +
+        LOREM_MEDIUM +
+        '</p>' +
         '</div>' +
         '</div>' +
         '<div class="ad-full-email-mini-row">' +
         '<p class="ad-full-email-mini-row-label">Sponsored partners</p>' +
         '<div class="ad-full-email-mini-row-logos">' +
-        logoCell +
-        logoCell +
-        logoCell +
+        logoCells +
         '</div>' +
         '</div>',
     });
@@ -643,14 +578,19 @@
     renderDemoHeroSponsor(shell, payload);
   }
 
-  function renderMiniInShell(shell, block, slot) {
+  function renderMiniInShell(shell, blocks, slot) {
     if (!shell) return;
-    var payload = demoSponsorBlock(block);
+    var list = Array.isArray(blocks) ? blocks : [blocks || DEMO_SPONSOR];
+    var payloads = list.map(function (block) {
+      return demoSponsorBlock(block);
+    });
     if (window.CmsAdBlocks && window.CmsAdBlocks.renderCarouselAd) {
-      window.CmsAdBlocks.renderCarouselAd(shell, [payload, payload, payload], slot || 'event_page_carousel_ads');
+      window.CmsAdBlocks.renderCarouselAd(shell, payloads, slot || 'event_page_carousel_ads', {
+        shuffle: false,
+      });
       return;
     }
-    renderDemoMiniSponsor(shell, payload);
+    renderDemoMiniSponsor(shell, payloads[0]);
   }
 
   function renderCompactInShell(shell, block, slot) {
@@ -727,10 +667,13 @@
       '<p class="ad-full-email-lede">' +
       esc(config.lede || 'Details are included below for your records.') +
       '</p>' +
+      '<p class="ad-full-email-lorem">' +
+      esc(config.lorem || LOREM_MEDIUM) +
+      '</p>' +
       '</div>' +
       (config.detailHtml || '') +
       '<div class="ad-full-email-footer">' +
-      '<p class="ad-full-email-footer-note">Questions? Reply to this email or visit your account.</p>' +
+      '<p class="ad-full-email-footer-note">Questions? Lorem ipsum dolor sit amet — reply to this email or visit your account.</p>' +
       '</div>' +
       '<div class="ad-full-email-brand">' +
       '<img src="' +
@@ -754,13 +697,16 @@
     renderSponsorEmailPreview(container, block, {
       kicker: 'Payout approved',
       title: 'Your payout is on its way',
-      lede: 'We\u2019ve approved your payout request. Funds should arrive within 3\u20135 working days.',
+      lede: 'We\u2019ve approved your payout request. Funds should arrive within 3\u20135 working days. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
         '<p class="ad-full-email-event-kicker">Payout summary</p>' +
         '<p class="ad-full-email-event-name">Manchester Business Network</p>' +
         '<p class="ad-full-email-event-date"><span>Amount</span><strong>£420.00</strong></p>' +
+        '<p class="ad-full-email-event-desc">' +
+        LOREM_MEDIUM +
+        '</p>' +
         '<div class="ad-full-email-event-meta">' +
         '<div><span>Reference</span><strong>PO-10482</strong></div>' +
         '<div><span>Status</span><strong>Approved</strong></div>' +
@@ -774,13 +720,16 @@
     renderSponsorEmailPreview(container, block, {
       kicker: 'Listing live',
       title: 'Your opportunity is now live',
-      lede: 'Your business opportunity listing is published and visible to members browsing the directory.',
+      lede: 'Your business opportunity listing is published and visible to members browsing the directory. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
         '<p class="ad-full-email-event-kicker">Your listing</p>' +
         '<p class="ad-full-email-event-name">Coffee shop franchise — Manchester</p>' +
         '<p class="ad-full-email-event-date"><span>Category</span><strong>Franchise · North West</strong></p>' +
+        '<p class="ad-full-email-event-desc">' +
+        LOREM_MEDIUM +
+        '</p>' +
         '<div class="ad-full-email-event-meta">' +
         '<div><span>Status</span><strong>Live</strong></div>' +
         '<div><span>Enquiries</span><strong>Open</strong></div>' +
@@ -840,11 +789,11 @@
     initExampleGallery(document.getElementById('ad-events-mini-gallery'));
     initExampleGallery(document.getElementById('ad-opp-listing-gallery'));
 
-    renderMiniInShell(document.getElementById('ad-live-mini-event'), DEMO_SPONSOR, 'event_page_carousel_ads');
+    renderMiniInShell(document.getElementById('ad-live-mini-event'), DEMO_MINI_SPONSORS, 'event_page_carousel_ads');
     renderMiniSponsorEmailPreview(document.getElementById('ad-live-mini-event-email'), DEMO_SPONSOR);
     renderMiniInShell(
       document.getElementById('ad-live-mini-organisers-dir'),
-      DEMO_SPONSOR,
+      DEMO_MINI_SPONSORS,
       'organiser_page_carousel_ads'
     );
   }
@@ -1019,7 +968,6 @@
       initTabJumpLinks();
       initEnquiryForm();
       loadLivePreviews();
-      loadMainSponsorAvailability();
     });
   } else {
     initHeroEntrance();
@@ -1030,6 +978,5 @@
     initTabJumpLinks();
     initEnquiryForm();
     loadLivePreviews();
-    loadMainSponsorAvailability();
   }
 })();

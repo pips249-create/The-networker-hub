@@ -595,8 +595,9 @@
     );
   }
 
-  function renderCarouselAd(container, ads, slotOrSubject) {
+  function renderCarouselAd(container, ads, slotOrSubject, options) {
     if (!container) return false;
+    options = options || {};
     var list = Array.isArray(ads) ? ads : [];
     if (!list.length) {
       return renderCarouselPlaceholder(container, slotOrSubject);
@@ -606,7 +607,9 @@
       return renderLogoOnlyAd(container, list[0]);
     }
 
-    list = shuffleArray(list);
+    if (options.shuffle !== false) {
+      list = shuffleArray(list);
+    }
 
     var dots = list
       .map(function (_ad, index) {
