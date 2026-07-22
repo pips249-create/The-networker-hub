@@ -73,13 +73,13 @@
     html: function (hubView) {
       var isOrg = hubView === 'organiser';
       return (
-        '<div class="hub-mode-switch" role="group" aria-label="Switch between your tickets and organiser workspace">' +
+        '<div class="hub-mode-switch" role="group" aria-label="Switch between My Hub and organiser workspace">' +
         '<button type="button" class="hub-mode-btn' +
         (!isOrg ? ' is-active' : '') +
-        '" data-hub-mode="attendee">My tickets</button>' +
+        '" data-hub-mode="attendee">My Hub</button>' +
         '<button type="button" class="hub-mode-btn' +
         (isOrg ? ' is-active' : '') +
-        '" data-hub-mode="organiser">Organiser hub</button>' +
+        '" data-hub-mode="organiser">Organiser workspace</button>' +
         '</div>'
       );
     },
@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260721d';
+  var NAV_BUILD = '20260722a';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -235,14 +235,14 @@
       '<button type="button" class="nav-dropdown-toggle' +
       (hubActive ? ' is-active' : '') +
       '" id="nav-my-hub-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-my-hub-menu">' +
-      'My Hub <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
+      'My account <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
       '<div class="nav-dropdown-menu" id="nav-my-hub-menu" role="menu" hidden>' +
       organiserItem +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/account/') +
       '"' +
       accountActive +
-      '>My tickets &amp; reviews</a>' +
+      '>My Hub</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/account/settings') +
       '"' +
@@ -347,7 +347,8 @@
         html +=
           '<div class="nav-mobile-hub-mode">' + window.HubModeSwitch.html(hubView) + '</div>';
       }
-      html += link('/account/', 'My tickets &amp; reviews', 'account', 'nav-mobile-item');
+      html += '<p class="nav-mobile-account-label">My account</p>';
+      html += link('/account/', 'My Hub', 'account', 'nav-mobile-item');
       if (user.organiserUiVisible) {
         html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
       }

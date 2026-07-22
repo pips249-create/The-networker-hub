@@ -25,7 +25,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'KEY PAGES',
     body:
       'Home / · Events /events/ · Opportunities /opportunities/ · List an opportunity /opportunities/list · ' +
-      'My tickets & favourites /account/ · Organiser dashboard /organiser/ · Sign in /login · Register /register · ' +
+      'My Hub /account/ · Organiser workspace /organiser/ · Sign in /login · Register /register · ' +
       'FAQ /faq · About /about · Contact /contact (chat with Hubert) · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
   },
   {
@@ -217,7 +217,7 @@ const FALLBACK_REPLIES = [
   {
     match: /confirmation email|booking email|didn.?t receive|didn't receive|no confirmation|email.*ticket/i,
     reply:
-      'Booking confirmations are sent by email after successful checkout. Please check your spam or junk folder and that your account email is correct in /account/. Your tickets also appear in My tickets (/account/). Still missing? Email hello@thenetworkerhub.com with the event name and the email address you used.',
+      'Booking confirmations are sent by email after successful checkout. Please check your spam or junk folder and that your account email is correct in /account/. Your tickets also appear in My Hub (/account/). Still missing? Email hello@thenetworkerhub.com with the event name and the email address you used.',
   },
   {
     match: /forgot.*password|reset.*password|password reset/i,
@@ -242,7 +242,7 @@ const FALLBACK_REPLIES = [
   {
     match: /cancel.*(book|ticket|registration)|cancel my (book|ticket)/i,
     reply:
-      'Cancellation rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. For free events, you may be able to cancel from My tickets (/account/). If you need help, email hello@thenetworkerhub.com with your booking reference.',
+      'Cancellation rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. For free events, you may be able to cancel from My Hub (/account/). If you need help, email hello@thenetworkerhub.com with your booking reference.',
   },
   {
     match: /refund|chargeback|cooling.?off/i,
@@ -317,12 +317,12 @@ const FALLBACK_REPLIES = [
   {
     match: /guest|add a name|book for someone/i,
     reply:
-      'Yes — when you buy a ticket you can add guest names at Stripe checkout. Those names are shared with the organiser to manage attendance. View your bookings in My tickets (/account/).',
+      'Yes — when you buy a ticket you can add guest names at Stripe checkout. Those names are shared with the organiser to manage attendance. View your bookings in My Hub (/account/).',
   },
   {
     match: /\bbook\b.*\bticket|\bticket\b.*\bbook|how do i book|buy a ticket|checkout|my tickets/i,
     reply:
-      'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My tickets (/account/). Issues? Email hello@thenetworkerhub.com with your event name and order reference.',
+      'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My Hub (/account/). Issues? Email hello@thenetworkerhub.com with your event name and order reference.',
   },
   {
     match: /save.*opportunit|opportunit.*favourit|heart.*opportunit|saved opportunit/i,

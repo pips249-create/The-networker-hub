@@ -225,6 +225,15 @@
   padding: 8px 4px 12px;
 }
 
+.nav-mobile-account-label {
+  margin: 12px 14px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #635c5e);
+}
+
 .nav-mobile-hub-mode .hub-mode-switch {
   width: 100%;
 }

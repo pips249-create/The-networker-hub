@@ -433,12 +433,12 @@
       return leadMsg + ' We have emailed you the details.';
     }
     if (email.skipped) {
-      return leadMsg + ' Check My tickets for your booking details.';
+      return leadMsg + ' Check My Hub for your booking details.';
     }
     if (email.errors && email.errors.length) {
       return (
         leadMsg +
-        ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My tickets.'
+        ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My Hub.'
       );
     }
     return leadMsg + ' We have emailed you the details.';

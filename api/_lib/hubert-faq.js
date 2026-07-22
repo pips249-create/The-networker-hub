@@ -29,7 +29,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How do I book a ticket on The Networker Hub?',
     answer:
-      'Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My tickets.',
+      'Create a free account first, then open an event from the listing page, choose your ticket type, and complete secure Stripe checkout. You can add guest names at checkout and view bookings in My Hub.',
     category: 'buyers',
     icon: '🎫',
   },
@@ -85,7 +85,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'I did not receive my booking confirmation email',
     answer:
-      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My tickets at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.',
+      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My Hub at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.',
     category: 'buyers',
     icon: '📧',
   },
