@@ -181,7 +181,6 @@
 
   const promoteSection = document.getElementById('ep-promote-section');
   const viewListingLink = document.getElementById('ep-view-listing');
-  const promoteJump = document.getElementById('ep-promote-jump');
   const justPublished = Boolean(previewStash) || params.get('published') === '1';
 
   function isApprovedListing(ev) {
@@ -203,19 +202,15 @@
     return status === 'published' || status === 'live';
   }
 
-  function listingIsLive(ev) {
-    if (!ev) return false;
-    if (isApprovedListing(ev) && isPublishedListing(ev)) return true;
-    // Just published — trust publish flow until API catches up.
-    if (justPublished && isPublishedListing(ev)) return true;
-    if (justPublished && isApprovedListing(ev)) return true;
-    return false;
+  function canPromoteEvent(ev) {
+    if (justPublished) return true;
+    if (primaryId && !ev) return true;
+    return isPublishedListing(ev);
   }
 
   function setPromoteVisibility(isLive, options) {
     options = options || {};
     if (promoteSection) promoteSection.hidden = !isLive;
-    if (promoteJump) promoteJump.hidden = !isLive;
     if (isLive && options.scrollIntoView && promoteSection) {
       requestAnimationFrame(function () {
         promoteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -452,7 +447,7 @@
       lead.textContent =
         'Your ' +
         eventIds.length +
-        ' dates are live on the hub. Preview the main listing below — then share it or choose featured placement if you like.';
+        ' dates are live on the hub. Share your listing or feature it in Premium Spotlight to reach more attendees.';
     }
 
     setShareUrls(title);
@@ -483,17 +478,31 @@
     }
     if (lead) {
       lead.textContent =
-        'Attendees can find your event on the hub. Preview your listing below — then share it or choose featured placement if you like.';
+        'Share your event now or feature it in Premium Spotlight to reach more attendees in your area.';
     }
     setPromoteVisibility(true, {
       scrollIntoView: options.scrollIntoView != null ? options.scrollIntoView : justPublished,
     });
   }
 
-  function markPendingApproval() {
+  function markPendingApproval(ev) {
     const title = document.getElementById('ep-title');
     const previewHint = document.getElementById('ep-preview-hint');
     const lead = document.getElementById('ep-lead');
+    const pendingReview = ev && isPublishedListing(ev) && !isApprovedListing(ev);
+    if (pendingReview) {
+      if (title) title.textContent = 'Your event is submitted';
+      if (previewHint) {
+        previewHint.textContent =
+          'We are finishing a quick review before it appears on the public browse page.';
+      }
+      if (lead) {
+        lead.textContent =
+          'You can still share your listing link now, or feature it in Premium Spotlight while we complete review.';
+      }
+      setPromoteVisibility(true);
+      return;
+    }
     if (title) title.textContent = 'Finish your listing to go live';
     if (previewHint) {
       previewHint.textContent =
@@ -513,7 +522,7 @@
         photo: fallbackImage,
         description: '',
       });
-      markPendingApproval();
+      setPromoteVisibility(false);
       return;
     }
 
@@ -528,15 +537,15 @@
 
     try {
       let organiserEvent = await loadOrganiserEvent();
-      if (justPublished && organiserEvent && !listingIsLive(organiserEvent)) {
+      if (justPublished && organiserEvent && !canPromoteEvent(organiserEvent)) {
         await new Promise(function (resolve) {
           setTimeout(resolve, 600);
         });
         organiserEvent = await loadOrganiserEvent();
       }
       if (organiserEvent) {
-        if (listingIsLive(organiserEvent)) markLiveOnBrowse();
-        else if (!justPublished) markPendingApproval();
+        if (canPromoteEvent(organiserEvent)) markLiveOnBrowse();
+        else markPendingApproval(organiserEvent);
         applyFeaturedStartIso(organiserEvent.date || organiserEvent.starts_at || '');
         renderPreview({
           id: organiserEvent.id,
@@ -551,6 +560,8 @@
           organiserName: organiserEvent.organiserName || organiserEvent.groupName,
           organiserLogo: organiserEvent.organiserLogo,
           approvalStatus: organiserEvent.approvalStatus,
+          status: organiserEvent.status,
+          listingStatus: organiserEvent.listingStatus,
         });
         if (organiserEvent.seriesGroupId) {
           try {
@@ -766,8 +777,8 @@
   loadFeaturedSlotStatus();
 
   setShareUrls(fallbackTitle);
-  if (justPublished && primaryId) {
-    markLiveOnBrowse({ scrollIntoView: true });
+  if (primaryId) {
+    markLiveOnBrowse({ scrollIntoView: justPublished });
   } else {
     setPromoteVisibility(false);
   }

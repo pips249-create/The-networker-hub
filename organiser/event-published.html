@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260722b" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260722c" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
   </head>
@@ -31,36 +31,60 @@
           </p>
         </div>
 
-        <section class="ee-card ep-preview-card" aria-labelledby="ep-preview-heading">
-          <h2 id="ep-preview-heading">Preview your listing</h2>
-          <p class="ee-hint ep-preview-hint" id="ep-preview-hint">This is how your event appears on the browse page.</p>
-          <div id="ep-preview-loading" class="ep-preview-loading">Loading preview…</div>
-          <article class="ep-listing-preview" id="ep-listing-preview" hidden>
-            <a class="ep-preview-media" id="ep-preview-link" href="#" target="_blank" rel="noopener">
-              <img id="ep-preview-img" src="../assets/event-placeholder.svg" alt="" width="640" height="400" />
-            </a>
-            <div class="ep-preview-body">
-              <h3 class="ep-preview-title" id="ep-preview-title">Event title</h3>
-              <p class="ep-preview-meta" id="ep-preview-meta"></p>
-              <p class="ep-preview-desc" id="ep-preview-desc"></p>
-            </div>
-          </article>
-        </section>
-
-        <div class="ep-actions ep-actions--primary">
-          <a class="ee-btn ee-btn-primary" href="/organiser/#events-list">Go to My Events</a>
-          <a class="ee-btn ee-btn-outline" href="../events/" id="ep-view-listing" target="_blank" rel="noopener">View public listing</a>
-          <a class="ee-btn ee-btn-outline ep-promote-jump" href="#ep-promote-section" id="ep-promote-jump" hidden>
-            Share or feature your event
-          </a>
-        </div>
-
       <div class="ep-promote-section" id="ep-promote-section">
-        <p class="ep-promote-kicker">Optional next steps</p>
-        <h2 class="ep-promote-heading">Share or feature your event</h2>
-        <p class="ep-promote-lead">Promote your listing on social media, or appear in the Premium Spotlight carousel.</p>
+        <p class="ep-promote-kicker">Grow your event</p>
+        <h2 class="ep-promote-heading">Share it or feature it in Premium Spotlight</h2>
+        <p class="ep-promote-lead">
+          Most organisers share their listing straight away. Featured placement puts you in front of more attendees in your area.
+        </p>
 
         <div class="ep-promote-row">
+          <section class="ee-card oe-premium-upsell ep-featured-upsell" id="ep-featured-upsell" aria-labelledby="ep-featured-heading">
+            <p class="oe-premium-badge">Featured listing</p>
+            <h2 class="oe-premium-heading" id="ep-featured-heading">Would you like to feature your event?</h2>
+            <p class="oe-premium-lede" id="ep-featured-lede">
+              Appear in the Premium Spotlight carousel when people browse events in your area — only <strong>12 featured slots</strong> at any time, from <strong>£55 per month</strong>.
+            </p>
+            <input type="hidden" name="featured-plan" value="1month" />
+            <div class="ep-featured-body">
+              <div class="ep-featured-preview" id="ep-featured-preview" aria-labelledby="ep-featured-preview-label">
+                <p class="ep-featured-preview-label" id="ep-featured-preview-label">Preview — Premium Spotlight</p>
+                <div class="ep-featured-spotlight-frame" aria-hidden="true">
+                  <div class="ep-featured-spotlight-frame-head">
+                    <span class="ep-featured-spotlight-frame-title"><span class="icon">★</span> Premium Spotlight</span>
+                    <span class="ep-featured-spotlight-frame-link">View all</span>
+                  </div>
+                  <div class="ep-featured-spotlight-frame-track" id="ep-featured-preview-card"></div>
+                </div>
+                <p class="ep-featured-preview-note">Your event would appear here on the events browse page.</p>
+              </div>
+              <div class="ep-featured-main">
+                <ul class="oe-premium-features">
+                  <li>Spotlight carousel placement for your area and dates</li>
+                  <li>Top of search and filtered results</li>
+                  <li>Featured badge on your listing card</li>
+                  <li>Priority exposure to motivated attendees</li>
+                </ul>
+                <p class="oe-premium-note ep-featured-duration-note" id="ep-featured-duration-note" hidden role="note"></p>
+                <p class="oe-premium-slot-status" id="ep-featured-slot-status" hidden role="status"></p>
+                <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
+                <div class="ep-featured-footer" aria-labelledby="ep-featured-heading">
+                  <div class="ep-featured-price-block">
+                    <p class="ep-featured-single-price">
+                      <span class="ep-featured-plan-price">£55.00</span>
+                      <span class="ep-featured-plan-duration" id="ep-featured-plan-duration">per month</span>
+                    </p>
+                  </div>
+                  <div class="oe-premium-actions">
+                    <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
+                      Yes — feature my event
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section class="ee-card ep-share-card" aria-labelledby="ep-share-heading">
             <h2 id="ep-share-heading">Share on social media</h2>
             <p class="ee-hint" id="ep-share-hint">
@@ -106,58 +130,33 @@
               </div>
             </div>
           </section>
-
-          <section class="ee-card oe-premium-upsell ep-featured-upsell" id="ep-featured-upsell" aria-labelledby="ep-featured-heading">
-            <p class="oe-premium-badge">Featured listing</p>
-            <h2 class="oe-premium-heading" id="ep-featured-heading">Make your event stand out</h2>
-            <p class="oe-premium-lede" id="ep-featured-lede">
-              Appear in the Premium Spotlight carousel when people browse events in your area — only <strong>12 featured slots</strong> at any time.
-            </p>
-            <input type="hidden" name="featured-plan" value="1month" />
-            <div class="ep-featured-body">
-              <div class="ep-featured-preview" id="ep-featured-preview" aria-labelledby="ep-featured-preview-label">
-                <p class="ep-featured-preview-label" id="ep-featured-preview-label">Preview — Premium Spotlight</p>
-                <div class="ep-featured-spotlight-frame" aria-hidden="true">
-                  <div class="ep-featured-spotlight-frame-head">
-                    <span class="ep-featured-spotlight-frame-title"><span class="icon">★</span> Premium Spotlight</span>
-                    <span class="ep-featured-spotlight-frame-link">View all</span>
-                  </div>
-                  <div class="ep-featured-spotlight-frame-track" id="ep-featured-preview-card"></div>
-                </div>
-                <p class="ep-featured-preview-note">Your event would appear here on the events browse page.</p>
-              </div>
-              <div class="ep-featured-main">
-                <ul class="oe-premium-features">
-                  <li>Spotlight carousel placement for your area and dates</li>
-                  <li>Top of search and filtered results</li>
-                  <li>Featured badge on your listing card</li>
-                  <li>Priority exposure to motivated attendees</li>
-                </ul>
-                <p class="oe-premium-note ep-featured-duration-note" id="ep-featured-duration-note" hidden role="note"></p>
-                <p class="oe-premium-slot-status" id="ep-featured-slot-status" hidden role="status"></p>
-                <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
-                <div class="ep-featured-footer" aria-labelledby="ep-featured-heading">
-                  <div class="ep-featured-price-block">
-                    <p class="ep-featured-single-price">
-                      <span class="ep-featured-plan-price">£55.00</span>
-                      <span class="ep-featured-plan-duration" id="ep-featured-plan-duration">per month</span>
-                    </p>
-                  </div>
-                  <div class="oe-premium-actions">
-                    <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
-                      Yes — feature my event
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
         </div>
 
         <p class="ep-promote-skip">
-          <a href="/organiser/#events-list" id="ep-promote-skip">No thanks — I'm done for now</a>
+          <a href="/organiser/#events-list" id="ep-promote-skip">Skip for now — go to My Events</a>
         </p>
       </div>
+
+        <section class="ee-card ep-preview-card" aria-labelledby="ep-preview-heading">
+          <h2 id="ep-preview-heading">Preview your listing</h2>
+          <p class="ee-hint ep-preview-hint" id="ep-preview-hint">This is how your event appears on the browse page.</p>
+          <div id="ep-preview-loading" class="ep-preview-loading">Loading preview…</div>
+          <article class="ep-listing-preview" id="ep-listing-preview" hidden>
+            <a class="ep-preview-media" id="ep-preview-link" href="#" target="_blank" rel="noopener">
+              <img id="ep-preview-img" src="../assets/event-placeholder.svg" alt="" width="640" height="400" />
+            </a>
+            <div class="ep-preview-body">
+              <h3 class="ep-preview-title" id="ep-preview-title">Event title</h3>
+              <p class="ep-preview-meta" id="ep-preview-meta"></p>
+              <p class="ep-preview-desc" id="ep-preview-desc"></p>
+            </div>
+          </article>
+        </section>
+
+        <div class="ep-actions ep-actions--primary">
+          <a class="ee-btn ee-btn-primary" href="../events/" id="ep-view-listing" target="_blank" rel="noopener">View public listing</a>
+          <a class="ee-btn ee-btn-outline" href="/organiser/#events-list">Go to My Events</a>
+        </div>
       </div>
     </div>
 
@@ -165,6 +164,6 @@
     <script src="../js/hub-comms-pack.js?v=20260714events"></script>
     <script src="../js/hub-going-share.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
-    <script src="../js/organiser-event-published.js?v=20260722c"></script>
+    <script src="../js/organiser-event-published.js?v=20260722d"></script>
   </body>
 </html>

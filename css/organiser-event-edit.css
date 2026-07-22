@@ -1512,24 +1512,15 @@ a.ee-wizard-link:hover {
   scroll-margin-top: 88px;
 }
 
-.organiser-published-page .ep-actions--primary .ep-promote-jump {
-  flex: 1 1 100%;
-}
-
-@media (min-width: 640px) {
-  .organiser-published-page .ep-actions--primary .ep-promote-jump {
-    flex: 1 1 auto;
-  }
-}
-
 .organiser-published-page .ep-live-block .ep-preview-card {
+  margin-top: 28px;
   margin-bottom: 20px;
 }
 
 .organiser-published-page .ep-promote-section {
-  margin-top: 12px;
-  padding-top: 28px;
-  border-top: 1px solid var(--ee-border);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .organiser-published-page .ep-promote-kicker {
@@ -1538,7 +1529,7 @@ a.ee-wizard-link:hover {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ee-text-soft);
+  color: var(--ee-purple-dark);
   text-align: center;
 }
 

@@ -5706,7 +5706,7 @@
       e.stopPropagation();
       closeAllActionMenus();
       const eid = promoteEventBtn.getAttribute('data-promote-event');
-      if (eid) location.href = '/organiser/event-published?ids=' + encodeURIComponent(eid);
+      if (eid) location.href = '/organiser/event-published?ids=' + encodeURIComponent(eid) + '&published=1';
       return true;
     }
 
