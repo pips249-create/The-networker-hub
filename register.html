@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="css/auth.css?v=20260721" />
+    <link rel="stylesheet" href="css/auth.css?v=20260722" />
     <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls" />
   </head>
   <body class="auth-page">
@@ -21,18 +21,29 @@
 
     <main class="auth-main auth-main--split auth-main--register">
       <div class="auth-split auth-split--register">
-        <aside class="auth-panel auth-panel--brand" aria-label="For organisers">
-          <p class="auth-panel-kicker">For organisers</p>
-          <h2 class="auth-panel-title">Find your next attendees</h2>
-          <p class="auth-panel-lede">
-            Ticketing and discovery for UK networking groups — from weekly breakfasts to annual conferences.
+        <aside
+          class="auth-panel auth-panel--brand"
+          id="register-brand-panel"
+          aria-label="Events, Business Opps, and organisers"
+        >
+          <p class="auth-panel-kicker" id="register-panel-kicker">For networkers</p>
+          <h2 class="auth-panel-title" id="register-panel-title">
+            Find your next <span class="auth-panel-accent" id="register-hero-word">event</span>
+          </h2>
+          <p class="auth-panel-lede" id="register-panel-lede">
+            Stop wasting time searching for your next event, business opportunities, or organisers — they can all be
+            found on your Networker Hub.
           </p>
-          <ul class="auth-panel-points">
-            <li>List events, manage bookings &amp; payouts</li>
-            <li>Guest visits, member-only tickets &amp; visit tracking</li>
-            <li>Organiser access enabled automatically when you sign up</li>
+          <ul class="auth-panel-points" id="register-panel-points">
+            <li>Browse &amp; book UK networking events</li>
+            <li>Compare &amp; enquire on Business Opps</li>
+            <li>Discover organisers &amp; read reviews</li>
+            <li>My Hub dashboard &amp; smart alerts</li>
+            <li>Guest visits &amp; member rates when signed in</li>
           </ul>
-          <a class="auth-panel-cta" href="/for-organisers">See what&rsquo;s included →</a>
+          <a class="auth-panel-cta" id="register-panel-cta" href="/for-attendees"
+            >See what&rsquo;s included for networkers →</a
+          >
         </aside>
 
         <div class="auth-panel auth-panel--form">
@@ -122,8 +133,8 @@
             <label class="auth-terms-check auth-terms-check--optional" for="register-marketing">
               <input type="checkbox" id="register-marketing" name="marketing" />
               <span
-                >Email me tips, event recommendations and Networker news (optional). You can change this anytime in
-                account settings. Booking confirmations and security emails are always sent.</span
+                >Send me tips and event recommendations (optional). You can change this anytime in account settings.
+                Booking confirmations and security emails are always sent.</span
               >
             </label>
             <div class="auth-actions">
@@ -141,6 +152,7 @@
       </div>
     </main>
 
-    <script src="js/auth.js?v=20260721b"></script>
+    <script src="js/find-your-next-rotate.js?v=20260722"></script>
+    <script src="js/auth.js?v=20260722"></script>
   </body>
 </html>

@@ -365,6 +365,8 @@
     if (getIntentParam() === 'organiser-claim') return;
     if (!isOrganiserAuthIntentFromPage()) return;
 
+    applyRegisterOrganiserBrandPanel();
+
     var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
     if (loginLede) {
       loginLede.textContent =
@@ -391,6 +393,8 @@
   function applyOrganiserClaimContext() {
     var params = new URLSearchParams(window.location.search);
     if (params.get('intent') !== 'organiser-claim') return;
+
+    applyRegisterOrganiserBrandPanel();
 
     var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
     if (loginLede) {
@@ -435,9 +439,50 @@
       });
   }
 
+  function applyRegisterOrganiserBrandPanel() {
+    var panel = document.getElementById('register-brand-panel');
+    if (!panel) return;
+
+    panel.setAttribute('aria-label', 'For organisers');
+
+    var kicker = document.getElementById('register-panel-kicker');
+    if (kicker) kicker.textContent = 'For organisers';
+
+    var title = document.getElementById('register-panel-title');
+    if (title) title.textContent = 'Find your next attendees';
+
+    var lede = document.getElementById('register-panel-lede');
+    if (lede) {
+      lede.textContent =
+        'Ticketing and discovery for UK networking groups — from weekly breakfasts to annual conferences.';
+    }
+
+    var points = document.getElementById('register-panel-points');
+    if (points) {
+      points.innerHTML =
+        '<li>List events, manage bookings &amp; payouts</li>' +
+        '<li>Guest visits, member-only tickets &amp; visit tracking</li>' +
+        '<li>Organiser access enabled automatically when you sign up</li>';
+    }
+
+    var cta = document.getElementById('register-panel-cta');
+    if (cta) {
+      cta.textContent = "See what's included →";
+      cta.setAttribute('href', '/for-organisers');
+    }
+  }
+
   function initLoginHeroSlogan() {
     var wordEl = document.getElementById('login-hero-word');
     if (!wordEl || !window.HubFindYourNextRotate) return;
+
+    window.HubFindYourNextRotate(wordEl, ['event', 'Business Opp', 'organiser'], 3000);
+  }
+
+  function initRegisterHeroSlogan() {
+    var wordEl = document.getElementById('register-hero-word');
+    if (!wordEl || !window.HubFindYourNextRotate) return;
+    if (isOrganiserAuthIntentFromPage() || getIntentParam() === 'organiser-claim') return;
 
     window.HubFindYourNextRotate(wordEl, ['event', 'Business Opp', 'organiser'], 3000);
   }
@@ -447,4 +492,5 @@
   applyOrganiserClaimContext();
   maybeRedirectAuthenticatedClaimEntry();
   initLoginHeroSlogan();
+  initRegisterHeroSlogan();
 })();
