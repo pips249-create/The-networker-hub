@@ -83,14 +83,18 @@
       listingsOpt.value = 'listings';
       listingsOpt.textContent = 'Most listings';
       listingsOpt.hidden = true;
-      sortSelect.appendChild(listingsOpt);
+      var recommendedOpt = sortSelect.querySelector('option[value="recommended"]');
+      if (recommendedOpt) sortSelect.insertBefore(listingsOpt, recommendedOpt);
+      else sortSelect.appendChild(listingsOpt);
     }
     if (!sortSelect.querySelector('option[value="name"]')) {
       var nameOpt = document.createElement('option');
       nameOpt.value = 'name';
       nameOpt.textContent = 'Name A–Z';
       nameOpt.hidden = true;
-      sortSelect.appendChild(nameOpt);
+      var recommendedAnchor = sortSelect.querySelector('option[value="recommended"]');
+      if (recommendedAnchor) sortSelect.insertBefore(nameOpt, recommendedAnchor);
+      else sortSelect.appendChild(nameOpt);
     }
   }
 

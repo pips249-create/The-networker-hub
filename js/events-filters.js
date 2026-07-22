@@ -210,6 +210,36 @@
     return getLocationRadiusMiles();
   }
 
+  function isLocationFilterDisabled() {
+    return !!(checkInPerson && !checkInPerson.checked);
+  }
+
+  function syncLocationFieldForFormat() {
+    var locationDisabled = isLocationFilterDisabled();
+    var locationGroup = document.querySelector('.filter-bar-location-group');
+
+    if (locationDisabled) {
+      if (postcodeInput && postcodeInput.value) {
+        postcodeInput.value = '';
+        window.hubLocationFilterState = null;
+        window.hubLocationFilterCoords = null;
+      }
+      if (toggleNearMe) toggleNearMe.checked = false;
+      if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
+    }
+
+    if (postcodeInput) postcodeInput.disabled = locationDisabled;
+    if (locationRadius) {
+      locationRadius.disabled =
+        locationDisabled || !((postcodeInput && postcodeInput.value.trim()) || isNearMeActive());
+    }
+    if (toggleNearMe) toggleNearMe.disabled = locationDisabled;
+    if (toggleNearMeMobile) toggleNearMeMobile.disabled = locationDisabled;
+    if (locationGroup) locationGroup.classList.toggle('is-disabled', locationDisabled);
+
+    if (!locationDisabled) syncNearRadiusUi();
+  }
+
   function syncLocationRadiusControls() {
     var value = String(getLocationRadiusMiles());
     if (locationRadius && locationRadius.value !== value) locationRadius.value = value;
@@ -249,6 +279,10 @@
   }
 
   function syncNearRadiusUi() {
+    if (isLocationFilterDisabled()) {
+      syncLocationFieldForFormat();
+      return;
+    }
     syncNearControls(isMobileFilterLayout() ? 'mobile' : 'desktop');
     var pc = (postcodeInput && postcodeInput.value) || '';
     pc = pc.trim();
@@ -703,7 +737,7 @@
     if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
     window.hubLocationFilterState = null;
     window.hubLocationFilterCoords = null;
-    syncNearRadiusUi();
+    syncLocationFieldForFormat();
   }
 
   var pendingResultsScroll = false;
@@ -778,6 +812,7 @@
       if (checkFiveStarsOnly) checkFiveStarsOnly.checked = !!prefs.fiveStarsOnly;
       if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;
       if (checkOnline && prefs.online === false) checkOnline.checked = false;
+      syncLocationFieldForFormat();
       if (priceMinInput && prefs.priceMin) priceMinInput.value = prefs.priceMin;
       if (priceMaxInput && prefs.priceMax) priceMaxInput.value = prefs.priceMax;
       if (sortSelect && prefs.sort) sortSelect.value = prefs.sort;
@@ -910,7 +945,7 @@
     window.hubUserCoords = null;
     window.hubLocationFilterState = null;
     window.hubLocationFilterCoords = null;
-    syncNearRadiusUi();
+    syncLocationFieldForFormat();
     setActiveTypeTab('all');
     try {
       sessionStorage.removeItem(FILTER_STORAGE_KEY);
@@ -1035,7 +1070,15 @@
     el.addEventListener('change', applyFilters);
   }
 
-  [searchInput, sortSelect, checkInPerson, checkOnline, checkFreeOnly, checkFiveStarsOnly].forEach(bindFilter);
+  function onFormatFilterChange() {
+    syncLocationFieldForFormat();
+    applyFilters();
+  }
+
+  [searchInput, sortSelect, checkFreeOnly, checkFiveStarsOnly].forEach(bindFilter);
+
+  if (checkInPerson) checkInPerson.addEventListener('change', onFormatFilterChange);
+  if (checkOnline) checkOnline.addEventListener('change', onFormatFilterChange);
 
   [priceMinInput, priceMaxInput].forEach(function (el) {
     if (!el) return;
@@ -1259,4 +1302,6 @@
   ) {
     setActiveTypeTab('meeting');
   }
+
+  syncLocationFieldForFormat();
 })();

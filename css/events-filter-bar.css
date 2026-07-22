@@ -227,10 +227,29 @@
 }
 
 .filter-bar-row-top .filter-field-postcode {
-  flex: 0 1 160px;
-  width: 160px;
-  max-width: 200px;
+  flex: 0 1 200px;
+  width: 200px;
+  max-width: 260px;
   min-width: 0;
+}
+
+.filter-bar-location-group.is-disabled {
+  opacity: 0.55;
+}
+
+.filter-bar-location-group.is-disabled .filter-field input,
+.filter-bar-location-group.is-disabled select {
+  background: rgba(255, 255, 255, 0.45);
+  color: rgba(74, 68, 70, 0.55);
+  cursor: not-allowed;
+}
+
+.filter-bar-location-group.is-disabled .filter-checkbox {
+  cursor: not-allowed;
+}
+
+.events-filter-shell .filter-bar-location-group.is-disabled .filter-field input::placeholder {
+  color: rgba(74, 68, 70, 0.4);
 }
 
 .filter-bar-row-top .filter-field-search {
@@ -1256,14 +1275,14 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 
   .filter-bar-location-group {
     flex: 0 1 auto;
-    max-width: 340px;
+    max-width: 400px;
     min-width: 0;
   }
 
   .filter-bar-row-top .filter-field-postcode {
-    flex: 0 1 140px;
-    width: 140px;
-    max-width: 180px;
+    flex: 0 1 200px;
+    width: 200px;
+    max-width: 240px;
     min-width: 0;
   }
 
