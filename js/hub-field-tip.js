@@ -12,10 +12,15 @@
   }
 
   function getTip(id) {
-    var registry = global.OrganiserFieldTips || {};
-    if (registry[id]) return registry[id];
-    registry = global.ForOrganisersFeatureTips || {};
-    return registry[id] || null;
+    var registries = [
+      global.OrganiserFieldTips,
+      global.ForOrganisersFeatureTips,
+      global.ForAttendeesFeatureTips,
+    ];
+    for (var i = 0; i < registries.length; i++) {
+      if (registries[i] && registries[i][id]) return registries[i][id];
+    }
+    return null;
   }
 
   function ensurePopover() {

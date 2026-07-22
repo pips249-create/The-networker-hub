@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Events, organisers &amp; Business Opps – For networkers – The Networker Hub</title>
-<meta name="description" content="Find UK networking events, organiser communities, and business opportunities in one place. One free Networker Hub account — My Hub dashboard, smart alerts, member rates, and booking reminders.">
+<meta name="description" content="UK networking events, organiser pages, and Business Opps in one place. One free account — My Hub, smart alerts, member rates, and booking reminders.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/for-organisers-page.css?v=20260721m">
-<link rel="stylesheet" href="css/for-attendees-page.css?v=20260722d">
+<link rel="stylesheet" href="css/hub-field-tip.css?v=20260722">
+<link rel="stylesheet" href="css/for-attendees-page.css?v=20260722e">
 <link rel="icon" href="assets/hubert-icon.png" type="image/png">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260714cls">
 <script src="js/hub-seo-static-config.js?v=20260722a"></script>
@@ -34,17 +35,17 @@
         <p class="fo-hero-kicker">For networkers</p>
         <h1 id="fa-hero-heading">Find your next <span class="fo-hero-accent" id="fa-hero-word">opportunity</span></h1>
         <p class="fo-hero-lede">
-          Stop wasting time searching for your next event, business opportunities, or organisers — they can all be found on your Networker Hub.
+          Stop hunting across sites for events, Business Opps, and organisers. Your Networker Hub brings them together.
         </p>
         <ul class="fo-benefit-list fo-hero-benefits" aria-label="What you get with one free account">
-          <li>My Hub dashboard for events, organisers &amp; Business Opps</li>
-          <li>Read reviews before you book or enquire</li>
-          <li>Write reviews and read organiser replies</li>
-          <li>Compare Business Opps and track enquiries</li>
-          <li>Follow favourite organisers and saved events</li>
-          <li>Email reminders for favourite groups</li>
-          <li>Smart alerts when tickets open</li>
-          <li>Guest visits and member rates when signed in</li>
+          <li>My Hub for events, organisers &amp; Business Opps</li>
+          <li>Read reviews before you book</li>
+          <li>Write reviews · read organiser replies</li>
+          <li>Compare Business Opps · track enquiries</li>
+          <li>Follow favourite organisers &amp; events</li>
+          <li>Email reminders for your groups</li>
+          <li>Alerts when tickets go on sale</li>
+          <li>Guest visits &amp; member rates</li>
         </ul>
         <div class="fo-hero-actions">
           <a class="btn btn-primary" href="/register?next=%2Faccount%2F">Create free account</a>
@@ -140,14 +141,14 @@
             </div>
           </div>
           <h3>Find events &amp; organisers</h3>
-          <p class="fo-benefit-lede">Search UK networking events and organiser pages from your account — with reviews, filters, and guest visit options to help you pick the right room.</p>
+          <p class="fo-benefit-lede">UK networking events and organiser pages from your account. Reviews, filters, and guest visits help you choose.</p>
           <ul class="fo-benefit-list">
             <li>Events directory &amp; organiser browse</li>
             <li>Location, date, price &amp; keyword filters</li>
-            <li>Organiser reviews &amp; ranking badges</li>
-            <li>Guest visit &amp; trial options</li>
+            <li data-hub-tip="fa-ranking-badges">Organiser reviews &amp; ranking badges</li>
+            <li data-hub-tip="fa-guest-visit">Guest visit &amp; trial options</li>
             <li>Follow favourite organisers &amp; saved events</li>
-            <li>Ask Hubert — AI concierge</li>
+            <li data-hub-tip="fa-ask-hubert">Ask Hubert — AI concierge</li>
           </ul>
         </article>
 
@@ -181,59 +182,14 @@
             </div>
           </div>
           <h3>Explore Business Opps</h3>
-          <p class="fo-benefit-lede">The Business Opps directory at <strong>/opportunities/</strong> brings franchises, side hustles, and partnerships into one place — compare listings and send enquiries from your account.</p>
+          <p class="fo-benefit-lede">Franchises, side hustles, and partnerships in one directory. Compare listings and send enquiries from your account.</p>
           <ul class="fo-benefit-list">
-            <li>Business Opps directory at /opportunities/</li>
+            <li data-hub-tip="fa-business-opps-directory">Business Opps directory</li>
             <li>Compare franchises, side hustles &amp; partnerships</li>
-            <li>Send enquiries and track replies in My Hub</li>
-            <li>Saved opportunity searches &amp; email alerts</li>
+            <li>Send enquiries · track replies in My Hub</li>
+            <li data-hub-tip="fa-saved-opp-search">Saved opportunity searches &amp; email alerts</li>
             <li>Filters by category, location &amp; investment</li>
             <li>New listing alerts when a search matches</li>
-          </ul>
-        </article>
-
-        <article class="fo-benefit-col fo-reveal-child">
-          <div class="fo-benefit-visual" aria-hidden="true">
-            <div class="fo-benefit-scene fo-benefit-scene--tickets">
-              <div class="fo-benefit-event-page">
-                <div class="fo-benefit-event-hero"></div>
-                <div class="fo-benefit-event-body">
-                  <strong>Friday breakfast networking</strong>
-                  <span>Fri 7:30am · Manchester city centre</span>
-                  <div class="fo-benefit-ticket-row is-selected">
-                    <span>
-                      <b>Guest visit</b>
-                      <small>First visit · complimentary</small>
-                    </span>
-                    <em>Free</em>
-                  </div>
-                  <div class="fo-benefit-ticket-row">
-                    <span>
-                      <b>Member rate</b>
-                      <small>Signed in · on member list</small>
-                    </span>
-                    <em>£12</em>
-                  </div>
-                  <span class="fo-benefit-checkout-btn">Book now</span>
-                </div>
-              </div>
-              <div class="fo-benefit-receipt">
-                <span class="fo-benefit-receipt-badge">Confirmed</span>
-                <strong>Booking confirmed</strong>
-                <span>Reminder email · 24 hours before</span>
-                <span>Join link stored in My Hub</span>
-              </div>
-            </div>
-          </div>
-          <h3>Book with confidence</h3>
-          <p class="fo-benefit-lede">Streamlined checkout, clear fees, and automated confirmations — plus member rates when you belong to a group and series passes for recurring events.</p>
-          <ul class="fo-benefit-list">
-            <li>Instant booking confirmations</li>
-            <li>24-hour event reminders</li>
-            <li>Online join-link reminders</li>
-            <li>Member rates when on a group roster</li>
-            <li>Series bundles &amp; full series passes</li>
-            <li>Self-service cancellation when allowed</li>
           </ul>
         </article>
 
@@ -267,14 +223,14 @@
             </div>
           </div>
           <h3>Your networking hub</h3>
-          <p class="fo-benefit-lede">My Hub keeps tickets, saved favourites, memberships, reviews, and opportunity enquiries together — with alerts so you never miss the next seat or listing.</p>
+          <p class="fo-benefit-lede">My Hub keeps your tickets, favourites, memberships, reviews, and enquiries in one place.</p>
           <ul class="fo-benefit-list">
-            <li>My Hub dashboard at /account/</li>
+            <li>Instant booking confirmations &amp; 24-hour reminders</li>
+            <li data-hub-tip="fa-member-rates">Member rates on group rosters</li>
             <li>Saved events, organisers &amp; opps</li>
-            <li>Smart alerts when tickets open</li>
-            <li>Saved opportunity search alerts</li>
+            <li data-hub-tip="fa-smart-alerts">Smart alerts when tickets open</li>
             <li>Leave reviews &amp; read organiser replies</li>
-            <li>&ldquo;I&rsquo;m going&rdquo; share cards for LinkedIn</li>
+            <li data-hub-tip="fa-share-cards">&ldquo;I&rsquo;m going&rdquo; share cards for LinkedIn</li>
           </ul>
         </article>
       </div>
@@ -285,7 +241,7 @@
     <div class="fo-flow-inner">
       <header class="fo-section-head fo-section-head--center fo-reveal-child">
         <h2 id="fa-hub-heading">Everything in My Hub</h2>
-        <p class="fo-section-lede">Tickets, saved favourites, memberships, reviews, and Business Opp enquiries — all from your attendee dashboard. Each sidebar item opens directly.</p>
+        <p class="fo-section-lede">Your tickets, favourites, memberships, reviews, and Business Opp enquiries — all in My Hub.</p>
       </header>
       <div class="fo-workspace-stage fo-reveal-child">
         <aside class="fo-workspace-detail" id="fa-workspace-detail" aria-live="polite">
@@ -454,7 +410,7 @@
   <section class="fo-cta" aria-labelledby="fa-cta-heading">
     <div class="fo-flow-inner">
       <div class="fo-cta-panel">
-        <p class="fo-cta-pricing"><strong>Free to join.</strong> No subscription — one account for events, organisers, and Business Opps. <span class="fo-cta-pricing-links"><a href="/help/pricing-fees">Pricing &amp; fees →</a><span aria-hidden="true"> · </span><a href="/faq">Attendee FAQs →</a></span></p>
+        <p class="fo-cta-pricing"><strong>Free to join.</strong> No subscription — one account for events, organisers, and Business Opps. <span class="fo-cta-pricing-links"><a href="/help/pricing-fees">Pricing &amp; fees →</a><span aria-hidden="true"> · </span><a href="/faq">FAQs →</a></span></p>
         <h2 id="fa-cta-heading">Ready to join your Networker Hub?</h2>
         <div class="fo-cta-actions">
           <a class="btn btn-primary fo-cta-primary" href="/register?next=%2Faccount%2F">Create free account</a>
@@ -469,6 +425,8 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260722a" data-root=""></script>
 <script src="js/find-your-next-rotate.js?v=20260714"></script>
+<script src="js/for-attendees-feature-tips.js?v=20260722"></script>
+<script src="js/hub-field-tip.js?v=20260722"></script>
 <script src="js/for-attendees-page.js?v=20260722b"></script>
 
 </body>
