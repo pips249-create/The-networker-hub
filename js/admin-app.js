@@ -842,6 +842,10 @@
         title = 'City Partner placements';
         subtitle =
           'Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in hub emails.';
+      } else if (fullHash === 'sponsorship/advertising-enquiries') {
+        title = 'Advertising enquiries';
+        subtitle =
+          'Sponsorship form submissions from /advertising. Rosie is emailed automatically; use this list for follow-up.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
         title = 'Event & organiser pages — Sponsor carousel (3 ads)';
         subtitle =
@@ -5849,6 +5853,10 @@
       renderCityPartnersPage();
       return;
     }
+    if (hash === 'sponsorship/advertising-enquiries') {
+      renderAdvertisingEnquiriesPage();
+      return;
+    }
     if (hash === 'sponsorship/event-page-carousel') {
       renderEventCarouselPage('event_page_carousel_ads');
       return;
@@ -5966,6 +5974,18 @@
       '<p id="sponsor-picker-status" class="text-sm text-slate-500">Loading ad statuses…</p>' +
       groupsHtml +
       '<section class="admin-ad-picker-group">' +
+      '<h3 class="admin-ad-picker-group-title">Inbound leads</h3>' +
+      '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
+      '<a href="#sponsorship/advertising-enquiries" class="admin-ad-picker-card admin-ad-picker-card--enquiries">' +
+      '<div class="admin-ad-picker-card-head">' +
+      '<span class="admin-ad-picker-type">Form</span>' +
+      '<span class="admin-ad-picker-status" id="advertising-enquiries-picker-status">…</span>' +
+      '</div>' +
+      '<p class="admin-ad-picker-label">Advertising enquiries</p>' +
+      '<p class="admin-ad-picker-help">Submissions from /advertising — package, budget, and contact details.</p>' +
+      '<span class="admin-ad-picker-action">View enquiries →</span>' +
+      '</a></div></section>' +
+      '<section class="admin-ad-picker-group">' +
       '<h3 class="admin-ad-picker-group-title">City pages</h3>' +
       '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
       '<a href="#sponsorship/city-partners" class="admin-ad-picker-card admin-ad-picker-card--city-partners">' +
@@ -6059,6 +6079,37 @@
       })
       .catch(function () {
         var el = document.getElementById('home-partners-picker-status');
+        if (el) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+        }
+      });
+
+    adminGet('/api/admin/advertising-enquiries?limit=100')
+      .then(function (data) {
+        var el = document.getElementById('advertising-enquiries-picker-status');
+        if (!el) return;
+        if (!data || data.error) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          return;
+        }
+        var recent = Number(data.recentCount) || 0;
+        var total = Number(data.total) || 0;
+        if (!total) {
+          el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">None yet</span>';
+        } else if (recent) {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' +
+            recent +
+            ' this week</span>';
+        } else {
+          el.innerHTML =
+            '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' + total + ' total</span>';
+        }
+      })
+      .catch(function () {
+        var el = document.getElementById('advertising-enquiries-picker-status');
         if (el) {
           el.innerHTML =
             '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
@@ -6444,6 +6495,125 @@
           }
         });
     });
+  }
+
+  function initAdvertisingEnquiriesAdmin() {
+    var statusEl = document.getElementById('advertising-enquiries-status');
+    var bodyEl = document.getElementById('advertising-enquiries-body');
+
+    function setEnquiriesStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text || '';
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function renderEnquiriesTable(data) {
+      if (!bodyEl) return;
+      var enquiries = Array.isArray(data.enquiries) ? data.enquiries : [];
+      if (!enquiries.length) {
+        bodyEl.innerHTML = '<p class="text-sm text-slate-500">No enquiries yet.</p>';
+        return;
+      }
+
+      var rows = enquiries
+        .map(function (row) {
+          var message = String(row.message || '').trim();
+          var messageCell = message
+            ? '<span title="' +
+              attrEsc(message) +
+              '">' +
+              esc(message.length > 120 ? message.slice(0, 117) + '…' : message) +
+              '</span>'
+            : '—';
+          return (
+            '<tr class="border-t border-slate-100 align-top">' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
+            esc(formatAdminDateTime(row.createdAt)) +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm"><strong>' +
+            esc(row.companyName || '—') +
+            '</strong><br><span class="text-slate-600">' +
+            esc(row.contactName || '—') +
+            '</span></td>' +
+            '<td class="px-3 py-2 text-sm break-all"><a class="text-brand-700 hover:underline" href="mailto:' +
+            attrEsc(row.email || '') +
+            '">' +
+            esc(row.email || '—') +
+            '</a></td>' +
+            '<td class="px-3 py-2 text-sm">' +
+            esc(row.section || '—') +
+            '<br><span class="text-slate-600">' +
+            esc(row.packageName || '—') +
+            '</span></td>' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
+            esc(row.budget || '—') +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm text-slate-600 max-w-xs">' +
+            messageCell +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      bodyEl.innerHTML =
+        '<table class="min-w-full text-left">' +
+        '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
+        '<tr><th class="px-3 py-2">Submitted</th><th class="px-3 py-2">Company</th><th class="px-3 py-2">Email</th><th class="px-3 py-2">Section / package</th><th class="px-3 py-2">Budget</th><th class="px-3 py-2">Message</th></tr>' +
+        '</thead><tbody>' +
+        rows +
+        '</tbody></table>';
+    }
+
+    adminGet('/api/admin/advertising-enquiries?limit=100')
+      .then(function (data) {
+        if (!data || data.error) {
+          throw new Error((data && data.message) || data.error || 'enquiries_load_failed');
+        }
+        renderEnquiriesTable(data);
+        var recent = Number(data.recentCount) || 0;
+        var total = Number(data.total) || 0;
+        setEnquiriesStatus(
+          total
+            ? total +
+                ' enquir' +
+                (total === 1 ? 'y' : 'ies') +
+                ' loaded' +
+                (recent ? ' · ' + recent + ' in the last 7 days' : '') +
+                '.'
+            : 'No enquiries yet.',
+          'ok'
+        );
+      })
+      .catch(function (err) {
+        if (bodyEl) {
+          bodyEl.innerHTML =
+            '<p class="text-sm text-red-700">' + esc((err && err.message) || 'Could not load enquiries') + '</p>';
+        }
+        setEnquiriesStatus((err && err.message) || 'Could not load enquiries', 'error');
+      });
+  }
+
+  function renderAdvertisingEnquiriesPage() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Advertising enquiries</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Latest submissions from /advertising. Rosie receives each enquiry by email automatically.</p></div>' +
+      '<a href="/advertising" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open advertising page ↗</a>' +
+      '</div>' +
+      '<p id="advertising-enquiries-status" class="text-sm text-slate-500">Loading enquiries…</p>' +
+      '<div id="advertising-enquiries-body" class="overflow-x-auto"></div>' +
+      '</section></div>';
+
+    initAdvertisingEnquiriesAdmin();
   }
 
   function renderHomePartnersPage() {
