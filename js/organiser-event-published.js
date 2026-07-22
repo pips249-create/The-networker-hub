@@ -536,7 +536,7 @@
       }
       if (organiserEvent) {
         if (listingIsLive(organiserEvent)) markLiveOnBrowse();
-        else markPendingApproval();
+        else if (!justPublished) markPendingApproval();
         applyFeaturedStartIso(organiserEvent.date || organiserEvent.starts_at || '');
         renderPreview({
           id: organiserEvent.id,
@@ -588,11 +588,12 @@
         renderPreview(data.event);
         return;
       }
-      markPendingApproval();
+      if (!justPublished) markPendingApproval();
     } catch {
-      markPendingApproval();
+      if (!justPublished) markPendingApproval();
     }
 
+    if (!justPublished) markPendingApproval();
     renderPreview({
       title: fallbackTitle,
       photo: fallbackImage,
