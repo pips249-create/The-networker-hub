@@ -597,6 +597,21 @@ body.nav-menu-open {
     align-self: center;
   }
 
+  .filter-bar-primary .filter-price-range--inline {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .filter-bar-primary .filter-price-range--inline .filter-price-bounds {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .filter-bar-primary .filter-price-range--inline .filter-price-bound {
+    flex: 1 1 calc(50% - 6px);
+    max-width: none;
+  }
+
   .filter-more-panel,
   .filter-more-panel[hidden] {
     display: none;

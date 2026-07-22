@@ -53,8 +53,8 @@ function parseBrowseQuery(query) {
     'date',
     'price-asc',
     'price-desc',
-    'rating-asc',
-    'rating-desc',
+    'best-rated',
+    'newest-added',
   ];
 
   const types = String(q.type || q.types || '')
@@ -234,10 +234,16 @@ function rowRatingSortKey(row) {
   return Number.isNaN(rating) ? null : rating;
 }
 
+function rowAddedSortKey(row) {
+  if (!row.created_at) return null;
+  const ts = new Date(row.created_at).getTime();
+  return Number.isNaN(ts) ? null : ts;
+}
+
 function sortRows(rows, sort) {
   const list = rows.slice();
   list.sort((a, b) => {
-    if (sort === 'rating-desc') {
+    if (sort === 'best-rated' || sort === 'rating-desc') {
       const rb = rowRatingSortKey(b);
       const ra = rowRatingSortKey(a);
       if (ra == null && rb == null) return 0;
@@ -245,13 +251,13 @@ function sortRows(rows, sort) {
       if (rb == null) return -1;
       return rb - ra;
     }
-    if (sort === 'rating-asc') {
-      const ra = rowRatingSortKey(a);
-      const rb = rowRatingSortKey(b);
-      if (ra == null && rb == null) return 0;
-      if (ra == null) return 1;
-      if (rb == null) return -1;
-      return ra - rb;
+    if (sort === 'newest-added') {
+      const cb = rowAddedSortKey(b);
+      const ca = rowAddedSortKey(a);
+      if (ca == null && cb == null) return 0;
+      if (ca == null) return 1;
+      if (cb == null) return -1;
+      return cb - ca;
     }
     if (sort === 'price-asc') {
       return (Number(a.min_ticket_price) || 0) - (Number(b.min_ticket_price) || 0);
@@ -287,14 +293,14 @@ function applySqlSort(query, sort) {
       .order('min_ticket_price', { ascending: false })
       .order('starts_at', { ascending: true });
   }
-  if (sort === 'rating-asc') {
-    return query
-      .order('average_rating', { ascending: true, nullsFirst: false })
-      .order('starts_at', { ascending: true });
-  }
-  if (sort === 'rating-desc') {
+  if (sort === 'best-rated' || sort === 'rating-desc') {
     return query
       .order('average_rating', { ascending: false, nullsFirst: false })
+      .order('starts_at', { ascending: true });
+  }
+  if (sort === 'newest-added') {
+    return query
+      .order('created_at', { ascending: false, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   return query
@@ -422,7 +428,7 @@ async function fetchBrowsePageIds(sb, params) {
     const slim = await fetchMatchingRows(
       sb,
       params,
-      'id, latitude, longitude, format_tab, starts_at, min_ticket_price, average_rating, featured, featured_until'
+      'id, latitude, longitude, format_tab, starts_at, min_ticket_price, average_rating, featured, featured_until, created_at'
     );
     const filtered = slim.filter((row) => rowPassesGeo(row, params));
     const sorted = sortRows(filtered, params.sort);
@@ -432,7 +438,7 @@ async function fetchBrowsePageIds(sb, params) {
   }
 
   let query = sb.from(BROWSE_VIEW).select(
-    'id, starts_at, min_ticket_price, average_rating, featured, featured_until',
+    'id, starts_at, min_ticket_price, average_rating, featured, featured_until, created_at',
     { count: 'exact' }
   );
   query = applyBrowseFilters(query, params);

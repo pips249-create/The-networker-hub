@@ -122,6 +122,46 @@ body.browse-mode-organisers .events-hero-organiser-sep {
   color: rgba(255, 255, 255, 0.45);
 }
 
+.events-hub-cta-link {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.events-hero-organiser-cta .events-hub-cta-link {
+  color: var(--ev-lavender);
+  text-decoration-color: rgba(212, 184, 232, 0.55);
+}
+
+.events-hero-organiser-cta .events-hub-cta-link:hover {
+  color: #e8d4f4;
+  text-decoration-color: rgba(232, 212, 244, 0.9);
+}
+
+body.browse-mode-organisers .events-hero-organiser-cta .events-hub-cta-link {
+  color: #93c5fd;
+  text-decoration-color: rgba(147, 197, 253, 0.55);
+}
+
+body.browse-mode-organisers .events-hero-organiser-cta .events-hub-cta-link:hover {
+  color: #bfdbfe;
+  text-decoration-color: rgba(191, 219, 254, 0.9);
+}
+
+.events-organiser-footnote .events-hub-cta-link {
+  color: var(--lavender-deep);
+}
+
+body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
+  color: #2563eb;
+}
+
+.events-organiser-footnote .events-hub-cta-link:hover {
+  color: var(--charcoal);
+}
+
 .events-hero-lede strong {
   color: #fff;
   font-weight: 600;

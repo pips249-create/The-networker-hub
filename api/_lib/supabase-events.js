@@ -440,6 +440,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     organiser: orgName,
     rating: Number(row.average_rating) || 0,
     reviews: Number(row.review_count) || 0,
+    createdAt: row.created_at || null,
     isApprovalRequired:
       normalizeAttendanceMode(row.attendance_mode) === 'category_exclusivity' ||
       row.auto_approve === false ||

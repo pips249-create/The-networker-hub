@@ -88,8 +88,8 @@
 }
 
 .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box {
-  background: #fff;
-  border-color: #fff;
+  background: var(--gold);
+  border-color: var(--gold);
 }
 
 .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box::after {
@@ -114,8 +114,8 @@
 }
 
 .events-filter-shell .event-type-chip.is-active {
-  background: #fff;
-  border-color: #fff;
+  background: var(--gold);
+  border-color: var(--gold);
   color: var(--filter-surface-deep);
 }
 
@@ -143,7 +143,8 @@
 }
 
 .events-filter-shell .filter-date-wrap.is-active {
-  border-color: #fff;
+  border-color: var(--gold);
+  background: var(--gold-light);
 }
 
 .events-filter-shell .filter-more-toggle {
@@ -162,11 +163,11 @@
 }
 
 .events-filter-shell .filter-more-toggle[aria-expanded='true'] {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.16);
+  color: var(--filter-surface-deep);
+  background: var(--gold);
   border-style: solid;
-  border-color: rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  border-color: var(--gold);
+  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.22);
 }
 
 .events-filter-shell .filter-price-bound {
@@ -221,17 +222,19 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 12px;
-  flex: 1 1 320px;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
 .filter-bar-row-top .filter-field-postcode {
-  flex: 1 1 160px;
+  flex: 0 1 160px;
+  width: 160px;
+  max-width: 200px;
   min-width: 0;
 }
 
 .filter-bar-row-top .filter-field-search {
-  flex: 1 1 280px;
+  flex: 2 1 320px;
   min-width: 220px;
 }
 
@@ -328,10 +331,10 @@
 }
 
 .filter-format-group--inline .filter-format-pill input:checked + .filter-format-pill-face {
-  background: #fff;
-  border-color: #fff;
+  background: var(--gold);
+  border-color: var(--gold);
   color: var(--filter-surface-deep, var(--lavender-deep));
-  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.28);
+  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.22);
 }
 
 .filter-format-group--inline .filter-format-pill input:checked + .filter-format-pill-face .filter-format-pill-icon {
@@ -399,10 +402,10 @@
 }
 
 .filter-format-pill input:checked + .filter-format-pill-face {
-  background: #fff;
-  border-color: #fff;
+  background: var(--gold);
+  border-color: var(--gold);
   color: var(--filter-surface-deep, var(--lavender-deep));
-  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.28);
+  box-shadow: 0 2px 12px rgba(18, 8, 28, 0.22);
 }
 
 .filter-format-pill input:checked + .filter-format-pill-face .filter-format-pill-icon {
@@ -630,6 +633,26 @@
   min-width: 0;
 }
 
+.filter-bar-primary .filter-price-range--inline,
+.filter-price-range--inline {
+  flex: 0 1 auto;
+  width: auto;
+  flex-wrap: nowrap;
+}
+
+.filter-bar-primary .filter-price-range--inline .filter-price-range-controls {
+  flex-wrap: nowrap;
+}
+
+.filter-bar-primary .filter-price-range--inline .filter-price-bounds {
+  flex: 0 1 auto;
+}
+
+.filter-bar-primary .filter-price-range--inline .filter-price-bound {
+  flex: 0 0 auto;
+  max-width: 150px;
+}
+
 .filter-rating-filter {
   display: flex;
   flex-wrap: wrap;
@@ -819,6 +842,7 @@
 
 .filter-bar-primary .filter-bar-quick,
 .filter-bar-primary .filter-format-group--inline,
+.filter-bar-primary .filter-price-range--inline,
 .filter-bar-primary .filter-more-toggle {
   display: inline-flex;
   align-items: center;
@@ -1231,19 +1255,22 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
   }
 
   .filter-bar-location-group {
-    flex: 1 1 0;
+    flex: 0 1 auto;
+    max-width: 340px;
     min-width: 0;
   }
 
   .filter-bar-row-top .filter-field-postcode {
-    flex: 1 1 0;
+    flex: 0 1 140px;
+    width: 140px;
+    max-width: 180px;
     min-width: 0;
   }
 
   .filter-bar-row-top .filter-field-search {
-    flex: 1 1 280px;
-    min-width: 240px;
-    max-width: 420px;
+    flex: 2 1 360px;
+    min-width: 280px;
+    max-width: none;
   }
 
   .filter-bar-row-top .filter-location-radius,
@@ -1401,8 +1428,8 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 
 .events-view-toggle-btn.is-active,
 .events-view-toggle-btn[aria-pressed='true'] {
-  background: var(--lavender-deep);
-  color: #fff;
+  background: var(--gold);
+  color: var(--filter-surface-deep, var(--charcoal));
   box-shadow: none;
 }
 
@@ -1464,6 +1491,11 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 
 .events-results-actions .browse-mode-toggle {
   flex-shrink: 0;
+}
+
+.events-page .browse-mode-btn.is-active {
+  background: var(--gold);
+  color: var(--filter-surface-deep, var(--charcoal));
 }
 
 .clear-filters-link {

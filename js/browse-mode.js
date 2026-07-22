@@ -5,6 +5,8 @@
   var heroBadge = document.getElementById('events-hero-badge');
   var heroTitle = document.getElementById('events-hero-heading');
   var heroBrowseLink = document.getElementById('events-hero-browse-link');
+  var heroOrganiserCta = document.getElementById('events-hero-organiser-cta');
+  var organiserFootnote = document.getElementById('events-organiser-footnote');
   var heroSub = document.getElementById('events-hero-lede');
   var listingsHeader = document.getElementById('all-heading');
   var searchInput = document.getElementById('search');
@@ -138,18 +140,43 @@
     });
   }
 
+  var eventsHeroOrganiserHtml =
+    'Organiser? <button type="button" class="events-hero-organiser-link" data-hub-action="add-event">List an event</button>' +
+    '<span class="events-hero-organiser-sep" aria-hidden="true"> · </span>' +
+    '<button type="button" class="events-hero-organiser-link" data-hub-action="add-group">Add an organiser page</button>';
+
+  var eventsFootnoteOrganiserHtml =
+    'Organiser? <button type="button" class="events-organiser-footnote-link" data-hub-action="add-event">List an event</button>' +
+    '<span class="events-organiser-footnote-sep" aria-hidden="true"> · </span>' +
+    '<button type="button" class="events-organiser-footnote-link" data-hub-action="add-group">Add an organiser page</button>';
+
+  var organisersHubCtaHtml =
+    'Want to be part of the hub? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>';
+
   function syncHeroBrowseLink(mode) {
     if (!heroBrowseLink) return;
     if (mode === 'organisers') {
-      heroBrowseLink.innerHTML =
-        'Looking for an event? <a href="' +
-        browseModeHref('events') +
-        '">Browse events</a>';
+      heroBrowseLink.hidden = true;
+      heroBrowseLink.innerHTML = '';
     } else {
+      heroBrowseLink.hidden = false;
       heroBrowseLink.innerHTML =
         'Looking for a networking group? <a href="' +
         browseModeHref('organisers') +
         '">Browse organisers</a>';
+    }
+  }
+
+  function syncOrganiserCta(mode) {
+    if (mode === 'organisers') {
+      if (heroOrganiserCta) heroOrganiserCta.innerHTML = organisersHubCtaHtml;
+      if (organiserFootnote) organiserFootnote.innerHTML = organisersHubCtaHtml;
+      return;
+    }
+    if (heroOrganiserCta) heroOrganiserCta.innerHTML = eventsHeroOrganiserHtml;
+    if (organiserFootnote) organiserFootnote.innerHTML = eventsFootnoteOrganiserHtml;
+    if (window.HubOrganiserActions && window.HubOrganiserActions.bindActions) {
+      window.HubOrganiserActions.bindActions(document);
     }
   }
 
@@ -195,6 +222,7 @@
       initSponsorHub(mode);
       syncBrowseToggles(mode);
       syncHeroBrowseLink(mode);
+      syncOrganiserCta(mode);
       return;
     }
     if (heroBadge) heroBadge.textContent = c.badge;
@@ -213,6 +241,7 @@
     initSponsorHub(mode);
     syncBrowseToggles(mode);
     syncHeroBrowseLink(mode);
+    syncOrganiserCta(mode);
   }
 
   function setMode(mode, options) {

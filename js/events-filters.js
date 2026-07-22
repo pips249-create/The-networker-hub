@@ -554,11 +554,18 @@
     return rating;
   }
 
+  function eventAddedSortKey(ev) {
+    var raw = ev.createdAt || ev.created_at || '';
+    if (!raw) return null;
+    var ts = new Date(raw).getTime();
+    return Number.isNaN(ts) ? null : ts;
+  }
+
   function sortEvents(list) {
     var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
     copy.sort(function (a, b) {
-      if (sort === 'rating' || sort === 'rating-desc') {
+      if (sort === 'best-rated' || sort === 'rating' || sort === 'rating-desc') {
         var rb = eventRatingSortKey(b);
         var ra = eventRatingSortKey(a);
         if (ra == null && rb == null) return 0;
@@ -566,13 +573,13 @@
         if (rb == null) return -1;
         return rb - ra;
       }
-      if (sort === 'rating-asc') {
-        var raAsc = eventRatingSortKey(a);
-        var rbAsc = eventRatingSortKey(b);
-        if (raAsc == null && rbAsc == null) return 0;
-        if (raAsc == null) return 1;
-        if (rbAsc == null) return -1;
-        return raAsc - rbAsc;
+      if (sort === 'newest-added') {
+        var ca = eventAddedSortKey(a);
+        var cb = eventAddedSortKey(b);
+        if (ca == null && cb == null) return 0;
+        if (ca == null) return 1;
+        if (cb == null) return -1;
+        return cb - ca;
       }
       if (sort === 'price' || sort === 'price-asc') {
         return eventListingPrice(a) - eventListingPrice(b);

@@ -9,13 +9,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260714cls">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260722barfix">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260722price">
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260613">
 <script src="../js/fact-loader.js?v=20260613"></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-<link rel="stylesheet" href="../css/events-page.css?v=20260722lede">
+<link rel="stylesheet" href="../css/events-page.css?v=20260722hubcta">
 <link rel="stylesheet" href="../css/home-page.css?v=20260721loc2">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260722barfix">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260722gold">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260717logo">
 <link rel="stylesheet" href="../css/networking-regions.css?v=20260721hero">
 <script src="../js/hub-lazy-vendor.js?v=20260716fp"></script>
@@ -43,7 +43,7 @@
       <p class="events-hero-browse-link" id="events-hero-browse-link">
         Looking for a networking group? <a href="/events/?mode=organisers">Browse organisers</a>
       </p>
-      <p class="events-hero-organiser-cta">
+      <p class="events-hero-organiser-cta" id="events-hero-organiser-cta">
         Organiser?
         <button type="button" class="events-hero-organiser-link" data-hub-action="add-event">
           List an event
@@ -218,7 +218,7 @@
           </div>
         </div>
         <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline">
-          <legend class="filter-bar-chip-label filter-format-legend">Format</legend>
+          <legend class="visually-hidden">Format</legend>
           <div class="filter-format-pills">
             <label class="filter-format-pill">
               <input type="checkbox" id="check-inperson" checked>
@@ -236,6 +236,26 @@
             </label>
           </div>
         </fieldset>
+        <div class="filter-price-range filter-price-range--inline filter-event-only" id="filter-price-range">
+          <span class="visually-hidden">Price</span>
+          <div class="filter-price-range-controls">
+            <label class="filter-checkbox filter-checkbox-free">
+              <input type="checkbox" id="filter-free-only">
+              <span class="filter-checkbox-box" aria-hidden="true"></span>
+              Free
+            </label>
+            <div class="filter-price-bounds">
+              <label class="filter-price-bound">
+                <span class="filter-price-bound-label">Min (£)</span>
+                <input type="number" id="price-min-input" class="filter-price-bound-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Minimum price in pounds">
+              </label>
+              <label class="filter-price-bound">
+                <span class="filter-price-bound-label">Max (£)</span>
+                <input type="number" id="price-max-input" class="filter-price-bound-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Maximum price in pounds">
+              </label>
+            </div>
+          </div>
+        </div>
         <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
           <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
           More filters <span class="filter-more-chevron" aria-hidden="true">▾</span>
@@ -244,36 +264,6 @@
         <div class="filter-more-panel filter-event-only" id="filter-more-panel" hidden>
           <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested filter-event-only">
             <nav class="event-type-chips" id="event-type-chips" aria-label="Event type"></nav>
-          </div>
-          <div class="filter-rating-filter filter-event-only" id="filter-rating-filter">
-            <span class="filter-bar-chip-label">Rating</span>
-            <label class="filter-format-pill filter-rating-pill">
-              <input type="checkbox" id="filter-five-stars-only">
-              <span class="filter-format-pill-face">
-                <span class="filter-rating-stars" aria-hidden="true">★★★★★</span>
-                5 stars only
-              </span>
-            </label>
-          </div>
-          <div class="filter-price-range" id="filter-price-range">
-            <span class="filter-bar-chip-label">Price</span>
-            <div class="filter-price-range-controls">
-              <label class="filter-checkbox filter-checkbox-free">
-                <input type="checkbox" id="filter-free-only">
-                <span class="filter-checkbox-box" aria-hidden="true"></span>
-                Free
-              </label>
-              <div class="filter-price-bounds">
-                <label class="filter-price-bound">
-                  <span class="filter-price-bound-label">Min (£)</span>
-                  <input type="number" id="price-min-input" class="filter-price-bound-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Minimum price in pounds">
-                </label>
-                <label class="filter-price-bound">
-                  <span class="filter-price-bound-label">Max (£)</span>
-                  <input type="number" id="price-max-input" class="filter-price-bound-input" min="0" step="1" inputmode="numeric" placeholder="Any" aria-label="Maximum price in pounds">
-                </label>
-              </div>
-            </div>
           </div>
         </div>
         <div class="filter-organiser-only">
@@ -377,11 +367,11 @@
           <label for="sort">Sort by</label>
           <select id="sort">
             <option value="recommended">Recommended</option>
-            <option value="date">Date</option>
+            <option value="date">Soonest</option>
             <option value="price-asc">Price ascending</option>
             <option value="price-desc">Price descending</option>
-            <option value="rating-asc">Rating ascending</option>
-            <option value="rating-desc">Rating descending</option>
+            <option value="best-rated">Best rated</option>
+            <option value="newest-added">Newest added</option>
           </select>
         </div>
       </div>
@@ -440,7 +430,7 @@
         </div>
         <h2 class="listings-header" id="all-heading">All listings</h2>
         <div class="event-listings" id="event-listings"></div>
-        <p class="events-organiser-footnote">
+        <p class="events-organiser-footnote" id="events-organiser-footnote">
           Organiser?
           <button type="button" class="events-organiser-footnote-link" data-hub-action="add-event">List an event</button><span class="events-organiser-footnote-sep" aria-hidden="true"> · </span><button type="button" class="events-organiser-footnote-link" data-hub-action="add-group">Add an organiser page</button>
         </p>
@@ -672,6 +662,6 @@
 <script src="../js/organisers-filters.js?v=20260714b"></script>
 <script src="../js/organisers.js?v=20260721spotlight"></script>
 <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../"></script>
-<script src="../js/browse-mode.js?v=20260722orgtitle"></script>
+<script src="../js/browse-mode.js?v=20260722hubcta"></script>
 </body>
 </html>
