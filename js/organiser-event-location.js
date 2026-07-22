@@ -47,6 +47,33 @@
     );
   }
 
+  function showAttendeeUpdateAlerts(source) {
+    if (!source) return;
+    const linkEmails = source.linkUpdateEmails;
+    if (linkEmails && linkEmails.sent > 0) {
+      showAlert(
+        'Join link saved. We emailed ' +
+          linkEmails.sent +
+          ' ticket holder' +
+          (linkEmails.sent === 1 ? '' : 's') +
+          ' with the link.',
+        'ok'
+      );
+      return;
+    }
+    const detailsEmails = source.detailsUpdateEmails;
+    if (detailsEmails && detailsEmails.sent > 0) {
+      showAlert(
+        'Changes saved. We emailed ' +
+          detailsEmails.sent +
+          ' ticket holder' +
+          (detailsEmails.sent === 1 ? '' : 's') +
+          ' with the update.',
+        'ok'
+      );
+    }
+  }
+
   function normalizeEventFormat(raw) {
     const s = String(raw || '')
       .toLowerCase()
@@ -630,17 +657,7 @@
     setAutodraftStatus('');
 
     const savedEvents = res.data.events || [];
-    const linkEmails = savedEvents[0] && savedEvents[0].linkUpdateEmails;
-    if (linkEmails && linkEmails.sent > 0) {
-      showAlert(
-        'Join link saved. We emailed ' +
-          linkEmails.sent +
-          ' ticket holder' +
-          (linkEmails.sent === 1 ? '' : 's') +
-          ' with the link.',
-        'ok'
-      );
-    }
+    showAttendeeUpdateAlerts(savedEvents[0]);
 
     if (!continueToTickets) {
       if (isEmbedDrawer && window.parent && window.parent !== window) {

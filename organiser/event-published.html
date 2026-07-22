@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260722a" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260722b" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
   </head>
@@ -25,9 +25,9 @@
       <div class="ep-live-block">
         <div class="ep-success" role="status">
           <span class="ep-success-icon" aria-hidden="true">✓</span>
-          <h1 class="ep-title" id="ep-title">Your listing is live</h1>
+          <h1 class="ep-title" id="ep-title">Checking your listing…</h1>
           <p class="ep-lead" id="ep-lead">
-            Attendees can find your event on the hub. Preview your listing below — then share it or choose featured placement if you like.
+            One moment while we load your published event.
           </p>
         </div>
 
@@ -50,10 +50,12 @@
         <div class="ep-actions ep-actions--primary">
           <a class="ee-btn ee-btn-primary" href="/organiser/#events-list">Go to My Events</a>
           <a class="ee-btn ee-btn-outline" href="../events/" id="ep-view-listing" target="_blank" rel="noopener">View public listing</a>
+          <a class="ee-btn ee-btn-outline ep-promote-jump" href="#ep-promote-section" id="ep-promote-jump" hidden>
+            Share or feature your event
+          </a>
         </div>
-      </div>
 
-      <div class="ep-promote-section" id="ep-promote-section">
+      <div class="ep-promote-section" id="ep-promote-section" hidden>
         <p class="ep-promote-kicker">Optional next steps</p>
         <h2 class="ep-promote-heading">Share or feature your event</h2>
         <p class="ep-promote-lead">Promote your listing on social media, or appear in the Premium Spotlight carousel.</p>
@@ -156,12 +158,13 @@
           <a href="/organiser/#events-list" id="ep-promote-skip">No thanks — I'm done for now</a>
         </p>
       </div>
+      </div>
     </div>
 
     <script src="../js/organiser-event-wizard.js?v=20260608c" data-step="publish"></script>
     <script src="../js/hub-comms-pack.js?v=20260714events"></script>
     <script src="../js/hub-going-share.js?v=20260716"></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat"></script>
-    <script src="../js/organiser-event-published.js?v=20260722a"></script>
+    <script src="../js/organiser-event-published.js?v=20260722b"></script>
   </body>
 </html>

@@ -562,12 +562,16 @@
     const banner = document.getElementById('ee-lock-banner');
     if (banner) {
       banner.hidden = !currentEventLocked;
-      if (currentEventLocked) banner.innerHTML = ticketSalesLockBannerHtml('details');
+      if (currentEventLocked) banner.innerHTML = ticketSalesLockBannerHtml();
     }
     const editableHint = document.getElementById('ee-lock-editable-hint');
     if (editableHint) editableHint.hidden = !currentEventLocked;
 
     setSeriesFieldLocked(document.getElementById('ee-group'), currentEventLocked);
+    ['#ee-copy-title-from-group', '#ee-copy-desc-from-group'].forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) el.disabled = currentEventLocked;
+    });
 
     const lockSelectors = [
       '#ee-type',
@@ -602,18 +606,7 @@
 
   const SUPPORT_EMAIL = 'hello@thenetworkerhub.com';
 
-  function ticketSalesLockBannerHtml(page) {
-    if (page === 'location') {
-      return (
-        '🔒 <strong>Ticket sales are live.</strong> Venue, date, format, and address are locked. ' +
-        'You can still update the online join link — ticket holders are emailed when it changes. ' +
-        'For other changes, contact <a href="mailto:' +
-        SUPPORT_EMAIL +
-        '">' +
-        SUPPORT_EMAIL +
-        '</a> or cancel the event from My Events.'
-      );
-    }
+  function ticketSalesLockBannerHtml() {
     return (
       '🔒 <strong>Ticket sales are live.</strong> Date, time, type, location, and cover photo are locked. ' +
       'You can still edit the title and description — ticket holders are emailed when those change. ' +
@@ -623,6 +616,33 @@
       SUPPORT_EMAIL +
       '</a> or cancel the event.'
     );
+  }
+
+  function showAttendeeUpdateAlerts(source) {
+    if (!source) return;
+    const linkEmails = source.linkUpdateEmails;
+    if (linkEmails && linkEmails.sent > 0) {
+      showAlert(
+        'Join link saved. We emailed ' +
+          linkEmails.sent +
+          ' ticket holder' +
+          (linkEmails.sent === 1 ? '' : 's') +
+          ' with the link.',
+        'ok'
+      );
+      return;
+    }
+    const detailsEmails = source.detailsUpdateEmails;
+    if (detailsEmails && detailsEmails.sent > 0) {
+      showAlert(
+        'Changes saved. We emailed ' +
+          detailsEmails.sent +
+          ' ticket holder' +
+          (detailsEmails.sent === 1 ? '' : 's') +
+          ' with the update.',
+        'ok'
+      );
+    }
   }
 
   function setPhotoLockUi(locked) {
@@ -2050,17 +2070,7 @@
     autodraftDisabled = true;
     clearAutodraft(organiserGroupId);
     const savedEvent = res.data.event || {};
-    const linkEmails = savedEvent.linkUpdateEmails;
-    if (linkEmails && linkEmails.sent > 0) {
-      showAlert(
-        'Join link saved. We emailed ' +
-          linkEmails.sent +
-          ' ticket holder' +
-          (linkEmails.sent === 1 ? '' : 's') +
-          ' with the link.',
-        'ok'
-      );
-    }
+    showAttendeeUpdateAlerts(savedEvent);
 
     if (!publish) {
       if (isEmbedDrawer && window.parent && window.parent !== window) {

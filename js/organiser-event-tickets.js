@@ -2506,6 +2506,28 @@
     }
 
     if (!publish && existingTicketsLoaded && !ticketsChangedFromSnapshot(tiers)) {
+      if (options.redirectToReview) {
+        if (hasPaidTickets) {
+          try {
+            sessionStorage.setItem(
+              REVIEW_REFUND_KEY,
+              JSON.stringify({
+                eventIds: eventIds.slice(),
+                refundPolicy: refund.refundPolicy,
+                refundPolicyDetails: refund.refundPolicyDetails || '',
+                refundCutoffDays: refund.refundCutoffDays,
+                refundTermsAgreed: Boolean(refund.refundTermsAgreed),
+                vatTreatment: collectVatTreatment(),
+              })
+            );
+          } catch {
+            /* ignore quota / private mode */
+          }
+        }
+        clearTicketDraft();
+        location.href = reviewPageUrl();
+        return;
+      }
       showAlert(
         'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
@@ -2652,12 +2674,15 @@
     captureSavedTicketsSnapshot(tiers);
 
     if (publish) {
+      const published = Boolean(data.published);
       const publishedRows = Array.isArray(data.publishedEvents) ? data.publishedEvents : [];
       const allLive =
-        publishedRows.length > 0 &&
-        publishedRows.every(function (ev) {
-          return String(ev.status || ev.listingStatus || '').toLowerCase() === 'published';
-        });
+        published &&
+        (publishedRows.length === 0 ||
+          publishedRows.every(function (ev) {
+            const status = String(ev.status || ev.listingStatus || '').toLowerCase();
+            return status === 'published' || status === 'live';
+          }));
       if (!allLive) {
         showAlert(
           'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then continue to review again.',

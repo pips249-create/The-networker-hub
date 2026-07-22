@@ -93,15 +93,34 @@
   }
 
   function loadSeriesMeta() {
-    const hadUrlIds = eventIds.length > 0;
+    const urlIds = eventIds.slice();
+    const hadUrlIds = urlIds.length > 0;
     try {
       const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
-      if (raw) seriesMeta = { ...seriesMeta, ...JSON.parse(raw) };
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (hadUrlIds) {
+        const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
+          .map(function (id) {
+            return String(id).trim();
+          })
+          .filter(Boolean);
+        const sameIds =
+          storedIds.length === urlIds.length &&
+          urlIds.every(function (id) {
+            return storedIds.includes(id);
+          });
+        if (sameIds) {
+          seriesMeta = { ...seriesMeta, ...parsed };
+        }
+      } else {
+        seriesMeta = { ...seriesMeta, ...parsed };
+        if (parsed.eventIds && parsed.eventIds.length) {
+          eventIds = parsed.eventIds;
+        }
+      }
     } catch {
       /* ignore */
-    }
-    if (!hadUrlIds && seriesMeta.eventIds && seriesMeta.eventIds.length) {
-      eventIds = seriesMeta.eventIds;
     }
   }
 
@@ -872,12 +891,15 @@
         return;
       }
 
+      const published = Boolean(result.data.published);
       const publishedRows = Array.isArray(result.data.publishedEvents) ? result.data.publishedEvents : [];
       const allLive =
-        publishedRows.length > 0 &&
-        publishedRows.every(function (ev) {
-          return String(ev.status || ev.listingStatus || '').toLowerCase() === 'published';
-        });
+        published &&
+        (publishedRows.length === 0 ||
+          publishedRows.every(function (ev) {
+            const status = String(ev.status || ev.listingStatus || '').toLowerCase();
+            return status === 'published' || status === 'live';
+          }));
       if (!allLive) {
         showAlert(
           'Tickets were saved, but this event is still a draft and not live yet. Check ticket types, bank details (for paid tickets), and dates — then try publishing again.',

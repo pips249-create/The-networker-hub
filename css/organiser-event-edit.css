@@ -1508,6 +1508,20 @@ a.ee-wizard-link:hover {
   margin-bottom: 8px;
 }
 
+.organiser-published-page .ep-live-block .ep-promote-section {
+  scroll-margin-top: 88px;
+}
+
+.organiser-published-page .ep-actions--primary .ep-promote-jump {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 640px) {
+  .organiser-published-page .ep-actions--primary .ep-promote-jump {
+    flex: 1 1 auto;
+  }
+}
+
 .organiser-published-page .ep-live-block .ep-preview-card {
   margin-bottom: 20px;
 }

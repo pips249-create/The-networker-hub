@@ -181,9 +181,40 @@
 
   const promoteSection = document.getElementById('ep-promote-section');
   const viewListingLink = document.getElementById('ep-view-listing');
+  const promoteJump = document.getElementById('ep-promote-jump');
+  const justPublished = Boolean(previewStash);
+
+  function isApprovedListing(ev) {
+    const approval = String(
+      (ev && ev.approvalStatus) ||
+        (ev && ev.statusRaw) ||
+        (ev && ev.listingStatusRaw) ||
+        ''
+    )
+      .trim()
+      .toLowerCase();
+    return approval === 'approved';
+  }
+
+  function isPublishedListing(ev) {
+    const status = String((ev && ev.status) || (ev && ev.listingStatus) || '')
+      .trim()
+      .toLowerCase();
+    return status === 'published' || status === 'live';
+  }
+
+  function listingIsLive(ev) {
+    return isApprovedListing(ev) && isPublishedListing(ev);
+  }
 
   function setPromoteVisibility(isLive) {
     if (promoteSection) promoteSection.hidden = !isLive;
+    if (promoteJump) promoteJump.hidden = !isLive;
+    if (isLive && justPublished && promoteSection) {
+      requestAnimationFrame(function () {
+        promoteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
   }
 
   function setShareUrls(title) {
@@ -411,7 +442,7 @@
     if (card) card.hidden = false;
 
     const lead = document.getElementById('ep-lead');
-    if (lead && eventIds.length > 1 && String(ev.approvalStatus || '').trim() === 'Approved') {
+    if (lead && eventIds.length > 1 && isApprovedListing(ev)) {
       lead.textContent =
         'Your ' +
         eventIds.length +
@@ -483,7 +514,7 @@
       );
       const data = await res.json();
       if (data.event) {
-        const approved = String(data.event.approvalStatus || '').trim() === 'Approved';
+        const approved = listingIsLive(data.event);
         if (approved) markLiveOnBrowse();
         else markPendingApproval();
         applyFeaturedStartIso(data.event.date || data.event.starts_at || '');
