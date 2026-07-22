@@ -61,6 +61,23 @@
 .for-attendees-page .btn-primary {
   background: linear-gradient(135deg, #9a7aa8 0%, #7a5a98 100%);
   border-color: #7a5a98;
+  color: #fff;
+}
+
+.for-attendees-page .btn-primary:hover {
+  color: #fff;
+}
+
+.for-attendees-page .fo-hero-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(194, 153, 209, 0.45);
+  color: var(--od-purple-dark);
+}
+
+.for-attendees-page .fo-hero-actions .btn-secondary:hover {
+  background: #fff;
+  border-color: rgba(154, 122, 168, 0.55);
+  color: var(--od-purple-deep);
 }
 
 .for-attendees-page .fo-cta-panel {
