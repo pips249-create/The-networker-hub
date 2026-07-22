@@ -80,6 +80,22 @@
   border-color: #7a5a98;
 }
 
+.for-attendees-page .fo-hero-actions--pillars {
+  gap: 10px;
+}
+
+.for-attendees-page .fo-hero-actions--pillars .btn-secondary {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(194, 153, 209, 0.45);
+  color: var(--od-purple-dark);
+}
+
+.for-attendees-page .fo-hero-actions--pillars .btn-secondary:hover {
+  background: #fff;
+  border-color: rgba(154, 122, 168, 0.55);
+  color: var(--od-purple-deep);
+}
+
 /* Attendee dashboard mock extras */
 .fa-alert-chip {
   display: inline-flex;

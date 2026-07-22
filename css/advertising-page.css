@@ -350,7 +350,7 @@ body.advertising-page {
   padding: 22px 20px;
   border-radius: 16px;
   border: 1px solid var(--ad-line);
-  background: var(--ad-panel);
+  background: var(--ad-soft-muted);
 }
 
 .ad-enquiry-head h2 {
