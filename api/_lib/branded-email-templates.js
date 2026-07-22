@@ -77,6 +77,21 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Your listing was not approved — {{opportunity_title}}',
   },
+  city_partner_payment_welcome: {
+    file: 'city-partner-payment-welcome.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'City Partner confirmed — send your logo & link',
+  },
+  city_partner_slot_open: {
+    file: 'city-partner-slot-open.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{city_name}} City Partner — slot now available',
+  },
+  city_partner_opening_soon: {
+    file: 'city-partner-opening-soon.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{city_name}} City Partner — opens {{available_from}}',
+  },
   payout_requested: {
     file: 'payout-requested.html',
     marker: 'hub-email-layout-v2',

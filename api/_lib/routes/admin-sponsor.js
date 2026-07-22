@@ -3,6 +3,7 @@ const { getAdminSponsor, saveSponsorBlock, copySponsorBlock } = require('../admi
 const { BOOKING_EMAIL_SPONSOR_SLOT, EVENTS_SPONSOR_SLOT } = require('../email-booking-defaults');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
+const { isCityPartnerSlot } = require('../cms-sponsor-fields');
 
 function parseBody(req) {
   let body = req.body;
@@ -39,6 +40,14 @@ async function resolveLogoUrl(body) {
     if (uploaded) logo_url = uploaded;
   }
   return logo_url;
+}
+
+function parseSlotAvailableFrom(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
 module.exports = async function handler(req, res) {
@@ -88,7 +97,7 @@ module.exports = async function handler(req, res) {
     const cta_url = String(body.cta_url || '').trim();
     const company_name = String(body.company_name || '').trim();
     const cta_color = String(body.cta_color || '').trim();
-    const isCityPartner = /^networking_city_partner_/i.test(slot);
+    const isCityPartner = isCityPartnerSlot(slot);
 
     if (!cta_label || !cta_url) {
       return json(res, 400, { ok: false, error: 'missing_cta' });
@@ -97,7 +106,7 @@ module.exports = async function handler(req, res) {
     try {
       const sb = getSupabaseAdmin();
       const logo_url = await resolveLogoUrl(body);
-      const block = await saveSponsorBlock(sb, {
+      const savePayload = {
         slot,
         title,
         body: blockBody,
@@ -108,7 +117,19 @@ module.exports = async function handler(req, res) {
         company_name,
         active: body.active !== false,
         include_in_emails: isCityPartner ? false : body.include_in_emails !== false,
-      });
+      };
+      if (isCityPartner) {
+        if (body.sponsor_email !== undefined) {
+          savePayload.sponsor_email =
+            String(body.sponsor_email || '')
+              .trim()
+              .toLowerCase() || null;
+        }
+        if (body.sponsor_available_from !== undefined) {
+          savePayload.sponsor_available_from = parseSlotAvailableFrom(body.sponsor_available_from);
+        }
+      }
+      const block = await saveSponsorBlock(sb, savePayload);
       return json(res, 200, { ok: true, block, slot, updatedAt: new Date().toISOString() });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'sponsor_save_failed', message: e.message });

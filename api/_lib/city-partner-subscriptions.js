@@ -7,7 +7,11 @@ const {
   cityPartnerSlotKey,
   parseCityPartnerSlot,
 } = require('./networking-city-partners');
-const { notifyCityPartnerWaitlistForSlug } = require('./city-partner-waitlist');
+const {
+  notifyCityPartnerWaitlistForSlug,
+  notifyCityPartnerWaitlistOpeningSoon,
+} = require('./city-partner-waitlist');
+const { sendCityPartnerPaymentWelcome } = require('./city-partner-emails');
 
 function normalizeMeta(metadata) {
   return metadata && typeof metadata === 'object' ? metadata : {};
@@ -184,7 +188,15 @@ async function handleCityPartnerSubscriptionUpdated(subscription) {
       subscriptionId,
       availableFrom: periodEnd,
     });
-    return { ok: true, action: 'scheduled_release', availableFrom: periodEnd, cities };
+    const openingSoon = [];
+    for (const slug of cities) {
+      try {
+        openingSoon.push(await notifyCityPartnerWaitlistOpeningSoon(slug, { sb, availableFrom: periodEnd }));
+      } catch (e) {
+        openingSoon.push({ citySlug: slug, error: e.message });
+      }
+    }
+    return { ok: true, action: 'scheduled_release', availableFrom: periodEnd, cities, openingSoon };
   }
 
   if (status === 'active' && !cancelAtPeriodEnd) {

@@ -23,6 +23,20 @@ This creates Products, Prices, and Payment Links for all sponsorship tiers and w
 
 `checkout.session.completed` is already enabled — it also records sponsorship if you use Stripe Checkout / Payment Links with the metadata below.
 
+### City Partner subscriptions (self-serve)
+
+City Partner checkout uses **Stripe Subscriptions** (rolling monthly). Enable these webhook events on the same endpoint:
+
+| Event | Purpose |
+|-------|---------|
+| `checkout.session.completed` | Reserve city slots after payment; send sponsor welcome email |
+| `customer.subscription.updated` | When `cancel_at_period_end` is set, store the slot open date and email waitlist “opening soon” |
+| `customer.subscription.deleted` | Release slots and email waitlist “slot open” |
+
+Run Supabase migrations `189_city_partner_waitlist.sql` and `190_city_partner_emails.sql` before go-live.
+
+Checkout metadata uses `placement=city_partner` and `networking_cities` (comma-separated slugs). Slot state is stored on `cms_blocks` (`sponsor_subscription_id`, `sponsor_email`, `sponsor_available_from`).
+
 ## Creating an invoice in Stripe
 
 When you create an invoice for a sponsor, add **metadata** on the invoice (Stripe Dashboard → Invoice → Additional options → Metadata, or via API).

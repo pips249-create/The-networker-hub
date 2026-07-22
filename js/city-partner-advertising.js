@@ -447,11 +447,41 @@
   var params = new URLSearchParams(window.location.search);
   var returnState = params.get('city-partner');
   if (returnState === 'success') {
-    setStatus(
-      'Thanks — payment received. Your cities are reserved. Send logo and link to rosie@thenetworkerhub.com and we will publish your placement once creative is approved.',
-      'ok'
-    );
-    focusCityPartnerPackage();
+    var sessionId = params.get('session_id');
+    if (sessionId) {
+      setStatus('Confirming your payment…');
+      fetch(
+        '/api/city-partner?action=verify&session_id=' + encodeURIComponent(sessionId)
+      )
+        .then(readJsonResponse)
+        .then(function (result) {
+          if (!result.ok || !result.data || !result.data.verified) {
+            throw new Error(
+              (result.data && (result.data.message || result.data.error)) ||
+                'Payment could not be verified'
+            );
+          }
+          setStatus(
+            'Thanks — payment confirmed. Your cities are reserved and we have emailed next steps. Send logo and link to rosie@thenetworkerhub.com and we will publish once creative is approved.',
+            'ok'
+          );
+          focusCityPartnerPackage();
+        })
+        .catch(function (err) {
+          setStatus(
+            err.message ||
+              'Payment received — if this message persists, email rosie@thenetworkerhub.com with your checkout receipt.',
+            'error'
+          );
+          focusCityPartnerPackage();
+        });
+    } else {
+      setStatus(
+        'Thanks — payment received. Your cities are reserved. Send logo and link to rosie@thenetworkerhub.com and we will publish your placement once creative is approved.',
+        'ok'
+      );
+      focusCityPartnerPackage();
+    }
   } else if (returnState === 'cancelled') {
     setStatus('Checkout cancelled — selected cities are still available if open.', '');
     focusCityPartnerPackage();

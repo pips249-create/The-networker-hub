@@ -7,8 +7,13 @@ const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_l
 const {
   normalizeSponsorBlock,
   isPublishableSponsorBlock,
+  isCityPartnerSlot,
 } = require('./_lib/cms-sponsor-fields');
-const { cityPartnerSlotKey } = require('./_lib/networking-city-partners');
+const {
+  cityPartnerSlotKey,
+  cityPartnerStatus,
+  cityPartnerAvailabilityFields,
+} = require('./_lib/networking-city-partners');
 
 const LEGACY_SPONSOR_HUB_SLOT = 'sponsor_hub';
 const { HOME_PARTNERS_SLOT, parsePartnersBody, publishablePartners } = require('./_lib/home-partners');
@@ -127,6 +132,21 @@ module.exports = async function handler(req, res) {
         active: sectionActive,
         ads,
         block: row ? { ...row, ads } : null,
+      });
+    }
+
+    if (isCityPartnerSlot(slot)) {
+      const row = await fetchSlotRow(sb, slot);
+      const status = cityPartnerStatus(row);
+      const cityPartner = cityPartnerAvailabilityFields(row, status);
+      const block = isPublishableSponsorBlock(row, slot) ? normalizeSponsorBlock(row) : null;
+      return res.status(200).json({
+        ok: true,
+        configured: true,
+        provider: 'supabase',
+        slot,
+        block,
+        cityPartner,
       });
     }
 

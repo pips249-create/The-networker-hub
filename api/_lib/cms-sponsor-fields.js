@@ -119,7 +119,7 @@ function buildSponsorRow(payload) {
   const include_in_emails = payload.include_in_emails !== false;
   const slot = String(payload.slot || 'sponsor_hub').trim() || 'sponsor_hub';
 
-  return {
+  const row = {
     slot,
     title,
     subtitle: title,
@@ -134,6 +134,18 @@ function buildSponsorRow(payload) {
     include_in_emails,
     updated_at: new Date().toISOString(),
   };
+
+  if (payload.sponsor_subscription_id !== undefined) {
+    row.sponsor_subscription_id = payload.sponsor_subscription_id || null;
+  }
+  if (payload.sponsor_email !== undefined) {
+    row.sponsor_email = payload.sponsor_email || null;
+  }
+  if (payload.sponsor_available_from !== undefined) {
+    row.sponsor_available_from = payload.sponsor_available_from || null;
+  }
+
+  return row;
 }
 
 module.exports = {

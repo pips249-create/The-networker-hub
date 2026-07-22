@@ -293,6 +293,47 @@
     return true;
   }
 
+  function formatCityPartnerOpens(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+  }
+
+  function renderCityPartnerWaitlist(container, cityPartner) {
+    if (!container || !cityPartner) return false;
+    var status = String(cityPartner.status || '').trim();
+    if (status !== 'booked' && status !== 'booked_until') return false;
+
+    var opensLabel = formatCityPartnerOpens(cityPartner.availableFrom);
+    var statusText =
+      status === 'booked_until' && opensLabel
+        ? 'Currently sponsored · opens ' + opensLabel
+        : 'City sponsor slot held · join the waitlist for the next opening.';
+    var opensHtml = opensLabel
+      ? '<p class="networking-city-partner-opens">Opens <strong>' + esc(opensLabel) + '</strong></p>'
+      : '';
+
+    container.hidden = false;
+    container.removeAttribute('hidden');
+    container.removeAttribute('data-company');
+    container.innerHTML =
+      '<aside class="networking-city-partner-ad networking-city-partner-ad--booked" aria-label="City Sponsor slot held">' +
+      '<span class="networking-city-partner-badge">City Sponsor</span>' +
+      '<p class="networking-city-partner-status">' +
+      esc(statusText) +
+      '</p>' +
+      opensHtml +
+      '<a class="networking-city-partner-waitlist-link" href="/advertising#city-partner-package">Join waitlist</a>' +
+      '</aside>';
+    return true;
+  }
+
   function isCityPartnerRenderable(block) {
     if (!block || block.active === false) return false;
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
@@ -347,6 +388,38 @@
       })
       .catch(function () {
         return null;
+      });
+  }
+
+  function loadCityPartnerSlot(slot) {
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok) return { block: null, cityPartner: null };
+        return {
+          block: data.block || null,
+          cityPartner: data.cityPartner || null,
+        };
+      })
+      .catch(function () {
+        return { block: null, cityPartner: null };
+      });
+  }
+
+  function mountCityPartnerSlot(container, slot) {
+    if (!container) return Promise.resolve(false);
+    return loadCityPartnerSlot(slot)
+      .then(function (result) {
+        if (result.block && renderCityPartnerAd(container, result.block)) return true;
+        if (result.cityPartner && renderCityPartnerWaitlist(container, result.cityPartner)) {
+          return true;
+        }
+        return renderCityPartnerPlaceholder(container);
+      })
+      .catch(function () {
+        return renderCityPartnerPlaceholder(container);
       });
   }
 
@@ -690,11 +763,14 @@
     renderCompactPlaceholder: renderCompactPlaceholder,
     renderCityPartnerAd: renderCityPartnerAd,
     renderCityPartnerPlaceholder: renderCityPartnerPlaceholder,
+    renderCityPartnerWaitlist: renderCityPartnerWaitlist,
+    mountCityPartnerSlot: mountCityPartnerSlot,
     renderCarouselAd: renderCarouselAd,
     renderCarouselPlaceholder: renderCarouselPlaceholder,
     renderLogoOnlyAd: renderLogoOnlyAd,
     isCompactRenderable: isCompactRenderable,
     loadCmsAd: loadCmsAd,
+    loadCityPartnerSlot: loadCityPartnerSlot,
     loadCarouselAds: loadCarouselAds,
     loadEventPageCarousel: loadEventPageCarousel,
     loadOrganiserPageCarousel: loadOrganiserPageCarousel,

@@ -213,12 +213,11 @@
   };
 
   var ENQUIRY_PACKAGES = {
-    events: ['Main Sponsor', 'Mini Sponsors', 'City Partner', 'Featured Listing', 'Not sure yet'],
+    events: ['Main Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
     organisers: ['Main Sponsor', 'Mini Sponsors', 'Featured Listing', 'Not sure yet'],
     opportunities: [
       'Main Sponsor',
       'Mini Sponsors',
-      'City Partner',
       'Directory Listing',
       'Featured Listing',
       'Not sure yet',

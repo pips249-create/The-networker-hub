@@ -14,9 +14,11 @@ const {
 const {
   createCityPartnerCheckoutSession,
   isStripeCheckoutConfigured,
+  retrieveCheckoutSession,
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { joinCityPartnerWaitlist, cityPartnerWaitlistStatus } = require('../city-partner-waitlist');
+const { isCityPartnerMetadata } = require('../city-partner-subscriptions');
 const { enforceRateLimit } = require('../rate-limit');
 
 function parseBody(req) {
@@ -56,6 +58,41 @@ module.exports = async function handler(req, res) {
     const availability = await getCityPartnerAvailability(sb);
 
     if (req.method === 'GET') {
+      const action = String(req.query?.action || '').trim().toLowerCase();
+      if (action === 'verify') {
+        const sessionId = String(req.query?.session_id || req.query?.sessionId || '').trim();
+        if (!sessionId) {
+          return res.status(400).json({ ok: false, error: 'missing_session_id' });
+        }
+        if (!isStripeCheckoutConfigured()) {
+          return res.status(503).json({ ok: false, error: 'stripe_not_configured' });
+        }
+
+        const session = await retrieveCheckoutSession(sessionId);
+        const metadata = session?.metadata || {};
+        if (!isCityPartnerMetadata(metadata)) {
+          return res.status(400).json({ ok: false, error: 'invalid_checkout_session' });
+        }
+        if (String(session?.payment_status || '').toLowerCase() !== 'paid') {
+          return res.status(409).json({ ok: false, error: 'payment_not_completed' });
+        }
+
+        const cities = normalizeCitySlugs(metadata.networking_cities || metadata.networkingCities || '');
+        const email = String(
+          session.customer_details?.email || session.customer_email || metadata.sponsor_email || ''
+        )
+          .trim()
+          .toLowerCase();
+
+        return res.status(200).json({
+          ok: true,
+          verified: true,
+          cities,
+          email,
+          sessionId,
+        });
+      }
+
       const slugs = normalizeCitySlugs(req.query?.cities || req.query?.city || '');
       const quote =
         slugs.length > 0 ? calculateCityPartnerQuote(slugs.length) : null;

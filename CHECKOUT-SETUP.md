@@ -48,8 +48,10 @@ Redeploy after changing env vars.
 
 1. [Stripe Dashboard](https://dashboard.stripe.com) → **Developers → Webhooks**
 2. **Add endpoint:** `https://the-networker-hub.vercel.app/api/stripe-webhook`
-3. Events: **`checkout.session.completed`**, **`invoice.paid`**, and **`charge.refunded`**
+3. Events: **`checkout.session.completed`**, **`customer.subscription.updated`**, **`customer.subscription.deleted`**, **`invoice.paid`**, and **`charge.refunded`**
 4. Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel
+
+`customer.subscription.updated` / `customer.subscription.deleted` drive City Partner slot release, waitlist emails, and scheduled open dates when a sponsor cancels at period end.
 
 `invoice.paid` logs sponsorship & advertising invoices into Revenue targets when invoice metadata includes `revenue_category` (see `docs/STRIPE-SPONSORSHIP-INVOICES.md`).
 

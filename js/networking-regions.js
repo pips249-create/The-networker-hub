@@ -110,23 +110,25 @@
   var partnerShell = document.getElementById('networking-region-city-partner');
   showCityPartnerLayout();
   if (partnerShell && window.CmsAdBlocks) {
-    if (
+    if (window.CmsAdBlocks.mountCityPartnerSlot) {
+      window.CmsAdBlocks.mountCityPartnerSlot(partnerShell, 'networking_city_partner_' + slug);
+    } else if (
       !partnerShell.querySelector('.networking-city-partner-ad') &&
       window.CmsAdBlocks.renderCityPartnerPlaceholder
     ) {
       window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+      window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug)
+        .then(function (block) {
+          if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) return;
+          if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+            window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+          }
+        })
+        .catch(function () {
+          if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+            window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+          }
+        });
     }
-    window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug)
-      .then(function (block) {
-        if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) return;
-        if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
-          window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
-        }
-      })
-      .catch(function () {
-        if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
-          window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
-        }
-      });
   }
 })();

@@ -154,6 +154,46 @@
   box-shadow: none;
 }
 
+.networking-city-partner-ad--booked {
+  border-style: solid;
+  background: rgba(255, 255, 255, 0.88);
+  text-align: center;
+}
+
+.networking-city-partner-status {
+  margin: 0;
+  color: #635c5e;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.networking-city-partner-opens {
+  margin: 0;
+  color: #1c2040;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.networking-city-partner-waitlist-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--region-accent, #5b2f99);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.networking-city-partner-waitlist-link:hover,
+.networking-city-partner-waitlist-link:focus-visible {
+  opacity: 0.92;
+}
+
 /* Override Sponsor Hub logo band — that layout breaks this compact slot. */
 .networking-city-partner-ad .sponsor-logo-wrap,
 .networking-city-partner-ad .sponsor-logo-wrap.sponsor-logo-band {

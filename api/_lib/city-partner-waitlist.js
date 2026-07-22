@@ -135,6 +135,10 @@ async function notifyCityPartnerWaitlistForSlug(citySlug, options) {
     const contactName =
       String(row.company_name || '').trim() || to.split('@')[0] || 'there';
     try {
+      const availableFromNote =
+        availableFrom && availableFrom !== 'now'
+          ? ' from ' + availableFrom
+          : '';
       await sendTemplatedEmail({
         slug: 'city_partner_slot_open',
         to,
@@ -143,6 +147,7 @@ async function notifyCityPartnerWaitlistForSlug(citySlug, options) {
           city_name: cityName,
           advertising_url: advertisingUrl,
           available_from: availableFrom || 'now',
+          available_from_note: availableFromNote,
           site_url: siteUrl,
         },
       });
@@ -159,9 +164,68 @@ async function notifyCityPartnerWaitlistForSlug(citySlug, options) {
   return { notified, citySlug: slug, cityName };
 }
 
+async function notifyCityPartnerWaitlistOpeningSoon(citySlug, options) {
+  const slug = String(citySlug || '').trim().toLowerCase();
+  if (!VALID_SLUGS.has(slug)) {
+    return { notified: 0, skipped: true, reason: 'invalid_slug' };
+  }
+
+  const availableFromIso = options?.availableFrom || null;
+  const availableFrom = formatAvailableFromLabel(availableFromIso);
+  if (!availableFrom) {
+    return { notified: 0, skipped: true, reason: 'missing_available_from' };
+  }
+
+  const sb = options?.sb || getSupabaseAdmin();
+  const { data: rows, error } = await sb
+    .from('city_partner_waitlist')
+    .select('id, email, company_name')
+    .eq('city_slug', slug)
+    .is('notified_at', null)
+    .is('opening_soon_notified_at', null)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  if (!rows?.length) return { notified: 0, skipped: true, reason: 'empty' };
+
+  const siteUrl = siteBase();
+  const cityName = cityNameForSlug(slug);
+  const advertisingUrl = siteUrl + '/advertising#city-partner-package';
+  let notified = 0;
+
+  for (const row of rows) {
+    const to = normalizeEmail(row.email);
+    if (!to) continue;
+    const contactName =
+      String(row.company_name || '').trim() || to.split('@')[0] || 'there';
+    try {
+      await sendTemplatedEmail({
+        slug: 'city_partner_opening_soon',
+        to,
+        variables: {
+          contact_name: contactName,
+          city_name: cityName,
+          available_from: availableFrom,
+          advertising_url: advertisingUrl,
+          site_url: siteUrl,
+        },
+      });
+      await sb
+        .from('city_partner_waitlist')
+        .update({ opening_soon_notified_at: new Date().toISOString() })
+        .eq('id', row.id);
+      notified += 1;
+    } catch {
+      /* continue with next */
+    }
+  }
+
+  return { notified, citySlug: slug, cityName, availableFrom };
+}
+
 module.exports = {
   joinCityPartnerWaitlist,
   cityPartnerWaitlistStatus,
   notifyCityPartnerWaitlistForSlug,
+  notifyCityPartnerWaitlistOpeningSoon,
   formatAvailableFromLabel,
 };

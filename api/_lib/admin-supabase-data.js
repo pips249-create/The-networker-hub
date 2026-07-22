@@ -1081,6 +1081,17 @@ async function saveSponsorBlock(sb, payload) {
     payload.logo_url = existing.logo_url || existing.image_url || '';
   }
   const row = buildSponsorRow({ ...payload, slot: key });
+  if (existing) {
+    if (payload.sponsor_subscription_id === undefined) {
+      row.sponsor_subscription_id = existing.sponsor_subscription_id ?? null;
+    }
+    if (payload.sponsor_email === undefined) {
+      row.sponsor_email = existing.sponsor_email ?? null;
+    }
+    if (payload.sponsor_available_from === undefined) {
+      row.sponsor_available_from = existing.sponsor_available_from ?? null;
+    }
+  }
   const res = await sb.from('cms_blocks').upsert(row, { onConflict: 'slot' }).select().single();
   if (res.error) throw new Error(res.error.message);
   return normalizeSponsorBlock(res.data);

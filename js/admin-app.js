@@ -5804,6 +5804,10 @@
     if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
     if (active) active.checked = block.active !== false;
     if (includeInEmails) includeInEmails.checked = block.include_in_emails !== false;
+    var slotEmail = document.getElementById('sponsor-slot-email');
+    var slotOpens = document.getElementById('sponsor-slot-available-from');
+    if (slotEmail) slotEmail.value = String(block.sponsor_email || '').trim();
+    if (slotOpens) slotOpens.value = isoToDatetimeLocalUtc(block.sponsor_available_from);
     sponsorCtaColorManual = false;
     setSponsorCtaColorFields(savedColor);
     if (!sanitizeSponsorCtaColor(savedColor)) {
@@ -6187,6 +6191,21 @@
     });
   }
 
+  function isoToDatetimeLocalUtc(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toISOString().slice(0, 16);
+  }
+
+  function datetimeLocalUtcToIso(value) {
+    var raw = String(value || '').trim();
+    if (!raw) return null;
+    var d = new Date(raw + ':00.000Z');
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
+
   function initCityPartnerWaitlistAdmin() {
     var statusEl = document.getElementById('city-partner-waitlist-status');
     var bodyEl = document.getElementById('city-partner-waitlist-body');
@@ -6507,6 +6526,10 @@
       setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
       if (includeInEmails) includeInEmails.checked = true;
+      var slotEmail = document.getElementById('sponsor-slot-email');
+      var slotOpens = document.getElementById('sponsor-slot-available-from');
+      if (slotEmail) slotEmail.value = '';
+      if (slotOpens) slotOpens.value = '';
       sponsorLogoBase64 = null;
       sponsorLogoMime = '';
       sponsorLogoFilename = '';
@@ -6527,6 +6550,14 @@
       '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
       'Ad active (uncheck to hide this placement on site)</label>' +
       '<div id="city-partner-subscription-meta" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm space-y-1"></div>' +
+      '<div id="city-partner-slot-fields" class="hidden space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slot booking details</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-slot-email">Billing / hold email</label>' +
+      '<input type="email" id="sponsor-slot-email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="sponsor@company.com" autocomplete="off"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-slot-available-from">Slot opens (UTC)</label>' +
+      '<input type="datetime-local" id="sponsor-slot-available-from" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<p class="text-xs text-slate-500 mt-1">Leave blank for an immediate hold. Stripe subscriptions update these automatically.</p></div>' +
+      '</div>' +
       '<label id="sponsor-include-emails-wrap" class="hidden items-start gap-2 text-sm text-slate-700 rounded-lg border border-violet-100 bg-violet-50 px-3 py-3">' +
       '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
       '<span><strong>Include this sponsor in matching emails</strong><span id="sponsor-email-scope" class="block text-xs text-slate-500 mt-0.5"></span></span></label>' +
@@ -6647,6 +6678,7 @@
       var includeWrap = document.getElementById('sponsor-include-emails-wrap');
       var emailScope = document.getElementById('sponsor-email-scope');
       var logoOnlyNote = document.getElementById('sponsor-hero-logo-only-note');
+      var slotFields = document.getElementById('city-partner-slot-fields');
       var emailScopes = {
         events_sponsor_hub: 'Shown in event and attendee emails selected for sponsorship.',
         organisers_sponsor_hub: 'Shown in emails sent to networking group organisers.',
@@ -6657,6 +6689,7 @@
         includeWrap.classList.toggle('flex', Boolean(emailScopes[currentSlotKey]));
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
+      if (slotFields) slotFields.classList.toggle('hidden', slot.preview !== 'city_partner');
       if (heroFields) {
         heroFields.hidden = slot.preview === 'compact' || slot.preview === 'city_partner';
       }
@@ -7015,6 +7048,14 @@
         payload.logoBase64 = sponsorLogoBase64;
         payload.logoMime = sponsorLogoMime;
         payload.logoFilename = sponsorLogoFilename;
+      }
+      if (slot.preview === 'city_partner') {
+        var slotEmailEl = document.getElementById('sponsor-slot-email');
+        var slotOpensEl = document.getElementById('sponsor-slot-available-from');
+        payload.sponsor_email = slotEmailEl ? slotEmailEl.value.trim() : '';
+        payload.sponsor_available_from = slotOpensEl
+          ? datetimeLocalUtcToIso(slotOpensEl.value)
+          : null;
       }
 
       fetch('/api/admin/sponsor', {
