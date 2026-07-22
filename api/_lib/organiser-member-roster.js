@@ -878,7 +878,39 @@ async function loadMemberTicketsForEvent(sb, eventId) {
   return memberRows.map((t) => ticketRowToTier(t, regCounts.get(t.id) || 0));
 }
 
-async function buildRosterReports(organiserId, { eventId, recentEventIds } = {}) {
+async function loadUpcomingOrganiserEvents(sb, orgId, limit = 6) {
+  const now = new Date().toISOString();
+  const cap = Math.min(Math.max(Number(limit) || 6, 1), 12);
+  const { data, error } = await sb
+    .from('events')
+    .select('id, title, starts_at, status, approval_status')
+    .eq('organiser_id', orgId)
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .gte('starts_at', now)
+    .order('starts_at', { ascending: true })
+    .limit(cap);
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+function registrationRowCountsForRoster(regs, eligibleEmails) {
+  const bookedEmails = new Set();
+  (regs || []).forEach((row) => {
+    const app = String(row.application_status || 'Approved');
+    const pay = String(row.payment_status || '');
+    if (app === 'Denied' || pay === 'Refunded') return;
+    const em = normalizeRosterEmail(row.attendees?.email);
+    if (em && eligibleEmails.has(em)) bookedEmails.add(em);
+  });
+  const bookedCount = bookedEmails.size;
+  const notBookedCount = Math.max(0, eligibleEmails.size - bookedCount);
+  const bookedPercent =
+    eligibleEmails.size > 0 ? Math.round((bookedCount / eligibleEmails.size) * 100) : 0;
+  return { bookedCount, notBookedCount, bookedPercent, bookedEmails };
+}
+
+async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomingLimit } = {}) {
   const sb = getSupabaseAdmin();
   const orgId = String(organiserId || '').trim();
   const roster = await listRosterForOrganiser(orgId, { status: 'all' });
@@ -907,7 +939,19 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
           expiresAt: r.expiresAt,
           daysUntilExpiry: r.daysUntilExpiry,
         })),
+      lapsed: activeRoster
+        .filter((r) => !r.membershipActive && r.expiresAt)
+        .map((r) => ({
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          expiresAt: r.expiresAt,
+          daysSinceExpiry:
+            r.daysUntilExpiry != null && r.daysUntilExpiry < 0 ? Math.abs(r.daysUntilExpiry) : null,
+        }))
+        .sort((a, b) => String(b.expiresAt || '').localeCompare(String(a.expiresAt || ''))),
     },
+    upcomingEventBookings: null,
     bookedForEvent: null,
     eventAttendance: null,
     missedRecentMeetings: null,
@@ -1019,6 +1063,65 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds } = {})
     reports.missedRecentMeetings = {
       recentEventIds: recentIds,
       members: missed,
+    };
+  }
+
+  const eligibleMembers = activeRoster.filter((m) => m.membershipActive);
+  const eligibleEmails = new Set(eligibleMembers.map((m) => m.email));
+  const upcomingEvents = await loadUpcomingOrganiserEvents(sb, orgId, upcomingLimit);
+  if (upcomingEvents.length && eligibleEmails.size) {
+    const upcomingIds = upcomingEvents.map((ev) => ev.id).filter(Boolean);
+    const { data: upcomingRegs, error: upcomingErr } = await sb
+      .from('registrations')
+      .select('event_id, attendees(email), application_status, payment_status, cancelled_at')
+      .in('event_id', upcomingIds)
+      .eq('organiser_id', orgId)
+      .is('cancelled_at', null);
+    if (upcomingErr) throw new Error(upcomingErr.message);
+
+    const regsByEvent = new Map();
+    (upcomingRegs || []).forEach((row) => {
+      if (!row.event_id) return;
+      if (!regsByEvent.has(row.event_id)) regsByEvent.set(row.event_id, []);
+      regsByEvent.get(row.event_id).push(row);
+    });
+
+    const eventSummaries = upcomingEvents.map((ev) => {
+      const counts = registrationRowCountsForRoster(regsByEvent.get(ev.id) || [], eligibleEmails);
+      return {
+        eventId: ev.id,
+        title: String(ev.title || 'Event').trim(),
+        startsAt: ev.starts_at || null,
+        bookedCount: counts.bookedCount,
+        notBookedCount: counts.notBookedCount,
+        bookedPercent: counts.bookedPercent,
+      };
+    });
+
+    const averageBookedPercent =
+      eventSummaries.length > 0
+        ? Math.round(
+            eventSummaries.reduce((sum, ev) => sum + ev.bookedPercent, 0) / eventSummaries.length
+          )
+        : 0;
+
+    reports.upcomingEventBookings = {
+      eligibleMemberCount: eligibleEmails.size,
+      events: eventSummaries,
+      averageBookedPercent,
+    };
+  } else if (upcomingEvents.length) {
+    reports.upcomingEventBookings = {
+      eligibleMemberCount: 0,
+      events: upcomingEvents.map((ev) => ({
+        eventId: ev.id,
+        title: String(ev.title || 'Event').trim(),
+        startsAt: ev.starts_at || null,
+        bookedCount: 0,
+        notBookedCount: 0,
+        bookedPercent: 0,
+      })),
+      averageBookedPercent: 0,
     };
   }
 

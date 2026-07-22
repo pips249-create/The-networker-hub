@@ -183,49 +183,52 @@
   }
 
   function measureSpotlightLoopWidth() {
+    var sc = window.HubSpotlightCarousel;
     var track = els.spotlightTrack;
     var featured = getSpotlightFeatured();
-    if (!track || !featured.length) return 0;
-
-    var cards = track.querySelectorAll('.opp-premium-card');
-    if (!cards.length) return 0;
-
-    var gap = parseFloat(getComputedStyle(track).gap) || 14;
-    var width = 0;
-    var count = Math.min(featured.length, cards.length);
-
-    for (var i = 0; i < count; i++) {
-      width += cards[i].getBoundingClientRect().width;
-      if (i < count - 1) width += gap;
-    }
-
-    return width;
+    if (!sc || !track || !featured.length) return 0;
+    return sc.measureLoopWidth(track, featured.length, '.opp-premium-card');
   }
 
   function syncSpotlightLoopScroll() {
+    var sc = window.HubSpotlightCarousel;
     var track = els.spotlightTrack;
-    if (!track) return;
+    if (!sc || !track) return;
     var loopWidth = measureSpotlightLoopWidth();
-    if (!loopWidth) return;
+    sc.syncLoopScroll(track, loopWidth);
+  }
 
-    track.dataset.loopWidth = String(loopWidth);
+  function layoutSpotlightTrack(cardsHtml, itemCount) {
+    var sc = window.HubSpotlightCarousel;
+    if (!sc || !els.spotlightTrack) return;
+    var section = els.spotlightSection || els.spotlightTrack.closest('.premium-spotlight');
+    sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.opp-premium-card', cardsHtml);
+  }
 
-    if (track.scrollLeft >= loopWidth) {
-      track.scrollLeft = track.scrollLeft - loopWidth;
-    }
+  function refreshSpotlightLayout() {
+    var featured = getSpotlightFeatured();
+    if (!els.spotlightTrack || !featured.length) return;
+    layoutSpotlightTrack(featured.map(premiumSpotlightCard).join(''), featured.length);
+    syncSpotlightLoopScroll();
+    startSpotlightAuto();
   }
 
   function advanceSpotlight(dir) {
     dir = dir < 0 ? -1 : 1;
     var featured = getSpotlightFeatured();
     var track = els.spotlightTrack;
+    var sc = window.HubSpotlightCarousel;
     if (!featured.length || featured.length <= 1 || !track || spotlightAnimating) return;
 
     spotlightAnimating = true;
     stopSpotlightAuto();
 
     var step = getSpotlightCardStep() * dir;
-    var loopWidth = parseFloat(track.dataset.loopWidth) || measureSpotlightLoopWidth();
+    var looping = sc && sc.isLooping(track);
+    var loopWidth =
+      looping && sc
+        ? parseFloat(track.dataset.loopWidth) || sc.measureLoopWidth(track, featured.length, '.opp-premium-card')
+        : 0;
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var behavior = reduceMotion ? 'auto' : 'smooth';
 
@@ -235,18 +238,24 @@
       startSpotlightAuto();
     }
 
-    if (dir < 0 && track.scrollLeft <= 4 && loopWidth > 0) {
-      track.scrollLeft = loopWidth;
+    if (looping && loopWidth > 0) {
+      if (dir < 0 && track.scrollLeft <= 4) {
+        track.scrollLeft = loopWidth;
+      }
+      track.scrollBy({ left: step, behavior: behavior });
+    } else if (sc) {
+      sc.advanceNonLoop(track, dir, step, behavior);
+    } else {
+      track.scrollBy({ left: step, behavior: behavior });
     }
 
-    track.scrollBy({ left: step, behavior: behavior });
     window.setTimeout(finishAdvance, reduceMotion ? 0 : 380);
   }
 
   function startSpotlightAuto() {
     stopSpotlightAuto();
-    if (!els.spotlightTrack) return;
-    if (getSpotlightFeatured().length <= 1) return;
+    var sc = window.HubSpotlightCarousel;
+    if (!els.spotlightTrack || !sc || !sc.canAutoAdvance(els.spotlightTrack, getSpotlightFeatured().length)) return;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating) return;
       advanceSpotlight(1);
@@ -280,7 +289,7 @@
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
-        if (!spotlightAnimating) syncSpotlightLoopScroll();
+        if (!spotlightAnimating) refreshSpotlightLayout();
       }, 200);
     });
   }
@@ -415,13 +424,11 @@
     }
 
     var cardsHtml = featured.map(premiumSpotlightCard).join('');
-    var loopHtml = featured.length > 1 ? cardsHtml : '';
-    els.spotlightTrack.innerHTML = cardsHtml + loopHtml;
     els.spotlightTrack.classList.add('spotlight-track--carousel');
-    els.spotlightTrack.scrollLeft = 0;
     if (promo) promo.hidden = false;
     bindSpotlightCarousel();
     requestAnimationFrame(function () {
+      layoutSpotlightTrack(cardsHtml, featured.length);
       syncSpotlightLoopScroll();
       startSpotlightAuto();
     });

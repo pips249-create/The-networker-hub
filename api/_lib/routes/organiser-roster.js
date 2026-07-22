@@ -72,8 +72,16 @@ module.exports = async function handler(req, res) {
         const recentEventIds = recentRaw
           ? recentRaw.split(',').map((s) => s.trim()).filter(Boolean)
           : [];
+        const upcomingLimit = Math.min(
+          Math.max(Number(req.query?.upcomingLimit || req.query?.upcoming_limit) || 6, 1),
+          12
+        );
         const started = Date.now();
-        const reports = await buildRosterReports(organiserId, { eventId, recentEventIds });
+        const reports = await buildRosterReports(organiserId, {
+          eventId,
+          recentEventIds,
+          upcomingLimit,
+        });
         return json(res, 200, {
           ok: true,
           reports,

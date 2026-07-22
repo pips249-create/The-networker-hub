@@ -135,6 +135,11 @@
     return 6;
   }
 
+  function selectedUpcomingLimit() {
+    const raw = Number(document.getElementById('omr-reports-upcoming-limit')?.value || 6);
+    return raw === 3 ? 3 : 6;
+  }
+
   function reportsEventLabel(eventId) {
     const id = String(eventId || selectedReportsEventId() || '').trim();
     if (!id) return '';
@@ -162,21 +167,29 @@
     const type = selectedReportType();
     const eventSel = document.getElementById('omr-reports-event-select');
     const periodSel = document.getElementById('omr-reports-period');
+    const upcomingLimitSel = document.getElementById('omr-reports-upcoming-limit');
     const typeHint = document.getElementById('omr-reports-type-hint');
     const eventHint = document.getElementById('omr-reports-event-hint');
     const needsEvent = type === 'bookings' || type === 'engagement';
     const needsPeriod = type === 'engagement';
+    const needsUpcomingLimit = type === 'upcoming';
 
     if (eventSel) eventSel.hidden = !needsEvent;
     if (periodSel) periodSel.hidden = !needsPeriod;
+    if (upcomingLimitSel) upcomingLimitSel.hidden = !needsUpcomingLimit;
 
     if (typeHint) {
       if (type === 'overview') {
-        typeHint.textContent = 'Counts, sign-ups, and expiring memberships across your whole list.';
+        typeHint.textContent = 'Counts, sign-ups, expiring, and lapsed memberships across your whole list.';
+      } else if (type === 'upcoming') {
+        typeHint.textContent =
+          'See what share of your members have booked each of your next upcoming events.';
       } else if (type === 'bookings') {
         typeHint.textContent = 'See which members have booked a specific event — and who has not.';
       } else if (type === 'expiring') {
         typeHint.textContent = 'Members whose membership ends within the next 14 days.';
+      } else if (type === 'lapsed') {
+        typeHint.textContent = 'Members whose membership expiry date has passed.';
       } else {
         typeHint.textContent = 'New vs returning attendance, plus missed recent meetings.';
       }
@@ -209,8 +222,17 @@
       el.textContent = 'You will get a snapshot of your whole member list.';
       return;
     }
+    if (type === 'upcoming') {
+      el.textContent =
+        'You will see booking rates for your next ' + selectedUpcomingLimit() + ' upcoming events.';
+      return;
+    }
     if (type === 'expiring') {
       el.textContent = 'You will see members expiring in the next 14 days.';
+      return;
+    }
+    if (type === 'lapsed') {
+      el.textContent = 'You will see members whose membership has expired.';
       return;
     }
     if (type === 'bookings') {
@@ -402,8 +424,10 @@
   function reportTypeLabel(type) {
     const map = {
       overview: 'Overview',
+      upcoming: 'Upcoming events',
       bookings: 'Event bookings',
       expiring: 'Expiring soon',
+      lapsed: 'Lapsed members',
       engagement: 'Engagement',
     };
     return map[type] || 'Report';
@@ -413,11 +437,13 @@
     const type = selectedReportType();
     const base = reportTypeLabel(type);
     const eventLabel = reportsEventLabel();
+    if (type === 'upcoming') return base + ' · next ' + selectedUpcomingLimit() + ' events';
     if (type === 'bookings' && eventLabel) return base + ' · ' + eventLabel;
     if (type === 'engagement') {
       return base + ' · last ' + selectedReportPeriod() + ' meetings' + (eventLabel ? ' · ' + eventLabel : '');
     }
     if (type === 'expiring') return base + ' · next 14 days';
+    if (type === 'lapsed') return base + ' · expired memberships';
     return base + ' · whole member list';
   }
 
@@ -437,13 +463,15 @@
     if (summary) summary.textContent = reportsCompactSummaryLine();
   }
 
-  function reportsCacheKey(eventId, period) {
+  function reportsCacheKey(eventId, period, upcomingLimit) {
     return (
       getOrganiserId() +
       ':' +
       String(eventId != null ? eventId : selectedReportsEventId() || '') +
       ':' +
-      String(period != null ? period : selectedReportPeriod())
+      String(period != null ? period : selectedReportPeriod()) +
+      ':' +
+      String(upcomingLimit != null ? upcomingLimit : selectedUpcomingLimit())
     );
   }
 
@@ -531,7 +559,7 @@
   }
 
   function setReportTab(tab) {
-    const allowed = ['overview', 'bookings', 'expiring', 'engagement'];
+    const allowed = ['overview', 'upcoming', 'bookings', 'expiring', 'lapsed', 'engagement'];
     activeReportTab = allowed.indexOf(tab) >= 0 ? tab : 'overview';
     document.querySelectorAll('[data-omr-report-tab]').forEach(function (btn) {
       const active = btn.dataset.omrReportTab === activeReportTab;
@@ -961,8 +989,8 @@
     const attendance = reports.eventAttendance;
     const missed = reports.missedRecentMeetings;
     const expiry = reports.membershipExpiry || {};
-    const eventLabel = selectedEventLabel();
-    const eventSelected = Boolean(selectedReportsEventId() || selectedEventId());
+    const lapsed = expiry.lapsed || [];
+    const upcoming = reports.upcomingEventBookings;
     let html = '';
 
     if (activeReportTab === 'overview') {
@@ -982,10 +1010,56 @@
         '<span><strong>' +
         esc(h.expiringSoon || 0) +
         '</strong> expiring soon</span>' +
+        '<span><strong>' +
+        esc(h.expired || 0) +
+        '</strong> lapsed</span>' +
         '</div></div>';
     }
 
+    if (activeReportTab === 'upcoming') {
+      if (upcoming && upcoming.events && upcoming.events.length) {
+        html =
+          '<div class="omr-report-card omr-report-card--stat">' +
+          '<p class="omr-report-kicker">Upcoming events</p>' +
+          '<p class="omr-report-stat">' +
+          esc(upcoming.averageBookedPercent || 0) +
+          '<span>% average booked</span></p>' +
+          '<p class="omr-report-note">Across your next ' +
+          esc(upcoming.events.length) +
+          ' event' +
+          (upcoming.events.length === 1 ? '' : 's') +
+          ', based on ' +
+          esc(upcoming.eligibleMemberCount || 0) +
+          ' members with active membership.</p></div>';
+        upcoming.events.forEach(function (ev) {
+          html +=
+            '<div class="omr-report-card omr-report-card--upcoming">' +
+            '<h3>' +
+            esc(ev.title || 'Event') +
+            '</h3>' +
+            (ev.startsAt ? '<p class="omr-report-event">' + esc(formatShortEventDate(ev.startsAt)) + '</p>' : '') +
+            '<p class="omr-report-stat">' +
+            esc(ev.bookedCount || 0) +
+            ' booked · ' +
+            esc(ev.notBookedCount || 0) +
+            ' not yet · ' +
+            esc(ev.bookedPercent || 0) +
+            '%</p>' +
+            '<div class="omr-report-progress" aria-hidden="true"><span style="width:' +
+            esc(Math.max(0, Math.min(100, Number(ev.bookedPercent) || 0))) +
+            '%"></span></div>' +
+            '</div>';
+        });
+      } else {
+        html =
+          '<div class="omr-report-card omr-report-card--empty"><h3>Upcoming events</h3>' +
+          '<p>No live upcoming events yet. Publish an event to track member booking rates here.</p></div>';
+      }
+    }
+
     if (activeReportTab === 'bookings') {
+      const eventLabel = selectedEventLabel();
+      const eventSelected = Boolean(selectedReportsEventId() || selectedEventId());
       if (!eventSelected) {
         html =
           '<div class="omr-report-card omr-report-card--empty"><h3>Event bookings</h3>' +
@@ -1038,8 +1112,30 @@
       }
     }
 
+    if (activeReportTab === 'lapsed') {
+      if (lapsed.length) {
+        html = '<div class="omr-report-card"><h3>Lapsed memberships</h3><ul>';
+        lapsed.forEach(function (m) {
+          html +=
+            '<li>' +
+            esc(reportMemberLabel(m)) +
+            ' — expired ' +
+            esc(m.expiresAt) +
+            (m.daysSinceExpiry != null ? ' (' + esc(m.daysSinceExpiry) + ' days ago)' : '') +
+            '</li>';
+        });
+        html += '</ul></div>';
+      } else {
+        html =
+          '<div class="omr-report-card omr-report-card--empty"><h3>Lapsed memberships</h3>' +
+          '<p>No expired memberships on your list.</p></div>';
+      }
+    }
+
     if (activeReportTab === 'engagement') {
       html = '';
+      const eventLabel = selectedEventLabel();
+      const eventSelected = Boolean(selectedReportsEventId() || selectedEventId());
       if (eventSelected && attendance) {
         html +=
           '<div class="omr-report-card"><h3>Your members at this event</h3>' +
@@ -1089,7 +1185,7 @@
       return null;
     }
 
-    const cacheKey = reportsCacheKey(eventId, period);
+    const cacheKey = reportsCacheKey(eventId, period, selectedUpcomingLimit());
     if (!force && lastReports && reportsLoadedKey === cacheKey && !reportsStale) {
       renderReports(lastReports);
       syncReportsPanelState();
@@ -1105,6 +1201,7 @@
       let qs = '&action=reports';
       if (eventId) qs += '&eventId=' + encodeURIComponent(eventId);
       const recentCount = Math.max(Number(period || selectedReportPeriod()) || 6, 1);
+      const upcomingLimit = selectedUpcomingLimit();
       const recent = events
         .slice(0, recentCount)
         .map(function (e) {
@@ -1112,9 +1209,10 @@
         })
         .join(',');
       if (recent) qs += '&recentEventIds=' + encodeURIComponent(recent);
+      qs += '&upcomingLimit=' + encodeURIComponent(String(upcomingLimit));
       const data = await api(rosterUrl(qs));
       lastReports = data.reports || null;
-      reportsLoadedKey = reportsCacheKey(eventId, recentCount);
+      reportsLoadedKey = reportsCacheKey(eventId, recentCount, upcomingLimit);
       reportsStale = false;
       renderReports(data.reports);
     } finally {
@@ -1237,9 +1335,33 @@
 
     const h = r.rosterHealth || {};
     lines.push(csvCell('Membership health'));
-    lines.push(['Active members', 'Signed up', 'Not signed up', 'Expiring soon'].map(csvCell).join(','));
-    lines.push([h.totalActive || 0, h.claimed || 0, h.unclaimed || 0, h.expiringSoon || 0].map(csvCell).join(','));
+    lines.push(['Active members', 'Signed up', 'Not signed up', 'Expiring soon', 'Lapsed'].map(csvCell).join(','));
+    lines.push(
+      [h.totalActive || 0, h.claimed || 0, h.unclaimed || 0, h.expiringSoon || 0, h.expired || 0]
+        .map(csvCell)
+        .join(',')
+    );
     lines.push('');
+
+    if (r.upcomingEventBookings && (r.upcomingEventBookings.events || []).length) {
+      const u = r.upcomingEventBookings;
+      lines.push(csvCell('Upcoming event booking rates'));
+      lines.push(['Event', 'Date', 'Booked', 'Not booked', 'Booked %'].map(csvCell).join(','));
+      u.events.forEach(function (ev) {
+        lines.push(
+          [
+            ev.title || 'Event',
+            ev.startsAt || '',
+            ev.bookedCount || 0,
+            ev.notBookedCount || 0,
+            (ev.bookedPercent || 0) + '%',
+          ]
+            .map(csvCell)
+            .join(',')
+        );
+      });
+      lines.push('');
+    }
 
     if (r.bookedForEvent) {
       const b = r.bookedForEvent;
@@ -1281,6 +1403,16 @@
       lines.push(['Name', 'Email', 'Expires', 'Days left'].map(csvCell).join(','));
       expiry.forEach(function (m) {
         lines.push([m.name || '', m.email, m.expiresAt || '', m.daysUntilExpiry].map(csvCell).join(','));
+      });
+      lines.push('');
+    }
+
+    const lapsed = (r.membershipExpiry && r.membershipExpiry.lapsed) || [];
+    if (lapsed.length) {
+      lines.push(csvCell('Lapsed memberships'));
+      lines.push(['Name', 'Email', 'Expired', 'Days ago'].map(csvCell).join(','));
+      lapsed.forEach(function (m) {
+        lines.push([m.name || '', m.email, m.expiresAt || '', m.daysSinceExpiry].map(csvCell).join(','));
       });
     }
 
@@ -1738,6 +1870,11 @@
 
     document.getElementById('omr-reports-period')?.addEventListener('change', function () {
       reportPeriod = selectedReportPeriod();
+      updateReportsSetupSummary();
+      markReportsStale();
+    });
+
+    document.getElementById('omr-reports-upcoming-limit')?.addEventListener('change', function () {
       updateReportsSetupSummary();
       markReportsStale();
     });

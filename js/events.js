@@ -156,7 +156,8 @@
     stopSpotlightAuto();
     if (!els.spotlightTrack) return;
     const premium = getSpotlightPremium();
-    if (premium.length <= 1) return;
+    const sc = window.HubSpotlightCarousel;
+    if (!sc || !sc.canAutoAdvance(els.spotlightTrack, premium.length)) return;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating) return;
       advanceSpotlight(1);
@@ -173,49 +174,52 @@
   }
 
   function measureSpotlightLoopWidth() {
+    const sc = window.HubSpotlightCarousel;
     const track = els.spotlightTrack;
     const premium = getSpotlightPremium();
-    if (!track || !premium.length) return 0;
-
-    const cards = track.querySelectorAll('.premium-card');
-    if (!cards.length) return 0;
-
-    const gap = parseFloat(getComputedStyle(track).gap) || 14;
-    let width = 0;
-    const count = Math.min(premium.length, cards.length);
-
-    for (let i = 0; i < count; i++) {
-      width += cards[i].getBoundingClientRect().width;
-      if (i < count - 1) width += gap;
-    }
-
-    return width;
+    if (!sc || !track || !premium.length) return 0;
+    return sc.measureLoopWidth(track, premium.length, '.premium-card');
   }
 
   function syncSpotlightLoopScroll() {
+    const sc = window.HubSpotlightCarousel;
     const track = els.spotlightTrack;
-    if (!track) return;
+    if (!sc || !track) return;
     const loopWidth = measureSpotlightLoopWidth();
-    if (!loopWidth) return;
+    sc.syncLoopScroll(track, loopWidth);
+  }
 
-    track.dataset.loopWidth = String(loopWidth);
+  function layoutSpotlightTrack(cardsHtml, itemCount) {
+    const sc = window.HubSpotlightCarousel;
+    if (!sc || !els.spotlightTrack) return;
+    const section = els.spotlightTrack.closest('.premium-spotlight');
+    sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.premium-card', cardsHtml);
+  }
 
-    if (track.scrollLeft >= loopWidth) {
-      track.scrollLeft = track.scrollLeft - loopWidth;
-    }
+  function refreshSpotlightLayout() {
+    const premium = getSpotlightPremium();
+    if (!els.spotlightTrack || !premium.length) return;
+    layoutSpotlightTrack(premium.map(premiumCard).join(''), premium.length);
+    syncSpotlightLoopScroll();
+    startSpotlightAuto();
   }
 
   function advanceSpotlight(dir) {
     dir = dir < 0 ? -1 : 1;
     const premium = getSpotlightPremium();
     const track = els.spotlightTrack;
+    const sc = window.HubSpotlightCarousel;
     if (!premium.length || premium.length <= 1 || !track || spotlightAnimating) return;
 
     spotlightAnimating = true;
     stopSpotlightAuto();
 
     const step = getSpotlightCardStep() * dir;
-    const loopWidth = parseFloat(track.dataset.loopWidth) || measureSpotlightLoopWidth();
+    const looping = sc && sc.isLooping(track);
+    const loopWidth =
+      looping && sc
+        ? parseFloat(track.dataset.loopWidth) || sc.measureLoopWidth(track, premium.length, '.premium-card')
+        : 0;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const behavior = reduceMotion ? 'auto' : 'smooth';
 
@@ -225,11 +229,17 @@
       startSpotlightAuto();
     }
 
-    if (dir < 0 && track.scrollLeft <= 4 && loopWidth > 0) {
-      track.scrollLeft = loopWidth;
+    if (looping && loopWidth > 0) {
+      if (dir < 0 && track.scrollLeft <= 4) {
+        track.scrollLeft = loopWidth;
+      }
+      track.scrollBy({ left: step, behavior: behavior });
+    } else if (sc) {
+      sc.advanceNonLoop(track, dir, step, behavior);
+    } else {
+      track.scrollBy({ left: step, behavior: behavior });
     }
 
-    track.scrollBy({ left: step, behavior: behavior });
     window.setTimeout(finishAdvance, reduceMotion ? 0 : 380);
   }
 
@@ -261,7 +271,7 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
         if (!spotlightAnimating) {
-          syncSpotlightLoopScroll();
+          refreshSpotlightLayout();
         }
       }, 200);
     });
@@ -953,12 +963,10 @@
         stopSpotlightAuto();
       } else {
         const cardsHtml = premium.map(premiumCard).join('');
-        const loopHtml = premium.length > 1 ? cardsHtml : '';
-        els.spotlightTrack.innerHTML = cardsHtml + loopHtml;
         els.spotlightTrack.classList.add('spotlight-track--carousel');
-        els.spotlightTrack.scrollLeft = 0;
         bindSpotlightCarousel();
         requestAnimationFrame(function () {
+          layoutSpotlightTrack(cardsHtml, premium.length);
           syncSpotlightLoopScroll();
           startSpotlightAuto();
         });

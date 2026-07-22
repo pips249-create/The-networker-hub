@@ -3585,6 +3585,28 @@
   color: #084a52;
 }
 
+.org-page--memberships .omr-report-card--upcoming h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #084a52;
+}
+
+.omr-report-progress {
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(13, 110, 122, 0.12);
+  overflow: hidden;
+}
+
+.omr-report-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0d6e7a 0%, #1096a8 100%);
+}
+
 .org-page--memberships .omr-report-card + .omr-report-card {
   margin-top: 12px;
 }

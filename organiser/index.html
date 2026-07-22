@@ -931,8 +931,10 @@
                   <div class="org-filter-bar omr-filter-bar omr-reports-bar">
                     <select id="omr-report-type" aria-label="Report type" aria-describedby="omr-reports-type-hint">
                       <option value="overview">Overview — list health &amp; sign-ups</option>
+                      <option value="upcoming">Upcoming events — booking rates across next events</option>
                       <option value="bookings">Event bookings — booked vs not booked</option>
                       <option value="expiring">Expiring soon — renewals in next 14 days</option>
+                      <option value="lapsed">Lapsed — expired memberships</option>
                       <option value="engagement">Engagement — attendance &amp; missed meetings</option>
                     </select>
                     <select id="omr-reports-event-select" class="omr-filter-event" aria-label="Event for report" hidden>
@@ -942,6 +944,10 @@
                       <option value="3">Last 3 meetings</option>
                       <option value="6" selected>Last 6 meetings</option>
                       <option value="12">Last 12 meetings</option>
+                    </select>
+                    <select id="omr-reports-upcoming-limit" aria-label="Number of upcoming events" hidden>
+                      <option value="3">Next 3 events</option>
+                      <option value="6" selected>Next 6 events</option>
                     </select>
                     <button type="button" class="org-btn org-btn-gold org-btn-sm" id="omr-run-reports">Run report</button>
                     <button type="button" class="org-btn org-btn-outline org-btn-sm" id="omr-refresh-reports" hidden>Refresh</button>
@@ -968,6 +974,10 @@
                       <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                       <span class="org-events-tab-label">Overview</span>
                     </button>
+                    <button type="button" role="tab" class="org-events-tab" id="omr-report-tab-upcoming" data-omr-report-tab="upcoming" aria-selected="false" tabindex="-1">
+                      <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <span class="org-events-tab-label">Upcoming</span>
+                    </button>
                     <button type="button" role="tab" class="org-events-tab" id="omr-report-tab-bookings" data-omr-report-tab="bookings" aria-selected="false" tabindex="-1">
                       <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18"/><path d="M7 13h.01"/><path d="M11 13h6"/><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
                       <span class="org-events-tab-label">Event bookings</span>
@@ -975,6 +985,10 @@
                     <button type="button" role="tab" class="org-events-tab" id="omr-report-tab-expiring" data-omr-report-tab="expiring" aria-selected="false" tabindex="-1">
                       <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                       <span class="org-events-tab-label">Expiring</span>
+                    </button>
+                    <button type="button" role="tab" class="org-events-tab" id="omr-report-tab-lapsed" data-omr-report-tab="lapsed" aria-selected="false" tabindex="-1">
+                      <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="22" y2="11"/></svg>
+                      <span class="org-events-tab-label">Lapsed</span>
                     </button>
                     <button type="button" role="tab" class="org-events-tab" id="omr-report-tab-engagement" data-omr-report-tab="engagement" aria-selected="false" tabindex="-1">
                       <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg>
