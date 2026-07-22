@@ -32,7 +32,7 @@
 
   function isOrganiserAuthIntentFromPage() {
     var intent = getIntentParam();
-    if (intent === 'organiser') return true;
+    if (intent === 'organiser' || intent === 'organiser-claim') return true;
     var next = getNextParam();
     if (!next) return false;
     try {
@@ -40,6 +40,38 @@
       return /^\/organiser(\/|$)/.test(path);
     } catch (e) {
       return /^\/organiser(\/|$)/.test(next.split('?')[0]);
+    }
+  }
+
+  function isNetworkerAuthIntentFromPage() {
+    var intent = getIntentParam();
+    if (intent === 'networker') return true;
+    var next = getNextParam();
+    if (!next) return false;
+    try {
+      var path = /^https?:\/\//i.test(next) ? new URL(next).pathname : next.split('?')[0];
+      return /^\/account(\/|$)/.test(path);
+    } catch (e) {
+      return /^\/account(\/|$)/.test(next.split('?')[0]);
+    }
+  }
+
+  function isOrganiserNextPath(next) {
+    if (!next) return false;
+    try {
+      var path = /^https?:\/\//i.test(next) ? new URL(next).pathname : next.split('?')[0];
+      return /^\/organiser(\/|$)/.test(path);
+    } catch (e) {
+      return /^\/organiser(\/|$)/.test(next.split('?')[0]);
+    }
+  }
+
+  function updateAuthLinks() {
+    if (createAccountLink) {
+      createAccountLink.setAttribute('href', withNextParam('/register'));
+    }
+    if (registerSignInLink) {
+      registerSignInLink.setAttribute('href', withNextParam('/login'));
     }
   }
 
@@ -365,12 +397,6 @@
     if (getIntentParam() === 'organiser-claim') return;
     if (!isOrganiserAuthIntentFromPage()) return;
 
-    var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
-    if (loginLede) {
-      loginLede.textContent =
-        'Sign in to open your organiser workspace — list events, manage attendees, and reach members browsing the Hub.';
-    }
-
     var registerTitle = document.querySelector('#register-form') && document.querySelector('.auth-card--wizard h1');
     if (registerTitle) {
       registerTitle.textContent = 'Create your organiser account';
@@ -475,6 +501,212 @@
       calloutText.textContent =
         'Step 1 of 2 — create an account with the email linked to your group. Next you\u2019ll confirm your page in the organiser dashboard.';
     }
+
+    var audienceToggle = document.getElementById('auth-audience-toggle');
+    if (audienceToggle) audienceToggle.hidden = true;
+
+    var audienceNote = document.getElementById('login-audience-note');
+    if (audienceNote) audienceNote.hidden = true;
+  }
+
+  function initLoginAudienceToggle() {
+    if (!loginForm) return;
+    if (getIntentParam() === 'organiser-claim') return;
+
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') === '1') {
+      var checkoutToggle = document.getElementById('auth-audience-toggle');
+      if (checkoutToggle) checkoutToggle.hidden = true;
+      var checkoutNote = document.getElementById('login-audience-note');
+      if (checkoutNote) checkoutNote.hidden = true;
+      return;
+    }
+
+    var toggle = document.getElementById('auth-audience-toggle');
+    var networkerBtn = document.getElementById('auth-audience-networker');
+    var organiserBtn = document.getElementById('auth-audience-organiser');
+    if (!toggle || !networkerBtn || !organiserBtn) return;
+
+    var heroStop = null;
+
+    var LOGIN_AUDIENCE = {
+      neutral: {
+        kicker: 'The Networker Hub',
+        titleHtml: 'Your Hub account',
+        lede: 'One login for browsing events, managing bookings, and opening your organiser workspace.',
+        points: [
+          'Browse & book UK networking events',
+          'My Hub dashboard, alerts & saved listings',
+          'List events & manage your group when you\u2019re ready',
+          'Compare & enquire on Business Opportunities',
+        ],
+        ctaText: 'See what\u2019s included for networkers \u2192',
+        ctaHref: '/for-attendees',
+        formLede: 'Welcome back \u2014 use the email and password for your Hub account. Same login for My Hub and your organiser workspace.',
+        createLead: 'New to The Networker Hub?',
+        createBtn: 'Create a free account',
+        createHint: 'Free to join \u00b7 about 2 minutes',
+        showNote: true,
+        rotate: null,
+      },
+      networker: {
+        kicker: 'For networkers',
+        titleHtml: 'Find your next <span class="auth-panel-accent" id="login-hero-word">event</span>',
+        lede: 'Stop wasting time searching for your next event, business opportunities, or organisers \u2014 they can all be found on your Networker Hub.',
+        points: [
+          'Browse & book UK networking events',
+          'Compare & enquire on Business Opportunities',
+          'Discover organisers & read reviews',
+          'My Hub dashboard & smart alerts',
+          'Guest visits & member rates when signed in',
+        ],
+        ctaText: 'See what\u2019s included for networkers \u2192',
+        ctaHref: '/for-attendees',
+        formLede: 'Sign in to open My Hub \u2014 saved events, bookings, alerts, and member rates.',
+        createLead: 'New to The Networker Hub?',
+        createBtn: 'Create a free account',
+        createHint: 'Free to join \u00b7 about 2 minutes',
+        showNote: true,
+        rotate: ['event', 'Business Opportunity', 'organiser'],
+      },
+      organiser: {
+        kicker: 'For organisers',
+        titleHtml: 'Find your next <span class="auth-panel-accent" id="login-hero-word">attendees</span>',
+        lede: 'Ticketing and discovery for UK networking groups \u2014 from weekly breakfasts to annual conferences.',
+        points: [
+          'List events & sell tickets with guest-visit tools',
+          'Manage bookings, visits & attendee exports',
+          'Reach members browsing events on the Hub',
+          'Keep 100% of ticket price \u00b7 free to list',
+          'Claim your page if your group is already listed',
+        ],
+        ctaText: 'See what\u2019s included for organisers \u2192',
+        ctaHref: '/for-organisers',
+        formLede: 'Sign in to open your organiser workspace \u2014 list events, manage attendees, and reach members browsing the Hub.',
+        createLead: 'No organiser account yet?',
+        createBtn: 'Create a free organiser account',
+        createHint: 'We enable organiser access automatically',
+        showNote: false,
+        rotate: ['attendees', 'bookings', 'discovery'],
+      },
+    };
+
+    function detectInitialAudience() {
+      if (isOrganiserAuthIntentFromPage()) return 'organiser';
+      if (isNetworkerAuthIntentFromPage()) return 'networker';
+      return 'neutral';
+    }
+
+    function stopHeroRotation() {
+      if (typeof heroStop === 'function') {
+        heroStop();
+        heroStop = null;
+      }
+    }
+
+    function startHeroRotation(words) {
+      stopHeroRotation();
+      if (!words || !words.length || !window.HubFindYourNextRotate) return;
+      var wordEl = document.getElementById('login-hero-word');
+      if (!wordEl) return;
+      heroStop = window.HubFindYourNextRotate(wordEl, words, 3000);
+    }
+
+    function renderPoints(el, points) {
+      if (!el || !points) return;
+      el.innerHTML = points.map(function (point) {
+        return '<li>' + point + '</li>';
+      }).join('');
+    }
+
+    function syncAudienceUrl(audience) {
+      var urlParams = new URLSearchParams(window.location.search);
+      var next = urlParams.get('next') || '';
+
+      if (audience === 'organiser') {
+        urlParams.set('intent', 'organiser');
+        if (!isOrganiserNextPath(next)) {
+          urlParams.set('next', '/organiser/');
+        }
+      } else {
+        urlParams.delete('intent');
+        if (isOrganiserNextPath(next)) {
+          urlParams.delete('next');
+        }
+      }
+
+      var query = urlParams.toString();
+      var nextUrl = window.location.pathname + (query ? '?' + query : '');
+      window.history.replaceState(null, '', nextUrl);
+      updateAuthLinks();
+    }
+
+    function setToggleState(audience) {
+      var isOrganiser = audience === 'organiser';
+      networkerBtn.classList.toggle('is-active', !isOrganiser);
+      organiserBtn.classList.toggle('is-active', isOrganiser);
+      networkerBtn.setAttribute('aria-selected', isOrganiser ? 'false' : 'true');
+      organiserBtn.setAttribute('aria-selected', isOrganiser ? 'true' : 'false');
+    }
+
+    function applyAudience(audience, options) {
+      options = options || {};
+      var content = LOGIN_AUDIENCE[audience] || LOGIN_AUDIENCE.neutral;
+      var panelKicker = document.getElementById('auth-panel-kicker');
+      var panelTitle = document.getElementById('auth-panel-title');
+      var panelLede = document.getElementById('auth-panel-lede');
+      var panelPoints = document.getElementById('auth-panel-points');
+      var panelCta = document.getElementById('auth-panel-cta');
+      var loginLede = document.getElementById('login-form-lede');
+      var createLead = document.getElementById('login-create-account-lead');
+      var createBtn = document.getElementById('login-create-account');
+      var createHint = document.getElementById('login-create-account-hint');
+      var audienceNote = document.getElementById('login-audience-note');
+
+      if (panelKicker) panelKicker.textContent = content.kicker;
+      if (panelTitle) panelTitle.innerHTML = content.titleHtml;
+      if (panelLede) panelLede.textContent = content.lede;
+      renderPoints(panelPoints, content.points);
+      if (panelCta) {
+        panelCta.textContent = content.ctaText;
+        panelCta.setAttribute('href', content.ctaHref);
+      }
+      if (loginLede) loginLede.textContent = content.formLede;
+      if (createLead) createLead.textContent = content.createLead;
+      if (createBtn) createBtn.textContent = content.createBtn;
+      if (createHint) createHint.textContent = content.createHint;
+      if (audienceNote) audienceNote.hidden = !content.showNote;
+
+      setToggleState(audience === 'organiser' ? 'organiser' : 'networker');
+      startHeroRotation(content.rotate);
+
+      if (options.syncUrl !== false) {
+        syncAudienceUrl(audience === 'organiser' ? 'organiser' : 'networker');
+      }
+    }
+
+    function onAudienceSelect(audience) {
+      if (audience === 'organiser') {
+        applyAudience('organiser');
+        return;
+      }
+      var initial = detectInitialAudience();
+      applyAudience(initial === 'networker' ? 'networker' : 'neutral');
+    }
+
+    networkerBtn.addEventListener('click', function () {
+      onAudienceSelect('networker');
+    });
+
+    organiserBtn.addEventListener('click', function () {
+      onAudienceSelect('organiser');
+    });
+
+    var initialAudience = detectInitialAudience();
+    applyAudience(initialAudience, { syncUrl: false });
+    if (initialAudience === 'organiser') {
+      syncAudienceUrl('organiser');
+    }
   }
 
   function maybeRedirectAuthenticatedClaimEntry() {
@@ -497,17 +729,9 @@
       });
   }
 
-  function initLoginHeroSlogan() {
-    if (getIntentParam() === 'organiser-claim') return;
-    var wordEl = document.getElementById('login-hero-word');
-    if (!wordEl || !window.HubFindYourNextRotate) return;
-
-    window.HubFindYourNextRotate(wordEl, ['event', 'Business Opp', 'organiser'], 3000);
-  }
-
   applyCheckoutContext();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
+  initLoginAudienceToggle();
   maybeRedirectAuthenticatedClaimEntry();
-  initLoginHeroSlogan();
 })();

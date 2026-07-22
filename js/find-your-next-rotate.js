@@ -18,7 +18,7 @@
     }
 
     var index = 0;
-    window.setInterval(function () {
+    var timer = window.setInterval(function () {
       index = (index + 1) % words.length;
       el.classList.add('is-fading');
       window.setTimeout(function () {
@@ -26,6 +26,10 @@
         el.classList.remove('is-fading');
       }, 180);
     }, intervalMs || 2800);
+
+    return function stop() {
+      window.clearInterval(timer);
+    };
   }
 
   window.HubFindYourNextRotate = rotate;
