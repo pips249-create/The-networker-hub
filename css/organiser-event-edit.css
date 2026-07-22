@@ -1516,10 +1516,71 @@ a.ee-wizard-link:hover {
   }
 }
 
-.organiser-published-page .ep-publish-row .ep-preview-card,
-.organiser-published-page .ep-publish-row .ep-featured-upsell {
+.organiser-published-page .ep-publish-row .ep-preview-card {
   margin-bottom: 0;
   height: 100%;
+}
+
+.organiser-published-page .ep-featured-upsell {
+  margin-bottom: 20px;
+}
+
+.organiser-published-page .ep-featured-body {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 760px) {
+  .organiser-published-page .ep-featured-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: start;
+  }
+}
+
+.organiser-published-page .ep-featured-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.organiser-published-page .ep-featured-main .oe-premium-features {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(201, 150, 31, 0.2);
+}
+
+.organiser-published-page .ep-featured-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(201, 150, 31, 0.22);
+}
+
+.organiser-published-page .ep-featured-footer .ep-featured-price-block {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.organiser-published-page .ep-featured-footer .oe-premium-actions {
+  flex: 1 1 220px;
+  margin: 0;
+}
+
+@media (max-width: 519px) {
+  .organiser-published-page .ep-featured-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .organiser-published-page .ep-featured-footer .oe-premium-actions .ee-btn {
+    width: 100%;
+  }
 }
 
 .ep-success {
@@ -2607,24 +2668,25 @@ body.ee-modal-open {
 .organiser-published-page .ep-featured-single-price {
   display: flex;
   align-items: baseline;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 0 18px;
-  padding: 18px 16px;
-  border-radius: 12px;
-  border: 2px solid #e8d9a8;
-  background: linear-gradient(180deg, #fffdf6 0%, #fff9eb 100%);
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 .organiser-published-page .ep-featured-single-price .ep-featured-plan-price {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1c2040;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--opp-navy, #0d1f3c);
+  line-height: 1;
 }
 
 .organiser-published-page .ep-featured-single-price .ep-featured-plan-duration {
-  font-size: 1rem;
-  color: #635c5e;
+  font-size: 14px;
+  color: var(--opp-mid-gray, #635c5e);
 }
 
 .organiser-published-page .ep-featured-plans {
@@ -2704,7 +2766,7 @@ body.ee-modal-open {
 }
 
 .organiser-published-page .ep-featured-preview {
-  margin: 0 0 18px;
+  margin: 0;
 }
 
 .organiser-published-page .ep-featured-preview-label {
@@ -2881,8 +2943,13 @@ body.ee-modal-open {
   color: var(--ee-text-soft);
 }
 
+.organiser-published-page .oe-premium-lede {
+  max-width: 42em;
+}
+
 .organiser-published-page .oe-premium-actions .ee-btn {
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* Dashboard drawer embed */

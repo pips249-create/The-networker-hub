@@ -593,8 +593,8 @@
     featuredHeading.textContent = 'Extend your featured listing';
   }
   if (extendFeatured && featuredLede) {
-    featuredLede.textContent =
-      'Your featured placement is ending soon. Extend to keep premium visibility — from £55 per month, prorated when your event is sooner.';
+    featuredLede.innerHTML =
+      'Your featured placement is ending soon. Extend to keep premium visibility — from <strong>£55 per month</strong>, prorated when your event is sooner.';
   }
 
   if (featuredCancelled && featuredError) {
