@@ -40,6 +40,7 @@ module.exports = async function handler(req, res) {
     .trim()
     .toLowerCase();
   const organiserId = String(body.organiserId || body.organiser_id || '').trim();
+  let organiserIdsToClaim = organiserId ? [organiserId] : [];
 
   if (organiserId && useSupabase()) {
     try {
@@ -105,6 +106,10 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (!organiserIdsToClaim.length && email && useSupabase()) {
+      organiserIdsToClaim = await sbAuth.findOrganiserIdsByEmail(email);
+    }
+
     if (!target) {
       const organiserIds = await sbAuth.findOrganiserIdsByEmail(email);
       return json(res, 404, {
@@ -121,6 +126,13 @@ module.exports = async function handler(req, res) {
         error: 'cannot_impersonate_admin',
         message: 'Admin accounts cannot be impersonated.',
       });
+    }
+
+    if (body.provision !== false && organiserIdsToClaim.length && useSupabase()) {
+      const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+      for (const oid of organiserIdsToClaim) {
+        await ensureOrganiserClaimedForAdminEvent(oid);
+      }
     }
 
     const impersonator = {

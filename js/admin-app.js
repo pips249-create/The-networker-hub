@@ -14702,9 +14702,24 @@
       '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       esc(opp.description || '') +
       '</textarea></div>' +
-      (opp.owner_email
-        ? '<p class="sm:col-span-2 text-xs text-slate-500">Owner: ' + esc(opp.owner_email) + '</p>'
+      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
+      '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
+      '<p class="text-xs text-slate-500">Assign a claimant email to open the in-dashboard claim prompt when they sign in.</p>' +
+      '<div class="flex flex-wrap gap-2 items-end">' +
+      '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
+      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.owner_email || '') +
+      '" placeholder="claimant@example.com"></div>' +
+      '<button type="button" data-opp-assign-owner="' +
+      attrEsc(opp.id) +
+      '" class="rounded-lg bg-amber-700 text-white text-sm font-semibold px-4 py-2 hover:bg-amber-800">Assign &amp; send claim invite</button>' +
+      '</div>' +
+      (opp.ownership_claim_status
+        ? '<p class="text-xs text-slate-500">Claim status: <span class="font-semibold">' +
+          esc(opp.ownership_claim_status) +
+          '</span></p>'
         : '') +
+      '</div>' +
       '</div></form>'
     );
   }
@@ -15273,6 +15288,55 @@
       });
   }
 
+  function assignOpportunityOwner(id, form) {
+    var ownerEmail = formFieldVal(form, 'owner_email');
+    if (!ownerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) {
+      window.alert('Enter a valid owner email before assigning.');
+      return;
+    }
+    if (
+      !window.confirm(
+        'Assign “' +
+          ownerEmail +
+          '” as owner and open the in-dashboard claim prompt when they sign in?'
+      )
+    ) {
+      return;
+    }
+    var msg = form.querySelector('.opportunity-cleanup-msg');
+    var btn = form.querySelector('[data-opp-assign-owner]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Assigning owner…';
+      msg.className = 'opportunity-cleanup-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', {
+      id: id,
+      action: 'assign_owner',
+      owner_email: ownerEmail,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Assign owner failed');
+        if (msg) {
+          msg.textContent = 'Owner assigned — claim invite will appear when they sign in.';
+          msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
+        }
+        return refreshOpportunityCleanupPage();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not assign owner';
+          msg.className = 'opportunity-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function saveOpportunityCleanupForm(form) {
     var id = form.getAttribute('data-opportunity-id');
     var msg = form.querySelector('.opportunity-cleanup-msg');
@@ -15397,6 +15461,14 @@
           toggle.textContent = 'Edit';
         }
       }
+      return;
+    }
+    var assignOwnerBtn = e.target.closest('[data-opp-assign-owner]');
+    if (assignOwnerBtn) {
+      var assignRow = assignOwnerBtn.closest('.opportunity-cleanup-panel');
+      var assignForm = assignRow && assignRow.querySelector('.opportunity-cleanup-form');
+      var assignId = assignOwnerBtn.getAttribute('data-opp-assign-owner');
+      if (assignForm && assignId) assignOpportunityOwner(assignId, assignForm);
       return;
     }
     var approveBtn = e.target.closest('[data-opp-approve]');

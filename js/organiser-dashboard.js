@@ -6749,6 +6749,7 @@
   function showOrganiserEmailVerifyBanner() {
     if (state.organiserEmailVerified || state.isAdmin) return;
     if ((state.pendingClaimGroups || []).length > 0 && !state.organiserAccess) return;
+    if ((state.pendingClaimOpportunities || []).length > 0 && !state.organiserAccess) return;
     showOrganiserAlert(
       'Confirm your email before publishing events, viewing attendees, or setting up payouts. ' +
         '<a href="/organiser/verify-email">Confirm email</a>',
@@ -9016,7 +9017,7 @@
       /* ignore */
     }
 
-    if ((state.pendingClaimGroups || []).length > 0) {
+    if ((state.pendingClaimGroups || []).length > 0 || (state.pendingClaimOpportunities || []).length > 0) {
       panel.hidden = true;
       updateSetupResumeBanner();
       return;
@@ -9285,6 +9286,7 @@
   function continueOnboardingAfterClaim() {
     if (state.adminView) return;
     if ((state.pendingClaimGroups || []).length > 0) return;
+    if ((state.pendingClaimOpportunities || []).length > 0) return;
     updateSetupResumeBanner();
     if (!needsOrganiserProfileReview()) {
       showReadyForEventPrompt();
@@ -10935,7 +10937,7 @@
       bindScopeButtonOnce();
     } else if (data.groupsError) {
       state.dashboardScope = { kind: 'groups_error', message: data.groupsError };
-    } else if (!state.groups.length && !state.pendingClaimGroups.length) {
+    } else if (!state.groups.length && !state.pendingClaimGroups.length && !(state.pendingClaimOpportunities || []).length) {
       state.dashboardScope = { kind: 'onboarding' };
     } else {
       state.dashboardScope = null;

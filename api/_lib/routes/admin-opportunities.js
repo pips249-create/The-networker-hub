@@ -116,6 +116,7 @@ function mapOpportunityRow(row) {
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
     owner_email: String(row.owner_email || '').toLowerCase(),
+    ownership_claim_status: row.ownership_claim_status || null,
     organiser_id: row.organiser_id || '',
     image_url: row.image_url || '',
     logo_url: row.logo_url || '',
