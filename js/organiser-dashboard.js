@@ -9066,6 +9066,12 @@
       if (bodyEl) {
         bodyEl.textContent = 'Create or claim your organiser page to get started on the hub.';
       }
+    } else if (needsOrganiserProfileReview()) {
+      if (titleEl) titleEl.textContent = 'Step 1 of 3 — check your organiser page';
+      if (bodyEl) {
+        bodyEl.textContent =
+          'Confirm your organiser page details before you list your first event.';
+      }
     } else if (!progress.hasEvent) {
       if (titleEl) titleEl.textContent = 'Step 2 of 3 — list an event';
       if (bodyEl) {
@@ -9097,6 +9103,10 @@
         const progress = gettingStartedProgress();
         if (!progress.hasGroup) {
           window.location.href = '/organiser/group-edit';
+          return;
+        }
+        if (needsOrganiserProfileReview()) {
+          window.location.href = organiserProfileReviewUrl();
           return;
         }
         if (!progress.hasEvent) {
@@ -9158,26 +9168,30 @@
     return false;
   }
 
+  function needsOrganiserProfileReview() {
+    const onboarding = window.HubOrganiserOnboarding;
+    return Boolean(
+      state.groups.length > 0 &&
+        onboarding &&
+        onboarding.isProfileReviewDone &&
+        !onboarding.isProfileReviewDone() &&
+        !hasListedEvents()
+    );
+  }
+
+  function organiserProfileReviewUrl() {
+    const group = state.groups[0];
+    if (!group || !group.id) return '/organiser/#groups';
+    return '/organiser/group-edit?id=' + encodeURIComponent(group.id) + '&onboard=review';
+  }
+
   function continueOnboardingAfterClaim() {
     if (state.adminView) return;
     if ((state.pendingClaimGroups || []).length > 0) return;
-    const onboarding = window.HubOrganiserOnboarding;
-    if (!onboarding) return;
-
-    if (
-      state.groups.length > 0 &&
-      !onboarding.isProfileReviewDone() &&
-      !hasListedEvents()
-    ) {
-      const group = state.groups[0];
-      if (group && group.id) {
-        window.location.href =
-          '/organiser/group-edit?id=' + encodeURIComponent(group.id) + '&onboard=review';
-        return;
-      }
+    updateSetupResumeBanner();
+    if (!needsOrganiserProfileReview()) {
+      showReadyForEventPrompt();
     }
-
-    showReadyForEventPrompt();
   }
 
   function afterTourOnboardingStep() {
@@ -9308,8 +9322,11 @@
       }
 
       if (action === 'claim' && data.group && data.group.id) {
-        window.location.href =
-          '/organiser/group-edit?id=' + encodeURIComponent(data.group.id) + '&onboard=review';
+        hideGroupClaimModal();
+        await loadBootstrap();
+        updateSetupResumeBanner();
+        updateGettingStartedPanel();
+        setRoute('groups', { skipEventsGuard: true });
         return;
       }
 

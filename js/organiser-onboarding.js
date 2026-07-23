@@ -335,8 +335,6 @@
     if (!tourAutoStarted && shouldAutoStart()) {
       tourAutoStarted = true;
       window.setTimeout(showTour, 400);
-    } else if (isTourDone() && afterTourStep) {
-      afterTourStep();
     }
   }
 

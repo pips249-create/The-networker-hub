@@ -158,6 +158,13 @@
     } catch (e) {
       /* ignore */
     }
+    if (
+      this.storageKey === 'hub_flow_tour_group_review_v1' &&
+      global.HubOrganiserOnboarding &&
+      global.HubOrganiserOnboarding.markProfileReviewDone
+    ) {
+      global.HubOrganiserOnboarding.markProfileReviewDone();
+    }
     this.hide();
   };
 

@@ -465,7 +465,7 @@
       if ((onboardReview || (!editId && mode === 'continue')) && window.HubFlowTour) {
         window.HubFlowTour.markEventTourPending();
       }
-      if (onboardReview && mode === 'continue' && window.HubOrganiserOnboarding) {
+      if (onboardReview && window.HubOrganiserOnboarding) {
         window.HubOrganiserOnboarding.markProfileReviewDone();
       }
 
