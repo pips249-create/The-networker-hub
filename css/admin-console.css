@@ -776,36 +776,9 @@ a.admin-action-row:hover .admin-action-btn {
   color: #991b1b;
 }
 
-/* Fix listings — pinned header; table + pagination scroll below */
-#admin-main:has(.event-cleanup-page) {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-}
-
-#admin-main:has(.event-cleanup-page) > .admin-hub-tabs {
-  flex-shrink: 0;
-}
-
-.admin-hub-panel:has(.event-cleanup-page) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
+/* Fix listings — normal page scroll; filters stick; pagination below table */
 .event-cleanup-page {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.event-cleanup-header,
-.event-cleanup-toolbar {
-  flex-shrink: 0;
+  display: block;
 }
 
 .event-cleanup-create > summary::-webkit-details-marker {
@@ -813,48 +786,26 @@ a.admin-action-row:hover .admin-action-btn {
 }
 
 .event-cleanup-create-body {
-  max-height: min(40vh, 28rem);
-  overflow-y: auto;
-}
-
-.event-cleanup-list-pane {
-  flex: 1;
-  min-height: 0;
+  max-height: min(70vh, 36rem);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.event-cleanup-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding-bottom: 0.25rem;
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9), 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.event-cleanup-list {
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   background: #fff;
-}
-
-@media (max-width: 1023px) {
-  #admin-main:has(.event-cleanup-page) {
-    display: block;
-    overflow: visible;
-  }
-
-  .admin-hub-panel:has(.event-cleanup-page) {
-    display: block;
-  }
-
-  .event-cleanup-page {
-    display: block;
-  }
-
-  .event-cleanup-list-pane {
-    overflow: visible;
-    min-height: auto;
-  }
-
-  .event-cleanup-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9), 0 4px 12px rgba(15, 23, 42, 0.06);
-  }
 }
 
 /* Group profile cleanup — inline quick edit + pagination */

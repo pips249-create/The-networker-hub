@@ -10522,9 +10522,16 @@
       });
   }
 
-  function resetEventCleanupScroll() {
-    var pane = document.getElementById('event-cleanup-list-pane');
-    if (pane) pane.scrollTop = 0;
+  function resetEventCleanupScroll(target) {
+    var mainEl = document.getElementById('admin-main');
+    if (target === 'list') {
+      var list = document.getElementById('event-cleanup-list');
+      if (list && typeof list.scrollIntoView === 'function') {
+        list.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
+      return;
+    }
+    if (mainEl) mainEl.scrollTop = 0;
   }
 
   function goToEventPage(page) {
@@ -10533,7 +10540,7 @@
     return fetchEventCleanup(eventCleanupState.page)
       .then(applyEventCleanupData)
       .then(function () {
-        resetEventCleanupScroll();
+        resetEventCleanupScroll('list');
       });
   }
 
@@ -13018,16 +13025,13 @@
 
   function renderEventCleanup() {
     main.innerHTML =
-      '<div class="event-cleanup-page">' +
-      '<div class="event-cleanup-header space-y-3">' +
+      '<div class="event-cleanup-page space-y-3">' +
       eventCleanupCreateSectionHtml() +
       '<div class="event-cleanup-toolbar space-y-3">' +
       eventCleanupFiltersHtml() +
       eventCleanupBulkHtml() +
-      '</div></div>' +
-      '<div id="event-cleanup-list-pane" class="event-cleanup-list-pane">' +
-      '<div id="event-cleanup-list"></div>' +
-      '</div></div>';
+      '</div>' +
+      '<div id="event-cleanup-list" class="event-cleanup-list"></div></div>';
 
     syncEventCleanupFilterUi();
     bindEventCreateOrganiserPicker();
