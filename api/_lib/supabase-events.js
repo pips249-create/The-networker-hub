@@ -1056,15 +1056,6 @@ async function handle(req, res) {
         rowToEvent(row, organiser, tickets, organiserRanking),
         seriesSiblingRows
       );
-      if (!event.hasTicketTiers) {
-        return res.status(404).json({
-          configured: true,
-          provider: 'supabase',
-          error: 'not_found',
-          message: 'This event is not published.',
-          event: null,
-        });
-      }
       event.isSeries = seriesDates.length > 1;
       const seriesIds = new Set(seriesDates.map((d) => d.id));
       const relatedFiltered = (relatedRows || []).filter((r) => !seriesIds.has(r.id));
