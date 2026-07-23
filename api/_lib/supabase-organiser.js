@@ -6,7 +6,7 @@ const { resolveImageUrl, decodeUploadBuffer } = require('./supabase-storage');
 const { imageDimensionsFromBuffer, imageDimensionsFromUrl } = require('./image-dimensions');
 const { logoResolutionWarning } = require('./logo-quality');
 const { isAdminRole } = require('./auth');
-const { resolveOrganiserAccess, getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
+const { resolveOrganiserAccess, getOrCreateOrganiserAccount, groupVisibleInOrganiserWorkspace } = require('./supabase-organiser-access');
 const { eventImageUrl } = require('./event-image');
 const { clampComplimentaryVisitsAllowed } = require('./guest-visits');
 const { publicOrganiserSlug } = require('./organiser-slug');
@@ -80,7 +80,7 @@ async function listGroupsForUser(userId, email) {
   if (error) throw new Error(error.message);
 
   return (data || [])
-    .filter((row) => row.ownership_claim_status === 'claimed')
+    .filter((row) => groupVisibleInOrganiserWorkspace({ sub: userId, email }, row))
     .map(rowToGroup);
 }
 
@@ -127,7 +127,7 @@ async function listGroupsForAccount(session, resolvedAccess) {
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data || [])
-    .filter((row) => row.ownership_claim_status === 'claimed')
+    .filter((row) => groupVisibleInOrganiserWorkspace(session, row))
     .map(rowToGroup);
 }
 

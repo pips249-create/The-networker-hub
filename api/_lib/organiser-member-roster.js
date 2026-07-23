@@ -20,6 +20,13 @@ const {
 const { resolvePhotoUrl } = require('./supabase-organisers-browse');
 const { formatEventDateTime } = require('./favourite-sales-emails');
 const { emailGreetingName } = require('./email-display-name');
+const {
+  LISTING_ALERT_EVENT_COLUMNS,
+  groupEventsForListingAlerts,
+  buildListingAlertEmailFields,
+  loadListingAlertSeriesPeers,
+  loadUnalertedEventsForRecipient,
+} = require('./listing-alert-series');
 
 const ROSTER_STATUS_ACTIVE = 'active';
 const ROSTER_STATUS_REMOVED = 'removed';
@@ -1263,32 +1270,32 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
   const email = normalizeRosterEmail(member.email);
   if (!email || !member.membershipActive) return 'skipped';
 
-  const alertedRes = await sb
-    .from('organiser_roster_listing_alerts')
-    .select('id')
-    .eq('roster_member_id', memberId)
-    .eq('event_id', eventId)
-    .maybeSingle();
-  if (alertedRes.error) throw new Error(alertedRes.error.message);
-  if (alertedRes.data?.id) return 'skipped';
+  const seriesPeers = await loadListingAlertSeriesPeers(sb, eventRow);
+  const unalertedEvents = await loadUnalertedEventsForRecipient(sb, {
+    eventRows: seriesPeers,
+    alertTable: 'organiser_roster_listing_alerts',
+    recipientColumn: 'roster_member_id',
+    recipientId: memberId,
+  });
+  if (!unalertedEvents.length) return 'skipped';
+  if (!unalertedEvents.some((row) => String(row.id) === eventId)) return 'skipped';
 
   const site = siteBase();
-  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at || eventRow.startsAt);
-  const eventLocation =
-    String(eventRow.location_label || eventRow.locationLabel || eventRow.venue || eventRow.city || '').trim() ||
-    'See event page';
-  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
-  const eventUrl = eventPublicUrl(eventRow, site);
+  const fields = buildListingAlertEmailFields(unalertedEvents, site, {
+    variant: 'member_roster',
+    organiserName: organiser.name,
+    userName: emailGreetingName(member.name, email),
+  });
   const organiserUrl = organiserPublicUrl(organiser, site);
   const organiserName = String(organiser.name || 'your networking group').trim();
   const hasAccount = Boolean(member.attendeeId || member.claimedAt);
   const ctaUrl = hasAccount
-    ? loginUrlWithNext(site, email, eventUrl)
+    ? loginUrlWithNext(site, email, fields.event_url)
     : site +
       '/register?email=' +
       encodeURIComponent(email) +
       '&next=' +
-      encodeURIComponent(eventUrl);
+      encodeURIComponent(fields.event_url);
   const ctaLabel = hasAccount ? 'View member tickets' : 'Create account & view event';
 
   await sendTemplatedEmail({
@@ -1299,11 +1306,18 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
       user_email: email,
       organiser_name: organiserName,
       organiser_url: organiserUrl,
-      event_name: String(eventRow.title || 'Event').trim(),
-      event_date: event_date || '',
-      event_time: eventTimeSuffix,
-      event_location: eventLocation,
-      event_url: eventUrl,
+      event_name: fields.event_name,
+      event_date: fields.event_date || '',
+      event_time: fields.event_time,
+      event_location: fields.event_location,
+      event_url: fields.event_url,
+      event_date_count: fields.event_date_count,
+      listing_badge: fields.listing_badge,
+      listing_headline: fields.listing_headline,
+      listing_intro: fields.listing_intro,
+      listing_subject: fields.listing_subject,
+      event_date_prefix: fields.event_date_prefix,
+      listing_cta_label: fields.listing_cta_label,
       cta_url: ctaUrl,
       cta_label: ctaLabel,
       hub_account_url: hubAccountUrl(site),
@@ -1317,10 +1331,12 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
     },
   });
 
-  await sb.from('organiser_roster_listing_alerts').insert({
-    roster_member_id: memberId,
-    event_id: eventId,
-  });
+  await sb.from('organiser_roster_listing_alerts').insert(
+    unalertedEvents.map((row) => ({
+      roster_member_id: memberId,
+      event_id: row.id,
+    }))
+  );
   if (alreadyAlerted) alreadyAlerted.add(memberId);
 
   if (member.attendeeId) {
@@ -1333,10 +1349,10 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
         .maybeSingle();
       if (fav.data?.id) {
         await sb.from('organiser_favourite_listing_alerts').upsert(
-          {
+          unalertedEvents.map((row) => ({
             organiser_favourite_id: fav.data.id,
-            event_id: eventId,
-          },
+            event_id: row.id,
+          })),
           { onConflict: 'organiser_favourite_id,event_id', ignoreDuplicates: true }
         );
       }
@@ -1369,9 +1385,7 @@ async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
   const now = new Date().toISOString();
   const { data: events, error: eventsErr } = await sb
     .from('events')
-    .select(
-      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at'
-    )
+    .select(LISTING_ALERT_EVENT_COLUMNS)
     .eq('organiser_id', orgId)
     .eq('status', 'published')
     .eq('approval_status', 'Approved')
@@ -1381,10 +1395,11 @@ async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
   if (eventsErr) throw new Error(eventsErr.message);
   if (!(events || []).length) return result;
 
-  for (const eventRow of events) {
+  const eventGroups = groupEventsForListingAlerts(events);
+  for (const group of eventGroups) {
     try {
       const outcome = await sendMemberRosterNewEventAlert(sb, {
-        eventRow,
+        eventRow: group.anchor,
         organiser,
         member,
       });
@@ -1396,7 +1411,7 @@ async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
         continue;
       }
       result.errors.push({
-        event_id: eventRow.id,
+        event_id: group.anchor?.id,
         email: member.email,
         message: e.message || String(e),
       });

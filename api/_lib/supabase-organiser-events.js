@@ -1965,11 +1965,15 @@ async function getLeanOrganiserWorkspace(req) {
 
   const { getOrganiserAccessStatus } = require('./organiser-access-guard');
   const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+  const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
   const accessPromise = resolveOrganiserAccess(session).catch(() => null);
   const accessStatusPromise = getOrganiserAccessStatus(session).catch(() => null);
   const pendingClaimsPromise = adminView
     ? Promise.resolve([])
-    : listPendingClaimGroupsForSession(session).catch(() => []);
+    : Promise.all([
+        listPendingClaimGroupsForSession(session).catch(() => []),
+        listPendingClaimOpportunitiesForSession(session).catch(() => []),
+      ]).then(([groups, opportunities]) => ({ groups, opportunities }));
 
   let groups = [];
   let groupsError = null;
@@ -1982,12 +1986,14 @@ async function getLeanOrganiserWorkspace(req) {
 
   const groupIds = groups.map((g) => g.id);
   const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
-  const [pendingClaimGroups, eventSummaries, accessStatus, rosterSummaries] = await Promise.all([
+  const [pendingClaims, eventSummaries, accessStatus, rosterSummaries] = await Promise.all([
     pendingClaimsPromise,
     listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
     accessStatusPromise,
     buildRosterSummariesForOrganisers(groupIds).catch(() => new Map()),
   ]);
+  const pendingClaimGroups = pendingClaims.groups || [];
+  const pendingClaimOpportunities = pendingClaims.opportunities || [];
 
   const workspaceSummary = null;
 
@@ -2006,6 +2012,7 @@ async function getLeanOrganiserWorkspace(req) {
     session,
     groups,
     pendingClaimGroups,
+    pendingClaimOpportunities,
     events: [],
     upcomingEvents: [],
     tickets: [],
@@ -2064,12 +2071,15 @@ async function getOrganiserWorkspace(req) {
 
   let groups = [];
   let pendingClaimGroups = [];
+  let pendingClaimOpportunities = [];
   let groupsError = null;
   try {
     groups = await sbOrg.listGroupsForSession(session, adminView);
     if (!adminView) {
       const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+      const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
       pendingClaimGroups = await listPendingClaimGroupsForSession(session);
+      pendingClaimOpportunities = await listPendingClaimOpportunitiesForSession(session);
     }
   } catch (e) {
     groupsError = e.message;
@@ -2225,6 +2235,7 @@ async function getOrganiserWorkspace(req) {
     session,
     groups: overviewGroups,
     pendingClaimGroups,
+    pendingClaimOpportunities,
     events,
     upcomingEvents,
     tickets,

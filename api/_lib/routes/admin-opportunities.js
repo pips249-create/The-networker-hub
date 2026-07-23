@@ -5,7 +5,7 @@ const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths } = require('../opportunity-listing-pricing');
 
-const { HUB_SEED_OWNER_EMAIL } = require('../opportunity-hub-seed');
+const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
 
 const TEST_SAMPLE_LISTINGS = [
   {
@@ -438,6 +438,36 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, ...result });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'delete_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'assign_owner') {
+      const ownerEmail = String(body.owner_email || body.ownerEmail || '').trim().toLowerCase();
+      if (!ownerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) {
+        return json(res, 400, { error: 'invalid_owner_email' });
+      }
+      try {
+        const sb = getSupabaseAdmin();
+        const now = new Date().toISOString();
+        const patch = {
+          owner_email: ownerEmail,
+          supabase_user_id: null,
+          ownership_claim_status: isHubSeedOwnerEmail(ownerEmail) ? null : 'pending',
+          ownership_claimed_at: null,
+          ownership_disputed_at: null,
+          ownership_disputed_by_email: null,
+          updated_at: now,
+        };
+        const { data, error } = await sb
+          .from('business_opportunities')
+          .update(patch)
+          .eq('id', id)
+          .select('*')
+          .single();
+        if (error) throw new Error(error.message);
+        return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'assign_owner_failed', message: e.message });
       }
     }
 

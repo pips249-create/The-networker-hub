@@ -9,6 +9,20 @@ const {
   isOrganiserEmailVerified,
 } = require('./supabase-auth');
 
+async function countPendingClaims(session) {
+  try {
+    const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
+    const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
+    const [groups, opportunities] = await Promise.all([
+      listPendingClaimGroupsForSession(session),
+      listPendingClaimOpportunitiesForSession(session),
+    ]);
+    return groups.length + opportunities.length;
+  } catch {
+    return 0;
+  }
+}
+
 async function countPendingClaimGroups(session) {
   try {
     const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
@@ -37,7 +51,7 @@ async function getOrganiserAccessStatus(session) {
   const [hub, organiserProfiles, pendingClaimCount] = await Promise.all([
     getHubAccount(uid),
     countOrganiserProfiles(uid, email),
-    countPendingClaimGroups(session),
+    countPendingClaims(session),
   ]);
 
   const organiserAccess =
@@ -112,4 +126,5 @@ module.exports = {
   assertOrganiserEmailVerified,
   isPublishIntent,
   countPendingClaimGroups,
+  countPendingClaims,
 };

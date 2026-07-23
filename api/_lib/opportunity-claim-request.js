@@ -75,7 +75,7 @@ async function createOpportunityClaimRequest(input) {
     (role ? '<li><strong>Role:</strong> ' + escapeHtml(role) + '</li>' : '') +
     (message ? '<li><strong>Message:</strong> ' + escapeHtml(message) + '</li>' : '') +
     '</ul>' +
-    '<p><strong>Next steps:</strong> verify the claimant, then reassign <code>owner_email</code> in Command Centre and send them the organiser checkout link.</p>' +
+    '<p><strong>Next steps:</strong> assign the claimant in Command Centre with action <code>assign_owner</code> (sets owner email and opens the in-dashboard claim prompt), or update <code>owner_email</code> manually and set claim status to pending.</p>' +
     '<p><a href="' +
     escapeHtml(adminUrl) +
     '">Open opportunities in Command Centre</a></p>' +

@@ -10,6 +10,7 @@ const cancellations = require('./supabase-organiser-cancellations');
 const attendees = require('./supabase-organiser-attendees');
 const opportunities = require('./supabase-opportunities');
 const claims = require('./supabase-organiser-claims');
+const opportunityClaims = require('./supabase-opportunity-claims');
 
 function getOrganiserApi() {
   return {
@@ -34,6 +35,9 @@ function getOrganiserApi() {
     listPendingClaimGroupsForSession: claims.listPendingClaimGroupsForSession,
     claimGroupForSession: claims.claimGroupForSession,
     rejectGroupForSession: claims.rejectGroupForSession,
+    listPendingClaimOpportunitiesForSession: opportunityClaims.listPendingClaimOpportunitiesForSession,
+    claimOpportunityForSession: opportunityClaims.claimOpportunityForSession,
+    rejectOpportunityForSession: opportunityClaims.rejectOpportunityForSession,
   };
 }
 

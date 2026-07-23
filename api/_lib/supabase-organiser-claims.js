@@ -241,8 +241,15 @@ async function rejectGroupForSession(session, groupId, notes) {
  * by using the address the invite was sent to.
  */
 async function bootstrapOrganiserFromPendingClaims(session) {
-  const pending = await listPendingClaimGroupsForSession(session);
-  const pendingCount = pending.length;
+  const pendingGroups = await listPendingClaimGroupsForSession(session);
+  let pendingOpportunities = [];
+  try {
+    const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
+    pendingOpportunities = await listPendingClaimOpportunitiesForSession(session);
+  } catch {
+    pendingOpportunities = [];
+  }
+  const pendingCount = pendingGroups.length + pendingOpportunities.length;
   if (!pendingCount || !session?.sub) {
     return { bootstrapped: false, pendingCount };
   }
@@ -266,7 +273,50 @@ async function bootstrapOrganiserFromPendingClaims(session) {
   const { error } = await sb.from('hub_accounts').upsert(patch, { onConflict: 'user_id' });
   if (error) throw new Error(error.message);
 
-  return { bootstrapped: true, pendingCount: pending.length };
+  return { bootstrapped: true, pendingCount };
+}
+
+/**
+ * When Command Centre creates events for a group, treat the profile as owned by its
+ * contact email so the organiser dashboard lists those events after impersonation.
+ */
+async function ensureOrganiserClaimedForAdminEvent(organiserId) {
+  const sb = getSupabaseAdmin();
+  const oid = String(organiserId || '').trim();
+  if (!oid) return { claimed: false, reason: 'missing_id' };
+
+  const { data: organiser, error } = await sb.from('organisers').select('*').eq('id', oid).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!organiser) return { claimed: false, reason: 'not_found' };
+  if (organiser.ownership_claim_status === 'claimed') return { claimed: true, already: true };
+  if (organiser.ownership_claim_status === 'disputed') return { claimed: false, reason: 'disputed' };
+
+  const em = profileEmail(organiser);
+  if (!em) return { claimed: false, reason: 'missing_email' };
+
+  const { provisionOrganiserLogin } = require('./supabase-auth');
+  let userId = organiser.supabase_user_id || null;
+  if (!userId) {
+    const provisioned = await provisionOrganiserLogin(oid);
+    userId = provisioned.userId;
+  }
+
+  const account = await getOrCreateOrganiserAccount({ sub: userId, email: em });
+  const now = new Date().toISOString();
+  const patch = {
+    supabase_user_id: userId,
+    ownership_claim_status: 'claimed',
+    ownership_claimed_at: now,
+    ownership_disputed_at: null,
+    ownership_disputed_by_email: null,
+  };
+  if (account?.id && !organiser.organiser_account_id) {
+    patch.organiser_account_id = account.id;
+  }
+
+  const { error: upErr } = await sb.from('organisers').update(patch).eq('id', oid);
+  if (upErr) throw new Error(upErr.message);
+  return { claimed: true };
 }
 
 module.exports = {
@@ -275,4 +325,6 @@ module.exports = {
   rejectGroupForSession,
   notifyAdminOfClaimDispute,
   bootstrapOrganiserFromPendingClaims,
+  ensureOrganiserClaimedForAdminEvent,
+  emailMatchesProfile,
 };

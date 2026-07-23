@@ -24,6 +24,7 @@ const {
   EMAIL_SPONSOR_LOGO_BAND_FALLBACK,
   buildSponsorLogoMarkup,
 } = require('./email-booking-defaults');
+const { buildListingAlertSeriesCopy } = require('./listing-alert-series');
 
 function sampleRecommendationCard(title, subtitle, url) {
   return (
@@ -288,7 +289,33 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'saved_organiser_new_listing') {
-    vars.event_time = ' · 8:00 AM';
+    vars.event_time = ' · ' + (vars.event_time || '8:00 AM');
+    Object.assign(
+      vars,
+      buildListingAlertSeriesCopy({
+        dateCount: 1,
+        variant: 'saved_organiser',
+        organiserName: vars.organiser_name,
+        userName: vars.user_name,
+        eventName: vars.event_name,
+      })
+    );
+  }
+
+  if (slug === 'member_roster_new_event') {
+    vars.event_time = ' · ' + (vars.event_time || '8:00 AM');
+    vars.cta_url = vars.event_url;
+    vars.cta_label = 'View member tickets';
+    Object.assign(
+      vars,
+      buildListingAlertSeriesCopy({
+        dateCount: 1,
+        variant: 'member_roster',
+        organiserName: vars.organiser_name,
+        userName: vars.user_name,
+        eventName: vars.event_name,
+      })
+    );
   }
 
   if (slug === 'guest_visit_followup') {

@@ -2358,6 +2358,54 @@
       </div>
     </div>
 
+    <div id="org-opportunity-claim" class="org-group-claim" hidden aria-hidden="true">
+      <div class="org-group-claim-backdrop"></div>
+      <div
+        class="org-group-claim-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="org-opportunity-claim-title"
+      >
+        <p class="org-group-claim-kicker" id="org-opportunity-claim-kicker">Confirm your listing</p>
+        <h2 class="org-group-claim-title" id="org-opportunity-claim-title">Is this your business opportunity?</h2>
+        <p class="org-group-claim-intro" id="org-opportunity-claim-intro">
+          We found a business opportunity listing linked to your email. Confirm you manage this listing — then you can review details and respond to enquiries.
+        </p>
+
+        <div class="org-group-claim-card" id="org-opportunity-claim-card">
+          <div class="org-group-claim-card-head">
+            <div class="org-group-claim-avatar" id="org-opportunity-claim-avatar" aria-hidden="true">O</div>
+            <div>
+              <h3 class="org-group-claim-name" id="org-opportunity-claim-name">Listing title</h3>
+              <p class="org-group-claim-email" id="org-opportunity-claim-host"></p>
+            </div>
+          </div>
+          <p class="org-group-claim-desc" id="org-opportunity-claim-desc"></p>
+        </div>
+
+        <label class="org-group-claim-notes" id="org-opportunity-claim-notes-wrap" hidden>
+          <span>Optional note for the Hub team</span>
+          <textarea
+            id="org-opportunity-claim-notes"
+            rows="3"
+            maxlength="500"
+            placeholder="e.g. This is a different company with a similar name"
+          ></textarea>
+        </label>
+
+        <p class="org-group-claim-error" id="org-opportunity-claim-error" hidden></p>
+
+        <div class="org-group-claim-actions">
+          <button type="button" class="org-btn org-btn-outline" id="org-opportunity-claim-reject">
+            No, this isn&apos;t mine
+          </button>
+          <button type="button" class="org-btn org-btn-gold" id="org-opportunity-claim-accept">
+            Yes, this is my listing
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="org-group-drawer" class="org-group-drawer" hidden aria-hidden="true">
       <div class="org-group-drawer-backdrop" data-org-group-drawer-close tabindex="-1"></div>
       <aside

@@ -138,7 +138,9 @@ function rowToListing(row) {
     organiserId: row.organiser_id || '',
     ownerEmail: String(row.owner_email || '').toLowerCase(),
     ownerUserId: row.supabase_user_id || '',
-    claimable: isHubSeedOwnerEmail(row.owner_email),
+    ownershipClaimStatus: row.ownership_claim_status || null,
+    claimable:
+      isHubSeedOwnerEmail(row.owner_email) && row.ownership_claim_status !== 'pending',
     packageTier: row.package_tier || null,
     listingMonths: row.listing_months != null ? Number(row.listing_months) : null,
     listingPaidAt: row.listing_paid_at || null,
@@ -446,6 +448,7 @@ async function listOwnedOpportunityRowsForSession(session, select) {
   function addRows(data) {
     for (const row of data || []) {
       if (row?.id && !seen.has(row.id)) {
+        if (String(row.ownership_claim_status || '').toLowerCase() === 'pending') continue;
         seen.add(row.id);
         rows.push(row);
       }

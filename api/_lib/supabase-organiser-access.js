@@ -7,12 +7,28 @@ const {
   countTeamInviteSlots,
   teamSlotsRemaining,
 } = require('./organiser-team-limits');
-const { sendOrganiserTeamInviteEmail } = require('./organiser-team-emails');
+const { emailMatchesProfile } = require('./supabase-organiser-claims');
 
 function isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     String(v || '')
   );
+}
+
+function groupVisibleInOrganiserWorkspace(session, row) {
+  if (!row || row.ownership_claim_status === 'disputed') return false;
+  if (row.ownership_claim_status === 'claimed') return true;
+  if (row.ownership_claim_status === 'pending') {
+    const uid = isUuid(session?.sub) ? session.sub : '';
+    const em = String(session?.email || '')
+      .trim()
+      .toLowerCase();
+    if (uid && row.supabase_user_id === uid) return true;
+    return emailMatchesProfile(em, row);
+  }
+  const uid = isUuid(session?.sub) ? session.sub : null;
+  if (uid && row.supabase_user_id === uid) return true;
+  return emailMatchesProfile(session?.email, row);
 }
 
 function rowToTeamMember(row, groupScope) {
@@ -269,7 +285,18 @@ async function resolveOrganiserAccess(session) {
     else legacyQuery = legacyQuery.eq('email', em);
     const { data: legacy } = await legacyQuery;
     (legacy || []).forEach((r) => {
-      if (r && r.ownership_claim_status !== 'disputed' && r.ownership_claim_status !== 'pending') {
+      if (!r || r.ownership_claim_status === 'disputed') return;
+      if (r.ownership_claim_status === 'claimed') {
+        legacyGroupIds.add(r.id);
+        return;
+      }
+      if (r.ownership_claim_status === 'pending') {
+        if (emailMatchesProfile(em, r) || (uid && r.supabase_user_id === uid)) {
+          legacyGroupIds.add(r.id);
+        }
+        return;
+      }
+      if ((uid && r.supabase_user_id === uid) || emailMatchesProfile(em, r)) {
         legacyGroupIds.add(r.id);
       }
     });
@@ -611,6 +638,7 @@ async function updateTeamMemberGroups(session, memberId, { allGroups, groupIds }
 module.exports = {
   resolveOrganiserAccess,
   getOrCreateOrganiserAccount,
+  groupVisibleInOrganiserWorkspace,
   listTeamMembers,
   inviteTeamMember,
   removeTeamMember,

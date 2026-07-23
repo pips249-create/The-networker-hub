@@ -220,12 +220,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   saved_organiser_new_listing: {
     file: 'saved-organiser-new-listing.html',
     marker: 'hub-email-layout-v2',
-    subject: '{{organiser_name}} has a new event',
+    subject: '{{listing_subject}}',
   },
   member_roster_new_event: {
     file: 'member-roster-new-event.html',
     marker: 'hub-email-layout-v2',
-    subject: '{{organiser_name}} has a new event for members',
+    subject: '{{listing_subject}}',
   },
   member_roster_booking_reminder: {
     file: 'member-roster-booking-reminder.html',

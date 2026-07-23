@@ -7,32 +7,44 @@ const {
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
-  eventPublicUrl,
   organiserPublicUrl,
 } = require('./hub-email-urls');
 const { isEventPublishedForSale } = require('./ticket-sales');
-const { formatEventDateTime } = require('./favourite-sales-emails');
+const {
+  LISTING_ALERT_EVENT_COLUMNS,
+  groupEventsForListingAlerts,
+  buildListingAlertEmailFields,
+  eventPublishedAfterFavourite,
+} = require('./listing-alert-series');
 
-function buildSavedOrganiserNewListingVars({ attendee, organiser, eventRow, siteUrl }) {
+function buildSavedOrganiserNewListingVars({ attendee, organiser, eventRow, eventRows, siteUrl }) {
   const site = siteBase(siteUrl);
   const name = String(attendee?.name || '').trim() || 'there';
   const email = String(attendee?.email || '').trim().toLowerCase();
-  const { event_date, event_time } = formatEventDateTime(eventRow.starts_at);
-  const eventLocation =
-    String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
-    'See event page';
-  const eventTimeSuffix = event_time ? ' · ' + event_time : '';
+  const rows = eventRows && eventRows.length ? eventRows : eventRow ? [eventRow] : [];
+  const fields = buildListingAlertEmailFields(rows, site, {
+    variant: 'saved_organiser',
+    organiserName: organiser?.name,
+    userName: name,
+  });
 
   return {
     user_name: name,
     user_email: email,
     organiser_name: String(organiser?.name || 'Organiser').trim(),
     organiser_url: organiserPublicUrl(organiser, site),
-    event_name: String(eventRow.title || 'Event').trim(),
-    event_date,
-    event_time: eventTimeSuffix,
-    event_location: eventLocation,
-    event_url: eventPublicUrl(eventRow, site),
+    event_name: fields.event_name,
+    event_date: fields.event_date,
+    event_time: fields.event_time,
+    event_location: fields.event_location,
+    event_url: fields.event_url,
+    event_date_count: fields.event_date_count,
+    listing_badge: fields.listing_badge,
+    listing_headline: fields.listing_headline,
+    listing_intro: fields.listing_intro,
+    listing_subject: fields.listing_subject,
+    event_date_prefix: fields.event_date_prefix,
+    listing_cta_label: fields.listing_cta_label,
     hub_account_url: hubAccountUrl(site) + '#saved',
     browse_events_url: browseEventsUrl(site),
     contact_url: contactUrl(site),
@@ -69,9 +81,7 @@ async function sendDueOrganiserListingAlertEmails(sb) {
 
   const eventsRes = await sb
     .from('events')
-    .select(
-      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, created_at'
-    )
+    .select(LISTING_ALERT_EVENT_COLUMNS)
     .in('organiser_id', organiserIds)
     .eq('status', 'published')
     .eq('approval_status', 'Approved');
@@ -114,29 +124,24 @@ async function sendDueOrganiserListingAlertEmails(sb) {
     }
 
     const organiserEvents = eventsByOrganiser.get(organiserId) || [];
-    for (const eventRow of organiserEvents) {
-      const alertKey = String(favourite.id) + ':' + String(eventRow.id);
-      if (alerted.has(alertKey)) {
-        result.skipped += 1;
-        continue;
-      }
+    const eventGroups = groupEventsForListingAlerts(organiserEvents);
 
-      const publishedAt = eventRow.published_at || eventRow.created_at;
-      const publishedDate = publishedAt ? new Date(publishedAt) : null;
-      if (
-        favouriteCreated &&
-        publishedDate &&
-        !Number.isNaN(publishedDate.getTime()) &&
-        publishedDate < favouriteCreated
-      ) {
-        result.skipped += 1;
+    for (const group of eventGroups) {
+      const unalertedEvents = group.events.filter((eventRow) => {
+        const alertKey = String(favourite.id) + ':' + String(eventRow.id);
+        if (alerted.has(alertKey)) return false;
+        return eventPublishedAfterFavourite(eventRow, favouriteCreated);
+      });
+
+      if (!unalertedEvents.length) {
+        result.skipped += group.events.length;
         continue;
       }
 
       const vars = buildSavedOrganiserNewListingVars({
         attendee,
         organiser,
-        eventRow,
+        eventRows: unalertedEvents,
       });
 
       try {
@@ -145,16 +150,18 @@ async function sendDueOrganiserListingAlertEmails(sb) {
           to: attendeeEmail,
           variables: vars,
         });
-        await sb.from('organiser_favourite_listing_alerts').insert({
-          organiser_favourite_id: favourite.id,
-          event_id: eventRow.id,
-        });
-        alerted.add(alertKey);
+        for (const eventRow of unalertedEvents) {
+          await sb.from('organiser_favourite_listing_alerts').insert({
+            organiser_favourite_id: favourite.id,
+            event_id: eventRow.id,
+          });
+          alerted.add(String(favourite.id) + ':' + String(eventRow.id));
+        }
         result.sent += 1;
       } catch (e) {
         result.errors.push({
           favourite_id: favourite.id,
-          event_id: eventRow.id,
+          event_ids: unalertedEvents.map((row) => row.id),
           email: attendeeEmail,
           message: e.message || String(e),
         });
@@ -174,9 +181,7 @@ async function sendDueMemberRosterListingAlertEmails(sb) {
   const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const eventsRes = await sb
     .from('events')
-    .select(
-      'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, created_at'
-    )
+    .select(LISTING_ALERT_EVENT_COLUMNS)
     .eq('status', 'published')
     .eq('approval_status', 'Approved')
     .gte('published_at', since)
@@ -189,14 +194,15 @@ async function sendDueMemberRosterListingAlertEmails(sb) {
   if (!events.length) return result;
 
   const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
-  for (const eventRow of events) {
+  const eventGroups = groupEventsForListingAlerts(events);
+  for (const group of eventGroups) {
     try {
-      const r = await notifyRosterMembersOfPublishedEvent(eventRow);
+      const r = await notifyRosterMembersOfPublishedEvent(group.anchor);
       result.sent += r.sent || 0;
       result.skipped += r.skipped || 0;
       if (r.errors && r.errors.length) result.errors.push(...r.errors);
     } catch (e) {
-      result.errors.push({ event_id: eventRow.id, message: e.message || String(e) });
+      result.errors.push({ event_id: group.anchor?.id, message: e.message || String(e) });
     }
   }
   return result;

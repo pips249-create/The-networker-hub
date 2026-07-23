@@ -83,12 +83,14 @@
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
+    pendingClaimOpportunities: [],
     organiserAccess: false,
     organiserEmailVerified: false,
     dashboardScope: null,
   };
 
   let groupClaimRejectMode = false;
+  let opportunityClaimRejectMode = false;
 
   function isClaimOnboardIntent() {
     try {
@@ -8957,6 +8959,7 @@
 
   function syncPendingClaimFlag() {
     window.hubPendingGroupClaims = (state.pendingClaimGroups || []).length > 0;
+    window.hubPendingOpportunityClaims = (state.pendingClaimOpportunities || []).length > 0;
   }
 
   function gettingStartedProgress() {
@@ -9206,6 +9209,10 @@
   window.orgDashOpenClaimModal = function () {
     if ((state.pendingClaimGroups || []).length > 0) {
       renderGroupClaimModal();
+      return;
+    }
+    if ((state.pendingClaimOpportunities || []).length > 0) {
+      renderOpportunityClaimModal();
     }
   };
 
@@ -9233,7 +9240,10 @@
       modal.hidden = true;
       modal.setAttribute('aria-hidden', 'true');
     }
-    document.body.classList.remove('org-group-claim-active');
+    const oppModal = document.getElementById('org-opportunity-claim');
+    if (!oppModal || oppModal.hidden) {
+      document.body.classList.remove('org-group-claim-active');
+    }
     groupClaimRejectMode = false;
   }
 
@@ -9285,6 +9295,10 @@
     if (state.adminView) return;
     if ((state.pendingClaimGroups || []).length > 0) {
       renderGroupClaimModal();
+      return;
+    }
+    if ((state.pendingClaimOpportunities || []).length > 0) {
+      renderOpportunityClaimModal();
       return;
     }
     continueOnboardingAfterClaim();
@@ -9379,6 +9393,7 @@
     }
 
     hideReadyForEventModal();
+    hideOpportunityClaimModal();
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('org-group-claim-active');
@@ -9427,8 +9442,13 @@
         return;
       }
 
+      hideGroupClaimModal();
+      if ((state.pendingClaimOpportunities || []).length) {
+        renderOpportunityClaimModal();
+        return;
+      }
+
       if (action === 'claim' && data.group && data.group.id) {
-        hideGroupClaimModal();
         await loadBootstrap();
         updateSetupResumeBanner();
         updateGettingStartedPanel();
@@ -9441,6 +9461,148 @@
       if (action === 'reject') {
         showOrganiserAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
       }
+    } catch (e) {
+      if (errEl) {
+        errEl.textContent = e.message || 'Something went wrong. Please try again.';
+        errEl.hidden = false;
+      }
+      if (acceptBtn) acceptBtn.disabled = false;
+      if (rejectBtn) rejectBtn.disabled = false;
+    }
+  }
+
+  function hideOpportunityClaimModal() {
+    const modal = document.getElementById('org-opportunity-claim');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    if (!(state.pendingClaimGroups || []).length) {
+      document.body.classList.remove('org-group-claim-active');
+    }
+    opportunityClaimRejectMode = false;
+  }
+
+  function renderOpportunityClaimModal() {
+    const modal = document.getElementById('org-opportunity-claim');
+    const list = state.pendingClaimOpportunities || [];
+    syncPendingClaimFlag();
+    updateGettingStartedVisibility();
+
+    if (!modal || !list.length || state.adminView || shouldDeferGroupClaimModal()) {
+      if (modal) hideOpportunityClaimModal();
+      return;
+    }
+
+    const opportunity = list[0];
+    const kicker = document.getElementById('org-opportunity-claim-kicker');
+    const nameEl = document.getElementById('org-opportunity-claim-name');
+    const hostEl = document.getElementById('org-opportunity-claim-host');
+    const descEl = document.getElementById('org-opportunity-claim-desc');
+    const avatarEl = document.getElementById('org-opportunity-claim-avatar');
+    const notesWrap = document.getElementById('org-opportunity-claim-notes-wrap');
+    const errEl = document.getElementById('org-opportunity-claim-error');
+    const acceptBtn = document.getElementById('org-opportunity-claim-accept');
+    const rejectBtn = document.getElementById('org-opportunity-claim-reject');
+
+    if (kicker) {
+      kicker.textContent =
+        list.length > 1
+          ? 'Listing 1 of ' + list.length + ' — confirm ownership'
+          : 'Confirm your listing';
+    }
+    if (nameEl) nameEl.textContent = opportunity.title || 'Business opportunity';
+    if (hostEl) {
+      hostEl.textContent =
+        (opportunity.host ? opportunity.host + ' · ' : '') +
+        (opportunity.ownerEmail || state.user?.email || '');
+    }
+    if (descEl) {
+      const desc = String(opportunity.desc || opportunity.description || '').trim();
+      descEl.textContent = desc || 'Review the listing details after you claim it.';
+      descEl.hidden = false;
+    }
+    if (avatarEl) {
+      if (opportunity.logoUrl || opportunity.imageUrl) {
+        avatarEl.innerHTML =
+          '<img src="' +
+          esc(opportunity.logoUrl || opportunity.imageUrl) +
+          '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';
+      } else {
+        avatarEl.textContent = String(opportunity.host || opportunity.title || 'O').slice(0, 1).toUpperCase();
+      }
+    }
+    if (notesWrap) notesWrap.hidden = !opportunityClaimRejectMode;
+    if (errEl) errEl.hidden = true;
+    if (acceptBtn) {
+      acceptBtn.disabled = false;
+      acceptBtn.textContent = opportunityClaimRejectMode ? 'Back' : 'Yes, this is my listing';
+    }
+    if (rejectBtn) {
+      rejectBtn.disabled = false;
+      rejectBtn.textContent = opportunityClaimRejectMode
+        ? 'Confirm — not my listing'
+        : 'No, this isn\'t mine';
+      rejectBtn.classList.toggle('org-btn-danger', opportunityClaimRejectMode);
+      rejectBtn.classList.toggle('org-btn-outline', !opportunityClaimRejectMode);
+    }
+
+    hideReadyForEventModal();
+    hideGroupClaimModal();
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-group-claim-active');
+  }
+
+  async function submitOpportunityClaimAction(action) {
+    const list = state.pendingClaimOpportunities || [];
+    const opportunity = list[0];
+    const errEl = document.getElementById('org-opportunity-claim-error');
+    const acceptBtn = document.getElementById('org-opportunity-claim-accept');
+    const rejectBtn = document.getElementById('org-opportunity-claim-reject');
+    const notesEl = document.getElementById('org-opportunity-claim-notes');
+    if (!opportunity) return;
+
+    if (errEl) errEl.hidden = true;
+    if (acceptBtn) acceptBtn.disabled = true;
+    if (rejectBtn) rejectBtn.disabled = true;
+
+    try {
+      const body = { opportunityId: opportunity.id, action: action };
+      if (action === 'reject' && notesEl && notesEl.value.trim()) {
+        body.notes = notesEl.value.trim();
+      }
+      const { ok, data } = await api('/api/organiser/opportunity-claims', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      if (!ok) throw new Error(data.message || data.error || 'claim_action_failed');
+
+      state.pendingClaimOpportunities = list.filter((o) => o.id !== opportunity.id);
+      opportunityClaimRejectMode = false;
+      if (notesEl) notesEl.value = '';
+
+      if (state.pendingClaimOpportunities.length) {
+        renderOpportunityClaimModal();
+        return;
+      }
+
+      hideOpportunityClaimModal();
+      await loadBootstrap();
+      if (action === 'claim') {
+        showOrganiserAlert(
+          data.message || 'Listing claimed — open My business opportunities to manage it.',
+          false
+        );
+        setRoute('business-overview', { skipEventsGuard: true });
+      } else if (action === 'reject') {
+        showOrganiserAlert(
+          data.message || 'Listing removed from your dashboard. The Hub team has been notified.',
+          false
+        );
+      }
+      updateSetupResumeBanner();
+      updateGettingStartedPanel();
     } catch (e) {
       if (errEl) {
         errEl.textContent = e.message || 'Something went wrong. Please try again.';
@@ -9502,6 +9664,29 @@
           return;
         }
         submitGroupClaimAction('reject');
+      });
+    }
+
+    const oppAcceptBtn = document.getElementById('org-opportunity-claim-accept');
+    const oppRejectBtn = document.getElementById('org-opportunity-claim-reject');
+    if (oppAcceptBtn) {
+      oppAcceptBtn.addEventListener('click', function () {
+        if (opportunityClaimRejectMode) {
+          opportunityClaimRejectMode = false;
+          renderOpportunityClaimModal();
+          return;
+        }
+        submitOpportunityClaimAction('claim');
+      });
+    }
+    if (oppRejectBtn) {
+      oppRejectBtn.addEventListener('click', function () {
+        if (!opportunityClaimRejectMode) {
+          opportunityClaimRejectMode = true;
+          renderOpportunityClaimModal();
+          return;
+        }
+        submitOpportunityClaimAction('reject');
       });
     }
   }
@@ -10689,6 +10874,7 @@
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
     state.pendingClaimGroups = data.pendingClaimGroups || [];
+    state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];
     state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
@@ -10767,6 +10953,7 @@
     }
     postReady = function () {
       renderGroupClaimModal();
+      renderOpportunityClaimModal();
       updateTeamNavBadge();
       if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
         window.HubOrganiserOnboarding.initAfterDashboardReady();

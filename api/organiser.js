@@ -9,6 +9,7 @@ const routes = {
   'workspace-stats': require('./_lib/routes/organiser-workspace-stats'),
   groups: require('./_lib/routes/organiser-groups'),
   'group-claims': require('./_lib/routes/organiser-group-claims'),
+  'opportunity-claims': require('./_lib/routes/organiser-opportunity-claims'),
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
   attendees: require('./_lib/routes/organiser-attendees'),

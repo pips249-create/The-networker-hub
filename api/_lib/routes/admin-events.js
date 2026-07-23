@@ -697,6 +697,8 @@ module.exports = async function handler(req, res) {
 
       try {
         const { createEvent, resolveSeriesGroupId } = require('../supabase-organiser-events');
+        const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+        await ensureOrganiserClaimedForAdminEvent(organiserId);
         const occ = normalizeOccurrences(body);
         const listingStatus = body.status || 'draft';
         const isDraft = String(listingStatus || '').toLowerCase() === 'draft';
