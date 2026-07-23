@@ -142,6 +142,9 @@
     if (data.meta && typeof data.meta.spotlightHasActiveFeatured === 'boolean') {
       window.hubBrowseHasActiveFeatured = data.meta.spotlightHasActiveFeatured;
     }
+    if (data.meta && data.meta.spotlightSlots) {
+      window.hubBrowseSpotlightSlots = data.meta.spotlightSlots;
+    }
     if (typeof page === 'number') {
       window.hubBrowseCurrentPage = page;
     }

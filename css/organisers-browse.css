@@ -316,7 +316,37 @@ body.browse-mode-organisers .org-premium-spotlight .org-premium-card .premium-ca
   justify-content: center;
   padding: 12px 16px;
   box-sizing: border-box;
-  background: #fff;
+  background: linear-gradient(180deg, #f8f9fb 0%, #e4e8ef 52%, #8b95a5 100%);
+}
+
+body.browse-mode-organisers .org-premium-spotlight .org-premium-card .premium-card-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(12, 18, 32, 0.08) 0%,
+    rgba(12, 18, 32, 0.24) 34%,
+    rgba(12, 18, 32, 0.72) 62%,
+    rgba(12, 18, 32, 0.94) 100%
+  );
+}
+
+body.browse-mode-organisers .org-premium-spotlight .org-premium-card .premium-card-body {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding: 12px 10px 2px;
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 18, 32, 0) 0%,
+    rgba(12, 18, 32, 0.58) 28%,
+    rgba(12, 18, 32, 0.88) 100%
+  );
+}
+
+body.browse-mode-organisers .org-premium-spotlight .org-premium-card .premium-card-title,
+body.browse-mode-organisers .org-premium-spotlight .org-premium-card .premium-meta-row,
+body.browse-mode-organisers .org-premium-spotlight .org-premium-card .org-premium-industry {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 body.browse-mode-organisers .org-premium-spotlight .org-premium-logo {
@@ -344,8 +374,9 @@ body.browse-mode-organisers .org-premium-spotlight .org-premium-logo-placeholder
 
 body.browse-mode-organisers .org-premium-spotlight .premium-meta-row--muted {
   font-size: 11px;
-  opacity: 0.88;
+  opacity: 1;
   margin-top: 2px;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 body.browse-mode-organisers .org-premium-spotlight .premium-meta-row--muted span {

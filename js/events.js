@@ -61,6 +61,34 @@
     });
   }
 
+  function spotlightCarouselHasOpenSlots() {
+    const slots = window.hubBrowseSpotlightSlots;
+    if (slots && typeof slots.full === 'boolean') return !slots.full;
+    return null;
+  }
+
+  function shouldAppendSpotlightBoostPromo() {
+    const premium = getSpotlightPremium();
+    if (!premium.length) return false;
+    const open = spotlightCarouselHasOpenSlots();
+    if (open === false) return false;
+    if (open === true) return true;
+    return premium.length < SPOTLIGHT_MAX;
+  }
+
+  function getSpotlightTrackItemCount() {
+    const premium = getSpotlightPremium();
+    if (!premium.length) return 0;
+    return premium.length + (shouldAppendSpotlightBoostPromo() ? 1 : 0);
+  }
+
+  function buildSpotlightTrackHtml() {
+    const premium = getSpotlightPremium();
+    let html = premium.map(premiumCard).join('');
+    if (shouldAppendSpotlightBoostPromo()) html += spotlightBoostPromoCard();
+    return html;
+  }
+
   function spotlightRefinementNote() {
     if (!window.hubSpotlightRefinementFiltersActive) return '';
     const refinement = window.hubSpotlightRefinementFiltersActive();
@@ -155,9 +183,9 @@
   function startSpotlightAuto() {
     stopSpotlightAuto();
     if (!els.spotlightTrack) return;
-    const premium = getSpotlightPremium();
+    const itemCount = getSpotlightTrackItemCount();
     const sc = window.HubSpotlightCarousel;
-    if (!sc || !sc.canAutoAdvance(els.spotlightTrack, premium.length)) return;
+    if (!sc || !sc.canAutoAdvance(els.spotlightTrack, itemCount)) return;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating) return;
       advanceSpotlight(1);
@@ -176,9 +204,9 @@
   function measureSpotlightLoopWidth() {
     const sc = window.HubSpotlightCarousel;
     const track = els.spotlightTrack;
-    const premium = getSpotlightPremium();
-    if (!sc || !track || !premium.length) return 0;
-    return sc.measureLoopWidth(track, premium.length, '.premium-card');
+    const itemCount = getSpotlightTrackItemCount();
+    if (!sc || !track || !itemCount) return 0;
+    return sc.measureLoopWidth(track, itemCount, '.premium-card');
   }
 
   function syncSpotlightLoopScroll() {
@@ -197,19 +225,19 @@
   }
 
   function refreshSpotlightLayout() {
-    const premium = getSpotlightPremium();
-    if (!els.spotlightTrack || !premium.length) return;
-    layoutSpotlightTrack(premium.map(premiumCard).join(''), premium.length);
+    const itemCount = getSpotlightTrackItemCount();
+    if (!els.spotlightTrack || !itemCount) return;
+    layoutSpotlightTrack(buildSpotlightTrackHtml(), itemCount);
     syncSpotlightLoopScroll();
     startSpotlightAuto();
   }
 
   function advanceSpotlight(dir) {
     dir = dir < 0 ? -1 : 1;
-    const premium = getSpotlightPremium();
+    const itemCount = getSpotlightTrackItemCount();
     const track = els.spotlightTrack;
     const sc = window.HubSpotlightCarousel;
-    if (!premium.length || premium.length <= 1 || !track || spotlightAnimating) return;
+    if (!itemCount || itemCount <= 1 || !track || spotlightAnimating) return;
 
     spotlightAnimating = true;
     stopSpotlightAuto();
@@ -218,7 +246,7 @@
     const looping = sc && sc.isLooping(track);
     const loopWidth =
       looping && sc
-        ? parseFloat(track.dataset.loopWidth) || sc.measureLoopWidth(track, premium.length, '.premium-card')
+        ? parseFloat(track.dataset.loopWidth) || sc.measureLoopWidth(track, itemCount, '.premium-card')
         : 0;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const behavior = reduceMotion ? 'auto' : 'smooth';
@@ -964,11 +992,13 @@
         els.spotlightTrack.scrollLeft = 0;
         stopSpotlightAuto();
       } else {
-        const cardsHtml = premium.map(premiumCard).join('');
+        const cardsHtml = buildSpotlightTrackHtml();
+        const itemCount = getSpotlightTrackItemCount();
         els.spotlightTrack.classList.add('spotlight-track--carousel');
         bindSpotlightCarousel();
         requestAnimationFrame(function () {
-          layoutSpotlightTrack(cardsHtml, premium.length);
+          layoutSpotlightTrack(cardsHtml, itemCount);
+          if (shouldAppendSpotlightBoostPromo()) bindSpotlightBoostPromo();
           syncSpotlightLoopScroll();
           startSpotlightAuto();
         });

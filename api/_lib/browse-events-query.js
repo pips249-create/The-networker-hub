@@ -563,11 +563,12 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   let meta = null;
   if (params.includeMeta) {
-    const { listActiveFeaturedEventRows } = require('./event-featured-slots');
-    const activeFeaturedRows = await listActiveFeaturedEventRows();
+    const { getFeaturedSpotlightSlotStatus } = require('./event-featured-slots');
+    const spotlightSlots = await getFeaturedSpotlightSlotStatus();
     meta = {
       typeCounts: await fetchBrowseTypeCounts(sb, params),
-      spotlightHasActiveFeatured: activeFeaturedRows.length > 0,
+      spotlightHasActiveFeatured: spotlightSlots.used > 0,
+      spotlightSlots,
     };
   }
 

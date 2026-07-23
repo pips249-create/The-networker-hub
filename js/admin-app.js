@@ -12797,6 +12797,7 @@
     if (!el) return;
     if (spotlightSlotsCache) {
       el.innerHTML = spotlightSlotCardsHtml(spotlightSlotsCache);
+      if (document.getElementById('featured-status')) paintFeaturedSpotlightTable();
       return;
     }
     adminGet('/api/admin/spotlight').then(function (data) {
@@ -12810,6 +12811,7 @@
       }
       spotlightSlotsCache = data.slots;
       el.innerHTML = spotlightSlotCardsHtml(data.slots);
+      if (document.getElementById('featured-status')) paintFeaturedSpotlightTable();
     });
   }
 
@@ -12847,25 +12849,40 @@
     });
   }
 
+  function featuredSpotlightStatusText(events, rows, filterActive) {
+    var flaggedCount = (events || []).filter(function (e) {
+      return e.featured;
+    }).length;
+    var slot = spotlightSlotsCache && spotlightSlotsCache.events;
+    var activeCount = slot && slot.used != null ? slot.used : null;
+    var slotMax = slot && slot.max != null ? slot.max : 12;
+    var countLabel =
+      activeCount != null
+        ? activeCount + ' active in carousel (max ' + slotMax + ')'
+        : flaggedCount + ' featured';
+    if (activeCount != null && flaggedCount !== activeCount) {
+      countLabel = flaggedCount + ' flagged · ' + countLabel;
+    }
+    return (
+      countLabel +
+      ' · ' +
+      (filterActive ? rows.length + ' shown · ' + events.length + ' loaded' : events.length + ' approved events') +
+      ' (upcoming first)'
+    );
+  }
+
   function paintFeaturedSpotlightTable() {
     var tbody = document.getElementById('featured-tbody');
     var status = document.getElementById('featured-status');
     var events = featuredSpotlightEvents || [];
     var rows = filterFeaturedSpotlightEvents(events);
-    var featuredCount = events.filter(function (e) {
-      return e.featured;
-    }).length;
     if (status) {
       var filterActive =
         featuredSpotlightState.q ||
         featuredSpotlightState.featured ||
         featuredSpotlightState.eventType ||
         featuredSpotlightState.when;
-      status.textContent =
-        featuredCount +
-        ' featured · ' +
-        (filterActive ? rows.length + ' shown · ' + events.length + ' loaded' : events.length + ' approved events') +
-        ' (upcoming first)';
+      status.textContent = featuredSpotlightStatusText(events, rows, filterActive);
     }
     if (!tbody) return;
     if (!events.length) {

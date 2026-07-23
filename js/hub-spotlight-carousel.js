@@ -1,7 +1,9 @@
 /**
- * Premium Spotlight carousel helpers — loop only when cards overflow the viewport.
+ * Premium Spotlight carousel helpers — infinite loop when there are multiple cards.
  */
 (function (global) {
+  var loopScrollHandlers = new WeakMap();
+
   function measureCardsWidth(track, cardSelector, count) {
     if (!track) return 0;
     var cards = track.querySelectorAll(cardSelector);
@@ -50,7 +52,7 @@
     }
 
     var overflow = cardsOverflowViewport(track, itemCount, cardSelector);
-    var looping = overflow && itemCount > 1;
+    var looping = itemCount > 1;
 
     track.dataset.spotlightLoop = looping ? '1' : '0';
     track.dataset.spotlightOverflow = overflow ? '1' : '0';
@@ -59,7 +61,17 @@
     if (track.innerHTML !== desiredHtml) {
       track.innerHTML = desiredHtml;
     }
-    if (!looping) track.scrollLeft = 0;
+    if (!looping) {
+      unbindLoopScrollSync(track);
+      track.scrollLeft = 0;
+      track.removeAttribute('data-loop-width');
+    } else {
+      bindLoopScrollSync(track, itemCount, cardSelector);
+      updateLoopScrollBinding(track, itemCount, cardSelector);
+      var loopWidth = measureLoopWidth(track, itemCount, cardSelector);
+      if (loopWidth > 0) track.dataset.loopWidth = String(loopWidth);
+      syncLoopScroll(track, loopWidth, itemCount, cardSelector);
+    }
 
     setNavArrowsVisible(section, overflow && itemCount > 1);
 
@@ -71,12 +83,50 @@
     return measureCardsWidth(track, cardSelector, itemCount);
   }
 
-  function syncLoopScroll(track, loopWidth) {
-    if (!track || !loopWidth) return;
+  function resolveLoopWidth(track, loopWidth, itemCount, cardSelector) {
+    if (loopWidth > 0) return loopWidth;
+    if (!track || !isLooping(track)) return 0;
+    if (itemCount && cardSelector) {
+      return measureLoopWidth(track, itemCount, cardSelector);
+    }
+    return track.scrollWidth > 0 ? track.scrollWidth / 2 : 0;
+  }
+
+  function syncLoopScroll(track, loopWidth, itemCount, cardSelector) {
+    if (!track || !isLooping(track)) return;
+    loopWidth = resolveLoopWidth(track, loopWidth, itemCount, cardSelector);
+    if (!loopWidth) return;
     track.dataset.loopWidth = String(loopWidth);
-    if (track.scrollLeft >= loopWidth) {
+    if (track.scrollLeft >= loopWidth - 1) {
       track.scrollLeft = track.scrollLeft - loopWidth;
     }
+  }
+
+  function bindLoopScrollSync(track, itemCount, cardSelector) {
+    if (!track || loopScrollHandlers.has(track)) return;
+    var state = { itemCount: itemCount, cardSelector: cardSelector };
+    var handler = function () {
+      if (!isLooping(track)) return;
+      var loopWidth = parseFloat(track.dataset.loopWidth) || 0;
+      syncLoopScroll(track, loopWidth, state.itemCount, state.cardSelector);
+    };
+    track.addEventListener('scroll', handler, { passive: true });
+    loopScrollHandlers.set(track, { handler: handler, state: state });
+  }
+
+  function updateLoopScrollBinding(track, itemCount, cardSelector) {
+    var bound = loopScrollHandlers.get(track);
+    if (bound) {
+      bound.state.itemCount = itemCount;
+      bound.state.cardSelector = cardSelector;
+    }
+  }
+
+  function unbindLoopScrollSync(track) {
+    var bound = loopScrollHandlers.get(track);
+    if (!bound || !track) return;
+    track.removeEventListener('scroll', bound.handler);
+    loopScrollHandlers.delete(track);
   }
 
   function advanceNonLoop(track, dir, step, behavior) {
@@ -90,8 +140,24 @@
     }
   }
 
+  function advanceLoop(track, dir, step, behavior, loopWidth, itemCount, cardSelector) {
+    loopWidth = resolveLoopWidth(track, loopWidth, itemCount, cardSelector);
+    if (!loopWidth) return false;
+
+    if (dir < 0 && track.scrollLeft <= 4) {
+      track.scrollLeft = loopWidth;
+    } else if (dir > 0 && track.scrollLeft >= loopWidth - 1) {
+      track.scrollLeft = track.scrollLeft - loopWidth;
+    }
+
+    track.scrollBy({ left: step, behavior: behavior });
+    syncLoopScroll(track, loopWidth, itemCount, cardSelector);
+    return true;
+  }
+
   global.HubSpotlightCarousel = {
     applyLoopLayout: applyLoopLayout,
+    advanceLoop: advanceLoop,
     canAutoAdvance: canAutoAdvance,
     cardsOverflowViewport: cardsOverflowViewport,
     isLooping: isLooping,

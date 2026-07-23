@@ -243,8 +243,9 @@
     var sc = window.HubSpotlightCarousel;
     var track = els.spotlightTrack;
     if (!sc || !track) return;
+    var featured = getSpotlightVisible();
     var loopWidth = measureSpotlightLoopWidth();
-    sc.syncLoopScroll(track, loopWidth);
+    sc.syncLoopScroll(track, loopWidth, featured.length, '.opp-premium-card');
   }
 
   function layoutSpotlightTrack(cardsHtml, itemCount) {
@@ -274,10 +275,6 @@
 
     var step = getSpotlightCardStep() * dir;
     var looping = sc && sc.isLooping(track);
-    var loopWidth =
-      looping && sc
-        ? parseFloat(track.dataset.loopWidth) || sc.measureLoopWidth(track, featured.length, '.opp-premium-card')
-        : 0;
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var behavior = reduceMotion ? 'auto' : 'smooth';
 
@@ -287,11 +284,15 @@
       startSpotlightAuto();
     }
 
-    if (looping && loopWidth > 0) {
-      if (dir < 0 && track.scrollLeft <= 4) {
-        track.scrollLeft = loopWidth;
+    if (looping && sc) {
+      var loopWidth =
+        parseFloat(track.dataset.loopWidth) ||
+        sc.measureLoopWidth(track, featured.length, '.opp-premium-card');
+      if (
+        !sc.advanceLoop(track, dir, step, behavior, loopWidth, featured.length, '.opp-premium-card')
+      ) {
+        sc.advanceNonLoop(track, dir, step, behavior);
       }
-      track.scrollBy({ left: step, behavior: behavior });
     } else if (sc) {
       sc.advanceNonLoop(track, dir, step, behavior);
     } else {
