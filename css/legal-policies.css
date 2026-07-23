@@ -3,6 +3,20 @@
   padding-bottom: 0;
 }
 
+.content-hero .section-kicker {
+  transition: color 0.2s ease;
+}
+
+#legal-hero-title,
+#legal-hero-lede {
+  transition: opacity 0.15s ease;
+}
+
+.footer-col-links a.is-active {
+  color: var(--lavender-deep);
+  font-weight: 600;
+}
+
 .legal-layout {
   max-width: 1140px;
   margin: 0 auto;

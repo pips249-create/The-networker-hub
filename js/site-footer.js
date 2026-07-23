@@ -1,6 +1,6 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260722a
+ * FOOTER_BUILD=20260722b
  */
 (function () {
   var FOOTER_BUILD = '20260722b';
@@ -74,22 +74,22 @@
     '<nav class="footer-col-links" aria-label="Legal">' +
     '<a href="' +
     href('/legal-policies') +
-    '">Legal &amp; policies</a>' +
+    '" data-footer-policy="overview">Legal &amp; policies</a>' +
     '<a href="' +
     href('/legal-policies#privacy') +
-    '">Privacy</a>' +
+    '" data-footer-policy="privacy">Privacy policy</a>' +
     '<a href="' +
     href('/legal-policies#terms') +
-    '">Terms</a>' +
+    '" data-footer-policy="terms">Terms &amp; conditions</a>' +
     '<a href="' +
     href('/legal-policies#hub-rules') +
-    '">Hub rules</a>' +
+    '" data-footer-policy="hub-rules">Hub rules</a>' +
     '<a href="' +
     href('/legal-policies#refunds') +
-    '">Refunds</a>' +
+    '" data-footer-policy="refunds">Refunds &amp; cancellations</a>' +
     '<a href="' +
     href('/legal-policies#cookies') +
-    '">Cookies</a>' +
+    '" data-footer-policy="cookies">Cookie policy</a>' +
     '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>' +
     '</nav>' +
     '</div>' +
