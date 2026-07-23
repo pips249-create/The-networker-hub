@@ -186,10 +186,9 @@
     const titleEl = el('ge-page-title');
     const leadEl = el('ge-page-lead');
 
-    if (titleEl) titleEl.textContent = 'Check your organiser page';
+    if (titleEl) titleEl.textContent = 'Your organiser page';
     if (leadEl) {
-      leadEl.textContent =
-        'We linked this group to your account. Please confirm the name, logo, and contact details are correct before you list events.';
+      leadEl.textContent = 'Linked to your account — confirm the details below.';
     }
     if (saveChanges) saveChanges.hidden = false;
     if (continueBtn) {
@@ -579,7 +578,7 @@
         } else showAlert('Could not load this profile.');
       }
 
-      if (onboardReview && window.HubFlowTour) {
+      if (onboardReview && !isEmbedded() && window.HubFlowTour) {
         window.HubFlowTour.startGroupTour({ onboardReview: true, force: true, delay: 350 });
       }
     } else {
@@ -592,7 +591,7 @@
       configureCreateActions();
       const boot = await api('/api/organiser/bootstrap');
       if (boot.ok) showMultiProfileTip(boot.data.groups || []);
-      if (isEmbedded() && !onboardReview && window.HubFlowTour) {
+      if (!isEmbedded() && window.HubFlowTour) {
         window.HubFlowTour.startGroupTour({ isEdit: false, delay: 350 });
       }
     }

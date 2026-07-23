@@ -170,7 +170,10 @@
     if (this.spotlight) this.spotlight.style.cssText = '';
     if (this.root) {
       var backdrop = this.root.querySelector('.hub-flow-tour-backdrop');
-      if (backdrop) backdrop.style.pointerEvents = '';
+      if (backdrop) {
+        backdrop.hidden = false;
+        backdrop.style.pointerEvents = '';
+      }
     }
   };
 
@@ -210,6 +213,7 @@
     var target = step.target ? document.querySelector(step.target) : null;
     var backdrop = this.root.querySelector('.hub-flow-tour-backdrop');
     if (backdrop) {
+      backdrop.hidden = !target;
       backdrop.style.pointerEvents = target ? 'none' : 'auto';
     }
     if (target) {
@@ -297,6 +301,7 @@
     {
       title: 'Check your organiser page',
       body: 'We linked this networking group to your account. Please confirm the logo, name, and contact details are correct before you list events.',
+      target: '#ge-form',
     },
     {
       title: 'Logo and group name',
@@ -324,6 +329,7 @@
     {
       title: 'Welcome — your organiser page',
       body: 'This is your public page on The Networker Hub. A quick walkthrough of what to fill in before your first event.',
+      target: '#ge-form',
     },
     {
       title: 'Logo and group name',
