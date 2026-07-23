@@ -275,7 +275,13 @@
   function bindShareCommsPack(root, pack) {
     if (!root || !pack) return;
     const urlEl = root.querySelector('[data-comms-url]');
-    if (urlEl) urlEl.textContent = pack.url || '';
+    if (urlEl) {
+      const url = String(pack.url || '').trim();
+      const caption = String(pack.caption || '');
+      const showUrlLine = url && caption.indexOf(url) === -1;
+      urlEl.hidden = !showUrlLine;
+      urlEl.textContent = showUrlLine ? url : '';
+    }
     renderCaptionVariants(pack);
     applyShareCaption(pack.caption || '');
     if (commsPackBound) return;
@@ -752,7 +758,12 @@
     const original = btn ? btn.textContent : '';
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Copying…';
+      btn.textContent = 'Preparing…';
+    }
+    try {
+      await sharePackPromise;
+    } catch {
+      /* non-fatal */
     }
     const caption = (sharePack && sharePack.caption) || listingUrl;
     const copied = await copyText(
@@ -761,6 +772,7 @@
       '',
       'Post copied — paste it into LinkedIn'
     );
+    if (shareCardDataUrl) downloadShareImage();
     if (btn) {
       btn.disabled = false;
       btn.textContent = copied ? 'Copied — opening LinkedIn…' : original || 'Copy post & open LinkedIn';
@@ -907,6 +919,7 @@
             : 'Only ' + slots.available + ' featured spotlight places left right now.';
       }
       if (slots.full && !extendFeatured) {
+        featuredUpsell.classList.add('is-slots-full');
         if (featuredSlotStatus) {
           featuredSlotStatus.hidden = false;
           featuredSlotStatus.textContent =

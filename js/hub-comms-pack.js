@@ -34,8 +34,22 @@
     return !label || label === 'free' || label === '£0' || label === '£0.00';
   }
 
+  function formatMetaDate(raw) {
+    if (!raw) return '';
+    var d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return String(raw).trim();
+    return d.toLocaleString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
   function eventMetaLine(ev) {
-    var date = String((ev && (ev.date || ev.dateLine)) || '').trim();
+    var date = formatMetaDate((ev && (ev.starts_at || ev.date || ev.dateLine)) || '');
     var location = String((ev && ev.location) || '').trim();
     return [date, location].filter(Boolean).join(' · ');
   }
@@ -188,7 +202,13 @@
     var captionEl = root.querySelector('[data-comms-caption]');
     var urlEl = root.querySelector('[data-comms-url]');
     if (captionEl) captionEl.textContent = pack.caption || '';
-    if (urlEl) urlEl.textContent = pack.url || '';
+    if (urlEl) {
+      var url = String(pack.url || '').trim();
+      var caption = String(pack.caption || '');
+      var showUrlLine = url && caption.indexOf(url) === -1;
+      urlEl.hidden = !showUrlLine;
+      urlEl.textContent = showUrlLine ? url : '';
+    }
 
     root.querySelectorAll('[data-comms-copy]').forEach(function (btn) {
       btn.addEventListener('click', function () {

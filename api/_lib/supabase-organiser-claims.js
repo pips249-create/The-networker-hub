@@ -4,25 +4,12 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { rowToGroup } = require('./supabase-organiser');
 const { sendViaResend } = require('./send-template-email');
+const { profileEmail, emailMatchesProfile } = require('./supabase-organiser-profile-email');
 
 function isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     String(v || '')
   );
-}
-
-function profileEmail(row) {
-  return String(row?.email || row?.contact_email || '')
-    .trim()
-    .toLowerCase();
-}
-
-function emailMatchesProfile(sessionEmail, row) {
-  const em = String(sessionEmail || '')
-    .trim()
-    .toLowerCase();
-  if (!em) return false;
-  return profileEmail(row) === em;
 }
 
 function sessionMatchesPendingProfile(session, row) {

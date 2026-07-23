@@ -1536,6 +1536,11 @@ a.ee-wizard-link:hover {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     align-items: start;
   }
+
+  .organiser-published-page .ep-spotlight-secondary {
+    position: sticky;
+    top: 88px;
+  }
 }
 
 .organiser-published-page .ep-promote-split-col {
@@ -1788,6 +1793,22 @@ a.ee-wizard-link:hover {
   margin-bottom: 20px;
 }
 
+.organiser-published-page .ep-featured-duration-note {
+  color: var(--ee-text-mid);
+}
+
+.organiser-published-page #ep-featured-error {
+  color: #9a3412;
+}
+
+.organiser-published-page .ep-featured-upsell.is-slots-full .ep-featured-footer {
+  display: none;
+}
+
+.organiser-published-page .ep-featured-upsell.is-slots-full .oe-premium-features {
+  margin-bottom: 0;
+}
+
 .organiser-published-page .ep-featured-body {
   display: grid;
   gap: 20px;
@@ -1971,8 +1992,8 @@ a.ee-wizard-link:hover {
 }
 
 .ep-share-input {
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--ee-border);
   border-radius: var(--ee-radius);
@@ -1980,6 +2001,8 @@ a.ee-wizard-link:hover {
   font-family: inherit;
   color: var(--ee-text);
   background: var(--ee-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ep-copy-feedback {
@@ -2027,8 +2050,27 @@ a.ee-wizard-link:hover {
 
 .ep-comms-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ep-comms-actions .ee-btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (min-width: 520px) {
+  .organiser-published-page .ep-comms-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .organiser-published-page .ep-comms-actions .ee-btn {
+    width: auto;
+    flex: 1 1 calc(50% - 5px);
+    min-width: 140px;
+  }
 }
 
 .ep-share-pack {

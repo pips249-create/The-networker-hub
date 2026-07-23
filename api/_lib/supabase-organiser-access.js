@@ -7,15 +7,12 @@ const {
   countTeamInviteSlots,
   teamSlotsRemaining,
 } = require('./organiser-team-limits');
+const { emailMatchesProfile } = require('./supabase-organiser-profile-email');
 
 function isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     String(v || '')
   );
-}
-
-function emailMatchesProfile(sessionEmail, row) {
-  return require('./supabase-organiser-claims').emailMatchesProfile(sessionEmail, row);
 }
 
 function groupVisibleInOrganiserWorkspace(session, row) {
@@ -211,8 +208,8 @@ async function resolveOrganiserAccountLabel(sb, accountId, fallbackEmail) {
 
 async function getOrCreateOrganiserAccount(session) {
   const sb = getSupabaseAdmin();
-  const uid = isUuid(session.sub) ? session.sub : null;
-  const em = String(session.email || '').toLowerCase();
+  const uid = isUuid(session?.sub) ? session.sub : null;
+  const em = String(session?.email || '').toLowerCase();
   if (!uid && !em) return null;
 
   let account = null;
