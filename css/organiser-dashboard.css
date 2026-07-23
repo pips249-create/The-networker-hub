@@ -6376,6 +6376,11 @@ body.org-cancel-modal-open {
   text-decoration: underline;
 }
 
+.org-getting-started.is-claim-mismatch {
+  border-color: rgba(180, 120, 40, 0.35);
+  background: linear-gradient(135deg, rgba(255, 248, 230, 0.95) 0%, var(--od-white) 55%);
+}
+
 .org-getting-started-list {
   margin: 0;
   padding: 0;

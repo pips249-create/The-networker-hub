@@ -79,6 +79,10 @@ const MEMBER_QUESTIONS = [
     expect: /claim|\/guides\/claim-your-organiser-page|\/events\//i,
   },
   {
+    q: 'My email has changed — how do I claim my organiser page?',
+    expect: /Request access|Browse organisers|\/events\//i,
+  },
+  {
     q: 'Can I get alerts when tickets go on sale?',
     expect: /email you when they open|Saved organisers/i,
   },

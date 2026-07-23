@@ -330,6 +330,9 @@
     if (params.get('onboard') === 'claim' && window.orgDashOpenClaimModal) {
       markTourDone();
       window.orgDashOpenClaimModal();
+      if (window.orgDashHandleClaimOnboardMismatch) {
+        window.orgDashHandleClaimOnboardMismatch();
+      }
       return;
     }
     if (!tourAutoStarted && shouldAutoStart()) {

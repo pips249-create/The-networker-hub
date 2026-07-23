@@ -75,7 +75,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISERS',
     body:
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe Connect onboarding under Revenue is required before publishing paid tickets. ' +
-      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — guide at /guides/claim-your-organiser-page. New groups without a listing: email hello@thenetworkerhub.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
+      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hello@thenetworkerhub.com with your group name and current contact email. New groups without a listing: email hello@thenetworkerhub.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkerhub.com with the event title. ' +
       'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
       'PAYOUTS: With Stripe Connect (standard), ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue for balance, refunds, and bank payouts. Events archive automatically after they end. Legacy manual Hub payouts (if Connect is off): 7-day settlement after the event, then request payout from Revenue when net amount is above £1. Minimum payout £1. Full guide: /help/organiser-payouts. ' +
@@ -306,9 +306,14 @@ const FALLBACK_REPLIES = [
       'Many networking events on the hub are free to attend — browse /events/ and check each event page for pricing. You can filter listings and look for free tickets. Free events may still need registration; some require a free account to complete sign-up.',
   },
   {
+    match: /email changed|wrong email|different email|no claim prompt|request access.*(organiser|group|page)/i,
+    reply:
+      'If your contact email has changed, sign in will not match the listing on file. Find your group on /events/ (organisers tab), open its profile, and use Request access — we verify you and send a claim link to your current email. Already signed in with no prompt? Check Overview for a notice, or follow the same Request access path. Guide: /guides/claim-your-organiser-page.',
+  },
+  {
     match: /claim.*(organiser|page|profile|group)|take over.*(page|profile|listing)|already listed|legacy networker|old networker site/i,
     reply:
-      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/. Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Email hello@thenetworkerhub.com with your group name and contact email.',
+      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/ (appears automatically when your email matches). Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Your email may have changed — open your group\'s public profile and use Request access, or email hello@thenetworkerhub.com with your group name and current contact email.',
   },
   {
     match: /invite.*team|team member|add.*editor|editor access|team & invites|remove.*team member/i,

@@ -90,6 +90,78 @@
 
   let groupClaimRejectMode = false;
 
+  function isClaimOnboardIntent() {
+    try {
+      return new URLSearchParams(window.location.search).get('onboard') === 'claim';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function hasClaimOnboardMismatch() {
+    if (!isClaimOnboardIntent() || state.adminView) return false;
+    return !(state.pendingClaimGroups || []).length && !state.groups.length;
+  }
+
+  function claimOnboardMismatchNotice() {
+    const email = esc(state.user?.email || 'your account email');
+    return {
+      id: 'claim-email-mismatch',
+      type: 'warning',
+      title: 'No organiser page matched this email',
+      text:
+        'We could not link <strong>' +
+        email +
+        '</strong> to an existing group listing. If your contact email has changed, find your group in the directory and use <strong>Request access</strong> on its profile page — do not create a duplicate organiser page.',
+      actions:
+        '<a class="org-btn org-btn-gold org-btn-sm" href="/events/?mode=organisers">Find your group</a>' +
+        ' <a class="org-btn org-btn-outline org-btn-sm" href="/guides/claim-your-organiser-page">Claim guide</a>',
+    };
+  }
+
+  function applyClaimMismatchGettingStarted(panel) {
+    if (!panel) return;
+    const mismatch = hasClaimOnboardMismatch();
+    panel.classList.toggle('is-claim-mismatch', mismatch);
+
+    const groupStep = panel.querySelector('[data-getting-step="group"]');
+    if (!groupStep) return;
+
+    const titleEl = groupStep.querySelector('strong');
+    const descEl = groupStep.querySelector('span');
+    const createBtn = groupStep.querySelector('[data-org-getting-action="group"]');
+    let findLink = groupStep.querySelector('[data-org-getting-find-group]');
+
+    if (mismatch) {
+      if (titleEl) titleEl.textContent = 'Find your existing listing';
+      if (descEl) {
+        descEl.innerHTML =
+          'Your email did not match a listing on file. Open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet.';
+      }
+      if (createBtn) createBtn.hidden = true;
+      if (!findLink) {
+        findLink = document.createElement('a');
+        findLink.className = 'org-btn org-btn-gold org-btn-sm';
+        findLink.setAttribute('data-org-getting-find-group', '1');
+        findLink.href = '/events/?mode=organisers';
+        findLink.textContent = 'Find your group';
+        groupStep.appendChild(findLink);
+      } else {
+        findLink.hidden = false;
+      }
+      return;
+    }
+
+    panel.classList.remove('is-claim-mismatch');
+    if (titleEl) titleEl.textContent = 'Create your organiser page';
+    if (descEl) {
+      descEl.innerHTML =
+        'Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first — if yours is already listed, open it and request access instead of creating a duplicate.';
+    }
+    if (createBtn) createBtn.hidden = false;
+    if (findLink) findLink.hidden = true;
+  }
+
   const ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
   const signin = document.getElementById('org-signin');
   const shell = document.getElementById('org-shell');
@@ -1789,15 +1861,19 @@
           text: esc(scope.message || 'Please refresh the page or try again shortly.'),
         });
       } else if (scope.kind === 'onboarding') {
-        notices.push({
-          id: 'onboarding',
-          type: 'info',
-          title: 'Set up your organiser workspace',
-          text:
-            'Start with your <strong>organiser page</strong> — your public page on the hub for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
-          actions:
-            '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/group-edit">Create organiser page</a>',
-        });
+        if (hasClaimOnboardMismatch()) {
+          notices.push(claimOnboardMismatchNotice());
+        } else {
+          notices.push({
+            id: 'onboarding',
+            type: 'info',
+            title: 'Set up your organiser workspace',
+            text:
+              'Start with your <strong>organiser page</strong> — your public page on the hub for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
+            actions:
+              '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/group-edit">Create organiser page</a>',
+          });
+        }
       }
     }
 
@@ -8964,9 +9040,13 @@
 
     panel.hidden = false;
 
+    applyClaimMismatchGettingStarted(panel);
+
     const titleEl = panel.querySelector('.org-getting-started-title');
     if (titleEl) {
-      if (requiredDone === 0) titleEl.textContent = "Here's what to do first";
+      if (hasClaimOnboardMismatch()) {
+        titleEl.textContent = 'Claim your existing listing first';
+      } else if (requiredDone === 0) titleEl.textContent = "Here's what to do first";
       else titleEl.textContent = "Here's what's next";
     }
     panel.classList.remove('is-complete');
@@ -9062,9 +9142,11 @@
     const titleEl = document.getElementById('org-setup-resume-title');
     const bodyEl = document.getElementById('org-setup-resume-body');
     if (!progress.hasGroup) {
-      if (titleEl) titleEl.textContent = 'Step 1 of 3 — organiser page';
+      if (titleEl) titleEl.textContent = hasClaimOnboardMismatch() ? 'Find your existing listing' : 'Step 1 of 3 — organiser page';
       if (bodyEl) {
-        bodyEl.textContent = 'Create or claim your organiser page to get started on the hub.';
+        bodyEl.textContent = hasClaimOnboardMismatch()
+          ? 'Your email did not match a listing — find your group and request access instead of creating a duplicate page.'
+          : 'Create or claim your organiser page to get started on the hub.';
       }
     } else if (needsOrganiserProfileReview()) {
       if (titleEl) titleEl.textContent = 'Step 1 of 3 — check your organiser page';
@@ -9125,6 +9207,11 @@
     if ((state.pendingClaimGroups || []).length > 0) {
       renderGroupClaimModal();
     }
+  };
+
+  window.orgDashHandleClaimOnboardMismatch = function () {
+    if (!hasClaimOnboardMismatch()) return;
+    renderAll();
   };
 
   /** @deprecated use updateGettingStartedPanel */
@@ -9218,6 +9305,19 @@
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('org-group-claim-active');
+
+    const group = state.groups[0];
+    const kickerEl = modal.querySelector('.org-group-claim-kicker');
+    const titleEl = document.getElementById('org-ready-event-title');
+    const introEl = document.getElementById('org-ready-event-intro');
+    if (kickerEl) kickerEl.textContent = 'Step 2 of 2 — your first event';
+    if (titleEl) {
+      titleEl.textContent = group && group.name ? group.name + ' is yours — list your first event?' : 'Ready to add an event?';
+    }
+    if (introEl) {
+      introEl.textContent =
+        'Your organiser page is confirmed. List your first meeting, exhibition, or conference — we will walk you through the format and details.';
+    }
   }
 
   function renderGroupClaimModal() {
@@ -9282,6 +9382,12 @@
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('org-group-claim-active');
+
+    const introEl = document.getElementById('org-group-claim-intro');
+    if (introEl) {
+      introEl.textContent =
+        'We found an organiser page linked to your email. Confirm you manage this page — next you can check the details and list events.';
+    }
   }
 
   async function submitGroupClaimAction(action) {
@@ -9326,7 +9432,8 @@
         await loadBootstrap();
         updateSetupResumeBanner();
         updateGettingStartedPanel();
-        setRoute('groups', { skipEventsGuard: true });
+        setRoute('dashboard', { skipEventsGuard: true });
+        continueOnboardingAfterClaim();
         return;
       }
 
