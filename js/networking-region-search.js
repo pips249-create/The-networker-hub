@@ -1,6 +1,6 @@
 /**
  * City search autocomplete + navigation to /networking/:slug.
- * Used by homepage hero and events filter bar.
+ * Used by homepage hero, events search field, and location field.
  */
 (function (global) {
   function escAttr(s) {

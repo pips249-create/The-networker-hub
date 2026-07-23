@@ -167,7 +167,7 @@ function applySearchFilter(query, params) {
   terms.forEach((term) => {
     const t = `%${term}%`;
     next = next.or(
-      `title.ilike.${t},description.ilike.${t},city.ilike.${t},venue.ilike.${t},location_label.ilike.${t},postcode.ilike.${t},organiser_name.ilike.${t}`
+      `title.ilike.${t},description.ilike.${t},city.ilike.${t},venue.ilike.${t},location_label.ilike.${t},postcode.ilike.${t},organiser_name.ilike.${t},event_type.ilike.${t},meeting_type.ilike.${t},highlights.ilike.${t},format_tab.ilike.${t}`
     );
   });
   return next;

@@ -1103,6 +1103,7 @@
 
   window.hubUpdateEventTypeChipCounts = function () {
     var counts = window.hubBrowseTypeCounts;
+    var selectedTypes = activeTypeTabs.slice();
     typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
     typeTabs.forEach(function (chip) {
       var type = chip.getAttribute('data-type') || 'all';
@@ -1110,10 +1111,18 @@
       if (!countEl) return;
       var count;
       if (window.hubServerBrowse) {
-        if (counts) {
-          count = type === 'all' ? counts.all || 0 : counts[type] || 0;
-        } else if (type === 'all' && window.hubBrowseTotal != null) {
-          count = Number(window.hubBrowseTotal) || 0;
+        if (type === 'all') {
+          if (selectedTypes.length > 0 && window.hubBrowseTotal != null) {
+            count = Number(window.hubBrowseTotal) || 0;
+          } else if (counts) {
+            count = counts.all || 0;
+          } else if (window.hubBrowseTotal != null) {
+            count = Number(window.hubBrowseTotal) || 0;
+          } else {
+            return;
+          }
+        } else if (counts) {
+          count = counts[type] || 0;
         } else {
           return;
         }
@@ -1431,5 +1440,22 @@
     });
   }
 
+  function initEventsFilterLocationCitySearch() {
+    if (!postcodeInput || !window.HUB_initNetworkingRegionSearch) return;
+    var locationWrap = postcodeInput.closest('.filter-field-postcode');
+    if (!locationWrap) return;
+    window.HUB_initNetworkingRegionSearch(postcodeInput, locationWrap, {
+      suggestClass: 'events-filter-search-suggest',
+      preserveParams: ['mode'],
+      isEnabled: function () {
+        return !!(postcodeInput && !postcodeInput.disabled);
+      },
+      onNonCitySubmit: function () {
+        applyLocationFilters();
+      },
+    });
+  }
+
   initEventsFilterCitySearch();
+  initEventsFilterLocationCitySearch();
 })();
