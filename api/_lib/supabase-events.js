@@ -792,7 +792,8 @@ async function eventsFromPublishedRows(sb, rows, knownOrganiser, options = {}) {
       const eventTickets = ticketsByEvent.get(row.id) || [];
       const ranking = row.organiser_id ? rankingsByOrg[row.organiser_id] || null : null;
       const ev = rowToEvent(row, org, eventTickets, ranking);
-      if (!ev.hasTicketTiers) return null;
+      // Browse includes listing-only events before ticket types exist (migration 196).
+      if (!browseList && !ev.hasTicketTiers) return null;
       return browseList ? stripBrowseListPayload(ev) : ev;
     })
     .filter(Boolean);
@@ -943,15 +944,8 @@ async function fetchTicketedEventIds(sb) {
 
 async function fetchApprovedEvents(sb, options = {}) {
   const browseList = options.browseList !== false;
-  const [rows, ticketEventIds] = await Promise.all([
-    fetchPublishedEventRows(sb, { upcomingOnly: browseList }),
-    browseList ? fetchTicketedEventIds(sb) : Promise.resolve(null),
-  ]);
-  let list = rows;
-  if (browseList && ticketEventIds && list.length) {
-    list = list.filter((row) => ticketEventIds.has(row.id));
-  }
-  const mapped = await eventsFromPublishedRows(sb, list, null, { browseList });
+  const rows = await fetchPublishedEventRows(sb, { upcomingOnly: browseList });
+  const mapped = await eventsFromPublishedRows(sb, rows, null, { browseList });
   return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
 
