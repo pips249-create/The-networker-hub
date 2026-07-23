@@ -64,6 +64,8 @@ function newSeriesGroupId() {
   return crypto.randomUUID();
 }
 
+const ACTIVE_SERIES_STATUSES = ['draft', 'published', 'unpublished'];
+
 const DUPLICATE_TITLE_SUFFIX_RE = / \(copy\)$/i;
 
 function defaultDuplicateTitle(sourceTitle) {
@@ -1121,6 +1123,278 @@ async function updateEvent(eventId, payload) {
   return event;
 }
 
+function londonDateKeyFromIso(iso) {
+  const raw = String(iso || '').trim();
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const pick = (type) => {
+    const hit = parts.find((p) => p.type === type);
+    return hit ? hit.value : '';
+  };
+  return `${pick('year')}-${pick('month')}-${pick('day')}`;
+}
+
+function occurrenceDateKey(occ) {
+  return londonDateKeyFromIso(occ?.date || occ?.start || occ?.dateTime || '');
+}
+
+async function loadActiveSeriesPeerRows(sb, seriesGroupId, fallbackRow) {
+  const gid = String(seriesGroupId || '').trim();
+  if (!gid) return fallbackRow ? [fallbackRow] : [];
+  const { data, error } = await sb
+    .from('events')
+    .select('*')
+    .eq('series_group_id', gid)
+    .in('status', ACTIVE_SERIES_STATUSES)
+    .order('starts_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  const rows = data || [];
+  if (fallbackRow?.id && !rows.some((row) => row.id === fallbackRow.id)) {
+    rows.push(fallbackRow);
+  }
+  return rows.sort((a, b) => {
+    const da = a.starts_at ? new Date(a.starts_at).getTime() : 0;
+    const db = b.starts_at ? new Date(b.starts_at).getTime() : 0;
+    return da - db;
+  });
+}
+
+async function deleteDraftEventIfAllowed(sb, eventId) {
+  const id = String(eventId || '').trim();
+  if (!id) return false;
+  const { data: row, error } = await sb.from('events').select('id, locked').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!row || row.locked) return false;
+
+  const { count, error: regErr } = await sb
+    .from('registrations')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', id);
+  if (regErr) throw new Error(regErr.message);
+  if (count > 0) return false;
+
+  const { error: ticketErr } = await sb.from('tickets').delete().eq('event_id', id);
+  if (ticketErr) throw new Error(ticketErr.message);
+
+  const { error: delErr } = await sb.from('events').delete().eq('id', id);
+  if (delErr) throw new Error(delErr.message);
+  return true;
+}
+
+const SERIES_INSERT_CHUNK = 100;
+
+async function resolveSeriesSharedPhotoUrl(anchorId, base, anchorRow) {
+  const existing = String(base.photoUrl || eventImageUrl(anchorRow) || '').trim();
+  if (base.photoBase64) {
+    const uploaded = await resolveEventPhotoUrl(
+      { ...base, photoUrl: existing || base.photoUrl },
+      anchorId
+    );
+    if (uploaded) return uploaded;
+    throw new Error('Could not upload event photo');
+  }
+  return existing || null;
+}
+
+async function buildSharedSeriesRowTemplate(base, anchorId) {
+  const sampleDate = base.date || '2099-01-01T10:00:00.000Z';
+  const sampleEnd = base.endDate || sampleDate;
+  const payload = {
+    ...base,
+    date: sampleDate,
+    endDate: sampleEnd,
+    _touchDate: true,
+  };
+  delete payload.photoBase64;
+  delete payload.photoMime;
+  delete payload.photoFilename;
+
+  let row = await buildEventRow(payload, anchorId, 'create');
+  row = await inheritGroupPhotoIfMissing(row, payload);
+  delete row.starts_at;
+  delete row.ends_at;
+  return row;
+}
+
+function mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId) {
+  const dates = parseDateIso(occurrence.date, occurrence.endDate);
+  return {
+    ...sharedRow,
+    starts_at: dates.starts_at,
+    ends_at: dates.ends_at,
+    series_group_id: seriesGroupId,
+  };
+}
+
+function lockedSeriesPeerPatch(sharedRow, occurrence, seriesGroupId) {
+  const dates = parseDateIso(occurrence.date, occurrence.endDate);
+  return {
+    starts_at: dates.starts_at,
+    ends_at: dates.ends_at,
+    series_group_id: seriesGroupId,
+  };
+}
+
+async function insertEventRowsBatch(sb, rows) {
+  const created = [];
+  for (let i = 0; i < rows.length; i += SERIES_INSERT_CHUNK) {
+    const slice = rows.slice(i, i + SERIES_INSERT_CHUNK);
+    const { data, error } = await sb.from('events').insert(slice).select('*');
+    if (error) throw new Error(error.message);
+    created.push(...(data || []));
+  }
+  return created;
+}
+
+async function updateSeriesPeerRow(sb, peerRow, sharedRow, occurrence, seriesGroupId) {
+  const patch = peerRow.locked
+    ? lockedSeriesPeerPatch(sharedRow, occurrence, seriesGroupId)
+    : mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId);
+  const { data, error } = await sb.from('events').update(patch).eq('id', peerRow.id).select('*').single();
+  if (error) throw new Error(error.message);
+  if (peerRow.starts_at !== data.starts_at && data.starts_at) {
+    await syncTicketSaleEndsAfterStartChange(sb, peerRow.id, peerRow.starts_at, data.starts_at);
+  }
+  return data;
+}
+
+async function createEventsForOccurrences(base, occurrences, seriesGroupId, anchorId) {
+  const occ = Array.isArray(occurrences) ? occurrences.filter((o) => o && o.date) : [];
+  if (!occ.length) {
+    return { events: [await createEvent({ ...base, date: '', endDate: '' })], eventIds: [] };
+  }
+  if (occ.length === 1) {
+    const one = await createEvent({
+      ...base,
+      seriesGroupId,
+      date: occ[0].date,
+      endDate: occ[0].endDate,
+    });
+    return { events: [one], eventIds: [one.id], event: one };
+  }
+
+  const sb = getSupabaseAdmin();
+  const photoUrl = await resolveSeriesSharedPhotoUrl(anchorId || 'new', base, null);
+  const baseWithPhoto = { ...base, seriesGroupId };
+  delete baseWithPhoto.photoBase64;
+  delete baseWithPhoto.photoMime;
+  delete baseWithPhoto.photoFilename;
+  if (photoUrl) baseWithPhoto.photoUrl = photoUrl;
+
+  const sharedRow = await buildSharedSeriesRowTemplate(baseWithPhoto, anchorId || null);
+  const insertRows = occ.map((occurrence) =>
+    mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId)
+  );
+  const createdRows = await insertEventRowsBatch(sb, insertRows);
+  const events = createdRows.map(rowToEvent);
+  return {
+    events,
+    eventIds: events.map((ev) => ev.id).filter(Boolean),
+    event: events[0],
+  };
+}
+
+/**
+ * Reconcile selected calendar dates with existing series rows — update matched dates,
+ * create missing ones, and remove deselected draft dates without registrations.
+ */
+async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, seriesGroupId }) {
+  const anchorId = String(eventId || '').trim();
+  if (!anchorId) {
+    const e = new Error('missing_event_id');
+    e.status = 400;
+    throw e;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: anchorRow, error: anchorErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('id', anchorId)
+    .maybeSingle();
+  if (anchorErr) throw new Error(anchorErr.message);
+  if (!anchorRow) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    throw e;
+  }
+
+  const occ = Array.isArray(occurrences) ? occurrences.filter((o) => o && o.date) : [];
+  if (!occ.length) {
+    const event = await updateEvent(anchorId, { ...base, seriesGroupId: seriesGroupId || null });
+    return { events: [event], eventIds: [event.id], event };
+  }
+
+  const guardedBase = await applyDuplicateTitleGuard(sb, anchorRow, base);
+  const resolvedSeriesGroupId =
+    seriesGroupId || anchorRow.series_group_id || resolveSeriesGroupId(null, occ.length);
+  const peers = await loadActiveSeriesPeerRows(sb, resolvedSeriesGroupId, anchorRow);
+  const peerByDateKey = new Map();
+  peers.forEach((row) => {
+    const key = londonDateKeyFromIso(row.starts_at);
+    if (key && !peerByDateKey.has(key)) peerByDateKey.set(key, row);
+  });
+
+  const photoUrl = await resolveSeriesSharedPhotoUrl(anchorId, guardedBase, anchorRow);
+  const baseWithPhoto = { ...guardedBase, seriesGroupId: resolvedSeriesGroupId };
+  delete baseWithPhoto.photoBase64;
+  delete baseWithPhoto.photoMime;
+  delete baseWithPhoto.photoFilename;
+  if (photoUrl) baseWithPhoto.photoUrl = photoUrl;
+
+  const sharedRow = await buildSharedSeriesRowTemplate(baseWithPhoto, anchorId);
+  const usedPeerIds = new Set();
+  const toUpdate = [];
+  const insertOccurrences = [];
+
+  for (const occurrence of occ) {
+    const key = occurrenceDateKey(occurrence);
+    const matchedPeer = key ? peerByDateKey.get(key) : null;
+    if (matchedPeer && !usedPeerIds.has(matchedPeer.id)) {
+      usedPeerIds.add(matchedPeer.id);
+      toUpdate.push({ peer: matchedPeer, occurrence });
+      continue;
+    }
+    insertOccurrences.push(occurrence);
+  }
+
+  const insertRows = insertOccurrences.map((occurrence) =>
+    mergeOccurrenceIntoRow(sharedRow, occurrence, resolvedSeriesGroupId)
+  );
+  const [createdRows, updatedRows] = await Promise.all([
+    insertRows.length ? insertEventRowsBatch(sb, insertRows) : Promise.resolve([]),
+    Promise.all(
+      toUpdate.map(({ peer, occurrence }) =>
+        updateSeriesPeerRow(sb, peer, sharedRow, occurrence, resolvedSeriesGroupId)
+      )
+    ),
+  ]);
+
+  const orphanPeers = peers.filter((peer) => peer?.id && !usedPeerIds.has(peer.id));
+  if (orphanPeers.length) {
+    await Promise.all(orphanPeers.map((peer) => deleteDraftEventIfAllowed(sb, peer.id)));
+  }
+
+  const events = [...updatedRows, ...createdRows]
+    .map(rowToEvent)
+    .sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return da - db;
+    });
+  const eventIds = events.map((ev) => ev.id).filter(Boolean);
+  const anchorEvent = events.find((ev) => ev.id === anchorId) || events[0];
+
+  return { events, eventIds, event: anchorEvent };
+}
+
 async function maybeNotifyAttendeesOfEventUpdate(sb, eventId, existingRow, updatedRow) {
   if (!existingRow || !updatedRow) return null;
   try {
@@ -1527,8 +1801,6 @@ async function filterOwnedEventIds(eventIds, groupIds, adminView) {
   if (error) throw new Error(error.message);
   return (data || []).map((row) => row.id).filter(Boolean);
 }
-
-const ACTIVE_SERIES_STATUSES = ['draft', 'published', 'unpublished'];
 
 async function fetchSeriesPeerIds(sb, row) {
   if (!row?.id) return [];
@@ -2425,8 +2697,10 @@ module.exports = {
   listTicketsForSession,
   getEventById,
   createEvent,
+  createEventsForOccurrences,
   duplicateEventForSession,
   updateEvent,
+  syncSeriesOccurrencesForEvent,
   deleteEventForSession,
   enableTicketSalesForEvent,
   createTicket,

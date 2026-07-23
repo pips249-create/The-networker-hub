@@ -89,7 +89,9 @@ module.exports = async function handler(req, res) {
     listEventsForSeriesGroup,
     groupOwnedBySession,
     createEvent,
+    createEventsForOccurrences,
     updateEvent,
+    syncSeriesOccurrencesForEvent,
     deleteEventForSession,
     duplicateEventForSession,
     getEventById,
@@ -208,37 +210,20 @@ module.exports = async function handler(req, res) {
       if (!occ.length && !isDraft) {
         return json(res, 400, { error: 'missing_dates', message: 'Select at least one date before publishing.' });
       }
-      const primary = occ[0] || {};
-      const touchDate = Boolean(body.date || body.endDate || body.dateTime || occ.length);
       const existing = await getEventById(eventId);
       const seriesGroupId = resolveSeriesGroupId(existing.seriesGroupId, occ.length);
-      const event = await updateEvent(eventId, {
-        ...base,
-        _touchDate: touchDate,
+      const synced = await syncSeriesOccurrencesForEvent(eventId, {
+        base,
+        occurrences: occ,
         seriesGroupId,
-        date: primary.date || body.date || body.dateTime || '',
-        endDate: primary.endDate || body.endDate || '',
       });
 
-      const extra = [];
-      for (const o of occ.slice(1)) {
-        extra.push(
-          await createEvent({
-            ...base,
-            seriesGroupId,
-            date: o.date,
-            endDate: o.endDate,
-          })
-        );
-      }
-
-      const allIds = [event.id, ...extra.map((e) => e.id)];
       return json(res, 200, {
         ok: true,
-        event,
-        events: [event, ...extra],
-        eventIds: allIds,
-        needsTickets: allIds.length > 0,
+        event: synced.event || synced.events[0],
+        events: synced.events,
+        eventIds: synced.eventIds,
+        needsTickets: synced.eventIds.length > 0,
       });
     } catch (e) {
       return json(res, e.status || 500, {
@@ -316,26 +301,13 @@ module.exports = async function handler(req, res) {
         });
         events = [one];
       } else {
-        const created = [];
-        let sharedPhotoUrl = null;
-        for (const o of occ) {
-          const slice = {
-            ...base,
-            seriesGroupId,
-            date: o.date,
-            endDate: o.endDate,
-          };
-          if (sharedPhotoUrl) {
-            delete slice.photoBase64;
-            delete slice.photoMime;
-            delete slice.photoFilename;
-            slice.photoUrl = sharedPhotoUrl;
-          }
-          const ev = await createEvent(slice);
-          if (!sharedPhotoUrl && ev.imageUrl) sharedPhotoUrl = ev.imageUrl;
-          created.push(ev);
-        }
-        events = created;
+        const result = await createEventsForOccurrences(
+          { ...base, seriesGroupId },
+          occ,
+          seriesGroupId,
+          null
+        );
+        events = result.events;
       }
 
       const eventIds = events.map((e) => e.id);

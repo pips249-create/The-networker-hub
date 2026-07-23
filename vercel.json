@@ -176,7 +176,7 @@
     "api/cron.js": { "maxDuration": 300 },
     "api/auth.js": { "maxDuration": 15 },
     "api/admin.js": { "maxDuration": 15 },
-    "api/organiser.js": { "maxDuration": 15 },
+    "api/organiser.js": { "maxDuration": 60 },
     "api/organisers.js": { "maxDuration": 15 },
     "api/events.js": { "maxDuration": 15 },
     "api/seo.js": { "maxDuration": 15 },

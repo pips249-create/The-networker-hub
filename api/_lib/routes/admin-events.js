@@ -704,7 +704,7 @@ module.exports = async function handler(req, res) {
       if (!organiserId) return json(res, 400, { error: 'missing_organiser_id' });
 
       try {
-        const { createEvent, resolveSeriesGroupId } = require('../supabase-organiser-events');
+        const { createEvent, createEventsForOccurrences, resolveSeriesGroupId } = require('../supabase-organiser-events');
         const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
         await ensureOrganiserClaimedForAdminEvent(organiserId);
         const occ = normalizeOccurrences(body);
@@ -747,26 +747,13 @@ module.exports = async function handler(req, res) {
             }),
           ];
         } else {
-          events = [];
-          let sharedPhotoUrl = null;
-          for (let i = 0; i < occ.length; i += 1) {
-            const o = occ[i];
-            const slice = {
-              ...base,
-              seriesGroupId,
-              date: o.date,
-              endDate: o.endDate,
-            };
-            if (i > 0) {
-              delete slice.photoBase64;
-              delete slice.photoMime;
-              delete slice.photoFilename;
-              if (sharedPhotoUrl) slice.photoUrl = sharedPhotoUrl;
-            }
-            const ev = await createEvent(slice);
-            if (!sharedPhotoUrl && ev.imageUrl) sharedPhotoUrl = ev.imageUrl;
-            events.push(ev);
-          }
+          const result = await createEventsForOccurrences(
+            { ...base, seriesGroupId },
+            occ,
+            seriesGroupId,
+            null
+          );
+          events = result.events;
         }
 
         return json(res, 201, {
