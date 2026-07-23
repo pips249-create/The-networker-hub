@@ -412,6 +412,7 @@
     'Awards',
     'Webinar',
     'Workshop',
+    'Seminar',
     'Masterclass',
   ];
   var MEETING_FORMATS = ['In person', 'Online'];
@@ -460,9 +461,7 @@
     q: '',
     total: 0,
     items: [],
-    hasMore: false,
     loading: false,
-    loadingMore: false,
     selected: {},
     expanded: {},
   };
@@ -10490,16 +10489,9 @@
       });
   }
 
-  function fetchEventCleanup(pageIndex, options) {
-    var opts = options || {};
-    var append = Boolean(opts.append);
-    if (!append && eventCleanupState.loading) return Promise.resolve(eventCleanupCache);
-    if (append && (eventCleanupState.loadingMore || eventCleanupState.loading || !eventCleanupState.hasMore)) {
-      return Promise.resolve(eventCleanupCache);
-    }
-
-    if (append) eventCleanupState.loadingMore = true;
-    else eventCleanupState.loading = true;
+  function fetchEventCleanup(pageIndex) {
+    if (eventCleanupState.loading) return Promise.resolve(eventCleanupCache);
+    eventCleanupState.loading = true;
 
     var page =
       typeof pageIndex === 'number' && !isNaN(pageIndex) ? Math.max(0, pageIndex) : eventCleanupState.page;
@@ -10517,106 +10509,27 @@
     return adminGet('/api/admin/events?' + params.toString())
       .then(function (data) {
         eventCleanupState.loading = false;
-        eventCleanupState.loadingMore = false;
         if (!data || data.error) return data;
         var batch = data.events || [];
         eventCleanupState.total = data.total != null ? data.total : batch.length;
-        if (append) {
-          var seen = new Set(
-            eventCleanupState.items.map(function (ev) {
-              return ev.id;
-            })
-          );
-          batch.forEach(function (ev) {
-            if (!ev || !ev.id || seen.has(ev.id)) return;
-            seen.add(ev.id);
-            eventCleanupState.items.push(ev);
-          });
-        } else {
-          eventCleanupState.items = batch.slice();
-        }
-        eventCleanupState.hasMore = eventCleanupState.items.length < eventCleanupState.total;
+        eventCleanupState.items = batch.slice();
         eventCleanupCache = Object.assign({}, data, { events: eventCleanupState.items });
         return eventCleanupCache;
       })
       .catch(function () {
         eventCleanupState.loading = false;
-        eventCleanupState.loadingMore = false;
         return { error: 'network_error' };
       });
   }
 
-  function loadMoreEventCleanup() {
-    if (!eventCleanupState.hasMore || eventCleanupState.loadingMore || eventCleanupState.loading) {
-      return Promise.resolve(eventCleanupCache);
-    }
-    var nextPage = Math.floor(eventCleanupState.items.length / EVENT_PAGE_SIZE);
-    return fetchEventCleanup(nextPage, { append: true }).then(function (data) {
-      applyEventCleanupData(data, { append: true });
-      return data;
-    });
-  }
-
-  function eventCleanupScrollRoot() {
-    var mainEl = document.getElementById('admin-main');
-    if (!mainEl) return null;
-    var style = window.getComputedStyle(mainEl);
-    if (style.overflowY === 'auto' || style.overflowY === 'scroll') return mainEl;
-    return null;
-  }
-
   function resetEventCleanupScroll() {
-    var scrollRoot = eventCleanupScrollRoot();
-    if (scrollRoot) {
-      scrollRoot.scrollTop = 0;
-      return;
-    }
-    var list = document.getElementById('event-cleanup-list');
-    if (list && typeof list.scrollIntoView === 'function') {
-      list.scrollIntoView({ block: 'start', behavior: 'auto' });
-    }
-  }
-
-  function bindEventCleanupLazyLoad() {
-    var scrollRoot = eventCleanupScrollRoot();
-    var sentinel = document.getElementById('event-cleanup-lazy-sentinel');
-    if (!sentinel) return;
-    var observerHost = scrollRoot || window;
-    if (observerHost._eventCleanupLazyObserver) {
-      observerHost._eventCleanupLazyObserver.disconnect();
-      observerHost._eventCleanupLazyObserver = null;
-    }
-    if (!('IntersectionObserver' in window)) return;
-    observerHost._eventCleanupLazyObserver = new IntersectionObserver(
-      function (entries) {
-        if (entries.some(function (entry) {
-          return entry.isIntersecting;
-        })) {
-          loadMoreEventCleanup();
-        }
-      },
-      { root: scrollRoot, rootMargin: '240px 0px', threshold: 0 }
-    );
-    observerHost._eventCleanupLazyObserver.observe(sentinel);
-  }
-
-  function updateEventCleanupLazyUi() {
-    var sentinel = document.getElementById('event-cleanup-lazy-sentinel');
-    var lazyStatus = document.getElementById('event-cleanup-lazy-status');
-    if (sentinel) {
-      sentinel.hidden = !eventCleanupState.hasMore && !eventCleanupState.loadingMore;
-    }
-    if (lazyStatus) {
-      lazyStatus.hidden = !eventCleanupState.loadingMore;
-      lazyStatus.textContent = eventCleanupState.loadingMore ? 'Loading more events…' : '';
-    }
+    var pane = document.getElementById('event-cleanup-list-pane');
+    if (pane) pane.scrollTop = 0;
   }
 
   function goToEventPage(page) {
     eventCleanupState.page = Math.max(0, page);
     eventCleanupState.expanded = {};
-    eventCleanupState.items = [];
-    eventCleanupState.hasMore = false;
     return fetchEventCleanup(eventCleanupState.page)
       .then(applyEventCleanupData)
       .then(function () {
@@ -12761,8 +12674,7 @@
       });
   }
 
-  function applyEventCleanupData(data, options) {
-    var opts = options || {};
+  function applyEventCleanupData(data) {
     var status = document.getElementById('event-cleanup-status');
     if (!data || data.error || data.ok === false) {
       if (status) {
@@ -12771,23 +12683,17 @@
           esc((data && (data.error || data.message)) || 'unknown') +
           ').</span>';
       }
-      updateEventCleanupLazyUi();
       return;
     }
 
     eventCleanupCache = data;
-    renderEventCleanupList({ append: Boolean(opts.append) });
-    updateEventCleanupLazyUi();
-    bindEventCleanupLazyLoad();
-    if (!opts.append) {
-      fetchEventOrganiserOptions().then(populateEventOrganiserSelects);
-    }
+    renderEventCleanupList();
+    fetchEventOrganiserOptions().then(populateEventOrganiserSelects);
   }
 
   function refreshEventCleanupData() {
     eventCleanupState.page = 0;
     eventCleanupState.items = [];
-    eventCleanupState.hasMore = false;
     eventCleanupState.expanded = {};
     var status = document.getElementById('event-cleanup-status');
     if (status) status.textContent = 'Loading events…';
@@ -12882,8 +12788,7 @@
     );
   }
 
-  function renderEventCleanupList(options) {
-    var opts = options || {};
+  function renderEventCleanupList() {
     var list = document.getElementById('event-cleanup-list');
     var status = document.getElementById('event-cleanup-status');
     var hint = document.getElementById('event-cleanup-hint');
@@ -12893,31 +12798,26 @@
     var organisers =
       eventOrganiserOptionsCache || (data.organisers || []).map(normalizeOrganiserOption);
     var events = eventCleanupState.items.length ? eventCleanupState.items : data.events || [];
+    var page = eventCleanupState.page;
     var shown = events.length;
     var total = eventCleanupState.total || shown;
+    var pageStart = shown ? page * EVENT_PAGE_SIZE + 1 : 0;
+    var pageEnd = page * EVENT_PAGE_SIZE + shown;
+    var pagination = adminPaginationHtml(page, total, EVENT_PAGE_SIZE, 'data-event-page');
 
     if (status) {
-      var parts = [
+      status.innerHTML =
         '<span class="text-brand-900 font-semibold">' +
-          (shown
-            ? 'Showing ' + shown + ' of ' + total + ' event' + (total === 1 ? '' : 's')
-            : 'No events match your filters') +
-          '</span>',
-      ];
-      if (eventCleanupState.hasMore) {
-        parts.push('<span class="text-slate-500">Scroll for more</span>');
-      }
-      if (data.unlinked_count) {
-        parts.push(
-          '<span class="text-amber-800 font-semibold">' +
+        (shown
+          ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' event' + (total === 1 ? '' : 's')
+          : 'No events match your filters') +
+        '</span>' +
+        (data.unlinked_count
+          ? ' · <span class="text-amber-800 font-semibold">' +
             data.unlinked_count +
             ' unlinked in catalogue</span>'
-        );
-      }
-      if (eventCleanupState.loading) {
-        parts.push('<span class="text-slate-400">Loading…</span>');
-      }
-      status.innerHTML = parts.join(' · ');
+          : '') +
+        (eventCleanupState.loading ? ' · <span class="text-slate-400">Loading…</span>' : '');
     }
 
     if (hint) {
@@ -12930,7 +12830,8 @@
 
     if (!shown) {
       list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event above.</p>';
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event above.</p>' +
+        pagination;
       updateEventBulkBar();
       return;
     }
@@ -12955,16 +12856,16 @@
           '</tr></thead><tbody>' +
           rows +
           '</tbody></table>'
-      );
+      ) + pagination;
     updateEventBulkBar();
   }
 
   function eventCleanupCreateSectionHtml() {
     return (
-      '<section class="event-cleanup-create rounded-xl border border-brand-200 bg-brand-50/50 shadow-sm">' +
-      '<h2 class="font-semibold text-brand-900 px-4 py-3 border-b border-brand-100">Create event for a group</h2>' +
-      '<div class="px-4 pb-4 space-y-3 pt-3">' +
-      '<p class="text-xs text-slate-600">Add an event under an existing organiser profile with the core listing details. You can publish as a listing without tickets — visitors can nudge the organiser to add them. Organisers finish tickets and enable sales when ready.</p>' +
+      '<details class="event-cleanup-create rounded-xl border border-brand-200 bg-brand-50/50 shadow-sm group">' +
+      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
+      '<div class="px-4 pb-4 space-y-3 border-t border-brand-100 event-cleanup-create-body">' +
+      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile with the core listing details. You can publish as a listing without tickets — visitors can nudge the organiser to add them. Organisers finish tickets and enable sales when ready.</p>' +
       '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
@@ -13002,7 +12903,7 @@
       '<p class="text-[11px] text-slate-500 mt-1">Published events go live on browse (listing-only until tickets are added).</p></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
-      '<span class="event-create-msg text-xs"></span></div></form></div></section>'
+      '<span class="event-create-msg text-xs"></span></div></form></div></details>'
     );
   }
 
@@ -13057,7 +12958,7 @@
       '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '<div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all loaded</label>' +
+      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label>' +
       '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div></div></div>'
     );
   }
@@ -13065,13 +12966,13 @@
   function eventCleanupBulkHtml() {
     return (
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — search by title or city, pick an organiser, or use quick filters. Scroll the list below to load more.</p>' +
+      'Large catalogue — search by title or city, pick an organiser, or use quick filters. Use the page numbers below the table to browse.</p>' +
       '<div id="event-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="event-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="event-bulk-count">0</span> events selected</p>' +
       '<button type="button" id="event-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
-      '<p class="text-xs text-slate-600">Filter and load more to add events — your selection is kept until you apply changes, unpublish, or clear.</p>' +
+      '<p class="text-xs text-slate-600">Change pages to select events on other pages — your selection is kept until you apply changes, unpublish, or clear.</p>' +
       '<div id="event-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
       '<p class="text-xs text-slate-600">Only fields you set below are applied to every selected event.</p>' +
       '<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">' +
@@ -13118,15 +13019,14 @@
   function renderEventCleanup() {
     main.innerHTML =
       '<div class="event-cleanup-page">' +
+      '<div class="event-cleanup-header space-y-3">' +
       eventCleanupCreateSectionHtml() +
       '<div class="event-cleanup-toolbar space-y-3">' +
       eventCleanupFiltersHtml() +
       eventCleanupBulkHtml() +
-      '</div>' +
+      '</div></div>' +
       '<div id="event-cleanup-list-pane" class="event-cleanup-list-pane">' +
       '<div id="event-cleanup-list"></div>' +
-      '<div id="event-cleanup-lazy-sentinel" class="event-cleanup-lazy-sentinel" aria-hidden="true"></div>' +
-      '<div id="event-cleanup-lazy-status" class="event-cleanup-lazy-status hidden">Loading more events…</div>' +
       '</div></div>';
 
     syncEventCleanupFilterUi();
