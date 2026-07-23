@@ -1920,6 +1920,18 @@ body.advertising-page {
   align-items: stretch;
 }
 
+/* Package collapse removed — always show full package under tabs (covers stale cached JS). */
+.ad-package-summary {
+  display: none !important;
+}
+
+.ad-package--collapsible.is-collapsed .ad-package-main,
+.ad-package--collapsible.is-collapsed .ad-package-preview,
+.ad-package--collapsible.is-collapsed .ad-package-span-full,
+.ad-package--collapsible.is-collapsed .ad-package-foot {
+  display: block !important;
+}
+
 .ad-package-browser .ad-package {
   border: 0;
   border-radius: 0;
