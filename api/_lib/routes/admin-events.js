@@ -11,6 +11,7 @@ const { plainEventDescription } = require('../event-description');
 const { ukOutcode } = require('../supabase-events');
 const { deriveLocationFields } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
+const { profileEmail } = require('../supabase-organiser-profile-email');
 
 function parseBody(req) {
   let body = req.body;
@@ -90,7 +91,7 @@ async function fetchOrganiserOptions(sb) {
   while (true) {
     const res = await sb
       .from('organisers')
-      .select('id, name, listing_status, slug')
+      .select('id, name, listing_status, slug, email, contact_email, ownership_claim_status')
       .order('name', { ascending: true })
       .range(from, from + pageSize - 1);
     if (res.error) throw new Error(res.error.message);
@@ -116,7 +117,7 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
     photo_url: eventImageUrl(row),
     organiser_id: row.organiser_id || '',
     organiser_name: org ? String(org.name || '').trim() : '',
-    organiser_email: org ? String(org.email || '').trim().toLowerCase() : '',
+    organiser_email: org ? profileEmail(org) : '',
     organiser_ownership_status: org ? String(org.ownership_claim_status || '').trim() : '',
     organiser_slug: org ? publicOrganiserSlug(org) || '' : '',
     starts_at: row.starts_at || '',
@@ -222,9 +223,7 @@ async function listEventsForAdmin(query) {
         rows.map((row) => row.organiser_id)
       );
 
-  const orgById = new Map(
-    organisers.map((o) => [o.id, { id: o.id, name: o.name, slug: o.slug, listing_status: o.listing_status }])
-  );
+  const orgById = new Map(organisers.map((o) => [o.id, o]));
   let commerceStats = null;
   let cancellationsByEvent = null;
   if (!light) {
@@ -943,16 +942,29 @@ module.exports = async function handler(req, res) {
       return json(res, e.status || 400, { error: e.message });
     }
 
-    if (!Object.keys(patch).length && !body.photo_base64) {
+    if (!Object.keys(patch).length && !body.photo_base64 && !String(body.organiser_contact_email || body.contact_email || '').trim()) {
       return json(res, 400, { error: 'no_fields' });
     }
 
     try {
       const sb = getSupabaseAdmin();
       const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
-      const claimOrganiserId = String(
-        body.organiser_id || patch.organiser_id || ''
-      ).trim();
+      const { applyOrganiserContactEmail } = require('./admin-organisers');
+      const organiserContactEmail = String(body.organiser_contact_email || body.contact_email || '').trim();
+      let claimOrganiserId = String(body.organiser_id || patch.organiser_id || '').trim();
+      if (organiserContactEmail) {
+        if (!claimOrganiserId) {
+          const { data: existingRow } = await sb
+            .from('events')
+            .select('organiser_id')
+            .eq('id', id)
+            .maybeSingle();
+          claimOrganiserId = String(existingRow?.organiser_id || '').trim();
+        }
+        if (claimOrganiserId) {
+          await applyOrganiserContactEmail(claimOrganiserId, organiserContactEmail);
+        }
+      }
       if (claimOrganiserId) {
         await ensureOrganiserClaimedForAdminEvent(claimOrganiserId);
       } else {

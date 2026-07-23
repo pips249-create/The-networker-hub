@@ -459,7 +459,10 @@
     page: 0,
     q: '',
     total: 0,
+    items: [],
+    hasMore: false,
     loading: false,
+    loadingMore: false,
     selected: {},
     expanded: {},
   };
@@ -9721,7 +9724,12 @@
   }
 
   function missingBadge(field) {
-    var labels = { description: 'No bio', logo: 'No logo', website: 'No website' };
+    var labels = {
+      description: 'No bio',
+      logo: 'No logo',
+      website: 'No website',
+      email: 'No contact email',
+    };
     return (
       '<span class="inline-flex items-center rounded-full bg-amber-100 text-amber-900 text-[10px] font-semibold px-2 py-0.5 mr-1">' +
       esc(labels[field] || field) +
@@ -9817,7 +9825,19 @@
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
       '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       organiserOptionsHtml(organisers, ev.organiser_id) +
-      '</select></div>' +
+      '</select>' +
+      (ev.organiser_id && !ev.organiser_email
+        ? '<p class="text-[11px] text-amber-800 font-semibold mt-1">This organiser profile has no contact email — add one below so the owner can sign in.</p>'
+        : ev.organiser_email
+          ? '<p class="text-[11px] text-slate-500 mt-1">Owner email: ' + esc(ev.organiser_email) + '</p>'
+          : '') +
+      '</div>' +
+      (ev.organiser_id
+        ? '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser contact email</label>' +
+          '<input type="email" name="organiser_contact_email" autocomplete="email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(ev.organiser_email || '') +
+          '" placeholder="hello@chapter-leader.com"></div>'
+        : '') +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
       '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(toDatetimeLocalValue(ev.starts_at)) +
@@ -10252,6 +10272,11 @@
       '<input type="text" name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(o.name || '') +
       '" placeholder="Networking group name"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Contact email</label>' +
+      '<input type="email" name="contact_email" autocomplete="email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(o.email || '') +
+      '" placeholder="hello@theircompany.com">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Links this profile to an organiser login and shows on event cleanup.</p></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
       '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(o.website || '') +
@@ -10465,9 +10490,17 @@
       });
   }
 
-  function fetchEventCleanup(pageIndex) {
-    if (eventCleanupState.loading) return Promise.resolve(eventCleanupCache);
-    eventCleanupState.loading = true;
+  function fetchEventCleanup(pageIndex, options) {
+    var opts = options || {};
+    var append = Boolean(opts.append);
+    if (!append && eventCleanupState.loading) return Promise.resolve(eventCleanupCache);
+    if (append && (eventCleanupState.loadingMore || eventCleanupState.loading || !eventCleanupState.hasMore)) {
+      return Promise.resolve(eventCleanupCache);
+    }
+
+    if (append) eventCleanupState.loadingMore = true;
+    else eventCleanupState.loading = true;
+
     var page =
       typeof pageIndex === 'number' && !isNaN(pageIndex) ? Math.max(0, pageIndex) : eventCleanupState.page;
     eventCleanupState.page = page;
@@ -10484,27 +10517,91 @@
     return adminGet('/api/admin/events?' + params.toString())
       .then(function (data) {
         eventCleanupState.loading = false;
+        eventCleanupState.loadingMore = false;
         if (!data || data.error) return data;
-        eventCleanupCache = data;
-        eventCleanupState.total = data.total != null ? data.total : (data.events || []).length;
+        var batch = data.events || [];
+        eventCleanupState.total = data.total != null ? data.total : batch.length;
+        if (append) {
+          var seen = new Set(
+            eventCleanupState.items.map(function (ev) {
+              return ev.id;
+            })
+          );
+          batch.forEach(function (ev) {
+            if (!ev || !ev.id || seen.has(ev.id)) return;
+            seen.add(ev.id);
+            eventCleanupState.items.push(ev);
+          });
+        } else {
+          eventCleanupState.items = batch.slice();
+        }
+        eventCleanupState.hasMore = eventCleanupState.items.length < eventCleanupState.total;
+        eventCleanupCache = Object.assign({}, data, { events: eventCleanupState.items });
         return eventCleanupCache;
       })
       .catch(function () {
         eventCleanupState.loading = false;
+        eventCleanupState.loadingMore = false;
         return { error: 'network_error' };
       });
   }
 
-  function goToEventPage(page) {
-    var next = Math.max(0, page);
-    var listEl = document.getElementById('event-cleanup-list');
-    eventCleanupState.expanded = {};
-    fetchEventCleanup(next).then(function (data) {
-      applyEventCleanupData(data);
-      if (listEl && listEl.scrollIntoView) {
-        listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+  function loadMoreEventCleanup() {
+    if (!eventCleanupState.hasMore || eventCleanupState.loadingMore || eventCleanupState.loading) {
+      return Promise.resolve(eventCleanupCache);
+    }
+    var nextPage = Math.floor(eventCleanupState.items.length / EVENT_PAGE_SIZE);
+    return fetchEventCleanup(nextPage, { append: true }).then(function (data) {
+      applyEventCleanupData(data, { append: true });
+      return data;
     });
+  }
+
+  function bindEventCleanupLazyLoad() {
+    var pane = document.getElementById('event-cleanup-list-pane');
+    var sentinel = document.getElementById('event-cleanup-lazy-sentinel');
+    if (!pane || !sentinel) return;
+    if (pane._eventCleanupLazyObserver) {
+      pane._eventCleanupLazyObserver.disconnect();
+      pane._eventCleanupLazyObserver = null;
+    }
+    if (!('IntersectionObserver' in window)) return;
+    pane._eventCleanupLazyObserver = new IntersectionObserver(
+      function (entries) {
+        if (entries.some(function (entry) {
+          return entry.isIntersecting;
+        })) {
+          loadMoreEventCleanup();
+        }
+      },
+      { root: pane, rootMargin: '240px 0px', threshold: 0 }
+    );
+    pane._eventCleanupLazyObserver.observe(sentinel);
+  }
+
+  function updateEventCleanupLazyUi() {
+    var sentinel = document.getElementById('event-cleanup-lazy-sentinel');
+    var lazyStatus = document.getElementById('event-cleanup-lazy-status');
+    if (sentinel) {
+      sentinel.hidden = !eventCleanupState.hasMore && !eventCleanupState.loadingMore;
+    }
+    if (lazyStatus) {
+      lazyStatus.hidden = !eventCleanupState.loadingMore;
+      lazyStatus.textContent = eventCleanupState.loadingMore ? 'Loading more events…' : '';
+    }
+  }
+
+  function goToEventPage(page) {
+    eventCleanupState.page = Math.max(0, page);
+    var pane = document.getElementById('event-cleanup-list-pane');
+    eventCleanupState.expanded = {};
+    eventCleanupState.items = [];
+    eventCleanupState.hasMore = false;
+    return fetchEventCleanup(eventCleanupState.page)
+      .then(applyEventCleanupData)
+      .then(function () {
+        if (pane) pane.scrollTop = 0;
+      });
   }
 
   function createGroupCleanupForm(form) {
@@ -10592,6 +10689,7 @@
         return adminPost('/api/admin/organisers', {
           id: id,
           name: formFieldVal(form, 'name'),
+          contact_email: formFieldVal(form, 'contact_email'),
           description: formFieldVal(form, 'description'),
           website: formFieldVal(form, 'website'),
           photo_url: logoPayload.photo_url,
@@ -10960,15 +11058,17 @@
         var payload = { action: 'bulk_update', ids: ids };
         var desc = formFieldVal(form, 'bulk_description');
         var site = formFieldVal(form, 'bulk_website');
+        var bulkEmail = formFieldVal(form, 'bulk_contact_email').trim();
         if (desc) payload.description = desc;
         if (site) payload.website = site;
+        if (bulkEmail) payload.contact_email = bulkEmail;
         if (logoPayload.photo_url) payload.photo_url = logoPayload.photo_url;
         if (logoPayload.logoBase64) {
           payload.logoBase64 = logoPayload.logoBase64;
           payload.logoMime = logoPayload.logoMime;
           payload.logoFilename = logoPayload.logoFilename;
         }
-        if (!payload.description && !payload.website && !payload.photo_url && !payload.logoBase64) {
+        if (!payload.description && !payload.website && !payload.contact_email && !payload.photo_url && !payload.logoBase64) {
           throw new Error('Fill in at least one field to apply.');
         }
         return adminPost('/api/admin/organisers', payload);
@@ -11012,6 +11112,7 @@
             id: id,
             title: formFieldVal(form, 'title'),
             organiser_id: formFieldVal(form, 'organiser_id') || null,
+            organiser_contact_email: formFieldVal(form, 'organiser_contact_email').trim(),
             starts_at: formFieldVal(form, 'starts_at') || null,
             event_type: formFieldVal(form, 'event_type') || null,
             meeting_type: formFieldVal(form, 'meeting_type') || null,
@@ -11509,6 +11610,11 @@
       adminPost('/api/admin/events', { action: 'ensure_organiser_owner', organiser_id: grantOrganiserId })
         .then(function (data) {
           if (!data.ok) throw new Error(data.message || data.error || 'Could not grant access');
+          if (data.reason === 'missing_email') {
+            throw new Error(
+              'This organiser profile has no contact email. Add one in the event editor or Group profile cleanup, then try again.'
+            );
+          }
           var msg = grantAccessBtn.closest('.event-cleanup-form');
           var msgEl = msg && msg.querySelector('.event-cleanup-msg');
           if (msgEl) {
@@ -11536,13 +11642,21 @@
       adminPost('/api/admin/events', { action: 'bulk_ensure_organiser_owner', ids: bulkIds })
         .then(function (data) {
           if (!data.ok) throw new Error(data.message || data.error || 'Could not grant access');
+          var skipped = (data.results || []).filter(function (row) {
+            return row && row.reason === 'missing_email';
+          }).length;
           if (bulkMsg) {
             bulkMsg.textContent =
               'Granted access for ' +
               String(data.organiser_count || 0) +
               ' organiser profile' +
               (Number(data.organiser_count) === 1 ? '' : 's') +
-              '.';
+              '.' +
+              (skipped
+                ? ' ' +
+                  skipped +
+                  ' skipped — add a contact email on the organiser profile first (Group profile cleanup or event editor).'
+                : '');
             bulkMsg.className = 'text-xs text-emerald-700 font-semibold';
           }
         })
@@ -11982,6 +12096,8 @@
       '<p class="text-xs text-slate-600">Search again to add more groups — your selection is kept until you merge, delete, or clear.</p>' +
       '<div id="group-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
       '<p class="text-xs text-slate-600">Only filled-in fields are applied to every selected group.</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Contact email</label>' +
+      '<input type="email" name="bulk_contact_email" autocomplete="email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank to keep existing emails"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
       '<textarea name="bulk_description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank to keep existing bios"></textarea></div>' +
       adminLogoFieldHtml('bulk', '') +
@@ -12625,7 +12741,8 @@
       });
   }
 
-  function applyEventCleanupData(data) {
+  function applyEventCleanupData(data, options) {
+    var opts = options || {};
     var status = document.getElementById('event-cleanup-status');
     if (!data || data.error || data.ok === false) {
       if (status) {
@@ -12634,19 +12751,28 @@
           esc((data && (data.error || data.message)) || 'unknown') +
           ').</span>';
       }
+      updateEventCleanupLazyUi();
       return;
     }
 
     eventCleanupCache = data;
-    renderEventCleanupList();
-    fetchEventOrganiserOptions().then(populateEventOrganiserSelects);
+    renderEventCleanupList({ append: Boolean(opts.append) });
+    updateEventCleanupLazyUi();
+    bindEventCleanupLazyLoad();
+    if (!opts.append) {
+      fetchEventOrganiserOptions().then(populateEventOrganiserSelects);
+    }
   }
 
   function refreshEventCleanupData() {
     eventCleanupState.page = 0;
+    eventCleanupState.items = [];
+    eventCleanupState.hasMore = false;
     eventCleanupState.expanded = {};
     var status = document.getElementById('event-cleanup-status');
+    var pane = document.getElementById('event-cleanup-list-pane');
     if (status) status.textContent = 'Loading events…';
+    if (pane) pane.scrollTop = 0;
     return fetchEventCleanup(0)
       .then(applyEventCleanupData)
       .catch(function () {
@@ -12658,7 +12784,87 @@
     return fetchEventCleanup(eventCleanupState.page).then(applyEventCleanupData);
   }
 
-  function renderEventCleanupList() {
+  function eventCleanupRowHtml(ev, organisers) {
+    var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
+    var organiserLabel = ev.organiser_name
+      ? esc(ev.organiser_name)
+      : '<span class="text-amber-800 font-semibold">Unlinked</span>';
+    if (ev.organiser_email) {
+      organiserLabel +=
+        '<span class="block text-[10px] text-slate-500 truncate mt-0.5">' +
+        esc(ev.organiser_email) +
+        '</span>';
+    } else if (ev.organiser_id) {
+      organiserLabel +=
+        '<span class="block text-[10px] text-amber-800 font-semibold mt-0.5">No owner email</span>';
+    }
+    var dateLabel = ev.starts_at
+      ? esc(fmtTime(ev.starts_at))
+      : '<span class="text-slate-400">No date</span>';
+    if (eventCleanupState.selected[ev.id]) rememberSelectedEvent(ev);
+    var checked = eventCleanupState.selected[ev.id] ? ' checked' : '';
+    var isOpen = !!eventCleanupState.expanded[ev.id];
+    return (
+      '<tr class="border-b border-slate-100 hover:bg-slate-50/80" data-event-id-row="' +
+      attrEsc(ev.id) +
+      '">' +
+      '<td class="py-2.5 pr-2 w-8">' +
+      '<input type="checkbox" class="event-select-checkbox rounded border-slate-300" value="' +
+      attrEsc(ev.id) +
+      '"' +
+      checked +
+      ' aria-label="Select ' +
+      attrEsc(ev.title || 'event') +
+      '">' +
+      '</td>' +
+      '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
+      attrEsc(ev.title || 'Untitled') +
+      '">' +
+      esc(ev.title || 'Untitled') +
+      '</div>' +
+      (ev.city ? '<div class="text-[11px] text-slate-500 truncate">' + esc(ev.city) + '</div>' : '') +
+      '</td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 max-w-[10rem]"><span class="block truncate">' +
+      organiserLabel +
+      '</span></td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
+      dateLabel +
+      '</td>' +
+      '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
+      listingStatusBadge(ev.status) +
+      approvalStatusBadge(ev.approval_status) +
+      (Math.max(0, Number(ev.registration_count) || 0) > 0
+        ? '<span class="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">' +
+          esc(String(ev.registration_count)) +
+          ' booking' +
+          (Number(ev.registration_count) === 1 ? '' : 's') +
+          '</span>'
+        : '') +
+      '</div></td>' +
+      '<td class="py-2.5 text-right whitespace-nowrap">' +
+      '<div class="flex flex-wrap justify-end gap-2">' +
+      (publicHref
+        ? '<a href="' +
+          attrEsc(publicHref) +
+          '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>'
+        : '') +
+      '<button type="button" data-toggle-event-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+      (isOpen ? 'Close' : 'Edit') +
+      '</button>' +
+      '</div></td></tr>' +
+      '<tr class="event-cleanup-panel' +
+      (isOpen ? '' : ' hidden') +
+      ' border-b border-slate-200 bg-slate-50/80" data-event-panel-for="' +
+      attrEsc(ev.id) +
+      '">' +
+      '<td colspan="6" class="p-4">' +
+      eventCleanupEditFormHtml(ev, organisers) +
+      '</td></tr>'
+    );
+  }
+
+  function renderEventCleanupList(options) {
+    var opts = options || {};
     var list = document.getElementById('event-cleanup-list');
     var status = document.getElementById('event-cleanup-status');
     var hint = document.getElementById('event-cleanup-hint');
@@ -12667,20 +12873,21 @@
     var data = eventCleanupCache;
     var organisers =
       eventOrganiserOptionsCache || (data.organisers || []).map(normalizeOrganiserOption);
-    var events = data.events || [];
-    var page = eventCleanupState.page;
-    var pageStart = events.length ? page * EVENT_PAGE_SIZE + 1 : 0;
-    var pageEnd = page * EVENT_PAGE_SIZE + events.length;
-    var total = eventCleanupState.total || events.length;
+    var events = eventCleanupState.items.length ? eventCleanupState.items : data.events || [];
+    var shown = events.length;
+    var total = eventCleanupState.total || shown;
 
     if (status) {
       var parts = [
         '<span class="text-brand-900 font-semibold">' +
-          (events.length
-            ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' event' + (total === 1 ? '' : 's')
-            : 'No events on this page') +
+          (shown
+            ? 'Showing ' + shown + ' of ' + total + ' event' + (total === 1 ? '' : 's')
+            : 'No events match your filters') +
           '</span>',
       ];
+      if (eventCleanupState.hasMore) {
+        parts.push('<span class="text-slate-500">Scroll for more</span>');
+      }
       if (data.unlinked_count) {
         parts.push(
           '<span class="text-amber-800 font-semibold">' +
@@ -12695,98 +12902,23 @@
     }
 
     if (hint) {
-      if (total > EVENT_PAGE_SIZE && !eventCleanupHasActiveFilters()) {
+      if (total > EVENT_PAGE_SIZE) {
         hint.classList.remove('hidden');
       } else {
         hint.classList.add('hidden');
       }
     }
 
-    if (!events.length) {
+    if (!shown) {
       list.innerHTML =
-        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event below.</p>' +
-        adminPaginationHtml(page, total, EVENT_PAGE_SIZE, 'data-event-page');
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No events match your filters. Try search, quick filters, or create a new event above.</p>';
+      updateEventBulkBar();
       return;
     }
 
     var rows = events
       .map(function (ev) {
-        var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
-        var organiserLabel = ev.organiser_name
-          ? esc(ev.organiser_name)
-          : '<span class="text-amber-800 font-semibold">Unlinked</span>';
-        if (ev.organiser_email) {
-          organiserLabel +=
-            '<span class="block text-[10px] text-slate-500 truncate mt-0.5">' +
-            esc(ev.organiser_email) +
-            '</span>';
-        } else if (ev.organiser_id) {
-          organiserLabel +=
-            '<span class="block text-[10px] text-amber-800 font-semibold mt-0.5">No owner email</span>';
-        }
-        var dateLabel = ev.starts_at
-          ? esc(fmtTime(ev.starts_at))
-          : '<span class="text-slate-400">No date</span>';
-        if (eventCleanupState.selected[ev.id]) rememberSelectedEvent(ev);
-        var checked = eventCleanupState.selected[ev.id] ? ' checked' : '';
-        var isOpen = !!eventCleanupState.expanded[ev.id];
-        return (
-          '<tr class="border-b border-slate-100 hover:bg-slate-50/80" data-event-id-row="' +
-          attrEsc(ev.id) +
-          '">' +
-          '<td class="py-2.5 pr-2 w-8">' +
-          '<input type="checkbox" class="event-select-checkbox rounded border-slate-300" value="' +
-          attrEsc(ev.id) +
-          '"' +
-          checked +
-          ' aria-label="Select ' +
-          attrEsc(ev.title || 'event') +
-          '">' +
-          '</td>' +
-          '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
-          attrEsc(ev.title || 'Untitled') +
-          '">' +
-          esc(ev.title || 'Untitled') +
-          '</div>' +
-          (ev.city ? '<div class="text-[11px] text-slate-500 truncate">' + esc(ev.city) + '</div>' : '') +
-          '</td>' +
-          '<td class="py-2.5 pr-3 text-xs text-slate-600 max-w-[10rem]"><span class="block truncate">' +
-          organiserLabel +
-          '</span></td>' +
-          '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
-          dateLabel +
-          '</td>' +
-          '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
-          listingStatusBadge(ev.status) +
-          approvalStatusBadge(ev.approval_status) +
-          (Math.max(0, Number(ev.registration_count) || 0) > 0
-            ? '<span class="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">' +
-              esc(String(ev.registration_count)) +
-              ' booking' +
-              (Number(ev.registration_count) === 1 ? '' : 's') +
-              '</span>'
-            : '') +
-          '</div></td>' +
-          '<td class="py-2.5 text-right whitespace-nowrap">' +
-          '<div class="flex flex-wrap justify-end gap-2">' +
-          (publicHref
-            ? '<a href="' +
-              attrEsc(publicHref) +
-              '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>'
-            : '') +
-          '<button type="button" data-toggle-event-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
-          (isOpen ? 'Close' : 'Edit') +
-          '</button>' +
-          '</div></td></tr>' +
-          '<tr class="event-cleanup-panel' +
-          (isOpen ? '' : ' hidden') +
-          ' border-b border-slate-200 bg-slate-50/80" data-event-panel-for="' +
-          attrEsc(ev.id) +
-          '">' +
-          '<td colspan="6" class="p-4">' +
-          eventCleanupEditFormHtml(ev, organisers) +
-          '</td></tr>'
-        );
+        return eventCleanupRowHtml(ev, organisers);
       })
       .join('');
 
@@ -12804,15 +12936,60 @@
           '</tr></thead><tbody>' +
           rows +
           '</tbody></table>'
-      ) +
-      adminPaginationHtml(page, total, EVENT_PAGE_SIZE, 'data-event-page');
+      );
     updateEventBulkBar();
   }
 
-  function renderEventCleanup() {
-    main.innerHTML =
-      '<div class="space-y-4">' +
-      '<div class="admin-filter-bar admin-filter-bar--sticky rounded-xl border border-slate-200 p-4 space-y-3">' +
+  function eventCleanupCreateSectionHtml() {
+    return (
+      '<section class="event-cleanup-create rounded-xl border border-brand-200 bg-brand-50/50 shadow-sm">' +
+      '<h2 class="font-semibold text-brand-900 px-4 py-3 border-b border-brand-100">Create event for a group</h2>' +
+      '<div class="px-4 pb-4 space-y-3 pt-3">' +
+      '<p class="text-xs text-slate-600">Add an event under an existing organiser profile with the core listing details. You can publish as a listing without tickets — visitors can nudge the organiser to add them. Organisers finish tickets and enable sales when ready.</p>' +
+      '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
+      eventDescriptionFieldHtml('') +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<div id="event-create-organiser-picker" class="relative">' +
+      '<input type="hidden" name="organiser_id" id="event-create-organiser-id">' +
+      '<input type="search" id="event-create-organiser-search" autocomplete="off" placeholder="Search by group name…" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<div id="event-create-organiser-selected" class="hidden rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm"></div>' +
+      '<div id="event-create-organiser-results" class="hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
+      '</div></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Dates (optional)</label>' +
+      '<p class="text-xs text-slate-500 mb-2">Add one or more dates. The same start and end time applies to each date. Multiple dates create a linked series.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3 mb-3">' +
+      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">Start time</label>' +
+      '<input type="time" name="start_time" value="10:00" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">End time (optional)</label>' +
+      '<input type="time" name="end_time" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div></div>' +
+      '<div id="event-create-dates-list" class="space-y-2 mb-2"></div>' +
+      '<button type="button" id="event-create-add-date" class="text-xs font-semibold text-brand-700 hover:underline">+ Add another date</button></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+      '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventTypeOptions('Meeting') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+      '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      meetingFormatOptions('In person') +
+      '</select></div>' +
+      eventLocationFieldsHtml({ meeting_type: 'In person' }) +
+      eventPhotoFieldHtml('event-create-photo', '') +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventStatusOptions('published') +
+      '</select>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Published events go live on browse (listing-only until tickets are added).</p></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
+      '<span class="event-create-msg text-xs"></span></div></form></div></section>'
+    );
+  }
+
+  function eventCleanupFiltersHtml() {
+    return (
+      '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="event-cleanup-search" placeholder="Search title or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(eventCleanupState.q) +
@@ -12861,10 +13038,15 @@
       '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '<div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label>' +
-      '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div></div></div>' +
+      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all loaded</label>' +
+      '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div></div></div>'
+    );
+  }
+
+  function eventCleanupBulkHtml() {
+    return (
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — search by title or city, pick an organiser, or use quick filters below. Use page numbers below the table to browse.</p>' +
+      'Large catalogue — search by title or city, pick an organiser, or use quick filters. Scroll the list below to load more.</p>' +
       '<div id="event-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="event-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -12910,50 +13092,23 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">Cancel event &amp; refund bookings</button>' +
       '<button type="button" id="event-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">Delete empty events</button>' +
-      '<span id="event-delete-msg" class="text-xs"></span></div></div></div>' +
+      '<span id="event-delete-msg" class="text-xs"></span></div></div></div>'
+    );
+  }
+
+  function renderEventCleanup() {
+    main.innerHTML =
+      '<div class="event-cleanup-page">' +
+      eventCleanupCreateSectionHtml() +
+      '<div class="event-cleanup-toolbar space-y-3">' +
+      eventCleanupFiltersHtml() +
+      eventCleanupBulkHtml() +
+      '</div>' +
+      '<div id="event-cleanup-list-pane" class="event-cleanup-list-pane">' +
       '<div id="event-cleanup-list"></div>' +
-      '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group">' +
-      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
-      '<div class="px-4 pb-4 space-y-3 border-t border-brand-100">' +
-      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile with the core listing details. You can publish as a listing without tickets — visitors can nudge the organiser to add them. Organisers finish tickets and enable sales when ready.</p>' +
-      '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
-      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
-      eventDescriptionFieldHtml('') +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
-      '<div id="event-create-organiser-picker" class="relative">' +
-      '<input type="hidden" name="organiser_id" id="event-create-organiser-id">' +
-      '<input type="search" id="event-create-organiser-search" autocomplete="off" placeholder="Search by group name…" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      '<div id="event-create-organiser-selected" class="hidden rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm"></div>' +
-      '<div id="event-create-organiser-results" class="hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
-      '</div></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Dates (optional)</label>' +
-      '<p class="text-xs text-slate-500 mb-2">Add one or more dates. The same start and end time applies to each date. Multiple dates create a linked series.</p>' +
-      '<div class="grid sm:grid-cols-2 gap-3 mb-3">' +
-      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">Start time</label>' +
-      '<input type="time" name="start_time" value="10:00" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
-      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">End time (optional)</label>' +
-      '<input type="time" name="end_time" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div></div>' +
-      '<div id="event-create-dates-list" class="space-y-2 mb-2"></div>' +
-      '<button type="button" id="event-create-add-date" class="text-xs font-semibold text-brand-700 hover:underline">+ Add another date</button></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
-      '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      eventTypeOptions('Meeting') +
-      '</select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
-      '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      meetingFormatOptions('In person') +
-      '</select></div>' +
-      eventLocationFieldsHtml({ meeting_type: 'In person' }) +
-      eventPhotoFieldHtml('event-create-photo', '') +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
-      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      eventStatusOptions('published') +
-      '</select>' +
-      '<p class="text-[11px] text-slate-500 mt-1">Published events go live on browse (listing-only until tickets are added).</p></div>' +
-      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
-      '<span class="event-create-msg text-xs"></span></div></form></div></details></div>';
+      '<div id="event-cleanup-lazy-sentinel" class="event-cleanup-lazy-sentinel" aria-hidden="true"></div>' +
+      '<div id="event-cleanup-lazy-status" class="event-cleanup-lazy-status hidden">Loading more events…</div>' +
+      '</div></div>';
 
     syncEventCleanupFilterUi();
     bindEventCreateOrganiserPicker();

@@ -8,7 +8,7 @@ const { createGroup } = require('../supabase-organiser');
 const { resolveClaimDispute, clearDisputedProfileEmail, resolveOrganiserClaimRequest, approveOrganiserClaimRequest } = require('../admin-supabase-data');
 
 const INCOMPLETE_FILTER =
-  'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
+  'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.,email.is.null,email.eq.,contact_email.is.null,contact_email.eq.';
 const INCOMPLETE_COUNT_CACHE_MS = 60 * 1000;
 let incompleteCountCache = { value: null, at: 0 };
 
@@ -74,6 +74,7 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
   const website = String(row.website || '').trim();
   const email = String(row.contact_email || row.email || '').trim().toLowerCase();
   const missing = [];
+  if (!email) missing.push('email');
   if (!description) missing.push('description');
   if (!photoUrl) missing.push('logo');
   if (!website) missing.push('website');
@@ -208,8 +209,73 @@ async function resolveOrganiserPhotoUrl(body, folder) {
   return photo_url;
 }
 
+function normalizeContactEmail(body) {
+  if (
+    !Object.prototype.hasOwnProperty.call(body, 'contact_email') &&
+    !Object.prototype.hasOwnProperty.call(body, 'email')
+  ) {
+    return undefined;
+  }
+  const email = String(body.contact_email ?? body.email ?? '')
+    .trim()
+    .toLowerCase();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const err = new Error('invalid_email');
+    err.status = 400;
+    err.message = 'Enter a valid contact email.';
+    throw err;
+  }
+  return email || null;
+}
+
+async function applyOrganiserContactEmail(organiserId, email) {
+  const id = String(organiserId || '').trim();
+  const em = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (!id) {
+    const err = new Error('missing_id');
+    err.status = 400;
+    throw err;
+  }
+  if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+    const err = new Error('invalid_email');
+    err.status = 400;
+    err.message = 'Enter a valid contact email.';
+    throw err;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: existing, error: loadErr } = await sb
+    .from('organisers')
+    .select('id, ownership_claim_status')
+    .eq('id', id)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!existing) {
+    const err = new Error('organiser_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const patch = { email: em, contact_email: em };
+  if (existing.ownership_claim_status !== 'claimed' && existing.ownership_claim_status !== 'disputed') {
+    patch.ownership_claim_status = 'pending';
+  }
+
+  const { data, error } = await sb.from('organisers').update(patch).eq('id', id).select('*').single();
+  if (error) throw new Error(error.message);
+  invalidateIncompleteOrganiserCount();
+  return data;
+}
+
 function buildOrganiserPatch(body, photo_url) {
   const patch = {};
+  const contactEmail = normalizeContactEmail(body);
+  if (contactEmail !== undefined) {
+    patch.email = contactEmail;
+    patch.contact_email = contactEmail;
+  }
   if (Object.prototype.hasOwnProperty.call(body, 'name')) {
     patch.name = String(body.name || '').trim() || null;
   }
@@ -1058,8 +1124,19 @@ module.exports = async function handler(req, res) {
     const { data, error } = await sb.from('organisers').update(patch).eq('id', id).select('*').single();
     if (error) throw new Error(error.message);
     invalidateIncompleteOrganiserCount();
+    if (patch.contact_email) {
+      try {
+        const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+        await ensureOrganiserClaimedForAdminEvent(id);
+      } catch {
+        /* profile email saved; claim can run later */
+      }
+    }
     return json(res, 200, { ok: true, organiser: mapOrganiserRow(data, undefined) });
   } catch (e) {
-    return json(res, 500, { ok: false, error: 'update_failed', message: e.message });
+    const status = e.status || 500;
+    return json(res, status, { ok: false, error: e.message || 'update_failed', message: e.message });
   }
 };
+
+module.exports.applyOrganiserContactEmail = applyOrganiserContactEmail;

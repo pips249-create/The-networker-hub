@@ -247,6 +247,66 @@ async function getOrCreateOrganiserAccount(session) {
 }
 
 /** Profiles tied to this login always belong in the workspace (even in team mode). */
+async function emailMatchedOrganiserIdsForSession(session) {
+  const em = String(session?.email || '')
+    .trim()
+    .toLowerCase();
+  if (!em) return [];
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id')
+    .or(`email.eq.${em},contact_email.eq.${em}`)
+    .neq('ownership_claim_status', 'disputed');
+  if (error) throw new Error(error.message);
+  return (data || []).map((r) => r.id).filter(Boolean);
+}
+
+function workspaceGroupIds(groups, access) {
+  const ids = new Set((groups || []).map((g) => g.id).filter(Boolean));
+  ((access && access.groupIds) || []).forEach((id) => {
+    if (id) ids.add(id);
+  });
+  return [...ids];
+}
+
+/** Include email-matched profiles that bootstrap already shows in the workspace. */
+async function mergeEmailMatchedGroups(session, groups, access) {
+  const merged = [...(groups || [])];
+  const have = new Set(merged.map((g) => g.id));
+  const missingIds = workspaceGroupIds(groups, access).filter((id) => !have.has(id));
+  (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => {
+    if (!have.has(id)) missingIds.push(id);
+  });
+  const uniqueMissing = [...new Set(missingIds.filter(Boolean))].filter((id) => !have.has(id));
+  if (!uniqueMissing.length) return merged;
+
+  const sb = getSupabaseAdmin();
+  const { rowToGroup } = require('./supabase-organiser');
+  const { data, error } = await sb.from('organisers').select('*').in('id', uniqueMissing);
+  if (error) throw new Error(error.message);
+  (data || []).forEach((row) => {
+    if (!groupVisibleInOrganiserWorkspace(session, row)) return;
+    merged.push(rowToGroup(row));
+    have.add(row.id);
+  });
+  return merged;
+}
+
+async function listAccessibleGroupsForSession(session, adminView) {
+  const { syncEmailMatchedOrganiserClaims } = require('./supabase-organiser-claims');
+  if (!adminView) {
+    await syncEmailMatchedOrganiserClaims(session).catch(() => {});
+  }
+  const access = await resolveOrganiserAccess(session);
+  const { listGroupsForSession } = require('./supabase-organiser');
+  let groups = await listGroupsForSession(session, adminView, access);
+  if (!adminView) {
+    groups = await mergeEmailMatchedGroups(session, groups, access);
+  }
+  return { groups, access };
+}
+
 async function appendSessionOwnedOrganiserIds(sb, session, groupIds) {
   const uid = isUuid(session?.sub) ? session.sub : null;
   const em = String(session?.email || '').toLowerCase();
@@ -667,6 +727,9 @@ module.exports = {
   resolveOrganiserAccess,
   getOrCreateOrganiserAccount,
   groupVisibleInOrganiserWorkspace,
+  emailMatchedOrganiserIdsForSession,
+  mergeEmailMatchedGroups,
+  listAccessibleGroupsForSession,
   listTeamMembers,
   inviteTeamMember,
   removeTeamMember,

@@ -2,6 +2,7 @@ const { organiserPersonalScopeFromRequest } = require('../auth');
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertDescriptionLimit } = require('../text-limits');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
+const { listAccessibleGroupsForSession } = require('../supabase-organiser-access');
 
 function organiserApi() {
   return getOrganiserApi();
@@ -10,6 +11,12 @@ function organiserApi() {
 function adminViewForRequest(req, session) {
   const api = organiserApi();
   return api.isPlatformAdmin(session) && !organiserPersonalScopeFromRequest(req);
+}
+
+async function ownedGroupsForRequest(req, session) {
+  const adminView = adminViewForRequest(req, session);
+  const { groups } = await listAccessibleGroupsForSession(session, adminView);
+  return { groups, adminView };
 }
 
 function parseBody(req) {
@@ -41,7 +48,7 @@ module.exports = async function handler(req, res) {
     const groupId = String(req.query?.id || '').trim();
     try {
       if (groupId) {
-        const groups = await api.listGroupsForSession(auth.session);
+        const { groups, adminView } = await ownedGroupsForRequest(req, auth.session);
         if (!api.isPlatformAdmin(auth.session) && !api.groupOwnedBySession(auth.session, groups, groupId)) {
           return json(res, 403, { error: 'group_not_owned' });
         }
@@ -49,11 +56,11 @@ module.exports = async function handler(req, res) {
         const group = await api.enrichGroupForDashboard(
           raw,
           auth.session,
-          adminViewForRequest(req, auth.session)
+          adminView
         );
         return json(res, 200, { ok: true, group });
       }
-      const groups = await api.listGroupsForSession(auth.session);
+      const { groups } = await ownedGroupsForRequest(req, auth.session);
       return json(res, 200, { ok: true, groups });
     } catch (e) {
       return json(res, e.status || 500, {
@@ -96,7 +103,7 @@ module.exports = async function handler(req, res) {
     if (!hasProfileFields) return json(res, 400, { error: 'missing_fields' });
 
     try {
-      const groups = await api.listGroupsForSession(auth.session);
+      const { groups, adminView } = await ownedGroupsForRequest(req, auth.session);
       if (!api.groupOwnedBySession(auth.session, groups, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
@@ -126,7 +133,7 @@ module.exports = async function handler(req, res) {
       const group = await api.enrichGroupForDashboard(
         updated,
         auth.session,
-        adminViewForRequest(req, auth.session)
+        adminView
       );
       const saveWarnings = updated.saveWarnings || [];
       const message =
@@ -173,7 +180,7 @@ module.exports = async function handler(req, res) {
 
     if (action === 'unpublish' && actionGroupId) {
       try {
-        const groups = await api.listGroupsForSession(auth.session);
+        const { groups } = await ownedGroupsForRequest(req, auth.session);
         if (!api.groupOwnedBySession(auth.session, groups, actionGroupId)) {
           return json(res, 403, { error: 'group_not_owned' });
         }
@@ -195,7 +202,7 @@ module.exports = async function handler(req, res) {
 
     if (action === 'duplicate' && actionGroupId) {
       try {
-        const groups = await api.listGroupsForSession(auth.session);
+        const { groups } = await ownedGroupsForRequest(req, auth.session);
         if (!api.groupOwnedBySession(auth.session, groups, actionGroupId)) {
           return json(res, 403, { error: 'group_not_owned' });
         }

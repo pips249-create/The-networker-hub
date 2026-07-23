@@ -432,7 +432,14 @@
       }
 
       if (!res.ok) {
-        showAlert(res.data.message || res.data.error || 'Could not save profile');
+        const err = res.data.error || '';
+        if (err === 'group_not_owned') {
+          showAlert(
+            'This organiser page is not linked to your account yet. Sign in with the email on the profile, or use Request access on the public page.'
+          );
+          return;
+        }
+        showAlert(res.data.message || err || 'Could not save profile');
         return;
       }
 
