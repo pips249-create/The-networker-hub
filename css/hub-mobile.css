@@ -387,6 +387,13 @@ body.nav-menu-open {
     gap: 16px;
   }
 
+  .footer-logo {
+    height: 72px;
+    max-width: min(280px, 72vw);
+    margin: 0 auto;
+    object-position: center center;
+  }
+
   .footer-columns {
     width: 100%;
     justify-content: flex-start;

@@ -992,9 +992,12 @@ body.hub-page-account .site-nav {
   flex-shrink: 0;
 }
 .footer-logo {
-  height: 56px;
+  height: 88px;
   width: auto;
+  max-width: min(320px, 42vw);
   display: block;
+  object-fit: contain;
+  object-position: left center;
 }
 .footer-columns {
   display: flex;

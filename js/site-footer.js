@@ -1,9 +1,9 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260722b
+ * FOOTER_BUILD=20260723a
  */
 (function () {
-  var FOOTER_BUILD = '20260722b';
+  var FOOTER_BUILD = '20260723a';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -23,8 +23,8 @@
     href('/') +
     '" class="footer-brand" aria-label="Home">' +
     '<img class="footer-logo" src="' +
-    href('/assets/logo.png') +
-    '" alt="" width="187" height="70" aria-hidden="true">' +
+    href('/assets/logo-nav-transparent.png?v=20260723a') +
+    '" alt="" width="714" height="193" aria-hidden="true">' +
     '</a>' +
     '<div class="footer-columns">' +
     '<div class="footer-col">' +
