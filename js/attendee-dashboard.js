@@ -14,6 +14,7 @@
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   let savedScope = 'events';
+  let ticketsScope = 'upcoming';
   let opportunitySavedScope = 'listings';
   let reviewsScope = 'pending';
   let openUtilityMenu = null;
@@ -36,6 +37,10 @@
       title: 'Saved organisers',
       sub: 'Networking groups and hosts you follow. Saving an event also saves its organiser.',
     },
+    reviews: {
+      title: 'Organiser reviews',
+      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
+    },
   };
 
   const OPPORTUNITY_SAVED_SCOPE_HEAD = {
@@ -50,6 +55,10 @@
   };
 
   const SUBPAGE_HEAD = {
+    tickets: {
+      title: 'Event tickets',
+      sub: 'Events you are registered for, payment history, and cancelled bookings.',
+    },
     upcoming: {
       title: 'Upcoming events',
       sub: 'Events you are registered for or have applied to attend.',
@@ -64,7 +73,7 @@
     },
     saved: {
       title: 'Saved & memberships',
-      sub: 'Your group memberships, saved events, and saved organisers.',
+      sub: 'Your group memberships, saved events, saved organisers, and organiser reviews from events you attended.',
     },
     'saved-opportunities': {
       title: 'Saved listings',
@@ -132,9 +141,19 @@
     if (empty) empty.hidden = !isEmpty;
   }
 
+  const TICKETS_SCOPES = ['upcoming', 'past', 'payments', 'cancellations'];
+
+  function isTicketsScope(scope) {
+    return TICKETS_SCOPES.includes(scope);
+  }
+
   function routeHash() {
     if (currentRoute === 'overview') return '';
+    if (currentRoute === 'tickets') return '#' + ticketsScope;
     if (currentRoute === 'saved' && savedScope === 'groups') return '#memberships';
+    if (currentRoute === 'saved' && savedScope === 'reviews') {
+      return reviewsScope === 'done' ? '#reviews-done' : '#reviews-pending';
+    }
     if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'alerts') return '#search-alerts';
     if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
     return '#' + currentRoute;
@@ -1082,12 +1101,13 @@
   }
 
   function layoutRouteKey(route) {
-    if (isReviewsRoute(route)) return 'reviews';
+    if (route === 'tickets' || isTicketsScope(route)) return ticketsScope;
+    if (currentRoute === 'saved' && savedScope === 'reviews') return 'reviews';
     return route;
   }
 
   function pageRouteKey(route) {
-    if (isReviewsRoute(route)) return 'reviews';
+    if (route === 'tickets' || isTicketsScope(route)) return 'tickets';
     return route;
   }
 
@@ -1133,7 +1153,11 @@
       btn.dataset.boundReviewsScope = '1';
       btn.addEventListener('click', () => {
         const scope = btn.getAttribute('data-reviews-scope') || 'pending';
-        setRoute(reviewsRouteFromScope(scope));
+        setSavedScope('reviews');
+        setReviewsScope(scope);
+        syncRouteHash();
+        if (currentRoute !== 'saved') setRoute('saved');
+        else if (dashboardReady) renderRouteTables('saved', { force: true });
       });
     });
     setReviewsScope(reviewsScope);
@@ -1149,6 +1173,47 @@
     } else if (!hasEvents && hasOrganisers) {
       setSavedScope('organisers');
     }
+  }
+
+  function setTicketsScope(scope) {
+    ticketsScope = isTicketsScope(scope) ? scope : 'upcoming';
+    document.querySelectorAll('[data-tickets-scope]').forEach((btn) => {
+      const active = btn.getAttribute('data-tickets-scope') === ticketsScope;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-tickets-pane]').forEach((pane) => {
+      const active = pane.getAttribute('data-tickets-pane') === ticketsScope;
+      pane.classList.toggle('is-active', active);
+      pane.hidden = !active;
+    });
+    if (currentRoute === 'tickets') {
+      syncRouteHash();
+      updateTicketsSubpageHead();
+    }
+  }
+
+  function updateTicketsSubpageHead() {
+    if (currentRoute !== 'tickets') return;
+    const meta = SUBPAGE_HEAD[ticketsScope] || SUBPAGE_HEAD.tickets;
+    const titleEl = document.getElementById('ad-subpage-title');
+    const subEl = document.getElementById('ad-subpage-sub');
+    if (titleEl) titleEl.textContent = meta.title;
+    if (subEl) subEl.textContent = meta.sub;
+  }
+
+  function bindTicketsScope() {
+    document.querySelectorAll('[data-tickets-scope]').forEach((btn) => {
+      if (btn.dataset.boundTicketsScope) return;
+      btn.dataset.boundTicketsScope = '1';
+      btn.addEventListener('click', () => {
+        const scope = btn.getAttribute('data-tickets-scope') || 'upcoming';
+        setTicketsScope(scope);
+        if (currentRoute !== 'tickets') setRoute('tickets');
+        else if (dashboardReady) renderRouteTables(ticketsScope, { force: true });
+      });
+    });
+    setTicketsScope(ticketsScope);
   }
 
   function setSavedScope(scope) {
@@ -1185,6 +1250,7 @@
       btn.addEventListener('click', () => {
         const scope = btn.getAttribute('data-saved-scope') || 'events';
         setSavedScope(scope);
+        if (dashboardReady) renderRouteTables('saved', { force: true });
       });
     });
     setSavedScope(savedScope);
@@ -1575,7 +1641,11 @@
 
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
-    if (hash.startsWith('review/')) return 'reviews-pending';
+    if (hash.startsWith('review/')) {
+      savedScope = 'reviews';
+      reviewsScope = 'pending';
+      return 'saved';
+    }
     if (hash === 'memberships') return 'memberships';
     if (hash === 'search-alerts') {
       opportunitySavedScope = 'alerts';
@@ -1585,20 +1655,31 @@
       opportunitySavedScope = 'listings';
       return 'saved-opportunities';
     }
+    if (hash === 'reviews-done') {
+      savedScope = 'reviews';
+      reviewsScope = 'done';
+      return 'saved';
+    }
+    if (hash === 'reviews-pending' || hash === 'reviews') {
+      savedScope = 'reviews';
+      reviewsScope = 'pending';
+      return 'saved';
+    }
+    if (hash === 'tickets') {
+      ticketsScope = 'upcoming';
+      return 'tickets';
+    }
+    if (isTicketsScope(hash)) {
+      ticketsScope = hash;
+      return 'tickets';
+    }
     const allowed = [
       'overview',
-      'upcoming',
-      'payments',
-      'cancellations',
+      'tickets',
       'saved',
       'saved-opportunities',
-      'past',
       'opportunity-enquiries',
-      'reviews',
-      'reviews-pending',
-      'reviews-done',
     ];
-    if (hash === 'reviews') return 'reviews-pending';
     return allowed.includes(hash) ? hash : 'overview';
   }
 
@@ -2128,7 +2209,9 @@
   function openReviewFromQuery() {
     const eventId = consumePendingReviewEventId();
     if (!eventId) return;
-    setRoute('reviews-pending');
+    setSavedScope('reviews');
+    setReviewsScope('pending');
+    setRoute('saved');
     const reg = findRegistrationByEventId(eventId);
     const launch = () => {
       if (!reg) return;
@@ -2165,26 +2248,35 @@
     }
     if (nextRoute === 'reviews') nextRoute = 'reviews-pending';
     if (isReviewsRoute(nextRoute)) {
+      setSavedScope('reviews');
       setReviewsScope(reviewsScopeFromRoute(nextRoute));
-      nextRoute = reviewsRouteFromScope(reviewsScope);
+      nextRoute = 'saved';
+    }
+    if (isTicketsScope(nextRoute)) {
+      setTicketsScope(nextRoute);
+      nextRoute = 'tickets';
     }
     currentRoute = nextRoute;
     closeUtilityMenus();
-    updateLayoutHeader(currentRoute);
+    updateLayoutHeader(layoutRouteKey(currentRoute));
     const activePage = pageRouteKey(currentRoute);
     document.querySelectorAll('[data-ad-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-ad-page') === activePage);
     });
     document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
       const navRoute = a.getAttribute('data-ad-route');
-      const active = isReviewsRoute(currentRoute) ? navRoute === 'reviews' : navRoute === currentRoute;
-      a.classList.toggle('is-active', active);
+      a.classList.toggle('is-active', navRoute === currentRoute);
     });
     if (currentRoute === 'saved' && savedScope === 'events') {
       maybeDefaultSavedScope();
     }
     if (currentRoute === 'saved') {
+      setSavedScope(savedScope);
       updateSavedSubpageHead();
+    }
+    if (currentRoute === 'tickets') {
+      setTicketsScope(ticketsScope);
+      updateTicketsSubpageHead();
     }
     if (currentRoute === 'saved-opportunities') {
       setOpportunitySavedScope(opportunitySavedScope);
@@ -2304,18 +2396,20 @@
       el.hidden = false;
       el.textContent = String(n);
     };
-    set('ad-side-upcoming', upcomingList().length);
-    set('ad-side-past', pastList().length);
+    set('ad-side-tickets', upcomingList().length);
     set('ad-side-enquiries', (opportunityEnquiries || []).length);
     set('ad-side-pending', pendingReviewsList().length);
     set('ad-side-reviewed', doneReviewsList().length);
-    set('ad-side-cancellations', (cancelledBookings || []).length);
-    set('ad-side-saved-opportunities', savedOpportunities.length);
+    set('ad-side-saved-opportunities', savedOpportunities.length + savedOpportunitySearches.length);
+    setTabCount('ad-tickets-count-upcoming', upcomingList().length);
+    setTabCount('ad-tickets-count-past', pastList().length);
+    setTabCount('ad-tickets-count-cancellations', (cancelledBookings || []).length);
     setTabCount('ad-opp-saved-count-listings', savedOpportunities.length);
     setTabCount('ad-opp-saved-count-alerts', savedOpportunitySearches.length);
     setTabCount('ad-saved-count-groups', myGroups.length);
     setTabCount('ad-saved-count-events', savedEvents.length);
     setTabCount('ad-saved-count-organisers', savedOrganisers.length);
+    setTabCount('ad-saved-count-reviews', pendingReviewsList().length);
     setTabCount('ad-reviews-count-pending', pendingReviewsList().length);
     setTabCount('ad-reviews-count-done', doneReviewsList().length);
   }
@@ -3416,7 +3510,8 @@
   }
 
   function routeTablesKey(route) {
-    return isReviewsRoute(route) ? 'reviews' : route;
+    if (route === 'tickets') return ticketsScope;
+    return route;
   }
 
   function renderRouteTables(route, options) {
@@ -3447,24 +3542,6 @@
         return db - da;
       });
       renderEventRows('ad-past-body', 'ad-past-empty', 'ad-pagination-past', 'past', past, true);
-    } else if (key === 'reviews' || key === 'reviews-pending' || key === 'reviews-done') {
-      renderPendingReviewCards();
-      renderEventRows(
-        'ad-reviews-done-body',
-        'ad-reviews-done-empty',
-        null,
-        'reviews-done',
-        doneReviewsList(),
-        false
-      );
-      renderedRoutes.add('reviews');
-      renderedRoutes.add('reviews-pending');
-      renderedRoutes.add('reviews-done');
-      return;
-    } else if (key === 'payments') {
-      renderPaymentsTable();
-    } else if (key === 'cancellations') {
-      renderCancellationsTable();
     } else if (key === 'saved') {
       maybeDefaultSavedScope();
       try {
@@ -3482,6 +3559,23 @@
       } catch (err) {
         /* non-fatal */
       }
+      try {
+        renderPendingReviewCards();
+        renderEventRows(
+          'ad-reviews-done-body',
+          'ad-reviews-done-empty',
+          null,
+          'reviews-done',
+          doneReviewsList(),
+          false
+        );
+      } catch (err) {
+        /* non-fatal */
+      }
+    } else if (key === 'payments') {
+      renderPaymentsTable();
+    } else if (key === 'cancellations') {
+      renderCancellationsTable();
     } else if (key === 'saved-opportunities') {
       try {
         renderSavedOpportunitiesTable();
@@ -3516,11 +3610,10 @@
     renderedRoutes.clear();
     renderRouteTables('upcoming', { force: true });
     renderRouteTables('past', { force: true });
-    renderRouteTables('reviews', { force: true });
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
-    if (savedEvents.length || myGroups.length || savedOrganisers.length) {
+    if (savedEvents.length || myGroups.length || savedOrganisers.length || pendingReviewsList().length || doneReviewsList().length) {
       renderRouteTables('saved', { force: true });
     }
     if (savedOpportunities.length || savedOpportunitySearches.length) {
@@ -3578,7 +3671,9 @@
       btn.addEventListener('click', () => {
         let route = btn.getAttribute('data-ad-stat-route') || 'overview';
         if (route === 'reviews') {
-          route = pendingReviewsList().length > 0 ? 'reviews-pending' : 'reviews-done';
+          setSavedScope('reviews');
+          setReviewsScope(pendingReviewsList().length > 0 ? 'pending' : 'done');
+          route = 'saved';
         }
         setRoute(route);
       });
@@ -3646,6 +3741,7 @@
     bindStatCards();
     bindHubContextSwitch();
     bindSavedScope();
+    bindTicketsScope();
     bindOpportunitySavedScope();
     bindReviewsScope();
     bindReviewModal();

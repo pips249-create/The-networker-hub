@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260723partner" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723oppalerts" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723ticketshub" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
@@ -40,32 +40,22 @@
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="My Hub">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
             <span class="hub-side-nav-divider">Event tickets</span>
-            <a href="#upcoming" class="hub-side-nav-link" data-ad-route="upcoming">
-              Upcoming
-              <span class="ad-side-count" id="ad-side-upcoming" hidden></span>
-            </a>
-            <a href="#payments" class="hub-side-nav-link" data-ad-route="payments">Payments</a>
-            <a href="#cancellations" class="hub-side-nav-link" data-ad-route="cancellations">
-              Cancellations
-              <span class="ad-side-count" id="ad-side-cancellations" hidden></span>
-            </a>
-            <a href="#past" class="hub-side-nav-link" data-ad-route="past">
-              Past events
-              <span class="ad-side-count" id="ad-side-past" hidden></span>
-            </a>
-            <a href="#reviews" class="hub-side-nav-link" data-ad-route="reviews">
-              Organiser reviews
-              <span class="ad-side-count" id="ad-side-pending" hidden></span>
+            <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
+              Event tickets
+              <span class="ad-side-count" id="ad-side-tickets" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Saved</span>
-            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved &amp; memberships</a>
+            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">
+              Saved &amp; memberships
+              <span class="ad-side-count" id="ad-side-pending" hidden></span>
+            </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
               My enquiries
               <span class="ad-side-count" id="ad-side-enquiries" hidden></span>
             </a>
             <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
-              Saved listings
+              Saved &amp; alerts
               <span class="ad-side-count" id="ad-side-saved-opportunities" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Partner with us</span>
@@ -140,101 +130,157 @@
               </div>
             </section>
 
-            <!-- Upcoming -->
-            <section class="ad-page" id="ad-page-upcoming" data-ad-page="upcoming">
-              <div class="ad-table-scroll" id="ad-upcoming-table">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th class="ad-th-thumb"></th>
-                        <th>Event</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Tickets</th>
-                        <th>Application</th>
-                        <th>Payment</th>
-                        <th>Review</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-upcoming-body"></tbody>
-                  </table>
+            <!-- Event tickets -->
+            <section class="ad-page" id="ad-page-tickets" data-ad-page="tickets">
+              <div class="ad-saved-panel">
+                <div class="ad-saved-scope-wrap">
+                  <p class="ad-saved-scope-kicker" id="ad-tickets-scope-kicker">Your bookings</p>
+                  <div class="ad-saved-scope" role="tablist" aria-labelledby="ad-tickets-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-tickets-scope="upcoming">
+                      Upcoming
+                      <span class="ad-saved-scope-count" id="ad-tickets-count-upcoming" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="past">
+                      Past events
+                      <span class="ad-saved-scope-count" id="ad-tickets-count-past" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="payments">
+                      Payments
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="cancellations">
+                      Cancellations
+                      <span class="ad-saved-scope-count" id="ad-tickets-count-cancellations" hidden aria-hidden="true"></span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div class="ad-empty-state" id="ad-upcoming-empty" hidden role="status">
-                <div class="ad-empty-state-icon" aria-hidden="true">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                </div>
-                <h3 class="ad-empty-state-title">No upcoming networking booked yet</h3>
-                <p class="ad-empty-state-text">Explore local business breakfasts, online masterclasses, and regional expos happening near you this week.</p>
-                <div class="ad-empty-state-actions">
-                  <a class="ad-btn ad-btn-primary" href="../events/">Browse events near you →</a>
-                </div>
-              </div>
-              <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
-            </section>
 
-            <!-- Payments -->
-            <section class="ad-page" id="ad-page-payments" data-ad-page="payments">
-              <div class="ad-refund-alert" id="ad-refund-alert-payments" hidden role="status"></div>
-              <div class="ad-table-scroll" id="ad-payments-table">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th class="ad-th-thumb"></th>
-                        <th>Event</th>
-                        <th>Booked</th>
-                        <th>Reference</th>
-                        <th>Tickets</th>
-                        <th>Paid</th>
-                        <th>Application</th>
-                        <th>Payment</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-payments-body"></tbody>
-                  </table>
+                <div class="ad-saved-pane is-active" data-tickets-pane="upcoming" role="tabpanel">
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-table-scroll" id="ad-upcoming-table">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-thumb"></th>
+                              <th>Event</th>
+                              <th>Date</th>
+                              <th>Time</th>
+                              <th>Tickets</th>
+                              <th>Application</th>
+                              <th>Payment</th>
+                              <th>Review</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-upcoming-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-upcoming-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No upcoming networking booked yet</h3>
+                      <p class="ad-empty-state-text">Explore local business breakfasts, online masterclasses, and regional expos happening near you this week.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../events/">Browse events near you →</a>
+                      </div>
+                    </div>
+                    <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
+                  </div>
                 </div>
-              </div>
-              <div class="ad-empty-state" id="ad-payments-empty" hidden role="status">
-                <div class="ad-empty-state-icon" aria-hidden="true">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                </div>
-                <h3 class="ad-empty-state-title">No payment history yet</h3>
-                <p class="ad-empty-state-text">When you book a ticket, your reference, amount paid, and receipt details will appear here.</p>
-                <div class="ad-empty-state-actions">
-                  <a class="ad-btn ad-btn-primary" href="../events/">Browse events near you →</a>
-                </div>
-              </div>
-            </section>
 
-            <!-- Cancellations -->
-            <section class="ad-page" id="ad-page-cancellations" data-ad-page="cancellations">
-              <div class="ad-refund-alert" id="ad-refund-alert-cancellations" hidden role="status"></div>
-              <div class="ad-table-scroll">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th class="ad-th-thumb"></th>
-                        <th>Event</th>
-                        <th>Cancelled</th>
-                        <th>Reference</th>
-                        <th>Tickets</th>
-                        <th>Paid</th>
-                        <th>Refund</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-cancellations-body"></tbody>
-                  </table>
+                <div class="ad-saved-pane" data-tickets-pane="past" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-table-scroll">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-thumb"></th>
+                              <th>Event</th>
+                              <th>Date</th>
+                              <th>Time</th>
+                              <th>Tickets</th>
+                              <th>Application</th>
+                              <th>Payment</th>
+                              <th>Review</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-past-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <p class="ad-empty" id="ad-past-empty" hidden>You have no past events yet.</p>
+                    <nav class="ad-pagination" id="ad-pagination-past" aria-label="Past events pages" hidden></nav>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane" data-tickets-pane="payments" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-refund-alert" id="ad-refund-alert-payments" hidden role="status"></div>
+                    <div class="ad-table-scroll" id="ad-payments-table">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-thumb"></th>
+                              <th>Event</th>
+                              <th>Booked</th>
+                              <th>Reference</th>
+                              <th>Tickets</th>
+                              <th>Paid</th>
+                              <th>Application</th>
+                              <th>Payment</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-payments-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-payments-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No payment history yet</h3>
+                      <p class="ad-empty-state-text">When you book a ticket, your reference, amount paid, and receipt details will appear here.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../events/">Browse events near you →</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane" data-tickets-pane="cancellations" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-refund-alert" id="ad-refund-alert-cancellations" hidden role="status"></div>
+                    <div class="ad-table-scroll">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-thumb"></th>
+                              <th>Event</th>
+                              <th>Cancelled</th>
+                              <th>Reference</th>
+                              <th>Tickets</th>
+                              <th>Paid</th>
+                              <th>Refund</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-cancellations-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <p class="ad-empty" id="ad-cancellations-empty" hidden>
+                      No cancelled bookings — if you cancel a ticket, it will appear here with refund details.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p class="ad-empty" id="ad-cancellations-empty" hidden>
-                No cancelled bookings — if you cancel a ticket, it will appear here with refund details.
-              </p>
             </section>
 
             <!-- Saved -->
@@ -254,6 +300,10 @@
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">
                       Saved organisers
                       <span class="ad-saved-scope-count" id="ad-saved-count-organisers" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="reviews">
+                      Organiser reviews
+                      <span class="ad-saved-scope-count" id="ad-saved-count-reviews" hidden aria-hidden="true"></span>
                     </button>
                   </div>
                 </div>
@@ -333,33 +383,50 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <!-- Past -->
-            <section class="ad-page" id="ad-page-past" data-ad-page="past">
-              <div class="ad-table-scroll">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th class="ad-th-thumb"></th>
-                        <th>Event</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Tickets</th>
-                        <th>Application</th>
-                        <th>Payment</th>
-                        <th>Review</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-past-body"></tbody>
-                  </table>
+                <div class="ad-saved-pane" data-saved-pane="reviews" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner">
+                    <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
+                      <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Review lists</p>
+                      <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
+                        <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
+                          To write
+                          <span class="ad-saved-scope-count" id="ad-reviews-count-pending" hidden aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">
+                          Submitted
+                          <span class="ad-saved-scope-count" id="ad-reviews-count-done" hidden aria-hidden="true"></span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
+                      <div class="ad-review-cards" id="ad-reviews-pending-cards" hidden role="list"></div>
+                      <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
+                    </div>
+
+                    <div class="ad-saved-pane" data-reviews-pane="done" role="tabpanel" hidden>
+                      <div class="ad-table-scroll">
+                        <div class="ad-table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th class="ad-th-thumb"></th>
+                                <th>Event</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th class="ad-th-actions">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody id="ad-reviews-done-body"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p class="ad-empty" id="ad-past-empty" hidden>You have no past events yet.</p>
-              <nav class="ad-pagination" id="ad-pagination-past" aria-label="Past events pages" hidden></nav>
             </section>
 
             <!-- Saved opportunity listings -->
@@ -474,49 +541,6 @@
               </p>
             </section>
 
-            <!-- Reviews -->
-            <section class="ad-page" id="ad-page-reviews" data-ad-page="reviews">
-              <div class="ad-saved-panel">
-                <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
-                  <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Your organiser reviews</p>
-                  <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
-                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
-                      To write
-                      <span class="ad-saved-scope-count" id="ad-reviews-count-pending" hidden aria-hidden="true"></span>
-                    </button>
-                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">
-                      Submitted
-                      <span class="ad-saved-scope-count" id="ad-reviews-count-done" hidden aria-hidden="true"></span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
-                  <div class="ad-review-cards" id="ad-reviews-pending-cards" hidden role="list"></div>
-                  <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
-                </div>
-
-                <div class="ad-saved-pane" data-reviews-pane="done" role="tabpanel" hidden>
-                  <div class="ad-table-scroll">
-                    <div class="ad-table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th class="ad-th-thumb"></th>
-                            <th>Event</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th class="ad-th-actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="ad-reviews-done-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
-                </div>
-              </div>
-            </section>
           </div>
         </div>
       </div>
@@ -739,6 +763,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260723oppalerts"></script>
+    <script src="../js/attendee-dashboard.js?v=20260723ticketshub"></script>
   </body>
 </html>
