@@ -183,6 +183,11 @@
 
   function onBrowseFetchError(err) {
     console.error('Browse fetch failed', err);
+    window.hubBrowseEvents = [];
+    window.hubBrowseFeatured = [];
+    window.hubBrowseTotal = 0;
+    window.hubBrowsePagination = null;
+    if (window.hubRefreshListings) window.hubRefreshListings();
     var status = document.getElementById('load-status');
     if (status) {
       status.textContent = 'Could not refresh results. Try again or clear filters.';
