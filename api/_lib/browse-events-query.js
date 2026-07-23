@@ -17,12 +17,15 @@ const {
   isUpcomingBrowseEvent,
   isApprovedPublicEventPayload,
 } = require('./supabase-events');
+const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
 
 const BROWSE_VIEW = 'browse_events_index';
 const MAX_LIMIT = 48;
 const DEFAULT_LIMIT = 12;
 const MAX_PINS = 2500;
 const IN_CHUNK = 80;
+const PIN_SELECT =
+  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating';
 
 function dedupeEventsById(events) {
   const seen = new Set();
@@ -362,6 +365,7 @@ function rowToBrowsePin(row) {
     : priceNum > 0
       ? '£' + priceNum.toFixed(2)
       : 'Free';
+  const typeRaw = String(row.event_type || row.type_tab || '').trim();
   return {
     id: row.id,
     slug: row.slug,
@@ -384,6 +388,11 @@ function rowToBrowsePin(row) {
     isMembersOnlyEvent: membersOnlyEvent,
     hasMembersOnlyTiers: membersOnlyEvent,
     outcode: row.outcode,
+    featured: isEventCurrentlyFeatured(row),
+    eventType: typeRaw,
+    typeRaw,
+    photo: eventImageUrl(row),
+    photoPosition: normalizeEventImagePosition(row.image_position),
   };
 }
 
@@ -407,6 +416,7 @@ async function fetchBrowseTypeCounts(sb, params) {
     'awards',
     'webinar',
     'workshop',
+    'seminar',
     'masterclass',
   ];
   const base = { ...params, types: [] };
@@ -512,11 +522,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
   if (params.mode === 'pins') {
     const pinParams = { ...params, limit: MAX_PINS, offset: 0 };
     if (hasGeoRadius(params)) {
-      const slim = await fetchMatchingRows(
-        sb,
-        pinParams,
-        'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, average_rating, featured, featured_until'
-      );
+      const slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT);
       const filtered = slim.filter((row) => rowPassesGeo(row, params));
       const sorted = sortRows(filtered, params.sort);
       return {
@@ -527,12 +533,10 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
       };
     }
 
-    const slim = await fetchMatchingRows(
-      sb,
-      pinParams,
-      'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode',
-      { sort: params.sort, limit: MAX_PINS }
-    );
+    const slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
+      sort: params.sort,
+      limit: MAX_PINS,
+    });
     return {
       events: slim.map(rowToBrowsePin),
       pagination: { total: slim.length, page: 1, limit: MAX_PINS, totalPages: 1 },

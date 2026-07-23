@@ -2198,6 +2198,47 @@ body.browse-mode-organisers .events-toolbar {
   box-shadow: none;
 }
 
+.map-event-popup .leaflet-popup-close-button {
+  display: none;
+}
+
+.map-event-card {
+  position: relative;
+}
+
+.map-event-card-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--charcoal);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(45, 38, 54, 0.18);
+}
+
+.map-event-card-close span {
+  display: block;
+  margin-top: -2px;
+}
+
+.map-event-card-close:hover,
+.map-event-card-close:focus {
+  background: #fff;
+  outline: 2px solid var(--lavender-deep);
+  outline-offset: 1px;
+}
+
 .map-event-card-media {
   aspect-ratio: 16 / 9;
   background: var(--lavender-light);

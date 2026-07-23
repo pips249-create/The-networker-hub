@@ -7,6 +7,7 @@ const MEETING_TYPES = [
   'Awards',
   'Webinar',
   'Workshop',
+  'Seminar',
   'Masterclass',
 ];
 
@@ -16,6 +17,7 @@ const LEGACY_TYPE_MAP = {
   'networking / meeting': 'Meeting',
   netwalking: 'Meeting',
   workshop: 'Workshop',
+  seminar: 'Seminar',
   "women's networking": 'Meeting',
   'women only': 'Meeting',
   'women-only': 'Meeting',
@@ -42,6 +44,7 @@ function normalizeEventType(raw) {
   if (/exhibit/i.test(t)) return 'Exhibition';
   if (/webinar/i.test(t)) return 'Webinar';
   if (/workshop/i.test(t)) return 'Workshop';
+  if (/seminar/i.test(t)) return 'Seminar';
   if (/\bmasterclass\b/i.test(t) || /\bsession\b/i.test(t)) return 'Masterclass';
   if (/conference|summit/i.test(t)) return 'Conference';
   if (/festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {
@@ -67,6 +70,7 @@ function parseTypeCategory(raw) {
   if (t === 'Awards') return 'awards';
   if (t === 'Webinar') return 'webinar';
   if (t === 'Workshop') return 'workshop';
+  if (t === 'Seminar') return 'seminar';
   if (t === 'Masterclass') return 'masterclass';
   return 'meeting';
 }

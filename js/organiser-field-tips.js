@@ -13,7 +13,7 @@
     'event-type': {
       title: 'Event type',
       body:
-        'Meeting covers breakfasts, netwalking, women-only and most networking listings. Use Conference, Exhibition or Awards for summits, trade shows and dinners. Events is for other larger formats. Webinar, Workshop and Masterclass help attendees find the right style of listing.',
+        'Meeting covers breakfasts, netwalking, women-only and most networking listings. Use Conference, Exhibition or Awards for summits, trade shows and dinners. Events is for other larger formats. Webinar, Workshop, Seminar and Masterclass help attendees find the right style of listing.',
       hubertPrompt: 'Which event type should I choose for my networking event?',
     },
     'event-description': {

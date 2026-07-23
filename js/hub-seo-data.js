@@ -33,7 +33,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How do organisers list an event on The Networker Hub?",
-      "answer": "Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email.",
+      "answer": "Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email. Email changed? Find your group and use Request access on its profile page.",
       "category": "organisers",
       "icon": "📅"
     },
@@ -51,7 +51,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Who is Hubert on The Networker Hub?",
-      "answer": "Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.",
+      "answer": "Hubert is the British English gentleman and concierge on The Networker Hub. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages.",
       "category": "general",
       "icon": "✨"
     },
@@ -129,7 +129,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "What is the guest visit programme?",
-      "answer": "An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available.",
+      "answer": "An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–3 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Member-only for this event while keeping paid tickets available.",
       "category": "organisers",
       "icon": "🎫"
     },
@@ -279,7 +279,7 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers list an event on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email."
+                "text": "Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email. Email changed? Find your group and use Request access on its profile page."
               }
             }
           ]
@@ -378,7 +378,7 @@ window.HUB_SEO_DATA = {
               "name": "How do organisers list an event on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email."
+                "text": "Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email. Email changed? Find your group and use Request access on its profile page."
               }
             },
             {
@@ -402,7 +402,7 @@ window.HUB_SEO_DATA = {
               "name": "Who is Hubert on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages."
+                "text": "Hubert is the British English gentleman and concierge on The Networker Hub. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages."
               }
             },
             {
@@ -506,7 +506,7 @@ window.HUB_SEO_DATA = {
               "name": "What is the guest visit programme?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available."
+                "text": "An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–3 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Member-only for this event while keeping paid tickets available."
               }
             },
             {
@@ -1691,14 +1691,14 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 2,
               "name": "Sign in with the right email",
-              "text": "Sign in or create an account using the email address linked to your group. The claim prompt appears when the hub recognises your address.",
+              "text": "Sign in or create an account using the email address linked to your group. When it matches, a claim prompt appears automatically on your organiser dashboard. Email changed? Find your group on /events/ and use Request access on its profile page.",
               "url": "http://localhost:3000/guides/claim-your-organiser-page#sign-in"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Confirm the claim",
-              "text": "Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group.",
+              "text": "Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hello@thenetworkerhub.com.",
               "url": "http://localhost:3000/guides/claim-your-organiser-page#confirm-claim"
             },
             {

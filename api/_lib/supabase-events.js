@@ -125,6 +125,7 @@ function eventTypeTabCategory(raw) {
   if (t === 'Awards') return 'awards';
   if (t === 'Webinar') return 'webinar';
   if (t === 'Workshop') return 'workshop';
+  if (t === 'Seminar') return 'seminar';
   if (t === 'Masterclass') return 'masterclass';
   return 'meeting';
 }

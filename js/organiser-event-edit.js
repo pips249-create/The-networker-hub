@@ -1427,6 +1427,7 @@
       { value: 'Awards', label: 'Awards' },
       { value: 'Webinar', label: 'Webinar' },
       { value: 'Workshop', label: 'Workshop' },
+      { value: 'Seminar', label: 'Seminar' },
       { value: 'Masterclass', label: 'Masterclass' },
     ];
     const current = canonicalEventType(selected || sel.value || 'Meeting');

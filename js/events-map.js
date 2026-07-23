@@ -517,31 +517,66 @@
     return ev.photo || ev.imageUrl || ev.organiserLogo || '';
   }
 
+  function defaultMapPlaceholder() {
+    if (window.getDefaultEventPlaceholder) return window.getDefaultEventPlaceholder();
+    return '/assets/placeholders/default.svg';
+  }
+
   function mapEventImageHtml(ev) {
     var src = mapEventImageSrc(ev);
-    if (!src) return '';
+    var eventType = ev.eventType || ev.typeRaw || ev.type || '';
+    var placementFn = window.getEventPlacementImage;
+    var fallbackRaw =
+      (placementFn
+        ? placementFn(ev.id || '', eventType, ev.title || '')
+        : '') || defaultMapPlaceholder();
+    var resolved = src || fallbackRaw;
+    if (!resolved) return '';
     var logoClass =
-      window.hubIsLogoStyleCover && window.hubIsLogoStyleCover(ev, src)
+      window.hubIsLogoStyleCover && window.hubIsLogoStyleCover(ev, resolved)
         ? ' is-logo-cover'
+        : '';
+    var placeholderClass =
+      /\/assets\/placeholders\//i.test(resolved) || /event-placeholder/i.test(resolved)
+        ? ' is-placeholder'
         : '';
     var pos = String(ev.photoPosition || '').trim();
     var posStyle =
-      pos && /^\d{1,3}% \d{1,3}%$/.test(pos) && String(ev.photo || '').trim() === src
+      pos && /^\d{1,3}% \d{1,3}%$/.test(pos) && String(ev.photo || '').trim() === resolved
         ? ' style="object-position:' + pos + '"'
         : '';
+    var errorFallback = defaultMapPlaceholder().replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
     return (
       '<div class="map-event-card-media">' +
       '<img class="map-event-card-img' +
       logoClass +
+      placeholderClass +
       '"' +
       posStyle +
       ' src="' +
-      escapeHtml(src) +
+      escapeHtml(resolved) +
       '" alt="' +
       escapeHtml(ev.title || 'Event cover') +
-      '" loading="lazy" decoding="async" referrerpolicy="no-referrer">' +
+      '" loading="lazy" decoding="async" referrerpolicy="no-referrer" ' +
+      'onerror="this.onerror=null;this.src=\'' +
+      errorFallback +
+      '\';this.classList.add(\'is-placeholder\');this.style.objectPosition=\'\'">' +
       '</div>'
     );
+  }
+
+  function bindPopupCloseButton(marker) {
+    var popup = marker.getPopup();
+    var el = popup && popup.getElement();
+    if (!el) return;
+    var closeBtn = el.querySelector('.map-event-card-close');
+    if (!closeBtn || closeBtn._bound) return;
+    closeBtn._bound = true;
+    closeBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      marker.closePopup();
+    });
   }
 
   function popupHtml(ev, miles) {
@@ -555,6 +590,7 @@
 
     return (
       '<div class="map-event-card">' +
+      '<button type="button" class="map-event-card-close" aria-label="Close event details"><span aria-hidden="true">&times;</span></button>' +
       mapEventImageHtml(ev) +
       '<div class="map-event-card-body">' +
       '<div class="map-event-card-top">' +
@@ -620,9 +656,11 @@
       className: 'map-event-popup',
       maxWidth: popupMax,
       minWidth: Math.min(220, popupMax),
+      closeButton: false,
     });
     marker.on('popupopen', function () {
       highlightSidebarItem(ev.id);
+      bindPopupCloseButton(marker);
     });
     marker.on('popupclose', function () {
       if (activeSidebarId === ev.id) highlightSidebarItem(null);

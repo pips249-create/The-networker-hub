@@ -85,7 +85,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER EVENT LISTING',
     body:
       'Creating a listing: /organiser/ → create event → choose group and format (in person or online) → event-edit.html for title, type, description, photo, venue or join link, and dates → event-tickets.html for tiers, VAT, refund policy, publish. ' +
-      'EVENT TYPE (Meeting, Events, Conference, Exhibition, Awards, Webinar, Workshop, Masterclass): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Conference is for multi-day summits and delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. ' +
+      'EVENT TYPE (Meeting, Events, Conference, Exhibition, Awards, Webinar, Workshop, Seminar, Masterclass): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (lunch & learns and similar). Conference is for multi-day summits and delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop, Seminar and Masterclass help people find online talks, hands-on training, expert-led seminars, and masterclasses. ' +
       'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
       'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
       'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp browse listing, use a landscape photo at least 1200×750px. After upload, drag the preview to recentre how the image is cropped on listing cards (Reset position clears the crop). Use Remove to clear a photo and upload again.',
@@ -443,7 +443,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event|conference or exhibition/i,
     reply:
-      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Conference is for summits and multi-day delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. Pick the type that best matches how people will search for it on /events/. Conferences guide: /guides/list-a-conference-or-exhibition.',
+      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as lunch & learns. Conference is for summits and multi-day delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop, Seminar and Masterclass help people find online talks, hands-on training, expert-led seminars, and masterclasses. Pick the type that best matches how people will search for it on /events/. Conferences guide: /guides/list-a-conference-or-exhibition.',
   },
   {
     match: /image.*(crop|cut off|cut.?off|position|reposition|recentre|reframe|framing|heads? cut)|photo.*(crop|cut off|position|reposition)|cover.*(crop|cut off|position)/i,
@@ -603,7 +603,7 @@ const FALLBACK_REPLIES = [
   {
     match: /academy|training|workshop|webinar|masterclass|course/i,
     reply:
-      'The Networker Hub focuses on networking events and business opportunities. Browse events at /events/ or opportunities at /opportunities/. For seminars and learning-style meetups, try filtering the events directory by type.',
+      'The Networker Hub focuses on networking events and business opportunities. Browse events at /events/ or opportunities at /opportunities/. For seminars and learning-style meetups, filter the events directory by Seminar, Workshop or Masterclass.',
   },
   {
     match: /review|rating/i,

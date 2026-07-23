@@ -11,6 +11,7 @@
     { value: 'Awards', label: 'Awards' },
     { value: 'Webinar', label: 'Webinar' },
     { value: 'Workshop', label: 'Workshop' },
+    { value: 'Seminar', label: 'Seminar' },
     { value: 'Masterclass', label: 'Masterclass' },
   ];
 
@@ -20,6 +21,7 @@
     'networking / meeting': 'Meeting',
     netwalking: 'Meeting',
     workshop: 'Workshop',
+    seminar: 'Seminar',
     "women's networking": 'Meeting',
     'women only': 'Meeting',
     'women-only': 'Meeting',
@@ -55,6 +57,7 @@
     if (/exhibit/i.test(t)) return 'Exhibition';
     if (/webinar/i.test(t)) return 'Webinar';
     if (/workshop/i.test(t)) return 'Workshop';
+    if (/seminar/i.test(t)) return 'Seminar';
     if (/\bmasterclass\b/i.test(t) || /\bsession\b/i.test(t)) return 'Masterclass';
     if (/conference|summit/i.test(t)) return 'Conference';
     if (/festival|award|netwalk|golf|padel|tennis|sport|social sport/i.test(t)) {

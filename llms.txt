@@ -59,7 +59,7 @@ Create a free account first, then open an event from the listing page, choose yo
 Browse opportunities for free at /opportunities/. When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page.
 
 ## How do organisers list an event on The Networker Hub?
-Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email.
+Sign in, claim your organiser page if prompted, then open the organiser dashboard at /organiser/ to create events and manage attendees. Your networking group may already be listed — search the organiser directory on /events/ and claim the page linked to your email. Email changed? Find your group and use Request access on its profile page.
 
 ## Where does event information on The Networker Hub come from?
 Listings are managed in the events database and updated by organisers and the Networker Hub team. Dates, venues, and prices on each event page are the source of truth for that event.
@@ -68,7 +68,7 @@ Listings are managed in the events database and updated by organisers and the Ne
 The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine.
 
 ## Who is Hubert on The Networker Hub?
-Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.
+Hubert is the British English gentleman and concierge on The Networker Hub. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages.
 
 ## Is The Networker Hub free to use?
 Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.
@@ -107,7 +107,7 @@ Paid hero sponsor placements are available on the events directory, organisers b
 Sign in to /organiser/, open Events → Attendees. See each person's visit count (1st visit, 2 visits, etc.), filter by new or returning, filter by event, and click Download attendees CSV. Export printable name badges (PDF, standard A4 sticker sheets) from the same screen — badges use each guest's name, company, and job title from their Hub account when set.
 
 ## What is the guest visit programme?
-An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available.
+An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–3 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Member-only for this event while keeping paid tickets available.
 
 ## What is Category Exclusivity?
 An alternative to open ticket sales. Prospective attendees apply instead of buying straight away — they answer two fixed questions (industry and job title). You approve or deny from your organiser dashboard; approved applicants receive a payment link to complete booking.
