@@ -44,6 +44,11 @@
   function applyLoopLayout(track, section, itemCount, cardSelector, cardsHtml) {
     if (!track) return { overflow: false, looping: false };
 
+    /* Render once so overflow is measured against real card widths, not stale/empty track content. */
+    if (track.innerHTML !== cardsHtml) {
+      track.innerHTML = cardsHtml;
+    }
+
     var overflow = cardsOverflowViewport(track, itemCount, cardSelector);
     var looping = overflow && itemCount > 1;
 

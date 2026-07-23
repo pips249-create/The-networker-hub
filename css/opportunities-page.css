@@ -2029,6 +2029,129 @@
   color: var(--text-muted);
 }
 
+/* Filter bar — navy shell, gold accents (matches hero palette) */
+.opp-browse-page .events-filter-heading {
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .events-filter-shell {
+  --filter-surface: var(--opp-navy);
+  --filter-surface-deep: var(--opp-navy-mid);
+  background: var(--filter-surface);
+  box-shadow: 0 12px 36px rgba(13, 31, 60, 0.28);
+}
+
+.opp-browse-page .events-filter-bar {
+  background: transparent;
+  border-color: transparent;
+}
+
+.opp-browse-page .events-filter-shell .filter-field-icon,
+.opp-browse-page .events-filter-shell .filter-date-icon {
+  color: var(--opp-gold-light);
+}
+
+.opp-browse-page .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box {
+  background: #fff;
+  border-color: #fff;
+}
+
+.opp-browse-page .events-filter-shell .filter-checkbox input:checked + .filter-checkbox-box::after {
+  border-color: var(--opp-navy);
+}
+
+.opp-browse-page .events-filter-shell .event-type-chip.is-active {
+  background: var(--opp-gold);
+  border-color: var(--opp-gold);
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .events-filter-shell .event-type-chip:hover:not(.is-active) {
+  border-color: var(--opp-gold-border);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.opp-browse-page .events-filter-shell .filter-format-pill input:checked + .filter-format-pill-face,
+.opp-browse-page .events-filter-shell .filter-format-pill-face:hover {
+  border-color: var(--opp-gold-light);
+}
+
+.opp-browse-page .events-filter-shell .filter-format-pill input:checked + .filter-format-pill-face {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .events-filter-shell .filter-more-toggle[aria-expanded='true'],
+.opp-browse-page .events-filter-shell .filter-more-toggle:hover {
+  border-color: var(--opp-gold-border);
+  color: #fff;
+}
+
+.opp-browse-page .events-filter-shell .filter-clear-btn {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.opp-browse-page .events-filter-shell .filter-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--opp-gold-border);
+}
+
+.opp-browse-page .filter-opp-invest-group .filter-format-pill-face {
+  min-width: 7.5rem;
+  justify-content: center;
+}
+
+.opp-browse-page .filter-opp-commitment-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.opp-browse-page .filter-opp-category-wrap select {
+  min-width: 11rem;
+}
+
+.opp-browse-page .events-results-meta {
+  border-color: var(--opp-border);
+}
+
+.opp-browse-page .events-results-count {
+  color: var(--opp-dark-gray);
+}
+
+.opp-browse-page .clear-filters-link {
+  color: var(--opp-gold);
+}
+
+.opp-browse-page .clear-filters-link:hover {
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .events-sort-wrap label,
+.opp-browse-page .listings-header {
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .events-sort-wrap select {
+  border-color: var(--opp-border);
+  color: var(--opp-text);
+}
+
+.opp-browse-page .events-sort-wrap select:focus {
+  border-color: var(--opp-gold);
+  box-shadow: 0 0 0 3px var(--opp-gold-dim);
+}
+
+.opp-browse-page .opp-listings-spotlight-only {
+  margin: 0;
+  padding: 20px 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--opp-mid-gray);
+}
+
 .opp-browse-page .opp-browse-hero .opp-hero-stats {
   min-width: 0;
 }

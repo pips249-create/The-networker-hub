@@ -167,6 +167,18 @@
     return copy;
   }
 
+  function dedupeListingsById(list) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var id = String(list[i].id || '');
+      if (!id || seen[id]) continue;
+      seen[id] = true;
+      out.push(list[i]);
+    }
+    return out;
+  }
+
   function resetSpotlightOrder() {
     spotlightFeaturedOrder = null;
   }
@@ -180,14 +192,34 @@
 
   function getSpotlightFeatured() {
     if (!spotlightFeaturedOrder) {
-      var featured = allListings
-        .filter(function (item) {
+      var featured = dedupeListingsById(
+        allListings.filter(function (item) {
           return item.featured;
         })
-        .slice(0, SPOTLIGHT_MAX);
+      ).slice(0, SPOTLIGHT_MAX);
       spotlightFeaturedOrder = shuffleList(featured);
     }
     return spotlightFeaturedOrder;
+  }
+
+  function getSpotlightVisible() {
+    return getSpotlightFeatured().filter(matchesFilter);
+  }
+
+  function getGridListings() {
+    var filtered = getFilteredList();
+    var spotlightVisible = getSpotlightVisible();
+    if (!spotlightVisible.length) return filtered;
+
+    var inSpotlight = {};
+    spotlightVisible.forEach(function (item) {
+      inSpotlight[String(item.id)] = true;
+    });
+
+    var gridOnly = filtered.filter(function (item) {
+      return !inSpotlight[String(item.id)];
+    });
+    return gridOnly;
   }
 
   function getSpotlightCardStep() {
@@ -202,7 +234,7 @@
   function measureSpotlightLoopWidth() {
     var sc = window.HubSpotlightCarousel;
     var track = els.spotlightTrack;
-    var featured = getSpotlightFeatured();
+    var featured = getSpotlightVisible();
     if (!sc || !track || !featured.length) return 0;
     return sc.measureLoopWidth(track, featured.length, '.opp-premium-card');
   }
@@ -223,7 +255,7 @@
   }
 
   function refreshSpotlightLayout() {
-    var featured = getSpotlightFeatured();
+    var featured = getSpotlightVisible();
     if (!els.spotlightTrack || !featured.length) return;
     layoutSpotlightTrack(featured.map(premiumSpotlightCard).join(''), featured.length);
     syncSpotlightLoopScroll();
@@ -232,7 +264,7 @@
 
   function advanceSpotlight(dir) {
     dir = dir < 0 ? -1 : 1;
-    var featured = getSpotlightFeatured();
+    var featured = getSpotlightVisible();
     var track = els.spotlightTrack;
     var sc = window.HubSpotlightCarousel;
     if (!featured.length || featured.length <= 1 || !track || spotlightAnimating) return;
@@ -272,7 +304,7 @@
   function startSpotlightAuto() {
     stopSpotlightAuto();
     var sc = window.HubSpotlightCarousel;
-    if (!els.spotlightTrack || !sc || !sc.canAutoAdvance(els.spotlightTrack, getSpotlightFeatured().length)) return;
+    if (!els.spotlightTrack || !sc || !sc.canAutoAdvance(els.spotlightTrack, getSpotlightVisible().length)) return;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating) return;
       advanceSpotlight(1);
@@ -423,7 +455,7 @@
   function renderSpotlight() {
     if (!els.spotlightTrack) return;
 
-    var featured = getSpotlightFeatured();
+    var featured = getSpotlightVisible();
     var promo = document.querySelector('.opp-promo-section');
 
     if (!featured.length) {
@@ -1088,7 +1120,7 @@
   function loadMoreListings() {
     if (loadingMore || !els.mount) return;
 
-    var filtered = sortListings(getFilteredList());
+    var filtered = sortListings(getGridListings());
     var slice = getListingSlice(filtered);
     if (!slice.hasMore) return;
 
@@ -1212,21 +1244,29 @@
   function renderListings() {
     if (!els.mount) return;
 
-    var filtered = sortListings(getFilteredList());
+    var totalMatches = sortListings(getFilteredList());
+    var filtered = sortListings(getGridListings());
     var listingsBlock = document.getElementById('listings-view');
     if (listingsBlock) listingsBlock.hidden = viewMode === 'map';
 
     if (viewMode === 'map') {
-      updateResultsCount(filtered.length);
-      if (window.hubRefreshOpportunitiesMap) window.hubRefreshOpportunitiesMap(filtered);
+      updateResultsCount(totalMatches.length);
+      if (window.hubRefreshOpportunitiesMap) window.hubRefreshOpportunitiesMap(totalMatches);
       return;
     }
 
     if (!filtered.length) {
       disconnectLazyObserver();
+      if (totalMatches.length) {
+        els.mount.innerHTML =
+          '<p class="opp-listings-spotlight-only" role="status">Matching premium listings are shown in Premium Spotlight above.</p>';
+        updateResultsCount(totalMatches.length);
+        updateTypeChipCounts();
+        return;
+      }
       els.mount.innerHTML =
         '<div class="events-empty" role="status"><p>No opportunities match your filters. <button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button></p></div>';
-      updateResultsCount(0);
+      updateResultsCount(totalMatches.length);
       updateTypeChipCounts();
       bindClearFilters();
       return;
@@ -1243,7 +1283,7 @@
       paginationHtml(currentPage, slice.totalPages);
 
     lastRenderedCount = slice.rangeEnd;
-    updateResultsCount(filtered.length);
+    updateResultsCount(totalMatches.length);
     updateTypeChipCounts();
     if (saves) saves.refreshButtons(els.mount);
     if (slice.hasMore) observeLazySentinel();
@@ -1715,7 +1755,7 @@
 
       var btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
-      var filtered = getFilteredList();
+      var filtered = getGridListings();
       var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
       var p = parseInt(btn.getAttribute('data-page'), 10);
       if (!p || p === currentPage || p < 1 || p > totalPages) return;

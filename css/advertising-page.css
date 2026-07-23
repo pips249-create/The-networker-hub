@@ -668,25 +668,25 @@ body.advertising-page {
 
 /* ─── Quick enquiry strip ─── */
 .ad-enquiry-quick {
-  margin: 0 0 1.25rem;
-  padding: 16px 18px;
-  border-radius: 14px;
+  margin: 0 0 1rem;
+  padding: 12px 14px;
+  border-radius: 12px;
   border: 1px solid var(--ad-line);
   background: linear-gradient(165deg, #fff 0%, var(--ad-soft-muted) 100%);
   scroll-margin-top: 88px;
 }
 
 .ad-enquiry-quick-title {
-  margin: 0 0 8px;
-  font-size: 1rem;
+  margin: 0 0 4px;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--ad-ink);
 }
 
 .ad-enquiry-quick-lede {
-  margin: 0 0 14px;
-  font-size: 0.88rem;
-  line-height: 1.55;
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  line-height: 1.45;
   color: var(--ad-muted);
 }
 
@@ -698,18 +698,19 @@ body.advertising-page {
 }
 
 .ad-enquiry-quick-fields .ad-enquiry-field input {
-  min-height: 42px;
+  min-height: 36px;
+  font-size: 0.84rem;
 }
 
 .ad-enquiry-quick-submit {
-  min-height: 42px;
-  padding: 0 16px;
+  min-height: 36px;
+  padding: 0 14px;
   border: none;
   border-radius: 999px;
   background: var(--ad-ink);
   color: #fff;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -993,11 +994,11 @@ body.advertising-page {
 }
 
 .ad-section-pick[data-ad-tab="organisers"] {
-  background: linear-gradient(180deg, rgba(225, 218, 242, 0.72) 0%, #fff 38%);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.1) 0%, #fff 38%);
 }
 
 .ad-section-pick[data-ad-tab="organisers"]::before {
-  background: linear-gradient(90deg, #5c4694 0%, #8b7bb8 100%);
+  background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%);
 }
 
 .ad-section-pick[data-ad-tab="opportunities"] {
@@ -1049,9 +1050,9 @@ body.advertising-page {
 }
 
 .ad-section-pick[data-ad-tab="organisers"] .ad-section-pick-pill {
-  background: rgba(92, 70, 148, 0.12);
-  color: #4a386f;
-  border: 1px solid rgba(92, 70, 148, 0.26);
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e40af;
+  border: 1px solid rgba(37, 99, 235, 0.26);
 }
 
 .ad-section-pick[data-ad-tab="opportunities"] .ad-section-pick-pill {
@@ -1110,6 +1111,14 @@ body.advertising-page {
   font-size: 0.8rem;
   font-weight: 700;
   color: #5c2d6a;
+}
+
+.ad-section-pick[data-ad-tab="organisers"] .ad-section-pick-body em {
+  color: #1e40af;
+}
+
+.ad-section-pick[data-ad-tab="opportunities"] .ad-section-pick-body em {
+  color: #7a5a08;
 }
 
 .ad-tab-panel--events {

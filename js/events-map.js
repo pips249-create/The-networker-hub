@@ -511,6 +511,39 @@
     return ev.price || 'Free';
   }
 
+  function mapEventImageSrc(ev) {
+    if (window.getEventBrowseImage) return window.getEventBrowseImage(ev);
+    if (window.getEventImage) return window.getEventImage(ev);
+    return ev.photo || ev.imageUrl || ev.organiserLogo || '';
+  }
+
+  function mapEventImageHtml(ev) {
+    var src = mapEventImageSrc(ev);
+    if (!src) return '';
+    var logoClass =
+      window.hubIsLogoStyleCover && window.hubIsLogoStyleCover(ev, src)
+        ? ' is-logo-cover'
+        : '';
+    var pos = String(ev.photoPosition || '').trim();
+    var posStyle =
+      pos && /^\d{1,3}% \d{1,3}%$/.test(pos) && String(ev.photo || '').trim() === src
+        ? ' style="object-position:' + pos + '"'
+        : '';
+    return (
+      '<div class="map-event-card-media">' +
+      '<img class="map-event-card-img' +
+      logoClass +
+      '"' +
+      posStyle +
+      ' src="' +
+      escapeHtml(src) +
+      '" alt="' +
+      escapeHtml(ev.title || 'Event cover') +
+      '" loading="lazy" decoding="async" referrerpolicy="no-referrer">' +
+      '</div>'
+    );
+  }
+
   function popupHtml(ev, miles) {
     var fmtClass = formatClass(ev);
     var fmtLabel = formatLabel(ev);
@@ -522,6 +555,8 @@
 
     return (
       '<div class="map-event-card">' +
+      mapEventImageHtml(ev) +
+      '<div class="map-event-card-body">' +
       '<div class="map-event-card-top">' +
       premium +
       '<span class="map-event-card-format ' +
@@ -541,9 +576,10 @@
       '</p>' +
       (loc ? '<p class="map-event-card-location">' + escapeHtml(loc) + '</p>' : '') +
       (dist ? '<p class="map-event-card-distance">' + escapeHtml(dist) + '</p>' : '') +
-      '<a class="map-event-card-cta btn btn-primary" href="' +
+      '<a class="map-event-card-cta" href="' +
       escapeHtml(eventHref(ev)) +
       '">View event</a>' +
+      '</div>' +
       '</div>'
     );
   }

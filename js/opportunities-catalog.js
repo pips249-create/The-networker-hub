@@ -407,6 +407,13 @@
         loadedCatalog = data.opportunities.map(function (row, i) {
           return normalizeListing(apiRowToSeed(row), i);
         });
+        var seenIds = {};
+        loadedCatalog = loadedCatalog.filter(function (item) {
+          var id = String(item.id || '');
+          if (!id || seenIds[id]) return false;
+          seenIds[id] = true;
+          return true;
+        });
         return loadedCatalog.slice();
       })
       .catch(function () {
