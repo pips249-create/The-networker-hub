@@ -39,14 +39,14 @@
   var panelCopy = {
     overview: {
       title: 'Overview',
-      text: 'See upcoming tickets, saved events, pending reviews, and membership expiry dates from one home screen.'
+      text: 'See upcoming tickets, saved favourites, pending reviews, and membership expiry dates from one home screen.'
     },
     upcoming: {
       title: 'Upcoming',
-      text: 'Booking references, meeting links for online events, share cards, and cancellation options when the policy allows.'
+      text: 'Booking references, meeting links for online Events, share cards, and cancellation options when the policy allows.'
     },
     past: {
-      title: 'Past events',
+      title: 'Past Events',
       text: 'Events you attended — leave a review to help others pick the right networking room.'
     },
     payments: {
@@ -55,11 +55,11 @@
     },
     saved: {
       title: 'Saved',
-      text: 'Saved events, organisers, opportunities, and search alerts — get emailed when tickets open or new listings match.'
+      text: 'Saved Events, Organisers, Business Opportunities, and search alerts — get emailed when tickets open or new listings match.'
     },
     reviews: {
       title: 'Reviews',
-      text: 'Leave feedback after events you attended and read organiser replies in your dashboard.'
+      text: 'Leave feedback after Events you attended and read Organiser replies in your dashboard.'
     },
     enquiries: {
       title: 'My enquiries',
@@ -145,7 +145,7 @@
 
     window.HubFindYourNextRotate(
       wordEl,
-      ['opportunity', 'organiser', 'event', 'connection', 'community'],
+      ['Event', 'Organiser', 'Business Opportunity', 'connection', 'community'],
       3000
     );
   }

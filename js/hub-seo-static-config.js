@@ -58,8 +58,8 @@ window.HUB_SEO_STATIC = {
   },
   "for-attendees": {
     "path": "/for-attendees",
-    "title": "Find your next event – For attendees – The Networker Hub",
-    "description": "Find UK networking events, organiser communities, and business opportunities in one place. Browse free on The Networker Hub — My Hub dashboard, smart alerts, member rates, and booking reminders.",
+    "title": "Events, Organisers & Business Opportunities – For networkers – The Networker Hub",
+    "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free to join — My Hub, smart alerts, member rates, and booking reminders.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },

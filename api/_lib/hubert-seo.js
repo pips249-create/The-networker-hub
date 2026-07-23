@@ -373,9 +373,9 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/for-attendees',
-      name: 'For Attendees – The Networker Hub',
+      name: 'For networkers – The Networker Hub',
       description:
-        'Browse UK networking events, organiser pages, and business opportunities. My Hub dashboard, saved alerts, member rates, booking reminders, reviews, and guest visits.',
+        'UK Events, Organiser pages, and Business Opportunities in one place. Free My Hub account with saved alerts, member rates, booking reminders, reviews, and guest visits.',
       about: buildOrganizationSchema(base),
     });
   } else if (page === 'advertising') {

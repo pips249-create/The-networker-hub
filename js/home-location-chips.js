@@ -37,6 +37,9 @@
     if (text.length > 9) {
       chip.classList.add('home-location-chip--compact-label');
     }
+    if (text.indexOf(' ') === -1 && text.length > 8) {
+      nameEl.setAttribute('lang', 'en');
+    }
   }
 
   function initLocationLandmarkIcons() {

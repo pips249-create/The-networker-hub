@@ -2948,7 +2948,9 @@ html:has(.home-page) {
   font-weight: 650;
   line-height: 1.2;
   letter-spacing: 0.01em;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
 }
 
 .home-location-chip-name--stacked {
@@ -2958,10 +2960,14 @@ html:has(.home-page) {
   gap: 0;
   max-width: 5.4em;
   line-height: 1.05;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 .home-location-chip-name-line {
   display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 .home-location-chip--compact-label .home-location-chip-name:not(.home-location-chip-name--stacked) {
