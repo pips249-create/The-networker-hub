@@ -2531,6 +2531,7 @@
       sorted
         .map(function (o) {
           var label = o.name || o.id;
+          if (o.email) label += ' · ' + o.email;
           if (o.listingStatus && o.listingStatus !== 'published') {
             label += ' (' + o.listingStatus + ')';
           }
@@ -10247,6 +10248,10 @@
       '">' +
       adminLogoFieldHtml(o.id, o.photo_url, true) +
       '<div class="group-cleanup-quick-fields min-w-0 space-y-2">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Group name</label>' +
+      '<input type="text" name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(o.name || '') +
+      '" placeholder="Networking group name"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>' +
       '<input type="url" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(o.website || '') +
@@ -10260,9 +10265,11 @@
       '</textarea></div></div>' +
       '<div class="group-cleanup-quick-actions flex flex-col items-stretch gap-2 shrink-0">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 whitespace-nowrap">Save</button>' +
-      '<a href="../organiser/group-edit?id=' +
-      encodeURIComponent(o.id) +
-      '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline text-center">Full editor</a>' +
+      '<button type="button" class="group-open-full-editor text-xs font-semibold text-brand-700 hover:underline text-center" data-organiser-id="' +
+      attrEsc(o.id) +
+      '" data-group-email="' +
+      attrEsc(o.email || '') +
+      '">Full editor</button>' +
       '<span class="group-cleanup-msg text-xs text-center"></span></div></form>' +
       groupModerationPanelHtml(o)
     );
@@ -10584,6 +10591,7 @@
       .then(function (logoPayload) {
         return adminPost('/api/admin/organisers', {
           id: id,
+          name: formFieldVal(form, 'name'),
           description: formFieldVal(form, 'description'),
           website: formFieldVal(form, 'website'),
           photo_url: logoPayload.photo_url,
@@ -10630,13 +10638,15 @@
       });
   }
 
-  function impersonateOrganiserGroup(organiserId, email) {
-    adminPost('/api/admin/impersonate', {
+  function impersonateOrganiserGroup(organiserId, email, redirect) {
+    var payload = {
       organiserId: organiserId,
       email: email || '',
       view: 'organiser',
       provision: true,
-    })
+    };
+    if (redirect) payload.redirect = redirect;
+    adminPost('/api/admin/impersonate', payload)
       .then(function (data) {
         if (!data.ok) {
           window.alert(data.message || data.error || 'Could not impersonate group.');
@@ -10647,10 +10657,39 @@
         } catch (e) {
           /* ignore */
         }
-        window.location.href = '../' + String(data.redirect || '/organiser/').replace(/^\//, '');
+        window.location.href = '../' + String(data.redirect || redirect || '/organiser/').replace(/^\//, '');
       })
       .catch(function () {
         window.alert('Request failed. Try again.');
+      });
+  }
+
+  function openGroupFullEditor(organiserId, email, btn) {
+    if (btn) btn.disabled = true;
+    var redirect = '/organiser/group-edit?id=' + encodeURIComponent(organiserId);
+    adminPost('/api/admin/impersonate', {
+      organiserId: organiserId,
+      email: email || '',
+      view: 'organiser',
+      provision: true,
+      redirect: redirect,
+    })
+      .then(function (data) {
+        if (!data.ok) {
+          window.alert(data.message || data.error || 'Could not open full editor.');
+          if (btn) btn.disabled = false;
+          return;
+        }
+        try {
+          sessionStorage.removeItem('hub_nav_session_v1');
+        } catch (e) {
+          /* ignore */
+        }
+        window.location.href = '../' + String(data.redirect || redirect).replace(/^\//, '');
+      })
+      .catch(function () {
+        window.alert('Request failed. Try again.');
+        if (btn) btn.disabled = false;
       });
   }
 
@@ -10690,6 +10729,19 @@
     });
     var duplicateCount = ids.length - 1;
     var primaryLabel = (primary && primary.name) || 'selected group';
+    var duplicateEmails = rows
+      .filter(function (o) {
+        return String(o.id) !== String(primaryId) && o.email;
+      })
+      .map(function (o) {
+        return o.email;
+      });
+    var teamNote =
+      duplicateEmails.length === 1
+        ? ' Contact email ' + duplicateEmails[0] + ' will be added as a team editor on the primary account (unless it already owns the profile).'
+        : duplicateEmails.length > 1
+          ? ' Contact emails from merged groups will be added as team editors on the primary account.'
+          : '';
     var confirmMsg =
       'Merge ' +
       duplicateCount +
@@ -10698,7 +10750,9 @@
       ' into "' +
       primaryLabel +
       '"?\n\n' +
-      'Events will move to the primary profile. Other account owners will be added as team editors. Duplicate profiles will be deleted. This cannot be undone.';
+      'Events will move to the primary profile.' +
+      teamNote +
+      ' Duplicate profiles will be deleted. This cannot be undone.';
     if (!window.confirm(confirmMsg)) return;
 
     if (btn) btn.disabled = true;
@@ -11326,6 +11380,16 @@
       return;
     }
 
+    var fullEditorBtn = e.target.closest('.group-open-full-editor');
+    if (fullEditorBtn) {
+      openGroupFullEditor(
+        fullEditorBtn.getAttribute('data-organiser-id'),
+        fullEditorBtn.getAttribute('data-group-email'),
+        fullEditorBtn
+      );
+      return;
+    }
+
     var enableEmailsBtn = e.target.closest('[data-enable-group-emails]');
     if (enableEmailsBtn) {
       setGroupEmailsEnabled(enableEmailsBtn.getAttribute('data-enable-group-emails'), true, enableEmailsBtn);
@@ -11435,6 +11499,62 @@
       var selectPage = document.getElementById('event-cleanup-select-page');
       if (selectPage) selectPage.checked = false;
       updateEventBulkBar();
+      return;
+    }
+    var grantAccessBtn = e.target.closest('[data-grant-organiser-access]');
+    if (grantAccessBtn) {
+      var grantOrganiserId = grantAccessBtn.getAttribute('data-grant-organiser-access');
+      if (!grantOrganiserId) return;
+      grantAccessBtn.disabled = true;
+      adminPost('/api/admin/events', { action: 'ensure_organiser_owner', organiser_id: grantOrganiserId })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Could not grant access');
+          var msg = grantAccessBtn.closest('.event-cleanup-form');
+          var msgEl = msg && msg.querySelector('.event-cleanup-msg');
+          if (msgEl) {
+            msgEl.textContent = data.already
+              ? 'Profile already claimed for ' + (data.email || 'owner') + '.'
+              : 'Owner access granted.';
+            msgEl.className = 'event-cleanup-msg text-xs text-emerald-700 font-semibold';
+          }
+        })
+        .catch(function (err) {
+          window.alert(err.message || 'Could not grant owner access');
+        })
+        .finally(function () {
+          grantAccessBtn.disabled = false;
+        });
+      return;
+    }
+    if (e.target.closest('#event-bulk-grant-access')) {
+      var bulkIds = getSelectedEventIds();
+      if (!bulkIds.length) return;
+      var bulkBtn = document.getElementById('event-bulk-grant-access');
+      var bulkMsg = document.getElementById('event-bulk-msg');
+      if (bulkBtn) bulkBtn.disabled = true;
+      if (bulkMsg) bulkMsg.textContent = 'Granting access…';
+      adminPost('/api/admin/events', { action: 'bulk_ensure_organiser_owner', ids: bulkIds })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Could not grant access');
+          if (bulkMsg) {
+            bulkMsg.textContent =
+              'Granted access for ' +
+              String(data.organiser_count || 0) +
+              ' organiser profile' +
+              (Number(data.organiser_count) === 1 ? '' : 's') +
+              '.';
+            bulkMsg.className = 'text-xs text-emerald-700 font-semibold';
+          }
+        })
+        .catch(function (err) {
+          if (bulkMsg) {
+            bulkMsg.textContent = err.message || 'Could not grant access';
+            bulkMsg.className = 'text-xs text-red-700 font-semibold';
+          }
+        })
+        .finally(function () {
+          if (bulkBtn) bulkBtn.disabled = false;
+        });
       return;
     }
     var unselectBtn = e.target.closest('[data-unselect-event]');
@@ -11983,6 +12103,8 @@
       id: ev.id,
       title: ev.title || 'Untitled',
       organiser_name: ev.organiser_name || '',
+      organiser_email: ev.organiser_email || '',
+      organiser_id: ev.organiser_id || '',
       status: ev.status || '',
       starts_at: ev.starts_at || '',
       ends_at: ev.ends_at || '',
@@ -12593,6 +12715,15 @@
         var organiserLabel = ev.organiser_name
           ? esc(ev.organiser_name)
           : '<span class="text-amber-800 font-semibold">Unlinked</span>';
+        if (ev.organiser_email) {
+          organiserLabel +=
+            '<span class="block text-[10px] text-slate-500 truncate mt-0.5">' +
+            esc(ev.organiser_email) +
+            '</span>';
+        } else if (ev.organiser_id) {
+          organiserLabel +=
+            '<span class="block text-[10px] text-amber-800 font-semibold mt-0.5">No owner email</span>';
+        }
         var dateLabel = ev.starts_at
           ? esc(fmtTime(ev.starts_at))
           : '<span class="text-slate-400">No date</span>';
@@ -12715,6 +12846,7 @@
       '<option value="false">Remove featured</option></select></div></div>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
+      '<button type="button" id="event-bulk-grant-access" class="rounded-lg border border-brand-300 bg-white text-brand-800 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Grant owner access</button>' +
       '<span id="event-bulk-msg" class="text-xs"></span></div></form>' +
       '<div id="event-moderation-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
       '<p class="text-sm font-semibold text-brand-900">Hide listing (default for moderation)</p>' +

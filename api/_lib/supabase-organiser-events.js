@@ -12,7 +12,7 @@ const { hubViewFromRequest, organiserPersonalScopeFromRequest } = require('./aut
 
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
-const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace } = require('./supabase-organiser-access');
 const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 
@@ -1953,6 +1953,92 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
   };
 }
 
+function dedupeGroupsById(groups) {
+  const byId = new Map();
+  (groups || []).forEach((g) => {
+    if (g && g.id && !byId.has(g.id)) byId.set(g.id, g);
+  });
+  return [...byId.values()];
+}
+
+function workspaceGroupIds(groups, access) {
+  const ids = new Set((groups || []).map((g) => g.id).filter(Boolean));
+  ((access && access.groupIds) || []).forEach((id) => {
+    if (id) ids.add(id);
+  });
+  return [...ids];
+}
+
+async function emailMatchedOrganiserIdsForSession(session) {
+  const em = String(session?.email || '').trim().toLowerCase();
+  if (!em) return [];
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id')
+    .or(`email.eq.${em},contact_email.eq.${em}`)
+    .neq('ownership_claim_status', 'disputed');
+  if (error) throw new Error(error.message);
+  return (data || []).map((r) => r.id).filter(Boolean);
+}
+
+async function resolveWorkspaceGroupIds(session, groups, access, adminView) {
+  if (adminView) return (groups || []).map((g) => g.id).filter(Boolean);
+  const ids = new Set(workspaceGroupIds(groups, access));
+  (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => ids.add(id));
+  return [...ids];
+}
+
+async function mergeWorkspaceGroups(session, groups, access, adminView) {
+  if (adminView) return groups || [];
+  const merged = [...(groups || [])];
+  const have = new Set(merged.map((g) => g.id));
+  const missingIds = workspaceGroupIds(groups, access).filter((id) => !have.has(id));
+  (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => {
+    if (!have.has(id)) missingIds.push(id);
+  });
+  const uniqueMissing = [...new Set(missingIds.filter(Boolean))].filter((id) => !have.has(id));
+  if (!uniqueMissing.length) return merged;
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.from('organisers').select('*').in('id', uniqueMissing);
+  if (error) throw new Error(error.message);
+  (data || []).forEach((row) => {
+    if (!groupVisibleInOrganiserWorkspace(session, row)) return;
+    merged.push(sbOrg.rowToGroup(row));
+    have.add(row.id);
+  });
+  return dedupeGroupsById(merged);
+}
+
+async function prepareOrganiserWorkspaceScope(session, adminView) {
+  const { syncEmailMatchedOrganiserClaims } = require('./supabase-organiser-claims');
+  if (!adminView) {
+    await syncEmailMatchedOrganiserClaims(session).catch(() => {});
+  }
+
+  let access = null;
+  try {
+    access = await resolveOrganiserAccess(session);
+  } catch {
+    access = null;
+  }
+
+  let groups = [];
+  let groupsError = null;
+  try {
+    groups = await sbOrg.listGroupsForSession(session, adminView, access);
+    if (!adminView) {
+      groups = await mergeWorkspaceGroups(session, groups, access, adminView);
+    }
+  } catch (e) {
+    groupsError = e.message;
+  }
+
+  const groupIds = await resolveWorkspaceGroupIds(session, groups, access, adminView);
+  return { groups, groupIds, access, groupsError };
+}
+
 async function getLeanOrganiserWorkspace(req) {
   const { requireOrganiserSession } = require('./organiser');
   const wsAuth = requireOrganiserSession(req);
@@ -1966,7 +2052,6 @@ async function getLeanOrganiserWorkspace(req) {
   const { getOrganiserAccessStatus } = require('./organiser-access-guard');
   const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
   const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
-  const accessPromise = resolveOrganiserAccess(session).catch(() => null);
   const accessStatusPromise = getOrganiserAccessStatus(session).catch(() => null);
   const pendingClaimsPromise = adminView
     ? Promise.resolve([])
@@ -1975,16 +2060,11 @@ async function getLeanOrganiserWorkspace(req) {
         listPendingClaimOpportunitiesForSession(session).catch(() => []),
       ]).then(([groups, opportunities]) => ({ groups, opportunities }));
 
-  let groups = [];
-  let groupsError = null;
-  const access = await accessPromise;
-  try {
-    groups = await sbOrg.listGroupsForSession(session, adminView, access);
-  } catch (e) {
-    groupsError = e.message;
-  }
-
-  const groupIds = groups.map((g) => g.id);
+  const scope = await prepareOrganiserWorkspaceScope(session, adminView);
+  let groups = scope.groups;
+  const groupIds = scope.groupIds;
+  const access = scope.access;
+  const groupsError = scope.groupsError;
   const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
   const [pendingClaims, eventSummaries, accessStatus, rosterSummaries] = await Promise.all([
     pendingClaimsPromise,
@@ -2069,23 +2149,21 @@ async function getOrganiserWorkspace(req) {
     /* ignore */
   }
 
-  let groups = [];
   let pendingClaimGroups = [];
   let pendingClaimOpportunities = [];
-  let groupsError = null;
-  try {
-    groups = await sbOrg.listGroupsForSession(session, adminView);
-    if (!adminView) {
+  if (!adminView) {
+    try {
       const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
       const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
       pendingClaimGroups = await listPendingClaimGroupsForSession(session);
       pendingClaimOpportunities = await listPendingClaimOpportunitiesForSession(session);
+    } catch {
+      /* pending claims optional */
     }
-  } catch (e) {
-    groupsError = e.message;
   }
 
-  const groupIds = groups.map((g) => g.id);
+  const { groups, groupIds, access: workspaceAccess, groupsError } =
+    await prepareOrganiserWorkspaceScope(session, adminView);
   const eventsOnly = String(req.query?.eventsOnly || '') === '1';
 
   if (eventsOnly) {
@@ -2144,11 +2222,13 @@ async function getOrganiserWorkspace(req) {
     return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
   }
 
-  let access = null;
-  try {
-    access = await resolveOrganiserAccess(session);
-  } catch {
-    access = null;
+  let access = workspaceAccess;
+  if (!access) {
+    try {
+      access = await resolveOrganiserAccess(session);
+    } catch {
+      access = null;
+    }
   }
 
   let workspaceSalesCache = null;

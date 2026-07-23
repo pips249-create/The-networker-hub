@@ -2,7 +2,6 @@
  * First-login group profile claim / dispute — Supabase.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
 const { rowToGroup } = require('./supabase-organiser');
 const { sendViaResend } = require('./send-template-email');
 
@@ -166,6 +165,7 @@ async function claimGroupForSession(session, groupId) {
     throw err;
   }
 
+  const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
   const account = await getOrCreateOrganiserAccount(session);
   const now = new Date().toISOString();
   const patch = {
@@ -301,6 +301,7 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
     userId = provisioned.userId;
   }
 
+  const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
   const account = await getOrCreateOrganiserAccount({ sub: userId, email: em });
   const now = new Date().toISOString();
   const patch = {
@@ -319,6 +320,28 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   return { claimed: true };
 }
 
+/** Claim email-matched profiles when an account holder opens the organiser workspace. */
+async function syncEmailMatchedOrganiserClaims(session) {
+  const em = String(session?.email || '').trim().toLowerCase();
+  if (!em) return { synced: 0 };
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id, ownership_claim_status')
+    .or(`email.eq.${em},contact_email.eq.${em}`);
+  if (error) throw new Error(error.message);
+
+  let synced = 0;
+  for (const row of data || []) {
+    if (!row?.id || row.ownership_claim_status === 'disputed') continue;
+    if (row.ownership_claim_status === 'claimed') continue;
+    const result = await ensureOrganiserClaimedForAdminEvent(row.id);
+    if (result.claimed) synced += 1;
+  }
+  return { synced };
+}
+
 module.exports = {
   listPendingClaimGroupsForSession,
   claimGroupForSession,
@@ -326,5 +349,6 @@ module.exports = {
   notifyAdminOfClaimDispute,
   bootstrapOrganiserFromPendingClaims,
   ensureOrganiserClaimedForAdminEvent,
+  syncEmailMatchedOrganiserClaims,
   emailMatchesProfile,
 };

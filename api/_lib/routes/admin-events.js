@@ -60,8 +60,10 @@ function mapOrganiserOptionRow(o) {
   return {
     id: o.id,
     name: String(o.name || '').trim(),
+    email: String(o.contact_email || o.email || '').trim().toLowerCase(),
     listing_status: o.listing_status || '',
     slug: publicOrganiserSlug(o) || '',
+    ownership_claim_status: o.ownership_claim_status || '',
   };
 }
 
@@ -72,7 +74,7 @@ async function fetchOrganisersByIds(sb, organiserIds) {
   const all = [];
   for (let i = 0; i < ids.length; i += 80) {
     const chunk = ids.slice(i, i + 80);
-    const res = await sb.from('organisers').select('id, name, listing_status, slug').in('id', chunk);
+    const res = await sb.from('organisers').select('id, name, listing_status, slug, email, contact_email, ownership_claim_status').in('id', chunk);
     if (res.error) throw new Error(res.error.message);
     all.push(...(res.data || []));
   }
@@ -114,6 +116,8 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
     photo_url: eventImageUrl(row),
     organiser_id: row.organiser_id || '',
     organiser_name: org ? String(org.name || '').trim() : '',
+    organiser_email: org ? String(org.email || '').trim().toLowerCase() : '',
+    organiser_ownership_status: org ? String(org.ownership_claim_status || '').trim() : '',
     organiser_slug: org ? publicOrganiserSlug(org) || '' : '',
     starts_at: row.starts_at || '',
     ends_at: row.ends_at || '',
@@ -535,11 +539,16 @@ async function adminDeleteEvent(sb, eventId, opts) {
 }
 
 async function bulkUpdateEvents(ids, body) {
-  const patch = buildEventPatchFromBody(body);
+  const patch = await buildEventPatchFromBody(body);
   if (!Object.keys(patch).length) {
     const err = new Error('no_fields');
     err.status = 400;
     throw err;
+  }
+
+  const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+  if (patch.organiser_id) {
+    await ensureOrganiserClaimedForAdminEvent(patch.organiser_id);
   }
 
   const sb = getSupabaseAdmin();
@@ -887,6 +896,40 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, ...result });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'ensure_owner_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'bulk_ensure_organiser_owner') {
+      const ids = [
+        ...new Set(
+          (Array.isArray(body.ids) ? body.ids : [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (!ids.length) return json(res, 400, { error: 'missing_ids' });
+      try {
+        const sb = getSupabaseAdmin();
+        const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+        const { data: rows, error } = await sb.from('events').select('id, organiser_id').in('id', ids);
+        if (error) throw new Error(error.message);
+        const organiserIds = [
+          ...new Set((rows || []).map((row) => row.organiser_id).filter(Boolean)),
+        ];
+        const results = [];
+        for (const organiserId of organiserIds) {
+          results.push({
+            organiser_id: organiserId,
+            ...(await ensureOrganiserClaimedForAdminEvent(organiserId)),
+          });
+        }
+        return json(res, 200, { ok: true, results, organiser_count: organiserIds.length });
+      } catch (e) {
+        return json(res, 500, {
+          ok: false,
+          error: 'bulk_ensure_owner_failed',
+          message: e.message,
+        });
       }
     }
 

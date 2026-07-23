@@ -7931,7 +7931,7 @@
     body.innerHTML = '';
 
     if (!list.length) {
-      const hasEvents = state.events.length > 0;
+      const hasEvents = eventsSourceList().length > 0;
       setOrgEmpty(empty, {
         show: true,
         title: hasEvents ? 'No matching events' : 'No events yet',
