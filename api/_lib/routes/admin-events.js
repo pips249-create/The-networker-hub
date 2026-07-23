@@ -878,6 +878,18 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (body.action === 'ensure_organiser_owner') {
+      const organiserId = String(body.organiser_id || '').trim();
+      if (!organiserId) return json(res, 400, { error: 'missing_organiser_id' });
+      try {
+        const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+        const result = await ensureOrganiserClaimedForAdminEvent(organiserId);
+        return json(res, 200, { ok: true, ...result });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'ensure_owner_failed', message: e.message });
+      }
+    }
+
     const id = String(body.id || '').trim();
     if (!id) return json(res, 400, { error: 'missing_id' });
 
@@ -894,6 +906,22 @@ module.exports = async function handler(req, res) {
 
     try {
       const sb = getSupabaseAdmin();
+      const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
+      const claimOrganiserId = String(
+        body.organiser_id || patch.organiser_id || ''
+      ).trim();
+      if (claimOrganiserId) {
+        await ensureOrganiserClaimedForAdminEvent(claimOrganiserId);
+      } else {
+        const { data: existingRow } = await sb
+          .from('events')
+          .select('organiser_id')
+          .eq('id', id)
+          .maybeSingle();
+        if (existingRow?.organiser_id) {
+          await ensureOrganiserClaimedForAdminEvent(existingRow.organiser_id);
+        }
+      }
       if (Object.keys(patch).length) {
         await applyEventPatch(sb, id, patch);
       }

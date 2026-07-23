@@ -4758,13 +4758,13 @@
       '<div class="space-y-6 max-w-4xl">' +
       '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
       '<p class="font-semibold">Support &amp; debugging only</p>' +
-      '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated. Group profile emails without a login are created automatically (no email sent).</p>' +
+      '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated. Networking group profiles get a silent login if needed (no email sent). Choose <strong>Organiser dashboard</strong> to add events on that group&apos;s profile.</p>' +
       '</div>' +
       '<form id="impersonate-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
       '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-email">User email</label>' +
       '<input type="email" id="impersonate-email" list="impersonate-email-list" required placeholder="user@company.com" autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">' +
       '<datalist id="impersonate-email-list"></datalist>' +
-      '<p id="impersonate-user-hint" class="text-xs text-slate-500 mt-2">Enter any user or networking group email — group profiles get a silent login if needed.</p></div>' +
+      '<p id="impersonate-user-hint" class="text-xs text-slate-500 mt-2">Enter a networking group email or any user email. Group profiles are linked automatically so new events attach to that organiser page.</p></div>' +
       '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-view">Open as them in</label>' +
       '<select id="impersonate-view" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">' +
       '<option value="account">Attendee account</option>' +
@@ -4776,8 +4776,22 @@
       '</form>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
-      '<div><h3 class="text-sm font-bold text-slate-700">Browse accounts</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Read-only directory from Supabase — click Impersonate on a row.</p></div>' +
+      '<div><h3 class="text-sm font-bold text-slate-700">Networking groups</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Search ~1,000+ group profiles by name or email — opens the organiser dashboard so you can add events.</p></div>' +
+      '<p id="impersonate-groups-status" class="text-xs text-slate-500">Search to find a group</p></div>' +
+      '<div class="px-4 py-3 border-b border-slate-100">' +
+      '<label class="text-xs font-semibold text-slate-500 uppercase">Search groups</label>' +
+      '<input type="search" id="impersonate-groups-search" placeholder="Group name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3">Group</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Events</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="impersonate-groups-body"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Type a group name or email to search.</td></tr></tbody></table>'
+      ) +
+      '</div>' +
+      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
+      '<div><h3 class="text-sm font-bold text-slate-700">Browse login accounts</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">People with Hub sign-ins — not every networking group profile.</p></div>' +
       '<p id="impersonate-directory-status" class="text-xs text-slate-500">Loading…</p></div>' +
       '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-3 items-end">' +
       '<div class="flex-1 min-w-[200px]"><label class="text-xs font-semibold text-slate-500 uppercase">Search</label>' +
@@ -4805,6 +4819,10 @@
     var messageEl = document.getElementById('impersonate-message');
     var hintEl = document.getElementById('impersonate-user-hint');
     var impersonateView = document.getElementById('impersonate-view');
+    var groupsBody = document.getElementById('impersonate-groups-body');
+    var groupsStatus = document.getElementById('impersonate-groups-status');
+    var groupsSearch = document.getElementById('impersonate-groups-search');
+    var groupsSearchTimer = null;
 
     function showImpersonateMessage(text, isError) {
       if (!messageEl) return;
@@ -4834,6 +4852,79 @@
         .catch(function () {
           showImpersonateMessage('Request failed. Try again.', true);
           if (btn) btn.disabled = false;
+        });
+    }
+
+    function paintGroupsRows(groups) {
+      if (!groupsBody) return;
+      if (!groups.length) {
+        groupsBody.innerHTML =
+          '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No networking groups match that search.</td></tr>';
+        return;
+      }
+      groupsBody.innerHTML = groups
+        .map(function (o) {
+          var canImpersonate = Boolean(o.email);
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-4 py-3 font-medium">' +
+            esc(o.name || 'Untitled') +
+            '</td>' +
+            '<td class="px-4 py-3 text-slate-600">' +
+            (o.email ? esc(o.email) : '<span class="text-slate-400">No email</span>') +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            String(o.event_count || 0) +
+            '</td>' +
+            '<td class="px-4 py-3 text-right">' +
+            (canImpersonate
+              ? '<button type="button" class="impersonate-group-btn text-xs font-semibold text-brand-700 hover:underline" data-organiser-id="' +
+                attrEsc(o.id) +
+                '" data-email="' +
+                attrEsc(o.email) +
+                '">Impersonate</button>'
+              : '<span class="text-xs text-slate-400">Add email first</span>') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+      groupsBody.querySelectorAll('.impersonate-group-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          impersonateOrganiserGroup(
+            btn.getAttribute('data-organiser-id'),
+            btn.getAttribute('data-email')
+          );
+        });
+      });
+    }
+
+    function loadImpersonateGroups(query) {
+      var q = String(query || '').trim();
+      if (!q) {
+        if (groupsStatus) groupsStatus.textContent = 'Search to find a group';
+        paintGroupsRows([]);
+        if (groupsBody) {
+          groupsBody.innerHTML =
+            '<tr><td colspan="4" class="px-4 py-6 text-slate-500">Type a group name or email to search.</td></tr>';
+        }
+        return;
+      }
+      if (groupsStatus) groupsStatus.textContent = 'Searching…';
+      adminGet('/api/admin/organisers?q=' + encodeURIComponent(q) + '&limit=50')
+        .then(function (data) {
+          var groups = (data && data.organisers) || [];
+          if (groupsStatus) {
+            groupsStatus.textContent =
+              groups.length + ' group' + (groups.length === 1 ? '' : 's') + ' shown';
+          }
+          paintGroupsRows(groups);
+        })
+        .catch(function () {
+          if (groupsStatus) groupsStatus.textContent = 'Search failed';
+          if (groupsBody) {
+            groupsBody.innerHTML =
+              '<tr><td colspan="4" class="px-4 py-6 text-red-600">Could not load groups. Try again.</td></tr>';
+          }
         });
     }
 
@@ -4900,9 +4991,11 @@
           .join('');
       }
       if (hintEl) {
-        hintEl.textContent = users.length
-          ? users.length + ' accounts available from Supabase.'
-          : 'No users loaded — you can still enter an email manually.';
+        hintEl.textContent =
+          users.length +
+          ' login account' +
+          (users.length === 1 ? '' : 's') +
+          ' loaded. Search networking groups below, or enter any group email above.';
       }
       if (directoryStatus) {
         directoryStatus.textContent =
@@ -4913,6 +5006,14 @@
 
     if (directorySearch) directorySearch.addEventListener('input', paintDirectory);
     if (directoryRole) directoryRole.addEventListener('change', paintDirectory);
+    if (groupsSearch) {
+      groupsSearch.addEventListener('input', function () {
+        clearTimeout(groupsSearchTimer);
+        groupsSearchTimer = setTimeout(function () {
+          loadImpersonateGroups(groupsSearch.value);
+        }, 280);
+      });
+    }
 
     if (form) {
       form.addEventListener('submit', function (e) {
@@ -9206,6 +9307,7 @@
     return {
       id: o.id,
       name: o.name,
+      email: o.email || '',
       listingStatus: o.listingStatus || o.listing_status || '',
       slug: o.slug || '',
     };
@@ -9319,6 +9421,9 @@
           esc(suffix) +
           '</span>' +
           (org.slug ? '<span class="block text-xs text-slate-500 mt-0.5">/' + esc(org.slug) + '</span>' : '') +
+          (org.email
+            ? '<span class="block text-xs text-slate-500 mt-0.5">' + esc(org.email) + '</span>'
+            : '') +
           '</button>'
         );
       })

@@ -246,6 +246,29 @@ async function getOrCreateOrganiserAccount(session) {
   return account;
 }
 
+/** Profiles tied to this login always belong in the workspace (even in team mode). */
+async function appendSessionOwnedOrganiserIds(sb, session, groupIds) {
+  const uid = isUuid(session?.sub) ? session.sub : null;
+  const em = String(session?.email || '').toLowerCase();
+  if (!uid && !em) return;
+
+  let query = sb.from('organisers').select('id, email, contact_email, supabase_user_id, ownership_claim_status');
+  if (uid && em) {
+    query = query.or(`supabase_user_id.eq.${uid},email.eq.${em},contact_email.eq.${em}`);
+  } else if (uid) {
+    query = query.eq('supabase_user_id', uid);
+  } else {
+    query = query.or(`email.eq.${em},contact_email.eq.${em}`);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  (data || []).forEach((row) => {
+    if (!row?.id || row.ownership_claim_status === 'disputed') return;
+    if (groupVisibleInOrganiserWorkspace(session, row)) groupIds.add(row.id);
+  });
+}
+
 async function resolveOrganiserAccess(session) {
   const sb = getSupabaseAdmin();
   const uid = isUuid(session.sub) ? session.sub : null;
@@ -340,6 +363,8 @@ async function resolveOrganiserAccess(session) {
       });
     }
   }
+
+  await appendSessionOwnedOrganiserIds(sb, session, groupIds);
 
   return {
     accountId: effectiveAccountId,
