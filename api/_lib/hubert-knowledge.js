@@ -263,7 +263,7 @@ const FALLBACK_REPLIES = [
   {
     match: /list.*(franchise|opportunit)|publish.*opportunit|post.*opportunit|sell.*franchise/i,
     reply:
-      'To list a business opportunity, sign in and go to /opportunities/list or open the organiser dashboard at /organiser/. You can publish franchise, partnership, and other opportunity listings there and respond to enquiries from the dashboard.',
+      'Sign in → /organiser/ → Business opportunities → List a listing. Complete the form — title, type, summary, investment notes, images — and submit for review. Listings are checked before going live. Full guide: /guides/list-a-business-opportunity.',
   },
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
@@ -314,11 +314,6 @@ const FALLBACK_REPLIES = [
     match: /invite.*team|team member|add.*editor|editor access|team & invites|remove.*team member/i,
     reply:
       'Only the account owner can invite team members. Sign in → /organiser/ → Team & invites → enter their email, choose all groups or selected groups, and send (up to 100 editors). They sign in with that exact email to become Active. Editors can manage events and view revenue but cannot invite others, add bank details, or delete events. Guide: /guides/invite-your-team.',
-  },
-  {
-    match: /how do i list a business opportunity|list a business opportunity|publish.*business opportunity|opportunity listing.*organiser|submit.*opportunity.*review/i,
-    reply:
-      'Sign in → /organiser/ → Business opportunities → List a listing. Complete the form — title, type, summary, investment notes, images — and submit for review. Listings are checked before going live. Full guide: /guides/list-a-business-opportunity.',
   },
   {
     match: /respond to.*enquir|reply to.*enquir|manage.*opportunity enquir|enquir.*as organiser|prospect enquir/i,
