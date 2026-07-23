@@ -12,7 +12,7 @@ const { hubViewFromRequest, organiserPersonalScopeFromRequest } = require('./aut
 
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
-const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace } = require('./supabase-organiser-access');
+const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace, emailMatchedOrganiserIdsForSession, mergeEmailMatchedGroups } = require('./supabase-organiser-access');
 const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 
@@ -134,7 +134,7 @@ function mapMeetingType(format) {
 function mapApprovalStatus(listingStatus) {
   if (listingStatus == null || listingStatus === '') return undefined;
   const s = String(listingStatus).toLowerCase();
-  if (s === 'approved') return 'Approved';
+  if (s === 'published' || s === 'approved') return 'Approved';
   if (s === 'rejected') return 'Rejected';
   if (s === 'pending review' || s === 'pending') return 'Pending Review';
   return undefined;
@@ -818,6 +818,16 @@ async function buildEventRow(payload, eventId, mode) {
     demoteToDraftWithoutDate(row);
   }
 
+  if (row.status === 'published' && row.starts_at) {
+    row.approval_status = 'Approved';
+    if (row.ticket_sales_enabled == null) {
+      row.ticket_sales_enabled = false;
+    }
+    if (mode === 'create') {
+      row.published_at = new Date().toISOString();
+    }
+  }
+
   return row;
 }
 
@@ -852,12 +862,45 @@ async function createEvent(payload) {
   const { data, error } = await sb.from('events').insert(row).select('*').single();
   if (error) throw new Error(error.message);
 
+  let saved = data;
+  if (
+    String(saved.status || '').toLowerCase() === 'published' &&
+    String(saved.approval_status || '').trim() === 'Approved' &&
+    saved.starts_at
+  ) {
+    const { ensureEventSlug } = require('./event-slug');
+    const slug = await ensureEventSlug(sb, {
+      title: saved.title,
+      eventId: saved.id,
+      currentSlug: saved.slug,
+    });
+    if (slug && slug !== saved.slug) {
+      const { data: slugRow, error: slugErr } = await sb
+        .from('events')
+        .update({ slug })
+        .eq('id', saved.id)
+        .select('*')
+        .single();
+      if (slugErr) throw new Error(slugErr.message);
+      if (slugRow) saved = slugRow;
+    }
+    await publishOrganiserListingsForEventIds(sb, [saved]);
+    try {
+      const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
+      notifyRosterMembersOfPublishedEvent(saved).catch((err) => {
+        console.error('[createEvent] member list new-event email failed', saved.id, err?.message || err);
+      });
+    } catch {
+      /* optional */
+    }
+  }
+
   if (deferImage || Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
-    const updated = await applyEventPhotoAfterSave(data.id, payload);
+    const updated = await applyEventPhotoAfterSave(saved.id, payload);
     if (updated) return rowToEvent(updated);
   }
 
-  return rowToEvent(data);
+  return rowToEvent(saved);
 }
 
 async function duplicateEventForSession(session, sourceEventId, groupIds) {
@@ -1969,19 +2012,6 @@ function workspaceGroupIds(groups, access) {
   return [...ids];
 }
 
-async function emailMatchedOrganiserIdsForSession(session) {
-  const em = String(session?.email || '').trim().toLowerCase();
-  if (!em) return [];
-  const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('organisers')
-    .select('id')
-    .or(`email.eq.${em},contact_email.eq.${em}`)
-    .neq('ownership_claim_status', 'disputed');
-  if (error) throw new Error(error.message);
-  return (data || []).map((r) => r.id).filter(Boolean);
-}
-
 async function resolveWorkspaceGroupIds(session, groups, access, adminView) {
   if (adminView) return (groups || []).map((g) => g.id).filter(Boolean);
   const ids = new Set(workspaceGroupIds(groups, access));
@@ -1991,24 +2021,7 @@ async function resolveWorkspaceGroupIds(session, groups, access, adminView) {
 
 async function mergeWorkspaceGroups(session, groups, access, adminView) {
   if (adminView) return groups || [];
-  const merged = [...(groups || [])];
-  const have = new Set(merged.map((g) => g.id));
-  const missingIds = workspaceGroupIds(groups, access).filter((id) => !have.has(id));
-  (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => {
-    if (!have.has(id)) missingIds.push(id);
-  });
-  const uniqueMissing = [...new Set(missingIds.filter(Boolean))].filter((id) => !have.has(id));
-  if (!uniqueMissing.length) return merged;
-
-  const sb = getSupabaseAdmin();
-  const { data, error } = await sb.from('organisers').select('*').in('id', uniqueMissing);
-  if (error) throw new Error(error.message);
-  (data || []).forEach((row) => {
-    if (!groupVisibleInOrganiserWorkspace(session, row)) return;
-    merged.push(sbOrg.rowToGroup(row));
-    have.add(row.id);
-  });
-  return dedupeGroupsById(merged);
+  return mergeEmailMatchedGroups(session, groups, access);
 }
 
 async function prepareOrganiserWorkspaceScope(session, adminView) {

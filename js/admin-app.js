@@ -12948,8 +12948,9 @@
       eventPhotoFieldHtml('event-create-photo', '') +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      eventStatusOptions('draft') +
-      '</select></div>' +
+      eventStatusOptions('published') +
+      '</select>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Published events go live on browse (listing-only until tickets are added).</p></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
       '<span class="event-create-msg text-xs"></span></div></form></div></details></div>';

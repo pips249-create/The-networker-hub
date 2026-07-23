@@ -434,15 +434,19 @@ async function applyEventPatch(sb, id, patch) {
     patch.ticket_sales_enabled = false;
   }
 
-  if (patch.status === 'published') {
-    const { data: ticketRows, error: ticketErr } = await sb
-      .from('tickets')
-      .select('id, event_id, status, sale_starts_at, sale_ends_at')
-      .eq('event_id', id);
-    if (ticketErr) throw new Error(ticketErr.message);
-    patch.ticket_sales_enabled = (ticketRows || []).length
-      ? eventHasTicketsOnSale(ticketRows)
-      : false;
+  const effectiveStatus = patch.status != null ? patch.status : current.status;
+  if (String(effectiveStatus || '').trim() === 'published') {
+    patch.approval_status = 'Approved';
+    if (!Object.prototype.hasOwnProperty.call(patch, 'ticket_sales_enabled')) {
+      const { data: ticketRows, error: ticketErr } = await sb
+        .from('tickets')
+        .select('id, event_id, status, sale_starts_at, sale_ends_at')
+        .eq('event_id', id);
+      if (ticketErr) throw new Error(ticketErr.message);
+      patch.ticket_sales_enabled = (ticketRows || []).length
+        ? eventHasTicketsOnSale(ticketRows)
+        : false;
+    }
   }
 
   if (patch.status === 'cancelled') {
