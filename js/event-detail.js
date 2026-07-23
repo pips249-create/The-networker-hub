@@ -3337,6 +3337,12 @@
       if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       if (nudgePanel) {
         nudgePanel.hidden = false;
+        const leadEl = nudgePanel.querySelector('.ticket-sales-nudge-lead');
+        if (leadEl) {
+          leadEl.textContent = ev.hasTicketTiers
+            ? 'Unfortunately you can\u2019t buy tickets for this event until the organiser allows ticket sales.'
+            : 'Tickets for this event are not available yet \u2014 the organiser has not set them up.';
+        }
         bindTicketSalesNudgeUi(ev);
         prefillNudgeEmail();
       }

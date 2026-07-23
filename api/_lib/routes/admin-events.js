@@ -440,13 +440,9 @@ async function applyEventPatch(sb, id, patch) {
       .select('id, event_id, status, sale_starts_at, sale_ends_at')
       .eq('event_id', id);
     if (ticketErr) throw new Error(ticketErr.message);
-    if (!(ticketRows || []).length) {
-      const err = new Error('Add at least one ticket type before publishing this event.');
-      err.status = 400;
-      err.code = 'tickets_required_for_publish';
-      throw err;
-    }
-    patch.ticket_sales_enabled = eventHasTicketsOnSale(ticketRows);
+    patch.ticket_sales_enabled = (ticketRows || []).length
+      ? eventHasTicketsOnSale(ticketRows)
+      : false;
   }
 
   if (patch.status === 'cancelled') {

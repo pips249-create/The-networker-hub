@@ -1346,8 +1346,6 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
     throw e;
   }
 
-  await assertEventsHaveTicketsForPublish(sb, ids);
-
   const patch = {
     status: 'published',
     published_at: new Date().toISOString(),
@@ -1401,7 +1399,9 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
     const rowPatch = {
       ...patch,
       slug,
-      ticket_sales_enabled: eventHasTicketsOnSale(eventTickets, undefined, row.starts_at),
+      ticket_sales_enabled: eventTickets.length
+        ? eventHasTicketsOnSale(eventTickets, undefined, row.starts_at)
+        : false,
     };
     if (row.refund_terms_agreed || row.refund_terms_agreed_at) {
       rowPatch.refund_terms_agreed = true;

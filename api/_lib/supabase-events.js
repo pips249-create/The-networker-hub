@@ -357,10 +357,9 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     isEventPublishedForSale(row) && hasTicketTiers && !ticketsOnSale && Boolean(ticketSalesOpensAt);
   const isTicketSalesPending =
     isEventPublishedForSale(row) &&
-    hasTicketTiers &&
     !isTicketSalesScheduled &&
     !ticketSalesEnabled &&
-    ticketsOnSale;
+    (!hasTicketTiers || ticketsOnSale);
   const connectRequired = connectRequiredForPaidCheckout() && hasPaidTickets;
   const connectReady =
     !connectRequired ||

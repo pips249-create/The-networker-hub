@@ -12812,7 +12812,57 @@
   function renderEventCleanup() {
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div>' +
+      '<div class="admin-filter-bar admin-filter-bar--sticky rounded-xl border border-slate-200 p-4 space-y-3">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
+      '<input type="search" id="event-cleanup-search" placeholder="Search title or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      attrEsc(eventCleanupState.q) +
+      '">' +
+      '<select id="event-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<option value="recent"' +
+      (eventCleanupState.sort === 'recent' ? ' selected' : '') +
+      '>Newest first</option>' +
+      '<option value="date"' +
+      (eventCleanupState.sort === 'date' ? ' selected' : '') +
+      '>Event date</option>' +
+      '<option value="title"' +
+      (eventCleanupState.sort === 'title' ? ' selected' : '') +
+      '>Title A–Z</option></select></div>' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-xs">' +
+      '<option value="">All organisers</option></select>' +
+      '<select id="event-cleanup-status-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[10rem]">' +
+      '<option value="">Any status</option>' +
+      eventStatusOptions(eventCleanupState.status) +
+      '</select>' +
+      '<select id="event-cleanup-approval-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
+      '<option value="">Any approval</option>' +
+      '<option value="Pending Review"' +
+      (eventCleanupState.approval === 'Pending Review' ? ' selected' : '') +
+      '>Pending review</option>' +
+      '<option value="Approved"' +
+      (eventCleanupState.approval === 'Approved' ? ' selected' : '') +
+      '>Approved</option>' +
+      '<option value="Rejected"' +
+      (eventCleanupState.approval === 'Rejected' ? ' selected' : '') +
+      '>Rejected</option></select>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
+      (eventCleanupState.unlinked ? ' checked' : '') +
+      '> Unlinked</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-no-date" class="rounded border-slate-300"' +
+      (eventCleanupState.noDate ? ' checked' : '') +
+      '> No date</label></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" data-event-quick="unlinked" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unlinked</button>' +
+      '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
+      '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
+      '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft events</button>' +
+      '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
+      '<div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label>' +
+      '<div id="event-cleanup-status" class="text-sm text-slate-500">Loading events…</div></div></div>' +
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
       'Large catalogue — search by title or city, pick an organiser, or use quick filters below. Use page numbers below the table to browse.</p>' +
       '<div id="event-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
@@ -12861,60 +12911,11 @@
       '<button type="button" id="event-force-delete-btn" class="rounded-lg border border-red-300 bg-white text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">Cancel event &amp; refund bookings</button>' +
       '<button type="button" id="event-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">Delete empty events</button>' +
       '<span id="event-delete-msg" class="text-xs"></span></div></div></div>' +
-      '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
-      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
-      '<input type="search" id="event-cleanup-search" placeholder="Search title or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
-      attrEsc(eventCleanupState.q) +
-      '">' +
-      '<select id="event-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
-      '<option value="recent"' +
-      (eventCleanupState.sort === 'recent' ? ' selected' : '') +
-      '>Newest first</option>' +
-      '<option value="date"' +
-      (eventCleanupState.sort === 'date' ? ' selected' : '') +
-      '>Event date</option>' +
-      '<option value="title"' +
-      (eventCleanupState.sort === 'title' ? ' selected' : '') +
-      '>Title A–Z</option></select></div>' +
-      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
-      '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-xs">' +
-      '<option value="">All organisers</option></select>' +
-      '<select id="event-cleanup-status-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[10rem]">' +
-      '<option value="">Any status</option>' +
-      eventStatusOptions(eventCleanupState.status) +
-      '</select>' +
-      '<select id="event-cleanup-approval-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]">' +
-      '<option value="">Any approval</option>' +
-      '<option value="Pending Review"' +
-      (eventCleanupState.approval === 'Pending Review' ? ' selected' : '') +
-      '>Pending review</option>' +
-      '<option value="Approved"' +
-      (eventCleanupState.approval === 'Approved' ? ' selected' : '') +
-      '>Approved</option>' +
-      '<option value="Rejected"' +
-      (eventCleanupState.approval === 'Rejected' ? ' selected' : '') +
-      '>Rejected</option></select>' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
-      (eventCleanupState.unlinked ? ' checked' : '') +
-      '> Unlinked</label>' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="event-cleanup-no-date" class="rounded border-slate-300"' +
-      (eventCleanupState.noDate ? ' checked' : '') +
-      '> No date</label></div>' +
-      '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" data-event-quick="unlinked" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unlinked</button>' +
-      '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
-      '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
-      '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft events</button>' +
-      '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
       '<div id="event-cleanup-list"></div>' +
       '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group">' +
       '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
       '<div class="px-4 pb-4 space-y-3 border-t border-brand-100">' +
-      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile with the core listing details. It starts as a draft — organisers can add tickets and publish when ready.</p>' +
+      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile with the core listing details. You can publish as a listing without tickets — visitors can nudge the organiser to add them. Organisers finish tickets and enable sales when ready.</p>' +
       '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +

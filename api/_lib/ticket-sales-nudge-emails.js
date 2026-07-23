@@ -62,20 +62,14 @@ async function loadNudgeContext(eventId) {
   if (ticketsError) throw new Error(ticketsError.message);
 
   const tickets = ticketRows || [];
-  if (!tickets.length) {
-    const err = new Error('no_tickets');
-    err.status = 400;
-    throw err;
-  }
-
-  const ticketsOnSale = eventHasTicketsOnSale(tickets);
-  const isScheduled = !ticketsOnSale && Boolean(earliestTicketSaleStart(tickets));
+  const ticketsOnSale = tickets.length ? eventHasTicketsOnSale(tickets) : false;
+  const isScheduled = tickets.length && !ticketsOnSale && Boolean(earliestTicketSaleStart(tickets));
   if (isScheduled) {
     const err = new Error('ticket_sales_scheduled');
     err.status = 400;
     throw err;
   }
-  if (resolveTicketSalesEnabled(event, tickets)) {
+  if (tickets.length && resolveTicketSalesEnabled(event, tickets)) {
     const err = new Error('ticket_sales_already_enabled');
     err.status = 400;
     throw err;
