@@ -69,10 +69,22 @@
           window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15
         );
       }
-    } else if (params.location && window.hubAllowedOutcodesForQuery) {
-      var outcodes = window.hubAllowedOutcodesForQuery(params.location);
-      if (outcodes && outcodes.length) {
-        params.outcodes = outcodes.join(',');
+    } else if (params.location) {
+      var filterCoords = window.hubLocationFilterCoords;
+      var prefersGeo =
+        window.hubPrefersGeoRadiusForLocation &&
+        window.hubPrefersGeoRadiusForLocation(params.location);
+      if (prefersGeo && filterCoords && filterCoords.length === 2) {
+        params.lat = String(filterCoords[0]);
+        params.lng = String(filterCoords[1]);
+        params.radius = String(
+          window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15
+        );
+      } else if (window.hubAllowedOutcodesForQuery) {
+        var outcodes = window.hubAllowedOutcodesForQuery(params.location);
+        if (outcodes && outcodes.length) {
+          params.outcodes = outcodes.join(',');
+        }
       }
     }
 

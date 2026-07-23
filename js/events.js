@@ -781,10 +781,14 @@
           escapeHtml(searchQ) +
           '”</a>.'
         : isRegionalPage
-          ? 'Check back soon, or <a href="/events/">browse all UK events</a>. Organisers can list a group from the button above.'
+          ? 'Check back soon, or <a href="' +
+            (window.hubBrowseAllEventsHref || '/events/?browse=all') +
+            '">browse all UK events</a>. Organisers can list a group from the button above.'
           : 'Try clearing filters, choosing a different date range, or browsing all event types.';
       const emptyAction = isRegionalPage
-        ? '<a class="empty-state-btn" href="/events/">Browse all events</a>'
+        ? '<a class="empty-state-btn" href="' +
+          (window.hubBrowseAllEventsHref || '/events/?browse=all') +
+          '">Browse all events</a>'
         : '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>';
       els.listings.innerHTML =
         '<div class="empty-state is-visible" role="status">' +

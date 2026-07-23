@@ -285,10 +285,19 @@
     return allowed;
   }
 
+  window.hubPrefersGeoRadiusForLocation = function (input) {
+    return !!parseFullUkPostcode(String(input || '').trim());
+  };
+
   window.hubResolveLocationFilter = function (input) {
     var raw = String(input || '').trim();
     if (!raw) {
       window.hubLocationFilterState = null;
+      return Promise.resolve();
+    }
+
+    if (parseFullUkPostcode(raw)) {
+      window.hubLocationFilterState = { query: raw, mode: 'geo' };
       return Promise.resolve();
     }
 
@@ -383,6 +392,7 @@
   window.hubAllowedOutcodesForQuery = function (input) {
     var raw = String(input || '').trim();
     if (!raw) return [];
+    if (parseFullUkPostcode(raw)) return [];
     var state = window.hubLocationFilterState;
     if (state && state.query === raw && state.allowed) {
       return Object.keys(state.allowed);

@@ -147,6 +147,7 @@ function applySearchFilter(query, params) {
 }
 
 function applyOutcodeFilter(query, params) {
+  if (hasGeoRadius(params)) return query;
   const outcodes = outcodeListForLocation(params.location, params.outcodes);
   if (outcodes && outcodes.length) {
     const ocList = outcodes.length <= 120 ? outcodes : outcodes.slice(0, 120);

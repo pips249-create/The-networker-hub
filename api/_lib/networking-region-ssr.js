@@ -41,7 +41,7 @@ function buildListingsHtml(events, origin, region, total) {
       '<div class="event-listings hub-region-ssr-listings" id="event-listings" data-hub-ssr-listings="1">' +
       '<p class="hub-region-ssr-empty">No upcoming networking events in ' +
       regionName +
-      ' yet. <a href="/for-organisers">List your event</a> or <a href="/events/">browse all UK events</a>.</p>' +
+      ' yet. <a href="/for-organisers">List your event</a> or <a href="/events/?browse=all">browse all UK events</a>.</p>' +
       '</div>'
     );
   }
