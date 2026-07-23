@@ -21,6 +21,70 @@
     },
   ];
 
+  function scheduledReminderDue(reminder) {
+    if (!reminder || !reminder.dueDate) return false;
+    var due = new Date(String(reminder.dueDate) + 'T23:59:59');
+    if (isNaN(due.getTime())) return false;
+    return due.getTime() <= Date.now();
+  }
+
+  function formatScheduledReminderDue(dueDate) {
+    var d = new Date(String(dueDate) + 'T12:00:00');
+    if (isNaN(d.getTime())) return String(dueDate || '');
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function renderScheduledReminderHtml(reminder) {
+    return (
+      '<div class="admin-scheduled-reminder">' +
+      '<p class="admin-scheduled-reminder-title">' +
+      esc(reminder.title) +
+      '</p>' +
+      '<p class="admin-scheduled-reminder-meta"><strong>Due ' +
+      esc(formatScheduledReminderDue(reminder.dueDate)) +
+      '</strong></p>' +
+      '<p class="admin-scheduled-reminder-detail">' +
+      esc(reminder.detail) +
+      '</p>' +
+      (reminder.href
+        ? '<a href="' +
+          attrEsc(reminder.href) +
+          '" class="admin-scheduled-reminder-link">View details</a>'
+        : '') +
+      '</div>'
+    );
+  }
+
+  function marketingStatsReviewQueueAlert() {
+    var reminder = PLATFORM_SCHEDULED_REMINDERS.find(function (r) {
+      return r.id === 'marketing-stats-review';
+    });
+    if (!reminder || !scheduledReminderDue(reminder)) return null;
+    return {
+      id: reminder.id,
+      severity: 'low',
+      title: reminder.title,
+      detail: reminder.detail,
+      href: reminder.href || '#dashboard',
+      time: reminder.dueDate,
+    };
+  }
+
+  function syncScheduledRemindersSection() {
+    var section = document.getElementById('dashboard-scheduled-reminders-section');
+    var el = document.getElementById('dashboard-scheduled-reminders');
+    if (!el) return;
+    var upcoming = PLATFORM_SCHEDULED_REMINDERS.filter(function (r) {
+      return r && r.dueDate && !scheduledReminderDue(r);
+    });
+    if (section) section.hidden = !upcoming.length;
+    if (!upcoming.length) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = upcoming.map(renderScheduledReminderHtml).join('');
+  }
+
   function isLocalDevHost() {
     var host = String(window.location.hostname || '').toLowerCase();
     return host === 'localhost' || host === '127.0.0.1';
@@ -426,6 +490,7 @@
     eventType: '',
     when: '',
   };
+  var featuredSpotlightLoadGen = 0;
   var featuredSpotlightSearchTimer = null;
   var featuredSpotlightOrganisers = [];
   var featuredSpotlightOpportunities = [];
@@ -1341,6 +1406,7 @@
       }
     }
     data = data || {};
+    if (r.ok && data.ok == null) data.ok = true;
     if (!r.ok) {
       data.error = data.error || data.message || 'request_failed';
       data.ok = false;
@@ -13171,6 +13237,59 @@
     });
   }
 
+  function loadFeaturedSpotlightEvents() {
+    var loadGen = ++featuredSpotlightLoadGen;
+    var tbody = document.getElementById('featured-tbody');
+    var status = document.getElementById('featured-status');
+    if (status) status.textContent = 'Loading approved events…';
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr>';
+    }
+
+    adminGet(
+      '/api/admin/events?approval_status=Approved&limit=100&sort=date&light=1'
+    )
+      .then(function (data) {
+        if (loadGen !== featuredSpotlightLoadGen) return;
+        if (!document.getElementById('featured-tbody')) return;
+        if (!data || !data.ok) {
+          if (status) {
+            status.textContent =
+              'Could not load events.' +
+              (data && data.message ? ' ' + data.message : '');
+          }
+          if (tbody) {
+            tbody.innerHTML =
+              '<tr><td colspan="7" class="px-4 py-6 text-red-700">Load failed. Try refreshing the page.</td></tr>';
+          }
+          return;
+        }
+        featuredSpotlightEvents = Array.isArray(data.events) ? data.events : [];
+        try {
+          paintFeaturedSpotlightTable();
+        } catch (err) {
+          if (status) status.textContent = 'Could not display events.';
+          if (tbody) {
+            tbody.innerHTML =
+              '<tr><td colspan="7" class="px-4 py-6 text-red-700">' +
+              esc((err && err.message) || 'Display failed.') +
+              '</td></tr>';
+          }
+        }
+      })
+      .catch(function (err) {
+        if (loadGen !== featuredSpotlightLoadGen) return;
+        if (!document.getElementById('featured-tbody')) return;
+        if (status) status.textContent = 'Could not load events.';
+        if (tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="px-4 py-6 text-red-700">' +
+            esc((err && err.message) || 'Request failed.') +
+            '</td></tr>';
+        }
+      });
+  }
+
   function renderSpotlightEventsTab() {
     var typeOptions = EVENT_TYPES.map(function (t) {
       return (
@@ -13230,18 +13349,7 @@
     loadSpotlightSlotBanner();
     bindFeaturedSpotlightFilters();
     bindSpotlightToggleHandlers();
-
-    adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date').then(function (data) {
-      var tbody = document.getElementById('featured-tbody');
-      var status = document.getElementById('featured-status');
-      if (!data || !data.ok) {
-        if (status) status.textContent = 'Could not load events.';
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
-        return;
-      }
-      featuredSpotlightEvents = data.events || [];
-      paintFeaturedSpotlightTable();
-    });
+    loadFeaturedSpotlightEvents();
   }
 
   function renderSpotlightOrganisersTab() {

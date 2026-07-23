@@ -128,15 +128,19 @@ async function listEventsForAdmin(query) {
   const search = String(query.q || '').trim();
   const sort = String(query.sort || 'recent').trim().toLowerCase();
   const featuredOnly = query.featured === '1' || query.featured === 'true';
+  const light =
+    query.light === '1' ||
+    query.light === 'true' ||
+    String(query.view || '').trim().toLowerCase() === 'spotlight';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
   const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
 
-  let dbQuery = sb
-    .from('events')
-    .select(
-      'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, featured_until, created_at, locked',
-      { count: 'exact' }
-    );
+  let dbQuery = sb.from('events').select(
+    light
+      ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
+      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, featured_until, created_at, locked',
+    { count: 'exact' }
+  );
 
   if (sort === 'title') {
     dbQuery = dbQuery.order('title', { ascending: true });
@@ -192,34 +196,42 @@ async function listEventsForAdmin(query) {
   const orgById = new Map(
     organisers.map((o) => [o.id, { id: o.id, name: o.name, slug: o.slug, listing_status: o.listing_status }])
   );
-  const commerceStats = await fetchEventRegistrationStats(
-    sb,
-    rows.map((row) => row.id)
-  );
-  const cancellationsByEvent = await fetchLatestCancellationsByEventId(
-    sb,
-    rows.map((row) => row.id)
-  );
+  let commerceStats = null;
+  let cancellationsByEvent = null;
+  if (!light) {
+    commerceStats = await fetchEventRegistrationStats(
+      sb,
+      rows.map((row) => row.id)
+    );
+    cancellationsByEvent = await fetchLatestCancellationsByEventId(
+      sb,
+      rows.map((row) => row.id)
+    );
+  }
   const events = rows.map((row) =>
-    mapEventRow(row, orgById, commerceStats, cancellationsByEvent[row.id] || null)
+    mapEventRow(row, orgById, commerceStats, cancellationsByEvent ? cancellationsByEvent[row.id] || null : null)
   );
   const total = eventsRes.count != null ? eventsRes.count : rows.length;
 
-  const unlinkedCountRes = await sb
-    .from('events')
-    .select('id', { count: 'exact', head: true })
-    .is('organiser_id', null);
-  if (unlinkedCountRes.error) throw new Error(unlinkedCountRes.error.message);
+  let unlinkedCount = 0;
+  if (!light) {
+    const unlinkedCountRes = await sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .is('organiser_id', null);
+    if (unlinkedCountRes.error) throw new Error(unlinkedCountRes.error.message);
+    unlinkedCount = unlinkedCountRes.count || 0;
+  }
 
   return {
     events,
-    organisers,
+    organisers: light ? [] : organisers,
     count: events.length,
     total,
     offset,
     limit,
     hasMore: offset + events.length < total,
-    unlinked_count: unlinkedCountRes.count || 0,
+    unlinked_count: unlinkedCount,
   };
 }
 
