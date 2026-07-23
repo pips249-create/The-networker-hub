@@ -20,6 +20,7 @@
   let shareCardDataUrl = '';
   let currentShareReg = null;
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
+  const ORGANISER_CONTEXT_DISMISS_KEY = 'hub_attendee_organiser_context_dismissed';
 
   const SUBPAGE_HEAD = {
     upcoming: {
@@ -35,7 +36,7 @@
       sub: 'Bookings you have cancelled, including refund status and amounts.',
     },
     saved: {
-      title: 'Saved',
+      title: 'Saved & memberships',
       sub: 'Saved events, organisers, and opportunities — plus your group memberships and expiry dates under My memberships.',
     },
     past: {
@@ -84,9 +85,20 @@
     return '<span class="' + cls + '">' + esc(label) + '</span>';
   }
 
+  function membershipOrganiserHref(item) {
+    return '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');
+  }
+
   function goToMemberships() {
     setSavedScope('groups');
     setRoute('saved');
+  }
+
+  function setListEmptyState(tableId, emptyId, isEmpty) {
+    const table = tableId ? document.getElementById(tableId) : null;
+    const empty = emptyId ? document.getElementById(emptyId) : null;
+    if (table) table.hidden = isEmpty;
+    if (empty) empty.hidden = !isEmpty;
   }
 
   function routeHash() {
@@ -1869,10 +1881,10 @@
 
     body.innerHTML = '';
     if (!list.length) {
-      if (empty) empty.hidden = false;
+      setListEmptyState('ad-payments-table', 'ad-payments-empty', true);
       return;
     }
-    if (empty) empty.hidden = true;
+    setListEmptyState('ad-payments-table', 'ad-payments-empty', false);
 
     list.forEach((reg) => {
       const applicationStatus = String(reg.applicationStatus || 'Approved').trim();
@@ -2224,11 +2236,19 @@
 
     body.innerHTML = '';
     if (!list.length) {
-      if (empty) empty.hidden = false;
+      if (bodyId === 'ad-upcoming-body') {
+        setListEmptyState('ad-upcoming-table', emptyId, true);
+      } else if (empty) {
+        empty.hidden = false;
+      }
       renderPagination(navId, listKey, 1);
       return;
     }
-    if (empty) empty.hidden = true;
+    if (bodyId === 'ad-upcoming-body') {
+      setListEmptyState('ad-upcoming-table', emptyId, false);
+    } else if (empty) {
+      empty.hidden = true;
+    }
 
     slice.forEach((reg) => {
       const tr = document.createElement('tr');
@@ -2472,16 +2492,20 @@
       myGroups
         .slice(0, 3)
         .map((item) => {
-          const href =
-            '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');
+          const href = membershipOrganiserHref(item);
           return (
             '<li class="ad-overview-membership-nudge-item">' +
+            '<div class="ad-overview-membership-nudge-item-main">' +
             '<a class="ad-overview-membership-nudge-name" href="' +
             esc(href) +
             '">' +
             esc(item.organiserName || 'Group') +
             '</a>' +
             membershipStatusBadge(item) +
+            '</div>' +
+            '<a class="ad-btn ad-btn-primary ad-btn-sm" href="' +
+            esc(href) +
+            '">View member events</a>' +
             '</li>'
           );
         })
@@ -2979,10 +3003,8 @@
         title: item.organiserName || item.name,
         imageUrl: item.organiserPhotoUrl || '',
       };
-      const membership = membershipStatusLabel(item);
       const account = item.claimedAt || item.attendeeId ? 'Signed up' : 'Invite sent';
-      const href =
-        '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');
+      const href = membershipOrganiserHref(item);
       tr.innerHTML =
         '<td>' +
         thumbHtml(favItem) +
@@ -2991,12 +3013,14 @@
         '">' +
         esc(item.organiserName || 'Group') +
         '</a></td><td>' +
-        esc(membership) +
+        membershipStatusBadge(item) +
         '</td><td>' +
         esc(account) +
-        '</td><td><a class="ad-btn ad-btn-ghost" href="' +
+        '</td><td class="ad-td-actions"><div class="ad-action-group">' +
+        '<a class="ad-btn ad-btn-primary ad-btn-sm" href="' +
         esc(href) +
-        '">View meetings</a></td>';
+        '">View member events</a>' +
+        '</div></td>';
       body.appendChild(tr);
     });
   }
@@ -3345,6 +3369,7 @@
   }
 
   function bindHubContextSwitch() {
+    initOrganiserContextBanner();
     document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-hub-switch');
@@ -3355,6 +3380,23 @@
         });
       });
     });
+  }
+
+  function initOrganiserContextBanner() {
+    const banner = document.getElementById('ad-organiser-context');
+    if (!banner) return;
+    if (localStorage.getItem(ORGANISER_CONTEXT_DISMISS_KEY) === '1') {
+      banner.hidden = true;
+      return;
+    }
+    banner.hidden = false;
+    const dismissBtn = document.getElementById('ad-organiser-context-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        localStorage.setItem(ORGANISER_CONTEXT_DISMISS_KEY, '1');
+        banner.hidden = true;
+      });
+    }
   }
 
   async function ensureAttendeeHubMode() {

@@ -71,6 +71,30 @@
   margin-bottom: 20px;
 }
 
+.hub-dash-context--dismissible {
+  position: relative;
+  padding-right: 40px;
+}
+
+.hub-dash-context-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ad-text-soft);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.hub-dash-context-dismiss:hover {
+  color: var(--ad-slate);
+  background: rgba(255, 255, 255, 0.6);
+}
+
 .ad-subpage-head {
   margin-bottom: 14px;
   padding-bottom: 12px;
@@ -741,6 +765,53 @@
 .ad-empty a {
   color: var(--ad-teal-dark);
   font-weight: 600;
+}
+
+.ad-empty-state {
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--ad-white);
+  border: 1px dashed var(--ad-teal);
+  border-radius: var(--ad-radius);
+}
+
+.ad-empty-state[hidden] {
+  display: none !important;
+}
+
+.ad-empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--ad-teal-pale);
+  color: var(--ad-teal-dark);
+}
+
+.ad-empty-state-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ad-slate);
+}
+
+.ad-empty-state-text {
+  margin: 0 auto;
+  max-width: 30em;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ad-text-mid);
+}
+
+.ad-empty-state-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .ad-saved-block {
@@ -1872,6 +1943,14 @@ tr.ad-row-highlight td {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.ad-overview-membership-nudge-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .ad-overview-membership-nudge-name {

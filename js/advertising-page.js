@@ -180,10 +180,6 @@
     'ad-pkg-opportunities-spotlight': 'opportunities',
   };
 
-  var DEFAULT_PACKAGE = {
-    events: 'city-partner-package',
-  };
-
   var ENQUIRY_SECTION_LABELS = {
     events: 'Events',
     organisers: 'Organisers',
@@ -1241,12 +1237,11 @@
 
     var initial = tabFromHash(location.hash) || 'events';
     var hashAnchor = packageFromHash(location.hash);
-    var defaultAnchor = !hashAnchor && DEFAULT_PACKAGE[initial] ? DEFAULT_PACKAGE[initial] : '';
     var startTab = tabsRoot.querySelector('[data-ad-tab="' + initial + '"]') || tabs[0];
     if (startTab) {
       activateTab(startTab, {
-        preserveHash: !!(hashAnchor || defaultAnchor),
-        anchor: hashAnchor || defaultAnchor,
+        preserveHash: true,
+        anchor: hashAnchor,
       });
     }
 

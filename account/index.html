@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260721mem" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723ux" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
@@ -54,7 +54,7 @@
               <span class="ad-side-count" id="ad-side-past" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Saved</span>
-            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved</a>
+            <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved &amp; memberships</a>
             <span class="hub-side-nav-divider">Opportunities &amp; reviews</span>
             <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
               My enquiries
@@ -82,7 +82,8 @@
                 </p>
               </header>
 
-              <aside class="hub-dash-context hub-dash-context--attendee">
+              <aside class="hub-dash-context hub-dash-context--attendee hub-dash-context--dismissible" id="ad-organiser-context" hidden>
+                <button type="button" class="hub-dash-context-dismiss" id="ad-organiser-context-dismiss" aria-label="Dismiss notice">×</button>
                 <p>
                   Running a networking group?
                   <button type="button" class="hub-dash-context-btn" data-hub-switch="organiser">Switch to Organiser workspace</button>
@@ -131,14 +132,11 @@
                 <h2 class="ad-section-title ad-section-title--spaced">Saved events happening soon</h2>
                 <div class="ad-feed-scroll" id="ad-overview-feed-scroll" role="list"></div>
               </div>
-              <p class="ad-section-hint">
-                This area is for attending events and engaging with listings — not for managing a group. Use Organiser workspace in the nav for that.
-              </p>
             </section>
 
             <!-- Upcoming -->
             <section class="ad-page" id="ad-page-upcoming" data-ad-page="upcoming">
-              <div class="ad-table-scroll">
+              <div class="ad-table-scroll" id="ad-upcoming-table">
                 <div class="ad-table-wrap">
                   <table>
                     <thead>
@@ -158,17 +156,23 @@
                   </table>
                 </div>
               </div>
-              <p class="ad-empty" id="ad-upcoming-empty" hidden>
-                No upcoming events — browse events to book your next ticket.
-                <a href="../events/">Browse events →</a>
-              </p>
+              <div class="ad-empty-state" id="ad-upcoming-empty" hidden role="status">
+                <div class="ad-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+                <h3 class="ad-empty-state-title">No upcoming networking booked yet</h3>
+                <p class="ad-empty-state-text">Explore local business breakfasts, online masterclasses, and regional expos happening near you this week.</p>
+                <div class="ad-empty-state-actions">
+                  <a class="ad-btn ad-btn-primary" href="../events/">Browse events near you →</a>
+                </div>
+              </div>
               <nav class="ad-pagination" id="ad-pagination-upcoming" aria-label="Upcoming events pages" hidden></nav>
             </section>
 
             <!-- Payments -->
             <section class="ad-page" id="ad-page-payments" data-ad-page="payments">
               <div class="ad-refund-alert" id="ad-refund-alert-payments" hidden role="status"></div>
-              <div class="ad-table-scroll">
+              <div class="ad-table-scroll" id="ad-payments-table">
                 <div class="ad-table-wrap">
                   <table>
                     <thead>
@@ -188,10 +192,16 @@
                   </table>
                 </div>
               </div>
-              <p class="ad-empty" id="ad-payments-empty" hidden>
-                No bookings yet — your payment history will appear here after you book an event.
-                <a href="../events/">Browse events →</a>
-              </p>
+              <div class="ad-empty-state" id="ad-payments-empty" hidden role="status">
+                <div class="ad-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                </div>
+                <h3 class="ad-empty-state-title">No payment history yet</h3>
+                <p class="ad-empty-state-text">When you book a ticket, your reference, amount paid, and receipt details will appear here.</p>
+                <div class="ad-empty-state-actions">
+                  <a class="ad-btn ad-btn-primary" href="../events/">Browse events near you →</a>
+                </div>
+              </div>
             </section>
 
             <!-- Cancellations -->
@@ -661,6 +671,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260721mem"></script>
+    <script src="../js/attendee-dashboard.js?v=20260723ux"></script>
   </body>
 </html>
