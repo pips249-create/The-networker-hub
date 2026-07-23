@@ -486,19 +486,19 @@
       .then(function (result) {
         if (result.ok && result.data && result.data.ok) {
           if (callbacks.onOk) {
-            callbacks.onOk(result.data.message || 'Thanks — Rosie will reply within one business day.');
+            callbacks.onOk(result.data.message || 'Thanks — our partnerships team will reply within one business day.');
           }
           return result;
         }
         var message =
           (result.data && result.data.message) ||
-          'Could not send your enquiry. Email rosie@thenetworkerhub.com instead.';
+          'Could not send your enquiry. Email rosie@thenetworkerhub.com and our team will follow up.';
         if (callbacks.onError) callbacks.onError(message);
         return result;
       })
       .catch(function () {
         if (callbacks.onError) {
-          callbacks.onError('Could not send your enquiry. Email rosie@thenetworkerhub.com instead.');
+          callbacks.onError('Could not send your enquiry. Email rosie@thenetworkerhub.com and our team will follow up.');
         }
       });
   }
@@ -570,7 +570,7 @@
       }).finally(function () {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Send quick enquiry →';
+          submitBtn.textContent = 'Request recommendation →';
         }
       });
     });

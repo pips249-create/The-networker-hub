@@ -676,36 +676,15 @@ body.advertising-page {
   scroll-margin-top: 88px;
 }
 
-.ad-enquiry-quick-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 14px;
-}
-
-.ad-enquiry-quick-avatar {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(122, 61, 138, 0.18);
-  box-shadow: 0 2px 8px rgba(45, 38, 54, 0.08);
-}
-
-.ad-enquiry-quick-copy {
-  min-width: 0;
-}
-
 .ad-enquiry-quick-title {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 1rem;
   font-weight: 700;
   color: var(--ad-ink);
 }
 
 .ad-enquiry-quick-lede {
-  margin: 0;
+  margin: 0 0 14px;
   font-size: 0.88rem;
   line-height: 1.55;
   color: var(--ad-muted);
@@ -6093,12 +6072,6 @@ body.advertising-page {
 
   .ad-trust-metric {
     padding: 0;
-  }
-
-  .ad-enquiry-quick-head {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
   }
 
   .ad-section-nav {
