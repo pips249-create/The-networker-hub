@@ -252,7 +252,14 @@ async function listOrganisersForAdmin(query) {
 
   if (organiserId) dbQuery = dbQuery.eq('id', organiserId);
   else {
-    if (q) dbQuery = dbQuery.ilike('name', `%${q}%`);
+    if (q) {
+      if (q.includes('@')) {
+        const needle = q.toLowerCase();
+        dbQuery = dbQuery.or(`email.ilike.%${needle}%,contact_email.ilike.%${needle}%`);
+      } else {
+        dbQuery = dbQuery.ilike('name', `%${q}%`);
+      }
+    }
     if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
   }
 
