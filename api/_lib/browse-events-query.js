@@ -3,7 +3,15 @@
  */
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
-const { outcodeListForLocation, haversineMiles, bboxForRadiusMiles, cityRegionFromInput, regionLocationTextFilters } = require('./uk-outcode');
+const {
+  outcodeListForLocation,
+  haversineMiles,
+  bboxForRadiusMiles,
+  cityRegionFromInput,
+  regionLocationTextFilters,
+  parseFullUkPostcode,
+} = require('./uk-outcode');
+const { geocodeUkPostcode } = require('./postcode-geocode');
 const {
   eventsFromPublishedRows,
   isUpcomingBrowseEvent,
@@ -110,6 +118,25 @@ function hasGeoRadius(params) {
     Number.isFinite(params.radiusMi) &&
     params.radiusMi > 0
   );
+}
+
+/** Full postcodes need lat/lng for mile radius — geocode on server when the client did not. */
+async function enrichGeoParams(params) {
+  if (hasGeoRadius(params)) return params;
+  const fullPc = parseFullUkPostcode(params.location);
+  if (!fullPc) return params;
+  const geo = await geocodeUkPostcode(fullPc);
+  if (!geo || !Number.isFinite(geo.latitude) || !Number.isFinite(geo.longitude)) {
+    return params;
+  }
+  const radiusMi =
+    Number.isFinite(params.radiusMi) && params.radiusMi > 0 ? params.radiusMi : 15;
+  return {
+    ...params,
+    lat: geo.latitude,
+    lng: geo.longitude,
+    radiusMi,
+  };
 }
 
 function applyFormatFilter(query, params) {
@@ -312,10 +339,10 @@ function applySqlSort(query, sort) {
 
 function rowPassesGeo(row, params) {
   if (!hasGeoRadius(params)) return true;
+  if (row.format_tab === 'online') return true;
   const lat = row.latitude != null ? Number(row.latitude) : null;
   const lng = row.longitude != null ? Number(row.longitude) : null;
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
-  if (row.format_tab === 'online') return true;
   return haversineMiles(params.lat, params.lng, lat, lng) <= params.radiusMi;
 }
 
@@ -479,7 +506,7 @@ async function fetchRowsByIds(sb, ids) {
 }
 
 async function fetchBrowseEventsPage(sb, rawQuery) {
-  const params = parseBrowseQuery(rawQuery);
+  const params = await enrichGeoParams(parseBrowseQuery(rawQuery));
 
   if (params.mode === 'pins') {
     const pinParams = { ...params, limit: MAX_PINS, offset: 0 };

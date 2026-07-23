@@ -74,12 +74,14 @@
       var prefersGeo =
         window.hubPrefersGeoRadiusForLocation &&
         window.hubPrefersGeoRadiusForLocation(params.location);
-      if (prefersGeo && filterCoords && filterCoords.length === 2) {
-        params.lat = String(filterCoords[0]);
-        params.lng = String(filterCoords[1]);
+      if (prefersGeo) {
         params.radius = String(
           window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15
         );
+        if (filterCoords && filterCoords.length === 2) {
+          params.lat = String(filterCoords[0]);
+          params.lng = String(filterCoords[1]);
+        }
       } else if (window.hubAllowedOutcodesForQuery) {
         var outcodes = window.hubAllowedOutcodesForQuery(params.location);
         if (outcodes && outcodes.length) {
