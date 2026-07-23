@@ -549,6 +549,18 @@
   color: var(--text-body);
 }
 
+.auth-intent-callout-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #635c5e;
+}
+
+.auth-intent-callout-note a {
+  font-weight: 600;
+  color: var(--lavender-deep);
+}
+
 .auth-secondary-btn--prominent {
   background: var(--lavender-light);
 }

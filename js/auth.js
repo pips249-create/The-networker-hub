@@ -436,7 +436,7 @@
     var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
     if (loginLede) {
       loginLede.textContent =
-        'Use the email address your group listing is linked to on the Hub. If you are new here, create a free account below instead.';
+        'Use the email address your group listing is linked to on the Hub — when it matches, you\u2019ll get a claim prompt on your dashboard. If you are new here, create a free account below instead.';
     }
 
     var panelKicker = document.getElementById('auth-panel-kicker');
@@ -509,9 +509,20 @@
     }
 
     var calloutText = document.getElementById('auth-intent-callout-text');
-    if (calloutText && registerForm && !loginForm) {
-      calloutText.textContent =
-        'Step 1 of 2 — create an account with the email linked to your group. Next you\u2019ll confirm your page in the organiser dashboard.';
+    if (calloutText) {
+      if (loginForm) {
+        calloutText.textContent =
+          'Step 1 of 2 — sign in with the email linked to your group. When it matches, a claim prompt appears on your organiser dashboard.';
+      } else if (registerForm) {
+        calloutText.textContent =
+          'Step 1 of 2 — create an account with the email linked to your group. When it matches, a claim prompt appears on your organiser dashboard.';
+      }
+    }
+
+    var calloutNote = document.getElementById('auth-intent-callout-note');
+    if (calloutNote) {
+      calloutNote.innerHTML =
+        'Email changed? <a href="/events/?mode=organisers">Find your group</a> and request access on its profile page.';
     }
 
     var audienceToggle = document.getElementById('auth-audience-toggle');
