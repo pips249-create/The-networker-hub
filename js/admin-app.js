@@ -10557,16 +10557,37 @@
     });
   }
 
+  function eventCleanupScrollRoot() {
+    var mainEl = document.getElementById('admin-main');
+    if (!mainEl) return null;
+    var style = window.getComputedStyle(mainEl);
+    if (style.overflowY === 'auto' || style.overflowY === 'scroll') return mainEl;
+    return null;
+  }
+
+  function resetEventCleanupScroll() {
+    var scrollRoot = eventCleanupScrollRoot();
+    if (scrollRoot) {
+      scrollRoot.scrollTop = 0;
+      return;
+    }
+    var list = document.getElementById('event-cleanup-list');
+    if (list && typeof list.scrollIntoView === 'function') {
+      list.scrollIntoView({ block: 'start', behavior: 'auto' });
+    }
+  }
+
   function bindEventCleanupLazyLoad() {
-    var pane = document.getElementById('event-cleanup-list-pane');
+    var scrollRoot = eventCleanupScrollRoot();
     var sentinel = document.getElementById('event-cleanup-lazy-sentinel');
-    if (!pane || !sentinel) return;
-    if (pane._eventCleanupLazyObserver) {
-      pane._eventCleanupLazyObserver.disconnect();
-      pane._eventCleanupLazyObserver = null;
+    if (!sentinel) return;
+    var observerHost = scrollRoot || window;
+    if (observerHost._eventCleanupLazyObserver) {
+      observerHost._eventCleanupLazyObserver.disconnect();
+      observerHost._eventCleanupLazyObserver = null;
     }
     if (!('IntersectionObserver' in window)) return;
-    pane._eventCleanupLazyObserver = new IntersectionObserver(
+    observerHost._eventCleanupLazyObserver = new IntersectionObserver(
       function (entries) {
         if (entries.some(function (entry) {
           return entry.isIntersecting;
@@ -10574,9 +10595,9 @@
           loadMoreEventCleanup();
         }
       },
-      { root: pane, rootMargin: '240px 0px', threshold: 0 }
+      { root: scrollRoot, rootMargin: '240px 0px', threshold: 0 }
     );
-    pane._eventCleanupLazyObserver.observe(sentinel);
+    observerHost._eventCleanupLazyObserver.observe(sentinel);
   }
 
   function updateEventCleanupLazyUi() {
@@ -10593,14 +10614,13 @@
 
   function goToEventPage(page) {
     eventCleanupState.page = Math.max(0, page);
-    var pane = document.getElementById('event-cleanup-list-pane');
     eventCleanupState.expanded = {};
     eventCleanupState.items = [];
     eventCleanupState.hasMore = false;
     return fetchEventCleanup(eventCleanupState.page)
       .then(applyEventCleanupData)
       .then(function () {
-        if (pane) pane.scrollTop = 0;
+        resetEventCleanupScroll();
       });
   }
 
@@ -12770,9 +12790,8 @@
     eventCleanupState.hasMore = false;
     eventCleanupState.expanded = {};
     var status = document.getElementById('event-cleanup-status');
-    var pane = document.getElementById('event-cleanup-list-pane');
     if (status) status.textContent = 'Loading events…';
-    if (pane) pane.scrollTop = 0;
+    resetEventCleanupScroll();
     return fetchEventCleanup(0)
       .then(applyEventCleanupData)
       .catch(function () {
