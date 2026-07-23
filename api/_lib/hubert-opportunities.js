@@ -10,7 +10,7 @@ const HELP_NOT_OPPORTUNITY_BROWSE =
 
 /** Explicit browse / discovery intent for business opportunities. */
 const OPPORTUNITY_BROWSE_INTENT =
-  /\b(what opportunit|find (?:a |an )?(?:franchise|partnership|side|deal|opportunit)|show (?:me )?(?:any )?(?:franchise|partnership|side|opportunit)|any franchis|franchise opportunit|partnership opportunit|side[\s-]?hustle opportunit|distributorship opportunit|browse opportunit|search opportunit|help me find|available on (?:the )?hub|what(?:'s| is) (?:on|available on) (?:the )?opportunit|low[\s-]?investment|under £|under \d+k|featured opportunit|opportunities on the hub|franchise deals?|partnership deals?)\b/i;
+  /\b(what opportunit\w*|find (?:a |an )?(?:franchise|partnership|side|deal|opportunit\w*)|show (?:me )?(?:any )?(?:franchise|partnership|side|opportunit\w*)|any franchis|franchise opportunit\w*|partnership opportunit\w*|side[\s-]?hustle opportunit\w*|distributorship opportunit\w*|browse opportunit\w*|search opportunit\w*|help me find|(?:on|available on) (?:the )?hub|what(?:'s| is) (?:on|available on) (?:the )?opportunit\w*|low[\s-]?investment|under £|under \d+k|featured opportunit\w*|opportunities on the hub|franchise deals?|partnership deals?)\b/i;
 
 const TYPE_ALIASES = {
   franchise: /\bfranchis/i,
