@@ -3,6 +3,7 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { fetchApprovedEvents } = require('./supabase-events');
+const { hubEventUrl, hubSiteUrl } = require('./hubert-site-url');
 
 /** Help / organiser listing questions — must not trigger live event browse. */
 const HELP_NOT_EVENT_BROWSE =
@@ -264,8 +265,11 @@ function scoreEvent(event, query) {
   const title = String(event.title || '').toLowerCase();
   const location = query.location;
 
-  if (location && haystack.includes(location)) score += 8;
-  if (query.freeOnly && event.priceKey === 'free') score += 4;
+  if (location && !haystack.includes(location)) return -1;
+  if (query.freeOnly && event.priceKey !== 'free') return -1;
+
+  if (location) score += 8;
+  if (query.freeOnly) score += 4;
   if (/\bfeatured\b/i.test(query.text) && event.featured) score += 3;
 
   const words = String(query.text || '')
@@ -285,7 +289,11 @@ function scoreEvent(event, query) {
   if (when != null) {
     if (query.window.from != null && when < query.window.from) return -1;
     if (query.window.to != null && when >= query.window.to) return -1;
-    score += 1;
+    if (score > 0) score += 1;
+  }
+
+  if (!location && !query.freeOnly && score === 0 && words.length === 0) {
+    score = 1;
   }
 
   return score;
@@ -297,9 +305,24 @@ function compactEventLine(event) {
     event.dateLine || event.date,
     event.city || event.locationShort || event.location,
     event.price,
-    '/events/' + event.slug,
+    hubEventUrl(event.slug),
   ].filter(Boolean);
   return '- ' + bits.join(' | ');
+}
+
+function formatEventListingLine(event) {
+  const where = event.city || event.locationShort || event.location;
+  return (
+    '• ' +
+    event.title +
+    ' — ' +
+    (event.dateLine || event.date || 'Date TBC') +
+    (where ? ' · ' + where : '') +
+    ' · ' +
+    event.price +
+    '\n  ' +
+    hubEventUrl(event.slug)
+  );
 }
 
 async function searchEventsForHubert(userMessage, limit) {
@@ -338,15 +361,18 @@ async function searchEventsForHubert(userMessage, limit) {
     });
 
   const max = Math.min(Math.max(limit || 6, 1), 8);
-  const hasSignal = query.location || query.freeOnly || ranked.some(function (r) {
-    return r.score > 0;
-  });
+  const hasSignal =
+    query.location ||
+    query.freeOnly ||
+    ranked.some(function (r) {
+      return r.score > 1;
+    });
 
   let events;
   if (hasSignal) {
     events = ranked
       .filter(function (r) {
-        return r.score > 0 || (!query.location && !query.freeOnly);
+        return r.score > 0;
       })
       .slice(0, max)
       .map(function (r) {
@@ -388,7 +414,7 @@ function buildEventContextBlock(result) {
   }
 
   return (
-    'LIVE EVENT LOOKUP — cite only these real published events (title, date, location, price, link). Do not invent others:\n' +
+    'LIVE EVENT LOOKUP — cite only these real published events. Include the full URL link for each listing. Do not invent others:\n' +
     events.map(compactEventLine).join('\n')
   );
 }
@@ -411,8 +437,10 @@ function formatEventFallbackReply(result) {
     const locationHint = query && query.location ? ' in ' + formatLocationLabel(query.location) : '';
     const nearbyHint =
       query && query.location
-        ? ' Try a nearby city, check online events on /events/, or browse the map view.'
-        : ' Browse everything at /events/ and filter by location, date, and type — new listings are added regularly.';
+        ? ' Try a nearby city, check online events at ' + hubSiteUrl('/events/') + ', or browse the map view.'
+        : ' Browse everything at ' +
+          hubSiteUrl('/events/') +
+          ' and filter by location, date, and type — new listings are added regularly.';
     return (
       "I've checked our live listings, and I'm afraid there aren't any upcoming events" +
       locationHint +
@@ -423,26 +451,16 @@ function formatEventFallbackReply(result) {
 
   const locationLabel =
     query && query.location ? ' near ' + formatLocationLabel(query.location) : '';
-  const lines = events.map(function (event) {
-    return (
-      '• ' +
-      event.title +
-      ' — ' +
-      (event.dateLine || event.date || 'Date TBC') +
-      (event.city || event.locationShort ? ' · ' + (event.city || event.locationShort) : '') +
-      ' · ' +
-      event.price +
-      ' · /events/' +
-      event.slug
-    );
-  });
+  const lines = events.map(formatEventListingLine);
 
   return (
     'Allow me to share a few upcoming events' +
     locationLabel +
     ':\n\n' +
-    lines.join('\n') +
-    '\n\nYou will find the full directory at /events/.'
+    lines.join('\n\n') +
+    '\n\nYou will find the full directory at ' +
+    hubSiteUrl('/events/') +
+    '.'
   );
 }
 
@@ -451,4 +469,6 @@ module.exports = {
   searchEventsForHubert,
   buildEventContextBlock,
   formatEventFallbackReply,
+  scoreEvent,
+  eventHaystack,
 };

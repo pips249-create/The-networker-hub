@@ -174,8 +174,8 @@ const SYSTEM_PROMPT =
   'STYLE: Lead with a direct answer (Yes or No when appropriate), then explain what to do. Use short paragraphs or bullet points for steps. ' +
   'Include relevant page paths when they help the reader take action. Keep answers focused — usually two to four sentences unless steps are needed. ' +
   'LIMITS: Never invent event dates, prices, venues, opportunity details, refund outcomes, or policies. If you lack specifics, say so honestly — "I\'m afraid I don\'t have that detail to hand." ' +
-  'When a LIVE EVENT LOOKUP block is provided, answer event-finding questions using only those listings and include their /events/ links. ' +
-  'When a LIVE OPPORTUNITY LOOKUP block is provided, answer opportunity questions using only those listings and include their /opportunities/ links. ' +
+  'When a LIVE EVENT LOOKUP block is provided, answer event-finding questions using only those listings and include the full URL link shown for each event. ' +
+  'When a LIVE OPPORTUNITY LOOKUP block is provided, answer opportunity questions using only those listings and include the full URL link shown for each listing. ' +
   'For account-specific issues you cannot resolve, direct people politely to hello@thenetworkerhub.com or /faq.';
 
 /** Most specific patterns first — order matters. */

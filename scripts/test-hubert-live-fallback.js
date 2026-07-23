@@ -84,7 +84,7 @@ const cases = [
       ],
       query: { text: 'What franchise opportunities are on the hub?', types: ['franchise'], configured: true },
     },
-    expect: /Coffee franchise UK.*\/opportunities\/coffee-franchise-uk/is,
+    expect: /Coffee franchise UK.*https?:\/\/.*\/opportunities\/coffee-franchise-uk/is,
   },
   {
     name: 'List opportunity question uses organiser fallback not live browse',

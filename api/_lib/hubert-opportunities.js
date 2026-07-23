@@ -3,6 +3,7 @@
  */
 const { isSupabaseConfigured } = require('./supabase');
 const { listPublishedOpportunities } = require('./supabase-opportunities');
+const { hubOpportunityUrl, hubSiteUrl } = require('./hubert-site-url');
 
 /** Organiser listing / enquiry help — must not trigger live opportunity browse. */
 const HELP_NOT_OPPORTUNITY_BROWSE =
@@ -82,10 +83,11 @@ function scoreOpportunity(item, query) {
     const typeHit = query.types.some(function (wanted) {
       return itemTypes.includes(wanted);
     });
-    if (typeHit) score += 10;
-    else score -= 2;
+    if (!typeHit) return -1;
+    score += 10;
   }
 
+  if (query.featuredOnly && !item.featured) return -1;
   if (query.featuredOnly && item.featured) score += 3;
 
   const words = String(query.text || '')
@@ -95,7 +97,7 @@ function scoreOpportunity(item, query) {
     .filter(function (w) {
       return (
         w.length >= 4 &&
-        !/^(what|show|find|browse|list|opportunity|opportunities|business|franchise|partnership|deal|deals|available)$/.test(
+        !/^(what|show|find|browse|list|opportunity|opportunities|business|franchise|partnership|deal|deals|available|hub)$/.test(
           w
         )
       );
@@ -105,6 +107,10 @@ function scoreOpportunity(item, query) {
     if (title.includes(word)) score += 5;
     else if (haystack.includes(word)) score += 2;
   });
+
+  if (!query.types.length && !query.featuredOnly && score === 0 && words.length === 0) {
+    score = 1;
+  }
 
   return score;
 }
@@ -119,9 +125,26 @@ function compactOpportunityLine(item) {
     typeLabel(item.type),
     item.host,
     summary,
-    '/opportunities/' + item.id,
+    hubOpportunityUrl(item.id),
   ].filter(Boolean);
   return '- ' + bits.join(' | ');
+}
+
+function formatOpportunityListingLine(item) {
+  const summary = String(item.desc || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100);
+  return (
+    '• ' +
+    item.title +
+    ' — ' +
+    typeLabel(item.type) +
+    (item.host ? ' · ' + item.host : '') +
+    (summary ? ' · ' + summary : '') +
+    '\n  ' +
+    hubOpportunityUrl(item.id)
+  );
 }
 
 async function searchOpportunitiesForHubert(userMessage, limit) {
@@ -154,15 +177,18 @@ async function searchOpportunitiesForHubert(userMessage, limit) {
     });
 
   const max = Math.min(Math.max(limit || 6, 1), 8);
-  const hasSignal = query.types.length > 0 || ranked.some(function (r) {
-    return r.score > 0;
-  });
+  const hasSignal =
+    query.types.length > 0 ||
+    query.featuredOnly ||
+    ranked.some(function (r) {
+      return r.score > 1;
+    });
 
   let opportunities;
   if (hasSignal) {
     opportunities = ranked
       .filter(function (r) {
-        return r.score > 0 || !query.types.length;
+        return r.score > 0;
       })
       .slice(0, max)
       .map(function (r) {
@@ -199,7 +225,7 @@ function buildOpportunityContextBlock(result) {
   }
 
   return (
-    'LIVE OPPORTUNITY LOOKUP — cite only these real published listings (title, type, host, summary, link). Do not invent others:\n' +
+    'LIVE OPPORTUNITY LOOKUP — cite only these real published listings. Include the full URL link for each listing. Do not invent others:\n' +
     opportunities.map(compactOpportunityLine).join('\n')
   );
 }
@@ -216,31 +242,20 @@ function formatOpportunityFallbackReply(result) {
     return (
       "I'm afraid I couldn't find published business opportunities" +
       typeHint +
-      ' on the hub at present. Do browse the directory at /opportunities/, or check back soon.'
+      ' on the hub at present. Do browse the directory at ' +
+      hubSiteUrl('/opportunities/') +
+      ', or check back soon.'
     );
   }
 
-  const lines = opportunities.map(function (item) {
-    const summary = String(item.desc || '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 100);
-    return (
-      '• ' +
-      item.title +
-      ' — ' +
-      typeLabel(item.type) +
-      (item.host ? ' · ' + item.host : '') +
-      (summary ? ' · ' + summary : '') +
-      ' · /opportunities/' +
-      item.id
-    );
-  });
+  const lines = opportunities.map(formatOpportunityListingLine);
 
   return (
     'Allow me to highlight a few business opportunities that may suit you:\n\n' +
-    lines.join('\n') +
-    '\n\nBrowse everything at /opportunities/. A free account is needed to send an enquiry.'
+    lines.join('\n\n') +
+    '\n\nBrowse everything at ' +
+    hubSiteUrl('/opportunities/') +
+    '. A free account is needed to send an enquiry.'
   );
 }
 
@@ -251,4 +266,5 @@ module.exports = {
   formatOpportunityFallbackReply,
   HELP_NOT_OPPORTUNITY_BROWSE,
   OPPORTUNITY_BROWSE_INTENT,
+  scoreOpportunity,
 };
