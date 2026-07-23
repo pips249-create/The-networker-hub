@@ -76,14 +76,10 @@
       { label: 'Contact email', prompt: 'Who sees the contact email on my organiser page?' },
     ],
     'organiser-dashboard': [
-      { label: 'Visit tracking', prompt: 'How do I see who is new vs returning on my attendee list?' },
-      { label: 'Claim my group', prompt: 'How do I claim my organiser page on the hub?' },
-      { label: 'Conference or exhibition', prompt: 'How do I list a conference or exhibition?' },
       { label: 'Getting started', prompt: 'How do I list my first event on the hub?' },
-      { label: 'List an event', prompt: 'How do I list my first event?' },
+      { label: 'Claim my group', prompt: 'How do I claim my organiser page on the hub?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts and refunds work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },
-      { label: 'Membership', prompt: 'What is a membership and how do I use it?' },
     ],
   };
 

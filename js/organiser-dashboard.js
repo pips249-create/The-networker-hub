@@ -1401,23 +1401,25 @@
         return ev && ev.featured && eventIsEligibleForFeaturedUpgrade(ev);
       }).length;
       if (!state.eventsLoaded) {
-        eventsMeta.textContent = 'Pin an upcoming event to the top of the events directory.';
+        eventsMeta.textContent = 'Show your event first when people browse upcoming events on the hub.';
       } else if (!eligible.length) {
-        eventsMeta.textContent = 'Publish an upcoming live event first, then upgrade it here.';
+        eventsMeta.textContent = 'Publish an upcoming event first, then come back here to feature it.';
       } else if (featuredCount > 0) {
         eventsMeta.textContent =
+          'You have ' +
           eligible.length +
-          ' eligible event' +
+          ' upcoming event' +
           (eligible.length === 1 ? '' : 's') +
           ' · ' +
           featuredCount +
-          ' already featured';
+          ' already featured at the top';
       } else {
         eventsMeta.textContent =
+          'You have ' +
           eligible.length +
-          ' eligible event' +
+          ' upcoming event' +
           (eligible.length === 1 ? '' : 's') +
-          ' ready to boost';
+          ' — pick one to show at the top of the events page';
       }
     }
     if (oppMeta) {
@@ -1429,23 +1431,25 @@
         return o && (o.featured || opportunityPremiumMeta(o).tone !== 'muted');
       }).length;
       if (!state.opportunitiesLoaded) {
-        oppMeta.textContent = 'Pin a live business opportunity to the top of the opportunities directory.';
+        oppMeta.textContent = 'Show your listing first when people browse business opportunities on the hub.';
       } else if (!liveListings.length) {
-        oppMeta.textContent = 'List a business opportunity first, then add premium spotlight from My business opportunities.';
+        oppMeta.textContent = 'Publish a business opportunity first, then come back here to feature it.';
       } else if (premiumCount > 0) {
         oppMeta.textContent =
+          'You have ' +
           liveListings.length +
           ' live listing' +
           (liveListings.length === 1 ? '' : 's') +
           ' · ' +
           premiumCount +
-          ' with premium spotlight';
+          ' already featured at the top';
       } else {
         oppMeta.textContent =
+          'You have ' +
           liveListings.length +
           ' live listing' +
           (liveListings.length === 1 ? '' : 's') +
-          ' ready to boost';
+          ' — pick one to show at the top of the opportunities page';
       }
     }
   }

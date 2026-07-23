@@ -87,6 +87,10 @@
       title: 'My opportunity enquiries',
       sub: 'Messages you sent to business opportunity listings on the Hub. Organisers reply by email.',
     },
+    visibility: {
+      title: 'Grow your visibility',
+      sub: 'Pin your own listings higher, or sponsor the hub as a brand to reach audiences across events, organisers, and business opportunities.',
+    },
     'reviews-pending': {
       title: 'Organiser reviews',
       sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
@@ -156,6 +160,7 @@
     }
     if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'alerts') return '#search-alerts';
     if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
+    if (currentRoute === 'visibility') return '#visibility';
     return '#' + currentRoute;
   }
 
@@ -1673,12 +1678,14 @@
       ticketsScope = hash;
       return 'tickets';
     }
+    if (hash === 'visibility' || hash === 'grow-visibility') return 'visibility';
     const allowed = [
       'overview',
       'tickets',
       'saved',
       'saved-opportunities',
       'opportunity-enquiries',
+      'visibility',
     ];
     return allowed.includes(hash) ? hash : 'overview';
   }

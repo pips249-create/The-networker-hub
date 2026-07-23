@@ -138,6 +138,15 @@
       }
     });
 
+    self.inputEl.addEventListener('input', function () {
+      if (!self.suggestionsEl) return;
+      if (self.inputEl.value.trim()) {
+        self.hideSuggestions();
+      } else if (self.history.length === 0) {
+        self.suggestionsEl.hidden = false;
+      }
+    });
+
     if (self.suggestionsEl) {
       self.suggestionsEl.addEventListener('click', function (ev) {
         var chip = ev.target.closest('[data-prompt]');

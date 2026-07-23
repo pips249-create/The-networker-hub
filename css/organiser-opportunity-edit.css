@@ -1124,17 +1124,37 @@ body.oe-opportunity-drawer-open {
   max-width: 760px;
   padding: 14px 16px;
   border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.oe-moderation-warnings.is-incomplete {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.oe-moderation-warnings.is-incomplete strong {
+  color: #1e293b;
+}
+
+.oe-moderation-warnings.is-incomplete .oe-moderation-warnings-note {
+  color: #64748b;
+}
+
+.oe-moderation-warnings.is-flagged {
   border: 1px solid rgba(180, 83, 9, 0.35);
   background: #fff8eb;
   color: #7c2d12;
-  font-size: 14px;
-  line-height: 1.55;
+}
+
+.oe-moderation-warnings.is-flagged strong {
+  color: #9a3412;
 }
 
 .oe-moderation-warnings strong {
   display: block;
   margin-bottom: 6px;
-  color: #9a3412;
 }
 
 .oe-moderation-warnings ul {
@@ -1145,6 +1165,9 @@ body.oe-opportunity-drawer-open {
 .oe-moderation-warnings-note {
   margin: 8px 0 0;
   font-size: 12px;
+}
+
+.oe-moderation-warnings.is-flagged .oe-moderation-warnings-note {
   color: #9a3412;
 }
 

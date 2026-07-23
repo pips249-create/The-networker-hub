@@ -540,6 +540,15 @@
     });
   }
 
+  function formatModerationReason(reason) {
+    const label = String(reason.label || '').replace(/</g, '&lt;');
+    if (reason.id === 'missing_field') {
+      const field = label.replace(/^Missing required field:\s*/i, '');
+      return 'Add ' + field;
+    }
+    return label;
+  }
+
   function renderModerationWarnings(scan, isDraft) {
     const panel = document.getElementById('oe-moderation-warnings');
     if (!panel) return;
@@ -550,24 +559,49 @@
       return;
     }
 
-    const intro = isDraft
-      ? 'Before you publish, fix the following so your listing can be approved:'
-      : 'Your listing may be rejected unless you fix the following:';
+    const allMissingFields = scan.reasons.every((reason) => reason.id === 'missing_field');
+    const hasPolicyIssues = scan.reasons.some((reason) => reason.id !== 'missing_field');
+
+    let title;
+    let intro;
+    let note;
+    let panelClass;
+
+    if (allMissingFields) {
+      title = 'A few details still needed';
+      intro = isDraft
+        ? 'Add these before publishing so browsers can compare your opportunity:'
+        : 'Add these so your listing shows clearly on opportunity cards:';
+      note =
+        'Investment, location, and opportunity type help people understand what you\u2019re offering.';
+      panelClass = 'oe-moderation-warnings is-incomplete';
+    } else {
+      title = 'Please review';
+      intro = isDraft
+        ? 'Before you publish, please address the following:'
+        : 'Please update the following to keep your listing live:';
+      note = hasPolicyIssues
+        ? 'We don\u2019t allow MLM-style recruitment, guaranteed income claims, or unregulated investment language.'
+        : '';
+      panelClass = 'oe-moderation-warnings is-flagged';
+    }
 
     const items = scan.reasons
-      .map((reason) => '<li>' + String(reason.label || '').replace(/</g, '&lt;') + '</li>')
+      .map((reason) => '<li>' + formatModerationReason(reason) + '</li>')
       .join('');
 
-    panel.className = 'oe-moderation-warnings is-flagged';
+    panel.className = panelClass;
     panel.innerHTML =
-      '<strong>Content check</strong>' +
+      '<strong>' +
+      title +
+      '</strong>' +
       '<p>' +
       intro +
       '</p>' +
       '<ul>' +
       items +
       '</ul>' +
-      '<p class="oe-moderation-warnings-note">The Hub blocks MLM-style recruitment, guaranteed income claims, and unregulated investment language. Investment, location, and opportunity type must be clearly stated.</p>';
+      (note ? '<p class="oe-moderation-warnings-note">' + note + '</p>' : '');
     panel.hidden = false;
   }
 

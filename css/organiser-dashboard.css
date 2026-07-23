@@ -8585,22 +8585,6 @@ body.org-event-drawer-open {
 }
 
 /* Grow your visibility hub */
-.org-visibility-callout {
-  margin: 0 0 28px;
-  padding: 16px 18px;
-  border-radius: calc(var(--od-radius) + 2px);
-  border: 1px solid rgba(154, 122, 168, 0.22);
-  background: linear-gradient(180deg, #faf6fc 0%, #fff 100%);
-  box-shadow: var(--od-shadow-sm);
-}
-
-.org-visibility-callout p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--od-text-mid);
-}
-
 .org-visibility-section + .org-visibility-section {
   margin-top: 34px;
   padding-top: 34px;
