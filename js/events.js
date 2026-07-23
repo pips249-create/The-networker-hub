@@ -1009,6 +1009,11 @@
     els.status.hidden = !msg;
   }
 
+  function isMapViewOpen() {
+    var mapBtn = document.getElementById('map-view-btn');
+    return !!(mapBtn && mapBtn.getAttribute('aria-pressed') === 'true');
+  }
+
   window.hubRefreshListings = function () {
     if (document.body.classList.contains('browse-mode-organisers')) {
       if (window.hubRefreshOrganiserListings) window.hubRefreshOrganiserListings();
@@ -1017,7 +1022,11 @@
     if (!window.hubServerBrowse) currentPage = 1;
     renderAll();
     if (window.hubRefreshMap && window.hubGetFilteredEvents) {
-      var mapList = window.hubBrowsePins && window.hubBrowsePins.length ? window.hubBrowsePins : getFilteredList();
+      // Server browse refreshes map pins after the dedicated pins fetch —
+      // avoid flashing paginated list rows as map markers.
+      if (window.hubServerBrowse && isMapViewOpen()) return;
+      var mapList =
+        window.hubBrowsePins && window.hubBrowsePins.length ? window.hubBrowsePins : getFilteredList();
       window.hubRefreshMap(mapList);
     }
   };

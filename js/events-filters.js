@@ -763,6 +763,8 @@
           priceMax: priceMaxInput ? priceMaxInput.value : '',
           sort: sortSelect ? sortSelect.value : 'recommended',
           typeTabs: activeTypeTabs.slice(),
+          dateFrom: dateFromTs ? new Date(dateFromTs).toISOString() : '',
+          dateTo: dateToTs ? new Date(dateToTs).toISOString() : '',
         })
       );
     } catch (e) {
@@ -784,6 +786,66 @@
     } catch (e) {
       return '';
     }
+  }
+
+  function getUrlTypeTab() {
+    try {
+      if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {
+        return 'exhibition';
+      }
+      if (location.hash === '#conferences' || location.search.indexOf('type=conference') !== -1) {
+        return 'conference';
+      }
+      if (location.hash === '#awards' || location.search.indexOf('type=awards') !== -1) {
+        return 'awards';
+      }
+      if (location.hash === '#events' || location.search.indexOf('type=events') !== -1) {
+        return 'events';
+      }
+      if (
+        location.hash === '#meetings' ||
+        location.hash === '#netwalking' ||
+        location.search.indexOf('type=meeting') !== -1 ||
+        location.search.indexOf('type=netwalking') !== -1 ||
+        location.search.indexOf('type=networking-meeting') !== -1
+      ) {
+        return 'meeting';
+      }
+    } catch (e) {
+      return '';
+    }
+    return '';
+  }
+
+  function restoreDateFilterPrefs(prefs) {
+    if (!prefs || (!prefs.dateFrom && !prefs.dateTo)) return;
+    dateFromTs = prefs.dateFrom ? new Date(prefs.dateFrom).getTime() : null;
+    dateToTs = prefs.dateTo ? new Date(prefs.dateTo).getTime() : null;
+    if (dateFromTs != null && Number.isNaN(dateFromTs)) dateFromTs = null;
+    if (dateToTs != null && Number.isNaN(dateToTs)) dateToTs = null;
+    syncBrowseDateParams();
+    ensureFlatpickr(function () {
+      if (!flatpickrInstance || !dateFromTs) return;
+      var dates = [new Date(dateFromTs)];
+      if (dateToTs && dateToTs !== dateFromTs) dates.push(new Date(dateToTs));
+      flatpickrInstance.setDate(dates, false);
+      syncDateWrapState(dates);
+    });
+  }
+
+  function resolveRestoredLocationFilter(postcode) {
+    var restorePc = String(postcode || '').trim();
+    if (!restorePc) return Promise.resolve();
+    var resolveFilter = window.hubResolveLocationFilter
+      ? window.hubResolveLocationFilter(restorePc)
+      : Promise.resolve();
+    return resolveFilter
+      .then(function () {
+        return resolveLocationFilterCoords(restorePc);
+      })
+      .then(function () {
+        syncNearRadiusUi();
+      });
   }
 
   function applyOnlineFormatFilter() {
@@ -863,6 +925,7 @@
         return Promise.resolve();
       }
 
+      var urlTypeTab = getUrlTypeTab();
       var raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
       if (!raw) {
         return Promise.resolve();
@@ -884,26 +947,26 @@
       if (locationRadius && restoredRadius) locationRadius.value = restoredRadius;
       if (nearRadius && restoredRadius) nearRadius.value = restoredRadius;
       if (nearRadiusMobile && restoredRadius) nearRadiusMobile.value = restoredRadius;
-      if (Array.isArray(prefs.typeTabs)) {
-        activeTypeTabs = prefs.typeTabs.map(normalizeTypeTabSlug).filter(function (slug) {
-          return slug && slug !== 'all';
-        });
-        window.hubBrowseActiveTypeTabs = activeTypeTabs.slice();
-        syncTypeChipUi();
-      } else if (prefs.typeTab) {
-        setActiveTypeTab(normalizeTypeTabSlug(prefs.typeTab));
+      if (!urlTypeTab) {
+        if (Array.isArray(prefs.typeTabs)) {
+          activeTypeTabs = prefs.typeTabs.map(normalizeTypeTabSlug).filter(function (slug) {
+            return slug && slug !== 'all';
+          });
+          window.hubBrowseActiveTypeTabs = activeTypeTabs.slice();
+          syncTypeChipUi();
+        } else if (prefs.typeTab) {
+          setActiveTypeTab(normalizeTypeTabSlug(prefs.typeTab));
+        }
       }
+      restoreDateFilterPrefs(prefs);
       syncNearRadiusUi();
-      if (postcodeInput && prefs.postcode) {
-        var restorePc = prefs.postcode;
-        var resolveFilter = window.hubResolveLocationFilter
-          ? window.hubResolveLocationFilter(restorePc)
-          : Promise.resolve();
-        return resolveFilter.then(function () {
-          return resolveLocationFilterCoords(restorePc);
-        }).then(function () {
+      if (isNearMeActive()) {
+        return resolveNearMeCoords().then(function () {
           syncNearRadiusUi();
         });
+      }
+      if (postcodeInput && prefs.postcode) {
+        return resolveRestoredLocationFilter(prefs.postcode);
       }
     } catch (e) {
       /* ignore */
@@ -960,6 +1023,7 @@
   }
 
   function hasExtraFiltersBeyondRegional() {
+    var regional = window.hubRegionalLanding;
     if (searchInput && String(searchInput.value || '').trim()) return true;
     if (dateFromTs || dateToTs) return true;
     if (checkFreeOnly && checkFreeOnly.checked) return true;
@@ -971,7 +1035,22 @@
     if (checkInPerson && !checkInPerson.checked) return true;
     if (checkOnline && !checkOnline.checked) return true;
     if (sortSelect && sortSelect.value && sortSelect.value !== 'recommended') return true;
+    if (regional && regional.location && postcodeInput) {
+      var pc = String(postcodeInput.value || '').trim();
+      if (pc && pc !== String(regional.location).trim()) return true;
+    }
     return false;
+  }
+
+  function finishResetFilters() {
+    syncLocationFieldForFormat();
+    setActiveTypeTab('all');
+    try {
+      sessionStorage.removeItem(FILTER_STORAGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    applyFilters({ immediate: true });
   }
 
   function resetFilters() {
@@ -984,7 +1063,6 @@
     }
 
     if (searchInput) searchInput.value = '';
-    if (postcodeInput) postcodeInput.value = '';
     if (sortSelect) sortSelect.value = 'recommended';
     if (flatpickrInstance) flatpickrInstance.clear();
     syncDateWrapState([]);
@@ -1005,15 +1083,15 @@
     window.hubUserCoords = null;
     window.hubLocationFilterState = null;
     window.hubLocationFilterCoords = null;
-    syncLocationFieldForFormat();
-    setActiveTypeTab('all');
-    try {
-      sessionStorage.removeItem(FILTER_STORAGE_KEY);
-    } catch (e) {
-      /* ignore */
+
+    if (regional && regional.location) {
+      if (postcodeInput) postcodeInput.value = regional.location;
+      resolveRestoredLocationFilter(regional.location).then(finishResetFilters);
+      return;
     }
 
-    applyFilters({ immediate: true });
+    if (postcodeInput) postcodeInput.value = '';
+    finishResetFilters();
   }
 
   function setActiveTypeTab(type) {
@@ -1336,25 +1414,9 @@
     });
   }
 
-  if (location.hash === '#exhibitions' || location.search.indexOf('type=exhibition') !== -1) {
-    setActiveTypeTab('exhibition');
-  } else if (
-    location.hash === '#conferences' ||
-    location.search.indexOf('type=conference') !== -1
-  ) {
-    setActiveTypeTab('conference');
-  } else if (location.hash === '#awards' || location.search.indexOf('type=awards') !== -1) {
-    setActiveTypeTab('awards');
-  } else if (location.hash === '#events' || location.search.indexOf('type=events') !== -1) {
-    setActiveTypeTab('events');
-  } else if (
-    location.hash === '#meetings' ||
-    location.hash === '#netwalking' ||
-    location.search.indexOf('type=meeting') !== -1 ||
-    location.search.indexOf('type=netwalking') !== -1 ||
-    location.search.indexOf('type=networking-meeting') !== -1
-  ) {
-    setActiveTypeTab('meeting');
+  var urlTypeTab = getUrlTypeTab();
+  if (urlTypeTab) {
+    setActiveTypeTab(urlTypeTab);
   }
 
   syncLocationFieldForFormat();

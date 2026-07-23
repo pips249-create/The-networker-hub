@@ -1693,7 +1693,8 @@ body.events-view-map .events-map-wrap {
   }
 
   body.events-view-map .events-map-mobile-bar {
-    display: none;
+    display: block;
+    margin-bottom: 4px;
   }
 
   body.events-view-map .events-map-panel {

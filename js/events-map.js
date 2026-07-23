@@ -1048,7 +1048,7 @@
 
           pending.forEach(function (ev) {
             var coords = coordsForEvent(ev);
-            if (!coords || !eventWithinNearMe(ev, userCoords)) return;
+            if (!coords || !eventWithinLocationRadius(ev, userCoords)) return;
             addMarker(ev, coords, distanceMiles(ev, userCoords));
             placed++;
             skipped--;

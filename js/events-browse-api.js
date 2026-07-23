@@ -199,6 +199,9 @@
       lastFilterSignature = filterSignature;
       lastTypeCounts = null;
       if (window.hubBrowseInvalidatePins) window.hubBrowseInvalidatePins();
+      if (isMapViewOpen() && window.hubRefreshMap) {
+        window.hubRefreshMap([]);
+      }
     }
 
     return fetch(url, { credentials: 'same-origin', cache: 'no-store' })
