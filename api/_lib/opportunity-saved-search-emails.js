@@ -146,7 +146,7 @@ async function sendDueSavedSearchMatchEmails(sb) {
           opportunity_title: String(lead.title || 'New opportunity').trim(),
           opportunity_url: opportunityPublicUrl(lead, siteUrl),
           browse_opportunities_url: siteUrl + '/opportunities/',
-          hub_account_url: hubAccountUrl(siteUrl) + '#saved',
+          hub_account_url: hubAccountUrl(siteUrl) + '#search-alerts',
           contact_url: contactUrl(siteUrl),
           privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
           terms_url: legalPolicyUrl(siteUrl, 'terms'),

@@ -82,12 +82,22 @@
     );
   }
 
-  function logoMarkup(logoUrl, imgClass, placeholderClass) {
+  function logoBandDarkAttr(block) {
+    if (window.CmsSponsorFields && window.CmsSponsorFields.logoBandDark(block)) {
+      return ' data-logo-band-dark="true"';
+    }
+    return '';
+  }
+
+  function logoMarkup(logoUrl, imgClass, placeholderClass, block) {
     var url = String(logoUrl || '').trim();
     var hasLogo = window.CmsSponsorFields ? window.CmsSponsorFields.isLogoUrl(url) : /^https?:\/\//i.test(url);
+    var darkAttr = logoBandDarkAttr(block);
     if (hasLogo) {
       return (
-        '<div class="sponsor-logo-wrap sponsor-logo-band has-logo">' +
+        '<div class="sponsor-logo-wrap sponsor-logo-band has-logo"' +
+        darkAttr +
+        '>' +
         '<img class="' +
         imgClass +
         ' sponsor-logo--full" src="' +
@@ -98,7 +108,9 @@
       );
     }
     return (
-      '<div class="sponsor-logo-wrap sponsor-logo-band">' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band"' +
+      darkAttr +
+      '>' +
       '<div class="' +
       placeholderClass +
       '">Your logo here</div></div>'
@@ -131,7 +143,7 @@
       '<aside class="cms-ad-sidebar sponsor-hub sponsor-hub--active">' +
       '<span class="sponsor-hub-badge">Sponsored</span>' +
       '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Powered by</span></div>' +
-      logoMarkup(logo, 'sponsor-logo', 'sponsor-logo-placeholder') +
+      logoMarkup(logo, 'sponsor-logo', 'sponsor-logo-placeholder', block) +
       (company ? '<p class="sponsor-company">' + esc(company) + '</p>' : '') +
       (tagline ? '<p class="sponsor-tagline">' + taglineHtml(tagline) + '</p>' : '') +
       (list ? '<div class="sponsor-body">' + list + '</div>' : '') +
@@ -203,7 +215,7 @@
       '<aside class="cms-ad-banner">' +
       '<span class="cms-ad-banner-badge">Sponsored</span>' +
       '<div class="cms-ad-banner-logo">' +
-      logoMarkup(logo, 'cms-ad-banner-logo-img', 'cms-ad-banner-logo-placeholder') +
+      logoMarkup(logo, 'cms-ad-banner-logo-img', 'cms-ad-banner-logo-placeholder', block) +
       '</div>' +
       '<div class="cms-ad-banner-copy">' +
       (company ? '<p class="cms-ad-banner-company">' + esc(company) + '</p>' : '') +
@@ -248,7 +260,7 @@
     container.innerHTML =
       '<aside class="cms-ad-compact">' +
       '<span class="cms-ad-compact-badge">Sponsored</span>' +
-      logoMarkup(logo, 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
+      logoMarkup(logo, 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder', block) +
       '<a class="cms-ad-compact-cta" href="' +
       esc(ctaUrl) +
       '">' +
@@ -504,12 +516,13 @@
     return arr;
   }
 
-  function logoLinkMarkup(logoUrl, linkUrl, ariaLabel, fillBox) {
+  function logoLinkMarkup(logoUrl, linkUrl, ariaLabel, fillBox, block) {
     var url = String(logoUrl || '').trim();
     var href = normalizeCta(linkUrl);
     var hasLogo = window.CmsSponsorFields ? window.CmsSponsorFields.isLogoUrl(url) : /^https?:\/\//i.test(url);
     var label = esc(String(ariaLabel || 'Sponsored partner').trim() || 'Sponsored partner');
     var imgClass = 'cms-ad-logo-only-img sponsor-logo--full' + (fillBox ? ' cms-ad-logo-only-img--fill' : '');
+    var darkAttr = logoBandDarkAttr(block);
     var inner = hasLogo
       ? '<img class="' +
         imgClass +
@@ -528,7 +541,9 @@
       '<div class="sponsor-logo-wrap sponsor-logo-band' +
       (hasLogo ? ' has-logo' : '') +
       (fillBox ? ' sponsor-logo-wrap--fill' : '') +
-      '">' +
+      '"' +
+      darkAttr +
+      '>' +
       inner +
       '</div></a>'
     );
@@ -567,7 +582,7 @@
     container.innerHTML =
       '<aside class="cms-ad-logo-only cms-ad-logo-only--fill">' +
       '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
-      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true) +
+      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true, block) +
       '</aside>';
     applyLogoLink(container.querySelector('.cms-ad-logo-link'), block.cta_url);
     wireCarouselLogoBands(container);
@@ -590,7 +605,7 @@
       '">' +
       '<aside class="cms-ad-logo-only cms-ad-logo-only--fill">' +
       '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
-      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true) +
+      logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true, block) +
       '</aside></div>'
     );
   }

@@ -932,7 +932,7 @@ body.advertising-page {
 }
 
 .ad-section-nav-label {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -943,23 +943,31 @@ body.advertising-page {
 .ad-section-picks {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(122, 61, 138, 0.12);
+  background: linear-gradient(165deg, rgba(255, 253, 249, 0.98) 0%, rgba(235, 224, 240, 0.28) 100%);
+  box-shadow: 0 8px 28px rgba(45, 38, 54, 0.07);
 }
 
 .ad-section-pick {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 16px 18px;
-  border: 1px solid var(--ad-line);
+  padding: 18px 16px 16px;
+  border: 1px solid rgba(45, 38, 54, 0.14);
   border-radius: 14px;
   cursor: pointer;
   font: inherit;
   text-align: left;
   color: var(--ad-ink);
-  background: #fffdf9;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(45, 38, 54, 0.06);
+  overflow: hidden;
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -967,22 +975,66 @@ body.advertising-page {
     background 0.18s ease;
 }
 
+.ad-section-pick::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.ad-section-pick[data-ad-tab="events"] {
+  background: linear-gradient(180deg, rgba(235, 224, 240, 0.72) 0%, #fff 38%);
+}
+
+.ad-section-pick[data-ad-tab="events"]::before {
+  background: linear-gradient(90deg, #6b3479 0%, #9a5aad 100%);
+}
+
+.ad-section-pick[data-ad-tab="organisers"] {
+  background: linear-gradient(180deg, rgba(225, 218, 242, 0.72) 0%, #fff 38%);
+}
+
+.ad-section-pick[data-ad-tab="organisers"]::before {
+  background: linear-gradient(90deg, #5c4694 0%, #8b7bb8 100%);
+}
+
+.ad-section-pick[data-ad-tab="opportunities"] {
+  background: linear-gradient(180deg, rgba(252, 243, 220, 0.82) 0%, #fff 38%);
+}
+
+.ad-section-pick[data-ad-tab="opportunities"]::before {
+  background: linear-gradient(90deg, #a67c00 0%, #d4a832 100%);
+}
+
 .ad-section-pick:hover {
-  transform: translateY(-1px);
-  border-color: rgba(122, 61, 138, 0.28);
-  box-shadow: 0 8px 24px rgba(45, 38, 54, 0.07);
+  transform: translateY(-2px);
+  border-color: rgba(122, 61, 138, 0.32);
+  box-shadow: 0 10px 26px rgba(45, 38, 54, 0.1);
 }
 
 .ad-section-pick.is-active {
-  background: var(--surface-warm);
-  border-color: rgba(122, 61, 138, 0.45);
-  box-shadow: 0 8px 22px rgba(122, 61, 138, 0.12);
+  border-color: rgba(122, 61, 138, 0.55);
+  box-shadow:
+    0 12px 30px rgba(122, 61, 138, 0.16),
+    inset 0 0 0 1px rgba(122, 61, 138, 0.08);
+  transform: translateY(-2px);
+}
+
+.ad-section-pick.is-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(122, 61, 138, 0.22);
+  border-radius: 14px;
+  pointer-events: none;
 }
 
 .ad-section-pick-pill {
   display: inline-block;
-  margin-bottom: 6px;
-  padding: 3px 9px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.66rem;
   font-weight: 700;
@@ -991,36 +1043,51 @@ body.advertising-page {
 }
 
 .ad-section-pick[data-ad-tab="events"] .ad-section-pick-pill {
-  background: var(--ad-events-accent-soft);
-  color: var(--ad-events-accent);
-  border: 1px solid var(--ad-events-accent-border);
+  background: rgba(122, 61, 138, 0.14);
+  color: #5c2d6a;
+  border: 1px solid rgba(122, 61, 138, 0.28);
 }
 
 .ad-section-pick[data-ad-tab="organisers"] .ad-section-pick-pill {
-  background: var(--ad-organisers-accent-soft);
-  color: var(--ad-organisers-accent);
-  border: 1px solid var(--ad-organisers-accent-border);
+  background: rgba(92, 70, 148, 0.12);
+  color: #4a386f;
+  border: 1px solid rgba(92, 70, 148, 0.26);
 }
 
 .ad-section-pick[data-ad-tab="opportunities"] .ad-section-pick-pill {
-  background: var(--ad-opportunities-accent-soft);
-  color: #8a6910;
-  border: 1px solid var(--ad-opportunities-accent-border);
+  background: rgba(201, 150, 31, 0.14);
+  color: #7a5a08;
+  border: 1px solid rgba(201, 150, 31, 0.3);
 }
 
 .ad-section-pick-arrow {
   flex-shrink: 0;
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1rem;
   line-height: 1;
   color: var(--lavender-deep);
-  opacity: 0.55;
-  transition: transform 0.18s ease, opacity 0.18s ease;
+  background: rgba(122, 61, 138, 0.08);
+  border: 1px solid rgba(122, 61, 138, 0.12);
+  opacity: 0.85;
+  transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
 }
 
 .ad-section-pick:hover .ad-section-pick-arrow,
 .ad-section-pick.is-active .ad-section-pick-arrow {
   opacity: 1;
+  background: rgba(122, 61, 138, 0.14);
   transform: translateX(2px);
+}
+
+.ad-section-pick.is-active .ad-section-pick-arrow {
+  background: var(--lavender-deep);
+  color: #fff;
+  border-color: transparent;
 }
 
 .ad-section-pick:focus-visible {
@@ -1030,8 +1097,8 @@ body.advertising-page {
 
 .ad-section-pick-body strong {
   display: block;
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.94rem;
+  font-weight: 700;
   color: var(--ad-ink);
   line-height: 1.35;
 }
@@ -1040,9 +1107,9 @@ body.advertising-page {
   display: block;
   margin-top: 6px;
   font-style: normal;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--lavender-deep);
+  color: #5c2d6a;
 }
 
 .ad-tab-panel--events {
@@ -1848,91 +1915,9 @@ body.advertising-page {
 }
 
 .ad-package-browser .ad-package.is-active-package {
-  display: block;
-}
-
-.ad-package--collapsible.is-collapsed .ad-package-main,
-.ad-package--collapsible.is-collapsed .ad-package-preview,
-.ad-package--collapsible.is-collapsed .ad-package-span-full,
-.ad-package--collapsible.is-collapsed .ad-package-foot {
-  display: none;
-}
-
-.ad-package--collapsible.is-collapsed .ad-package-summary {
-  border-bottom: 0;
-}
-
-.ad-package--collapsible .ad-package-summary {
-  grid-column: 1 / -1;
-}
-
-.ad-package-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 16px 18px;
-  border: 0;
-  background: var(--ad-soft-muted);
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-  color: inherit;
-}
-
-.ad-package--collapsible.is-expanded .ad-package-summary {
-  border-bottom: 1px solid var(--ad-line);
-}
-
-.ad-package-summary-main {
-  min-width: 0;
-}
-
-.ad-package-summary-label {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ad-muted);
-}
-
-.ad-package-summary-title {
-  display: block;
-  margin-top: 2px;
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.15rem;
-  font-weight: 400;
-  color: var(--ad-ink);
-}
-
-.ad-package-summary-price {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--ad-muted);
-}
-
-.ad-package-summary-icon {
-  flex-shrink: 0;
-  font-size: 1.2rem;
-  line-height: 1;
-  color: var(--ad-muted);
-}
-
-.ad-package--collapsible.is-expanded .ad-package-summary-icon::before {
-  content: '−';
-}
-
-.ad-package--collapsible.is-collapsed .ad-package-summary-icon::before {
-  content: '+';
-}
-
-.ad-package-summary:focus-visible {
-  outline: 2px solid rgba(154, 122, 168, 0.45);
-  outline-offset: -2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
 }
 
 .ad-package-browser .ad-package {
@@ -1944,12 +1929,6 @@ body.advertising-page {
 
 .ad-package-browser .ad-package[hidden] {
   display: none !important;
-}
-
-.ad-package-browser .ad-package.is-active-package {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: stretch;
 }
 
 .ad-package-main,
@@ -6035,12 +6014,13 @@ body.advertising-page {
 
   .ad-section-picks {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding-bottom: 4px;
+    padding: 14px;
+    padding-bottom: 16px;
   }
 
   .ad-section-picks::-webkit-scrollbar {
@@ -6048,7 +6028,7 @@ body.advertising-page {
   }
 
   .ad-section-pick {
-    flex: 0 0 min(78vw, 260px);
+    flex: 0 0 min(78vw, 280px);
     scroll-snap-align: start;
   }
 

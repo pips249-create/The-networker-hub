@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260723partner" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723stats" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723oppalerts" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
@@ -53,16 +53,20 @@
               Past events
               <span class="ad-side-count" id="ad-side-past" hidden></span>
             </a>
+            <a href="#reviews" class="hub-side-nav-link" data-ad-route="reviews">
+              Organiser reviews
+              <span class="ad-side-count" id="ad-side-pending" hidden></span>
+            </a>
             <span class="hub-side-nav-divider">Saved</span>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">Saved &amp; memberships</a>
-            <span class="hub-side-nav-divider">Opportunities &amp; reviews</span>
+            <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
               My enquiries
               <span class="ad-side-count" id="ad-side-enquiries" hidden></span>
             </a>
-            <a href="#reviews" class="hub-side-nav-link" data-ad-route="reviews">
-              Reviews
-              <span class="ad-side-count" id="ad-side-pending" hidden></span>
+            <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
+              Saved listings
+              <span class="ad-side-count" id="ad-side-saved-opportunities" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Partner with us</span>
             <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner">Advertising &amp; sponsorship</a>
@@ -117,7 +121,7 @@
                   <div class="ad-stat-meta" id="ad-stat-next">—</div>
                 </button>
                 <button type="button" class="ad-stat ad-stat--gold ad-stat-link" data-ad-stat-route="reviews" aria-label="View reviews">
-                  <div class="ad-stat-label">Reviews submitted</div>
+                  <div class="ad-stat-label">Organiser reviews</div>
                   <div class="ad-stat-value" id="ad-stat-reviews" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
                 </button>
@@ -251,132 +255,82 @@
                       Saved organisers
                       <span class="ad-saved-scope-count" id="ad-saved-count-organisers" hidden aria-hidden="true"></span>
                     </button>
-                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="opportunities">
-                      Saved opportunities
-                      <span class="ad-saved-scope-count" id="ad-saved-count-opportunities" hidden aria-hidden="true"></span>
-                    </button>
                   </div>
                 </div>
 
                 <div class="ad-saved-pane" data-saved-pane="groups" role="tabpanel" hidden>
-                  <p class="ad-section-sub ad-section-sub--tight">Networking groups that added you to their member list. Sign in with the same email to book member-only tickets.</p>
-                  <div class="ad-table-scroll">
-                    <div class="ad-table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th class="ad-th-thumb"></th>
-                            <th>Group</th>
-                            <th>Membership</th>
-                            <th>Hub account</th>
-                            <th class="ad-th-actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="ad-my-groups-body"></tbody>
-                      </table>
+                  <div class="ad-saved-pane-inner">
+                    <div class="ad-membership-cards" id="ad-my-groups-list" role="list"></div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-my-groups-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No memberships yet</h3>
+                      <p class="ad-empty-state-text">When a networking group adds your email to their member list, your membership and expiry date will appear here.</p>
                     </div>
+                    <p class="ad-membership-footnote" hidden>Renewals are handled by your networking group — contact them directly, not through the Hub.</p>
                   </div>
-                  <p class="ad-empty" id="ad-my-groups-empty" hidden>
-                    No memberships yet. When a networking group adds your email to their member list, it will appear here.
-                  </p>
                 </div>
 
                 <div class="ad-saved-pane is-active" data-saved-pane="events" role="tabpanel">
-                  <div class="ad-table-scroll">
-                    <div class="ad-table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th class="ad-th-thumb"></th>
-                            <th>Event</th>
-                            <th>Date</th>
-                            <th>Location</th>
-                            <th class="ad-th-actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="ad-saved-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <p class="ad-empty" id="ad-saved-empty" hidden>
-                    No saved events yet.
-                    <a href="../events/">Browse events →</a>
-                  </p>
-                </div>
-
-                <div class="ad-saved-pane" data-saved-pane="organisers" role="tabpanel" hidden>
-                  <div class="ad-table-scroll">
-                    <div class="ad-table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th class="ad-th-thumb"></th>
-                            <th>Organiser</th>
-                            <th>Industry</th>
-                            <th>Rating</th>
-                            <th class="ad-th-actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="ad-saved-organisers-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <p class="ad-empty" id="ad-saved-organisers-empty" hidden>
-                    No saved organisers yet. Saving an event also saves its organiser.
-                    <a href="../events/#organisers">Browse organisers →</a>
-                  </p>
-                </div>
-
-                <div class="ad-saved-pane" data-saved-pane="opportunities" role="tabpanel" hidden>
-                  <p class="ad-saved-sync-note" id="ad-saved-opportunities-sync" hidden role="status"></p>
-                  <div class="ad-saved-opp-toolbar" id="ad-saved-opp-toolbar" hidden>
-                    <p class="ad-saved-opp-compare-hint"><span id="ad-compare-count">0</span> selected for compare (max 3)</p>
-                    <button type="button" class="ad-btn ad-btn-primary" id="ad-compare-open" disabled>Compare selected</button>
-                    <button type="button" class="ad-btn ad-btn-ghost" id="ad-compare-clear">Clear</button>
-                  </div>
-                  <div class="ad-table-scroll">
-                    <div class="ad-table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th class="ad-th-check" scope="col"><span class="visually-hidden">Compare</span></th>
-                            <th class="ad-th-thumb"></th>
-                            <th>Opportunity</th>
-                            <th>Listed by</th>
-                            <th>Saved</th>
-                            <th class="ad-th-actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody id="ad-saved-opportunities-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <p class="ad-empty" id="ad-saved-opportunities-empty" hidden>
-                    No saved opportunities yet.
-                    <a href="../opportunities/">Browse opportunities →</a>
-                  </p>
-
-                  <div class="ad-saved-block" id="saved-searches">
-                    <h3 class="ad-section-title ad-section-title--spaced">Opportunity search alerts</h3>
-                    <p class="ad-section-sub ad-section-sub--tight">Email alerts when newly published listings match filters you saved on the browse page.</p>
-                    <div class="ad-table-scroll">
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-table-scroll" id="ad-saved-events-table">
                       <div class="ad-table-wrap">
                         <table>
                           <thead>
                             <tr>
-                              <th>Search</th>
-                              <th>Saved</th>
+                              <th class="ad-th-thumb"></th>
+                              <th>Event</th>
+                              <th>Date</th>
+                              <th>Location</th>
                               <th class="ad-th-actions">Actions</th>
                             </tr>
                           </thead>
-                          <tbody id="ad-saved-searches-body"></tbody>
+                          <tbody id="ad-saved-body"></tbody>
                         </table>
                       </div>
                     </div>
-                    <p class="ad-empty" id="ad-saved-searches-empty" hidden>
-                      No search alerts yet.
-                      <a href="../opportunities/">Browse opportunities →</a>
-                    </p>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-saved-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No saved events yet</h3>
+                      <p class="ad-empty-state-text">Tap the heart on any event in the directory to save it here for later.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../events/">Browse events →</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane" data-saved-pane="organisers" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-table-scroll" id="ad-saved-organisers-table">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-thumb"></th>
+                              <th>Organiser</th>
+                              <th>Industry</th>
+                              <th>Rating</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-saved-organisers-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-saved-organisers-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No saved organisers yet</h3>
+                      <p class="ad-empty-state-text">Saving an event also saves its organiser — or browse groups directly in the directory.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../events/#organisers">Browse organisers →</a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -408,6 +362,94 @@
               <nav class="ad-pagination" id="ad-pagination-past" aria-label="Past events pages" hidden></nav>
             </section>
 
+            <!-- Saved opportunity listings -->
+            <section class="ad-page" id="ad-page-saved-opportunities" data-ad-page="saved-opportunities">
+              <div class="ad-saved-panel">
+                <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
+                  <p class="ad-saved-scope-kicker" id="ad-opp-saved-scope-kicker">Business opportunities</p>
+                  <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-opp-saved-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-opp-saved-scope="listings">
+                      Saved listings
+                      <span class="ad-saved-scope-count" id="ad-opp-saved-count-listings" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-opp-saved-scope="alerts">
+                      Search alerts
+                      <span class="ad-saved-scope-count" id="ad-opp-saved-count-alerts" hidden aria-hidden="true"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane is-active" data-opp-saved-pane="listings" role="tabpanel">
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <p class="ad-saved-sync-note" id="ad-saved-opportunities-sync" hidden role="status"></p>
+                    <div class="ad-saved-opp-toolbar" id="ad-saved-opp-toolbar" hidden>
+                      <p class="ad-saved-opp-compare-hint"><span id="ad-compare-count">0</span> selected for compare (max 3)</p>
+                      <button type="button" class="ad-btn ad-btn-primary" id="ad-compare-open" disabled>Compare selected</button>
+                      <button type="button" class="ad-btn ad-btn-ghost" id="ad-compare-clear">Clear</button>
+                    </div>
+                    <div class="ad-table-scroll" id="ad-saved-opportunities-table">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-check" scope="col"><span class="visually-hidden">Compare</span></th>
+                              <th class="ad-th-thumb"></th>
+                              <th>Opportunity</th>
+                              <th>Listed by</th>
+                              <th>Saved</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-saved-opportunities-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-saved-opportunities-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No saved listings yet</h3>
+                      <p class="ad-empty-state-text">Save business opportunities from the directory to compare or enquire later.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../opportunities/">Browse opportunities →</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane" data-opp-saved-pane="alerts" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <p class="ad-opp-alerts-intro">We email you when a newly published listing matches filters you saved on the opportunities browse page. Use <strong>Alert me</strong> on <a href="../opportunities/">Browse opportunities</a> to create one.</p>
+                    <div class="ad-table-scroll" id="ad-saved-searches-table">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Search filters</th>
+                              <th>Saved</th>
+                              <th>Last alert</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-saved-searches-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-saved-searches-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 4h16v12H5.17L4 17.17V4z"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No search alerts yet</h3>
+                      <p class="ad-empty-state-text">Set filters on the opportunities directory, then tap <strong>Alert me</strong> to get emailed when new listings match.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../opportunities/">Browse opportunities →</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <!-- Opportunity enquiries sent -->
             <section class="ad-page" id="ad-page-opportunity-enquiries" data-ad-page="opportunity-enquiries">
               <div class="ad-table-scroll">
@@ -436,7 +478,7 @@
             <section class="ad-page" id="ad-page-reviews" data-ad-page="reviews">
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
-                  <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Review lists</p>
+                  <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Your organiser reviews</p>
                   <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
                     <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
                       To write
@@ -697,6 +739,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260723stats"></script>
+    <script src="../js/attendee-dashboard.js?v=20260723oppalerts"></script>
   </body>
 </html>

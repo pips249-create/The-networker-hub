@@ -222,7 +222,21 @@
     );
   }
 
-  function applyLogoBand(wrap, img, hasLogo) {
+  function logoBandDark(block) {
+    return !!(block && block.logo_band_dark === true);
+  }
+
+  function logoBandForceDark(wrap, opts) {
+    if (opts && opts.forceDark === true) return true;
+    return !!(wrap && wrap.getAttribute('data-logo-band-dark') === 'true');
+  }
+
+  function applyDarkLogoBand(wrap) {
+    wrap.style.backgroundColor = LOGO_BAND_DARK;
+    wrap.classList.add('sponsor-logo-band--dark');
+  }
+
+  function applyLogoBand(wrap, img, hasLogo, opts) {
     if (!wrap) return;
     wrap.classList.add('sponsor-logo-band');
     wrap.classList.toggle('has-logo', Boolean(hasLogo));
@@ -239,6 +253,10 @@
     }
 
     function paint() {
+      if (logoBandForceDark(wrap, opts)) {
+        applyDarkLogoBand(wrap);
+        return;
+      }
       var band = sampleLogoBandColor(img);
       if (!band && isHeroLogoWrap(wrap)) {
         band = { color: LOGO_BAND_DARK, dark: true };
@@ -253,9 +271,8 @@
       img.addEventListener(
         'error',
         function () {
-          if (isHeroLogoWrap(wrap)) {
-            wrap.style.backgroundColor = LOGO_BAND_DARK;
-            wrap.classList.add('sponsor-logo-band--dark');
+          if (logoBandForceDark(wrap, opts) || isHeroLogoWrap(wrap)) {
+            applyDarkLogoBand(wrap);
           } else {
             wrap.style.backgroundColor = LOGO_BAND_LIGHT;
             wrap.classList.remove('sponsor-logo-band--dark');
@@ -271,6 +288,7 @@
     tagline: tagline,
     logoUrl: logoUrl,
     companyName: companyName,
+    logoBandDark: logoBandDark,
     isLogoUrl: isLogoUrl,
     sanitizeCtaColor: sanitizeCtaColor,
     sampleLogoColorHex: sampleLogoColorHex,

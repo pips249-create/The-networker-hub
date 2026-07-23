@@ -9,6 +9,18 @@
   var VERCEL_ANALYTICS_URL =
     'https://vercel.com/pips249-create/the-networker-hub/analytics';
 
+  /** Scheduled ops reminders shown on Command Centre Home. */
+  var PLATFORM_SCHEDULED_REMINDERS = [
+    {
+      id: 'marketing-stats-review',
+      dueDate: '2026-11-23',
+      title: 'Review marketing page stats',
+      detail:
+        'Check whether 27,000+ Events listed and 17,000+ networkers last year still match Google Analytics and platform data. Update for-networkers, for-organisers, about, advertising, list-an-opportunity, events browse, login, and register if needed.',
+      href: '#analytics',
+    },
+  ];
+
   function isLocalDevHost() {
     var host = String(window.location.hostname || '').toLowerCase();
     return host === 'localhost' || host === '127.0.0.1';
@@ -1118,6 +1130,12 @@
         time: new Date().toISOString(),
       });
     }
+    var statsReminder = marketingStatsReviewQueueAlert();
+    if (statsReminder && !alerts.some(function (a) {
+      return a.id === statsReminder.id;
+    })) {
+      alerts.push(statsReminder);
+    }
     var severityOrder = { high: 0, medium: 1, low: 2 };
     alerts.sort(function (a, b) {
       return (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3);
@@ -1259,6 +1277,7 @@
     }
 
     updateHealthBadge(sidebarNotificationTotal(data));
+    syncScheduledRemindersSection();
   }
 
   function refreshEventHealthQuietly(force) {
@@ -4494,6 +4513,10 @@
         '<a href="#moderation" class="admin-shortcut"><span class="admin-shortcut-label">Reported items</span><span class="admin-shortcut-desc">Reviews and listings</span></a>' +
         '<a href="#analytics" class="admin-shortcut"><span class="admin-shortcut-label">Website visitors</span><span class="admin-shortcut-desc">Traffic and pages</span></a>' +
         '</div></div></section>' +
+        '<section class="admin-dash-section" id="dashboard-scheduled-reminders-section">' +
+        '<div class="admin-dash-section-head"><h3>Scheduled reminders</h3>' +
+        '<p>Future tasks — these move into Things to do when due.</p></div>' +
+        '<div class="admin-dash-section-body" id="dashboard-scheduled-reminders"></div></section>' +
         '<section class="admin-dash-section" id="dashboard-action-section">' +
         '<div class="admin-dash-section-head"><h3>Things to do</h3>' +
         '<p>Work through these in order — urgent items are listed first.</p></div>' +
@@ -4534,6 +4557,8 @@
       applyDashboardMetrics(cached);
       applyDashboardNotifications(cached);
     }
+
+    syncScheduledRemindersSection();
 
     refreshAdminNotifications({ forceHealth: !healthCacheFetchedAt }).then(function (data) {
       applyDashboardMetrics(data);
@@ -5728,15 +5753,18 @@
     return h3 ? h3.textContent.trim() : '';
   }
 
-  function sponsorPreviewLogoHtml(logoUrl, compact) {
+  function sponsorPreviewLogoHtml(logoUrl, compact, forceDark) {
     var bandClass =
       'sponsor-preview-logo-band' +
       (compact ? ' sponsor-preview-logo-band--compact' : ' sponsor-preview-logo-band--hero mb-3');
+    var darkAttr = forceDark ? ' data-logo-band-dark="true"' : '';
     if (logoUrl && /^(https?:|\/|data:image\/)/i.test(logoUrl)) {
       return (
         '<div class="' +
         bandClass +
-        '" data-sponsor-preview-band>' +
+        '" data-sponsor-preview-band' +
+        darkAttr +
+        '>' +
         '<img src="' +
         esc(logoUrl) +
         '" alt="" class="sponsor-preview-logo-img" crossorigin="anonymous" ' +
@@ -6663,6 +6691,8 @@
       setSponsorCtaColorFields(d.ctaColor || defaultSponsorCtaColor());
       if (active) active.checked = true;
       if (includeInEmails) includeInEmails.checked = true;
+      var logoBandDark = document.getElementById('sponsor-logo-band-dark');
+      if (logoBandDark) logoBandDark.checked = false;
       var slotEmail = document.getElementById('sponsor-slot-email');
       var slotOpens = document.getElementById('sponsor-slot-available-from');
       if (slotEmail) slotEmail.value = '';
@@ -6711,6 +6741,9 @@
       '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…">' +
       '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, wide format recommended)</label>' +
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
+      '<label class="flex items-start gap-2 text-sm text-slate-700 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">' +
+      '<input type="checkbox" id="sponsor-logo-band-dark" class="rounded border-slate-300 mt-0.5"> ' +
+      '<span><strong>Use dark logo band</strong><span class="block text-xs text-slate-500 mt-0.5">For logos with white or light text on a light background. Overrides automatic detection.</span></span></label>' +
       '<div class="grid sm:grid-cols-2 gap-4" id="sponsor-cta-fields">' +
       '<div><label id="sponsor-cta-label-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
@@ -6788,6 +6821,7 @@
         cta_label: creative.ctaLabel,
         cta_url: creative.ctaUrl,
         cta_color: creative.ctaColor,
+        logo_band_dark: creative.logoBandDark === true,
         body: '',
       };
     }
@@ -6881,6 +6915,7 @@
         cta_url: creative.ctaUrl,
         cta_color: creative.ctaColor,
         company_name: creative.companyName,
+        logo_band_dark: creative.logoBandDark === true,
       };
       var inactiveNote = inactive
         ? '<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">Inactive — hidden on site until <strong>Ad active</strong> is checked.</p>'
@@ -6961,7 +6996,7 @@
           '<span class="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider text-slate-500">' +
           esc(badge) +
           '</span>' +
-          sponsorPreviewLogoHtml(creative.logoUrl, true) +
+          sponsorPreviewLogoHtml(creative.logoUrl, true, creative.logoBandDark) +
           '<span data-sponsor-preview-cta class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2.5">' +
           esc(creative.ctaLabel) +
           '</span></aside>';
@@ -6973,7 +7008,7 @@
         el.innerHTML =
           '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 pb-4 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
           '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
-          sponsorPreviewLogoHtml(creative.logoUrl, false) +
+          sponsorPreviewLogoHtml(creative.logoUrl, false, creative.logoBandDark) +
           '</aside>';
         return;
       }
@@ -6981,7 +7016,7 @@
       el.innerHTML =
         '<aside class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] max-w-md shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
         '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
-        sponsorPreviewLogoHtml(creative.logoUrl, false) +
+        sponsorPreviewLogoHtml(creative.logoUrl, false, creative.logoBandDark) +
         (creative.companyName
           ? '<p class="text-sm font-extrabold mb-1">' + esc(creative.companyName) + '</p>'
           : '') +
@@ -7057,6 +7092,7 @@
     [
       'sponsor-company',
       'sponsor-logo-url',
+      'sponsor-logo-band-dark',
       'sponsor-tagline',
       'sponsor-cta-label',
       'sponsor-cta-color-hex',
@@ -7178,6 +7214,7 @@
         company_name:
           slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.companyName,
         logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
+        logo_band_dark: creative.logoBandDark === true,
         active: creative.active,
         include_in_emails: slot.preview === 'city_partner' ? false : creative.includeInEmails,
       };

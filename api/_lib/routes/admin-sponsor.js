@@ -117,6 +117,7 @@ module.exports = async function handler(req, res) {
         company_name,
         active: body.active !== false,
         include_in_emails: isCityPartner ? false : body.include_in_emails !== false,
+        logo_band_dark: body.logo_band_dark === true,
       };
       if (isCityPartner) {
         if (body.sponsor_email !== undefined) {

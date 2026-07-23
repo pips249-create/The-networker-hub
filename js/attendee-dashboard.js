@@ -14,6 +14,7 @@
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   let savedScope = 'events';
+  let opportunitySavedScope = 'listings';
   let reviewsScope = 'pending';
   let openUtilityMenu = null;
   let shareModalOpen = false;
@@ -21,6 +22,32 @@
   let currentShareReg = null;
   const REVIEW_EVENT_STORAGE_KEY = 'hub_review_event_id';
   const ORGANISER_CONTEXT_DISMISS_KEY = 'hub_attendee_organiser_context_dismissed';
+
+  const SAVED_SCOPE_HEAD = {
+    groups: {
+      title: 'My memberships',
+      sub: 'Groups that added you to their member list. Sign in with the same email to book member-only tickets.',
+    },
+    events: {
+      title: 'Saved events',
+      sub: 'Events you bookmarked from the directory — book before they sell out.',
+    },
+    organisers: {
+      title: 'Saved organisers',
+      sub: 'Networking groups and hosts you follow. Saving an event also saves its organiser.',
+    },
+  };
+
+  const OPPORTUNITY_SAVED_SCOPE_HEAD = {
+    listings: {
+      title: 'Saved listings',
+      sub: 'Business opportunities you bookmarked — compare listings or send an enquiry.',
+    },
+    alerts: {
+      title: 'Search alerts',
+      sub: 'Email alerts when newly published listings match filters you saved on the browse page.',
+    },
+  };
 
   const SUBPAGE_HEAD = {
     upcoming: {
@@ -37,7 +64,11 @@
     },
     saved: {
       title: 'Saved & memberships',
-      sub: 'Saved events, organisers, and opportunities — plus your group memberships and expiry dates under My memberships.',
+      sub: 'Your group memberships, saved events, and saved organisers.',
+    },
+    'saved-opportunities': {
+      title: 'Saved listings',
+      sub: 'Business opportunities you bookmarked — compare listings or send an enquiry.',
     },
     past: {
       title: 'Past events',
@@ -48,16 +79,16 @@
       sub: 'Messages you sent to business opportunity listings on the Hub. Organisers reply by email.',
     },
     'reviews-pending': {
-      title: 'Reviews',
-      sub: 'Leave feedback after events you attended, or read reviews you have already submitted.',
+      title: 'Organiser reviews',
+      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
     },
     'reviews-done': {
-      title: 'Reviews',
-      sub: 'Leave feedback after events you attended, or read reviews you have already submitted.',
+      title: 'Organiser reviews',
+      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
     },
     reviews: {
-      title: 'Reviews',
-      sub: 'Leave feedback after events you attended, or read reviews you have already submitted.',
+      title: 'Organiser reviews',
+      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
     },
   };
 
@@ -104,6 +135,8 @@
   function routeHash() {
     if (currentRoute === 'overview') return '';
     if (currentRoute === 'saved' && savedScope === 'groups') return '#memberships';
+    if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'alerts') return '#search-alerts';
+    if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
     return '#' + currentRoute;
   }
 
@@ -1111,11 +1144,10 @@
     const hasGroups = myGroups.length > 0;
     const hasEvents = savedEvents.length > 0;
     const hasOrganisers = savedOrganisers.length > 0;
-    const hasOpportunities = savedOpportunities.length > 0;
     if (hasGroups) {
       setSavedScope('groups');
-    } else if (!hasEvents && !hasOrganisers && hasOpportunities) {
-      setSavedScope('opportunities');
+    } else if (!hasEvents && hasOrganisers) {
+      setSavedScope('organisers');
     }
   }
 
@@ -1131,13 +1163,19 @@
       pane.classList.toggle('is-active', active);
       pane.hidden = !active;
     });
-    const toolbar = document.getElementById('ad-saved-opp-toolbar');
-    if (toolbar) {
-      toolbar.hidden = savedScope !== 'opportunities' || !savedOpportunities.length;
-    }
     if (currentRoute === 'saved') {
       syncRouteHash();
+      updateSavedSubpageHead();
     }
+  }
+
+  function updateSavedSubpageHead() {
+    if (currentRoute !== 'saved') return;
+    const meta = SAVED_SCOPE_HEAD[savedScope] || SUBPAGE_HEAD.saved;
+    const titleEl = document.getElementById('ad-subpage-title');
+    const subEl = document.getElementById('ad-subpage-sub');
+    if (titleEl) titleEl.textContent = meta.title;
+    if (subEl) subEl.textContent = meta.sub;
   }
 
   function bindSavedScope() {
@@ -1147,12 +1185,56 @@
       btn.addEventListener('click', () => {
         const scope = btn.getAttribute('data-saved-scope') || 'events';
         setSavedScope(scope);
-        if (scope === 'opportunities') {
-          loadSavedOpportunities();
-        }
       });
     });
     setSavedScope(savedScope);
+  }
+
+  function setOpportunitySavedScope(scope) {
+    opportunitySavedScope = scope || 'listings';
+    document.querySelectorAll('[data-opp-saved-scope]').forEach((btn) => {
+      const active = btn.getAttribute('data-opp-saved-scope') === opportunitySavedScope;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-opp-saved-pane]').forEach((pane) => {
+      const active = pane.getAttribute('data-opp-saved-pane') === opportunitySavedScope;
+      pane.classList.toggle('is-active', active);
+      pane.hidden = !active;
+    });
+    const toolbar = document.getElementById('ad-saved-opp-toolbar');
+    if (toolbar) {
+      toolbar.hidden =
+        opportunitySavedScope !== 'listings' ||
+        currentRoute !== 'saved-opportunities' ||
+        !savedOpportunities.length;
+    }
+    if (currentRoute === 'saved-opportunities') {
+      syncRouteHash();
+      updateOpportunitySavedSubpageHead();
+    }
+  }
+
+  function updateOpportunitySavedSubpageHead() {
+    if (currentRoute !== 'saved-opportunities') return;
+    const meta = OPPORTUNITY_SAVED_SCOPE_HEAD[opportunitySavedScope] || SUBPAGE_HEAD['saved-opportunities'];
+    const titleEl = document.getElementById('ad-subpage-title');
+    const subEl = document.getElementById('ad-subpage-sub');
+    if (titleEl) titleEl.textContent = meta.title;
+    if (subEl) subEl.textContent = meta.sub;
+  }
+
+  function bindOpportunitySavedScope() {
+    document.querySelectorAll('[data-opp-saved-scope]').forEach((btn) => {
+      if (btn.dataset.boundOppSavedScope) return;
+      btn.dataset.boundOppSavedScope = '1';
+      btn.addEventListener('click', () => {
+        const scope = btn.getAttribute('data-opp-saved-scope') || 'listings';
+        setOpportunitySavedScope(scope);
+        if (dashboardReady) renderRouteTables('saved-opportunities', { force: true });
+      });
+    });
+    setOpportunitySavedScope(opportunitySavedScope);
   }
 
   let reviewRating = 0;
@@ -1495,12 +1577,21 @@
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
     if (hash.startsWith('review/')) return 'reviews-pending';
     if (hash === 'memberships') return 'memberships';
+    if (hash === 'search-alerts') {
+      opportunitySavedScope = 'alerts';
+      return 'saved-opportunities';
+    }
+    if (hash === 'saved-opportunities') {
+      opportunitySavedScope = 'listings';
+      return 'saved-opportunities';
+    }
     const allowed = [
       'overview',
       'upcoming',
       'payments',
       'cancellations',
       'saved',
+      'saved-opportunities',
       'past',
       'opportunity-enquiries',
       'reviews',
@@ -2092,6 +2183,14 @@
     if (currentRoute === 'saved' && savedScope === 'events') {
       maybeDefaultSavedScope();
     }
+    if (currentRoute === 'saved') {
+      updateSavedSubpageHead();
+    }
+    if (currentRoute === 'saved-opportunities') {
+      setOpportunitySavedScope(opportunitySavedScope);
+      updateOpportunitySavedSubpageHead();
+      loadSavedOpportunities();
+    }
     syncRouteHash();
     if (dashboardReady) renderRouteTables(routeTablesKey(currentRoute));
   }
@@ -2211,10 +2310,12 @@
     set('ad-side-pending', pendingReviewsList().length);
     set('ad-side-reviewed', doneReviewsList().length);
     set('ad-side-cancellations', (cancelledBookings || []).length);
+    set('ad-side-saved-opportunities', savedOpportunities.length);
+    setTabCount('ad-opp-saved-count-listings', savedOpportunities.length);
+    setTabCount('ad-opp-saved-count-alerts', savedOpportunitySearches.length);
     setTabCount('ad-saved-count-groups', myGroups.length);
     setTabCount('ad-saved-count-events', savedEvents.length);
     setTabCount('ad-saved-count-organisers', savedOrganisers.length);
-    setTabCount('ad-saved-count-opportunities', savedOpportunities.length);
     setTabCount('ad-reviews-count-pending', pendingReviewsList().length);
     setTabCount('ad-reviews-count-done', doneReviewsList().length);
   }
@@ -2626,10 +2727,10 @@
 
     body.innerHTML = '';
     if (!savedEvents.length) {
-      if (empty) empty.hidden = false;
+      setListEmptyState('ad-saved-events-table', 'ad-saved-empty', true);
       return;
     }
-    if (empty) empty.hidden = true;
+    setListEmptyState('ad-saved-events-table', 'ad-saved-empty', false);
 
     savedEvents.forEach((item) => {
       const tr = document.createElement('tr');
@@ -2841,7 +2942,9 @@
     }
 
     maybeDefaultSavedScope();
-    if (dashboardReady && currentRoute === 'saved') {
+    if (dashboardReady && currentRoute === 'saved-opportunities') {
+      renderRouteTables('saved-opportunities', { force: true });
+    } else if (dashboardReady && currentRoute === 'saved') {
       renderRouteTables('saved', { force: true });
     }
   }
@@ -2855,7 +2958,10 @@
     if (!cmp || !toolbar) return;
 
     const ids = cmp.ids();
-    toolbar.hidden = savedScope !== 'opportunities' || !savedOpportunities.length;
+    toolbar.hidden =
+      currentRoute !== 'saved-opportunities' ||
+      opportunitySavedScope !== 'listings' ||
+      !savedOpportunities.length;
     if (countEl) countEl.textContent = String(ids.length);
     if (openBtn) openBtn.disabled = ids.length < 2;
     if (clearBtn) clearBtn.disabled = !ids.length;
@@ -2911,8 +3017,7 @@
     const scope = String(params.get('scope') || '').trim().toLowerCase();
     if (!wantCompare && scope !== 'opportunities') return;
 
-    setRoute('saved');
-    setSavedScope('opportunities');
+    setRoute('saved-opportunities');
 
     if (!wantCompare) return;
 
@@ -2935,7 +3040,7 @@
         const clean = new URL(location.href);
         clean.searchParams.delete('compare');
         clean.searchParams.delete('scope');
-        history.replaceState(null, '', clean.pathname + clean.search + '#saved');
+        history.replaceState(null, '', clean.pathname + clean.search + '#saved-opportunities');
       });
     });
   }
@@ -2949,10 +3054,10 @@
     body.innerHTML = '';
     refreshCompareToolbar();
     if (!savedOpportunities.length) {
-      if (empty) empty.hidden = false;
+      setListEmptyState('ad-saved-opportunities-table', 'ad-saved-opportunities-empty', true);
       return;
     }
-    if (empty) empty.hidden = true;
+    setListEmptyState('ad-saved-opportunities-table', 'ad-saved-opportunities-empty', false);
 
     savedOpportunities.forEach((item) => {
       const tr = document.createElement('tr');
@@ -3026,43 +3131,88 @@
     });
   }
 
-  function renderMyGroupsTable() {
-    const body = document.getElementById('ad-my-groups-body');
-    const empty = document.getElementById('ad-my-groups-empty');
-    if (!body) return;
+  function ensureMyGroupsListEl() {
+    let list = document.getElementById('ad-my-groups-list');
+    if (list) return list;
 
-    body.innerHTML = '';
+    const legacyBody = document.getElementById('ad-my-groups-body');
+    const pane = document.querySelector('[data-saved-pane="groups"]');
+    if (!pane) return null;
+
+    if (legacyBody) {
+      const tableWrap = legacyBody.closest('.ad-table-scroll');
+      if (tableWrap) tableWrap.remove();
+      pane.querySelectorAll('.ad-section-sub').forEach((el) => el.remove());
+    }
+
+    let inner = pane.querySelector('.ad-saved-pane-inner');
+    if (!inner) {
+      inner = document.createElement('div');
+      inner.className = 'ad-saved-pane-inner';
+      pane.appendChild(inner);
+    }
+
+    list = document.createElement('div');
+    list.id = 'ad-my-groups-list';
+    list.className = 'ad-membership-cards';
+    list.setAttribute('role', 'list');
+    inner.insertBefore(list, inner.firstChild);
+    return list;
+  }
+
+  function renderMyGroupsList() {
+    const list = ensureMyGroupsListEl();
+    const empty = document.getElementById('ad-my-groups-empty');
+    const footnote = document.querySelector('.ad-membership-footnote');
+    if (!list) return;
+
+    list.innerHTML = '';
     if (!myGroups.length) {
+      list.hidden = true;
       if (empty) empty.hidden = false;
+      if (footnote) footnote.hidden = true;
       return;
     }
+
+    list.hidden = false;
     if (empty) empty.hidden = true;
+    if (footnote) footnote.hidden = false;
 
     myGroups.forEach((item) => {
-      const tr = document.createElement('tr');
       const favItem = {
         title: item.organiserName || item.name,
         imageUrl: item.organiserPhotoUrl || '',
       };
-      const account = item.claimedAt || item.attendeeId ? 'Signed up' : 'Invite sent';
+      const account = item.claimedAt || item.attendeeId ? 'Signed up on Hub' : 'Invite sent — use the same email to sign in';
       const href = membershipOrganiserHref(item);
-      tr.innerHTML =
-        '<td>' +
+      const card = document.createElement('article');
+      card.className = 'ad-membership-card';
+      card.setAttribute('role', 'listitem');
+      card.innerHTML =
+        '<div class="ad-membership-card-main">' +
+        '<div class="ad-membership-card-logo">' +
         thumbHtml(favItem) +
-        '</td><td class="ad-td-name"><a href="' +
+        '</div>' +
+        '<div class="ad-membership-card-copy">' +
+        '<a class="ad-membership-card-name" href="' +
         esc(href) +
         '">' +
         esc(item.organiserName || 'Group') +
-        '</a></td><td>' +
-        membershipStatusBadge(item) +
-        '</td><td>' +
+        '</a>' +
+        '<p class="ad-membership-card-meta">' +
         esc(account) +
-        '</td><td class="ad-td-actions"><div class="ad-action-group">' +
-        '<a class="ad-btn ad-btn-primary ad-btn-sm" href="' +
+        '</p>' +
+        '</div>' +
+        '<div class="ad-membership-card-status">' +
+        membershipStatusBadge(item) +
+        '</div>' +
+        '</div>' +
+        '<div class="ad-membership-card-actions">' +
+        '<a class="ad-btn ad-btn-primary" href="' +
         esc(href) +
         '">View member events</a>' +
-        '</div></td>';
-      body.appendChild(tr);
+        '</div>';
+      list.appendChild(card);
     });
   }
 
@@ -3073,10 +3223,10 @@
 
     body.innerHTML = '';
     if (!savedOrganisers.length) {
-      if (empty) empty.hidden = false;
+      setListEmptyState('ad-saved-organisers-table', 'ad-saved-organisers-empty', true);
       return;
     }
-    if (empty) empty.hidden = true;
+    setListEmptyState('ad-saved-organisers-table', 'ad-saved-organisers-empty', false);
 
     savedOrganisers.forEach((item) => {
       const tr = document.createElement('tr');
@@ -3136,10 +3286,10 @@
 
     body.innerHTML = '';
     if (!savedOpportunitySearches.length) {
-      if (empty) empty.hidden = false;
+      setListEmptyState('ad-saved-searches-table', 'ad-saved-searches-empty', true);
       return;
     }
-    if (empty) empty.hidden = true;
+    setListEmptyState('ad-saved-searches-table', 'ad-saved-searches-empty', false);
 
     const q = window.HubOpportunityQuality;
     savedOpportunitySearches.forEach((item) => {
@@ -3150,6 +3300,7 @@
         (q && q.criteriaLabel ? q.criteriaLabel(criteria) : 'Saved search');
       const href =
         q && q.criteriaToUrl ? q.criteriaToUrl(criteria, '../opportunities/') : '../opportunities/';
+      const lastAlert = item.lastNotifiedAt || item.last_notified_at;
       tr.innerHTML =
         '<td class="ad-td-name"><a href="' +
         esc(href) +
@@ -3157,9 +3308,15 @@
         esc(label) +
         '</a></td><td>' +
         esc(formatDateShort(item.createdAt || item.created_at)) +
-        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-search-remove" data-search-id="' +
+        '</td><td>' +
+        esc(lastAlert ? formatDateShort(lastAlert) : 'None yet') +
+        '</td><td class="ad-td-actions"><div class="ad-action-group ad-action-group--inline">' +
+        '<a class="ad-btn ad-btn-ghost ad-btn-sm" href="' +
+        esc(href) +
+        '">View matches</a>' +
+        '<button type="button" class="ad-btn ad-btn-ghost ad-btn-sm ad-saved-search-remove" data-search-id="' +
         esc(item.id || '') +
-        '">Remove alert</button></td>';
+        '">Remove</button></div></td>';
       body.appendChild(tr);
     });
 
@@ -3177,6 +3334,7 @@
           });
           savedOpportunitySearches = savedOpportunitySearches.filter((x) => String(x.id) !== String(searchId));
           renderSavedOpportunitySearchesTable();
+          updateSideCounts();
         } catch {
           btn.disabled = false;
         }
@@ -3199,8 +3357,8 @@
       await ensureOpportunitiesCatalog();
       applySavedOpportunityData(null);
     }
-    if (dashboardReady && currentRoute === 'saved') {
-      renderRouteTables('saved', { force: true });
+    if (dashboardReady && currentRoute === 'saved-opportunities') {
+      renderRouteTables('saved-opportunities', { force: true });
     }
   }
 
@@ -3310,7 +3468,7 @@
     } else if (key === 'saved') {
       maybeDefaultSavedScope();
       try {
-        renderMyGroupsTable();
+        renderMyGroupsList();
       } catch (err) {
         /* non-fatal */
       }
@@ -3324,6 +3482,7 @@
       } catch (err) {
         /* non-fatal */
       }
+    } else if (key === 'saved-opportunities') {
       try {
         renderSavedOpportunitiesTable();
       } catch (err) {
@@ -3361,8 +3520,11 @@
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
     renderRouteTables('opportunity-enquiries', { force: true });
-    if (savedEvents.length || myGroups.length || savedOrganisers.length || savedOpportunities.length || savedOpportunitySearches.length) {
+    if (savedEvents.length || myGroups.length || savedOrganisers.length) {
       renderRouteTables('saved', { force: true });
+    }
+    if (savedOpportunities.length || savedOpportunitySearches.length) {
+      renderRouteTables('saved-opportunities', { force: true });
     }
     updateSideCounts();
   }
@@ -3484,6 +3646,7 @@
     bindStatCards();
     bindHubContextSwitch();
     bindSavedScope();
+    bindOpportunitySavedScope();
     bindReviewsScope();
     bindReviewModal();
     bindViewReviewModal();
@@ -3620,6 +3783,10 @@
           savedOpportunitySearches = oppSearchData.searches;
         } else {
           savedOpportunitySearches = [];
+        }
+        if (dashboardReady && currentRoute === 'saved-opportunities') {
+          setOpportunitySavedScope(opportunitySavedScope);
+          renderRouteTables('saved-opportunities', { force: true });
         }
       } catch {
         savedOpportunitySearches = [];

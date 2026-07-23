@@ -1113,6 +1113,7 @@ async function copySponsorBlock(sb, fromSlot, toSlot) {
     cta_color: source.cta_color || '',
     logo_url: source.logo_url || source.image_url || '',
     company_name: source.company_name || '',
+    logo_band_dark: source.logo_band_dark === true,
     active: source.active !== false,
     include_in_emails: source.include_in_emails !== false,
   });

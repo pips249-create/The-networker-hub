@@ -103,8 +103,14 @@ function normalizeSponsorBlock(block) {
     image_url: sponsorLogoUrl(block) || null,
     company_name: sponsorCompanyName(block) || null,
     cta_color: sponsorCtaColor(block) || null,
+    logo_band_dark: sponsorLogoBandDark(block),
     include_in_emails: block.include_in_emails !== false,
   };
+}
+
+function sponsorLogoBandDark(block) {
+  if (!block) return false;
+  return block.logo_band_dark === true;
 }
 
 function buildSponsorRow(payload) {
@@ -117,6 +123,7 @@ function buildSponsorRow(payload) {
   const cta_color = sanitizeCtaColor(payload.cta_color) || null;
   const active = payload.active !== false;
   const include_in_emails = payload.include_in_emails !== false;
+  const logo_band_dark = payload.logo_band_dark === true;
   const slot = String(payload.slot || 'sponsor_hub').trim() || 'sponsor_hub';
 
   const row = {
@@ -132,6 +139,7 @@ function buildSponsorRow(payload) {
     company_name,
     active,
     include_in_emails,
+    logo_band_dark,
     updated_at: new Date().toISOString(),
   };
 
@@ -155,6 +163,7 @@ module.exports = {
   sponsorCompanyName,
   sanitizeCtaColor,
   sponsorCtaColor,
+  sponsorLogoBandDark,
   hasSponsorLogo,
   hasValidCtaUrl,
   isCompactSponsorSlot,

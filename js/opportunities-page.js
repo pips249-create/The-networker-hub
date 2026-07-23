@@ -1485,7 +1485,7 @@
           return;
         }
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.message) || 'Could not save alert');
-        setSaveSearchStatus('Alert saved — we will email you when new listings match.');
+        setSaveSearchStatus('Alert saved — we will email you when new listings match. Manage alerts in My Hub → Saved listings → Search alerts.');
       })
       .catch(function (e) {
         setSaveSearchStatus(e.message || 'Could not save alert. Try again.', true);

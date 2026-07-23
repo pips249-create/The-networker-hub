@@ -1012,3 +1012,47 @@ a.admin-action-row:hover .admin-action-btn {
   font-weight: 700;
 }
 
+.admin-scheduled-reminder {
+  padding: 0.875rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+
+.admin-scheduled-reminder + .admin-scheduled-reminder {
+  margin-top: 0.75rem;
+}
+
+.admin-scheduled-reminder-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--admin-text, #0f172a);
+}
+
+.admin-scheduled-reminder-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: #5b2f99;
+}
+
+.admin-scheduled-reminder-detail {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--admin-text-muted);
+}
+
+.admin-scheduled-reminder-link {
+  display: inline-block;
+  margin-top: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #5b2f99;
+  text-decoration: none;
+}
+
+.admin-scheduled-reminder-link:hover {
+  text-decoration: underline;
+}
+

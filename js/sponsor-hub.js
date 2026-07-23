@@ -154,14 +154,20 @@
     return true;
   }
 
-  function setSponsorLogo(els, logoUrl) {
+  function setSponsorLogo(els, logoUrl, block) {
     var url = String(logoUrl || '').trim();
     var hasLogo = window.CmsSponsorFields
       ? window.CmsSponsorFields.isLogoUrl(url)
       : /^https?:\/\//i.test(url);
+    var forceDark =
+      window.CmsSponsorFields && window.CmsSponsorFields.logoBandDark
+        ? window.CmsSponsorFields.logoBandDark(block)
+        : false;
     if (els.sponsorLogoWrap) {
       els.sponsorLogoWrap.hidden = false;
       els.sponsorLogoWrap.classList.toggle('has-logo', hasLogo);
+      if (forceDark) els.sponsorLogoWrap.setAttribute('data-logo-band-dark', 'true');
+      else els.sponsorLogoWrap.removeAttribute('data-logo-band-dark');
     }
     if (els.sponsorLogo) {
       if (hasLogo) {
@@ -171,7 +177,9 @@
         els.sponsorLogo.src = url;
         els.sponsorLogo.hidden = false;
         if (window.CmsSponsorFields) {
-          window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, els.sponsorLogo, true);
+          window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, els.sponsorLogo, true, {
+            forceDark: forceDark,
+          });
         }
       } else {
         els.sponsorLogo.removeAttribute('src');
@@ -239,7 +247,7 @@
       block.body,
       heroSponsor ? SPONSOR_HERO_MAX_BULLETS : 0
     );
-    var hasLogo = setSponsorLogo(els, logoUrl);
+    var hasLogo = setSponsorLogo(els, logoUrl, block);
     var logoOnly = applyHeroLogoLink(els, {
       active: true,
       hasLogo: hasLogo,

@@ -853,14 +853,26 @@ button.ad-stat-link:focus-visible::after {
   flex-wrap: wrap;
 }
 
+.ad-empty-state--compact {
+  padding: 28px 20px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ad-empty-state--compact .ad-empty-state-text {
+  font-size: 13px;
+}
+
 .ad-saved-block {
   margin-bottom: 28px;
 }
 
 .ad-saved-pane .ad-saved-block {
-  margin: 8px 14px 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e8edf4;
+  margin: 24px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--ad-border-soft);
 }
 
 .ad-saved-panel {
@@ -872,9 +884,13 @@ button.ad-stat-link:focus-visible::after {
   margin-bottom: 28px;
 }
 
+.ad-saved-panel--flat {
+  box-shadow: 0 2px 12px rgba(45, 27, 94, 0.06);
+}
+
 .ad-saved-scope-wrap {
-  padding: 16px 16px 14px;
-  background: var(--ad-teal-pale);
+  padding: 18px 18px 16px;
+  background: linear-gradient(180deg, var(--ad-teal-pale) 0%, #faf8fc 100%);
   border-bottom: 1px solid var(--ad-border-soft);
 }
 
@@ -901,7 +917,7 @@ button.ad-stat-link:focus-visible::after {
 
 @media (min-width: 720px) {
   .ad-saved-scope:not(.ad-saved-scope--pair) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -969,6 +985,131 @@ button.ad-stat-link:focus-visible::after {
 
 .ad-saved-pane {
   padding: 0;
+  background: var(--ad-white);
+}
+
+.ad-saved-pane-inner {
+  padding: 20px;
+}
+
+.ad-saved-pane-inner--table {
+  padding-top: 16px;
+}
+
+.ad-saved-pane-inner--table .ad-table-scroll {
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius);
+  overflow: hidden;
+}
+
+.ad-saved-pane-inner--table .ad-table-wrap {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ad-membership-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ad-membership-cards[hidden] {
+  display: none !important;
+}
+
+.ad-membership-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #faf8fc 0%, var(--ad-white) 100%);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius);
+  box-shadow: 0 2px 8px rgba(45, 27, 94, 0.04);
+}
+
+.ad-membership-card-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.ad-membership-card-logo .ad-thumb,
+.ad-membership-card-logo .ad-thumb-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+}
+
+.ad-membership-card-copy {
+  min-width: 0;
+}
+
+.ad-membership-card-name {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ad-slate);
+  text-decoration: none;
+  line-height: 1.25;
+}
+
+.ad-membership-card-name:hover {
+  color: var(--ad-teal-dark);
+  text-decoration: underline;
+}
+
+.ad-membership-card-meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ad-text-soft);
+}
+
+.ad-membership-card-status {
+  flex-shrink: 0;
+}
+
+.ad-membership-card-actions {
+  flex-shrink: 0;
+}
+
+.ad-membership-footnote {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ad-text-soft);
+  background: var(--ad-teal-pale);
+  border-radius: var(--ad-radius-sm);
+}
+
+.ad-membership-footnote[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 560px) {
+  .ad-membership-card {
+    align-items: flex-start;
+  }
+
+  .ad-membership-card-main {
+    width: 100%;
+  }
+
+  .ad-membership-card-actions {
+    width: 100%;
+  }
+
+  .ad-membership-card-actions .ad-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .ad-saved-pane[hidden] {
@@ -987,7 +1128,33 @@ button.ad-stat-link:focus-visible::after {
 }
 
 .ad-saved-pane .ad-saved-opp-toolbar {
-  margin: 14px 14px 0;
+  margin: 0 0 12px;
+}
+
+.ad-opp-alerts-intro {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ad-text-mid);
+  background: var(--ad-teal-pale);
+  border-radius: var(--ad-radius-sm);
+}
+
+.ad-opp-alerts-intro a {
+  color: var(--ad-teal-dark);
+  font-weight: 600;
+}
+
+.ad-action-group--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ad-action-group--inline .ad-btn-sm {
+  padding: 6px 10px;
+  font-size: 11px;
 }
 
 .ad-saved-block .ad-section-title {

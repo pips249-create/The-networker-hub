@@ -236,44 +236,6 @@
     return active ? active.getAttribute('data-ad-tab') || 'events' : activeAdSection || 'events';
   }
 
-  function setPackageExpanded(pkg, expanded) {
-    if (!pkg || !pkg.classList.contains('ad-package--collapsible')) return;
-    var summary = pkg.querySelector('.ad-package-summary');
-    pkg.classList.toggle('is-expanded', expanded);
-    pkg.classList.toggle('is-collapsed', !expanded);
-    if (summary) summary.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-  }
-
-  function initPackageCollapse() {
-    document.querySelectorAll('.ad-package-browser .ad-package').forEach(function (pkg) {
-      if (pkg.dataset.adCollapseInit === '1') return;
-      pkg.dataset.adCollapseInit = '1';
-
-      var label = packageLabelFromArticle(pkg);
-      var price = packagePriceFromArticle(pkg);
-      var summary = document.createElement('button');
-      summary.type = 'button';
-      summary.className = 'ad-package-summary';
-      summary.setAttribute('aria-expanded', 'false');
-      summary.innerHTML =
-        '<span class="ad-package-summary-main">' +
-        '<span class="ad-package-summary-label">Package</span>' +
-        '<span class="ad-package-summary-title">' +
-        esc(label) +
-        '</span>' +
-        (price ? '<span class="ad-package-summary-price">' + esc(price) + '</span>' : '') +
-        '</span>' +
-        '<span class="ad-package-summary-icon" aria-hidden="true"></span>';
-
-      pkg.insertBefore(summary, pkg.firstChild);
-      pkg.classList.add('ad-package--collapsible', 'is-collapsed');
-
-      summary.addEventListener('click', function () {
-        setPackageExpanded(pkg, pkg.classList.contains('is-collapsed'));
-      });
-    });
-  }
-
   function activatePackageInPanel(panel, packageId, options) {
     if (!panel || !packageId) return false;
     var browser = panel.querySelector('.ad-package-browser');
@@ -287,10 +249,7 @@
       var active = article.id === packageId;
       article.hidden = !active;
       article.classList.toggle('is-active-package', active);
-      if (active) {
-        found = true;
-        setPackageExpanded(article, !!(options && options.expand));
-      }
+      if (active) found = true;
     });
 
     tabs.forEach(function (tab) {
@@ -344,7 +303,7 @@
           (price ? '<span class="ad-package-tab-price">' + esc(price) + '</span>' : '');
 
         btn.addEventListener('click', function () {
-          activatePackageInPanel(panel, id, { expand: false });
+          activatePackageInPanel(panel, id);
           if (history.replaceState) {
             history.replaceState(null, '', '#' + id);
           }
@@ -858,7 +817,7 @@
       var panel = panelName
         ? document.querySelector('[data-ad-panel="' + panelName + '"]')
         : null;
-      if (panel && activatePackageInPanel(panel, id, { scroll: true, expand: true })) {
+      if (panel && activatePackageInPanel(panel, id, { scroll: true })) {
         return;
       }
       var el = document.getElementById(id);
@@ -1373,7 +1332,7 @@
           activatePackageInPanel(
             document.querySelector('[data-ad-panel="' + target + '"]'),
             anchor,
-            { scroll: true, expand: true }
+            { scroll: true }
           );
         }, 40);
       }
@@ -1441,7 +1400,6 @@
     document.addEventListener('DOMContentLoaded', function () {
       initHeroEntrance();
       initReveal();
-      initPackageCollapse();
       initTabs();
       initPackageTabs();
       initPackageReveal();
@@ -1456,7 +1414,6 @@
   } else {
     initHeroEntrance();
     initReveal();
-    initPackageCollapse();
     initTabs();
     initPackageTabs();
     initPackageReveal();
