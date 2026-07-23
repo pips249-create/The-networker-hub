@@ -482,6 +482,7 @@
   var EVENT_PAGE_SIZE = 30;
   var OPPORTUNITY_PAGE_SIZE = 30;
   var eventOrganiserOptionsCache = null;
+  var eventCreateOrganiserDocClickBound = false;
   var opportunityCleanupCache = null;
   var featuredSpotlightEvents = [];
   var featuredSpotlightState = {
@@ -9227,12 +9228,259 @@
 
   function populateEventOrganiserSelects(organisers) {
     var filterSelect = document.getElementById('event-cleanup-organiser');
-    var createSelect = document.getElementById('event-create-organiser');
     if (filterSelect) filterSelect.innerHTML = eventCleanupFilterHtml(organisers);
-    if (createSelect) {
-      createSelect.innerHTML = organiserOptionsHtml(organisers, eventCleanupState.organiserId);
-    }
+    syncEventCreateOrganiserPicker(organisers);
     updateEventBulkBar();
+  }
+
+  function organiserListingSuffix(status) {
+    var s = String(status || '').toLowerCase();
+    if (!s || s === 'published') return '';
+    return ' (' + s + ')';
+  }
+
+  function findOrganiserOptionById(organisers, id) {
+    var target = String(id || '');
+    if (!target) return null;
+    for (var i = 0; i < (organisers || []).length; i += 1) {
+      if (String(organisers[i].id) === target) return organisers[i];
+    }
+    return null;
+  }
+
+  function setEventCreateOrganiserSelection(id, name, status) {
+    var hidden = document.getElementById('event-create-organiser-id');
+    var search = document.getElementById('event-create-organiser-search');
+    var selected = document.getElementById('event-create-organiser-selected');
+    var results = document.getElementById('event-create-organiser-results');
+    if (hidden) hidden.value = id || '';
+    if (search) {
+      search.value = '';
+      search.classList.toggle('hidden', Boolean(id));
+    }
+    if (selected) {
+      if (id) {
+        selected.classList.remove('hidden');
+        selected.innerHTML =
+          '<span class="font-semibold text-brand-900">' +
+          esc(name || id) +
+          '</span>' +
+          (status && status !== 'published'
+            ? '<span class="text-slate-500">' + esc(organiserListingSuffix(status)) + '</span>'
+            : '') +
+          ' <button type="button" class="text-brand-700 hover:underline ml-2" id="event-create-organiser-clear">Change</button>';
+      } else {
+        selected.classList.add('hidden');
+        selected.textContent = '';
+      }
+    }
+    if (results) {
+      results.classList.add('hidden');
+      results.innerHTML = '';
+    }
+  }
+
+  function syncEventCreateOrganiserPicker(organisers) {
+    var picker = document.getElementById('event-create-organiser-picker');
+    if (!picker || picker.dataset.bound !== '1') return;
+    var preselected = eventCleanupState.organiserId || '';
+    if (!preselected) {
+      setEventCreateOrganiserSelection('', '', '');
+      return;
+    }
+    var match = findOrganiserOptionById(organisers, preselected);
+    if (match) {
+      setEventCreateOrganiserSelection(match.id, match.name, match.listingStatus);
+    }
+  }
+
+  function paintEventCreateOrganiserResults(items, emptyMsg) {
+    var results = document.getElementById('event-create-organiser-results');
+    if (!results) return;
+    if (!items.length) {
+      results.innerHTML =
+        '<p class="px-3 py-3 text-sm text-slate-500">' + esc(emptyMsg || 'No organisers found') + '</p>';
+      results.classList.remove('hidden');
+      return;
+    }
+    results.innerHTML = items
+      .map(function (org) {
+        var suffix = organiserListingSuffix(org.listingStatus || org.listing_status);
+        return (
+          '<button type="button" class="event-create-organiser-result w-full text-left px-3 py-2.5 hover:bg-brand-50 transition border-b border-slate-100 last:border-0" data-id="' +
+          attrEsc(org.id) +
+          '" data-name="' +
+          attrEsc(org.name || org.id) +
+          '" data-status="' +
+          attrEsc(org.listingStatus || org.listing_status || '') +
+          '">' +
+          '<span class="block text-sm font-semibold text-brand-900">' +
+          esc(org.name || org.id) +
+          esc(suffix) +
+          '</span>' +
+          (org.slug ? '<span class="block text-xs text-slate-500 mt-0.5">/' + esc(org.slug) + '</span>' : '') +
+          '</button>'
+        );
+      })
+      .join('');
+    results.classList.remove('hidden');
+  }
+
+  function bindEventCreateOrganiserPicker() {
+    var picker = document.getElementById('event-create-organiser-picker');
+    if (!picker || picker.dataset.bound === '1') return;
+    picker.dataset.bound = '1';
+
+    var search = document.getElementById('event-create-organiser-search');
+    var results = document.getElementById('event-create-organiser-results');
+    var searchTimer = null;
+
+    function runOrganiserSearch(query) {
+      var params = new URLSearchParams();
+      params.set('limit', '50');
+      if (query) params.set('q', query);
+      adminGet('/api/admin/organisers?' + params.toString())
+        .then(function (data) {
+          var items = ((data && data.organisers) || []).map(normalizeOrganiserOption);
+          paintEventCreateOrganiserResults(
+            items,
+            query ? 'No groups match that search' : 'Type a group name to search'
+          );
+        })
+        .catch(function () {
+          paintEventCreateOrganiserResults([], 'Could not search organisers');
+        });
+    }
+
+    if (search) {
+      search.addEventListener('focus', function () {
+        runOrganiserSearch(String(search.value || '').trim());
+      });
+      search.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          runOrganiserSearch(String(search.value || '').trim());
+        }, 220);
+      });
+    }
+
+    picker.addEventListener('click', function (e) {
+      var clearBtn = e.target.closest('#event-create-organiser-clear');
+      if (clearBtn) {
+        setEventCreateOrganiserSelection('', '', '');
+        if (search) search.focus();
+        return;
+      }
+      var btn = e.target.closest('.event-create-organiser-result');
+      if (!btn) return;
+      setEventCreateOrganiserSelection(
+        btn.getAttribute('data-id') || '',
+        btn.getAttribute('data-name') || '',
+        btn.getAttribute('data-status') || ''
+      );
+    });
+
+    if (!eventCreateOrganiserDocClickBound) {
+      eventCreateOrganiserDocClickBound = true;
+      document.addEventListener('click', function (e) {
+        var activePicker = document.getElementById('event-create-organiser-picker');
+        var activeResults = document.getElementById('event-create-organiser-results');
+        if (activePicker && activeResults && !activePicker.contains(e.target)) {
+          activeResults.classList.add('hidden');
+        }
+      });
+    }
+
+    syncEventCreateOrganiserPicker(eventOrganiserOptionsCache || []);
+  }
+
+  function eventCreateDateRowHtml(value) {
+    return (
+      '<div class="event-create-date-row flex items-center gap-2">' +
+      '<input type="date" name="event_date" value="' +
+      attrEsc(value || '') +
+      '" class="flex-1 rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<button type="button" class="event-create-remove-date rounded-lg border border-slate-300 px-2 py-2 text-xs text-slate-600 hover:bg-slate-50" aria-label="Remove date">Remove</button>' +
+      '</div>'
+    );
+  }
+
+  function bindEventCreateDatesSection() {
+    var list = document.getElementById('event-create-dates-list');
+    var addBtn = document.getElementById('event-create-add-date');
+    if (!list || list.dataset.bound === '1') return;
+    list.dataset.bound = '1';
+    if (!list.children.length) {
+      list.innerHTML = eventCreateDateRowHtml('');
+    }
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        list.insertAdjacentHTML('beforeend', eventCreateDateRowHtml(''));
+      });
+    }
+    list.addEventListener('click', function (e) {
+      var removeBtn = e.target.closest('.event-create-remove-date');
+      if (!removeBtn) return;
+      var row = removeBtn.closest('.event-create-date-row');
+      if (!row) return;
+      if (list.querySelectorAll('.event-create-date-row').length <= 1) {
+        row.querySelector('input[type="date"]').value = '';
+        return;
+      }
+      row.remove();
+    });
+  }
+
+  function defaultEventCreateEndTime(startTime) {
+    var parts = String(startTime || '10:00').split(':');
+    var hour = parseInt(parts[0], 10);
+    if (Number.isNaN(hour)) hour = 10;
+    var endHour = Math.min(hour + 2, 23);
+    return String(endHour).padStart(2, '0') + ':' + String(parts[1] || '00').padStart(2, '0');
+  }
+
+  function combineEventCreateDateTime(dateKey, timeValue) {
+    if (!dateKey) return '';
+    var time = String(timeValue || '10:00').trim() || '10:00';
+    if (time.length === 5) time += ':00';
+    return dateKey + 'T' + time;
+  }
+
+  function collectEventCreateOccurrences(form) {
+    var startTime = formFieldVal(form, 'start_time') || '10:00';
+    var endTime = formFieldVal(form, 'end_time') || defaultEventCreateEndTime(startTime);
+    var dateInputs = form.querySelectorAll('#event-create-dates-list input[type="date"]');
+    var keys = [];
+    dateInputs.forEach(function (input) {
+      var value = String(input.value || '').trim();
+      if (value && keys.indexOf(value) === -1) keys.push(value);
+    });
+    keys.sort();
+    return keys.map(function (key) {
+      return {
+        date: combineEventCreateDateTime(key, startTime),
+        endDate: combineEventCreateDateTime(key, endTime),
+      };
+    });
+  }
+
+  function resetEventCreateForm(form) {
+    if (!form) return;
+    form.reset();
+    var startTime = formField(form, 'start_time');
+    if (startTime) startTime.value = '10:00';
+    var list = document.getElementById('event-create-dates-list');
+    if (list) {
+      list.innerHTML = eventCreateDateRowHtml('');
+    }
+    if (eventCleanupState.organiserId) {
+      var match = findOrganiserOptionById(eventOrganiserOptionsCache || [], eventCleanupState.organiserId);
+      if (match) {
+        setEventCreateOrganiserSelection(match.id, match.name, match.listingStatus);
+        return;
+      }
+    }
+    setEventCreateOrganiserSelection('', '', '');
   }
 
   function missingBadge(field) {
@@ -10497,6 +10745,23 @@
   function createEventCleanupForm(form) {
     var msg = form.querySelector('.event-create-msg');
     var btn = form.querySelector('[type="submit"]');
+    var organiserId = formFieldVal(form, 'organiser_id');
+    var occurrences = collectEventCreateOccurrences(form);
+    var status = formFieldVal(form, 'status') || 'draft';
+    if (!organiserId) {
+      if (msg) {
+        msg.textContent = 'Choose an organiser / group first.';
+        msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (status !== 'draft' && !occurrences.length) {
+      if (msg) {
+        msg.textContent = 'Add at least one date before publishing.';
+        msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
     if (btn) btn.disabled = true;
     if (msg) {
       msg.textContent = 'Creating…';
@@ -10505,23 +10770,24 @@
     adminPost('/api/admin/events', {
       action: 'create',
       title: formFieldVal(form, 'title'),
-      organiser_id: formFieldVal(form, 'organiser_id'),
-      starts_at: formFieldVal(form, 'starts_at') || null,
+      organiser_id: organiserId,
+      occurrences: occurrences,
       event_type: formFieldVal(form, 'event_type') || 'Meeting',
       meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
-      status: formFieldVal(form, 'status') || 'draft',
+      status: status,
     })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        var count = Array.isArray(data.events) ? data.events.length : 1;
         if (msg) {
-          msg.textContent = 'Event created.';
+          msg.textContent =
+            count > 1
+              ? count + ' events created as a date series.'
+              : 'Event created.';
           msg.className = 'event-create-msg text-xs text-emerald-700 font-semibold';
         }
-        form.reset();
-        if (eventCleanupState.organiserId) {
-          var orgField = formField(form, 'organiser_id');
-          if (orgField) orgField.value = eventCleanupState.organiserId;
-        }
+        resetEventCreateForm(form);
+        if (btn) btn.disabled = false;
         return refreshEventCleanupData();
       })
       .catch(function (err) {
@@ -12262,11 +12528,22 @@
       '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
-      '<select name="organiser_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" id="event-create-organiser">' +
-      '<option value="">— Choose organiser —</option></select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">First date (optional)</label>' +
-      '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<div id="event-create-organiser-picker" class="relative">' +
+      '<input type="hidden" name="organiser_id" id="event-create-organiser-id">' +
+      '<input type="search" id="event-create-organiser-search" autocomplete="off" placeholder="Search by group name…" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<div id="event-create-organiser-selected" class="hidden rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm"></div>' +
+      '<div id="event-create-organiser-results" class="hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
+      '</div></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Dates (optional)</label>' +
+      '<p class="text-xs text-slate-500 mb-2">Add one or more dates. The same start and end time applies to each date. Multiple dates create a linked series.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3 mb-3">' +
+      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">Start time</label>' +
+      '<input type="time" name="start_time" value="10:00" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">End time (optional)</label>' +
+      '<input type="time" name="end_time" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div></div>' +
+      '<div id="event-create-dates-list" class="space-y-2 mb-2"></div>' +
+      '<button type="button" id="event-create-add-date" class="text-xs font-semibold text-brand-700 hover:underline">+ Add another date</button></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
       '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventTypeOptions('Meeting') +
@@ -12284,6 +12561,8 @@
       '<span class="event-create-msg text-xs"></span></div></form></div></details></div>';
 
     syncEventCleanupFilterUi();
+    bindEventCreateOrganiserPicker();
+    bindEventCreateDatesSection();
     refreshEventCleanupData();
   }
 

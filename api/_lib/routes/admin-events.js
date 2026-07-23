@@ -20,6 +20,23 @@ function parseBody(req) {
   return body || {};
 }
 
+function normalizeOccurrences(body) {
+  if (Array.isArray(body.occurrences) && body.occurrences.length) {
+    return body.occurrences
+      .map((o) => ({
+        date: o.date || o.start || o.dateTime || '',
+        endDate: o.endDate || o.end || '',
+      }))
+      .filter((o) => o.date);
+  }
+  const dates = Array.isArray(body.dates) ? body.dates.filter(Boolean) : [];
+  if (dates.length) {
+    return dates.map((date) => ({ date, endDate: body.ends_at || body.endDate || '' }));
+  }
+  const single = body.starts_at || body.date || body.dateTime || '';
+  return single ? [{ date: single, endDate: body.ends_at || body.endDate || '' }] : [];
+}
+
 function queryFromRequest(req) {
   const q = { ...(req.query || {}) };
   if (req.url) {
@@ -615,19 +632,64 @@ module.exports = async function handler(req, res) {
       if (!organiserId) return json(res, 400, { error: 'missing_organiser_id' });
 
       try {
-        const { createEvent } = require('../supabase-organiser-events');
-        const event = await createEvent({
+        const { createEvent, resolveSeriesGroupId } = require('../supabase-organiser-events');
+        const occ = normalizeOccurrences(body);
+        const listingStatus = body.status || 'draft';
+        const isDraft = String(listingStatus || '').toLowerCase() === 'draft';
+        if (!occ.length && !isDraft) {
+          return json(res, 400, { error: 'missing_dates', message: 'Add at least one date before publishing.' });
+        }
+
+        const base = {
           title,
           groupId: organiserId,
           type: normalizeEventType(body.event_type || 'Meeting'),
           eventFormat: body.meeting_type || 'In person',
-          date: body.starts_at || null,
-          endDate: body.ends_at || null,
           description: body.description || '',
           photoUrl: body.photo_url || '',
-          listingStatus: body.status || 'draft',
+          listingStatus,
+        };
+
+        const seriesGroupId = resolveSeriesGroupId(null, occ.length);
+        let events;
+
+        if (!occ.length && isDraft) {
+          events = [await createEvent({ ...base, date: '', endDate: '' })];
+        } else if (occ.length === 1) {
+          events = [
+            await createEvent({
+              ...base,
+              seriesGroupId,
+              date: occ[0].date,
+              endDate: occ[0].endDate,
+            }),
+          ];
+        } else {
+          events = [];
+          let sharedPhotoUrl = null;
+          for (const o of occ) {
+            const slice = {
+              ...base,
+              seriesGroupId,
+              date: o.date,
+              endDate: o.endDate,
+            };
+            if (sharedPhotoUrl) {
+              slice.photoUrl = sharedPhotoUrl;
+            }
+            const ev = await createEvent(slice);
+            if (!sharedPhotoUrl && ev.imageUrl) sharedPhotoUrl = ev.imageUrl;
+            events.push(ev);
+          }
+        }
+
+        return json(res, 201, {
+          ok: true,
+          event: events[0],
+          events,
+          eventIds: events.map((e) => e.id),
+          seriesGroupId: seriesGroupId || events[0]?.seriesGroupId || null,
         });
-        return json(res, 201, { ok: true, event });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'create_failed', message: e.message });
       }
