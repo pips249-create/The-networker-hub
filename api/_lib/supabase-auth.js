@@ -479,7 +479,7 @@ async function countOrganiserProfiles(userId, email) {
   const { count, error } = await sb
     .from('organisers')
     .select('id', { count: 'exact', head: true })
-    .or(`supabase_user_id.eq.${userId},email.eq.${em}`);
+    .or(`supabase_user_id.eq.${userId},email.eq.${em},contact_email.eq.${em}`);
   if (error) return 0;
   return count || 0;
 }
