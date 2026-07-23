@@ -4518,26 +4518,6 @@
     setText('ev-trail-current', 'Event unavailable');
   }
 
-  async function loadEventPageAds() {
-    if (!window.CmsAdBlocks) return;
-    const sidebarEl = document.getElementById('event-page-sidebar-ad');
-    const bannerEl = document.getElementById('event-page-banner-ad');
-    try {
-      if (sidebarEl) {
-        await window.CmsAdBlocks.loadPageCarouselAds(sidebarEl, {
-          slot: 'event_page_carousel_ads',
-        });
-      }
-      if (bannerEl) {
-        await window.CmsAdBlocks.loadBannerAd(bannerEl, {
-          slot: 'event_page_banner_ad',
-        });
-      }
-    } catch {
-      /* non-fatal */
-    }
-  }
-
   async function bootWork(params, id, slug) {
     if (id || slug) {
       const tiersEl = document.getElementById('ticket-tiers');
@@ -4615,7 +4595,6 @@
           } else {
             renderRelated([]);
           }
-          loadEventPageAds();
           return;
         }
         showEventLoadError(
@@ -4672,7 +4651,6 @@
       }
       initTicketPanel(ev);
       initActions(ev);
-      loadEventPageAds();
     }
   }
 
