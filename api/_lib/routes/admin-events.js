@@ -7,6 +7,10 @@ const { eventImageUrl, eventImageDbValue } = require('../event-image');
 const { eventHasTicketsOnSale } = require('../ticket-sales');
 const { fetchEventRegistrationStats, fetchLatestCancellationsByEventId } = require('../admin-event-commerce');
 const { evaluateReinstateEligibility } = require('../admin-event-reinstate');
+const { plainEventDescription } = require('../event-description');
+const { ukOutcode } = require('../supabase-events');
+const { deriveLocationFields } = require('../uk-outcode');
+const { geocodeUkPostcode } = require('../postcode-geocode');
 
 function parseBody(req) {
   let body = req.body;
@@ -120,6 +124,10 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
     vat_treatment: row.vat_treatment || '',
     slug: publicEventSlug({ slug: row.slug, title: row.title }),
     city: row.city || '',
+    venue: row.venue || '',
+    address: row.address || '',
+    postcode: row.postcode || '',
+    meeting_link: row.meeting_link || '',
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
@@ -155,7 +163,7 @@ async function listEventsForAdmin(query) {
   let dbQuery = sb.from('events').select(
     light
       ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
-      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, featured, featured_until, created_at, locked',
+      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked',
     { count: 'exact' }
   );
 
@@ -252,13 +260,32 @@ async function listEventsForAdmin(query) {
   };
 }
 
-function buildEventPatchFromBody(body) {
+function eventDetailsFromAdminBody(body) {
+  return {
+    description: body.description != null ? String(body.description || '').trim() : undefined,
+    venue: body.venue != null ? String(body.venue || '').trim() : undefined,
+    addressLine1:
+      body.address != null
+        ? String(body.address || body.address_line1 || '').trim()
+        : body.address_line1 != null
+          ? String(body.address_line1 || '').trim()
+          : undefined,
+    city: body.city != null ? String(body.city || '').trim() : undefined,
+    postcode: body.postcode != null ? String(body.postcode || '').trim() : undefined,
+    photoUrl: body.photo_url != null ? String(body.photo_url || '').trim() : undefined,
+    photoBase64: body.photo_base64 || null,
+    photoMime: body.photo_mime || null,
+    photoFilename: body.photo_filename || null,
+  };
+}
+
+async function buildEventPatchFromBody(body) {
   const patch = {};
   if (Object.prototype.hasOwnProperty.call(body, 'title')) {
     patch.title = String(body.title || '').trim() || null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'description')) {
-    patch.description = String(body.description || '').trim() || null;
+    patch.description = plainEventDescription(body.description) || null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
     patch.image_url = eventImageDbValue(body.photo_url);
@@ -282,6 +309,43 @@ function buildEventPatchFromBody(body) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'meeting_type')) {
     patch.meeting_type = String(body.meeting_type || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'venue')) {
+    patch.venue = String(body.venue || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'address') || Object.prototype.hasOwnProperty.call(body, 'address_line1')) {
+    patch.address = String(body.address || body.address_line1 || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'city')) {
+    patch.city = String(body.city || '').trim() || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'postcode')) {
+    const postcode = String(body.postcode || '').trim() || null;
+    patch.postcode = postcode;
+    patch.outcode = postcode ? ukOutcode(postcode) : null;
+    if (postcode) {
+      const geo = await geocodeUkPostcode(postcode);
+      if (geo) {
+        if (geo.latitude != null) patch.latitude = geo.latitude;
+        if (geo.longitude != null) patch.longitude = geo.longitude;
+        if (!patch.city && geo.city) patch.city = geo.city;
+      }
+    }
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'venue') ||
+    Object.prototype.hasOwnProperty.call(body, 'address') ||
+    Object.prototype.hasOwnProperty.call(body, 'address_line1') ||
+    Object.prototype.hasOwnProperty.call(body, 'city') ||
+    Object.prototype.hasOwnProperty.call(body, 'postcode')
+  ) {
+    const derived = deriveLocationFields({
+      venue: body.venue,
+      addressLine1: body.address || body.address_line1,
+      city: patch.city != null ? patch.city : body.city,
+      postcode: body.postcode,
+    });
+    patch.location_label = derived.location || derived.city || body.venue || null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'status')) {
     const status = String(body.status || '').trim();
@@ -640,14 +704,22 @@ module.exports = async function handler(req, res) {
           return json(res, 400, { error: 'missing_dates', message: 'Add at least one date before publishing.' });
         }
 
+        const details = eventDetailsFromAdminBody(body);
         const base = {
           title,
           groupId: organiserId,
           type: normalizeEventType(body.event_type || 'Meeting'),
           eventFormat: body.meeting_type || 'In person',
-          description: body.description || '',
-          photoUrl: body.photo_url || '',
           listingStatus,
+          description: details.description != null ? details.description : '',
+          venue: details.venue != null ? details.venue : '',
+          addressLine1: details.addressLine1 != null ? details.addressLine1 : '',
+          city: details.city != null ? details.city : '',
+          postcode: details.postcode != null ? details.postcode : '',
+          photoUrl: details.photoUrl != null ? details.photoUrl : '',
+          photoBase64: details.photoBase64,
+          photoMime: details.photoMime,
+          photoFilename: details.photoFilename,
         };
 
         const seriesGroupId = resolveSeriesGroupId(null, occ.length);
@@ -667,15 +739,19 @@ module.exports = async function handler(req, res) {
         } else {
           events = [];
           let sharedPhotoUrl = null;
-          for (const o of occ) {
+          for (let i = 0; i < occ.length; i += 1) {
+            const o = occ[i];
             const slice = {
               ...base,
               seriesGroupId,
               date: o.date,
               endDate: o.endDate,
             };
-            if (sharedPhotoUrl) {
-              slice.photoUrl = sharedPhotoUrl;
+            if (i > 0) {
+              delete slice.photoBase64;
+              delete slice.photoMime;
+              delete slice.photoFilename;
+              if (sharedPhotoUrl) slice.photoUrl = sharedPhotoUrl;
             }
             const ev = await createEvent(slice);
             if (!sharedPhotoUrl && ev.imageUrl) sharedPhotoUrl = ev.imageUrl;
@@ -805,18 +881,43 @@ module.exports = async function handler(req, res) {
 
     let patch;
     try {
-      patch = buildEventPatchFromBody(body);
+      patch = await buildEventPatchFromBody(body);
     } catch (e) {
       return json(res, e.status || 400, { error: e.message });
     }
 
-    if (!Object.keys(patch).length) {
+    if (!Object.keys(patch).length && !body.photo_base64) {
       return json(res, 400, { error: 'no_fields' });
     }
 
     try {
       const sb = getSupabaseAdmin();
-      const event = await applyEventPatch(sb, id, patch);
+      if (Object.keys(patch).length) {
+        await applyEventPatch(sb, id, patch);
+      }
+      if (body.photo_base64) {
+        const { updateEvent } = require('../supabase-organiser-events');
+        const photoPayload = {
+          photoBase64: body.photo_base64,
+          photoMime: body.photo_mime || '',
+          photoFilename: body.photo_filename || '',
+        };
+        if (Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
+          photoPayload.photoUrl = String(body.photo_url || '').trim();
+        }
+        await updateEvent(id, photoPayload);
+      }
+      const { data: row, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!row) return json(res, 404, { error: 'not_found' });
+      const orgById = new Map();
+      if (row.organiser_id) {
+        const orgs = await fetchOrganisersByIds(sb, [row.organiser_id]);
+        orgs.forEach((o) => orgById.set(o.id, o));
+      }
+      const commerceStats = await fetchEventRegistrationStats(sb, [id]);
+      const cancellationsByEvent = await fetchLatestCancellationsByEventId(sb, [id]);
+      const event = mapEventRow(row, orgById, commerceStats, cancellationsByEvent[id] || null);
       return json(res, 200, { ok: true, event });
     } catch (e) {
       if (e.message === 'missing_date') {

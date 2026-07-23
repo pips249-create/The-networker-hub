@@ -9473,6 +9473,15 @@
     if (list) {
       list.innerHTML = eventCreateDateRowHtml('');
     }
+    delete adminLogoPending['event-create-photo'];
+    var photoPreview = form.querySelector('[data-admin-logo-key="event-create-photo"] .admin-logo-preview');
+    var photoPlaceholder = form.querySelector('[data-admin-logo-key="event-create-photo"] .admin-logo-placeholder');
+    if (photoPreview) {
+      photoPreview.classList.add('hidden');
+      photoPreview.removeAttribute('src');
+    }
+    if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
+    syncEventCreateLocationVisibility(form);
     if (eventCleanupState.organiserId) {
       var match = findOrganiserOptionById(eventOrganiserOptionsCache || [], eventCleanupState.organiserId);
       if (match) {
@@ -9481,6 +9490,128 @@
       }
     }
     setEventCreateOrganiserSelection('', '', '');
+  }
+
+  function isInPersonMeetingFormat(value) {
+    var s = String(value || '').toLowerCase();
+    if (!s) return true;
+    if (s.includes('online') && !s.includes('person')) return false;
+    return s.includes('person') || s.includes('in ');
+  }
+
+  function eventDescriptionFieldHtml(value) {
+    return (
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Description</label>' +
+      '<textarea name="description" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="What happens at this event? Organisers can refine this later.">' +
+      esc(value || '') +
+      '</textarea></div>'
+    );
+  }
+
+  function eventLocationFieldsHtml(ev, className) {
+    ev = ev || {};
+    var hidden = !isInPersonMeetingFormat(ev.meeting_type);
+    return (
+      '<div class="' +
+      (className || 'event-location-fields') +
+      ' sm:col-span-2 grid sm:grid-cols-2 gap-3' +
+      (hidden ? ' hidden' : '') +
+      '">' +
+      '<div class="sm:col-span-2"><p class="text-xs font-semibold text-slate-500">In-person location</p></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Venue name</label>' +
+      '<input type="text" name="venue" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.venue || '') +
+      '" placeholder="e.g. The Exchange"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Street address</label>' +
+      '<input type="text" name="address" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.address || '') +
+      '" placeholder="Street address" autocomplete="street-address"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">City</label>' +
+      '<input type="text" name="city" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.city || '') +
+      '" placeholder="e.g. Leeds" autocomplete="address-level2"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Postcode</label>' +
+      '<input type="text" name="postcode" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.postcode || '') +
+      '" placeholder="e.g. LS1 4DY" autocomplete="postal-code"></div></div>'
+    );
+  }
+
+  function eventPhotoFieldHtml(key, photoUrl) {
+    var hasPhoto = !!photoUrl;
+    return (
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Event photo</label>' +
+      '<p class="text-[11px] text-slate-500 mb-2">Click, paste (Ctrl+V), or drop an image — or paste a URL below. Leave blank to use the group logo.</p>' +
+      '<div class="admin-logo-zone border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
+      attrEsc(key) +
+      '" tabindex="0" role="button" aria-label="Upload or paste event photo">' +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+      '<img class="admin-logo-preview mx-auto h-16 w-16 rounded-lg object-cover border border-slate-200' +
+      (hasPhoto ? '' : ' hidden') +
+      '" src="' +
+      attrEsc(photoUrl || '') +
+      '" alt="">' +
+      '<p class="admin-logo-placeholder text-xs text-slate-500 mt-2' +
+      (hasPhoto ? ' hidden' : '') +
+      '">Drop image here or click to browse</p></div>' +
+      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
+      attrEsc(photoUrl || '') +
+      '" placeholder="https://… (optional if you uploaded a file)"></div>'
+    );
+  }
+
+  function eventPhotoPayloadForKey(key, form) {
+    var pending = adminLogoPending[key];
+    if (pending && pending.file) {
+      return readFileAsBase64(pending.file).then(function (b64) {
+        var payload = {
+          photo_base64: b64,
+          photo_mime: pending.file.type,
+          photo_filename: pending.file.name,
+        };
+        if (form && formField(form, 'photo_url')) {
+          var url = formFieldVal(form, 'photo_url');
+          if (url) payload.photo_url = url;
+        }
+        return payload;
+      });
+    }
+    var payload = {};
+    if (form && formField(form, 'photo_url')) payload.photo_url = formFieldVal(form, 'photo_url');
+    return Promise.resolve(payload);
+  }
+
+  function eventDetailsPayloadFromForm(form) {
+    return {
+      description: formFieldVal(form, 'description'),
+      venue: formFieldVal(form, 'venue'),
+      address: formFieldVal(form, 'address'),
+      city: formFieldVal(form, 'city'),
+      postcode: formFieldVal(form, 'postcode'),
+    };
+  }
+
+  function syncEventCreateLocationVisibility(form) {
+    if (!form) return;
+    var formatEl = formField(form, 'meeting_type');
+    var locationBlock = form.querySelector('.event-location-fields');
+    if (!locationBlock || !formatEl) return;
+    locationBlock.classList.toggle('hidden', !isInPersonMeetingFormat(formatEl.value));
+  }
+
+  function bindEventFormLocationToggle(root) {
+    (root || main).querySelectorAll('select[name="meeting_type"]').forEach(function (select) {
+      if (select.dataset.locationToggleBound === '1') return;
+      select.dataset.locationToggleBound = '1';
+      select.addEventListener('change', function () {
+        var form = select.closest('form');
+        if (!form) return;
+        var locationBlock = form.querySelector('.event-location-fields');
+        if (locationBlock) {
+          locationBlock.classList.toggle('hidden', !isInPersonMeetingFormat(select.value));
+        }
+      });
+    });
   }
 
   function missingBadge(field) {
@@ -9576,6 +9707,7 @@
       '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ev.title || '') +
       '"></div>' +
+      eventDescriptionFieldHtml(ev.description || '') +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
       '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       organiserOptionsHtml(organisers, ev.organiser_id) +
@@ -9602,10 +9734,8 @@
       '<option value="">—</option>' +
       meetingFormatOptions(ev.meeting_type) +
       '</select></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Cover image URL</label>' +
-      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(ev.photo_url || '') +
-      '" placeholder="https://…"></div>' +
+      eventLocationFieldsHtml(ev) +
+      eventPhotoFieldHtml('event-photo-' + ev.id, ev.photo_url || '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
       (ev.can_reinstate
@@ -10710,23 +10840,31 @@
     var id = form.getAttribute('data-event-id');
     var msg = form.querySelector('.event-cleanup-msg');
     var btn = form.querySelector('[type="submit"]');
+    var photoKey = 'event-photo-' + id;
     if (btn) btn.disabled = true;
     if (msg) {
       msg.textContent = 'Saving…';
       msg.className = 'event-cleanup-msg text-xs text-slate-500';
     }
-    adminPost('/api/admin/events', {
-      id: id,
-      title: formFieldVal(form, 'title'),
-      organiser_id: formFieldVal(form, 'organiser_id') || null,
-      starts_at: formFieldVal(form, 'starts_at') || null,
-      event_type: formFieldVal(form, 'event_type') || null,
-      meeting_type: formFieldVal(form, 'meeting_type') || null,
-      status: formFieldVal(form, 'status') || null,
-      photo_url: formFieldVal(form, 'photo_url') || null,
-    })
+    eventPhotoPayloadForKey(photoKey, form)
+      .then(function (photoPayload) {
+        return adminPost('/api/admin/events', Object.assign(
+          {
+            id: id,
+            title: formFieldVal(form, 'title'),
+            organiser_id: formFieldVal(form, 'organiser_id') || null,
+            starts_at: formFieldVal(form, 'starts_at') || null,
+            event_type: formFieldVal(form, 'event_type') || null,
+            meeting_type: formFieldVal(form, 'meeting_type') || null,
+            status: formFieldVal(form, 'status') || null,
+          },
+          eventDetailsPayloadFromForm(form),
+          photoPayload
+        ));
+      })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
+        delete adminLogoPending[photoKey];
         if (msg) {
           msg.textContent = 'Saved.';
           msg.className = 'event-cleanup-msg text-xs text-emerald-700 font-semibold';
@@ -10767,15 +10905,22 @@
       msg.textContent = 'Creating…';
       msg.className = 'event-create-msg text-xs text-slate-500';
     }
-    adminPost('/api/admin/events', {
-      action: 'create',
-      title: formFieldVal(form, 'title'),
-      organiser_id: organiserId,
-      occurrences: occurrences,
-      event_type: formFieldVal(form, 'event_type') || 'Meeting',
-      meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
-      status: status,
-    })
+    eventPhotoPayloadForKey('event-create-photo', form)
+      .then(function (photoPayload) {
+        return adminPost('/api/admin/events', Object.assign(
+          {
+            action: 'create',
+            title: formFieldVal(form, 'title'),
+            organiser_id: organiserId,
+            occurrences: occurrences,
+            event_type: formFieldVal(form, 'event_type') || 'Meeting',
+            meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
+            status: status,
+          },
+          eventDetailsPayloadFromForm(form),
+          photoPayload
+        ));
+      })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
         var count = Array.isArray(data.events) ? data.events.length : 1;
@@ -10787,6 +10932,7 @@
           msg.className = 'event-create-msg text-xs text-emerald-700 font-semibold';
         }
         resetEventCreateForm(form);
+        delete adminLogoPending['event-create-photo'];
         if (btn) btn.disabled = false;
         return refreshEventCleanupData();
       })
@@ -10827,6 +10973,11 @@
       })
         .then(function (data) {
           if (!data || !data.ok) throw new Error((data && data.message) || 'Could not approve claim request');
+          var successMsg = (data && data.message) || 'Claim invite sent.';
+          if (data && data.claimUrl) {
+            successMsg += '\n\nClaim link (for your records):\n' + data.claimUrl;
+          }
+          window.alert(successMsg);
           return refreshAdminNotifications().then(function () {
             if (document.getElementById('group-cleanup-list')) return refreshGroupCleanupPage();
           });
@@ -11303,6 +11454,8 @@
           panel.classList.remove('hidden');
           eventCleanupState.expanded[id] = true;
           toggle.textContent = 'Close';
+          bindAdminLogoZones(panel);
+          bindEventFormLocationToggle(panel);
         } else {
           delete eventCleanupState.expanded[id];
           toggle.textContent = 'Edit';
@@ -12524,10 +12677,11 @@
       '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group">' +
       '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
       '<div class="px-4 pb-4 space-y-3 border-t border-brand-100">' +
-      '<p class="text-xs text-slate-600 pt-3">Add another event under an existing organiser profile. It starts as a draft until you publish it.</p>' +
+      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile with the core listing details. It starts as a draft — organisers can add tickets and publish when ready.</p>' +
       '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
+      eventDescriptionFieldHtml('') +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
       '<div id="event-create-organiser-picker" class="relative">' +
       '<input type="hidden" name="organiser_id" id="event-create-organiser-id">' +
@@ -12552,6 +12706,8 @@
       '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       meetingFormatOptions('In person') +
       '</select></div>' +
+      eventLocationFieldsHtml({ meeting_type: 'In person' }) +
+      eventPhotoFieldHtml('event-create-photo', '') +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventStatusOptions('draft') +
@@ -12563,6 +12719,8 @@
     syncEventCleanupFilterUi();
     bindEventCreateOrganiserPicker();
     bindEventCreateDatesSection();
+    bindEventFormLocationToggle(main);
+    bindAdminLogoZones(main.querySelector('.event-create-form'));
     refreshEventCleanupData();
   }
 

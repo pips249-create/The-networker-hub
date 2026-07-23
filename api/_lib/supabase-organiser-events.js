@@ -1429,8 +1429,13 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
   // Notify member-list people for newly Approved published events (non-blocking).
   try {
     const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
+    const { listingAlertSeriesKey } = require('./listing-alert-series');
+    const notifiedSeries = new Set();
     for (const row of updated || []) {
       if (String(row.approval_status || '').trim() !== 'Approved') continue;
+      const seriesKey = listingAlertSeriesKey(row);
+      if (notifiedSeries.has(seriesKey)) continue;
+      notifiedSeries.add(seriesKey);
       notifyRosterMembersOfPublishedEvent(row).catch((err) => {
         console.error('[publish] member list new-event email failed', row.id, err?.message || err);
       });
