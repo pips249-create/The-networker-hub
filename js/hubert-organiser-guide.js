@@ -4,19 +4,21 @@
 (function (global) {
   var GREETINGS = {
     'event-format':
-      "I'll walk you through choosing a group and format — ask me anything as you go.",
+      "Good afternoon. I'll walk you through choosing a group and format — do ask if anything is unclear.",
     'event-edit':
-      "Let's get your listing details in shape. I'll highlight each section, or you can ask me here.",
+      "Allow me to help with your listing details. I'll highlight each section, or you may ask me here.",
     'event-tickets':
-      'Almost there — ticket types and publishing next. Ask if VAT, refunds, tier setup, or member list tickets are unclear.',
+      'Almost there — ticket types and publishing next. Do ask if VAT, refunds, tier setup, or member list tickets are unclear.',
     'event-review':
-      'Check your summary before publishing. Ask if anything looks wrong or you want to change a section.',
+      'Do check your summary before publishing. Ask if anything looks amiss or you would like to change a section.',
+    'event-location':
+      'This is the location step — venue address for in-person events, or your online join link. Do ask if anything is unclear.',
     'member-roster':
       'This is your membership — it unlocks Members only tickets. Ask how to add members, import CSV, expiry dates, or reports.',
     'group-edit':
-      'Your organiser page is the home for your events. Ask if anything on this page is unclear.',
+      'Your organiser page is the home for your events. Do ask if anything on this page is unclear.',
     'organiser-dashboard':
-      "I'm here on your organiser dashboard — ask about claiming your page, listing events, tickets, payouts, or inviting your team.",
+      "I'm at your service on your organiser dashboard — ask about claiming your page, listing events, tickets, payouts, or inviting your team.",
   };
 
   var SUGGESTIONS = {
@@ -114,6 +116,7 @@
     if (/\/event-edit(?:\.html)?\/?$/.test(path)) return 'event-edit';
     if (/\/event-tickets(?:\.html)?\/?$/.test(path)) return 'event-tickets';
     if (/\/event-review(?:\.html)?\/?$/.test(path)) return 'event-review';
+    if (/\/event-location(?:\.html)?\/?$/.test(path)) return 'event-location';
     if (/\/group-edit(?:\.html)?\/?$/.test(path)) return 'group-edit';
     if (/\/member-roster(?:\.html)?\/?$/.test(path)) return 'member-roster';
     return '';

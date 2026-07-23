@@ -64,7 +64,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Who is Hubert on The Networker Hub?',
     answer:
-      'Hubert is the business butler and concierge on The Networker Hub. He helps visitors find events and business opportunities, explains how tickets and enquiries work, and guides organisers to the right tools. Chat with Hubert on the contact page or via the floating assistant on public pages.',
+      'Hubert is the British English gentleman and concierge on The Networker Hub. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages.',
     category: 'general',
     icon: '✨',
   },
@@ -155,7 +155,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'What is the guest visit programme?',
     answer:
-      'An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–2 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Disallow guest passes while keeping paid tickets available.',
+      'An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–3 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Member-only for this event while keeping paid tickets available.',
     category: 'organisers',
     icon: '🎫',
   },

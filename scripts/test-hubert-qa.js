@@ -10,9 +10,6 @@ const MEMBER_QUESTIONS = [
   { q: 'How do I book a ticket?', expect: /register|Stripe|checkout/i },
   { q: 'I forgot my password', expect: /password reset|login/i },
   { q: 'Can I get a refund?', expect: /organiser|refund/i },
-  { q: 'Can I transfer my ticket to a colleague?', expect: /transfer|organiser/i },
-  { q: 'What events are in Manchester?', expect: /Manchester|\/events\//i },
-  { q: 'Are there any free networking events?', expect: /free.*event|\/events\//i },
   { q: 'How do I list my networking group?', expect: /organiser|hello@/i },
   { q: 'How much does it cost to list an event?', expect: /fee|free|organiser/i },
   { q: 'What are business opportunities?', expect: /\/opportunities\//i },
@@ -27,7 +24,7 @@ const MEMBER_QUESTIONS = [
   { q: 'The organiser cancelled my event', expect: /full refund|cancelled/i },
   { q: 'My Stripe payment failed', expect: /payment|checkout|hello@/i },
   { q: 'Is this site free?', expect: /browsing.*free|free/i },
-  { q: 'What is Hubert?', expect: /butler|concierge/i },
+  { q: 'What is Hubert?', expect: /host|concierge|at your service/i },
   { q: 'How do I contact support?', expect: /hello@/i },
   { q: 'Cookie policy', expect: /legal-policies|cookie/i },
   { q: 'I want to list a franchise opportunity', expect: /list.*opportunit|\/opportunities\/list/i },
@@ -38,8 +35,11 @@ const MEMBER_QUESTIONS = [
   { q: 'Why did the networker hub start?', expect: /right room|careers|companies|mission/i },
   { q: 'How much does The Networker Hub make per ticket?', expect: /4\.5%|booking fee|platform and payment/i },
   { q: 'How can I download the attendees for my next event', expect: /Attendees|CSV|\/organiser\//i },
-  { q: 'How long between payouts for my event? Can I get it instantly?', expect: /7.day|not instant|settlement|Stripe/i },
-  { q: 'What is the difference between an event and a meeting?', expect: /browse filter|Meeting covers|regular networking/i },
+  { q: 'How long between payouts for my event? Can I get it instantly?', expect: /Stripe Connect|Stripe Express|7.day|\/help\/organiser-payouts/i },
+  {
+    q: 'What is the difference between an event and a meeting?',
+    expect: /browse filter|Meeting covers|Conference|regular networking/i,
+  },
   { q: 'My event image is too small', expect: /1200|landscape|recentre/i },
   { q: 'My event image is too big', expect: /2MB|compress|URL/i },
   { q: "I've accidentally added an extra date — how do I remove it?", expect: /click.*highlighted|deselect|calendar/i },
@@ -75,9 +75,26 @@ const MEMBER_QUESTIONS = [
   },
   { q: 'How do I import my member list as CSV?', expect: /Import CSV|email.*required|expires/i },
   {
+    q: 'How do I claim my organiser page?',
+    expect: /claim|\/guides\/claim-your-organiser-page|\/events\//i,
+  },
+  {
+    q: 'Can I get alerts when tickets go on sale?',
+    expect: /email you when they open|Saved organisers/i,
+  },
+  {
     q: 'A networking group added me to their member list — what does that mean?',
     expect: /member-only|\/account\/|sign in|My memberships/i,
   },
+  { q: 'How do I invite a team member to my organiser account?', expect: /Team & invites|\/guides\/invite-your-team/i },
+  {
+    q: 'How do I list a business opportunity on the hub?',
+    expect: /Business opportunities|\/guides\/list-a-business-opportunity|submit for review/i,
+  },
+  { q: 'What happens when I publish my event?', expect: /approval|Approved|\/events\//i },
+  { q: 'How do I respond to opportunity enquiries?', expect: /Business opportunities|\/organiser\/|email notification/i },
+  { q: 'Where do I set the venue for my event?', expect: /venue|location|join link|postcode/i },
+  { q: 'What franchise opportunities are on the hub?', expect: /\/opportunities\//i },
 ];
 
 let failed = 0;

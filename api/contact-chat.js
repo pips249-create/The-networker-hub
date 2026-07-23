@@ -6,47 +6,26 @@ const { json, setCors } = require('./_lib/auth');
 const { enforceRateLimit } = require('./_lib/rate-limit');
 const {
   SYSTEM_PROMPT,
-  fallbackReply,
-  matchedFallbackReply,
-  buildOrganiserContextAddendum,
+  buildPageContextAddendum,
   ORGANISER_PAGE_KEYS,
 } = require('./_lib/hubert-knowledge');
 const {
   wantsEventSearch,
   searchEventsForHubert,
   buildEventContextBlock,
-  formatEventFallbackReply,
 } = require('./_lib/hubert-events');
 const {
   wantsOpportunitySearch,
   searchOpportunitiesForHubert,
   buildOpportunityContextBlock,
-  formatOpportunityFallbackReply,
 } = require('./_lib/hubert-opportunities');
+const { resolveHubertReply } = require('./_lib/hubert-reply');
 
 function buildLiveContext(eventLookup, opportunityLookup) {
   return [
     buildEventContextBlock(eventLookup || { events: [], query: null }),
     buildOpportunityContextBlock(opportunityLookup || { opportunities: [], query: null }),
   ].join('\n\n');
-}
-
-function pickLiveFallbackReply(eventLookup, opportunityLookup, latestUserText) {
-  const knowledge = matchedFallbackReply(latestUserText);
-  if (knowledge) return knowledge;
-
-  const events = eventLookup && eventLookup.events;
-  const opportunities = opportunityLookup && opportunityLookup.opportunities;
-  const eventCount = events ? events.length : 0;
-  const opportunityCount = opportunities ? opportunities.length : 0;
-
-  if (opportunityCount && (!eventCount || opportunityCount >= eventCount)) {
-    return formatOpportunityFallbackReply(opportunityLookup);
-  }
-  if (eventCount) {
-    return formatEventFallbackReply(eventLookup);
-  }
-  return null;
 }
 
 function sanitizeMessages(raw) {
@@ -139,7 +118,10 @@ module.exports = async function handler(req, res) {
 
   const pageContext = String(body.context || body.pageContext || '').trim();
   const isOrganiserPage = ORGANISER_PAGE_KEYS.indexOf(pageContext) !== -1;
-  const lookupOptions = { skipEventSearch: isOrganiserPage };
+  const lookupOptions = {
+    skipEventSearch: isOrganiserPage,
+    skipOpportunitySearch: isOrganiserPage,
+  };
 
   let eventLookup = null;
   let opportunityLookup = null;
@@ -150,7 +132,7 @@ module.exports = async function handler(req, res) {
         eventLookup = result;
       }));
     }
-    if (wantsOpportunitySearch(latestUser.content)) {
+    if (wantsOpportunitySearch(latestUser.content, lookupOptions)) {
       lookups.push(searchOpportunitiesForHubert(latestUser.content).then(function (result) {
         opportunityLookup = result;
       }));
@@ -159,7 +141,7 @@ module.exports = async function handler(req, res) {
 
     const systemPrompt =
       SYSTEM_PROMPT +
-      buildOrganiserContextAddendum(pageContext) +
+      buildPageContextAddendum(pageContext) +
       '\n\n' +
       buildLiveContext(eventLookup, opportunityLookup);
 
@@ -167,9 +149,7 @@ module.exports = async function handler(req, res) {
     let mode = 'ai';
 
     if (!reply) {
-      reply =
-        pickLiveFallbackReply(eventLookup, opportunityLookup, latestUser.content) ||
-        fallbackReply(latestUser.content);
+      reply = resolveHubertReply(latestUser.content, eventLookup, opportunityLookup);
       mode = 'fallback';
     }
 
@@ -182,8 +162,7 @@ module.exports = async function handler(req, res) {
         opportunityLookup && opportunityLookup.opportunities ? opportunityLookup.opportunities.length : 0,
     });
   } catch (err) {
-    let degradedReply =
-      matchedFallbackReply(latestUser.content) || fallbackReply(latestUser.content);
+    let degradedReply = null;
     try {
       const lookups = [];
       if (!eventLookup && wantsEventSearch(latestUser.content, lookupOptions)) {
@@ -197,10 +176,12 @@ module.exports = async function handler(req, res) {
         }));
       }
       if (lookups.length) await Promise.all(lookups);
-      degradedReply =
-        pickLiveFallbackReply(eventLookup, opportunityLookup, latestUser.content) || degradedReply;
+      degradedReply = resolveHubertReply(latestUser.content, eventLookup, opportunityLookup);
     } catch (lookupErr) {
       /* keep generic fallback */
+    }
+    if (!degradedReply) {
+      degradedReply = resolveHubertReply(latestUser.content, null, null);
     }
     return json(res, 200, {
       ok: true,

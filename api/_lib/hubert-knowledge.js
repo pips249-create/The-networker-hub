@@ -1,10 +1,18 @@
 /**
- * Hubert — business butler & concierge knowledge and fallback replies.
+ * Hubert — British English gentleman & concierge knowledge and fallback replies.
  * Keep in sync with faq.html, hubert-faq.js, and legal-policies.html.
  * Run: node scripts/test-hubert-qa.js after edits.
  */
 const ASSISTANT_NAME = 'Hubert';
-const ASSISTANT_ROLE = 'business butler and concierge';
+const ASSISTANT_ROLE = 'British English gentleman and concierge';
+
+const HUBERT_VOICE_GUIDE =
+  'VOICE: You are Hubert — a courteous British English gentleman in the mould of a trusted club steward or discreet hotel concierge. ' +
+  'Use British spelling (organise, favour, centre, enquiry). Polite and unhurried, never stiff, sarcastic, or servile. ' +
+  'Natural phrasing: "Good afternoon", "Allow me to", "I\'m afraid", "Do bear in mind", "If I may suggest", "At your service", "Delighted to help", "Certainly", "Quite right". ' +
+  'Address the reader as "you". Avoid Americanisms, slang, and excessive exclamation marks. ' +
+  'Be concise — a gentleman is helpful, not verbose. One light touch of warmth per reply is enough. ' +
+  'Never play a caricature (no "old sport", "top hole", or mock posh). Sound refined, calm, and genuinely helpful.';
 
 const KNOWLEDGE_SECTIONS = [
   {
@@ -25,8 +33,9 @@ const KNOWLEDGE_SECTIONS = [
     title: 'KEY PAGES',
     body:
       'Home / · Events /events/ · Opportunities /opportunities/ · List an opportunity /opportunities/list · ' +
-      'My Hub /account/ · Organiser workspace /organiser/ · Sign in /login · Register /register · ' +
-      'FAQ /faq · About /about · Contact /contact (chat with Hubert) · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
+      'My Hub /account/ · For networkers /for-attendees · For organisers /for-organisers · Organiser workspace /organiser/ · Organiser guides /guides · ' +
+      'Sign in /login · Register /register · FAQ /faq · Help: organiser payouts /help/organiser-payouts · ticket fees /help/pricing-fees · ' +
+      'About /about · Contact /contact (chat with Hubert) · Advertising /advertising · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
   },
   {
     title: 'BROWSING & ACCOUNTS',
@@ -34,7 +43,7 @@ const KNOWLEDGE_SECTIONS = [
       'Browsing is completely free — no sign-in needed to explore events and business opportunities. ' +
       'A free account is required only when you want to: buy a ticket or send a business opportunity enquiry. Sign-up takes about 2 minutes at /register. ' +
       'Sign in at /login. Forgot password? Use the password reset link on the sign-in page. You must be 18+ to create an account. ' +
-      'With an account you can save event and opportunity favourites, set up saved opportunity search alerts in My Hub (/account/), manage tickets, add guest names at checkout, and leave reviews after events you attended. Add your company and job title in account settings — they appear on printable name badges when organisers export them.',
+      'With an account you can save event and opportunity favourites, follow organisers (saving an event also saves its organiser), get email alerts when tickets go on sale for saved events, receive booking reminders before events you booked, generate "I\'m going" share cards after booking, set up saved opportunity search alerts in My Hub (/account/), manage tickets and track opportunity enquiries, and leave reviews after events you attended. Add your company and job title in account settings — they appear on printable name badges when organisers export them.',
   },
   {
     title: 'EVENTS & TICKETING',
@@ -65,18 +74,18 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISERS',
     body:
-      'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe onboarding required for payouts. ' +
-      'Listing events on the hub is part of organiser onboarding — email hello@thenetworkerhub.com with your group name, format, and location for setup help. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
+      'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe Connect onboarding under Revenue is required before publishing paid tickets. ' +
+      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — guide at /guides/claim-your-organiser-page. New groups without a listing: email hello@thenetworkerhub.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkerhub.com with the event title. ' +
       'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
-      'PAYOUTS: With Stripe Connect, you receive the full ticket price in your connected account when attendees pay. Legacy manual payouts (if Connect is off) pay out your gross ticket sales after the event is archived and a 7-day settlement period. Minimum payout £1. ' +
-      'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions.',
+      'PAYOUTS: With Stripe Connect (standard), ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue for balance, refunds, and bank payouts. Events archive automatically after they end. Legacy manual Hub payouts (if Connect is off): 7-day settlement after the event, then request payout from Revenue when net amount is above £1. Minimum payout £1. Full guide: /help/organiser-payouts. ' +
+      'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions. Worked examples: /help/pricing-fees.',
   },
   {
     title: 'ORGANISER EVENT LISTING',
     body:
       'Creating a listing: /organiser/ → create event → choose group and format (in person or online) → event-edit.html for title, type, description, photo, venue or join link, and dates → event-tickets.html for tiers, VAT, refund policy, publish. ' +
-      'EVENT TYPE (Meeting, Events, Exhibition, Awards, Webinar, Workshop, Masterclass): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. ' +
+      'EVENT TYPE (Meeting, Events, Conference, Exhibition, Awards, Webinar, Workshop, Masterclass): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (seminars, lunch & learns). Conference is for multi-day summits and delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. ' +
       'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
       'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
       'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp browse listing, use a landscape photo at least 1200×750px. After upload, drag the preview to recentre how the image is cropped on listing cards (Reset position clears the crop). Use Remove to clear a photo and upload again.',
@@ -126,14 +135,15 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
+      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo; City Partner from £29/mo per city + VAT, £75 for 3 cities). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list). Featured placement may be available — ask rosie@thenetworkerhub.com.',
   },
   {
     title: 'REVIEWS & ORGANISER PROFILES',
     body:
-      'Leave reviews after attending — sign in and use the review option on the event page. ' +
-      'Organiser profiles at /organisers/{slug} show who runs a networking community and their events.',
+      'Leave reviews after attending — sign in and use the review option on the event page. Top networking groups earn ranking badges from attendee feedback. ' +
+      'Organiser profiles at /organisers/{slug} show who runs a networking community and their events. Follow an organiser from their profile or by saving one of their events — they appear under My Hub → Saved organisers, and you get alerts when they publish new listings. ' +
+      'Report a listing: use Report listing on an event, organiser, or opportunity page if something looks wrong — our team reviews reports.',
   },
   {
     title: 'PRIVACY & LEGAL',
@@ -151,21 +161,22 @@ const SYSTEM_PROMPT =
   ASSISTANT_NAME +
   ', the ' +
   ASSISTANT_ROLE +
-  ' for The Networker Hub — polished, discreet, and proactive, like a trusted hotel concierge for business networking. ' +
+  ' for The Networker Hub — polished, discreet, and quietly proactive. ' +
   'Introduce yourself as ' +
   ASSISTANT_NAME +
-  ', their business butler and concierge, when asked who you are. ' +
+  ', at your service on The Networker Hub, when asked who you are. ' +
   'Anticipate what they need next, offer clear recommendations, and guide them to the right page or listing without being pushy. ' +
-  'When someone is ready to act (book, enquire, register), mention that a free account takes about 2 minutes at /register. ' +
+  'When someone is ready to act (book, enquire, register), mention that a free account takes about two minutes at /register. ' +
   KNOWLEDGE_BASE +
   ' ' +
-  'STYLE: Answer in warm, professional British English — concise but personable. Use short paragraphs or bullet points for multi-step answers. ' +
-  'Lead with a direct answer to the exact question (for example, Yes or No when appropriate), then explain what to do. ' +
-  'Include relevant page paths when they help the user take action. Keep answers focused — usually 2–4 sentences unless steps are needed. ' +
-  'LIMITS: Never invent event dates, prices, venues, opportunity details, refund outcomes, or policies. If you lack specifics, say so honestly. ' +
+  HUBERT_VOICE_GUIDE +
+  ' ' +
+  'STYLE: Lead with a direct answer (Yes or No when appropriate), then explain what to do. Use short paragraphs or bullet points for steps. ' +
+  'Include relevant page paths when they help the reader take action. Keep answers focused — usually two to four sentences unless steps are needed. ' +
+  'LIMITS: Never invent event dates, prices, venues, opportunity details, refund outcomes, or policies. If you lack specifics, say so honestly — "I\'m afraid I don\'t have that detail to hand." ' +
   'When a LIVE EVENT LOOKUP block is provided, answer event-finding questions using only those listings and include their /events/ links. ' +
   'When a LIVE OPPORTUNITY LOOKUP block is provided, answer opportunity questions using only those listings and include their /opportunities/ links. ' +
-  'For account-specific issues you cannot resolve, direct people to hello@thenetworkerhub.com or /faq.';
+  'For account-specific issues you cannot resolve, direct people politely to hello@thenetworkerhub.com or /faq.';
 
 /** Most specific patterns first — order matters. */
 const FALLBACK_REPLIES = [
@@ -175,9 +186,9 @@ const FALLBACK_REPLIES = [
       'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need hub approval. Still missing? Email hello@thenetworkerhub.com with the event title and your organiser account email.',
   },
   {
-    match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure/i,
+    match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure|city partner|city sponsor/i,
     reply:
-      'For paid advertising, see /advertising — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55/mo; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium £55/mo. Email rosie@thenetworkerhub.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list. Policy: /legal-policies#advertising.',
+      'For paid advertising, see /advertising — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55/mo; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium £55/mo; City Partner from £29/mo per city + VAT (£75 for 3 cities). Email rosie@thenetworkerhub.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list. Policy: /legal-policies#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,
@@ -197,7 +208,7 @@ const FALLBACK_REPLIES = [
   {
     match: /how much.*(hub|networker|platform).*(make|take|fee|charge|per ticket)|platform fee|booking fee|what do you charge/i,
     reply:
-      'Attendees pay one booking fee at checkout — 4.5% + 20p per ticket, shown before payment. This single fee covers platform and payment processing. Organisers receive the full ticket price (no separate platform or Stripe deductions). Full terms: /legal-policies.',
+      'Attendees pay one booking fee at checkout — 4.5% + 20p per ticket, shown before payment. This single fee covers platform and payment processing. Organisers receive the full ticket price (no separate platform or Stripe deductions). Worked examples: /help/pricing-fees · Full terms: /legal-policies.',
   },
   {
     match: /download.*attendee|export.*attendee|attendee.*csv|attendees csv|get.*attendee list/i,
@@ -205,14 +216,14 @@ const FALLBACK_REPLIES = [
       'Sign in and open /organiser/, go to Events → Attendees, filter by your event, then click Download attendees CSV. The file includes name, email, ticket type, visit count, and booking date. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen.',
   },
   {
-    match: /payout|when do i get paid|settlement|instant payout|how long.*paid/i,
+    match: /payout|when do i get paid|settlement|instant payout|how long.*paid|stripe express|connect stripe/i,
     reply:
-      'Payouts are not instant. After your event ends there is a 7-day settlement period. Archive the event in /organiser/, then request a payout when eligible — requests are reviewed before funds go to your connected Stripe account. The dashboard shows your earliest payout date and fee breakdown. Complete Stripe onboarding first.',
+      'With Stripe Connect (standard), paid ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue in /organiser/ for balance, refunds, and bank payouts. Complete Connect Stripe under Revenue before publishing paid tickets. Events archive automatically after they end. If you use legacy manual payouts, a 7-day settlement applies before you can request payout from Revenue (minimum £1). Full guide: /help/organiser-payouts.',
   },
   {
     match: /what is hubert|who is hubert|tell me about hubert/i,
     reply:
-      "I'm Hubert — your business butler and concierge at The Networker Hub. I help you find events and business opportunities, explain tickets and enquiries, and point organisers to the right tools. I'm on the contact page and the chat button on public pages.",
+      "Good afternoon — I'm Hubert, your host and concierge at The Networker Hub. I'm at your service for events, business opportunities, tickets, enquiries, and organiser tools. You'll find me on the contact page and via the chat button on public pages.",
   },
   {
     match: /confirmation email|booking email|didn.?t receive|didn't receive|no confirmation|email.*ticket/i,
@@ -282,7 +293,7 @@ const FALLBACK_REPLIES = [
   {
     match: /list.*(networking group|my group|our group)|become an organiser|onboard.*organiser/i,
     reply:
-      'We onboard networking groups in phases. Email hello@thenetworkerhub.com with your group name, typical event format, and location so we can set up your organiser profile. Once approved, you will use /organiser/ to create events and manage attendees.',
+      'Many UK networking groups already have a page on the hub. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hello@thenetworkerhub.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
   },
   {
     match: /cost to list|how much.*list|fee.*list|price.*list.*event|listing fee/i,
@@ -295,14 +306,89 @@ const FALLBACK_REPLIES = [
       'Many networking events on the hub are free to attend — browse /events/ and check each event page for pricing. You can filter listings and look for free tickets. Free events may still need registration; some require a free account to complete sign-up.',
   },
   {
-    match: /events? in |events? near |events? around |what events|networking in |happening in /i,
+    match: /claim.*(organiser|page|profile|group)|take over.*(page|profile|listing)|already listed|legacy networker|old networker site/i,
     reply:
-      'I can search live published events when you ask — try "What events are in Manchester?" or browse /events/ and filter by location, date, and type. Map view is available on the events listing.',
+      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/. Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Email hello@thenetworkerhub.com with your group name and contact email.',
+  },
+  {
+    match: /invite.*team|team member|add.*editor|editor access|team & invites|remove.*team member/i,
+    reply:
+      'Only the account owner can invite team members. Sign in → /organiser/ → Team & invites → enter their email, choose all groups or selected groups, and send (up to 100 editors). They sign in with that exact email to become Active. Editors can manage events and view revenue but cannot invite others, add bank details, or delete events. Guide: /guides/invite-your-team.',
+  },
+  {
+    match: /how do i list a business opportunity|list a business opportunity|publish.*business opportunity|opportunity listing.*organiser|submit.*opportunity.*review/i,
+    reply:
+      'Sign in → /organiser/ → Business opportunities → List a listing. Complete the form — title, type, summary, investment notes, images — and submit for review. Listings are checked before going live. Full guide: /guides/list-a-business-opportunity.',
+  },
+  {
+    match: /respond to.*enquir|reply to.*enquir|manage.*opportunity enquir|enquir.*as organiser|prospect enquir/i,
+    reply:
+      'When someone enquires on your listing, you receive an email notification. Reply directly to the prospect and track enquiries under Business opportunities in /organiser/. Attendees can also view sent enquiries in My Hub (/account/).',
+  },
+  {
+    match: /what happens when i publish|after i publish|publish my event|how long.*approv|listing review|when will my event go live|event approval/i,
+    reply:
+      'When you publish, your event is submitted for hub approval — typically within one working day. Once Approved and tied to a published organiser profile, it appears on /events/ and attendees can book. People on your member list are emailed automatically when you publish Approved events.',
+  },
+  {
+    match: /venue step|event location step|where do i (set|add) the venue|online join link|postcode.*event/i,
+    reply:
+      'On the location step, add your venue name and address for in-person events, or paste your online join link for webinars. The postcode helps attendees find you on the map. Attendees see the full venue or link after booking — online links also appear in My Hub (/account/).',
+  },
+  {
+    match: /how do i find events|where (can|do) i (find|browse|search) events|discover events/i,
+    reply:
+      'Browse all events free at /events/ — filter by type, date, industry, and location, or use map view. Ask me something specific like "What events are in Leeds?" and I will search live listings for you.',
+  },
+  {
+    match: /ticket.*(alert|on sale|go on sale)|alert.*ticket|notify.*ticket|when tickets (open|go on sale)/i,
+    reply:
+      'Save an event while signed in (heart icon on the listing). If tickets are not on sale yet, we email you when they open. You can also follow organisers — saving one of their events adds them under My Hub → Saved organisers, and you get alerts when they publish new listings.',
+  },
+  {
+    match: /follow.*organiser|save.*organiser|favourite organiser|favorite organiser|saved organiser/i,
+    reply:
+      'Follow an organiser from their profile page, or save any of their events — the organiser is added under My Hub → Saved organisers. You will get email alerts when they publish new events. Browse organisers from /events/ (organisers tab).',
+  },
+  {
+    match: /share card|i.?m going|linkedin.*(event|going|attending)|social.*(share|post).*event/i,
+    reply:
+      'After you book, open My Hub (/account/) → your upcoming event → use the share option to generate an "I\'m going" card for LinkedIn or social media. Booking references and online meeting links are also in My Hub.',
+  },
+  {
+    match: /booking reminder|remind me before|email before (the )?event|event reminder/i,
+    reply:
+      'We send booking reminder emails before events you have booked — check your inbox (and spam folder). Your tickets and meeting links are always in My Hub (/account/).',
+  },
+  {
+    match: /track.*enquir|my enquir|opportunity enquir|enquiries i sent/i,
+    reply:
+      'Sign in and open My Hub (/account/) → My opportunity enquiries to see enquiries you have sent and any replies from listers. Browse opportunities at /opportunities/.',
+  },
+  {
+    match: /report.*(listing|event|organiser|opportunit)|flag.*(listing|event|page|inappropriate)/i,
+    reply:
+      'Use Report listing on the event, organiser profile, or opportunity page. Choose a reason and optional details — our team reviews reports. For urgent booking issues, email hello@thenetworkerhub.com with the listing name.',
+  },
+  {
+    match: /connect stripe|stripe connect|stripe onboarding|set up (stripe|bank|payout)|bank details.*organiser/i,
+    reply:
+      'Sign in → /organiser/ → Revenue → Connect Stripe. Complete Stripe onboarding before publishing paid tickets — this links your bank account so ticket revenue can reach you. Free events do not need Stripe. Guide: /help/organiser-payouts.',
+  },
+  {
+    match: /cancel.*(my )?event as organiser|organiser.*cancel.*event|how do i cancel an event/i,
+    reply:
+      'Sign in → /organiser/ → My events → open the event → Cancel event. Attendees are notified and eligible for refunds per your refund policy and /legal-policies#refunds. Refunds are deducted from event revenue before any payout.',
+  },
+  {
+    match: /hub rules|organiser rules|listing standards/i,
+    reply:
+      'Organiser standards and listing rules are in plain English at /legal-policies#hub-rules — covering accurate listings, respectful conduct, and what happens if a listing is removed. Full organiser terms: /legal-policies#organisers.',
   },
   {
     match: /save an event|save events|saving events/i,
     reply:
-      'Create a free account at /register, then save events to your favourites while browsing. Manage saved events and tickets from /account/.',
+      'Create a free account at /register, then tap the heart on any event while browsing. Saved events appear in My Hub (/account/). If tickets are not on sale yet, we email you when they open. Saving an event also saves its organiser.',
   },
   {
     match: /who (runs|operates) (this |the )?(site|hub|platform)/i,
@@ -355,9 +441,9 @@ const FALLBACK_REPLIES = [
       'Include who the event is for, what happens on the day, and useful keywords people search for — location, industry, format, and who should come. Attendees filter listings using this text, so be specific rather than generic. You can also copy from your organiser page using the button on the form.',
   },
   {
-    match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event/i,
+    match: /difference.*(event|meeting)|meeting vs|event vs|what.*(event type|type of event)|meeting or event|conference or exhibition/i,
     reply:
-      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. Pick the type that best matches how people will search for it on /events/.',
+      'Every listing is an event — the Event type dropdown is a browse filter. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs such as seminars or lunch & learns. Conference is for summits and multi-day delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop and Masterclass help people find online talks, hands-on training, and expert-led masterclasses. Pick the type that best matches how people will search for it on /events/. Conferences guide: /guides/list-a-conference-or-exhibition.',
   },
   {
     match: /image.*(crop|cut off|cut.?off|position|reposition|recentre|reframe|framing|heads? cut)|photo.*(crop|cut off|position|reposition)|cover.*(crop|cut off|position)/i,
@@ -561,19 +647,35 @@ const ORGANISER_PAGE_CONTEXT = {
     'The user is creating an event and is on the format step (choose organiser page + in person or online). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-edit':
     'The user is on the event listing details step (title, type, description, photo with drag-to-reposition crop, location, dates). Answer listing-setup questions from your organiser knowledge. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  'event-location':
+    'The user is on the event location step (venue address, postcode, or online join link). Help with in-person vs online setup, venue fields, and what appears on the public listing. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
     'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Previous Attendees is optional. Members only tickets use the Member list. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+  'event-review':
+    'The user is on the publish review step before their event goes live. Explain what happens on publish, approval timing, and what they can still edit. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'member-roster':
     'The user is managing a Member list for their networking group. Explain what the list is, how to add or import members, optional expiry dates, invite emails, Members only tickets, and the reports on this page. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'group-edit':
-    'The user is editing their organiser page. Answer organiser-page questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is editing their organiser page. Answer organiser-page questions about logo, description, guest visit limit, and contact details. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'organiser-dashboard':
-    'The user is on the organiser dashboard. Answer questions about groups, events, attendees, revenue, and team invites. Team editors can manage events and view revenue but cannot invite others or delete events; up to 100 editors per account. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the organiser dashboard. Answer questions about claiming their page, groups, events, attendees, revenue, payouts, business opportunity listings, and team invites. Team editors can manage events and view revenue but cannot invite others or delete events; up to 100 editors per account. Do NOT list browse-page events or public opportunity listings unless they explicitly ask.',
   guides:
-    'The user is on the organiser guides / onboarding checklist page. Give concise answers (about 2 sentences) with direct links to /organiser/ routes, guide pages under /guides/, or specific dashboard sections. Focus on organiser setup tasks like listing events, Stripe, CSV export, and team invites.',
+    'The user is on the organiser guides / onboarding checklist page. Give concise answers (about 2 sentences) with direct links to /organiser/ routes, guide pages under /guides/, or specific dashboard sections. Focus on organiser setup tasks like listing events, Stripe, CSV export, team invites, and business opportunities.',
+  opportunities:
+    'The user is browsing business opportunities at /opportunities/. Help them find franchises, partnerships, side hustles, and deals — use LIVE OPPORTUNITY LOOKUP when they ask discovery questions. Explain saving listings (heart icon), search alerts, compare (up to 3), and sending enquiries (free account required). For listing an opportunity as an organiser, direct them to /guides/list-a-business-opportunity or /organiser/ → Business opportunities.',
 };
 
 const ORGANISER_PAGE_KEYS = Object.keys(ORGANISER_PAGE_CONTEXT);
+
+function buildPageContextAddendum(pageContext) {
+  const key = String(pageContext || '').trim();
+  if (!key || !ORGANISER_PAGE_CONTEXT[key]) return '';
+  return '\n\nPAGE CONTEXT: ' + ORGANISER_PAGE_CONTEXT[key];
+}
+
+function buildOrganiserContextAddendum(pageContext) {
+  return buildPageContextAddendum(pageContext);
+}
 
 function matchedFallbackReply(latestUser) {
   const text = String(latestUser || '').trim();
@@ -582,6 +684,42 @@ function matchedFallbackReply(latestUser) {
     if (FALLBACK_REPLIES[i].match.test(text)) return FALLBACK_REPLIES[i].reply;
   }
   return null;
+}
+
+function applyGentlemanTone(reply) {
+  const text = String(reply || '').trim();
+  if (!text) return text;
+  if (
+    /^(Good (morning|afternoon|evening|day)|Allow me|I'm afraid|Certainly\.|Indeed\.|Delighted|Very good|Thank you for your enquiry|A pleasure|Good afternoon —)/i.test(
+      text
+    )
+  ) {
+    return text;
+  }
+
+  const replacements = [
+    [/^Yes —/i, 'Yes, indeed —'],
+    [/^Yes,/i, 'Yes, indeed —'],
+    [/^No —/i, "I'm afraid not —"],
+    [/^I've checked our live listings and couldn't find upcoming events/i, "I've checked our live listings, and I'm afraid there aren't any upcoming events"],
+    [/^I couldn't find upcoming events matching that/i, "I'm afraid I couldn't find upcoming events matching that"],
+    [/^I couldn't find published business opportunities/i, "I'm afraid I couldn't find published business opportunities"],
+    [/^Here are upcoming events/i, 'Allow me to share a few upcoming events'],
+    [/^Here are some upcoming events/i, 'Allow me to share a few upcoming events'],
+    [/^Here are some business opportunities/i, 'Allow me to highlight a few business opportunities'],
+    [/^Thank you for your message/i, 'Thank you for your enquiry'],
+  ];
+
+  for (let i = 0; i < replacements.length; i++) {
+    if (replacements[i][0].test(text)) {
+      return text.replace(replacements[i][0], replacements[i][1]);
+    }
+  }
+
+  if (!text.includes('\n') && text.length > 48) {
+    return 'Certainly. ' + text.charAt(0).toLowerCase() + text.slice(1);
+  }
+  return text;
 }
 
 function buildOrganiserContextAddendum(pageContext) {
@@ -593,25 +731,24 @@ function buildOrganiserContextAddendum(pageContext) {
 function fallbackReply(latestUser) {
   const text = String(latestUser || '').trim();
   if (!text) {
-    return (
-      "Good day — I'm " +
-      ASSISTANT_NAME +
-      ', your business butler and concierge at The Networker Hub. How may I help — finding events or opportunities, booking tickets, or getting started as an organiser?'
+    return applyGentlemanTone(
+      "Good afternoon. I'm " +
+        ASSISTANT_NAME +
+        ", at your service on The Networker Hub. How may I assist you today — finding events or opportunities, booking tickets, or getting started as an organiser?"
     );
   }
   const matched = matchedFallbackReply(text);
-  if (matched) return matched;
-  return (
-    "Thank you for your message. For detailed help, email hello@thenetworkerhub.com or read our FAQ at /faq. " +
-    "I'm " +
-    ASSISTANT_NAME +
-    ', your business butler and concierge — ask me about events, business opportunities, tickets, accounts, or organiser tools.'
+  if (matched) return applyGentlemanTone(matched);
+  return applyGentlemanTone(
+    "Thank you for your enquiry. I'm afraid I don't have quite enough detail to answer that precisely — do email hello@thenetworkerhub.com, or browse our FAQ at /faq. " +
+      "Otherwise, ask me about events, business opportunities, tickets, accounts, or organiser tools and I'll do my best to help."
   );
 }
 
 module.exports = {
   ASSISTANT_NAME,
   ASSISTANT_ROLE,
+  HUBERT_VOICE_GUIDE,
   KNOWLEDGE_SECTIONS,
   KNOWLEDGE_BASE,
   SYSTEM_PROMPT,
@@ -619,6 +756,8 @@ module.exports = {
   ORGANISER_PAGE_CONTEXT,
   ORGANISER_PAGE_KEYS,
   matchedFallbackReply,
+  applyGentlemanTone,
+  buildPageContextAddendum,
   buildOrganiserContextAddendum,
   fallbackReply,
 };

@@ -15,6 +15,12 @@
     return /\/organiser\/?$/.test(path) || /\/organiser\/index\.html$/.test(path);
   }
 
+  function publicPageContext() {
+    var path = (window.location.pathname || '').toLowerCase();
+    if (/\/opportunities\/?/.test(path)) return 'opportunities';
+    return '';
+  }
+
   function shouldSkip() {
     if (script && script.getAttribute('data-hubert') === 'off') return true;
     var path = (window.location.pathname || '').toLowerCase();
@@ -42,10 +48,18 @@
       : window.HubertChatSuggestions;
   var panelSub = organiserDashMode
     ? 'Got any questions? Ask me anything.'
-    : 'Your business butler &amp; concierge';
+    : publicPageContext() === 'opportunities'
+      ? 'At your service — find franchises, partnerships &amp; deals'
+      : 'Your British English gentleman &amp; concierge';
   var inputPlaceholder = organiserDashMode
     ? 'Ask about groups, events, tickets, or payouts…'
-    : 'Ask Hubert to find events, opportunities, or guide you…';
+    : publicPageContext() === 'opportunities'
+      ? 'Ask Hubert to find franchises, side hustles, or partnerships…'
+      : 'Ask Hubert to find events, opportunities, or guide you…';
+  var widgetGreeting =
+    publicPageContext() === 'opportunities'
+      ? "Good afternoon. I'm Hubert — allow me to help you explore business opportunities on the hub. Ask about franchises, side hustles, or partnerships, or tap a suggestion below."
+      : greeting;
 
   var mount = document.createElement('div');
   mount.id = 'hubert-widget';
@@ -104,8 +118,8 @@
     sendBtn: document.getElementById('hubert-send'),
     resetBtn: document.getElementById('hubert-reset'),
     suggestionsEl: suggestionsEl,
-    greeting: greeting,
-    hubertContext: organiserDashMode ? 'organiser-dashboard' : '',
+    greeting: widgetGreeting,
+    hubertContext: organiserDashMode ? 'organiser-dashboard' : publicPageContext(),
     bubblePrefix: 'hubert-bubble',
   });
 

@@ -76,6 +76,84 @@ const UK_LOCATIONS = [
   'watford',
   'st albans',
   'harrogate',
+  'ripon',
+  'skipton',
+  'whitby',
+  'scarborough',
+  'doncaster',
+  'rotherham',
+  'barnsley',
+  'huddersfield',
+  'halifax',
+  'bradford',
+  'wakefield',
+  'yorkshire',
+  'durham',
+  'darlington',
+  'carlisle',
+  'kendal',
+  'kirkby lonsdale',
+  'lincoln',
+  'grantham',
+  'boston',
+  'spalding',
+  'stamford',
+  'colchester',
+  'chelmsford',
+  'southend',
+  'canterbury',
+  'dover',
+  'maidstone',
+  'tunbridge wells',
+  'eastbourne',
+  'hastings',
+  'chichester',
+  'winchester',
+  'portsmouth',
+  'fareham',
+  'salisbury',
+  'basingstoke',
+  'newbury',
+  'slough',
+  'high wycombe',
+  'aylesbury',
+  'bedford',
+  'stevenage',
+  'hemel hempstead',
+  'stoke-on-trent',
+  'telford',
+  'shrewsbury',
+  'hereford',
+  'worcester',
+  'gloucester',
+  'stroud',
+  'cirencester',
+  'torquay',
+  'paignton',
+  'truro',
+  'penzance',
+  'newquay',
+  'barnstaple',
+  'taunton',
+  'yeovil',
+  'sherborne',
+  'dorchester',
+  'weymouth',
+  'inverness',
+  'stirling',
+  'perth',
+  'falkirk',
+  'paisley',
+  'ayr',
+  'kilmarnock',
+  'greenock',
+  'bangor',
+  'newport',
+  'caerphilly',
+  'llandudno',
+  'colwyn bay',
+  'northern ireland',
+  'england',
   'scotland',
   'wales',
   'online',
@@ -92,6 +170,7 @@ function wantsEventSearch(text, options) {
 function normalizeLocation(value) {
   return String(value || '')
     .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -314,19 +393,36 @@ function buildEventContextBlock(result) {
   );
 }
 
+function formatLocationLabel(location) {
+  return String(location || '')
+    .split(' ')
+    .filter(Boolean)
+    .map(function (part) {
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(' ');
+}
+
 function formatEventFallbackReply(result) {
   const events = (result && result.events) || [];
   const query = result && result.query;
 
   if (!events.length) {
-    const locationHint = query && query.location ? ' in ' + query.location : '';
+    const locationHint = query && query.location ? ' in ' + formatLocationLabel(query.location) : '';
+    const nearbyHint =
+      query && query.location
+        ? ' Try a nearby city, check online events on /events/, or browse the map view.'
+        : ' Browse everything at /events/ and filter by location, date, and type — new listings are added regularly.';
     return (
-      "I couldn't find upcoming events matching that" +
+      "I've checked our live listings, and I'm afraid there aren't any upcoming events" +
       locationHint +
-      ' right now. Browse everything at /events/ or try a different city or date.'
+      ' at present.' +
+      nearbyHint
     );
   }
 
+  const locationLabel =
+    query && query.location ? ' near ' + formatLocationLabel(query.location) : '';
   const lines = events.map(function (event) {
     return (
       '• ' +
@@ -342,9 +438,11 @@ function formatEventFallbackReply(result) {
   });
 
   return (
-    'Here are some upcoming events that might help:\n\n' +
+    'Allow me to share a few upcoming events' +
+    locationLabel +
+    ':\n\n' +
     lines.join('\n') +
-    '\n\nSee all listings at /events/.'
+    '\n\nYou will find the full directory at /events/.'
   );
 }
 

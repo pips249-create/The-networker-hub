@@ -3,7 +3,7 @@
  */
 (function (global) {
   var HUBERT_GREETING =
-    "Good day — I'm Hubert, your business butler and concierge. Browse events and opportunities for free, or I can guide you through tickets, enquiries, and organiser tools.";
+    "Good afternoon. I'm Hubert — at your service on The Networker Hub. Do browse events and opportunities freely, or allow me to guide you through tickets, enquiries, and organiser tools.";
 
   var DEFAULT_SUGGESTIONS = [
     { label: 'Upcoming events', prompt: 'What networking events are coming up?' },

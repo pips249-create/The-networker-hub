@@ -4,8 +4,13 @@
 const { isSupabaseConfigured } = require('./supabase');
 const { listPublishedOpportunities } = require('./supabase-opportunities');
 
-const OPPORTUNITY_INTENT =
-  /\b(opportunit|opportunities|franchise|franchises|partnership|partnerships|side[\s-]?hustle|distributorship|referral deal|business deal|invest(?:ment)?|listings? on the hub|browse opportunit|find (?:a )?(?:franchise|partnership|deal)|what(?:'s| is) (?:on|available on) (?:the )?opportunit)/i;
+/** Organiser listing / enquiry help — must not trigger live opportunity browse. */
+const HELP_NOT_OPPORTUNITY_BROWSE =
+  /\b(how do i list|how can i list|how do i publish|list a|list my|publish a|submit a|create a listing|manage enquir|respond to enquir|reply to enquir|organiser dashboard|listing form|submit for review|how do i enquire|how to enquire|send an enquiry|what is a business opportunit|what are business opportunit|business opportunit.*(fee|cost|price)|listings are reviewed)\b/i;
+
+/** Explicit browse / discovery intent for business opportunities. */
+const OPPORTUNITY_BROWSE_INTENT =
+  /\b(what opportunit|find (?:a |an )?(?:franchise|partnership|side|deal|opportunit)|show (?:me )?(?:any )?(?:franchise|partnership|side|opportunit)|any franchis|franchise opportunit|partnership opportunit|side[\s-]?hustle opportunit|distributorship opportunit|browse opportunit|search opportunit|help me find|available on (?:the )?hub|what(?:'s| is) (?:on|available on) (?:the )?opportunit|low[\s-]?investment|under £|under \d+k|featured opportunit|opportunities on the hub|franchise deals?|partnership deals?)\b/i;
 
 const TYPE_ALIASES = {
   franchise: /\bfranchis/i,
@@ -16,8 +21,12 @@ const TYPE_ALIASES = {
   'business-opportunity': /\bbusiness opportunit|\bdeal\b|\binvestment\b/i,
 };
 
-function wantsOpportunitySearch(text) {
-  return OPPORTUNITY_INTENT.test(String(text || ''));
+function wantsOpportunitySearch(text, options) {
+  const t = String(text || '');
+  if (!t) return false;
+  if (options && options.skipOpportunitySearch) return false;
+  if (HELP_NOT_OPPORTUNITY_BROWSE.test(t)) return false;
+  return OPPORTUNITY_BROWSE_INTENT.test(t);
 }
 
 function detectOpportunityTypes(text) {
@@ -205,9 +214,9 @@ function formatOpportunityFallbackReply(result) {
         ? ' matching ' + query.types.map(typeLabel).join(', ')
         : '';
     return (
-      "I couldn't find published business opportunities" +
+      "I'm afraid I couldn't find published business opportunities" +
       typeHint +
-      ' on the hub right now. Browse the directory at /opportunities/ or check back soon.'
+      ' on the hub at present. Do browse the directory at /opportunities/, or check back soon.'
     );
   }
 
@@ -229,7 +238,7 @@ function formatOpportunityFallbackReply(result) {
   });
 
   return (
-    'Here are some business opportunities that may suit you:\n\n' +
+    'Allow me to highlight a few business opportunities that may suit you:\n\n' +
     lines.join('\n') +
     '\n\nBrowse everything at /opportunities/. A free account is needed to send an enquiry.'
   );
@@ -240,4 +249,6 @@ module.exports = {
   searchOpportunitiesForHubert,
   buildOpportunityContextBlock,
   formatOpportunityFallbackReply,
+  HELP_NOT_OPPORTUNITY_BROWSE,
+  OPPORTUNITY_BROWSE_INTENT,
 };
