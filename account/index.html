@@ -17,9 +17,9 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714skip" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260715nav" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260723partner" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723ux" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723stats" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260714cls" />
 
   </head>
@@ -64,6 +64,8 @@
               Reviews
               <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
+            <span class="hub-side-nav-divider">Partner with us</span>
+            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner">Advertising &amp; sponsorship</a>
             <div class="hub-side-nav-util">
               <a href="../events/">Browse events</a>
               <a href="/account/settings">Settings</a>
@@ -109,21 +111,21 @@
             <!-- Overview -->
             <section class="ad-page is-active" id="ad-page-overview" data-ad-page="overview">
               <div class="ad-stats" id="ad-stats">
-                <div class="ad-stat ad-stat--purple">
+                <button type="button" class="ad-stat ad-stat--purple ad-stat-link" data-ad-stat-route="upcoming" aria-label="View upcoming events">
                   <div class="ad-stat-label">Upcoming events</div>
                   <div class="ad-stat-value" id="ad-stat-upcoming" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-next">—</div>
-                </div>
-                <div class="ad-stat ad-stat--gold">
+                </button>
+                <button type="button" class="ad-stat ad-stat--gold ad-stat-link" data-ad-stat-route="reviews" aria-label="View reviews">
                   <div class="ad-stat-label">Reviews submitted</div>
                   <div class="ad-stat-value" id="ad-stat-reviews" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
-                </div>
-                <div class="ad-stat ad-stat--purple">
+                </button>
+                <button type="button" class="ad-stat ad-stat--purple ad-stat-link" data-ad-stat-route="opportunity-enquiries" aria-label="View opportunity enquiries">
                   <div class="ad-stat-label">Opportunity enquiries sent</div>
                   <div class="ad-stat-value" id="ad-stat-enquiries" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-enquiries-hint">—</div>
-                </div>
+                </button>
               </div>
               <div class="ad-refund-alert" id="ad-refund-alert-overview" hidden role="status"></div>
               <div class="ad-overview-membership-nudge" id="ad-overview-membership-nudge" hidden></div>
@@ -234,11 +236,26 @@
             <!-- Saved -->
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
               <div class="ad-saved-panel">
-                <div class="ad-saved-scope" role="tablist" aria-label="Saved items">
-                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">My memberships</button>
-                  <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-saved-scope="events">Saved Events</button>
-                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">Saved Organisers</button>
-                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="opportunities">Saved Opportunities</button>
+                <div class="ad-saved-scope-wrap">
+                  <p class="ad-saved-scope-kicker" id="ad-saved-scope-kicker">Choose what to view</p>
+                  <div class="ad-saved-scope" role="tablist" aria-labelledby="ad-saved-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">
+                      My memberships
+                      <span class="ad-saved-scope-count" id="ad-saved-count-groups" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-saved-scope="events">
+                      Saved events
+                      <span class="ad-saved-scope-count" id="ad-saved-count-events" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">
+                      Saved organisers
+                      <span class="ad-saved-scope-count" id="ad-saved-count-organisers" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="opportunities">
+                      Saved opportunities
+                      <span class="ad-saved-scope-count" id="ad-saved-count-opportunities" hidden aria-hidden="true"></span>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="ad-saved-pane" data-saved-pane="groups" role="tabpanel" hidden>
@@ -418,9 +435,18 @@
             <!-- Reviews -->
             <section class="ad-page" id="ad-page-reviews" data-ad-page="reviews">
               <div class="ad-saved-panel">
-                <div class="ad-saved-scope" role="tablist" aria-label="Review lists">
-                  <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">To write</button>
-                  <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">Submitted</button>
+                <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
+                  <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Review lists</p>
+                  <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
+                      To write
+                      <span class="ad-saved-scope-count" id="ad-reviews-count-pending" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">
+                      Submitted
+                      <span class="ad-saved-scope-count" id="ad-reviews-count-done" hidden aria-hidden="true"></span>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
@@ -671,6 +697,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260615"></script>
-    <script src="../js/attendee-dashboard.js?v=20260723ux"></script>
+    <script src="../js/attendee-dashboard.js?v=20260723stats"></script>
   </body>
 </html>

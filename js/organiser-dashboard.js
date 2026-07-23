@@ -1389,6 +1389,65 @@
         businessEl.textContent = 'No enquiries yet';
       }
     }
+    renderVisibilityHubMeta();
+  }
+
+  function renderVisibilityHubMeta() {
+    const eventsMeta = document.getElementById('org-visibility-events-meta');
+    const oppMeta = document.getElementById('org-visibility-opp-meta');
+    if (eventsMeta) {
+      const eligible = liveEventsForFeaturedUpgrade();
+      const featuredCount = (state.events || []).filter(function (ev) {
+        return ev && ev.featured && eventIsEligibleForFeaturedUpgrade(ev);
+      }).length;
+      if (!state.eventsLoaded) {
+        eventsMeta.textContent = 'Pin an upcoming event to the top of the events directory.';
+      } else if (!eligible.length) {
+        eventsMeta.textContent = 'Publish an upcoming live event first, then upgrade it here.';
+      } else if (featuredCount > 0) {
+        eventsMeta.textContent =
+          eligible.length +
+          ' eligible event' +
+          (eligible.length === 1 ? '' : 's') +
+          ' · ' +
+          featuredCount +
+          ' already featured';
+      } else {
+        eventsMeta.textContent =
+          eligible.length +
+          ' eligible event' +
+          (eligible.length === 1 ? '' : 's') +
+          ' ready to boost';
+      }
+    }
+    if (oppMeta) {
+      const liveListings = (state.opportunities || []).filter(function (o) {
+        const status = String(o.status || o.listingStatus || '').toLowerCase();
+        return status === 'published' || status === 'live';
+      });
+      const premiumCount = liveListings.filter(function (o) {
+        return o && (o.featured || opportunityPremiumMeta(o).tone !== 'muted');
+      }).length;
+      if (!state.opportunitiesLoaded) {
+        oppMeta.textContent = 'Pin a live business opportunity to the top of the opportunities directory.';
+      } else if (!liveListings.length) {
+        oppMeta.textContent = 'List a business opportunity first, then add premium spotlight from My business opportunities.';
+      } else if (premiumCount > 0) {
+        oppMeta.textContent =
+          liveListings.length +
+          ' live listing' +
+          (liveListings.length === 1 ? '' : 's') +
+          ' · ' +
+          premiumCount +
+          ' with premium spotlight';
+      } else {
+        oppMeta.textContent =
+          liveListings.length +
+          ' live listing' +
+          (liveListings.length === 1 ? '' : 's') +
+          ' ready to boost';
+      }
+    }
   }
 
   function esc(s) {
@@ -2986,6 +3045,8 @@
     }
     if (hash === 'team') return { page: 'team', sub: null };
     if (hash === 'member-lists' || hash === 'memberships') return { page: 'memberships', sub: null };
+    if (hash === 'visibility' || hash === 'grow-visibility') return { page: 'visibility', sub: null };
+    if (hash === 'social-spotlight' || hash === 'event-spotlight') return { page: 'social-spotlight', sub: null };
     return { page: hash, sub: null };
   }
 
@@ -7164,7 +7225,9 @@
       sub = 'events-tickets';
     } else if (route === 'team') {
       page = 'team';
-    } else if (route === 'social' || route === 'promote') {
+    } else if (route === 'visibility' || route === 'grow-visibility') {
+      page = 'visibility';
+    } else if (route === 'social' || route === 'promote' || route === 'social-spotlight' || route === 'event-spotlight') {
       page = 'social';
     }
 
@@ -7193,6 +7256,22 @@
           }
         });
       });
+    }
+    if (page === 'visibility') {
+      renderVisibilityHubMeta();
+      if (!state.eventsLoaded || !state.opportunitiesLoaded) {
+        requestAnimationFrame(function () {
+          if (!state.eventsLoaded) refresh();
+          if (!state.opportunitiesLoaded) {
+            loadOpportunitiesList().then(function () {
+              renderVisibilityHubMeta();
+            });
+          }
+          loadFeaturedSpotlightSlots().then(function () {
+            renderVisibilityHubMeta();
+          });
+        });
+      }
     }
     if (page === 'team') {
       ensureTeamLoaded().then(function () {
@@ -7239,7 +7318,9 @@
           : page === 'business-list'
             ? 'business-list'
             : page === 'social'
-              ? 'social'
+              ? route === 'social-spotlight' || route === 'event-spotlight'
+                ? 'social-spotlight'
+                : 'social'
               : page === 'dashboard'
                 ? ''
                 : page;
@@ -11586,7 +11667,7 @@
       applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
       setRoute(r.sub || r.page);
-      if (r.page === 'social') initSocialPageTabs();
+      if (r.page === 'social' || r.page === 'social-spotlight') initSocialPageTabs();
       if (
         r.page === 'groups' ||
         r.page === 'memberships' ||

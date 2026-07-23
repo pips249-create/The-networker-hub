@@ -773,6 +773,27 @@
     );
   }
 
+  function calendarLinksInlineHtml(reg) {
+    if (!canShowCalendarLinks(reg) || !window.HubCalendarShare) return '';
+    const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
+    return (
+      '<div class="ad-cal-links" aria-label="Add to calendar">' +
+      '<span class="ad-cal-links-label">Add to calendar</span>' +
+      '<a class="ad-cal-link" href="' +
+      esc(links.google) +
+      '" target="_blank" rel="noopener noreferrer">Google</a>' +
+      '<span class="ad-cal-sep" aria-hidden="true">·</span>' +
+      '<a class="ad-cal-link" href="' +
+      esc(links.outlook) +
+      '" target="_blank" rel="noopener noreferrer">Outlook</a>' +
+      '<span class="ad-cal-sep" aria-hidden="true">·</span>' +
+      '<button type="button" class="ad-cal-link ad-cal-ics" data-registration-id="' +
+      esc(reg.id || '') +
+      '">iCal</button>' +
+      '</div>'
+    );
+  }
+
   function calendarMenuItemsHtml(reg) {
     if (!canShowCalendarLinks(reg) || !window.HubCalendarShare) return '';
     const links = HubCalendarShare.buildCalendarLinks(registrationCalendarEvent(reg));
@@ -929,7 +950,7 @@
   function utilityDropdownHtml(reg, options) {
     if (!options || !options.showUtilities) return '';
     const canPdf = registrationHasTicketPdf(reg);
-    const calendarItems = calendarMenuItemsHtml(reg);
+    const calendarItems = options.hideCalendar ? '' : calendarMenuItemsHtml(reg);
     const shareItem = shareMenuItemHtml(reg);
     const cancelItem = cancelMenuItemHtml(reg, options);
     return (
@@ -2160,6 +2181,18 @@
     }
   }
 
+  function setTabCount(id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!dashboardReady || !n) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.hidden = false;
+    el.textContent = String(n);
+  }
+
   function updateSideCounts() {
     const set = (id, n) => {
       const el = document.getElementById(id);
@@ -2178,6 +2211,12 @@
     set('ad-side-pending', pendingReviewsList().length);
     set('ad-side-reviewed', doneReviewsList().length);
     set('ad-side-cancellations', (cancelledBookings || []).length);
+    setTabCount('ad-saved-count-groups', myGroups.length);
+    setTabCount('ad-saved-count-events', savedEvents.length);
+    setTabCount('ad-saved-count-organisers', savedOrganisers.length);
+    setTabCount('ad-saved-count-opportunities', savedOpportunities.length);
+    setTabCount('ad-reviews-count-pending', pendingReviewsList().length);
+    setTabCount('ad-reviews-count-done', doneReviewsList().length);
   }
 
   function renderPagination(navId, listKey, totalPages) {
@@ -2282,7 +2321,9 @@
           utilityDropdownHtml(reg, {
             showUtilities: listKey === 'upcoming',
             showCancel: listKey === 'upcoming',
+            hideCalendar: listKey === 'upcoming',
           }) +
+          (listKey === 'upcoming' ? calendarLinksInlineHtml(reg) : '') +
           '</div></td>';
       } else {
         tr.innerHTML =
@@ -3368,6 +3409,20 @@
     window.addEventListener('hashchange', () => setRoute(parseRoute()));
   }
 
+  function bindStatCards() {
+    document.querySelectorAll('[data-ad-stat-route]').forEach((btn) => {
+      if (btn.dataset.boundStatRoute) return;
+      btn.dataset.boundStatRoute = '1';
+      btn.addEventListener('click', () => {
+        let route = btn.getAttribute('data-ad-stat-route') || 'overview';
+        if (route === 'reviews') {
+          route = pendingReviewsList().length > 0 ? 'reviews-pending' : 'reviews-done';
+        }
+        setRoute(route);
+      });
+    });
+  }
+
   function bindHubContextSwitch() {
     initOrganiserContextBanner();
     document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
@@ -3426,6 +3481,7 @@
 
   async function init() {
     bindNav();
+    bindStatCards();
     bindHubContextSwitch();
     bindSavedScope();
     bindReviewsScope();

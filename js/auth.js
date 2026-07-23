@@ -408,6 +408,9 @@
         'Step 1 of 2 — create your account to list events and manage your group. We enable organiser access automatically; confirm your email before publishing.';
     }
 
+    var registerProof = document.getElementById('auth-platform-proof');
+    if (registerProof) registerProof.hidden = true;
+
     var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
     if (registerWizard) {
       registerWizard.textContent = 'Create organiser account';
@@ -485,6 +488,15 @@
         'Use the same email address your group listing is linked to on the Hub. After sign-up you will confirm your organiser page (about 2 minutes).';
     }
 
+    var registerProof = document.getElementById('auth-platform-proof');
+    if (registerProof) registerProof.hidden = true;
+
+    var panelProof = document.getElementById('auth-panel-proof');
+    if (panelProof) {
+      panelProof.textContent = '27,000+ Events listed last year \u00b7 UK-wide directory';
+      panelProof.hidden = false;
+    }
+
     var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
     if (registerWizard) {
       registerWizard.textContent = 'Create account';
@@ -545,7 +557,8 @@
         formLede: 'Welcome back \u2014 use the email and password for your Hub account. Same login for My Hub and your organiser workspace.',
         createLead: 'New to The Networker Hub?',
         createBtn: 'Create a free account',
-        createHint: 'Free to join \u00b7 about 2 minutes',
+        createHint: '17,000+ networkers last year \u00b7 free to join',
+        panelProof: '27,000+ Events listed \u00b7 17,000+ networkers last year',
         showNote: true,
         rotate: null,
       },
@@ -565,7 +578,8 @@
         formLede: 'Sign in to open My Hub \u2014 saved events, bookings, alerts, and member rates.',
         createLead: 'New to The Networker Hub?',
         createBtn: 'Create a free account',
-        createHint: 'Free to join \u00b7 about 2 minutes',
+        createHint: '17,000+ networkers last year \u00b7 free to join',
+        panelProof: '27,000+ Events listed \u00b7 17,000+ networkers last year',
         showNote: true,
         rotate: ['event', 'Business Opportunity', 'organiser'],
       },
@@ -585,7 +599,8 @@
         formLede: 'Sign in to open your organiser workspace \u2014 list events, manage attendees, and reach members browsing the Hub.',
         createLead: 'No organiser account yet?',
         createBtn: 'Create a free organiser account',
-        createHint: 'We enable organiser access automatically',
+        createHint: '27,000+ Events listed last year \u00b7 free to list',
+        panelProof: '17,000+ people used the directory last year \u00b7 27,000+ Events listed',
         showNote: false,
         rotate: ['attendees', 'bookings', 'discovery'],
       },
@@ -662,10 +677,15 @@
       var createBtn = document.getElementById('login-create-account');
       var createHint = document.getElementById('login-create-account-hint');
       var audienceNote = document.getElementById('login-audience-note');
+      var panelProof = document.getElementById('auth-panel-proof');
 
       if (panelKicker) panelKicker.textContent = content.kicker;
       if (panelTitle) panelTitle.innerHTML = content.titleHtml;
       if (panelLede) panelLede.textContent = content.lede;
+      if (panelProof) {
+        panelProof.textContent = content.panelProof || '';
+        panelProof.hidden = !content.panelProof;
+      }
       renderPoints(panelPoints, content.points);
       if (panelCta) {
         panelCta.textContent = content.ctaText;

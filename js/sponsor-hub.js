@@ -165,6 +165,9 @@
     }
     if (els.sponsorLogo) {
       if (hasLogo) {
+        if (!/^data:/i.test(url)) {
+          els.sponsorLogo.crossOrigin = 'anonymous';
+        }
         els.sponsorLogo.src = url;
         els.sponsorLogo.hidden = false;
         if (window.CmsSponsorFields) {

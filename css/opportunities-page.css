@@ -1878,6 +1878,20 @@
   transition: background-color 0.2s ease;
 }
 
+.opp-browse-page .sponsor-logo-wrap.sponsor-logo-band--dark {
+  border-radius: 8px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark:hover {
+  filter: brightness(1.06);
+}
+
 .opp-browse-page .sponsor-logo-wrap.has-logo .sponsor-logo-placeholder {
   display: none !important;
 }

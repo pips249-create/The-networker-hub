@@ -195,6 +195,36 @@
   color: var(--ad-teal-dark);
 }
 
+.hub-side-nav-link--partner {
+  border-left-color: transparent !important;
+  box-shadow: none !important;
+  font-weight: 600;
+}
+
+.attendee-dashboard-page .hub-side-nav-link--partner {
+  color: #7a5a12;
+  background: rgba(189, 147, 46, 0.12);
+  border: 1px solid rgba(189, 147, 46, 0.28);
+  border-radius: 8px;
+  margin: 0 4px 6px;
+  padding-left: 12px;
+}
+
+.attendee-dashboard-page .hub-side-nav-link--partner:hover {
+  background: rgba(189, 147, 46, 0.2);
+  color: #5c4510;
+}
+
+.organiser-dashboard-page .hub-side-nav-link--partner {
+  color: #7a5a12;
+  background: rgba(189, 147, 46, 0.1);
+}
+
+.organiser-dashboard-page .hub-side-nav-link--partner:hover {
+  background: rgba(189, 147, 46, 0.18);
+  color: #5c4510;
+}
+
 .organiser-dashboard-page .org-events-subnav--in-sidebar {
   display: none;
 }

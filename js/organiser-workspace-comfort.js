@@ -100,6 +100,23 @@
         'Featured upgrade options appear here if you want extra visibility.',
       ],
     },
+    'social-spotlight': {
+      title: 'How to boost an event',
+      steps: [
+        'Tick one or more upcoming live events you want more people to see.',
+        'Choose how long to stay featured, then continue to payment.',
+        'Featured placement runs until your event starts if that is sooner than one month.',
+      ],
+    },
+    visibility: {
+      title: 'How to grow your visibility',
+      steps: [
+        'Use Featured Boost to pin your own event or business opportunity higher in search.',
+        'Open Grow your visibility any time to compare self-serve upgrades and sponsorship options.',
+        'Sponsorship packages are for third-party B2B brands reaching audiences across directories — not for pinning your own listings.',
+        'City Sponsor checks out online; Headline Sponsor and Page Partner are confirmed by enquiry.',
+      ],
+    },
     team: {
       title: 'How to manage your team',
       steps: [
@@ -119,7 +136,9 @@
   function guideKeyFromLocation() {
     var hash = (location.hash || '').replace(/^#/, '').trim().toLowerCase();
     if (!hash || hash === 'dashboard') return 'dashboard';
+    if (hash === 'social-spotlight' || hash === 'event-spotlight') return 'social-spotlight';
     if (hash === 'promote' || hash === 'social') return 'social';
+    if (hash === 'visibility' || hash === 'grow-visibility') return 'visibility';
     if (
       hash === 'business-overview' ||
       hash === 'business-listings' ||

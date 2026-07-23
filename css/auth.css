@@ -389,7 +389,20 @@
   font-size: 15px;
   line-height: 1.55;
   opacity: 0.92;
+  margin: 0 0 12px;
+}
+
+.auth-panel-proof,
+.auth-platform-proof {
   margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.auth-platform-proof {
+  color: var(--auth-muted, #635c5e);
 }
 
 .auth-panel-points {

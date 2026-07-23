@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=20260714cls">
+<link rel="stylesheet" href="css/hub.css?v=20260723stats">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260723ux">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260723brand">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -33,18 +33,27 @@
       <p class="ad-page-kicker">Advertising &amp; sponsorship</p>
       <h1>Reach UK business owners on The Networker Hub</h1>
       <p class="ad-page-lede">
-        Guide pricing and live placement examples. Pick a section below to compare packages.
+        Connect your brand directly with 17,000+ UK founders, directors, and event organisers at the exact moment they do business.
       </p>
+      <div class="ad-trust-bar" aria-label="Platform reach">
+        <div class="ad-trust-metric">
+          <strong>27,000+</strong>
+          <span>UK events listed</span>
+        </div>
+        <div class="ad-trust-metric">
+          <strong>17,000+</strong>
+          <span>Active networkers</span>
+        </div>
+        <div class="ad-trust-metric">
+          <strong>100%</strong>
+          <span>Targeted B2B audience</span>
+        </div>
+      </div>
       <div class="ad-page-header-actions">
         <a class="ad-page-header-cta ad-page-header-cta--primary" href="#ad-section-nav">Browse placements</a>
-        <a class="ad-page-header-cta ad-page-header-cta--secondary ad-enquiry-jump" href="#ad-enquiry">Send an enquiry</a>
+        <a class="ad-page-header-cta ad-page-header-cta--secondary" href="#ad-enquiry-quick">Send an enquiry</a>
       </div>
       <p class="ad-page-header-meta">City Sponsor checks out online · other packages by enquiry · all labelled Sponsored</p>
-      <ul class="ad-page-proof" aria-label="Platform reach">
-        <li><strong>27,000+</strong> events listed last year</li>
-        <li><strong>17,000+</strong> networkers</li>
-        <li><strong>UK-wide</strong> directory</li>
-      </ul>
     </div>
   </header>
 
@@ -58,24 +67,27 @@
       <div class="ad-section-picks" id="ad-section-picks" role="tablist" aria-label="Choose a section to advertise in">
       <button type="button" class="ad-section-pick is-active" role="tab" id="ad-tab-events" data-ad-tab="events" data-ad-pick="events" aria-controls="ad-panel-events" aria-selected="true">
         <span class="ad-section-pick-body">
-          <strong>Events</strong>
-          <span>Directory, event pages &amp; emails</span>
+          <span class="ad-section-pick-pill">Events</span>
+          <strong>Directory, event pages &amp; emails</strong>
           <em>From £29/mo + VAT</em>
         </span>
+        <span class="ad-section-pick-arrow" aria-hidden="true">→</span>
       </button>
       <button type="button" class="ad-section-pick" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" data-ad-pick="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">
         <span class="ad-section-pick-body">
-          <strong>Organisers</strong>
-          <span>Organiser directory &amp; emails</span>
+          <span class="ad-section-pick-pill">Organisers</span>
+          <strong>Organiser directory &amp; emails</strong>
           <em>From £27.50/mo</em>
         </span>
+        <span class="ad-section-pick-arrow" aria-hidden="true">→</span>
       </button>
       <button type="button" class="ad-section-pick" role="tab" id="ad-tab-opportunities" data-ad-tab="opportunities" data-ad-pick="opportunities" aria-controls="ad-panel-opportunities" aria-selected="false" tabindex="-1">
         <span class="ad-section-pick-body">
-          <strong>Opportunities</strong>
-          <span>Business opportunities directory</span>
+          <span class="ad-section-pick-pill">Opportunities</span>
+          <strong>Business opportunities directory</strong>
           <em>From £25/mo + VAT</em>
         </span>
+        <span class="ad-section-pick-arrow" aria-hidden="true">→</span>
       </button>
       </div>
     </div>
@@ -85,8 +97,13 @@
     </p>
 
     <section class="ad-enquiry-quick ad-reveal" id="ad-enquiry-quick" aria-labelledby="ad-enquiry-quick-title">
-      <h2 class="ad-enquiry-quick-title" id="ad-enquiry-quick-title">Quick enquiry</h2>
-      <p class="ad-enquiry-quick-lede">Not ready to browse? Leave your name and email — Rosie will help you choose.</p>
+      <div class="ad-enquiry-quick-head">
+        <img src="/assets/about-rosie.png" alt="" class="ad-enquiry-quick-avatar" width="48" height="48" loading="lazy" decoding="async">
+        <div class="ad-enquiry-quick-copy">
+          <h2 class="ad-enquiry-quick-title" id="ad-enquiry-quick-title">Quick enquiry</h2>
+          <p class="ad-enquiry-quick-lede">Not sure which placement fits your budget? Drop your name and email below — Rosie will personally send over a custom media recommendation within 24 hours.</p>
+        </div>
+      </div>
       <form class="ad-enquiry-quick-form" id="ad-enquiry-quick-form">
         <input type="text" name="website" class="ad-enquiry-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
         <div class="ad-enquiry-quick-fields">

@@ -31,37 +31,77 @@
     return /^(https?:|\/|data:image\/)/i.test(u);
   }
 
-  function sampleBackgroundFromImage(img) {
+  var LOGO_BAND_DARK = '#1a1a2e';
+  var LOGO_BAND_LIGHT = '#f3f4f6';
+
+  function pixelLuminance(r, g, b) {
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  }
+
+  function sampleLogoBandColor(img) {
     try {
       var canvas = document.createElement('canvas');
-      var size = 24;
+      var size = 48;
       canvas.width = size;
       canvas.height = size;
       var ctx = canvas.getContext('2d');
       if (!ctx) return null;
       ctx.drawImage(img, 0, 0, size, size);
       var data = ctx.getImageData(0, 0, size, size).data;
-      var r = 0;
-      var g = 0;
-      var b = 0;
-      var n = 0;
-      for (var i = 0; i < data.length; i += 4) {
-        if (data[i + 3] < 40) continue;
-        r += data[i];
-        g += data[i + 1];
-        b += data[i + 2];
-        n++;
+      var edgeR = 0;
+      var edgeG = 0;
+      var edgeB = 0;
+      var edgeN = 0;
+      var bright = 0;
+      var dark = 0;
+      var total = 0;
+
+      for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+          var i = (y * size + x) * 4;
+          if (data[i + 3] < 40) continue;
+          var pr = data[i];
+          var pg = data[i + 1];
+          var pb = data[i + 2];
+          var lum = pixelLuminance(pr, pg, pb);
+          total++;
+          if (lum > 0.92) bright++;
+          if (lum < 0.35) dark++;
+          var onEdge = x < 4 || y < 4 || x >= size - 4 || y >= size - 4;
+          if (onEdge) {
+            edgeR += pr;
+            edgeG += pg;
+            edgeB += pb;
+            edgeN++;
+          }
+        }
       }
-      if (!n) return null;
-      return (
-        'rgb(' +
-        Math.round(r / n) +
-        ',' +
-        Math.round(g / n) +
-        ',' +
-        Math.round(b / n) +
-        ')'
-      );
+
+      if (!total) return null;
+
+      var bgR = edgeN ? edgeR / edgeN : 0;
+      var bgG = edgeN ? edgeG / edgeN : 0;
+      var bgB = edgeN ? edgeB / edgeN : 0;
+      var bgLum = pixelLuminance(bgR, bgG, bgB);
+      var brightRatio = bright / total;
+      var darkRatio = dark / total;
+
+      if (bgLum > 0.72 && brightRatio > 0.08 && darkRatio < 0.12) {
+        return { color: LOGO_BAND_DARK, dark: true };
+      }
+
+      if (!edgeN) return { color: LOGO_BAND_LIGHT, dark: false };
+      return {
+        color:
+          'rgb(' +
+          Math.round(bgR) +
+          ',' +
+          Math.round(bgG) +
+          ',' +
+          Math.round(bgB) +
+          ')',
+        dark: false,
+      };
     } catch (e) {
       return null;
     }
@@ -175,6 +215,13 @@
     el.style.setProperty('--sponsor-cta-fg', ctaTextOnBg(safe));
   }
 
+  function isHeroLogoWrap(wrap) {
+    return !!(
+      wrap &&
+      wrap.closest('.sponsor-hub--in-hero.sponsor-hub--logo-only, .sponsor-hub--in-hero.sponsor-hub--active')
+    );
+  }
+
   function applyLogoBand(wrap, img, hasLogo) {
     if (!wrap) return;
     wrap.classList.add('sponsor-logo-band');
@@ -182,14 +229,22 @@
 
     if (!hasLogo || !img) {
       wrap.style.backgroundColor = '';
+      wrap.classList.remove('sponsor-logo-band--dark');
       return;
     }
 
     img.classList.add('sponsor-logo--full');
+    if (!/^data:/i.test(String(img.src || ''))) {
+      img.crossOrigin = 'anonymous';
+    }
 
     function paint() {
-      var bg = sampleBackgroundFromImage(img);
-      wrap.style.backgroundColor = bg || '#f3f4f6';
+      var band = sampleLogoBandColor(img);
+      if (!band && isHeroLogoWrap(wrap)) {
+        band = { color: LOGO_BAND_DARK, dark: true };
+      }
+      wrap.style.backgroundColor = (band && band.color) || LOGO_BAND_LIGHT;
+      wrap.classList.toggle('sponsor-logo-band--dark', !!(band && band.dark));
     }
 
     if (img.complete && img.naturalWidth) paint();
@@ -198,7 +253,13 @@
       img.addEventListener(
         'error',
         function () {
-          wrap.style.backgroundColor = '#f3f4f6';
+          if (isHeroLogoWrap(wrap)) {
+            wrap.style.backgroundColor = LOGO_BAND_DARK;
+            wrap.classList.add('sponsor-logo-band--dark');
+          } else {
+            wrap.style.backgroundColor = LOGO_BAND_LIGHT;
+            wrap.classList.remove('sponsor-logo-band--dark');
+          }
         },
         { once: true }
       );

@@ -276,6 +276,44 @@
   box-shadow: 0 8px 20px rgba(45, 27, 94, 0.1);
 }
 
+button.ad-stat-link {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.ad-stat-link:hover {
+  border-color: var(--ad-teal);
+}
+
+button.ad-stat-link:focus-visible {
+  outline: 2px solid var(--ad-teal);
+  outline-offset: 2px;
+}
+
+button.ad-stat-link::after {
+  content: 'View →';
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ad-teal);
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+button.ad-stat-link:hover::after,
+button.ad-stat-link:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .ad-stat-label {
   font-size: 11px;
   font-weight: 600;
@@ -742,7 +780,8 @@
 
 .ad-td-actions {
   width: 1%;
-  white-space: nowrap;
+  min-width: 148px;
+  white-space: normal;
   vertical-align: top;
   overflow: visible;
   position: relative;
@@ -833,39 +872,99 @@
   margin-bottom: 28px;
 }
 
-.ad-saved-scope {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  border-bottom: 1px solid var(--ad-border-soft);
+.ad-saved-scope-wrap {
+  padding: 16px 16px 14px;
   background: var(--ad-teal-pale);
+  border-bottom: 1px solid var(--ad-border-soft);
+}
+
+.ad-saved-scope-wrap--compact {
+  padding-bottom: 12px;
+}
+
+.ad-saved-scope-kicker {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ad-text-mid);
+}
+
+.ad-saved-scope {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ad-saved-scope--pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 720px) {
+  .ad-saved-scope:not(.ad-saved-scope--pair) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .ad-saved-scope-btn {
-  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 0;
   font-family: inherit;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.3;
   color: var(--ad-teal-dark);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 12px 10px;
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 999px;
+  padding: 10px 12px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .ad-saved-scope-btn:hover {
-  background: rgba(255, 255, 255, 0.55);
+  border-color: var(--ad-teal);
+  color: var(--ad-slate);
+  transform: translateY(-1px);
 }
 
 .ad-saved-scope-btn.is-active {
-  color: var(--ad-slate);
-  background: var(--ad-white);
-  border-bottom-color: var(--ad-teal);
+  color: #fff;
+  background: var(--ad-teal);
+  border-color: var(--ad-teal-dark);
+  box-shadow: 0 3px 10px rgba(122, 61, 138, 0.28);
+}
+
+.ad-saved-scope-btn.is-active:hover {
+  color: #fff;
+  transform: none;
+}
+
+.ad-saved-scope-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  background: var(--ad-teal-pale);
+  color: var(--ad-teal-dark);
+}
+
+.ad-saved-scope-count[hidden] {
+  display: none !important;
+}
+
+.ad-saved-scope-btn.is-active .ad-saved-scope-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
 }
 
 .ad-saved-pane {
@@ -1862,24 +1961,40 @@ tr.ad-row-highlight td {
   flex-wrap: wrap;
   align-items: center;
   gap: 2px 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ad-border-soft);
+}
+
+.ad-cal-links-label {
+  display: block;
+  width: 100%;
+  margin: 0 0 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ad-text-soft);
 }
 
 .ad-cal-link {
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ad-teal-dark);
-  background: none;
-  border: none;
-  padding: 0;
+  background: var(--ad-teal-pale);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
   cursor: pointer;
   text-decoration: none;
   line-height: 1.35;
 }
 
 .ad-cal-link:hover {
-  color: var(--ad-teal);
-  text-decoration: underline;
+  color: var(--ad-teal-dark);
+  background: var(--ad-teal-light);
+  text-decoration: none;
 }
 
 .ad-cal-sep {
