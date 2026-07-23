@@ -111,7 +111,7 @@
     visibility: {
       title: 'How to grow your visibility',
       steps: [
-        'Use Featured Boost to pin your own event or business opportunity higher in search.',
+        'Feature your own event or business opportunity to show it first when people browse the hub.',
         'Open Grow your visibility any time to compare self-serve upgrades and sponsorship options.',
         'Sponsorship packages are for third-party B2B brands reaching audiences across directories — not for pinning your own listings.',
         'City Sponsor checks out online; Headline Sponsor and Page Partner are confirmed by enquiry.',
