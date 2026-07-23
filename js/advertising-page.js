@@ -186,6 +186,14 @@
     opportunities: 'Opportunities',
   };
 
+  var STICKY_CTA_BY_SECTION = {
+    events: { href: '#city-partner-package', text: 'City Sponsor · from £29/mo' },
+    organisers: { href: '#ad-pkg-organisers-main', text: 'Headline · from £1,000/mo' },
+    opportunities: { href: '#ad-pkg-opportunities-listing', text: 'List from £25/mo + VAT' },
+  };
+
+  var activeAdSection = 'events';
+
   var ENQUIRY_PACKAGES = {
     events: ['Headline Sponsor', 'Event Page Partner', 'Featured Event Boost', 'Not sure yet'],
     organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Organiser Boost', 'Not sure yet'],
@@ -214,6 +222,58 @@
     return first && first.nodeType === 3 ? first.textContent.trim() : priceEl.textContent.trim().split('\n')[0];
   }
 
+  function syncStickyCta(section) {
+    activeAdSection = section || activeAdSection || 'events';
+    var cfg = STICKY_CTA_BY_SECTION[activeAdSection] || STICKY_CTA_BY_SECTION.events;
+    var primary = document.getElementById('ad-sticky-cta-primary');
+    if (!primary || !cfg) return;
+    primary.href = cfg.href;
+    primary.textContent = cfg.text;
+  }
+
+  function getActiveAdSection() {
+    var active = document.querySelector('[data-ad-tab].is-active');
+    return active ? active.getAttribute('data-ad-tab') || 'events' : activeAdSection || 'events';
+  }
+
+  function setPackageExpanded(pkg, expanded) {
+    if (!pkg || !pkg.classList.contains('ad-package--collapsible')) return;
+    var summary = pkg.querySelector('.ad-package-summary');
+    pkg.classList.toggle('is-expanded', expanded);
+    pkg.classList.toggle('is-collapsed', !expanded);
+    if (summary) summary.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  }
+
+  function initPackageCollapse() {
+    document.querySelectorAll('.ad-package-browser .ad-package').forEach(function (pkg) {
+      if (pkg.dataset.adCollapseInit === '1') return;
+      pkg.dataset.adCollapseInit = '1';
+
+      var label = packageLabelFromArticle(pkg);
+      var price = packagePriceFromArticle(pkg);
+      var summary = document.createElement('button');
+      summary.type = 'button';
+      summary.className = 'ad-package-summary';
+      summary.setAttribute('aria-expanded', 'false');
+      summary.innerHTML =
+        '<span class="ad-package-summary-main">' +
+        '<span class="ad-package-summary-label">Package</span>' +
+        '<span class="ad-package-summary-title">' +
+        esc(label) +
+        '</span>' +
+        (price ? '<span class="ad-package-summary-price">' + esc(price) + '</span>' : '') +
+        '</span>' +
+        '<span class="ad-package-summary-icon" aria-hidden="true"></span>';
+
+      pkg.insertBefore(summary, pkg.firstChild);
+      pkg.classList.add('ad-package--collapsible', 'is-collapsed');
+
+      summary.addEventListener('click', function () {
+        setPackageExpanded(pkg, pkg.classList.contains('is-collapsed'));
+      });
+    });
+  }
+
   function activatePackageInPanel(panel, packageId, options) {
     if (!panel || !packageId) return false;
     var browser = panel.querySelector('.ad-package-browser');
@@ -227,7 +287,10 @@
       var active = article.id === packageId;
       article.hidden = !active;
       article.classList.toggle('is-active-package', active);
-      if (active) found = true;
+      if (active) {
+        found = true;
+        setPackageExpanded(article, !!(options && options.expand));
+      }
     });
 
     tabs.forEach(function (tab) {
@@ -281,7 +344,7 @@
           (price ? '<span class="ad-package-tab-price">' + esc(price) + '</span>' : '');
 
         btn.addEventListener('click', function () {
-          activatePackageInPanel(panel, id);
+          activatePackageInPanel(panel, id, { expand: false });
           if (history.replaceState) {
             history.replaceState(null, '', '#' + id);
           }
@@ -393,6 +456,126 @@
     });
   }
 
+  function setQuickEnquiryStatus(message, type) {
+    var statusEl = document.getElementById('ad-enquiry-quick-status');
+    if (!statusEl) return;
+    if (!message) {
+      statusEl.hidden = true;
+      statusEl.textContent = '';
+      statusEl.classList.remove('is-ok', 'is-error');
+      return;
+    }
+    statusEl.hidden = false;
+    statusEl.textContent = message;
+    statusEl.classList.toggle('is-ok', type === 'ok');
+    statusEl.classList.toggle('is-error', type === 'error');
+  }
+
+  function submitAdvertisingEnquiry(payload, callbacks) {
+    callbacks = callbacks || {};
+    return fetch('/api/advertising', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (result.ok && result.data && result.data.ok) {
+          if (callbacks.onOk) {
+            callbacks.onOk(result.data.message || 'Thanks — Rosie will reply within one business day.');
+          }
+          return result;
+        }
+        var message =
+          (result.data && result.data.message) ||
+          'Could not send your enquiry. Email rosie@thenetworkerhub.com instead.';
+        if (callbacks.onError) callbacks.onError(message);
+        return result;
+      })
+      .catch(function () {
+        if (callbacks.onError) {
+          callbacks.onError('Could not send your enquiry. Email rosie@thenetworkerhub.com instead.');
+        }
+      });
+  }
+
+  function initQuickEnquiry() {
+    var form = document.getElementById('ad-enquiry-quick-form');
+    if (!form) return;
+
+    var submitBtn = document.getElementById('ad-enquiry-quick-submit');
+    var moreLink = document.getElementById('ad-enquiry-quick-more');
+
+    if (moreLink) {
+      moreLink.addEventListener('click', function () {
+        var quickName = form.querySelector('[name="name"]');
+        var quickEmail = form.querySelector('[name="email"]');
+        var mainForm = document.getElementById('ad-enquiry-form');
+        if (!mainForm) return;
+        if (quickName && quickName.value) {
+          var nameField = mainForm.querySelector('[name="name"]');
+          if (nameField) nameField.value = quickName.value;
+        }
+        if (quickEmail && quickEmail.value) {
+          var emailField = mainForm.querySelector('[name="email"]');
+          if (emailField) emailField.value = quickEmail.value;
+        }
+        syncEnquiryFormSection(getActiveAdSection());
+        var sectionEl = document.getElementById('ad-enquiry-section');
+        var packageEl = document.getElementById('ad-enquiry-package');
+        if (sectionEl) {
+          var label = ENQUIRY_SECTION_LABELS[getActiveAdSection()] || 'Events';
+          Array.prototype.forEach.call(sectionEl.options, function (opt) {
+            opt.selected = opt.value === label;
+          });
+        }
+        if (packageEl) packageEl.value = 'Not sure yet';
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      setQuickEnquiryStatus('', '');
+
+      var fd = new FormData(form);
+      var section = ENQUIRY_SECTION_LABELS[getActiveAdSection()] || 'Events';
+      var payload = {
+        company: '',
+        name: String(fd.get('name') || '').trim(),
+        email: String(fd.get('email') || '').trim(),
+        section: section,
+        package: 'Not sure yet',
+        budget: '',
+        message: 'Quick enquiry from advertising page.',
+        website: String(fd.get('website') || '').trim(),
+      };
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
+
+      submitAdvertisingEnquiry(payload, {
+        onOk: function (message) {
+          setQuickEnquiryStatus(message, 'ok');
+          form.reset();
+        },
+        onError: function (message) {
+          setQuickEnquiryStatus(message, 'error');
+        },
+      }).finally(function () {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send quick enquiry →';
+        }
+      });
+    });
+  }
+
   function initEnquiryForm() {
     var form = document.getElementById('ad-enquiry-form');
     if (!form) return;
@@ -434,41 +617,21 @@
         submitBtn.textContent = 'Sending…';
       }
 
-      fetch('/api/advertising', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-        .then(function (res) {
-          return res.json().then(function (data) {
-            return { ok: res.ok, data: data };
-          });
-        })
-        .then(function (result) {
-          if (result.ok && result.data && result.data.ok) {
-            setEnquiryStatus(result.data.message || 'Thanks — Rosie will reply within one business day.', 'ok');
-            form.reset();
-            syncCityPartnerEnquiryNote();
-            return;
-          }
-          setEnquiryStatus(
-            (result.data && result.data.message) ||
-              'Could not send your enquiry. Email rosie@thenetworkerhub.com instead.',
-            'error'
-          );
-        })
-        .catch(function () {
-          setEnquiryStatus(
-            'Could not send your enquiry. Email rosie@thenetworkerhub.com instead.',
-            'error'
-          );
-        })
-        .finally(function () {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Send enquiry →';
-          }
-        });
+      submitAdvertisingEnquiry(payload, {
+        onOk: function (message) {
+          setEnquiryStatus(message, 'ok');
+          form.reset();
+          syncCityPartnerEnquiryNote();
+        },
+        onError: function (message) {
+          setEnquiryStatus(message, 'error');
+        },
+      }).finally(function () {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send enquiry →';
+        }
+      });
     });
   }
 
@@ -534,6 +697,8 @@
     var header = document.querySelector('.ad-page-header');
     var enquiry = document.getElementById('ad-enquiry');
     if (!bar || !header) return;
+
+    syncStickyCta(getActiveAdSection());
 
     var showBar = false;
     var hideForEnquiry = false;
@@ -693,7 +858,7 @@
       var panel = panelName
         ? document.querySelector('[data-ad-panel="' + panelName + '"]')
         : null;
-      if (panel && activatePackageInPanel(panel, id, { scroll: true })) {
+      if (panel && activatePackageInPanel(panel, id, { scroll: true, expand: true })) {
         return;
       }
       var el = document.getElementById(id);
@@ -1195,6 +1360,7 @@
       });
 
       syncSectionPackages(target);
+      syncStickyCta(target);
 
       var preserveHash = options && options.preserveHash;
       var anchor = options && options.anchor;
@@ -1207,7 +1373,7 @@
           activatePackageInPanel(
             document.querySelector('[data-ad-panel="' + target + '"]'),
             anchor,
-            { scroll: true }
+            { scroll: true, expand: true }
           );
         }, 40);
       }
@@ -1275,11 +1441,13 @@
     document.addEventListener('DOMContentLoaded', function () {
       initHeroEntrance();
       initReveal();
+      initPackageCollapse();
       initTabs();
       initPackageTabs();
       initPackageReveal();
       initTabJumpLinks();
       initEnquiryJumps();
+      initQuickEnquiry();
       initEnquiryForm();
       initStickyCta();
       loadSlotAvailability();
@@ -1288,11 +1456,13 @@
   } else {
     initHeroEntrance();
     initReveal();
+    initPackageCollapse();
     initTabs();
     initPackageTabs();
     initPackageReveal();
     initTabJumpLinks();
     initEnquiryJumps();
+    initQuickEnquiry();
     initEnquiryForm();
     initStickyCta();
     loadSlotAvailability();

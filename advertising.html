@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260714cls">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260723hdr">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260723ux">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -31,14 +31,20 @@
   <header class="ad-page-header" aria-label="Advertising and sponsorship">
     <div class="ad-page-header-inner">
       <p class="ad-page-kicker">Advertising &amp; sponsorship</p>
-      <h1>Reach UK business owners where they discover events &amp; opportunities</h1>
+      <h1>Reach UK business owners on The Networker Hub</h1>
       <p class="ad-page-lede">
-        Guide pricing and live examples. <strong>City Sponsor</strong> cities checkout online when available. <strong>Headline Sponsor</strong> and <strong>Page Partner</strong> placements are enquiry-only and reviewed before go-live. All spots are labelled <strong>Sponsored</strong>.
+        Guide pricing and live placement examples. Pick a section below to compare packages.
       </p>
       <div class="ad-page-header-actions">
-        <a class="ad-page-header-cta ad-page-header-cta--primary" href="#city-partner-package">Check city availability</a>
+        <a class="ad-page-header-cta ad-page-header-cta--primary" href="#ad-section-nav">Browse placements</a>
         <a class="ad-page-header-cta ad-page-header-cta--secondary ad-enquiry-jump" href="#ad-enquiry">Send an enquiry</a>
       </div>
+      <p class="ad-page-header-meta">City Sponsor checks out online · other packages by enquiry · all labelled Sponsored</p>
+      <ul class="ad-page-proof" aria-label="Platform reach">
+        <li><strong>27,000+</strong> events listed last year</li>
+        <li><strong>17,000+</strong> networkers</li>
+        <li><strong>UK-wide</strong> directory</li>
+      </ul>
     </div>
   </header>
 
@@ -48,26 +54,26 @@
     <span class="content-flow-orb content-flow-orb--3" aria-hidden="true"></span>
     <div class="content-body ad-content-body">
     <div class="ad-section-nav ad-reveal" id="ad-section-nav">
-      <p class="ad-section-nav-label">Choose a section to advertise in</p>
+      <p class="ad-section-nav-label">Choose a section</p>
       <div class="ad-section-picks" id="ad-section-picks" role="tablist" aria-label="Choose a section to advertise in">
       <button type="button" class="ad-section-pick is-active" role="tab" id="ad-tab-events" data-ad-tab="events" data-ad-pick="events" aria-controls="ad-panel-events" aria-selected="true">
         <span class="ad-section-pick-body">
           <strong>Events</strong>
-          <span>Headline Sponsor, Page Partner &amp; City Sponsor</span>
+          <span>Directory, event pages &amp; emails</span>
           <em>From £29/mo + VAT</em>
         </span>
       </button>
       <button type="button" class="ad-section-pick" role="tab" id="ad-tab-organisers" data-ad-tab="organisers" data-ad-pick="organisers" aria-controls="ad-panel-organisers" aria-selected="false" tabindex="-1">
         <span class="ad-section-pick-body">
           <strong>Organisers</strong>
-          <span>Headline Sponsor, Page Partner &amp; Featured Boost</span>
+          <span>Organiser directory &amp; emails</span>
           <em>From £27.50/mo</em>
         </span>
       </button>
       <button type="button" class="ad-section-pick" role="tab" id="ad-tab-opportunities" data-ad-tab="opportunities" data-ad-pick="opportunities" aria-controls="ad-panel-opportunities" aria-selected="false" tabindex="-1">
         <span class="ad-section-pick-body">
           <strong>Opportunities</strong>
-          <span>Headline Sponsor, Page Partner, City Sponsor &amp; Directory Listing</span>
+          <span>Business opportunities directory</span>
           <em>From £25/mo + VAT</em>
         </span>
       </button>
@@ -78,9 +84,31 @@
       Guide rates · min. 1 month unless stated · <a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>
     </p>
 
-    <section class="ad-package-picker ad-reveal" aria-labelledby="ad-package-picker-title">
-      <h2 class="ad-package-picker-title" id="ad-package-picker-title">Not sure which package?</h2>
-      <div class="ad-package-picker-grid">
+    <section class="ad-enquiry-quick ad-reveal" id="ad-enquiry-quick" aria-labelledby="ad-enquiry-quick-title">
+      <h2 class="ad-enquiry-quick-title" id="ad-enquiry-quick-title">Quick enquiry</h2>
+      <p class="ad-enquiry-quick-lede">Not ready to browse? Leave your name and email — Rosie will help you choose.</p>
+      <form class="ad-enquiry-quick-form" id="ad-enquiry-quick-form">
+        <input type="text" name="website" class="ad-enquiry-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="ad-enquiry-quick-fields">
+          <label class="ad-enquiry-field">
+            <span class="visually-hidden">Your name</span>
+            <input type="text" name="name" autocomplete="name" placeholder="Your name" required>
+          </label>
+          <label class="ad-enquiry-field">
+            <span class="visually-hidden">Work email</span>
+            <input type="email" name="email" autocomplete="email" placeholder="Work email" required>
+          </label>
+          <button type="submit" class="ad-enquiry-quick-submit" id="ad-enquiry-quick-submit">Send quick enquiry →</button>
+        </div>
+        <p class="ad-enquiry-quick-more"><a href="#ad-enquiry" id="ad-enquiry-quick-more">Add more details</a></p>
+        <p class="ad-enquiry-quick-status" id="ad-enquiry-quick-status" role="status" hidden></p>
+      </form>
+    </section>
+
+    <section class="ad-package-picker ad-package-picker--collapsible ad-reveal" aria-labelledby="ad-package-picker-title">
+      <details class="ad-package-picker-details">
+        <summary class="ad-package-picker-title" id="ad-package-picker-title">Help me choose a package</summary>
+        <div class="ad-package-picker-grid">
         <a class="ad-package-picker-card" href="#city-partner-package" data-ad-tab-jump="events">
           <strong>Local or regional brand</strong>
           <span>City Sponsor from £29/mo — exclusive per city, checkout online.</span>
@@ -97,7 +125,8 @@
           <strong>Promoting your own listing</strong>
           <span>Directory Listing or Featured Boost — self-serve from your dashboard.</span>
         </a>
-      </div>
+        </div>
+      </details>
     </section>
 
     <!-- Events -->
@@ -1461,6 +1490,7 @@
       <div class="ad-enquiry-inner">
         <header class="ad-enquiry-head">
           <h2 id="ad-enquiry-title">Send an enquiry</h2>
+          <p class="ad-enquiry-lede">Prefer to share more detail? Complete the form below — we reply within one business day.</p>
         </header>
         <form class="ad-enquiry-form" id="ad-enquiry-form">
           <input type="text" name="website" class="ad-enquiry-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -1517,7 +1547,7 @@
 </main>
 
 <div class="ad-sticky-cta" id="ad-sticky-cta" hidden>
-  <a class="ad-sticky-cta-btn ad-sticky-cta-btn--primary" href="#city-partner-package">City Sponsor · from £29/mo</a>
+  <a class="ad-sticky-cta-btn ad-sticky-cta-btn--primary" id="ad-sticky-cta-primary" href="#city-partner-package">City Sponsor · from £29/mo</a>
   <a class="ad-sticky-cta-btn ad-sticky-cta-btn--secondary ad-enquiry-jump" href="#ad-enquiry">Send enquiry</a>
 </div>
 
@@ -1525,7 +1555,7 @@
 <script src="js/site-footer.js?v=20260722b" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
-<script src="js/advertising-page.js?v=20260723top"></script>
+<script src="js/advertising-page.js?v=20260723ux"></script>
 <script src="js/city-partner-advertising.js?v=20260722cp18"></script>
 
 </body>
