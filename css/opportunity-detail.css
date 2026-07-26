@@ -75,8 +75,19 @@
 }
 
 @media (max-width: 899px) {
+  .opportunity-detail-page .opp-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .opportunity-detail-page .opp-detail-main {
+    order: 1;
+  }
+
   .opportunity-detail-page .opp-detail-sidebar {
-    order: -1;
+    order: 2;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   .opportunity-detail-page .opp-enquire-card {
@@ -88,6 +99,44 @@
   .opportunity-detail-page .opp-detail-breadcrumb {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .opportunity-detail-page .opp-detail-main {
+    padding: 20px 16px;
+  }
+
+  .opportunity-detail-page .opp-detail-hero {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "logo title"
+      "save save";
+    gap: 12px;
+    align-items: start;
+  }
+
+  .opportunity-detail-page .opp-detail-host-logo {
+    grid-area: logo;
+  }
+
+  .opportunity-detail-page .opp-detail-hero-text {
+    grid-area: title;
+    min-width: 0;
+  }
+
+  .opportunity-detail-page .opp-detail-save {
+    grid-area: save;
+    justify-self: start;
+  }
+
+  .opportunity-detail-page .opp-detail-hero:has(.opp-detail-host-logo[hidden]) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "save";
+  }
+
+  .opportunity-detail-page .opp-detail-meta-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -715,4 +764,56 @@
 .opportunity-detail-page .opp-similar-invest {
   font-size: 13px;
   color: #6b7280;
+}
+
+/* Mobile sticky jump to enquire form */
+.opp-enquire-jump {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body.opp-enquire-jump-active .opp-detail-shell {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .opp-enquire-jump.is-visible {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 95;
+    padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+    background: linear-gradient(
+      180deg,
+      rgba(248, 249, 251, 0) 0%,
+      rgba(248, 249, 251, 0.92) 24%,
+      rgba(248, 249, 251, 0.98) 100%
+    );
+    border-top: 1px solid rgba(13, 31, 60, 0.12);
+    box-shadow: 0 -8px 28px rgba(13, 31, 60, 0.08);
+  }
+
+  .opp-enquire-jump-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 72px 12px 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--opp-gold, #c9961f);
+    color: var(--opp-navy, #0d1f3c);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(201, 150, 31, 0.28);
+  }
+
+  .opp-enquire-jump-btn:active {
+    transform: scale(0.99);
+  }
 }

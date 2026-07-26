@@ -172,6 +172,11 @@
   gap: 4px;
 }
 
+/* Extra bottom space so last account links clear any fixed chrome */
+body.nav-menu-open .nav-mobile-links {
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+
 .nav-mobile-links .nav-mobile-item,
 .nav-mobile-links a.nav-mobile-item,
 .nav-mobile-links button.nav-mobile-item {
@@ -385,6 +390,12 @@ body.nav-menu-open {
     flex-direction: column;
     text-align: center;
     gap: 16px;
+    min-width: 0;
+    max-width: 100%;
+    padding-left: 4px;
+    padding-right: 4px;
+    /* Clear fixed Hubert launcher so footer links stay tappable */
+    padding-bottom: 88px;
   }
 
   .footer-logo {
@@ -395,18 +406,44 @@ body.nav-menu-open {
   }
 
   .footer-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     width: 100%;
-    justify-content: flex-start;
-    gap: 20px 28px;
+    gap: 20px 16px;
+    justify-content: stretch;
+    text-align: left;
+  }
+
+  .footer-col {
+    min-width: 0;
   }
 
   .footer-col-links {
     gap: 6px;
   }
 
+  .footer-col-links a,
+  .footer-cookie-settings {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   .footer-links {
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .footer-copy {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    padding-left: 4px;
+    padding-right: 4px;
+    box-sizing: border-box;
+  }
+
+  .footer-copy .nowrap {
+    white-space: normal;
   }
 }
 
@@ -467,9 +504,54 @@ body.nav-menu-open {
   .events-page .shell {
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 32px;
+    padding-bottom: 96px;
     max-width: 100%;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .events-page #networking-location-directory {
+    order: 8;
+    margin-bottom: 12px;
+  }
+
+  .events-page .events-filter-wrap {
+    order: 9;
+  }
+
+  .events-page .events-results-meta {
+    order: 10;
+  }
+
+  .events-page .events-map-wrap,
+  .events-page .events-map-hint-bar {
+    order: 11;
+  }
+
+  .events-page .events-body {
+    order: 12;
+  }
+
+  .events-page .home-locations.networking-location-directory {
+    padding: 16px 0 4px;
+    margin-bottom: 0;
+    box-shadow: none;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .events-page .home-locations.networking-location-directory .home-flow-inner {
+    padding: 0;
+  }
+
+  .events-page .home-locations.networking-location-directory .section-title {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  .events-page .home-locations.networking-location-directory .home-locations-lede {
+    display: none;
   }
 
   .events-filter-shell {
@@ -478,7 +560,7 @@ body.nav-menu-open {
   }
 
   .events-filter-bar {
-    padding: 10px 12px;
+    padding: 8px 10px;
     min-width: 0;
   }
 
@@ -490,9 +572,9 @@ body.nav-menu-open {
   .filter-bar-row-top {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
   }
 
   .filter-bar-location-group {
@@ -547,6 +629,19 @@ body.nav-menu-open {
     min-width: 0;
   }
 
+  /* Only the mobile Near me control should paint under 901px */
+  .filter-checkbox.filter-near-control-desktop {
+    display: none !important;
+  }
+
+  .filter-checkbox.filter-near-control-mobile {
+    display: inline-flex !important;
+  }
+
+  .filter-bar-row-top .filter-field-search input {
+    text-overflow: ellipsis;
+  }
+
   .filter-near-radius select {
     max-width: none;
     width: 100%;
@@ -572,7 +667,7 @@ body.nav-menu-open {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
-    gap: 8px;
+    gap: 6px;
   }
 
   .filter-bar-actions {
@@ -591,10 +686,10 @@ body.nav-menu-open {
 
   .filter-bar-primary {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     width: 100%;
-    gap: 8px;
+    gap: 6px;
   }
 
   .filter-bar-quick {
@@ -607,12 +702,33 @@ body.nav-menu-open {
     flex: 1 1 auto;
     min-width: 0;
     min-height: 42px;
+    /* Keep date control clear of the fixed Hubert launcher */
+    max-width: calc(100% - 72px);
+  }
+
+  .filter-bar-primary .filter-bar-quick,
+  .filter-bar-primary .filter-format-group--inline,
+  .filter-bar-primary .filter-price-range--inline,
+  .filter-bar-primary .filter-more-toggle {
+    width: 100%;
+    max-width: none;
   }
 
   .filter-bar-primary .filter-format-group--inline {
     flex: 0 0 auto;
     min-width: 0;
-    width: auto;
+  }
+
+  .filter-format-pills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-format-pill,
+  .filter-format-pill-face {
+    width: 100%;
   }
 
   .filter-bar-primary .filter-format-pill {
@@ -621,9 +737,10 @@ body.nav-menu-open {
 
   .filter-bar-primary .filter-more-toggle {
     display: inline-flex;
-    width: auto;
+    width: 100%;
     flex: 0 0 auto;
-    align-self: center;
+    align-self: stretch;
+    justify-content: center;
   }
 
   .filter-bar-primary .filter-price-range--inline {
@@ -631,13 +748,27 @@ body.nav-menu-open {
     width: 100%;
   }
 
+  .filter-bar-primary .filter-price-range--inline .filter-price-range-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-bar-primary .filter-price-range--inline .filter-checkbox-free {
+    grid-column: 1 / -1;
+  }
+
   .filter-bar-primary .filter-price-range--inline .filter-price-bounds {
-    flex: 1 1 auto;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
     width: 100%;
   }
 
   .filter-bar-primary .filter-price-range--inline .filter-price-bound {
-    flex: 1 1 calc(50% - 6px);
+    flex: 1 1 auto;
     max-width: none;
   }
 
@@ -1404,11 +1535,32 @@ body.nav-menu-open {
 
 /* ─── Event detail ─── */
 @media (max-width: 768px) {
-  .event-detail-page .shell,
-  .ev-shell {
+  .event-detail-page .container {
     padding-left: 16px;
     padding-right: 16px;
     max-width: 100%;
-    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .event-detail-page .hero {
+    margin-bottom: 20px;
+  }
+
+  .event-detail-page .content-section {
+    margin-bottom: 28px;
+  }
+}
+
+/* ─── Organiser profile ─── */
+@media (max-width: 768px) {
+  .organiser-profile-page .org-profile-shell {
+    padding-bottom: 88px;
+  }
+}
+
+/* ─── Opportunity detail ─── */
+@media (max-width: 768px) {
+  .opportunity-detail-page .opp-detail-shell {
+    padding-bottom: 24px;
   }
 }

@@ -269,16 +269,22 @@
     return isLocationRadiusActive() ? ' · within ' + getNearRadiusMiles() + ' miles' : '';
   }
 
+  function postcodeHintSuffix() {
+    var narrow = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
+    return narrow ? ' · add postcode' : ' · add postcode for distances';
+  }
+
   function formatSidebarSub(onMap, total, hasCoords) {
     var shown = Math.min(sidebarVisibleCount, onMap);
     var more = onMap > sidebarVisibleCount ? '+' : '';
     var nearSuffix = nearMeSubSuffix();
+    var pcHint = postcodeHintSuffix();
     if (viewportFilterActive) {
       var areaLead = onMap + ' in this area · ' + total + ' matching · showing ';
       if (hasCoords) {
         return areaLead + 'nearest ' + shown + more + nearSuffix;
       }
-      return areaLead + shown + more + ' · add postcode for distances' + nearSuffix;
+      return areaLead + shown + more + pcHint + nearSuffix;
     }
     if (hasCoords) {
       return (
@@ -298,7 +304,7 @@
       ' matching · showing ' +
       shown +
       more +
-      ' · add postcode for distances' +
+      pcHint +
       nearSuffix
     );
   }
@@ -651,12 +657,16 @@
   }
 
   function addMarker(ev, coords, miles) {
-    var popupMax = Math.min(280, Math.max(220, (window.innerWidth || 320) - 48));
+    var isNarrow = (window.innerWidth || 320) <= 900;
+    var popupMax = Math.min(isNarrow ? 240 : 280, Math.max(200, (window.innerWidth || 320) - (isNarrow ? 72 : 48)));
     var marker = L.marker(coords, { icon: markerIconForEvent(ev) }).bindPopup(popupHtml(ev, miles), {
       className: 'map-event-popup',
       maxWidth: popupMax,
-      minWidth: Math.min(220, popupMax),
+      minWidth: Math.min(200, popupMax),
       closeButton: false,
+      autoPan: true,
+      autoPanPadding: isNarrow ? [20, 56] : [32, 32],
+      keepInView: true,
     });
     marker.on('popupopen', function () {
       highlightSidebarItem(ev.id);

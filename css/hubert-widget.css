@@ -279,6 +279,18 @@
   height: min(520px, calc(100vh - 80px));
 }
 
+/* Hide launcher while mobile nav is open so it cannot cover the drawer */
+body.nav-menu-open .hubert-widget {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Lift above sticky detail-page CTAs (tickets / enquire) */
+body.ev-ticket-jump-active .hubert-widget:not(.hubert-widget--open),
+body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
 @media (max-width: 640px) {
   .hubert-launcher-label {
     display: none;
@@ -290,8 +302,8 @@
   }
 
   .hubert-launcher-icon {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
 
   .hubert-panel {

@@ -30,12 +30,24 @@
 
   function loadScript(src, testFn) {
     if (typeof testFn === 'function' && testFn()) return Promise.resolve();
-    if (loading[src]) return loading[src];
+    if (loading[src]) {
+      return loading[src].then(function () {
+        if (typeof testFn === 'function' && !testFn()) {
+          delete loading[src];
+          return loadScript(src, testFn);
+        }
+      });
+    }
     loading[src] = new Promise(function (resolve, reject) {
       var script = document.createElement('script');
       script.src = src;
       script.crossOrigin = 'anonymous';
       script.onload = function () {
+        if (typeof testFn === 'function' && !testFn()) {
+          delete loading[src];
+          reject(new Error('Script loaded but did not initialise'));
+          return;
+        }
         resolve();
       };
       script.onerror = function () {
@@ -48,19 +60,21 @@
   }
 
   function hubLoadLeaflet() {
+    // Styles can load in parallel; MarkerCluster must wait for Leaflet (global L).
     return Promise.all([
       loadStyle('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'),
       loadStyle('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css'),
       loadStyle('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css'),
       loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', function () {
         return !!global.L;
+      }).then(function () {
+        return loadScript(
+          'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+          function () {
+            return !!(global.L && global.L.markerClusterGroup);
+          }
+        );
       }),
-      loadScript(
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
-        function () {
-          return !!(global.L && global.L.markerClusterGroup);
-        }
-      ),
     ]);
   }
 
@@ -74,11 +88,15 @@
     ]);
   }
 
+  function hubLeafletReady() {
+    return !!(global.L && global.L.markerClusterGroup);
+  }
+
   function hubEnsureLeafletReady(callback) {
     var run = function () {
       if (typeof callback === 'function') callback();
     };
-    if (global.L) {
+    if (hubLeafletReady()) {
       run();
       return Promise.resolve();
     }

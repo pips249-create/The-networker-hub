@@ -523,8 +523,7 @@
 
   .org-profile-side {
     position: static;
-    order: -1;
-    max-width: 340px;
+    max-width: 480px;
     margin: 0 auto;
     width: 100%;
   }
@@ -600,7 +599,6 @@
 
   .org-profile-side {
     position: static;
-    order: 1;
     margin: 0;
     width: 100%;
   }
@@ -621,6 +619,13 @@
   .org-profile-actions-primary {
     justify-content: flex-start;
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .org-profile-actions-primary .org-profile-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .org-profile-btn {
@@ -661,6 +666,13 @@
   }
 
   .org-profile-actions-primary {
+    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .org-profile-actions-primary .org-profile-btn {
+    width: 100%;
     justify-content: center;
   }
 

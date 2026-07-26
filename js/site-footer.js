@@ -1,9 +1,9 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260723a
+ * FOOTER_BUILD=20260726d
  */
 (function () {
-  var FOOTER_BUILD = '20260723a';
+  var FOOTER_BUILD = '20260726d';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 

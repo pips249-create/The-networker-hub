@@ -611,6 +611,55 @@
     }
   }
 
+  var enquireJumpBound = false;
+
+  function refreshEnquireJumpVisibility() {
+    var jump = document.getElementById('opp-enquire-jump');
+    var card = document.getElementById('opp-enquire-card');
+    if (!jump || !card) return;
+
+    var mobile = window.matchMedia('(max-width: 768px)').matches;
+    var cardVisible = jump.dataset.cardVisible === '1';
+    var show = mobile && !cardVisible;
+
+    jump.hidden = !show;
+    jump.classList.toggle('is-visible', show);
+    document.body.classList.toggle('opp-enquire-jump-active', show);
+  }
+
+  function initEnquireJumpBar() {
+    if (enquireJumpBound) {
+      refreshEnquireJumpVisibility();
+      return;
+    }
+    var jump = document.getElementById('opp-enquire-jump');
+    var card = document.getElementById('opp-enquire-card');
+    var btn = document.getElementById('opp-enquire-jump-btn');
+    if (!jump || !card || !btn) return;
+    enquireJumpBound = true;
+
+    btn.addEventListener('click', function () {
+      var navOffset = window.matchMedia('(max-width: 768px)').matches ? 64 : 80;
+      var top = card.getBoundingClientRect().top + window.scrollY - navOffset;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    });
+
+    window.matchMedia('(max-width: 768px)').addEventListener('change', refreshEnquireJumpVisibility);
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          jump.dataset.cardVisible =
+            entry.isIntersecting && entry.intersectionRatio > 0.15 ? '1' : '0';
+          refreshEnquireJumpVisibility();
+        });
+      },
+      { threshold: [0, 0.15, 0.35], rootMargin: '-56px 0px -72px 0px' }
+    );
+    observer.observe(card);
+    refreshEnquireJumpVisibility();
+  }
+
   function finishInit(item) {
     if (!item) {
       showNotFound();
@@ -625,6 +674,7 @@
     prefillEnquireForm();
     wireListingReport(item);
     loadSidebarAd();
+    initEnquireJumpBar();
   }
 
   function init() {

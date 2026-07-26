@@ -391,6 +391,9 @@
       '<h3 class="organiser-card-name">' +
       escapeHtml(org.name) +
       '</h3>' +
+      '<p class="organiser-card-listings">' +
+      escapeHtml(listingCountLabel(org.eventCount)) +
+      '</p>' +
       (org.ranking && org.ranking.label
         ? '<span class="organiser-card-ranking hub-ranking-badge hub-ranking-badge--' +
           escapeHtml(org.ranking.tier || 'top10') +

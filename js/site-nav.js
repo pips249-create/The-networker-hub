@@ -431,29 +431,46 @@
     if (toggle.dataset.bound) return;
     toggle.dataset.bound = '1';
 
+    function setDrawerInert(isInert) {
+      if ('inert' in drawer) {
+        drawer.inert = isInert;
+      }
+    }
+
     function openMenu() {
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close menu');
       nav.classList.add('is-menu-open');
       drawer.hidden = false;
+      setDrawerInert(false);
       drawer.classList.add('is-open');
       drawer.setAttribute('aria-hidden', 'false');
       backdrop.hidden = false;
       document.body.classList.add('nav-menu-open');
+      window.requestAnimationFrame(function () {
+        if (closeBtn) closeBtn.focus();
+      });
     }
 
     function closeMenu() {
+      var focusInDrawer = drawer.contains(document.activeElement);
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open menu');
       nav.classList.remove('is-menu-open');
       drawer.classList.remove('is-open');
+      // Move focus out before aria-hidden so assistive tech is not blocked.
+      if (focusInDrawer) toggle.focus();
       drawer.setAttribute('aria-hidden', 'true');
+      setDrawerInert(true);
       backdrop.hidden = true;
       document.body.classList.remove('nav-menu-open');
       window.setTimeout(function () {
         if (!drawer.classList.contains('is-open')) drawer.hidden = true;
       }, 260);
     }
+
+    // Closed drawer starts aria-hidden; keep it inert so focus cannot land inside.
+    setDrawerInert(true);
 
     toggle.addEventListener('click', function () {
       if (drawer.classList.contains('is-open')) closeMenu();

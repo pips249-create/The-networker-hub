@@ -1277,6 +1277,43 @@
     });
   }
 
+  function initMobileFilterToggle() {
+    var shell = document.querySelector('.events-filter-shell');
+    var toggle = document.getElementById('filter-mobile-toggle');
+    var advanced = document.getElementById('filter-bar-advanced');
+    if (!shell || !toggle || !advanced || toggle.dataset.bound) return;
+    toggle.dataset.bound = '1';
+
+    var label = toggle.querySelector('.filter-mobile-toggle-label');
+    var mq = window.matchMedia('(max-width: 768px)');
+
+    function syncMobileFilterToggle() {
+      var mobile = mq.matches;
+      toggle.hidden = !mobile;
+      if (!mobile) {
+        shell.classList.remove('is-filter-expanded');
+        toggle.setAttribute('aria-expanded', 'false');
+        if (label) label.textContent = 'Show filters';
+        return;
+      }
+      var expanded = shell.classList.contains('is-filter-expanded');
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      if (label) label.textContent = expanded ? 'Hide filters' : 'Show filters';
+    }
+
+    toggle.addEventListener('click', function () {
+      var expanded = shell.classList.toggle('is-filter-expanded');
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      if (label) label.textContent = expanded ? 'Hide filters' : 'Show filters';
+    });
+
+    if (mq.addEventListener) mq.addEventListener('change', syncMobileFilterToggle);
+    else if (mq.addListener) mq.addListener(syncMobileFilterToggle);
+    syncMobileFilterToggle();
+  }
+
+  initMobileFilterToggle();
+
   function bindClearFilters(btn) {
     if (!btn) return;
     btn.addEventListener('click', function () {
