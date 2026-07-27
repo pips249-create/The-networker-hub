@@ -373,9 +373,10 @@
     sponsorship: {
       title: 'How to manage ads and sponsors',
       steps: [
-        'Pick a placement from the list — home page, city pages, event pages, and so on.',
-        'Each slot needs a logo image and a click-through link.',
-        'Save and check the live page to confirm it appears.',
+        'Pick a placement — browse heroes, detail-page ads, email mini sponsors, city partners, or home partners.',
+        'Browse heroes (events / organisers / opportunities): logo + website link only. Sidebar and banner ads also need a button label and colour.',
+        'Mini sponsor carousels: logo + click-through link per slot. Tick Active, then Save.',
+        'Check Ad active (or Mini sponsors active), save, and confirm on the live page.',
       ],
     },
     campaigns: {
@@ -3844,8 +3845,153 @@
     );
   }
 
+  function renderDemandRankList(rows, labelKey, countKey, emptyMessage) {
+    if (!rows || !rows.length) {
+      return '<p class="text-sm text-slate-500">' + esc(emptyMessage) + '</p>';
+    }
+    return (
+      '<ul class="space-y-2">' +
+      rows
+        .map(function (row) {
+          var label = row[labelKey] || row.title || row.name || row.query || row.location || row.type || '—';
+          var count = row[countKey] != null ? row[countKey] : row.count;
+          var extra = row.city ? ' · ' + esc(row.city) : '';
+          var zeroNote =
+            row.zeroCount != null && Number(row.zeroCount) > 0
+              ? ' · ' + esc(String(row.zeroCount)) + ' zero'
+              : '';
+          var avgNote =
+            row.avgResults != null ? ' · avg ' + esc(String(row.avgResults)) + ' results' : '';
+          return (
+            '<li class="flex items-start justify-between text-sm gap-3">' +
+            '<span class="font-medium text-brand-900 min-w-0 break-words">' +
+            esc(label) +
+            (extra || '') +
+            '</span>' +
+            '<span class="text-slate-500 shrink-0">' +
+            esc(String(count || 0)) +
+            zeroNote +
+            avgNote +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function renderDemandPanel(data) {
+    if (!data || data.error || data.configured === false) {
+      return '<p class="text-sm text-red-700">Could not load demand insights. Check Supabase env vars on Vercel.</p>';
+    }
+
+    var browse = data.browseSearches || {};
+    var favs = data.favourites || {};
+    var opps = data.opportunities || {};
+    var guests = data.guestVisits || {};
+    var searchNote = browse.unavailable
+      ? '<p class="text-xs text-amber-800 bg-amber-50 rounded-lg px-3 py-2">' +
+        esc(browse.message || 'Search logging table is not available yet.') +
+        '</p>'
+      : '<p class="text-xs text-slate-500">Logged when visitors accept analytics cookies and use search or filters on Events (page 1 only).</p>';
+
+    return (
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
+      '<div><h3 class="font-bold text-brand-900">Demand &amp; intent</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">What people search, save, and enquire about — ' +
+      esc(analyticsPeriodLabel(data.period || analyticsState.period)) +
+      '.</p></div>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      card(
+        'Browse searches logged',
+        String(browse.totalLogged || 0),
+        String(browse.withQuery || 0) + ' with text · ' + String(browse.zeroResults || 0) + ' zero results',
+        'brand'
+      ) +
+      card(
+        'Favourites saved',
+        String((favs.eventsSaved || 0) + (favs.organisersSaved || 0) + (favs.opportunitiesSaved || 0)),
+        String(favs.eventsSaved || 0) +
+          ' events · ' +
+          String(favs.organisersSaved || 0) +
+          ' groups · ' +
+          String(favs.opportunitiesSaved || 0) +
+          ' opps',
+        'violet'
+      ) +
+      card(
+        'Opportunity enquiries',
+        String(opps.enquiriesTotal || 0),
+        String(opps.enquiriesNew || 0) + ' still marked new',
+        'emerald'
+      ) +
+      card(
+        'Guest visits',
+        String(guests.total || 0),
+        String(guests.uniqueAttendees || 0) + ' unique attendees',
+        'blue'
+      ) +
+      '</div>' +
+      searchNote +
+      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Top event searches</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Free-text queries on /events</p>' +
+      renderDemandRankList(browse.topQueries || [], 'query', 'count', 'No search terms logged in this period yet.') +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Zero-result searches</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Demand with no matching inventory</p>' +
+      renderDemandRankList(
+        browse.zeroResultQueries || [],
+        'query',
+        'count',
+        'No zero-result searches in this period.'
+      ) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Locations searched</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Postcode / area filter text</p>' +
+      renderDemandRankList(
+        browse.topLocations || [],
+        'location',
+        'count',
+        'No location filters logged in this period yet.'
+      ) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Most saved events</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Attendee favourites</p>' +
+      renderDemandRankList(favs.topEvents || [], 'title', 'saves', 'No event favourites in this period yet.') +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Most saved groups</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Organiser favourites</p>' +
+      renderDemandRankList(
+        favs.topOrganisers || [],
+        'name',
+        'saves',
+        'No organiser favourites in this period yet.'
+      ) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Opportunity demand</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Views, enquiries, and saved-search terms</p>' +
+      '<div class="space-y-4">' +
+      '<div><p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Most viewed</p>' +
+      renderDemandRankList(opps.topViewed || [], 'title', 'viewCount', 'No opportunity views yet.') +
+      '</div>' +
+      '<div><p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Most enquired</p>' +
+      renderDemandRankList(opps.topEnquired || [], 'title', 'enquiries', 'No enquiries in this period yet.') +
+      '</div>' +
+      '<div><p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Saved search terms</p>' +
+      renderDemandRankList(
+        opps.savedSearchTerms || [],
+        'query',
+        'count',
+        'No opportunity saved-search terms in this period.'
+      ) +
+      '</div></div></div></div></section>'
+    );
+  }
+
   function loadAnalyticsInsights() {
     var panel = document.getElementById('analytics-insights');
+    var demandPanel = document.getElementById('analytics-demand');
     var controls = document.getElementById('analytics-period-controls');
     if (controls) {
       controls.innerHTML =
@@ -3856,8 +4002,14 @@
     if (panel) {
       panel.innerHTML = '<p class="text-sm text-slate-500">Loading platform insights…</p>';
     }
+    if (demandPanel) {
+      demandPanel.innerHTML = '<p class="text-sm text-slate-500">Loading demand insights…</p>';
+    }
     adminGet('/api/admin/insights?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
       if (panel) panel.innerHTML = renderInsightsPanel(data);
+    });
+    adminGet('/api/admin/demand?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
+      if (demandPanel) demandPanel.innerHTML = renderDemandPanel(data);
     });
   }
 
@@ -3915,6 +4067,7 @@
       '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
       '<li class="text-sm text-slate-500">Loading…</li></ul>' +
       '</aside></div>' +
+      '<div id="analytics-demand"><p class="text-sm text-slate-500">Loading demand insights…</p></div>' +
       '<div id="analytics-insights"><p class="text-sm text-slate-500">Loading platform insights…</p></div></div>';
 
     bindAnalyticsControls();
@@ -5961,6 +6114,7 @@
     var ctaUrl = document.getElementById('sponsor-cta-url');
     var active = document.getElementById('sponsor-active');
     var includeInEmails = document.getElementById('sponsor-include-emails');
+    var logoBandDark = document.getElementById('sponsor-logo-band-dark');
     var savedColor =
       window.CmsSponsorFields && window.CmsSponsorFields.ctaColor
         ? window.CmsSponsorFields.ctaColor(block)
@@ -5975,6 +6129,12 @@
     if (ctaUrl && block.cta_url) ctaUrl.value = block.cta_url;
     if (active) active.checked = block.active !== false;
     if (includeInEmails) includeInEmails.checked = block.include_in_emails !== false;
+    if (logoBandDark) {
+      logoBandDark.checked =
+        window.CmsSponsorFields && window.CmsSponsorFields.logoBandDark
+          ? window.CmsSponsorFields.logoBandDark(block)
+          : block.logo_band_dark === true;
+    }
     var slotEmail = document.getElementById('sponsor-slot-email');
     var slotOpens = document.getElementById('sponsor-slot-available-from');
     if (slotEmail) slotEmail.value = String(block.sponsor_email || '').trim();
@@ -5987,6 +6147,21 @@
         autoFillSponsorCtaColorFromLogo(savedLogo);
       }
     }
+  }
+
+  /** Prefer Tailwind .hidden — HTML [hidden] loses to utility classes like .grid. */
+  function setAdminElHidden(el, hide) {
+    if (!el) return;
+    el.classList.toggle('hidden', Boolean(hide));
+    if (hide) el.setAttribute('hidden', '');
+    else el.removeAttribute('hidden');
+  }
+
+  function sponsorHasValidWebsiteUrl(url) {
+    var u = String(url || '').trim();
+    if (/^mailto:/i.test(u)) return u.length > 7;
+    if (!/^https?:\/\//i.test(u)) return false;
+    return u.replace(/^https?:\/\//i, '').trim().length > 0;
   }
 
   function defaultSponsorCtaColor() {
@@ -6823,7 +6998,7 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. For each company: name, logo, CTA label, and link — shown when the section is active.</p></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
       '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
       'Show on home page</label></div>' +
@@ -6888,6 +7063,9 @@
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="sponsor-active" class="rounded border-slate-300" checked> ' +
       'Ad active (uncheck to hide this placement on site)</label>' +
+      '<div id="sponsor-required-panel" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">What you need</p>' +
+      '<p id="sponsor-required-copy" class="text-sm text-slate-700"></p></div>' +
       '<div id="city-partner-subscription-meta" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm space-y-1"></div>' +
       '<div id="city-partner-slot-fields" class="hidden space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">' +
       '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slot booking details</p>' +
@@ -6901,15 +7079,15 @@
       '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
       '<span><strong>Include this sponsor in matching emails</strong><span id="sponsor-email-scope" class="block text-xs text-slate-500 mt-0.5"></span></span></label>' +
       '<p id="sponsor-hero-logo-only-note" class="hidden text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">' +
-      'With a logo uploaded, the live hero shows a large clickable logo only. The website link below is used when visitors click the logo.</p>' +
+      'With a logo uploaded, the live hero shows a large clickable logo only — no button or button colour. The website link below is used when visitors click the logo.</p>' +
       '<div id="sponsor-hero-fields" class="space-y-5">' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-company">Company name</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-company">Company name <span class="font-normal text-slate-400">(optional)</span></label>' +
       '<input type="text" id="sponsor-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Acme Ltd"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-tagline">Tagline / offer</label>' +
       '<input type="text" id="sponsor-tagline" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().tagline) +
       '"></div></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-logo-url">Company logo URL</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-logo-url">Company logo <span class="text-brand-700">*</span></label>' +
       '<input type="text" id="sponsor-logo-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-2" placeholder="https://…">' +
       '<label class="block text-xs text-slate-500 mb-1" for="sponsor-logo-file">Or upload logo (max 2MB, wide format recommended)</label>' +
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
@@ -6917,11 +7095,11 @@
       '<input type="checkbox" id="sponsor-logo-band-dark" class="rounded border-slate-300 mt-0.5"> ' +
       '<span><strong>Use dark logo band</strong><span class="block text-xs text-slate-500 mt-0.5">For logos with white or light text on a light background. Overrides automatic detection.</span></span></label>' +
       '<div class="grid sm:grid-cols-2 gap-4" id="sponsor-cta-fields">' +
-      '<div><label id="sponsor-cta-label-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label</label>' +
+      '<div id="sponsor-cta-label-wrap"><label id="sponsor-cta-label-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label <span class="text-brand-700">*</span></label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaLabel) +
       '"></div>' +
-      '<div id="sponsor-cta-color-wrap"><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color-hex">CTA button colour (Hex)</label>' +
+      '<div id="sponsor-cta-color-wrap"><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-color-hex">CTA button colour (Hex) <span class="text-brand-700">*</span></label>' +
       '<div class="flex items-center gap-2">' +
       '<span id="sponsor-cta-color-swatch" class="h-10 w-14 shrink-0 rounded border border-slate-200" style="background:' +
       esc(slotDefaults().ctaColor || defaultSponsorCtaColor()) +
@@ -6931,10 +7109,10 @@
       '" placeholder="#2d2636" maxlength="7" spellcheck="false" inputmode="text" autocomplete="off">' +
       '</div>' +
       '<p class="text-xs text-slate-500 mt-1">Picked automatically from the logo — type a Hex code (e.g. #2d2636) to override.</p></div></div>' +
-      '<div><label id="sponsor-cta-url-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">CTA link (https:// opens in a new tab, or mailto:)</label>' +
+      '<div><label id="sponsor-cta-url-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-url">Website link <span class="text-brand-700">*</span></label>' +
       '<input type="text" id="sponsor-cta-url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
       esc(slotDefaults().ctaUrl) +
-      '"></div>' +
+      '" placeholder="https://example.com"></div>' +
       '<div class="flex flex-wrap gap-3 pt-2">' +
       '<button type="button" id="sponsor-preview-btn" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Update preview</button>' +
       '<button type="button" id="sponsor-publish-btn" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save sponsor</button>' +
@@ -6962,11 +7140,13 @@
       var d = slotDefaults();
       var activeEl = document.getElementById('sponsor-active');
       var includeEmailsEl = document.getElementById('sponsor-include-emails');
+      var logoBandDarkEl = document.getElementById('sponsor-logo-band-dark');
       var logoUrl = document.getElementById('sponsor-logo-url').value.trim();
       if (sponsorLogoBase64) logoUrl = sponsorLogoBase64;
       return {
         active: activeEl ? activeEl.checked : true,
         includeInEmails: includeEmailsEl ? includeEmailsEl.checked : false,
+        logoBandDark: logoBandDarkEl ? logoBandDarkEl.checked : false,
         companyName: document.getElementById('sponsor-company').value.trim(),
         logoUrl: logoUrl,
         tagline: document.getElementById('sponsor-tagline').value.trim(),
@@ -7006,9 +7186,21 @@
       var heroFields = document.getElementById('sponsor-hero-fields');
       var ctaFields = document.getElementById('sponsor-cta-fields');
       var logoOnlyNote = document.getElementById('sponsor-hero-logo-only-note');
-      if (heroFields) heroFields.hidden = hasLogo;
-      if (ctaFields) ctaFields.hidden = hasLogo;
+      var ctaUrlLabel = document.getElementById('sponsor-cta-url-label');
+      var requiredCopy = document.getElementById('sponsor-required-copy');
+      setAdminElHidden(heroFields, hasLogo);
+      setAdminElHidden(ctaFields, hasLogo);
       if (logoOnlyNote) logoOnlyNote.classList.toggle('hidden', !hasLogo);
+      if (ctaUrlLabel) {
+        ctaUrlLabel.innerHTML = hasLogo
+          ? 'Website link (logo click-through) <span class="text-brand-700">*</span>'
+          : 'CTA link (https:// opens in a new tab, or mailto:) <span class="text-brand-700">*</span>';
+      }
+      if (requiredCopy) {
+        requiredCopy.textContent = hasLogo
+          ? 'Required: company logo and website link. Live placement is logo-only — no button label or colour.'
+          : 'Required: tagline (or logo), button label, button colour, and link. Upload a logo to switch to logo-only mode.';
+      }
     }
 
     function syncSlotFormLayout() {
@@ -7016,12 +7208,14 @@
       var heroFields = document.getElementById('sponsor-hero-fields');
       var ctaUrlLabel = document.getElementById('sponsor-cta-url-label');
       var ctaLabelLabel = document.getElementById('sponsor-cta-label-label');
+      var ctaFields = document.getElementById('sponsor-cta-fields');
       var ctaColorWrap = document.getElementById('sponsor-cta-color-wrap');
       var previewHint = document.getElementById('sponsor-preview-hint');
       var includeWrap = document.getElementById('sponsor-include-emails-wrap');
       var emailScope = document.getElementById('sponsor-email-scope');
       var logoOnlyNote = document.getElementById('sponsor-hero-logo-only-note');
       var slotFields = document.getElementById('city-partner-slot-fields');
+      var requiredCopy = document.getElementById('sponsor-required-copy');
       var emailScopes = {
         events_sponsor_hub: 'Shown in event and attendee emails selected for sponsorship.',
         organisers_sponsor_hub: 'Shown in emails sent to networking group organisers.',
@@ -7033,31 +7227,58 @@
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
       if (slotFields) slotFields.classList.toggle('hidden', slot.preview !== 'city_partner');
-      if (heroFields) {
-        heroFields.hidden = slot.preview === 'compact' || slot.preview === 'city_partner';
-      }
       if (logoOnlyNote) logoOnlyNote.classList.add('hidden');
+
       if (slot.preview === 'hero') {
+        setAdminElHidden(heroFields, false);
+        setAdminElHidden(ctaFields, false);
+        setAdminElHidden(ctaColorWrap, false);
         syncHeroLogoOnlyFields();
+      } else if (slot.preview === 'city_partner') {
+        setAdminElHidden(heroFields, true);
+        setAdminElHidden(ctaFields, true);
+        setAdminElHidden(ctaColorWrap, true);
+        if (ctaUrlLabel) {
+          ctaUrlLabel.innerHTML =
+            'Sponsor website URL (https:// — opens in a new tab) <span class="text-brand-700">*</span>';
+        }
+        if (requiredCopy) {
+          requiredCopy.textContent =
+            'Required: company logo and website link. Live city partner block is logo + link only (no button or colour).';
+        }
+      } else if (slot.preview === 'banner') {
+        setAdminElHidden(heroFields, false);
+        setAdminElHidden(ctaFields, false);
+        setAdminElHidden(ctaColorWrap, false);
+        if (ctaLabelLabel) {
+          ctaLabelLabel.innerHTML = 'Button label <span class="text-brand-700">*</span>';
+        }
+        if (ctaUrlLabel) {
+          ctaUrlLabel.innerHTML =
+            'Sponsor website URL (https:// — opens in a new tab) <span class="text-brand-700">*</span>';
+        }
+        if (requiredCopy) {
+          requiredCopy.textContent =
+            'Required: logo, button label, button colour, and website link. Optional: company name and headline.';
+        }
       } else {
-        var ctaFields = document.getElementById('sponsor-cta-fields');
-        if (ctaFields) ctaFields.hidden = false;
+        // compact sidebar
+        setAdminElHidden(heroFields, true);
+        setAdminElHidden(ctaFields, false);
+        setAdminElHidden(ctaColorWrap, false);
+        if (ctaLabelLabel) {
+          ctaLabelLabel.innerHTML = 'CTA button label <span class="text-brand-700">*</span>';
+        }
+        if (ctaUrlLabel) {
+          ctaUrlLabel.innerHTML =
+            'Sponsor website URL (https:// — opens in a new tab) <span class="text-brand-700">*</span>';
+        }
+        if (requiredCopy) {
+          requiredCopy.textContent =
+            'Required: logo, button label, button colour, and website link.';
+        }
       }
-      if (ctaColorWrap) ctaColorWrap.hidden = slot.preview === 'city_partner';
-      if (ctaLabelLabel) {
-        ctaLabelLabel.textContent =
-          slot.preview === 'city_partner'
-            ? 'Link label (shown under logo)'
-            : slot.preview === 'banner'
-              ? 'Button label'
-              : 'CTA button label';
-      }
-      if (ctaUrlLabel) {
-        ctaUrlLabel.textContent =
-          slot.preview === 'compact' || slot.preview === 'city_partner' || slot.preview === 'banner'
-            ? 'Sponsor website URL (https:// — opens in a new tab)'
-            : 'CTA link (https:// opens in a new tab, or mailto:)';
-      }
+
       if (previewHint) {
         if (slot.preview === 'city_partner') {
           previewHint.textContent =
@@ -7326,6 +7547,10 @@
       var btn = document.getElementById('sponsor-publish-btn');
       var creative = readForm();
       var slot = slotDefaults();
+      var hasLogo = /^(https?:|\/|data:image\/)/i.test(String(creative.logoUrl || '').trim());
+      var logoOnlyHero = slot.preview === 'hero' && hasLogo;
+      var logoOnlyPlacement = logoOnlyHero || slot.preview === 'city_partner';
+
       if (
         creative.active &&
         slot.preview === 'hero' &&
@@ -7356,17 +7581,22 @@
         );
         return;
       }
-      if (creative.active && (!creative.ctaLabel || !creative.ctaUrl)) {
-        setSponsorStatus('CTA label and link are required for an active ad.', 'error');
+      if (creative.active && logoOnlyPlacement) {
+        if (!sponsorHasValidWebsiteUrl(creative.ctaUrl)) {
+          setSponsorStatus(
+            'Enter the full website URL (https://example.com) used when visitors click the logo.',
+            'error'
+          );
+          return;
+        }
+      } else if (creative.active && (!creative.ctaLabel || !creative.ctaUrl)) {
+        setSponsorStatus('Button label and link are required for an active ad.', 'error');
         return;
       }
       if (
         creative.active &&
-        (slot.preview === 'compact' || slot.preview === 'city_partner' || slot.preview === 'banner') &&
-        (!/^https?:\/\//i.test(creative.ctaUrl) ||
-          !String(creative.ctaUrl || '')
-            .replace(/^https?:\/\//i, '')
-            .trim())
+        (slot.preview === 'compact' || slot.preview === 'banner') &&
+        !sponsorHasValidWebsiteUrl(creative.ctaUrl)
       ) {
         setSponsorStatus('Enter the full sponsor website URL (https://example.com) — opens in a new tab.', 'error');
         return;
@@ -7492,11 +7722,11 @@
         '<button type="button" class="home-partner-remove text-xs font-semibold text-red-700 hover:underline">Remove</button>' +
         '</div></div>' +
         '<div class="grid sm:grid-cols-2 gap-3">' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name</label>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="home-partner-name w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(p.company_name || '') +
         '" placeholder="Acme Ltd"></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo URL</label>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="home-partner-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(pending ? '' : logo) +
         '" placeholder="https://…"></div></div>' +
@@ -7507,11 +7737,11 @@
           : '') +
         '</div>' +
         '<div class="grid sm:grid-cols-2 gap-3">' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA label</label>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA label <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="home-partner-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(p.cta_label || 'Visit website') +
         '"></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA link</label>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA link <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="home-partner-cta-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(p.cta_url || '') +
         '" placeholder="https://… or mailto:…"></div></div></div>'
@@ -7783,7 +8013,8 @@
         '<input type="checkbox" class="event-carousel-ad-active rounded border-slate-300"' +
         (ad.active !== false ? ' checked' : '') +
         '> Active</label></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo URL</label>' +
+        '<p class="text-xs text-slate-500">Required for an active slot: logo + click-through link.</p>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(pending ? '' : logo) +
         '" placeholder="https://…"></div>' +
@@ -7793,7 +8024,7 @@
           ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
           : '') +
         '</div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Click-through link</label>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Click-through link <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-link-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(ad.cta_url || '') +
         '" placeholder="https://… — opens when someone clicks the logo"></div></div>'
@@ -8028,7 +8259,7 @@
       welcome_url: previewOrigin + '/welcome',
       dashboard_url: previewOrigin + '/organiser/',
       site_url: previewOrigin,
-      logo_url: previewOrigin + '/assets/logo-nav.png',
+      logo_url: previewOrigin + '/assets/logo-nav-transparent.png',
       logo_footer_url: previewOrigin + '/assets/logo-email-footer.png',
       screening_industry: 'Financial services',
       screening_job_title: 'Business development manager',
@@ -8665,22 +8896,16 @@
       });
     }
 
-    function buildEmailSponsorSectionHtml(logo, url, name, logoBandBg) {
+    function buildEmailSponsorSectionHtml(logo, url, name) {
       var link = String(url || '').trim();
       if (!link) return '';
       var label = String(name || '').trim() || 'Our sponsor';
-      var bandBg = String(logoBandBg || '').trim() || '#f3f4f6';
-      var safeBandBg = attrEsc(bandBg);
       var logoHtml = String(logo || '').trim()
-        ? '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:' +
-          safeBandBg +
-          ';border-radius:10px;"><tr><td style="padding:12px 24px;text-align:center;">' +
-          '<img src="' +
+        ? '<img src="' +
           attrEsc(logo) +
           '" alt="' +
           attrEsc(label) +
-          '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">' +
-          '</td></tr></table>'
+          '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">'
         : '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
           esc(label) +
           '</span>';
@@ -8730,8 +8955,7 @@
       SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(
         logo,
         form.url,
-        form.company,
-        emailSponsorCtaColor
+        form.company
       );
     }
 
@@ -8745,16 +8969,11 @@
         return;
       }
       if (logo) {
-        var bandBg = String(emailSponsorCtaColor || '').trim() || '#f3f4f6';
         el.innerHTML =
           '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Powered by</p>' +
-          '<div class="inline-block rounded-lg px-6 py-3" style="background:' +
-          attrEsc(bandBg) +
-          ';">' +
           '<img src="' +
           attrEsc(logo) +
-          '" alt="" class="mx-auto max-h-12 w-auto" style="max-width:140px;display:block;">' +
-          '</div>';
+          '" alt="" class="mx-auto max-h-12 w-auto" style="max-width:140px;display:block;">';
       } else {
         el.innerHTML =
           '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Powered by</p>' +

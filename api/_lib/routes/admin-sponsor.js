@@ -93,13 +93,19 @@ module.exports = async function handler(req, res) {
     const slot = String(body.slot || 'events_sponsor_hub').trim() || 'events_sponsor_hub';
     const title = String(body.title || '').trim();
     const blockBody = String(body.body || '').trim();
-    const cta_label = String(body.cta_label || '').trim();
+    let cta_label = String(body.cta_label || '').trim();
     const cta_url = String(body.cta_url || '').trim();
     const company_name = String(body.company_name || '').trim();
     const cta_color = String(body.cta_color || '').trim();
     const isCityPartner = isCityPartnerSlot(slot);
 
-    if (!cta_label || !cta_url) {
+    // Logo-only placements (browse heroes with a logo, city partners) do not show a button,
+    // but the API still stores a label for schema consistency / email fallbacks.
+    if (!cta_label) {
+      cta_label = isCityPartner ? 'Find out more' : 'Enquire now';
+    }
+
+    if (!cta_url) {
       return json(res, 400, { ok: false, error: 'missing_cta' });
     }
 

@@ -86,11 +86,22 @@ function isPublishableSponsorBlock(block, slot) {
   const key = String(slot || block.slot || '').trim();
   const ctaLabel = String(block.cta_label || '').trim();
   const ctaUrl = String(block.cta_url || '').trim();
-  if (!ctaLabel || !hasValidCtaUrl(ctaUrl)) return false;
-  if (isCompactSponsorSlot(key)) return hasSponsorLogo(block);
+  if (!hasValidCtaUrl(ctaUrl)) return false;
+
+  // City partner: logo + website only (no on-page button).
+  if (isCityPartnerSlot(key)) return hasSponsorLogo(block);
+
+  // Compact / banner: logo + labelled CTA button.
+  if (key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad') {
+    return hasSponsorLogo(block) && Boolean(ctaLabel);
+  }
+
+  // Browse heroes: logo-only when a logo is set; otherwise tagline/company + CTA.
+  if (hasSponsorLogo(block)) return true;
+  if (!ctaLabel) return false;
   const tagline = sponsorTagline(block);
   const company = sponsorCompanyName(block);
-  return hasSponsorLogo(block) || Boolean(tagline) || Boolean(company);
+  return Boolean(tagline) || Boolean(company);
 }
 
 function normalizeSponsorBlock(block) {
