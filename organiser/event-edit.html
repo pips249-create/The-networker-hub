@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260722lock" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260727ux" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260716tips" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -47,7 +47,7 @@
         <div class="ee-duplicate-banner" id="ee-duplicate-banner" hidden role="status"></div>
         <h1 class="ee-title" id="ee-page-title">New event listing</h1>
         <p class="ee-lead" id="ee-page-lead">
-          Add your event details, pick dates on the calendar, then continue to location and tickets.
+          Add your event details, location, and dates, then continue to tickets.
         </p>
         <div class="ee-event-stats" id="ee-event-stats" hidden>
           <div class="ee-stat gold">
@@ -150,6 +150,63 @@
           </div>
         </div>
 
+        <div class="ee-card" id="ee-card-location">
+          <h2>Location &amp; access</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Choose in person or online, then add the venue or join details before ticket setup.
+          </p>
+          <div class="ee-field" id="ee-format-field">
+            <p class="ee-label-block">Format</p>
+            <div class="ee-mode-toggle" role="group" aria-label="Event format">
+              <button type="button" class="ee-mode-btn is-active" data-ee-format="in-person" aria-pressed="true">In person</button>
+              <button type="button" class="ee-mode-btn" data-ee-format="online" aria-pressed="false">Online</button>
+            </div>
+          </div>
+
+          <div class="ee-format-panel is-visible" id="ee-venue-block" data-format-panel="venue">
+            <h3 class="ee-subheading" data-hub-tip="event-venue">Venue &amp; address</h3>
+            <div class="ee-field">
+              <label for="ee-venue">Venue name</label>
+              <input type="text" id="ee-venue" placeholder="e.g. The Exchange" />
+            </div>
+            <div class="ee-field">
+              <label for="ee-address1">Address line 1</label>
+              <input type="text" id="ee-address1" placeholder="Street address" autocomplete="street-address" />
+            </div>
+            <div class="ee-row-2">
+              <div class="ee-field">
+                <label for="ee-city">City / town</label>
+                <input type="text" id="ee-city" placeholder="e.g. Liverpool" autocomplete="address-level2" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-postcode">Postcode</label>
+                <input type="text" id="ee-postcode" placeholder="e.g. L1 8JQ" autocomplete="postal-code" />
+                <p class="ee-hint ee-field-error" id="ee-postcode-hint" hidden></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="ee-format-panel" id="ee-online-block" data-format-panel="online">
+            <h3 class="ee-subheading" data-hub-tip="event-online">Online access</h3>
+            <div class="ee-field">
+              <label for="ee-platform">Platform</label>
+              <select id="ee-platform">
+                <option value="">Select platform</option>
+                <option>Zoom Meeting</option>
+                <option>Zoom Webinar</option>
+                <option>Microsoft Teams</option>
+                <option>Google Meet</option>
+                <option>Hopin</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="ee-field">
+              <label for="ee-join-link">Meeting / join link <span class="ee-optional">(optional)</span></label>
+              <input type="url" id="ee-join-link" placeholder="https://zoom.us/j/… or Teams link" />
+            </div>
+          </div>
+        </div>
+
         </div><!-- /.ee-main-col -->
 
         <aside class="ee-sticky-side">
@@ -157,10 +214,10 @@
         <div class="ee-card ee-card-dates" id="ee-card-dates">
           <h2 data-hub-tip="event-dates">Dates</h2>
           <p class="ee-hint ee-dates-guidance" data-hub-tip="event-series-planning">
-            Recurring meeting? Click every week you meet — same time and venue apply to all dates.
-            Multi-day conference with one price? Either select all days and use matching ticket prices
-            (attendees can book all dates in one checkout), or sell on the first day only and say in the
-            description that the ticket covers every day.
+            <strong>Click every date this event runs</strong> — one click per meeting day. Recurring weekly
+            meetings: select each week on the calendar (same time and venue apply to all). Multi-day
+            conference? Select every day you meet, or sell on the first day only and say in the description
+            that the ticket covers every day.
           </p>
           <div class="ee-calendar" id="ee-calendar">
             <div class="ee-cal-header">
@@ -194,17 +251,17 @@
         <!-- Section 5: Save or publish -->
         <div class="ee-card ee-card-actions">
           <div class="ee-actions ee-actions--split">
-            <button type="button" class="ee-btn ee-btn-outline" id="ee-save-draft">Save as draft</button>
-            <button type="submit" class="ee-btn ee-btn-gold" id="ee-submit">Continue to location →</button>
+            <p class="ee-hint ee-autodraft-inline" id="ee-autodraft-inline">Progress autosaves in this browser.</p>
+            <button type="submit" class="ee-btn ee-btn-gold" id="ee-submit">Continue to tickets →</button>
           </div>
           <p class="ee-hint ee-autodraft-status" id="ee-autodraft-status" aria-live="polite"></p>
-          <p class="ee-hint ee-actions-note">Venue or online access is on the next step, then ticket setup.</p>
+          <p class="ee-hint ee-actions-note">Ticket types and pricing come on the next step.</p>
         </div>
       </form>
     </div>
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260716perf" defer></script>
-    <script src="../js/organiser-event-wizard.js?v=20260716loc" data-step="details" defer></script>
+    <script src="../js/organiser-event-wizard.js?v=20260727loc1" data-step="details" defer></script>
     <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../" defer></script>
     <script src="../js/hubert-chat.js?v=20260612" defer></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
@@ -215,8 +272,9 @@
     <script src="../js/hub-event-timezone.js?v=20260727" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260716endfix" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260611" defer></script>
+    <script src="../js/postcode-outcode.js?v=20260716loc" defer></script>
     <script src="../js/organiser-field-tips.js?v=20260716tips" defer></script>
     <script src="../js/hub-field-tip.js?v=20260716tips" defer></script>
-    <script src="../js/organiser-event-edit.js?v=20260727time" defer></script>
+    <script src="../js/organiser-event-edit.js?v=20260727loc1" defer></script>
   </body>
 </html>

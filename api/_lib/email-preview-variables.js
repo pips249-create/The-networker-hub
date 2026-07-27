@@ -400,7 +400,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'organiser_email_verify') {
-    vars.verify_url = site + '/organiser/verify-email?token=sample';
+    vars.verify_url = site + '/organiser/verify-email';
+    vars.verify_code = '482917';
   }
 
   if (slug === 'member_roster_invite' || slug === 'member_roster_existing') {

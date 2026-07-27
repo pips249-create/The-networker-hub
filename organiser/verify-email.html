@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/auth.css?v=20260708" />
+    <link rel="stylesheet" href="../css/auth.css?v=20260727ux" />
     <link rel="stylesheet" href="../css/organiser-enable.css?v=20260709b" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260726m" />
   </head>
@@ -33,8 +33,8 @@
                 <p class="auth-welcome-kicker">Almost there</p>
                 <h1>Confirm your email</h1>
                 <p class="auth-lede auth-lede--welcome" id="verify-email-lede">
-                  We sent a confirmation link to <strong id="verify-email-address">your email</strong>. Open it to
-                  publish events, view attendees, and set up payouts.
+                  We sent a 6-digit code to <strong id="verify-email-address">your email</strong>. Enter it below to
+                  unlock your organiser dashboard.
                 </p>
               </header>
 
@@ -42,16 +42,32 @@
               <p id="verify-email-error" class="auth-error" hidden role="alert"></p>
               <p id="verify-email-dev" class="auth-dev-link" hidden></p>
 
-              <div class="auth-verify-actions">
-                <button type="button" class="auth-primary-btn" id="verify-email-resend">Resend confirmation email</button>
-                <a href="/organiser/" class="auth-primary-btn" id="verify-email-continue" hidden>
-                  Continue to organiser workspace
-                </a>
-              </div>
+              <form id="verify-email-form" class="auth-verify-form" novalidate>
+                <div class="auth-field">
+                  <label for="verify-email-code">Confirmation code</label>
+                  <input
+                    type="text"
+                    id="verify-email-code"
+                    name="code"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    placeholder="6-digit code"
+                    required
+                  />
+                </div>
+                <div class="auth-verify-actions">
+                  <button type="submit" class="auth-primary-btn" id="verify-email-confirm">Confirm your email</button>
+                </div>
+              </form>
 
-              <p class="auth-form-foot">
-                <a href="../account/" class="auth-secondary-link">← Back to My Hub</a>
+              <p class="auth-verify-resend-row">
+                <button type="button" class="auth-text-btn" id="verify-email-resend">Resend code</button>
               </p>
+              <a href="/organiser/" class="auth-primary-btn" id="verify-email-continue" hidden>
+                Continue to organiser workspace
+              </a>
             </div>
           </section>
 
@@ -130,6 +146,6 @@
       </div>
     </main>
 
-    <script src="../js/organiser-verify-email.js?v=20260727" defer></script>
+    <script src="../js/organiser-verify-email.js?v=20260727code" defer></script>
   </body>
 </html>

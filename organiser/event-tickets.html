@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260721moe2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260727ux" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -36,7 +36,7 @@
     <div class="ee-wrap">
       <div class="ee-back-row">
         <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
-        <a class="ee-back ee-back-secondary" id="ee-edit-event-link" href="/organiser/event-location" hidden>← Location &amp; access</a>
+        <a class="ee-back ee-back-secondary" id="ee-edit-event-link" href="/organiser/event-edit" hidden>← Event details</a>
         <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert's help</button>
       </div>
       <div id="ee-wizard-mount"></div>
@@ -80,6 +80,23 @@
               <strong>Category Exclusivity</strong>
               <span>Attendees apply first. You review their industry and job title, then approve or decline before they pay.</span>
             </button>
+          </div>
+          <div class="ee-attendance-next">
+            <button type="button" class="ee-btn ee-btn-gold" id="ee-attendance-continue">Continue to ticket setup →</button>
+          </div>
+        </div>
+
+        <div class="ee-step2-modal" id="ee-step2-modal" hidden>
+          <div class="ee-step2-modal-backdrop" data-ee-step2-close tabindex="-1"></div>
+          <div class="ee-step2-modal-panel" role="dialog" aria-modal="true" aria-labelledby="ee-step2-modal-title">
+            <div class="ee-step2-modal-head">
+              <h2 id="ee-step2-modal-title">Step 2 — ticket setup</h2>
+              <button type="button" class="ee-btn ee-btn-outline ee-step2-modal-close" data-ee-step2-close aria-label="Close">Close</button>
+            </div>
+            <div class="ee-step2-modal-body" id="ee-step2-modal-body"></div>
+            <div class="ee-step2-modal-foot">
+              <button type="button" class="ee-btn ee-btn-gold" id="ee-step2-modal-done">Done — continue</button>
+            </div>
           </div>
         </div>
 
@@ -378,20 +395,19 @@
           </label>
         </div>
 
-        <div class="ee-actions">
-          <button type="button" class="ee-btn ee-btn-outline" id="ee-tickets-save">Save tickets (draft)</button>
-          <button type="submit" class="ee-btn ee-btn-primary" id="ee-tickets-submit">Continue to review →</button>
-          <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ee-tickets-back-edit" hidden>
-            ← Location &amp; access
-          </button>
+        <div class="ee-actions ee-actions--split">
           <a class="ee-btn ee-btn-outline ee-fullpage-back" href="/organiser/#events-tickets">Back to dashboard</a>
+          <button type="submit" class="ee-btn ee-btn-gold" id="ee-tickets-submit">Continue to review →</button>
+          <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ee-tickets-back-edit" hidden>
+            ← Event details
+          </button>
         </div>
       </form>
     </div>
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260716perf" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260727" defer></script>
-    <script src="../js/organiser-event-wizard.js?v=20260716loc" data-step="tickets" defer></script>
+    <script src="../js/organiser-event-wizard.js?v=20260727loc1" data-step="tickets" defer></script>
     <script src="../js/hubert-chat.js?v=20260612" defer></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260701" data-root="../" defer></script>
@@ -402,6 +418,6 @@
     <script src="../js/organiser-payment-setup.js?v=20260722a" defer></script>
     <script src="../js/organiser-field-tips.js?v=20260715guest" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260727time" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260727step2" defer></script>
   </body>
 </html>

@@ -1213,11 +1213,12 @@ a.ee-wizard-link:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 10px;
   text-align: left;
   border: 2px solid var(--ee-border);
   border-radius: var(--ee-radius);
-  padding: 16px;
+  padding: 28px 24px;
+  min-height: 200px;
   background: var(--ee-white);
   font-family: inherit;
   cursor: pointer;
@@ -1225,19 +1226,19 @@ a.ee-wizard-link:hover {
 }
 
 .ee-attendance-card strong {
-  font-size: 15px;
+  font-size: 20px;
   color: var(--ee-text);
 }
 
 .ee-attendance-card > span:last-of-type {
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--ee-text-mid);
   font-weight: 400;
 }
 
 .ee-attendance-card-icon {
-  font-size: 22px;
+  font-size: 36px;
   line-height: 1;
 }
 
@@ -1245,6 +1246,106 @@ a.ee-wizard-link:hover {
   border-color: var(--ee-purple);
   background: var(--ee-purple-pale);
   box-shadow: inset 0 0 0 1px var(--ee-purple);
+}
+
+.ee-attendance-next {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.ee-step2-modal[hidden] {
+  display: none !important;
+}
+
+.ee-step2-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.ee-step2-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 32, 64, 0.45);
+}
+
+.ee-step2-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  max-height: min(90vh, 900px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(28, 32, 64, 0.28);
+  padding: 20px 22px 18px;
+}
+
+.ee-step2-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ee-step2-modal-head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.ee-step2-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ee-border);
+}
+
+body.ee-step2-modal-open {
+  overflow: hidden;
+}
+
+.ee-autodraft-inline {
+  margin: 0;
+  color: #55705c;
+  font-weight: 600;
+}
+
+.ee-number-stepper {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  gap: 6px;
+  align-items: center;
+}
+
+.ee-number-step {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1.5px solid var(--ee-border);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ee-text);
+  cursor: pointer;
+}
+
+.ee-number-step:hover {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple-pale);
+}
+
+.ee-number-stepper input[type='number'] {
+  width: 100%;
+  text-align: center;
 }
 
 #ee-tickets-form .ee-card[hidden],

@@ -66,16 +66,19 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         emailSent: true,
-        message: 'Check your inbox for a confirmation link.',
+        message: 'Check your inbox for a confirmation code.',
         ...result,
       });
     } catch (e) {
-      if (e.code === 'email_not_configured' && e.verifyUrl) {
+      if (e.code === 'email_not_configured' && (e.verifyUrl || e.verifyCode)) {
         return json(res, 200, {
           ok: true,
           emailSent: false,
-          devVerifyUrl: e.verifyUrl,
-          message: 'Email is not configured on this server. Use the verification link below.',
+          devVerifyUrl: e.verifyUrl || null,
+          devVerifyCode: e.verifyCode || null,
+          message: e.verifyCode
+            ? 'Email is not configured on this server. Use the confirmation code below.'
+            : 'Email is not configured on this server. Use the verification link below.',
         });
       }
       return json(res, 500, {
@@ -173,6 +176,7 @@ module.exports = async function handler(req, res) {
 
     let emailSent = false;
     let devVerifyUrl = null;
+    let devVerifyCode = null;
     let verifyMessage = null;
 
     if (!before.organiserEmailVerified) {
@@ -183,12 +187,14 @@ module.exports = async function handler(req, res) {
           name: session.name,
         });
         emailSent = true;
-        verifyMessage = 'We sent a confirmation link to ' + session.email + '.';
+        verifyMessage = 'We sent a confirmation code to ' + session.email + '.';
       } catch (e) {
-        if (e.code === 'email_not_configured' && e.verifyUrl) {
-          devVerifyUrl = e.verifyUrl;
-          verifyMessage =
-            'Email is not configured on this server — use the verification link on the next screen.';
+        if (e.code === 'email_not_configured' && (e.verifyUrl || e.verifyCode)) {
+          devVerifyUrl = e.verifyUrl || null;
+          devVerifyCode = e.verifyCode || null;
+          verifyMessage = e.verifyCode
+            ? 'Email is not configured on this server — enter the confirmation code on the next screen.'
+            : 'Email is not configured on this server — use the verification link on the next screen.';
         } else {
           verifyMessage = 'Organiser access enabled, but we could not send a confirmation email yet.';
         }
@@ -196,13 +202,14 @@ module.exports = async function handler(req, res) {
     }
 
     const status = await getOrganiserAccessStatus(session);
-    const redirect = emailSent || devVerifyUrl ? '/organiser/verify-email' : '/organiser/';
+    const redirect = emailSent || devVerifyUrl || devVerifyCode ? '/organiser/verify-email' : '/organiser/';
 
     return json(res, 200, {
       ok: true,
       ...status,
       emailSent,
       devVerifyUrl,
+      devVerifyCode,
       verifyMessage,
       redirect,
       message: before.organiserAccess

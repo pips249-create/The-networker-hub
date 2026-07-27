@@ -1,5 +1,7 @@
 /**
  * Email verification for organiser actions (publish, attendees, payouts, claims).
+ * Primary UX: 6-digit code entered on /organiser/verify-email.
+ * Legacy email links with ?token= still work for already-sent messages.
  */
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./supabase');
@@ -16,7 +18,11 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(String(token || '')).digest('hex');
 }
 
-function newVerifyToken() {
+function newVerifyCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+}
+
+function newLegacyLinkToken() {
   return crypto.randomBytes(32).toString('base64url');
 }
 
@@ -79,14 +85,12 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
     throw err;
   }
 
-  const token = newVerifyToken();
-  await storeVerifyToken(userId, token);
+  const code = newVerifyCode();
+  await storeVerifyToken(userId, code);
 
   const verifyUrl =
     siteHost() +
-    '/organiser/verify-email?token=' +
-    encodeURIComponent(token) +
-    '&email=' +
+    '/organiser/verify-email?email=' +
     encodeURIComponent(address);
   const displayName = String(name || '').trim() || address.split('@')[0];
 
@@ -97,17 +101,19 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
       variables: {
         user_name: displayName,
         user_email: address,
+        verify_code: code,
         verify_url: verifyUrl,
       },
       skipEmailCheck: true,
     });
     return { ok: true, emailSent: true, verifyUrl: null, ...result };
   } catch (e) {
-    const code = e.code || '';
-    if (code === 'resend_not_configured') {
+    const errCode = e.code || '';
+    if (errCode === 'resend_not_configured') {
       const err = new Error('email_not_configured');
       err.code = 'email_not_configured';
       err.verifyUrl = verifyUrl;
+      err.verifyCode = code;
       throw err;
     }
     throw e;
@@ -116,7 +122,9 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
 
 async function verifyOrganiserEmailToken({ userId, token }) {
   const uid = String(userId || '').trim();
-  const raw = String(token || '').trim();
+  const raw = String(token || '')
+    .trim()
+    .replace(/\s+/g, '');
   if (!uid || !raw) {
     const err = new Error('invalid_token');
     err.status = 400;
@@ -153,4 +161,5 @@ module.exports = {
   sendOrganiserEmailVerification,
   verifyOrganiserEmailToken,
   markOrganiserEmailVerified,
+  newLegacyLinkToken,
 };

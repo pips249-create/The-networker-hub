@@ -17,6 +17,7 @@ const { isSupabaseConfigured } = require('../api/_lib/supabase');
 const DEFAULT_NAMES = {
   'catherine@thenetworkerhub.com': 'Catherine',
   'rosie@thenetworkerhub.com': 'Rosie',
+  'rosie.mcgilvray@yahoo.co.uk': 'Rosie McGilvray',
 };
 
 async function main() {

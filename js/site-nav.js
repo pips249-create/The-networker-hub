@@ -192,13 +192,16 @@
     return true;
   }
 
-  function listEventCta(extraClass) {
-    var isActive = page === 'for-organisers';
+  function listEventCta(user, extraClass) {
+    var forOrganisers = !(user && user.organiserUiVisible);
+    var path = forOrganisers ? '/for-organisers' : '/organiser/';
+    var pageKey = forOrganisers ? 'for-organisers' : 'organiser';
+    var isActive = page === pageKey;
     var active = isActive ? ' aria-current="page"' : '';
     var cls = 'nav-organiser' + (extraClass ? ' ' + extraClass : '');
     return (
       '<a href="' +
-      href('/for-organisers') +
+      href(path) +
       '" class="' +
       cls +
       '"' +
@@ -350,7 +353,7 @@
       html += moreNavDropdownHtml();
     }
     if (showListEventCta(user)) {
-      html += listEventCta();
+      html += listEventCta(user);
     }
     if (user) {
       // Same top bar for every signed-in user. Account-specific links (organiser
@@ -414,7 +417,7 @@
       return html;
     }
     if (showListEventCta(user)) {
-      html += listEventCta('nav-mobile-item nav-mobile-list-event');
+      html += listEventCta(user, 'nav-mobile-item nav-mobile-list-event');
     }
     if (user) {
       // Same mobile account section for everyone; optional links only when relevant.

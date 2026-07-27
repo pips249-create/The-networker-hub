@@ -472,7 +472,7 @@
         '<p class="ee-publish-review-sub">' +
         esc(reviewLocationSummary()) +
         '</p>',
-      '/organiser/event-location',
+      '/organiser/event-edit',
       'Edit location'
     );
     html += reviewSection(
@@ -509,11 +509,11 @@
       return !Number.isNaN(start.getTime()) && start > Date.now();
     });
     let text =
-      'Your listing is submitted for review. Once approved, it appears on Browse events';
+      'Your listing goes live automatically on Browse events';
     if (scheduled) {
       text += ' and ticket sales open on the start dates you set';
     } else {
-      text += ' and ticket sales go live';
+      text += ' and ticket sales go live straight away';
     }
     text += '. You can still edit most details from My Events before the first date.';
     const nextEl = document.getElementById('ee-publish-review-next');

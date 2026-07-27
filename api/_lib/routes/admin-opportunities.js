@@ -103,11 +103,77 @@ function normalizeApprovalStatus(input) {
   return raw;
 }
 
+function parseAbout(input) {
+  if (Array.isArray(input)) {
+    return input.map((p) => String(p).trim()).filter(Boolean);
+  }
+  return String(input || '')
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+function aboutToText(about) {
+  if (Array.isArray(about)) return about.map((p) => String(p || '').trim()).filter(Boolean).join('\n\n');
+  return String(about || '').trim();
+}
+
+function metaVal(meta, keyRe) {
+  for (const m of meta || []) {
+    if (keyRe.test(String(m.key || ''))) return String(m.val || '').trim();
+  }
+  return '';
+}
+
+async function resolveAdminOpportunityImage(body, opportunityId) {
+  if (body.photo_base64 || body.photoBase64) {
+    const url = await resolveImageUrl({
+      folder: `opportunities/${opportunityId || 'new'}/cover`,
+      logoUrl: body.image_url || body.photo_url || body.photoUrl || null,
+      logoBase64: body.photo_base64 || body.photoBase64,
+      logoMime: body.photo_mime || body.photoMime,
+      logoFilename: body.photo_filename || body.photoFilename,
+    });
+    if (url) return url;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'image_url') || Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
+    const url = String(body.image_url || body.photo_url || '').trim();
+    return url || null;
+  }
+  return undefined;
+}
+
+async function resolveAdminOpportunityLogo(body, opportunityId) {
+  if (body.logo_base64 || body.logoBase64) {
+    const url = await resolveImageUrl({
+      folder: `opportunities/${opportunityId || 'new'}/logo`,
+      logoUrl: body.logo_url || body.logoUrl || null,
+      logoBase64: body.logo_base64 || body.logoBase64,
+      logoMime: body.logo_mime || body.logoMime,
+      logoFilename: body.logo_filename || body.logoFilename,
+    });
+    if (url) return url;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'logo_url') || Object.prototype.hasOwnProperty.call(body, 'logoUrl')) {
+    const url = String(body.logo_url || body.logoUrl || '').trim();
+    return url || null;
+  }
+  return undefined;
+}
+
 function mapOpportunityRow(row) {
+  const meta = normalizeMeta(row.meta);
   return {
     id: row.id,
     title: String(row.title || '').trim(),
     description: String(row.description || '').trim(),
+    about: Array.isArray(row.about) ? row.about.map(String) : [],
+    about_text: aboutToText(row.about),
+    meta,
+    investment: metaVal(meta, /^investment$/i),
+    investment_includes: metaVal(meta, /^investment includes$/i),
+    location: metaVal(meta, /^location$/i) || metaVal(meta, /territor/i),
+    commitment: metaVal(meta, /^commitment$/i),
     host: String(row.host || '').trim(),
     type: row.type || '',
     category: row.category || '',
@@ -128,6 +194,23 @@ function mapOpportunityRow(row) {
     updated_at: row.updated_at || '',
     published_at: row.published_at || '',
   };
+}
+
+function buildMetaFromAdminInput(input) {
+  if (Array.isArray(input.meta)) return normalizeMeta(input.meta);
+  const meta = [];
+  const investment = String(input.investment || '').trim();
+  const includes = String(input.investment_includes || input.investmentIncludes || '').trim();
+  const location = String(input.location || '').trim();
+  const commitment = String(input.commitment || '').trim();
+  const financialKey = String(input.financial_key || input.financialKey || '').trim();
+  const financialVal = String(input.financial_val || input.financialVal || '').trim();
+  if (investment) meta.push({ key: 'Investment', val: investment });
+  if (includes) meta.push({ key: 'Investment includes', val: includes });
+  if (financialKey && financialVal) meta.push({ key: financialKey, val: financialVal });
+  if (location) meta.push({ key: 'Location', val: location });
+  if (commitment) meta.push({ key: 'Commitment', val: commitment });
+  return normalizeMeta(meta);
 }
 
 async function listOpportunitiesForAdmin(query) {
@@ -219,81 +302,44 @@ function applyPublishedListingPayment(patch, row, now) {
   }
 }
 
-async function resolveAdminOpportunityCover(input) {
-  if (input.photoBase64 || input.photo_base64) {
-    const url = await resolveImageUrl({
-      folder: 'opportunities/new/cover',
-      logoUrl: input.photoUrl || input.photo_url || input.image_url,
-      logoBase64: input.photoBase64 || input.photo_base64,
-      logoMime: input.photoMime || input.photo_mime,
-      logoFilename: input.photoFilename || input.photo_filename,
-    });
-    if (url) return url;
-  }
-  const direct = String(input.photoUrl || input.photo_url || input.image_url || '').trim();
-  return direct || null;
-}
-
-async function resolveAdminOpportunityLogo(input) {
-  if (input.logoBase64 || input.logo_base64) {
-    const url = await resolveImageUrl({
-      folder: 'opportunities/new/logo',
-      logoUrl: input.logoUrl || input.logo_url,
-      logoBase64: input.logoBase64 || input.logo_base64,
-      logoMime: input.logoMime || input.logo_mime,
-      logoFilename: input.logoFilename || input.logo_filename,
-    });
-    if (url) return url;
-  }
-  const direct = String(input.logoUrl || input.logo_url || '').trim();
-  return direct || null;
-}
-
-function normalizeAbout(input) {
-  if (Array.isArray(input.about)) {
-    return input.about.map((p) => String(p).trim()).filter(Boolean);
-  }
-  const aboutText = String(input.aboutText || input.about_text || '').trim();
-  if (!aboutText) return [];
-  return aboutText
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-}
-
 async function createAdminOpportunity(input) {
   const sb = getSupabaseAdmin();
   const title = String(input.title || '').trim();
-  const host = String(input.host || '').trim() || 'Listing';
+  const host = String(input.host || '').trim() || 'Hub listing';
   if (!title) throw new Error('missing_title');
 
   const status = String(input.status || 'published').trim().toLowerCase();
   const published = status === 'published';
   const now = new Date();
   const listingExpiresAt = addMonths(now, 12);
-  const ownerEmailRaw = String(input.owner_email || input.ownerEmail || '').trim().toLowerCase();
-  const ownerEmail = ownerEmailRaw || HUB_SEED_OWNER_EMAIL;
-  const isTestListing = /^\[TEST\]/i.test(title);
+  const ownerEmail = String(input.owner_email || input.ownerEmail || HUB_SEED_OWNER_EMAIL)
+    .trim()
+    .toLowerCase() || HUB_SEED_OWNER_EMAIL;
+  const isTest = Boolean(input.is_test) || /^\[TEST\]/i.test(title);
+  const type = normalizeType(input.type || 'business-opportunity');
+  const about = parseAbout(input.about != null ? input.about : input.about_text || input.aboutText);
+  const meta = buildMetaFromAdminInput(input);
 
   const row = {
     organiser_id: null,
     owner_email: ownerEmail,
-    ownership_claim_status:
-      ownerEmailRaw && !isHubSeedOwnerEmail(ownerEmailRaw) ? 'pending' : null,
-    type: normalizeType(input.type || 'business-opportunity'),
+    ownership_claim_status: isHubSeedOwnerEmail(ownerEmail) ? null : 'pending',
+    ownership_claimed_at: null,
+    ownership_disputed_at: null,
+    ownership_disputed_by_email: null,
+    supabase_user_id: null,
+    type,
     category: String(input.category || 'general').trim() || 'general',
     title,
     description: String(input.description || '').trim() || null,
-    about: normalizeAbout(input),
+    about,
     host,
     host_initials: hostInitials(host),
     host_color: input.host_color || '#374151',
-    contact_email: String(input.contact_email || input.contactEmail || '').trim() || null,
-    meta: normalizeMeta(input.meta),
-    tags: [
-      isTestListing ? 'admin-test' : 'admin-created',
-      normalizeType(input.type || 'business-opportunity'),
-    ],
+    meta,
+    tags: isTest ? ['admin-test', type] : [type],
+    image_url: String(input.image_url || input.photo_url || '').trim() || null,
+    logo_url: String(input.logo_url || '').trim() || null,
     status: published ? 'published' : 'draft',
     approval_status: published ? 'Approved' : 'Pending Review',
     featured: Boolean(input.featured),
@@ -303,9 +349,6 @@ async function createAdminOpportunity(input) {
     updated_at: now.toISOString(),
   };
 
-  row.image_url = await resolveAdminOpportunityCover(input);
-  row.logo_url = await resolveAdminOpportunityLogo(input);
-
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title,
     opportunityId: null,
@@ -314,6 +357,25 @@ async function createAdminOpportunity(input) {
 
   const { data, error } = await sb.from('business_opportunities').insert(row).select('*').single();
   if (error) throw new Error(error.message);
+
+  const imagePatch = {};
+  const imageUrl = await resolveAdminOpportunityImage(input, data.id);
+  if (imageUrl !== undefined) imagePatch.image_url = imageUrl;
+  const logoUrl = await resolveAdminOpportunityLogo(input, data.id);
+  if (logoUrl !== undefined) imagePatch.logo_url = logoUrl;
+
+  if (Object.keys(imagePatch).length) {
+    imagePatch.updated_at = now.toISOString();
+    const { data: updated, error: updateErr } = await sb
+      .from('business_opportunities')
+      .update(imagePatch)
+      .eq('id', data.id)
+      .select('*')
+      .single();
+    if (updateErr) throw new Error(updateErr.message);
+    return mapOpportunityRow(updated);
+  }
+
   return mapOpportunityRow(data);
 }
 
@@ -402,20 +464,25 @@ module.exports = async function handler(req, res) {
           status: body.status,
           description: body.description,
           about: body.about,
-          aboutText: body.aboutText || body.about_text,
-          meta: body.meta,
+          about_text: body.about_text || body.aboutText,
           featured: body.featured,
+          image_url: body.image_url || body.photo_url,
+          logo_url: body.logo_url,
           owner_email: body.owner_email || body.ownerEmail,
-          contact_email: body.contact_email || body.contactEmail,
-          image_url: body.image_url,
-          photoUrl: body.photoUrl || body.photo_url,
-          photoBase64: body.photoBase64 || body.photo_base64,
-          photoMime: body.photoMime || body.photo_mime,
-          photoFilename: body.photoFilename || body.photo_filename,
-          logoUrl: body.logoUrl || body.logo_url,
-          logoBase64: body.logoBase64 || body.logo_base64,
-          logoMime: body.logoMime || body.logo_mime,
-          logoFilename: body.logoFilename || body.logo_filename,
+          investment: body.investment,
+          investment_includes: body.investment_includes || body.investmentIncludes,
+          location: body.location,
+          commitment: body.commitment,
+          financial_key: body.financial_key || body.financialKey,
+          financial_val: body.financial_val || body.financialVal,
+          meta: body.meta,
+          photo_base64: body.photo_base64 || body.photoBase64,
+          photo_mime: body.photo_mime || body.photoMime,
+          photo_filename: body.photo_filename || body.photoFilename,
+          logo_base64: body.logo_base64 || body.logoBase64,
+          logo_mime: body.logo_mime || body.logoMime,
+          logo_filename: body.logo_filename || body.logoFilename,
+          is_test: body.is_test,
         });
         return json(res, 201, { ok: true, opportunity });
       } catch (e) {
@@ -543,15 +610,35 @@ module.exports = async function handler(req, res) {
     if (Object.prototype.hasOwnProperty.call(body, 'description')) {
       patch.description = String(body.description || '').trim() || null;
     }
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'about') ||
+      Object.prototype.hasOwnProperty.call(body, 'about_text') ||
+      Object.prototype.hasOwnProperty.call(body, 'aboutText')
+    ) {
+      patch.about = parseAbout(body.about != null ? body.about : body.about_text || body.aboutText);
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'meta') ||
+      Object.prototype.hasOwnProperty.call(body, 'investment') ||
+      Object.prototype.hasOwnProperty.call(body, 'location') ||
+      Object.prototype.hasOwnProperty.call(body, 'commitment') ||
+      Object.prototype.hasOwnProperty.call(body, 'investment_includes') ||
+      Object.prototype.hasOwnProperty.call(body, 'financial_key') ||
+      Object.prototype.hasOwnProperty.call(body, 'financial_val')
+    ) {
+      patch.meta = buildMetaFromAdminInput(body);
+    }
     if (Object.prototype.hasOwnProperty.call(body, 'host')) {
       patch.host = String(body.host || '').trim() || null;
+      if (patch.host) patch.host_initials = hostInitials(patch.host);
     }
     if (Object.prototype.hasOwnProperty.call(body, 'type')) {
       patch.type = normalizeType(body.type);
     }
-    if (Object.prototype.hasOwnProperty.call(body, 'image_url')) {
-      patch.image_url = String(body.image_url || '').trim() || null;
-    }
+    const imageUrl = await resolveAdminOpportunityImage(body, id);
+    if (imageUrl !== undefined) patch.image_url = imageUrl;
+    const logoUrl = await resolveAdminOpportunityLogo(body, id);
+    if (logoUrl !== undefined) patch.logo_url = logoUrl;
     if (Object.prototype.hasOwnProperty.call(body, 'status')) {
       const status = String(body.status || '').trim();
       if (status && !['draft', 'published', 'unpublished', 'archived'].includes(status)) {

@@ -136,11 +136,11 @@
   function autodraftSavedMessage(draft) {
     if (draft && draft.hadUploadedPhoto) {
       return editId
-        ? 'Unsaved changes kept in this browser only — not saved to your listing yet. Re-select the uploaded image if you leave this page.'
+        ? 'Progress autosaved in this browser — re-select the uploaded image if you leave this page.'
         : 'Draft autosaved in this browser. Re-select the uploaded image if you close this page.';
     }
     return editId
-      ? 'Unsaved changes kept in this browser only — click Save changes to update your listing.'
+      ? 'Progress autosaved in this browser.'
       : 'Draft autosaved in this browser.';
   }
 
@@ -176,6 +176,12 @@
       dates: getSelectedDateKeys(),
       startTime: fieldValue('ee-start-time'),
       endTime: fieldValue('ee-end-time'),
+      venue: fieldValue('ee-venue'),
+      address1: fieldValue('ee-address1'),
+      city: fieldValue('ee-city'),
+      postcode: fieldValue('ee-postcode'),
+      platform: fieldValue('ee-platform'),
+      joinLink: fieldValue('ee-join-link'),
     };
   }
 
@@ -269,6 +275,14 @@
     if (QuarterTime && draft.startTime && draft.endTime && !options.skipTimes) {
       QuarterTime.setValues('ee-start-time', 'ee-end-time', draft.startTime, draft.endTime);
     }
+    fillLocationFields({
+      venue: draft.venue,
+      addressLine1: draft.address1,
+      city: draft.city,
+      postcode: draft.postcode,
+      onlinePlatform: draft.platform,
+      onlineLink: draft.joinLink,
+    });
     const description = document.getElementById('ee-description');
     if (description) description.dispatchEvent(new Event('input', { bubbles: true }));
     renderCalendar();
@@ -1657,6 +1671,50 @@
         btn.disabled = locked;
       });
     }
+
+    const venueBlock = document.getElementById('ee-venue-block');
+    const onlineBlock = document.getElementById('ee-online-block');
+    const showVenue = eventFormat === 'in-person';
+    const showOnline = eventFormat === 'online';
+    if (venueBlock) venueBlock.classList.toggle('is-visible', showVenue);
+    if (onlineBlock) onlineBlock.classList.toggle('is-visible', showOnline);
+    setFormatPanelFieldsDisabled(venueBlock, !showVenue || currentEventLocked || currentSeriesDateOnly);
+    setFormatPanelFieldsDisabled(onlineBlock, !showOnline || currentSeriesDateOnly);
+  }
+
+  function buildLocationFields() {
+    const showOnline = eventFormat === 'online';
+    const venue = showOnline ? '' : fieldValue('ee-venue').trim();
+    const address1 = showOnline ? '' : fieldValue('ee-address1').trim();
+    const city = showOnline ? '' : fieldValue('ee-city').trim();
+    const postcode = showOnline ? '' : fieldValue('ee-postcode').trim();
+    const parts = [venue, address1, city, postcode].filter(Boolean);
+    const fullAddress = parts.join(', ');
+    return {
+      venue,
+      addressLine1: address1,
+      city,
+      postcode,
+      location: showOnline ? 'Online' : fullAddress,
+      fullAddress: showOnline ? 'Online' : fullAddress,
+      eventFormat,
+      onlinePlatform: showOnline ? fieldValue('ee-platform').trim() : '',
+      onlineLink: showOnline ? fieldValue('ee-join-link').trim() : '',
+    };
+  }
+
+  function fillLocationFields(fields) {
+    if (!fields) return;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val != null) el.value = String(val);
+    };
+    set('ee-venue', fields.venue || '');
+    set('ee-address1', fields.addressLine1 || '');
+    set('ee-city', fields.city || '');
+    set('ee-postcode', fields.postcode || '');
+    set('ee-platform', fields.onlinePlatform || '');
+    set('ee-join-link', fields.onlineLink || '');
   }
 
   function bindFormatToggleButtons() {
@@ -1765,6 +1823,7 @@
     eventFormat = resolveEventFormat(ev);
     snapshotLocationFromEvent(ev);
     applyFormatUi(eventFormat);
+    fillLocationFields(cachedLocationFields);
     ensureGroupOptionForEvent(ev);
     if (ev.imageUrl) {
       const preview = document.getElementById('ee-photo-preview');
@@ -1800,7 +1859,7 @@
       selectedDates.add(dateKey(dateParts.year, dateParts.month - 1, dateParts.day));
     });
     if (!timeSet && QuarterTime) {
-      QuarterTime.setValues('ee-start-time', 'ee-end-time', '10:00', '12:00');
+      QuarterTime.setValues('ee-start-time', 'ee-end-time', '09:00', '11:00');
     }
     renderCalendar();
     renderSelectedList();
@@ -1887,10 +1946,8 @@
       if (editId) {
         document.getElementById('ee-page-title').textContent = 'Edit event';
         document.getElementById('ee-page-lead').textContent =
-          'Update your listing, add more dates on the calendar, then continue to location.';
-        document.getElementById('ee-submit').textContent = 'Continue to location →';
-        const draftBtn = document.getElementById('ee-save-draft');
-        if (draftBtn) draftBtn.textContent = 'Save changes';
+          'Update your listing, location, and dates, then continue to tickets.';
+        document.getElementById('ee-submit').textContent = 'Continue to tickets →';
 
         let ev = null;
         ev = await fetchEventForEdit(editId, data.events || []);
@@ -2015,6 +2072,15 @@
     }
 
     const recurrence = deriveRecurrenceFromDates(dateKeys);
+    const locFields = buildLocationFields();
+    if (publish && eventFormat === 'in-person' && !currentEventLocked && !currentSeriesDateOnly) {
+      if (!locFields.postcode) {
+        showAlert('Enter a postcode before continuing — we use it to place your event on the map.');
+        const postcodeEl = document.getElementById('ee-postcode');
+        if (postcodeEl) postcodeEl.focus();
+        return;
+      }
+    }
     let payload = {
       organiserGroupId,
       title,
@@ -2023,9 +2089,8 @@
       recurrencePattern: recurrence.recurrencePattern,
       recurrenceEndDate: recurrence.recurrenceEndDate,
       occurrences,
-      eventFormat,
+      ...locFields,
     };
-    if (editId) payload = preserveLocationOnPayload(payload);
     if (!editId) payload.listingStatus = 'draft';
 
     if (!currentEventLocked) {
@@ -2061,9 +2126,9 @@
     };
 
     const saveLabel = publish
-      ? 'Continuing to location'
+      ? 'Continuing to tickets'
       : editId
-        ? 'Saving changes'
+        ? 'Saving draft'
         : 'Saving draft';
 
     let res;
@@ -2112,7 +2177,7 @@
     const eventIds =
       res.data.eventIds || events.map((ev) => ev.id).filter(Boolean);
     if (publish && !eventIds.length) {
-      showAlert('Event saved but could not open location step. Try Edit from My Events.');
+      showAlert('Event saved but could not open ticket setup. Try Edit from My Events.');
       return;
     }
     const leadImage =
@@ -2139,10 +2204,10 @@
       })),
     };
     if (isEmbedDrawer && window.parent && window.parent !== window) {
-      goToLocationSetup(locationMeta);
+      goToTicketSetup(locationMeta);
       window.parent.postMessage(
         {
-          type: 'hub-event-goto-location',
+          type: 'hub-event-goto-tickets',
           eventIds,
           title,
         },
@@ -2150,7 +2215,7 @@
       );
       return;
     }
-    goToLocationSetup(locationMeta);
+    goToTicketSetup(locationMeta);
   }
 
   document.getElementById('ee-form').addEventListener('submit', (e) => {
@@ -2189,7 +2254,7 @@
       const cancelBtn = document.getElementById('ee-cancel-event-btn');
       if (cancelBtn) cancelBtn.addEventListener('click', requestEventCancellation);
       if (QuarterTime) {
-        QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '18:00', end: '20:00' });
+        QuarterTime.initPair('ee-start-time', 'ee-end-time', { start: '09:00', end: '11:00' });
       }
       bindTimeListRefresh();
       if (!editId && window.HubFlowTour && !isEmbedDrawer) {

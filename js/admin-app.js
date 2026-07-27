@@ -136,7 +136,7 @@
     },
     'opportunity-cleanup': {
       title: 'Fix listings',
-      subtitle: 'Review, create, and edit business opportunity listings',
+      subtitle: 'Review and approve business opportunity listings',
     },
     accounts: {
       title: 'User accounts',
@@ -443,6 +443,7 @@
     page: 0,
     q: '',
     incomplete: false,
+    excludeHidden: false,
     total: 0,
     loading: false,
     selected: {},
@@ -1389,20 +1390,6 @@
     }, METRICS_POLL_MS);
   }
 
-  var ADMIN_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
-
-  function normalizeUploadBase64(dataUrlOrBase64) {
-    return String(dataUrlOrBase64 || '').replace(/^data:[^;]+;base64,/, '');
-  }
-
-  function adminNetworkErrorMessage(err) {
-    var msg = String((err && err.message) || '').trim();
-    if (!msg || msg === 'Failed to fetch' || msg === 'Load failed' || msg === 'NetworkError when attempting to fetch resource.') {
-      return 'Network request failed — check your connection, try a smaller image (under 2MB), or refresh and sign in again.';
-    }
-    return msg;
-  }
-
   function parseAdminFetchResponse(r, text) {
     var data = {};
     if (text) {
@@ -1427,11 +1414,6 @@
     if (!r.ok) {
       data.error = data.error || data.message || 'request_failed';
       data.ok = false;
-      if (r.status === 403 && data.error === 'site_private') {
-        data.message =
-          data.message ||
-          'Site preview access expired — open /site-access in a new tab, enter the preview password, then try again.';
-      }
     }
     return data;
   }
@@ -1447,7 +1429,7 @@
         return {
           ok: false,
           error: 'network_error',
-          message: adminNetworkErrorMessage(err),
+          message: (err && err.message) || 'Request failed',
         };
       });
   }
@@ -1468,7 +1450,7 @@
         return {
           ok: false,
           error: 'network_error',
-          message: adminNetworkErrorMessage(err),
+          message: (err && err.message) || 'Request failed',
         };
       });
   }
@@ -1489,7 +1471,7 @@
         return {
           ok: false,
           error: 'network_error',
-          message: adminNetworkErrorMessage(err),
+          message: (err && err.message) || 'Request failed',
         };
       });
   }
@@ -9907,35 +9889,25 @@
   }
 
   function readFileAsBase64(file) {
-    if (file && file.size > ADMIN_IMAGE_MAX_BYTES) {
-      return Promise.reject(
-        new Error('Image must be under 2MB. Choose a smaller file or paste an image URL instead.')
-      );
-    }
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () {
-        resolve(normalizeUploadBase64(String(reader.result || '')));
+        resolve(String(reader.result || ''));
       };
-      reader.onerror = function () {
-        reject(new Error('Could not read the image file.'));
-      };
+      reader.onerror = reject;
       reader.readAsDataURL(file);
     });
   }
 
-  function adminImageFieldHtml(key, label, urlFieldName, photoUrl, compact) {
+  function adminLogoFieldHtml(key, photoUrl, compact) {
     var hasPhoto = !!photoUrl;
-    var urlName = urlFieldName || 'photo_url';
-    var labelHtml =
-      '<label class="block text-xs font-semibold text-slate-500 mb-1">' + esc(label || 'Image') + '</label>';
     if (compact) {
       return (
         '<div class="group-cleanup-logo-field min-w-0">' +
-        labelHtml +
+        '<label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
         '<div class="admin-logo-zone admin-logo-zone--compact border-2 border-dashed border-slate-300 rounded-lg p-2 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
         attrEsc(key) +
-        '" tabindex="0" role="button" aria-label="Upload or paste image">' +
+        '" tabindex="0" role="button" aria-label="Upload or paste logo">' +
         '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
         '<img class="admin-logo-preview mx-auto h-12 w-12 rounded-lg object-contain border border-slate-200' +
         (hasPhoto ? '' : ' hidden') +
@@ -9945,20 +9917,17 @@
         '<p class="admin-logo-placeholder text-[10px] text-slate-500 mt-1' +
         (hasPhoto ? ' hidden' : '') +
         '">Drop or click</p></div>' +
-        '<input type="url" name="' +
-        attrEsc(urlName) +
-        '" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white text-xs mt-1.5" value="' +
+        '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white text-xs mt-1.5" value="' +
         attrEsc(photoUrl || '') +
-        '" placeholder="Image URL"></div>'
+        '" placeholder="Logo URL"></div>'
       );
     }
     return (
-      '<div>' +
-      labelHtml +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
       '<p class="text-[11px] text-slate-500 mb-2">Click, paste (Ctrl+V), or drop an image — or paste a URL below.</p>' +
       '<div class="admin-logo-zone border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
       attrEsc(key) +
-      '" tabindex="0" role="button" aria-label="Upload or paste image">' +
+      '" tabindex="0" role="button" aria-label="Upload or paste logo">' +
       '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
       '<img class="admin-logo-preview mx-auto h-16 w-16 rounded-lg object-cover border border-slate-200' +
       (hasPhoto ? '' : ' hidden') +
@@ -9968,16 +9937,10 @@
       '<p class="admin-logo-placeholder text-xs text-slate-500 mt-2' +
       (hasPhoto ? ' hidden' : '') +
       '">Drop image here or click to browse</p></div>' +
-      '<input type="url" name="' +
-      attrEsc(urlName) +
-      '" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
+      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
       attrEsc(photoUrl || '') +
       '" placeholder="https://… (optional if you uploaded a file)"></div>'
     );
-  }
-
-  function adminLogoFieldHtml(key, photoUrl, compact) {
-    return adminImageFieldHtml(key, 'Logo', 'photo_url', photoUrl, compact);
   }
 
   function bindAdminLogoZone(zone) {
@@ -9988,8 +9951,11 @@
     var preview = zone.querySelector('.admin-logo-preview');
     var placeholder = zone.querySelector('.admin-logo-placeholder');
     var form = zone.closest('form');
+    var wrap = zone.parentElement;
+    var urlName = zone.getAttribute('data-admin-logo-url-name') || 'photo_url';
     var urlInput =
-      (zone.parentElement && zone.parentElement.querySelector('input[type="url"]')) ||
+      (wrap && wrap.querySelector('input[name="' + urlName + '"]')) ||
+      (form && form.querySelector('input[name="' + urlName + '"]')) ||
       (form && form.querySelector('input[name="photo_url"]'));
 
     function showPreview(src) {
@@ -10001,12 +9967,6 @@
     }
 
     function setFile(file) {
-      if (!file) return;
-      if (file.size > ADMIN_IMAGE_MAX_BYTES) {
-        window.alert('Image must be under 2MB. Choose a smaller file or paste an image URL instead.');
-        if (fileInput) fileInput.value = '';
-        return;
-      }
       adminLogoPending[key] = { file: file };
       var reader = new FileReader();
       reader.onload = function () {
@@ -10052,6 +10012,8 @@
       name: o.name || 'Untitled',
       email: o.email || '',
       event_count: o.event_count || 0,
+      hub_suspended: Boolean(o.hub_suspended),
+      listing_status: o.listing_status || '',
     };
   }
 
@@ -10086,6 +10048,8 @@
     if (mergeSection) mergeSection.classList.toggle('hidden', ids.length < 2);
     var deleteSection = document.getElementById('group-delete-section');
     if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
+    var browseSection = document.getElementById('group-browse-section');
+    if (browseSection) browseSection.classList.toggle('hidden', ids.length === 0);
     if (chipsEl) {
       chipsEl.innerHTML = rows
         .map(function (o) {
@@ -10136,8 +10100,7 @@
     }
   }
 
-  function logoPayloadForKey(key, form, urlFieldName) {
-    var urlName = urlFieldName || 'photo_url';
+  function logoPayloadForKey(key, form) {
     var pending = adminLogoPending[key];
     if (pending && pending.file) {
       return readFileAsBase64(pending.file).then(function (b64) {
@@ -10146,41 +10109,16 @@
           logoMime: pending.file.type,
           logoFilename: pending.file.name,
         };
-        if (form && formField(form, urlName)) {
-          var url = formFieldVal(form, urlName);
+        if (form && formField(form, 'photo_url')) {
+          var url = formFieldVal(form, 'photo_url');
           if (url) payload.photo_url = url;
         }
         return payload;
       });
     }
     var payload = {};
-    if (form && formField(form, urlName)) payload.photo_url = formFieldVal(form, urlName);
+    if (form && formField(form, 'photo_url')) payload.photo_url = formFieldVal(form, 'photo_url');
     return Promise.resolve(payload);
-  }
-
-  function imagePayloadForKey(key, form, urlFieldName) {
-    return logoPayloadForKey(key, form, urlFieldName).then(function (payload) {
-      return {
-        base64: payload.logoBase64,
-        mime: payload.logoMime,
-        filename: payload.logoFilename,
-        url: payload.photo_url,
-      };
-    });
-  }
-
-  function opportunityCreateMetaFromForm(form) {
-    var meta = [];
-    var investment = formFieldVal(form, 'investment');
-    var location = formFieldVal(form, 'location');
-    var commitment = formFieldVal(form, 'commitment');
-    var financialKey = formFieldVal(form, 'financial_key');
-    var financialVal = formFieldVal(form, 'financial_val');
-    if (investment) meta.push({ key: 'Investment', val: investment });
-    if (location) meta.push({ key: 'Location', val: location });
-    if (commitment) meta.push({ key: 'Commitment', val: commitment });
-    if (financialKey && financialVal) meta.push({ key: financialKey, val: financialVal });
-    return meta;
   }
 
   function adminPaginationHtml(page, total, pageSize, dataAttr) {
@@ -10370,7 +10308,7 @@
       (browseHiddenDisabled ? ' disabled' : '') +
       '>' +
       '<span class="min-w-0"><span class="block text-sm font-semibold text-brand-900">Hide from browse</span>' +
-      '<span class="block text-[11px] text-slate-500 mt-0.5">Off the public directory only. They can still claim via invite email / matching login, then publish events (which puts the page live again).</span>' +
+      '<span class="block text-[11px] text-slate-500 mt-0.5">Keeps this group off the public organiser directory until they claim the profile and publish a listing.</span>' +
       (browseHiddenDisabled
         ? '<span class="block text-[11px] text-amber-800 font-semibold mt-1">Suspended — use Reinstate profile to publish again.</span>'
         : '') +
@@ -10560,6 +10498,7 @@
     params.set('limit', String(GROUP_PAGE_SIZE));
     if (groupCleanupState.q) params.set('q', groupCleanupState.q);
     if (groupCleanupState.incomplete) params.set('incomplete', '1');
+    if (groupCleanupState.excludeHidden) params.set('exclude_hidden', '1');
     if (options.organiserId || groupCleanupState.focusOrganiserId) {
       params.set('id', String(options.organiserId || groupCleanupState.focusOrganiserId));
     }
@@ -10765,26 +10704,6 @@
         window.alert(err.message || 'Could not create login');
       })
       .finally(function () {
-        if (btn) btn.disabled = false;
-      });
-  }
-
-  function setGroupHiddenFromBrowse(organiserId, hide, btn) {
-    if (!organiserId) return;
-    if (btn) btn.disabled = true;
-    return adminPost('/api/admin/organisers', {
-      id: organiserId,
-      hide_from_browse: Boolean(hide),
-    })
-      .then(function (data) {
-        if (!data.ok) throw new Error(data.message || data.error || 'Could not update visibility');
-        return refreshGroupCleanupPage();
-      })
-      .then(function () {
-        updateGroupBulkBar();
-      })
-      .catch(function (err) {
-        window.alert(err.message || 'Could not update visibility');
         if (btn) btn.disabled = false;
       });
   }
@@ -11087,6 +11006,84 @@
       msgEl: document.getElementById('group-delete-msg'),
       btn: document.getElementById('group-delete-btn'),
     });
+  }
+
+  function bulkSetGroupsHiddenFromBrowse(hide) {
+    var rows = selectedGroupRows();
+    var eligible = rows.filter(function (o) {
+      return !o.hub_suspended;
+    });
+    var suspendedCount = rows.length - eligible.length;
+    if (!eligible.length) {
+      window.alert('None of the selected profiles can be updated — suspended profiles must be reinstated first.');
+      return;
+    }
+    var ids = eligible.map(function (o) {
+      return o.id;
+    });
+    var confirmMsg =
+      (hide
+        ? 'Hide ' +
+          ids.length +
+          ' group profile' +
+          (ids.length === 1 ? '' : 's') +
+          ' from the public organiser directory?\n\nThey can still claim via invite email and add events.'
+        : 'Show ' +
+          ids.length +
+          ' group profile' +
+          (ids.length === 1 ? '' : 's') +
+          ' on the public organiser directory again?') +
+      (suspendedCount
+        ? '\n\n' + suspendedCount + ' suspended profile' + (suspendedCount === 1 ? '' : 's') + ' will be skipped.'
+        : '');
+    if (!window.confirm(confirmMsg)) return;
+
+    var msgEl = document.getElementById('group-browse-msg');
+    var hideBtn = document.getElementById('group-hide-browse-btn');
+    var showBtn = document.getElementById('group-show-browse-btn');
+    if (hideBtn) hideBtn.disabled = true;
+    if (showBtn) showBtn.disabled = true;
+    if (msgEl) {
+      msgEl.textContent = hide ? 'Hiding from browse…' : 'Showing on browse…';
+      msgEl.className = 'text-xs text-slate-500';
+    }
+
+    adminPost('/api/admin/organisers', { action: 'bulk_update', ids: ids, hide_from_browse: hide })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
+        clearSelectedGroups();
+        if (main) {
+          main.querySelectorAll('.group-select-checkbox').forEach(function (cb) {
+            cb.checked = false;
+          });
+        }
+        var selectPage = document.getElementById('group-cleanup-select-page');
+        if (selectPage) selectPage.checked = false;
+        if (msgEl) {
+          msgEl.textContent =
+            (hide ? 'Hidden ' : 'Shown ') +
+            (data.updated || ids.length) +
+            ' profile' +
+            ((data.updated || ids.length) === 1 ? '' : 's') +
+            ' on browse.' +
+            (suspendedCount ? ' ' + suspendedCount + ' suspended skipped.' : '');
+          msgEl.className = 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshGroupCleanupPage();
+      })
+      .then(function () {
+        updateGroupBulkBar();
+      })
+      .catch(function (err) {
+        if (msgEl) {
+          msgEl.textContent = err.message || 'Could not update browse visibility';
+          msgEl.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (hideBtn) hideBtn.disabled = false;
+        if (showBtn) showBtn.disabled = false;
+      });
   }
 
   function deleteSingleGroup(id, name, eventCount, btn) {
@@ -11503,6 +11500,16 @@
       return;
     }
 
+    if (e.target.closest('#group-hide-browse-btn')) {
+      bulkSetGroupsHiddenFromBrowse(true);
+      return;
+    }
+
+    if (e.target.closest('#group-show-browse-btn')) {
+      bulkSetGroupsHiddenFromBrowse(false);
+      return;
+    }
+
     if (e.target.closest('#group-delete-btn')) {
       deleteSelectedGroups();
       return;
@@ -11522,16 +11529,6 @@
     var provisionBtn = e.target.closest('[data-provision-group-login]');
     if (provisionBtn) {
       provisionGroupLogin(provisionBtn.getAttribute('data-provision-group-login'), provisionBtn);
-      return;
-    }
-
-    var hideBrowseBtn = e.target.closest('[data-hide-group-browse]');
-    if (hideBrowseBtn) {
-      setGroupHiddenFromBrowse(
-        hideBrowseBtn.getAttribute('data-hide-group-browse'),
-        hideBrowseBtn.getAttribute('data-hide') === '1',
-        hideBrowseBtn
-      );
       return;
     }
 
@@ -11608,6 +11605,15 @@
     document.body.addEventListener('change', function (e) {
       if (e.target.id === 'group-cleanup-incomplete') {
         groupCleanupState.incomplete = e.target.checked;
+        groupCleanupState.page = 0;
+        fetchGroupCleanup(0).then(function (data) {
+          renderGroupCleanupList(data);
+          bindGroupCleanupPageUi();
+        });
+        return;
+      }
+      if (e.target.id === 'group-cleanup-exclude-hidden') {
+        groupCleanupState.excludeHidden = e.target.checked;
         groupCleanupState.page = 0;
         fetchGroupCleanup(0).then(function (data) {
           renderGroupCleanupList(data);
@@ -12091,15 +12097,6 @@
                   attrEsc(o.id) +
                   '" class="text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 hover:bg-slate-50">Block emails</button>'
               : '') +
-            (o.hub_suspended
-              ? ''
-              : String(o.listing_status || '').toLowerCase() === 'unpublished'
-                ? '<button type="button" data-hide-group-browse="' +
-                  attrEsc(o.id) +
-                  '" data-hide="0" class="text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-800 px-2.5 py-1 hover:bg-emerald-50" title="Put this group back on the public organiser directory">Show on browse</button>'
-                : '<button type="button" data-hide-group-browse="' +
-                  attrEsc(o.id) +
-                  '" data-hide="1" class="text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 px-2.5 py-1 hover:bg-slate-50" title="Hide from the public organiser directory — they can still claim by email and add events">Hide from browse</button>') +
             '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
             (isOpen ? 'Close' : 'Edit profile') +
             '</button>' +
@@ -12181,6 +12178,13 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
       '<span id="group-bulk-msg" class="text-xs"></span></div></form>' +
+      '<div id="group-browse-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Browse visibility</p>' +
+      '<p class="text-xs text-slate-600">Hide removes profiles from the public organiser directory. They can still claim via invite email and publish events (which puts the page live again).</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="group-hide-browse-btn" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Hide from browse</button>' +
+      '<button type="button" id="group-show-browse-btn" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-4 py-2 hover:bg-emerald-100">Show on browse</button>' +
+      '<span id="group-browse-msg" class="text-xs"></span></div></div>' +
       '<div id="group-merge-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
       '<p class="text-sm font-semibold text-brand-900">Merge duplicate groups</p>' +
       '<p class="text-xs text-slate-600">Pick the profile to keep. Other selected groups are removed; their events move to the primary profile and their account owners become team editors.</p>' +
@@ -12204,8 +12208,12 @@
       (groupCleanupState.incomplete ? ' checked' : '') +
       '> Show incomplete only</label>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="group-cleanup-exclude-hidden" class="rounded border-slate-300"' +
+      (groupCleanupState.excludeHidden ? ' checked' : '') +
+      '> Hide hidden from browse</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
-      '<p class="text-xs text-slate-500">Compact rows — use <strong>Hide from browse</strong> on a row, or <strong>Edit profile</strong> for full details. Use page numbers below to browse.</p>' +
+      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers below to browse.</p>' +
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;
@@ -13105,11 +13113,16 @@
     );
   }
 
-  function eventCleanupBulkHtml() {
+  function eventCleanupHintHtml() {
     return (
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — search by title or city, pick an organiser, or use quick filters. Use the page numbers below the table to browse.</p>' +
-      '<div id="event-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
+      'Large catalogue — search by title or city, pick an organiser, or use quick filters. Use the page numbers below the table to browse.</p>'
+    );
+  }
+
+  function eventCleanupBulkHtml() {
+    return (
+      '<div id="event-cleanup-bulk" class="event-cleanup-bulk hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="event-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="event-bulk-count">0</span> events selected</p>' +
@@ -13164,8 +13177,9 @@
       eventCleanupCreateSectionHtml() +
       '<div class="event-cleanup-toolbar space-y-3">' +
       eventCleanupFiltersHtml() +
-      eventCleanupBulkHtml() +
+      eventCleanupHintHtml() +
       '</div>' +
+      eventCleanupBulkHtml() +
       '<div id="event-cleanup-list" class="event-cleanup-list"></div></div>';
 
     syncEventCleanupFilterUi();
@@ -15057,6 +15071,195 @@
       .join('');
   }
 
+  function opportunityCommitmentOptions(selected) {
+    return ['', 'Full-time', 'Part-time / Flexible', 'Event-based', 'Flexible']
+      .map(function (s) {
+        return (
+          '<option value="' +
+          attrEsc(s) +
+          '"' +
+          (selected === s ? ' selected' : '') +
+          '>' +
+          esc(s || 'Select…') +
+          '</option>'
+        );
+      })
+      .join('');
+  }
+
+  function opportunityFinancialKeyOptions(selected) {
+    return ['', 'Earnings', 'Commission', 'Return est.', 'Revenue', 'Income', 'Profit']
+      .map(function (s) {
+        return (
+          '<option value="' +
+          attrEsc(s) +
+          '"' +
+          (selected === s ? ' selected' : '') +
+          '>' +
+          esc(s || 'None') +
+          '</option>'
+        );
+      })
+      .join('');
+  }
+
+  function opportunityMetaFinancialFromOpp(opp) {
+    var meta = (opp && opp.meta) || [];
+    for (var i = 0; i < meta.length; i++) {
+      var key = String(meta[i].key || '');
+      if (/^(earnings|commission|return est\.|revenue|income|profit)$/i.test(key)) {
+        return { key: key, val: String(meta[i].val || '') };
+      }
+    }
+    return { key: '', val: '' };
+  }
+
+  function opportunityImageFieldHtml(key, urlName, label, help, imageUrl) {
+    var hasPhoto = !!imageUrl;
+    return (
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">' +
+      esc(label) +
+      '</label>' +
+      '<p class="text-[11px] text-slate-500 mb-2">' +
+      esc(help) +
+      '</p>' +
+      '<div class="admin-logo-zone border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
+      attrEsc(key) +
+      '" data-admin-logo-url-name="' +
+      attrEsc(urlName) +
+      '" tabindex="0" role="button" aria-label="' +
+      attrEsc(label) +
+      '">' +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
+      '<img class="admin-logo-preview mx-auto h-16 w-auto max-w-full rounded-lg object-cover border border-slate-200' +
+      (hasPhoto ? '' : ' hidden') +
+      '" src="' +
+      attrEsc(imageUrl || '') +
+      '" alt="">' +
+      '<p class="admin-logo-placeholder text-xs text-slate-500 mt-2' +
+      (hasPhoto ? ' hidden' : '') +
+      '">Drop image here or click to browse</p></div>' +
+      '<input type="url" name="' +
+      attrEsc(urlName) +
+      '" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
+      attrEsc(imageUrl || '') +
+      '" placeholder="https://… (optional if you uploaded a file)"></div>'
+    );
+  }
+
+  function opportunityImagePayloadForKey(key, form, urlName, base64Key) {
+    var pending = adminLogoPending[key];
+    var fieldName = urlName || 'image_url';
+    var prefix = base64Key || 'photo';
+    if (pending && pending.file) {
+      return readFileAsBase64(pending.file).then(function (b64) {
+        var payload = {};
+        payload[prefix + '_base64'] = b64;
+        payload[prefix + '_mime'] = pending.file.type;
+        payload[prefix + '_filename'] = pending.file.name;
+        if (form && formField(form, fieldName)) {
+          var url = formFieldVal(form, fieldName);
+          if (url) payload[fieldName] = url;
+        }
+        return payload;
+      });
+    }
+    var payload = {};
+    if (form && formField(form, fieldName)) payload[fieldName] = formFieldVal(form, fieldName) || null;
+    return Promise.resolve(payload);
+  }
+
+  function opportunityListingFieldsHtml(opp, opts) {
+    opp = opp || {};
+    opts = opts || {};
+    var coverKey = opts.coverKey || 'opp-cover';
+    var logoKey = opts.logoKey || 'opp-logo';
+    var financial = opportunityMetaFinancialFromOpp(opp);
+    return (
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.title || '') +
+      '" placeholder="e.g. Yorkshire café franchise — territory available"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Host / company</label>' +
+      '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.host || '') +
+      '" placeholder="Acme Ltd"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
+      '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityTypeOptions(opp.type || 'business-opportunity') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityStatusOptions(opp.status || 'published') +
+      '</select></div>' +
+      (opts.includeApproval
+        ? '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Approval</label>' +
+          '<select name="approval_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          '<option value="Pending Review"' +
+          (opp.approval_status === 'Pending Review' ? ' selected' : '') +
+          '>Pending review</option>' +
+          '<option value="Approved"' +
+          (opp.approval_status === 'Approved' ? ' selected' : '') +
+          '>Approved</option>' +
+          '<option value="Rejected"' +
+          (opp.approval_status === 'Rejected' ? ' selected' : '') +
+          '>Rejected</option></select></div>'
+        : '') +
+      '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
+      '<input type="checkbox" name="featured" class="rounded border-slate-300"' +
+      (opp.featured ? ' checked' : '') +
+      '> Featured in spotlight</label></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Short description</label>' +
+      '<textarea name="description" rows="2" maxlength="400" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Shown on listing cards — what it is and who it suits">' +
+      esc(opp.description || '') +
+      '</textarea></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Full description</label>' +
+      '<textarea name="about_text" rows="5" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="What’s included, support offered, and who you’re looking for. Separate paragraphs with a blank line.">' +
+      esc(opp.about_text || '') +
+      '</textarea></div>' +
+      opportunityImageFieldHtml(
+        coverKey,
+        'image_url',
+        'Cover image',
+        'Shown on the listing card and detail page. Click, paste, or drop an image — or paste a URL.',
+        opp.image_url || ''
+      ) +
+      opportunityImageFieldHtml(
+        logoKey,
+        'logo_url',
+        'Business logo (optional)',
+        'Square logo shown beside the company name.',
+        opp.logo_url || ''
+      ) +
+      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 grid sm:grid-cols-2 gap-3">' +
+      '<p class="sm:col-span-2 text-xs font-semibold text-slate-600">Card details</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Investment required</label>' +
+      '<input type="text" name="investment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.investment || '') +
+      '" placeholder="e.g. £0 or £9,500"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
+      '<input type="text" name="location" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.location || '') +
+      '" placeholder="e.g. Yorkshire / Remote / UK-wide"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">What’s included in this investment? <span class="font-normal">(optional)</span></label>' +
+      '<textarea name="investment_includes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Training, starter kit, marketing materials…">' +
+      esc(opp.investment_includes || '') +
+      '</textarea></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment</label>' +
+      '<select name="commitment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityCommitmentOptions(opp.commitment || '') +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Earnings / return <span class="font-normal">(optional)</span></label>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+      '<select name="financial_key" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityFinancialKeyOptions(financial.key) +
+      '</select>' +
+      '<input type="text" name="financial_val" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(financial.val) +
+      '" placeholder="e.g. £400–£900/mo"></div></div></div>'
+    );
+  }
+
   function opportunityCleanupHasActiveFilters() {
     return !!(
       opportunityCleanupState.q ||
@@ -15115,48 +15318,14 @@
       '</div>' +
       '<span class="opportunity-cleanup-msg text-xs"></span></div>' +
       '<div class="grid sm:grid-cols-2 gap-3">' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
-      '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(opp.title || '') +
-      '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Host / company</label>' +
-      '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(opp.host || '') +
-      '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
-      '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      opportunityTypeOptions(opp.type) +
-      '</select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
-      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      opportunityStatusOptions(opp.status || 'draft') +
-      '</select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Approval</label>' +
-      '<select name="approval_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      '<option value="Pending Review"' +
-      (opp.approval_status === 'Pending Review' ? ' selected' : '') +
-      '>Pending review</option>' +
-      '<option value="Approved"' +
-      (opp.approval_status === 'Approved' ? ' selected' : '') +
-      '>Approved</option>' +
-      '<option value="Rejected"' +
-      (opp.approval_status === 'Rejected' ? ' selected' : '') +
-      '>Rejected</option></select></div>' +
-      '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
-      '<input type="checkbox" name="featured" class="rounded border-slate-300"' +
-      (opp.featured ? ' checked' : '') +
-      '> Featured in spotlight</label></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Cover image URL</label>' +
-      '<input type="url" name="image_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(opp.image_url || '') +
-      '" placeholder="https://…"></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Description</label>' +
-      '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      esc(opp.description || '') +
-      '</textarea></div>' +
+      opportunityListingFieldsHtml(opp, {
+        includeApproval: true,
+        coverKey: 'opp-edit-cover-' + opp.id,
+        logoKey: 'opp-edit-logo-' + opp.id,
+      }) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
       '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
-      '<p class="text-xs text-slate-500">Assign a claimant email to open the in-dashboard claim prompt when they sign in.</p>' +
+      '<p class="text-xs text-slate-500">Hub-owned listings stay claimable until you assign a claimant email. Assigning opens the in-dashboard claim prompt when they sign in.</p>' +
       '<div class="flex flex-wrap gap-2 items-end">' +
       '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
       '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -15548,6 +15717,7 @@
       ) +
       adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
     updateOpportunityBulkBar();
+    bindAdminLogoZones(list);
   }
 
   function renderOpportunityCleanup(fullHash) {
@@ -15640,73 +15810,67 @@
       '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group" open>' +
       '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create listing</summary>' +
       '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
-      '<p class="text-xs text-slate-600 pt-3">Add a full business opportunity listing — cover image, descriptions, and card highlights. Assign an <strong>owner email</strong> to open the in-dashboard claim prompt when they sign in.</p>' +
+      '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
       '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
-      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Tropic Skincare — Ambassador Programme"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Host / company</label>' +
-      '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Acme Ltd"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
-      '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      opportunityTypeOptions('business-opportunity') +
-      '</select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
-      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      opportunityStatusOptions('published') +
-      '</select></div>' +
-      '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
-      '<input type="checkbox" name="featured" class="rounded border-slate-300"> Featured in spotlight</label></div>' +
-      '<div class="sm:col-span-2">' +
-      adminImageFieldHtml('opp-create-cover', 'Cover image', 'image_url', '', false) +
-      '</div>' +
-      '<div class="sm:col-span-2">' +
-      adminImageFieldHtml('opp-create-logo', 'Business logo (optional)', 'logo_url', '', false) +
-      '</div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Short description</label>' +
-      '<p class="text-[11px] text-slate-500 mb-1">Shown on the browse card — keep it concise.</p>' +
-      '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="What the opportunity is and who it suits"></textarea></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Full description</label>' +
-      '<p class="text-[11px] text-slate-500 mb-1">Shown on the detail page. Separate paragraphs with a blank line.</p>' +
-      '<textarea name="about" rows="5" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Tell people what&apos;s included, what support you offer, and what you&apos;re looking for."></textarea></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Investment required</label>' +
-      '<input type="text" name="investment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. £0 or £9,500"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
-      '<input type="text" name="location" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Yorkshire or UK-wide"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment</label>' +
-      '<select name="commitment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      '<option value="">Select…</option>' +
-      '<option>Full-time</option>' +
-      '<option>Part-time / Flexible</option>' +
-      '<option>Event-based</option>' +
-      '<option>Flexible</option></select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Earnings / return (optional)</label>' +
-      '<div class="grid grid-cols-2 gap-2">' +
-      '<select name="financial_key" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      '<option value="">None</option>' +
-      '<option value="Earnings">Earnings</option>' +
-      '<option value="Commission">Commission</option>' +
-      '<option value="Return est.">Return est.</option>' +
-      '<option value="Revenue">Revenue</option></select>' +
-      '<input type="text" name="financial_val" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. £800–£2k/mo"></div></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Contact email for enquiries</label>' +
-      '<input type="email" name="contact_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="you@company.co.uk"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email (for claim invite)</label>' +
-      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="claimant@example.com">' +
-      '<p class="text-[11px] text-slate-500 mt-1">When they sign in, they&apos;ll see a prompt to claim this listing.</p></div>' +
-      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3 pt-1">' +
+      opportunityListingFieldsHtml(
+        { type: 'business-opportunity', status: 'published' },
+        { coverKey: 'opp-create-cover', logoKey: 'opp-create-logo' }
+      ) +
+      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
+      '<p class="text-xs font-semibold text-slate-600">Claim later (optional)</p>' +
+      '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
+      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
-      '<span class="opportunity-create-msg text-xs"></span></div></form></div></details>' +
-      '<details class="rounded-xl border border-slate-200 bg-slate-50/50 group">' +
-      '<summary class="cursor-pointer list-none font-semibold text-slate-700 px-4 py-3 select-none">Add sample test listings</summary>' +
-      '<div class="px-4 pb-4 space-y-3 border-t border-slate-200">' +
-      '<p class="text-xs text-slate-600 pt-3">Create 3 prefilled sample listings for previewing <code class="text-[11px]">/opportunities/</code>. Titles are prefixed with <code class="text-[11px]">[TEST]</code> — delete them from the table above when you are done.</p>' +
+      '<span class="opportunity-create-msg text-xs"></span></div></form>' +
+      '<div class="border-t border-brand-100 pt-4 space-y-3">' +
+      '<p class="text-xs font-semibold text-slate-600">Quick samples</p>' +
+      '<p class="text-xs text-slate-600">Add 3 sample <code class="text-[11px]">[TEST]</code> listings with stock images for previewing /opportunities/ — delete them from the table when done.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Add 3 sample test listings</button>' +
-      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></details></div>';
+      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg border border-brand-300 bg-white text-brand-900 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Add 3 sample test listings</button>' +
+      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></details></div>';
 
     syncOpportunityCleanupFilterUi();
+    bindAdminLogoZones(main.querySelector('.opportunity-create-form'));
     refreshOpportunityCleanupData();
-    bindAdminLogoZones(main);
+  }
+
+  function resetOpportunityCreateForm(form) {
+    if (!form) return;
+    form.reset();
+    var statusField = formField(form, 'status');
+    if (statusField) statusField.value = 'published';
+    var typeField = formField(form, 'type');
+    if (typeField) typeField.value = 'business-opportunity';
+    delete adminLogoPending['opp-create-cover'];
+    delete adminLogoPending['opp-create-logo'];
+    form.querySelectorAll('.admin-logo-preview').forEach(function (img) {
+      img.classList.add('hidden');
+      img.removeAttribute('src');
+    });
+    form.querySelectorAll('.admin-logo-placeholder').forEach(function (el) {
+      el.classList.remove('hidden');
+    });
+  }
+
+  function opportunityFormPayload(form) {
+    return {
+      title: formFieldVal(form, 'title'),
+      host: formFieldVal(form, 'host'),
+      type: formFieldVal(form, 'type') || 'business-opportunity',
+      status: formFieldVal(form, 'status') || 'published',
+      description: formFieldVal(form, 'description') || null,
+      about_text: formFieldVal(form, 'about_text') || null,
+      investment: formFieldVal(form, 'investment') || null,
+      investment_includes: formFieldVal(form, 'investment_includes') || null,
+      location: formFieldVal(form, 'location') || null,
+      commitment: formFieldVal(form, 'commitment') || null,
+      financial_key: formFieldVal(form, 'financial_key') || null,
+      financial_val: formFieldVal(form, 'financial_val') || null,
+      featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
+      owner_email: formFieldVal(form, 'owner_email') || null,
+    };
   }
 
   function createOpportunityCleanupForm(form) {
@@ -15717,55 +15881,30 @@
       msg.textContent = 'Creating…';
       msg.className = 'opportunity-create-msg text-xs text-slate-500';
     }
+    var coverKey =
+      (form.querySelector('[data-admin-logo-url-name="image_url"]') &&
+        form.querySelector('[data-admin-logo-url-name="image_url"]').getAttribute('data-admin-logo-key')) ||
+      'opp-create-cover';
+    var logoKey =
+      (form.querySelector('[data-admin-logo-url-name="logo_url"]') &&
+        form.querySelector('[data-admin-logo-url-name="logo_url"]').getAttribute('data-admin-logo-key')) ||
+      'opp-create-logo';
     Promise.all([
-      imagePayloadForKey('opp-create-cover', form, 'image_url'),
-      imagePayloadForKey('opp-create-logo', form, 'logo_url'),
+      opportunityImagePayloadForKey(coverKey, form, 'image_url', 'photo'),
+      opportunityImagePayloadForKey(logoKey, form, 'logo_url', 'logo'),
     ])
-      .then(function (results) {
-        var cover = results[0];
-        var logo = results[1];
-        var aboutText = formFieldVal(form, 'about');
-        var about = aboutText
-          ? aboutText
-              .split(/\n\s*\n/)
-              .map(function (p) {
-                return p.trim();
-              })
-              .filter(Boolean)
-          : [];
-        return adminPost('/api/admin/opportunities', {
-          action: 'create',
-          title: formFieldVal(form, 'title'),
-          host: formFieldVal(form, 'host'),
-          type: formFieldVal(form, 'type') || 'business-opportunity',
-          status: formFieldVal(form, 'status') || 'published',
-          description: formFieldVal(form, 'description') || null,
-          about: about,
-          meta: opportunityCreateMetaFromForm(form),
-          featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
-          contact_email: formFieldVal(form, 'contact_email') || null,
-          owner_email: formFieldVal(form, 'owner_email') || null,
-          photoUrl: cover.url,
-          photoBase64: cover.base64,
-          photoMime: cover.mime,
-          photoFilename: cover.filename,
-          logoUrl: logo.url,
-          logoBase64: logo.base64,
-          logoMime: logo.mime,
-          logoFilename: logo.filename,
-        });
+      .then(function (parts) {
+        var payload = Object.assign({ action: 'create' }, opportunityFormPayload(form), parts[0], parts[1]);
+        return adminPost('/api/admin/opportunities', payload);
       })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
-        delete adminLogoPending['opp-create-cover'];
-        delete adminLogoPending['opp-create-logo'];
         if (msg) {
-          msg.textContent = 'Listing created.';
+          msg.textContent = payloadOwnerClaimMsg(data.opportunity) || 'Listing created.';
           msg.className = 'opportunity-create-msg text-xs text-emerald-700 font-semibold';
         }
-        form.reset();
-        var statusField = formField(form, 'status');
-        if (statusField) statusField.value = 'published';
+        resetOpportunityCreateForm(form);
+        if (btn) btn.disabled = false;
         return refreshOpportunityCleanupData();
       })
       .then(function () {
@@ -15778,6 +15917,14 @@
         }
         if (btn) btn.disabled = false;
       });
+  }
+
+  function payloadOwnerClaimMsg(opportunity) {
+    if (!opportunity) return '';
+    if (opportunity.ownership_claim_status === 'pending' && opportunity.owner_email) {
+      return 'Listing created — claim invite will appear when ' + opportunity.owner_email + ' signs in.';
+    }
+    return 'Listing created — hub-owned and claimable.';
   }
 
   function createOpportunityTestSamples() {

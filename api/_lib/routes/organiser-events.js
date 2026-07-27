@@ -268,6 +268,28 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (String(body.action || '').trim() === 'unpublish') {
+      const eventId = String(body.id || body.eventId || '').trim();
+      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      try {
+        const { allowed } = await ownedEventIds();
+        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
+          return json(res, 403, { error: 'event_not_owned' });
+        }
+        const updated = await updateEvent(eventId, { listingStatus: 'unpublished' });
+        return json(res, 200, {
+          ok: true,
+          event: updated,
+          message: 'Event unpublished — it is hidden from Browse events.',
+        });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          error: e.code || 'event_unpublish_failed',
+          message: e.message,
+        });
+      }
+    }
+
     const title = String(body.title || '').trim();
     const groupId = String(body.organiserGroupId || body.groupId || '').trim();
     const occ = normalizeOccurrences(body);

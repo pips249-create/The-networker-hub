@@ -1,10 +1,10 @@
 /**
  * Breadcrumb progress bar for create / edit event listing flow.
+ * Location sits on step 1 (details) with the event form.
  */
 (function () {
   var STEPS = [
-    { id: 'details', label: 'Event details' },
-    { id: 'location', label: 'Location & access' },
+    { id: 'details', label: 'Details & location' },
     { id: 'tickets', label: 'Set up tickets' },
     { id: 'review', label: 'Review' },
     { id: 'publish', label: 'Publish' },
@@ -65,17 +65,11 @@
 
   function stepHref(stepId, ctx) {
     if (stepId === 'format') return '/organiser/event-format';
-    if (stepId === 'details') {
+    if (stepId === 'details' || stepId === 'location') {
       if (ctx.editId) return '/organiser/event-edit?id=' + encodeURIComponent(ctx.editId);
       if (ctx.format) return '/organiser/event-edit?format=' + encodeURIComponent(ctx.format);
       if (ctx.firstEventId) return '/organiser/event-edit?id=' + encodeURIComponent(ctx.firstEventId);
       return '/organiser/event-edit';
-    }
-    if (stepId === 'location') {
-      if (ctx.firstEventId) {
-        return '/organiser/event-location?id=' + encodeURIComponent(ctx.firstEventId);
-      }
-      return null;
     }
     if (stepId === 'tickets') {
       if (!ctx.eventIds.length) return null;
@@ -88,8 +82,14 @@
     return null;
   }
 
+  function normalizeStepId(stepId) {
+    if (stepId === 'location') return 'details';
+    return stepId;
+  }
+
   function render(currentStepId, mount) {
     if (!mount) return;
+    currentStepId = normalizeStepId(currentStepId);
 
     var currentIndex = STEPS.findIndex(function (s) {
       return s.id === currentStepId;

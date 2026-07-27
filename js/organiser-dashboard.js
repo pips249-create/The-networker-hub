@@ -2903,8 +2903,29 @@
       esc(id) +
       '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
       eventDeleteActionHtml(ev) +
-      '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Hide from directory</span></span></button>' +
+      eventUnpublishActionHtml(ev) +
       '</div></div>'
+    );
+  }
+
+  function eventUnpublishActionHtml(ev) {
+    const id = ev && ev.id;
+    if (!id) return '';
+    const statusKey = String(ev.statusKey || ev.status || ev.listingStatus || '').toLowerCase();
+    if (statusKey === 'unpublished') {
+      return (
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Already unpublished</span></span></button>'
+      );
+    }
+    if (statusKey === 'draft' || statusKey === 'cancelled' || statusKey === 'archived') {
+      return (
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Publish first to list on site</span></span></button>'
+      );
+    }
+    return (
+      '<button type="button" class="org-action-item danger" data-unpublish-event="' +
+      esc(id) +
+      '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Hide from directory</span></span></button>'
     );
   }
 
@@ -2957,6 +2978,7 @@
       alumniItem +
       cancelItem +
       deleteItem +
+      eventUnpublishActionHtml(ev) +
       '</div></div>'
     );
   }
@@ -5804,6 +5826,30 @@
     renderAll();
   }
 
+  async function confirmUnpublishEvent(eventId) {
+    if (!eventId) return;
+    const ev = (state.events || []).find((e) => e.id === eventId) || { id: eventId };
+    const label = ev.title || 'this event';
+    const ok = window.confirm(
+      'Unpublish "' +
+        label +
+        '"?\n\n' +
+        'This event will be removed from Browse events immediately. Existing bookings stay in your dashboard.'
+    );
+    if (!ok) return;
+
+    const res = await api('/api/organiser/events', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'unpublish', id: eventId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not unpublish this event.');
+      return;
+    }
+    await loadBootstrap();
+    renderAll();
+  }
+
   function closeAllActionMenus() {
     document.querySelectorAll('.org-action-menu.is-open').forEach((m) => {
       m.classList.remove('is-open', 'is-floating');
@@ -5894,6 +5940,15 @@
       closeAllActionMenus();
       const gid = unpublishBtn.getAttribute('data-unpublish-group');
       confirmUnpublishGroup(gid);
+      return true;
+    }
+
+    const unpublishEventBtn = e.target.closest('[data-unpublish-event]');
+    if (unpublishEventBtn && !unpublishEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmUnpublishEvent(unpublishEventBtn.getAttribute('data-unpublish-event'));
       return true;
     }
 

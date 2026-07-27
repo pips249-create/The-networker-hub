@@ -623,10 +623,10 @@
     }
   }
 
-  function goBackToEventLocationInDrawer() {
+  function goBackToEventDetailsInDrawer() {
     if (!eventIds[0] || !window.parent || window.parent === window) return;
     window.parent.postMessage(
-      { type: 'hub-event-goto-location', eventIds: [eventIds[0]], title: seriesMeta.title || '' },
+      { type: 'hub-event-goto-edit', eventId: eventIds[0], title: seriesMeta.title || '' },
       window.location.origin
     );
   }
@@ -637,19 +637,19 @@
     const actionBack = document.getElementById('ee-tickets-back-edit');
     if (editLink) {
       editLink.hidden = false;
-      editLink.textContent = '← Location & access';
+      editLink.textContent = '← Event details';
       editLink.href = '#';
       editLink.addEventListener('click', function (e) {
         e.preventDefault();
-        goBackToEventLocationInDrawer();
+        goBackToEventDetailsInDrawer();
       });
     }
     if (actionBack) {
       actionBack.hidden = false;
-      actionBack.textContent = '← Location & access';
+      actionBack.textContent = '← Event details';
       actionBack.addEventListener('click', function (e) {
         e.preventDefault();
-        goBackToEventLocationInDrawer();
+        goBackToEventDetailsInDrawer();
       });
     }
   }
@@ -712,6 +712,100 @@
     });
   }
 
+  let step2Confirmed = false;
+  let step2Home = null;
+
+  function activeStep2Panel() {
+    return attendanceMode === 'category_exclusivity'
+      ? document.getElementById('ee-panel-category-exclusivity')
+      : document.getElementById('ee-panel-tickets');
+  }
+
+  function ensureStep2Home() {
+    if (step2Home) return step2Home;
+    const form = document.getElementById('ee-tickets-form');
+    if (!form) return null;
+    step2Home = document.createElement('div');
+    step2Home.id = 'ee-step2-home';
+    step2Home.hidden = true;
+    const attendance = document.getElementById('ee-attendance-card-wrap');
+    if (attendance && attendance.nextSibling) {
+      form.insertBefore(step2Home, attendance.nextSibling);
+    } else {
+      form.appendChild(step2Home);
+    }
+    return step2Home;
+  }
+
+  function parkStep2Panels() {
+    const home = ensureStep2Home();
+    if (!home) return;
+    ['ee-panel-tickets', 'ee-panel-category-exclusivity'].forEach(function (id) {
+      const panel = document.getElementById(id);
+      if (panel && panel.parentElement !== home) home.appendChild(panel);
+    });
+  }
+
+  function openStep2Modal() {
+    parkStep2Panels();
+    const modal = document.getElementById('ee-step2-modal');
+    const body = document.getElementById('ee-step2-modal-body');
+    const panel = activeStep2Panel();
+    if (!modal || !body || !panel) return;
+    panel.hidden = false;
+    body.appendChild(panel);
+    modal.hidden = false;
+    document.body.classList.add('ee-step2-modal-open');
+    const title = document.getElementById('ee-step2-modal-title');
+    if (title) {
+      title.textContent =
+        attendanceMode === 'category_exclusivity'
+          ? 'Step 2 — Category Exclusivity'
+          : 'Step 2 — ticket types';
+    }
+  }
+
+  function closeStep2Modal(opts) {
+    const confirm = !opts || opts.confirm !== false;
+    const modal = document.getElementById('ee-step2-modal');
+    const home = ensureStep2Home();
+    const body = document.getElementById('ee-step2-modal-body');
+    if (body && home) {
+      Array.from(body.children).forEach(function (child) {
+        home.appendChild(child);
+      });
+    }
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('ee-step2-modal-open');
+    if (confirm) {
+      step2Confirmed = true;
+      revealPostStep2();
+    }
+  }
+
+  function revealPostStep2() {
+    const ticketsPanel = document.getElementById('ee-panel-tickets');
+    const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+    const optionalExtras = document.getElementById('ee-panel-optional-extras');
+    const paidWrap = document.getElementById('ee-paid-setup-wrap');
+    const attendeeExtras = document.getElementById('ee-attendee-extras-card');
+    const rest = document.getElementById('ee-tickets-rest');
+    const openBooking = isOpenBookingMode(attendanceMode);
+    const isCategory = attendanceMode === 'category_exclusivity';
+
+    if (ticketsPanel) ticketsPanel.hidden = !openBooking;
+    if (categoryPanel) categoryPanel.hidden = !isCategory;
+    if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
+    if (paidWrap) paidWrap.hidden = false;
+    if (attendeeExtras) attendeeExtras.hidden = false;
+    if (rest) rest.hidden = false;
+    document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
+      el.hidden = false;
+    });
+    syncTicketStepLabels();
+    updatePublishButton();
+  }
+
   function setAttendanceMode(mode) {
     const requested =
       mode === 'guest_programme' || mode === 'tickets' || mode === 'category_exclusivity'
@@ -745,10 +839,22 @@
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const openBooking = isOpenBookingMode(attendanceMode);
     const guestOn = attendanceMode === 'guest_programme';
+    const modalOpen = document.getElementById('ee-step2-modal') && !document.getElementById('ee-step2-modal').hidden;
 
-    if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-    if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
-    if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
+    if (!step2Confirmed && !modalOpen) {
+      if (ticketsPanel) ticketsPanel.hidden = true;
+      if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = true;
+      if (optionalExtras) optionalExtras.hidden = true;
+    } else if (modalOpen) {
+      if (ticketsPanel) ticketsPanel.hidden = !openBooking;
+      if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
+      if (optionalExtras) optionalExtras.hidden = true;
+    } else {
+      if (ticketsPanel) ticketsPanel.hidden = !openBooking;
+      if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
+      if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
+    }
+
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
     syncAddonCard('ee-guest-addon', guestOn);
@@ -806,23 +912,9 @@
   }
 
   const DEFAULT_TIER_NAME = 'General admission';
-  const TICKET_ORDER_WORDS = [
-    'one',
-    'two',
-    'three',
-    'four',
-    'five',
-    'six',
-    'seven',
-    'eight',
-    'nine',
-    'ten',
-  ];
 
   function ticketOrderLabel(index) {
-    const n = index + 1;
-    const word = TICKET_ORDER_WORDS[n - 1] || String(n);
-    return 'Ticket ' + word;
+    return 'Ticket ' + String(index + 1);
   }
 
   function tierRowHtml(index) {
@@ -847,9 +939,17 @@
       '<textarea class="ee-tier-desc" rows="2" placeholder="What is included with this ticket"></textarea></div>' +
       '<div class="ee-row-2 ee-tier-price-row">' +
       '<div class="ee-field"><label>Price (£)</label><p class="ee-hint">Enter 0 for free</p>' +
-      '<input type="number" class="ee-tier-price" min="0" step="0.01" value="0" /></div>' +
+      '<div class="ee-number-stepper">' +
+      '<button type="button" class="ee-number-step ee-tier-price-down" aria-label="Decrease price">↓</button>' +
+      '<input type="number" class="ee-tier-price" min="0" step="0.01" value="0" />' +
+      '<button type="button" class="ee-number-step ee-tier-price-up" aria-label="Increase price">↑</button>' +
+      '</div></div>' +
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
-      '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" /></div>' +
+      '<div class="ee-number-stepper">' +
+      '<button type="button" class="ee-number-step ee-tier-qty-down" aria-label="Decrease quantity">↓</button>' +
+      '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" />' +
+      '<button type="button" class="ee-number-step ee-tier-qty-up" aria-label="Increase quantity">↑</button>' +
+      '</div></div>' +
       '</div>' +
       '<div class="ee-field ee-tier-series-pass-field" hidden data-field-tip="event-series-pass-tier">' +
       '<label class="ee-check-label">' +
@@ -962,6 +1062,33 @@
     const down = row.querySelector('.ee-tier-down');
     if (up) up.addEventListener('click', () => moveTierRow(row, -1));
     if (down) down.addEventListener('click', () => moveTierRow(row, 1));
+
+    function stepNumberInput(input, delta, opts) {
+      if (!input) return;
+      const step = Number(opts && opts.step) || 1;
+      const min = opts && opts.min != null ? Number(opts.min) : 0;
+      const raw = String(input.value || '').trim();
+      let current = raw === '' ? (opts && opts.emptyAs != null ? Number(opts.emptyAs) : 0) : Number(raw);
+      if (!Number.isFinite(current)) current = 0;
+      const next = Math.max(min, Math.round((current + delta * step) * 100) / 100);
+      input.value = String(next);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    row.querySelector('.ee-tier-price-up')?.addEventListener('click', () => {
+      stepNumberInput(row.querySelector('.ee-tier-price'), 1, { step: 1, min: 0 });
+    });
+    row.querySelector('.ee-tier-price-down')?.addEventListener('click', () => {
+      stepNumberInput(row.querySelector('.ee-tier-price'), -1, { step: 1, min: 0 });
+    });
+    row.querySelector('.ee-tier-qty-up')?.addEventListener('click', () => {
+      stepNumberInput(row.querySelector('.ee-tier-qty'), 1, { step: 1, min: 0, emptyAs: 0 });
+    });
+    row.querySelector('.ee-tier-qty-down')?.addEventListener('click', () => {
+      stepNumberInput(row.querySelector('.ee-tier-qty'), -1, { step: 1, min: 0, emptyAs: 0 });
+    });
+
     const removeBtn = row.querySelector('.ee-tier-remove');
     if (removeBtn) {
       removeBtn.addEventListener('click', () => {
@@ -2152,8 +2279,8 @@
       if (isEmbedDrawer) {
         bindEmbedBackToEdit();
       } else {
-        editLink.href = '/organiser/event-location?id=' + encodeURIComponent(eventIds[0]);
-        editLink.textContent = '← Location & access';
+        editLink.href = '/organiser/event-edit?id=' + encodeURIComponent(eventIds[0]);
+        editLink.textContent = '← Event details';
         editLink.hidden = false;
       }
     }
@@ -2303,6 +2430,29 @@
       setAttendanceMode('category_exclusivity');
       updatePublishButton();
     });
+    document.getElementById('ee-attendance-continue')?.addEventListener('click', () => {
+      openStep2Modal();
+    });
+    document.getElementById('ee-step2-modal-done')?.addEventListener('click', () => {
+      closeStep2Modal({ confirm: true });
+    });
+    document.querySelectorAll('[data-ee-step2-close]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        closeStep2Modal({ confirm: false });
+      });
+    });
+    parkStep2Panels();
+    if (loaded.tickets && loaded.tickets.length) {
+      step2Confirmed = true;
+      revealPostStep2();
+    } else {
+      document.getElementById('ee-panel-optional-extras') &&
+        (document.getElementById('ee-panel-optional-extras').hidden = true);
+      const paidWrap = document.getElementById('ee-paid-setup-wrap');
+      if (paidWrap) paidWrap.hidden = true;
+      const attendeeExtras = document.getElementById('ee-attendee-extras-card');
+      if (attendeeExtras) attendeeExtras.hidden = true;
+    }
     bindPrivateTicketFields();
     bindMembersOnlyEventToggle();
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
@@ -2355,6 +2505,11 @@
   }
 
   async function continueToReview() {
+    if (!step2Confirmed) {
+      openStep2Modal();
+      showAlert('Finish ticket setup in the step 2 window, then click Done — continue.', 'warn');
+      return;
+    }
     if (ticketsLocked) {
       showAlert(
         'This event has ticket sales — ticket types and refund terms cannot be changed. Cancel the event from the event editor if you need to make changes.',

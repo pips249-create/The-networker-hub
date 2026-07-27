@@ -38,9 +38,9 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
   const body = parseBody(req);
-  const token = String(body.token || '').trim();
+  const token = String(body.token || body.code || '').trim();
   if (!token) {
-    return json(res, 400, { error: 'missing_token', message: 'Verification link is invalid.' });
+    return json(res, 400, { error: 'missing_token', message: 'Enter the 6-digit confirmation code from your email.' });
   }
 
   try {
@@ -60,8 +60,8 @@ module.exports = async function handler(req, res) {
       error: code,
       message:
         code === 'token_expired'
-          ? 'This confirmation link has expired. Request a new one from the organiser workspace.'
-          : 'This confirmation link is invalid or has already been used.',
+          ? 'This confirmation code has expired. Request a new one and try again.'
+          : 'That confirmation code is invalid or has already been used.',
     });
   }
 };
