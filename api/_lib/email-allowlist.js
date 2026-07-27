@@ -12,6 +12,7 @@ const DEFAULT_ALLOWED_RECIPIENTS = [
   'andreagaiga8@gmail.com',
   'hancher249@gmail.com',
   'rosie.mcgilvray@yahoo.co.uk',
+  'gary.dixon336@outlook.com',
 ];
 
 function normalizeEmail(email) {
