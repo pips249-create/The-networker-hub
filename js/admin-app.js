@@ -13802,8 +13802,8 @@
         var dateLabel = ev.starts_at ? fmtTime(ev.starts_at).split(',')[0] : '—';
         var expiryLabel = formatSpotlightExpiry(ev.featured, ev.featured_until || ev.featuredUntil);
         var viewUrl = ev.slug
-          ? '../events/event?slug=' + encodeURIComponent(ev.slug)
-          : '../events/event?id=' + encodeURIComponent(ev.id);
+          ? '../events/' + encodeURIComponent(ev.slug)
+          : '../events/event.html?id=' + encodeURIComponent(ev.id);
         return (
           '<tr class="border-t border-slate-100' +
           (ev.featured ? ' bg-amber-50/40' : '') +
@@ -13870,8 +13870,8 @@
     tbody.innerHTML = rows
       .map(function (o) {
         var viewUrl = o.slug
-          ? '../events/organiser?slug=' + encodeURIComponent(o.slug)
-          : '../events/organiser?id=' + encodeURIComponent(o.id);
+          ? '../organisers/' + encodeURIComponent(o.slug)
+          : '../events/organiser.html?id=' + encodeURIComponent(o.id);
         return (
           '<tr class="border-t border-slate-100' +
           (o.featured ? ' bg-amber-50/40' : '') +

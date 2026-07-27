@@ -136,7 +136,7 @@ function calculateFeaturedListingQuote({ currentUntil, planId, eventStartsAt } =
     pricingMode: 'prorated',
     visibleDays,
     pricingNote:
-      'Prorated for ' +
+      'Price covers ' +
       visibleDays +
       ' day' +
       (visibleDays === 1 ? '' : 's') +

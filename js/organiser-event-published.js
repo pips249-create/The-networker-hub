@@ -956,7 +956,7 @@
   }
   if (extendFeatured && featuredLede) {
     featuredLede.innerHTML =
-      'Your featured placement is ending soon. Extend to keep premium visibility — from <strong>£55 per month</strong>, prorated when your event is sooner.';
+      'Your featured placement is ending soon. Extend to keep premium visibility — from <strong>£55 per month</strong>, adjusted when your event is sooner.';
   }
 
   if (featuredCancelled && featuredError) {

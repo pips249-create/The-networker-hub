@@ -728,19 +728,20 @@ function mapListingReportRow(r, options = {}) {
   let viewUrl = null;
   let adminUrl = null;
   if (r.listing_type === 'event' && eventId) {
+    // Pretty /events/:slug — avoid /events/event?slug=… which Vercel treats as slug "event"
     viewUrl = eventSlug
-      ? `../events/event?slug=${encodeURIComponent(eventSlug)}`
-      : `../events/event?id=${encodeURIComponent(eventId)}`;
+      ? `../events/${encodeURIComponent(eventSlug)}`
+      : `../events/event.html?id=${encodeURIComponent(eventId)}`;
     adminUrl = `#cleanup/events?q=${encodeURIComponent(title)}`;
   } else if (r.listing_type === 'organiser' && organiserId) {
     viewUrl = organiserSlug
-      ? `../events/organiser?slug=${encodeURIComponent(organiserSlug)}`
-      : `../events/organiser?id=${encodeURIComponent(organiserId)}`;
+      ? `../organisers/${encodeURIComponent(organiserSlug)}`
+      : `../events/organiser.html?id=${encodeURIComponent(organiserId)}`;
     adminUrl = `#cleanup/groups?organiser=${encodeURIComponent(organiserId)}`;
   } else if (r.listing_type === 'opportunity' && opportunityId) {
     viewUrl = opportunitySlug
       ? `../opportunities/${encodeURIComponent(opportunitySlug)}`
-      : `../opportunities/opportunity?id=${encodeURIComponent(opportunityId)}`;
+      : `../opportunities/opportunity.html?id=${encodeURIComponent(opportunityId)}`;
     adminUrl = `#cleanup/opportunities?q=${encodeURIComponent(title)}`;
   }
   return {

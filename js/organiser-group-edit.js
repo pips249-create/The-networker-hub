@@ -249,7 +249,7 @@
     if (statusLine) statusLine.hidden = true;
     if (hint) {
       hint.textContent =
-        'Your profile will be submitted for verification. Next, you will set up your first event.';
+        'Your profile goes live when you save, then you’ll set up your first event. Verification follows separately.';
     }
   }
 
@@ -412,8 +412,12 @@
     const payload = await buildPayload();
     if (!payload) return;
 
+    const editId = getEditId();
     if (mode === 'published') payload.listingStatus = 'published';
     else if (mode === 'draft') payload.listingStatus = 'draft';
+    // New profiles via "Save and create event" go live so they appear on the site
+    // (verification stays Pending until admin verifies).
+    else if (mode === 'continue' && !editId) payload.listingStatus = 'published';
 
     const saveChanges = el('ge-save-changes');
     const draftBtn = el('ge-save-draft');
@@ -424,7 +428,6 @@
     });
     if (triggerBtn) triggerBtn.disabled = true;
 
-    const editId = getEditId();
     const onboardReview = config && config.onboardReview;
 
     try {
