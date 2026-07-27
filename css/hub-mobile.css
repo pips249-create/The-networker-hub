@@ -282,6 +282,63 @@ body.nav-menu-open .nav-mobile-links {
   color: var(--charcoal-soft, #5c5557);
 }
 
+.nav-mobile-cities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.nav-mobile-city {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(194, 153, 209, 0.45);
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--lavender-deep, #5b3d7a);
+  text-decoration: none;
+}
+
+.nav-mobile-city:hover,
+.nav-mobile-city:focus-visible {
+  border-color: var(--lavender-deep, #5b3d7a);
+  background: #f9f4fb;
+  text-decoration: none;
+}
+
+.detail-region-cta {
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--lavender-deep, #5b3d7a);
+  text-decoration: none;
+}
+
+.detail-region-cta:hover,
+.detail-region-cta:focus-visible {
+  text-decoration: underline;
+}
+
+.detail-region-cta[hidden] {
+  display: none !important;
+}
+
+.org-profile-section .detail-region-cta {
+  margin-top: 14px;
+}
+
+.opp-detail-main > .detail-region-cta {
+  margin: -4px 0 16px;
+}
+
 .nav-mobile-links a.nav-mobile-signin {
   color: var(--lavender-deep) !important;
 }

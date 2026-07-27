@@ -313,6 +313,19 @@
     if (els.featuredPip) els.featuredPip.hidden = !item.featured;
 
     renderMeta(item);
+    if (window.HUB_applyDetailRegionCta) {
+      var locMeta = '';
+      (item.meta || []).forEach(function (m) {
+        if (/^location$/i.test(m.key) || /territor/i.test(m.key)) {
+          locMeta = locMeta || String(m.val || '').trim();
+        }
+      });
+      window.HUB_applyDetailRegionCta(document.getElementById('opp-region-cta'), {
+        context: 'opportunities',
+        slug: item.citySlugs && item.citySlugs[0] ? item.citySlugs[0] : '',
+        locationTexts: locMeta ? [locMeta] : [],
+      });
+    }
     renderTrustBadges(item);
     renderCompaniesHouse(item);
     renderInvestmentBreakdown(item);

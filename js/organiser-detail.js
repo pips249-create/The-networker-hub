@@ -239,6 +239,38 @@
     if (emptyEl) emptyEl.hidden = false;
   }
 
+  function regionSlugFromEvents(events) {
+    if (!window.HUB_slugFromLocationTexts || !events || !events.length) return '';
+    var counts = {};
+    events.forEach(function (ev) {
+      var slug = window.HUB_slugFromLocationTexts([
+        ev.postcode,
+        ev.city,
+        ev.outcode,
+        ev.location,
+        ev.locationShort,
+      ]);
+      if (slug) counts[slug] = (counts[slug] || 0) + 1;
+    });
+    var best = '';
+    var bestCount = 0;
+    Object.keys(counts).forEach(function (slug) {
+      if (counts[slug] > bestCount) {
+        bestCount = counts[slug];
+        best = slug;
+      }
+    });
+    return best;
+  }
+
+  function applyOrganiserRegionCta(events) {
+    if (!window.HUB_applyDetailRegionCta) return;
+    window.HUB_applyDetailRegionCta(document.getElementById('org-region-cta'), {
+      context: 'organisers',
+      slug: regionSlugFromEvents(events),
+    });
+  }
+
   function renderEvents(events) {
     var list = document.getElementById('org-events');
     var empty = document.getElementById('org-events-empty');
@@ -247,6 +279,7 @@
     if (!events || !events.length) {
       list.innerHTML = '';
       if (empty) empty.hidden = false;
+      applyOrganiserRegionCta([]);
       return;
     }
     if (empty) empty.hidden = true;
@@ -265,6 +298,8 @@
         );
       })
       .join('');
+
+    applyOrganiserRegionCta(events);
   }
 
   function rankingCollapseKey(orgId) {

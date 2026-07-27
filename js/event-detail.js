@@ -857,13 +857,24 @@
 
     const section = document.getElementById('ev-location-section');
     if (section) section.hidden = online;
-    if (online) return;
+    const regionCta = document.getElementById('ev-region-cta');
+    if (online) {
+      if (regionCta) regionCta.hidden = true;
+      return;
+    }
 
     const vn = String(ev.venue || ev.venueName || '').trim();
     const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
     setText('ev-venue-name', vn || 'Venue TBC');
     setText('ev-venue-addr', va);
     applyMapAndDirections(ev);
+
+    if (window.HUB_applyDetailRegionCta) {
+      window.HUB_applyDetailRegionCta(document.getElementById('ev-region-cta'), {
+        context: 'events',
+        locationTexts: [ev.postcode, ev.city, ev.outcode, ev.location, ev.locationShort, ev.address],
+      });
+    }
   }
 
   function organiserProfileHref(ev) {

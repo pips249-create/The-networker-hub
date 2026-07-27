@@ -367,6 +367,32 @@
     return html;
   }
 
+  var MOBILE_DRAWER_CITIES = [
+    { slug: 'central-london', name: 'Central London' },
+    { slug: 'manchester', name: 'Manchester' },
+    { slug: 'birmingham', name: 'Birmingham' },
+    { slug: 'bristol', name: 'Bristol' },
+    { slug: 'leeds', name: 'Leeds' },
+    { slug: 'edinburgh', name: 'Edinburgh' },
+    { slug: 'glasgow', name: 'Glasgow' },
+    { slug: 'liverpool', name: 'Liverpool' },
+  ];
+
+  function buildMobileDrawerCities() {
+    var html = '<p class="nav-mobile-section-label">Browse by city</p>';
+    html += '<div class="nav-mobile-cities" role="list">';
+    MOBILE_DRAWER_CITIES.forEach(function (city) {
+      html +=
+        '<a class="nav-mobile-city" href="/networking/' +
+        encodeURIComponent(city.slug) +
+        '" role="listitem">' +
+        city.name +
+        '</a>';
+    });
+    html += '</div>';
+    return html;
+  }
+
   function buildMobileDrawerLinks(user, pending) {
     var html = '';
     if (user) {
@@ -374,6 +400,7 @@
     }
     html += link('/events/', 'Events', 'events', 'nav-mobile-item');
     html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
+    html += buildMobileDrawerCities();
     if (user) {
       html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
