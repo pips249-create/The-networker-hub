@@ -1108,12 +1108,24 @@
       try {
         var res = await fetch(path, { credentials: 'same-origin' });
         if (!res.ok) {
+          var body = null;
+          try {
+            body = await res.json();
+          } catch (parseErr) {
+            body = null;
+          }
+          if (body && (body.error === 'site_private' || res.status === 403)) {
+            throw new Error(body.message || 'site_private');
+          }
           lastError = new Error('HTTP ' + res.status + ' for ' + path);
           continue;
         }
         return await res.json();
       } catch (err) {
         lastError = err;
+        if (err && /site_private|private preview/i.test(String(err.message || ''))) {
+          throw err;
+        }
       }
     }
     throw lastError || new Error('Failed to fetch');
@@ -1137,9 +1149,11 @@
           var hint =
             window.location.protocol === 'file:'
               ? 'Open this page via your dev server: http://localhost:3000/events/ (run npm start first). Do not open the HTML file from Finder.'
-              : 'Could not load events (' +
-                detail +
-                '). Confirm npm start is running, use http://localhost:3000/events/, and disable ad blockers for localhost.';
+              : /403|site_private|private preview/i.test(detail)
+                ? 'Preview access required. Go to http://localhost:3000/site-access, enter the shared preview password, then open Events again.'
+                : 'Could not load events (' +
+                  detail +
+                  '). Confirm npm start is running, use http://localhost:3000/events/, and disable ad blockers for localhost.';
           setStatus(hint, true);
           events = [];
           applyLoadedEvents();
@@ -1156,9 +1170,11 @@
         var hint =
           window.location.protocol === 'file:'
             ? 'Open this page via your dev server: http://localhost:3000/events/ (run npm start first). Do not open the HTML file from Finder.'
-            : 'Could not load events (' +
-              detail +
-              '). Confirm npm start is running, use http://localhost:3000/events/, and disable ad blockers for localhost.';
+            : /403|site_private|private preview|Failed to fetch/i.test(detail)
+              ? 'Preview access required (or the API is blocked). Go to http://localhost:3000/site-access, enter the preview password, then open http://localhost:3000/events/ again.'
+              : 'Could not load events (' +
+                detail +
+                '). Confirm npm start is running, use http://localhost:3000/events/, and disable ad blockers for localhost.';
         setStatus(hint, true);
         events = [];
         applyLoadedEvents();

@@ -55,9 +55,7 @@ function buildSponsorLogoMarkup(logo, name, logoBandBg) {
 
 function buildSponsorSection(block, options) {
   if (!block) return '';
-  const label =
-    String(options?.label || '').trim() ||
-    'Sponsored — partner support helps keep The Networker Hub free';
+  const label = String(options?.label || '').trim() || 'Powered by';
   const logo = toPublicAssetUrl(sponsorLogoUrl(block), process.env.SITE_URL);
   const url = String(block.cta_url || '').trim();
   const name = sponsorCompanyName(block) || 'Our sponsor';
@@ -65,10 +63,10 @@ function buildSponsorSection(block, options) {
   const safeUrl = url.replace(/"/g, '&quot;');
   const logoBandBg = sponsorEmailLogoBandColor(block, options?.logoBandBg);
   const logoHtml = buildSponsorLogoMarkup(logo, name, logoBandBg);
-  // Sits in the cream logo-hero band, in a bordered container just below the Hub logo.
+  // Sits in the cream logo-hero band as a clean white card (not cream-on-cream).
   return (
     '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:16px 20px;text-align:center;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
     label +

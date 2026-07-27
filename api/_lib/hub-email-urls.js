@@ -60,6 +60,11 @@ function hubAccountUrl(siteUrl) {
   return siteBase(siteUrl) + '/account/';
 }
 
+/** Email preferences / unsubscribe destination (account settings). */
+function unsubscribeUrl(siteUrl) {
+  return siteBase(siteUrl) + '/account/settings#email-preferences';
+}
+
 function welcomeUrl(siteUrl) {
   return siteBase(siteUrl) + '/welcome';
 }
@@ -172,6 +177,7 @@ module.exports = {
   browseEventsUrl,
   opportunitiesBrowseUrl,
   hubAccountUrl,
+  unsubscribeUrl,
   welcomeUrl,
   hubPaymentUrl,
   legalPolicyUrl,

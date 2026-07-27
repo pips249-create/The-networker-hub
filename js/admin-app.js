@@ -8270,7 +8270,7 @@
           '<tr><td class="mobile-pad" style="padding:0 40px 20px;text-align:center;">' +
           '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
           '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
-          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0;">Our mini sponsors</p>' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0;">Powered by</p>' +
           '</td></tr><tr><td style="padding:0 12px 16px;text-align:center;">' +
           '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#9a7aa8;">Sample mini sponsors</span>' +
           '</td></tr></table></td></tr>';
@@ -8384,7 +8384,7 @@
       '<div id="email-sponsor-panel" class="hidden border-t border-slate-100 pt-5 space-y-4">' +
       '<div class="space-y-2">' +
       '<h4 class="text-sm font-bold text-brand-900">Email sponsor</h4>' +
-      '<p class="text-xs text-slate-500">Shown in the &ldquo;proudly powered by&rdquo; strip on booking confirmations, 24-hour reminders, and organiser new-booking alerts. Defaults from your <strong>Events browse</strong> sponsor — change it here without affecting the website, or pull the latest from Events.</p>' +
+      '<p class="text-xs text-slate-500">Shown in the &ldquo;Powered by&rdquo; strip on booking confirmations, 24-hour reminders, and organiser new-booking alerts. Defaults from your <strong>Events browse</strong> sponsor — change it here without affecting the website, or pull the latest from Events.</p>' +
       '<p id="email-sponsor-status" class="text-xs text-slate-500"></p>' +
       '</div>' +
       '<div class="grid sm:grid-cols-2 gap-4">' +
@@ -8686,9 +8686,9 @@
           '</span>';
       return (
         '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
         '<tr><td style="padding:16px 20px;text-align:center;">' +
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Our event directory is proudly powered by</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Powered by</p>' +
         '<a href="' +
         attrEsc(link) +
         '" style="display:inline-block;text-decoration:none;">' +
@@ -8747,7 +8747,7 @@
       if (logo) {
         var bandBg = String(emailSponsorCtaColor || '').trim() || '#f3f4f6';
         el.innerHTML =
-          '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Our event directory is proudly powered by</p>' +
+          '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Powered by</p>' +
           '<div class="inline-block rounded-lg px-6 py-3" style="background:' +
           attrEsc(bandBg) +
           ';">' +
@@ -8757,7 +8757,7 @@
           '</div>';
       } else {
         el.innerHTML =
-          '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Our event directory is proudly powered by</p>' +
+          '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Powered by</p>' +
           '<p class="font-semibold text-brand-900">' +
           esc(form.company || 'Sponsor') +
           '</p>';

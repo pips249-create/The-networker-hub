@@ -190,7 +190,13 @@
     if (window.hubRefreshListings) window.hubRefreshListings();
     var status = document.getElementById('load-status');
     if (status) {
-      status.textContent = 'Could not refresh results. Try again or clear filters.';
+      var msg = err && err.message ? String(err.message) : '';
+      if (/403|site_private|private preview/i.test(msg)) {
+        status.textContent =
+          'Preview access required. Open /site-access, enter the preview password, then return to Events.';
+      } else {
+        status.textContent = 'Could not refresh results. Try again or clear filters.';
+      }
       status.hidden = false;
       status.classList.add('is-error');
     }
@@ -214,7 +220,19 @@
 
     return fetch(url, { credentials: 'same-origin', cache: 'no-store' })
       .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) {
+          return res
+            .json()
+            .catch(function () {
+              return null;
+            })
+            .then(function (body) {
+              if (body && body.error === 'site_private') {
+                throw new Error(body.message || 'site_private');
+              }
+              throw new Error('HTTP ' + res.status);
+            });
+        }
         return res.json();
       })
       .then(function (data) {

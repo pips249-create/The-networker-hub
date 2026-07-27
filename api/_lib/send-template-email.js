@@ -26,7 +26,12 @@ const {
   logoNavUrl,
   logoFooterUrl,
   supportEmail,
+  unsubscribeUrl,
 } = require('./hub-email-urls');
+const {
+  ensureUnsubscribePlaceholder,
+  ensureUnsubscribeLink,
+} = require('./email-footer-unsubscribe');
 const {
   enrichBookingConfirmationVars,
   enrichBookingReminderVars,
@@ -251,6 +256,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     hub_rules_url: legalPolicyUrl(siteUrl, 'hub-rules'),
     refunds_url: legalPolicyUrl(siteUrl, 'refunds'),
     contact_url: contactUrl(siteUrl),
+    unsubscribe_url: unsubscribeUrl(siteUrl),
     support_email: supportEmail(),
     sponsor_row: sponsorSection,
     sponsor_section: sponsorSection,
@@ -306,6 +312,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   merged.mini_sponsors_row = dbMiniSponsorsRow;
 
   let bodyHtml = template.body_html;
+  bodyHtml = ensureUnsubscribePlaceholder(bodyHtml);
   if (templateSource === 'database') {
   if (slug === 'booking_confirmation') {
     const resolved = resolveBookingConfirmationBody(template.body_html);
@@ -415,6 +422,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   );
 
   html = patchEmailMobileStyles(html);
+  html = ensureUnsubscribeLink(html, merged.unsubscribe_url || unsubscribeUrl(siteUrl));
 
   return {
     template,
@@ -424,7 +432,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   };
 }
 
-async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllowlist }) {
+async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllowlist, listUnsubscribeUrl }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
@@ -476,6 +484,13 @@ async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllow
     body.reply_to = replyToAddress;
   }
   if (tagList.length) body.tags = tagList;
+
+  const unsub = String(listUnsubscribeUrl || '').trim();
+  if (unsub) {
+    body.headers = {
+      'List-Unsubscribe': '<' + unsub + '>',
+    };
+  }
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -587,6 +602,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
   }
 
   const built = await buildEmailFromTemplate(slug, variables);
+  const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const result = await sendViaResend({
     to,
     subject: subject || built.subject,
@@ -595,6 +611,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     replyTo,
     from,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
+    listUnsubscribeUrl: unsubscribeUrl(siteUrl),
   });
   return {
     ...result,

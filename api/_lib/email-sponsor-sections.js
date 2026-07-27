@@ -143,7 +143,7 @@ function wrapSponsorRow(inner) {
 function buildMiniSponsorsRow(ads, options = {}) {
   const list = (ads || []).filter(Boolean).slice(0, 3);
   if (!list.length) return '';
-  const label = String(options.label || 'Sponsored partners');
+  const label = String(options.label || 'Powered by');
 
   const cells = list
     .map(function (ad) {
@@ -256,14 +256,12 @@ async function getEmailSponsorVars(slug) {
   try {
     const sb = getSupabaseAdmin();
     let mainBlock = null;
-    let label = 'Sponsored — partner support helps keep The Networker Hub free';
+    const label = 'Powered by';
 
     if (OPPORTUNITY_EMAIL_SLUGS.has(slug)) {
       mainBlock = await resolveOpportunitySponsorBlock(sb);
-      label = 'Sponsored — partner support helps keep business opportunities free to browse';
     } else if (ORGANISER_EMAIL_SLUGS.has(slug)) {
       mainBlock = await resolveOrganiserSponsorBlock(sb);
-      label = 'Sponsored — partner support helps keep the organiser directory free';
     } else if (EVENT_MAIN_SPONSOR_SLUGS.has(slug)) {
       mainBlock = await resolveEventsMainSponsorBlock(sb);
     }
@@ -275,7 +273,7 @@ async function getEmailSponsorVars(slug) {
     let miniRow = '';
     if (HUB_PARTNER_SPONSOR_SLUGS.has(slug)) {
       const partnerBlocks = await resolveHubPartnerBlocks(sb);
-      miniRow = buildMiniSponsorsRow(partnerBlocks, { label: 'Our Hub partners' });
+      miniRow = buildMiniSponsorsRow(partnerBlocks, { label: 'Powered by' });
     } else if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchEventMiniSponsorAds(sb, 3);
       miniRow = buildMiniSponsorsRow(ads);

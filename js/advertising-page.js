@@ -720,7 +720,7 @@
       skipMainSponsor: true,
       beforeFooterHtml:
         '<div class="ad-full-email-mini-row">' +
-        '<p class="ad-full-email-mini-row-label">Sponsored partners</p>' +
+        '<p class="ad-full-email-mini-row-label">Powered by</p>' +
         '<div class="ad-full-email-mini-row-logos">' +
         buildMiniSponsorsRowHtml() +
         '</div>' +
@@ -1062,7 +1062,7 @@
       : '<span class="ad-full-email-sponsor-name">' + esc(company || 'Sponsor logo') + '</span>';
     return (
       '<div class="ad-full-email-sponsor ad-full-email-sponsor--highlight">' +
-      '<span class="ad-email-line ad-email-line--sponsor-kicker"></span>' +
+      '<p class="ad-full-email-sponsor-label">Powered by</p>' +
       (url !== '#' ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + logoInner + '</a>' : logoInner) +
       '</div>'
     );

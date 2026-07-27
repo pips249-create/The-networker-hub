@@ -411,7 +411,6 @@ a.rankings-row:hover {
 .rankings-org-name {
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 1.06rem;
-  font-weight: 750;
   font-weight: 700;
   color: var(--rankings-ink);
   margin: 0 0 4px;

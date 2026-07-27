@@ -57,7 +57,7 @@
       '" class="ad-full-email-sponsor-logo" loading="lazy" decoding="async">';
     return (
       '<div class="ad-full-email-sponsor ad-full-email-sponsor--highlight">' +
-      '<p class="pitch-email-kicker">Our event directory is proudly powered by</p>' +
+      '<p class="pitch-email-kicker">Powered by</p>' +
       '<a href="' +
       esc(url) +
       '" target="_blank" rel="noopener noreferrer">' +

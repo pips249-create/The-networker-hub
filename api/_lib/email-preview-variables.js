@@ -8,6 +8,7 @@ const {
   hubPaymentUrl,
   legalPolicyUrl,
   contactUrl,
+  unsubscribeUrl,
   logoNavUrl,
   logoFooterUrl,
   supportEmail,
@@ -72,6 +73,7 @@ function basePreviewVars(siteUrl) {
     browse_events_url: browseEventsUrl(site),
     opportunities_url: site + '/opportunities/',
     contact_url: contactUrl(site),
+    unsubscribe_url: unsubscribeUrl(site),
     privacy_url: legalPolicyUrl(site, 'privacy'),
     terms_url: legalPolicyUrl(site, 'terms'),
     refunds_url: legalPolicyUrl(site, 'refunds'),
@@ -153,9 +155,9 @@ function sampleSponsorRow(site) {
   );
   return (
     '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:16px 20px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Sponsored — partner support helps keep The Networker Hub free</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Powered by</p>' +
     '<a href="' +
     site +
     '/advertising" style="display:inline-block;text-decoration:none;">' +
@@ -165,10 +167,7 @@ function sampleSponsorRow(site) {
 }
 
 function sampleOpportunitySponsorRow(site) {
-  return sampleSponsorRow(site).replace(
-    'Sponsored — partner support helps keep The Networker Hub free',
-    'Sponsored — partner support helps keep business opportunities free to browse'
-  );
+  return sampleSponsorRow(site);
 }
 
 function sampleMiniSponsorsRow() {
@@ -371,6 +370,17 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       vars.sponsor_row = sampleOpportunitySponsorRow(site);
     }
     vars.sponsor_section = vars.sponsor_row;
+    if (!String(vars.mini_sponsors_row || '').trim()) {
+      vars.mini_sponsors_row = sampleMiniSponsorsRow();
+    }
+  } else if (slug && String(slug).startsWith('organiser_')) {
+    if (!String(vars.sponsor_row || '').trim()) {
+      vars.sponsor_row = sampleSponsorRow(site);
+    }
+    vars.sponsor_section = vars.sponsor_row;
+    if (!String(vars.mini_sponsors_row || '').trim()) {
+      vars.mini_sponsors_row = sampleMiniSponsorsRow();
+    }
   } else if (
     slug === 'booking_confirmation' ||
     slug === 'booking_reminder' ||
