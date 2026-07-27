@@ -21,12 +21,14 @@ function slugFormat(fmt) {
   return raw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-/** Match public RLS: Verified OR listing_status published — exclude draft shells. */
+/** Match public RLS: Verified or published listing, but never when admin/organiser-unpublished. */
 function isPublicOrganiser(row) {
   if (!row || !row.id) return false;
   if (!String(row.name || '').trim()) return false;
+  const status = String(row.listing_status || 'draft').toLowerCase();
+  if (status === 'unpublished') return false;
   const verified = row.verification_status === 'Verified';
-  const published = String(row.listing_status || '').toLowerCase() === 'published';
+  const published = status === 'published';
   return verified || published;
 }
 

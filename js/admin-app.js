@@ -136,7 +136,7 @@
     },
     'opportunity-cleanup': {
       title: 'Fix listings',
-      subtitle: 'Review and approve business opportunity listings',
+      subtitle: 'Review, create, and edit business opportunity listings',
     },
     accounts: {
       title: 'User accounts',
@@ -9898,15 +9898,18 @@
     });
   }
 
-  function adminLogoFieldHtml(key, photoUrl, compact) {
+  function adminImageFieldHtml(key, label, urlFieldName, photoUrl, compact) {
     var hasPhoto = !!photoUrl;
+    var urlName = urlFieldName || 'photo_url';
+    var labelHtml =
+      '<label class="block text-xs font-semibold text-slate-500 mb-1">' + esc(label || 'Image') + '</label>';
     if (compact) {
       return (
         '<div class="group-cleanup-logo-field min-w-0">' +
-        '<label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
+        labelHtml +
         '<div class="admin-logo-zone admin-logo-zone--compact border-2 border-dashed border-slate-300 rounded-lg p-2 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
         attrEsc(key) +
-        '" tabindex="0" role="button" aria-label="Upload or paste logo">' +
+        '" tabindex="0" role="button" aria-label="Upload or paste image">' +
         '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
         '<img class="admin-logo-preview mx-auto h-12 w-12 rounded-lg object-contain border border-slate-200' +
         (hasPhoto ? '' : ' hidden') +
@@ -9916,17 +9919,20 @@
         '<p class="admin-logo-placeholder text-[10px] text-slate-500 mt-1' +
         (hasPhoto ? ' hidden' : '') +
         '">Drop or click</p></div>' +
-        '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white text-xs mt-1.5" value="' +
+        '<input type="url" name="' +
+        attrEsc(urlName) +
+        '" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white text-xs mt-1.5" value="' +
         attrEsc(photoUrl || '') +
-        '" placeholder="Logo URL"></div>'
+        '" placeholder="Image URL"></div>'
       );
     }
     return (
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Logo</label>' +
+      '<div>' +
+      labelHtml +
       '<p class="text-[11px] text-slate-500 mb-2">Click, paste (Ctrl+V), or drop an image — or paste a URL below.</p>' +
       '<div class="admin-logo-zone border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 transition bg-white" data-admin-logo-key="' +
       attrEsc(key) +
-      '" tabindex="0" role="button" aria-label="Upload or paste logo">' +
+      '" tabindex="0" role="button" aria-label="Upload or paste image">' +
       '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
       '<img class="admin-logo-preview mx-auto h-16 w-16 rounded-lg object-cover border border-slate-200' +
       (hasPhoto ? '' : ' hidden') +
@@ -9936,10 +9942,16 @@
       '<p class="admin-logo-placeholder text-xs text-slate-500 mt-2' +
       (hasPhoto ? ' hidden' : '') +
       '">Drop image here or click to browse</p></div>' +
-      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
+      '<input type="url" name="' +
+      attrEsc(urlName) +
+      '" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm mt-2" value="' +
       attrEsc(photoUrl || '') +
       '" placeholder="https://… (optional if you uploaded a file)"></div>'
     );
+  }
+
+  function adminLogoFieldHtml(key, photoUrl, compact) {
+    return adminImageFieldHtml(key, 'Logo', 'photo_url', photoUrl, compact);
   }
 
   function bindAdminLogoZone(zone) {
@@ -9950,7 +9962,9 @@
     var preview = zone.querySelector('.admin-logo-preview');
     var placeholder = zone.querySelector('.admin-logo-placeholder');
     var form = zone.closest('form');
-    var urlInput = form && form.querySelector('input[name="photo_url"]');
+    var urlInput =
+      (zone.parentElement && zone.parentElement.querySelector('input[type="url"]')) ||
+      (form && form.querySelector('input[name="photo_url"]'));
 
     function showPreview(src) {
       if (preview) {
@@ -10090,7 +10104,8 @@
     }
   }
 
-  function logoPayloadForKey(key, form) {
+  function logoPayloadForKey(key, form, urlFieldName) {
+    var urlName = urlFieldName || 'photo_url';
     var pending = adminLogoPending[key];
     if (pending && pending.file) {
       return readFileAsBase64(pending.file).then(function (b64) {
@@ -10099,16 +10114,41 @@
           logoMime: pending.file.type,
           logoFilename: pending.file.name,
         };
-        if (form && formField(form, 'photo_url')) {
-          var url = formFieldVal(form, 'photo_url');
+        if (form && formField(form, urlName)) {
+          var url = formFieldVal(form, urlName);
           if (url) payload.photo_url = url;
         }
         return payload;
       });
     }
     var payload = {};
-    if (form && formField(form, 'photo_url')) payload.photo_url = formFieldVal(form, 'photo_url');
+    if (form && formField(form, urlName)) payload.photo_url = formFieldVal(form, urlName);
     return Promise.resolve(payload);
+  }
+
+  function imagePayloadForKey(key, form, urlFieldName) {
+    return logoPayloadForKey(key, form, urlFieldName).then(function (payload) {
+      return {
+        base64: payload.logoBase64,
+        mime: payload.logoMime,
+        filename: payload.logoFilename,
+        url: payload.photo_url,
+      };
+    });
+  }
+
+  function opportunityCreateMetaFromForm(form) {
+    var meta = [];
+    var investment = formFieldVal(form, 'investment');
+    var location = formFieldVal(form, 'location');
+    var commitment = formFieldVal(form, 'commitment');
+    var financialKey = formFieldVal(form, 'financial_key');
+    var financialVal = formFieldVal(form, 'financial_val');
+    if (investment) meta.push({ key: 'Investment', val: investment });
+    if (location) meta.push({ key: 'Location', val: location });
+    if (commitment) meta.push({ key: 'Commitment', val: commitment });
+    if (financialKey && financialVal) meta.push({ key: financialKey, val: financialVal });
+    return meta;
   }
 
   function adminPaginationHtml(page, total, pageSize, dataAttr) {
@@ -10261,6 +10301,9 @@
   }
 
   function groupCleanupQuickFormHtml(o) {
+    var hiddenFromBrowse =
+      String(o.listing_status || '').toLowerCase() === 'unpublished' && !o.hub_suspended;
+    var browseHiddenDisabled = Boolean(o.hub_suspended);
     return (
       '<form class="group-cleanup-form group-cleanup-quick-form" data-organiser-id="' +
       attrEsc(o.id) +
@@ -10286,7 +10329,20 @@
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Description / bio</label>' +
       '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group">' +
       esc(o.description || '') +
-      '</textarea></div></div>' +
+      '</textarea></div>' +
+      '<label class="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 cursor-pointer' +
+      (browseHiddenDisabled ? ' opacity-60 cursor-not-allowed' : '') +
+      '">' +
+      '<input type="checkbox" name="hide_from_browse" class="rounded border-slate-300 mt-0.5"' +
+      (hiddenFromBrowse ? ' checked' : '') +
+      (browseHiddenDisabled ? ' disabled' : '') +
+      '>' +
+      '<span class="min-w-0"><span class="block text-sm font-semibold text-brand-900">Hide from browse</span>' +
+      '<span class="block text-[11px] text-slate-500 mt-0.5">Keeps this group off the public organiser directory until they claim the profile and publish a listing.</span>' +
+      (browseHiddenDisabled
+        ? '<span class="block text-[11px] text-amber-800 font-semibold mt-1">Suspended — use Reinstate profile to publish again.</span>'
+        : '') +
+      '</span></label></div>' +
       '<div class="group-cleanup-quick-actions flex flex-col items-stretch gap-2 shrink-0">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 whitespace-nowrap">Save</button>' +
       '<button type="button" class="group-open-full-editor text-xs font-semibold text-brand-700 hover:underline text-center" data-organiser-id="' +
@@ -10626,7 +10682,8 @@
     }
     logoPayloadForKey(id, form)
       .then(function (logoPayload) {
-        return adminPost('/api/admin/organisers', {
+        var hideInput = form.querySelector('[name="hide_from_browse"]');
+        var payload = {
           id: id,
           name: formFieldVal(form, 'name'),
           contact_email: formFieldVal(form, 'contact_email'),
@@ -10636,7 +10693,11 @@
           logoBase64: logoPayload.logoBase64,
           logoMime: logoPayload.logoMime,
           logoFilename: logoPayload.logoFilename,
-        });
+        };
+        if (hideInput && !hideInput.disabled) {
+          payload.hide_from_browse = hideInput.checked;
+        }
+        return adminPost('/api/admin/organisers', payload);
       })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
@@ -11926,6 +11987,9 @@
             esc(o.name || 'Untitled') +
             '</h3>' +
             listingStatusBadge(o.listing_status) +
+            (String(o.listing_status || '').toLowerCase() === 'unpublished' && !o.hub_suspended
+              ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200">Hidden from browse</span>'
+              : '') +
             moderationBadge(o) +
             loginBadge +
             '</div>' +
@@ -15503,15 +15567,12 @@
       '<input type="checkbox" id="opportunity-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
       '<div id="opportunity-cleanup-list"></div>' +
       '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group" open>' +
-      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Add test listings</summary>' +
+      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create listing</summary>' +
       '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
-      '<p class="text-xs text-slate-600 pt-3">Create sample listings for previewing the business opportunities page. Titles are prefixed with <code class="text-[11px]">[TEST]</code> where noted — delete them from this table when you are done.</p>' +
-      '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Add 3 sample test listings</button>' +
-      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div>' +
-      '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3 border-t border-brand-100 pt-4">' +
+      '<p class="text-xs text-slate-600 pt-3">Add a full business opportunity listing — cover image, descriptions, and card highlights. Assign an <strong>owner email</strong> to open the in-dashboard claim prompt when they sign in.</p>' +
+      '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
-      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="[TEST] Your listing title"></div>' +
+      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Tropic Skincare — Ambassador Programme"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Host / company</label>' +
       '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Acme Ltd"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
@@ -15524,14 +15585,57 @@
       '</select></div>' +
       '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
       '<input type="checkbox" name="featured" class="rounded border-slate-300"> Featured in spotlight</label></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Description</label>' +
-      '<textarea name="description" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short summary for the listing card"></textarea></div>' +
-      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create test listing</button>' +
-      '<span class="opportunity-create-msg text-xs"></span></div></form></div></details></div>';
+      '<div class="sm:col-span-2">' +
+      adminImageFieldHtml('opp-create-cover', 'Cover image', 'image_url', '', false) +
+      '</div>' +
+      '<div class="sm:col-span-2">' +
+      adminImageFieldHtml('opp-create-logo', 'Business logo (optional)', 'logo_url', '', false) +
+      '</div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Short description</label>' +
+      '<p class="text-[11px] text-slate-500 mb-1">Shown on the browse card — keep it concise.</p>' +
+      '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="What the opportunity is and who it suits"></textarea></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Full description</label>' +
+      '<p class="text-[11px] text-slate-500 mb-1">Shown on the detail page. Separate paragraphs with a blank line.</p>' +
+      '<textarea name="about" rows="5" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Tell people what&apos;s included, what support you offer, and what you&apos;re looking for."></textarea></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Investment required</label>' +
+      '<input type="text" name="investment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. £0 or £9,500"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
+      '<input type="text" name="location" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Yorkshire or UK-wide"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment</label>' +
+      '<select name="commitment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">Select…</option>' +
+      '<option>Full-time</option>' +
+      '<option>Part-time / Flexible</option>' +
+      '<option>Event-based</option>' +
+      '<option>Flexible</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Earnings / return (optional)</label>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+      '<select name="financial_key" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">None</option>' +
+      '<option value="Earnings">Earnings</option>' +
+      '<option value="Commission">Commission</option>' +
+      '<option value="Return est.">Return est.</option>' +
+      '<option value="Revenue">Revenue</option></select>' +
+      '<input type="text" name="financial_val" class="rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. £800–£2k/mo"></div></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Contact email for enquiries</label>' +
+      '<input type="email" name="contact_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="you@company.co.uk"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email (for claim invite)</label>' +
+      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="claimant@example.com">' +
+      '<p class="text-[11px] text-slate-500 mt-1">When they sign in, they&apos;ll see a prompt to claim this listing.</p></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3 pt-1">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
+      '<span class="opportunity-create-msg text-xs"></span></div></form></div></details>' +
+      '<details class="rounded-xl border border-slate-200 bg-slate-50/50 group">' +
+      '<summary class="cursor-pointer list-none font-semibold text-slate-700 px-4 py-3 select-none">Add sample test listings</summary>' +
+      '<div class="px-4 pb-4 space-y-3 border-t border-slate-200">' +
+      '<p class="text-xs text-slate-600 pt-3">Create 3 prefilled sample listings for previewing <code class="text-[11px]">/opportunities/</code>. Titles are prefixed with <code class="text-[11px]">[TEST]</code> — delete them from the table above when you are done.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Add 3 sample test listings</button>' +
+      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></details></div>';
 
     syncOpportunityCleanupFilterUi();
     refreshOpportunityCleanupData();
+    bindAdminLogoZones(main);
   }
 
   function createOpportunityCleanupForm(form) {
@@ -15542,19 +15646,50 @@
       msg.textContent = 'Creating…';
       msg.className = 'opportunity-create-msg text-xs text-slate-500';
     }
-    adminPost('/api/admin/opportunities', {
-      action: 'create',
-      title: formFieldVal(form, 'title'),
-      host: formFieldVal(form, 'host'),
-      type: formFieldVal(form, 'type') || 'business-opportunity',
-      status: formFieldVal(form, 'status') || 'published',
-      description: formFieldVal(form, 'description') || null,
-      featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
-    })
+    Promise.all([
+      imagePayloadForKey('opp-create-cover', form, 'image_url'),
+      imagePayloadForKey('opp-create-logo', form, 'logo_url'),
+    ])
+      .then(function (results) {
+        var cover = results[0];
+        var logo = results[1];
+        var aboutText = formFieldVal(form, 'about');
+        var about = aboutText
+          ? aboutText
+              .split(/\n\s*\n/)
+              .map(function (p) {
+                return p.trim();
+              })
+              .filter(Boolean)
+          : [];
+        return adminPost('/api/admin/opportunities', {
+          action: 'create',
+          title: formFieldVal(form, 'title'),
+          host: formFieldVal(form, 'host'),
+          type: formFieldVal(form, 'type') || 'business-opportunity',
+          status: formFieldVal(form, 'status') || 'published',
+          description: formFieldVal(form, 'description') || null,
+          about: about,
+          meta: opportunityCreateMetaFromForm(form),
+          featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
+          contact_email: formFieldVal(form, 'contact_email') || null,
+          owner_email: formFieldVal(form, 'owner_email') || null,
+          photoUrl: cover.url,
+          photoBase64: cover.base64,
+          photoMime: cover.mime,
+          photoFilename: cover.filename,
+          logoUrl: logo.url,
+          logoBase64: logo.base64,
+          logoMime: logo.mime,
+          logoFilename: logo.filename,
+        });
+      })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        delete adminLogoPending['opp-create-cover'];
+        delete adminLogoPending['opp-create-logo'];
         if (msg) {
-          msg.textContent = 'Test listing created.';
+          msg.textContent = 'Listing created.';
           msg.className = 'opportunity-create-msg text-xs text-emerald-700 font-semibold';
         }
         form.reset();

@@ -1590,18 +1590,23 @@ async function createTicket({
   return rowToTicket(data);
 }
 
-/** Browse page requires organiser listing_status not draft — auto-publish when events go live. */
+/** Auto-publish organiser profile when a listing goes live (not when hub-suspended). */
 async function publishOrganiserListingsForEventIds(sb, eventRows) {
   const organiserIds = [
     ...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean)),
   ];
   if (!organiserIds.length) return;
 
+  const { moderationSummariesForOrganisers } = require('./organiser-moderation');
+  const moderationById = await moderationSummariesForOrganisers(sb, organiserIds);
+  const eligibleIds = organiserIds.filter((id) => !moderationById.get(id)?.hub_suspended);
+  if (!eligibleIds.length) return;
+
   const { error } = await sb
     .from('organisers')
     .update({ listing_status: 'published' })
-    .in('id', organiserIds)
-    .or('listing_status.eq.draft,listing_status.is.null');
+    .in('id', eligibleIds)
+    .or('listing_status.eq.draft,listing_status.is.null,listing_status.eq.unpublished');
   if (error) throw new Error(error.message);
 }
 

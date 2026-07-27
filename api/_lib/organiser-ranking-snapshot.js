@@ -71,7 +71,9 @@ async function computeLiveRankingIndex(sb) {
 
   const ranked = (data || [])
     .filter((row) => {
-      const published = String(row.listing_status || '').toLowerCase() === 'published';
+      const status = String(row.listing_status || 'draft').toLowerCase();
+      if (status === 'unpublished') return false;
+      const published = status === 'published';
       const verified = row.verification_status === 'Verified';
       if (!published && !verified) return false;
       const reviews = Number(row.review_count) || 0;

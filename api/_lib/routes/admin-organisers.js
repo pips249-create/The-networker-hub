@@ -301,6 +301,14 @@ function buildOrganiserPatch(body, photo_url) {
   if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
     patch.featured = Boolean(body.featured);
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'hide_from_browse')) {
+    patch.listing_status = body.hide_from_browse ? 'unpublished' : 'published';
+  } else if (Object.prototype.hasOwnProperty.call(body, 'listing_status')) {
+    const status = String(body.listing_status || '').trim().toLowerCase();
+    if (status === 'draft' || status === 'published' || status === 'unpublished') {
+      patch.listing_status = status;
+    }
+  }
   return patch;
 }
 

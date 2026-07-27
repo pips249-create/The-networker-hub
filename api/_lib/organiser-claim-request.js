@@ -20,12 +20,10 @@ function profileEmail(row) {
     .toLowerCase();
 }
 
+const { isPublicOrganiser } = require('./supabase-organisers-browse');
+
 function isOrganiserClaimableRow(row) {
-  if (!row || !row.id) return false;
-  if (!String(row.name || '').trim()) return false;
-  const verified = row.verification_status === 'Verified';
-  const published = String(row.listing_status || '').toLowerCase() === 'published';
-  if (!verified && !published) return false;
+  if (!isPublicOrganiser(row)) return false;
   const status = String(row.ownership_claim_status || '').toLowerCase();
   return status !== 'claimed';
 }

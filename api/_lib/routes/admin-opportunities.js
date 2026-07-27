@@ -4,6 +4,7 @@ const { normalizeType, normalizeMeta, rejectOpportunityListing, rowToListing } =
 const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths } = require('../opportunity-listing-pricing');
+const { resolveImageUrl } = require('../supabase-storage');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
 
@@ -218,34 +219,81 @@ function applyPublishedListingPayment(patch, row, now) {
   }
 }
 
+async function resolveAdminOpportunityCover(input) {
+  if (input.photoBase64 || input.photo_base64) {
+    const url = await resolveImageUrl({
+      folder: 'opportunities/new/cover',
+      logoUrl: input.photoUrl || input.photo_url || input.image_url,
+      logoBase64: input.photoBase64 || input.photo_base64,
+      logoMime: input.photoMime || input.photo_mime,
+      logoFilename: input.photoFilename || input.photo_filename,
+    });
+    if (url) return url;
+  }
+  const direct = String(input.photoUrl || input.photo_url || input.image_url || '').trim();
+  return direct || null;
+}
+
+async function resolveAdminOpportunityLogo(input) {
+  if (input.logoBase64 || input.logo_base64) {
+    const url = await resolveImageUrl({
+      folder: 'opportunities/new/logo',
+      logoUrl: input.logoUrl || input.logo_url,
+      logoBase64: input.logoBase64 || input.logo_base64,
+      logoMime: input.logoMime || input.logo_mime,
+      logoFilename: input.logoFilename || input.logo_filename,
+    });
+    if (url) return url;
+  }
+  const direct = String(input.logoUrl || input.logo_url || '').trim();
+  return direct || null;
+}
+
+function normalizeAbout(input) {
+  if (Array.isArray(input.about)) {
+    return input.about.map((p) => String(p).trim()).filter(Boolean);
+  }
+  const aboutText = String(input.aboutText || input.about_text || '').trim();
+  if (!aboutText) return [];
+  return aboutText
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
 async function createAdminOpportunity(input) {
   const sb = getSupabaseAdmin();
   const title = String(input.title || '').trim();
-  const host = String(input.host || '').trim() || 'Test listing';
+  const host = String(input.host || '').trim() || 'Listing';
   if (!title) throw new Error('missing_title');
 
   const status = String(input.status || 'published').trim().toLowerCase();
   const published = status === 'published';
   const now = new Date();
   const listingExpiresAt = addMonths(now, 12);
+  const ownerEmailRaw = String(input.owner_email || input.ownerEmail || '').trim().toLowerCase();
+  const ownerEmail = ownerEmailRaw || HUB_SEED_OWNER_EMAIL;
+  const isTestListing = /^\[TEST\]/i.test(title);
 
   const row = {
     organiser_id: null,
-    owner_email: String(input.owner_email || HUB_SEED_OWNER_EMAIL).toLowerCase(),
+    owner_email: ownerEmail,
+    ownership_claim_status:
+      ownerEmailRaw && !isHubSeedOwnerEmail(ownerEmailRaw) ? 'pending' : null,
     type: normalizeType(input.type || 'business-opportunity'),
     category: String(input.category || 'general').trim() || 'general',
     title,
     description: String(input.description || '').trim() || null,
-    about: Array.isArray(input.about)
-      ? input.about.map((p) => String(p).trim()).filter(Boolean)
-      : [],
+    about: normalizeAbout(input),
     host,
     host_initials: hostInitials(host),
     host_color: input.host_color || '#374151',
+    contact_email: String(input.contact_email || input.contactEmail || '').trim() || null,
     meta: normalizeMeta(input.meta),
-    tags: ['admin-test', normalizeType(input.type || 'business-opportunity')],
-    image_url: String(input.image_url || '').trim() || null,
-    logo_url: String(input.logo_url || '').trim() || null,
+    tags: [
+      isTestListing ? 'admin-test' : 'admin-created',
+      normalizeType(input.type || 'business-opportunity'),
+    ],
     status: published ? 'published' : 'draft',
     approval_status: published ? 'Approved' : 'Pending Review',
     featured: Boolean(input.featured),
@@ -254,6 +302,9 @@ async function createAdminOpportunity(input) {
     published_at: published ? now.toISOString() : null,
     updated_at: now.toISOString(),
   };
+
+  row.image_url = await resolveAdminOpportunityCover(input);
+  row.logo_url = await resolveAdminOpportunityLogo(input);
 
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title,
@@ -350,8 +401,21 @@ module.exports = async function handler(req, res) {
           type: body.type,
           status: body.status,
           description: body.description,
+          about: body.about,
+          aboutText: body.aboutText || body.about_text,
+          meta: body.meta,
           featured: body.featured,
+          owner_email: body.owner_email || body.ownerEmail,
+          contact_email: body.contact_email || body.contactEmail,
           image_url: body.image_url,
+          photoUrl: body.photoUrl || body.photo_url,
+          photoBase64: body.photoBase64 || body.photo_base64,
+          photoMime: body.photoMime || body.photo_mime,
+          photoFilename: body.photoFilename || body.photo_filename,
+          logoUrl: body.logoUrl || body.logo_url,
+          logoBase64: body.logoBase64 || body.logo_base64,
+          logoMime: body.logoMime || body.logo_mime,
+          logoFilename: body.logoFilename || body.logo_filename,
         });
         return json(res, 201, { ok: true, opportunity });
       } catch (e) {
