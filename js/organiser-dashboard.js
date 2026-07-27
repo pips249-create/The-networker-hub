@@ -9343,8 +9343,179 @@
     if ((state.pendingClaimGroups || []).length > 0) return;
     if ((state.pendingClaimOpportunities || []).length > 0) return;
     updateSetupResumeBanner();
+    if (showLaunchSetupPrompt()) return;
     if (!needsOrganiserProfileReview()) {
       showReadyForEventPrompt();
+    }
+  }
+
+  function launchSetupInput() {
+    const events = (state.events || []).concat(state.upcomingEvents || []);
+    return {
+      groups: state.groups || [],
+      events: events,
+      tickets: state.tickets || [],
+      groupEventsIntoSeries: groupEventsIntoSeries,
+    };
+  }
+
+  function hideLaunchSetupModal() {
+    const modal = document.getElementById('org-launch-setup');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    const ready = document.getElementById('org-ready-event');
+    const claim = document.getElementById('org-group-claim');
+    if ((!ready || ready.hidden) && (!claim || claim.hidden)) {
+      document.body.classList.remove('org-group-claim-active');
+    }
+  }
+
+  function openLaunchSetupItem(item) {
+    if (!item) return;
+    hideLaunchSetupModal();
+    if (item.kind === 'profile') {
+      location.href = window.HubOrganiserLaunchSetup.profileEditUrl(item.id);
+      return;
+    }
+    if (item.kind === 'event' && item.family && item.family.primary) {
+      const ids = (item.family.events || [])
+        .map(function (e) {
+          return e.id;
+        })
+        .filter(Boolean);
+      try {
+        sessionStorage.setItem(
+          'hub_event_series',
+          JSON.stringify({
+            title: item.family.title,
+            eventIds: ids,
+            events: (item.family.events || []).map(function (e) {
+              return { id: e.id, date: e.date || e.startsAt || e.starts_at || '' };
+            }),
+            launchSetup: true,
+            familyKey: item.family.key,
+          })
+        );
+      } catch (e) {
+        /* ignore */
+      }
+      const primaryId = item.family.primary.id;
+      location.href =
+        '/organiser/event-edit?id=' +
+        encodeURIComponent(primaryId) +
+        '&onboard=launch' +
+        (ids.length > 1 ? '&seriesEdit=1' : '');
+    }
+  }
+
+  function showLaunchSetupPrompt() {
+    const modal = document.getElementById('org-launch-setup');
+    const launch = window.HubOrganiserLaunchSetup;
+    if (!modal || !launch || state.adminView) return false;
+
+    const built = launch.buildQueue(launchSetupInput());
+    if (built.stored.dismissed || !built.queue.length) {
+      hideLaunchSetupModal();
+      return false;
+    }
+
+    const item = built.queue[0];
+    const profilesLeft = built.queue.filter(function (q) {
+      return q.kind === 'profile';
+    }).length;
+    const eventsLeft = built.queue.filter(function (q) {
+      return q.kind === 'event';
+    }).length;
+
+    hideReadyForEventModal();
+    hideGroupClaimModal();
+
+    const kicker = document.getElementById('org-launch-setup-kicker');
+    const titleEl = document.getElementById('org-launch-setup-title');
+    const introEl = document.getElementById('org-launch-setup-intro');
+    const labelEl = document.getElementById('org-launch-setup-item-label');
+    const metaEl = document.getElementById('org-launch-setup-item-meta');
+    const queueEl = document.getElementById('org-launch-setup-queue');
+
+    if (kicker) {
+      kicker.textContent =
+        built.queue.length === 1
+          ? 'Almost there — 1 step left'
+          : 'Finish setup · ' + built.queue.length + ' steps left';
+    }
+    if (titleEl) {
+      titleEl.textContent =
+        item.kind === 'profile' ? 'Review your organiser page' : 'Review your event & tickets';
+    }
+    if (introEl) {
+      if (item.kind === 'profile') {
+        introEl.textContent =
+          (state.groups || []).length > 1
+            ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported).'
+            : 'Confirm your public profile before tickets go live. Set complimentary guest visits (0–3) if you offer trial nights.';
+      } else if (item.isSeries) {
+        introEl.textContent =
+          'This is a recurring series (' +
+          item.dateCount +
+          ' dates). You review shared details and tickets once — every date uses the same setup. Free tickets can go live without Stripe; paid tickets need Connect before card payments work.';
+      } else if (eventsLeft > 1) {
+        introEl.textContent =
+          'You have several seeded listings. Finish this one (details → tickets → review → publish), then we will take you to the next.';
+      } else {
+        introEl.textContent =
+          'Check the listing we prepared, set tickets, then review everything before publishing. Free RSVPs go live without Stripe; paid tickets need bank payouts connected first.';
+      }
+    }
+    if (labelEl) labelEl.textContent = item.title;
+    if (metaEl) {
+      metaEl.textContent =
+        item.indexHint +
+        (item.kind === 'profile' && item.thin ? ' · needs photo or description' : '');
+    }
+    if (queueEl) {
+      const bits = [];
+      if (profilesLeft) bits.push(profilesLeft + ' page' + (profilesLeft === 1 ? '' : 's'));
+      if (eventsLeft) bits.push(eventsLeft + ' event' + (eventsLeft === 1 ? '' : 's') + ' / series');
+      queueEl.textContent = bits.length ? 'Still to do: ' + bits.join(', ') + '.' : '';
+    }
+
+    const goBtn = document.getElementById('org-launch-setup-go');
+    if (goBtn) {
+      goBtn.textContent =
+        item.kind === 'profile' ? 'Review profile →' : 'Open event setup →';
+    }
+
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-group-claim-active');
+    modal.dataset.launchItemKind = item.kind;
+    modal.dataset.launchItemId = item.id;
+    return true;
+  }
+
+  function bindLaunchSetupUi() {
+    const laterBtn = document.getElementById('org-launch-setup-later');
+    const goBtn = document.getElementById('org-launch-setup-go');
+    if (laterBtn) {
+      laterBtn.addEventListener('click', function () {
+        hideLaunchSetupModal();
+        if (window.HubOrganiserLaunchSetup) window.HubOrganiserLaunchSetup.dismiss();
+        updateGettingStartedVisibility();
+      });
+    }
+    if (goBtn) {
+      goBtn.addEventListener('click', function () {
+        const launch = window.HubOrganiserLaunchSetup;
+        if (!launch) return;
+        const item = launch.nextItem(launchSetupInput());
+        if (!item) {
+          hideLaunchSetupModal();
+          return;
+        }
+        openLaunchSetupItem(item);
+      });
     }
   }
 
@@ -9364,6 +9535,10 @@
   function showReadyForEventPrompt() {
     const modal = document.getElementById('org-ready-event');
     if (!modal || state.adminView) return;
+    if (window.HubOrganiserLaunchSetup) {
+      const progress = window.HubOrganiserLaunchSetup.progressSummary(launchSetupInput());
+      if (!progress.dismissed && progress.remaining > 0) return;
+    }
     if (!state.groups.length || hasListedEvents()) {
       hideReadyForEventModal();
       return;
@@ -9440,7 +9615,7 @@
     if (errEl) errEl.hidden = true;
     if (acceptBtn) {
       acceptBtn.disabled = false;
-      acceptBtn.textContent = groupClaimRejectMode ? 'Back' : 'Yes, this is my group';
+      acceptBtn.textContent = groupClaimRejectMode ? 'Back' : 'Yes — continue setup';
     }
     if (rejectBtn) {
       rejectBtn.disabled = false;
@@ -9458,7 +9633,7 @@
     const introEl = document.getElementById('org-group-claim-intro');
     if (introEl) {
       introEl.textContent =
-        'We found an organiser page linked to your email. Confirm you manage this page — next you can check the details and list events.';
+        'We found an organiser page linked to your email. Confirm you manage this page — next we will walk you through your profile, any events we prepared, tickets, and a final review before you take bookings.';
     }
   }
 
@@ -12328,12 +12503,27 @@
       bindOnboardingPipeline();
       bindGroupClaimUi();
       bindSetupResumeUi();
+      bindLaunchSetupUi();
       bindReadyEventUi();
       bindUi();
       const initial = resolveInitialRoute();
       setRoute(initial.sub || initial.page);
       await loadBootstrap({ silent: true });
       applyPendingGroupContinue();
+      try {
+        const bootParams = new URLSearchParams(window.location.search);
+        if (bootParams.get('onboard') === 'launch' && window.HubOrganiserLaunchSetup) {
+          window.HubOrganiserLaunchSetup.clearDismissed();
+          showLaunchSetupPrompt();
+          if (window.history.replaceState) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('onboard');
+            window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
       api('/api/auth/hub-mode', {
         method: 'POST',
         body: JSON.stringify({ mode: 'organiser' }),

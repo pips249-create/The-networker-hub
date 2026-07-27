@@ -52,7 +52,7 @@ Reply-to is set to `hello@the-networker.co.uk` when sent via Campaigns.
 
 - References Email 1 (“you may have seen our note…”)
 - CTA: **Confirm your organiser page** → register or login with group email
-- Steps: password → confirm page → add event → Stripe when ready
+- Steps: password → confirm page → review profile & seeded event → tickets → publish (Stripe only for paid)
 
 **How to send:**
 

@@ -218,6 +218,42 @@ module.exports = async function handler(req, res) {
         seriesGroupId,
       });
 
+      try {
+        const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+        const { logFromSession, changedKeys } = require('../entity-activity-log');
+        const access = await resolveOrganiserAccess(auth.session);
+        const updated = synced.event || synced.events[0] || {};
+        const keys = changedKeys(existing, updated, [
+          'title',
+          'listingStatus',
+          'status',
+          'date',
+          'startsAt',
+          'location',
+          'venue',
+          'city',
+          'description',
+          'eventFormat',
+          'onlineLink',
+        ]);
+        const statusChanged =
+          String(existing?.listingStatus || existing?.status || '') !==
+          String(updated?.listingStatus || updated?.status || base.listingStatus || '');
+        await logFromSession(auth.session, access, {
+          entity_type: 'event',
+          entity_id: eventId,
+          organiser_id: base.groupId || existing?.groupId || existing?.organiserId || null,
+          action: statusChanged ? 'event_status_updated' : 'event_updated',
+          summary:
+            (statusChanged ? 'Updated event status' : 'Updated event') +
+            (updated?.title ? ': ' + String(updated.title).slice(0, 80) : '') +
+            (keys.length ? ' (' + keys.slice(0, 6).join(', ') + ')' : ''),
+          metadata: { changedFields: keys, listingStatus: base.listingStatus || null },
+        });
+      } catch {
+        /* activity log must not block saves */
+      }
+
       return json(res, 200, {
         ok: true,
         event: synced.event || synced.events[0],
@@ -277,6 +313,20 @@ module.exports = async function handler(req, res) {
           return json(res, 403, { error: 'event_not_owned' });
         }
         const updated = await updateEvent(eventId, { listingStatus: 'unpublished' });
+        try {
+          const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+          const { logFromSession } = require('../entity-activity-log');
+          const access = await resolveOrganiserAccess(auth.session);
+          await logFromSession(auth.session, access, {
+            entity_type: 'event',
+            entity_id: eventId,
+            organiser_id: updated?.groupId || updated?.organiserId || null,
+            action: 'event_unpublished',
+            summary: 'Unpublished event' + (updated?.title ? ': ' + String(updated.title).slice(0, 80) : ''),
+          });
+        } catch {
+          /* ignore */
+        }
         return json(res, 200, {
           ok: true,
           event: updated,
@@ -372,6 +422,18 @@ module.exports = async function handler(req, res) {
         eventId,
         groups.map((g) => g.id)
       );
+      try {
+        const { logFromSession } = require('../entity-activity-log');
+        await logFromSession(auth.session, access, {
+          entity_type: 'event',
+          entity_id: eventId,
+          organiser_id: deleted?.groupId || deleted?.organiserId || null,
+          action: 'event_deleted',
+          summary: 'Deleted event' + (deleted?.title ? ': ' + String(deleted.title).slice(0, 80) : ''),
+        });
+      } catch {
+        /* ignore */
+      }
       return json(res, 200, { ok: true, event: deleted, message: 'Event deleted.' });
     } catch (e) {
       return json(res, e.status || 500, {

@@ -185,21 +185,27 @@
     const hint = el('ge-actions-hint');
     const titleEl = el('ge-page-title');
     const leadEl = el('ge-page-lead');
+    const launchSetup = config && config.onboardLaunch;
 
     if (titleEl) titleEl.textContent = 'Your organiser page';
     if (leadEl) {
-      leadEl.textContent = 'Linked to your account — confirm the details below.';
+      leadEl.textContent = launchSetup
+        ? 'Confirm logo, description, contact details, and complimentary guest visits — we could not import all of this for you.'
+        : 'Linked to your account — confirm the details below.';
     }
     if (saveChanges) saveChanges.hidden = false;
     if (continueBtn) {
       continueBtn.hidden = false;
-      continueBtn.textContent = 'Looks good — list my first event →';
+      continueBtn.textContent = launchSetup
+        ? 'Looks good — continue setup →'
+        : 'Looks good — list my first event →';
     }
     if (publishBtn) publishBtn.hidden = true;
     if (draftBtn) draftBtn.hidden = true;
     if (hint) {
-      hint.textContent =
-        'Update anything that needs changing, then continue to set up your first event listing.';
+      hint.textContent = launchSetup
+        ? 'Set complimentary visits (0–3) if you offer trial nights. If you have several organiser pages, you will review each one in turn.'
+        : 'Update anything that needs changing, then continue to set up your first event listing.';
     }
     if (g) showStatusBadge(g);
   }
@@ -488,13 +494,17 @@
       if (onboardReview && window.HubOrganiserOnboarding) {
         window.HubOrganiserOnboarding.markProfileReviewDone();
       }
+      if ((onboardReview || (config && config.onboardLaunch)) && saved && saved.id && window.HubOrganiserLaunchSetup) {
+        window.HubOrganiserLaunchSetup.markProfileDone(saved.id);
+      }
 
       const hasWarnings = Boolean(logoWarning || logoResolutionWarning || saveWarnings.length);
       const delay = hasWarnings ? 2200 : isEmbedded() ? 900 : 700;
+      const launchSetup = Boolean(config && config.onboardLaunch);
 
       const continueToEvent = isEmbedded()
-        ? mode === 'continue' || onboardReview
-        : onboardReview || (!editId && mode === 'continue');
+        ? mode === 'continue' || onboardReview || launchSetup
+        : onboardReview || launchSetup || (!editId && mode === 'continue');
 
       if (isEmbedded()) {
         if (!(continueToEvent && config.onContinue) && config.onSaved) {
@@ -505,7 +515,7 @@
             if (config.onContinue) config.onContinue(saved, mode);
             else {
               stashGroupContinue(saved && saved.id);
-              location.href = '/organiser/#groups';
+              location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
             }
           }, delay);
         } else {
@@ -518,7 +528,7 @@
 
       if (continueToEvent) stashGroupContinue(saved && saved.id);
       setTimeout(function () {
-        location.href = '/organiser/#groups';
+        location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
       }, delay);
     } finally {
       [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
@@ -667,6 +677,7 @@
       root: options.root || document,
       editId: options.editId || '',
       onboardReview: Boolean(options.onboardReview),
+      onboardLaunch: Boolean(options.onboardLaunch),
       embedded: Boolean(options.embedded),
       onClose: options.onClose || null,
       onSaved: options.onSaved || null,
@@ -687,6 +698,7 @@
       if (options.root) config.root = options.root;
       if (options.editId != null) config.editId = options.editId;
       if (options.onboardReview != null) config.onboardReview = Boolean(options.onboardReview);
+      if (options.onboardLaunch != null) config.onboardLaunch = Boolean(options.onboardLaunch);
       if (options.embedded != null) config.embedded = Boolean(options.embedded);
       if (options.onClose) config.onClose = options.onClose;
       if (options.onSaved) config.onSaved = options.onSaved;
@@ -707,9 +719,11 @@
   const geForm = document.getElementById('ge-form');
   if (geForm && !geForm.closest('#org-group-drawer')) {
     const params = new URLSearchParams(location.search);
+    const onboard = params.get('onboard') || '';
     init({
       editId: params.get('id') || '',
-      onboardReview: params.get('onboard') === 'review',
+      onboardReview: onboard === 'review' || onboard === 'launch',
+      onboardLaunch: onboard === 'launch',
     });
     if (!params.get('id') && window.HubFlowTour) {
       window.HubFlowTour.startGroupTour({ isEdit: false, delay: 0 });

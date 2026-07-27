@@ -1153,6 +1153,24 @@ module.exports = async function handler(req, res) {
         /* profile email saved; claim can run later */
       }
     }
+    try {
+      const { logFromSession } = require('../entity-activity-log');
+      await logFromSession(session, null, {
+        entity_type: 'organiser',
+        entity_id: id,
+        organiser_id: id,
+        action: 'admin_organiser_updated',
+        summary:
+          'Hub admin updated group profile' +
+          (data?.name ? ': ' + String(data.name).slice(0, 80) : '') +
+          ' (' +
+          Object.keys(patch).slice(0, 8).join(', ') +
+          ')',
+        metadata: { changedFields: Object.keys(patch), source: 'admin' },
+      });
+    } catch {
+      /* ignore */
+    }
     return json(res, 200, { ok: true, organiser: mapOrganiserRow(data, undefined) });
   } catch (e) {
     const status = e.status || 500;

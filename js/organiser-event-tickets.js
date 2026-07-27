@@ -2982,6 +2982,22 @@
     if (publishedTitle) publishedQs.set('title', publishedTitle);
     const publishedUrl = '/organiser/event-published?' + publishedQs.toString();
 
+    try {
+      if (window.HubOrganiserLaunchSetup) {
+        const famKey =
+          (seriesMeta && seriesMeta.familyKey) ||
+          (seriesMeta && seriesMeta.seriesGroupId
+            ? 'sg:' + seriesMeta.seriesGroupId
+            : eventIds[0]
+              ? 'ev:' + eventIds[0]
+              : '');
+        if (famKey) window.HubOrganiserLaunchSetup.markEventFamilyDone(famKey);
+        if (eventIds[0]) window.HubOrganiserLaunchSetup.markEventFamilyDone('ev:' + eventIds[0]);
+      }
+    } catch {
+      /* ignore */
+    }
+
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       window.parent.postMessage(
         {

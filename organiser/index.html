@@ -2310,6 +2310,31 @@
       </div>
     </div>
 
+    <div id="org-launch-setup" class="org-group-claim" hidden aria-hidden="true">
+      <div class="org-group-claim-backdrop"></div>
+      <div
+        class="org-group-claim-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="org-launch-setup-title"
+      >
+        <p class="org-group-claim-kicker" id="org-launch-setup-kicker">Finish setup</p>
+        <h2 class="org-group-claim-title" id="org-launch-setup-title">Get ready to take bookings</h2>
+        <p class="org-group-claim-intro" id="org-launch-setup-intro">
+          We&apos;ve prepared your page and event listing. Review each step — profile first (including complimentary visits), then your event, tickets, and a final check before publishing. Free bookings can go live without Stripe.
+        </p>
+        <div class="org-group-claim-card" id="org-launch-setup-card">
+          <p class="org-group-claim-desc" id="org-launch-setup-item-label" style="margin:0"></p>
+          <p class="org-group-claim-email" id="org-launch-setup-item-meta" style="margin-top:6px"></p>
+        </div>
+        <p class="org-group-claim-intro" id="org-launch-setup-queue" style="margin-top:12px;font-size:0.9rem"></p>
+        <div class="org-group-claim-actions">
+          <button type="button" class="org-btn org-btn-outline" id="org-launch-setup-later">Later</button>
+          <button type="button" class="org-btn org-btn-gold" id="org-launch-setup-go">Continue →</button>
+        </div>
+      </div>
+    </div>
+
     <div id="org-group-claim" class="org-group-claim" hidden aria-hidden="true">
       <div class="org-group-claim-backdrop"></div>
       <div
@@ -2352,7 +2377,7 @@
             No, this isn&apos;t mine
           </button>
           <button type="button" class="org-btn org-btn-gold" id="org-group-claim-accept">
-            Yes, this is my group
+            Yes — continue setup
           </button>
         </div>
       </div>
@@ -2627,6 +2652,7 @@
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" defer></script>
     <script src="../js/organiser-onboarding.js?v=20260723onboard" defer></script>
+    <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
     <script src="../js/organiser-group-edit.js?v=20260727publish" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260714link" defer></script>
     <script src="../js/review-report.js?v=20260708" defer></script>

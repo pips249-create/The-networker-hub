@@ -30,6 +30,7 @@ const routes = {
   complaints: require('./_lib/routes/admin-complaints'),
   'revenue-deals': require('./_lib/routes/admin-revenue-deals'),
   'revenue-targets': require('./_lib/routes/admin-revenue-targets'),
+  activity: require('./_lib/routes/admin-activity'),
 };
 
 module.exports = async function handler(req, res) {

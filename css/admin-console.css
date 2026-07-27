@@ -1139,3 +1139,139 @@ a.admin-action-row:hover .admin-action-btn {
   text-decoration: underline;
 }
 
+/* Home — compact needs-attention chips */
+.admin-needs-attention {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-needs-attention-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.admin-needs-attention-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-needs-attention-head p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.admin-needs-attention-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-needs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.admin-needs-chip:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.admin-needs-chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: #b45309;
+}
+
+.admin-needs-chip--rose .admin-needs-chip-count {
+  background: #be123c;
+}
+
+.admin-needs-chip--amber .admin-needs-chip-count {
+  background: #b45309;
+}
+
+.admin-needs-chip--slate .admin-needs-chip-count {
+  background: #475569;
+}
+
+.admin-needs-chip-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Cleanup — activity audit trail */
+.entity-activity-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+
+.entity-activity-item {
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.55rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.entity-activity-summary {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.entity-activity-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.admin-hub-panel {
+  padding-top: 0.25rem;
+}
+
+.admin-filter-bar input[type='search'],
+.admin-filter-bar input[type='text'],
+.admin-filter-bar select {
+  min-height: 2.35rem;
+}
+
+.admin-hub-tab:focus-visible,
+.admin-needs-chip:focus-visible,
+.entity-activity-load:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+

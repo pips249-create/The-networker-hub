@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New matching event – The Networker Hub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+    body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
+    img { border:0; display:block; max-width:100%; }
+    body { background-color:#faf7f2; }
+    table { border-collapse:collapse; }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#faf7f2;font-family:'DM Sans',system-ui,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#faf7f2;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(74,68,70,0.10);">
+        <tr>
+          <td style="background:#f5f0e8;padding:32px 48px 0;text-align:center;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker Hub" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;">
+            </a>
+          </td>
+        </tr>
+
+        {{sponsor_row}}
+
+<tr>
+          <td style="padding:32px 48px 8px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;color:#6b6567;margin:0 0 8px;">Hi {{user_name}},</p>
+            <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#0d1f3c;margin:0 0 16px;line-height:1.25;">A new event matches your saved search</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;color:#4a4446;margin:0 0 20px;">
+              Your alert for <strong>{{search_label}}</strong> found {{match_count}} new listing(s). Here is the latest:
+            </p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:18px;font-weight:600;color:#0d1f3c;margin:0 0 24px;">{{event_name}}</p>
+            <a href="{{event_url}}" style="display:inline-block;padding:14px 28px;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#0d1f3c;text-decoration:none;background:#c9961f;border-radius:999px;">View event</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 48px 32px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#6b6567;margin:24px 0 0;">
+              <a href="{{browse_events_url}}" style="color:#0d1f3c;">Browse all events</a>
+              · <a href="{{hub_account_url}}" style="color:#0d1f3c;">Manage saved searches</a>
+            </p>
+          </td>
+        </tr>
+        {{mini_sponsors_row}}
+        <tr>
+          <td style="padding:24px 48px 32px;border-top:1px solid #eee;font-size:12px;color:#9a9496;line-height:1.5;">
+            <a href="{{privacy_url}}" style="color:#6b6567;">Privacy</a> · <a href="{{terms_url}}" style="color:#6b6567;">Terms</a> · <a href="{{contact_url}}" style="color:#6b6567;">Contact</a>
+           · <a href="{{unsubscribe_url}}" style="color:#6b6567;">Unsubscribe</a></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

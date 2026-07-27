@@ -979,13 +979,29 @@
 
     const metaWrap = document.getElementById('ev-host-meta');
     const ratingMeta = document.getElementById('ev-host-rating-meta');
-    const reviewCount = Number(ev.reviews) || 0;
-    const rating = Number(ev.rating) || 0;
+    const reviewCount = Number(ev.reviews) || Number(ev.organiserReviews) || 0;
+    const rating = Number(ev.rating) || Number(ev.organiserRating) || 0;
     if (metaWrap && ratingMeta && reviewCount > 0 && rating > 0) {
-      ratingMeta.textContent =
-        '★ ' + rating.toFixed(1) + ' average · ' + reviewCount + ' review' + (reviewCount === 1 ? '' : 's');
+      ratingMeta.innerHTML =
+        '<span class="ev-host-stars" aria-hidden="true">' +
+        starsForRating(rating) +
+        '</span> <strong>' +
+        rating.toFixed(1) +
+        '</strong> · ' +
+        reviewCount +
+        ' review' +
+        (reviewCount === 1 ? '' : 's');
+      metaWrap.hidden = false;
+    } else if (metaWrap && ratingMeta) {
+      ratingMeta.textContent = 'No reviews yet — be the first after you attend.';
       metaWrap.hidden = false;
     } else if (metaWrap) metaWrap.hidden = true;
+  }
+
+  function starsForRating(rating) {
+    const r = Math.max(0, Math.min(5, Number(rating) || 0));
+    const full = Math.round(r);
+    return '★★★★★'.slice(0, full) + '☆☆☆☆☆'.slice(0, 5 - full);
   }
 
   function mapEmbedSrc(ev, q) {
@@ -2486,17 +2502,7 @@
         urgencyEl.hidden = false;
         urgencyEl.classList.add('is-sold-out');
       } else {
-        const scarce = tiers
-          .filter((t) => !t.soldOut)
-          .map((t) => ({ t, left: tierRemainingCount(t), label: tierRemainingLabel(t) }))
-          .filter((x) => x.label);
-        if (scarce.length) {
-          const lowest = scarce.reduce((a, b) => (a.left < b.left ? a : b));
-          urgencyEl.textContent = lowest.label;
-          urgencyEl.hidden = false;
-        } else {
-          urgencyEl.hidden = true;
-        }
+        urgencyEl.hidden = true;
       }
     }
 

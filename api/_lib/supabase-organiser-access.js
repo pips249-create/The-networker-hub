@@ -165,6 +165,27 @@ async function activatePendingTeamMembership(sb, userId, email) {
     .select('*')
     .single();
   if (upErr) throw new Error(upErr.message);
+
+  try {
+    const { logEntityActivity } = require('./entity-activity-log');
+    await logEntityActivity({
+      actor_user_id: uid,
+      actor_email: em,
+      actor_role: 'team',
+      entity_type: 'team_member',
+      entity_id: updated.id,
+      organiser_id: updated.organiser_account_id || null,
+      action: 'team_invite_accepted',
+      summary: 'Team member activated access: ' + em,
+      metadata: {
+        invitedBy: updated.invited_by || null,
+        accountId: updated.organiser_account_id || null,
+      },
+    });
+  } catch {
+    /* ignore */
+  }
+
   return updated;
 }
 

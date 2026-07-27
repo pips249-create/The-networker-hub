@@ -319,6 +319,7 @@
         }
         if (window.hubRefreshListings) window.hubRefreshListings();
         if (window.hubUpdateEventTypeChipCounts) window.hubUpdateEventTypeChipCounts();
+        if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
         return data;
       })
       .catch(function (err) {

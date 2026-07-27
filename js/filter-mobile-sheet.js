@@ -112,13 +112,26 @@
         ? options.onClear
         : function () {};
 
+    var getApplyLabel =
+      typeof options.getApplyLabel === 'function'
+        ? options.getApplyLabel
+        : function () {
+            return options.applyLabel || 'Show results';
+          };
+
     function syncSheetTitle() {
       if (!sheetTitle) return;
       sheetTitle.textContent = getTitle();
     }
 
+    function syncApplyLabel() {
+      if (!sheetApply) return;
+      sheetApply.textContent = getApplyLabel() || 'Show results';
+    }
+
     function mountSheetContent() {
       syncSheetTitle();
+      syncApplyLabel();
       if (inboxTitle && inboxTitle.parentNode !== sheetBody) {
         sheetBody.appendChild(inboxTitle);
       }
@@ -187,7 +200,10 @@
         badge.hidden = !active;
         badge.textContent = active ? '•' : '';
       }
-      if (sheetOpen) syncSheetTitle();
+      if (sheetOpen) {
+        syncSheetTitle();
+        syncApplyLabel();
+      }
     }
 
     toggle.addEventListener('click', function () {

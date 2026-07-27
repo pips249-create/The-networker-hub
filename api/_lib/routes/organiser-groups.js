@@ -134,6 +134,37 @@ module.exports = async function handler(req, res) {
         complimentaryVisitsScope:
           body.complimentaryVisitsScope ?? body.complimentary_visits_scope,
       });
+      try {
+        const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+        const { logFromSession } = require('../entity-activity-log');
+        const access = await resolveOrganiserAccess(auth.session);
+        const changed = [];
+        if (name) changed.push('name');
+        if (listingStatus != null) changed.push('listingStatus');
+        if (body.description !== undefined) changed.push('description');
+        if (body.website !== undefined) changed.push('website');
+        if (body.location !== undefined) changed.push('location');
+        if (body.logoUrl || body.logoBase64) changed.push('logo');
+        if (
+          body.complimentaryVisitsAllowed !== undefined ||
+          body.complimentary_visits_allowed !== undefined
+        ) {
+          changed.push('complimentaryVisits');
+        }
+        await logFromSession(auth.session, access, {
+          entity_type: 'organiser',
+          entity_id: groupId,
+          organiser_id: groupId,
+          action: listingStatus != null ? 'organiser_listing_updated' : 'organiser_updated',
+          summary:
+            'Updated group profile' +
+            (updated?.name ? ': ' + String(updated.name).slice(0, 80) : '') +
+            (changed.length ? ' (' + changed.slice(0, 8).join(', ') + ')' : ''),
+          metadata: { changedFields: changed, listingStatus },
+        });
+      } catch {
+        /* ignore */
+      }
       const group = await api.enrichGroupForDashboard(
         updated,
         auth.session,

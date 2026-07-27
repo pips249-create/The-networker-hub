@@ -73,6 +73,25 @@ module.exports = async function handler(req, res) {
         allGroups,
         groupIds: allGroups ? [] : body.groupIds,
       });
+      try {
+        const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+        const { logFromSession } = require('../entity-activity-log');
+        const access = await resolveOrganiserAccess(auth.session);
+        await logFromSession(auth.session, access, {
+          entity_type: 'team_member',
+          entity_id: member.id,
+          organiser_id: (access?.groupIds && access.groupIds[0]) || null,
+          action: 'team_invite_sent',
+          summary: 'Invited team member ' + (member.email || email),
+          metadata: {
+            email: member.email || email,
+            role: member.role || body.role || 'editor',
+            accountId: access?.accountId || null,
+          },
+        });
+      } catch {
+        /* ignore */
+      }
       return json(res, 201, {
         ok: true,
         member,
@@ -99,6 +118,25 @@ module.exports = async function handler(req, res) {
         allGroups,
         groupIds: allGroups ? [] : body.groupIds,
       });
+      try {
+        const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+        const { logFromSession } = require('../entity-activity-log');
+        const access = await resolveOrganiserAccess(auth.session);
+        await logFromSession(auth.session, access, {
+          entity_type: 'team_member',
+          entity_id: memberId,
+          organiser_id: (access?.groupIds && access.groupIds[0]) || null,
+          action: 'team_access_updated',
+          summary: 'Updated group access for ' + (member.email || 'team member'),
+          metadata: {
+            allGroups,
+            groupIds: allGroups ? [] : body.groupIds || [],
+            accountId: access?.accountId || null,
+          },
+        });
+      } catch {
+        /* ignore */
+      }
       return json(res, 200, {
         ok: true,
         member,
@@ -111,6 +149,21 @@ module.exports = async function handler(req, res) {
       const memberId = String(body.id || body.memberId || req.query?.id || '').trim();
       if (!memberId) return json(res, 400, { error: 'missing_member_id' });
       await api.removeTeamMember(auth.session, memberId);
+      try {
+        const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+        const { logFromSession } = require('../entity-activity-log');
+        const access = await resolveOrganiserAccess(auth.session);
+        await logFromSession(auth.session, access, {
+          entity_type: 'team_member',
+          entity_id: memberId,
+          organiser_id: (access?.groupIds && access.groupIds[0]) || null,
+          action: 'team_member_removed',
+          summary: 'Removed team member access',
+          metadata: { accountId: access?.accountId || null },
+        });
+      } catch {
+        /* ignore */
+      }
       return json(res, 200, { ok: true });
     }
 

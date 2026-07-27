@@ -113,13 +113,26 @@
         ? options.onClear
         : function () {};
 
+    var getApplyLabel =
+      typeof options.getApplyLabel === 'function'
+        ? options.getApplyLabel
+        : function () {
+            return options.applyLabel || 'Show results';
+          };
+
     function syncSheetTitle() {
       if (!sheetTitle) return;
       sheetTitle.textContent = getTitle();
     }
 
+    function syncApplyLabel() {
+      if (!sheetApply) return;
+      sheetApply.textContent = getApplyLabel() || 'Show results';
+    }
+
     function mountSheetContent() {
       syncSheetTitle();
+      syncApplyLabel();
       if (inboxTitle && inboxTitle.parentNode !== sheetBody) {
         sheetBody.appendChild(inboxTitle);
       }
@@ -188,7 +201,10 @@
         badge.hidden = !active;
         badge.textContent = active ? '•' : '';
       }
-      if (sheetOpen) syncSheetTitle();
+      if (sheetOpen) {
+        syncSheetTitle();
+        syncApplyLabel();
+      }
     }
 
     toggle.addEventListener('click', function () {
@@ -1394,11 +1410,10 @@
       var count;
       if (window.hubServerBrowse) {
         if (type === 'all') {
-          if (selectedTypes.length > 0 && window.hubBrowseTotal != null) {
-            count = Number(window.hubBrowseTotal) || 0;
-          } else if (counts) {
-            count = counts.all || 0;
-          } else if (window.hubBrowseTotal != null) {
+          /* Always show catalog total for All — not the active-type filtered total */
+          if (counts && counts.all != null) {
+            count = Number(counts.all) || 0;
+          } else if (selectedTypes.length === 0 && window.hubBrowseTotal != null) {
             count = Number(window.hubBrowseTotal) || 0;
           } else {
             return;
@@ -1584,6 +1599,13 @@
         return document.body.classList.contains('browse-mode-organisers')
           ? 'Filter organisers'
           : 'Filter events';
+      },
+      getApplyLabel: function () {
+        var n = window.hubBrowseTotal;
+        if (n == null && resultsCount) n = parseInt(String(resultsCount.textContent || ''), 10);
+        n = Number(n);
+        if (!isFinite(n) || n < 0) return 'Show results';
+        return 'Show ' + n.toLocaleString('en-GB') + ' result' + (n === 1 ? '' : 's');
       },
       onApply: function () {
         applyFilters({ immediate: true });

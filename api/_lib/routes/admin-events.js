@@ -990,6 +990,24 @@ module.exports = async function handler(req, res) {
       const commerceStats = await fetchEventRegistrationStats(sb, [id]);
       const cancellationsByEvent = await fetchLatestCancellationsByEventId(sb, [id]);
       const event = mapEventRow(row, orgById, commerceStats, cancellationsByEvent[id] || null);
+      try {
+        const { logFromSession } = require('../entity-activity-log');
+        const changed = Object.keys(patch || {});
+        if (body.photo_base64) changed.push('photo');
+        await logFromSession(session, null, {
+          entity_type: 'event',
+          entity_id: id,
+          organiser_id: row.organiser_id || null,
+          action: 'admin_event_updated',
+          summary:
+            'Hub admin updated event' +
+            (event?.title ? ': ' + String(event.title).slice(0, 80) : '') +
+            (changed.length ? ' (' + changed.slice(0, 8).join(', ') + ')' : ''),
+          metadata: { changedFields: changed, source: 'admin' },
+        });
+      } catch {
+        /* ignore */
+      }
       return json(res, 200, { ok: true, event });
     } catch (e) {
       if (e.message === 'missing_date') {

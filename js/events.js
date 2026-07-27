@@ -556,6 +556,101 @@
     return html;
   }
 
+  function currentBrowseSearchCriteria() {
+    const searchInput = document.getElementById('search');
+    const locationInput = document.getElementById('location');
+    const typeTabs = [];
+    document.querySelectorAll('[data-type-filter].is-active, .type-chip.is-active, input[name="event-type"]:checked').forEach(function (el) {
+      const v = el.getAttribute('data-type-filter') || el.value;
+      if (v) typeTabs.push(v);
+    });
+    const criteria = {
+      q: searchInput ? String(searchInput.value || '').trim() : '',
+      location: locationInput ? String(locationInput.value || '').trim() : '',
+      types: typeTabs.join(','),
+    };
+    if (window.hubServerBrowse && window.hubBrowseLastParams) {
+      const p = window.hubBrowseLastParams;
+      if (p.q) criteria.q = String(p.q).trim();
+      if (p.location || p.loc) criteria.location = String(p.location || p.loc).trim();
+      if (p.types) criteria.types = String(p.types).trim();
+      if (p.format) criteria.format = String(p.format).trim();
+    }
+    return criteria;
+  }
+
+  function criteriaLabel(criteria) {
+    const parts = [];
+    if (criteria.q) parts.push('“' + criteria.q + '”');
+    if (criteria.location) parts.push(criteria.location);
+    if (criteria.types) parts.push(criteria.types.replace(/,/g, ', '));
+    if (criteria.format && criteria.format !== 'all') parts.push(criteria.format);
+    return parts.length ? parts.join(' · ') : 'your filters';
+  }
+
+  function bindEmptySaveSearch() {
+    const btn = document.getElementById('empty-save-search');
+    const status = document.getElementById('empty-save-search-status');
+    const resetBtn = document.getElementById('empty-reset');
+    if (resetBtn && !resetBtn.dataset.bound) {
+      resetBtn.dataset.bound = '1';
+      resetBtn.addEventListener('click', function () {
+        if (window.hubClearAllFilters) window.hubClearAllFilters();
+        else if (window.location) window.location.href = '/events/?browse=all';
+      });
+    }
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      const criteria = currentBrowseSearchCriteria();
+      const label = criteriaLabel(criteria);
+      if (status) {
+        status.hidden = false;
+        status.textContent = 'Saving alert…';
+      }
+      btn.disabled = true;
+      fetch('/api/auth/event-saved-searches', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: label, criteria: criteria, notifyEmail: true }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, status: res.status, data: data };
+          });
+        })
+        .then(function (res) {
+          if (res.status === 401) {
+            const next = '/events/' + (window.location.search || '');
+            window.location.href = '/login?next=' + encodeURIComponent(next);
+            return;
+          }
+          if (!res.ok) {
+            if (status) {
+              status.textContent = (res.data && (res.data.message || res.data.error)) || 'Could not save alert.';
+              status.classList.add('is-error');
+            }
+            return;
+          }
+          if (status) {
+            status.textContent = 'Alert saved — we will email you when a matching event is published.';
+            status.classList.remove('is-error');
+          }
+          btn.textContent = 'Alert saved';
+        })
+        .catch(function () {
+          if (status) {
+            status.textContent = 'Could not save alert. Try again.';
+            status.classList.add('is-error');
+          }
+        })
+        .finally(function () {
+          btn.disabled = false;
+        });
+    });
+  }
+
   function slugifyEventTitle(title) {
     return String(title || '')
       .toLowerCase()
@@ -818,6 +913,9 @@
           (window.hubBrowseAllEventsHref || '/events/?browse=all') +
           '">Browse all events</a>'
         : '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>';
+      const notifyBtn =
+        '<button type="button" class="empty-state-btn empty-state-btn--secondary" id="empty-save-search" style="margin-left:8px">Email me when something matches</button>' +
+        '<p class="empty-state-text" id="empty-save-search-status" hidden role="status" style="margin-top:10px"></p>';
       els.listings.innerHTML =
         '<div class="empty-state is-visible" role="status">' +
         '<div class="empty-state-inner">' +
@@ -832,9 +930,13 @@
         '<p class="empty-state-text">' +
         emptyText +
         '</p>' +
+        '<div class="empty-state-actions">' +
         emptyAction +
+        notifyBtn +
+        '</div>' +
         '</div></div>';
       updateResultsSummary(0);
+      bindEmptySaveSearch();
       return;
     }
 

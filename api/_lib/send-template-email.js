@@ -138,6 +138,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'password_reset',
   'organiser_email_verify',
   'post_event_review_request',
+  'post_event_review_reminder',
+  'event_saved_search_match',
   'guest_visit_followup',
   'alumni_fast_pass_invite',
   'member_roster_invite',

@@ -1,7 +1,7 @@
 const { json } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { authorizeCron } = require('../cron-auth');
-const { sendDuePostEventReviewEmails } = require('../engagement-emails');
+const { sendDuePostEventReviewEmails, sendDuePostEventReviewReminderEmails } = require('../engagement-emails');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -17,7 +17,8 @@ module.exports = async function handler(req, res) {
   try {
     const sb = getSupabaseAdmin();
     const postReview = await sendDuePostEventReviewEmails(sb);
-    return json(res, 200, { ok: true, postReview });
+    const postReviewReminder = await sendDuePostEventReviewReminderEmails(sb);
+    return json(res, 200, { ok: true, postReview, postReviewReminder });
   } catch (e) {
     return json(res, 500, {
       ok: false,

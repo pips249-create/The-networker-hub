@@ -10,12 +10,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_claim_invite: {
     file: 'organiser-claim-invite.html',
     marker: 'hub-email-layout-v2',
-    subject: 'Your group is on The Networker Hub — claim your profile',
+    subject: 'Claim your page & finish setup — The Networker Hub',
   },
   organiser_launch_invite: {
     file: 'organiser-launch-invite.html',
     marker: 'hub-email-layout-v2',
-    subject: 'Confirm your organiser page — The Networker Hub',
+    subject: 'Confirm your page & finish setup — The Networker Hub',
   },
   organiser_rebrand_announcement: {
     file: 'organiser-rebrand-announcement.html',
@@ -131,6 +131,15 @@ const BRANDED_EMAIL_TEMPLATES = {
     file: 'post-event-review-request.html',
     marker: 'hub-email-layout-v2',
     subject: 'How was {{event_name}}?',
+  },
+  post_event_review_reminder: {
+    file: 'post-event-review-reminder.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Quick reminder — how was {{event_name}}?',
+  },
+  event_saved_search_match: {
+    file: 'event-saved-search-match.html',
+    subject: 'New event matching your saved search',
   },
   guest_visit_followup: {
     file: 'guest-visit-followup.html',

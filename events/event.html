@@ -551,7 +551,7 @@
     <script src="../js/networking-region-directory.js?v=20260727city"></script>
     <script src="../js/postcode-outcode.js?v=20260727city"></script>
     <script src="../js/detail-region-cta.js?v=20260727city"></script>
-    <script src="../js/event-detail.js?v=20260727city"></script>
+    <script src="../js/event-detail.js?v=20260727trust"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
@@ -914,8 +914,7 @@
 
           var cap = (meeting.ticketQty || meeting.maxAttendees || "").trim();
           if (cap) {
-            var uEl = document.getElementById("ev-urgency");
-            if (uEl) uEl.textContent = cap + " tickets";
+            /* capacity is not shown as urgency — trust comes from reviews/stars */
           }
         })();
 

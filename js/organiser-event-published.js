@@ -1063,6 +1063,49 @@
 
   loadFeaturedSlotStatus();
 
+  function showLaunchContinueIfNeeded() {
+    const banner = document.getElementById('ep-launch-continue');
+    const titleEl = document.getElementById('ep-launch-continue-title');
+    const bodyEl = document.getElementById('ep-launch-continue-body');
+    if (!banner || !window.HubOrganiserLaunchSetup) return;
+
+    fetch('/api/organiser/bootstrap', { credentials: 'include', cache: 'no-store' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        const built = window.HubOrganiserLaunchSetup.buildQueue({
+          groups: data.groups || [],
+          events: (data.events || []).concat(data.upcomingEvents || []),
+          tickets: data.tickets || [],
+        });
+        if (built.stored.dismissed || !built.queue.length) {
+          banner.hidden = true;
+          return;
+        }
+        const next = built.queue[0];
+        if (titleEl) {
+          titleEl.textContent =
+            built.queue.length === 1
+              ? 'One more step to finish setup'
+              : built.queue.length + ' steps left in your setup';
+        }
+        if (bodyEl) {
+          bodyEl.textContent =
+            next.kind === 'profile'
+              ? 'Next: review “' + next.title + '” (profile + complimentary visits).'
+              : 'Next: finish tickets and publish for “' + next.title + '”.';
+        }
+        banner.hidden = false;
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
+  }
+
+  showLaunchContinueIfNeeded();
+
   setShareUrls(fallbackTitle);
   if (primaryId) {
     markLiveOnBrowse({ scrollIntoView: justPublished });

@@ -962,6 +962,114 @@ async function sendDuePostEventReviewEmails(sb, options) {
   return result;
 }
 
+const POST_EVENT_REVIEW_REMINDER_DAYS = 5;
+const POST_EVENT_REVIEW_REMINDER_BATCH_LIMIT = 75;
+
+async function sendDuePostEventReviewReminderEmails(sb) {
+  const reminderBefore = daysAgo(POST_EVENT_REVIEW_REMINDER_DAYS);
+  const result = { sent: 0, skipped: 0, errors: [], candidates: [] };
+
+  const { data: registrations, error: regErr } = await sb
+    .from('registrations')
+    .select(
+      'id, attendee_id, event_id, payment_status, application_status, post_event_review_sent_at, post_event_review_reminder_sent_at'
+    )
+    .not('post_event_review_sent_at', 'is', null)
+    .is('post_event_review_reminder_sent_at', null)
+    .lte('post_event_review_sent_at', reminderBefore)
+    .in('payment_status', ['Paid', 'Free'])
+    .neq('application_status', 'Denied')
+    .is('cancelled_at', null)
+    .limit(200);
+  if (regErr) throw new Error(regErr.message);
+  if (!(registrations || []).length) return result;
+
+  const eventIds = [...new Set(registrations.map((r) => r.event_id).filter(Boolean))];
+  const { data: events, error: eventErr } = await sb
+    .from('events')
+    .select('id, title, slug, ends_at, starts_at')
+    .in('id', eventIds);
+  if (eventErr) throw new Error(eventErr.message);
+  const eventById = {};
+  (events || []).forEach((row) => {
+    if (row?.id) eventById[row.id] = row;
+  });
+
+  const attendeeIds = [...new Set(registrations.map((r) => r.attendee_id).filter(Boolean))];
+  const attendeeById = {};
+  if (attendeeIds.length) {
+    const { data: attendees, error: attErr } = await sb
+      .from('attendees')
+      .select('id, email, name')
+      .in('id', attendeeIds);
+    if (attErr) throw new Error(attErr.message);
+    (attendees || []).forEach((row) => {
+      attendeeById[row.id] = row;
+    });
+  }
+
+  const { data: existingReviews, error: reviewErr } = await sb
+    .from('reviews')
+    .select('attendee_id, event_id')
+    .in('event_id', eventIds);
+  if (reviewErr) throw new Error(reviewErr.message);
+  const reviewedPairs = new Set(
+    (existingReviews || []).map((row) => String(row.attendee_id) + ':' + String(row.event_id))
+  );
+
+  const siteUrl = siteBase();
+  for (const registration of registrations || []) {
+    if (result.sent >= POST_EVENT_REVIEW_REMINDER_BATCH_LIMIT) break;
+    const eventRow = eventById[registration.event_id];
+    if (!eventRow) {
+      result.skipped += 1;
+      continue;
+    }
+    if (
+      registration.attendee_id &&
+      reviewedPairs.has(String(registration.attendee_id) + ':' + String(registration.event_id))
+    ) {
+      result.skipped += 1;
+      continue;
+    }
+    const attendee = registration.attendee_id ? attendeeById[registration.attendee_id] : null;
+    const attendeeEmail = String(attendee?.email || '').trim().toLowerCase();
+    if (!attendeeEmail) {
+      result.skipped += 1;
+      continue;
+    }
+
+    try {
+      const reviewUrl = reviewUrlForEvent(eventRow, siteUrl);
+      await sendTemplatedEmail({
+        slug: 'post_event_review_reminder',
+        to: attendeeEmail,
+        variables: {
+          ...baseEmailVars(siteUrl),
+          user_name: String(attendee?.name || '').trim() || 'there',
+          event_name: String(eventRow.title || 'your event').trim(),
+          review_url: reviewUrl,
+        },
+        skipEmailCheck: true,
+      });
+      await sb
+        .from('registrations')
+        .update({ post_event_review_reminder_sent_at: new Date().toISOString() })
+        .eq('id', registration.id);
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else
+        result.errors.push({
+          registration_id: registration.id,
+          error: e.message || String(e),
+        });
+    }
+  }
+
+  return result;
+}
+
 async function sendDueCategoryExclusivityPaymentReminders(sb) {
   const reminderBefore = hoursAgo(CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS);
   const result = { sent: 0, skipped: 0, errors: [] };
@@ -1218,6 +1326,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
 async function runEngagementEmailMaintenance(sb) {
   const postReview = await sendDuePostEventReviewEmails(sb);
+  const postReviewReminder = await sendDuePostEventReviewReminderEmails(sb);
   const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
@@ -1228,6 +1337,7 @@ async function runEngagementEmailMaintenance(sb) {
   const stripeConnect = await sendDueStripeConnectNudges(sb);
   return {
     postReview,
+    postReviewReminder,
     guestVisitFollowup,
     categoryExclusivityPayment,
     reengagement,
@@ -1247,6 +1357,7 @@ module.exports = {
   sendOrganiserLowUpcomingEventsNudges,
   sendDueGuestVisitFollowupEmails,
   sendDuePostEventReviewEmails,
+  sendDuePostEventReviewReminderEmails,
   sendDueCategoryExclusivityPaymentReminders,
   sendDueStripeConnectNudges,
   runEngagementEmailMaintenance,

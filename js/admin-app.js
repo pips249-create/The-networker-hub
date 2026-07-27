@@ -438,7 +438,7 @@
   var adminNotificationsTimer = null;
   var groupCleanupCache = null;
   var eventCleanupCache = null;
-  var analyticsState = { period: '30d' };
+  var analyticsState = { period: '30d', demandCache: null };
   var financialsState = {
     organisersPage: 0,
     organisersQ: '',
@@ -942,6 +942,7 @@
             (on ? ' is-active' : '') +
             '"' +
             (on ? ' aria-current="page"' : '') +
+            (t.badgeKey ? ' data-hub-badge-key="' + attrEsc(t.badgeKey) + '"' : '') +
             '>' +
             esc(t.label) +
             (t.badgeHtml || '') +
@@ -1189,6 +1190,36 @@
       esc(label) +
       '</span>'
     );
+  }
+
+  function hubBadgeCountForKey(key, counts) {
+    var c = counts || {};
+    if (key === 'openReports') {
+      return (Number(c.openListingReports) || 0) + (Number(c.openReviewReports) || 0);
+    }
+    return Number(c[key]) || 0;
+  }
+
+  function syncLiveHubTabBadges(data) {
+    var counts = (data && data.actionCounts) || {};
+    document.querySelectorAll('a.admin-hub-tab[data-hub-badge-key]').forEach(function (tab) {
+      var key = tab.getAttribute('data-hub-badge-key');
+      if (!key) return;
+      var n = hubBadgeCountForKey(key, counts);
+      var badge = tab.querySelector('.admin-hub-tab-badge');
+      if (n <= 0) {
+        if (badge) badge.remove();
+        return;
+      }
+      var label = n > 99 ? '99+' : String(n);
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'admin-hub-tab-badge';
+        tab.appendChild(badge);
+      }
+      badge.setAttribute('aria-label', label + ' needing attention');
+      badge.textContent = label;
+    });
   }
 
   function actionCountValue(key) {
@@ -1496,6 +1527,8 @@
 
     updateHealthBadge(sidebarNotificationTotal(data));
     syncScheduledRemindersSection();
+    syncLiveHubTabBadges(data);
+    syncNeedsAttentionStrip(data);
   }
 
   function refreshEventHealthQuietly(force) {
@@ -1934,6 +1967,65 @@
     if (container) {
       container.innerHTML = renderAttentionQueue(attention);
     }
+  }
+
+  function needsAttentionChips(data) {
+    var counts = (data && data.actionCounts) || {};
+    var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
+    var chips = [];
+    function push(n, label, href, tone) {
+      var count = Number(n) || 0;
+      if (count <= 0) return;
+      chips.push({
+        count: count,
+        label: label,
+        href: href,
+        tone: tone || 'amber',
+      });
+    }
+    push(counts.pendingPayouts, 'Payouts to process', '#financials/payouts', 'rose');
+    push(
+      (Number(counts.openListingReports) || 0) + (Number(counts.openReviewReports) || 0),
+      'Open reports',
+      '#moderation/reports',
+      'amber'
+    );
+    push(counts.openComplaints, 'Complaints', '#support/complaints', 'amber');
+    push(counts.incompleteOrganisers, 'Incomplete groups', '#cleanup/groups', 'slate');
+    push(counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'slate');
+    push(healthCount, 'Event data issues', '#cleanup/issues', 'slate');
+    return chips;
+  }
+
+  function syncNeedsAttentionStrip(data) {
+    var section = document.getElementById('dashboard-needs-attention');
+    var body = document.getElementById('dashboard-needs-attention-body');
+    if (!section || !body) return;
+    if (!data || data.error || data.configured === false) return;
+    var chips = needsAttentionChips(data);
+    if (!chips.length) {
+      section.hidden = true;
+      body.innerHTML = '';
+      return;
+    }
+    section.hidden = false;
+    body.innerHTML = chips
+      .map(function (chip) {
+        return (
+          '<a href="' +
+          attrEsc(chip.href) +
+          '" class="admin-needs-chip admin-needs-chip--' +
+          attrEsc(chip.tone) +
+          '">' +
+          '<span class="admin-needs-chip-count">' +
+          esc(String(chip.count > 99 ? '99+' : chip.count)) +
+          '</span>' +
+          '<span class="admin-needs-chip-label">' +
+          esc(chip.label) +
+          '</span></a>'
+        );
+      })
+      .join('');
   }
 
   function renderAttentionQueue(attention) {
@@ -4039,10 +4131,11 @@
 
     return (
       '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
-      '<div><h3 class="font-bold text-brand-900">Demand &amp; intent</h3>' +
+      '<div class="flex flex-wrap items-start justify-between gap-3"><div><h3 class="font-bold text-brand-900">Demand &amp; intent</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">What people search, save, and enquire about — ' +
       esc(analyticsPeriodLabel(data.period || analyticsState.period)) +
       '.</p></div>' +
+      '<button type="button" id="demand-export-csv" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export searches CSV</button></div>' +
       '<div class="admin-metric-grid admin-metric-grid--4">' +
       card(
         'Browse searches logged',
@@ -4081,13 +4174,20 @@
       renderDemandRankList(browse.topQueries || [], 'query', 'count', 'No search terms logged in this period yet.') +
       '</div>' +
       '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Zero-result searches</h4>' +
-      '<p class="text-xs text-slate-500 mb-3">Demand with no matching inventory</p>' +
+      '<p class="text-xs text-slate-500 mb-3">Demand with no matching inventory — seed an organiser or event here next</p>' +
       renderDemandRankList(
         browse.zeroResultQueries || [],
         'query',
         'count',
         'No zero-result searches in this period.'
       ) +
+      (browse.zeroResultQueries && browse.zeroResultQueries.length
+        ? '<div class="mt-3 flex flex-wrap gap-2">' +
+          '<a class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-brand-900 hover:bg-slate-50" href="#organisers">Invite organiser for top city</a>' +
+          '<a class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-brand-900 hover:bg-slate-50" href="#events">Create seeded event</a>' +
+          '<button type="button" class="inline-flex items-center rounded-lg bg-brand-900 px-3 py-1.5 text-xs font-semibold text-white" id="demand-copy-zero-queries">Copy zero-result terms</button>' +
+          '</div>'
+        : '') +
       '</div>' +
       '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Locations searched</h4>' +
       '<p class="text-xs text-slate-500 mb-3">Postcode / area filter text</p>' +
@@ -4131,6 +4231,54 @@
     );
   }
 
+  function csvEscapeCell(value) {
+    var s = String(value == null ? '' : value);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function downloadAdminCsv(filename, rows) {
+    var csv = rows
+      .map(function (row) {
+        return row.map(csvEscapeCell).join(',');
+      })
+      .join('\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () {
+      try {
+        URL.revokeObjectURL(a.href);
+      } catch (_e) {
+        /* ignore */
+      }
+    }, 1000);
+  }
+
+  function exportDemandSearchesCsv(data) {
+    var browse = (data && data.browseSearches) || {};
+    var rows = [['type', 'term', 'count']];
+    (browse.topQueries || []).forEach(function (row) {
+      rows.push(['top_search', row.query || '', row.count || 0]);
+    });
+    (browse.zeroResultQueries || []).forEach(function (row) {
+      rows.push(['zero_result', row.query || '', row.count || 0]);
+    });
+    (browse.topLocations || []).forEach(function (row) {
+      rows.push(['location', row.location || '', row.count || 0]);
+    });
+    if (rows.length === 1) {
+      window.alert('No search terms to export for this period yet.');
+      return;
+    }
+    var period = String((data && data.period) || analyticsState.period || 'period');
+    downloadAdminCsv('demand-searches-' + period + '.csv', rows);
+  }
+
   function analyticsPeriodToolbarHtml() {
     return (
       '<div class="flex flex-wrap gap-2" id="analytics-period-controls">' +
@@ -4146,7 +4294,24 @@
     if (!demandPanel) return;
     demandPanel.innerHTML = '<p class="text-sm text-slate-500">Loading demand insights…</p>';
     adminGet('/api/admin/demand?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
+      analyticsState.demandCache = data;
       if (demandPanel) demandPanel.innerHTML = renderDemandPanel(data);
+      var copyBtn = document.getElementById('demand-copy-zero-queries');
+      if (copyBtn && data && data.browseSearches && data.browseSearches.zeroResultQueries) {
+        copyBtn.addEventListener('click', function () {
+          var lines = (data.browseSearches.zeroResultQueries || [])
+            .map(function (row) {
+              return String(row.query || '') + '\t' + String(row.count || 0);
+            })
+            .join('\n');
+          if (!lines) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(lines).then(function () {
+              copyBtn.textContent = 'Copied';
+            });
+          }
+        });
+      }
     });
   }
 
@@ -4168,6 +4333,10 @@
     if (document.body.dataset.analyticsPeriodBound) return;
     document.body.dataset.analyticsPeriodBound = '1';
     document.body.addEventListener('click', function (e) {
+      if (e.target.closest('#demand-export-csv')) {
+        exportDemandSearchesCsv(analyticsState.demandCache);
+        return;
+      }
       var btn = e.target.closest('[data-analytics-period]');
       if (!btn) return;
       var period = btn.getAttribute('data-analytics-period');
@@ -4981,6 +5150,10 @@
         '<div class="admin-dash-section-head"><h3>Scheduled reminders</h3>' +
         '<p>Future tasks — these move into Things to do when due.</p></div>' +
         '<div class="admin-dash-section-body" id="dashboard-scheduled-reminders"></div></section>' +
+        '<section class="admin-needs-attention" id="dashboard-needs-attention" hidden>' +
+        '<div class="admin-needs-attention-head"><h3>Needs attention</h3>' +
+        '<p>Live counts — tap to jump straight in.</p></div>' +
+        '<div class="admin-needs-attention-body" id="dashboard-needs-attention-body"></div></section>' +
         '<section class="admin-dash-section" id="dashboard-action-section">' +
         '<div class="admin-dash-section-head"><h3>Things to do</h3>' +
         '<p>Work through these in order — urgent items are listed first.</p></div>' +
@@ -6390,7 +6563,7 @@
       [
         { key: 'overview', label: 'Overview', href: '#financials/overview' },
         { key: 'organisers', label: 'Organisers', href: '#financials/organisers' },
-        { key: 'payouts', label: 'Payouts', href: '#financials/payouts', badgeHtml: payoutBadge },
+        { key: 'payouts', label: 'Payouts', href: '#financials/payouts', badgeHtml: payoutBadge, badgeKey: 'pendingPayouts' },
         { key: 'activity', label: 'Activity', href: '#financials/activity' },
       ],
       tab
@@ -10881,7 +11054,12 @@
               '" data-event-title="' +
               attrEsc(ev.title || 'Untitled') +
               '">Delete event</button>') +
-      '<span class="event-cleanup-msg text-xs"></span></div></form>'
+      '<span class="event-cleanup-msg text-xs"></span></div></form>' +
+      entityActivityPanelHtml({
+        entityType: 'event',
+        entityId: ev.id,
+        organiserId: ev.organiser_id || '',
+      })
     );
   }
 
@@ -11255,6 +11433,114 @@
     return esc(label + ': ' + (action.reason || '—')) + (when ? ' · ' + esc(when) : '');
   }
 
+  function actorRoleLabel(role) {
+    var r = String(role || '').toLowerCase();
+    if (r === 'owner') return 'Owner';
+    if (r === 'team' || r === 'editor') return 'Team member';
+    if (r === 'admin') return 'Hub admin';
+    if (r === 'system') return 'System';
+    return 'Unknown';
+  }
+
+  function renderEntityActivityItems(items) {
+    if (!items || !items.length) {
+      return '<p class="text-xs text-slate-500">No activity recorded yet for this listing.</p>';
+    }
+    return (
+      '<ul class="entity-activity-list-items space-y-2">' +
+      items
+        .map(function (item) {
+          var when = item.createdAt ? fmtTime(item.createdAt) : '—';
+          var who =
+            (item.actorEmail ? item.actorEmail : 'Unknown user') +
+            ' · ' +
+            actorRoleLabel(item.actorRole);
+          return (
+            '<li class="entity-activity-item">' +
+            '<div class="entity-activity-item-main">' +
+            '<p class="entity-activity-summary">' +
+            esc(item.summary || item.action || 'Change') +
+            '</p>' +
+            '<p class="entity-activity-meta">' +
+            esc(who) +
+            ' · ' +
+            esc(when) +
+            '</p></div></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function entityActivityPanelHtml(opts) {
+    var o = opts || {};
+    return (
+      '<div class="entity-activity-panel" data-entity-type="' +
+      attrEsc(o.entityType || '') +
+      '" data-entity-id="' +
+      attrEsc(o.entityId || '') +
+      '"' +
+      (o.organiserId ? ' data-organiser-id="' + attrEsc(o.organiserId) + '"' : '') +
+      '>' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<div><p class="text-xs font-semibold text-brand-900">Activity log</p>' +
+      '<p class="text-[11px] text-slate-500 mt-0.5">Who changed this listing — owner, team member, or Hub admin.</p></div>' +
+      '<button type="button" class="entity-activity-load rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50">Show activity</button></div>' +
+      '<div class="entity-activity-body mt-2 hidden"></div></div>'
+    );
+  }
+
+  function loadEntityActivityPanel(panel) {
+    if (!panel) return;
+    var body = panel.querySelector('.entity-activity-body');
+    var btn = panel.querySelector('.entity-activity-load');
+    if (!body) return;
+    body.classList.remove('hidden');
+    body.innerHTML = '<p class="text-xs text-slate-500">Loading activity…</p>';
+    if (btn) btn.disabled = true;
+    var entityType = panel.getAttribute('data-entity-type') || '';
+    var entityId = panel.getAttribute('data-entity-id') || '';
+    var organiserId = panel.getAttribute('data-organiser-id') || '';
+    var qs = [];
+    if (entityType === 'organiser' && organiserId) {
+      qs.push('organiserId=' + encodeURIComponent(organiserId));
+    } else if (entityType && entityId) {
+      qs.push('entityType=' + encodeURIComponent(entityType));
+      qs.push('entityId=' + encodeURIComponent(entityId));
+    } else if (organiserId) {
+      qs.push('organiserId=' + encodeURIComponent(organiserId));
+    }
+    qs.push('limit=40');
+    adminGet('/api/admin/activity?' + qs.join('&'))
+      .then(function (data) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Refresh activity';
+        }
+        if (!data || data.ok === false || data.error) {
+          body.innerHTML =
+            '<p class="text-xs text-red-700">' +
+            esc((data && (data.message || data.error)) || 'Could not load activity.') +
+            '</p>';
+          return;
+        }
+        if (data.unavailable) {
+          body.innerHTML =
+            '<p class="text-xs text-amber-800">' +
+            esc(data.message || 'Run migration 206_entity_activity_log.sql to enable activity history.') +
+            '</p>';
+          return;
+        }
+        body.innerHTML = renderEntityActivityItems(data.items || []);
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        body.innerHTML =
+          '<p class="text-xs text-red-700">' + esc(err.message || 'Could not load activity.') + '</p>';
+      });
+  }
+
   function groupModerationPanelHtml(o) {
     var mod = o.moderation || {};
     var recent = mod.recent || [];
@@ -11353,7 +11639,12 @@
       attrEsc(o.email || '') +
       '">Full editor</button>' +
       '<span class="group-cleanup-msg text-xs text-center"></span></div></form>' +
-      groupModerationPanelHtml(o)
+      groupModerationPanelHtml(o) +
+      entityActivityPanelHtml({
+        entityType: 'organiser',
+        entityId: o.id,
+        organiserId: o.id,
+      })
     );
   }
 
@@ -12294,6 +12585,12 @@
   }
 
   function handleGroupCleanupClick(e) {
+    var activityLoad = e.target.closest('.entity-activity-load');
+    if (activityLoad) {
+      loadEntityActivityPanel(activityLoad.closest('.entity-activity-panel'));
+      return;
+    }
+
     var approveClaimBtn = e.target.closest('[data-approve-organiser-claim-request]');
     if (approveClaimBtn) {
       var approveRequestId = approveClaimBtn.getAttribute('data-approve-organiser-claim-request');
@@ -12685,6 +12982,12 @@
 
   function handleEventCleanupClick(e) {
     if (!document.getElementById('event-cleanup-list')) return;
+
+    var activityLoad = e.target.closest('.entity-activity-load');
+    if (activityLoad) {
+      loadEntityActivityPanel(activityLoad.closest('.entity-activity-panel'));
+      return;
+    }
 
     var pageBtn = e.target.closest('[data-event-page]');
     if (pageBtn) {
@@ -16091,6 +16394,7 @@
           label: 'Complaints',
           href: '#support/complaints',
           badgeHtml: complaintsBadge,
+          badgeKey: 'openComplaints',
         },
       ],
       tab
@@ -17590,9 +17894,9 @@
     var oppBadge = hubTabBadge(actionCountValue('pendingOpportunities'));
     var tabsHtml = adminHubTabsHtml(
       [
-        { key: 'groups', label: 'Groups', href: '#cleanup/groups', badgeHtml: incompleteBadge },
+        { key: 'groups', label: 'Groups', href: '#cleanup/groups', badgeHtml: incompleteBadge, badgeKey: 'incompleteOrganisers' },
         { key: 'events', label: 'Events', href: '#cleanup/events' },
-        { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities', badgeHtml: oppBadge },
+        { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities', badgeHtml: oppBadge, badgeKey: 'pendingOpportunities' },
         { key: 'issues', label: 'Data issues', href: '#cleanup/issues' },
       ],
       tab
@@ -17654,7 +17958,7 @@
     );
     var tabsHtml = adminHubTabsHtml(
       [
-        { key: 'reports', label: 'Reports', href: '#moderation/reports', badgeHtml: reportsBadge },
+        { key: 'reports', label: 'Reports', href: '#moderation/reports', badgeHtml: reportsBadge, badgeKey: 'openReports' },
         { key: 'listings', label: 'Listings', href: '#moderation/listings' },
         { key: 'reviews', label: 'Reviews', href: '#moderation/reviews' },
         { key: 'import', label: 'Import', href: '#moderation/import' },
