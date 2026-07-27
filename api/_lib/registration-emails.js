@@ -131,7 +131,7 @@ function buildAttendeeEmailVars({
             ? eventRow.refund_cutoff_days
             : null,
     site_url: siteUrl,
-    logo_url: siteUrl + '/assets/logo-nav.png',
+    logo_url: siteUrl + '/assets/logo-nav-transparent.png',
     dashboard_url: organiserDashboardUrl(siteUrl),
   };
 }

@@ -184,6 +184,7 @@
     "api/seo.js": { "maxDuration": 15 },
     "api/sitemap.js": { "maxDuration": 15 },
     "api/opportunities.js": { "maxDuration": 15 },
+    "api/browse-analytics.js": { "maxDuration": 10 },
     "api/stripe-webhook.js": { "maxDuration": 15 },
     "api/contact-chat.js": { "maxDuration": 30 }
   },

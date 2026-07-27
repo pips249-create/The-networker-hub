@@ -7,6 +7,7 @@ const { json, setCors, sessionFromRequest, requireAdmin } = require('./_lib/auth
 const routes = {
   metrics: require('./_lib/routes/admin-metrics'),
   insights: require('./_lib/routes/admin-insights'),
+  demand: require('./_lib/routes/admin-demand'),
   events: require('./_lib/routes/admin-events'),
   users: require('./_lib/routes/admin-users'),
   moderation: require('./_lib/routes/admin-moderation'),

@@ -123,9 +123,15 @@
     });
   }
 
+  function hasAnalyticsConsent() {
+    var consent = readConsent();
+    return !!(consent && consent.analytics);
+  }
+
   window.HubCookieConsent = {
     openSettings: showModal,
     getConsent: readConsent,
+    hasAnalyticsConsent: hasAnalyticsConsent,
   };
 
   function init() {

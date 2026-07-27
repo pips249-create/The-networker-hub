@@ -4,7 +4,6 @@ const {
   isEmailSponsorBlock,
   sponsorLogoUrl,
   sponsorCompanyName,
-  sponsorCtaColor,
 } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 
@@ -17,13 +16,15 @@ const SPONSOR_FALLBACK_SLOTS = [
   LEGACY_SPONSOR_SLOT,
 ];
 
-/** Matches browse-page sponsor logo bands — avoids a harsh white pad behind logos. */
-const EMAIL_SPONSOR_LOGO_BAND_FALLBACK = '#f3f4f6';
+/** Soft neutral pad for logos — never use sponsor CTA colour (that looked like a blue button). */
+const EMAIL_SPONSOR_LOGO_BAND_FALLBACK = '#ffffff';
 
 function sponsorEmailLogoBandColor(block, override) {
   const fromOptions = String(override || '').trim();
   if (/^#[0-9a-f]{3,6}$/i.test(fromOptions)) return fromOptions.toLowerCase();
-  return sponsorCtaColor(block) || EMAIL_SPONSOR_LOGO_BAND_FALLBACK;
+  // Ignore block.cta_color in emails — CTA colours are for website buttons, not logo pads.
+  void block;
+  return EMAIL_SPONSOR_LOGO_BAND_FALLBACK;
 }
 
 function buildSponsorLogoMarkup(logo, name, logoBandBg) {
@@ -36,21 +37,15 @@ function buildSponsorLogoMarkup(logo, name, logoBandBg) {
   }
   const safeLogo = logo.replace(/"/g, '&quot;');
   const safeName = name.replace(/"/g, '&quot;');
-  const safeBandBg = logoBandBg.replace(/"/g, '&quot;');
   const imgHtml =
     '<img src="' +
     safeLogo +
     '" alt="' +
     safeName +
     '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">';
-  return (
-    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:' +
-    safeBandBg +
-    ';border-radius:10px;">' +
-    '<tr><td style="padding:12px 24px;text-align:center;">' +
-    imgHtml +
-    '</td></tr></table>'
-  );
+  // No coloured CTA band — logo sits cleanly on the white Powered by card.
+  void logoBandBg;
+  return imgHtml;
 }
 
 function buildSponsorSection(block, options) {
@@ -61,8 +56,7 @@ function buildSponsorSection(block, options) {
   const name = sponsorCompanyName(block) || 'Our sponsor';
   if (!url) return '';
   const safeUrl = url.replace(/"/g, '&quot;');
-  const logoBandBg = sponsorEmailLogoBandColor(block, options?.logoBandBg);
-  const logoHtml = buildSponsorLogoMarkup(logo, name, logoBandBg);
+  const logoHtml = buildSponsorLogoMarkup(logo, name);
   // Sits in the cream logo-hero band as a clean white card (not cream-on-cream).
   return (
     '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +

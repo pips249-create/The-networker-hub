@@ -70,6 +70,11 @@
     }
     toggle.dataset.bound = '1';
 
+    /* Escape .shell (position:relative; z-index:2) so fixed overlay sits above .site-nav */
+    if (sheet.parentNode !== document.body) {
+      document.body.appendChild(sheet);
+    }
+
     var mq = window.matchMedia(options.mediaQuery || '(max-width: 900px)');
     var sheetOpen = false;
     var lastFocus = null;

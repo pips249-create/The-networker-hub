@@ -175,7 +175,7 @@ function buildAlertsFromCounts(counts) {
       severity: 'medium',
       title: `${counts.spamReviews} review${counts.spamReviews === 1 ? '' : 's'} look like spam`,
       detail: 'Check and remove if needed.',
-      href: '#moderation',
+      href: '#moderation/reviews',
       time: new Date().toISOString(),
     });
   }
@@ -186,7 +186,7 @@ function buildAlertsFromCounts(counts) {
       severity: 'medium',
       title: `${counts.openListingReports} listing${counts.openListingReports === 1 ? '' : 's'} reported by a user`,
       detail: 'Read the report and decide what to do.',
-      href: '#moderation',
+      href: '#moderation/reports',
       time: new Date().toISOString(),
     });
   }
@@ -197,7 +197,7 @@ function buildAlertsFromCounts(counts) {
       severity: 'medium',
       title: `${counts.openReviewReports} review${counts.openReviewReports === 1 ? '' : 's'} reported by a user`,
       detail: 'Read the report and decide what to do.',
-      href: '#moderation',
+      href: '#moderation/reports',
       time: new Date().toISOString(),
     });
   }
@@ -241,7 +241,7 @@ function buildAlertsFromCounts(counts) {
       severity: 'high',
       title: `${counts.pendingPayouts} payout request${counts.pendingPayouts === 1 ? '' : 's'} waiting for approval`,
       detail: 'Approve the payout, then mark it paid once the money has been sent.',
-      href: '#financials',
+      href: '#financials/payouts',
       time: new Date().toISOString(),
     });
   }
@@ -252,7 +252,7 @@ function buildAlertsFromCounts(counts) {
       severity: 'medium',
       title: `${counts.stripeOnboarding} organiser${counts.stripeOnboarding === 1 ? '' : 's'} has not finished payment setup`,
       detail: 'They cannot receive ticket money until Stripe setup is complete.',
-      href: '#financials',
+      href: '#financials/organisers',
       time: new Date().toISOString(),
     });
   }
@@ -1381,11 +1381,60 @@ async function getAdminDashboard(options) {
   };
 }
 
-async function getAdminUsers() {
-  if (!isSupabaseConfigured()) return { configured: false, provider: 'supabase', users: [] };
+async function getAdminUsers(options = {}) {
+  if (!isSupabaseConfigured()) {
+    return { configured: false, provider: 'supabase', users: [], total: 0 };
+  }
   const sb = getSupabaseAdmin();
-  const users = await fetchUsers(sb);
-  return { configured: true, provider: 'supabase', users, updatedAt: new Date().toISOString() };
+  let users = await fetchUsers(sb);
+
+  const q = String(options.q || '')
+    .trim()
+    .toLowerCase();
+  const role = String(options.role || '').trim();
+  if (q) {
+    users = users.filter((u) => {
+      const name = String(u.name || '').toLowerCase();
+      const email = String(u.email || '').toLowerCase();
+      return name.includes(q) || email.includes(q);
+    });
+  }
+  if (role) {
+    users = users.filter((u) => String(u.role || '') === role);
+  }
+
+  users.sort((a, b) =>
+    String(a.name || '')
+      .localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+  );
+
+  const total = users.length;
+  const hasPaging =
+    options.limit != null &&
+    options.limit !== '' &&
+    Number.isFinite(Number(options.limit));
+
+  if (!hasPaging) {
+    return {
+      configured: true,
+      provider: 'supabase',
+      users,
+      total,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const limit = Math.min(Math.max(parseInt(String(options.limit), 10) || 30, 1), 100);
+  const offset = Math.max(parseInt(String(options.offset), 10) || 0, 0);
+  return {
+    configured: true,
+    provider: 'supabase',
+    users: users.slice(offset, offset + limit),
+    total,
+    offset,
+    limit,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 async function getAdminModeration() {

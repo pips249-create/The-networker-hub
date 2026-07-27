@@ -124,7 +124,7 @@
     window.__hubComplianceAssets = true;
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
     loadComplianceAsset('js/hub-analytics.js?v=20260727local');
-    loadComplianceAsset('js/cookie-consent.js?v=20260714');
+    loadComplianceAsset('js/cookie-consent.js?v=20260727demand');
   }
 
   var mount = document.getElementById('hub-site-nav');

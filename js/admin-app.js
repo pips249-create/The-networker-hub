@@ -3,6 +3,7 @@
  */
 (function () {
   var liveUsers = [];
+  var liveUsersComplete = false;
   var liveListings = [];
   var liveReviews = [];
 
@@ -116,7 +117,7 @@
     },
     analytics: {
       title: 'Website visitors',
-      subtitle: 'How many people visit the site, and which pages they view',
+      subtitle: 'Traffic overview, demand signals, and platform insights',
     },
     'event-health': {
       title: 'Event data issues',
@@ -184,11 +185,11 @@
     },
     moderation: {
       title: 'Reported items',
-      subtitle: 'Review reports from users and remove spam reviews',
+      subtitle: 'Reports, listing overview, reviews, and CSV import',
     },
     financials: {
       title: 'Payments',
-      subtitle: 'Payout requests, ticket income, and organiser payment setup',
+      subtitle: 'Revenue overview, organiser Connect status, payouts, and activity',
     },
     'revenue-targets': {
       title: 'Sales targets',
@@ -230,24 +231,25 @@
     analytics: {
       title: 'How to view website visitors',
       steps: [
-        'Click View stats or Open analytics to see visitor charts on Vercel.',
-        'Use Hub platform activity below for sign-ups and events — that is separate from anonymous traffic.',
-        'Change the time period (7 days, 30 days, all time) to compare trends.',
+        'Use the Overview, Demand, and Insights tabs — each page loads only what you need.',
+        'Overview links out to Vercel for visitor charts and shows live Hub counts.',
+        'Demand shows searches, favourites, opportunity enquiries, and guest visits.',
+        'Insights ranks top groups, events, and growth quality. Change 7 / 30 / all days on Demand or Insights.',
       ],
     },
     rankings: {
       title: 'How to manage top performers',
       steps: [
-        'Review the current month\'s top groups list (rating first, then review rate).',
-        'Send congratulation emails when you are ready — preview first if unsure.',
-        'Past snapshots are kept for reference.',
+        'Current shows this month\'s ranked groups — search or filter by badge tier.',
+        'Run a snapshot when you want to refresh badges; preview emails if unsure.',
+        'History keeps past snapshots and congratulation emails.',
       ],
     },
     users: {
       title: 'How to manage user accounts',
       steps: [
-        'Search or scroll to find an account.',
-        'Click a row to open details — featured status, email preferences, and dates.',
+        'Search or filter by role to find an account — results are paginated.',
+        'Click Details to open featured status, email preferences, and dates.',
         'Toggle featured organiser only when you have agreed it with the group.',
       ],
     },
@@ -316,10 +318,10 @@
     moderation: {
       title: 'How to handle reported items',
       steps: [
-        'Listing reports — read what the user reported and open the listing.',
-        'Review reports — check the quoted review and reporter note.',
-        'Spam reviews — remove only if clearly fake or abusive.',
-        'Dismiss a report once you have handled it.',
+        'Use the Reports tab for open listing and review reports — decide first here.',
+        'Unpublish upholds a listing report (emails poster and reporter); dismiss if it looks fine.',
+        'Listings and Reviews tabs are overviews with search — edit via Fix listings.',
+        'Import is for CSV data loads, separate from day-to-day moderation.',
       ],
     },
     import: {
@@ -334,17 +336,18 @@
     financials: {
       title: 'How to manage payments',
       steps: [
-        'Payout requests — approve when ready to pay the organiser, then mark paid after bank transfer.',
-        'Stripe status — organisers in amber have not finished payment setup; they cannot sell paid tickets yet.',
-        'Revenue summary shows ticket income and estimated Hub fees.',
+        'Use Overview for totals, Organisers for Stripe status, Payouts for the queue, and Activity for recent bookings.',
+        'On Payouts: approve when ready to pay, then mark paid after bank transfer.',
+        'On Organisers: amber Stripe status means the group cannot sell paid tickets yet.',
+        'Search and filter the organiser and payout tables when the lists get long.',
       ],
     },
     'revenue-targets': {
       title: 'How to track sales targets',
       steps: [
-        'Check progress bars against your monthly and overall goals.',
-        'Add manual sponsorship entries if money came in outside Stripe.',
-        'Switch chart views to compare forecast vs actual.',
+        'Overview shows progress bars and category cards against your goals.',
+        'Chart compares forecast vs actual — switch category or monthly/cumulative.',
+        'Deals is for offline sponsorship entries not invoiced through Stripe.',
       ],
     },
     spotlight: {
@@ -423,6 +426,7 @@
   var adminMetricsInflight = null;
   var ADMIN_METRICS_CACHE_KEY = 'tnh_admin_metrics_v2';
   var ADMIN_NAV_SECTIONS_KEY = 'tnh_admin_nav_sections_v1';
+  var ADMIN_HUB_TABS_KEY = 'tnh_admin_hub_tabs_v1';
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'moderation'],
@@ -435,6 +439,21 @@
   var groupCleanupCache = null;
   var eventCleanupCache = null;
   var analyticsState = { period: '30d' };
+  var financialsState = {
+    organisersPage: 0,
+    organisersQ: '',
+    organisersStatus: '',
+    payoutsPage: 0,
+    payoutsStatus: '',
+    cache: null,
+  };
+  var usersPageState = { page: 0, q: '', role: '', total: 0, loading: false };
+  var rankingsState = { q: '', tier: '', page: 0 };
+  var moderationListingsState = { q: '', status: '', page: 0 };
+  var USERS_PAGE_SIZE = 30;
+  var FINANCIALS_PAGE_SIZE = 30;
+  var RANKINGS_PAGE_SIZE = 25;
+  var MODERATION_LISTINGS_PAGE_SIZE = 30;
   var revenueTargetsChartsCache = null;
   var revenueTargetsChartInstance = null;
   var revenueTargetsChartView = 'overall';
@@ -487,6 +506,7 @@
   var OPPORTUNITY_PAGE_SIZE = 30;
   var eventOrganiserOptionsCache = null;
   var eventCreateOrganiserDocClickBound = false;
+  var eventBulkOrganiserDocClickBound = false;
   var opportunityCleanupCache = null;
   var featuredSpotlightEvents = [];
   var featuredSpotlightState = {
@@ -702,7 +722,7 @@
 
   function sponsorshipBackLinkHtml() {
     return (
-      '<a href="#sponsorship" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-900 mb-4">' +
+      '<a href="#sponsorship/placements" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-900 mb-4">' +
       '<span aria-hidden="true">←</span> All ad placements</a>'
     );
   }
@@ -862,6 +882,49 @@
         return 'Log complaints from hello@thenetworkerhub.com and track acknowledgement and 14-day response deadlines.';
       }
       return PAGE_META.support.subtitle;
+    }
+    if (route === 'analytics') {
+      if (hash.indexOf('demand') !== -1) {
+        return 'Searches, favourites, opportunity enquiries, and guest visits.';
+      }
+      if (hash.indexOf('insights') !== -1) {
+        return 'Top performers, growth, locations, and quality signals.';
+      }
+      return 'Visitor traffic, Hub activity, and a recent activity feed.';
+    }
+    if (route === 'financials') {
+      if (hash.indexOf('organisers') !== -1) {
+        return 'Ticket revenue and Stripe Connect status by organiser.';
+      }
+      if (hash.indexOf('payouts') !== -1) {
+        return 'Payout queue and refunds that need attention.';
+      }
+      if (hash.indexOf('activity') !== -1) {
+        return 'Recent registration and payment activity.';
+      }
+      return 'Ticket revenue, booking fees, and payout health at a glance.';
+    }
+    if (route === 'moderation') {
+      if (hash.indexOf('import') !== -1) return PAGE_META.import.subtitle;
+      if (hash.indexOf('listings') !== -1) return 'Browse Hub events — jump to cleanup to edit.';
+      if (hash.indexOf('reviews') !== -1) return 'Review spam-like or reported reviews.';
+      return 'Open listing and review reports waiting for a decision.';
+    }
+    if (route === 'rankings') {
+      if (hash.indexOf('history') !== -1) return 'Past monthly snapshots and congratulation emails.';
+      return 'Current monthly top-performer snapshot and badge actions.';
+    }
+    if (route === 'revenue-targets') {
+      if (hash.indexOf('chart') !== -1) return 'Forecast vs actual by month and category.';
+      if (hash.indexOf('deals') !== -1) return 'Log offline sponsorship and advertising revenue.';
+      return 'Progress against your sales targets.';
+    }
+    if (route === 'sponsorship') {
+      if (hash.indexOf('partners') !== -1 || hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1) {
+        return 'Home and city partner placements.';
+      }
+      if (hash.indexOf('enquir') !== -1) return 'Advertising enquiries from the public form.';
+      return 'Choose an ad placement to edit creatives and booking windows.';
     }
     return null;
   }
@@ -1047,6 +1110,91 @@
     } catch (e) {
       /* quota / private mode */
     }
+  }
+
+  function readHubTabState() {
+    try {
+      var raw = localStorage.getItem(ADMIN_HUB_TABS_KEY);
+      var state = raw ? JSON.parse(raw) : {};
+      return state && typeof state === 'object' ? state : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function rememberHubTab(hub, tab) {
+    var key = String(hub || '').trim();
+    var value = String(tab || '').trim();
+    if (!key || !value) return;
+    try {
+      var state = readHubTabState();
+      state[key] = value;
+      localStorage.setItem(ADMIN_HUB_TABS_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function recalledHubTab(hub, fallback) {
+    var state = readHubTabState();
+    var value = state[String(hub || '')];
+    return value ? String(value) : fallback;
+  }
+
+  /**
+   * Resolve hub tab from hash. Bare `#hub` restores the last tab (redirect).
+   * Returns null when a redirect was issued (hashchange will re-render).
+   * options.pathFor(tab) maps tab keys to hash paths when they differ from hub/tab.
+   */
+  function resolveHubTab(fullHash, hub, allowedTabs, defaultTab, options) {
+    var opts = options || {};
+    var allowed = allowedTabs || [];
+    var fallback = defaultTab || allowed[0] || 'overview';
+    function pathForTab(tab) {
+      if (typeof opts.pathFor === 'function') return opts.pathFor(tab);
+      return hub + '/' + tab;
+    }
+    var explicit = hubHashTab(fullHash, '');
+    if (explicit && allowed.indexOf(explicit) !== -1) {
+      rememberHubTab(hub, explicit);
+      return explicit;
+    }
+    // Sponsorship uses advertising-enquiries as the real path for the enquiries tab
+    if (hub === 'sponsorship' && String(fullHash || '').indexOf('advertising-enquiries') !== -1) {
+      rememberHubTab(hub, 'enquiries');
+      return 'enquiries';
+    }
+    var bare = !explicit;
+    if (bare) {
+      var recalled = recalledHubTab(hub, fallback);
+      if (allowed.indexOf(recalled) === -1) recalled = fallback;
+      rememberHubTab(hub, recalled);
+      if (recalled !== fallback) {
+        location.replace('#' + pathForTab(recalled));
+        return null;
+      }
+    }
+    rememberHubTab(hub, fallback);
+    return fallback;
+  }
+
+  function hubTabBadge(count) {
+    var n = Number(count) || 0;
+    if (n <= 0) return '';
+    var label = n > 99 ? '99+' : String(n);
+    return (
+      '<span class="admin-hub-tab-badge" aria-label="' +
+      attrEsc(label + ' needing attention') +
+      '">' +
+      esc(label) +
+      '</span>'
+    );
+  }
+
+  function actionCountValue(key) {
+    var cached = adminMetricsCache || readCachedAdminMetrics() || {};
+    var counts = cached.actionCounts || {};
+    return Number(counts[key]) || 0;
   }
 
   function navSectionForRoute(routeKey) {
@@ -1609,7 +1757,7 @@
           ' payout request' +
           (attention.pendingPayouts === 1 ? '' : 's') +
           ' awaiting review</p>' +
-          '<a href="#financials" class="text-xs font-semibold text-red-900 mt-2 inline-block hover:underline">Open Financials →</a></div>'
+          '<a href="#financials/payouts" class="text-xs font-semibold text-red-900 mt-2 inline-block hover:underline">Open Financials →</a></div>'
       );
     }
 
@@ -1621,7 +1769,7 @@
           ' organiser' +
           (attention.stripeOnboarding === 1 ? '' : 's') +
           ' stuck in Stripe Connect onboarding</p>' +
-          '<a href="#financials" class="text-xs font-semibold text-amber-900 mt-2 inline-block hover:underline">Check Stripe status →</a></div>'
+          '<a href="#financials/organisers" class="text-xs font-semibold text-amber-900 mt-2 inline-block hover:underline">Check Stripe status →</a></div>'
       );
     }
 
@@ -1664,7 +1812,7 @@
         parts.push('</div>');
       }
       parts.push(
-        '<a href="#moderation" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Dismiss on moderation page →</a></div>'
+        '<a href="#moderation/reports" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Dismiss on moderation page →</a></div>'
       );
     }
 
@@ -1694,7 +1842,7 @@
         parts.push('</div>');
       }
       parts.push(
-        '<a href="#moderation" class="text-xs font-semibold text-violet-900 mt-3 inline-block hover:underline">Dismiss on moderation page →</a></div>'
+        '<a href="#moderation/reports" class="text-xs font-semibold text-violet-900 mt-3 inline-block hover:underline">Dismiss on moderation page →</a></div>'
       );
     }
 
@@ -1734,7 +1882,7 @@
     }
     if (attention.spamReviews > 0) {
       links.push(
-        '<a href="#moderation" class="text-sm font-semibold text-brand-700 hover:underline">' +
+        '<a href="#moderation/reviews" class="text-sm font-semibold text-brand-700 hover:underline">' +
           attention.spamReviews +
           ' spam-like review' +
           (attention.spamReviews === 1 ? '' : 's') +
@@ -2245,7 +2393,7 @@
           ? 'Refunds confirmed in Stripe.'
           : 'Refund attempt sent — check Stripe and retry if needed.';
         window.alert(msg);
-        if (typeof renderFinancials === 'function') renderFinancials();
+        if (typeof refreshFinancialsView === 'function') refreshFinancialsView();
       })
       .catch(function (err) {
         window.alert(err.message || 'Could not retry refunds');
@@ -2876,7 +3024,7 @@
         adminPatch('/api/admin/moderation', { action: 'dismiss_report', id: reportId })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Dismiss failed');
-            renderModeration();
+            refreshModerationView();
             refreshAdminNotifications();
           })
           .catch(function (err) {
@@ -2919,7 +3067,7 @@
             if (notes.length) {
               window.alert('Report upheld. ' + notes.join(' '));
             }
-            renderModeration();
+            refreshModerationView();
             refreshAdminNotifications();
           })
           .catch(function (err) {
@@ -2936,7 +3084,7 @@
         adminPatch('/api/admin/moderation', { action: 'dismiss_review_report', id: reviewReportId })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Dismiss failed');
-            renderModeration();
+            refreshModerationView();
             refreshAdminNotifications();
           })
           .catch(function (err) {
@@ -2954,7 +3102,7 @@
         adminPatch('/api/admin/moderation', { action: 'delete_review_from_report', id: deleteReportId })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Remove failed');
-            renderModeration();
+            refreshModerationView();
             refreshAdminNotifications();
           })
           .catch(function (err) {
@@ -2972,7 +3120,7 @@
         adminPatch('/api/admin/moderation', { action: 'delete_review', id: reviewId })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Delete failed');
-            renderModeration();
+            refreshModerationView();
             refreshAdminNotifications();
           })
           .catch(function (err) {
@@ -3754,16 +3902,10 @@
     return (
       '<div class="space-y-5">' +
       '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
-      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">' +
       '<div><h3 class="font-bold text-brand-900">Top performers</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">Ranked from Supabase registrations — ' +
       esc(analyticsPeriodLabel(data.period || analyticsState.period)) +
       '.</p></div>' +
-      '<div id="analytics-period-controls" class="flex flex-wrap gap-2">' +
-      analyticsPeriodBtn('7d', '7 days') +
-      analyticsPeriodBtn('30d', '30 days') +
-      analyticsPeriodBtn('all', 'All time') +
-      '</div></div>' +
       '<div class="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">' +
       '<div class="min-w-0 lg:col-span-1 xl:col-span-1 rounded-xl border border-slate-200 overflow-hidden">' +
       '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Best groups</h4></div>' +
@@ -3989,90 +4131,59 @@
     );
   }
 
-  function loadAnalyticsInsights() {
-    var panel = document.getElementById('analytics-insights');
+  function analyticsPeriodToolbarHtml() {
+    return (
+      '<div class="flex flex-wrap gap-2" id="analytics-period-controls">' +
+      analyticsPeriodBtn('7d', '7 days') +
+      analyticsPeriodBtn('30d', '30 days') +
+      analyticsPeriodBtn('all', 'All time') +
+      '</div>'
+    );
+  }
+
+  function loadAnalyticsDemandPanel() {
     var demandPanel = document.getElementById('analytics-demand');
-    var controls = document.getElementById('analytics-period-controls');
-    if (controls) {
-      controls.innerHTML =
-        analyticsPeriodBtn('7d', '7 days') +
-        analyticsPeriodBtn('30d', '30 days') +
-        analyticsPeriodBtn('all', 'All time');
-    }
-    if (panel) {
-      panel.innerHTML = '<p class="text-sm text-slate-500">Loading platform insights…</p>';
-    }
-    if (demandPanel) {
-      demandPanel.innerHTML = '<p class="text-sm text-slate-500">Loading demand insights…</p>';
-    }
-    adminGet('/api/admin/insights?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
-      if (panel) panel.innerHTML = renderInsightsPanel(data);
-    });
+    if (!demandPanel) return;
+    demandPanel.innerHTML = '<p class="text-sm text-slate-500">Loading demand insights…</p>';
     adminGet('/api/admin/demand?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
       if (demandPanel) demandPanel.innerHTML = renderDemandPanel(data);
     });
   }
 
+  function loadAnalyticsInsightsPanel() {
+    var panel = document.getElementById('analytics-insights');
+    if (!panel) return;
+    panel.innerHTML = '<p class="text-sm text-slate-500">Loading platform insights…</p>';
+    adminGet('/api/admin/insights?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
+      if (panel) panel.innerHTML = renderInsightsPanel(data);
+    });
+  }
+
+  function reloadCurrentAnalyticsPeriod() {
+    if (document.getElementById('analytics-demand')) loadAnalyticsDemandPanel();
+    if (document.getElementById('analytics-insights')) loadAnalyticsInsightsPanel();
+  }
+
   function bindAnalyticsControls() {
-    if (!main || main.dataset.analyticsBound) return;
-    main.dataset.analyticsBound = '1';
-    main.addEventListener('click', function (e) {
+    if (document.body.dataset.analyticsPeriodBound) return;
+    document.body.dataset.analyticsPeriodBound = '1';
+    document.body.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-analytics-period]');
       if (!btn) return;
       var period = btn.getAttribute('data-analytics-period');
       if (!period || period === analyticsState.period) return;
       analyticsState.period = period;
-      loadAnalyticsInsights();
+      reloadCurrentAnalyticsPeriod();
+      document.querySelectorAll('[data-analytics-period]').forEach(function (el) {
+        var on = el.getAttribute('data-analytics-period') === analyticsState.period;
+        el.className =
+          'rounded-lg px-3 py-1.5 text-xs font-semibold transition ' +
+          (on ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200');
+      });
     });
   }
 
-  function renderAnalytics() {
-    var trackingOn = analyticsTrackingActive();
-    main.innerHTML =
-      '<div class="space-y-5 min-w-0">' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm">' +
-      '<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">' +
-      '<div class="flex items-start gap-3 min-w-0">' +
-      '<span class="inline-flex shrink-0 items-center justify-center w-10 h-10 rounded-lg bg-brand-50 text-brand-700 text-lg" aria-hidden="true">▤</span>' +
-      '<div class="min-w-0">' +
-      '<h3 class="font-bold text-brand-900">Visitor traffic on Vercel</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Charts live in Vercel — visitors, pages, referrers, countries, and devices.</p>' +
-      '</div></div>' +
-      '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
-      '<span class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full ' +
-      (trackingOn ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50') +
-      '">' +
-      '<span class="w-2 h-2 rounded-full ' +
-      (trackingOn ? 'bg-emerald-500' : 'bg-amber-500') +
-      '"></span>' +
-      (trackingOn ? 'Tracking active' : 'Tracking not detected') +
-      '</span>' +
-      '<a href="' +
-      attrEsc(VERCEL_ANALYTICS_URL) +
-      '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 hover:bg-brand-900 transition">Open analytics <span aria-hidden="true">↗</span></a>' +
-      '</div></div></section>' +
-      '<div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0">' +
-      '<h3 class="font-bold text-brand-900">Hub platform activity</h3>' +
-      '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
-      '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
-      card('Hub accounts', '…', 'Loading…', 'blue') +
-      card('Approved events', '…', 'Loading…', 'brand') +
-      card('Organisers', '…', 'Loading…', 'violet') +
-      card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
-      '</div></section>' +
-      '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
-      '<h3 class="font-bold text-brand-900 text-sm shrink-0">Recent genuine activity</h3>' +
-      '<p class="text-xs text-slate-500 mt-1 mb-3 shrink-0">Excludes E2E and test seed data.</p>' +
-      '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
-      '<li class="text-sm text-slate-500">Loading…</li></ul>' +
-      '</aside></div>' +
-      '<div id="analytics-demand"><p class="text-sm text-slate-500">Loading demand insights…</p></div>' +
-      '<div id="analytics-insights"><p class="text-sm text-slate-500">Loading platform insights…</p></div></div>';
-
-    bindAnalyticsControls();
-    loadAnalyticsInsights();
-
+  function paintAnalyticsOverviewMetrics() {
     fetchAdminMetrics(false).then(function (data) {
       var metricsEl = document.getElementById('analytics-platform-metrics');
       var activityEl = document.getElementById('analytics-activity');
@@ -4113,6 +4224,95 @@
         activityEl.innerHTML = renderActivityList(data.activity, 8);
       }
     });
+  }
+
+  function renderAnalyticsOverview() {
+    var trackingOn = analyticsTrackingActive();
+    main.innerHTML =
+      '<div class="space-y-5 min-w-0">' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm">' +
+      '<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">' +
+      '<div class="flex items-start gap-3 min-w-0">' +
+      '<span class="inline-flex shrink-0 items-center justify-center w-10 h-10 rounded-lg bg-brand-50 text-brand-700 text-lg" aria-hidden="true">▤</span>' +
+      '<div class="min-w-0">' +
+      '<h3 class="font-bold text-brand-900">Visitor traffic on Vercel</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Charts live in Vercel — visitors, pages, referrers, countries, and devices.</p>' +
+      '</div></div>' +
+      '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
+      '<span class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full ' +
+      (trackingOn ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50') +
+      '">' +
+      '<span class="w-2 h-2 rounded-full ' +
+      (trackingOn ? 'bg-emerald-500' : 'bg-amber-500') +
+      '"></span>' +
+      (trackingOn ? 'Tracking active' : 'Tracking not detected') +
+      '</span>' +
+      '<a href="' +
+      attrEsc(VERCEL_ANALYTICS_URL) +
+      '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 hover:bg-brand-900 transition">Open analytics <span aria-hidden="true">↗</span></a>' +
+      '</div></div></section>' +
+      '<div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">' +
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0">' +
+      '<h3 class="font-bold text-brand-900">Hub platform activity</h3>' +
+      '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
+      '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
+      card('Hub accounts', '…', 'Loading…', 'blue') +
+      card('Approved events', '…', 'Loading…', 'brand') +
+      card('Organisers', '…', 'Loading…', 'violet') +
+      card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
+      '</div></section>' +
+      '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
+      '<h3 class="font-bold text-brand-900 text-sm shrink-0">Recent genuine activity</h3>' +
+      '<p class="text-xs text-slate-500 mt-1 mb-3 shrink-0">Excludes E2E and test seed data.</p>' +
+      '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
+      '<li class="text-sm text-slate-500">Loading…</li></ul>' +
+      '</aside></div>' +
+      '<p class="text-sm text-slate-500">Need deeper signals? Open <a href="#analytics/demand" class="font-semibold text-brand-700 hover:underline">Demand</a> or <a href="#analytics/insights" class="font-semibold text-brand-700 hover:underline">Insights</a>.</p>' +
+      '</div>';
+    paintAnalyticsOverviewMetrics();
+  }
+
+  function renderAnalyticsDemand() {
+    main.innerHTML =
+      '<div class="space-y-4 min-w-0">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">' +
+      '<p class="text-sm text-slate-500">Consent-gated browse searches plus favourites, enquiries, and guest visits.</p>' +
+      analyticsPeriodToolbarHtml() +
+      '</div>' +
+      '<div id="analytics-demand"><p class="text-sm text-slate-500">Loading demand insights…</p></div></div>';
+    loadAnalyticsDemandPanel();
+  }
+
+  function renderAnalyticsInsights() {
+    main.innerHTML =
+      '<div class="space-y-4 min-w-0">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">' +
+      '<p class="text-sm text-slate-500">Top performers and growth quality from Supabase registrations.</p>' +
+      analyticsPeriodToolbarHtml() +
+      '</div>' +
+      '<div id="analytics-insights"><p class="text-sm text-slate-500">Loading platform insights…</p></div></div>';
+    loadAnalyticsInsightsPanel();
+  }
+
+  function renderAnalyticsHub(fullHash) {
+    bindAnalyticsControls();
+    var tab = resolveHubTab(fullHash, 'analytics', ['overview', 'demand', 'insights'], 'overview');
+    if (!tab) return;
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'overview', label: 'Overview', href: '#analytics/overview' },
+        { key: 'demand', label: 'Demand', href: '#analytics/demand' },
+        { key: 'insights', label: 'Insights', href: '#analytics/insights' },
+      ],
+      tab
+    );
+    if (tab === 'demand') withHubTabs(tabsHtml, renderAnalyticsDemand);
+    else if (tab === 'insights') withHubTabs(tabsHtml, renderAnalyticsInsights);
+    else withHubTabs(tabsHtml, renderAnalyticsOverview);
+  }
+
+  function renderAnalytics() {
+    renderAnalyticsHub(currentAdminHash());
   }
 
   function applyDashboardMetrics(data) {
@@ -4167,7 +4367,7 @@
     return 'bg-red-500';
   }
 
-  function renderRevenueTargetsPanel(targets) {
+  function renderRevenueTargetsPanel(targets, section) {
     if (!targets || targets.error) {
       return (
         '<p class="text-sm text-red-700">Could not load revenue targets' +
@@ -4413,14 +4613,15 @@
           '</ul></div>'
         : '';
 
-    return (
+    var overviewHtml =
       '<div class="space-y-4">' +
       summary +
-      chartSection +
       assessmentHtml +
       '<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">' +
       categoryCards +
-      '</div>' +
+      '</div></div>';
+
+    var dealsHtml =
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900">Log sponsorship &amp; advertising revenue</h3>' +
       '<p class="text-xs text-slate-500 mt-1">Stripe invoices with the correct metadata are logged automatically when paid. Use the form below only for offline payments not invoiced through Stripe.</p>' +
@@ -4429,7 +4630,22 @@
       '<div class="mt-4">' +
       manualForm +
       manualList +
-      '</div></section></div>'
+      '</div></section>';
+
+    if (section === 'overview') return overviewHtml;
+    if (section === 'chart') return '<div class="space-y-4">' + chartSection + '</div>';
+    if (section === 'deals') return '<div class="space-y-4">' + dealsHtml + '</div>';
+
+    return (
+      '<div class="space-y-4">' +
+      summary +
+      chartSection +
+      assessmentHtml +
+      '<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">' +
+      categoryCards +
+      '</div>' +
+      dealsHtml +
+      '</div>'
     );
   }
 
@@ -4620,9 +4836,10 @@
     });
   }
 
-  function loadRevenueTargets() {
+  function loadRevenueTargets(section) {
     var panel = document.getElementById('revenue-targets-panel');
     if (!panel) return Promise.resolve();
+    var view = section || 'overview';
     panel.innerHTML = '<p class="text-sm text-slate-500">Loading revenue targets…</p>';
     return adminGet('/api/admin/revenue-targets').then(function (data) {
       if (!data || data.ok === false || data.error || data.configured === false) {
@@ -4632,17 +4849,21 @@
           '</p>';
         return;
       }
-      panel.innerHTML = renderRevenueTargetsPanel(data.revenueTargets);
+      panel.innerHTML = renderRevenueTargetsPanel(data.revenueTargets, view);
       revenueTargetsChartsCache = data.revenueTargets.charts || null;
-      revenueTargetsChartView = 'overall';
-      revenueTargetsChartMode = 'monthly';
-      syncRevenueChartTabs();
-      renderRevenueTargetsChart();
+      if (view === 'chart') {
+        revenueTargetsChartView = 'overall';
+        revenueTargetsChartMode = 'monthly';
+        syncRevenueChartTabs();
+        renderRevenueTargetsChart();
+      } else {
+        destroyRevenueTargetsChart();
+      }
     });
   }
 
   function bindRevenueTargetsEvents() {
-    var mainEl = main;
+    var mainEl = document.getElementById('admin-main') || main;
     if (!mainEl || mainEl._revenueTargetsBound) return;
     mainEl._revenueTargetsBound = true;
 
@@ -4670,7 +4891,7 @@
         }
         if (status) status.textContent = 'Saved.';
         form.reset();
-        loadRevenueTargets();
+        loadRevenueTargets(recalledHubTab('revenue-targets', 'deals'));
       });
     });
 
@@ -4703,19 +4924,38 @@
           return r.json();
         })
         .then(function () {
-          loadRevenueTargets();
+          loadRevenueTargets(recalledHubTab('revenue-targets', 'deals'));
         });
     });
   }
 
-  function renderRevenueTargets() {
+  function renderRevenueTargetsSection(section) {
     destroyRevenueTargetsChart();
-    revenueTargetsChartsCache = null;
     main.innerHTML =
       '<div class="space-y-6">' +
       '<div id="revenue-targets-panel"><p class="text-sm text-slate-500">Loading revenue targets…</p></div></div>';
     bindRevenueTargetsEvents();
-    loadRevenueTargets();
+    loadRevenueTargets(section);
+  }
+
+  function renderRevenueTargetsHub(fullHash) {
+    var tab = resolveHubTab(fullHash, 'revenue-targets', ['overview', 'chart', 'deals'], 'overview');
+    if (!tab) return;
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'overview', label: 'Overview', href: '#revenue-targets/overview' },
+        { key: 'chart', label: 'Chart', href: '#revenue-targets/chart' },
+        { key: 'deals', label: 'Deals', href: '#revenue-targets/deals' },
+      ],
+      tab
+    );
+    withHubTabs(tabsHtml, function () {
+      renderRevenueTargetsSection(tab);
+    });
+  }
+
+  function renderRevenueTargets() {
+    renderRevenueTargetsHub(currentAdminHash());
   }
 
   function renderDashboard() {
@@ -4733,9 +4973,9 @@
         '<p>Jump straight to the pages you use most often.</p></div>' +
         '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
         '<a href="#cleanup/groups" class="admin-shortcut"><span class="admin-shortcut-label">Fix listings</span><span class="admin-shortcut-desc">Group pages and events</span></a>' +
-        '<a href="#financials" class="admin-shortcut"><span class="admin-shortcut-label">Payments</span><span class="admin-shortcut-desc">Payouts and Stripe</span></a>' +
-        '<a href="#moderation" class="admin-shortcut"><span class="admin-shortcut-label">Reported items</span><span class="admin-shortcut-desc">Reviews and listings</span></a>' +
-        '<a href="#analytics" class="admin-shortcut"><span class="admin-shortcut-label">Website visitors</span><span class="admin-shortcut-desc">Traffic and pages</span></a>' +
+        '<a href="#financials/payouts" class="admin-shortcut"><span class="admin-shortcut-label">Payouts</span><span class="admin-shortcut-desc">Approve and mark paid</span></a>' +
+        '<a href="#moderation/reports" class="admin-shortcut"><span class="admin-shortcut-label">Open reports</span><span class="admin-shortcut-desc">Listing and review reports</span></a>' +
+        '<a href="#analytics/demand" class="admin-shortcut"><span class="admin-shortcut-label">Demand signals</span><span class="admin-shortcut-desc">Searches, saves, enquiries</span></a>' +
         '</div></div></section>' +
         '<section class="admin-dash-section" id="dashboard-scheduled-reminders-section">' +
         '<div class="admin-dash-section-head"><h3>Scheduled reminders</h3>' +
@@ -4769,10 +5009,10 @@
         '<p>Key numbers from the database.</p></div>' +
         '<div class="admin-dash-section-body pt-0">' +
         '<div id="live-metrics" class="text-base text-slate-600 min-h-[10rem]">Loading…</div></div></div></section>' +
-        '<a href="#analytics" class="admin-quick-link group">' +
-        '<div><p class="admin-quick-link-title">Website visitor stats</p>' +
-        '<p class="admin-quick-link-desc">See how many people visit the site, which pages they view, and where they come from.</p></div>' +
-        '<span class="admin-action-btn">View stats</span></a></div>';
+        '<a href="#analytics/demand" class="admin-quick-link group">' +
+        '<div><p class="admin-quick-link-title">Demand &amp; visitor insights</p>' +
+        '<p class="admin-quick-link-desc">See what people search for, what they save, and how the Hub is growing.</p></div>' +
+        '<span class="admin-action-btn">Open Demand</span></a></div>';
     }
 
     var cached = adminMetricsCache || readCachedAdminMetrics();
@@ -4874,13 +5114,14 @@
   }
 
   function loadUsersDirectory(callback) {
-    if (liveUsers.length) {
+    if (liveUsersComplete && liveUsers.length) {
       callback(liveUsers);
       return;
     }
     adminGet('/api/admin/users').then(function (data) {
       if (data && !data.error && data.configured !== false) {
         liveUsers = data.users || [];
+        liveUsersComplete = true;
       }
       callback(liveUsers);
     });
@@ -5670,132 +5911,407 @@
       .join('');
   }
 
-  function renderModeration() {
-    main.innerHTML =
-      '<div class="space-y-6">' +
-      '<p id="moderation-status" class="text-sm text-slate-500">Loading listings and reviews from Supabase…</p>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Events go live automatically when organisers publish. For reports: view the listing, edit it in cleanup, unpublish to uphold (emails the poster and reporter), or dismiss if it looks fine. Three upheld listing breaches on the same organiser profile trigger automatic suspension.</p>' +
-      '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm" id="moderation-reports-panel">' +
-      '<h3 class="font-bold text-amber-900 mb-1">Open listing reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from event, group, and opportunity pages — view, unpublish, or dismiss when reviewed.</p>' +
-      '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
-      '<div class="bg-white rounded-xl border border-emerald-200 p-5 shadow-sm" id="moderation-validated-reports-panel">' +
-      '<h3 class="font-bold text-emerald-900 mb-1">Uphold history</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Reports you validated by unpublishing — includes conduct warnings and suspensions.</p>' +
-      '<div class="space-y-3" id="moderation-validated-reports">Loading…</div></div>' +
-      '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm" id="moderation-review-reports-panel">' +
-      '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — remove the review or dismiss when reviewed.</p>' +
-      '<div class="space-y-3" id="moderation-review-reports">Loading…</div></div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All events</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Read-only overview — organisers publish events themselves.</p></div>' +
-      adminTableScroll(
-        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
-          '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
-      ) +
-      '</div>' +
-      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
-      '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — delete to remove from the site.</p>' +
-      '<div class="space-y-3" id="moderation-reviews">Loading…</div></div></div>';
-
-    adminGet('/api/admin/moderation').then(function (data) {
-      var status = document.getElementById('moderation-status');
-      var listingsEl = document.getElementById('moderation-listings');
-      var reviewsEl = document.getElementById('moderation-reviews');
-      var reportsEl = document.getElementById('moderation-reports');
-      var validatedReportsEl = document.getElementById('moderation-validated-reports');
-      var reviewReportsEl = document.getElementById('moderation-review-reports');
-      if (!data || data.error || data.configured === false) {
-        liveListings = [];
-        liveReviews = [];
-        if (status) status.textContent = 'Could not load moderation data from Supabase.';
-        if (listingsEl) listingsEl.innerHTML = listingsTableHtml([]);
-        if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
-        if (reportsEl) reportsEl.innerHTML = listingReportsHtml([]);
-        if (validatedReportsEl) validatedReportsEl.innerHTML = listingReportsHtml([], { readOnly: true });
-        if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml([]);
-        return;
-      }
-      liveListings = data.listings || [];
-      liveReviews = data.reviews || [];
-      var listingReports = data.listingReports || [];
-      var validatedListingReports = data.validatedListingReports || [];
-      var reviewReports = data.reviewReports || [];
-      if (status) {
-        status.textContent =
-          liveListings.length +
-          ' events · ' +
-          listingReports.length +
-          ' open listing reports · ' +
-          validatedListingReports.length +
-          ' upheld · ' +
-          reviewReports.length +
-          ' review reports · ' +
-          liveReviews.length +
-          ' reviews from Supabase';
-        if (listingReports.length || reviewReports.length) {
-          status.innerHTML =
-            esc(status.textContent) +
-            ' — <a href="#moderation-reports-panel" class="font-semibold text-amber-800 hover:underline">Jump to reports</a>';
-        }
-      }
-      if (reportsEl) reportsEl.innerHTML = listingReportsHtml(listingReports);
-      if (validatedReportsEl) {
-        validatedReportsEl.innerHTML = listingReportsHtml(validatedListingReports, { readOnly: true });
-      }
-      if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml(reviewReports);
-      if (data.listingReportsError && status) {
-        status.innerHTML =
-          esc(status.textContent) +
-          ' <span class="text-red-700">(Could not load open listing reports: ' +
-          esc(data.listingReportsError) +
-          ')</span>';
-      }
-      if (data.validatedListingReportsError && status) {
-        status.innerHTML =
-          esc(status.textContent) +
-          ' <span class="text-red-700">(Could not load uphold history: ' +
-          esc(data.validatedListingReportsError) +
-          ')</span>';
-      }
-      var reportsPanel = document.getElementById('moderation-reports-panel');
-      var reviewReportsPanel = document.getElementById('moderation-review-reports-panel');
-      if (reportsPanel) {
-        reportsPanel.classList.toggle('ring-2', listingReports.length > 0);
-        reportsPanel.classList.toggle('ring-amber-300', listingReports.length > 0);
-      }
-      if (reviewReportsPanel) {
-        reviewReportsPanel.classList.toggle('ring-2', reviewReports.length > 0);
-        reviewReportsPanel.classList.toggle('ring-violet-300', reviewReports.length > 0);
-      }
-      if (listingsEl) listingsEl.innerHTML = listingsTableHtml(liveListings);
-      if (reviewsEl) reviewsEl.innerHTML = reviewsHtml(liveReviews);
-      if (listingReports.length && reportsPanel) {
-        reportsPanel.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      }
+  function loadFinancialsData(force) {
+    if (!force && financialsState.cache) return Promise.resolve(financialsState.cache);
+    return adminGet('/api/admin/financials').then(function (data) {
+      financialsState.cache = data;
+      return data;
     });
   }
 
-  function renderFinancials() {
+  function financialsMoney(n) {
+    var v = Number(n) || 0;
+    return '£' + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2));
+  }
+
+  function financialsStatusLine(data) {
+    if (!data || data.ok === false || data.error || data.configured === false) {
+      return (data && (data.message || data.error)) || 'Could not load financial data from Supabase.';
+    }
+    var summary = data.summary || {};
+    var queue = data.payoutQueue || [];
+    var stripe = data.stripeAccounts || [];
+    var statusLine =
+      financialsMoney(summary.totalTicketRevenue) +
+      ' ticket revenue · ' +
+      queue.length +
+      ' payout row' +
+      (queue.length === 1 ? '' : 's') +
+      ' · ' +
+      stripe.length +
+      ' organiser' +
+      (stripe.length === 1 ? '' : 's');
+    if (summary.refundsPendingCount) {
+      statusLine =
+        summary.refundsPendingCount +
+        ' refund' +
+        (summary.refundsPendingCount === 1 ? '' : 's') +
+        ' pending · ' +
+        statusLine;
+    }
+    return statusLine;
+  }
+
+  function paintFinancialsSummary(data, summaryEl, statusEl) {
+    if (!data || data.ok === false || data.error || data.configured === false) {
+      if (statusEl) statusEl.textContent = financialsStatusLine(data);
+      return false;
+    }
+    var summary = data.summary || {};
+    if (summaryEl) {
+      summaryEl.innerHTML =
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+        financialsMoney(summary.totalTicketRevenue) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Booking fees</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+        financialsMoney(summary.totalBookingFees) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+        String(summary.paidRegistrationCount || 0) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Payouts pending</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+        String(summary.pendingPayoutCount || 0) +
+        '</p></div>' +
+        (summary.refundsPendingCount
+          ? '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"><p class="text-xs text-amber-900/80 uppercase tracking-wide">Refunds pending</p><p class="text-xl font-bold text-amber-950 mt-1">' +
+            String(summary.refundsPendingCount) +
+            '</p></div>'
+          : '');
+    }
+    if (statusEl) {
+      var statusLine = financialsStatusLine(data);
+      if (data.payoutWarning || data.refundsPendingWarning) {
+        statusEl.innerHTML =
+          (data.refundsPendingWarning
+            ? '<span class="text-red-700 font-medium">' +
+              esc(data.refundsPendingWarning) +
+              '</span><br>'
+            : '') +
+          (data.payoutWarning
+            ? '<span class="text-amber-800 font-medium">' +
+              esc(data.payoutWarning) +
+              '</span><br>'
+            : '') +
+          '<span class="text-slate-500">' +
+          esc(statusLine) +
+          '</span>';
+      } else {
+        statusEl.textContent = statusLine;
+      }
+    }
+    return true;
+  }
+
+  function financialsOrganiserRowsHtml(rows) {
+    if (!rows.length) {
+      return '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No matching organisers.</td></tr>';
+    }
+    return rows
+      .map(function (s) {
+        var statusCls =
+          s.status === 'Connected'
+            ? 'text-emerald-600'
+            : s.status === 'Onboarding'
+              ? 'text-amber-700'
+              : 'text-slate-500';
+        return (
+          '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
+          esc(s.organiser) +
+          '</td><td class="px-4 py-3">' +
+          esc(s.balance) +
+          '</td><td class="px-4 py-3">' +
+          esc(s.lastPayout) +
+          '</td><td class="px-4 py-3 font-medium ' +
+          statusCls +
+          '">' +
+          esc(s.status) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function financialsPayoutRowsHtml(queue, payoutWarning) {
+    if (!queue.length) {
+      return (
+        '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
+        (payoutWarning
+          ? 'Payout queue unavailable until migration 120 is applied in Supabase.'
+          : 'No matching payout requests.') +
+        '</td></tr>'
+      );
+    }
+    return queue
+      .map(function (p) {
+        var statusCls =
+          p.status === 'paid'
+            ? 'text-emerald-700 bg-emerald-50'
+            : p.status === 'pending_review'
+              ? 'text-amber-800 bg-amber-50'
+              : 'text-slate-700 bg-slate-100';
+        var actions = '';
+        if (p.status === 'pending_review') {
+          actions =
+            '<button type="button" class="payout-status-btn rounded-lg bg-brand-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
+            attrEsc(p.id) +
+            '" data-payout-status="approved">Approve</button>';
+        } else if (p.status === 'approved') {
+          actions =
+            '<button type="button" class="payout-status-btn rounded-lg bg-emerald-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
+            attrEsc(p.id) +
+            '" data-payout-status="paid">Mark paid</button>';
+        } else {
+          actions = '<span class="text-xs text-slate-400">—</span>';
+        }
+        return (
+          '<tr class="border-t border-slate-100">' +
+          '<td class="px-4 py-3 font-medium">' +
+          esc(p.eventTitle) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(p.organiser) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(p.amount) +
+          '</td>' +
+          '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded ' +
+          statusCls +
+          '">' +
+          esc(p.statusLabel) +
+          '</span></td>' +
+          '<td class="px-4 py-3 text-xs text-slate-500">' +
+          esc(fmtTime(p.requestedAt)) +
+          '</td>' +
+          '<td class="px-4 py-3 whitespace-nowrap">' +
+          actions +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function financialsRefundRowsHtml(refundsPending, refundsPendingWarning) {
+    if (!refundsPending.length) {
+      return (
+        '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
+        (refundsPendingWarning
+          ? 'Could not load refunds pending: ' + esc(refundsPendingWarning)
+          : 'No pending refunds.') +
+        '</td></tr>'
+      );
+    }
+    return refundsPending
+      .map(function (row) {
+        return (
+          '<tr class="border-t border-amber-100">' +
+          '<td class="px-4 py-3 font-medium">' +
+          esc(row.title) +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          esc(row.organiserName || '—') +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+          String(row.paidBookings || 0) +
+          '</td>' +
+          '<td class="px-4 py-3 text-xs text-slate-500">' +
+          esc(fmtTime(row.cancelledAt)) +
+          '</td>' +
+          '<td class="px-4 py-3 text-xs">' +
+          esc(row.reason || '—') +
+          '</td>' +
+          '<td class="px-4 py-3 whitespace-nowrap">' +
+          '<button type="button" class="retry-refunds-btn rounded-lg bg-amber-800 text-white px-2 py-1 text-xs font-semibold hover:bg-amber-900" data-retry-refunds-event="' +
+          attrEsc(row.eventId) +
+          '">Retry refunds</button>' +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function paintFinancialsOrganisersTable(data) {
+    var stripeEl = document.getElementById('financials-stripe');
+    var pagerEl = document.getElementById('financials-organisers-pager');
+    var statusEl = document.getElementById('financials-status');
+    if (!stripeEl) return;
+    if (!paintFinancialsSummary(data, null, statusEl)) {
+      stripeEl.innerHTML =
+        '<tr><td colspan="4" class="px-4 py-6 text-slate-500">Could not load organisers.</td></tr>';
+      return;
+    }
+    var stripe = data.stripeAccounts || [];
+    var q = String(financialsState.organisersQ || '')
+      .trim()
+      .toLowerCase();
+    var statusFilter = String(financialsState.organisersStatus || '').trim();
+    var filtered = stripe.filter(function (s) {
+      if (statusFilter && String(s.status || '') !== statusFilter) return false;
+      if (!q) return true;
+      return String(s.organiser || '')
+        .toLowerCase()
+        .indexOf(q) >= 0;
+    });
+    var pageData = paginateRows(filtered, financialsState.organisersPage, FINANCIALS_PAGE_SIZE);
+    financialsState.organisersPage = pageData.page;
+    stripeEl.innerHTML = financialsOrganiserRowsHtml(pageData.rows);
+    if (pagerEl) {
+      pagerEl.innerHTML =
+        '<p class="text-xs text-slate-500 mb-2">' +
+        esc(String(pageData.total)) +
+        ' organiser' +
+        (pageData.total === 1 ? '' : 's') +
+        (q || statusFilter ? ' matching filters' : '') +
+        '</p>' +
+        adminPaginationHtml(pageData.page, pageData.total, FINANCIALS_PAGE_SIZE, 'data-fin-org-page');
+    }
+  }
+
+  function paintFinancialsPayoutsTable(data) {
+    var queueEl = document.getElementById('financials-queue');
+    var pagerEl = document.getElementById('financials-payouts-pager');
+    var refundsSectionEl = document.getElementById('financials-refunds-section');
+    var refundsEl = document.getElementById('financials-refunds-pending');
+    var statusEl = document.getElementById('financials-status');
+    if (!paintFinancialsSummary(data, null, statusEl)) return;
+    var queue = data.payoutQueue || [];
+    var refundsPending = data.refundsPending || [];
+    var statusFilter = String(financialsState.payoutsStatus || '').trim();
+    var filtered = queue.filter(function (p) {
+      if (!statusFilter) return true;
+      return String(p.status || '') === statusFilter;
+    });
+    var pageData = paginateRows(filtered, financialsState.payoutsPage, FINANCIALS_PAGE_SIZE);
+    financialsState.payoutsPage = pageData.page;
+    if (queueEl) queueEl.innerHTML = financialsPayoutRowsHtml(pageData.rows, data.payoutWarning);
+    if (pagerEl) {
+      pagerEl.innerHTML =
+        '<p class="text-xs text-slate-500 mb-2">' +
+        esc(String(pageData.total)) +
+        ' payout request' +
+        (pageData.total === 1 ? '' : 's') +
+        '</p>' +
+        adminPaginationHtml(pageData.page, pageData.total, FINANCIALS_PAGE_SIZE, 'data-fin-pay-page');
+    }
+    if (refundsSectionEl) {
+      refundsSectionEl.classList.toggle('hidden', !refundsPending.length && !data.refundsPendingWarning);
+    }
+    if (refundsEl) {
+      refundsEl.innerHTML = financialsRefundRowsHtml(refundsPending, data.refundsPendingWarning);
+    }
+  }
+
+  function renderFinancialsOverview() {
     main.innerHTML =
       '<div class="space-y-6">' +
       '<p id="financials-status" class="text-sm text-slate-500">Loading financial data from Supabase…</p>' +
       '<div id="financials-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>' +
+      '<div class="grid gap-3 sm:grid-cols-3">' +
+      '<a href="#financials/organisers" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Organisers</p><p class="text-xs text-slate-500 mt-1">Revenue and Stripe Connect</p></a>' +
+      '<a href="#financials/payouts" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Payouts</p><p class="text-xs text-slate-500 mt-1">Queue and refunds pending</p></a>' +
+      '<a href="#financials/activity" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Activity</p><p class="text-xs text-slate-500 mt-1">Recent registrations</p></a>' +
+      '</div></div>';
+    loadFinancialsData().then(function (data) {
+      paintFinancialsSummary(
+        data,
+        document.getElementById('financials-summary'),
+        document.getElementById('financials-status')
+      );
+    });
+  }
+
+  function bindFinancialsOrganisersFilters() {
+    var searchEl = document.getElementById('financials-org-search');
+    var statusEl = document.getElementById('financials-org-status');
+    if (searchEl) {
+      searchEl.value = financialsState.organisersQ || '';
+      searchEl.addEventListener('input', function () {
+        financialsState.organisersQ = searchEl.value || '';
+        financialsState.organisersPage = 0;
+        if (financialsState.cache) paintFinancialsOrganisersTable(financialsState.cache);
+      });
+    }
+    if (statusEl) {
+      statusEl.value = financialsState.organisersStatus || '';
+      statusEl.addEventListener('change', function () {
+        financialsState.organisersStatus = statusEl.value || '';
+        financialsState.organisersPage = 0;
+        if (financialsState.cache) paintFinancialsOrganisersTable(financialsState.cache);
+      });
+    }
+    var pager = document.getElementById('financials-organisers-pager');
+    if (pager && !pager.dataset.bound) {
+      pager.dataset.bound = '1';
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-fin-org-page]');
+        if (!btn) return;
+        financialsState.organisersPage = Number(btn.getAttribute('data-fin-org-page')) || 0;
+        if (financialsState.cache) paintFinancialsOrganisersTable(financialsState.cache);
+      });
+    }
+  }
+
+  function renderFinancialsOrganisers() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="financials-status" class="text-sm text-slate-500">Loading…</p>' +
+      '<div class="admin-filter-bar flex flex-wrap gap-3 items-center">' +
+      '<input type="search" id="financials-org-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search organiser" />' +
+      '<select id="financials-org-status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="">All Stripe statuses</option>' +
+      '<option value="Connected">Connected</option>' +
+      '<option value="Onboarding">Onboarding</option>' +
+      '<option value="Not started">Not started</option>' +
+      '</select></div>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Organiser ticket revenue</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Total paid ticket revenue per organiser (all time) — organisers receive full ticket price; booking fees shown in summary.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Total paid ticket revenue per organiser (all time).</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Ticket revenue</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Stripe Connect</th></tr></thead>' +
           '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</section>' +
+      '<div id="financials-organisers-pager"></div></div>';
+    bindFinancialsOrganisersFilters();
+    loadFinancialsData().then(paintFinancialsOrganisersTable);
+  }
+
+  function bindFinancialsPayoutsFilters() {
+    var statusEl = document.getElementById('financials-pay-status');
+    if (statusEl) {
+      statusEl.value = financialsState.payoutsStatus || '';
+      statusEl.addEventListener('change', function () {
+        financialsState.payoutsStatus = statusEl.value || '';
+        financialsState.payoutsPage = 0;
+        if (financialsState.cache) paintFinancialsPayoutsTable(financialsState.cache);
+      });
+    }
+    var pager = document.getElementById('financials-payouts-pager');
+    if (pager && !pager.dataset.bound) {
+      pager.dataset.bound = '1';
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-fin-pay-page]');
+        if (!btn) return;
+        financialsState.payoutsPage = Number(btn.getAttribute('data-fin-pay-page')) || 0;
+        if (financialsState.cache) paintFinancialsPayoutsTable(financialsState.cache);
+      });
+    }
+  }
+
+  function renderFinancialsPayouts() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="financials-status" class="text-sm text-slate-500">Loading…</p>' +
+      '<div class="admin-filter-bar flex flex-wrap gap-3 items-center">' +
+      '<select id="financials-pay-status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="">All payout statuses</option>' +
+      '<option value="pending_review">Pending review</option>' +
+      '<option value="approved">Approved</option>' +
+      '<option value="paid">Paid</option>' +
+      '</select></div>' +
       '<section id="financials-refunds-section" class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden hidden">' +
       '<div class="px-4 py-3 border-b border-amber-100 bg-amber-50"><h3 class="font-bold text-amber-950">Refunds pending</h3>' +
-      '<p class="text-xs text-amber-900/80 mt-0.5">Cancelled events where Stripe refunds were not confirmed — retry or check Stripe manually.</p></div>' +
+      '<p class="text-xs text-amber-900/80 mt-0.5">Cancelled events where Stripe refunds were not confirmed.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-amber-50/80 text-xs uppercase text-amber-900/70">' +
           '<tr><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Paid bookings</th><th class="px-4 py-3">Cancelled</th><th class="px-4 py-3">Reason</th><th class="px-4 py-3"></th></tr></thead>' +
@@ -5804,233 +6320,38 @@
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Payout queue</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Organiser payout requests from the dashboard — approve then mark paid after transfer.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Approve then mark paid after transfer.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Net</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Requested</th><th class="px-4 py-3"></th></tr></thead>' +
           '<tbody id="financials-queue"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</section>' +
+      '<div id="financials-payouts-pager"></div></div>';
+    bindFinancialsPayoutsFilters();
+    loadFinancialsData().then(paintFinancialsPayoutsTable);
+  }
+
+  function renderFinancialsActivity() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="financials-status" class="text-sm text-slate-500">Loading…</p>' +
       '<section class="bg-slate-900 rounded-xl p-5 text-slate-100 shadow-sm">' +
       '<h3 class="font-bold text-sm uppercase tracking-wide text-brand-100 mb-1">Recent registrations</h3>' +
-      '<p class="text-xs text-brand-100/70 mb-4">Last 40 registration rows from Supabase (payment status and amount).</p>' +
-      '<div id="financials-log" class="max-h-80 overflow-y-auto">Loading…</div></section></div>';
-
-    adminGet('/api/admin/financials').then(function (data) {
-      var status = document.getElementById('financials-status');
-      var stripeEl = document.getElementById('financials-stripe');
+      '<p class="text-xs text-brand-100/70 mb-4">Latest registration rows from Supabase (payment status and amount).</p>' +
+      '<div id="financials-log" class="max-h-[32rem] overflow-y-auto">Loading…</div></section></div>';
+    loadFinancialsData().then(function (data) {
+      var statusEl = document.getElementById('financials-status');
       var logEl = document.getElementById('financials-log');
-      var summaryEl = document.getElementById('financials-summary');
-
-      if (!data || data.ok === false || data.error || data.configured === false) {
-        if (status) {
-          status.textContent =
-            (data && (data.message || data.error)) || 'Could not load financial data from Supabase.';
-        }
+      if (!paintFinancialsSummary(data, null, statusEl)) {
+        if (logEl) logEl.innerHTML = '<p class="text-sm text-slate-400">Unavailable.</p>';
         return;
       }
-
-      var stripe = data.stripeAccounts || [];
       var log = data.automationLog || [];
-      var queue = data.payoutQueue || [];
-      var refundsPending = data.refundsPending || [];
-      var summary = data.summary || {};
-      var queueEl = document.getElementById('financials-queue');
-      var refundsSectionEl = document.getElementById('financials-refunds-section');
-      var refundsEl = document.getElementById('financials-refunds-pending');
-
-      function money(n) {
-        var v = Number(n) || 0;
-        return '£' + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2));
-      }
-
-      if (summaryEl) {
-        summaryEl.innerHTML =
-          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
-          money(summary.totalTicketRevenue) +
-          '</p></div>' +
-          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Booking fees</p><p class="text-xl font-bold text-brand-900 mt-1">' +
-          money(summary.totalBookingFees) +
-          '</p></div>' +
-          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +
-          String(summary.paidRegistrationCount || 0) +
-          '</p></div>' +
-          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Payouts pending</p><p class="text-xl font-bold text-brand-900 mt-1">' +
-          String(summary.pendingPayoutCount || 0) +
-          '</p></div>' +
-          (summary.refundsPendingCount
-            ? '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"><p class="text-xs text-amber-900/80 uppercase tracking-wide">Refunds pending</p><p class="text-xl font-bold text-amber-950 mt-1">' +
-              String(summary.refundsPendingCount) +
-              '</p></div>'
-            : '');
-      }
-
-      if (status) {
-        var statusLine =
-          money(summary.totalTicketRevenue) +
-          ' ticket revenue · ' +
-          queue.length +
-          ' payout row' +
-          (queue.length === 1 ? '' : 's') +
-          ' · ' +
-          stripe.length +
-          ' organiser' +
-          (stripe.length === 1 ? '' : 's');
-        if (summary.refundsPendingCount) {
-          statusLine =
-            summary.refundsPendingCount +
-            ' refund' +
-            (summary.refundsPendingCount === 1 ? '' : 's') +
-            ' pending · ' +
-            statusLine;
-        }
-        if (data.payoutWarning || data.refundsPendingWarning) {
-          status.innerHTML =
-            (data.refundsPendingWarning
-              ? '<span class="text-red-700 font-medium">' +
-                esc(data.refundsPendingWarning) +
-                '</span><br>'
-              : '') +
-            (data.payoutWarning
-              ? '<span class="text-amber-800 font-medium">' +
-                esc(data.payoutWarning) +
-                '</span><br>'
-              : '') +
-            '<span class="text-slate-500">' +
-            esc(statusLine) +
-            '</span>';
-        } else {
-          status.textContent = statusLine;
-        }
-      }
-
-      if (refundsSectionEl) {
-        refundsSectionEl.classList.toggle('hidden', !refundsPending.length && !data.refundsPendingWarning);
-      }
-      if (refundsEl) {
-        refundsEl.innerHTML = refundsPending.length
-          ? refundsPending
-              .map(function (row) {
-                return (
-                  '<tr class="border-t border-amber-100">' +
-                  '<td class="px-4 py-3 font-medium">' +
-                  esc(row.title) +
-                  '</td>' +
-                  '<td class="px-4 py-3">' +
-                  esc(row.organiserName || '—') +
-                  '</td>' +
-                  '<td class="px-4 py-3">' +
-                  String(row.paidBookings || 0) +
-                  '</td>' +
-                  '<td class="px-4 py-3 text-xs text-slate-500">' +
-                  esc(fmtTime(row.cancelledAt)) +
-                  '</td>' +
-                  '<td class="px-4 py-3 text-xs">' +
-                  esc(row.reason || '—') +
-                  '</td>' +
-                  '<td class="px-4 py-3 whitespace-nowrap">' +
-                  '<button type="button" class="retry-refunds-btn rounded-lg bg-amber-800 text-white px-2 py-1 text-xs font-semibold hover:bg-amber-900" data-retry-refunds-event="' +
-                  attrEsc(row.eventId) +
-                  '">Retry refunds</button>' +
-                  '</td></tr>'
-                );
-              })
-              .join('')
-          : '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
-            (data.refundsPendingWarning
-              ? 'Could not load refunds pending: ' + esc(data.refundsPendingWarning)
-              : 'No pending refunds.') +
-            '</td></tr>';
-      }
-
-      if (queueEl) {
-        queueEl.innerHTML = queue.length
-          ? queue
-              .map(function (p) {
-                var statusCls =
-                  p.status === 'paid'
-                    ? 'text-emerald-700 bg-emerald-50'
-                    : p.status === 'pending_review'
-                      ? 'text-amber-800 bg-amber-50'
-                      : 'text-slate-700 bg-slate-100';
-                var actions = '';
-                if (p.status === 'pending_review') {
-                  actions =
-                    '<button type="button" class="payout-status-btn rounded-lg bg-brand-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
-                    attrEsc(p.id) +
-                    '" data-payout-status="approved">Approve</button>';
-                } else if (p.status === 'approved') {
-                  actions =
-                    '<button type="button" class="payout-status-btn rounded-lg bg-emerald-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
-                    attrEsc(p.id) +
-                    '" data-payout-status="paid">Mark paid</button>';
-                } else {
-                  actions = '<span class="text-xs text-slate-400">—</span>';
-                }
-                return (
-                  '<tr class="border-t border-slate-100">' +
-                  '<td class="px-4 py-3 font-medium">' +
-                  esc(p.eventTitle) +
-                  '</td>' +
-                  '<td class="px-4 py-3">' +
-                  esc(p.organiser) +
-                  '</td>' +
-                  '<td class="px-4 py-3">' +
-                  esc(p.amount) +
-                  '</td>' +
-                  '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded ' +
-                  statusCls +
-                  '">' +
-                  esc(p.statusLabel) +
-                  '</span></td>' +
-                  '<td class="px-4 py-3 text-xs text-slate-500">' +
-                  esc(fmtTime(p.requestedAt)) +
-                  '</td>' +
-                  '<td class="px-4 py-3 whitespace-nowrap">' +
-                  actions +
-                  '</td></tr>'
-                );
-              })
-              .join('')
-          : '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
-            (data.payoutWarning
-              ? 'Payout queue unavailable until migration 120 is applied in Supabase.'
-              : 'No payout requests yet.') +
-            '</td></tr>';
-      }
-
-      if (stripeEl) {
-        stripeEl.innerHTML = stripe.length
-          ? stripe
-              .map(function (s) {
-                var statusCls =
-                  s.status === 'Connected'
-                    ? 'text-emerald-600'
-                    : s.status === 'Onboarding'
-                      ? 'text-amber-700'
-                      : 'text-slate-500';
-                return (
-                  '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
-                  esc(s.organiser) +
-                  '</td><td class="px-4 py-3">' +
-                  esc(s.balance) +
-                  '</td><td class="px-4 py-3">' +
-                  esc(s.lastPayout) +
-                  '</td><td class="px-4 py-3 font-medium ' +
-                  statusCls +
-                  '">' +
-                  esc(s.status) +
-                  '</td></tr>'
-                );
-              })
-              .join('')
-          : '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No organisers in Supabase yet.</td></tr>';
-      }
-
+      var genuineLog = log.filter(function (l) {
+        return !/\be2e\b/i.test(String(l.line || ''));
+      });
       if (logEl) {
-        var genuineLog = log.filter(function (l) {
-          return !/\be2e\b/i.test(String(l.line || ''));
-        });
         logEl.innerHTML = genuineLog.length
           ? genuineLog
               .map(function (l) {
@@ -6054,6 +6375,239 @@
           : '<p class="text-sm text-slate-400">No registrations logged yet.</p>';
       }
     });
+  }
+
+  function renderFinancialsHub(fullHash) {
+    var tab = resolveHubTab(
+      fullHash,
+      'financials',
+      ['overview', 'organisers', 'payouts', 'activity'],
+      'overview'
+    );
+    if (!tab) return;
+    var payoutBadge = hubTabBadge(actionCountValue('pendingPayouts'));
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'overview', label: 'Overview', href: '#financials/overview' },
+        { key: 'organisers', label: 'Organisers', href: '#financials/organisers' },
+        { key: 'payouts', label: 'Payouts', href: '#financials/payouts', badgeHtml: payoutBadge },
+        { key: 'activity', label: 'Activity', href: '#financials/activity' },
+      ],
+      tab
+    );
+    if (tab === 'organisers') withHubTabs(tabsHtml, renderFinancialsOrganisers);
+    else if (tab === 'payouts') withHubTabs(tabsHtml, renderFinancialsPayouts);
+    else if (tab === 'activity') withHubTabs(tabsHtml, renderFinancialsActivity);
+    else withHubTabs(tabsHtml, renderFinancialsOverview);
+  }
+
+  function renderFinancials() {
+    renderFinancialsHub(currentAdminHash());
+  }
+
+  function loadModerationData() {
+    return adminGet('/api/admin/moderation');
+  }
+
+  function renderModerationReports() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<p id="moderation-status" class="text-sm text-slate-500">Loading reports…</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">For reports: view the listing, edit it in cleanup, unpublish to uphold (emails the poster and reporter), or dismiss if it looks fine. Three upheld listing breaches on the same organiser profile trigger automatic suspension.</p>' +
+      '<div class="bg-white rounded-xl border border-amber-200 p-5 shadow-sm" id="moderation-reports-panel">' +
+      '<h3 class="font-bold text-amber-900 mb-1">Open listing reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from event, group, and opportunity pages.</p>' +
+      '<div class="space-y-3" id="moderation-reports">Loading…</div></div>' +
+      '<div class="bg-white rounded-xl border border-emerald-200 p-5 shadow-sm" id="moderation-validated-reports-panel">' +
+      '<h3 class="font-bold text-emerald-900 mb-1">Uphold history</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Reports validated by unpublishing — includes conduct warnings and suspensions.</p>' +
+      '<div class="space-y-3" id="moderation-validated-reports">Loading…</div></div>' +
+      '<div class="bg-white rounded-xl border border-violet-200 p-5 shadow-sm" id="moderation-review-reports-panel">' +
+      '<h3 class="font-bold text-violet-900 mb-1">Review reports</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Submitted from organiser profiles — remove the review or dismiss when reviewed.</p>' +
+      '<div class="space-y-3" id="moderation-review-reports">Loading…</div></div></div>';
+
+    loadModerationData().then(function (data) {
+      var status = document.getElementById('moderation-status');
+      var reportsEl = document.getElementById('moderation-reports');
+      var validatedReportsEl = document.getElementById('moderation-validated-reports');
+      var reviewReportsEl = document.getElementById('moderation-review-reports');
+      if (!data || data.error || data.configured === false) {
+        if (status) status.textContent = 'Could not load moderation data from Supabase.';
+        if (reportsEl) reportsEl.innerHTML = listingReportsHtml([]);
+        if (validatedReportsEl) validatedReportsEl.innerHTML = listingReportsHtml([], { readOnly: true });
+        if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml([]);
+        return;
+      }
+      liveListings = data.listings || [];
+      liveReviews = data.reviews || [];
+      var listingReports = data.listingReports || [];
+      var validatedListingReports = data.validatedListingReports || [];
+      var reviewReports = data.reviewReports || [];
+      if (status) {
+        status.textContent =
+          listingReports.length +
+          ' open listing reports · ' +
+          validatedListingReports.length +
+          ' upheld · ' +
+          reviewReports.length +
+          ' review reports';
+      }
+      if (reportsEl) reportsEl.innerHTML = listingReportsHtml(listingReports);
+      if (validatedReportsEl) {
+        validatedReportsEl.innerHTML = listingReportsHtml(validatedListingReports, { readOnly: true });
+      }
+      if (reviewReportsEl) reviewReportsEl.innerHTML = reviewReportsHtml(reviewReports);
+      var reportsPanel = document.getElementById('moderation-reports-panel');
+      var reviewReportsPanel = document.getElementById('moderation-review-reports-panel');
+      if (reportsPanel) {
+        reportsPanel.classList.toggle('ring-2', listingReports.length > 0);
+        reportsPanel.classList.toggle('ring-amber-300', listingReports.length > 0);
+      }
+      if (reviewReportsPanel) {
+        reviewReportsPanel.classList.toggle('ring-2', reviewReports.length > 0);
+        reviewReportsPanel.classList.toggle('ring-violet-300', reviewReports.length > 0);
+      }
+    });
+  }
+
+  function paintModerationListingsTable() {
+    var listingsEl = document.getElementById('moderation-listings');
+    var pagerEl = document.getElementById('moderation-listings-pager');
+    var statusEl = document.getElementById('moderation-status');
+    if (!listingsEl) return;
+    var q = String(moderationListingsState.q || '')
+      .trim()
+      .toLowerCase();
+    var statusFilter = String(moderationListingsState.status || '').trim();
+    var filtered = (liveListings || []).filter(function (l) {
+      if (statusFilter && String(l.status || '') !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        String(l.title || '')
+          .toLowerCase()
+          .indexOf(q) >= 0 ||
+        String(l.organiser || '')
+          .toLowerCase()
+          .indexOf(q) >= 0 ||
+        String(l.city || '')
+          .toLowerCase()
+          .indexOf(q) >= 0
+      );
+    });
+    var pageData = paginateRows(filtered, moderationListingsState.page, MODERATION_LISTINGS_PAGE_SIZE);
+    moderationListingsState.page = pageData.page;
+    listingsEl.innerHTML = listingsTableHtml(pageData.rows, 'No matching events.');
+    if (statusEl) {
+      statusEl.textContent =
+        pageData.total +
+        ' event' +
+        (pageData.total === 1 ? '' : 's') +
+        (q || statusFilter ? ' matching filters' : ' loaded');
+    }
+    if (pagerEl) {
+      pagerEl.innerHTML = adminPaginationHtml(
+        pageData.page,
+        pageData.total,
+        MODERATION_LISTINGS_PAGE_SIZE,
+        'data-mod-list-page'
+      );
+    }
+  }
+
+  function renderModerationListings() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="moderation-status" class="text-sm text-slate-500">Loading listings…</p>' +
+      '<div class="admin-filter-bar flex flex-wrap gap-3 items-center">' +
+      '<input type="search" id="moderation-listings-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search title, organiser, city" />' +
+      '<select id="moderation-listings-status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="">All statuses</option>' +
+      '<option value="Live">Live</option>' +
+      '<option value="Draft">Draft</option>' +
+      '</select></div>' +
+      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">All events</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Read-only overview — organisers publish events themselves. Edit via Fix listings.</p></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Tickets</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="moderation-listings"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+      ) +
+      '</div>' +
+      '<div id="moderation-listings-pager"></div></div>';
+
+    var searchEl = document.getElementById('moderation-listings-search');
+    var statusEl = document.getElementById('moderation-listings-status');
+    var pager = document.getElementById('moderation-listings-pager');
+    if (searchEl) {
+      searchEl.value = moderationListingsState.q || '';
+      searchEl.addEventListener('input', function () {
+        moderationListingsState.q = searchEl.value || '';
+        moderationListingsState.page = 0;
+        paintModerationListingsTable();
+      });
+    }
+    if (statusEl) {
+      statusEl.value = moderationListingsState.status || '';
+      statusEl.addEventListener('change', function () {
+        moderationListingsState.status = statusEl.value || '';
+        moderationListingsState.page = 0;
+        paintModerationListingsTable();
+      });
+    }
+    if (pager && !pager.dataset.bound) {
+      pager.dataset.bound = '1';
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-mod-list-page]');
+        if (!btn) return;
+        moderationListingsState.page = Number(btn.getAttribute('data-mod-list-page')) || 0;
+        paintModerationListingsTable();
+      });
+    }
+
+    loadModerationData().then(function (data) {
+      if (!data || data.error || data.configured === false) {
+        liveListings = [];
+        paintModerationListingsTable();
+        var status = document.getElementById('moderation-status');
+        if (status) status.textContent = 'Could not load moderation data from Supabase.';
+        return;
+      }
+      liveListings = data.listings || [];
+      liveReviews = data.reviews || [];
+      paintModerationListingsTable();
+    });
+  }
+
+  function renderModerationReviews() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="moderation-status" class="text-sm text-slate-500">Loading reviews…</p>' +
+      '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+      '<h3 class="font-bold text-brand-900 mb-1">Reviews</h3>' +
+      '<p class="text-xs text-slate-500 mb-4">Spam-like reviews are highlighted — delete to remove from the site.</p>' +
+      '<div class="space-y-3" id="moderation-reviews">Loading…</div></div></div>';
+    loadModerationData().then(function (data) {
+      var status = document.getElementById('moderation-status');
+      var reviewsEl = document.getElementById('moderation-reviews');
+      if (!data || data.error || data.configured === false) {
+        liveReviews = [];
+        if (status) status.textContent = 'Could not load moderation data from Supabase.';
+        if (reviewsEl) reviewsEl.innerHTML = reviewsHtml([]);
+        return;
+      }
+      liveListings = data.listings || [];
+      liveReviews = data.reviews || [];
+      if (status) {
+        status.textContent = liveReviews.length + ' review' + (liveReviews.length === 1 ? '' : 's');
+      }
+      if (reviewsEl) reviewsEl.innerHTML = reviewsHtml(liveReviews);
+    });
+  }
+
+  function renderModeration() {
+    renderModerationHub(currentAdminHash());
   }
 
   function sponsorHeadlineHtml(headline) {
@@ -6216,6 +6770,79 @@
       if (typeof sponsorPreviewRerender === 'function') sponsorPreviewRerender();
     };
     img.src = logoSrc;
+  }
+
+  function renderSponsorshipHub(fullHash) {
+    var hash = String(fullHash || 'sponsorship');
+    var topTabs = ['placements', 'partners', 'enquiries'];
+    var sponsorshipPaths = {
+      pathFor: function (t) {
+        if (t === 'enquiries') return 'sponsorship/advertising-enquiries';
+        if (t === 'partners') return 'sponsorship/partners';
+        return 'sponsorship/placements';
+      },
+    };
+    var tab = 'placements';
+
+    if (hash === 'sponsorship' || hash === 'sponsorship/placements') {
+      tab = resolveHubTab(hash, 'sponsorship', topTabs, 'placements', sponsorshipPaths);
+      if (!tab) return;
+    } else if (
+      hash === 'sponsorship/partners' ||
+      hash.indexOf('home-partners') !== -1 ||
+      hash.indexOf('city-partners') !== -1
+    ) {
+      tab = 'partners';
+      rememberHubTab('sponsorship', 'partners');
+    } else if (hash.indexOf('advertising-enquiries') !== -1) {
+      tab = 'enquiries';
+      rememberHubTab('sponsorship', 'enquiries');
+    } else {
+      tab = 'placements';
+      rememberHubTab('sponsorship', 'placements');
+    }
+
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'placements', label: 'Placements', href: '#sponsorship/placements' },
+        { key: 'partners', label: 'Partners', href: '#sponsorship/partners' },
+        { key: 'enquiries', label: 'Enquiries', href: '#sponsorship/advertising-enquiries' },
+      ],
+      tab
+    );
+
+    if (tab === 'enquiries') {
+      withHubTabs(tabsHtml, renderAdvertisingEnquiriesPage);
+      return;
+    }
+
+    if (tab === 'partners') {
+      if (hash.indexOf('home-partners') !== -1) {
+        withHubTabs(tabsHtml, renderHomePartnersPage);
+        return;
+      }
+      if (hash.indexOf('city-partners') !== -1) {
+        withHubTabs(tabsHtml, renderCityPartnersPage);
+        return;
+      }
+      withHubTabs(tabsHtml, function () {
+        main.innerHTML =
+          '<div class="space-y-4">' +
+          '<div class="grid gap-3 sm:grid-cols-2">' +
+          '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Homepage partner logos and links</p></a>' +
+          '<a href="#sponsorship/city-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">City partners</p><p class="text-xs text-slate-500 mt-1">City exclusivity waitlist and slots</p></a>' +
+          '</div></div>';
+      });
+      return;
+    }
+
+    withHubTabs(tabsHtml, function () {
+      if (hash === 'sponsorship' || hash === 'sponsorship/placements') {
+        renderSponsorshipPicker();
+        return;
+      }
+      renderSponsorship(hash);
+    });
   }
 
   function renderSponsorship(fullHash) {
@@ -9722,6 +10349,157 @@
     syncEventCreateOrganiserPicker(eventOrganiserOptionsCache || []);
   }
 
+  function setEventBulkOrganiserSelection(id, name, status) {
+    var hidden = document.getElementById('event-bulk-organiser-id');
+    var search = document.getElementById('event-bulk-organiser-search');
+    var selected = document.getElementById('event-bulk-organiser-selected');
+    var results = document.getElementById('event-bulk-organiser-results');
+    var value = id || '';
+    if (hidden) hidden.value = value;
+    if (search) {
+      search.value = '';
+      search.classList.toggle('hidden', Boolean(value));
+    }
+    if (selected) {
+      if (value === '__unlink__') {
+        selected.classList.remove('hidden');
+        selected.innerHTML =
+          '<span class="font-semibold text-brand-900">Unlink from organiser</span>' +
+          ' <button type="button" class="text-brand-700 hover:underline ml-2" id="event-bulk-organiser-clear">Change</button>';
+      } else if (value) {
+        selected.classList.remove('hidden');
+        selected.innerHTML =
+          '<span class="font-semibold text-brand-900">' +
+          esc(name || value) +
+          '</span>' +
+          (status && status !== 'published'
+            ? '<span class="text-slate-500">' + esc(organiserListingSuffix(status)) + '</span>'
+            : '') +
+          ' <button type="button" class="text-brand-700 hover:underline ml-2" id="event-bulk-organiser-clear">Change</button>';
+      } else {
+        selected.classList.add('hidden');
+        selected.textContent = '';
+      }
+    }
+    if (results) {
+      results.classList.add('hidden');
+      results.innerHTML = '';
+    }
+  }
+
+  function paintEventBulkOrganiserResults(items, emptyMsg) {
+    var results = document.getElementById('event-bulk-organiser-results');
+    if (!results) return;
+    var unlinkRow =
+      '<button type="button" class="event-bulk-organiser-result w-full text-left px-3 py-2.5 hover:bg-brand-50 transition border-b border-slate-100" data-id="__unlink__" data-name="Unlink from organiser" data-status="">' +
+      '<span class="block text-sm font-semibold text-brand-900">— Unlink from organiser —</span>' +
+      '<span class="block text-xs text-slate-500 mt-0.5">Remove the organiser link from selected events</span>' +
+      '</button>';
+    if (!items.length) {
+      results.innerHTML =
+        unlinkRow +
+        '<p class="px-3 py-3 text-sm text-slate-500">' +
+        esc(emptyMsg || 'No organisers found') +
+        '</p>';
+      results.classList.remove('hidden');
+      return;
+    }
+    results.innerHTML =
+      unlinkRow +
+      items
+        .map(function (org) {
+          var suffix = organiserListingSuffix(org.listingStatus || org.listing_status);
+          return (
+            '<button type="button" class="event-bulk-organiser-result w-full text-left px-3 py-2.5 hover:bg-brand-50 transition border-b border-slate-100 last:border-0" data-id="' +
+            attrEsc(org.id) +
+            '" data-name="' +
+            attrEsc(org.name || org.id) +
+            '" data-status="' +
+            attrEsc(org.listingStatus || org.listing_status || '') +
+            '">' +
+            '<span class="block text-sm font-semibold text-brand-900">' +
+            esc(org.name || org.id) +
+            esc(suffix) +
+            '</span>' +
+            (org.slug ? '<span class="block text-xs text-slate-500 mt-0.5">/' + esc(org.slug) + '</span>' : '') +
+            (org.email
+              ? '<span class="block text-xs text-slate-500 mt-0.5">' + esc(org.email) + '</span>'
+              : '') +
+            '</button>'
+          );
+        })
+        .join('');
+    results.classList.remove('hidden');
+  }
+
+  function bindEventBulkOrganiserPicker() {
+    var picker = document.getElementById('event-bulk-organiser-picker');
+    if (!picker || picker.dataset.bound === '1') return;
+    picker.dataset.bound = '1';
+
+    var search = document.getElementById('event-bulk-organiser-search');
+    var results = document.getElementById('event-bulk-organiser-results');
+    var searchTimer = null;
+
+    function runOrganiserSearch(query) {
+      var params = new URLSearchParams();
+      params.set('limit', '50');
+      if (query) params.set('q', query);
+      adminGet('/api/admin/organisers?' + params.toString())
+        .then(function (data) {
+          var items = ((data && data.organisers) || []).map(normalizeOrganiserOption);
+          paintEventBulkOrganiserResults(
+            items,
+            query ? 'No groups match that search' : 'Type a group name to search'
+          );
+        })
+        .catch(function () {
+          paintEventBulkOrganiserResults([], 'Could not search organisers');
+        });
+    }
+
+    if (search) {
+      search.addEventListener('focus', function () {
+        runOrganiserSearch(String(search.value || '').trim());
+      });
+      search.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          runOrganiserSearch(String(search.value || '').trim());
+        }, 220);
+      });
+    }
+
+    picker.addEventListener('click', function (e) {
+      var clearBtn = e.target.closest('#event-bulk-organiser-clear');
+      if (clearBtn) {
+        setEventBulkOrganiserSelection('', '', '');
+        if (search) search.focus();
+        return;
+      }
+      var btn = e.target.closest('.event-bulk-organiser-result');
+      if (!btn) return;
+      setEventBulkOrganiserSelection(
+        btn.getAttribute('data-id') || '',
+        btn.getAttribute('data-name') || '',
+        btn.getAttribute('data-status') || ''
+      );
+    });
+
+    if (!eventBulkOrganiserDocClickBound) {
+      eventBulkOrganiserDocClickBound = true;
+      document.addEventListener('click', function (e) {
+        var activePicker = document.getElementById('event-bulk-organiser-picker');
+        var activeResults = document.getElementById('event-bulk-organiser-results');
+        if (activePicker && activeResults && !activePicker.contains(e.target)) {
+          activeResults.classList.add('hidden');
+        }
+      });
+    }
+
+    setEventBulkOrganiserSelection('', '', '');
+  }
+
   function eventCreateDateRowHtml(value) {
     return (
       '<div class="event-create-date-row flex items-center gap-2">' +
@@ -10390,6 +11168,41 @@
       totalPages +
       '</span></nav>'
     );
+  }
+
+  function paginateRows(rows, page, pageSize) {
+    var list = rows || [];
+    var size = Math.max(1, pageSize || 30);
+    var total = list.length;
+    var totalPages = Math.max(1, Math.ceil(total / size) || 1);
+    var safePage = Math.min(Math.max(0, Number(page) || 0), totalPages - 1);
+    var start = safePage * size;
+    return {
+      page: safePage,
+      total: total,
+      pageSize: size,
+      rows: list.slice(start, start + size),
+    };
+  }
+
+  function hubHashTab(fullHash, fallback) {
+    var parts = String(fullHash || '')
+      .replace(/^#/, '')
+      .split(/[/?]/);
+    return parts[1] || fallback || '';
+  }
+
+  function currentAdminHash() {
+    return normalizeAdminHash((location.hash || '#dashboard').replace(/^#/, ''));
+  }
+
+  function refreshModerationView() {
+    renderModerationHub(currentAdminHash());
+  }
+
+  function refreshFinancialsView() {
+    financialsState.cache = null;
+    renderFinancialsHub(currentAdminHash());
   }
 
   function moderationBadge(o) {
@@ -12598,26 +13411,6 @@
         })
         .join('');
     }
-    var bulkOrganiser = document.getElementById('event-bulk-organiser');
-    if (bulkOrganiser && eventOrganiserOptionsCache) {
-      var currentOrg = bulkOrganiser.value;
-      bulkOrganiser.innerHTML =
-        '<option value="">— Leave organiser unchanged —</option>' +
-        '<option value="__unlink__">— Unlink from organiser —</option>' +
-        eventOrganiserOptionsCache
-          .map(function (o) {
-            return (
-              '<option value="' +
-              attrEsc(o.id) +
-              '"' +
-              (String(currentOrg) === String(o.id) ? ' selected' : '') +
-              '>' +
-              esc(o.name) +
-              '</option>'
-            );
-          })
-          .join('');
-    }
     if (main) {
       var selectPage = document.getElementById('event-cleanup-select-page');
       var pageCbs = main.querySelectorAll('.event-select-checkbox');
@@ -13021,6 +13814,7 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
         clearSelectedEvents();
+        setEventBulkOrganiserSelection('', '', '');
         var parts = ['Updated ' + (data.updated || 0) + ' event' + ((data.updated || 0) === 1 ? '' : 's') + '.'];
         if (data.skipped && data.skipped.length) {
           parts.push('Skipped ' + data.skipped.length + '.');
@@ -13351,8 +14145,13 @@
       '<p class="text-xs text-slate-600">Only fields you set below are applied to every selected event.</p>' +
       '<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
-      '<select name="bulk_organiser_id" id="event-bulk-organiser" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      '<option value="">— Leave unchanged —</option></select></div>' +
+      '<div id="event-bulk-organiser-picker" class="relative">' +
+      '<input type="hidden" name="bulk_organiser_id" id="event-bulk-organiser-id" value="">' +
+      '<input type="search" id="event-bulk-organiser-search" autocomplete="off" placeholder="Search by group name…" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<div id="event-bulk-organiser-selected" class="hidden rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm"></div>' +
+      '<div id="event-bulk-organiser-results" class="hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
+      '</div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Leave blank to keep current organisers.</p></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="bulk_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="">— Leave unchanged —</option>' +
@@ -13403,17 +14202,27 @@
 
     syncEventCleanupFilterUi();
     bindEventCreateOrganiserPicker();
+    bindEventBulkOrganiserPicker();
     bindEventCreateDatesSection();
     bindEventFormLocationToggle(main);
     bindAdminLogoZones(main.querySelector('.event-create-form'));
     refreshEventCleanupData();
   }
 
-  function renderRankings() {
+  function renderRankingsCurrent() {
     main.innerHTML =
-      '<div class="space-y-6">' +
+      '<div class="space-y-4">' +
       '<p id="rankings-status" class="text-sm text-slate-500">Loading ranking snapshot…</p>' +
-      '<div id="rankings-panels" class="space-y-4"></div></div>';
+      '<div class="admin-filter-bar flex flex-wrap gap-3 items-center">' +
+      '<input type="search" id="rankings-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search group name" />' +
+      '<select id="rankings-tier" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+      '<option value="">All badges</option>' +
+      '<option value="top10">Top 10</option>' +
+      '<option value="top25">Top 25</option>' +
+      '<option value="top50">Top 50</option>' +
+      '</select></div>' +
+      '<div id="rankings-panels" class="space-y-4"></div>' +
+      '<div id="rankings-pager"></div></div>';
 
     function tierBadge(tier) {
       var label =
@@ -13431,9 +14240,26 @@
       });
     }
 
+    function filteredEntries(data) {
+      var q = String(rankingsState.q || '')
+        .trim()
+        .toLowerCase();
+      var tier = String(rankingsState.tier || '').trim();
+      return (data.entries || []).filter(function (row) {
+        if (tier && String(row.tier || '') !== tier) return false;
+        if (!q) return true;
+        var org = row.organisers || {};
+        return String(org.name || '')
+          .toLowerCase()
+          .indexOf(q) >= 0;
+      });
+    }
+
     function paint(data) {
+      rankingsState.cache = data;
       var status = document.getElementById('rankings-status');
       var panels = document.getElementById('rankings-panels');
+      var pager = document.getElementById('rankings-pager');
       if (!panels) return;
 
       if (!data.ok && data.error) {
@@ -13442,6 +14268,10 @@
       }
 
       var snap = data.snapshot;
+      var filtered = filteredEntries(data);
+      var pageData = paginateRows(filtered, rankingsState.page, RANKINGS_PAGE_SIZE);
+      rankingsState.page = pageData.page;
+
       if (status) {
         status.textContent = snap
           ? 'Current period: ' +
@@ -13449,12 +14279,14 @@
             ' (' +
             snap.period_key +
             ') · ' +
-            (data.badgeCount != null ? data.entries.length : snap.total_ranked) +
-            ' ranked groups'
+            pageData.total +
+            ' group' +
+            (pageData.total === 1 ? '' : 's') +
+            (rankingsState.q || rankingsState.tier ? ' matching filters' : ' ranked')
           : 'No snapshot yet — run the monthly snapshot to publish badges.';
       }
 
-      var entryRows = (data.entries || [])
+      var entryRows = pageData.rows
         .map(function (row) {
           var org = row.organisers || {};
           return (
@@ -13483,50 +14315,13 @@
         })
         .join('');
 
-      var historyRows = (data.snapshots || [])
-        .map(function (s) {
-          return (
-            '<tr class="border-b border-slate-100 last:border-0">' +
-            '<td class="py-2 pr-3 text-sm">' +
-            esc(s.period_label) +
-            '</td>' +
-            '<td class="py-2 pr-3 text-sm text-slate-600">' +
-            esc(String(s.total_ranked)) +
-            ' groups</td>' +
-            '<td class="py-2 pr-3 text-xs text-slate-500">' +
-            esc(s.triggered_by || 'cron') +
-            '</td></tr>'
-          );
-        })
-        .join('');
-
-      var emailRows = (data.recentEmails || [])
-        .map(function (m) {
-          return (
-            '<tr class="border-b border-slate-100 last:border-0">' +
-            '<td class="py-2 pr-3 text-sm text-slate-700">' +
-            esc(m.email_to) +
-            '</td>' +
-            '<td class="py-2 pr-3">' +
-            tierBadge(m.tier) +
-            '</td>' +
-            '<td class="py-2 pr-3 text-sm text-slate-600">' +
-            esc(m.period_label) +
-            '</td>' +
-            '<td class="py-2 pr-3 text-xs uppercase text-slate-500">' +
-            esc(m.reason) +
-            '</td></tr>'
-          );
-        })
-        .join('');
-
       panels.innerHTML =
         '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
         '<div class="flex flex-wrap items-start justify-between gap-3 mb-4">' +
         '<div><h3 class="font-bold text-brand-900">Monthly snapshot</h3>' +
         '<p class="text-xs text-slate-500 mt-1">Groups need at least ' +
         esc(String(data.minReviews || 3)) +
-        ' reviews and a published profile. Ranked by average rating, then review rate (reviews ÷ past-event ticket buyers). Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
+        ' reviews and a published profile. Ranked by average rating, then review rate. Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
         '<div class="flex flex-wrap gap-2">' +
         '<button type="button" id="rankings-run-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Run snapshot now</button>' +
         '<button type="button" id="rankings-run-no-email-btn" class="rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Snapshot only (no emails)</button>' +
@@ -13537,26 +14332,17 @@
             '<th class="py-2 pr-3">Rank</th><th class="py-2 pr-3">Group</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Rating / rate</th></tr></thead><tbody>' +
             entryRows +
             '</tbody></table></div>'
-          : '<p class="text-sm text-slate-500">No ranked groups in the current snapshot.</p>') +
-        '</section>' +
-        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-        '<h3 class="font-bold text-brand-900 mb-3">Snapshot history</h3>' +
-        (historyRows
-          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
-            '<th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Ranked</th><th class="py-2 pr-3">Source</th></tr></thead><tbody>' +
-            historyRows +
-            '</tbody></table></div>'
-          : '<p class="text-sm text-slate-500">No history yet.</p>') +
-        '</section>' +
-        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-        '<h3 class="font-bold text-brand-900 mb-3">Recent congratulation emails</h3>' +
-        (emailRows
-          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
-            '<th class="py-2 pr-3">Sent to</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Reason</th></tr></thead><tbody>' +
-            emailRows +
-            '</tbody></table></div>'
-          : '<p class="text-sm text-slate-500">No ranking emails sent yet.</p>') +
+          : '<p class="text-sm text-slate-500">No ranked groups match these filters.</p>') +
         '</section>';
+
+      if (pager) {
+        pager.innerHTML = adminPaginationHtml(
+          pageData.page,
+          pageData.total,
+          RANKINGS_PAGE_SIZE,
+          'data-rankings-page'
+        );
+      }
 
       function runSnapshot(sendEmails) {
         var msg = document.getElementById('rankings-run-msg');
@@ -13595,10 +14381,150 @@
         runNoEmailBtn.addEventListener('click', function () { runSnapshot(false); });
     }
 
+    var searchEl = document.getElementById('rankings-search');
+    var tierEl = document.getElementById('rankings-tier');
+    var pager = document.getElementById('rankings-pager');
+    if (searchEl) {
+      searchEl.value = rankingsState.q || '';
+      searchEl.addEventListener('input', function () {
+        rankingsState.q = searchEl.value || '';
+        rankingsState.page = 0;
+        if (rankingsState.cache) paint(rankingsState.cache);
+      });
+    }
+    if (tierEl) {
+      tierEl.value = rankingsState.tier || '';
+      tierEl.addEventListener('change', function () {
+        rankingsState.tier = tierEl.value || '';
+        rankingsState.page = 0;
+        if (rankingsState.cache) paint(rankingsState.cache);
+      });
+    }
+    if (pager && !pager.dataset.bound) {
+      pager.dataset.bound = '1';
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-rankings-page]');
+        if (!btn) return;
+        rankingsState.page = Number(btn.getAttribute('data-rankings-page')) || 0;
+        if (rankingsState.cache) paint(rankingsState.cache);
+      });
+    }
+
     loadReport().then(paint).catch(function () {
       var status = document.getElementById('rankings-status');
       if (status) status.textContent = 'Could not load rankings.';
     });
+  }
+
+  function renderRankingsHistory() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<p id="rankings-status" class="text-sm text-slate-500">Loading history…</p>' +
+      '<div id="rankings-panels" class="space-y-4"></div></div>';
+
+    function tierBadge(tier) {
+      var label =
+        tier === 'top10' ? 'Top 10' : tier === 'top25' ? 'Top 25' : tier === 'top50' ? 'Top 50' : tier;
+      return (
+        '<span class="inline-flex items-center rounded-full bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide">' +
+        esc(label) +
+        '</span>'
+      );
+    }
+
+    fetch('/api/admin/rankings', { credentials: 'include', cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        var status = document.getElementById('rankings-status');
+        var panels = document.getElementById('rankings-panels');
+        if (!panels) return;
+        if (!data.ok && data.error) {
+          if (status) status.textContent = data.message || 'Could not load rankings.';
+          return;
+        }
+        if (status) status.textContent = 'Snapshot history and recent congratulation emails.';
+
+        var historyRows = (data.snapshots || [])
+          .map(function (s) {
+            return (
+              '<tr class="border-b border-slate-100 last:border-0">' +
+              '<td class="py-2 pr-3 text-sm">' +
+              esc(s.period_label) +
+              '</td>' +
+              '<td class="py-2 pr-3 text-sm text-slate-600">' +
+              esc(String(s.total_ranked)) +
+              ' groups</td>' +
+              '<td class="py-2 pr-3 text-xs text-slate-500">' +
+              esc(s.triggered_by || 'cron') +
+              '</td></tr>'
+            );
+          })
+          .join('');
+
+        var emailRows = (data.recentEmails || [])
+          .map(function (m) {
+            return (
+              '<tr class="border-b border-slate-100 last:border-0">' +
+              '<td class="py-2 pr-3 text-sm text-slate-700">' +
+              esc(m.email_to) +
+              '</td>' +
+              '<td class="py-2 pr-3">' +
+              tierBadge(m.tier) +
+              '</td>' +
+              '<td class="py-2 pr-3 text-sm text-slate-600">' +
+              esc(m.period_label) +
+              '</td>' +
+              '<td class="py-2 pr-3 text-xs uppercase text-slate-500">' +
+              esc(m.reason) +
+              '</td></tr>'
+            );
+          })
+          .join('');
+
+        panels.innerHTML =
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-3">Snapshot history</h3>' +
+          (historyRows
+            ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+              '<th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Ranked</th><th class="py-2 pr-3">Source</th></tr></thead><tbody>' +
+              historyRows +
+              '</tbody></table></div>'
+            : '<p class="text-sm text-slate-500">No history yet.</p>') +
+          '</section>' +
+          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+          '<h3 class="font-bold text-brand-900 mb-3">Recent congratulation emails</h3>' +
+          (emailRows
+            ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+              '<th class="py-2 pr-3">Sent to</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Reason</th></tr></thead><tbody>' +
+              emailRows +
+              '</tbody></table></div>'
+            : '<p class="text-sm text-slate-500">No ranking emails sent yet.</p>') +
+          '</section>';
+      })
+      .catch(function () {
+        var status = document.getElementById('rankings-status');
+        if (status) status.textContent = 'Could not load rankings.';
+      });
+  }
+
+  function renderRankingsHub(fullHash) {
+    var tab = resolveHubTab(fullHash, 'rankings', ['current', 'history'], 'current');
+    if (!tab) return;
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'current', label: 'Current', href: '#rankings/current' },
+        { key: 'history', label: 'History', href: '#rankings/history' },
+      ],
+      tab
+    );
+    if (tab === 'history') withHubTabs(tabsHtml, renderRankingsHistory);
+    else withHubTabs(tabsHtml, renderRankingsCurrent);
+  }
+
+  function renderRankings() {
+    renderRankingsHub(currentAdminHash());
   }
 
   function renderSystem() {
@@ -13750,7 +14676,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<p id="users-page-status" class="text-sm text-slate-500">Loading accounts from Supabase…</p>' +
-      '<div class="flex flex-wrap gap-3 items-center">' +
+      '<div class="admin-filter-bar">' +
       '<input type="search" id="users-page-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search name or email" />' +
       '<select id="users-page-role" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
       '<option value="">All roles</option><option value="Admin">Admin</option><option value="Organiser">Organiser</option><option value="Attendee">Attendee</option>' +
@@ -13760,83 +14686,172 @@
           '<tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Emails</th><th class="px-4 py-3">Featured</th><th class="px-4 py-3"></th></tr></thead>' +
           '<tbody id="users-page-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
-      '</div>';
+      '<div id="users-page-pager"></div></div>';
 
-    function paintUsersTable() {
+    var searchTimer = null;
+    var searchEl = document.getElementById('users-page-search');
+    var roleEl = document.getElementById('users-page-role');
+    var pager = document.getElementById('users-page-pager');
+    if (searchEl) searchEl.value = usersPageState.q || '';
+    if (roleEl) roleEl.value = usersPageState.role || '';
+
+    function mergeUsersIntoLive(rows) {
+      (rows || []).forEach(function (u) {
+        var idx = liveUsers.findIndex(function (existing) {
+          return existing.id === u.id;
+        });
+        if (idx >= 0) liveUsers[idx] = u;
+        else liveUsers.push(u);
+      });
+    }
+
+    function paintUsersRows(rows, total) {
       var tbody = document.getElementById('users-page-tbody');
-      var q = (document.getElementById('users-page-search')?.value || '').trim().toLowerCase();
-      var role = document.getElementById('users-page-role')?.value || '';
-      var rows = sortUsersAlphabetically(
-        liveUsers.filter(function (u) {
-          if (role && u.role !== role) return false;
-          if (!q) return true;
-          return (
-            String(u.name || '').toLowerCase().indexOf(q) >= 0 ||
-            String(u.email || '').toLowerCase().indexOf(q) >= 0
-          );
-        })
-      );
+      var status = document.getElementById('users-page-status');
+      var pagerEl = document.getElementById('users-page-pager');
+      usersPageState.total = total;
+      if (status) {
+        status.textContent =
+          total +
+          ' account' +
+          (total === 1 ? '' : 's') +
+          (usersPageState.q || usersPageState.role ? ' matching filters' : ' in Supabase');
+      }
       if (!tbody) return;
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
-        return;
+      } else {
+        tbody.innerHTML = rows
+          .map(function (u) {
+            return (
+              '<tr class="border-t border-slate-100">' +
+              '<td class="px-4 py-3 font-medium">' +
+              esc(u.name) +
+              '</td>' +
+              '<td class="px-4 py-3">' +
+              esc(u.email) +
+              '</td>' +
+              '<td class="px-4 py-3 text-center">' +
+              esc(u.role) +
+              '</td>' +
+              '<td class="px-4 py-3 text-center text-xs">' +
+              (u.emailsEnabled === false
+                ? '<span class="text-slate-500">Blocked</span>'
+                : '<span class="text-emerald-700">On</span>') +
+              '</td>' +
+              '<td class="px-4 py-3 text-center">' +
+              (u.organiserId
+                ? '<input type="checkbox" class="users-featured-toggle" data-user-id="' +
+                  attrEsc(u.id) +
+                  '" data-organiser-id="' +
+                  attrEsc(u.organiserId) +
+                  '" ' +
+                  (u.featured ? 'checked' : '') +
+                  ' aria-label="Featured organiser" />'
+                : '<span class="text-xs text-slate-400">—</span>') +
+              '</td>' +
+              '<td class="px-4 py-3 text-right whitespace-nowrap">' +
+              '<button type="button" class="users-open-drawer text-brand-700 text-xs font-semibold hover:underline" data-user-id="' +
+              attrEsc(u.id) +
+              '">Details</button>' +
+              (u.role !== 'Admin'
+                ? ' · <button type="button" class="users-impersonate text-brand-700 text-xs font-semibold hover:underline" data-email="' +
+                  attrEsc(u.email) +
+                  '">Impersonate</button>'
+                : '') +
+              '</td></tr>'
+            );
+          })
+          .join('');
       }
-      tbody.innerHTML = rows
-        .map(function (u) {
-          return (
-            '<tr class="border-t border-slate-100">' +
-            '<td class="px-4 py-3 font-medium">' +
-            esc(u.name) +
-            '</td>' +
-            '<td class="px-4 py-3">' +
-            esc(u.email) +
-            '</td>' +
-            '<td class="px-4 py-3 text-center">' +
-            esc(u.role) +
-            '</td>' +
-            '<td class="px-4 py-3 text-center text-xs">' +
-            (u.emailsEnabled === false
-              ? '<span class="text-slate-500">Blocked</span>'
-              : '<span class="text-emerald-700">On</span>') +
-            '</td>' +
-            '<td class="px-4 py-3 text-center">' +
-            (u.organiserId
-              ? '<input type="checkbox" class="users-featured-toggle" data-user-id="' +
-                attrEsc(u.id) +
-                '" data-organiser-id="' +
-                attrEsc(u.organiserId) +
-                '" ' +
-                (u.featured ? 'checked' : '') +
-                ' aria-label="Featured organiser" />'
-              : '<span class="text-xs text-slate-400">—</span>') +
-            '</td>' +
-            '<td class="px-4 py-3 text-right whitespace-nowrap">' +
-            '<button type="button" class="users-open-drawer text-brand-700 text-xs font-semibold hover:underline" data-user-id="' +
-            attrEsc(u.id) +
-            '">Details</button>' +
-            (u.role !== 'Admin'
-              ? ' · <button type="button" class="users-impersonate text-brand-700 text-xs font-semibold hover:underline" data-email="' +
-                attrEsc(u.email) +
-                '">Impersonate</button>'
-              : '') +
-            '</td></tr>'
-          );
-        })
-        .join('');
+      if (pagerEl) {
+        pagerEl.innerHTML = adminPaginationHtml(
+          usersPageState.page,
+          total,
+          USERS_PAGE_SIZE,
+          'data-users-page'
+        );
+      }
     }
 
-    loadUsersDirectory(function (users) {
+    function fetchUsersPage() {
+      var requestKey =
+        usersPageState.page +
+        '|' +
+        String(usersPageState.q || '') +
+        '|' +
+        String(usersPageState.role || '');
+      usersPageState.pendingKey = requestKey;
+      if (usersPageState.loading) return;
+      usersPageState.loading = true;
       var status = document.getElementById('users-page-status');
-      if (status) {
-        status.textContent = users.length + ' account' + (users.length === 1 ? '' : 's') + ' in Supabase';
-      }
-      paintUsersTable();
-    });
+      if (status) status.textContent = 'Loading accounts…';
+      var params = new URLSearchParams();
+      params.set('limit', String(USERS_PAGE_SIZE));
+      params.set('offset', String(usersPageState.page * USERS_PAGE_SIZE));
+      if (usersPageState.q) params.set('q', usersPageState.q);
+      if (usersPageState.role) params.set('role', usersPageState.role);
+      var startedKey = requestKey;
+      adminGet('/api/admin/users?' + params.toString())
+        .then(function (data) {
+          usersPageState.loading = false;
+          if (usersPageState.pendingKey !== startedKey) {
+            fetchUsersPage();
+            return;
+          }
+          if (!data || data.error || data.configured === false) {
+            paintUsersRows([], 0);
+            if (status) status.textContent = 'Could not load accounts from Supabase.';
+            return;
+          }
+          var rows = data.users || [];
+          mergeUsersIntoLive(rows);
+          var total = data.total != null ? Number(data.total) : rows.length;
+          var maxPage = Math.max(0, Math.ceil(total / USERS_PAGE_SIZE) - 1);
+          if (usersPageState.page > maxPage) {
+            usersPageState.page = maxPage;
+            fetchUsersPage();
+            return;
+          }
+          paintUsersRows(rows, total);
+        })
+        .catch(function () {
+          usersPageState.loading = false;
+          if (usersPageState.pendingKey !== startedKey) {
+            fetchUsersPage();
+            return;
+          }
+          paintUsersRows([], 0);
+          if (status) status.textContent = 'Could not load accounts from Supabase.';
+        });
+    }
 
-    var searchEl = document.getElementById('users-page-search');
-    var roleEl = document.getElementById('users-page-role');
-    if (searchEl) searchEl.addEventListener('input', paintUsersTable);
-    if (roleEl) roleEl.addEventListener('change', paintUsersTable);
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          usersPageState.q = (searchEl.value || '').trim();
+          usersPageState.page = 0;
+          fetchUsersPage();
+        }, 280);
+      });
+    }
+    if (roleEl) {
+      roleEl.addEventListener('change', function () {
+        usersPageState.role = roleEl.value || '';
+        usersPageState.page = 0;
+        fetchUsersPage();
+      });
+    }
+    if (pager && !pager.dataset.bound) {
+      pager.dataset.bound = '1';
+      pager.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-users-page]');
+        if (!btn) return;
+        usersPageState.page = Number(btn.getAttribute('data-users-page')) || 0;
+        fetchUsersPage();
+      });
+    }
 
     if (!main.dataset.usersBound) {
       main.dataset.usersBound = '1';
@@ -13881,6 +14896,8 @@
         }
       });
     }
+
+    fetchUsersPage();
   }
 
   function formatSpotlightExpiry(featured, untilIso) {
@@ -14588,10 +15605,13 @@
   }
 
   function renderSpotlightHub(fullHash) {
-    var hash = String(fullHash || 'spotlight/events');
-    var tab = 'events';
-    if (hash.indexOf('organisers') !== -1) tab = 'organisers';
-    else if (hash.indexOf('opportunities') !== -1) tab = 'opportunities';
+    var tab = resolveHubTab(
+      fullHash,
+      'spotlight',
+      ['events', 'organisers', 'opportunities'],
+      'events'
+    );
+    if (!tab) return;
 
     var tabsHtml = adminHubTabsHtml(
       [
@@ -14993,7 +16013,13 @@
       var filterBtn = e.target.closest('.complaints-filter-btn');
       if (filterBtn) {
         complaintsState.filter = filterBtn.getAttribute('data-filter') || 'open';
-        renderSupportComplaints();
+        document.querySelectorAll('.complaints-filter-btn').forEach(function (btn) {
+          var on = btn.getAttribute('data-filter') === complaintsState.filter;
+          btn.className =
+            'complaints-filter-btn rounded-lg border px-3 py-1.5 font-semibold ' +
+            (on ? 'border-brand-700 bg-brand-50 text-brand-900' : 'border-slate-200 text-slate-600');
+        });
+        loadComplaints();
         return;
       }
 
@@ -15054,12 +16080,18 @@
   }
 
   function renderSupportHub(fullHash) {
-    var hash = String(fullHash || 'support/bookings');
-    var tab = hash.indexOf('complaints') !== -1 ? 'complaints' : 'bookings';
+    var tab = resolveHubTab(fullHash, 'support', ['bookings', 'complaints'], 'bookings');
+    if (!tab) return;
+    var complaintsBadge = hubTabBadge(actionCountValue('openComplaints'));
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'bookings', label: 'Bookings', href: '#support/bookings' },
-        { key: 'complaints', label: 'Complaints', href: '#support/complaints' },
+        {
+          key: 'complaints',
+          label: 'Complaints',
+          href: '#support/complaints',
+          badgeHtml: complaintsBadge,
+        },
       ],
       tab
     );
@@ -15082,7 +16114,7 @@
       adminPatch('/api/admin/financials', { id: id, status: status })
         .then(function (data) {
           if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
-          renderFinancials();
+          refreshFinancialsView();
         })
         .catch(function (err) {
           btn.disabled = false;
@@ -16546,17 +17578,21 @@
   }
 
   function renderCleanupHub(fullHash) {
-    var hash = String(fullHash || 'cleanup/groups');
-    var tab = 'groups';
-    if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') tab = 'events';
-    else if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') tab = 'opportunities';
-    else if (hash.indexOf('issues') !== -1 || hash === 'event-health') tab = 'issues';
+    var tab = resolveHubTab(
+      fullHash,
+      'cleanup',
+      ['groups', 'events', 'opportunities', 'issues'],
+      'groups'
+    );
+    if (!tab) return;
 
+    var incompleteBadge = hubTabBadge(actionCountValue('incompleteOrganisers'));
+    var oppBadge = hubTabBadge(actionCountValue('pendingOpportunities'));
     var tabsHtml = adminHubTabsHtml(
       [
-        { key: 'groups', label: 'Groups', href: '#cleanup/groups' },
+        { key: 'groups', label: 'Groups', href: '#cleanup/groups', badgeHtml: incompleteBadge },
         { key: 'events', label: 'Events', href: '#cleanup/events' },
-        { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities' },
+        { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities', badgeHtml: oppBadge },
         { key: 'issues', label: 'Data issues', href: '#cleanup/issues' },
       ],
       tab
@@ -16565,17 +17601,17 @@
     if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
     else if (tab === 'opportunities')
       withHubTabs(tabsHtml, function () {
-        renderOpportunityCleanup(hash);
+        renderOpportunityCleanup(fullHash);
       });
     else if (tab === 'issues') withHubTabs(tabsHtml, renderEventHealth);
     else withHubTabs(tabsHtml, function () {
-      renderGroupCleanup(hash);
+      renderGroupCleanup(fullHash);
     });
   }
 
   function renderAccountsHub(fullHash) {
-    var hash = String(fullHash || 'accounts/users');
-    var tab = hash.indexOf('impersonate') !== -1 ? 'impersonate' : 'users';
+    var tab = resolveHubTab(fullHash, 'accounts', ['users', 'impersonate'], 'users');
+    if (!tab) return;
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'users', label: 'Users', href: '#accounts/users' },
@@ -16592,8 +17628,8 @@
   }
 
   function renderEmailHub(fullHash) {
-    var hash = String(fullHash || 'email/campaigns');
-    var tab = hash.indexOf('templates') !== -1 ? 'templates' : 'campaigns';
+    var tab = resolveHubTab(fullHash, 'email', ['campaigns', 'templates'], 'campaigns');
+    if (!tab) return;
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'campaigns', label: 'Campaigns', href: '#email/campaigns' },
@@ -16606,37 +17642,47 @@
   }
 
   function renderModerationHub(fullHash) {
-    var hash = String(fullHash || 'moderation');
-    var tab = hash.indexOf('import') !== -1 ? 'import' : 'review';
+    var tab = resolveHubTab(
+      fullHash,
+      'moderation',
+      ['reports', 'listings', 'reviews', 'import'],
+      'reports'
+    );
+    if (!tab) return;
+    var reportsBadge = hubTabBadge(
+      actionCountValue('openListingReports') + actionCountValue('openReviewReports')
+    );
     var tabsHtml = adminHubTabsHtml(
       [
-        { key: 'review', label: 'Review', href: '#moderation' },
+        { key: 'reports', label: 'Reports', href: '#moderation/reports', badgeHtml: reportsBadge },
+        { key: 'listings', label: 'Listings', href: '#moderation/listings' },
+        { key: 'reviews', label: 'Reviews', href: '#moderation/reviews' },
         { key: 'import', label: 'Import', href: '#moderation/import' },
       ],
       tab
     );
     if (tab === 'import') withHubTabs(tabsHtml, renderImport);
-    else withHubTabs(tabsHtml, renderModeration);
+    else if (tab === 'listings') withHubTabs(tabsHtml, renderModerationListings);
+    else if (tab === 'reviews') withHubTabs(tabsHtml, renderModerationReviews);
+    else withHubTabs(tabsHtml, renderModerationReports);
   }
 
   var routes = {
     dashboard: renderDashboard,
-    analytics: renderAnalytics,
+    analytics: renderAnalyticsHub,
     system: renderSystem,
-    rankings: renderRankings,
+    rankings: renderRankingsHub,
     cleanup: renderCleanupHub,
     accounts: renderAccountsHub,
     email: renderEmailHub,
     social: renderSocialHub,
     moderation: renderModerationHub,
-    financials: renderFinancials,
-    'revenue-targets': renderRevenueTargets,
+    financials: renderFinancialsHub,
+    'revenue-targets': renderRevenueTargetsHub,
     spotlight: renderSpotlightHub,
     featured: renderFeatured,
     support: renderSupportHub,
-    sponsorship: function () {
-      renderSponsorship((location.hash || '#sponsorship').replace('#', ''));
-    },
+    sponsorship: renderSponsorshipHub,
     'event-health': function () {
       location.replace('#cleanup/issues');
     },

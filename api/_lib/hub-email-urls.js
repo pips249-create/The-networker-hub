@@ -140,7 +140,7 @@ function opportunityPublicUrl(opportunityRow, siteUrl) {
 }
 
 function logoNavUrl(siteUrl) {
-  return toPublicAssetUrl('/assets/logo-nav.png', siteUrl);
+  return toPublicAssetUrl('/assets/logo-nav-transparent.png', siteUrl);
 }
 
 function logoFooterUrl(siteUrl) {

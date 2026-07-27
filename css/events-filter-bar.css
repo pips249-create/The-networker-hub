@@ -2575,15 +2575,20 @@ body.browse-mode-organisers .events-toolbar {
   }
 }
 
-/* Full-page mobile filter sheet */
+/* Full-page mobile filter sheet
+   Vars live on the sheet itself — it is portaled to <body> and sits outside
+   .events-filter-shell, so shell-scoped --filter-surface would not apply. */
 body.events-filter-sheet-open {
   overflow: hidden;
 }
 
 .filter-mobile-sheet {
+  --filter-surface: #7a5290;
+  --filter-surface-deep: #634268;
   position: fixed;
   inset: 0;
-  z-index: 1300;
+  /* Above .site-nav (100) and cookie/hubert chrome; sheet is portaled to body */
+  z-index: 11000;
   display: flex;
   flex-direction: column;
 }
@@ -2595,16 +2600,21 @@ body.events-filter-sheet-open {
 .filter-mobile-sheet-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(26, 16, 37, 0.42);
+  background: rgba(26, 16, 37, 0.55);
 }
 
 .filter-mobile-sheet-panel {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
-  background: var(--filter-surface);
+  height: 100dvh;
+  min-height: 100%;
+  background-color: #7a5290;
+  background-color: var(--filter-surface, #7a5290);
   color: #fff;
 }
 
@@ -2647,6 +2657,8 @@ body.events-filter-sheet-open {
   overscroll-behavior: contain;
   padding: 16px;
   -webkit-overflow-scrolling: touch;
+  background-color: #7a5290;
+  background-color: var(--filter-surface, #7a5290);
 }
 
 .filter-mobile-sheet-body .events-filter-inbox-title {

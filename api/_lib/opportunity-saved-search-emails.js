@@ -151,7 +151,7 @@ async function sendDueSavedSearchMatchEmails(sb) {
           privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
           terms_url: legalPolicyUrl(siteUrl, 'terms'),
           site_url: siteUrl,
-          logo_url: siteUrl + '/assets/logo-nav.png',
+          logo_url: siteUrl + '/assets/logo-nav-transparent.png',
         },
       });
 

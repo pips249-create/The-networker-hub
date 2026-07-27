@@ -719,9 +719,13 @@ body.browse-mode-organisers .events-hero-btn-primary:hover {
   color: #fff;
 }
 
-body.browse-mode-organisers .events-filter-shell {
+body.browse-mode-organisers .events-filter-shell,
+body.browse-mode-organisers .filter-mobile-sheet {
   --filter-surface: #2563eb;
   --filter-surface-deep: #1d4ed8;
+}
+
+body.browse-mode-organisers .events-filter-shell {
   background: var(--filter-surface);
   box-shadow: 0 12px 36px rgba(29, 78, 216, 0.28);
 }

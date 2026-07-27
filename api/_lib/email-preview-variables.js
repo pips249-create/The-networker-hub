@@ -191,6 +191,7 @@ function sampleMiniSponsorsRow() {
 }
 
 function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
+  const site = siteBase(siteUrl);
   const vars = { ...basePreviewVars(siteUrl), ...(extraVars || {}) };
 
   if (slug === 'application_denied') {
@@ -364,7 +365,6 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       'Please add more detail about the opportunity type and expected commitment before resubmitting.';
   }
 
-  const site = siteBase(siteUrl);
   if (slug && String(slug).startsWith('opportunity_')) {
     if (!String(vars.sponsor_row || '').trim()) {
       vars.sponsor_row = sampleOpportunitySponsorRow(site);

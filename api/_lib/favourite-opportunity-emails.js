@@ -40,7 +40,7 @@ function buildSavedOpportunityClosingSoonVars({ attendee, opportunityRow, siteUr
     terms_url: legalPolicyUrl(site, 'terms'),
     refunds_url: legalPolicyUrl(site, 'refunds'),
     site_url: site,
-    logo_url: site + '/assets/logo-nav.png',
+    logo_url: site + '/assets/logo-nav-transparent.png',
   };
 }
 

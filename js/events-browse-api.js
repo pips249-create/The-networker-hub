@@ -3,12 +3,15 @@
  */
 (function () {
   var API_PATH = '/api/hub-listings';
+  var ANALYTICS_PATH = '/api/browse-analytics';
   var DEBOUNCE_MS = 320;
   var debounceTimer = null;
   var fetchToken = 0;
   var lastTypeCounts = null;
   var lastPinsSignature = '';
   var lastFilterSignature = '';
+  var lastLoggedSignature = '';
+  var lastLoggedAt = 0;
 
   function browseFilterSignature(params) {
     var copy = Object.assign({}, params || {});
@@ -202,6 +205,66 @@
     }
   }
 
+  function hasAnalyticsConsent() {
+    if (window.HubCookieConsent && typeof window.HubCookieConsent.hasAnalyticsConsent === 'function') {
+      return window.HubCookieConsent.hasAnalyticsConsent();
+    }
+    var consent = window.HubCookieConsent && window.HubCookieConsent.getConsent
+      ? window.HubCookieConsent.getConsent()
+      : null;
+    return !!(consent && consent.analytics);
+  }
+
+  function browseHasDemandSignal(params, resultCount) {
+    if (params.q) return true;
+    if (params.location) return true;
+    if (params.types) return true;
+    if (params.inPerson === '1' || params.online === '1') return true;
+    if (params.free === '1' || params.fiveStars === '1') return true;
+    if (params.dateFrom || params.dateTo) return true;
+    if (params.priceMin || params.priceMax) return true;
+    return false;
+  }
+
+  function logBrowseSearch(params, resultCount) {
+    try {
+      if (!hasAnalyticsConsent()) return;
+      if (Number(params.page || 1) > 1) return;
+      if (!browseHasDemandSignal(params, resultCount)) return;
+
+      var signature = browseFilterSignature(params) + '|' + String(resultCount || 0);
+      var now = Date.now();
+      if (signature === lastLoggedSignature && now - lastLoggedAt < 15000) return;
+      lastLoggedSignature = signature;
+      lastLoggedAt = now;
+
+      fetch(ANALYTICS_PATH, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'record_search',
+          q: params.q || '',
+          location: params.location || '',
+          types: params.types || '',
+          inPerson: params.inPerson || '0',
+          online: params.online || '0',
+          free: params.free || '0',
+          fiveStars: params.fiveStars || '0',
+          dateFrom: params.dateFrom || '',
+          dateTo: params.dateTo || '',
+          priceMin: params.priceMin || '',
+          priceMax: params.priceMax || '',
+          sort: params.sort || '',
+          resultCount: Number(resultCount) || 0,
+        }),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (e) {
+      /* ignore analytics failures */
+    }
+  }
+
   function hubBrowseFetch(page, options) {
     options = options || {};
     var token = ++fetchToken;
@@ -240,6 +303,7 @@
         if (!data.configured) throw new Error('not_configured');
         if (data.error) throw new Error(data.message || data.error);
         applyBrowsePayload(data, page);
+        logBrowseSearch(params, window.hubBrowseTotal || 0);
         var status = document.getElementById('load-status');
         if (status && status.classList.contains('is-error')) {
           status.textContent = '';

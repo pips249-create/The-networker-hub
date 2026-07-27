@@ -32,7 +32,22 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const report = await getAdminUsers();
+      let q = '';
+      let role = '';
+      let limit;
+      let offset;
+      if (req.url) {
+        try {
+          const params = new URL(req.url, 'https://internal.local').searchParams;
+          q = params.get('q') || '';
+          role = params.get('role') || '';
+          if (params.has('limit')) limit = params.get('limit');
+          if (params.has('offset')) offset = params.get('offset');
+        } catch {
+          /* keep defaults */
+        }
+      }
+      const report = await getAdminUsers({ q, role, limit, offset });
       return json(res, 200, { ok: true, ...report });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'users_failed', message: e.message });
