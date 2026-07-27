@@ -46,6 +46,7 @@
     { "source": "/p/tnh-wibn-onboard-w9m3", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
     { "source": "/faq.html", "destination": "/faq", "permanent": true },
     { "source": "/about.html", "destination": "/about", "permanent": true },
+    { "source": "/rankings.html", "destination": "/rankings", "permanent": true },
     { "source": "/contact.html", "destination": "/contact", "permanent": true },
     { "source": "/guides.html", "destination": "/guides", "permanent": true },
     { "source": "/for-organisers.html", "destination": "/for-organisers", "permanent": true },
@@ -178,6 +179,7 @@
     "api/admin.js": { "maxDuration": 15 },
     "api/organiser.js": { "maxDuration": 60 },
     "api/organisers.js": { "maxDuration": 15 },
+    "api/rankings.js": { "maxDuration": 15 },
     "api/events.js": { "maxDuration": 15 },
     "api/seo.js": { "maxDuration": 15 },
     "api/sitemap.js": { "maxDuration": 15 },
@@ -220,6 +222,10 @@
     {
       "source": "/for-attendees",
       "destination": "/for-attendees.html"
+    },
+    {
+      "source": "/rankings",
+      "destination": "/rankings.html"
     },
     {
       "source": "/testing-bo",

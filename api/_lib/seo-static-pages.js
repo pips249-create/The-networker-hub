@@ -61,6 +61,14 @@ const STATIC_PAGES = {
     image: '/assets/logo.png',
     ogType: 'website',
   },
+  rankings: {
+    path: '/rankings',
+    title: 'Networking group leaderboard – The Networker Hub',
+    description:
+      'See the Top 10, Top 25 and Top 50 networking groups on The Networker Hub — ranked by attendee ratings and review rate each month.',
+    image: '/assets/logo.png',
+    ogType: 'website',
+  },
   'for-organisers': {
     path: '/for-organisers',
     title: 'Find your next attendees – For organisers – The Networker Hub',

@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260727nav';
+  var NAV_BUILD = '20260727lb';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -176,6 +176,9 @@
         /* ignore */
       }
       return false;
+    }
+    if (key === 'rankings') {
+      return page === 'rankings' || window.location.pathname.indexOf('/rankings') === 0;
     }
     return page === key;
   }
@@ -296,11 +299,17 @@
   }
 
   function isMoreNavActive() {
-    return isLinkActive('organisers') || isLinkActive('faq') || isLinkActive('contact');
+    return (
+      isLinkActive('organisers') ||
+      isLinkActive('rankings') ||
+      isLinkActive('faq') ||
+      isLinkActive('contact')
+    );
   }
 
   function moreNavDropdownHtml() {
     var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
+    var rankingsActive = isLinkActive('rankings') ? ' aria-current="page"' : '';
     var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
     var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
     return (
@@ -315,6 +324,11 @@
       '"' +
       organiserActive +
       '>Organisers</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('/rankings') +
+      '"' +
+      rankingsActive +
+      '>Leaderboard</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/faq') +
       '"' +
@@ -338,6 +352,7 @@
     html += link('/opportunities/', 'Opportunities', 'opportunities');
     if (user) {
       html += link('/events/?mode=organisers', 'Organisers', 'organisers');
+      html += link('/rankings', 'Leaderboard', 'rankings');
       html += link('/faq', 'Help', 'faq');
     }
     if (pending && !user) {
@@ -401,10 +416,12 @@
     html += buildMobileDrawerCities();
     if (user) {
       html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+      html += link('/rankings', 'Leaderboard', 'rankings', 'nav-mobile-item');
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
     } else {
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
       html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+      html += link('/rankings', 'Leaderboard', 'rankings', 'nav-mobile-item');
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
     }

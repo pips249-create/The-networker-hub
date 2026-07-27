@@ -238,7 +238,7 @@
     rankings: {
       title: 'How to manage top performers',
       steps: [
-        'Review the current month\'s top groups list.',
+        'Review the current month\'s top groups list (rating first, then review rate).',
         'Send congratulation emails when you are ready — preview first if unsure.',
         'Past snapshots are kept for reference.',
       ],
@@ -13253,7 +13253,13 @@
             esc(Number(row.rating).toFixed(1)) +
             ' · ' +
             esc(String(row.review_count)) +
-            ' reviews</td></tr>'
+            ' reviews · ' +
+            esc(
+              row.review_rate != null && row.review_rate !== ''
+                ? Math.round(Number(row.review_rate) * 100) + '%'
+                : '—'
+            ) +
+            ' rate</td></tr>'
           );
         })
         .join('');
@@ -13301,7 +13307,7 @@
         '<div><h3 class="font-bold text-brand-900">Monthly snapshot</h3>' +
         '<p class="text-xs text-slate-500 mt-1">Groups need at least ' +
         esc(String(data.minReviews || 3)) +
-        ' reviews and a published profile. Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
+        ' reviews and a published profile. Ranked by average rating, then review rate (reviews ÷ past-event ticket buyers). Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
         '<div class="flex flex-wrap gap-2">' +
         '<button type="button" id="rankings-run-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Run snapshot now</button>' +
         '<button type="button" id="rankings-run-no-email-btn" class="rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Snapshot only (no emails)</button>' +
@@ -13309,7 +13315,7 @@
         '<p id="rankings-run-msg" class="text-xs text-slate-500 mb-3"></p>' +
         (entryRows
           ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
-            '<th class="py-2 pr-3">Rank</th><th class="py-2 pr-3">Group</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Rating</th></tr></thead><tbody>' +
+            '<th class="py-2 pr-3">Rank</th><th class="py-2 pr-3">Group</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Rating / rate</th></tr></thead><tbody>' +
             entryRows +
             '</tbody></table></div>'
           : '<p class="text-sm text-slate-500">No ranked groups in the current snapshot.</p>') +

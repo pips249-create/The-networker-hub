@@ -3,7 +3,7 @@
  * FOOTER_BUILD=20260726d
  */
 (function () {
-  var FOOTER_BUILD = '20260726d';
+  var FOOTER_BUILD = '20260727lb';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -33,6 +33,12 @@
     '<a href="' +
     href('/events/') +
     '">Events</a>' +
+    '<a href="' +
+    href('/events/?mode=organisers') +
+    '">Organisers</a>' +
+    '<a href="' +
+    href('/rankings') +
+    '">Leaderboard</a>' +
     '<a href="' +
     href('/opportunities/') +
     '">Opportunities</a>' +

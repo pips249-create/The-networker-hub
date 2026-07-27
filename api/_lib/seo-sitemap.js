@@ -23,6 +23,7 @@ const STATIC_PATHS = [
   '/help/pricing-fees',
   '/contact',
   '/about',
+  '/rankings',
   '/for-organisers',
   '/for-attendees',
   '/advertising',

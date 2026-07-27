@@ -358,6 +358,16 @@ function buildSchemaGraph(page, origin) {
         'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.',
       mainEntity: buildOrganizationSchema(base),
     });
+  } else if (page === 'rankings') {
+    graph.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      url: base + '/rankings',
+      name: 'Networking group leaderboard – The Networker Hub',
+      description:
+        'Monthly Top 10, Top 25 and Top 50 networking groups on The Networker Hub, ranked by attendee ratings and review rate.',
+      about: buildOrganizationSchema(base),
+    });
   } else if (page === 'for-organisers') {
     graph.push({
       '@context': 'https://schema.org',
