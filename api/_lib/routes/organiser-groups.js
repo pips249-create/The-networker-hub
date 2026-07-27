@@ -99,7 +99,9 @@ module.exports = async function handler(req, res) {
       body.logoUrl ||
       body.logoBase64 ||
       body.complimentaryVisitsAllowed !== undefined ||
-      body.complimentary_visits_allowed !== undefined;
+      body.complimentary_visits_allowed !== undefined ||
+      body.complimentaryVisitsScope !== undefined ||
+      body.complimentary_visits_scope !== undefined;
     if (!hasProfileFields) return json(res, 400, { error: 'missing_fields' });
 
     try {
@@ -129,6 +131,8 @@ module.exports = async function handler(req, res) {
         listingStatus,
         complimentaryVisitsAllowed:
           body.complimentaryVisitsAllowed ?? body.complimentary_visits_allowed,
+        complimentaryVisitsScope:
+          body.complimentaryVisitsScope ?? body.complimentary_visits_scope,
       });
       const group = await api.enrichGroupForDashboard(
         updated,
@@ -228,6 +232,8 @@ module.exports = async function handler(req, res) {
           logoUrl: source.imageUrl || '',
           listingStatus: 'draft',
           verificationStatus: 'Pending',
+          complimentaryVisitsAllowed: source.complimentaryVisitsAllowed,
+          complimentaryVisitsScope: source.complimentaryVisitsScope,
         });
         const group = await api.enrichGroupForDashboard(
           created,
@@ -277,6 +283,14 @@ module.exports = async function handler(req, res) {
         logoFilename,
         listingStatus: body.listingStatus || 'draft',
         verificationStatus: body.verificationStatus || 'Pending',
+        complimentaryVisitsAllowed:
+          body.complimentaryVisitsAllowed ?? body.complimentary_visits_allowed,
+        complimentaryVisitsScope:
+          body.complimentaryVisitsScope ?? body.complimentary_visits_scope,
+        instagramUrl: body.instagramUrl,
+        facebookUrl: body.facebookUrl,
+        linkedinUrl: body.linkedinUrl,
+        xUrl: body.xUrl,
       });
       const group = await api.enrichGroupForDashboard(
         created,

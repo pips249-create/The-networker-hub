@@ -29,6 +29,7 @@
   let returnedFromStripe = false;
   let ticketsLocked = false;
   let organiserComplimentaryVisits = 0;
+  let organiserComplimentaryVisitsScope = 'per_group';
   let anchorEvent = null;
   let memberRosterActiveCount = null;
   let organiserGroupName = '';
@@ -883,6 +884,33 @@
     return Math.min(3, Math.max(0, n));
   }
 
+  function readGuestVisitsScope() {
+    const checked = document.querySelector('input[name="ee-visits-scope"]:checked');
+    return checked && checked.value === 'across_groups' ? 'across_groups' : 'per_group';
+  }
+
+  function setGuestVisitsScope(scope) {
+    const value = scope === 'across_groups' ? 'across_groups' : 'per_group';
+    document.querySelectorAll('input[name="ee-visits-scope"]').forEach((radio) => {
+      radio.checked = radio.value === value;
+    });
+    organiserComplimentaryVisitsScope = value;
+    syncGuestProgrammeNote();
+  }
+
+  function syncGuestProgrammeNote() {
+    const note = document.getElementById('ee-guest-programme-note-text');
+    if (!note) return;
+    const scope = readGuestVisitsScope();
+    if (scope === 'across_groups') {
+      note.textContent =
+        'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After that, they must buy a paid member ticket to keep attending any of your groups.';
+    } else {
+      note.textContent =
+        'Newcomers get up to 3 complimentary visits across this organiser page. After that, they must buy a paid member ticket to keep attending.';
+    }
+  }
+
   function syncGuestVisitsInput() {
     const el = document.getElementById('ee-guest-visits-allowed');
     if (!el) return;
@@ -892,6 +920,7 @@
     } else if (organiserComplimentaryVisits > 0 && (!el.dataset.touched || current < 1)) {
       el.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
     }
+    setGuestVisitsScope(organiserComplimentaryVisitsScope);
   }
 
   function saleEndSelectHtml(selected) {
@@ -1543,28 +1572,40 @@
   async function loadOrganiserGuestVisitSetting(groupId) {
     if (!groupId) {
       organiserComplimentaryVisits = 0;
+      organiserComplimentaryVisitsScope = 'per_group';
       return;
     }
     const { ok, data } = await api('/api/organiser/groups?id=' + encodeURIComponent(groupId));
     if (ok && data.group) {
       organiserComplimentaryVisits = Number(data.group.complimentaryVisitsAllowed) || 0;
+      organiserComplimentaryVisitsScope =
+        data.group.complimentaryVisitsScope === 'across_groups' ? 'across_groups' : 'per_group';
       organiserGroupName = String(data.group.name || '').trim();
     }
     const visitsEl = document.getElementById('ee-guest-visits-allowed');
     if (visitsEl && organiserComplimentaryVisits > 0) {
       visitsEl.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
     }
+    setGuestVisitsScope(organiserComplimentaryVisitsScope);
   }
 
-  async function saveOrganiserGuestVisitsAllowed(groupId, allowed) {
+  async function saveOrganiserGuestVisitsAllowed(groupId, allowed, scope) {
     const id = String(groupId || '').trim();
     const n = Math.min(3, Math.max(1, Math.floor(Number(allowed) || 0)));
+    const visitsScope = scope === 'across_groups' ? 'across_groups' : 'per_group';
     if (!id || n < 1) return { ok: false, message: 'Enter how many complimentary visits (1–3).' };
     const { ok, data } = await api('/api/organiser/groups', {
       method: 'PATCH',
-      body: JSON.stringify({ id, complimentaryVisitsAllowed: n }),
+      body: JSON.stringify({
+        id,
+        complimentaryVisitsAllowed: n,
+        complimentaryVisitsScope: visitsScope,
+      }),
     });
-    if (ok) organiserComplimentaryVisits = n;
+    if (ok) {
+      organiserComplimentaryVisits = n;
+      organiserComplimentaryVisitsScope = visitsScope;
+    }
     return { ok, message: data?.message || data?.error || '' };
   }
 
@@ -2476,6 +2517,13 @@
         updatePublishButton();
       });
     }
+    document.querySelectorAll('input[name="ee-visits-scope"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        syncGuestProgrammeNote();
+        updatePublishButton();
+      });
+    });
+    syncGuestProgrammeNote();
     bindRefundPolicy();
     bindAlumniFastPassFields();
     bindCategoryExclusivityCloseFields();
@@ -2752,8 +2800,8 @@
         updatePublishButton();
         return;
       }
-      if (visits !== organiserComplimentaryVisits) {
-        const saved = await saveOrganiserGuestVisitsAllowed(groupId, visits);
+      if (visits !== organiserComplimentaryVisits || readGuestVisitsScope() !== organiserComplimentaryVisitsScope) {
+        const saved = await saveOrganiserGuestVisitsAllowed(groupId, visits, readGuestVisitsScope());
         if (!saved.ok) {
           showAlert(saved.message || 'Could not save complimentary visit allowance.', 'warn');
           if (btn) btn.disabled = false;

@@ -61,7 +61,7 @@
     'fo-guest-visit': {
       title: 'Guest visit programme',
       body:
-        'Offer 1–3 complimentary trial visits so newcomers can try your group before buying a member ticket. Visit counts apply across your organiser page, with per-event overrides available.',
+        'Offer 1–3 complimentary trial visits so newcomers can try your group before buying a member ticket. You can apply visits per organiser page, or share them across all your pages, with per-event overrides available.',
     },
     'fo-category-exclusivity': {
       title: 'Category Exclusivity applications',

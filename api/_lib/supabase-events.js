@@ -481,6 +481,11 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     complimentaryVisitsAllowed: organiser
       ? Math.min(3, Math.max(0, Number(organiser.complimentary_visits_allowed) || 0))
       : 0,
+    complimentaryVisitsScope: organiser
+      ? String(organiser.complimentary_visits_scope || '').trim() === 'across_groups'
+        ? 'across_groups'
+        : 'per_group'
+      : 'per_group',
     guestVisitTier: tiers.find((t) => t.isGuestVisit) || null,
     alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),
     alumniTier: tiers.find((t) => t.isAlumni) || null,

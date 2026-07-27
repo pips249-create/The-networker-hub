@@ -93,7 +93,7 @@
           <div class="ee-field">
             <label for="ge-complimentary-visits">Complimentary guest visits</label>
             <p class="ee-hint" style="margin-top:0">
-              How many free trial visits a new attendee gets with your group before they need a paid member ticket. Type a number from 0 to 3 (Hub maximum).
+              How many free trial visits a new attendee gets before they need a paid member ticket. Type a number from 0 to 3 (Hub maximum).
             </p>
             <input
               type="number"
@@ -107,6 +107,20 @@
             />
             <p class="ee-hint" id="ge-complimentary-visits-hint">Enter 0 to turn the guest visit programme off.</p>
           </div>
+          <fieldset class="ee-field" id="ge-visits-scope-wrap">
+            <legend class="ee-label-block">Where do complimentary visits apply?</legend>
+            <label class="ee-check">
+              <input type="radio" name="ge-visits-scope" value="per_group" checked />
+              <span>This organiser page only</span>
+            </label>
+            <label class="ee-check">
+              <input type="radio" name="ge-visits-scope" value="across_groups" />
+              <span>Across all my organiser pages</span>
+            </label>
+            <p class="ee-hint" id="ge-visits-scope-hint">
+              Choose “across all pages” if someone should only get the free allowance once across every group you run.
+            </p>
+          </fieldset>
         </div>
 
         <div class="ee-actions ge-actions-stack">

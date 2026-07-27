@@ -1540,6 +1540,20 @@ body.ee-step2-modal-open {
   cursor: pointer;
 }
 
+.ee-field > legend.ee-label-block {
+  padding: 0;
+  margin: 0 0 8px;
+  float: none;
+  width: 100%;
+}
+
+fieldset.ee-field {
+  border: none;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
 .ee-check input {
   width: auto;
   flex-shrink: 0;

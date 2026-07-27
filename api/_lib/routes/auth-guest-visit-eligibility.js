@@ -3,7 +3,6 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { isUuid } = require('../uuid');
 const {
   getGuestVisitEligibility,
-  loadOrganiserGuestVisitAllowance,
   PLATFORM_MAX_COMPLIMENTARY_VISITS,
 } = require('../guest-visits');
 
@@ -13,6 +12,7 @@ function emptyEligibility() {
     used: 0,
     remaining: 0,
     eligible: false,
+    scope: 'per_group',
     platformMax: PLATFORM_MAX_COMPLIMENTARY_VISITS,
   };
 }
@@ -32,7 +32,6 @@ function parseOrganiserIds(query) {
 }
 
 async function eligibilityForOrganiser(sb, organiserId, session) {
-  const allowed = await loadOrganiserGuestVisitAllowance(sb, organiserId);
   const email = String(session.email || '')
     .trim()
     .toLowerCase();
@@ -41,7 +40,6 @@ async function eligibilityForOrganiser(sb, organiserId, session) {
     attendeeId: session.sub || null,
     userId: session.sub || null,
     email,
-    allowed,
   });
 }
 

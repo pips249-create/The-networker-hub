@@ -8,7 +8,12 @@ const { logoResolutionWarning } = require('./logo-quality');
 const { isAdminRole } = require('./auth');
 const { resolveOrganiserAccess, getOrCreateOrganiserAccount, groupVisibleInOrganiserWorkspace } = require('./supabase-organiser-access');
 const { eventImageUrl } = require('./event-image');
-const { clampComplimentaryVisitsAllowed } = require('./guest-visits');
+const {
+  clampComplimentaryVisitsAllowed,
+  normalizeComplimentaryVisitsScope,
+  syncSiblingGuestVisitSettings,
+  GUEST_VISIT_SCOPE_ACROSS_GROUPS,
+} = require('./guest-visits');
 const { publicOrganiserSlug } = require('./organiser-slug');
 
 function rowToGroup(row) {
@@ -50,6 +55,7 @@ function rowToGroup(row) {
     ownershipClaimStatus: row.ownership_claim_status || null,
     ownershipClaimedAt: row.ownership_claimed_at || null,
     complimentaryVisitsAllowed: clampComplimentaryVisitsAllowed(row.complimentary_visits_allowed),
+    complimentaryVisitsScope: normalizeComplimentaryVisitsScope(row.complimentary_visits_scope),
   };
 }
 
@@ -232,8 +238,46 @@ async function createGroup(payload) {
     ownership_claimed_at: claimedAt,
   };
 
-  const { data: created, error } = await sb.from('organisers').insert(insert).select('*').single();
+  if (
+    payload.complimentaryVisitsAllowed !== undefined ||
+    payload.complimentary_visits_allowed !== undefined
+  ) {
+    insert.complimentary_visits_allowed = clampComplimentaryVisitsAllowed(
+      payload.complimentaryVisitsAllowed ?? payload.complimentary_visits_allowed
+    );
+  }
+  if (
+    payload.complimentaryVisitsScope !== undefined ||
+    payload.complimentary_visits_scope !== undefined
+  ) {
+    insert.complimentary_visits_scope = normalizeComplimentaryVisitsScope(
+      payload.complimentaryVisitsScope ?? payload.complimentary_visits_scope
+    );
+  }
+
+  let created = null;
+  let error = null;
+  ({ data: created, error } = await sb.from('organisers').insert(insert).select('*').single());
+  if (
+    error &&
+    insert.complimentary_visits_scope !== undefined &&
+    /complimentary_visits_scope/i.test(String(error.message || ''))
+  ) {
+    const retryInsert = { ...insert };
+    delete retryInsert.complimentary_visits_scope;
+    ({ data: created, error } = await sb.from('organisers').insert(retryInsert).select('*').single());
+  }
   if (error) throw new Error(error.message);
+
+  if (
+    normalizeComplimentaryVisitsScope(created.complimentary_visits_scope) ===
+    GUEST_VISIT_SCOPE_ACROSS_GROUPS
+  ) {
+    await syncSiblingGuestVisitSettings(sb, created.id, {
+      scope: GUEST_VISIT_SCOPE_ACROSS_GROUPS,
+      allowed: created.complimentary_visits_allowed,
+    }).catch(() => {});
+  }
 
   let logoWarning = null;
   let logoResolutionWarning = null;
@@ -301,6 +345,14 @@ async function updateGroup(groupId, payload) {
       payload.complimentaryVisitsAllowed ?? payload.complimentary_visits_allowed
     );
   }
+  if (
+    payload.complimentaryVisitsScope !== undefined ||
+    payload.complimentary_visits_scope !== undefined
+  ) {
+    patch.complimentary_visits_scope = normalizeComplimentaryVisitsScope(
+      payload.complimentaryVisitsScope ?? payload.complimentary_visits_scope
+    );
+  }
   if (payload.listingStatus != null) {
     patch.listing_status = normalizeListingStatus(payload.listingStatus);
   }
@@ -325,13 +377,50 @@ async function updateGroup(groupId, payload) {
     throw e;
   }
 
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('organisers')
     .update(patch)
     .eq('id', groupId)
     .select('*')
     .single();
+  if (
+    error &&
+    patch.complimentary_visits_scope !== undefined &&
+    /complimentary_visits_scope/i.test(String(error.message || ''))
+  ) {
+    const retryPatch = { ...patch };
+    delete retryPatch.complimentary_visits_scope;
+    if (!Object.keys(retryPatch).length) {
+      const existing = await sb.from('organisers').select('*').eq('id', groupId).maybeSingle();
+      if (existing.error) throw new Error(existing.error.message);
+      data = existing.data;
+      error = null;
+    } else {
+      ({ data, error } = await sb
+        .from('organisers')
+        .update(retryPatch)
+        .eq('id', groupId)
+        .select('*')
+        .single());
+    }
+  }
   if (error) throw new Error(error.message);
+
+  const guestVisitFieldsTouched =
+    patch.complimentary_visits_allowed !== undefined ||
+    patch.complimentary_visits_scope !== undefined;
+  if (guestVisitFieldsTouched && data) {
+    const scope = normalizeComplimentaryVisitsScope(data.complimentary_visits_scope);
+    if (scope === GUEST_VISIT_SCOPE_ACROSS_GROUPS) {
+      await syncSiblingGuestVisitSettings(sb, groupId, {
+        scope,
+        allowed: data.complimentary_visits_allowed,
+      }).catch(() => {});
+    } else if (patch.complimentary_visits_scope !== undefined) {
+      // Switched back to per-group — align siblings' scope only, keep their own allowances.
+      await syncSiblingGuestVisitSettings(sb, groupId, { scope }).catch(() => {});
+    }
+  }
 
   const group = rowToGroup(data);
   if (logoWarning) group.logoWarning = logoWarning;

@@ -268,6 +268,12 @@
       const allowed = g.complimentaryVisitsAllowed != null ? Number(g.complimentaryVisitsAllowed) : 0;
       visitsEl.value = String(Math.min(3, Math.max(0, allowed)));
     }
+    const scope = String(g.complimentaryVisitsScope || 'per_group').trim() === 'across_groups'
+      ? 'across_groups'
+      : 'per_group';
+    document.querySelectorAll('input[name="ge-visits-scope"]').forEach((radio) => {
+      radio.checked = radio.value === scope;
+    });
     const counter = el('ge-word-count');
     if (counter) counter.textContent = String(countWords(g.description || ''));
     const rosterWrap = el('ge-roster-link-wrap');
@@ -387,6 +393,10 @@
       complimentaryVisitsAllowed: el('ge-complimentary-visits')
         ? Math.min(3, Math.max(0, Math.floor(Number(el('ge-complimentary-visits').value) || 0)))
         : 0,
+      complimentaryVisitsScope: (function () {
+        const checked = document.querySelector('input[name="ge-visits-scope"]:checked');
+        return checked && checked.value === 'across_groups' ? 'across_groups' : 'per_group';
+      })(),
     };
 
     if (logoFile) {

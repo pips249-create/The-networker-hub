@@ -66,7 +66,7 @@
     'guest-visit-programme': {
       title: 'Guest visit programme',
       body:
-        'Offer 1–3 complimentary visits so newcomers can try your group before buying a paid member ticket. The allowance applies across your organiser page. Use “Member-only for this event” to skip guest passes on a specific date.',
+        'Offer 1–3 complimentary visits so newcomers can try your group before buying a paid member ticket. Choose whether the allowance applies to this organiser page only, or across all your organiser pages. Use “Member-only for this event” to skip guest passes on a specific date.',
       hubertPrompt: 'What is the guest visit programme for networking groups?',
     },
     'member-only-event': {
