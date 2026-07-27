@@ -15,13 +15,13 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260723roi" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260727promo" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260726m" />
   </head>
   <body class="organiser-event-edit-page organiser-published-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260727city" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260727nav" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap ep-wrap">
       <div id="ee-wizard-mount"></div>
@@ -38,77 +38,82 @@
       <div class="ep-promote-section" id="ep-promote-section">
         <div class="ep-promote-split">
           <section class="ee-card ep-share-card ep-share-card--hero ep-promote-split-col" aria-labelledby="ep-share-heading">
-            <p class="ep-share-kicker">Free — social media</p>
-            <h2 class="ep-share-heading" id="ep-share-heading">Share your event</h2>
-            <p class="ee-hint ep-share-lead" id="ep-share-hint">
-              Most organisers share within the first hour. Pick a post style, copy the text, download the image, and share on LinkedIn, Facebook, or Instagram.
-            </p>
+            <div class="ep-promote-card-top">
+              <p class="ep-promote-card-kicker">Free — social media</p>
+              <h2 class="ep-promote-card-heading" id="ep-share-heading">Share your event</h2>
+              <p class="ee-hint ep-promote-card-lead" id="ep-share-hint">
+                Pick a post style, copy the text, download the image, and share on LinkedIn, Facebook, or Instagram.
+              </p>
 
-          <div class="ep-share-primary-action">
-            <button type="button" class="ee-btn ee-btn-gold" id="ep-share-linkedin-primary">
-              Copy post &amp; open LinkedIn
-            </button>
-            <p class="ep-linkedin-next" id="ep-linkedin-next">
-              We copy the post and download your picture. When LinkedIn opens, click <strong>Start a post</strong>, paste (<kbd>Ctrl+V</kbd> or <kbd>⌘V</kbd>), and attach the image from your downloads.
-            </p>
-          </div>
-
-            <div class="ep-share-pack" id="ep-share-pack">
-              <div class="ep-share-image-wrap">
-                <div class="ep-share-image-loading" id="ep-share-image-loading" role="status">Creating your social image…</div>
-                <img
-                  class="ep-share-image-preview"
-                  id="ep-share-image-preview"
-                  alt="Social media image preview for your event"
-                  hidden
-                />
-              </div>
-              <div class="ep-comms-preview" id="ep-comms-preview">
-                <div class="ep-caption-variants" id="ep-caption-variants" hidden>
-                  <p class="ep-comms-preview-label">Choose a post style</p>
-                  <div class="ep-caption-variant-list" id="ep-caption-variant-list" role="radiogroup" aria-label="Post style"></div>
-                </div>
-                <p class="ep-comms-preview-label">Suggested social post</p>
-                <pre class="ep-comms-preview-text" id="ep-comms-caption" data-comms-caption></pre>
-                <div class="ep-comms-actions">
-                  <button type="button" class="ee-btn ee-btn-primary" id="ep-copy-caption">Copy social post</button>
-                  <button type="button" class="ee-btn ee-btn-outline" id="ep-download-image" disabled>Download image</button>
-                </div>
-                <p class="ep-instagram-tip" id="ep-instagram-tip">
-                  <strong>Instagram:</strong> Download the image, then post to Stories. Tap the <strong>chain-link icon</strong> to add your listing link.
+              <div class="ep-share-primary-action">
+                <button type="button" class="ee-btn ee-btn-gold" id="ep-share-linkedin-primary">
+                  Copy post &amp; open LinkedIn
+                </button>
+                <p class="ep-linkedin-next" id="ep-linkedin-next">
+                  We copy the post and download your picture. On LinkedIn, click <strong>Start a post</strong>, paste
+                  (<kbd>Ctrl+V</kbd> or <kbd>⌘V</kbd>), then attach the image from your downloads. Other share buttons
+                  do the same for each network.
                 </p>
               </div>
             </div>
 
-            <div class="ep-share-link-row">
-              <input type="text" class="ep-share-input" id="ep-share-url" readonly aria-label="Share link" />
-              <button type="button" class="ee-btn ee-btn-outline" id="ep-copy-link">Copy link</button>
-            </div>
-            <p class="ep-copy-feedback" id="ep-copy-feedback" hidden>Link copied to clipboard</p>
-
-            <details class="ep-share-more">
-              <summary>More ways to share</summary>
-              <div class="ep-share-more-body">
-            <div class="ep-share-quick" role="group" aria-label="Quick share links">
-              <a class="ep-share-btn ep-share-linkedin" id="ep-share-linkedin" href="#" target="_blank" rel="noopener noreferrer">
-                LinkedIn
-              </a>
-              <a class="ep-share-btn ep-share-facebook" id="ep-share-facebook" href="#" target="_blank" rel="noopener noreferrer">
-                Facebook
-              </a>
-              <a class="ep-share-btn ep-share-x" id="ep-share-x" href="#" target="_blank" rel="noopener noreferrer">X</a>
-              <a class="ep-share-btn ep-share-whatsapp" id="ep-share-whatsapp" href="#" target="_blank" rel="noopener noreferrer">
-                WhatsApp
-              </a>
-              <a class="ep-share-btn ep-share-email" id="ep-share-email" href="#">Email</a>
-            </div>
+            <div class="ep-promote-card-body">
+              <div class="ep-share-pack" id="ep-share-pack">
+                <div class="ep-share-image-wrap">
+                  <div class="ep-share-image-loading" id="ep-share-image-loading" role="status">Creating your social image…</div>
+                  <img
+                    class="ep-share-image-preview"
+                    id="ep-share-image-preview"
+                    alt="Social media image preview for your event"
+                    hidden
+                  />
+                </div>
+                <div class="ep-comms-preview" id="ep-comms-preview">
+                  <div class="ep-caption-variants" id="ep-caption-variants" hidden>
+                    <p class="ep-comms-preview-label">Choose a post style</p>
+                    <div class="ep-caption-variant-list" id="ep-caption-variant-list" role="radiogroup" aria-label="Post style"></div>
+                  </div>
+                  <p class="ep-comms-preview-label">Suggested social post</p>
+                  <pre class="ep-comms-preview-text" id="ep-comms-caption" data-comms-caption></pre>
+                  <div class="ep-comms-actions">
+                    <button type="button" class="ee-btn ee-btn-primary" id="ep-copy-caption">Copy social post</button>
+                    <button type="button" class="ee-btn ee-btn-outline" id="ep-download-image" disabled>Download image</button>
+                  </div>
+                </div>
               </div>
-            </details>
 
-            <p class="ep-share-customise">
-              Want a different look?
-              <a href="/organiser/#social" id="ep-share-customise">More options in Share your event</a>
-            </p>
+              <div class="ep-share-link-row">
+                <input type="text" class="ep-share-input" id="ep-share-url" readonly aria-label="Share link" />
+                <button type="button" class="ee-btn ee-btn-outline" id="ep-copy-link">Copy link</button>
+              </div>
+              <p class="ep-copy-feedback" id="ep-copy-feedback" hidden>Link copied to clipboard</p>
+
+              <details class="ep-share-more">
+                <summary>More ways to share</summary>
+                <div class="ep-share-more-body">
+                  <p class="ep-instagram-tip" id="ep-instagram-tip">
+                    <strong>Instagram:</strong> Download the image, then post to Stories. Tap the <strong>chain-link icon</strong> to add your listing link.
+                  </p>
+                  <div class="ep-share-quick" role="group" aria-label="Quick share links">
+                    <a class="ep-share-btn ep-share-linkedin" id="ep-share-linkedin" href="#" target="_blank" rel="noopener noreferrer">
+                      LinkedIn
+                    </a>
+                    <a class="ep-share-btn ep-share-facebook" id="ep-share-facebook" href="#" target="_blank" rel="noopener noreferrer">
+                      Facebook
+                    </a>
+                    <a class="ep-share-btn ep-share-x" id="ep-share-x" href="#" target="_blank" rel="noopener noreferrer">X</a>
+                    <a class="ep-share-btn ep-share-whatsapp" id="ep-share-whatsapp" href="#" target="_blank" rel="noopener noreferrer">
+                      WhatsApp
+                    </a>
+                    <a class="ep-share-btn ep-share-email" id="ep-share-email" href="#">Email</a>
+                  </div>
+                  <p class="ep-share-customise">
+                    Want a different look?
+                    <a href="/organiser/#social" id="ep-share-customise">More options in Share your event</a>
+                  </p>
+                </div>
+              </details>
+            </div>
           </section>
 
           <section
@@ -116,14 +121,17 @@
             id="ep-featured-upsell"
             aria-labelledby="ep-featured-heading"
           >
-            <p class="oe-premium-badge">Paid — extra visibility</p>
-            <h2 class="oe-premium-heading" id="ep-featured-heading">Feature in Premium Spotlight</h2>
-            <p class="oe-premium-lede" id="ep-featured-lede">
-              Optional. Appear at the top of the browse page when people search for events in your area — only
-              <strong>12 featured slots</strong> at any time, from <strong>£55 per month</strong>.
-            </p>
+            <div class="ep-promote-card-top">
+              <p class="ep-promote-card-kicker ep-promote-card-kicker--paid">Paid — extra visibility</p>
+              <h2 class="ep-promote-card-heading" id="ep-featured-heading">Feature in Premium Spotlight</h2>
+              <p class="ee-hint ep-promote-card-lead" id="ep-featured-lede">
+                Optional. Appear at the top of the browse page when people search for events in your area — only
+                <strong>12 featured slots</strong> at any time, from <strong>£55 per month</strong>.
+              </p>
+            </div>
+
             <input type="hidden" name="featured-plan" value="1month" />
-            <div class="ep-featured-body">
+            <div class="ep-promote-card-body ep-featured-body">
               <div class="ep-featured-preview" id="ep-featured-preview" aria-labelledby="ep-featured-preview-label">
                 <p class="ep-featured-preview-label" id="ep-featured-preview-label">Preview — Premium Spotlight</p>
                 <div class="ep-featured-spotlight-frame" aria-hidden="true">
@@ -145,19 +153,20 @@
                 <p class="oe-premium-note ep-featured-duration-note" id="ep-featured-duration-note" hidden role="note"></p>
                 <p class="oe-premium-slot-status" id="ep-featured-slot-status" hidden role="status"></p>
                 <p class="oe-premium-note" id="ep-featured-error" hidden role="alert"></p>
-                <div class="ep-featured-footer" aria-labelledby="ep-featured-heading">
-                  <div class="ep-featured-price-block">
-                    <p class="ep-featured-single-price">
-                      <span class="ep-featured-plan-price">£55.00</span>
-                      <span class="ep-featured-plan-duration" id="ep-featured-plan-duration">per month</span>
-                    </p>
-                  </div>
-                  <div class="oe-premium-actions">
-                    <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
-                      Yes — feature my event
-                    </button>
-                  </div>
-                </div>
+              </div>
+            </div>
+
+            <div class="ep-promote-card-footer ep-featured-footer" aria-labelledby="ep-featured-heading">
+              <div class="ep-featured-price-block">
+                <p class="ep-featured-single-price">
+                  <span class="ep-featured-plan-price">£55.00</span>
+                  <span class="ep-featured-plan-duration" id="ep-featured-plan-duration">per month</span>
+                </p>
+              </div>
+              <div class="oe-premium-actions">
+                <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
+                  Yes — feature my event
+                </button>
               </div>
             </div>
           </section>
@@ -192,9 +201,9 @@
     </div>
 
     <script src="../js/organiser-event-wizard.js?v=20260608c" data-step="publish" defer></script>
-    <script src="../js/hub-comms-pack.js?v=20260723roi" defer></script>
-    <script src="../js/hub-going-share.js?v=20260722share" defer></script>
+    <script src="../js/hub-comms-pack.js?v=20260727share" defer></script>
+    <script src="../js/hub-going-share.js?v=20260727share" defer></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
-    <script src="../js/organiser-event-published.js?v=20260723roi" defer></script>
+    <script src="../js/organiser-event-published.js?v=20260727share" defer></script>
   </body>
 </html>

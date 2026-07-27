@@ -2948,38 +2948,52 @@
     }
   }
 
+  function localOpportunityCacheAllowed() {
+    return !(
+      window.HubOpportunitySaves &&
+      typeof window.HubOpportunitySaves.canUseLocalCache === 'function' &&
+      !window.HubOpportunitySaves.canUseLocalCache()
+    );
+  }
+
   function applySavedOpportunityData(data) {
     let list = [];
-    const localItems = readStoredOpportunityItems();
-    if (localItems.length) {
-      list = localItems.map((item) => ({
-        opportunityId: item.opportunityId || item.opportunity_id,
-        title: item.title || 'Opportunity',
-        host: item.host || '',
-        slug: item.slug || '',
-        logoUrl: item.logoUrl || item.imageUrl || '',
-        imageUrl: item.imageUrl || item.logoUrl || '',
-        createdAt: item.createdAt || item.created_at || item.savedAt || null,
-      }));
-    }
+    const serverOk = !!(data && data.ok);
+    const allowLocal = localOpportunityCacheAllowed();
 
-    if (data && data.ok && Array.isArray(data.favourites) && data.favourites.length) {
-      const serverItems = data.favourites.slice();
+    if (serverOk) {
+      if (Array.isArray(data.favourites)) {
+        list = data.favourites.slice();
+      }
+      if (Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
+        const seen = new Set(
+          list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
+        );
+        data.opportunityIds.forEach((id) => {
+          const key = String(id || '').trim();
+          if (key && !seen.has(key)) {
+            list.push({ opportunityId: key, title: 'Opportunity' });
+            seen.add(key);
+          }
+        });
+      }
+    } else if (allowLocal) {
+      const localItems = readStoredOpportunityItems();
+      if (localItems.length) {
+        list = localItems.map((item) => ({
+          opportunityId: item.opportunityId || item.opportunity_id,
+          title: item.title || 'Opportunity',
+          host: item.host || '',
+          slug: item.slug || '',
+          logoUrl: item.logoUrl || item.imageUrl || '',
+          imageUrl: item.imageUrl || item.logoUrl || '',
+          createdAt: item.createdAt || item.created_at || item.savedAt || null,
+        }));
+      }
       const seen = new Set(
         list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
       );
-      serverItems.forEach((item) => {
-        const key = String(item.opportunityId || item.opportunity_id || '').trim();
-        if (key && !seen.has(key)) {
-          list.push(item);
-          seen.add(key);
-        }
-      });
-    } else if (data && data.ok && Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
-      const seen = new Set(
-        list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
-      );
-      data.opportunityIds.forEach((id) => {
+      readStoredOpportunityIds().forEach((id) => {
         const key = String(id || '').trim();
         if (key && !seen.has(key)) {
           list.push({ opportunityId: key, title: 'Opportunity' });
@@ -2988,20 +3002,9 @@
       });
     }
 
-    const serverIds = new Set(
-      list.map((item) => String(item.opportunityId || item.opportunity_id || '').trim()).filter(Boolean)
-    );
-    readStoredOpportunityIds().forEach((id) => {
-      const key = String(id || '').trim();
-      if (key && !serverIds.has(key)) {
-        list.push({ opportunityId: key, title: 'Opportunity' });
-        serverIds.add(key);
-      }
-    });
-
     savedOpportunities = list.map(enrichSavedOpportunity);
 
-    if (window.HubOpportunitySaves) {
+    if (window.HubOpportunitySaves && allowLocal) {
       const mergedIds = savedOpportunities
         .map((item) => String(item.opportunityId || item.opportunity_id || '').trim())
         .filter(Boolean);
@@ -3024,8 +3027,11 @@
             createdAt: item.createdAt || item.created_at || new Date().toISOString(),
           }))
         );
-      } else if (data && data.ok && Array.isArray(data.opportunityIds) && data.opportunityIds.length) {
+      } else if (serverOk && Array.isArray(data.opportunityIds)) {
         window.HubOpportunitySaves.writeLocal(data.opportunityIds);
+        if (!data.opportunityIds.length && typeof window.HubOpportunitySaves.writeLocalItems === 'function') {
+          window.HubOpportunitySaves.writeLocalItems([]);
+        }
       }
     }
 
@@ -3445,9 +3451,17 @@
 
   async function loadSavedOpportunities() {
     // Paint browser saves immediately so the compare table is never blank while syncing.
-    applySavedOpportunityData(null);
+    if (localOpportunityCacheAllowed()) {
+      applySavedOpportunityData(null);
+    }
     try {
-      if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
+      if (window.HubOpportunitySaves && window.HubOpportunitySaves.adoptSession) {
+        const sessionData =
+          typeof window.hubFetchSession === 'function'
+            ? await window.hubFetchSession()
+            : null;
+        if (sessionData) await window.HubOpportunitySaves.adoptSession(sessionData);
+      } else if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
         await window.HubOpportunitySaves.mergeOnLogin();
       }
       const res = await fetch('/api/auth/opportunity-favourites', { credentials: 'include' });
@@ -3791,15 +3805,26 @@
     try {
       ensureAttendeeHubMode();
 
-      if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
-        try {
+      try {
+        if (window.HubOpportunitySaves && window.HubOpportunitySaves.adoptSession) {
+          await window.HubOpportunitySaves.adoptSession(sessionData);
+        } else if (window.HubOpportunitySaves && window.HubOpportunitySaves.mergeOnLogin) {
           await window.HubOpportunitySaves.mergeOnLogin();
-        } catch {
-          /* non-fatal — dashboard still falls back to local saves */
         }
+        if (window.HubFavourites && window.HubFavourites.adoptSession) {
+          await window.HubFavourites.adoptSession(sessionData);
+        }
+        if (window.HubOrganiserFavourites && window.HubOrganiserFavourites.adoptSession) {
+          await window.HubOrganiserFavourites.adoptSession(sessionData);
+        }
+      } catch {
+        /* non-fatal — dashboard still falls back to server fetches */
       }
-      // Show local saves before the network round-trip finishes.
-      applySavedOpportunityData(null);
+      // Show local saves before the network round-trip finishes (never while
+      // impersonating / when local cache belongs to another account).
+      if (localOpportunityCacheAllowed()) {
+        applySavedOpportunityData(null);
+      }
 
       const [dashRes, favRes, orgFavRes, oppFavRes, oppSearchRes] = await Promise.all([
         fetch('/api/auth/attendee-dashboard', { credentials: 'include' }),

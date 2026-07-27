@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260722b';
+  var NAV_BUILD = '20260727nav';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -188,7 +188,8 @@
   }
 
   function showListEventCta(user) {
-    return !user || !user.organiserUiVisible;
+    // Same top-bar CTA for every visitor and signed-in account.
+    return true;
   }
 
   function listEventCta(extraClass) {
@@ -244,12 +245,12 @@
       '" id="nav-my-hub-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-my-hub-menu">' +
       'My account <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
       '<div class="nav-dropdown-menu" id="nav-my-hub-menu" role="menu" hidden>' +
-      organiserItem +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/account/') +
       '"' +
       accountActive +
       '>My Hub</a>' +
+      organiserItem +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/account/settings') +
       '"' +
@@ -352,14 +353,8 @@
       html += listEventCta();
     }
     if (user) {
-      var hubView = user.hubView || 'attendee';
-      var showHubToggle =
-        user.canToggleHubMode === true &&
-        user.role === 'client' &&
-        user.organiserUiVisible;
-      if (showHubToggle && window.HubModeSwitch) {
-        html += window.HubModeSwitch.html(hubView);
-      }
+      // Same top bar for every signed-in user. Account-specific links (organiser
+      // workspace, Command Center) live only under My account.
       html += myHubDropdownHtml(user);
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
@@ -422,15 +417,7 @@
       html += listEventCta('nav-mobile-item nav-mobile-list-event');
     }
     if (user) {
-      var hubView = user.hubView || 'attendee';
-      var showHubToggle =
-        user.canToggleHubMode === true &&
-        user.role === 'client' &&
-        user.organiserUiVisible;
-      if (showHubToggle && window.HubModeSwitch) {
-        html +=
-          '<div class="nav-mobile-hub-mode">' + window.HubModeSwitch.html(hubView) + '</div>';
-      }
+      // Same mobile account section for everyone; optional links only when relevant.
       html += '<p class="nav-mobile-account-label">My account</p>';
       html += link('/account/', 'My Hub', 'account', 'nav-mobile-item');
       if (user.organiserUiVisible) {

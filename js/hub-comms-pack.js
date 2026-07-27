@@ -50,7 +50,14 @@
 
   function eventMetaLine(ev) {
     var date = formatMetaDate((ev && (ev.starts_at || ev.date || ev.dateLine)) || '');
-    var location = String((ev && ev.location) || '').trim();
+    var location = '';
+    if (global.HubOrganiserEventShare && global.HubOrganiserEventShare.formatShareLocation) {
+      location = global.HubOrganiserEventShare.formatShareLocation(ev);
+    } else if (global.HubGoingShare && global.HubGoingShare.formatShareLocation) {
+      location = global.HubGoingShare.formatShareLocation(ev);
+    } else {
+      location = String((ev && ev.location) || '').trim();
+    }
     return [date, location].filter(Boolean).join(' · ');
   }
 

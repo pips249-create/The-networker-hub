@@ -1389,6 +1389,20 @@
     }, METRICS_POLL_MS);
   }
 
+  var ADMIN_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+
+  function normalizeUploadBase64(dataUrlOrBase64) {
+    return String(dataUrlOrBase64 || '').replace(/^data:[^;]+;base64,/, '');
+  }
+
+  function adminNetworkErrorMessage(err) {
+    var msg = String((err && err.message) || '').trim();
+    if (!msg || msg === 'Failed to fetch' || msg === 'Load failed' || msg === 'NetworkError when attempting to fetch resource.') {
+      return 'Network request failed — check your connection, try a smaller image (under 2MB), or refresh and sign in again.';
+    }
+    return msg;
+  }
+
   function parseAdminFetchResponse(r, text) {
     var data = {};
     if (text) {
@@ -1413,6 +1427,11 @@
     if (!r.ok) {
       data.error = data.error || data.message || 'request_failed';
       data.ok = false;
+      if (r.status === 403 && data.error === 'site_private') {
+        data.message =
+          data.message ||
+          'Site preview access expired — open /site-access in a new tab, enter the preview password, then try again.';
+      }
     }
     return data;
   }
@@ -1428,7 +1447,7 @@
         return {
           ok: false,
           error: 'network_error',
-          message: (err && err.message) || 'Request failed',
+          message: adminNetworkErrorMessage(err),
         };
       });
   }
@@ -1449,7 +1468,7 @@
         return {
           ok: false,
           error: 'network_error',
-          message: (err && err.message) || 'Request failed',
+          message: adminNetworkErrorMessage(err),
         };
       });
   }
@@ -1470,7 +1489,7 @@
         return {
           ok: false,
           error: 'network_error',
-          message: (err && err.message) || 'Request failed',
+          message: adminNetworkErrorMessage(err),
         };
       });
   }
@@ -9888,12 +9907,19 @@
   }
 
   function readFileAsBase64(file) {
+    if (file && file.size > ADMIN_IMAGE_MAX_BYTES) {
+      return Promise.reject(
+        new Error('Image must be under 2MB. Choose a smaller file or paste an image URL instead.')
+      );
+    }
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () {
-        resolve(String(reader.result || ''));
+        resolve(normalizeUploadBase64(String(reader.result || '')));
       };
-      reader.onerror = reject;
+      reader.onerror = function () {
+        reject(new Error('Could not read the image file.'));
+      };
       reader.readAsDataURL(file);
     });
   }
@@ -9975,6 +10001,12 @@
     }
 
     function setFile(file) {
+      if (!file) return;
+      if (file.size > ADMIN_IMAGE_MAX_BYTES) {
+        window.alert('Image must be under 2MB. Choose a smaller file or paste an image URL instead.');
+        if (fileInput) fileInput.value = '';
+        return;
+      }
       adminLogoPending[key] = { file: file };
       var reader = new FileReader();
       reader.onload = function () {
@@ -10338,7 +10370,7 @@
       (browseHiddenDisabled ? ' disabled' : '') +
       '>' +
       '<span class="min-w-0"><span class="block text-sm font-semibold text-brand-900">Hide from browse</span>' +
-      '<span class="block text-[11px] text-slate-500 mt-0.5">Keeps this group off the public organiser directory until they claim the profile and publish a listing.</span>' +
+      '<span class="block text-[11px] text-slate-500 mt-0.5">Off the public directory only. They can still claim via invite email / matching login, then publish events (which puts the page live again).</span>' +
       (browseHiddenDisabled
         ? '<span class="block text-[11px] text-amber-800 font-semibold mt-1">Suspended — use Reinstate profile to publish again.</span>'
         : '') +
@@ -10733,6 +10765,26 @@
         window.alert(err.message || 'Could not create login');
       })
       .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function setGroupHiddenFromBrowse(organiserId, hide, btn) {
+    if (!organiserId) return;
+    if (btn) btn.disabled = true;
+    return adminPost('/api/admin/organisers', {
+      id: organiserId,
+      hide_from_browse: Boolean(hide),
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not update visibility');
+        return refreshGroupCleanupPage();
+      })
+      .then(function () {
+        updateGroupBulkBar();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not update visibility');
         if (btn) btn.disabled = false;
       });
   }
@@ -11473,6 +11525,16 @@
       return;
     }
 
+    var hideBrowseBtn = e.target.closest('[data-hide-group-browse]');
+    if (hideBrowseBtn) {
+      setGroupHiddenFromBrowse(
+        hideBrowseBtn.getAttribute('data-hide-group-browse'),
+        hideBrowseBtn.getAttribute('data-hide') === '1',
+        hideBrowseBtn
+      );
+      return;
+    }
+
     var impersonateGroupBtn = e.target.closest('[data-impersonate-group]');
     if (impersonateGroupBtn) {
       impersonateOrganiserGroup(
@@ -12029,6 +12091,15 @@
                   attrEsc(o.id) +
                   '" class="text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 hover:bg-slate-50">Block emails</button>'
               : '') +
+            (o.hub_suspended
+              ? ''
+              : String(o.listing_status || '').toLowerCase() === 'unpublished'
+                ? '<button type="button" data-hide-group-browse="' +
+                  attrEsc(o.id) +
+                  '" data-hide="0" class="text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-800 px-2.5 py-1 hover:bg-emerald-50" title="Put this group back on the public organiser directory">Show on browse</button>'
+                : '<button type="button" data-hide-group-browse="' +
+                  attrEsc(o.id) +
+                  '" data-hide="1" class="text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 px-2.5 py-1 hover:bg-slate-50" title="Hide from the public organiser directory — they can still claim by email and add events">Hide from browse</button>') +
             '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
             (isOpen ? 'Close' : 'Edit profile') +
             '</button>' +
@@ -12134,7 +12205,7 @@
       '> Show incomplete only</label>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
-      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers below to browse.</p>' +
+      '<p class="text-xs text-slate-500">Compact rows — use <strong>Hide from browse</strong> on a row, or <strong>Edit profile</strong> for full details. Use page numbers below to browse.</p>' +
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;

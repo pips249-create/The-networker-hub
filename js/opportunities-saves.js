@@ -2,13 +2,71 @@
  * Saved opportunities — localStorage for guests, Supabase sync when signed in.
  * POST = add (idempotent). DELETE = remove. Never toggle via POST — parallel
  * merges were adding then immediately removing the same favourite.
+ *
+ * localStorage is browser-scoped (not per account). Never merge local saves into
+ * another account — especially while impersonating — or the wrong user's bookmarks
+ * appear and can be written to the target account.
  */
 (function () {
   var SAVE_KEY = 'hubSavedOpportunityIds';
   var SAVE_ITEMS_KEY = 'hubSavedOpportunityItems';
+  var OWNER_KEY = 'hubSavedOpportunityOwner';
   var cache = null;
   var syncPromise = null;
   var mergePromise = null;
+  var activeAccount = { email: '', impersonating: false };
+
+  function readOwner() {
+    try {
+      return String(localStorage.getItem(OWNER_KEY) || '')
+        .trim()
+        .toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function writeOwner(email) {
+    try {
+      var key = String(email || '')
+        .trim()
+        .toLowerCase();
+      if (key) localStorage.setItem(OWNER_KEY, key);
+      else localStorage.removeItem(OWNER_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function accountEmail(sessionData) {
+    return sessionData && sessionData.user && sessionData.user.email
+      ? String(sessionData.user.email)
+          .trim()
+          .toLowerCase()
+      : '';
+  }
+
+  function setActiveAccount(sessionData) {
+    activeAccount.email = accountEmail(sessionData);
+    activeAccount.impersonating = !!(sessionData && sessionData.impersonating);
+  }
+
+  function canUseLocalCache() {
+    if (activeAccount.impersonating) return false;
+    var owner = readOwner();
+    if (!activeAccount.email) return true;
+    if (!owner) return true;
+    return owner === activeAccount.email;
+  }
+
+  function shouldMergeLocal(sessionData) {
+    if (!sessionData || !sessionData.ok || !sessionData.user) return false;
+    if (sessionData.impersonating) return false;
+    var owner = readOwner();
+    var email = accountEmail(sessionData);
+    if (!owner) return true;
+    return owner === email;
+  }
 
   function readLocal() {
     try {
@@ -43,6 +101,10 @@
   }
 
   function writeLocal(ids) {
+    if (activeAccount.impersonating) {
+      cache = uniqueIds(ids);
+      return;
+    }
     var next = uniqueIds(ids);
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(next));
@@ -50,15 +112,18 @@
       /* ignore */
     }
     cache = next.slice();
+    if (activeAccount.email) writeOwner(activeAccount.email);
   }
 
   function writeLocalItems(items) {
+    if (activeAccount.impersonating) return;
     var list = Array.isArray(items) ? items : [];
     try {
       localStorage.setItem(SAVE_ITEMS_KEY, JSON.stringify(list));
     } catch (e) {
       /* ignore */
     }
+    if (activeAccount.email) writeOwner(activeAccount.email);
   }
 
   function metaVal(meta, keyRe) {
@@ -125,10 +190,11 @@
   function setCacheFromServer(serverIds, keepLocalIds) {
     if (!Array.isArray(serverIds)) return;
     var merged = uniqueIds(serverIds);
-    if (keepLocalIds && keepLocalIds.length) {
+    if (!activeAccount.impersonating && keepLocalIds && keepLocalIds.length && canUseLocalCache()) {
       merged = uniqueIds(merged.concat(keepLocalIds));
     }
     cache = merged;
+    if (activeAccount.impersonating) return;
     writeLocal(cache);
   }
 
@@ -175,7 +241,28 @@
       .then(function (result) {
         var data = result.data;
         if (data && data.ok && Array.isArray(data.opportunityIds)) {
-          setCacheFromServer(data.opportunityIds, readLocal());
+          setCacheFromServer(data.opportunityIds);
+          if (data.favourites && !activeAccount.impersonating) {
+            writeLocalItems(
+              (data.favourites || []).map(function (item) {
+                return {
+                  opportunityId: item.opportunityId || item.opportunity_id,
+                  id: item.opportunityId || item.opportunity_id,
+                  title: item.title || 'Opportunity',
+                  host: item.host || '',
+                  slug: item.slug || '',
+                  type: item.type || '',
+                  logoUrl: item.logoUrl || item.imageUrl || '',
+                  imageUrl: item.imageUrl || item.logoUrl || '',
+                  locationLabel: item.locationLabel || '',
+                  investment: item.investment || '',
+                  commitment: item.commitment || '',
+                  meta: Array.isArray(item.meta) ? item.meta : [],
+                  createdAt: item.createdAt || item.created_at || null,
+                };
+              })
+            );
+          }
         }
         return data;
       })
@@ -189,6 +276,10 @@
     if (mergePromise) return mergePromise;
 
     mergePromise = (function () {
+      if (activeAccount.impersonating || !canUseLocalCache()) {
+        return syncFromServer();
+      }
+
       var localSnapshot = readLocal();
       var localItems = readLocalItems();
       if (!localSnapshot.length && !localItems.length) return syncFromServer();
@@ -219,7 +310,7 @@
         });
 
         if (!pending.length) {
-          setCacheFromServer(data.opportunityIds, localSnapshot);
+          setCacheFromServer(data.opportunityIds);
           return data;
         }
 
@@ -238,16 +329,7 @@
               finalData && finalData.ok && Array.isArray(finalData.opportunityIds)
                 ? finalData.opportunityIds
                 : data.opportunityIds || [];
-            setCacheFromServer(
-              serverIds,
-              uniqueIds(
-                localSnapshot.concat(
-                  localItems.map(function (item) {
-                    return item.opportunityId || item.opportunity_id;
-                  })
-                )
-              )
-            );
+            setCacheFromServer(serverIds);
             return finalData || data;
           });
       });
@@ -256,6 +338,21 @@
     });
 
     return mergePromise;
+  }
+
+  function adoptSession(sessionData) {
+    setActiveAccount(sessionData);
+    if (!(sessionData && sessionData.ok && sessionData.user)) return Promise.resolve(null);
+    if (shouldMergeLocal(sessionData)) {
+      return mergeLocalToServer().then(function (data) {
+        writeOwner(accountEmail(sessionData));
+        return data;
+      });
+    }
+    return syncFromServer().then(function (data) {
+      if (!sessionData.impersonating) writeOwner(accountEmail(sessionData));
+      return data;
+    });
   }
 
   function compareHref() {
@@ -370,6 +467,8 @@
     toggle: toggle,
     sync: syncFromServer,
     mergeOnLogin: mergeLocalToServer,
+    adoptSession: adoptSession,
+    canUseLocalCache: canUseLocalCache,
     refreshButtons: refreshButtons,
     writeLocal: writeLocal,
     writeLocalItems: writeLocalItems,
@@ -385,7 +484,7 @@
 
   loadSession()
     .then(function (data) {
-      if (data && data.ok && data.user) return mergeLocalToServer();
+      return adoptSession(data);
     })
     .catch(function () {
       /* guest — local only */

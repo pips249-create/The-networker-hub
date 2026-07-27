@@ -73,8 +73,8 @@
   async function init() {
     var session = await loadSession();
     if (!session.ok || !session.user) {
-      window.location.href =
-        '../login?next=' + encodeURIComponent('/organiser/verify-email');
+      var returnTo = window.location.pathname + window.location.search;
+      window.location.href = '/login?next=' + encodeURIComponent(returnTo);
       return;
     }
 

@@ -515,6 +515,14 @@ async function maybeGateSiteAccess(request, url) {
     return sitePrivateResponse();
   }
 
+  // Command Centre API: signed-in hub users (admin gate is enforced in the handler).
+  if (pathname === '/api/admin' || pathname.startsWith('/api/admin/')) {
+    if ((await hasSiteAccess(request)) || (await hasValidSession(request))) {
+      return { authorized: true };
+    }
+    return sitePrivateResponse();
+  }
+
   // Let social crawlers fetch listing HTML + OG tags (still noindexed via authorized path).
   if (isSocialCrawler(request) && isPublicListingPath(pathname)) {
     return { authorized: true, socialCrawler: true };

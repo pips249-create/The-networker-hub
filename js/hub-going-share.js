@@ -107,6 +107,77 @@
     return lines;
   }
 
+  /** Prefer the most complete address string available on the event. */
+  function formatShareLocation(ev) {
+    const location = String((ev && ev.location) || '').trim();
+    const venue = String((ev && ev.venue) || '').trim();
+    const address = String((ev && (ev.addressLine1 || ev.address || ev.fullAddress)) || '').trim();
+    const city = String((ev && ev.city) || '').trim();
+    const postcode = String((ev && ev.postcode) || '').trim();
+
+    const parts = [];
+    function pushUnique(value) {
+      const v = String(value || '').trim();
+      if (!v) return;
+      const lower = v.toLowerCase();
+      if (parts.some(function (p) { return p.toLowerCase() === lower; })) return;
+      if (parts.some(function (p) { return p.toLowerCase().indexOf(lower) !== -1; })) return;
+      if (parts.some(function (p) { return lower.indexOf(p.toLowerCase()) !== -1; })) {
+        for (let i = 0; i < parts.length; i++) {
+          if (lower.indexOf(parts[i].toLowerCase()) !== -1) {
+            parts[i] = v;
+            return;
+          }
+        }
+      }
+      parts.push(v);
+    }
+
+    pushUnique(venue);
+    pushUnique(address);
+    pushUnique(city);
+    pushUnique(postcode);
+
+    const structured = parts.join(', ');
+    if (structured && structured.length >= location.length) return structured;
+    return location || structured;
+  }
+
+  /**
+   * Draw date + address under the title. Address wraps onto multiple lines
+   * so long venues are not cut off with an ellipsis.
+   * Returns the y position after the last meta line.
+   */
+  function drawShareMeta(ctx, ev, textX, startY, textMaxW, options) {
+    options = options || {};
+    const dateLabel = formatShareDate(
+      ev && (ev.starts_at || ev.date || ev.dateLine)
+    );
+    const location = formatShareLocation(ev);
+    const fontSize = options.fontSize || 24;
+    const lineHeight = options.lineHeight || 30;
+    const maxLocLines = options.maxLocLines || 3;
+
+    ctx.fillStyle = options.color || '#5a4a62';
+    ctx.font = '500 ' + fontSize + 'px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    let y = startY;
+    if (dateLabel) {
+      ctx.fillText(truncateText(ctx, dateLabel, textMaxW), textX, y);
+      y += lineHeight;
+    }
+    if (location) {
+      const locLines = wrapLines(ctx, location, textMaxW, maxLocLines);
+      locLines.forEach(function (line) {
+        ctx.fillText(line, textX, y);
+        y += lineHeight;
+      });
+    }
+    return y;
+  }
+
   function resolveEventImageUrl(ev) {
     const direct = String((ev && ev.imageUrl) || '').trim();
     const logo = String((ev && ev.organiserLogo) || '').trim();
@@ -235,7 +306,13 @@
     // Title
     ctx.fillStyle = '#2d1b5e';
     ctx.font = '700 48px "DM Sans", system-ui, sans-serif';
-    const titleLines = wrapLines(ctx, (ev && ev.title) || 'Event', textMaxW, 3);
+    const locationHint = formatShareLocation(ev);
+    const titleLines = wrapLines(
+      ctx,
+      (ev && ev.title) || 'Event',
+      textMaxW,
+      locationHint ? 2 : 3
+    );
     let titleY = 210;
     titleLines.forEach(function (line) {
       ctx.fillText(line, textX, titleY);
@@ -251,14 +328,11 @@
       titleY += 40;
     }
 
-    const dateLabel = formatShareDate(ev && ev.starts_at);
-    const location = String((ev && ev.location) || '').trim();
-    const meta = [dateLabel, location].filter(Boolean).join('  ·  ');
-    if (meta) {
-      ctx.fillStyle = '#5a4a62';
-      ctx.font = '500 26px "DM Sans", system-ui, sans-serif';
-      ctx.fillText(truncateText(ctx, meta, textMaxW), textX, titleY + 28);
-    }
+    drawShareMeta(ctx, ev, textX, titleY + 28, textMaxW, {
+      fontSize: 26,
+      lineHeight: 32,
+      maxLocLines: 3,
+    });
 
     // Footer brand strip
     ctx.fillStyle = 'rgba(45, 27, 94, 0.08)';
@@ -386,7 +460,13 @@
 
     ctx.fillStyle = '#2d1b5e';
     ctx.font = '700 48px "DM Sans", system-ui, sans-serif';
-    const titleLines = wrapLines(ctx, (ev && ev.title) || 'Event', textMaxW, 3);
+    const locationHint = formatShareLocation(ev);
+    const titleLines = wrapLines(
+      ctx,
+      (ev && ev.title) || 'Event',
+      textMaxW,
+      locationHint ? 2 : 3
+    );
     let titleY = 210;
     titleLines.forEach(function (line) {
       ctx.fillText(line, textX, titleY);
@@ -402,18 +482,16 @@
       titleY += 40;
     }
 
-    const dateLabel = formatShareDate(ev && (ev.starts_at || ev.date || ev.dateLine));
-    const location = String((ev && ev.location) || '').trim();
-    const meta = [dateLabel, location].filter(Boolean).join('  ·  ');
-    if (meta) {
-      ctx.fillStyle = '#5a4a62';
-      ctx.font = '500 26px "DM Sans", system-ui, sans-serif';
-      ctx.fillText(truncateText(ctx, meta, textMaxW), textX, titleY + 28);
-    }
+    const metaBottom = drawShareMeta(ctx, ev, textX, titleY + 28, textMaxW, {
+      fontSize: 24,
+      lineHeight: 30,
+      maxLocLines: 3,
+    });
 
     ctx.fillStyle = '#5a4a62';
     ctx.font = '500 24px "DM Sans", system-ui, sans-serif';
-    ctx.fillText('Book on The Networker Hub', textX, titleY + 72);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Book on The Networker Hub', textX, Math.min(metaBottom + 28, CARD_H - 110));
 
     ctx.fillStyle = 'rgba(45, 27, 94, 0.08)';
     ctx.fillRect(64, CARD_H - 78, CARD_W - 128, 1);
@@ -443,6 +521,7 @@
     downloadPngDataUrl: downloadPngDataUrl,
     eventPageUrl: eventPageUrl,
     formatShareDate: formatShareDate,
+    formatShareLocation: formatShareLocation,
     safeFilename: safeFilename,
   };
 
@@ -452,5 +531,6 @@
     downloadPngDataUrl: downloadPngDataUrl,
     safeFilename: safeFilename,
     formatShareDate: formatShareDate,
+    formatShareLocation: formatShareLocation,
   };
 })(typeof window !== 'undefined' ? window : global);

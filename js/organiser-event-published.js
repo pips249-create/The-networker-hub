@@ -314,35 +314,149 @@
   }
 
   function updateShareQuickLinks(title, caption) {
-    const shareText = String(caption || title || 'My event').trim();
+    const rawCaption = String(caption || title || 'My event').trim();
+    const shareText = captionWithListingUrl(rawCaption);
     const encodedUrl = encodeURIComponent(listingUrl);
-    const shortText =
-      shareText.length > 240 ? shareText.slice(0, 237).trim() + '…' : shareText;
-    const encodedText = encodeURIComponent(shortText);
+    let tweetText = rawCaption;
+    if (listingUrl && tweetText.indexOf(listingUrl) !== -1) {
+      tweetText = tweetText
+        .split(listingUrl)
+        .join('')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+    const shortTweet =
+      tweetText.length > 220 ? tweetText.slice(0, 217).trim() + '…' : tweetText;
+    const encodedTweet = encodeURIComponent(shortTweet);
 
     if (shareQuickLinkedIn) {
-      shareQuickLinkedIn.href =
-        'https://www.linkedin.com/sharing/share-offsite/?url=' + encodedUrl;
+      // LinkedIn no longer accepts prefilled text — open the feed for paste.
+      shareQuickLinkedIn.href = 'https://www.linkedin.com/feed/';
+      shareQuickLinkedIn.setAttribute('data-share-network', 'linkedin');
     }
     if (shareQuickFacebook) {
-      shareQuickFacebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodedUrl;
+      shareQuickFacebook.href =
+        'https://www.facebook.com/sharer/sharer.php?u=' + encodedUrl;
+      shareQuickFacebook.setAttribute('data-share-network', 'facebook');
     }
     if (shareQuickX) {
       shareQuickX.href =
-        'https://twitter.com/intent/tweet?url=' + encodedUrl + '&text=' + encodedText;
+        'https://twitter.com/intent/tweet?text=' +
+        encodedTweet +
+        '&url=' +
+        encodedUrl;
+      shareQuickX.setAttribute('data-share-network', 'x');
     }
     if (shareQuickWhatsapp) {
       shareQuickWhatsapp.href =
-        'https://wa.me/?text=' + encodeURIComponent(shareText + '\n\n' + listingUrl);
+        'https://wa.me/?text=' + encodeURIComponent(shareText);
+      shareQuickWhatsapp.setAttribute('data-share-network', 'whatsapp');
     }
     if (shareQuickEmail) {
       shareQuickEmail.href =
         'mailto:?subject=' +
         encodeURIComponent('Join my event on The Networker Hub') +
         '&body=' +
-        encodeURIComponent(shareText + '\n\n' + listingUrl);
+        encodeURIComponent(shareText);
       shareQuickEmail.removeAttribute('target');
+      shareQuickEmail.setAttribute('data-share-network', 'email');
     }
+  }
+
+  function captionWithListingUrl(caption) {
+    const text = String(caption || '').trim();
+    const url = String(listingUrl || '').trim();
+    if (!url) return text;
+    if (!text) return url;
+    if (text.indexOf(url) !== -1) return text;
+    return text + '\n\n' + url;
+  }
+
+  function networkLabel(network) {
+    if (network === 'linkedin') return 'LinkedIn';
+    if (network === 'facebook') return 'Facebook';
+    if (network === 'x') return 'X';
+    if (network === 'whatsapp') return 'WhatsApp';
+    if (network === 'email') return 'email';
+    return 'your post';
+  }
+
+  async function shareToNetwork(network, clickEvent) {
+    if (clickEvent) clickEvent.preventDefault();
+    try {
+      await sharePackPromise;
+    } catch {
+      /* non-fatal */
+    }
+    const caption = captionWithListingUrl(
+      (sharePack && sharePack.caption) || listingUrl
+    );
+    const feedback = document.getElementById('ep-copy-feedback');
+    const needsPaste = network === 'linkedin' || network === 'facebook';
+
+    if (needsPaste) {
+      await copyText(
+        caption,
+        feedback,
+        '',
+        'Post copied — paste it into ' + networkLabel(network)
+      );
+    }
+
+    // Image posts: offer the promo image for platforms that support attachments.
+    if (
+      shareCardDataUrl &&
+      (network === 'linkedin' || network === 'facebook' || network === 'x')
+    ) {
+      downloadShareImage();
+    }
+
+    updateShareQuickLinks(sharePack && sharePack.title, caption);
+
+    let href = listingUrl;
+    if (network === 'linkedin' && shareQuickLinkedIn) href = shareQuickLinkedIn.href;
+    else if (network === 'facebook' && shareQuickFacebook) href = shareQuickFacebook.href;
+    else if (network === 'x' && shareQuickX) href = shareQuickX.href;
+    else if (network === 'whatsapp' && shareQuickWhatsapp) href = shareQuickWhatsapp.href;
+    else if (network === 'email' && shareQuickEmail) href = shareQuickEmail.href;
+
+    if (network === 'email') {
+      window.location.href = href;
+    } else {
+      window.open(href, '_blank', 'noopener,noreferrer');
+    }
+    markShareDone();
+  }
+
+  function bindShareQuickButtons() {
+    const buttons = [
+      [shareQuickLinkedIn, 'linkedin'],
+      [shareQuickFacebook, 'facebook'],
+      [shareQuickX, 'x'],
+      [shareQuickWhatsapp, 'whatsapp'],
+      [shareQuickEmail, 'email'],
+    ];
+    buttons.forEach(function (pair) {
+      const el = pair[0];
+      const network = pair[1];
+      if (!el || el.dataset.shareBound === '1') return;
+      el.dataset.shareBound = '1';
+      el.addEventListener('click', function (e) {
+        shareToNetwork(network, e);
+      });
+    });
+  }
+
+  bindShareQuickButtons();
+
+  function fullShareLocation(ev) {
+    if (
+      window.HubOrganiserEventShare &&
+      window.HubOrganiserEventShare.formatShareLocation
+    ) {
+      return window.HubOrganiserEventShare.formatShareLocation(ev);
+    }
+    return String((ev && ev.location) || '').trim();
   }
 
   function cardLocationForPreview(ev) {
@@ -550,7 +664,12 @@
       description: plainDescription(ev.description),
       date: ev.date || ev.dateLine,
       starts_at: ev.starts_at || ev.date || ev.dateLine,
-      location: ev.location,
+      location: fullShareLocation(ev) || ev.location,
+      venue: ev.venue,
+      addressLine1: ev.addressLine1 || ev.address,
+      address: ev.address || ev.addressLine1,
+      city: ev.city,
+      postcode: ev.postcode,
       type: ev.type || ev.eventType,
       eventType: ev.eventType || ev.type,
       priceKey: ev.priceKey,
@@ -567,7 +686,7 @@
   function sharePackEventFromSources(organiserEvent, hubEvent) {
     const base = organiserEvent || hubEvent || {};
     const hub = hubEvent || {};
-    return {
+    const merged = {
       id: base.id || primaryId,
       slug: base.slug || hub.slug,
       title: base.title || hub.title || fallbackTitle,
@@ -575,6 +694,11 @@
       date: base.date || hub.date || hub.dateLine,
       starts_at: base.starts_at || base.date || hub.starts_at || hub.date,
       location: base.location || hub.location,
+      venue: base.venue || hub.venue,
+      addressLine1: base.addressLine1 || base.address || hub.addressLine1 || hub.address,
+      address: base.address || base.addressLine1 || hub.address || hub.addressLine1,
+      city: base.city || hub.city,
+      postcode: base.postcode || hub.postcode,
       type: base.type || hub.type || hub.eventType,
       eventType: base.eventType || hub.eventType || base.type || hub.type,
       priceKey: hub.priceKey || base.priceKey,
@@ -589,6 +713,8 @@
       status: base.status,
       listingStatus: base.listingStatus,
     };
+    merged.location = fullShareLocation(merged) || merged.location;
+    return merged;
   }
 
   function markLiveOnBrowse(options) {
@@ -765,7 +891,7 @@
     } catch {
       /* non-fatal */
     }
-    const caption = (sharePack && sharePack.caption) || listingUrl;
+    const caption = captionWithListingUrl((sharePack && sharePack.caption) || listingUrl);
     const copied = await copyText(
       caption,
       feedback,

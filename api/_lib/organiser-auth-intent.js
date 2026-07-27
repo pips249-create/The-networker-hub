@@ -31,6 +31,22 @@ function isOrganiserClaimNext(next) {
   return String(next || '').indexOf('onboard=claim') !== -1;
 }
 
+/** True when next is verify-email and still carries the confirmation token. */
+function hasVerifyEmailToken(next) {
+  const raw = String(next || '').trim();
+  if (!raw) return false;
+  try {
+    const url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(raw, 'https://example.com');
+    return (
+      /^\/organiser\/verify-email\/?$/.test(url.pathname) && !!url.searchParams.get('token')
+    );
+  } catch {
+    return (
+      raw.indexOf('/organiser/verify-email') !== -1 && raw.indexOf('token=') !== -1
+    );
+  }
+}
+
 async function resolveOrganiserRedirect(session) {
   const status = await getOrganiserAccessStatus(session);
   if (status.pendingClaimCount > 0) {
@@ -93,6 +109,10 @@ function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect 
   const claimIntent = String(intent || '').trim().toLowerCase() === 'organiser-claim';
   if (claimIntent || isOrganiserClaimNext(trimmedNext)) {
     return trimmedNext || '/organiser/?onboard=claim';
+  }
+  // Keep email confirmation tokens — autoResult.redirect is a bare verify path.
+  if (hasVerifyEmailToken(trimmedNext)) {
+    return trimmedNext;
   }
   if (autoResult?.redirect) return autoResult.redirect;
   return trimmedNext || '/organiser/';
