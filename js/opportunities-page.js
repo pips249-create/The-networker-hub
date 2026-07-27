@@ -1429,6 +1429,7 @@
     writeFiltersToUrl();
     renderListings();
     renderSpotlight();
+    if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
   }
 
   function resetFilters() {
@@ -1476,6 +1477,7 @@
     writeFiltersToUrl();
     renderListings();
     renderSpotlight();
+    if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
   }
 
   function setSaveSearchStatus(msg, isError) {
@@ -1645,6 +1647,12 @@
         setView('map');
       });
     }
+    var mapListBtn = document.getElementById('opp-map-mobile-list-btn');
+    if (mapListBtn) {
+      mapListBtn.addEventListener('click', function () {
+        setView('grid');
+      });
+    }
     syncViewToggleUI();
   }
 
@@ -1704,6 +1712,31 @@
 
     if (els.clearBar) els.clearBar.addEventListener('click', resetFilters);
     if (els.clearResults) els.clearResults.addEventListener('click', resetFilters);
+
+    if (window.HUB_initMobileFilterSheet) {
+      var sheetCtrl = window.HUB_initMobileFilterSheet({
+        getTitle: function () {
+          return 'Filter opportunities';
+        },
+        hasActiveFilters: hasActiveOppMobileFilters,
+        onApply: applyFilters,
+        onClear: resetFilters,
+      });
+      if (sheetCtrl) window.hubSyncMobileFilterToggle = sheetCtrl.sync;
+    }
+  }
+
+  function hasActiveOppMobileFilters() {
+    readFiltersFromControls();
+    if (searchQ) return true;
+    if (locationQ) return true;
+    if (activeCategory) return true;
+    if (activeTypes.length) return true;
+    if (activeInvestTier && activeInvestTier !== 'all') return true;
+    if (activeCommitments.length) return true;
+    if (minInvest != null || maxInvest != null) return true;
+    if (activeLocationTag) return true;
+    return false;
   }
 
   function findListingById(id) {

@@ -2661,6 +2661,28 @@ body.events-filter-sheet-open {
   display: none;
 }
 
+.filter-mobile-sheet-body .filter-more-panel,
+.filter-mobile-sheet-body .filter-more-panel[hidden] {
+  display: flex !important;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-mobile-sheet-body .filter-more-toggle {
+  display: none !important;
+}
+
+.filter-mobile-sheet-body .filter-opp-location-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
 .filter-mobile-sheet-body .filter-format-pills {
   display: grid;
   grid-template-columns: 1fr 1fr;

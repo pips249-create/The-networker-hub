@@ -346,10 +346,10 @@ body.nav-menu-open {
     padding-top: 64px;
   }
 
-  /* Keep opportunities family at 72px even when the general mobile rule is 64px */
+  /* Align opportunities browse header offset with events browse */
   body.opportunities-page:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
   body.opportunities-page.has-site-nav {
-    padding-top: 72px;
+    padding-top: 64px;
   }
 
   body.hub-page-organiser .site-nav,
@@ -1617,5 +1617,45 @@ body.nav-menu-open {
 @media (max-width: 768px) {
   .opportunity-detail-page .opp-detail-shell {
     padding-bottom: 24px;
+  }
+}
+
+/* ─── Opportunities browse (filter sheet parity + toolbar) ─── */
+@media (max-width: 900px) {
+  .opp-browse-page .events-results-meta {
+    padding-right: 52px;
+  }
+
+  .opp-browse-page .events-results-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .opp-browse-page .events-results-actions .opp-copy-link-btn,
+  .opp-browse-page .events-results-actions .opp-save-search-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .opp-browse-page .events-view-sort-group {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .opp-browse-page .clear-filters-link {
+    align-self: flex-start;
+  }
+
+  body.opp-view-map.opp-browse-page .opp-map-mobile-bar,
+  body.opp-view-map.opp-browse-page .events-map-mobile-bar {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .opp-browse-page .opp-compare-nudge {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }

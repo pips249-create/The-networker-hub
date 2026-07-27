@@ -17,14 +17,14 @@
     <link rel="stylesheet" href="/css/hub.css?v=20260714cls" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260722lede" />
     <link rel="stylesheet" href="/css/opportunities-page.css?v=20260723filter" />
-    <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260722orgtitle" />
-    <link rel="stylesheet" href="/css/home-page.css?v=20260723hyphen" />
+    <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet" />
+    <link rel="stylesheet" href="/css/home-page.css?v=20260726city" />
     <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any" />
     <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml" />
     <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2" />
     <link rel="stylesheet" href="/css/networking-regions.css?v=20260722cp11" />
-    <link rel="stylesheet" href="/css/hub-mobile.css?v=20260726m" />
+    <link rel="stylesheet" href="/css/hub-mobile.css?v=20260727opp" />
     <link rel="stylesheet" href="/css/hubert-widget.css?v=20260710" />
     <script src="/js/hub-seo-static-config.js?v=20260612"></script>
     <script src="/js/hub-seo-static.js?v=20260612" data-page="opportunities"></script>
@@ -134,7 +134,7 @@
         <h2 class="events-filter-heading" id="events-filter-heading">Filter opportunities</h2>
         <div class="events-filter-shell">
           <div class="events-filter-bar" role="search" aria-label="Filter opportunities">
-            <div class="filter-bar-row filter-bar-row-top">
+            <div class="filter-bar-row filter-bar-row-top filter-bar-row-compact">
               <div class="filter-field filter-field-search filter-field-grow">
                 <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
@@ -142,6 +142,11 @@
                 <label class="visually-hidden" for="opp-search">Search opportunities</label>
                 <input type="search" id="opp-search" placeholder="Search franchises, side hustles, providers…" autocomplete="off">
               </div>
+              <button type="button" class="filter-mobile-toggle" id="filter-mobile-toggle" aria-expanded="false" aria-controls="filter-mobile-sheet" hidden>
+                <span class="filter-mobile-toggle-label">Filters</span>
+                <span class="filter-mobile-toggle-badge" id="filter-mobile-toggle-badge" hidden aria-hidden="true"></span>
+              </button>
+              <div class="filter-bar-location-group filter-opp-location-group">
               <div class="filter-field filter-field-postcode">
                 <span class="filter-field-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -149,8 +154,9 @@
                 <label class="visually-hidden" for="opp-postcode">Location</label>
                 <input type="text" id="opp-postcode" placeholder="City or region" autocomplete="address-level2" title="Filter by city or region">
               </div>
+              </div>
             </div>
-            <div class="filter-bar-row filter-bar-row-bottom">
+            <div class="filter-bar-row filter-bar-row-bottom" id="filter-bar-advanced">
               <div class="filter-bar-cluster">
                 <div class="filter-bar-primary">
                   <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group">
@@ -243,6 +249,28 @@
         </div>
       </div>
 
+      <div class="filter-mobile-sheet" id="filter-mobile-sheet" hidden aria-hidden="true">
+        <div class="filter-mobile-sheet-backdrop" id="filter-mobile-sheet-backdrop" tabindex="-1"></div>
+        <div
+          class="filter-mobile-sheet-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="filter-mobile-sheet-title"
+        >
+          <header class="filter-mobile-sheet-head">
+            <button type="button" class="filter-mobile-sheet-close" id="filter-mobile-sheet-close" aria-label="Close filters">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <h2 class="filter-mobile-sheet-title" id="filter-mobile-sheet-title">Filter opportunities</h2>
+          </header>
+          <div class="filter-mobile-sheet-body" id="filter-mobile-sheet-body"></div>
+          <footer class="filter-mobile-sheet-foot">
+            <button type="button" class="filter-mobile-sheet-clear" id="filter-mobile-sheet-clear">Clear all</button>
+            <button type="button" class="filter-mobile-sheet-apply" id="filter-mobile-sheet-apply">Show results</button>
+          </footer>
+        </div>
+      </div>
+
       <p class="opp-browse-disclaimer" role="note">
         Listings are informational only — not FCA-regulated and not investment advice. Conduct your own due diligence before any commercial arrangement.
       </p>
@@ -311,6 +339,12 @@
       <div class="events-body">
         <div class="events-main">
           <div class="opp-map-wrap" id="opp-map-wrap" hidden>
+            <div class="events-map-mobile-bar opp-map-mobile-bar" id="opp-map-mobile-bar">
+              <button type="button" class="events-map-mobile-list-btn" id="opp-map-mobile-list-btn" aria-pressed="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                Back to grid
+              </button>
+            </div>
             <aside class="opp-map-sidebar" id="opp-map-sidebar" aria-label="Opportunities on map">
               <div class="opp-map-sidebar-head" id="opp-map-sidebar-head">
                 <div class="opp-map-sidebar-head-row">
@@ -517,7 +551,8 @@
     <script src="/js/opportunities-regions.js?v=20260722cp11" defer></script>
     <script src="/js/postcode-geo.js?v=20260609b" defer></script>
     <script src="/js/hub-spotlight-carousel.js?v=20260723loop" defer></script>
-    <script src="/js/opportunities-page.js?v=20260723spotlight" defer></script>
+    <script src="/js/filter-mobile-sheet.js?v=20260727opp" defer></script>
+    <script src="/js/opportunities-page.js?v=20260727opp" defer></script>
     <script src="/js/opportunities-map.js?v=20260611" defer></script>
     <script src="/js/hubert-chat.js?v=20260710" defer></script>
     <script src="/js/hubert-widget.js?v=20260710" data-root="/" defer></script>

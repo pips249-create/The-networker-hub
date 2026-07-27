@@ -1331,181 +1331,51 @@
   }
 
   function initMobileFilterSheet() {
-    var shell = document.querySelector('.events-filter-shell');
-    var toggle = document.getElementById('filter-mobile-toggle');
-    var badge = document.getElementById('filter-mobile-toggle-badge');
-    var sheet = document.getElementById('filter-mobile-sheet');
-    var sheetBody = document.getElementById('filter-mobile-sheet-body');
-    var sheetBackdrop = document.getElementById('filter-mobile-sheet-backdrop');
-    var sheetClose = document.getElementById('filter-mobile-sheet-close');
-    var sheetClear = document.getElementById('filter-mobile-sheet-clear');
-    var sheetApply = document.getElementById('filter-mobile-sheet-apply');
-    var sheetTitle = document.getElementById('filter-mobile-sheet-title');
-    var filterBar = document.querySelector('.events-filter-bar');
-    var rowTop = document.querySelector('.filter-bar-row-top');
-    var locationGroup = document.querySelector('.filter-bar-location-group');
-    var advanced = document.getElementById('filter-bar-advanced');
-    var inboxTitle = document.getElementById('events-filter-inbox-heading');
-    if (!shell || !toggle || !sheet || !sheetBody || !filterBar || !advanced || toggle.dataset.bound) return;
-    toggle.dataset.bound = '1';
+    var api = window.HUB_initMobileFilterSheet;
+    if (!api) return;
 
-    var mq = window.matchMedia('(max-width: 900px)');
-    var sheetOpen = false;
-    var lastFocus = null;
-
-    var desktopAnchors = {
-      locationParent: rowTop,
-      locationNext: toggle,
-      advancedParent: filterBar,
-      advancedNext: null,
-      inboxParent: filterBar,
-      inboxNext: rowTop,
-    };
-
-    function isOrganiserMode() {
-      return document.body.classList.contains('browse-mode-organisers');
-    }
-
-    function hasActiveMobileFilters() {
-      if (isOrganiserMode()) {
-        var orgListings = document.getElementById('org-has-listings');
-        var orgGuest = document.getElementById('org-guest-visits');
-        return !!(
-          (orgListings && orgListings.checked) ||
-          (orgGuest && orgGuest.checked)
-        );
-      }
-      if (isNearMeActive()) return true;
-      if (postcodeInput && String(postcodeInput.value || '').trim()) return true;
-      if (dateFromTs || dateToTs) return true;
-      if (checkFreeOnly && checkFreeOnly.checked) return true;
-      if (checkFiveStarsOnly && checkFiveStarsOnly.checked) return true;
-      if (checkInPerson && !checkInPerson.checked) return true;
-      if (checkOnline && !checkOnline.checked) return true;
-      if (priceMinInput && String(priceMinInput.value || '').trim()) return true;
-      if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
-      return false;
-    }
-
-    function syncSheetTitle() {
-      if (!sheetTitle) return;
-      sheetTitle.textContent = isOrganiserMode() ? 'Filter organisers' : 'Filter events';
-    }
-
-    function mountSheetContent() {
-      syncSheetTitle();
-      if (inboxTitle && inboxTitle.parentNode !== sheetBody) {
-        sheetBody.appendChild(inboxTitle);
-      }
-      if (locationGroup && locationGroup.parentNode !== sheetBody) {
-        sheetBody.appendChild(locationGroup);
-      }
-      if (advanced && advanced.parentNode !== sheetBody) {
-        sheetBody.appendChild(advanced);
-      }
-    }
-
-    function restoreDesktopContent() {
-      if (inboxTitle && desktopAnchors.inboxParent) {
-        desktopAnchors.inboxParent.insertBefore(inboxTitle, desktopAnchors.inboxNext);
-      }
-      if (locationGroup && desktopAnchors.locationParent) {
-        desktopAnchors.locationParent.insertBefore(locationGroup, desktopAnchors.locationNext);
-      }
-      if (advanced && desktopAnchors.advancedParent) {
-        desktopAnchors.advancedParent.appendChild(advanced);
-      }
-    }
-
-    function setSheetOpen(open) {
-      sheetOpen = open;
-      shell.classList.toggle('is-filter-sheet-open', open);
-      document.body.classList.toggle('events-filter-sheet-open', open);
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      sheet.hidden = !open;
-      sheet.setAttribute('aria-hidden', open ? 'false' : 'true');
-      if (open) {
-        lastFocus = document.activeElement;
-        mountSheetContent();
-        if (sheetClose) sheetClose.focus();
-      } else if (lastFocus && typeof lastFocus.focus === 'function') {
-        lastFocus.focus();
-        lastFocus = null;
-      }
-    }
-
-    function openSheet() {
-      if (!mq.matches) return;
-      mountSheetContent();
-      setSheetOpen(true);
-    }
-
-    function closeSheet() {
-      setSheetOpen(false);
-    }
-
-    function syncMobileFilterToggle() {
-      var mobile = mq.matches;
-      toggle.hidden = !mobile;
-      if (!mobile) {
-        closeSheet();
-        restoreDesktopContent();
-        toggle.classList.remove('is-active-hint');
-        if (badge) badge.hidden = true;
-        return;
-      }
-
-      mountSheetContent();
-      var active = hasActiveMobileFilters();
-      toggle.classList.toggle('is-active-hint', active);
-      if (badge) {
-        badge.hidden = !active;
-        badge.textContent = active ? '•' : '';
-      }
-      if (sheetOpen) syncSheetTitle();
-    }
-
-    toggle.addEventListener('click', function () {
-      if (sheetOpen) closeSheet();
-      else openSheet();
-    });
-
-    if (sheetBackdrop) {
-      sheetBackdrop.addEventListener('click', closeSheet);
-    }
-    if (sheetClose) {
-      sheetClose.addEventListener('click', closeSheet);
-    }
-    if (sheetApply) {
-      sheetApply.addEventListener('click', function () {
+    var controller = api({
+      hasActiveFilters: function () {
+        if (document.body.classList.contains('browse-mode-organisers')) {
+          var orgListings = document.getElementById('org-has-listings');
+          var orgGuest = document.getElementById('org-guest-visits');
+          return !!(
+            (orgListings && orgListings.checked) ||
+            (orgGuest && orgGuest.checked)
+          );
+        }
+        if (isNearMeActive()) return true;
+        if (postcodeInput && String(postcodeInput.value || '').trim()) return true;
+        if (dateFromTs || dateToTs) return true;
+        if (checkFreeOnly && checkFreeOnly.checked) return true;
+        if (checkFiveStarsOnly && checkFiveStarsOnly.checked) return true;
+        if (checkInPerson && !checkInPerson.checked) return true;
+        if (checkOnline && !checkOnline.checked) return true;
+        if (priceMinInput && String(priceMinInput.value || '').trim()) return true;
+        if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
+        return false;
+      },
+      getTitle: function () {
+        return document.body.classList.contains('browse-mode-organisers')
+          ? 'Filter organisers'
+          : 'Filter events';
+      },
+      onApply: function () {
         applyFilters({ immediate: true });
-        closeSheet();
-      });
-    }
-    if (sheetClear) {
-      sheetClear.addEventListener('click', function () {
-        if (isOrganiserMode()) {
+      },
+      onClear: function () {
+        if (document.body.classList.contains('browse-mode-organisers')) {
           if (window.hubResetOrganiserFilters) window.hubResetOrganiserFilters();
         } else {
           resetFilters();
         }
-        syncMobileFilterToggle();
-      });
-    }
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && sheetOpen) {
-        e.preventDefault();
-        closeSheet();
-      }
+      },
     });
 
-    if (mq.addEventListener) mq.addEventListener('change', syncMobileFilterToggle);
-    else if (mq.addListener) mq.addListener(syncMobileFilterToggle);
-    syncMobileFilterToggle();
-    window.hubSyncMobileFilterToggle = syncMobileFilterToggle;
-    window.hubOpenMobileFilterSheet = openSheet;
-    window.hubCloseMobileFilterSheet = closeSheet;
+    if (!controller) return;
+    window.hubSyncMobileFilterToggle = controller.sync;
+    window.hubOpenMobileFilterSheet = controller.open;
+    window.hubCloseMobileFilterSheet = controller.close;
   }
 
   initMobileFilterSheet();
