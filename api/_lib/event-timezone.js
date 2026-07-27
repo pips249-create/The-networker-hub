@@ -95,6 +95,31 @@ function londonTimeFromIso(iso) {
   return `${hour}:${minute}`;
 }
 
+function londonDateKeyFromIso(iso) {
+  const parts = londonDatePartsFromIso(iso);
+  if (!parts) return '';
+  const month = String(parts.month).padStart(2, '0');
+  const day = String(parts.day).padStart(2, '0');
+  return `${parts.year}-${month}-${day}`;
+}
+
+function londonDatePartsFromIso(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: EVENT_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const year = Number(partValue(parts, 'year'));
+  const month = Number(partValue(parts, 'month'));
+  const day = Number(partValue(parts, 'day'));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  return { year, month, day };
+}
+
 function eventEndRaw(source) {
   if (!source) return null;
   return (
@@ -171,6 +196,8 @@ module.exports = {
   formatTimeRange,
   formatDateOnly,
   londonTimeFromIso,
+  londonDateKeyFromIso,
+  londonDatePartsFromIso,
   eventStartMs,
   eventEndMs,
   isEventStarted,

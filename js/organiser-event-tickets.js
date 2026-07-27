@@ -216,6 +216,10 @@
 
   function isoToDateInput(iso) {
     if (!iso) return '';
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonDateKeyFromIso === 'function') {
+      return tz.londonDateKeyFromIso(iso);
+    }
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
     const y = d.getFullYear();
@@ -226,6 +230,10 @@
 
   function isoToTimeInput(iso) {
     if (!iso) return '';
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonTimeFromIso === 'function') {
+      return tz.londonTimeFromIso(iso);
+    }
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -368,6 +376,16 @@
       : timeStr || '09:00';
     const parts = rounded.split(':').map(Number);
     const ymd = dateStr.split('-').map(Number);
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonWallToUtcIso === 'function') {
+      return tz.londonWallToUtcIso(
+        ymd[0],
+        ymd[1] || 1,
+        ymd[2] || 1,
+        parts[0] || 0,
+        parts[1] || 0
+      );
+    }
     const local = new Date(ymd[0], (ymd[1] || 1) - 1, ymd[2] || 1, parts[0] || 0, parts[1] || 0, 0);
     if (Number.isNaN(local.getTime())) return null;
     return local.toISOString();

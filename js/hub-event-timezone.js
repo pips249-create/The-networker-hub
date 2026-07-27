@@ -80,6 +80,40 @@
     return hour + ':' + partValue(parts, 'minute');
   }
 
+  function londonDateKeyFromIso(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    var parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: EVENT_TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(d);
+    var year = partValue(parts, 'year');
+    var month = partValue(parts, 'month');
+    var day = partValue(parts, 'day');
+    if (!year || !month || !day) return '';
+    return year + '-' + month + '-' + day;
+  }
+
+  function londonDatePartsFromIso(iso) {
+    if (!iso) return null;
+    var d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    var parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: EVENT_TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(d);
+    var year = Number(partValue(parts, 'year'));
+    var month = Number(partValue(parts, 'month'));
+    var day = Number(partValue(parts, 'day'));
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+    return { year: year, month: month, day: day };
+  }
+
   var MAX_EVENT_SPAN_MS = 36 * 60 * 60 * 1000;
 
   function eventStartRaw(source) {
@@ -137,6 +171,8 @@
     formatTime: formatTime,
     formatTimeRange: formatTimeRange,
     londonTimeFromIso: londonTimeFromIso,
+    londonDateKeyFromIso: londonDateKeyFromIso,
+    londonDatePartsFromIso: londonDatePartsFromIso,
     eventStartMs: eventStartMs,
     eventEndMs: eventEndMs,
     isEventStarted: isEventStarted,

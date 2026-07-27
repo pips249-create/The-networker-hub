@@ -266,7 +266,7 @@
       calYear = parts[0];
       calMonth = parts[1] - 1;
     }
-    if (QuarterTime && draft.startTime && draft.endTime) {
+    if (QuarterTime && draft.startTime && draft.endTime && !options.skipTimes) {
       QuarterTime.setValues('ee-start-time', 'ee-end-time', draft.startTime, draft.endTime);
     }
     const description = document.getElementById('ee-description');
@@ -329,7 +329,7 @@
     }
 
     if (!autodraftHasWork(draft)) return false;
-    applyDraftToForm(draft, { keepLoadedDescription: true });
+    applyDraftToForm(draft, { keepLoadedDescription: true, skipTimes: true });
     setAutodraftStatus(
       draft.hadUploadedPhoto
         ? 'Restored unsaved changes from this browser. Please re-select its uploaded image.'
@@ -1721,6 +1721,40 @@
     return peers.length > 1 ? sortEventsByDate(peers) : [ev];
   }
 
+  function eventWallTimeFromIso(iso) {
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonTimeFromIso === 'function') {
+      return tz.londonTimeFromIso(iso);
+    }
+    const d = parseAirtableDate(iso);
+    if (!d) return '';
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function londonCalendarPartsFromIso(iso) {
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonDatePartsFromIso === 'function') {
+      return tz.londonDatePartsFromIso(iso);
+    }
+    const d = parseAirtableDate(iso);
+    if (!d) return null;
+    return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+  }
+
+  function endIsoForPeer(peer) {
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.eventEndMs === 'function') {
+      const endMs = tz.eventEndMs({
+        date: peer.date,
+        endDate: peer.endDate,
+        starts_at: peer.date,
+        ends_at: peer.endDate,
+      });
+      if (endMs != null) return new Date(endMs).toISOString();
+    }
+    return peer.endDate || '';
+  }
+
   function prefillFromEvent(rawEv) {
     const ev = normalizeEventForForm(rawEv);
     document.getElementById('ee-title').value = ev.title || '';
@@ -1750,28 +1784,20 @@
     let timeSet = false;
     datePeers.forEach((peer) => {
       if (!peer.date) return;
-      const d = parseAirtableDate(peer.date);
-      if (!d) return;
+      const dateParts = londonCalendarPartsFromIso(peer.date);
+      if (!dateParts) return;
       if (!timeSet) {
-        calYear = d.getFullYear();
-        calMonth = d.getMonth();
-        const tz = window.HubEventTimezone;
-        const t =
-          tz && typeof tz.londonTimeFromIso === 'function'
-            ? tz.londonTimeFromIso(peer.date)
-            : pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-        const endD = peer.endDate ? parseAirtableDate(peer.endDate) : null;
-        const endT = endD
-          ? tz && typeof tz.londonTimeFromIso === 'function'
-            ? tz.londonTimeFromIso(peer.endDate)
-            : pad2(endD.getHours()) + ':' + pad2(endD.getMinutes())
-          : '12:00';
+        calYear = dateParts.year;
+        calMonth = dateParts.month - 1;
+        const t = eventWallTimeFromIso(peer.date);
+        const endIso = endIsoForPeer(peer);
+        const endT = endIso ? eventWallTimeFromIso(endIso) : defaultEndFromStart(t);
         if (QuarterTime) {
           QuarterTime.setValues('ee-start-time', 'ee-end-time', t, endT);
         }
         timeSet = true;
       }
-      selectedDates.add(dateKey(d.getFullYear(), d.getMonth(), d.getDate()));
+      selectedDates.add(dateKey(dateParts.year, dateParts.month - 1, dateParts.day));
     });
     if (!timeSet && QuarterTime) {
       QuarterTime.setValues('ee-start-time', 'ee-end-time', '10:00', '12:00');
