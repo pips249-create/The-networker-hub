@@ -951,7 +951,8 @@
   width: 100%;
 }
 
-.filter-bar-cluster > .filter-more-panel:not([hidden]) {
+.filter-bar-cluster > .filter-more-panel:not([hidden]),
+.filter-bar-cluster > .filter-bar-row-types {
   flex: 1 1 100%;
   width: 100%;
   order: 10;
@@ -2696,6 +2697,13 @@ body.events-filter-sheet-open {
   display: flex !important;
   flex-direction: column;
   gap: 10px;
+}
+
+.filter-mobile-sheet-body .filter-bar-row-types {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  order: 10;
 }
 
 .filter-mobile-sheet-body .filter-more-toggle {

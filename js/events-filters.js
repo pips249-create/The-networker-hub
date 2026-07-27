@@ -1320,16 +1320,6 @@
     syncNearRadiusUi();
   });
 
-  var moreToggle = document.getElementById('filter-more-toggle');
-  var morePanel = document.getElementById('filter-more-panel');
-  if (moreToggle && morePanel) {
-    moreToggle.addEventListener('click', function () {
-      var open = moreToggle.getAttribute('aria-expanded') === 'true';
-      moreToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
-      morePanel.hidden = open;
-    });
-  }
-
   function initMobileFilterSheet() {
     var api = window.HUB_initMobileFilterSheet;
     if (!api) return;
