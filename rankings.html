@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/hub.css?v=20260723stats">
 <link rel="stylesheet" href="css/content-page.css?v=20260711e">
 <link rel="stylesheet" href="css/hub-ranking-badge.css?v=20260727rank">
-<link rel="stylesheet" href="css/rankings-page.css?v=20260727lb">
+<link rel="stylesheet" href="css/rankings-page.css?v=20260727spark">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -24,18 +24,30 @@
 </head>
 <body class="rankings-page">
 
+<div class="rankings-sparkles" aria-hidden="true">
+  <span class="rankings-sparkle"></span>
+  <span class="rankings-sparkle"></span>
+  <span class="rankings-sparkle"></span>
+  <span class="rankings-sparkle"></span>
+  <span class="rankings-sparkle"></span>
+  <span class="rankings-sparkle"></span>
+</div>
+
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260727lb" data-root="" data-page="rankings"></script>
 
 <main class="rankings-main">
   <header class="rankings-hero">
     <div class="rankings-hero-inner">
-      <p class="section-kicker">Monthly leaderboard</p>
-      <h1>Top networking groups on the Hub</h1>
+      <p class="rankings-kicker"><span class="rankings-kicker-star" aria-hidden="true">★</span> Monthly leaderboard</p>
+      <h1>Top <span class="rankings-accent">networking groups</span> on the Hub</h1>
       <p class="rankings-hero-lede">
         Ranked by average attendee rating, then by review rate — so smaller groups can compete with larger ones.
       </p>
       <p id="rankings-period" class="rankings-hero-meta" hidden></p>
+      <p id="rankings-preview-note" class="rankings-preview-note" hidden>
+        Preview of how the leaderboard will look once groups earn badges
+      </p>
       <div class="rankings-hero-actions">
         <a class="rankings-btn rankings-btn--primary" href="/events/?mode=organisers">Browse organisers</a>
         <a class="rankings-btn rankings-btn--ghost" href="/for-organisers">List your group</a>
@@ -45,14 +57,16 @@
 
   <section class="rankings-board" aria-labelledby="rankings-board-heading">
     <h2 id="rankings-board-heading" class="visually-hidden">Leaderboard</h2>
-    <div class="rankings-filters" role="tablist" aria-label="Filter by badge tier">
-      <button type="button" class="rankings-filter is-active" data-tier="all" role="tab" aria-selected="true">All</button>
-      <button type="button" class="rankings-filter" data-tier="top10" role="tab" aria-selected="false">Top 10</button>
-      <button type="button" class="rankings-filter" data-tier="top25" role="tab" aria-selected="false">Top 25</button>
-      <button type="button" class="rankings-filter" data-tier="top50" role="tab" aria-selected="false">Top 50</button>
+    <div class="rankings-board-shell">
+      <div class="rankings-filters" role="tablist" aria-label="Filter by badge tier">
+        <button type="button" class="rankings-filter is-active" data-tier="all" role="tab" aria-selected="true">All</button>
+        <button type="button" class="rankings-filter" data-tier="top10" role="tab" aria-selected="false">Top 10</button>
+        <button type="button" class="rankings-filter" data-tier="top25" role="tab" aria-selected="false">Top 25</button>
+        <button type="button" class="rankings-filter" data-tier="top50" role="tab" aria-selected="false">Top 50</button>
+      </div>
+      <p id="rankings-status" class="rankings-status">Loading this month&rsquo;s rankings&hellip;</p>
+      <ol id="rankings-list" class="rankings-list" hidden></ol>
     </div>
-    <p id="rankings-status" class="rankings-status">Loading this month&rsquo;s rankings&hellip;</p>
-    <ol id="rankings-list" class="rankings-list" hidden></ol>
     <p class="rankings-footnote">
       Groups need at least 3 reviews and a published profile. Badges refresh monthly from the latest snapshot.
       Review rate is reviews divided by past-event ticket buyers.
@@ -62,6 +76,6 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260727lb" data-root=""></script>
-<script src="js/rankings.js?v=20260727lb" defer></script>
+<script src="js/rankings.js?v=20260727spark" defer></script>
 </body>
 </html>

@@ -2,6 +2,89 @@
  * Public monthly organiser ranking leaderboard.
  */
 (function () {
+  var PREVIEW_ENTRIES = [
+    {
+      rank: 1,
+      tier: 'top10',
+      label: 'Top 10 networking group on the Hub',
+      cardLabel: 'Top 10 · July 2026',
+      rating: 5.0,
+      reviewCount: 28,
+      reviewRate: 0.56,
+      organiser: { name: 'Harbour City Connectors', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 2,
+      tier: 'top10',
+      label: 'Top 10 networking group on the Hub',
+      cardLabel: 'Top 10 · July 2026',
+      rating: 4.9,
+      reviewCount: 41,
+      reviewRate: 0.48,
+      organiser: { name: 'Northbridge Breakfast Club', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 3,
+      tier: 'top10',
+      label: 'Top 10 networking group on the Hub',
+      cardLabel: 'Top 10 · July 2026',
+      rating: 4.9,
+      reviewCount: 19,
+      reviewRate: 0.63,
+      organiser: { name: 'Riverside Women in Business', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 8,
+      tier: 'top10',
+      label: 'Top 10 networking group on the Hub',
+      cardLabel: 'Top 10 · July 2026',
+      rating: 4.8,
+      reviewCount: 22,
+      reviewRate: 0.44,
+      organiser: { name: 'Midlands Founders Circle', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 14,
+      tier: 'top25',
+      label: 'Top 25 networking group on the Hub',
+      cardLabel: 'Top 25 · July 2026',
+      rating: 4.7,
+      reviewCount: 16,
+      reviewRate: 0.4,
+      organiser: { name: 'Canal Side Professionals', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 22,
+      tier: 'top25',
+      label: 'Top 25 networking group on the Hub',
+      cardLabel: 'Top 25 · July 2026',
+      rating: 4.6,
+      reviewCount: 12,
+      reviewRate: 0.5,
+      organiser: { name: 'Summit Sector Meetups', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 31,
+      tier: 'top50',
+      label: 'Top 50 networking group on the Hub',
+      cardLabel: 'Top 50 · July 2026',
+      rating: 4.5,
+      reviewCount: 9,
+      reviewRate: 0.36,
+      organiser: { name: 'Eastgate Evening Network', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+    {
+      rank: 47,
+      tier: 'top50',
+      label: 'Top 50 networking group on the Hub',
+      cardLabel: 'Top 50 · July 2026',
+      rating: 4.4,
+      reviewCount: 7,
+      reviewRate: 0.47,
+      organiser: { name: 'Coastal Creatives Hub', photoUrl: null, profilePath: '/events/?mode=organisers' },
+    },
+  ];
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -27,9 +110,12 @@
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 
-  function rowHtml(entry) {
+  function rowHtml(entry, options) {
+    options = options || {};
     var org = entry.organiser || {};
-    var path = org.profilePath || (org.id ? '/events/organiser?id=' + encodeURIComponent(org.id) : '#');
+    var path = options.preview
+      ? '#'
+      : org.profilePath || (org.id ? '/events/organiser?id=' + encodeURIComponent(org.id) : '#');
     var tier = entry.tier || 'top50';
     var badge =
       entry.cardLabel ||
@@ -47,13 +133,14 @@
     var avatar = org.photoUrl
       ? '<img class="rankings-avatar" src="' +
         esc(org.photoUrl) +
-        '" alt="" width="48" height="48" loading="lazy">'
+        '" alt="" width="50" height="50" loading="lazy">'
       : '<span class="rankings-avatar rankings-avatar--placeholder" aria-hidden="true">' +
         esc(initials(org.name)) +
         '</span>';
 
-    var tag = path && path !== '#' ? 'a' : 'div';
+    var tag = !options.preview && path && path !== '#' ? 'a' : 'div';
     var hrefAttr = tag === 'a' ? ' href="' + esc(path) + '"' : '';
+    var previewAttr = options.preview ? ' aria-disabled="true"' : '';
 
     return (
       '<' +
@@ -64,6 +151,7 @@
       esc(tier) +
       '"' +
       hrefAttr +
+      previewAttr +
       '>' +
       '<span class="rankings-place">#' +
       esc(String(entry.rank)) +
@@ -126,6 +214,31 @@
     if (list) list.hidden = shown === 0;
   }
 
+  function setPreviewMode(isPreview) {
+    document.body.classList.toggle('is-preview', !!isPreview);
+    var note = document.getElementById('rankings-preview-note');
+    if (note) note.hidden = !isPreview;
+  }
+
+  function paintPreview() {
+    var status = document.getElementById('rankings-status');
+    var list = document.getElementById('rankings-list');
+    var period = document.getElementById('rankings-period');
+    if (!list) return;
+
+    if (period) {
+      period.hidden = false;
+      period.textContent = 'Preview · July 2026 · sample groups';
+    }
+    setPreviewMode(true);
+    list.innerHTML = PREVIEW_ENTRIES.map(function (entry) {
+      return rowHtml(entry, { preview: true });
+    }).join('');
+    list.hidden = false;
+    if (status) status.hidden = true;
+    setFilter('all');
+  }
+
   function paint(data) {
     var status = document.getElementById('rankings-status');
     var list = document.getElementById('rankings-list');
@@ -133,37 +246,33 @@
     if (!status || !list) return;
 
     if (!data || data.ok === false) {
-      status.hidden = false;
-      status.textContent = (data && data.message) || 'Could not load the leaderboard.';
-      list.hidden = true;
+      paintPreview();
       return;
     }
 
     var snap = data.snapshot;
     var entries = data.entries || [];
 
+    if (!entries.length) {
+      paintPreview();
+      return;
+    }
+
+    setPreviewMode(false);
     if (period) {
       if (snap && snap.period_label) {
         period.hidden = false;
         period.textContent =
           snap.period_label +
-          (snap.total_ranked
-            ? ' · ' + snap.total_ranked + ' rated groups this period'
-            : '');
+          (snap.total_ranked ? ' · ' + snap.total_ranked + ' rated groups this period' : '');
       } else {
         period.hidden = true;
       }
     }
 
-    if (!entries.length) {
-      status.hidden = false;
-      status.textContent =
-        'No ranking snapshot yet — badges appear once groups have enough reviews.';
-      list.hidden = true;
-      return;
-    }
-
-    list.innerHTML = entries.map(rowHtml).join('');
+    list.innerHTML = entries.map(function (entry) {
+      return rowHtml(entry);
+    }).join('');
     list.hidden = false;
     status.hidden = true;
     setFilter('all');
@@ -181,6 +290,6 @@
     })
     .then(paint)
     .catch(function () {
-      paint({ ok: false, message: 'Could not load the leaderboard.' });
+      paintPreview();
     });
 })();
