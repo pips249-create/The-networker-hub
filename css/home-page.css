@@ -3009,6 +3009,27 @@ html:has(.home-page) {
   pointer-events: none;
 }
 
+.home-location-chip--near-you {
+  border-color: color-mix(in srgb, var(--chip-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--chip-accent) 12%, #fff);
+}
+
+.home-location-chip--near-you .home-location-chip-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--chip-accent) 72%, var(--charcoal));
+}
+
+.home-location-chip--near-you .home-location-chip-city {
+  font-weight: 700;
+}
+
+.home-location-chip--near-you[hidden] {
+  display: none !important;
+}
+
 .home-locations-more {
   margin: 6px 0 0;
 }

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260723stats">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20260726f">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20260727sheet">
 <link rel="stylesheet" href="../css/fact-loader.css?v=20260723">
 <script src="../js/fact-loader.js?v=20260723" defer></script>
 <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
@@ -18,8 +18,8 @@
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2">
 <link rel="stylesheet" href="../css/events-page.css?v=20260723logoband">
-<link rel="stylesheet" href="../css/home-page.css?v=20260723hyphen">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260726f">
+<link rel="stylesheet" href="../css/home-page.css?v=20260726city">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260727sheet">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260726f">
 <link rel="stylesheet" href="../css/networking-regions.css?v=20260722cp11">
 <script src="../js/hub-lazy-vendor.js?v=20260726m"></script>
@@ -144,7 +144,7 @@
     <div class="events-filter-shell">
     <div class="events-filter-bar" role="search" aria-label="Filter events">
       <p class="events-filter-inbox-title filter-organiser-only" id="events-filter-inbox-heading">Filter organisers</p>
-      <div class="filter-bar-row filter-bar-row-top">
+      <div class="filter-bar-row filter-bar-row-top filter-bar-row-compact">
         <div class="filter-field filter-field-search filter-field-grow">
           <span class="filter-field-icon filter-field-icon-end" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
@@ -153,6 +153,10 @@
           <input type="search" id="search" placeholder="Search events, organisers, cities…" autocomplete="off" aria-describedby="search-hint" title="Search by title, organiser, location, keywords like breakfast or women only, and event type">
           <span id="search-hint" class="visually-hidden">Search listings by title, organiser, location, keywords like breakfast or women only, and event type</span>
         </div>
+        <button type="button" class="filter-mobile-toggle" id="filter-mobile-toggle" aria-expanded="false" aria-controls="filter-mobile-sheet" hidden>
+          <span class="filter-mobile-toggle-label">Filters</span>
+          <span class="filter-mobile-toggle-badge" id="filter-mobile-toggle-badge" hidden aria-hidden="true"></span>
+        </button>
         <div class="filter-bar-location-group filter-event-only">
         <div class="filter-field filter-field-postcode">
           <span class="filter-field-icon" aria-hidden="true">
@@ -160,6 +164,7 @@
           </span>
           <label class="visually-hidden" for="postcode">Location</label>
           <input type="text" id="postcode" placeholder="Location" autocomplete="postal-code" title="Filter by location">
+          <a class="filter-city-page-cta" id="filter-city-page-cta" href="#" hidden>View city networking hub →</a>
         </div>
         <label class="filter-location-radius" id="location-radius-wrap">
           <span class="visually-hidden">Distance from location</span>
@@ -202,10 +207,6 @@
         </div>
         </div>
       </div>
-      <button type="button" class="filter-mobile-toggle" id="filter-mobile-toggle" aria-expanded="false" aria-controls="filter-bar-advanced">
-        <span class="filter-mobile-toggle-label">Show filters</span>
-        <span class="filter-mobile-toggle-chevron" aria-hidden="true">▾</span>
-      </button>
       <div class="filter-bar-row filter-bar-row-bottom" id="filter-bar-advanced">
         <div class="filter-bar-cluster">
         <div class="filter-bar-primary filter-event-only">
@@ -285,6 +286,28 @@
         </div>
       </div>
     </div>
+    </div>
+  </div>
+
+  <div class="filter-mobile-sheet" id="filter-mobile-sheet" hidden aria-hidden="true">
+    <div class="filter-mobile-sheet-backdrop" id="filter-mobile-sheet-backdrop" tabindex="-1"></div>
+    <div
+      class="filter-mobile-sheet-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="filter-mobile-sheet-title"
+    >
+      <header class="filter-mobile-sheet-head">
+        <button type="button" class="filter-mobile-sheet-close" id="filter-mobile-sheet-close" aria-label="Close filters">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <h2 class="filter-mobile-sheet-title" id="filter-mobile-sheet-title">Filters</h2>
+      </header>
+      <div class="filter-mobile-sheet-body" id="filter-mobile-sheet-body"></div>
+      <footer class="filter-mobile-sheet-foot">
+        <button type="button" class="filter-mobile-sheet-clear" id="filter-mobile-sheet-clear">Clear all</button>
+        <button type="button" class="filter-mobile-sheet-apply" id="filter-mobile-sheet-apply">Show results</button>
+      </footer>
     </div>
   </div>
 
@@ -601,18 +624,19 @@
 <script src="../js/hub-favourites.js?v=20260630" defer></script>
 <script src="../js/hub-organiser-favourites.js?v=20260630" defer></script>
 <script src="../js/meeting-types.js?v=20260715mc" defer></script>
-<script src="../js/postcode-outcode.js?v=20260723geo" defer></script>
+<script src="../js/postcode-outcode.js?v=20260726city" defer></script>
 <script src="../js/postcode-geo.js?v=20260723geo" defer></script>
 <script src="../js/region-landmark-icons.js?v=20260714clarity" defer></script>
 <script src="../js/networking-region-themes.js?v=20260716palette" defer></script>
-<script src="../js/home-location-chips.js?v=20260723hyphen" defer></script>
+<script src="../js/home-location-chips.js?v=20260726city" defer></script>
 <script src="../js/cms-ad-blocks.js?v=20260722cp11" defer></script>
 <script src="../js/networking-region-directory.js?v=20260717search" defer></script>
-<script src="../js/networking-region-search.js?v=20260722city" defer></script>
+<script src="../js/networking-region-search.js?v=20260726city" defer></script>
+<script src="../js/networking-region-near-you.js?v=20260726city" defer></script>
 <script src="../js/networking-regions.js?v=20260722cp11" defer></script>
 <script src="../js/booking-fees.js?v=20260716roster" defer></script>
 <script src="../js/hub-event-timezone.js?v=20260716" defer></script>
-<script src="../js/events-filters.js?v=20260726f" defer></script>
+<script src="../js/events-filters.js?v=20260727sheet" defer></script>
 <script src="../js/events-browse-api.js?v=20260723city" defer></script>
 <script src="../js/events-map.js?v=20260726m" defer></script>
 <script src="../js/flexible-event-image.js?v=20260612" defer></script>
@@ -622,6 +646,6 @@
 <script src="../js/organisers-filters.js?v=20260722orgfilters" defer></script>
 <script src="../js/organisers.js?v=20260726f" defer></script>
 <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../" defer></script>
-<script src="../js/browse-mode.js?v=20260726f" defer></script>
+<script src="../js/browse-mode.js?v=20260727sheet" defer></script>
 </body>
 </html>

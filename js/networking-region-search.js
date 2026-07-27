@@ -111,12 +111,15 @@
       list.innerHTML = items
         .map(function (item, i) {
           return (
-            '<li role="option" data-index="' +
+            '<li role="option" class="networking-region-suggest-item" data-index="' +
             i +
             '" data-slug="' +
             escAttr(item.slug) +
             '" tabindex="-1">' +
+            '<span class="networking-region-suggest-name">' +
             escAttr(item.name) +
+            '</span>' +
+            '<span class="networking-region-suggest-hint">View networking hub →</span>' +
             '</li>'
           );
         })

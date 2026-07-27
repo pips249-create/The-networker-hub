@@ -195,6 +195,7 @@
       initSponsorHub(mode);
       syncBrowseToggles(mode);
       syncOrganiserCta();
+      if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
       return;
     }
     if (heroBadge) heroBadge.textContent = c.badge;
@@ -213,6 +214,7 @@
     initSponsorHub(mode);
     syncBrowseToggles(mode);
     syncOrganiserCta();
+    if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
   }
 
   function setMode(mode, options) {

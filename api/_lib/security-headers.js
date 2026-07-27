@@ -15,7 +15,7 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.resend.com https://vitals.vercel-insights.com https://unpkg.com https://api.openai.com",
+  "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.resend.com https://vitals.vercel-insights.com https://unpkg.com https://api.openai.com https://api.postcodes.io",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://connect.stripe.com https://maps.google.com https://www.google.com https://maps.googleapis.com https://www.openstreetmap.org",
   "upgrade-insecure-requests",
 ].join('; ');
@@ -24,7 +24,7 @@ const GLOBAL_SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
   'Content-Security-Policy': CONTENT_SECURITY_POLICY,

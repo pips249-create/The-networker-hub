@@ -42,16 +42,22 @@
     }
   }
 
+  function initSingleLocationChip(chip) {
+    if (!chip) return;
+    var themes = window.HUB_NETWORKING_REGION_THEMES || {};
+    var slug = chip.getAttribute('data-region');
+    var theme = themes[slug];
+    if (applyAccent) applyAccent(chip, theme);
+    var icon = chip.querySelector('.home-location-chip-icon');
+    injectIcon(icon, theme, slug);
+    syncCompactLabel(chip);
+  }
+
   function initLocationLandmarkIcons() {
     var themes = window.HUB_NETWORKING_REGION_THEMES || {};
 
     document.querySelectorAll('.home-location-chip[data-region]').forEach(function (chip) {
-      var slug = chip.getAttribute('data-region');
-      var theme = themes[slug];
-      if (applyAccent) applyAccent(chip, theme);
-      var icon = chip.querySelector('.home-location-chip-icon');
-      injectIcon(icon, theme, slug);
-      syncCompactLabel(chip);
+      initSingleLocationChip(chip);
     });
 
     document.querySelectorAll('.networking-location-links a[data-region]').forEach(function (link) {
@@ -71,6 +77,8 @@
       link.classList.add('has-landmark-icon');
     });
   }
+
+  window.HUB_initLocationChipElement = initSingleLocationChip;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initLocationLandmarkIcons);

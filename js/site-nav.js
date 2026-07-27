@@ -437,6 +437,56 @@
       }
     }
 
+    function getSkipLink() {
+      return mount.querySelector('.skip-to-content');
+    }
+
+    function setSkipLinkTabbable(isTabbable) {
+      var skip = getSkipLink();
+      if (!skip) return;
+      if (isTabbable) {
+        if (skip.dataset.navMenuTabindex === '') skip.removeAttribute('tabindex');
+        else if (skip.dataset.navMenuTabindex) skip.setAttribute('tabindex', skip.dataset.navMenuTabindex);
+        skip.removeAttribute('data-nav-menu-tabindex');
+      } else {
+        skip.setAttribute('data-nav-menu-tabindex', skip.getAttribute('tabindex') || '');
+        skip.setAttribute('tabindex', '-1');
+      }
+    }
+
+    function setPageBehindMenuInert(isInert) {
+      var siteNav = document.getElementById('site-nav');
+      if (siteNav && 'inert' in siteNav) siteNav.inert = isInert;
+
+      Array.from(document.body.children).forEach(function (child) {
+        if (child === mount) return;
+        if ('inert' in child) child.inert = isInert;
+      });
+    }
+
+    function getDrawerFocusables() {
+      var selector =
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      return Array.from(drawer.querySelectorAll(selector)).filter(function (el) {
+        return !el.hidden && el.getAttribute('aria-hidden') !== 'true';
+      });
+    }
+
+    function trapDrawerFocus(e) {
+      if (e.key !== 'Tab' || !drawer.classList.contains('is-open')) return;
+      var focusables = getDrawerFocusables();
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
     function openMenu() {
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close menu');
@@ -447,6 +497,8 @@
       drawer.setAttribute('aria-hidden', 'false');
       backdrop.hidden = false;
       document.body.classList.add('nav-menu-open');
+      setSkipLinkTabbable(false);
+      setPageBehindMenuInert(true);
       window.requestAnimationFrame(function () {
         if (closeBtn) closeBtn.focus();
       });
@@ -464,6 +516,8 @@
       setDrawerInert(true);
       backdrop.hidden = true;
       document.body.classList.remove('nav-menu-open');
+      setSkipLinkTabbable(true);
+      setPageBehindMenuInert(false);
       window.setTimeout(function () {
         if (!drawer.classList.contains('is-open')) drawer.hidden = true;
       }, 260);
@@ -482,7 +536,9 @@
       a.addEventListener('click', closeMenu);
     });
     document.addEventListener('keydown', function (e) {
+      if (!drawer.classList.contains('is-open')) return;
       if (e.key === 'Escape') closeMenu();
+      else trapDrawerFocus(e);
     });
 
     var mobileSignOut = document.getElementById('nav-mobile-signout');

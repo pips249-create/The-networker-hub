@@ -111,7 +111,7 @@
   top: 0;
   right: 0;
   z-index: 200;
-  width: min(100%, 320px);
+  width: min(92vw, 360px);
   height: 100%;
   height: 100dvh;
   background: var(--brand-cream);
@@ -122,6 +122,13 @@
   overflow: hidden;
   transform: translateX(100%);
   transition: transform 0.25s ease;
+}
+
+@media (max-width: 400px) {
+  .nav-mobile-drawer {
+    width: 100%;
+    border-left: none;
+  }
 }
 
 .nav-mobile-drawer[hidden] {
@@ -137,12 +144,16 @@
 }
 
 .nav-mobile-drawer-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 18px;
   padding-top: max(16px, env(safe-area-inset-top));
   border-bottom: 1px solid rgba(194, 153, 209, 0.3);
+  background: var(--brand-cream);
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -160,16 +171,26 @@
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-mobile-close:active {
+  background: var(--lavender-soft);
 }
 
 .nav-mobile-links {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 14px max(24px, env(safe-area-inset-bottom));
+  scrollbar-width: none;
+  padding: 10px 14px max(24px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+}
+
+.nav-mobile-links::-webkit-scrollbar {
+  display: none;
 }
 
 /* Extra bottom space so last account links clear any fixed chrome */
@@ -189,18 +210,27 @@ body.nav-menu-open .nav-mobile-links {
   letter-spacing: 0.02em;
   color: var(--charcoal);
   text-decoration: none;
-  padding: 14px 14px;
+  padding: 12px 14px;
   border-radius: 10px;
   border: none;
   background: transparent;
   cursor: pointer;
   box-sizing: border-box;
   min-height: 44px;
+  transition: background 0.15s;
+}
+
+.nav-mobile-links .nav-mobile-item:active {
+  background: rgba(194, 153, 209, 0.22);
 }
 
 .nav-mobile-links a.nav-mobile-item[aria-current='page'] {
   background: var(--lavender-light);
   color: var(--lavender-deep);
+}
+
+.nav-mobile-links a.nav-mobile-item[aria-current='page']:active {
+  background: var(--lavender-soft);
 }
 
 .nav-mobile-signout {
@@ -231,21 +261,25 @@ body.nav-menu-open .nav-mobile-links {
 }
 
 .nav-mobile-account-label {
-  margin: 12px 14px 4px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  margin: 14px 14px 6px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(194, 153, 209, 0.35);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted, #635c5e);
+  color: var(--charcoal-soft, #5c5557);
 }
 
 .nav-mobile-section-label {
-  margin: 12px 14px 4px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  margin: 14px 14px 6px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(194, 153, 209, 0.35);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted, #635c5e);
+  color: var(--charcoal-soft, #5c5557);
 }
 
 .nav-mobile-links a.nav-mobile-signin {
@@ -557,10 +591,16 @@ body.nav-menu-open {
   .events-filter-shell {
     min-width: 0;
     max-width: 100%;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .filter-bar-row-compact {
+    gap: 8px;
   }
 
   .events-filter-bar {
-    padding: 8px 10px;
+    padding: 0;
     min-width: 0;
   }
 
@@ -570,11 +610,17 @@ body.nav-menu-open {
   }
 
   .filter-bar-row-top {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
-    gap: 6px;
-    margin-bottom: 6px;
-    padding-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .filter-bar-row-compact .filter-field-search {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .filter-bar-location-group {
@@ -597,8 +643,9 @@ body.nav-menu-open {
   }
 
   .filter-bar-row-top .filter-field input {
-    padding: 9px 10px 9px 34px;
+    padding: 8px 10px 8px 34px;
     font-size: 16px;
+    min-height: 40px;
   }
 
   .filter-bar-row-top .filter-field-search input {
@@ -606,10 +653,10 @@ body.nav-menu-open {
   }
 
   .filter-location-radius select {
-    min-width: 72px;
-    padding: 9px 26px 9px 10px;
+    min-width: 68px;
+    padding: 8px 24px 8px 8px;
     font-size: 16px;
-    min-height: 44px;
+    min-height: 40px;
   }
 
   .filter-location-near {
@@ -651,6 +698,14 @@ body.nav-menu-open {
     min-height: 44px;
     -webkit-appearance: menulist;
     appearance: auto;
+  }
+
+  .events-page .events-results-meta {
+    padding-right: 52px;
+  }
+
+  .events-page .events-results-actions {
+    flex-wrap: wrap;
   }
 
   .premium-card {

@@ -20,6 +20,7 @@
   var resultsCount = document.getElementById('results-count');
   var typeTabs = document.querySelectorAll('.event-type-chip[data-type]');
   var typeChipsRoot = document.getElementById('event-type-chips');
+  var cityPageCta = document.getElementById('filter-city-page-cta');
 
   var activeTypeTabs = [];
   var dateFromTs = null;
@@ -512,6 +513,49 @@
     return Promise.resolve(null);
   }
 
+  function updateCityPageCta() {
+    if (!cityPageCta || document.body.classList.contains('browse-mode-organisers')) {
+      if (cityPageCta) cityPageCta.hidden = true;
+      return;
+    }
+
+    var text = '';
+    if (postcodeInput && String(postcodeInput.value || '').trim()) {
+      text = String(postcodeInput.value || '').trim();
+    } else if (searchInput && String(searchInput.value || '').trim()) {
+      text = String(searchInput.value || '').trim();
+    }
+
+    if (!text || !window.hubNetworkingRegionSlugFromInput || !window.HUB_getNetworkingRegion) {
+      cityPageCta.hidden = true;
+      return;
+    }
+
+    var slug = window.hubNetworkingRegionSlugFromInput(text);
+    if (!slug) {
+      cityPageCta.hidden = true;
+      return;
+    }
+
+    var regional = window.hubRegionalLanding;
+    if (regional && regional.slug === slug) {
+      cityPageCta.hidden = true;
+      return;
+    }
+
+    var meta = window.HUB_getNetworkingRegion(slug);
+    if (!meta) {
+      cityPageCta.hidden = true;
+      return;
+    }
+
+    cityPageCta.href = window.HUB_networkingRegionPath
+      ? window.HUB_networkingRegionPath(slug)
+      : '/networking/' + encodeURIComponent(slug);
+    cityPageCta.textContent = 'View ' + meta.name + ' networking hub →';
+    cityPageCta.hidden = false;
+  }
+
   function applyNearMeFilters() {
     if (document.body.classList.contains('browse-mode-organisers')) return;
     if (!isNearMeActive()) {
@@ -521,6 +565,7 @@
       return;
     }
     resolveNearMeCoords().then(function () {
+      if (window.HUB_refreshNearYouChip) window.HUB_refreshNearYouChip();
       if (window.hubServerBrowse && window.hubBrowseFetchNow) {
         window.hubBrowseFetchNow(1);
       } else {
@@ -742,6 +787,7 @@
     if (window.hubRefreshMap) window.hubRefreshMap(filtered);
     if (window.hubUpdateEventTypeChipCounts) window.hubUpdateEventTypeChipCounts();
     saveFilterPrefs();
+    refreshMobileFilterToggleUi();
   }
 
   function saveFilterPrefs() {
@@ -996,6 +1042,7 @@
     clearTimeout(locationResolveTimer);
     var value = (postcodeInput && postcodeInput.value) || '';
     value = value.trim();
+    updateCityPageCta();
     if (!value) {
       window.hubLocationFilterState = null;
       window.hubLocationFilterCoords = null;
@@ -1207,8 +1254,14 @@
 
   function bindFilter(el) {
     if (!el) return;
-    el.addEventListener('input', applyFilters);
-    el.addEventListener('change', applyFilters);
+    el.addEventListener('input', function () {
+      if (el === searchInput) updateCityPageCta();
+      applyFilters();
+    });
+    el.addEventListener('change', function () {
+      if (el === searchInput) updateCityPageCta();
+      applyFilters();
+    });
   }
 
   function onFormatFilterChange() {
@@ -1277,42 +1330,189 @@
     });
   }
 
-  function initMobileFilterToggle() {
+  function initMobileFilterSheet() {
     var shell = document.querySelector('.events-filter-shell');
     var toggle = document.getElementById('filter-mobile-toggle');
+    var badge = document.getElementById('filter-mobile-toggle-badge');
+    var sheet = document.getElementById('filter-mobile-sheet');
+    var sheetBody = document.getElementById('filter-mobile-sheet-body');
+    var sheetBackdrop = document.getElementById('filter-mobile-sheet-backdrop');
+    var sheetClose = document.getElementById('filter-mobile-sheet-close');
+    var sheetClear = document.getElementById('filter-mobile-sheet-clear');
+    var sheetApply = document.getElementById('filter-mobile-sheet-apply');
+    var sheetTitle = document.getElementById('filter-mobile-sheet-title');
+    var filterBar = document.querySelector('.events-filter-bar');
+    var rowTop = document.querySelector('.filter-bar-row-top');
+    var locationGroup = document.querySelector('.filter-bar-location-group');
     var advanced = document.getElementById('filter-bar-advanced');
-    if (!shell || !toggle || !advanced || toggle.dataset.bound) return;
+    var inboxTitle = document.getElementById('events-filter-inbox-heading');
+    if (!shell || !toggle || !sheet || !sheetBody || !filterBar || !advanced || toggle.dataset.bound) return;
     toggle.dataset.bound = '1';
 
-    var label = toggle.querySelector('.filter-mobile-toggle-label');
-    var mq = window.matchMedia('(max-width: 768px)');
+    var mq = window.matchMedia('(max-width: 900px)');
+    var sheetOpen = false;
+    var lastFocus = null;
+
+    var desktopAnchors = {
+      locationParent: rowTop,
+      locationNext: toggle,
+      advancedParent: filterBar,
+      advancedNext: null,
+      inboxParent: filterBar,
+      inboxNext: rowTop,
+    };
+
+    function isOrganiserMode() {
+      return document.body.classList.contains('browse-mode-organisers');
+    }
+
+    function hasActiveMobileFilters() {
+      if (isOrganiserMode()) {
+        var orgListings = document.getElementById('org-has-listings');
+        var orgGuest = document.getElementById('org-guest-visits');
+        return !!(
+          (orgListings && orgListings.checked) ||
+          (orgGuest && orgGuest.checked)
+        );
+      }
+      if (isNearMeActive()) return true;
+      if (postcodeInput && String(postcodeInput.value || '').trim()) return true;
+      if (dateFromTs || dateToTs) return true;
+      if (checkFreeOnly && checkFreeOnly.checked) return true;
+      if (checkFiveStarsOnly && checkFiveStarsOnly.checked) return true;
+      if (checkInPerson && !checkInPerson.checked) return true;
+      if (checkOnline && !checkOnline.checked) return true;
+      if (priceMinInput && String(priceMinInput.value || '').trim()) return true;
+      if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
+      return false;
+    }
+
+    function syncSheetTitle() {
+      if (!sheetTitle) return;
+      sheetTitle.textContent = isOrganiserMode() ? 'Filter organisers' : 'Filter events';
+    }
+
+    function mountSheetContent() {
+      syncSheetTitle();
+      if (inboxTitle && inboxTitle.parentNode !== sheetBody) {
+        sheetBody.appendChild(inboxTitle);
+      }
+      if (locationGroup && locationGroup.parentNode !== sheetBody) {
+        sheetBody.appendChild(locationGroup);
+      }
+      if (advanced && advanced.parentNode !== sheetBody) {
+        sheetBody.appendChild(advanced);
+      }
+    }
+
+    function restoreDesktopContent() {
+      if (inboxTitle && desktopAnchors.inboxParent) {
+        desktopAnchors.inboxParent.insertBefore(inboxTitle, desktopAnchors.inboxNext);
+      }
+      if (locationGroup && desktopAnchors.locationParent) {
+        desktopAnchors.locationParent.insertBefore(locationGroup, desktopAnchors.locationNext);
+      }
+      if (advanced && desktopAnchors.advancedParent) {
+        desktopAnchors.advancedParent.appendChild(advanced);
+      }
+    }
+
+    function setSheetOpen(open) {
+      sheetOpen = open;
+      shell.classList.toggle('is-filter-sheet-open', open);
+      document.body.classList.toggle('events-filter-sheet-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      sheet.hidden = !open;
+      sheet.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (open) {
+        lastFocus = document.activeElement;
+        mountSheetContent();
+        if (sheetClose) sheetClose.focus();
+      } else if (lastFocus && typeof lastFocus.focus === 'function') {
+        lastFocus.focus();
+        lastFocus = null;
+      }
+    }
+
+    function openSheet() {
+      if (!mq.matches) return;
+      mountSheetContent();
+      setSheetOpen(true);
+    }
+
+    function closeSheet() {
+      setSheetOpen(false);
+    }
 
     function syncMobileFilterToggle() {
       var mobile = mq.matches;
       toggle.hidden = !mobile;
       if (!mobile) {
-        shell.classList.remove('is-filter-expanded');
-        toggle.setAttribute('aria-expanded', 'false');
-        if (label) label.textContent = 'Show filters';
+        closeSheet();
+        restoreDesktopContent();
+        toggle.classList.remove('is-active-hint');
+        if (badge) badge.hidden = true;
         return;
       }
-      var expanded = shell.classList.contains('is-filter-expanded');
-      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-      if (label) label.textContent = expanded ? 'Hide filters' : 'Show filters';
+
+      mountSheetContent();
+      var active = hasActiveMobileFilters();
+      toggle.classList.toggle('is-active-hint', active);
+      if (badge) {
+        badge.hidden = !active;
+        badge.textContent = active ? '•' : '';
+      }
+      if (sheetOpen) syncSheetTitle();
     }
 
     toggle.addEventListener('click', function () {
-      var expanded = shell.classList.toggle('is-filter-expanded');
-      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-      if (label) label.textContent = expanded ? 'Hide filters' : 'Show filters';
+      if (sheetOpen) closeSheet();
+      else openSheet();
+    });
+
+    if (sheetBackdrop) {
+      sheetBackdrop.addEventListener('click', closeSheet);
+    }
+    if (sheetClose) {
+      sheetClose.addEventListener('click', closeSheet);
+    }
+    if (sheetApply) {
+      sheetApply.addEventListener('click', function () {
+        applyFilters({ immediate: true });
+        closeSheet();
+      });
+    }
+    if (sheetClear) {
+      sheetClear.addEventListener('click', function () {
+        if (isOrganiserMode()) {
+          if (window.hubResetOrganiserFilters) window.hubResetOrganiserFilters();
+        } else {
+          resetFilters();
+        }
+        syncMobileFilterToggle();
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sheetOpen) {
+        e.preventDefault();
+        closeSheet();
+      }
     });
 
     if (mq.addEventListener) mq.addEventListener('change', syncMobileFilterToggle);
     else if (mq.addListener) mq.addListener(syncMobileFilterToggle);
     syncMobileFilterToggle();
+    window.hubSyncMobileFilterToggle = syncMobileFilterToggle;
+    window.hubOpenMobileFilterSheet = openSheet;
+    window.hubCloseMobileFilterSheet = closeSheet;
   }
 
-  initMobileFilterToggle();
+  initMobileFilterSheet();
+
+  function refreshMobileFilterToggleUi() {
+    if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
+  }
 
   function bindClearFilters(btn) {
     if (!btn) return;
@@ -1495,4 +1695,5 @@
 
   initEventsFilterCitySearch();
   initEventsFilterLocationCitySearch();
+  updateCityPageCta();
 })();

@@ -108,6 +108,22 @@ body {
   outline: 2px solid var(--lavender);
   outline-offset: 2px;
 }
+
+/* Skip link is for bypassing the header — hide it while the mobile drawer is open */
+body.nav-menu-open .skip-to-content,
+body.nav-menu-open .skip-to-content:focus,
+body.nav-menu-open .skip-to-content:focus-visible {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  outline: none;
+  box-shadow: none;
+}
 a { color: var(--lavender-deep); text-decoration: none; }
 a:hover { color: var(--charcoal); }
 

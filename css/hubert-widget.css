@@ -280,7 +280,8 @@
 }
 
 /* Hide launcher while mobile nav is open so it cannot cover the drawer */
-body.nav-menu-open .hubert-widget {
+body.nav-menu-open .hubert-widget,
+body.events-filter-sheet-open .hubert-widget {
   visibility: hidden;
   pointer-events: none;
 }
@@ -289,6 +290,17 @@ body.nav-menu-open .hubert-widget {
 body.ev-ticket-jump-active .hubert-widget:not(.hubert-widget--open),
 body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
   bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 900px) {
+  body.events-page .hubert-widget:not(.hubert-widget--open) {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.events-page .hubert-launcher-icon {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 @media (max-width: 640px) {

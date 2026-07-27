@@ -404,6 +404,44 @@
     return [];
   };
 
+  function toNetworkingRegionSlug(regionKey) {
+    if (!regionKey) return '';
+    if (regionKey === 'london') return 'central-london';
+    if (typeof window.HUB_getNetworkingRegion === 'function' && window.HUB_getNetworkingRegion(regionKey)) {
+      return regionKey;
+    }
+    if (typeof window.HUB_resolveNetworkingRegionSlug === 'function') {
+      var fromName = window.HUB_resolveNetworkingRegionSlug(regionKey);
+      if (fromName) return fromName;
+    }
+    return regionKey;
+  }
+
+  window.hubNetworkingRegionSlugFromInput = function (raw) {
+    var text = String(raw || '').trim();
+    if (!text) return '';
+
+    if (typeof window.HUB_resolveNetworkingRegionSlug === 'function') {
+      var direct = window.HUB_resolveNetworkingRegionSlug(text);
+      if (direct) return direct;
+    }
+
+    var fullPc = parseFullUkPostcode(text);
+    if (fullPc) {
+      var fromFull = parseOutcode(fullPc);
+      if (fromFull) {
+        return toNetworkingRegionSlug(findRegionForSector(sectorOf(fromFull)));
+      }
+    }
+
+    var oc = parseOutcode(text);
+    if (oc) {
+      return toNetworkingRegionSlug(findRegionForSector(sectorOf(oc)));
+    }
+
+    return toNetworkingRegionSlug(cityRegionFromInput(text));
+  };
+
   window.hubOutcodeLabel = function (userInput) {
     var raw = String(userInput || '').trim();
     if (!raw) return '';
