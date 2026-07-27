@@ -538,6 +538,19 @@ const MEMBER_ROSTER_EMAIL_SLUGS = new Set([
   'member_roster_booking_reminder',
 ]);
 
+/**
+ * Conduct moderation mail — must reach the organiser even while the pre-launch
+ * allowlist is on (warnings/suspensions are enforcement, not marketing).
+ */
+const ORGANISER_MODERATION_EMAIL_SLUGS = new Set([
+  'organiser_hub_warning',
+  'organiser_hub_suspended',
+]);
+
+function shouldSkipEmailAllowlist(slug) {
+  return MEMBER_ROSTER_EMAIL_SLUGS.has(slug) || ORGANISER_MODERATION_EMAIL_SLUGS.has(slug);
+}
+
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo, from }) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
@@ -581,7 +594,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     tags: resendTags,
     replyTo,
     from,
-    skipAllowlist: MEMBER_ROSTER_EMAIL_SLUGS.has(slug),
+    skipAllowlist: shouldSkipEmailAllowlist(slug),
   });
   return {
     ...result,

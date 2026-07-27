@@ -963,8 +963,19 @@ module.exports = async function handler(req, res) {
       let message = 'Warning ' + result.warningCount + ' of ' + result.warningLimit + ' recorded.';
       if (result.hubSuspended) {
         message += ' Organiser profile suspended and live events unpublished.';
-      } else if (result.warningEmailResult?.sent) {
+      }
+      const emailResult = result.warningEmailResult;
+      if (emailResult?.sent) {
         message += ' Warning email sent.';
+      } else if (emailResult?.skipped) {
+        message +=
+          ' Warning email not sent (' +
+          (emailResult.reason === 'missing_organiser_email'
+            ? 'no organiser email on file'
+            : emailResult.reason || 'skipped') +
+          ').';
+      } else if (emailResult && emailResult.sent === false) {
+        message += ' Warning email failed: ' + (emailResult.error || 'unknown error') + '.';
       }
       return json(res, 200, { ok: true, ...result, message });
     } catch (e) {
