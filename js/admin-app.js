@@ -3771,10 +3771,18 @@
     return (
       '<tr><td colspan="' +
       colspan +
-      '" class="px-4 py-5 text-sm text-slate-500">' +
+      '" class="px-3 py-4 text-sm text-slate-500">' +
       esc(message) +
       '</td></tr>'
     );
+  }
+
+  function insightsTableScroll(html) {
+    return '<div class="admin-insights-table-scroll">' + html + '</div>';
+  }
+
+  function insightsListScroll(html) {
+    return '<div class="admin-insights-list-scroll">' + html + '</div>';
   }
 
   function renderInsightsTopOrganisers(rows) {
@@ -3785,19 +3793,22 @@
       .map(function (o, i) {
         return (
           '<tr class="border-t border-slate-100">' +
-          '<td class="px-3 py-2.5 text-slate-400 text-xs">' +
+          '<td class="px-2.5 py-1.5 text-slate-400 text-xs tabular-nums">' +
           (i + 1) +
           '</td>' +
-          '<td class="px-3 py-2.5 font-medium text-brand-900">' +
+          '<td class="px-2.5 py-1.5 font-medium text-brand-900 min-w-0">' +
+          '<span class="block truncate" title="' +
+          attrEsc(o.name) +
+          '">' +
           esc(o.name) +
-          '</td>' +
-          '<td class="px-3 py-2.5 text-right font-semibold">' +
+          '</span></td>' +
+          '<td class="px-2.5 py-1.5 text-right font-semibold whitespace-nowrap tabular-nums">' +
           esc(fmtMoney(o.revenue || 0)) +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right">' +
+          '<td class="px-2.5 py-1.5 text-right tabular-nums">' +
           esc(String(o.registrations || 0)) +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right text-slate-600">' +
+          '<td class="px-2.5 py-1.5 text-right text-slate-600 whitespace-nowrap">' +
           esc(fmtRating(o.avgRating)) +
           (o.reviewCount ? ' <span class="text-slate-400">(' + o.reviewCount + ')</span>' : '') +
           '</td></tr>'
@@ -3818,25 +3829,27 @@
             : '—';
         return (
           '<tr class="border-t border-slate-100">' +
-          '<td class="px-3 py-2.5 text-slate-400 text-xs">' +
+          '<td class="px-2.5 py-1.5 text-slate-400 text-xs tabular-nums">' +
           (i + 1) +
           '</td>' +
-          '<td class="px-3 py-2.5 min-w-[140px]"><span class="font-medium text-brand-900">' +
+          '<td class="px-2.5 py-1.5 min-w-0"><span class="font-medium text-brand-900 block truncate" title="' +
+          attrEsc(e.title) +
+          '">' +
           esc(e.title) +
-          '</span><span class="block text-xs text-slate-500">' +
+          '</span><span class="block text-xs text-slate-500 truncate">' +
           esc(e.organiser) +
           (e.city ? ' · ' + esc(e.city) : '') +
           '</span></td>' +
-          '<td class="px-3 py-2.5 text-right font-semibold">' +
+          '<td class="px-2.5 py-1.5 text-right font-semibold whitespace-nowrap tabular-nums">' +
           esc(fmtMoney(e.revenue || 0)) +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right">' +
+          '<td class="px-2.5 py-1.5 text-right tabular-nums">' +
           esc(String(e.registrations || 0)) +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right text-slate-600">' +
+          '<td class="px-2.5 py-1.5 text-right text-slate-600 whitespace-nowrap">' +
           esc(fmtRating(e.avgRating)) +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right text-xs text-slate-500">' +
+          '<td class="px-2.5 py-1.5 text-right text-xs text-slate-500 whitespace-nowrap">' +
           esc(fill) +
           '</td></tr>'
         );
@@ -3852,18 +3865,20 @@
       .map(function (a, i) {
         return (
           '<tr class="border-t border-slate-100">' +
-          '<td class="px-3 py-2.5 text-slate-400 text-xs">' +
+          '<td class="px-2.5 py-1.5 text-slate-400 text-xs tabular-nums">' +
           (i + 1) +
           '</td>' +
-          '<td class="px-3 py-2.5"><span class="font-medium text-brand-900">' +
+          '<td class="px-2.5 py-1.5 min-w-0"><span class="font-medium text-brand-900 block truncate">' +
           esc(a.name) +
           '</span>' +
-          (a.email ? '<span class="block text-xs text-slate-500">' + esc(a.email) + '</span>' : '') +
+          (a.email
+            ? '<span class="block text-xs text-slate-500 truncate">' + esc(a.email) + '</span>'
+            : '') +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right font-semibold">' +
+          '<td class="px-2.5 py-1.5 text-right font-semibold whitespace-nowrap tabular-nums">' +
           esc(fmtMoney(a.spend || 0)) +
           '</td>' +
-          '<td class="px-3 py-2.5 text-right">' +
+          '<td class="px-2.5 py-1.5 text-right tabular-nums">' +
           esc(String(a.eventsAttended || 0)) +
           '</td></tr>'
         );
@@ -3875,24 +3890,24 @@
     if (!rows.length) {
       return '<p class="text-sm text-slate-500">No city data in this period yet.</p>';
     }
-    return (
-      '<ul class="space-y-2">' +
-      rows
-        .map(function (c) {
-          return (
-            '<li class="flex items-center justify-between text-sm gap-3">' +
-            '<span class="font-medium text-brand-900">' +
-            esc(c.city) +
-            '</span>' +
-            '<span class="text-slate-500 shrink-0">' +
-            esc(String(c.registrations || 0)) +
-            ' regs · ' +
-            esc(fmtMoney(c.revenue || 0)) +
-            '</span></li>'
-          );
-        })
-        .join('') +
-      '</ul>'
+    return insightsListScroll(
+      '<ul class="space-y-1.5">' +
+        rows
+          .map(function (c) {
+            return (
+              '<li class="flex items-center justify-between text-sm gap-3">' +
+              '<span class="font-medium text-brand-900 truncate min-w-0">' +
+              esc(c.city) +
+              '</span>' +
+              '<span class="text-slate-500 shrink-0 tabular-nums">' +
+              esc(String(c.registrations || 0)) +
+              ' regs · ' +
+              esc(fmtMoney(c.revenue || 0)) +
+              '</span></li>'
+            );
+          })
+          .join('') +
+        '</ul>'
     );
   }
 
@@ -3903,28 +3918,30 @@
       return '<p class="text-sm text-slate-500">No members have added a location yet.</p>';
     }
     return (
-      '<p class="text-xs text-slate-500 mb-3">' +
+      '<p class="text-xs text-slate-500 mb-2">' +
       esc(String(data.provided || 0)) +
       ' of ' +
       esc(String(data.total || 0)) +
       ' profiles provided a location · ' +
       esc(String(data.missing || 0)) +
       ' not provided</p>' +
-      '<ul class="space-y-2">' +
-      rows
-        .map(function (row) {
-          return (
-            '<li class="flex items-center justify-between text-sm gap-3">' +
-            '<span class="font-medium text-brand-900 min-w-0 truncate">' +
-            esc(row.area) +
-            '</span><span class="text-slate-500 shrink-0">' +
-            esc(String(row.users || 0)) +
-            (Number(row.users || 0) === 1 ? ' member' : ' members') +
-            '</span></li>'
-          );
-        })
-        .join('') +
-      '</ul>'
+      insightsListScroll(
+        '<ul class="space-y-1.5">' +
+          rows
+            .map(function (row) {
+              return (
+                '<li class="flex items-center justify-between text-sm gap-3">' +
+                '<span class="font-medium text-brand-900 min-w-0 truncate">' +
+                esc(row.area) +
+                '</span><span class="text-slate-500 shrink-0 tabular-nums">' +
+                esc(String(row.users || 0)) +
+                (Number(row.users || 0) === 1 ? ' member' : ' members') +
+                '</span></li>'
+              );
+            })
+            .join('') +
+          '</ul>'
+      )
     );
   }
 
@@ -3932,24 +3949,24 @@
     if (!rows.length) {
       return '<p class="text-sm text-slate-500">No registrations in this period yet.</p>';
     }
-    return (
-      '<ul class="space-y-2">' +
-      rows
-        .map(function (t) {
-          return (
-            '<li class="flex items-center justify-between text-sm gap-3">' +
-            '<span class="font-medium text-brand-900 capitalize">' +
-            esc(t.type) +
-            '</span>' +
-            '<span class="text-slate-500 shrink-0">' +
-            esc(String(t.count || 0)) +
-            ' · ' +
-            esc(fmtMoney(t.revenue || 0)) +
-            '</span></li>'
-          );
-        })
-        .join('') +
-      '</ul>'
+    return insightsListScroll(
+      '<ul class="space-y-1.5">' +
+        rows
+          .map(function (t) {
+            return (
+              '<li class="flex items-center justify-between text-sm gap-3">' +
+              '<span class="font-medium text-brand-900 capitalize truncate min-w-0">' +
+              esc(t.type) +
+              '</span>' +
+              '<span class="text-slate-500 shrink-0 tabular-nums">' +
+              esc(String(t.count || 0)) +
+              ' · ' +
+              esc(fmtMoney(t.revenue || 0)) +
+              '</span></li>'
+            );
+          })
+          .join('') +
+        '</ul>'
     );
   }
 
@@ -3961,24 +3978,24 @@
         ' with 3+ reviews yet.</p>'
       );
     }
-    return (
-      '<ul class="space-y-2">' +
-      rows
-        .map(function (r) {
-          return (
-            '<li class="flex items-center justify-between text-sm gap-3">' +
-            '<span class="font-medium text-brand-900 min-w-0 truncate">' +
-            esc(r.title || r.name) +
-            '</span>' +
-            '<span class="text-slate-600 shrink-0 font-semibold">' +
-            esc(fmtRating(r.avgRating)) +
-            ' <span class="text-slate-400 font-normal">(' +
-            esc(String(r.reviewCount || 0)) +
-            ')</span></span></li>'
-          );
-        })
-        .join('') +
-      '</ul>'
+    return insightsListScroll(
+      '<ul class="space-y-1.5">' +
+        rows
+          .map(function (r) {
+            return (
+              '<li class="flex items-center justify-between text-sm gap-3">' +
+              '<span class="font-medium text-brand-900 min-w-0 truncate">' +
+              esc(r.title || r.name) +
+              '</span>' +
+              '<span class="text-slate-600 shrink-0 font-semibold">' +
+              esc(fmtRating(r.avgRating)) +
+              ' <span class="text-slate-400 font-normal">(' +
+              esc(String(r.reviewCount || 0)) +
+              ')</span></span></li>'
+            );
+          })
+          .join('') +
+        '</ul>'
     );
   }
 
@@ -3991,48 +4008,71 @@
     var repeat = data.repeatAttendees || {};
     var growth = data.growthPulse || {};
     var funnel = data.applicationFunnel || {};
+    var periodLabel = analyticsPeriodLabel(data.period || analyticsState.period);
+    var orgCount = (data.topOrganisers || []).length;
+    var eventCount = (data.topEvents || []).length;
+    var attendeeCount = (data.topAttendees || []).length;
+
     return (
-      '<div class="space-y-5">' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
+      '<div class="admin-insights space-y-4">' +
+      '<nav class="admin-insights-jump" aria-label="Insights sections">' +
+      '<a href="#insights-performers" class="admin-insights-jump-link">Performers</a>' +
+      '<a href="#insights-growth" class="admin-insights-jump-link">Growth</a>' +
+      '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
+      '</nav>' +
+      '<section id="insights-performers" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div class="flex flex-wrap items-end justify-between gap-2">' +
       '<div><h3 class="font-bold text-brand-900">Top performers</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Ranked from Supabase registrations — ' +
-      esc(analyticsPeriodLabel(data.period || analyticsState.period)) +
-      '.</p></div>' +
-      '<div class="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">' +
-      '<div class="min-w-0 lg:col-span-1 xl:col-span-1 rounded-xl border border-slate-200 overflow-hidden">' +
-      '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Best groups</h4></div>' +
-      adminTableScroll(
-        '<table class="w-full text-sm"><thead class="text-xs uppercase text-slate-500 bg-white">' +
-          '<tr><th class="px-3 py-2 w-8"></th><th class="px-3 py-2 text-left">Organiser</th><th class="px-3 py-2 text-right">Revenue</th><th class="px-3 py-2 text-right">Regs</th><th class="px-3 py-2 text-right">Rating</th></tr></thead>' +
-          '<tbody id="insights-top-organisers">' +
+      '<p class="text-sm text-slate-500 mt-0.5">Ranked from registrations — ' +
+      esc(periodLabel) +
+      '. Tables scroll when long.</p></div>' +
+      '<p class="text-xs text-slate-400">' +
+      esc(String(orgCount)) +
+      ' groups · ' +
+      esc(String(eventCount)) +
+      ' events · ' +
+      esc(String(attendeeCount)) +
+      ' attendees</p></div>' +
+      '<div class="grid gap-3 lg:grid-cols-2">' +
+      '<div class="min-w-0 rounded-xl border border-slate-200 overflow-hidden flex flex-col">' +
+      '<div class="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-2">' +
+      '<h4 class="text-sm font-bold text-brand-900">Best groups</h4>' +
+      '<span class="text-[11px] text-slate-400">Top 10</span></div>' +
+      insightsTableScroll(
+        '<table class="w-full text-sm admin-insights-table"><thead class="text-[11px] uppercase tracking-wide text-slate-500">' +
+          '<tr><th class="px-2.5 py-2 w-7"></th><th class="px-2.5 py-2 text-left">Organiser</th><th class="px-2.5 py-2 text-right">Revenue</th><th class="px-2.5 py-2 text-right">Regs</th><th class="px-2.5 py-2 text-right">Rating</th></tr></thead>' +
+          '<tbody>' +
           renderInsightsTopOrganisers(data.topOrganisers || []) +
           '</tbody></table>'
       ) +
       '</div>' +
-      '<div class="min-w-0 lg:col-span-1 xl:col-span-2 rounded-xl border border-slate-200 overflow-hidden">' +
-      '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Best events</h4></div>' +
-      adminTableScroll(
-        '<table class="w-full text-sm"><thead class="text-xs uppercase text-slate-500 bg-white">' +
-          '<tr><th class="px-3 py-2 w-8"></th><th class="px-3 py-2 text-left">Event</th><th class="px-3 py-2 text-right">Revenue</th><th class="px-3 py-2 text-right">Sold</th><th class="px-3 py-2 text-right">Rating</th><th class="px-3 py-2 text-right">Fill</th></tr></thead>' +
-          '<tbody id="insights-top-events">' +
+      '<div class="min-w-0 rounded-xl border border-slate-200 overflow-hidden flex flex-col">' +
+      '<div class="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-2">' +
+      '<h4 class="text-sm font-bold text-brand-900">Best events</h4>' +
+      '<span class="text-[11px] text-slate-400">Top 10</span></div>' +
+      insightsTableScroll(
+        '<table class="w-full text-sm admin-insights-table"><thead class="text-[11px] uppercase tracking-wide text-slate-500">' +
+          '<tr><th class="px-2.5 py-2 w-7"></th><th class="px-2.5 py-2 text-left">Event</th><th class="px-2.5 py-2 text-right">Revenue</th><th class="px-2.5 py-2 text-right">Sold</th><th class="px-2.5 py-2 text-right">Rating</th><th class="px-2.5 py-2 text-right">Fill</th></tr></thead>' +
+          '<tbody>' +
           renderInsightsTopEvents(data.topEvents || []) +
           '</tbody></table>'
       ) +
-      '</div>' +
-      '<div class="min-w-0 lg:col-span-2 xl:col-span-2 rounded-xl border border-slate-200 overflow-hidden">' +
-      '<div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50"><h4 class="text-sm font-bold text-brand-900">Highest spending attendees</h4>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Admin view — top 5 by paid ticket spend (test/E2E excluded).</p></div>' +
-      adminTableScroll(
-        '<table class="w-full text-sm"><thead class="text-xs uppercase text-slate-500 bg-white">' +
-          '<tr><th class="px-3 py-2 w-8"></th><th class="px-3 py-2 text-left">Attendee</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Events</th></tr></thead>' +
-          '<tbody id="insights-top-attendees">' +
+      '</div></div>' +
+      '<div class="min-w-0 rounded-xl border border-slate-200 overflow-hidden">' +
+      '<div class="px-3 py-2 border-b border-slate-100 bg-slate-50">' +
+      '<h4 class="text-sm font-bold text-brand-900">Highest spending attendees</h4>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Top 10 by paid ticket spend (test/E2E excluded).</p></div>' +
+      insightsTableScroll(
+        '<table class="w-full text-sm admin-insights-table admin-insights-table--attendees"><thead class="text-[11px] uppercase tracking-wide text-slate-500">' +
+          '<tr><th class="px-2.5 py-2 w-7"></th><th class="px-2.5 py-2 text-left">Attendee</th><th class="px-2.5 py-2 text-right">Spend</th><th class="px-2.5 py-2 text-right">Events</th></tr></thead>' +
+          '<tbody>' +
           renderInsightsTopAttendees(data.topAttendees || []) +
           '</tbody></table>'
       ) +
-      '</div></div></section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
+      '</div></section>' +
+      '<section id="insights-growth" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Growth &amp; quality</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Trends and engagement signals from Supabase.</p></div>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Pulse metrics — always visible above the longer lists.</p></div>' +
       '<div class="admin-metric-grid admin-metric-grid--4">' +
       card(
         'Revenue (30 days)',
@@ -4058,24 +4098,27 @@
         String(funnel.approved || 0) + ' approved · ' + String(funnel.denied || 0) + ' denied',
         'brand'
       ) +
-      '</div>' +
-      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900">Member locations</h4>' +
-      '<p class="text-xs text-slate-500 mt-0.5 mb-3">All account profiles, grouped from the location members entered.</p><div id="insights-user-locations">' +
+      '</div></section>' +
+      '<section id="insights-places" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Places &amp; ratings</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Longer lists stay in a fixed-height scroll so the page does not grow forever.</p></div>' +
+      '<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">' +
+      '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0"><h4 class="text-sm font-bold text-brand-900">Member locations</h4>' +
+      '<p class="text-xs text-slate-500 mt-0.5 mb-2">Grouped from the location members entered.</p>' +
       renderInsightsUserLocations(data.userLocations || {}) +
-      '</div></div>' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Event cities</h4><div id="insights-top-cities">' +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0"><h4 class="text-sm font-bold text-brand-900 mb-2">Event cities</h4>' +
       renderInsightsCities(data.topCities || []) +
-      '</div></div>' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Event type mix</h4><div id="insights-type-mix">' +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0"><h4 class="text-sm font-bold text-brand-900 mb-2">Event type mix</h4>' +
       renderInsightsTypeMix(data.eventTypeMix || []) +
-      '</div></div>' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Highest rated groups</h4><p class="text-xs text-slate-500 mb-2">Min. 3 reviews</p><div id="insights-rated-orgs">' +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0"><h4 class="text-sm font-bold text-brand-900">Highest rated groups</h4><p class="text-xs text-slate-500 mb-2">Min. 3 reviews</p>' +
       renderInsightsRated(data.topRatedOrganisers || [], 'groups') +
-      '</div></div>' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">Highest rated events</h4><p class="text-xs text-slate-500 mb-2">Min. 3 reviews</p><div id="insights-rated-events">' +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0 md:col-span-2 xl:col-span-1"><h4 class="text-sm font-bold text-brand-900">Highest rated events</h4><p class="text-xs text-slate-500 mb-2">Min. 3 reviews</p>' +
       renderInsightsRated(data.topRatedEvents || [], 'events') +
-      '</div></div></div></section></div>'
+      '</div></div></section></div>'
     );
   }
 
@@ -4127,7 +4170,45 @@
       ? '<p class="text-xs text-amber-800 bg-amber-50 rounded-lg px-3 py-2">' +
         esc(browse.message || 'Search logging table is not available yet.') +
         '</p>'
-      : '<p class="text-xs text-slate-500">Logged when visitors accept analytics cookies and use search or filters on Events (page 1 only).</p>';
+      : '<p class="text-xs text-slate-500">Logged when visitors accept analytics cookies and use search or filters on Events, Organisers, or Opportunities.</p>';
+
+    var regionRows = browse.topRegions || [];
+    var sourceRows = browse.bySource || [];
+    var regionBlock =
+      regionRows.length || sourceRows.length
+        ? '<div class="grid sm:grid-cols-2 gap-4">' +
+          '<div><h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Top regions</h4>' +
+          (regionRows.length
+            ? '<ul class="text-sm space-y-1">' +
+              regionRows
+                .map(
+                  (r) =>
+                    '<li class="flex justify-between gap-2"><span>' +
+                    esc(r.region) +
+                    '</span><span class="text-slate-500">' +
+                    esc(String(r.count)) +
+                    '</span></li>'
+                )
+                .join('') +
+              '</ul>'
+            : '<p class="text-sm text-slate-400">No region-matched searches yet.</p>') +
+          '</div><div><h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">By browse page</h4>' +
+          (sourceRows.length
+            ? '<ul class="text-sm space-y-1">' +
+              sourceRows
+                .map(
+                  (r) =>
+                    '<li class="flex justify-between gap-2"><span>' +
+                    esc(String(r.source || '').replace(/_/g, ' ')) +
+                    '</span><span class="text-slate-500">' +
+                    esc(String(r.count)) +
+                    '</span></li>'
+                )
+                .join('') +
+              '</ul>'
+            : '<p class="text-sm text-slate-400">No source breakdown yet.</p>') +
+          '</div></div>'
+        : '';
 
     return (
       '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
@@ -4168,6 +4249,7 @@
       ) +
       '</div>' +
       searchNote +
+      regionBlock +
       '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">' +
       '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Top event searches</h4>' +
       '<p class="text-xs text-slate-500 mb-3">Free-text queries on /events</p>' +
@@ -4282,8 +4364,8 @@
   function analyticsPeriodToolbarHtml() {
     return (
       '<div class="flex flex-wrap gap-2" id="analytics-period-controls">' +
-      analyticsPeriodBtn('7d', '7 days') +
-      analyticsPeriodBtn('30d', '30 days') +
+        analyticsPeriodBtn('7d', '7 days') +
+        analyticsPeriodBtn('30d', '30 days') +
       analyticsPeriodBtn('all', 'All time') +
       '</div>'
     );
@@ -5021,10 +5103,10 @@
       panel.innerHTML = renderRevenueTargetsPanel(data.revenueTargets, view);
       revenueTargetsChartsCache = data.revenueTargets.charts || null;
       if (view === 'chart') {
-        revenueTargetsChartView = 'overall';
-        revenueTargetsChartMode = 'monthly';
-        syncRevenueChartTabs();
-        renderRevenueTargetsChart();
+      revenueTargetsChartView = 'overall';
+      revenueTargetsChartMode = 'monthly';
+      syncRevenueChartTabs();
+      renderRevenueTargetsChart();
       } else {
         destroyRevenueTargetsChart();
       }
@@ -6098,10 +6180,10 @@
   }
 
   function financialsStatusLine(data) {
-    if (!data || data.ok === false || data.error || data.configured === false) {
+      if (!data || data.ok === false || data.error || data.configured === false) {
       return (data && (data.message || data.error)) || 'Could not load financial data from Supabase.';
     }
-    var summary = data.summary || {};
+      var summary = data.summary || {};
     var queue = data.payoutQueue || [];
     var stripe = data.stripeAccounts || [];
     var statusLine =
@@ -6131,44 +6213,44 @@
       return false;
     }
     var summary = data.summary || {};
-    if (summaryEl) {
-      summaryEl.innerHTML =
-        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+      if (summaryEl) {
+        summaryEl.innerHTML =
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
         financialsMoney(summary.totalTicketRevenue) +
-        '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Booking fees</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          '</p></div>' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Booking fees</p><p class="text-xl font-bold text-brand-900 mt-1">' +
         financialsMoney(summary.totalBookingFees) +
-        '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +
-        String(summary.paidRegistrationCount || 0) +
-        '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Payouts pending</p><p class="text-xl font-bold text-brand-900 mt-1">' +
-        String(summary.pendingPayoutCount || 0) +
-        '</p></div>' +
-        (summary.refundsPendingCount
-          ? '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"><p class="text-xs text-amber-900/80 uppercase tracking-wide">Refunds pending</p><p class="text-xl font-bold text-amber-950 mt-1">' +
-            String(summary.refundsPendingCount) +
-            '</p></div>'
-          : '');
-    }
+          '</p></div>' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          String(summary.paidRegistrationCount || 0) +
+          '</p></div>' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Payouts pending</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          String(summary.pendingPayoutCount || 0) +
+          '</p></div>' +
+          (summary.refundsPendingCount
+            ? '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"><p class="text-xs text-amber-900/80 uppercase tracking-wide">Refunds pending</p><p class="text-xl font-bold text-amber-950 mt-1">' +
+              String(summary.refundsPendingCount) +
+              '</p></div>'
+            : '');
+      }
     if (statusEl) {
       var statusLine = financialsStatusLine(data);
-      if (data.payoutWarning || data.refundsPendingWarning) {
+        if (data.payoutWarning || data.refundsPendingWarning) {
         statusEl.innerHTML =
-          (data.refundsPendingWarning
-            ? '<span class="text-red-700 font-medium">' +
-              esc(data.refundsPendingWarning) +
-              '</span><br>'
-            : '') +
-          (data.payoutWarning
-            ? '<span class="text-amber-800 font-medium">' +
-              esc(data.payoutWarning) +
-              '</span><br>'
-            : '') +
-          '<span class="text-slate-500">' +
-          esc(statusLine) +
-          '</span>';
-      } else {
+            (data.refundsPendingWarning
+              ? '<span class="text-red-700 font-medium">' +
+                esc(data.refundsPendingWarning) +
+                '</span><br>'
+              : '') +
+            (data.payoutWarning
+              ? '<span class="text-amber-800 font-medium">' +
+                esc(data.payoutWarning) +
+                '</span><br>'
+              : '') +
+            '<span class="text-slate-500">' +
+            esc(statusLine) +
+            '</span>';
+        } else {
         statusEl.textContent = statusLine;
       }
     }
@@ -6187,7 +6269,7 @@
             : s.status === 'Onboarding'
               ? 'text-amber-700'
               : 'text-slate-500';
-        return (
+                return (
           '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
           esc(s.organiser) +
           '</td><td class="px-4 py-3">' +
@@ -6198,9 +6280,9 @@
           statusCls +
           '">' +
           esc(s.status) +
-          '</td></tr>'
-        );
-      })
+                  '</td></tr>'
+                );
+              })
       .join('');
   }
 
@@ -6215,57 +6297,57 @@
       );
     }
     return queue
-      .map(function (p) {
-        var statusCls =
-          p.status === 'paid'
-            ? 'text-emerald-700 bg-emerald-50'
-            : p.status === 'pending_review'
-              ? 'text-amber-800 bg-amber-50'
-              : 'text-slate-700 bg-slate-100';
-        var actions = '';
-        if (p.status === 'pending_review') {
-          actions =
-            '<button type="button" class="payout-status-btn rounded-lg bg-brand-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
-            attrEsc(p.id) +
-            '" data-payout-status="approved">Approve</button>';
-        } else if (p.status === 'approved') {
-          actions =
-            '<button type="button" class="payout-status-btn rounded-lg bg-emerald-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
-            attrEsc(p.id) +
-            '" data-payout-status="paid">Mark paid</button>';
-        } else {
-          actions = '<span class="text-xs text-slate-400">—</span>';
-        }
-        return (
-          '<tr class="border-t border-slate-100">' +
-          '<td class="px-4 py-3 font-medium">' +
-          esc(p.eventTitle) +
-          '</td>' +
-          '<td class="px-4 py-3">' +
-          esc(p.organiser) +
-          '</td>' +
-          '<td class="px-4 py-3">' +
-          esc(p.amount) +
-          '</td>' +
-          '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded ' +
-          statusCls +
-          '">' +
-          esc(p.statusLabel) +
-          '</span></td>' +
-          '<td class="px-4 py-3 text-xs text-slate-500">' +
-          esc(fmtTime(p.requestedAt)) +
-          '</td>' +
-          '<td class="px-4 py-3 whitespace-nowrap">' +
-          actions +
-          '</td></tr>'
-        );
-      })
+              .map(function (p) {
+                var statusCls =
+                  p.status === 'paid'
+                    ? 'text-emerald-700 bg-emerald-50'
+                    : p.status === 'pending_review'
+                      ? 'text-amber-800 bg-amber-50'
+                      : 'text-slate-700 bg-slate-100';
+                var actions = '';
+                if (p.status === 'pending_review') {
+                  actions =
+                    '<button type="button" class="payout-status-btn rounded-lg bg-brand-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
+                    attrEsc(p.id) +
+                    '" data-payout-status="approved">Approve</button>';
+                } else if (p.status === 'approved') {
+                  actions =
+                    '<button type="button" class="payout-status-btn rounded-lg bg-emerald-700 text-white px-2 py-1 text-xs font-semibold" data-payout-id="' +
+                    attrEsc(p.id) +
+                    '" data-payout-status="paid">Mark paid</button>';
+                } else {
+                  actions = '<span class="text-xs text-slate-400">—</span>';
+                }
+                return (
+                  '<tr class="border-t border-slate-100">' +
+                  '<td class="px-4 py-3 font-medium">' +
+                  esc(p.eventTitle) +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  esc(p.organiser) +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  esc(p.amount) +
+                  '</td>' +
+                  '<td class="px-4 py-3"><span class="text-xs font-semibold px-2 py-0.5 rounded ' +
+                  statusCls +
+                  '">' +
+                  esc(p.statusLabel) +
+                  '</span></td>' +
+                  '<td class="px-4 py-3 text-xs text-slate-500">' +
+                  esc(fmtTime(p.requestedAt)) +
+                  '</td>' +
+                  '<td class="px-4 py-3 whitespace-nowrap">' +
+                  actions +
+                  '</td></tr>'
+                );
+              })
       .join('');
   }
 
   function financialsRefundRowsHtml(refundsPending, refundsPendingWarning) {
     if (!refundsPending.length) {
-      return (
+                return (
         '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
         (refundsPendingWarning
           ? 'Could not load refunds pending: ' + esc(refundsPendingWarning)
@@ -6296,9 +6378,9 @@
           '<button type="button" class="retry-refunds-btn rounded-lg bg-amber-800 text-white px-2 py-1 text-xs font-semibold hover:bg-amber-900" data-retry-refunds-event="' +
           attrEsc(row.eventId) +
           '">Retry refunds</button>' +
-          '</td></tr>'
-        );
-      })
+                  '</td></tr>'
+                );
+              })
       .join('');
   }
 
@@ -6521,9 +6603,9 @@
         return;
       }
       var log = data.automationLog || [];
-      var genuineLog = log.filter(function (l) {
-        return !/\be2e\b/i.test(String(l.line || ''));
-      });
+        var genuineLog = log.filter(function (l) {
+          return !/\be2e\b/i.test(String(l.line || ''));
+        });
       if (logEl) {
         logEl.innerHTML = genuineLog.length
           ? genuineLog
@@ -13710,9 +13792,9 @@
             '" aria-label="Remove ' +
             attrEsc(ev.title || 'event') +
             ' from selection">×</button></span>'
-          );
-        })
-        .join('');
+            );
+          })
+          .join('');
     }
     if (main) {
       var selectPage = document.getElementById('event-cleanup-select-page');
@@ -14749,64 +14831,64 @@
         }
         if (status) status.textContent = 'Snapshot history and recent congratulation emails.';
 
-        var historyRows = (data.snapshots || [])
-          .map(function (s) {
-            return (
-              '<tr class="border-b border-slate-100 last:border-0">' +
-              '<td class="py-2 pr-3 text-sm">' +
-              esc(s.period_label) +
-              '</td>' +
-              '<td class="py-2 pr-3 text-sm text-slate-600">' +
-              esc(String(s.total_ranked)) +
-              ' groups</td>' +
-              '<td class="py-2 pr-3 text-xs text-slate-500">' +
-              esc(s.triggered_by || 'cron') +
-              '</td></tr>'
-            );
-          })
-          .join('');
+      var historyRows = (data.snapshots || [])
+        .map(function (s) {
+          return (
+            '<tr class="border-b border-slate-100 last:border-0">' +
+            '<td class="py-2 pr-3 text-sm">' +
+            esc(s.period_label) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm text-slate-600">' +
+            esc(String(s.total_ranked)) +
+            ' groups</td>' +
+            '<td class="py-2 pr-3 text-xs text-slate-500">' +
+            esc(s.triggered_by || 'cron') +
+            '</td></tr>'
+          );
+        })
+        .join('');
 
-        var emailRows = (data.recentEmails || [])
-          .map(function (m) {
-            return (
-              '<tr class="border-b border-slate-100 last:border-0">' +
-              '<td class="py-2 pr-3 text-sm text-slate-700">' +
-              esc(m.email_to) +
-              '</td>' +
-              '<td class="py-2 pr-3">' +
-              tierBadge(m.tier) +
-              '</td>' +
-              '<td class="py-2 pr-3 text-sm text-slate-600">' +
-              esc(m.period_label) +
-              '</td>' +
-              '<td class="py-2 pr-3 text-xs uppercase text-slate-500">' +
-              esc(m.reason) +
-              '</td></tr>'
-            );
-          })
-          .join('');
+      var emailRows = (data.recentEmails || [])
+        .map(function (m) {
+          return (
+            '<tr class="border-b border-slate-100 last:border-0">' +
+            '<td class="py-2 pr-3 text-sm text-slate-700">' +
+            esc(m.email_to) +
+            '</td>' +
+            '<td class="py-2 pr-3">' +
+            tierBadge(m.tier) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm text-slate-600">' +
+            esc(m.period_label) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-xs uppercase text-slate-500">' +
+            esc(m.reason) +
+            '</td></tr>'
+          );
+        })
+        .join('');
 
-        panels.innerHTML =
-          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-          '<h3 class="font-bold text-brand-900 mb-3">Snapshot history</h3>' +
-          (historyRows
-            ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
-              '<th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Ranked</th><th class="py-2 pr-3">Source</th></tr></thead><tbody>' +
-              historyRows +
-              '</tbody></table></div>'
-            : '<p class="text-sm text-slate-500">No history yet.</p>') +
-          '</section>' +
-          '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-          '<h3 class="font-bold text-brand-900 mb-3">Recent congratulation emails</h3>' +
-          (emailRows
-            ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
-              '<th class="py-2 pr-3">Sent to</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Reason</th></tr></thead><tbody>' +
-              emailRows +
-              '</tbody></table></div>'
-            : '<p class="text-sm text-slate-500">No ranking emails sent yet.</p>') +
-          '</section>';
+      panels.innerHTML =
+        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+        '<h3 class="font-bold text-brand-900 mb-3">Snapshot history</h3>' +
+        (historyRows
+          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+            '<th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Ranked</th><th class="py-2 pr-3">Source</th></tr></thead><tbody>' +
+            historyRows +
+            '</tbody></table></div>'
+          : '<p class="text-sm text-slate-500">No history yet.</p>') +
+        '</section>' +
+        '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+        '<h3 class="font-bold text-brand-900 mb-3">Recent congratulation emails</h3>' +
+        (emailRows
+          ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+            '<th class="py-2 pr-3">Sent to</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Period</th><th class="py-2 pr-3">Reason</th></tr></thead><tbody>' +
+            emailRows +
+            '</tbody></table></div>'
+          : '<p class="text-sm text-slate-500">No ranking emails sent yet.</p>') +
+        '</section>';
       })
-      .catch(function () {
+          .catch(function () {
         var status = document.getElementById('rankings-status');
         if (status) status.textContent = 'Could not load rankings.';
       });
@@ -15024,48 +15106,48 @@
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
       } else {
-        tbody.innerHTML = rows
-          .map(function (u) {
-            return (
-              '<tr class="border-t border-slate-100">' +
-              '<td class="px-4 py-3 font-medium">' +
-              esc(u.name) +
-              '</td>' +
-              '<td class="px-4 py-3">' +
-              esc(u.email) +
-              '</td>' +
-              '<td class="px-4 py-3 text-center">' +
-              esc(u.role) +
-              '</td>' +
-              '<td class="px-4 py-3 text-center text-xs">' +
-              (u.emailsEnabled === false
-                ? '<span class="text-slate-500">Blocked</span>'
-                : '<span class="text-emerald-700">On</span>') +
-              '</td>' +
-              '<td class="px-4 py-3 text-center">' +
-              (u.organiserId
-                ? '<input type="checkbox" class="users-featured-toggle" data-user-id="' +
-                  attrEsc(u.id) +
-                  '" data-organiser-id="' +
-                  attrEsc(u.organiserId) +
-                  '" ' +
-                  (u.featured ? 'checked' : '') +
-                  ' aria-label="Featured organiser" />'
-                : '<span class="text-xs text-slate-400">—</span>') +
-              '</td>' +
-              '<td class="px-4 py-3 text-right whitespace-nowrap">' +
-              '<button type="button" class="users-open-drawer text-brand-700 text-xs font-semibold hover:underline" data-user-id="' +
-              attrEsc(u.id) +
-              '">Details</button>' +
-              (u.role !== 'Admin'
-                ? ' · <button type="button" class="users-impersonate text-brand-700 text-xs font-semibold hover:underline" data-email="' +
-                  attrEsc(u.email) +
-                  '">Impersonate</button>'
-                : '') +
-              '</td></tr>'
-            );
-          })
-          .join('');
+      tbody.innerHTML = rows
+        .map(function (u) {
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-4 py-3 font-medium">' +
+            esc(u.name) +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(u.email) +
+            '</td>' +
+            '<td class="px-4 py-3 text-center">' +
+            esc(u.role) +
+            '</td>' +
+            '<td class="px-4 py-3 text-center text-xs">' +
+            (u.emailsEnabled === false
+              ? '<span class="text-slate-500">Blocked</span>'
+              : '<span class="text-emerald-700">On</span>') +
+            '</td>' +
+            '<td class="px-4 py-3 text-center">' +
+            (u.organiserId
+              ? '<input type="checkbox" class="users-featured-toggle" data-user-id="' +
+                attrEsc(u.id) +
+                '" data-organiser-id="' +
+                attrEsc(u.organiserId) +
+                '" ' +
+                (u.featured ? 'checked' : '') +
+                ' aria-label="Featured organiser" />'
+              : '<span class="text-xs text-slate-400">—</span>') +
+            '</td>' +
+            '<td class="px-4 py-3 text-right whitespace-nowrap">' +
+            '<button type="button" class="users-open-drawer text-brand-700 text-xs font-semibold hover:underline" data-user-id="' +
+            attrEsc(u.id) +
+            '">Details</button>' +
+            (u.role !== 'Admin'
+              ? ' · <button type="button" class="users-impersonate text-brand-700 text-xs font-semibold hover:underline" data-email="' +
+                attrEsc(u.email) +
+                '">Impersonate</button>'
+              : '') +
+            '</td></tr>'
+          );
+        })
+        .join('');
       }
       if (pagerEl) {
         pagerEl.innerHTML = adminPaginationHtml(

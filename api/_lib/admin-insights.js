@@ -99,7 +99,7 @@ function aggregateUserLocations(attendees) {
     missing: Math.max(0, (attendees || []).length - provided),
     areas: Array.from(areas.values())
       .sort((a, b) => b.users - a.users || a.area.localeCompare(b.area, 'en-GB'))
-      .slice(0, 10),
+      .slice(0, 15),
   };
 }
 
@@ -313,13 +313,15 @@ function aggregateInsights(regs, ratingMaps, capacityByEvent) {
       eventsAttended: a.eventsAttended,
     }))
     .sort((a, b) => b.spend - a.spend || b.eventsAttended - a.eventsAttended)
-    .slice(0, 5);
+    .slice(0, 10);
 
   const topCities = Array.from(cityStats.values())
     .sort((a, b) => b.registrations - a.registrations || b.revenue - a.revenue)
-    .slice(0, 5);
+    .slice(0, 12);
 
-  const eventTypeMix = Array.from(typeStats.values()).sort((a, b) => b.count - a.count);
+  const eventTypeMix = Array.from(typeStats.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
 
   return {
     topOrganisers,
@@ -351,7 +353,7 @@ function buildRatedLists(byEvent, byOrganiser, eventStats, organiserStats, organ
       };
     })
     .sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount)
-    .slice(0, 5);
+    .slice(0, 10);
 
   const topRatedEvents = Array.from(byEvent.entries())
     .filter(([, r]) => r.count >= 3)
@@ -366,7 +368,7 @@ function buildRatedLists(byEvent, byOrganiser, eventStats, organiserStats, organ
       };
     })
     .sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount)
-    .slice(0, 5);
+    .slice(0, 10);
 
   return { topRatedOrganisers, topRatedEvents };
 }
