@@ -452,7 +452,32 @@
   line-height: 1.6;
   color: var(--text-muted);
   margin: 0;
-  white-space: pre-wrap;
+}
+
+.org-profile-desc .org-profile-p,
+.org-profile-desc .org-profile-heading,
+.org-profile-desc p {
+  margin: 0 0 14px;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.org-profile-desc .org-profile-p:last-child,
+.org-profile-desc .org-profile-heading:last-child,
+.org-profile-desc p:last-child {
+  margin-bottom: 0;
+}
+
+.org-profile-desc .org-profile-heading {
+  font-weight: 700;
+  color: var(--charcoal, #2a2628);
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.org-profile-desc .org-profile-heading:first-child {
+  margin-top: 0;
 }
 
 .org-format-pills {

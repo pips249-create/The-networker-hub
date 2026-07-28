@@ -19,6 +19,7 @@
   var mapSidebarFoot = document.getElementById('map-sidebar-foot');
   var mapSidebarLoadMore = document.getElementById('map-sidebar-load-more');
   var mapSearchAreaBtn = document.getElementById('map-search-area-btn');
+  var mapSearchAreaBtnLabel = document.getElementById('map-search-area-btn-label');
   var mapAreaActive = document.getElementById('map-area-active');
   var mapAreaActiveLabel = document.getElementById('map-area-active-label');
   var mapAreaResetBtn = document.getElementById('map-area-reset-btn');
@@ -324,8 +325,51 @@
     });
   }
 
+  function countMappableInBounds() {
+    if (!map || !lastFilteredList.length) return 0;
+    var bounds = map.getBounds();
+    var n = 0;
+    for (var i = 0; i < lastFilteredList.length; i++) {
+      var coords = coordsForEvent(lastFilteredList[i]);
+      if (coords && bounds.contains(coords)) n += 1;
+    }
+    return n;
+  }
+
   function hideSearchAreaPrompt() {
-    if (mapSearchAreaBtn) mapSearchAreaBtn.hidden = true;
+    if (!mapSearchAreaBtn) return;
+    mapSearchAreaBtn.hidden = true;
+    mapSearchAreaBtn.classList.remove('is-visible', 'is-pulse');
+  }
+
+  function showSearchAreaPrompt() {
+    if (!mapSearchAreaBtn || !isMapView) return;
+    var count = countMappableInBounds();
+    var label = mapSearchAreaBtnLabel || mapSearchAreaBtn;
+    if (viewportFilterActive) {
+      label.textContent =
+        count > 0 ? 'Update to this area · ' + count : 'Update to this area · none here';
+    } else if (count > 0) {
+      label.textContent = 'Search this area · ' + count + (count === 1 ? ' event' : ' events');
+    } else {
+      label.textContent = 'Search this area · none here';
+    }
+    mapSearchAreaBtn.hidden = false;
+    mapSearchAreaBtn.classList.add('is-visible');
+    mapSearchAreaBtn.classList.remove('is-pulse');
+    // Retrigger entrance/pulse animation
+    void mapSearchAreaBtn.offsetWidth;
+    mapSearchAreaBtn.classList.add('is-pulse');
+    mapSearchAreaBtn.setAttribute(
+      'aria-label',
+      count > 0
+        ? (viewportFilterActive ? 'Update search to this map area, ' : 'Search this map area, ') +
+            count +
+            (count === 1 ? ' event' : ' events')
+        : viewportFilterActive
+          ? 'Update search to this map area — no events here'
+          : 'Search this map area — no events here'
+    );
   }
 
   function updateViewportControls(inAreaCount) {
@@ -334,7 +378,8 @@
       hideSearchAreaPrompt();
       mapAreaActive.hidden = false;
       if (mapAreaActiveLabel) {
-        mapAreaActiveLabel.textContent = String(inAreaCount) + ' in this area';
+        mapAreaActiveLabel.textContent =
+          inAreaCount === 1 ? '1 event in view' : String(inAreaCount) + ' events in view';
       }
     } else {
       mapAreaActive.hidden = true;
@@ -360,14 +405,13 @@
   }
 
   function onMapMoveEnd() {
-    if (!isMapView || suppressMapEvents > 0 || viewportFilterActive) return;
+    if (!isMapView || suppressMapEvents > 0) return;
     if (!mapUserMoved) return;
     clearTimeout(moveEndTimer);
     moveEndTimer = setTimeout(function () {
-      if (mapSearchAreaBtn && !viewportFilterActive) {
-        mapSearchAreaBtn.hidden = false;
-      }
-    }, 350);
+      if (!isMapView || suppressMapEvents > 0) return;
+      showSearchAreaPrompt();
+    }, 280);
   }
 
   function bindMapViewportEvents() {

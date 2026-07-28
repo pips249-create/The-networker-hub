@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-loading.css" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260728reviews" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260728paras1" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -208,8 +208,8 @@
 
         <section class="content-section" id="ev-about-section">
           <h2>About this event</h2>
-          <p id="ev-about-lead">Loading event details…</p>
-          <p id="ev-about-extra" hidden></p>
+          <div id="ev-about-lead" class="ev-about-copy">Loading event details…</div>
+          <div id="ev-about-extra" class="ev-about-copy" hidden></div>
           <h3 class="subhead" id="ev-included-heading" hidden>What&apos;s included</h3>
           <ul id="ev-included-list"></ul>
         </section>
@@ -559,7 +559,8 @@
     <script src="../js/postcode-outcode.js?v=20260727city"></script>
     <script src="../js/detail-region-cta.js?v=20260727city"></script>
     <script src="../js/how-reviews-work.js?v=20260728a"></script>
-    <script src="../js/event-detail.js?v=20260727seo"></script>
+    <script src="../js/plain-text-format.js?v=20260728paras1"></script>
+    <script src="../js/event-detail.js?v=20260728paras1"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
@@ -806,10 +807,18 @@
           var lead = document.getElementById("ev-about-lead");
           var extra = document.getElementById("ev-about-extra");
           if (about && lead) {
-            lead.textContent = about;
+            if (window.HubPlainTextFormat && HubPlainTextFormat.formatDocument) {
+              lead.innerHTML = HubPlainTextFormat.formatDocument(about);
+            } else {
+              lead.textContent = about;
+            }
             if (extra) extra.hidden = true;
           } else if (blurb && lead) {
-            lead.textContent = blurb;
+            if (window.HubPlainTextFormat && HubPlainTextFormat.formatDocument) {
+              lead.innerHTML = HubPlainTextFormat.formatDocument(blurb);
+            } else {
+              lead.textContent = blurb;
+            }
             if (extra) extra.hidden = true;
           }
 
@@ -877,7 +886,13 @@
           if (desc) {
             var lead = document.getElementById("ev-about-lead");
             var extra = document.getElementById("ev-about-extra");
-            if (lead) lead.textContent = desc;
+            if (lead) {
+              if (window.HubPlainTextFormat && HubPlainTextFormat.formatDocument) {
+                lead.innerHTML = HubPlainTextFormat.formatDocument(desc);
+              } else {
+                lead.textContent = desc;
+              }
+            }
             if (extra) extra.hidden = true;
           }
 

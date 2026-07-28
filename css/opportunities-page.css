@@ -2328,6 +2328,268 @@
   color: var(--opp-navy);
 }
 
+/* Event-grid opportunity cards */
+.opp-browse-page .event-grid-card {
+  border-color: var(--opp-border);
+}
+
+.opp-browse-page .event-grid-card:hover {
+  border-color: var(--opp-gold-border);
+  box-shadow: 0 8px 24px rgba(13, 31, 60, 0.1);
+}
+
+.opp-browse-page .event-grid-card.is-premium {
+  border-color: var(--opp-gold);
+  box-shadow: 0 4px 18px rgba(201, 150, 31, 0.18);
+}
+
+.opp-browse-page .event-grid-media {
+  background: var(--opp-light-gray);
+}
+
+.opp-browse-page .event-grid-category {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--opp-navy);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.opp-browse-page .event-grid-premium {
+  background: var(--opp-gold);
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .event-grid-price {
+  color: var(--opp-navy);
+  font-weight: 700;
+}
+
+.opp-browse-page .event-grid-format.investment-low {
+  color: #2d8a4e;
+}
+
+.opp-browse-page .event-grid-format.investment-mid {
+  color: #2563eb;
+}
+
+.opp-browse-page .event-grid-format.investment-high {
+  color: #9a3412;
+}
+
+.opp-browse-page .event-grid-title {
+  color: var(--opp-navy);
+  padding-right: 0;
+}
+
+.opp-browse-page .event-grid-host {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--opp-mid-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opp-browse-page .event-grid-meta {
+  margin: 0;
+  color: var(--opp-dark-gray);
+}
+
+.opp-browse-page .event-grid-card-link:focus-visible {
+  outline-color: var(--opp-gold);
+}
+
+.opp-browse-page .bo-opp-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.opp-browse-page .bo-opp-compact {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.opp-browse-page .bo-opp-compact .event-grid-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.opp-browse-page .bo-opp-card .event-grid-media .opp-fav-btn {
+  position: absolute;
+  top: auto;
+  bottom: 10px;
+  right: 10px;
+  left: auto;
+  z-index: 4;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--opp-mid-gray);
+  box-shadow: 0 2px 10px rgba(13, 31, 60, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.opp-browse-page .bo-opp-card .event-grid-media .opp-fav-btn:hover {
+  color: var(--opp-navy);
+  background: #fff;
+}
+
+.opp-browse-page .bo-opp-card .event-grid-media .opp-fav-btn.is-active {
+  color: var(--opp-gold);
+}
+
+.opp-browse-page .bo-opp-card .event-grid-media .opp-fav-btn.is-active svg path {
+  fill: currentColor;
+}
+
+.opp-browse-page .bo-opp-card .event-grid-media .opp-fav-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.opp-browse-page .bo-opp-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.opp-browse-page .bo-opp-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--opp-navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  transition: background 0.15s ease;
+}
+
+.opp-browse-page .bo-opp-primary-btn:hover {
+  background: #162847;
+  color: #fff;
+}
+
+.opp-browse-page .bo-opp-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto;
+  align-self: auto;
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--opp-navy);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  transition: color 0.15s ease;
+}
+
+.opp-browse-page .bo-opp-expand-btn:hover {
+  color: var(--opp-gold);
+}
+
+.opp-browse-page .bo-opp-expand-btn:focus-visible {
+  outline: 2px solid var(--opp-gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.opp-browse-page .bo-opp-expand-icon {
+  transition: transform 0.2s ease;
+}
+
+.opp-browse-page .bo-opp-card.is-expanded .bo-opp-expand-icon {
+  transform: rotate(180deg);
+}
+
+.opp-browse-page .bo-opp-card.is-expanded {
+  border-color: var(--opp-gold);
+  box-shadow: 0 10px 28px rgba(13, 31, 60, 0.12);
+}
+
+.opp-browse-page .bo-opp-card.is-expanded .event-grid-card-link {
+  pointer-events: none;
+}
+
+.opp-browse-page .bo-opp-detail {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--opp-border);
+  background: #fff;
+  pointer-events: auto;
+}
+
+.opp-browse-page .bo-opp-detail-inner {
+  padding: 14px 16px 16px;
+}
+
+.opp-browse-page .bo-opp-detail-inner .opp-company {
+  margin-bottom: 10px;
+}
+
+.opp-browse-page .bo-opp-detail-inner .opp-card-desc {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--opp-dark-gray);
+}
+
+.opp-browse-page .bo-opp-detail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.opp-browse-page .bo-opp-detail-footer .opp-enquire-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--opp-navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.opp-browse-page .bo-opp-detail-footer .opp-enquire-btn:hover {
+  background: #162847;
+}
+
 .opp-browse-page .events-sort-wrap select {
   border-color: var(--opp-border);
   color: var(--opp-text);
@@ -3322,7 +3584,7 @@
   border: 2px solid var(--opp-gold);
 }
 
-.opp-browse-page .opp-fav-btn {
+.opp-browse-page .opp-card .opp-fav-btn {
   position: absolute;
   top: 8px;
   right: 10px;
@@ -4040,7 +4302,7 @@
     font-size: 28px;
   }
 
-  .opp-browse-page .opp-fav-btn {
+  .opp-browse-page .opp-card .opp-fav-btn {
     top: 6px;
     right: 6px;
     width: 36px;
@@ -4662,11 +4924,57 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   padding: 28px 8px;
 }
 
+.opp-browse-page .opp-empty-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.opp-browse-page .opp-empty-copy {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--opp-dark-gray, #3d4557);
+}
+
 .opp-browse-page .opp-empty-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 14px;
+}
+
+.opp-browse-page .opp-empty-provider {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--opp-mid-gray, #8d99ae);
+}
+
+.opp-browse-page .opp-empty-provider a {
+  color: var(--opp-navy, #0d1f3c);
+  font-weight: 600;
+}
+
+.opp-browse-page .opp-low-results {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--opp-border, #dde3ed);
+  background: var(--opp-off-white, #f8f9fb);
+}
+
+.opp-browse-page .opp-low-results p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--opp-dark-gray, #3d4557);
+}
+
+.opp-browse-page .opp-low-results a {
+  color: var(--opp-navy, #0d1f3c);
+  font-weight: 600;
 }
 
 .opp-browse-page .opp-empty-btn {
@@ -4683,6 +4991,12 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 
 .opp-browse-page .opp-empty-btn:hover {
   background: var(--opp-navy-mid, #16325a);
+}
+
+.opportunities-page .opp-save-search-status a {
+  color: inherit;
+  font-weight: 700;
+  text-underline-offset: 2px;
 }
 
 .opportunities-page .opp-save-search-status {

@@ -17,6 +17,26 @@ function matchesSearchCriteria(item, criteria) {
   const location = String(criteria.location || '').trim();
   if (location && !hasTag(item, location)) return false;
 
+  const locationQuery = String(criteria.locationQuery || '')
+    .trim()
+    .toLowerCase();
+  if (locationQuery) {
+    const locationHay = [
+      item.locationLabel,
+      item.searchText,
+      item.title,
+      item.host,
+      item.city,
+      item.region,
+      ...(item.tags || []),
+      ...(item.meta || []).map((m) => `${m.key || ''} ${m.val || ''}`),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (!locationHay.includes(locationQuery)) return false;
+  }
+
   const commitment = String(criteria.commitment || '').trim();
   if (commitment && !hasTag(item, commitment)) return false;
 
@@ -64,6 +84,7 @@ function criteriaLabel(criteria) {
     parts.push(labels[criteria.invest] || criteria.invest);
   }
   if (criteria.location) parts.push(String(criteria.location).replace(/-/g, ' '));
+  if (criteria.locationQuery) parts.push(String(criteria.locationQuery));
   if (criteria.q) parts.push(`"${criteria.q}"`);
   return parts.length ? parts.join(', ') : 'your saved search';
 }

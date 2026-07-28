@@ -502,9 +502,20 @@
 
     renderReviews(org);
 
-    document.getElementById('org-description').textContent =
-      org.description ||
-      'This organiser is building their profile on The Networker Hub. Browse their upcoming listings below.';
+    var descEl = document.getElementById('org-description');
+    if (descEl) {
+      var descText =
+        org.description ||
+        'This organiser is building their profile on The Networker Hub. Browse their upcoming listings below.';
+      if (window.HubPlainTextFormat && HubPlainTextFormat.formatDocument && org.description) {
+        descEl.innerHTML = HubPlainTextFormat.formatDocument(descText, {
+          paragraphClass: 'org-profile-p',
+          headingClass: 'org-profile-heading',
+        });
+      } else {
+        descEl.textContent = descText;
+      }
+    }
 
     var formats = org.meetingFormats || [];
     var formatsSection = document.getElementById('org-formats-section');

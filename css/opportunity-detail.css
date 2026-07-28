@@ -357,6 +357,33 @@
   line-height: 1.65;
 }
 
+.opportunity-detail-page #opp-about-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.opportunity-detail-page #opp-about-extra .opp-about-p,
+.opportunity-detail-page #opp-about-extra .opp-about-heading {
+  margin: 0 0 1em;
+}
+
+.opportunity-detail-page #opp-about-extra .opp-about-p:last-child,
+.opportunity-detail-page #opp-about-extra .opp-about-heading:last-child {
+  margin-bottom: 0;
+}
+
+.opportunity-detail-page #opp-about-extra .opp-about-heading {
+  font-weight: 700;
+  color: var(--opp-navy, #0d1f3c);
+  margin-top: 1.15em;
+  margin-bottom: 0.4em;
+}
+
+.opportunity-detail-page #opp-about-extra .opp-about-heading:first-child {
+  margin-top: 0;
+}
+
 .opportunity-detail-page .opp-detail-poster {
   display: flex;
   gap: 14px;

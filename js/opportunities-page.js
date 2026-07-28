@@ -730,15 +730,19 @@
     if (catalog && catalog.cardDisplayMeta) {
       var meta = catalog.cardDisplayMeta(item);
       for (var i = 0; i < meta.length; i++) {
-        if (/investment/i.test(meta[i].key) && meta[i].val) return String(meta[i].val);
+        if (/investment/i.test(meta[i].key) && meta[i].val) {
+          var metaVal = String(meta[i].val).trim();
+          if (/^enquire$/i.test(metaVal)) return 'On request';
+          return metaVal;
+        }
       }
     }
     if (item.investAmount != null && !isNaN(item.investAmount)) {
-      if (item.investAmount <= 0) return 'Enquire';
+      if (item.investAmount <= 0) return 'On request';
       if (item.investAmount >= 1000) return 'From £' + Math.round(item.investAmount / 1000) + 'k';
       return 'From £' + item.investAmount;
     }
-    return 'Enquire';
+    return 'On request';
   }
 
   function commitmentLabel(item) {
@@ -1086,9 +1090,16 @@
     var invest = investmentLabel(item);
     var commitment = commitmentLabel(item);
     var tier = detectInvestTier(item);
-    var metaLine = [item.locationLabel || 'UK', invest].filter(Boolean).join(' · ');
+    var locationLabel = item.locationLabel || 'UK';
+    var hostLabel = String(item.host || '').trim();
+    var titleLabel = String(item.title || '').trim();
+    var showHost =
+      hostLabel &&
+      hostLabel.toLowerCase() !== titleLabel.toLowerCase() &&
+      hostLabel.toLowerCase() !== 'provider';
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
     var detailId = 'bo-opp-detail-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
+    var saved = saves && saves.isSaved(item.id);
 
     return (
       '<article class="event-grid-card bo-opp-card' +
@@ -1102,7 +1113,18 @@
       premiumBadge +
       '<span class="event-grid-category">' +
       escapeHtml(typeLabel) +
-      '</span></div>' +
+      '</span>' +
+      '<button type="button" class="fav-btn opp-fav-btn' +
+      (saved ? ' is-active' : '') +
+      '" data-opp-id="' +
+      escapeHtml(item.id) +
+      '" aria-label="' +
+      (saved ? 'Remove from saved' : 'Save opportunity') +
+      '" aria-pressed="' +
+      (saved ? 'true' : 'false') +
+      '">' +
+      FAV_ICON +
+      '</button></div>' +
       '<div class="event-grid-body">' +
       '<div class="event-grid-body-top">' +
       '<span class="event-grid-format ' +
@@ -1116,30 +1138,22 @@
       '<h3 class="event-grid-title">' +
       escapeHtml(item.title) +
       '</h3>' +
-      '<div class="event-grid-rating">' +
-      '<span class="event-grid-host">' +
-      escapeHtml(item.host || 'Provider') +
-      '</span>' +
-      '<button type="button" class="fav-btn opp-fav-btn' +
-      (saves && saves.isSaved(item.id) ? ' is-active' : '') +
-      '" data-opp-id="' +
-      escapeHtml(item.id) +
-      '" aria-label="' +
-      (saves && saves.isSaved(item.id) ? 'Remove from saved' : 'Save opportunity') +
-      '" aria-pressed="' +
-      (saves && saves.isSaved(item.id) ? 'true' : 'false') +
-      '">' +
-      FAV_ICON +
-      '</button></div>' +
+      (showHost
+        ? '<p class="event-grid-host">' + escapeHtml(hostLabel) + '</p>'
+        : '') +
       '<p class="event-grid-meta">' +
-      escapeHtml(metaLine) +
+      escapeHtml(locationLabel) +
       '</p>' +
+      '<div class="bo-opp-card-actions">' +
+      '<a class="bo-opp-primary-btn" href="' +
+      escapeHtml(href) +
+      '">View listing</a>' +
       '<button type="button" class="bo-opp-expand-btn" aria-expanded="false" aria-controls="' +
       escapeHtml(detailId) +
       '">' +
-      '<span class="bo-opp-expand-label">Show full details</span>' +
-      '<svg class="bo-opp-expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
-      '</button></div></div>' +
+      '<span class="bo-opp-expand-label">Quick look</span>' +
+      '<svg class="bo-opp-expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</button></div></div></div>' +
       '<div class="bo-opp-detail" id="' +
       escapeHtml(detailId) +
       '" hidden>' +
@@ -1149,7 +1163,7 @@
       escapeHtml(href) +
       '" aria-label="View ' +
       escapeHtml(item.title) +
-      '"></a></article>'
+      '" tabindex="-1"></a></article>'
     );
   }
 
@@ -1164,7 +1178,7 @@
     if (detail) detail.hidden = !expand;
     if (btn) {
       btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
-      if (label) label.textContent = expand ? 'Hide full details' : 'Show full details';
+      if (label) label.textContent = expand ? 'Hide' : 'Quick look';
     }
     expandedCardId = expand ? id : null;
   }
@@ -1562,6 +1576,10 @@
     maybeNudgeSaveSearch();
 
     var slice = getListingSlice(filtered);
+    var lowResultsHtml =
+      filtered.length > 0 && filtered.length <= 2 && hasActiveOppMobileFilters()
+        ? lowResultsHintHtml(filtered.length)
+        : '';
 
     els.mount.innerHTML =
       listingsRangeHtml(slice.rangeStart, slice.rangeEnd, filtered.length) +
@@ -1569,7 +1587,8 @@
       slice.items.map(gridCard).join('') +
       '</div>' +
       (slice.hasMore ? loadMoreHtml(filtered, slice.rangeEnd) : '') +
-      paginationHtml(currentPage, slice.totalPages);
+      paginationHtml(currentPage, slice.totalPages) +
+      lowResultsHtml;
 
     lastRenderedCount = slice.rangeEnd;
     updateResultsCount(totalMatches.length);
@@ -1578,6 +1597,7 @@
     if (slice.hasMore) observeLazySentinel();
     else disconnectLazyObserver();
     restoreExpandedCard();
+    bindEmptyStateActions();
   }
 
   function countHiddenNetworkMarketingMatches() {
@@ -1598,7 +1618,8 @@
     if (nmHiddenMatches > 0) {
       return (
         '<div class="events-empty opp-empty-state" role="status">' +
-        '<p><strong>No listings in this view.</strong> ' +
+        '<p class="opp-empty-title">No listings in this view</p>' +
+        '<p class="opp-empty-copy">' +
         nmHiddenMatches +
         ' network marketing listing' +
         (nmHiddenMatches === 1 ? ' matches' : 's match') +
@@ -1608,29 +1629,92 @@
         '<div class="opp-empty-actions">' +
         '<button type="button" class="opp-empty-btn" id="opp-show-network-marketing">Show network marketing</button>' +
         '<button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button>' +
-        '</div></div>'
+        '</div>' +
+        emptyProviderCtaHtml() +
+        '</div>'
       );
     }
 
+    var tips = [];
+    if (locationQ || activeLocationTag) tips.push('widen or clear location');
+    if (activeInvestTier && activeInvestTier !== 'all') tips.push('try All budgets');
+    if (activeTypes.length) tips.push('browse all opportunity types');
+    if (activeCategory) tips.push('clear the category');
+    if (!tips.length) tips.push('clear your filters');
+
     return (
       '<div class="events-empty opp-empty-state" role="status">' +
-      '<p>No opportunities match your filters.</p>' +
+      '<p class="opp-empty-title">No opportunities match these filters</p>' +
+      '<p class="opp-empty-copy">Try to ' +
+      escapeHtml(tips.slice(0, 2).join(', or ')) +
+      ' — or check back soon as new listings go live.</p>' +
       '<div class="opp-empty-actions">' +
-      '<button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button>' +
-      '</div></div>'
+      '<button type="button" class="opp-empty-btn" id="opp-clear-filters">Clear filters</button>' +
+      (locationQ || activeLocationTag
+        ? '<button type="button" class="clear-filters-link" id="opp-clear-location">Clear location only</button>'
+        : '') +
+      '<button type="button" class="clear-filters-link" id="opp-empty-alert">Alert me for this search</button>' +
+      '</div>' +
+      emptyProviderCtaHtml() +
+      '</div>'
+    );
+  }
+
+  function emptyProviderCtaHtml() {
+    return (
+      '<p class="opp-empty-provider">Provider with a franchise or side hustle? ' +
+      '<a href="/organiser/opportunity-edit" data-hub-action="add-opportunity">List your opportunity</a></p>'
+    );
+  }
+
+  function lowResultsHintHtml(count) {
+    return (
+      '<div class="opp-low-results" role="status">' +
+      '<p>Only <strong>' +
+      count +
+      '</strong> match' +
+      (count === 1 ? '' : 'es') +
+      '. ' +
+      '<button type="button" class="clear-filters-link" id="opp-low-clear-filters">Widen filters</button>' +
+      ' or ' +
+      '<a href="/organiser/opportunity-edit" data-hub-action="add-opportunity">list an opportunity</a>.</p>' +
+      '</div>'
     );
   }
 
   function bindEmptyStateActions() {
     bindClearFilters();
     var showNm = document.getElementById('opp-show-network-marketing');
-    if (!showNm || showNm.dataset.bound) return;
-    showNm.dataset.bound = '1';
-    showNm.addEventListener('click', function () {
-      hideNetworkMarketing = false;
-      syncHideNetworkMarketingUi();
-      applyFilters();
-    });
+    if (showNm && !showNm.dataset.bound) {
+      showNm.dataset.bound = '1';
+      showNm.addEventListener('click', function () {
+        hideNetworkMarketing = false;
+        syncHideNetworkMarketingUi();
+        applyFilters();
+      });
+    }
+    var clearLoc = document.getElementById('opp-clear-location');
+    if (clearLoc && !clearLoc.dataset.bound) {
+      clearLoc.dataset.bound = '1';
+      clearLoc.addEventListener('click', function () {
+        locationQ = '';
+        activeLocationTag = '';
+        if (els.postcode) els.postcode.value = '';
+        applyFilters();
+      });
+    }
+    var emptyAlert = document.getElementById('opp-empty-alert');
+    if (emptyAlert && !emptyAlert.dataset.bound) {
+      emptyAlert.dataset.bound = '1';
+      emptyAlert.addEventListener('click', function () {
+        openAlertDialog();
+      });
+    }
+    var lowClear = document.getElementById('opp-low-clear-filters');
+    if (lowClear && !lowClear.dataset.bound) {
+      lowClear.dataset.bound = '1';
+      lowClear.addEventListener('click', resetFilters);
+    }
   }
 
   function maybeNudgeSaveSearch() {
@@ -1696,11 +1780,14 @@
   }
 
   function currentFilterCriteria() {
+    var locationQuery = els.postcode ? String(els.postcode.value || '').trim() : '';
+    if (/^remote$/i.test(locationQuery) && activeLocationTag === 'remote') locationQuery = '';
     return {
       type: activeTypes.length === 1 ? activeTypes[0] : activeTypes.length ? activeTypes.join(',') : 'all',
       category: activeCategory || '',
       invest: activeInvestTier === 'all' ? '' : activeInvestTier,
       location: activeLocationTag || '',
+      locationQuery: locationQuery,
       commitment: activeCommitments.length === 1 ? activeCommitments[0] : activeCommitments.join(','),
       q: searchQ || '',
       sort: sortBy || 'recommended',
@@ -1730,8 +1817,13 @@
     if (els.search && searchQ) els.search.value = searchQ;
     if (els.sort) els.sort.value = sortBy;
     if (els.filterCategory && activeCategory) els.filterCategory.value = activeCategory;
-    if (params.get('location') === 'remote' && els.postcode && !params.get('q')) {
+    if (params.get('location') === 'remote' && els.postcode && !params.get('loc') && !params.get('q')) {
       els.postcode.value = 'Remote';
+    }
+    var locQuery = params.get('loc');
+    if (locQuery && els.postcode) {
+      els.postcode.value = locQuery;
+      locationQ = String(locQuery).trim().toLowerCase();
     }
 
     var viewParam = params.get('view');
@@ -1771,6 +1863,7 @@
     if (c.category) params.set('category', c.category);
     if (c.invest) params.set('invest', c.invest);
     if (c.location) params.set('location', c.location);
+    if (c.locationQuery) params.set('loc', c.locationQuery);
     if (c.commitment) params.set('commitment', c.commitment);
     if (c.q) params.set('q', c.q);
     if (c.sort && c.sort !== 'recommended') params.set('sort', c.sort);
@@ -1881,9 +1974,10 @@
     if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
   }
 
-  function setSaveSearchStatus(msg, isError) {
+  function setSaveSearchStatus(msg, isError, allowHtml) {
     if (!els.saveSearchStatus) return;
-    els.saveSearchStatus.textContent = msg || '';
+    if (allowHtml) els.saveSearchStatus.innerHTML = msg || '';
+    else els.saveSearchStatus.textContent = msg || '';
     els.saveSearchStatus.hidden = !msg;
     els.saveSearchStatus.classList.toggle('is-error', Boolean(isError));
   }
@@ -1917,6 +2011,7 @@
         criteria.category ||
         criteria.invest ||
         criteria.location ||
+        criteria.locationQuery ||
         criteria.commitment ||
         criteria.q ||
         (criteria.minInvest !== '' && criteria.minInvest != null) ||
@@ -1988,6 +2083,13 @@
         label: String(criteria.location).replace(/-/g, ' '),
       });
     }
+    if (criteria.locationQuery) {
+      chips.push({
+        key: 'locationQuery',
+        value: criteria.locationQuery,
+        label: 'Near ' + criteria.locationQuery,
+      });
+    }
     if (criteria.q) {
       chips.push({ key: 'q', value: criteria.q, label: '“' + criteria.q + '”' });
     }
@@ -2020,7 +2122,7 @@
           return c !== value;
         });
       alertDraft.commitment = commitments.join(',');
-    } else if (key === 'category' || key === 'invest' || key === 'location' || key === 'q') {
+    } else if (key === 'category' || key === 'invest' || key === 'location' || key === 'locationQuery' || key === 'q') {
       alertDraft[key] = '';
     } else if (key === 'minInvest' || key === 'maxInvest') {
       alertDraft[key] = '';
@@ -2148,7 +2250,10 @@
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.message) || 'Could not save alert');
         closeAlertDialog();
         setSaveSearchStatus(
-          'Alert saved — we will email you when new listings match. Manage alerts in My Hub → Saved listings → Search alerts.'
+          'Alert saved — we will email you when new listings match. ' +
+            '<a href="/account/#search-alerts">Manage alerts in My Hub</a>.',
+          false,
+          true
         );
       })
       .catch(function (e) {

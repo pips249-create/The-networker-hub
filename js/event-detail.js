@@ -1175,12 +1175,23 @@
     const heading = document.getElementById('ev-included-heading');
     const list = document.getElementById('ev-included-list');
     const desc = String(ev.description || '').trim();
+    const fallback =
+      'Join us for ' + ev.title + '. Full details will be shared with ticket holders.';
 
     if (lead) {
-      lead.textContent =
-        desc || 'Join us for ' + ev.title + '. Full details will be shared with ticket holders.';
+      const fmt = window.HubPlainTextFormat;
+      if (fmt && typeof fmt.formatDocument === 'function') {
+        lead.innerHTML = fmt.formatDocument(desc || fallback);
+      } else if (desc) {
+        lead.textContent = desc;
+      } else {
+        lead.textContent = fallback;
+      }
     }
-    if (extra) extra.hidden = true;
+    if (extra) {
+      extra.hidden = true;
+      extra.innerHTML = '';
+    }
 
     if (!list) return;
     list.innerHTML = '';
@@ -4648,7 +4659,10 @@
     document.title = title + ' – The Networker Hub';
     setText('ev-title', title);
     setText('ev-trail-current', title);
-    setText('ev-about-lead', data.message || 'This event is no longer available to book.');
+    const aboutLead = document.getElementById('ev-about-lead');
+    if (aboutLead) {
+      aboutLead.textContent = data.message || 'This event is no longer available to book.';
+    }
     const aboutExtra = document.getElementById('ev-about-extra');
     if (aboutExtra) {
       aboutExtra.hidden = false;

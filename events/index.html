@@ -19,7 +19,7 @@
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2">
 <link rel="stylesheet" href="../css/events-page.css?v=20260723logoband">
 <link rel="stylesheet" href="../css/home-page.css?v=20260726city">
-<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260727sheet4">
+<link rel="stylesheet" href="../css/events-filter-bar.css?v=20260728maparea1">
 <link rel="stylesheet" href="../css/organisers-browse.css?v=20260727sheetfix">
 <link rel="stylesheet" href="../css/networking-regions.css?v=20260722cp11">
 <script src="../js/hub-lazy-vendor.js?v=20260726m"></script>
@@ -364,9 +364,16 @@
     </div>
     <div id="events-map-panel" class="events-map-panel" aria-label="Events map">
       <div class="map-viewport-controls" id="map-viewport-controls">
-        <button type="button" class="map-search-area-btn" id="map-search-area-btn" hidden>Search this area</button>
+        <button type="button" class="map-search-area-btn" id="map-search-area-btn" hidden>
+          <svg class="map-search-area-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+          <span class="map-search-area-btn-label" id="map-search-area-btn-label">Search this area</span>
+        </button>
         <div class="map-area-active" id="map-area-active" hidden>
-          <span class="map-area-active-label" id="map-area-active-label"></span>
+          <span class="map-area-active-dot" aria-hidden="true"></span>
+          <span class="map-area-active-copy">
+            <span class="map-area-active-kicker">Map area</span>
+            <span class="map-area-active-label" id="map-area-active-label"></span>
+          </span>
           <button type="button" class="map-area-reset-btn" id="map-area-reset-btn">Show all</button>
         </div>
       </div>
@@ -632,7 +639,7 @@
 <script src="../js/events-filters.js?v=20260727radius" defer></script>
 <script src="../js/browse-analytics-client.js?v=20260728index1" defer></script>
 <script src="../js/events-browse-api.js?v=20260728index1" defer></script>
-<script src="../js/events-map.js?v=20260726m" defer></script>
+<script src="../js/events-map.js?v=20260728maparea1" defer></script>
 <script src="../js/flexible-event-image.js?v=20260612" defer></script>
 <script src="../js/hub-event-preview.js?v=20260721" defer></script>
 <script src="../js/hub-spotlight-carousel.js?v=20260723loop" defer></script>

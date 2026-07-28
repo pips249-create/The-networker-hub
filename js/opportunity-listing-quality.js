@@ -170,6 +170,28 @@
     var location = String(criteria.location || '').trim();
     if (location && !hasTag(item, location)) return false;
 
+    var locationQuery = String(criteria.locationQuery || '')
+      .trim()
+      .toLowerCase();
+    if (locationQuery) {
+      var locationHay = [
+        item.locationLabel,
+        item.searchText,
+        item.title,
+        item.host,
+        item.city,
+        item.region,
+        (item.tags || []).join(' '),
+        (item.meta || []).map(function (m) {
+          return (m.key || '') + ' ' + (m.val || '');
+        }).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (locationHay.indexOf(locationQuery) === -1) return false;
+    }
+
     var commitment = String(criteria.commitment || '').trim();
     if (commitment && !hasTag(item, commitment)) return false;
 
@@ -222,6 +244,7 @@
         });
     }
     if (criteria.location) parts.push(String(criteria.location).replace(/-/g, ' '));
+    if (criteria.locationQuery) parts.push(String(criteria.locationQuery));
     if (criteria.q) parts.push('“' + criteria.q + '”');
     return parts.length ? parts.join(', ') : 'All opportunities';
   }
@@ -234,6 +257,7 @@
     if (criteria.category) params.set('category', criteria.category);
     if (criteria.invest) params.set('invest', criteria.invest);
     if (criteria.location) params.set('location', criteria.location);
+    if (criteria.locationQuery) params.set('loc', criteria.locationQuery);
     if (criteria.commitment) params.set('commitment', criteria.commitment);
     if (criteria.q) params.set('q', criteria.q);
     if (criteria.sort && criteria.sort !== 'recommended') params.set('sort', criteria.sort);

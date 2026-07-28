@@ -50,6 +50,48 @@
       .replace(/"/g, '&quot;');
   }
 
+  function renderDesc(item) {
+    if (!els.desc) return;
+    var text = String((item && item.desc) || '').trim();
+    if (!text) {
+      els.desc.innerHTML = '';
+      els.desc.hidden = true;
+      return;
+    }
+    els.desc.hidden = false;
+    var fmt = window.HubPlainTextFormat;
+    if (fmt && typeof fmt.formatDocument === 'function' && /\n/.test(fmt.normalizeNewlines(text))) {
+      els.desc.innerHTML = fmt.formatDocument(text, {
+        paragraphClass: 'opp-about-p',
+        headingClass: 'opp-about-heading',
+      });
+      return;
+    }
+    if (fmt && typeof fmt.plainTextToHtml === 'function' && /\n/.test(String(text))) {
+      els.desc.innerHTML = fmt.plainTextToHtml(text);
+      return;
+    }
+    els.desc.textContent = text;
+  }
+
+  function renderAbout(item) {
+    if (!els.aboutExtra) return;
+    var fmt = window.HubPlainTextFormat;
+    if (fmt && typeof fmt.formatDocument === 'function') {
+      els.aboutExtra.innerHTML = fmt.formatDocument(item && item.about, {
+        paragraphClass: 'opp-about-p',
+        headingClass: 'opp-about-heading',
+      });
+      return;
+    }
+    var paras = Array.isArray(item && item.about) ? item.about : [];
+    els.aboutExtra.innerHTML = paras
+      .map(function (p) {
+        return '<p class="opp-about-p">' + escapeHtml(p) + '</p>';
+      })
+      .join('');
+  }
+
   function shortTitle(title) {
     var t = String(title || '');
     return t.length > 48 ? t.slice(0, 45) + '…' : t;
@@ -122,20 +164,6 @@
     els.saveBtn.classList.toggle('is-active', saved);
     els.saveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
     els.saveBtn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save opportunity');
-  }
-
-  function renderAbout(item) {
-    if (!els.aboutExtra) return;
-    var paras = (item.about || []).slice();
-    if (!paras.length) {
-      els.aboutExtra.innerHTML = '';
-      return;
-    }
-    els.aboutExtra.innerHTML = paras
-      .map(function (p) {
-        return '<p>' + escapeHtml(p) + '</p>';
-      })
-      .join('');
   }
 
   function renderMeta(item) {
@@ -314,8 +342,8 @@
     if (els.trailCurrent) els.trailCurrent.textContent = shortTitle(item.title);
     if (els.title) els.title.textContent = item.title;
     if (els.hostName) els.hostName.textContent = item.host;
-    if (els.desc) els.desc.textContent = item.desc;
     if (els.posterName) els.posterName.textContent = item.host;
+    renderDesc(item);
 
     var posterNote = document.querySelector('.opp-detail-poster-note');
     if (posterNote) {
