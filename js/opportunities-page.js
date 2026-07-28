@@ -262,14 +262,14 @@
   var DEFAULT_VIEW_MODE = 'grid';
 
   var TYPE_CHIPS = [
-    { id: 'all', label: 'All' },
-    { id: 'franchise', label: 'Franchise' },
-    { id: 'side-hustle', label: 'Side hustle' },
-    { id: 'partnership', label: 'Partnership / Affiliate' },
-    { id: 'networking', label: 'Networking group / Ambassador' },
-    { id: 'network-marketing', label: 'Network marketing' },
-    { id: 'business-opportunity', label: 'Business opportunity' },
-    { id: 'distributorship', label: 'Distributorship / Reseller' },
+    { id: 'all', label: 'All', shortLabel: 'All' },
+    { id: 'franchise', label: 'Franchise', shortLabel: 'Franchise' },
+    { id: 'side-hustle', label: 'Side hustle', shortLabel: 'Side hustle' },
+    { id: 'partnership', label: 'Partnership / Affiliate', shortLabel: 'Partnership' },
+    { id: 'networking', label: 'Networking group / Ambassador', shortLabel: 'Networking' },
+    { id: 'network-marketing', label: 'Network marketing', shortLabel: 'Net. marketing' },
+    { id: 'business-opportunity', label: 'Business opportunity', shortLabel: 'Business' },
+    { id: 'distributorship', label: 'Distributorship / Reseller', shortLabel: 'Distributor' },
   ];
 
   var COMMITMENTS = [
@@ -865,7 +865,10 @@
     sorted.sort(function (a, b) {
       if (sortBy === 'recommended') {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
-        return a.title.localeCompare(b.title, 'en-GB');
+        return listingRecency(b) - listingRecency(a);
+      }
+      if (sortBy === 'newest') {
+        return listingRecency(b) - listingRecency(a);
       }
       if (sortBy === 'invest-asc') {
         return (a.investAmount || 0) - (b.investAmount || 0);
@@ -879,6 +882,12 @@
       return 0;
     });
     return sorted;
+  }
+
+  function listingRecency(item) {
+    var raw = (item && (item.publishedAt || item.createdAt)) || '';
+    var t = Date.parse(raw);
+    return Number.isFinite(t) ? t : 0;
   }
 
   function countBy(predicate) {
@@ -1446,6 +1455,7 @@
   function buildTypeChips() {
     if (!els.typeChipsRoot) return;
     els.typeChipsRoot.innerHTML = TYPE_CHIPS.map(function (chip, index) {
+      var shortLabel = chip.shortLabel || chip.label;
       return (
         '<button type="button" class="event-type-chip' +
         (index === 0 ? ' is-active' : '') +
@@ -1453,8 +1463,15 @@
         escapeHtml(chip.id) +
         '" aria-pressed="' +
         (index === 0 ? 'true' : 'false') +
-        '">' +
+        '" title="' +
         escapeHtml(chip.label) +
+        '">' +
+        '<span class="event-type-chip-label-full">' +
+        escapeHtml(chip.label) +
+        '</span>' +
+        '<span class="event-type-chip-label-short">' +
+        escapeHtml(shortLabel) +
+        '</span>' +
         ' <span class="event-type-chip-count">(0)</span></button>'
       );
     }).join('');
@@ -1467,6 +1484,13 @@
     updateTypeChipCounts();
   }
 
+  function visibleListingCountForAllChip() {
+    if (!hideNetworkMarketing) return allListings.length;
+    return countBy(function (item) {
+      return !isNetworkMarketingListing(item);
+    });
+  }
+
   function updateTypeChipCounts() {
     if (!els.typeChipsRoot) return;
     els.typeChipsRoot.querySelectorAll('.event-type-chip[data-type]').forEach(function (chip) {
@@ -1475,7 +1499,7 @@
       if (!countEl) return;
       var n =
         type === 'all'
-          ? allListings.length
+          ? visibleListingCountForAllChip()
           : countBy(function (item) {
               return hasTag(item, type);
             });
@@ -1527,13 +1551,15 @@
 
     if (!filtered.length) {
       disconnectLazyObserver();
-      els.mount.innerHTML =
-        '<div class="events-empty" role="status"><p>No opportunities match your filters. <button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button></p></div>';
+      els.mount.innerHTML = emptyListingsHtml(totalMatches.length);
       updateResultsCount(totalMatches.length);
       updateTypeChipCounts();
       bindClearFilters();
+      bindEmptyStateActions();
       return;
     }
+
+    maybeNudgeSaveSearch();
 
     var slice = getListingSlice(filtered);
 
@@ -1552,6 +1578,80 @@
     if (slice.hasMore) observeLazySentinel();
     else disconnectLazyObserver();
     restoreExpandedCard();
+  }
+
+  function countHiddenNetworkMarketingMatches() {
+    if (!hideNetworkMarketing) return 0;
+    var n = 0;
+    hideNetworkMarketing = false;
+    for (var i = 0; i < allListings.length; i++) {
+      var item = allListings[i];
+      if (isNetworkMarketingListing(item) && matchesFilter(item)) n += 1;
+    }
+    hideNetworkMarketing = true;
+    return n;
+  }
+
+  function emptyListingsHtml(totalMatches) {
+    var nmHiddenMatches = !totalMatches ? countHiddenNetworkMarketingMatches() : 0;
+
+    if (nmHiddenMatches > 0) {
+      return (
+        '<div class="events-empty opp-empty-state" role="status">' +
+        '<p><strong>No listings in this view.</strong> ' +
+        nmHiddenMatches +
+        ' network marketing listing' +
+        (nmHiddenMatches === 1 ? ' matches' : 's match') +
+        ' your filters but ' +
+        (nmHiddenMatches === 1 ? 'is' : 'are') +
+        ' hidden by default.</p>' +
+        '<div class="opp-empty-actions">' +
+        '<button type="button" class="opp-empty-btn" id="opp-show-network-marketing">Show network marketing</button>' +
+        '<button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button>' +
+        '</div></div>'
+      );
+    }
+
+    return (
+      '<div class="events-empty opp-empty-state" role="status">' +
+      '<p>No opportunities match your filters.</p>' +
+      '<div class="opp-empty-actions">' +
+      '<button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button>' +
+      '</div></div>'
+    );
+  }
+
+  function bindEmptyStateActions() {
+    bindClearFilters();
+    var showNm = document.getElementById('opp-show-network-marketing');
+    if (!showNm || showNm.dataset.bound) return;
+    showNm.dataset.bound = '1';
+    showNm.addEventListener('click', function () {
+      hideNetworkMarketing = false;
+      syncHideNetworkMarketingUi();
+      applyFilters();
+    });
+  }
+
+  function maybeNudgeSaveSearch() {
+    if (!els.saveSearchBtn) return;
+    try {
+      if (window.sessionStorage && sessionStorage.getItem('hubOppSaveNudge') === '1') return;
+    } catch (e) {
+      /* ignore */
+    }
+    if (!hasActiveOppMobileFilters()) return;
+    if (!getFilteredList().length) return;
+
+    els.saveSearchBtn.classList.add('is-nudge');
+    try {
+      if (window.sessionStorage) sessionStorage.setItem('hubOppSaveNudge', '1');
+    } catch (err) {
+      /* ignore */
+    }
+    window.setTimeout(function () {
+      if (els.saveSearchBtn) els.saveSearchBtn.classList.remove('is-nudge');
+    }, 4200);
   }
 
   function bindClearFilters() {

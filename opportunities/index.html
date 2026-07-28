@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="/css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260722lede" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260728nm" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260728ux" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="stylesheet" href="/css/home-page.css?v=20260726city" />
     <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any" />
@@ -187,7 +187,9 @@
                   </button>
                 </div>
                 <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested">
-                  <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity type"></nav>
+                  <div class="event-type-chips-wrap">
+                    <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity type"></nav>
+                  </div>
                 </div>
                 <div class="filter-more-panel filter-opp-more-panel" id="filter-more-panel" hidden>
                   <div class="filter-opp-more-grid">
@@ -292,9 +294,10 @@
             <div class="events-sort-wrap">
               <label for="opp-sort">Sort by</label>
               <select id="opp-sort">
-                <option value="recommended">Recommended</option>
-                <option value="invest-asc">Investment: low–high</option>
-                <option value="invest-desc">Investment: high–low</option>
+                <option value="recommended">Featured first</option>
+                <option value="newest">Newest</option>
+                <option value="invest-asc">Investment: low to high</option>
+                <option value="invest-desc">Investment: high to low</option>
                 <option value="alpha">Name A–Z</option>
               </select>
             </div>
@@ -526,7 +529,7 @@
 
     <script src="/js/cms-ad-blocks.js?v=20260722cp11" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260710" data-root="/" defer></script>
-    <script src="/js/opportunities-catalog.js?v=20260728nm" defer></script>
+    <script src="/js/opportunities-catalog.js?v=20260728ux" defer></script>
     <script src="/js/opportunity-listing-quality.js?v=20260710d" defer></script>
     <script src="/js/opportunity-investment-breakdown.js?v=20260710" defer></script>
     <script src="/js/opportunities-saves.js?v=20260714a" defer></script>
@@ -538,7 +541,7 @@
     <script src="/js/postcode-geo.js?v=20260609b" defer></script>
     <script src="/js/hub-spotlight-carousel.js?v=20260723loop" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260728nm" defer></script>
+    <script src="/js/opportunities-page.js?v=20260728ux" defer></script>
     <script src="/js/opportunities-map.js?v=20260611" defer></script>
   </body>
 </html>

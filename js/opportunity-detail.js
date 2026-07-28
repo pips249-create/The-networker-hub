@@ -32,6 +32,7 @@
     investBreakdownList: document.getElementById('opp-investment-breakdown-list'),
     enquireSignin: document.getElementById('opp-enquire-signin'),
     trustBadges: document.getElementById('opp-detail-trust-badges'),
+    typeNotice: document.getElementById('opp-type-notice'),
     companiesHouse: document.getElementById('opp-companies-house'),
     similarSection: document.getElementById('opp-similar-section'),
     similarGrid: document.getElementById('opp-similar-grid'),
@@ -282,6 +283,30 @@
     els.investBreakdownSection.hidden = false;
   }
 
+  function isNetworkMarketingListing(item) {
+    if (!item) return false;
+    if (String(item.type || '') === 'network-marketing') return true;
+    var tags = (item.tags || []).concat(item.filterTags || []);
+    for (var i = 0; i < tags.length; i++) {
+      if (String(tags[i] || '') === 'network-marketing') return true;
+    }
+    return false;
+  }
+
+  function renderTypeNotice(item) {
+    if (!els.typeNotice) return;
+    if (!isNetworkMarketingListing(item)) {
+      els.typeNotice.hidden = true;
+      els.typeNotice.innerHTML = '';
+      return;
+    }
+    els.typeNotice.hidden = false;
+    els.typeNotice.innerHTML =
+      '<p><strong>Network marketing — product-selling only.</strong> ' +
+      'This listing should be about selling products or services. It is not an investment product, ' +
+      'and The Networker Hub does not verify earnings claims. Do your own due diligence before committing.</p>';
+  }
+
   function render(item) {
     current = item;
     document.title = item.title + ' – The Networker Hub';
@@ -313,6 +338,7 @@
     if (els.featuredPip) els.featuredPip.hidden = !item.featured;
 
     renderMeta(item);
+    renderTypeNotice(item);
     if (window.HUB_applyDetailRegionCta) {
       var locMeta = '';
       (item.meta || []).forEach(function (m) {

@@ -363,6 +363,8 @@
       imageUrl: row.imageUrl || '',
       logoUrl: row.logoUrl || '',
       claimable: Boolean(row.claimable),
+      publishedAt: row.publishedAt || row.createdAt || null,
+      createdAt: row.createdAt || null,
     };
   }
 

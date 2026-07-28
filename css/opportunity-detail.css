@@ -817,3 +817,22 @@
     transform: scale(0.99);
   }
 }
+
+.opportunity-detail-page .opp-detail-type-notice {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 150, 31, 0.35);
+  background: linear-gradient(135deg, rgba(201, 150, 31, 0.12), rgba(13, 31, 60, 0.04));
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.opportunity-detail-page .opp-detail-type-notice p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.opportunity-detail-page .opp-detail-type-notice strong {
+  font-weight: 700;
+}
