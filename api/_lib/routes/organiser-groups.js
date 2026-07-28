@@ -228,8 +228,9 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, group });
       } catch (e) {
         return json(res, e.status || 500, {
-          error: 'group_unpublish_failed',
+          error: e.code || 'group_unpublish_failed',
           message: e.message,
+          eventCount: e.eventCount || undefined,
           airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
         });
       }

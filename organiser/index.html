@@ -1316,40 +1316,44 @@
             </div>
           </header>
 
-          <aside class="org-leaderboard-howto" aria-labelledby="org-leaderboard-howto-title">
-            <h2 class="org-leaderboard-howto-title" id="org-leaderboard-howto-title">How ranking is calculated</h2>
-            <ol class="org-leaderboard-howto-steps">
-              <li>
-                <strong>Average rating first</strong>
-                <span>Groups are ordered by their average attendee star rating (highest first).</span>
-              </li>
-              <li>
-                <strong>Review rate breaks ties</strong>
-                <span>
-                  If two groups have the same average rating, the higher
-                  <em>review rate</em> ranks above.
-                </span>
-              </li>
-            </ol>
-            <div class="org-leaderboard-formula" role="note">
-              <p class="org-leaderboard-formula-label">Review rate</p>
-              <p class="org-leaderboard-formula-eq">
-                <span class="org-leaderboard-formula-part">Number of reviews</span>
-                <span class="org-leaderboard-formula-div" aria-hidden="true">÷</span>
-                <span class="org-leaderboard-formula-part">Past-event ticket buyers</span>
-              </p>
-              <p class="org-leaderboard-formula-note">
-                Ticket buyers = paid or free tickets on events that have already finished
-                (approved bookings only; cancelled bookings do not count).
-                A higher rate means a larger share of your past attendees left a review —
-                so a smaller group with strong feedback can outrank a larger one with the same stars.
-              </p>
+          <details class="org-leaderboard-howto">
+            <summary class="org-leaderboard-howto-summary" id="org-leaderboard-howto-title">
+              How ranking is calculated
+            </summary>
+            <div class="org-leaderboard-howto-body">
+              <ol class="org-leaderboard-howto-steps">
+                <li>
+                  <strong>Average rating first</strong>
+                  <span>Groups are ordered by their average attendee star rating (highest first).</span>
+                </li>
+                <li>
+                  <strong>Review rate breaks ties</strong>
+                  <span>
+                    If two groups have the same average rating, the higher
+                    <em>review rate</em> ranks above.
+                  </span>
+                </li>
+              </ol>
+              <div class="org-leaderboard-formula" role="note">
+                <p class="org-leaderboard-formula-label">Review rate</p>
+                <p class="org-leaderboard-formula-eq">
+                  <span class="org-leaderboard-formula-part">Number of reviews</span>
+                  <span class="org-leaderboard-formula-div" aria-hidden="true">÷</span>
+                  <span class="org-leaderboard-formula-part">Past-event ticket buyers</span>
+                </p>
+                <p class="org-leaderboard-formula-note">
+                  Ticket buyers = paid or free tickets on events that have already finished
+                  (approved bookings only; cancelled bookings do not count).
+                  A higher rate means a larger share of your past attendees left a review —
+                  so a smaller group with strong feedback can outrank a larger one with the same stars.
+                </p>
+              </div>
+              <ul class="org-leaderboard-rules">
+                <li>Groups need <strong>at least 3 reviews</strong> and a <strong>published organiser page</strong> to appear.</li>
+                <li>Badges (Top 10 / 25 / 50) refresh <strong>monthly</strong> from the latest snapshot.</li>
+              </ul>
             </div>
-            <ul class="org-leaderboard-rules">
-              <li>Groups need <strong>at least 3 reviews</strong> and a <strong>published organiser page</strong> to appear.</li>
-              <li>Badges (Top 10 / 25 / 50) refresh <strong>monthly</strong> from the latest snapshot.</li>
-            </ul>
-          </aside>
+          </details>
 
           <div class="org-leaderboard rankings-root" id="org-leaderboard-root">
             <div class="org-leaderboard-toolbar">
@@ -2775,7 +2779,7 @@
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/rankings.js?v=20260728org2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260728team2" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260728group1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260723vis" defer></script>
   </body>
 </html>

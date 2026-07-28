@@ -2916,13 +2916,22 @@
     if (kind === 'group') {
       const statusKey = item && item.statusKey;
       const unpublishDisabled = statusKey === 'unpublished' || statusKey === 'draft';
-      const unpublishBtn = unpublishDisabled
-        ? '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
-          (statusKey === 'unpublished' ? 'Already unpublished' : 'Publish first to list on site') +
-          '</span></span></button>'
-        : '<button type="button" class="org-action-item danger" data-unpublish-group="' +
-          esc(id) +
-          '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>';
+      const blockingRegs = !unpublishDisabled ? publishedEventsWithRegistrationsForGroup(id) : [];
+      const blockedByRegs = blockingRegs.length > 0;
+      const unpublishBtn =
+        unpublishDisabled || blockedByRegs
+          ? '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
+            (statusKey === 'unpublished'
+              ? 'Already unpublished'
+              : statusKey === 'draft'
+                ? 'Publish first to list on site'
+                : blockingRegs.length === 1
+                  ? 'Unpublish the event with registrations first'
+                  : 'Unpublish events with registrations first') +
+            '</span></span></button>'
+          : '<button type="button" class="org-action-item danger" data-unpublish-group="' +
+            esc(id) +
+            '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>';
       return (
         '<div class="org-action-wrap">' +
         '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -5881,10 +5890,36 @@
     openNewEventEditorDrawer({ groupId: groupId });
   }
 
+  function publishedEventsWithRegistrationsForGroup(groupId) {
+    const gid = String(groupId || '').trim();
+    if (!gid) return [];
+    return (state.events || []).filter(function (ev) {
+      if (String(eventOrganiserGroupId(ev) || '').trim() !== gid) return false;
+      if (!eventIsPublishedListing(ev)) return false;
+      if (isEventCancelled(ev)) return false;
+      if (Boolean(ev.locked)) return true;
+      return eventEffectiveTicketsSold(ev) > 0;
+    });
+  }
+
   async function confirmUnpublishGroup(groupId) {
     if (!groupId) return;
     const g = findGroupById(groupId);
     const label = g && g.name ? g.name : 'this group';
+    const blocking = publishedEventsWithRegistrationsForGroup(groupId);
+    if (blocking.length) {
+      const firstTitle = String(blocking[0].title || 'an event').trim();
+      window.alert(
+        blocking.length === 1
+          ? '"' +
+              firstTitle +
+              '" still has registrations. Unpublish that event first, then unpublish this group.'
+          : 'This group has ' +
+              blocking.length +
+              ' live events with registrations. Unpublish those events first, then unpublish this group.'
+      );
+      return;
+    }
     const ok = window.confirm(
       'Unpublish "' +
         label +

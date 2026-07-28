@@ -156,7 +156,17 @@ async function handleCityPartnerCheckoutCompleted(session) {
     availableFrom: null,
   });
 
-  return { ok: true, reserved, subscriptionId, cities };
+  let welcomeEmail = { skipped: true, reason: 'missing_email' };
+  if (email) {
+    try {
+      welcomeEmail = await sendCityPartnerPaymentWelcome({ email, cities });
+    } catch (e) {
+      /* Slot reservation succeeds even if welcome email fails */
+      welcomeEmail = { ok: false, error: e.message || String(e) };
+    }
+  }
+
+  return { ok: true, reserved, subscriptionId, cities, welcomeEmail };
 }
 
 async function handleCityPartnerSubscriptionUpdated(subscription) {

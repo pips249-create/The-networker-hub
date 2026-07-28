@@ -429,6 +429,8 @@ async function updateGroup(groupId, payload) {
 }
 
 async function unpublishGroup(groupId) {
+  const { assertGroupCanBeRemoved } = require('./group-removal-guard');
+  await assertGroupCanBeRemoved(groupId, { action: 'unpublish' });
   return updateGroup(groupId, { listingStatus: 'unpublished' });
 }
 

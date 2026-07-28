@@ -410,6 +410,14 @@
     if (category && category !== 'general') tags.push('cat-' + category);
 
     const aboutText = document.getElementById('oe-about').value.trim();
+    const aboutBlocks = aboutText
+      ? aboutText
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .split(/\n\s*\n/)
+          .map((p) => p.replace(/^\s+|\s+$/g, ''))
+          .filter(Boolean)
+      : [];
 
     return {
       title: document.getElementById('oe-title').value.trim(),
@@ -417,9 +425,7 @@
       types,
       category,
       description: document.getElementById('oe-desc').value.trim(),
-      about: aboutText
-        ? aboutText.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
-        : [],
+      about: aboutBlocks,
       aboutText,
       host: document.getElementById('oe-host').value.trim(),
       contactEmail: document.getElementById('oe-email').value.trim(),

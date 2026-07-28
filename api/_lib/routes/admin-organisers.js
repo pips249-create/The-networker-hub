@@ -568,6 +568,9 @@ async function deleteOrganisers(body) {
     };
   }
 
+  const { assertGroupCanBeRemoved } = require('../group-removal-guard');
+  await assertGroupCanBeRemoved(foundIds, { action: 'delete' });
+
   const eventCounts = await eventCountsForOrganisers(sb, foundIds);
   const eventsUnlinked = foundIds.reduce((sum, id) => sum + (eventCounts[id] || 0), 0);
 
@@ -1028,8 +1031,9 @@ module.exports = async function handler(req, res) {
       };
       return json(res, status, {
         ok: false,
-        error: e.message || 'delete_failed',
+        error: e.code || e.message || 'delete_failed',
         message: messages[e.message] || e.message || 'Delete failed',
+        eventCount: e.eventCount || undefined,
       });
     }
   }
