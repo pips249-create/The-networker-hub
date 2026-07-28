@@ -17,16 +17,17 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
-    <link rel="stylesheet" href="../css/hub.css?v=20260714skip" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260723partner" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260714dots" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260726m" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260723vis" />
+    <link rel="stylesheet" href="../css/rankings-page.css?v=20260728org2" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260728team1" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -75,6 +76,7 @@
             </button>
             <a href="#social" class="hub-side-nav-link" data-org-route="social">Share your event</a>
             <a href="#visibility" class="hub-side-nav-link" data-org-route="visibility">Grow your visibility</a>
+            <a href="#leaderboard" class="hub-side-nav-link" data-org-route="leaderboard">Leaderboard</a>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
@@ -192,6 +194,8 @@
                 <a href="#social" data-org-route="social">Share your event</a>
                 <span class="org-workspace-map-sep" aria-hidden="true">·</span>
                 <a href="#visibility" data-org-route="visibility">Grow your visibility</a>
+                <span class="org-workspace-map-sep" aria-hidden="true">·</span>
+                <a href="#leaderboard" data-org-route="leaderboard">Leaderboard</a>
                 <span class="org-workspace-map-sep" aria-hidden="true">·</span>
                 <a href="#team" data-org-route="team">Team</a>
               </p>
@@ -1290,6 +1294,75 @@
                 Tip: Featured organiser spotlight on the Hub is based on listing quality and activity — this badge is free for every published profile.
               </p>
             </div>
+          </div>
+        </section>
+
+        <!-- Monthly leaderboard -->
+        <section class="org-page org-page--leaderboard" id="org-page-leaderboard" data-org-page="leaderboard">
+          <header class="org-page-head org-page-head--split">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker">Monthly rankings</p>
+              <h1 class="org-page-title">Leaderboard</h1>
+              <p class="org-page-lead">
+                See where networking groups sit this month — and what drives the ranking.
+              </p>
+              <p id="rankings-period" class="org-leaderboard-period" hidden></p>
+              <p id="rankings-preview-note" class="org-leaderboard-preview-note" hidden>
+                Preview of how the leaderboard will look once groups earn badges
+              </p>
+            </div>
+            <div class="org-page-head-actions">
+              <a class="org-btn org-btn-outline org-btn-sm" href="#social" data-org-route="social">Share your badge</a>
+            </div>
+          </header>
+
+          <aside class="org-leaderboard-howto" aria-labelledby="org-leaderboard-howto-title">
+            <h2 class="org-leaderboard-howto-title" id="org-leaderboard-howto-title">How ranking is calculated</h2>
+            <ol class="org-leaderboard-howto-steps">
+              <li>
+                <strong>Average rating first</strong>
+                <span>Groups are ordered by their average attendee star rating (highest first).</span>
+              </li>
+              <li>
+                <strong>Review rate breaks ties</strong>
+                <span>
+                  If two groups have the same average rating, the higher
+                  <em>review rate</em> ranks above.
+                </span>
+              </li>
+            </ol>
+            <div class="org-leaderboard-formula" role="note">
+              <p class="org-leaderboard-formula-label">Review rate</p>
+              <p class="org-leaderboard-formula-eq">
+                <span class="org-leaderboard-formula-part">Number of reviews</span>
+                <span class="org-leaderboard-formula-div" aria-hidden="true">÷</span>
+                <span class="org-leaderboard-formula-part">Past-event ticket buyers</span>
+              </p>
+              <p class="org-leaderboard-formula-note">
+                Ticket buyers = paid or free tickets on events that have already finished
+                (approved bookings only; cancelled bookings do not count).
+                A higher rate means a larger share of your past attendees left a review —
+                so a smaller group with strong feedback can outrank a larger one with the same stars.
+              </p>
+            </div>
+            <ul class="org-leaderboard-rules">
+              <li>Groups need <strong>at least 3 reviews</strong> and a <strong>published organiser page</strong> to appear.</li>
+              <li>Badges (Top 10 / 25 / 50) refresh <strong>monthly</strong> from the latest snapshot.</li>
+            </ul>
+          </aside>
+
+          <div class="org-leaderboard rankings-root" id="org-leaderboard-root">
+            <div class="org-leaderboard-toolbar">
+              <p class="org-section-sub org-leaderboard-toolbar-label" id="org-leaderboard-filter-label">Filter by badge</p>
+              <div class="org-leaderboard-filters" role="tablist" aria-labelledby="org-leaderboard-filter-label">
+                <button type="button" class="rankings-filter org-leaderboard-filter is-active" data-tier="all" role="tab" aria-selected="true">All</button>
+                <button type="button" class="rankings-filter org-leaderboard-filter" data-tier="top10" role="tab" aria-selected="false">Top 10</button>
+                <button type="button" class="rankings-filter org-leaderboard-filter" data-tier="top25" role="tab" aria-selected="false">Top 25</button>
+                <button type="button" class="rankings-filter org-leaderboard-filter" data-tier="top50" role="tab" aria-selected="false">Top 50</button>
+              </div>
+            </div>
+            <p id="rankings-status" class="org-leaderboard-status">Loading this month&rsquo;s rankings&hellip;</p>
+            <ol id="rankings-list" class="rankings-list org-leaderboard-list" hidden></ol>
           </div>
         </section>
 
@@ -2697,7 +2770,8 @@
     <script src="../js/organiser-linkedin-post-builder.js?v=20260722styles" defer></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260727partner" defer></script>
+    <script src="../js/rankings.js?v=20260728org2" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260728lb2" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260723vis" defer></script>
   </body>
 </html>

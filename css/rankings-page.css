@@ -12,7 +12,8 @@
   border: 0;
 }
 
-.rankings-page {
+.rankings-page,
+.org-page--leaderboard {
   --rankings-ink: #1c2040;
   --rankings-teal: #0d6e7a;
   --rankings-teal-dark: #084a52;
@@ -23,6 +24,9 @@
   --rankings-muted: #4a6272;
   --rankings-line: rgba(13, 110, 122, 0.16);
   --rankings-bg: #f4f8fa;
+}
+
+.rankings-page {
   position: relative;
   isolation: isolate;
   background:

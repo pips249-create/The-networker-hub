@@ -1,5 +1,6 @@
 /**
- * Public monthly organiser ranking leaderboard.
+ * Monthly organiser ranking leaderboard.
+ * Works on the public /rankings page and inside the organiser dashboard.
  */
 (function () {
   var PREVIEW_ENTRIES = [
@@ -85,6 +86,12 @@
     },
   ];
 
+  var state = {
+    root: null,
+    loaded: false,
+    loading: false,
+  };
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -110,6 +117,32 @@
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 
+  function qs(id) {
+    if (state.root && state.root.querySelector) {
+      var scoped = state.root.querySelector('#' + id);
+      if (scoped) return scoped;
+    }
+    return document.getElementById(id);
+  }
+
+  function previewHosts() {
+    var hosts = [];
+    if (state.root) hosts.push(state.root);
+    if (document.body) hosts.push(document.body);
+    var page = document.getElementById('org-page-leaderboard');
+    if (page) hosts.push(page);
+    return hosts;
+  }
+
+  function isDashboardMount() {
+    return Boolean(
+      state.root &&
+        (state.root.id === 'org-page-leaderboard' ||
+          state.root.classList.contains('org-page--leaderboard') ||
+          (state.root.closest && state.root.closest('.org-page--leaderboard')))
+    );
+  }
+
   function rowHtml(entry, options) {
     options = options || {};
     var org = entry.organiser || {};
@@ -122,13 +155,9 @@
       entry.displayLabel ||
       String(entry.label || '').replace(' on the Hub', '');
     var rateLabel = formatRate(entry.reviewRate);
-    var stats =
-      '★ ' +
-      Number(entry.rating || 0).toFixed(1) +
-      ' · ' +
-      esc(String(entry.reviewCount || 0)) +
-      ' reviews' +
-      (rateLabel ? ' · ' + rateLabel + ' review rate' : '');
+    var rating = Number(entry.rating || 0).toFixed(1);
+    var reviews = String(entry.reviewCount || 0);
+    var dashboard = isDashboardMount();
 
     var avatar = org.photoUrl
       ? '<img class="rankings-avatar" src="' +
@@ -142,10 +171,46 @@
     var hrefAttr = tag === 'a' ? ' href="' + esc(path) + '"' : '';
     var previewAttr = options.preview ? ' aria-disabled="true"' : '';
 
+    var metrics;
+    if (dashboard) {
+      metrics =
+        '<dl class="org-leaderboard-metrics">' +
+        '<div class="org-leaderboard-metric">' +
+        '<dt>Average rating</dt>' +
+        '<dd>★ ' +
+        esc(rating) +
+        '</dd>' +
+        '</div>' +
+        '<div class="org-leaderboard-metric">' +
+        '<dt>Reviews</dt>' +
+        '<dd>' +
+        esc(reviews) +
+        '</dd>' +
+        '</div>' +
+        '<div class="org-leaderboard-metric">' +
+        '<dt>Review rate</dt>' +
+        '<dd>' +
+        esc(rateLabel || '—') +
+        '</dd>' +
+        '</div>' +
+        '</dl>';
+    } else {
+      metrics =
+        '<p class="rankings-org-stats">' +
+        '★ ' +
+        esc(rating) +
+        ' · ' +
+        esc(reviews) +
+        ' reviews' +
+        (rateLabel ? ' · ' + rateLabel + ' review rate' : '') +
+        '</p>';
+    }
+
     return (
       '<' +
       tag +
       ' class="rankings-row' +
+      (dashboard ? ' org-leaderboard-row' : '') +
       (tier === 'top10' ? ' rankings-row--top10' : '') +
       '" data-tier="' +
       esc(tier) +
@@ -162,9 +227,7 @@
       '<p class="rankings-org-name">' +
       esc(org.name || 'Networking group') +
       '</p>' +
-      '<p class="rankings-org-stats">' +
-      stats +
-      '</p>' +
+      metrics +
       '</div></div>' +
       '<div class="rankings-side">' +
       '<span class="hub-ranking-badge hub-ranking-badge--' +
@@ -180,14 +243,16 @@
   }
 
   function setFilter(tier) {
-    var buttons = document.querySelectorAll('.rankings-filter');
+    var root = state.root || document;
+    var buttons = root.querySelectorAll('.rankings-filter');
     buttons.forEach(function (btn) {
       var active = btn.getAttribute('data-tier') === tier;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
 
-    var rows = document.querySelectorAll('#rankings-list .rankings-row');
+    var list = qs('rankings-list');
+    var rows = list ? list.querySelectorAll('.rankings-row') : [];
     var shown = 0;
     rows.forEach(function (row) {
       var rowTier = row.getAttribute('data-tier');
@@ -200,8 +265,7 @@
       if (match) shown += 1;
     });
 
-    var status = document.getElementById('rankings-status');
-    var list = document.getElementById('rankings-list');
+    var status = qs('rankings-status');
     if (!rows.length) return;
     if (status) {
       if (shown === 0) {
@@ -215,15 +279,17 @@
   }
 
   function setPreviewMode(isPreview) {
-    document.body.classList.toggle('is-preview', !!isPreview);
-    var note = document.getElementById('rankings-preview-note');
+    previewHosts().forEach(function (host) {
+      host.classList.toggle('is-preview', !!isPreview);
+    });
+    var note = qs('rankings-preview-note');
     if (note) note.hidden = !isPreview;
   }
 
   function paintPreview() {
-    var status = document.getElementById('rankings-status');
-    var list = document.getElementById('rankings-list');
-    var period = document.getElementById('rankings-period');
+    var status = qs('rankings-status');
+    var list = qs('rankings-list');
+    var period = qs('rankings-period');
     if (!list) return;
 
     if (period) {
@@ -240,9 +306,9 @@
   }
 
   function paint(data) {
-    var status = document.getElementById('rankings-status');
-    var list = document.getElementById('rankings-list');
-    var period = document.getElementById('rankings-period');
+    var status = qs('rankings-status');
+    var list = qs('rankings-list');
+    var period = qs('rankings-period');
     if (!status || !list) return;
 
     if (!data || data.ok === false) {
@@ -278,18 +344,66 @@
     setFilter('all');
   }
 
-  document.querySelectorAll('.rankings-filter').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      setFilter(btn.getAttribute('data-tier') || 'all');
+  function bindFilters() {
+    var root = state.root || document;
+    root.querySelectorAll('.rankings-filter').forEach(function (btn) {
+      if (btn.getAttribute('data-rankings-bound') === '1') return;
+      btn.setAttribute('data-rankings-bound', '1');
+      btn.addEventListener('click', function () {
+        setFilter(btn.getAttribute('data-tier') || 'all');
+      });
     });
-  });
+  }
 
-  fetch('/api/rankings', { credentials: 'same-origin', cache: 'no-store' })
-    .then(function (res) {
-      return res.json();
-    })
-    .then(paint)
-    .catch(function () {
-      paintPreview();
-    });
+  function load() {
+    if (state.loading) return Promise.resolve();
+    state.loading = true;
+    return fetch('/api/rankings', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        paint(data);
+        state.loaded = true;
+      })
+      .catch(function () {
+        paintPreview();
+        state.loaded = true;
+      })
+      .finally(function () {
+        state.loading = false;
+      });
+  }
+
+  function init(root) {
+    var mount =
+      root ||
+      document.getElementById('org-page-leaderboard') ||
+      document.querySelector('.rankings-main') ||
+      document;
+    state.root = mount;
+    if (!qs('rankings-list')) return;
+    bindFilters();
+    if (!state.loaded) load();
+  }
+
+  function ensure() {
+    init(document.getElementById('org-page-leaderboard') || state.root);
+    if (!state.loaded) return load();
+    return Promise.resolve();
+  }
+
+  window.HubRankings = {
+    init: init,
+    ensure: ensure,
+    reload: function () {
+      state.loaded = false;
+      return load();
+    },
+  };
+
+  // Public page loads immediately; organiser dashboard mounts on #leaderboard.
+  if (document.body && document.body.classList.contains('rankings-page') && document.getElementById('rankings-list')) {
+    init();
+  }
 })();

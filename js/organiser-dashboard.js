@@ -3229,6 +3229,7 @@
     if (hash === 'team') return { page: 'team', sub: null };
     if (hash === 'member-lists' || hash === 'memberships') return { page: 'memberships', sub: null };
     if (hash === 'visibility' || hash === 'grow-visibility') return { page: 'visibility', sub: null };
+    if (hash === 'leaderboard' || hash === 'rankings') return { page: 'leaderboard', sub: null };
     if (hash === 'social-spotlight' || hash === 'event-spotlight') return { page: 'social-spotlight', sub: null };
     return { page: hash, sub: null };
   }
@@ -7444,6 +7445,8 @@
       page = 'team';
     } else if (route === 'visibility' || route === 'grow-visibility') {
       page = 'visibility';
+    } else if (route === 'leaderboard' || route === 'rankings') {
+      page = 'leaderboard';
     } else if (route === 'social' || route === 'promote' || route === 'social-spotlight' || route === 'event-spotlight') {
       page = 'social';
     }
@@ -7488,6 +7491,11 @@
             renderVisibilityHubMeta();
           });
         });
+      }
+    }
+    if (page === 'leaderboard') {
+      if (window.HubRankings && typeof window.HubRankings.ensure === 'function') {
+        window.HubRankings.ensure();
       }
     }
     if (page === 'team') {
