@@ -13,6 +13,7 @@
     { id: 'side-hustle', label: 'Side hustle' },
     { id: 'partnership', label: 'Partnership / Affiliate' },
     { id: 'networking', label: 'Networking group / Ambassador' },
+    { id: 'network-marketing', label: 'Network marketing' },
     { id: 'business-opportunity', label: 'Business opportunity' },
     { id: 'distributorship', label: 'Distributorship / Reseller' },
   ];

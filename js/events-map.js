@@ -165,7 +165,7 @@
 
   function mobilePanelHeightPx() {
     var vh = window.innerHeight || document.documentElement.clientHeight || 600;
-    return Math.min(Math.round(vh * 0.52), 560);
+    return Math.min(Math.round(vh * 0.58), 620);
   }
 
   function clearPanelInlineSize() {
@@ -181,8 +181,8 @@
       mapPanel.style.height = mobilePanelHeightPx() + 'px';
       mapPanel.style.minHeight = '300px';
     } else {
-      mapPanel.style.height = '420px';
-      mapPanel.style.minHeight = '420px';
+      mapPanel.style.height = '480px';
+      mapPanel.style.minHeight = '480px';
     }
   }
 
@@ -590,9 +590,12 @@
     var fmtLabel = formatLabel(ev);
     var loc = locationLabel(ev);
     var dist = distanceText(miles);
+    var dateLine = ev.dateLine || ev.date || 'Date TBC';
     var premium = ev.featured
       ? '<span class="map-event-card-premium">Premium</span>'
       : '';
+    var metaParts = [dateLine];
+    if (loc) metaParts.push(loc);
 
     return (
       '<div class="map-event-card">' +
@@ -614,9 +617,8 @@
       escapeHtml(ev.title) +
       '</h3>' +
       '<p class="map-event-card-meta">' +
-      escapeHtml(ev.dateLine || ev.date || 'Date TBC') +
+      escapeHtml(metaParts.join(' · ')) +
       '</p>' +
-      (loc ? '<p class="map-event-card-location">' + escapeHtml(loc) + '</p>' : '') +
       (dist ? '<p class="map-event-card-distance">' + escapeHtml(dist) + '</p>' : '') +
       '<a class="map-event-card-cta" href="' +
       escapeHtml(eventHref(ev)) +
@@ -658,7 +660,7 @@
 
   function addMarker(ev, coords, miles) {
     var isNarrow = (window.innerWidth || 320) <= 900;
-    var popupMax = Math.min(isNarrow ? 240 : 280, Math.max(200, (window.innerWidth || 320) - (isNarrow ? 72 : 48)));
+    var popupMax = Math.min(isNarrow ? 232 : 268, Math.max(200, (window.innerWidth || 320) - (isNarrow ? 72 : 48)));
     var marker = L.marker(coords, { icon: markerIconForEvent(ev) }).bindPopup(popupHtml(ev, miles), {
       className: 'map-event-popup',
       maxWidth: popupMax,
@@ -682,7 +684,9 @@
   function sidebarItemLabel(item) {
     var ev = item.ev;
     var dist = distanceText(item.miles);
+    var loc = locationLabel(ev);
     var parts = [ev.title, ev.dateLine || ev.date || 'Date TBC'];
+    if (loc) parts.push(loc);
     if (dist) parts.push(dist);
     return parts.join(', ');
   }
@@ -690,7 +694,9 @@
   function sidebarItemHtml(item) {
     var ev = item.ev;
     var dist = distanceText(item.miles);
+    var loc = locationLabel(ev);
     var meta = [ev.dateLine || ev.date || 'Date TBC'];
+    if (loc) meta.push(loc);
     if (dist) meta.push(dist);
     return (
       '<li class="map-sidebar-item" data-event-id="' +
@@ -699,11 +705,13 @@
       '<button type="button" class="map-sidebar-item-btn" aria-label="' +
       escapeHtml(sidebarItemLabel(item)) +
       '">' +
+      '<span class="map-sidebar-item-text">' +
       '<span class="map-sidebar-item-title">' +
       escapeHtml(ev.title) +
       '</span>' +
       '<span class="map-sidebar-item-meta">' +
       escapeHtml(meta.join(' · ')) +
+      '</span>' +
       '</span>' +
       '<span class="map-sidebar-item-price">' +
       escapeHtml(mapPriceLabel(ev)) +

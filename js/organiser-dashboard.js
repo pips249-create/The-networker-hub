@@ -8559,8 +8559,10 @@
       input.name = opts.inputName || 'team-group';
       input.value = g.id;
       if (selected.has(String(g.id))) input.checked = true;
+      const name = document.createElement('span');
+      name.textContent = g.name || 'Group';
       label.appendChild(input);
-      label.appendChild(document.createTextNode(g.name || 'Group'));
+      label.appendChild(name);
       listEl.appendChild(label);
     });
   }
@@ -8690,7 +8692,7 @@
         metrics.remaining +
         ' invite' +
         (metrics.remaining === 1 ? '' : 's') +
-        ' remaining. We email the invite link; they become Active when they sign in with that address.';
+        ' left. They become Active when they sign in with that email.';
     }
     if (inviteBtn) {
       inviteBtn.disabled = atCap;

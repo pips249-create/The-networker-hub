@@ -32,7 +32,9 @@
   function normalizeCta(url) {
     var u = String(url || '').trim();
     if (!u) return '#';
-    if (/^(https?:|mailto:)/i.test(u)) return u;
+    if (/^(https?:|mailto:|tel:)/i.test(u)) return u;
+    /* Root-relative and in-page anchors are valid sponsor destinations */
+    if (u.charAt(0) === '/' || u.charAt(0) === '#') return u;
     return '#';
   }
 

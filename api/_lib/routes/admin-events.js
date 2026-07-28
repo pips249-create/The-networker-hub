@@ -9,7 +9,7 @@ const { fetchEventRegistrationStats, fetchLatestCancellationsByEventId } = requi
 const { evaluateReinstateEligibility } = require('../admin-event-reinstate');
 const { plainEventDescription } = require('../event-description');
 const { ukOutcode } = require('../supabase-events');
-const { deriveLocationFields } = require('../uk-outcode');
+const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
 
@@ -349,6 +349,13 @@ async function buildEventPatchFromBody(body) {
       postcode: body.postcode,
     });
     patch.location_label = derived.location || derived.city || body.venue || null;
+    patch.region_slug =
+      resolveRegionSlug({
+        outcode: patch.outcode,
+        postcode: patch.postcode != null ? patch.postcode : body.postcode,
+        city: patch.city != null ? patch.city : body.city,
+        location: patch.location_label,
+      }) || null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'status')) {
     const status = String(body.status || '').trim();

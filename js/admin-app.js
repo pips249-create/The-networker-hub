@@ -16824,7 +16824,7 @@
       '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
       '<input type="checkbox" name="featured" class="rounded border-slate-300"' +
       (opp.featured ? ' checked' : '') +
-      '> Featured in spotlight</label></div>' +
+      '> Featured in spotlight <span class="text-xs text-slate-500">(not for network marketing)</span></label></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Short description</label>' +
       '<textarea name="description" rows="2" maxlength="400" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Shown on listing cards — what it is and who it suits">' +
       esc(opp.description || '') +

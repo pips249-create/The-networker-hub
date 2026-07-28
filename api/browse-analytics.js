@@ -1,5 +1,5 @@
 /**
- * Public browse analytics — anonymised events search/filter logging.
+ * Public browse analytics — anonymised search/filter logging across browse surfaces.
  */
 const { json, setCors } = require('./_lib/auth');
 const { enforceRateLimit } = require('./_lib/rate-limit');

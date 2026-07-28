@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728org2" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260728team1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260728team2" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -1509,18 +1509,19 @@
               <div class="org-team-permissions-card org-team-permissions-card--can">
                 <p class="org-team-permissions-label">Team members can</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--can">
-                  <li>View and manage assigned organiser pages</li>
-                  <li>Create and edit events, tickets, and attendee lists</li>
+                  <li>Manage assigned organiser pages</li>
+                  <li>Create and edit events and tickets</li>
                   <li>View revenue, registrations, and reviews</li>
-                  <li>Manage business opportunity listings</li>
+                  <li>Manage opportunity listings</li>
                 </ul>
               </div>
               <div class="org-team-permissions-card org-team-permissions-card--cannot">
                 <p class="org-team-permissions-label">Team members cannot</p>
                 <ul class="org-team-permissions-list org-team-permissions-list--cannot">
                   <li>Invite or remove colleagues</li>
-                  <li>Create or duplicate organiser pages</li>
-                  <li>Add bank details, request payouts, or delete events</li>
+                  <li>Create or duplicate pages</li>
+                  <li>Add bank details or request payouts</li>
+                  <li>Delete events</li>
                 </ul>
               </div>
             </div>
@@ -2087,24 +2088,27 @@
     <!-- Modal: invite team member -->
     <div class="org-modal" id="modal-team-invite" role="dialog" aria-modal="true" aria-labelledby="modal-team-title" hidden>
       <div class="org-modal-backdrop" data-org-modal-close></div>
-      <div class="org-modal-panel">
+      <div class="org-modal-panel org-modal-panel--team-invite">
         <h2 id="modal-team-title">Invite team member</h2>
-        <p class="org-modal-sub">They&apos;ll get <strong>team member</strong> access to the organiser pages you choose — create and edit events, manage attendees, and view revenue. They cannot invite others, add bank details, request payouts, or delete events.</p>
+        <p class="org-modal-lead">
+          They can create and edit events, manage attendees, and view revenue on the pages you choose.
+          They cannot invite others, add bank details, request payouts, or delete events.
+        </p>
         <p class="org-modal-note" id="modal-team-limit-note"></p>
         <form id="form-team-invite">
           <div class="org-field">
             <label for="team-invite-email">Email address</label>
             <input type="email" id="team-invite-email" required placeholder="colleague@company.com" autocomplete="email" />
-            <p class="org-field-hint">They must sign in with this exact email address to activate their access.</p>
+            <p class="org-field-hint">They must sign in with this exact email to activate access.</p>
           </div>
           <fieldset class="org-team-group-fieldset" id="team-invite-groups-fieldset">
             <legend class="org-team-group-legend">Organiser page access</legend>
             <label class="org-team-group-all">
               <input type="checkbox" id="team-invite-all-groups" checked />
-              All organiser pages on this account
+              <span>All organiser pages</span>
             </label>
             <div class="org-team-group-list" id="team-invite-group-list" hidden></div>
-            <p class="org-field-hint">Uncheck &ldquo;All organiser pages&rdquo; to limit this person to specific pages only.</p>
+            <p class="org-field-hint org-field-hint--after-choice">Uncheck above to limit access to specific pages.</p>
           </fieldset>
           <div class="org-modal-actions">
             <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Cancel</button>
@@ -2126,7 +2130,7 @@
             <legend class="org-team-group-legend">Organiser page access</legend>
             <label class="org-team-group-all">
               <input type="checkbox" id="team-groups-all-groups" />
-              All organiser pages on this account
+              <span>All organiser pages</span>
             </label>
             <div class="org-team-group-list" id="team-groups-group-list" hidden></div>
           </fieldset>
@@ -2771,7 +2775,7 @@
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/rankings.js?v=20260728org2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260728lb2" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260728team2" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260723vis" defer></script>
   </body>
 </html>

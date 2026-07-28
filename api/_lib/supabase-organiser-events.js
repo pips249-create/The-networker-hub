@@ -120,7 +120,7 @@ function resolveSeriesGroupId(existingSeriesGroupId, occurrenceCount) {
 
 const { normalizeEventType } = require('./event-types');
 const { ukOutcode } = require('./supabase-events');
-const { deriveLocationFields } = require('./uk-outcode');
+const { deriveLocationFields, resolveRegionSlug } = require('./uk-outcode');
 
 function mapEventType(type) {
   return normalizeEventType(type);
@@ -753,6 +753,13 @@ async function buildEventRow(payload, eventId, mode) {
         if (!row.city && geo.city) row.city = geo.city;
       }
     }
+    row.region_slug =
+      resolveRegionSlug({
+        outcode: row.outcode,
+        postcode: row.postcode,
+        city: row.city,
+        location: row.location_label,
+      }) || null;
   }
 
   row.meeting_link = payload.onlineLink || null;
@@ -1851,6 +1858,7 @@ function seriesDetailsPatchFromRow(row) {
     city: row.city,
     postcode: row.postcode,
     outcode: row.outcode,
+    region_slug: row.region_slug || null,
     location_label: row.location_label,
     latitude: row.latitude,
     longitude: row.longitude,
@@ -1887,6 +1895,7 @@ async function propagateSeriesEventDetails(sb, updatedRow) {
       delete patch.city;
       delete patch.postcode;
       delete patch.outcode;
+      delete patch.region_slug;
       delete patch.location_label;
       delete patch.latitude;
       delete patch.longitude;

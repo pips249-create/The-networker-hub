@@ -134,17 +134,19 @@
     var sections = document.querySelectorAll('.ad-reveal:not([hidden])');
     if (!sections.length) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    function revealAll() {
       sections.forEach(function (el) {
         el.classList.add('is-visible');
       });
+    }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      revealAll();
       return;
     }
 
     if (!window.IntersectionObserver) {
-      sections.forEach(function (el) {
-        el.classList.add('is-visible');
-      });
+      revealAll();
       return;
     }
 
@@ -157,12 +159,16 @@
           }
         });
       },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+      /* Generous margin so above-the-fold blocks reveal on mobile Safari */
+      { rootMargin: '40px 0px 20% 0px', threshold: 0.01 }
     );
 
     sections.forEach(function (el) {
       io.observe(el);
     });
+
+    /* Safety: never leave enquiry / packages stuck at opacity 0 */
+    window.setTimeout(revealAll, 1200);
   }
 
   var PACKAGE_PANEL = {
@@ -659,6 +665,21 @@
 
     syncStickyCta(getActiveAdSection());
 
+    var primary = document.getElementById('ad-sticky-cta-primary');
+    if (primary) {
+      primary.addEventListener('click', function (e) {
+        var hash = String(primary.getAttribute('href') || '').replace(/^#/, '').trim();
+        if (!hash) return;
+        e.preventDefault();
+        jumpToPackage(hash);
+        if (history.replaceState) {
+          history.replaceState(null, '', '#' + hash);
+        } else {
+          location.hash = hash;
+        }
+      });
+    }
+
     var showBar = false;
     var hideForEnquiry = false;
 
@@ -858,7 +879,9 @@
   function ctaUrlFromBlock(block) {
     if (!block) return '#';
     var url = String(block.cta_url || '').trim();
-    return /^(https?:|mailto:)/i.test(url) ? url : '#';
+    if (/^(https?:|mailto:|tel:)/i.test(url)) return url;
+    if (url.charAt(0) === '/' || url.charAt(0) === '#') return url;
+    return '#';
   }
 
   function renderEmptyPreview(container, message) {

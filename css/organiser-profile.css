@@ -315,7 +315,11 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--text-muted);
-  margin: 0 0 18px;
+  margin: 0 0 8px;
+}
+
+.org-reviews-intro .how-reviews-trigger {
+  margin: 0 0 16px;
 }
 
 .org-reviews-lead strong {

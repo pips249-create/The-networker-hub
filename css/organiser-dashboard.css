@@ -5760,6 +5760,18 @@ a.hub-payment-setup-btn {
   color: var(--od-text-dark);
 }
 
+.org-modal-lead {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--od-text-soft);
+}
+
+.org-modal-panel--team-invite {
+  max-width: 440px;
+}
+
 .org-modal-cancel-tickets {
   margin: 0 0 10px;
   padding: 10px 12px;
@@ -6545,6 +6557,8 @@ body.org-cancel-modal-open {
   position: relative;
   padding-left: 1.35rem;
   margin-bottom: 0.45rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .org-team-permissions-list li:last-child {
@@ -6732,11 +6746,25 @@ body.org-cancel-modal-open {
 
 .org-team-group-all {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 10px;
   font-size: 14px;
+  line-height: 1.4;
   cursor: pointer;
+}
+
+.org-team-group-all input,
+.org-team-group-option input {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.org-team-group-all span,
+.org-team-group-option span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .org-team-group-list {
@@ -6759,8 +6787,14 @@ body.org-cancel-modal-open {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
   font-size: 14px;
+  line-height: 1.4;
   cursor: pointer;
+}
+
+.org-field-hint--after-choice {
+  margin: 8px 0 0;
 }
 
 .org-nav-badge {

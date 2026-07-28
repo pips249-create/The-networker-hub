@@ -402,7 +402,9 @@ body.advertising-page {
 .ad-page-body {
   position: relative;
   padding-bottom: 48px;
-  overflow: hidden;
+  /* overflow-x only — overflow:hidden was clipping mobile content / sticky CTAs */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .ad-page-body > .content-body.ad-content-body {
@@ -1268,15 +1270,16 @@ body.advertising-page {
 }
 
 .ad-pricing-note {
-  margin: 0.5rem 0 1rem;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  border: 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.45;
+  margin: 0.75rem 0 1.25rem;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--ad-soft, rgba(235, 224, 240, 0.35));
+  border: 1px solid var(--ad-line, rgba(45, 38, 54, 0.08));
+  font-size: 0.88rem;
+  color: var(--ad-muted, #5c5668);
+  line-height: 1.5;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .ad-pricing-note a {

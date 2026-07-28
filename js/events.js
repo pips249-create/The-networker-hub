@@ -42,6 +42,8 @@
     spotlightFilterKey = '';
   }
 
+  window.hubResetSpotlightOrder = resetSpotlightOrder;
+
   function spotlightFilterSignature(featured) {
     return featured
       .map(function (ev) {
@@ -52,6 +54,7 @@
   }
 
   function hasAnyFeaturedEvents() {
+    if (window.hubBrowseFeatured && window.hubBrowseFeatured.length) return true;
     if (typeof window.hubBrowseHasActiveFeatured === 'boolean') {
       return window.hubBrowseHasActiveFeatured;
     }
@@ -59,6 +62,40 @@
     return source.some(function (ev) {
       return ev.featured;
     });
+  }
+
+  function getSpotlightPremium() {
+    const source =
+      window.hubBrowseFeatured && window.hubBrowseFeatured.length
+        ? window.hubBrowseFeatured
+        : window.hubBrowseEvents && window.hubBrowseEvents.length
+          ? window.hubBrowseEvents
+          : window.hubAllEvents && window.hubAllEvents.length
+            ? window.hubAllEvents
+            : events;
+    const featured = source.filter(function (ev) {
+      return ev.featured;
+    });
+    // Server browse: spotlight cards come from data.featured. An empty featured
+    // payload means filters excluded them — don't fall back to the grid page.
+    if (
+      window.hubServerBrowse &&
+      Array.isArray(window.hubBrowseFeatured) &&
+      !window.hubBrowseFeatured.length &&
+      window.hubBrowseHasActiveFeatured
+    ) {
+      return [];
+    }
+    const key = spotlightFilterSignature(featured);
+    if (key !== spotlightFilterKey || !spotlightPremiumOrder) {
+      spotlightFilterKey = key;
+      const pool =
+        featured.length > SPOTLIGHT_MAX
+          ? shuffleList(featured).slice(0, SPOTLIGHT_MAX)
+          : shuffleList(featured);
+      spotlightPremiumOrder = pool;
+    }
+    return spotlightPremiumOrder;
   }
 
   function spotlightCarouselHasOpenSlots() {
@@ -183,6 +220,9 @@
   function startSpotlightAuto() {
     stopSpotlightAuto();
     if (!els.spotlightTrack) return;
+    /* Auto-advance fights touch scrolling on phones and causes flicker */
+    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const itemCount = getSpotlightTrackItemCount();
     const sc = window.HubSpotlightCarousel;
     if (!sc || !sc.canAutoAdvance(els.spotlightTrack, itemCount)) return;
@@ -303,28 +343,6 @@
         }
       }, 200);
     });
-  }
-
-  function getSpotlightPremium() {
-    const source =
-      window.hubBrowseFeatured && window.hubBrowseFeatured.length
-        ? window.hubBrowseFeatured
-        : window.hubAllEvents && window.hubAllEvents.length
-          ? window.hubAllEvents
-          : events;
-    const featured = source.filter(function (ev) {
-      return ev.featured;
-    });
-    const key = spotlightFilterSignature(featured);
-    if (key !== spotlightFilterKey || !spotlightPremiumOrder) {
-      spotlightFilterKey = key;
-      const pool =
-        featured.length > SPOTLIGHT_MAX
-          ? shuffleList(featured).slice(0, SPOTLIGHT_MAX)
-          : shuffleList(featured);
-      spotlightPremiumOrder = pool;
-    }
-    return spotlightPremiumOrder;
   }
 
   function escapeHtml(s) {

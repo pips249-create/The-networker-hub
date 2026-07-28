@@ -3072,36 +3072,44 @@ html:has(.home-page) {
 }
 
 @media (max-width: 640px) {
-  .home-location-chip {
-    width: 92px;
-    height: 92px;
-    gap: 5px;
-    padding: 10px 8px 8px;
+  /* Show all cities — horizontal swipe is easy to miss on phones */
+  .home-locations-scroller::after {
+    display: none;
   }
 
-  .home-location-chip-name {
-    font-size: 10.5px;
+  .home-locations-track {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 8px;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: 4px 2px 8px;
   }
 
-  .home-location-chip-name--stacked {
-    font-size: 10px;
-  }
-
-  .home-location-chip--compact-label .home-location-chip-name:not(.home-location-chip-name--stacked) {
-    font-size: 9.5px;
-  }
-
+  .home-location-chip,
   .home-location-chip--online {
-    width: 98px;
-    height: 98px;
-    margin-right: 4px;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 1;
+    margin-right: 0;
+    gap: 4px;
+    padding: 8px 4px 6px;
   }
 
   .home-location-chip--online::after {
-    right: -8px;
+    display: none;
   }
 
-  .home-locations-scroller::after {
-    width: 36px;
+  .home-location-chip-name {
+    font-size: 10px;
+  }
+
+  .home-location-chip-name--stacked {
+    font-size: 9.5px;
+  }
+
+  .home-location-chip--compact-label .home-location-chip-name:not(.home-location-chip-name--stacked) {
+    font-size: 9px;
   }
 }

@@ -4,7 +4,7 @@
 const { getSupabaseAdmin, getSupabaseAnon, isSupabaseConfigured } = require('./supabase');
 
 const USER_ROLES = { ADMIN: 'admin', CLIENT: 'client' };
-const CURRENT_ORGANISER_TERMS_VERSION = 'v1';
+const CURRENT_ORGANISER_TERMS_VERSION = 'v2';
 
 /** When false (default), the app never triggers Supabase/Resend auth emails. */
 function authEmailsEnabled() {

@@ -44,20 +44,63 @@
     return document.body.classList.contains('browse-mode-organisers') ? 'organisers' : 'events';
   }
 
+  var sortOptionCache = {
+    date: null,
+    priceAsc: null,
+    priceDesc: null,
+    listings: null,
+    name: null,
+  };
+
+  function cacheSortOption(key, value, label) {
+    if (sortOptionCache[key]) return sortOptionCache[key];
+    var opt = sortSelect && sortSelect.querySelector('option[value="' + value + '"]');
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+    }
+    sortOptionCache[key] = opt;
+    return opt;
+  }
+
+  function ensureOrganiserSortOptions() {
+    if (!sortSelect) return;
+    cacheSortOption('date', 'date', 'Soonest');
+    cacheSortOption('priceAsc', 'price-asc', 'Price ascending');
+    cacheSortOption('priceDesc', 'price-desc', 'Price descending');
+    cacheSortOption('listings', 'listings', 'Most listings');
+    cacheSortOption('name', 'name', 'Name A–Z');
+  }
+
   function updateSortOptions(mode) {
     if (!sortSelect) return;
-    var recommended = sortSelect.querySelector('option[value="recommended"]');
-    var date = sortSelect.querySelector('option[value="date"]');
-    var priceAsc = sortSelect.querySelector('option[value="price-asc"]');
-    var priceDesc = sortSelect.querySelector('option[value="price-desc"]');
-    var listings = sortSelect.querySelector('option[value="listings"]');
-    var name = sortSelect.querySelector('option[value="name"]');
+    ensureOrganiserSortOptions();
 
-    if (date) date.hidden = mode === 'organisers';
-    if (priceAsc) priceAsc.hidden = mode === 'organisers';
-    if (priceDesc) priceDesc.hidden = mode === 'organisers';
-    if (listings) listings.hidden = mode === 'events';
-    if (name) name.hidden = mode === 'events';
+    var recommended = sortSelect.querySelector('option[value="recommended"]');
+
+    /* iOS Safari ignores option[hidden] — detach unused options from the DOM */
+    function setOptionInMode(opt, show, beforeNode) {
+      if (!opt) return;
+      if (show) {
+        if (!opt.parentNode) {
+          var anchor = beforeNode || recommended || null;
+          if (anchor && anchor.parentNode === sortSelect) sortSelect.insertBefore(opt, anchor);
+          else sortSelect.appendChild(opt);
+        }
+        opt.hidden = false;
+        opt.disabled = false;
+      } else if (opt.parentNode) {
+        opt.parentNode.removeChild(opt);
+      }
+    }
+
+    var insertBeforeRecommended = recommended || null;
+    setOptionInMode(sortOptionCache.date, mode !== 'organisers', insertBeforeRecommended);
+    setOptionInMode(sortOptionCache.priceAsc, mode !== 'organisers', insertBeforeRecommended);
+    setOptionInMode(sortOptionCache.priceDesc, mode !== 'organisers', insertBeforeRecommended);
+    setOptionInMode(sortOptionCache.listings, mode === 'organisers', insertBeforeRecommended);
+    setOptionInMode(sortOptionCache.name, mode === 'organisers', insertBeforeRecommended);
 
     if (mode === 'organisers') {
       if (
@@ -70,30 +113,6 @@
       }
     } else if (sortSelect.value === 'listings' || sortSelect.value === 'name') {
       sortSelect.value = 'recommended';
-    }
-
-    if (recommended) recommended.textContent = mode === 'organisers' ? 'Recommended' : 'Recommended';
-  }
-
-  function ensureOrganiserSortOptions() {
-    if (!sortSelect) return;
-    if (!sortSelect.querySelector('option[value="listings"]')) {
-      var listingsOpt = document.createElement('option');
-      listingsOpt.value = 'listings';
-      listingsOpt.textContent = 'Most listings';
-      listingsOpt.hidden = true;
-      var recommendedOpt = sortSelect.querySelector('option[value="recommended"]');
-      if (recommendedOpt) sortSelect.insertBefore(listingsOpt, recommendedOpt);
-      else sortSelect.appendChild(listingsOpt);
-    }
-    if (!sortSelect.querySelector('option[value="name"]')) {
-      var nameOpt = document.createElement('option');
-      nameOpt.value = 'name';
-      nameOpt.textContent = 'Name A–Z';
-      nameOpt.hidden = true;
-      var recommendedAnchor = sortSelect.querySelector('option[value="recommended"]');
-      if (recommendedAnchor) sortSelect.insertBefore(nameOpt, recommendedAnchor);
-      else sortSelect.appendChild(nameOpt);
     }
   }
 

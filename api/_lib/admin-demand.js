@@ -44,19 +44,38 @@ async function fetchAllPages(buildPage) {
 }
 
 async function aggregateBrowseSearches(sb, since) {
-  const rows = await fetchAllPages((from, to) =>
-    applySince(
-      sb
-        .from('browse_search_events')
-        .select('query_text, location_text, filters, result_count, zero_results, created_at')
-        .order('created_at', { ascending: false }),
-      'created_at',
-      since
-    ).range(from, to)
-  );
+  const selectCols =
+    'source, query_text, location_text, region_slug, filters, result_count, zero_results, created_at';
+  let rows;
+  try {
+    rows = await fetchAllPages((from, to) =>
+      applySince(
+        sb
+          .from('browse_search_events')
+          .select(selectCols)
+          .order('created_at', { ascending: false }),
+        'created_at',
+        since
+      ).range(from, to)
+    );
+  } catch (e) {
+    if (!/region_slug/i.test(String(e.message || ''))) throw e;
+    rows = await fetchAllPages((from, to) =>
+      applySince(
+        sb
+          .from('browse_search_events')
+          .select('source, query_text, location_text, filters, result_count, zero_results, created_at')
+          .order('created_at', { ascending: false }),
+        'created_at',
+        since
+      ).range(from, to)
+    );
+  }
 
   const queryStats = new Map();
   const locationCounts = new Map();
+  const regionCounts = new Map();
+  const sourceCounts = new Map();
   const typeCounts = new Map();
   let withQuery = 0;
   let zeroResults = 0;
@@ -64,8 +83,11 @@ async function aggregateBrowseSearches(sb, since) {
   for (const row of rows) {
     const q = String(row.query_text || '').trim();
     const loc = String(row.location_text || '').trim();
+    const region = String(row.region_slug || '').trim();
+    const source = String(row.source || 'events_browse').trim() || 'events_browse';
     const zero = !!row.zero_results || Number(row.result_count) === 0;
     if (zero) zeroResults += 1;
+    bump(sourceCounts, source);
     if (q) {
       withQuery += 1;
       const prev = queryStats.get(q) || { count: 0, zeroCount: 0, resultSum: 0 };
@@ -75,6 +97,7 @@ async function aggregateBrowseSearches(sb, since) {
       queryStats.set(q, prev);
     }
     if (loc) bump(locationCounts, loc);
+    if (region) bump(regionCounts, region);
     const types = Array.isArray(row.filters?.types) ? row.filters.types : [];
     types.forEach((t) => bump(typeCounts, t));
   }
@@ -102,6 +125,8 @@ async function aggregateBrowseSearches(sb, since) {
     topQueries,
     zeroResultQueries,
     topLocations: topFromMap(locationCounts, 10).map((r) => ({ location: r.key, count: r.count })),
+    topRegions: topFromMap(regionCounts, 10).map((r) => ({ region: r.key, count: r.count })),
+    bySource: topFromMap(sourceCounts, 10).map((r) => ({ source: r.key, count: r.count })),
     topTypes: topFromMap(typeCounts, 10).map((r) => ({ type: r.key, count: r.count })),
   };
 }

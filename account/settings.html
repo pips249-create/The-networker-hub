@@ -14,10 +14,10 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
     <link rel="stylesheet" href="../css/account-settings.css?v=20260715locationtip" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260726m" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
 
   </head>
   <body class="account-settings-page">
@@ -70,6 +70,34 @@
               placeholder="e.g. Business development manager"
               autocomplete="organization-title"
             />
+          </div>
+          <div class="as-field">
+            <div class="as-field-label-row">
+              <label for="as-professional-role">Your role</label>
+              <button
+                type="button"
+                class="as-field-tip-btn"
+                data-as-field-tip="as-professional-role-tip-text"
+                aria-label="Why we ask for your role"
+                aria-expanded="false"
+                aria-controls="as-professional-role-tip-text"
+              >
+                <span aria-hidden="true">?</span>
+              </button>
+            </div>
+            <div id="as-professional-role-tip-text" class="as-field-tip-popover" role="tooltip" hidden>
+              Helps us understand who networks on the Hub (e.g. founders vs employees). Optional and not shown on
+              badges.
+            </div>
+            <select id="as-professional-role" name="professionalRole">
+              <option value="">Prefer not to say</option>
+              <option value="founder">Founder / co-founder</option>
+              <option value="director">Director / owner</option>
+              <option value="employee">Employee</option>
+              <option value="freelancer">Freelancer / consultant</option>
+              <option value="investor">Investor</option>
+              <option value="other">Other</option>
+            </select>
           </div>
           <div class="as-field">
             <div class="as-field-label-row">
@@ -208,6 +236,6 @@
     </main>
 
     <script src="../js/site-nav.js?v=20260727nav" data-root="../" data-page="settings"></script>
-    <script src="../js/account-settings.js?v=20260715locationtip"></script>
+    <script src="../js/account-settings.js?v=20260728role1"></script>
   </body>
 </html>

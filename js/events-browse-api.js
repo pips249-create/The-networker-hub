@@ -10,8 +10,6 @@
   var lastTypeCounts = null;
   var lastPinsSignature = '';
   var lastFilterSignature = '';
-  var lastLoggedSignature = '';
-  var lastLoggedAt = 0;
 
   function browseFilterSignature(params) {
     var copy = Object.assign({}, params || {});
@@ -132,7 +130,25 @@
 
   function applyBrowsePayload(data, page) {
     window.hubBrowseEvents = dedupeEventsById(data.events || []);
-    window.hubBrowseFeatured = dedupeEventsById(data.featured || []);
+    // Page 2+ requests set meta=0 and omit a real featured payload (empty array).
+    // Keep the existing spotlight cards instead of wiping them on pagination.
+    var pageNum = typeof page === 'number' ? page : Number(page) || 1;
+    var shouldReplaceFeatured =
+      pageNum <= 1 ||
+      (data.meta && Object.prototype.hasOwnProperty.call(data, 'featured'));
+    if (shouldReplaceFeatured) {
+      var nextFeatured = dedupeEventsById(data.featured || []);
+      var prevFeatured = window.hubBrowseFeatured || [];
+      var featuredChanged =
+        nextFeatured.length !== prevFeatured.length ||
+        nextFeatured.some(function (ev, i) {
+          return String((ev && ev.id) || '') !== String((prevFeatured[i] && prevFeatured[i].id) || '');
+        });
+      window.hubBrowseFeatured = nextFeatured;
+      if (featuredChanged && typeof window.hubResetSpotlightOrder === 'function') {
+        window.hubResetSpotlightOrder();
+      }
+    }
     window.hubBrowseTotal = data.pagination ? Number(data.pagination.total) || 0 : window.hubBrowseEvents.length;
     window.hubBrowsePagination = data.pagination || null;
     if (data.meta && data.meta.typeCounts) {
@@ -207,6 +223,9 @@
   }
 
   function hasAnalyticsConsent() {
+    if (window.HubBrowseAnalytics && typeof window.HubBrowseAnalytics.hasConsent === 'function') {
+      return window.HubBrowseAnalytics.hasConsent();
+    }
     if (window.HubCookieConsent && typeof window.HubCookieConsent.hasAnalyticsConsent === 'function') {
       return window.HubCookieConsent.hasAnalyticsConsent();
     }
@@ -233,32 +252,35 @@
       if (Number(params.page || 1) > 1) return;
       if (!browseHasDemandSignal(params, resultCount)) return;
 
-      var signature = browseFilterSignature(params) + '|' + String(resultCount || 0);
-      var now = Date.now();
-      if (signature === lastLoggedSignature && now - lastLoggedAt < 15000) return;
-      lastLoggedSignature = signature;
-      lastLoggedAt = now;
+      var regional = window.hubRegionalLanding || null;
+      var payload = {
+        source: 'events_browse',
+        q: params.q || '',
+        location: params.location || '',
+        regionSlug: (regional && regional.slug) || '',
+        types: params.types || '',
+        inPerson: params.inPerson || '0',
+        online: params.online || '0',
+        free: params.free || '0',
+        fiveStars: params.fiveStars || '0',
+        dateFrom: params.dateFrom || '',
+        dateTo: params.dateTo || '',
+        priceMin: params.priceMin || '',
+        priceMax: params.priceMax || '',
+        sort: params.sort || '',
+        resultCount: Number(resultCount) || 0,
+      };
+
+      if (window.HubBrowseAnalytics && typeof window.HubBrowseAnalytics.logSearch === 'function') {
+        window.HubBrowseAnalytics.logSearch(payload);
+        return;
+      }
 
       fetch(ANALYTICS_PATH, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'record_search',
-          q: params.q || '',
-          location: params.location || '',
-          types: params.types || '',
-          inPerson: params.inPerson || '0',
-          online: params.online || '0',
-          free: params.free || '0',
-          fiveStars: params.fiveStars || '0',
-          dateFrom: params.dateFrom || '',
-          dateTo: params.dateTo || '',
-          priceMin: params.priceMin || '',
-          priceMax: params.priceMax || '',
-          sort: params.sort || '',
-          resultCount: Number(resultCount) || 0,
-        }),
+        body: JSON.stringify(Object.assign({ action: 'record_search' }, payload)),
         keepalive: true,
       }).catch(function () {});
     } catch (e) {

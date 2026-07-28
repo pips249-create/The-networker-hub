@@ -1057,7 +1057,7 @@
     return '/events/event?id=' + encodeURIComponent(ev.id);
   }
 
-  function renderRelated(related) {
+  function renderRelated(related, options) {
     const grid = document.getElementById('ev-related-grid');
     const empty = document.getElementById('ev-related-empty');
     const section = document.getElementById('ev-related-section');
@@ -1065,9 +1065,15 @@
 
     grid.innerHTML = '';
     const list = (related || []).filter((e) => e && e.id);
+    const hasSeriesDates = Boolean(options && options.hasSeriesDates);
 
     if (!list.length) {
-      if (empty) empty.hidden = false;
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = hasSeriesDates
+          ? 'Other dates for this event are in Choose a date above. No other events from this organiser yet.'
+          : 'No other upcoming events from this organiser yet.';
+      }
       if (section) section.classList.add('is-empty-related');
       return;
     }
@@ -4761,14 +4767,17 @@
           }
 
           const relatedFromApi = data.related || [];
+          const relatedOpts = {
+            hasSeriesDates: Array.isArray(data.seriesDates) && data.seriesDates.length > 1,
+          };
           if (relatedFromApi.length) {
-            renderRelated(relatedFromApi);
+            renderRelated(relatedFromApi, relatedOpts);
           } else if (!Object.prototype.hasOwnProperty.call(data, 'related')) {
             loadRelatedFallback(ev).then(function (related) {
-              renderRelated(related);
+              renderRelated(related, relatedOpts);
             });
           } else {
-            renderRelated([]);
+            renderRelated([], relatedOpts);
           }
           return;
         }

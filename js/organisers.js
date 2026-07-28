@@ -165,6 +165,8 @@
 
   function startSpotlightAuto() {
     stopSpotlightAuto();
+    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var track = getSpotlightTrack();
     var sc = window.HubSpotlightCarousel;
     if (!track || !sc || !sc.canAutoAdvance(track, getSpotlightFeatured().length)) return;

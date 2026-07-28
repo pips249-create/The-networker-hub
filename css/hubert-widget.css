@@ -318,6 +318,18 @@ body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
     height: 56px;
   }
 
+  /* Sit above mobile sticky CTAs (e.g. advertising page) */
+  body.advertising-page .hubert-widget:not(.hubert-widget--open) {
+    bottom: max(76px, calc(16px + env(safe-area-inset-bottom)));
+  }
+
+  /* Fade off the footer so Legal / Cookie links stay tappable */
+  .hubert-widget--near-footer:not(.hubert-widget--open) .hubert-launcher {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.92);
+  }
+
   .hubert-panel {
     width: calc(100vw - 24px);
     height: min(72vh, 620px);

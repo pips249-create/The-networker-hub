@@ -1731,7 +1731,7 @@ body.browse-mode-organisers .filter-price-range-row input[type='range'] {
 
 body.events-view-map .events-map-panel {
   height: 100%;
-  min-height: 420px;
+  min-height: 480px;
 }
 
 .events-map-sidebar {
@@ -1753,8 +1753,8 @@ body.events-view-map .events-map-panel {
 }
 
 body.events-view-map .events-map-wrap {
-  height: clamp(360px, calc(100svh - 320px), 720px);
-  min-height: 360px;
+  height: clamp(420px, calc(100svh - 240px), 860px);
+  min-height: 420px;
 }
 
 @media (max-width: 900px) {
@@ -1775,10 +1775,10 @@ body.events-view-map .events-map-wrap {
     grid-column: 1;
     grid-row: 1;
     width: 100%;
-    height: 58vh;
-    height: min(58dvh, 620px);
-    min-height: 320px;
-    max-height: 620px;
+    height: 62vh;
+    height: min(62dvh, 680px);
+    min-height: 340px;
+    max-height: 680px;
   }
 
   .events-map-sidebar {
@@ -1942,9 +1942,9 @@ body.events-view-map .events-map-wrap {
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto auto;
-  gap: 2px 10px;
-  padding: 12px;
+  gap: 8px 10px;
+  align-items: center;
+  padding: 11px 12px;
   border: 1px solid transparent;
   border-radius: 12px;
   background: transparent;
@@ -1964,27 +1964,32 @@ body.events-view-map .events-map-wrap {
   border-color: var(--lavender-soft);
 }
 
+.map-sidebar-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .map-sidebar-item-title {
-  grid-column: 1;
-  grid-row: 1;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--lavender-deep);
+  color: var(--charcoal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .map-sidebar-item-meta {
-  grid-column: 1;
-  grid-row: 2;
   font-size: 12px;
   line-height: 1.35;
-  color: var(--text-muted);
+  color: var(--charcoal-soft);
 }
 
 .map-sidebar-item-price {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
+  flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
   padding: 5px 9px;
@@ -2248,15 +2253,15 @@ body.browse-mode-organisers .events-toolbar {
   border-radius: 14px;
   padding: 0;
   overflow: hidden;
-  box-shadow: 0 8px 28px rgba(45, 38, 54, 0.14);
+  box-shadow: 0 10px 32px rgba(45, 38, 54, 0.18);
   border: 1px solid var(--border-soft);
 }
 
 .map-event-popup .leaflet-popup-content {
   margin: 0;
-  width: min(280px, calc(100vw - 48px)) !important;
-  max-width: min(280px, calc(100vw - 48px));
-  line-height: 1.45;
+  width: min(268px, calc(100vw - 48px)) !important;
+  max-width: min(268px, calc(100vw - 48px));
+  line-height: 1.4;
 }
 
 @media (max-width: 900px) {
@@ -2265,13 +2270,13 @@ body.browse-mode-organisers .events-toolbar {
   }
 
   .map-event-popup .leaflet-popup-content {
-    width: min(240px, calc(100vw - 72px)) !important;
-    max-width: min(240px, calc(100vw - 72px));
+    width: min(232px, calc(100vw - 72px)) !important;
+    max-width: min(232px, calc(100vw - 72px));
   }
 
   .map-event-card-media {
-    aspect-ratio: 2 / 1;
-    max-height: 96px;
+    aspect-ratio: 2.2 / 1;
+    max-height: 88px;
   }
 
   .map-event-card-body {
@@ -2284,14 +2289,13 @@ body.browse-mode-organisers .events-toolbar {
   }
 
   .map-event-card-meta,
-  .map-event-card-location,
   .map-event-card-distance {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .leaflet-container .map-event-popup .map-event-card-cta {
-    margin-top: 8px;
-    padding: 8px 12px;
+    margin-top: 10px;
+    padding: 9px 12px;
     font-size: 13px;
   }
 }
@@ -2315,38 +2319,50 @@ body.browse-mode-organisers .events-toolbar {
   top: 8px;
   right: 8px;
   z-index: 2;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--charcoal);
-  font-size: 22px;
+  background: rgba(28, 32, 64, 0.55);
+  color: #fff;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(45, 38, 54, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(28, 32, 64, 0.28);
 }
 
 .map-event-card-close span {
   display: block;
-  margin-top: -2px;
+  margin-top: -1px;
 }
 
 .map-event-card-close:hover,
 .map-event-card-close:focus {
-  background: #fff;
-  outline: 2px solid var(--lavender-deep);
+  background: rgba(28, 32, 64, 0.78);
+  outline: 2px solid #fff;
   outline-offset: 1px;
 }
 
 .map-event-card-media {
-  aspect-ratio: 16 / 9;
+  position: relative;
+  aspect-ratio: 2 / 1;
+  max-height: 120px;
   background: var(--lavender-light);
   overflow: hidden;
+}
+
+.map-event-card-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 32, 64, 0.18) 0%, transparent 42%);
+  pointer-events: none;
 }
 
 .map-event-card-img {
@@ -2363,15 +2379,15 @@ body.browse-mode-organisers .events-toolbar {
 }
 
 .map-event-card-body {
-  padding: 14px 16px 16px;
+  padding: 12px 14px 14px;
 }
 
 .map-event-card-top {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .map-event-card-premium {
@@ -2388,7 +2404,7 @@ body.browse-mode-organisers .events-toolbar {
 .map-event-card-format {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -2404,7 +2420,7 @@ body.browse-mode-organisers .events-toolbar {
   margin-left: auto;
   font-size: 11px;
   font-weight: 700;
-  padding: 5px 10px;
+  padding: 4px 9px;
   border-radius: var(--radius-pill);
   background: #2d8a4e;
   color: #fff;
@@ -2412,38 +2428,45 @@ body.browse-mode-organisers .events-toolbar {
 
 .map-event-card-title {
   margin: 0 0 6px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--lavender-deep);
+  color: var(--charcoal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .map-event-card-meta,
-.map-event-card-location,
 .map-event-card-distance {
-  margin: 0 0 4px;
-  font-size: 12px;
-  color: var(--text-muted);
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--charcoal-soft);
 }
 
 .map-event-card-distance {
+  margin-top: 3px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--lavender-deep);
 }
 
 .leaflet-container .map-event-popup .map-event-card-cta {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   margin-top: 12px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   font-size: 13px;
   font-weight: 700;
   border-radius: var(--radius-pill);
   text-decoration: none;
   color: #fff;
   background: var(--lavender-deep);
-  box-shadow: 0 4px 14px rgba(154, 122, 168, 0.35);
+  box-shadow: 0 3px 12px rgba(154, 122, 168, 0.3);
 }
 
 .leaflet-container .map-event-popup .map-event-card-cta:hover,

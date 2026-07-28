@@ -9,9 +9,29 @@ const WRITABLE = {
   location: true,
   company: true,
   jobTitle: true,
+  professionalRole: true,
   marketPreferences: true,
   businessSector: true,
 };
+
+const PROFESSIONAL_ROLES = new Set([
+  'founder',
+  'director',
+  'employee',
+  'freelancer',
+  'investor',
+  'other',
+]);
+
+function normalizeProfessionalRole(raw) {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  if (!s) return null;
+  if (PROFESSIONAL_ROLES.has(s)) return s;
+  return null;
+}
 
 function interestsToPreferences(interests) {
   if (!Array.isArray(interests) || !interests.length) return '';
@@ -77,6 +97,7 @@ function rowToProfile(session, hub, attendee) {
     location: String(attendee?.location || '').trim(),
     company: String(attendee?.company || '').trim(),
     jobTitle: String(attendee?.job_title || '').trim(),
+    professionalRole: String(attendee?.professional_role || '').trim(),
     marketPreferences: marketFromRow,
     businessSector: String(attendee?.business_sector || '').trim(),
     emailsEnabled: hub?.emails_enabled !== false,
@@ -134,6 +155,9 @@ async function updateProfile(session, body) {
   if (body.jobTitle !== undefined) {
     attendeePatch.job_title = String(body.jobTitle || '').trim() || null;
   }
+  if (body.professionalRole !== undefined) {
+    attendeePatch.professional_role = normalizeProfessionalRole(body.professionalRole);
+  }
   if (body.businessSector !== undefined) {
     attendeePatch.business_sector = String(body.businessSector || '').trim() || null;
   }
@@ -160,12 +184,14 @@ async function updateProfile(session, body) {
       if (
         msg.includes('business_sector') ||
         msg.includes('market_preferences') ||
-        msg.includes('job_title')
+        msg.includes('job_title') ||
+        msg.includes('professional_role')
       ) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
         delete fallback.market_preferences;
         if (msg.includes('job_title')) delete fallback.job_title;
+        if (msg.includes('professional_role')) delete fallback.professional_role;
         if (Object.keys(fallback).length) {
           const retry = await sb
             .from('attendees')
@@ -275,4 +301,6 @@ module.exports = {
   updateProfile,
   changePassword,
   WRITABLE,
+  PROFESSIONAL_ROLES,
+  normalizeProfessionalRole,
 };

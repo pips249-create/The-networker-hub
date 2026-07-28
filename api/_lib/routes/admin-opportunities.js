@@ -8,7 +8,7 @@ const {
   deriveOpportunityGeo,
   writeOpportunityRow,
 } = require('../supabase-opportunities');
-const { stripEarningsMeta } = require('../opportunity-moderation');
+const { stripEarningsMeta, isNetworkMarketingType } = require('../opportunity-moderation');
 const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths } = require('../opportunity-listing-pricing');
@@ -323,6 +323,10 @@ async function createAdminOpportunity(input) {
   const about = parseAbout(input.about != null ? input.about : input.about_text || input.aboutText);
   const meta = buildMetaFromAdminInput(input);
   const geo = deriveOpportunityGeo(input, meta);
+  const featured = Boolean(input.featured);
+  if (featured && isNetworkMarketingType(type)) {
+    throw new Error('network_marketing_not_spotlight');
+  }
 
   const row = {
     organiser_id: null,
@@ -348,7 +352,7 @@ async function createAdminOpportunity(input) {
     logo_url: String(input.logo_url || '').trim() || null,
     status: published ? 'published' : 'draft',
     approval_status: published ? 'Approved' : 'Pending Review',
-    featured: Boolean(input.featured),
+    featured,
     listing_expires_at: listingExpiresAt.toISOString(),
     listing_paid_at: now.toISOString(),
     published_at: published ? now.toISOString() : null,
@@ -681,6 +685,22 @@ module.exports = async function handler(req, res) {
     try {
       const sb = getSupabaseAdmin();
       const now = new Date();
+      if (patch.featured) {
+        const { data: currentFeatured } = await sb
+          .from('business_opportunities')
+          .select('type, tags')
+          .eq('id', id)
+          .maybeSingle();
+        const nextType = patch.type || (currentFeatured && currentFeatured.type);
+        const nextTags = currentFeatured && currentFeatured.tags;
+        if (isNetworkMarketingType({ type: nextType, tags: nextTags })) {
+          return json(res, 400, {
+            ok: false,
+            error: 'network_marketing_not_spotlight',
+            message: 'Network marketing listings cannot be featured in Premium Spotlight.',
+          });
+        }
+      }
       if (patch.status === 'published') {
         const { data: current } = await sb
           .from('business_opportunities')

@@ -136,6 +136,21 @@
     mount.classList.remove('hubert-widget--open');
   }
 
+  /* Keep launcher clear of the site footer (and sticky bars) so mobile taps reach links. */
+  var footerEl = document.getElementById('hub-site-footer') || document.querySelector('.site-footer');
+  if (footerEl && 'IntersectionObserver' in window) {
+    var footerIo = new IntersectionObserver(
+      function (entries) {
+        var near = entries.some(function (entry) {
+          return entry.isIntersecting;
+        });
+        mount.classList.toggle('hubert-widget--near-footer', near);
+      },
+      { root: null, rootMargin: '0px 0px -12% 0px', threshold: 0 }
+    );
+    footerIo.observe(footerEl);
+  }
+
   launcher.addEventListener('click', function () {
     if (panel.hidden) openPanel();
     else closePanel();

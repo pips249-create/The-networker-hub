@@ -72,7 +72,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 3. Moderator checks:
    - [ ] Truthful title and description
    - [ ] Investment/fee clearly stated
-   - [ ] No prohibited patterns (MLM, guaranteed returns)
+   - [ ] No prohibited patterns (recruitment-primary network marketing, guaranteed returns)
    - [ ] Lister has organiser terms accepted
    - [ ] Images do not infringe copyright (see legal policies)
 4. **Approve** → publish + `opportunity_listing_live` email  

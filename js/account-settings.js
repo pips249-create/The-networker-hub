@@ -37,6 +37,7 @@
     // Default on so fields stay visible even if an older API omits these flags.
     setFieldWritable('as-company', w.company !== false);
     setFieldWritable('as-job-title', w.jobTitle !== false);
+    setFieldWritable('as-professional-role', w.professionalRole !== false);
     setFieldWritable('as-location', w.location !== false);
   }
 
@@ -50,6 +51,7 @@
     setFieldValue('as-name', profile.name || '');
     setFieldValue('as-company', profile.company || '');
     setFieldValue('as-job-title', profile.jobTitle || '');
+    setFieldValue('as-professional-role', profile.professionalRole || '');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);
   }
@@ -231,6 +233,9 @@
           name: document.getElementById('as-name').value.trim(),
           company: document.getElementById('as-company').value.trim(),
           jobTitle: document.getElementById('as-job-title').value.trim(),
+          professionalRole: document.getElementById('as-professional-role')
+            ? document.getElementById('as-professional-role').value.trim()
+            : '',
           location: document.getElementById('as-location').value.trim(),
         }),
       });

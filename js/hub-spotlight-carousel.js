@@ -52,7 +52,12 @@
     }
 
     var overflow = cardsOverflowViewport(track, itemCount, cardSelector);
-    var looping = itemCount > 1;
+    /* Infinite HTML doubling causes flicker on phones — use simple snap scroll instead */
+    var preferSimpleScroll =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(hover: none), (max-width: 768px)').matches;
+    var looping = itemCount > 1 && !preferSimpleScroll;
 
     track.dataset.spotlightLoop = looping ? '1' : '0';
     track.dataset.spotlightOverflow = overflow ? '1' : '0';

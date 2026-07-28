@@ -1006,11 +1006,71 @@ body.hub-page-account .site-nav {
 }
 .footer-brand {
   flex-shrink: 0;
+  text-decoration: none;
+  color: inherit;
 }
+
+.footer-wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+.footer-wordmark-the,
+.footer-wordmark-hub {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #5c5557;
+  letter-spacing: 0.02em;
+}
+
+.footer-wordmark-networker {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.85rem, 4.5vw, 2.35rem);
+  font-weight: 400;
+  color: #c299d1;
+  letter-spacing: -0.01em;
+  margin: 0.05em 0;
+}
+
+.footer-wordmark-hub-o {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.72em;
+  height: 0.72em;
+  margin: 0 0.02em;
+  vertical-align: middle;
+}
+
+.footer-wordmark-hub-o-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #c299d1;
+  box-sizing: border-box;
+}
+
+.footer-wordmark-hub-o-dot {
+  width: 0.38em;
+  height: 0.38em;
+  border-radius: 50%;
+  background: #c299d1;
+  border: 2px solid #faf6ee;
+  box-sizing: border-box;
+}
+
 .footer-logo {
-  height: 88px;
+  height: 72px;
   width: auto;
-  max-width: min(320px, 42vw);
+  max-width: min(260px, 48vw);
   display: block;
   object-fit: contain;
   object-position: left center;

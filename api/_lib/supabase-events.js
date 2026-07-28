@@ -723,7 +723,9 @@ async function fetchRelatedPublishedRows(sb, organiserId, excludeIds, limit) {
   const exclude = new Set((excludeIds || []).filter(Boolean));
   if (!organiserId) return [];
 
-  const fetchLimit = Math.min(Math.max(limit + exclude.size + 2, limit), 24);
+  // Over-fetch: series siblings and same-title duplicates are excluded after the query,
+  // so a tight limit (e.g. 6) often leaves the related rail empty for recurring groups.
+  const fetchLimit = Math.min(Math.max(limit + exclude.size + 16, 32), 80);
   const { data, error } = await applyUpcomingBrowseFilter(
     sb
       .from('events')
@@ -739,7 +741,30 @@ async function fetchRelatedPublishedRows(sb, organiserId, excludeIds, limit) {
   return (data || [])
     .map((r) => ({ ...r, next_date: r.starts_at }))
     .filter((r) => !exclude.has(r.id) && isUpcomingBrowseEventRow(r))
-    .slice(0, limit);
+    .slice(0, Math.min(Math.max(limit, 1), 80));
+}
+
+function filterRelatedRowsForDetail(row, relatedRows, seriesIds, limit) {
+  const excludeSeries = seriesIds instanceof Set ? seriesIds : new Set(seriesIds || []);
+  const currentTitle = String(row?.title || '')
+    .trim()
+    .toLowerCase();
+  const out = [];
+  const seenTitles = new Set();
+
+  for (const candidate of relatedRows || []) {
+    if (!candidate || excludeSeries.has(candidate.id)) continue;
+    const title = String(candidate.title || '')
+      .trim()
+      .toLowerCase();
+    // Same title = same listing family (other dates belong in the series picker).
+    if (currentTitle && title === currentTitle) continue;
+    if (title && seenTitles.has(title)) continue;
+    if (title) seenTitles.add(title);
+    out.push(candidate);
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 async function eventsFromPublishedRows(sb, rows, knownOrganiser, options = {}) {
@@ -982,9 +1007,10 @@ async function buildEventSoftLanding(sb, row, organiser) {
   }
 
   const relatedRows = row.organiser_id
-    ? await fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 6)
+    ? await fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 24)
     : [];
-  const related = await eventsFromPublishedRows(sb, relatedRows, organiser);
+  const relatedFiltered = filterRelatedRowsForDetail(row, relatedRows, [row.id], 6);
+  const related = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
   const publicRelated = related.filter(
     (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
   );
@@ -1066,9 +1092,15 @@ async function handle(req, res) {
         sb,
         organiserId,
         excludeId ? [excludeId] : [],
+        Math.max(limit * 3, 24)
+      );
+      const relatedFiltered = filterRelatedRowsForDetail(
+        { id: excludeId || null, title: '' },
+        rows,
+        excludeId ? [excludeId] : [],
         limit
       );
-      const events = await eventsFromPublishedRows(sb, rows, organiser);
+      const events = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
       return res.status(200).json({
         configured: true,
         provider: 'supabase',
@@ -1135,16 +1167,23 @@ async function handle(req, res) {
             }
           })()
         : Promise.resolve(null);
-      const [{ data: ticketsRaw }, seriesResult, relatedRows, organiserRanking] = await Promise.all([
+      const [{ data: ticketsRaw }, seriesResult, organiserRanking] = await Promise.all([
         sb.from('tickets').select('*').eq('event_id', eventId),
         fetchEventSeriesDates(sb, row, organiser),
-        row.organiser_id
-          ? fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 6)
-          : Promise.resolve([]),
         organiserRankingPromise,
       ]);
       const seriesDates = seriesResult.seriesDates || [];
       const seriesSiblingRows = seriesResult.siblingRows || [];
+      const seriesIds = new Set(
+        [row.id]
+          .concat(seriesDates.map((d) => d.id))
+          .concat(seriesSiblingRows.map((r) => r.id))
+          .filter(Boolean)
+      );
+      const relatedRows = row.organiser_id
+        ? await fetchRelatedPublishedRows(sb, row.organiser_id, [...seriesIds], 24)
+        : [];
+      const relatedFiltered = filterRelatedRowsForDetail(row, relatedRows, seriesIds, 6);
       const ticketsList = ticketsRaw || [];
       const regCounts = await fetchRegistrationCountsByTicket(sb, ticketsList);
       const tickets = ticketsList.map((t) => ({
@@ -1156,8 +1195,6 @@ async function handle(req, res) {
         seriesSiblingRows
       );
       event.isSeries = seriesDates.length > 1;
-      const seriesIds = new Set(seriesDates.map((d) => d.id));
-      const relatedFiltered = (relatedRows || []).filter((r) => !seriesIds.has(r.id));
       const related = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
       const publicRelated = related.filter(
         (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)

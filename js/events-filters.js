@@ -1225,49 +1225,18 @@
         return Promise.resolve();
       }
 
-      var urlTypeTab = getUrlTypeTab();
       var raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
       if (!raw) {
         return Promise.resolve();
       }
       var prefs = JSON.parse(raw);
-      if (searchInput && prefs.search) searchInput.value = prefs.search;
-      if (postcodeInput && prefs.postcode) postcodeInput.value = prefs.postcode;
-      if (checkFreeOnly) checkFreeOnly.checked = !!prefs.freeOnly;
-      if (checkFiveStarsOnly) checkFiveStarsOnly.checked = !!prefs.fiveStarsOnly;
-      if (checkInPerson && prefs.inPerson === false) checkInPerson.checked = false;
-      if (checkOnline && prefs.online === false) checkOnline.checked = false;
-      syncLocationFieldForFormat();
-      if (priceMinInput && prefs.priceMin) priceMinInput.value = prefs.priceMin;
-      if (priceMaxInput && prefs.priceMax) priceMaxInput.value = prefs.priceMax;
+      /*
+       * Only restore sort — restoring location / dates / price / near-me made
+       * returning to /events/ feel "stuck" until Clear filters. URL params and
+       * regional landings still apply full filter state above.
+       */
       if (sortSelect && prefs.sort) sortSelect.value = prefs.sort;
-      if (toggleNearMe) toggleNearMe.checked = !!prefs.nearMe;
-      if (toggleNearMeMobile) toggleNearMeMobile.checked = !!prefs.nearMe;
-      var restoredRadius = prefs.locationRadius || prefs.nearRadius;
-      if (locationRadius && restoredRadius) locationRadius.value = restoredRadius;
-      if (nearRadius && restoredRadius) nearRadius.value = restoredRadius;
-      if (nearRadiusMobile && restoredRadius) nearRadiusMobile.value = restoredRadius;
-      if (!urlTypeTab) {
-        if (Array.isArray(prefs.typeTabs)) {
-          activeTypeTabs = prefs.typeTabs.map(normalizeTypeTabSlug).filter(function (slug) {
-            return slug && slug !== 'all';
-          });
-          window.hubBrowseActiveTypeTabs = activeTypeTabs.slice();
-          syncTypeChipUi();
-        } else if (prefs.typeTab) {
-          setActiveTypeTab(normalizeTypeTabSlug(prefs.typeTab));
-        }
-      }
-      restoreDateFilterPrefs(prefs);
-      syncNearRadiusUi();
-      if (isNearMeActive()) {
-        return resolveNearMeCoords().then(function () {
-          syncNearRadiusUi();
-        });
-      }
-      if (postcodeInput && prefs.postcode) {
-        return resolveRestoredLocationFilter(prefs.postcode);
-      }
+      return Promise.resolve();
     } catch (e) {
       /* ignore */
     }

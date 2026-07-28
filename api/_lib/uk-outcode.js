@@ -223,6 +223,41 @@ function deriveLocationFields(payload) {
   return { location, postcode, city };
 }
 
+/**
+ * Resolve a normalised networking region slug for Index rollups.
+ * Prefer outcode → sector mapping (specific London areas before bare london),
+ * then city / free-text aliases.
+ */
+function resolveRegionSlug(input) {
+  const raw =
+    input && typeof input === 'object'
+      ? input
+      : { location: input };
+  const hint = String(raw.regionSlug || raw.region_slug || raw.region || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-');
+  if (hint && (REGION_SECTORS[hint] || CITY_ALIASES[hint.replace(/-/g, ' ')] || hint === 'london')) {
+    if (REGION_SECTORS[hint] || hint === 'london') return hint;
+    return CITY_ALIASES[hint.replace(/-/g, ' ')] || hint;
+  }
+
+  const outcode = parseOutcode(
+    raw.outcode || raw.postcode || raw.location || raw.locationText || ''
+  );
+  if (outcode) {
+    const fromOutcode = findRegionForSector(sectorOf(outcode));
+    if (fromOutcode) return fromOutcode;
+  }
+
+  return (
+    cityRegionFromInput(raw.city) ||
+    cityRegionFromInput(raw.location) ||
+    cityRegionFromInput(raw.locationText) ||
+    null
+  );
+}
+
 /** City name + postcode prefix for text fallbacks when outcode column is empty. */
 function regionLocationTextFilters(regionKey) {
   const region = String(regionKey || '').trim().toLowerCase();
@@ -288,6 +323,7 @@ module.exports = {
   parseFullUkPostcode,
   parseCityFromLocationLabel,
   deriveLocationFields,
+  resolveRegionSlug,
   regionLocationTextFilters,
   outcodeListForLocation,
   haversineMiles,

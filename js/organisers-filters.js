@@ -136,6 +136,26 @@
     var filtered = window.hubGetFilteredOrganisers(all);
     if (resultsCount) resultsCount.textContent = String(filtered.length);
     if (window.hubRefreshOrganiserListings) window.hubRefreshOrganiserListings();
+    logOrganiserBrowseSearch(filtered.length);
+  }
+
+  function logOrganiserBrowseSearch(resultCount) {
+    if (!window.HubBrowseAnalytics || typeof window.HubBrowseAnalytics.logSearch !== 'function') return;
+    if (!hasActiveOrganiserFilters() && !(window.hubRegionalLanding && window.hubRegionalLanding.location)) {
+      return;
+    }
+    var regional = window.hubRegionalLanding || null;
+    window.HubBrowseAnalytics.logSearch({
+      source: 'organisers_browse',
+      q: (searchInput && searchInput.value) || '',
+      location: (regional && (regional.location || regional.name)) || '',
+      regionSlug: (regional && regional.slug) || '',
+      tab: getActiveTab(),
+      hasListings: !!(hasListings && hasListings.checked),
+      guestVisits: !!(guestVisits && guestVisits.checked),
+      sort: (sortSelect && sortSelect.value) || '',
+      resultCount: Number(resultCount) || 0,
+    });
   }
 
   function resetFilters() {
