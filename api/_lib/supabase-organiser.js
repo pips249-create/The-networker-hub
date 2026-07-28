@@ -133,7 +133,12 @@ async function listGroupsForAccount(session, resolvedAccess) {
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data || [])
-    .filter((row) => groupVisibleInOrganiserWorkspace(session, row))
+    .filter((row) => {
+      if (!row || row.ownership_claim_status === 'disputed') return false;
+      // Team-scoped / account pages are already authorised via resolveOrganiserAccess.
+      if (access.useTeamWorkspace || access.isOwner) return true;
+      return groupVisibleInOrganiserWorkspace(session, row);
+    })
     .map(rowToGroup);
 }
 

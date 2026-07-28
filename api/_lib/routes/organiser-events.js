@@ -95,6 +95,7 @@ module.exports = async function handler(req, res) {
     deleteEventForSession,
     duplicateEventForSession,
     getEventById,
+    republishEvent,
     resolveSeriesGroupId,
     isPlatformAdmin,
     airtableSetupHint,
@@ -335,6 +336,42 @@ module.exports = async function handler(req, res) {
       } catch (e) {
         return json(res, e.status || 500, {
           error: e.code || 'event_unpublish_failed',
+          message: e.message,
+        });
+      }
+    }
+
+    if (String(body.action || '').trim() === 'republish') {
+      const eventId = String(body.id || body.eventId || '').trim();
+      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      try {
+        const { allowed } = await ownedEventIds();
+        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
+          return json(res, 403, { error: 'event_not_owned' });
+        }
+        const updated = await republishEvent(eventId);
+        try {
+          const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+          const { logFromSession } = require('../entity-activity-log');
+          const access = await resolveOrganiserAccess(auth.session);
+          await logFromSession(auth.session, access, {
+            entity_type: 'event',
+            entity_id: eventId,
+            organiser_id: updated?.groupId || updated?.organiserId || null,
+            action: 'event_republished',
+            summary: 'Republished event' + (updated?.title ? ': ' + String(updated.title).slice(0, 80) : ''),
+          });
+        } catch {
+          /* ignore */
+        }
+        return json(res, 200, {
+          ok: true,
+          event: updated,
+          message: 'Event republished — it is live on Browse events again.',
+        });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          error: e.code || 'event_republish_failed',
           message: e.message,
         });
       }

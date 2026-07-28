@@ -76,32 +76,72 @@ async function loadScopedGroupIdsForMember(sb, memberId) {
   return scopes.get(memberId) ?? null;
 }
 
+/**
+ * Accept pages already on this account, or workspace pages the owner can see
+ * that are unlinked / still pending claim — then link them to the account so
+ * scoped team access can resolve them later.
+ */
 async function validateAccountGroupIds(sb, accountId, groupIds) {
   const ids = [...new Set((groupIds || []).filter(Boolean))];
   if (!ids.length) return [];
-  const { data, error } = await sb
-    .from('organisers')
-    .select('id')
-    .eq('organiser_account_id', accountId)
-    .in('id', ids);
-  if (error) throw new Error(error.message);
-  const valid = new Set((data || []).map((row) => row.id));
-  if (ids.some((id) => !valid.has(id))) {
+  if (!accountId) {
     const e = new Error('One or more groups are not on this account');
     e.status = 400;
     throw e;
   }
+
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id, organiser_account_id, ownership_claim_status')
+    .in('id', ids);
+  if (error) throw new Error(error.message);
+
+  const byId = new Map((data || []).map((row) => [row.id, row]));
+  const missing = ids.filter((id) => !byId.has(id));
+  if (missing.length) {
+    const e = new Error('One or more groups are not on this account');
+    e.status = 400;
+    throw e;
+  }
+
+  const toLink = [];
+  for (const id of ids) {
+    const row = byId.get(id);
+    const linked = row.organiser_account_id;
+    if (linked && linked !== accountId) {
+      const e = new Error('One or more groups are not on this account');
+      e.status = 400;
+      throw e;
+    }
+    if (row.ownership_claim_status === 'disputed') {
+      const e = new Error('One or more groups are not on this account');
+      e.status = 400;
+      throw e;
+    }
+    if (!linked) toLink.push(id);
+  }
+
+  if (toLink.length) {
+    const { error: linkErr } = await sb
+      .from('organisers')
+      .update({ organiser_account_id: accountId })
+      .in('id', toLink)
+      .is('organiser_account_id', null);
+    if (linkErr) throw new Error(linkErr.message);
+  }
+
   return ids;
 }
 
 async function setTeamMemberGroupAccess(sb, memberId, accountId, { allGroups, groupIds }) {
-  const { error: delErr } = await sb
-    .from('organiser_team_member_groups')
-    .delete()
-    .eq('team_member_id', memberId);
-  if (delErr) throw new Error(delErr.message);
-
-  if (allGroups) return;
+  if (allGroups) {
+    const { error: delErr } = await sb
+      .from('organiser_team_member_groups')
+      .delete()
+      .eq('team_member_id', memberId);
+    if (delErr) throw new Error(delErr.message);
+    return;
+  }
 
   const ids = await validateAccountGroupIds(sb, accountId, groupIds);
   if (!ids.length) {
@@ -109,6 +149,12 @@ async function setTeamMemberGroupAccess(sb, memberId, accountId, { allGroups, gr
     e.status = 400;
     throw e;
   }
+
+  const { error: delErr } = await sb
+    .from('organiser_team_member_groups')
+    .delete()
+    .eq('team_member_id', memberId);
+  if (delErr) throw new Error(delErr.message);
 
   const { error: insErr } = await sb.from('organiser_team_member_groups').insert(
     ids.map((organiserId) => ({
@@ -435,10 +481,15 @@ async function resolveOrganiserAccess(session) {
     (byAccount || []).forEach((r) => groupIds.add(r.id));
   }
 
+  let editorScopedGroupIds = null;
   if (isEditor && useTeamWorkspace && activeMembership) {
-    const scopedGroupIds = await loadScopedGroupIdsForMember(sb, activeMembership.id);
-    if (scopedGroupIds !== null) {
-      const allowed = new Set(scopedGroupIds);
+    editorScopedGroupIds = await loadScopedGroupIdsForMember(sb, activeMembership.id);
+    if (editorScopedGroupIds !== null) {
+      // Ensure assigned pages are present even if account linkage was delayed.
+      editorScopedGroupIds.forEach((id) => {
+        if (id) groupIds.add(id);
+      });
+      const allowed = new Set(editorScopedGroupIds);
       [...groupIds].forEach((id) => {
         if (!allowed.has(id)) groupIds.delete(id);
       });
@@ -446,6 +497,14 @@ async function resolveOrganiserAccess(session) {
   }
 
   await appendSessionOwnedOrganiserIds(sb, session, groupIds);
+
+  // Email-matched profiles must not bypass an owner's explicit page assignment.
+  if (editorScopedGroupIds !== null) {
+    const allowed = new Set(editorScopedGroupIds);
+    [...groupIds].forEach((id) => {
+      if (!allowed.has(id)) groupIds.delete(id);
+    });
+  }
 
   return {
     accountId: effectiveAccountId,
@@ -565,6 +624,8 @@ async function inviteTeamMember(session, { email, role, allGroups, groupIds }) {
   }
 
   const memberRole = role === 'owner' ? 'editor' : 'editor';
+  const grantAllGroups = allGroups !== false && !(Array.isArray(groupIds) && groupIds.length);
+  const resolvedGroupIds = grantAllGroups ? [] : [...new Set((groupIds || []).filter(Boolean))];
 
   const { data: existing } = await sb
     .from('organiser_team_members')
@@ -577,10 +638,42 @@ async function inviteTeamMember(session, { email, role, allGroups, groupIds }) {
     e.status = 400;
     throw e;
   }
+
+  // Validate / link pages before creating or updating the invite so a failed
+  // scope assignment cannot leave a pending member with implicit All access.
+  if (!grantAllGroups) {
+    await validateAccountGroupIds(sb, access.accountId, resolvedGroupIds);
+    if (!resolvedGroupIds.length) {
+      const e = new Error('Select at least one group, or choose All groups');
+      e.status = 400;
+      throw e;
+    }
+  }
+
   if (existing && existing.status === 'pending') {
-    const e = new Error('An invite is already pending for this email');
-    e.status = 400;
-    throw e;
+    await setTeamMemberGroupAccess(sb, existing.id, access.accountId, {
+      allGroups: grantAllGroups,
+      groupIds: resolvedGroupIds,
+    });
+    const { data: refreshed, error: refreshErr } = await sb
+      .from('organiser_team_members')
+      .update({ invited_at: new Date().toISOString() })
+      .eq('id', existing.id)
+      .select('*')
+      .single();
+    if (refreshErr) throw new Error(refreshErr.message);
+    const member = rowToTeamMember(
+      refreshed,
+      grantAllGroups ? null : await loadScopedGroupIdsForMember(sb, refreshed.id)
+    );
+    let emailSent = false;
+    try {
+      await sendTeamInviteEmail(session, member, access);
+      emailSent = true;
+    } catch (inviteErr) {
+      console.error('[organiser-team-invite]', inviteErr.message || inviteErr);
+    }
+    return { member, access, emailSent };
   }
 
   const { data, error } = await sb
@@ -597,11 +690,15 @@ async function inviteTeamMember(session, { email, role, allGroups, groupIds }) {
   if (error) throw new Error(error.message);
 
   const memberRow = data;
-  const grantAllGroups = allGroups !== false && !(Array.isArray(groupIds) && groupIds.length);
-  await setTeamMemberGroupAccess(sb, memberRow.id, access.accountId, {
-    allGroups: grantAllGroups,
-    groupIds: grantAllGroups ? [] : groupIds,
-  });
+  try {
+    await setTeamMemberGroupAccess(sb, memberRow.id, access.accountId, {
+      allGroups: grantAllGroups,
+      groupIds: resolvedGroupIds,
+    });
+  } catch (scopeErr) {
+    await sb.from('organiser_team_members').delete().eq('id', memberRow.id);
+    throw scopeErr;
+  }
 
   const member = rowToTeamMember(
     memberRow,

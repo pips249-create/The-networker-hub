@@ -116,6 +116,8 @@ async function assertOrganiserEmailVerified(session) {
 function isPublishIntent(body) {
   if (!body || typeof body !== 'object') return false;
   if (body.publish === true || body.publish === 'true') return true;
+  const action = String(body.action || '').trim().toLowerCase();
+  if (action === 'republish' || action === 'publish') return true;
   const listing = String(body.listingStatus || body.status || '').toLowerCase();
   return listing === 'published' || listing === 'publish' || listing === 'live';
 }

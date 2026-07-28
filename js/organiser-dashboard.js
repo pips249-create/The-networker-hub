@@ -3002,7 +3002,9 @@
     const statusKey = String(ev.statusKey || ev.status || ev.listingStatus || '').toLowerCase();
     if (statusKey === 'unpublished') {
       return (
-        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Already unpublished</span></span></button>'
+        '<button type="button" class="org-action-item" data-republish-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">↻</span><span class="org-action-text"><strong>Republish</strong><span>List on the hub again</span></span></button>'
       );
     }
     if (statusKey === 'draft' || statusKey === 'cancelled' || statusKey === 'archived') {
@@ -5965,6 +5967,30 @@
     renderAll();
   }
 
+  async function confirmRepublishEvent(eventId) {
+    if (!eventId) return;
+    const ev = (state.events || []).find((e) => e.id === eventId) || { id: eventId };
+    const label = ev.title || 'this event';
+    const ok = window.confirm(
+      'Republish "' +
+        label +
+        '"?\n\n' +
+        'This event will appear on Browse events again and ticket sales will resume if tiers are still on sale.'
+    );
+    if (!ok) return;
+
+    const res = await api('/api/organiser/events', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'republish', id: eventId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not republish this event.');
+      return;
+    }
+    await loadBootstrap();
+    renderAll();
+  }
+
   function closeAllActionMenus() {
     document.querySelectorAll('.org-action-menu.is-open').forEach((m) => {
       m.classList.remove('is-open', 'is-floating');
@@ -6064,6 +6090,15 @@
       e.stopPropagation();
       closeAllActionMenus();
       confirmUnpublishEvent(unpublishEventBtn.getAttribute('data-unpublish-event'));
+      return true;
+    }
+
+    const republishEventBtn = e.target.closest('[data-republish-event]');
+    if (republishEventBtn && !republishEventBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmRepublishEvent(republishEventBtn.getAttribute('data-republish-event'));
       return true;
     }
 

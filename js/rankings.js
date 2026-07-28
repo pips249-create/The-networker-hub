@@ -162,7 +162,7 @@
     var avatar = org.photoUrl
       ? '<img class="rankings-avatar" src="' +
         esc(org.photoUrl) +
-        '" alt="" width="50" height="50" loading="lazy">'
+        '" alt="" width="36" height="36" loading="lazy">'
       : '<span class="rankings-avatar rankings-avatar--placeholder" aria-hidden="true">' +
         esc(initials(org.name)) +
         '</span>';
@@ -174,26 +174,17 @@
     var metrics;
     if (dashboard) {
       metrics =
-        '<dl class="org-leaderboard-metrics">' +
-        '<div class="org-leaderboard-metric">' +
-        '<dt>Average rating</dt>' +
-        '<dd>★ ' +
+        '<p class="org-leaderboard-metrics-line">' +
+        '<span>★ ' +
         esc(rating) +
-        '</dd>' +
-        '</div>' +
-        '<div class="org-leaderboard-metric">' +
-        '<dt>Reviews</dt>' +
-        '<dd>' +
+        '</span>' +
+        '<span>' +
         esc(reviews) +
-        '</dd>' +
-        '</div>' +
-        '<div class="org-leaderboard-metric">' +
-        '<dt>Review rate</dt>' +
-        '<dd>' +
+        ' reviews</span>' +
+        '<span>' +
         esc(rateLabel || '—') +
-        '</dd>' +
-        '</div>' +
-        '</dl>';
+        ' review rate</span>' +
+        '</p>';
     } else {
       metrics =
         '<p class="rankings-org-stats">' +

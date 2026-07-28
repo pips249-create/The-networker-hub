@@ -419,7 +419,8 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
             average_rating: Number(row.rating).toFixed(1),
             review_count: String(row.reviewCount),
             profile_url: profileUrl,
-            dashboard_url: `${siteUrl}/organiser/`,
+            dashboard_url: `${siteUrl}/organiser/#social`,
+            rankings_url: `${siteUrl}/rankings`,
             social_share_text: socialShareText,
           },
         });

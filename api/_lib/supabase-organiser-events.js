@@ -2110,6 +2110,81 @@ async function createTicketsForEvents({
   return { created: out.length, tickets: out, publishedEvents };
 }
 
+/**
+ * Restore an organiser-unpublished (or hub-unpublished) event to the public directory.
+ * Re-runs the same publish gates as a first publish: date, tickets, and paid-ticket setup.
+ */
+async function republishEvent(eventId) {
+  const sb = getSupabaseAdmin();
+  const id = String(eventId || '').trim();
+  const { data: existing, error } = await sb
+    .from('events')
+    .select(
+      'id, title, status, starts_at, ticket_sales_enabled, published_at, approval_status, organiser_id, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at'
+    )
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!existing) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    e.code = 'event_not_found';
+    throw e;
+  }
+  if (String(existing.status || '').toLowerCase() !== 'unpublished') {
+    const e = new Error('Only unpublished events can be republished.');
+    e.status = 400;
+    e.code = 'not_unpublished';
+    throw e;
+  }
+
+  assertEventHasDateForPublish(existing);
+  await assertEventsHaveTicketsForPublish(sb, [id]);
+
+  const { data: tickets, error: ticketErr } = await sb.from('tickets').select('*').eq('event_id', id);
+  if (ticketErr) throw new Error(ticketErr.message);
+
+  const hasPaid = (tickets || []).some((t) => {
+    const price = Number(String(t.price || '').replace(/[£,\s]/g, ''));
+    return Number.isFinite(price) && price > 0;
+  });
+  if (hasPaid) {
+    const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
+    const { assertRefundPolicyForPaidCheckout } = require('./event-refund-policy');
+    await assertOrganiserReadyForPaidPublish(sb, [existing.organiser_id], tickets);
+    try {
+      assertRefundPolicyForPaidCheckout(existing);
+    } catch (refundErr) {
+      const e = new Error(refundErr.message);
+      e.status = refundErr.status || 400;
+      e.code = refundErr.code || 'refund_policy_required';
+      throw e;
+    }
+  }
+
+  const ticketSalesEnabled = (tickets || []).length
+    ? eventHasTicketsOnSale(tickets, undefined, existing.starts_at)
+    : false;
+
+  const patch = {
+    status: 'published',
+    approval_status: 'Approved',
+    ticket_sales_enabled: ticketSalesEnabled,
+  };
+  if (!existing.published_at) {
+    patch.published_at = new Date().toISOString();
+  }
+
+  const { data, error: updateErr } = await sb
+    .from('events')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (updateErr) throw new Error(updateErr.message);
+  return rowToEvent(data);
+}
+
 async function enableTicketSalesForEvent(session, eventId, groupIds) {
   const sb = getSupabaseAdmin();
   const id = String(eventId || '').trim();
@@ -2717,6 +2792,7 @@ module.exports = {
   syncSeriesOccurrencesForEvent,
   deleteEventForSession,
   enableTicketSalesForEvent,
+  republishEvent,
   createTicket,
   createTicketsForEvents,
   filterOwnedEventIds,

@@ -12,7 +12,7 @@ function getCanonicalOrganiserRankingBadgeHtml() {
 
 function isStaleOrganiserRankingBadgeTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
-  if (!body.includes('organiser-ranking-badge-v3')) return true;
+  if (!body.includes('organiser-ranking-badge-v4')) return true;
   if (body.startsWith('<p>Hi {{organiser_name}}')) return true;
   return false;
 }
