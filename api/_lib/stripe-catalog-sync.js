@@ -119,11 +119,23 @@ async function findPaymentLinkByCatalogKey(stripe, catalogKey) {
   );
 }
 
+async function paymentLinkPriceId(stripe, paymentLink) {
+  if (!paymentLink || !paymentLink.id) return '';
+  // list() responses omit line items — retrieve with expand before comparing prices
+  const full =
+    paymentLink.line_items && paymentLink.line_items.data
+      ? paymentLink
+      : await stripe.paymentLinks.retrieve(paymentLink.id, {
+          expand: ['line_items.data.price'],
+        });
+  const linePrice = full.line_items?.data?.[0]?.price;
+  return typeof linePrice === 'string' ? linePrice : String(linePrice?.id || '');
+}
+
 async function ensurePaymentLink(stripe, item, priceId) {
   const existing = await findPaymentLinkByCatalogKey(stripe, item.key);
   if (existing) {
-    const linePrice = existing.line_items?.data?.[0]?.price;
-    const linePriceId = typeof linePrice === 'string' ? linePrice : linePrice?.id;
+    const linePriceId = await paymentLinkPriceId(stripe, existing);
     if (linePriceId === priceId) {
       return { paymentLink: existing, created: false };
     }
