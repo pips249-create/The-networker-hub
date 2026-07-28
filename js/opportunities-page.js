@@ -265,10 +265,11 @@
     { id: 'all', label: 'All' },
     { id: 'franchise', label: 'Franchise' },
     { id: 'side-hustle', label: 'Side hustle' },
-    { id: 'partnership', label: 'Partnership' },
-    { id: 'networking', label: 'Networking' },
-    { id: 'distributorship', label: 'Distributorship' },
+    { id: 'partnership', label: 'Partnership / Affiliate' },
+    { id: 'networking', label: 'Networking group / Ambassador' },
+    { id: 'network-marketing', label: 'Network marketing' },
     { id: 'business-opportunity', label: 'Business opportunity' },
+    { id: 'distributorship', label: 'Distributorship / Reseller' },
   ];
 
   var COMMITMENTS = [
@@ -297,12 +298,14 @@
     'side-hustle',
     'partnership',
     'networking',
-    'distributorship',
+    'network-marketing',
     'business-opportunity',
+    'distributorship',
   ];
 
   var allListings = [];
   var activeTypes = [];
+  var hideNetworkMarketing = true;
   var activeInvestTier = 'all';
   var activeCategory = '';
   var activeCommitments = [];
@@ -445,7 +448,7 @@
     if (!spotlightFeaturedOrder) {
       var featured = dedupeListingsById(
         allListings.filter(function (item) {
-          return item.featured;
+          return item.featured && !isNetworkMarketingListing(item);
         })
       ).slice(0, SPOTLIGHT_MAX);
       spotlightFeaturedOrder = shuffleList(featured);
@@ -811,6 +814,16 @@
     return false;
   }
 
+  function isNetworkMarketingListing(item) {
+    if (!item) return false;
+    if (String(item.type || '') === 'network-marketing') return true;
+    var tags = (item.tags || []).concat(item.filterTags || []);
+    for (var i = 0; i < tags.length; i++) {
+      if (String(tags[i] || '') === 'network-marketing') return true;
+    }
+    return false;
+  }
+
   function matchesTypes(item) {
     if (!activeTypes.length) return true;
     for (var i = 0; i < activeTypes.length; i++) {
@@ -825,6 +838,13 @@
 
   function matchesFilter(item) {
     if (activeCitySlug && !matchesCityRegion(item)) return false;
+    if (
+      hideNetworkMarketing &&
+      isNetworkMarketingListing(item) &&
+      activeTypes.indexOf('network-marketing') === -1
+    ) {
+      return false;
+    }
     if (!matchesTypes(item)) return false;
     if (activeCategory && item.category !== activeCategory) return false;
     if (!matchesInvestTier(item)) return false;
@@ -1570,6 +1590,11 @@
     });
   }
 
+  function syncHideNetworkMarketingUi() {
+    var input = document.getElementById('opp-hide-network-marketing');
+    if (input) input.checked = hideNetworkMarketing;
+  }
+
   function currentFilterCriteria() {
     return {
       type: activeTypes.length === 1 ? activeTypes[0] : activeTypes.length ? activeTypes.join(',') : 'all',
@@ -1581,6 +1606,7 @@
       sort: sortBy || 'recommended',
       minInvest: minInvest != null ? minInvest : '',
       maxInvest: maxInvest != null ? maxInvest : '',
+      hideNm: hideNetworkMarketing ? '1' : '0',
     };
   }
 
@@ -1597,6 +1623,9 @@
     activeLocationTag = params.get('location') || '';
     var commitment = params.get('commitment') || '';
     activeCommitments = commitment ? commitment.split(',').filter(Boolean) : [];
+    var hideNm = params.get('hideNm');
+    hideNetworkMarketing = hideNm !== '0';
+    syncHideNetworkMarketingUi();
 
     if (els.search && searchQ) els.search.value = searchQ;
     if (els.sort) els.sort.value = sortBy;
@@ -1647,6 +1676,7 @@
     if (c.sort && c.sort !== 'recommended') params.set('sort', c.sort);
     if (c.minInvest !== '' && c.minInvest != null) params.set('min', String(c.minInvest));
     if (c.maxInvest !== '' && c.maxInvest != null) params.set('max', String(c.maxInvest));
+    if (!hideNetworkMarketing) params.set('hideNm', '0');
     if (activeCitySlug) params.set('city', activeCitySlug);
     if (viewMode && viewMode !== DEFAULT_VIEW_MODE) params.set('view', viewMode);
 
@@ -1719,6 +1749,7 @@
     }
 
     activeTypes = [];
+    hideNetworkMarketing = true;
     activeInvestTier = 'all';
     activeCategory = '';
     activeCommitments = [];
@@ -1738,6 +1769,7 @@
     if (els.filterCategory) els.filterCategory.value = '';
 
     syncTypeChipUi();
+    syncHideNetworkMarketingUi();
     syncCategorySelect();
     syncInvestPills();
     syncCommitmentChecks();
@@ -1939,6 +1971,14 @@
       });
     });
 
+    var hideNmInput = document.getElementById('opp-hide-network-marketing');
+    if (hideNmInput) {
+      hideNmInput.addEventListener('change', function () {
+        hideNetworkMarketing = !!hideNmInput.checked;
+        applyFilters();
+      });
+    }
+
     if (els.filterCategory) {
       els.filterCategory.addEventListener('change', applyFilters);
     }
@@ -2003,6 +2043,7 @@
     if (activeTypes.length) return true;
     if (activeInvestTier && activeInvestTier !== 'all') return true;
     if (activeCommitments.length) return true;
+    if (!hideNetworkMarketing) return true;
     if (minInvest != null || maxInvest != null) return true;
     if (activeLocationTag) return true;
     return false;

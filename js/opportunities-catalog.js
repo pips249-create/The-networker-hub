@@ -5,11 +5,32 @@
   var TYPE_LABELS = {
     franchise: 'Franchise',
     'side-hustle': 'Side hustle',
-    partnership: 'Partnership',
-    networking: 'Networking',
-    distributorship: 'Distributorship',
+    partnership: 'Partnership / Affiliate',
+    networking: 'Networking group / Ambassador',
+    'network-marketing': 'Network marketing',
     'business-opportunity': 'Business opportunity',
+    distributorship: 'Distributorship / Reseller',
   };
+
+  /** Canonical category list — keep in sync with filter + add-listing selects. */
+  var CATEGORY_OPTIONS = [
+    { id: 'cleaning', label: 'Cleaning' },
+    { id: 'food', label: 'Food & Drink' },
+    { id: 'tech', label: 'Tech & Digital' },
+    { id: 'health', label: 'Health & Fitness' },
+    { id: 'beauty', label: 'Beauty & Wellness' },
+    { id: 'property', label: 'Property' },
+    { id: 'education', label: 'Education & Coaching' },
+    { id: 'finance', label: 'Finance & Admin' },
+    { id: 'pets', label: 'Pets & Animals' },
+    { id: 'mlm', label: 'Network marketing' },
+    { id: 'general', label: 'Other' },
+  ];
+
+  var CATEGORY_LABELS = CATEGORY_OPTIONS.reduce(function (acc, opt) {
+    acc[opt.id] = opt.label;
+    return acc;
+  }, {});
 
   var MLM_ASSET_SLUGS = {
     'VitaBlend UK': 'vitablend-uk',
@@ -62,6 +83,7 @@
     'side-hustle': { emoji: '💡', gradient: 'linear-gradient(135deg,#e6f7f5,#b2e8e2)' },
     partnership: { emoji: '🤝', gradient: 'linear-gradient(135deg,#eff6ff,#bfdbfe)' },
     networking: { emoji: '🔗', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
+    'network-marketing': { emoji: '🌐', gradient: 'linear-gradient(135deg,#eff6ff,#c7d2fe)' },
     distributorship: { emoji: '📦', gradient: 'linear-gradient(135deg,#fff7ed,#fed7aa)' },
     'business-opportunity': { emoji: '✦', gradient: 'linear-gradient(135deg,#ecfdf5,#a7f3d0)' },
   };
@@ -532,6 +554,7 @@
       'side-hustle': 'opp-type-sidehustle',
       partnership: 'opp-type-partnership',
       networking: 'opp-type-networking',
+      'network-marketing': 'opp-type-network-marketing',
       distributorship: 'opp-type-distributorship',
       'business-opportunity': 'opp-type-business',
     };
@@ -540,6 +563,8 @@
 
   window.HubOpportunitiesCatalog = {
     TYPE_LABELS: TYPE_LABELS,
+    CATEGORY_OPTIONS: CATEGORY_OPTIONS,
+    CATEGORY_LABELS: CATEGORY_LABELS,
     SEED_LISTINGS: SEED_LISTINGS,
     buildSearchText: buildSearchText,
     normalizeListing: normalizeListing,

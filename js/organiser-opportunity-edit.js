@@ -26,6 +26,7 @@
     'side-hustle',
     'partnership',
     'networking',
+    'network-marketing',
     'business-opportunity',
     'distributorship',
   ];
@@ -105,7 +106,7 @@
   function hasHighRiskOpportunityType() {
     const types = getSelectedTypes();
     return types.some((type) =>
-      ['franchise', 'distributorship', 'partnership', 'business-opportunity'].includes(type)
+      ['franchise', 'distributorship', 'partnership', 'business-opportunity', 'network-marketing'].includes(type)
     );
   }
 

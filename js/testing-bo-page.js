@@ -11,10 +11,10 @@
     { id: 'all', label: 'All' },
     { id: 'franchise', label: 'Franchise' },
     { id: 'side-hustle', label: 'Side hustle' },
-    { id: 'partnership', label: 'Partnership' },
-    { id: 'networking', label: 'Networking' },
-    { id: 'distributorship', label: 'Distributorship' },
+    { id: 'partnership', label: 'Partnership / Affiliate' },
+    { id: 'networking', label: 'Networking group / Ambassador' },
     { id: 'business-opportunity', label: 'Business opportunity' },
+    { id: 'distributorship', label: 'Distributorship / Reseller' },
   ];
 
   var INVEST_LABELS = {

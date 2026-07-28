@@ -342,10 +342,10 @@ async function buildEventMeta(slug, origin) {
 const OPPORTUNITY_TYPE_LABELS = {
   franchise: 'Franchise',
   'side-hustle': 'Side hustle',
-  partnership: 'Partnership',
-  networking: 'Networking',
-  distributorship: 'Distributorship',
+  partnership: 'Partnership / Affiliate',
+  networking: 'Networking group / Ambassador',
   'business-opportunity': 'Business opportunity',
+  distributorship: 'Distributorship / Reseller',
 };
 
 function buildOpportunitySchema(item, origin) {

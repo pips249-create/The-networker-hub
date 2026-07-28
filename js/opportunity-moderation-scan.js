@@ -10,10 +10,10 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   var RED_FLAG_PATTERNS = [
     {
-      id: 'mlm',
-      label: 'MLM or network-marketing style recruitment',
+      id: 'recruitment_primary',
+      label: 'Recruitment-primary network marketing (downline / team-build focus)',
       regex:
-        /mlm|multi[\s-]?level|network marketing|direct sales|downline|upline|team build|independent consultant|ambassador program|be your own boss/i,
+        /\bmlm\b|multi[\s-]?level(?:\s+market(?:ing)?)?|pyramid\s+schem|downline|upline|team[\s-]?build(?:ing)?|build\s+(?:your\s+)?(?:team|downline)|recruit(?:ing|ment)?\s+(?:for\s+)?(?:income|earnings|commission|others|people|distributors)|earn(?:ings)?\s+(?:from|by)\s+recruit|compensation\s+(?:based\s+)?on\s+recruit|get[\s-]?rich\s+quick|be\s+your\s+own\s+boss/i,
     },
     {
       id: 'guaranteed_income',

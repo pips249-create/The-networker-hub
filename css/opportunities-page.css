@@ -806,6 +806,11 @@
   color: #9d174d;
 }
 
+.opportunities-page .opp-type-network-marketing {
+  background: rgba(99, 102, 241, 0.14);
+  color: #3730a3;
+}
+
 .opportunities-page .opp-type-distributorship {
   background: rgba(251, 191, 36, 0.18);
   color: #92400e;

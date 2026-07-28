@@ -14,10 +14,10 @@ function normalizeMeta(meta) {
 
 const RED_FLAG_PATTERNS = [
   {
-    id: 'mlm',
-    label: 'MLM or network-marketing style recruitment',
+    id: 'recruitment_primary',
+    label: 'Recruitment-primary network marketing (downline / team-build focus)',
     regex:
-      /mlm|multi[\s-]?level|network marketing|direct sales|downline|upline|team build|independent consultant|ambassador program|be your own boss/i,
+      /\bmlm\b|multi[\s-]?level(?:\s+market(?:ing)?)?|pyramid\s+schem|downline|upline|team[\s-]?build(?:ing)?|build\s+(?:your\s+)?(?:team|downline)|recruit(?:ing|ment)?\s+(?:for\s+)?(?:income|earnings|commission|others|people|distributors)|earn(?:ings)?\s+(?:from|by)\s+recruit|compensation\s+(?:based\s+)?on\s+recruit|get[\s-]?rich\s+quick|be\s+your\s+own\s+boss/i,
   },
   {
     id: 'guaranteed_income',
@@ -38,6 +38,17 @@ const RED_FLAG_PATTERNS = [
       /guaranteed\s+\d+\s*%|risk[\s-]?free\s+investment|no[\s-]?risk investment|assured return|capital guaranteed/i,
   },
 ];
+
+const NETWORK_MARKETING_TYPE = 'network-marketing';
+
+function isNetworkMarketingType(value) {
+  const types = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object'
+      ? [value.type].concat(Array.isArray(value.types) ? value.types : []).concat(Array.isArray(value.tags) ? value.tags : [])
+      : [value];
+  return types.some((t) => String(t || '').trim().toLowerCase() === NETWORK_MARKETING_TYPE);
+}
 
 const VAGUE_INVESTMENT = /^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negotiable)$/i;
 
@@ -115,6 +126,7 @@ const HIGH_RISK_OPPORTUNITY_TYPES = new Set([
   'distributorship',
   'partnership',
   'business-opportunity',
+  'network-marketing',
 ]);
 
 function opportunityRequiresFcaDisclaimer(opportunity) {
@@ -173,12 +185,14 @@ function scanOpportunityRedFlags(opportunity) {
     rejectionNote:
       'We could not approve this listing because it includes content we do not allow on The Networker Hub:\n\n' +
       bulletLines +
-      '\n\nPlease remove prohibited claims (such as MLM-style recruitment, guaranteed income, or unregulated investment promotions), ensure investment and territory are clearly stated, and resubmit.',
+      '\n\nPlease remove prohibited claims (such as recruitment-primary network marketing, guaranteed income, or unregulated investment promotions), ensure investment and territory are clearly stated, and resubmit.',
   };
 }
 
 module.exports = {
   RED_FLAG_PATTERNS,
+  NETWORK_MARKETING_TYPE,
+  isNetworkMarketingType,
   collectOpportunityText,
   validateStructuredFields,
   opportunityHasFinancialMeta,

@@ -11,7 +11,7 @@ const {
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
-const { scanOpportunityRedFlags, stripEarningsMeta } = require('./opportunity-moderation');
+const { scanOpportunityRedFlags, stripEarningsMeta, isNetworkMarketingType } = require('./opportunity-moderation');
 const { isHubSeedOwnerEmail } = require('./opportunity-hub-seed');
 const { parseOutcode, resolveRegionSlug } = require('./uk-outcode');
 
@@ -35,6 +35,7 @@ const VALID_TYPES = new Set([
   'networking',
   'distributorship',
   'business-opportunity',
+  'network-marketing',
 ]);
 
 function hostInitials(name) {
@@ -76,6 +77,7 @@ function normalizeType(type) {
   if (VALID_TYPES.has(s)) return s;
   if (s === 'sidehustle') return 'side-hustle';
   if (s === 'business') return 'business-opportunity';
+  if (s === 'networkmarketing' || s === 'mlm') return 'network-marketing';
   return 'business-opportunity';
 }
 
@@ -619,11 +621,16 @@ async function activateOpportunityPremium(opportunityId) {
 
   const { data: existing, error: loadErr } = await sb
     .from('business_opportunities')
-    .select('id, featured_until')
+    .select('id, featured_until, type, tags')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw new Error(loadErr.message);
   if (!existing) throw new Error('not_found');
+  if (isNetworkMarketingType(existing)) {
+    const err = new Error('network_marketing_not_spotlight');
+    err.code = 'network_marketing_not_spotlight';
+    throw err;
+  }
 
   const now = new Date();
   let base = now;

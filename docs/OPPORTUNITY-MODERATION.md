@@ -30,10 +30,10 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 1. **Pre-publish review** — All opportunity listings require admin approval before going live (`activateOpportunityListingPayment` sets `Pending Review`; live email on admin approve).
 2. **Structured listing fields** — Investment amount, opportunity type, territory / location — required on submit; automated rejection if missing or vague.
-3. **Automated red flags** — Server-side pattern checks in `api/_lib/opportunity-moderation.js` for MLM, guaranteed income, passive income, crypto, and unregulated investment language.
+3. **Automated red flags** — Server-side pattern checks in `api/_lib/opportunity-moderation.js` for recruitment-primary network marketing, guaranteed income, passive income, crypto, and unregulated investment language.
 4. **Reject + email** — `opportunity_listing_rejected` template with required admin reason (or automated reason); edit and resubmit.
 5. **Enquiry disclaimer** — Keep on browse, detail, and enquiry form (already implemented).
-6. **Organiser terms** — Prohibit pyramid selling and unregulated financial products (already in legal policies).
+6. **Organiser terms** — Prohibit pyramid selling, recruitment-primary network marketing, and unregulated financial products (already in legal policies).
 
 ### Tier 2 — Strengthen (next quarter)
 
@@ -55,7 +55,8 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 | Signal | Action |
 |--------|--------|
 | Guaranteed income / “quit your job in 90 days” | **Reject** |
-| MLM / downline / recruitment-focused | **Reject** |
+| Recruitment-primary network marketing (downline / upline / team-build income) | **Reject** |
+| Product-selling network marketing (typed `network-marketing`, no recruitment pitch) | **Approve** if substantiated; not eligible for Premium Spotlight |
 | Investment opportunity without risk warning | **Reject** or require edit |
 | Legitimate franchise with territory + fee stated | **Approve** if substantiated |
 | Partnership / white-label B2B | **Approve** if clear and not misleading |
@@ -92,6 +93,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-07-28 | Product-selling `network-marketing` type allowed; recruitment-primary auto-reject; not eligible for Premium Spotlight; browse hide filter default on |
 | 2026-07-10 | Earnings attestation required when listers enter financial figures; moderation owner assigned |
 | 2026-07-08 | Pre-publish review enforced; automated red flags; report listing; admin rejection reasons |
 | 2026-07-08 | Initial moderation guide |

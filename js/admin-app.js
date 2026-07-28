@@ -16671,10 +16671,11 @@
   var OPPORTUNITY_TYPES = [
     ['franchise', 'Franchise'],
     ['side-hustle', 'Side hustle'],
-    ['partnership', 'Partnership'],
-    ['networking', 'Networking'],
-    ['distributorship', 'Distributorship'],
+    ['partnership', 'Partnership / Affiliate'],
+    ['networking', 'Networking group / Ambassador'],
+    ['network-marketing', 'Network marketing'],
     ['business-opportunity', 'Business opportunity'],
+    ['distributorship', 'Distributorship / Reseller'],
   ];
 
   function opportunityTypeLabel(type) {

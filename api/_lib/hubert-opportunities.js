@@ -19,6 +19,7 @@ const TYPE_ALIASES = {
   'side-hustle': /\bside[\s-]?hustle|\bextra income\b|\bmoonlight/i,
   distributorship: /\bdistribut/i,
   networking: /\bnetwork(?:ing)? opportunit|\breferral\b/i,
+  'network-marketing': /\bnetwork\s*marketing|\bdirect\s*sales\b|\bmlm\b/i,
   'business-opportunity': /\bbusiness opportunit|\bdeal\b|\binvestment\b/i,
 };
 
@@ -62,11 +63,12 @@ function opportunityHaystack(item) {
 function typeLabel(type) {
   const labels = {
     franchise: 'Franchise',
-    partnership: 'Partnership',
     'side-hustle': 'Side hustle',
-    distributorship: 'Distributorship',
-    networking: 'Networking / referral',
+    partnership: 'Partnership / Affiliate',
+    networking: 'Networking group / Ambassador',
+    'network-marketing': 'Network marketing',
     'business-opportunity': 'Business opportunity',
+    distributorship: 'Distributorship / Reseller',
   };
   return labels[type] || 'Business opportunity';
 }

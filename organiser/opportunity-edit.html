@@ -72,6 +72,7 @@
               <label class="oe-type-option"><input type="checkbox" name="oe-type" value="side-hustle" /> Side hustle</label>
               <label class="oe-type-option"><input type="checkbox" name="oe-type" value="partnership" /> Partnership / Affiliate</label>
               <label class="oe-type-option"><input type="checkbox" name="oe-type" value="networking" /> Networking group / Ambassador</label>
+              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="network-marketing" /> Network marketing (product-selling only)</label>
               <label class="oe-type-option"><input type="checkbox" name="oe-type" value="business-opportunity" /> Business opportunity</label>
               <label class="oe-type-option"><input type="checkbox" name="oe-type" value="distributorship" /> Distributorship / Reseller</label>
             </div>
@@ -89,7 +90,7 @@
               <option value="education">Education &amp; Coaching</option>
               <option value="finance">Finance &amp; Admin</option>
               <option value="pets">Pets &amp; Animals</option>
-              <option value="mlm">MLM &amp; Network Marketing</option>
+              <option value="mlm">Network marketing</option>
               <option value="general">Other</option>
             </select>
           </div>
@@ -180,10 +181,9 @@
             <label for="oe-commitment">Commitment</label>
             <select id="oe-commitment" required>
               <option value="">Select…</option>
-              <option>Full-time</option>
-              <option>Part-time / Flexible</option>
-              <option>Event-based</option>
-              <option>Flexible</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time / Flexible">Part-time / Flexible</option>
+              <option value="Event-based">Event-based</option>
             </select>
           </div>
           <div class="ee-field" id="oe-fca-attest-field">

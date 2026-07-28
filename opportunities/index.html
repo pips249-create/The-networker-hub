@@ -200,11 +200,13 @@
                           <option value="food" data-count-category="food">Food &amp; Drink</option>
                           <option value="tech" data-count-category="tech">Tech &amp; Digital</option>
                           <option value="health" data-count-category="health">Health &amp; Fitness</option>
+                          <option value="beauty" data-count-category="beauty">Beauty &amp; Wellness</option>
                           <option value="property" data-count-category="property">Property</option>
                           <option value="education" data-count-category="education">Education &amp; Coaching</option>
-                          <option value="pets" data-count-category="pets">Pets &amp; Animals</option>
                           <option value="finance" data-count-category="finance">Finance &amp; Admin</option>
-                          <option value="mlm" data-count-category="mlm">MLM &amp; Network Marketing</option>
+                          <option value="pets" data-count-category="pets">Pets &amp; Animals</option>
+                          <option value="mlm" data-count-category="mlm">Network marketing</option>
+                          <option value="general" data-count-category="general">Other</option>
                         </select>
                       </label>
                     </div>
@@ -225,6 +227,11 @@
                         </label>
                       </div>
                     </fieldset>
+                    <label class="filter-checkbox filter-opp-hide-nm" style="margin-top: 8px">
+                      <input type="checkbox" id="opp-hide-network-marketing" checked>
+                      <span class="filter-checkbox-box" aria-hidden="true"></span>
+                      Hide network marketing listings
+                    </label>
                     <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest">
                       <span class="filter-bar-chip-label">Custom range</span>
                       <div class="filter-price-range-controls">
@@ -519,7 +526,7 @@
 
     <script src="/js/cms-ad-blocks.js?v=20260722cp11" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260710" data-root="/" defer></script>
-    <script src="/js/opportunities-catalog.js?v=20260728earn" defer></script>
+    <script src="/js/opportunities-catalog.js?v=20260728cat" defer></script>
     <script src="/js/opportunity-listing-quality.js?v=20260710d" defer></script>
     <script src="/js/opportunity-investment-breakdown.js?v=20260710" defer></script>
     <script src="/js/opportunities-saves.js?v=20260714a" defer></script>
@@ -531,7 +538,7 @@
     <script src="/js/postcode-geo.js?v=20260609b" defer></script>
     <script src="/js/hub-spotlight-carousel.js?v=20260723loop" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260728browse2" defer></script>
+    <script src="/js/opportunities-page.js?v=20260728types" defer></script>
     <script src="/js/opportunities-map.js?v=20260611" defer></script>
   </body>
 </html>

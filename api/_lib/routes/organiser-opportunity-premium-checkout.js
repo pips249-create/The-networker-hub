@@ -5,6 +5,7 @@ const {
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { assertPremiumSpotlightSlotAvailable } = require('../opportunity-premium-slots');
+const { isNetworkMarketingType } = require('../opportunity-moderation');
 
 function parseBody(req) {
   let body = req.body;
@@ -67,6 +68,15 @@ module.exports = async function handler(req, res) {
 
     if (String(opportunity.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'opportunity_not_live' });
+    }
+
+    if (isNetworkMarketingType(opportunity)) {
+      return json(res, 400, {
+        ok: false,
+        error: 'network_marketing_not_spotlight',
+        message:
+          'Network marketing listings cannot use Premium Spotlight. Keep a standard listing focused on product sales.',
+      });
     }
 
     try {

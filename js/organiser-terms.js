@@ -3,8 +3,8 @@
  * Persisted in hub_accounts (with localStorage cache).
  */
 (function () {
-  var STORAGE_KEY = 'hub_organiser_terms_v1';
-  var TERMS_VERSION = 'v1';
+  var STORAGE_KEY = 'hub_organiser_terms_v2';
+  var TERMS_VERSION = 'v2';
   var serverChecked = false;
   var serverAccepted = false;
 
@@ -80,6 +80,7 @@
       '<ul class="hub-organiser-terms-list">' +
       '<li>You are responsible for delivering events and honouring your stated refund policy</li>' +
       '<li>Business opportunity listings must be truthful and not misleading</li>' +
+      '<li>Network marketing listings must be product-selling only — recruitment-primary / downline schemes are not allowed</li>' +
       '<li>Use attendee contact details only to run your events — not for unrelated marketing</li>' +
       '<li>You must follow our <a href="/legal-policies#hub-rules" target="_blank" rel="noopener noreferrer">Hub rules</a> for organisers</li>' +
       '</ul>' +
