@@ -404,6 +404,7 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
       const profileUrl = profileUrlForOrganiser(orgRow, siteUrl);
       const badgeShort = publicBadgeLabel(row.label);
       const socialShareText = `Proud to share that ${orgRow.name || 'our group'} is a ${badgeShort} on The Networker Hub for ${periodLabel}. ⭐ ${profileUrl}`;
+      const badgeUrl = `${siteUrl}/rankings/badge?id=${encodeURIComponent(row.organiserId)}`;
 
       try {
         await sendTemplatedEmail({
@@ -419,7 +420,8 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
             average_rating: Number(row.rating).toFixed(1),
             review_count: String(row.reviewCount),
             profile_url: profileUrl,
-            dashboard_url: `${siteUrl}/organiser/#social`,
+            badge_url: badgeUrl,
+            dashboard_url: `${siteUrl}/organiser/#social-ranking`,
             rankings_url: `${siteUrl}/rankings`,
             social_share_text: socialShareText,
           },

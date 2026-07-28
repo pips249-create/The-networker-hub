@@ -127,7 +127,8 @@ function basePreviewVars(siteUrl) {
     average_rating: '4.8',
     review_count: '27',
     profile_url: organiserPublicUrl(organiserRow, site),
-    dashboard_url: site + '/organiser/#social',
+    badge_url: site + '/rankings/badge?id=' + encodeURIComponent(organiserRow.id || 'demo'),
+    dashboard_url: site + '/organiser/#social-ranking',
     rankings_url: site + '/rankings',
     social_share_text:
       'City Connectors is a Top 10 networking group on The Networker Hub for June 2026.',

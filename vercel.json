@@ -47,6 +47,7 @@
     { "source": "/faq.html", "destination": "/faq", "permanent": true },
     { "source": "/about.html", "destination": "/about", "permanent": true },
     { "source": "/rankings.html", "destination": "/rankings", "permanent": true },
+    { "source": "/rankings/badge.html", "destination": "/rankings/badge", "permanent": true },
     { "source": "/contact.html", "destination": "/contact", "permanent": true },
     { "source": "/guides.html", "destination": "/guides", "permanent": true },
     { "source": "/for-organisers.html", "destination": "/for-organisers", "permanent": true },
@@ -227,6 +228,10 @@
     {
       "source": "/rankings",
       "destination": "/rankings.html"
+    },
+    {
+      "source": "/rankings/badge",
+      "destination": "/rankings/badge.html"
     },
     {
       "source": "/testing-bo",

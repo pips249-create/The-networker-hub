@@ -1,0 +1,138 @@
+/* Public ranking badge share page */
+
+.ranking-badge-share {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 16px 72px;
+}
+
+.ranking-badge-share-hero {
+  text-align: center;
+  margin: 0 0 28px;
+}
+
+.ranking-badge-share-hero h1 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  font-weight: 400;
+  color: var(--rankings-ink, #1c2040);
+  margin: 0 0 12px;
+  line-height: 1.15;
+}
+
+.ranking-badge-share-lede {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--rankings-muted, #4a6272);
+  margin: 0 auto;
+  max-width: 36rem;
+}
+
+.ranking-badge-share-panel {
+  background: #3a4254;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 22px 18px;
+  box-shadow: none;
+}
+
+.ranking-badge-share-status {
+  margin: 0;
+  text-align: center;
+  color: rgba(236, 232, 224, 0.68);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  padding: 28px 8px;
+}
+
+.ranking-badge-share-content {
+  display: grid;
+  gap: 22px;
+}
+
+.ranking-badge-share-label {
+  display: block;
+  margin: 0 0 8px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232, 236, 245, 0.55);
+}
+
+.ranking-badge-share-preview {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.ranking-badge-share-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.ranking-badge-share-meta {
+  margin: 10px 0 0;
+  text-align: center;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(236, 232, 224, 0.68);
+}
+
+.ranking-badge-share-code {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  color: #ece8e0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.ranking-badge-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+
+.ranking-badge-share-tip {
+  margin: 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: rgba(232, 236, 245, 0.55);
+}
+
+.ranking-badge-share-page .rankings-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6fb;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.ranking-badge-share-page .rankings-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(201, 168, 76, 0.45);
+}
+
+@media (max-width: 640px) {
+  .ranking-badge-share {
+    padding: 28px 14px 56px;
+  }
+
+  .ranking-badge-share-panel {
+    padding: 16px 12px;
+  }
+}

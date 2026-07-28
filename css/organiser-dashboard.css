@@ -1035,10 +1035,47 @@
   margin: 0 0 12px;
 }
 
-.org-ranking-share-actions {
-  display: flex;
-  flex-wrap: wrap;
+.org-ranking-share-mount {
+  margin: 0 0 18px;
+}
+
+.org-ranking-share--board {
+  margin: 0 0 18px;
+  padding: 18px 18px 16px;
+  background: var(--od-white);
+  border: 1px solid var(--od-border-soft);
+  border-radius: calc(var(--od-radius) + 2px);
+  box-shadow: var(--od-shadow-sm);
+}
+
+.org-ranking-share--empty .org-ranking-tier-examples--board {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.org-ranking-tier-example-img {
+  display: block;
+  width: min(100%, 340px);
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(20, 24, 44, 0.18);
+}
+
+.org-ranking-tier-examples .org-ranking-tier-example {
+  display: grid;
   gap: 8px;
+  align-items: start;
+}
+
+.org-ranking-embed-preview {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 10px;
+  padding: 14px;
+  background: #0c1020;
+  border: 1px solid rgba(28, 32, 64, 0.12);
+  border-radius: 14px;
 }
 
 .org-linkedin-posts {
@@ -9051,12 +9088,12 @@ body.org-event-drawer-open {
 }
 
 .org-page--leaderboard {
-  --lb-ink: #e8ecf5;
-  --lb-muted: rgba(232, 236, 245, 0.58);
-  --lb-board: #121526;
-  --lb-row: rgba(255, 255, 255, 0.045);
+  --lb-ink: #ece8e0;
+  --lb-muted: rgba(236, 232, 224, 0.62);
+  --lb-board: #3a4254;
+  --lb-row: rgba(255, 255, 255, 0.07);
   --lb-row-border: rgba(255, 255, 255, 0.08);
-  --lb-gold: #c9a84c;
+  --lb-gold: #c4a86e;
 }
 
 .org-page--leaderboard .org-page-head {
@@ -9073,8 +9110,8 @@ body.org-event-drawer-open {
   padding: 12px;
   background: var(--lb-board);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 
 #org-page-leaderboard .org-leaderboard-toolbar-label {
@@ -9082,29 +9119,31 @@ body.org-event-drawer-open {
 }
 
 #org-page-leaderboard .org-leaderboard-filter {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
   color: var(--lb-muted);
   padding: 6px 12px;
   font-size: 12px;
 }
 
 #org-page-leaderboard .org-leaderboard-filter:hover {
-  border-color: rgba(201, 168, 76, 0.45);
-  color: #fff;
-  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(196, 168, 110, 0.5);
+  color: #f3efe6;
+  background: rgba(255, 255, 255, 0.11);
 }
 
 #org-page-leaderboard .org-leaderboard-filter.is-active {
-  background: #1f2a44;
-  border-color: rgba(201, 168, 76, 0.55);
-  color: #f3e6c0;
+  background: rgba(196, 168, 110, 0.22);
+  border-color: rgba(196, 168, 110, 0.5);
+  color: #f3efe6;
   box-shadow: none;
 }
 
 #org-page-leaderboard .org-leaderboard-status {
   color: var(--lb-muted);
   padding: 16px 8px;
+  background: transparent;
+  border: none;
 }
 
 #org-page-leaderboard .org-leaderboard-list,
@@ -9140,21 +9179,21 @@ body.org-event-drawer-open {
 }
 
 #org-page-leaderboard .rankings-row--top10 {
-  border-color: rgba(201, 168, 76, 0.35) !important;
-  background: rgba(201, 168, 76, 0.08) !important;
+  border-color: rgba(196, 168, 110, 0.28) !important;
+  background: rgba(196, 168, 110, 0.1) !important;
 }
 
 #org-page-leaderboard a.rankings-row:hover {
-  border-color: rgba(201, 168, 76, 0.4) !important;
-  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(196, 168, 110, 0.4) !important;
+  background: rgba(255, 255, 255, 0.11) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 
 #org-page-leaderboard .rankings-place {
   font-size: 0.95rem !important;
-  font-weight: 800;
-  color: rgba(232, 236, 245, 0.85) !important;
+  font-weight: 700;
+  color: rgba(236, 232, 224, 0.72) !important;
   text-shadow: none !important;
 }
 
@@ -9169,8 +9208,8 @@ body.org-event-drawer-open {
 
 #org-page-leaderboard .rankings-org-name {
   font-size: 13px !important;
-  font-weight: 700;
-  color: #f4f6fb !important;
+  font-weight: 600;
+  color: #ece8e0 !important;
   margin: 0 0 1px !important;
 }
 
@@ -9178,7 +9217,7 @@ body.org-event-drawer-open {
   width: 28px !important;
   height: 28px !important;
   border-radius: 50% !important;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
   box-shadow: none !important;
   background: #d7e4ea !important;
 }
@@ -9204,17 +9243,37 @@ body.org-event-drawer-open {
 #org-page-leaderboard .org-leaderboard-metrics-line span + span::before {
   content: '·';
   margin-right: 10px;
-  color: rgba(232, 236, 245, 0.28);
+  color: rgba(236, 232, 224, 0.28);
 }
 
 #org-page-leaderboard .rankings-side .hub-ranking-badge {
   font-size: 9px;
   padding: 3px 8px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+#org-page-leaderboard .hub-ranking-badge--top10 {
+  color: #5c4a22;
+  background: linear-gradient(135deg, #efe2bc 0%, #dfc88a 100%);
+  border-color: rgba(156, 122, 48, 0.35);
+}
+
+#org-page-leaderboard .hub-ranking-badge--top25 {
+  color: #2f4660;
+  background: linear-gradient(135deg, #dde8f4 0%, #b9cce2 100%);
+  border-color: rgba(70, 110, 150, 0.3);
+}
+
+#org-page-leaderboard .hub-ranking-badge--top50 {
+  color: #355038;
+  background: linear-gradient(135deg, #dde9d9 0%, #b8d0b4 100%);
+  border-color: rgba(80, 120, 78, 0.3);
 }
 
 #org-page-leaderboard.is-preview #org-leaderboard-root,
 #org-page-leaderboard .org-leaderboard.is-preview {
-  outline: 1px dashed rgba(201, 168, 76, 0.35);
+  outline: 1px dashed rgba(196, 168, 110, 0.4);
   outline-offset: 2px;
 }
 

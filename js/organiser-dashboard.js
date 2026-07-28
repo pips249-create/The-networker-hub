@@ -569,9 +569,61 @@
     }
   }
 
+  function rankingBadgeImageUrl(tier, periodLabel) {
+    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const params = new URLSearchParams();
+    const t = String(tier || 'top50').toLowerCase();
+    params.set('tier', t === 'top10' || t === 'top25' || t === 'top50' ? t : 'top50');
+    if (periodLabel) params.set('period', String(periodLabel).trim());
+    params.set('v', '2');
+    return origin.replace(/\/$/, '') + '/api/ranking-badge?' + params.toString();
+  }
+
+  function rankingBadgeShareUrl(groupId, slug) {
+    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const params = new URLSearchParams();
+    if (groupId) params.set('id', String(groupId));
+    if (slug) params.set('slug', String(slug));
+    return origin.replace(/\/$/, '') + '/rankings/badge?' + params.toString();
+  }
+
+  function rankingBadgeEmbedHtml(g, row) {
+    const origin = (location.origin || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+    const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
+    const rankingsUrl = origin + '/rankings';
+    const tier = String(row.tier || 'top50').toLowerCase();
+    const periodLabel = row.periodLabel || '';
+    const alt =
+      (g.name || 'Our group') +
+      ' — ' +
+      (row.cardLabel || rankingBadgeText(row) || 'Top ranking') +
+      ' on The Networker Hub';
+    const imgSrc = rankingBadgeImageUrl(tier, periodLabel);
+    return (
+      '<a href="' +
+      profileUrl +
+      '" target="_blank" rel="noopener noreferrer" title="' +
+      alt.replace(/"/g, '&quot;') +
+      '">' +
+      '<img src="' +
+      imgSrc +
+      '" alt="' +
+      alt.replace(/"/g, '&quot;') +
+      '" width="340" height="120" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
+      '</a><br />' +
+      '<a href="' +
+      rankingsUrl +
+      '" target="_blank" rel="noopener noreferrer" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#64748b;text-decoration:underline;">' +
+      'See the monthly leaderboard on The Networker Hub</a>'
+    );
+  }
+
   function buildRankingShareCardHtml(g, row) {
     const shareText = rankingShareText(g.name, { ...row, id: g.id, slug: g.slug || row.slug });
     const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
+    const embed = rankingBadgeEmbedHtml(g, row);
+    const badgeShareUrl = rankingBadgeShareUrl(g.id, g.slug);
+    const imgPreview = rankingBadgeImageUrl(row.tier, row.periodLabel);
     return (
       '<article class="org-ranking-share-card">' +
       '<div class="org-ranking-share-card-head">' +
@@ -589,22 +641,39 @@
       ' from ' +
       esc(String(row.reviewCount)) +
       ' reviews</p>' +
+      '<div class="org-ranking-embed">' +
+      '<p class="org-ranking-share-preview-label">Website badge</p>' +
+      '<div class="org-ranking-embed-preview"><img src="' +
+      esc(imgPreview) +
+      '" alt="" width="340" height="120" /></div>' +
+      '<label class="org-partner-badge-meta" for="ranking-embed-' +
+      esc(g.id) +
+      '">Embed code — links to your profile + the leaderboard</label>' +
+      '<textarea readonly class="org-partner-badge-code" id="ranking-embed-' +
+      esc(g.id) +
+      '" rows="4">' +
+      esc(embed) +
+      '</textarea>' +
+      '</div>' +
       '<div class="org-ranking-share-preview">' +
-      '<p class="org-ranking-share-preview-label">Your post will look like this</p>' +
+      '<p class="org-ranking-share-preview-label">Your social post will look like this</p>' +
       '<div class="org-ranking-share-preview-card" role="group" aria-label="Social post preview">' +
       '<p class="org-ranking-share-preview-text">' +
       esc(shareText) +
       '</p></div></div>' +
       '<div class="org-ranking-share-actions">' +
-      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-share="' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-ranking-embed="' +
+      esc(embed) +
+      '">Copy embed code</button>' +
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-share="' +
       esc(shareText) +
       '">Copy post text</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
       esc(profileUrl) +
       '">Copy profile link</button>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
-      esc(groupPublicProfileUrl(g.id, g.slug)) +
-      '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
+      esc(badgeShareUrl) +
+      '" target="_blank" rel="noopener noreferrer">Open share page</a>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="#social" data-org-route="social">Make a LinkedIn picture</a>' +
       '</div></article>'
     );
@@ -620,6 +689,11 @@
     root.querySelectorAll('[data-copy-link]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         copyOrganiserText(btn.getAttribute('data-copy-link') || '', btn);
+      });
+    });
+    root.querySelectorAll('[data-copy-ranking-embed]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyOrganiserText(btn.getAttribute('data-copy-ranking-embed') || '', btn);
       });
     });
   }
@@ -700,21 +774,22 @@
 
     if (examplesEl) {
       examplesEl.innerHTML = [
-        { tier: 'top10', sample: 'Top 10 networking group' },
-        { tier: 'top25', sample: 'Top 25 networking group' },
-        { tier: 'top50', sample: 'Top 50 networking group' },
+        { tier: 'top10', sample: 'Top 10' },
+        { tier: 'top25', sample: 'Top 25' },
+        { tier: 'top50', sample: 'Top 50' },
       ]
         .map(function (item) {
           return (
             '<div class="org-ranking-tier-example">' +
             '<span class="org-ranking-tier-example-label">' +
-            esc(item.tier.replace('top', 'Top ')) +
+            esc(item.sample) +
             '</span>' +
-            '<span class="hub-ranking-badge hub-ranking-badge--' +
-            esc(item.tier) +
-            ' hub-ranking-badge--lg">★ ' +
-            esc(item.sample + ' · ' + periodLabel) +
-            '</span></div>'
+            '<img class="org-ranking-tier-example-img" src="' +
+            esc(rankingBadgeImageUrl(item.tier, periodLabel)) +
+            '" alt="' +
+            esc(item.sample + ' award badge · ' + periodLabel) +
+            '" width="340" height="120" loading="lazy" />' +
+            '</div>'
           );
         })
         .join('');
@@ -748,15 +823,37 @@
     if (groupsMount) {
       if (ranked.length) {
         groupsMount.innerHTML =
-          '<section class="org-ranking-share org-ranking-share--compact">' +
-          '<h3 class="org-section-title">Your ranking badges</h3>' +
-          '<p class="org-section-sub">Share on social media — open <a href="#events-list">My events</a> for the full preview.</p>' +
+          '<section class="org-ranking-share org-ranking-share--board">' +
+          '<h2 class="org-section-title">Your award badge</h2>' +
+          '<p class="org-section-sub">Embed this on your website — it links to your Hub profile and this month&rsquo;s Top groups list.</p>' +
           '<div class="org-ranking-share-cards">' +
           cardsHtml +
           '</div></section>';
         bindRankingShareActions(groupsMount);
       } else {
-        groupsMount.innerHTML = '';
+        groupsMount.innerHTML =
+          '<section class="org-ranking-share org-ranking-share--board org-ranking-share--empty">' +
+          '<h2 class="org-section-title">Your award badge</h2>' +
+          '<p class="org-section-sub">When your group lands in the Top 10, 25 or 50, your website award badge and embed code appear here.</p>' +
+          '<div class="org-ranking-tier-examples org-ranking-tier-examples--board">' +
+          [
+            { tier: 'top10', sample: 'Top 10' },
+            { tier: 'top25', sample: 'Top 25' },
+            { tier: 'top50', sample: 'Top 50' },
+          ]
+            .map(function (item) {
+              return (
+                '<div class="org-ranking-tier-example">' +
+                '<img class="org-ranking-tier-example-img" src="' +
+                esc(rankingBadgeImageUrl(item.tier, periodLabel)) +
+                '" alt="' +
+                esc(item.sample + ' award badge example') +
+                '" width="340" height="120" loading="lazy" />' +
+                '</div>'
+              );
+            })
+            .join('') +
+          '</div></section>';
       }
     }
   }
@@ -1380,10 +1477,11 @@
   function socialTabFromHash() {
     const hash = String(location.hash || '').toLowerCase();
     if (hash.includes('spotlight') || hash.includes('featured')) return 'spotlight';
-    if (hash.includes('ranking') || hash.includes('review-badge')) return 'ranking';
+    if (hash.includes('ranking') || hash.includes('review-badge') || hash.includes('ranking-embed'))
+      return 'ranking';
     if (hash.includes('partner') || hash.includes('website-badge') || hash.includes('embed'))
       return 'partner';
-    if (hash.includes('linkedin') || hash.includes('social')) return 'linkedin';
+    if (hash.includes('linkedin') || hash === 'social') return 'linkedin';
     return '';
   }
 
@@ -3242,6 +3340,14 @@
     if (hash === 'visibility' || hash === 'grow-visibility') return { page: 'visibility', sub: null };
     if (hash === 'leaderboard' || hash === 'rankings') return { page: 'leaderboard', sub: null };
     if (hash === 'social-spotlight' || hash === 'event-spotlight') return { page: 'social-spotlight', sub: null };
+    if (
+      hash === 'social-ranking' ||
+      hash === 'ranking-badge' ||
+      hash === 'review-badge' ||
+      hash === 'ranking-embed'
+    ) {
+      return { page: 'social', sub: null };
+    }
     return { page: hash, sub: null };
   }
 
@@ -7567,6 +7673,7 @@
       if (window.HubRankings && typeof window.HubRankings.ensure === 'function') {
         window.HubRankings.ensure();
       }
+      renderOrganiserRankingShare();
     }
     if (page === 'team') {
       ensureTeamLoaded().then(function () {

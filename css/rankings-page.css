@@ -220,11 +220,11 @@
 }
 
 .rankings-board-shell {
-  background: #121526;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #3a4254;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
   padding: 14px 12px 12px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: none;
 }
 
 .rankings-filters {
@@ -240,30 +240,30 @@
   font-size: 0.78rem;
   font-weight: 700;
   border-radius: 999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(232, 236, 245, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(236, 232, 224, 0.78);
   padding: 6px 12px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .rankings-filter:hover {
-  border-color: rgba(201, 168, 76, 0.45);
-  color: #fff;
+  border-color: rgba(196, 168, 110, 0.55);
+  color: #f3efe6;
 }
 
 .rankings-filter.is-active {
-  background: #1f2a44;
-  border-color: rgba(201, 168, 76, 0.55);
-  color: #f3e6c0;
+  background: rgba(196, 168, 110, 0.22);
+  border-color: rgba(196, 168, 110, 0.5);
+  color: #f3efe6;
   box-shadow: none;
 }
 
 .rankings-status {
   font-family: 'DM Sans', system-ui, sans-serif;
   text-align: center;
-  color: rgba(232, 236, 245, 0.58);
+  color: rgba(236, 232, 224, 0.65);
   padding: 20px 12px;
   margin: 0;
 }
@@ -283,7 +283,7 @@
   grid-template-columns: 40px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 6px 10px;
@@ -322,21 +322,21 @@
 }
 
 a.rankings-row:hover {
-  border-color: rgba(201, 168, 76, 0.4);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(196, 168, 110, 0.4);
+  background: rgba(255, 255, 255, 0.11);
   transform: none;
   box-shadow: none;
 }
 
 .rankings-row--top10 {
-  border-color: rgba(201, 168, 76, 0.35);
-  background: rgba(201, 168, 76, 0.08);
+  border-color: rgba(196, 168, 110, 0.28);
+  background: rgba(196, 168, 110, 0.1);
   box-shadow: none;
 }
 
 .rankings-row--top10::before {
-  background: linear-gradient(180deg, #c9a84c, #8a7028);
-  opacity: 1;
+  background: linear-gradient(180deg, #c4a86e, #8d7340);
+  opacity: 0.85;
   width: 3px;
 }
 
@@ -353,14 +353,14 @@ a.rankings-row:hover {
   z-index: 1;
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.98rem;
-  font-weight: 800;
-  color: rgba(232, 236, 245, 0.85);
+  font-weight: 700;
+  color: rgba(236, 232, 224, 0.72);
   letter-spacing: -0.04em;
   text-align: center;
 }
 
 .rankings-row--top10 .rankings-place {
-  color: #c9a84c;
+  color: #c4a86e;
   text-shadow: none;
 }
 
@@ -379,7 +379,7 @@ a.rankings-row:hover {
   border-radius: 50%;
   object-fit: cover;
   background: #d7e4ea;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: none;
   flex-shrink: 0;
 }
@@ -402,8 +402,8 @@ a.rankings-row:hover {
 .rankings-org-name {
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.9rem;
-  font-weight: 700;
-  color: #f4f6fb;
+  font-weight: 600;
+  color: #ece8e0;
   margin: 0 0 1px;
   white-space: nowrap;
   overflow: hidden;
@@ -413,8 +413,31 @@ a.rankings-row:hover {
 .rankings-org-stats {
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.72rem;
-  color: rgba(232, 236, 245, 0.55);
+  color: rgba(236, 232, 224, 0.58);
   margin: 0;
+}
+
+.rankings-side .hub-ranking-badge {
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.rankings-board-shell .hub-ranking-badge--top10 {
+  color: #5c4a22;
+  background: linear-gradient(135deg, #efe2bc 0%, #dfc88a 100%);
+  border-color: rgba(156, 122, 48, 0.35);
+}
+
+.rankings-board-shell .hub-ranking-badge--top25 {
+  color: #2f4660;
+  background: linear-gradient(135deg, #dde8f4 0%, #b9cce2 100%);
+  border-color: rgba(70, 110, 150, 0.3);
+}
+
+.rankings-board-shell .hub-ranking-badge--top50 {
+  color: #355038;
+  background: linear-gradient(135deg, #dde9d9 0%, #b8d0b4 100%);
+  border-color: rgba(80, 120, 78, 0.3);
 }
 
 .rankings-side {

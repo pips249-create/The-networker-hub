@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking badge – The Networker Hub</title>
+<meta name="description" content="Share your Top 10, Top 25 or Top 50 networking group ranking badge from The Networker Hub — embed it on your website or share the leaderboard.">
+<meta property="og:title" content="Ranking badge – The Networker Hub">
+<meta property="og:description" content="Monthly networking group rankings on The Networker Hub — attendee ratings first, then review rate.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.thenetworkerhub.com/rankings/badge">
+<meta property="og:image" content="https://www.thenetworkerhub.com/assets/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/hub.css?v=20260728footer">
+<link rel="stylesheet" href="/css/hub-ranking-badge.css?v=20260728lb2">
+<link rel="stylesheet" href="/css/rankings-page.css?v=20260728lb2">
+<link rel="stylesheet" href="/css/hub-partner-badge.css?v=20260728embed">
+<link rel="stylesheet" href="/css/ranking-badge-share.css?v=20260728award">
+<link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
+<link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
+<link rel="stylesheet" href="/css/hub-mobile.css?v=20260728footer" />
+</head>
+<body class="rankings-page ranking-badge-share-page">
+
+<div id="hub-site-nav"></div>
+<script src="/js/site-nav.js?v=20260728lb" data-root="/" data-page="rankings"></script>
+
+<main class="ranking-badge-share rankings-main">
+  <header class="ranking-badge-share-hero">
+    <p class="rankings-kicker"><span class="rankings-kicker-star" aria-hidden="true">★</span> Website badge</p>
+    <h1 id="badge-share-title">Share your ranking badge</h1>
+    <p class="ranking-badge-share-lede" id="badge-share-lede">
+      Embed a period-stamped Top 10 / 25 / 50 badge on your website. It links to your Hub profile and the monthly leaderboard.
+    </p>
+  </header>
+
+  <section class="ranking-badge-share-panel" aria-live="polite">
+    <p id="badge-share-status" class="ranking-badge-share-status">Loading badge&hellip;</p>
+    <div id="badge-share-content" class="ranking-badge-share-content" hidden>
+      <div class="ranking-badge-share-preview-wrap">
+        <p class="ranking-badge-share-label">Preview</p>
+        <div id="badge-share-preview" class="ranking-badge-share-preview"></div>
+        <p id="badge-share-meta" class="ranking-badge-share-meta"></p>
+      </div>
+
+      <div class="ranking-badge-share-embed-wrap">
+        <label class="ranking-badge-share-label" for="badge-share-code">Website embed code</label>
+        <textarea id="badge-share-code" class="ranking-badge-share-code" rows="6" readonly></textarea>
+        <div class="ranking-badge-share-actions">
+          <button type="button" class="rankings-btn rankings-btn--primary" id="badge-share-copy">Copy embed code</button>
+          <a class="rankings-btn rankings-btn--ghost" id="badge-share-profile" href="/rankings" target="_blank" rel="noopener noreferrer">View profile</a>
+          <a class="rankings-btn rankings-btn--ghost" href="/rankings">Full leaderboard</a>
+        </div>
+        <p class="ranking-badge-share-tip">
+          Paste into your site footer or About page. The badge links to your public Hub profile; the text link points to this month&rsquo;s leaderboard.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="hub-site-footer"></div>
+<script src="/js/site-footer.js?v=20260728footer" data-root="/"></script>
+<script src="/js/ranking-badge-share.js?v=20260728award" defer></script>
+</body>
+</html>
