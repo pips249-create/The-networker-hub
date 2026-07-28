@@ -302,50 +302,6 @@
     applyOrganiserRegionCta(events);
   }
 
-  function rankingCollapseKey(orgId) {
-    return 'hub_org_public_ranking_collapsed_' + String(orgId || 'default');
-  }
-
-  function isRankingPanelCollapsed(orgId) {
-    try {
-      var stored = localStorage.getItem(rankingCollapseKey(orgId));
-      if (stored === null) return true;
-      return stored === '1';
-    } catch (e) {
-      return true;
-    }
-  }
-
-  function setRankingPanelCollapsed(orgId, collapsed) {
-    try {
-      localStorage.setItem(rankingCollapseKey(orgId), collapsed ? '1' : '0');
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
-  function bindPublicRankingPanel(orgId) {
-    var panel = document.getElementById('org-ranking-panel');
-    var toggle = panel && panel.querySelector('.org-ranking-panel-toggle');
-    var body = document.getElementById('org-ranking-panel-body');
-    var chev = panel && panel.querySelector('.org-ranking-panel-chev');
-    if (!panel || !toggle || !body) return;
-
-    function applyCollapsed(collapsed) {
-      body.hidden = collapsed;
-      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-      if (chev) chev.textContent = collapsed ? 'Show' : 'Hide';
-      panel.classList.toggle('is-expanded', !collapsed);
-    }
-
-    applyCollapsed(isRankingPanelCollapsed(orgId));
-    toggle.onclick = function () {
-      var collapsed = !body.hidden;
-      applyCollapsed(collapsed);
-      setRankingPanelCollapsed(orgId, collapsed);
-    };
-  }
-
   function showReviewStatus(message, type) {
     var el = document.getElementById('org-review-status');
     if (!el) return;
@@ -447,19 +403,18 @@
     document.getElementById('org-name').textContent = org.name || 'Organiser';
 
     var panel = document.getElementById('org-ranking-panel');
-    var summaryEl = document.getElementById('org-ranking-panel-summary');
     var rankingEl = document.getElementById('org-ranking-badge');
     var metaEl = document.getElementById('org-ranking-meta');
 
     if (org.ranking && org.ranking.label) {
       var tier = org.ranking.tier || 'top10';
       var badgeText =
+        org.ranking.cardLabel ||
         org.ranking.displayLabel ||
-        String(org.ranking.label).replace(' on the Hub', '') +
+        String(org.ranking.label).replace(' on the Hub', '').replace(' networking group', '') +
           (org.ranking.periodLabel ? ' · ' + org.ranking.periodLabel : '');
 
       if (panel) panel.hidden = false;
-      if (summaryEl) summaryEl.textContent = ' — ' + badgeText;
 
       if (rankingEl) {
         rankingEl.className =
@@ -475,23 +430,15 @@
 
       if (metaEl) {
         metaEl.textContent =
-          'Ranked #' +
+          '#' +
           org.ranking.rank +
           ' of ' +
           org.ranking.totalRanked +
-          ' rated networking groups on the Hub (★ ' +
-          Number(org.ranking.rating).toFixed(1) +
-          ' from ' +
-          org.ranking.reviewCount +
-          ' review' +
-          (Number(org.ranking.reviewCount) === 1 ? '' : 's') +
-          ').';
+          ' rated groups' +
+          (org.ranking.periodLabel ? ' · ' + org.ranking.periodLabel : '');
       }
-
-      bindPublicRankingPanel(org.id);
     } else {
       if (panel) panel.hidden = true;
-      if (summaryEl) summaryEl.textContent = '';
       if (rankingEl) {
         rankingEl.className = 'org-profile-ranking hub-ranking-badge';
         rankingEl.textContent = '';
