@@ -272,7 +272,7 @@
     if (!v || v === '—') return v;
     if (/^£/.test(v)) return v;
     var k = String(key || '').toLowerCase();
-    if (/^investment|earnings|commission|revenue|income|profit|return/.test(k)) {
+    if (/^investment/.test(k)) {
       if (/%/.test(v)) return v;
       if (/\d/.test(v)) return '£' + v;
     }
@@ -282,7 +282,6 @@
   function cardDisplayMeta(item) {
     var meta = item.meta || [];
     var investment = null;
-    var financial = null;
     var scarcity = null;
     var location = null;
     var extra = [];
@@ -290,8 +289,8 @@
     meta.forEach(function (m) {
       if (/^investment includes$/i.test(m.key)) return;
       if (/^companies house$/i.test(m.key)) return;
+      if (/^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)) return;
       if (/^investment$/i.test(m.key)) investment = m;
-      else if (/^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)) financial = financial || m;
       else if (isScarcityMeta(m.key, m.val)) scarcity = scarcity || m;
       else if (/^location$/i.test(m.key)) location = location || m;
       else extra.push(m);
@@ -305,7 +304,7 @@
     var commitment = metaVal(meta, /^commitment$/i);
     if (!row4 && commitment) row4 = { key: 'Commitment', val: commitment };
 
-    return [investment, financial, row3, row4].filter(Boolean).slice(0, 4);
+    return [investment, row3, row4].filter(Boolean).slice(0, 4);
   }
 
   function buildSearchText(item) {

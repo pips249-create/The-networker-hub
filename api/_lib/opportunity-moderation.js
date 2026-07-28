@@ -92,6 +92,17 @@ function opportunityHasFinancialMeta(meta) {
   );
 }
 
+/** Earnings / return / commission figures are no longer collected on listings. */
+function isEarningsMetaKey(key) {
+  return /^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(
+    String(key || '').trim()
+  );
+}
+
+function stripEarningsMeta(meta) {
+  return normalizeMeta(meta).filter((m) => !isEarningsMetaKey(m.key));
+}
+
 function parseInvestmentAmount(meta) {
   const raw = metaValue(normalizeMeta(meta), /^investment$/i);
   if (!raw) return null;
@@ -130,15 +141,8 @@ function validateFcaDisclaimer(payload) {
   return null;
 }
 
-function validateEarningsAttestation(payload) {
-  if (!opportunityHasFinancialMeta(payload?.meta)) return null;
-  if (!payload?.earningsClaimsAttested) {
-    return {
-      code: 'earnings_attestation_required',
-      message:
-        'Confirm your earnings or return figures are truthful, typical, and substantiated before listing.',
-    };
-  }
+function validateEarningsAttestation() {
+  // Earnings / return fields were removed from listing forms.
   return null;
 }
 
@@ -178,6 +182,8 @@ module.exports = {
   collectOpportunityText,
   validateStructuredFields,
   opportunityHasFinancialMeta,
+  isEarningsMetaKey,
+  stripEarningsMeta,
   opportunityRequiresFcaDisclaimer,
   validateEarningsAttestation,
   validateFcaDisclaimer,

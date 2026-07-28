@@ -16730,33 +16730,6 @@
       .join('');
   }
 
-  function opportunityFinancialKeyOptions(selected) {
-    return ['', 'Earnings', 'Commission', 'Return est.', 'Revenue', 'Income', 'Profit']
-      .map(function (s) {
-        return (
-          '<option value="' +
-          attrEsc(s) +
-          '"' +
-          (selected === s ? ' selected' : '') +
-          '>' +
-          esc(s || 'None') +
-          '</option>'
-        );
-      })
-      .join('');
-  }
-
-  function opportunityMetaFinancialFromOpp(opp) {
-    var meta = (opp && opp.meta) || [];
-    for (var i = 0; i < meta.length; i++) {
-      var key = String(meta[i].key || '');
-      if (/^(earnings|commission|return est\.|revenue|income|profit)$/i.test(key)) {
-        return { key: key, val: String(meta[i].val || '') };
-      }
-    }
-    return { key: '', val: '' };
-  }
-
   function opportunityImageFieldHtml(key, urlName, label, help, imageUrl) {
     var hasPhoto = !!imageUrl;
     return (
@@ -16817,7 +16790,6 @@
     opts = opts || {};
     var coverKey = opts.coverKey || 'opp-cover';
     var logoKey = opts.logoKey || 'opp-logo';
-    var financial = opportunityMetaFinancialFromOpp(opp);
     return (
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -16891,15 +16863,7 @@
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment</label>' +
       '<select name="commitment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       opportunityCommitmentOptions(opp.commitment || '') +
-      '</select></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Earnings / return <span class="font-normal">(optional)</span></label>' +
-      '<div class="grid grid-cols-2 gap-2">' +
-      '<select name="financial_key" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      opportunityFinancialKeyOptions(financial.key) +
-      '</select>' +
-      '<input type="text" name="financial_val" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(financial.val) +
-      '" placeholder="e.g. £400–£900/mo"></div></div></div>'
+      '</select></div></div>'
     );
   }
 
@@ -17271,7 +17235,9 @@
 
     var rows = opportunities
       .map(function (opp) {
-        var publicHref = '../opportunities/' + encodeURIComponent(opp.id);
+        var publicHref =
+          '../opportunities/' +
+          encodeURIComponent(opp.slug || opp.id);
         var isPending = opp.approval_status === 'Pending Review';
         var rowClass = isPending ? 'border-b border-amber-100 bg-amber-50/40' : 'border-b border-slate-100';
         var isOpen = !!opportunityCleanupState.expanded[opp.id];
@@ -17509,8 +17475,6 @@
       investment_includes: formFieldVal(form, 'investment_includes') || null,
       location: formFieldVal(form, 'location') || null,
       commitment: formFieldVal(form, 'commitment') || null,
-      financial_key: formFieldVal(form, 'financial_key') || null,
-      financial_val: formFieldVal(form, 'financial_val') || null,
       featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
       owner_email: formFieldVal(form, 'owner_email') || null,
     };

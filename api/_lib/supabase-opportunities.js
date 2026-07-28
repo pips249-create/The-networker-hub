@@ -11,8 +11,9 @@ const {
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
-const { scanOpportunityRedFlags, validateEarningsAttestation } = require('./opportunity-moderation');
+const { scanOpportunityRedFlags, stripEarningsMeta } = require('./opportunity-moderation');
 const { isHubSeedOwnerEmail } = require('./opportunity-hub-seed');
+const { parseOutcode, resolveRegionSlug } = require('./uk-outcode');
 
 const HOST_COLORS = [
   '#7a5c0a',
@@ -63,6 +64,10 @@ function normalizeMeta(meta) {
     .filter((m) => m.key && m.val);
 }
 
+function normalizeListingMeta(meta) {
+  return stripEarningsMeta(normalizeMeta(meta));
+}
+
 function normalizeType(type) {
   const s = String(type || '')
     .toLowerCase()
@@ -103,6 +108,76 @@ function buildOpportunityTags(types, payload) {
   return tags;
 }
 
+function metaValue(meta, keyRe) {
+  const list = normalizeMeta(meta);
+  for (let i = 0; i < list.length; i++) {
+    if (keyRe.test(list[i].key)) return list[i].val;
+  }
+  return '';
+}
+
+/** Derive outcode + region_slug from opportunity location fields / meta. */
+function deriveOpportunityGeo(payload, meta) {
+  const locationText =
+    String(payload.location || payload.territory || '').trim() ||
+    metaValue(meta, /^location$/i) ||
+    metaValue(meta, /territor/i) ||
+    '';
+  const outcode = parseOutcode(locationText) || null;
+  const regionSlug =
+    resolveRegionSlug({
+      location: locationText,
+      city: locationText,
+      outcode,
+      postcode: locationText,
+      regionSlug: payload.regionSlug || payload.region_slug,
+    }) || null;
+  return { locationText, outcode, regionSlug };
+}
+
+function stripOpportunityGeoFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.outcode;
+  delete next.region_slug;
+  return next;
+}
+
+/** True when PostgREST/Postgres rejects outcode/region_slug (migration 207 not applied). */
+function isMissingOpportunityGeoColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('outcode') && !msg.includes('region_slug')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+/**
+ * Insert/update with geo columns; if migration 207 is not applied yet, retry without them
+ * so Command Centre / organiser creates still succeed.
+ */
+async function writeOpportunityRow(sb, mode, row, id) {
+  const run = (payload) => {
+    if (mode === 'insert') {
+      return sb.from('business_opportunities').insert(payload).select('*').single();
+    }
+    return sb.from('business_opportunities').update(payload).eq('id', id).select('*').single();
+  };
+
+  let { data, error } = await run(row);
+  if (error && isMissingOpportunityGeoColumnError(error)) {
+    console.warn(
+      '[opportunities] outcode/region_slug columns missing — apply migration 207_regional_index_captures.sql'
+    );
+    ({ data, error } = await run(stripOpportunityGeoFields(row)));
+  }
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 function normalizeStatus(input) {
   const s = String(input || '')
     .toLowerCase()
@@ -114,7 +189,7 @@ function normalizeStatus(input) {
 
 function rowToListing(row) {
   if (!row) return null;
-  const meta = normalizeMeta(row.meta);
+  const meta = normalizeListingMeta(row.meta);
   return {
     id: row.id,
     slug: publicOpportunitySlug(row),
@@ -146,6 +221,8 @@ function rowToListing(row) {
     listingPaidAt: row.listing_paid_at || null,
     listingExpiresAt: row.listing_expires_at || null,
     listingPaymentActive: listingPaymentCurrent(row),
+    outcode: String(row.outcode || '').trim(),
+    regionSlug: String(row.region_slug || '').trim(),
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
     rejectionNote: row.rejection_note || null,
@@ -286,11 +363,15 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
     host_initials: payload.hostInitials || hostInitials(host),
     host_color: payload.hostColor || hostColorFromName(host),
     contact_email: String(payload.contactEmail || '').trim() || null,
-    meta: normalizeMeta(payload.meta),
+    meta: normalizeListingMeta(payload.meta),
     tags: buildOpportunityTags(types, payload),
     package_tier: String(payload.packageTier || '').trim() || null,
     updated_at: new Date().toISOString(),
   };
+
+  const geo = deriveOpportunityGeo(payload, row.meta);
+  row.outcode = geo.outcode;
+  row.region_slug = geo.regionSlug;
 
   const imageUrl = await resolveOpportunityImage(payload, opportunityId);
   if (imageUrl !== undefined) row.image_url = imageUrl;
@@ -481,14 +562,8 @@ async function listOpportunitiesForSession(session) {
     .map(rowToListing);
 }
 
-function assertOpportunityListingCompliance(payload) {
-  const earningsCheck = validateEarningsAttestation(payload);
-  if (earningsCheck) {
-    const err = new Error(earningsCheck.message);
-    err.status = 400;
-    err.code = earningsCheck.code;
-    throw err;
-  }
+function assertOpportunityListingCompliance() {
+  // Earnings / return fields were removed from listing forms.
 }
 
 async function createOpportunity(payload) {
@@ -505,8 +580,7 @@ async function createOpportunity(payload) {
     opportunityId: null,
     currentSlug: null,
   });
-  const { data, error } = await sb.from('business_opportunities').insert(row).select('*').single();
-  if (error) throw new Error(error.message);
+  const data = await writeOpportunityRow(sb, 'insert', row);
   return rowToListing(data);
 }
 
@@ -528,8 +602,7 @@ async function updateOpportunity(id, payload) {
       row.approval_status = 'Pending Review';
     }
   }
-  const { data, error } = await sb.from('business_opportunities').update(row).eq('id', id).select('*').single();
-  if (error) throw new Error(error.message);
+  const data = await writeOpportunityRow(sb, 'update', row, id);
 
   if (data.status === 'published') {
     const autoReject = await maybeAutoRejectOpportunity(data);
@@ -788,4 +861,8 @@ module.exports = {
   normalizeType,
   normalizeTypes,
   normalizeMeta,
+  deriveOpportunityGeo,
+  writeOpportunityRow,
+  isMissingOpportunityGeoColumnError,
+  stripOpportunityGeoFields,
 };

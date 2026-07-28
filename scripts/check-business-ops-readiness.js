@@ -94,13 +94,19 @@ const GATES = [
     },
   },
   {
-    id: 'earnings_attestation',
-    label: 'Earnings attestation on opportunity form',
+    id: 'no_earnings_claims',
+    label: 'No estimated earnings fields on opportunity forms',
     weight: 1,
     check: () => {
       const html = fs.readFileSync(path.join(root, 'organiser/opportunity-edit.html'), 'utf8');
       const js = fs.readFileSync(path.join(root, 'js/organiser-opportunity-edit.js'), 'utf8');
-      return html.includes('oe-earnings-attest') && js.includes('earningsClaimsAttested');
+      const admin = fs.readFileSync(path.join(root, 'js/admin-app.js'), 'utf8');
+      return (
+        !html.includes('oe-financial-key') &&
+        !html.includes('oe-earnings-attest') &&
+        !js.includes('earningsClaimsAttested') &&
+        !admin.includes('Earnings / return')
+      );
     },
   },
   {

@@ -223,15 +223,6 @@
         })
       ),
       compareRow(
-        'Earnings / return',
-        items.map(function (item) {
-          var fin = (item.meta || []).find(function (m) {
-            return /^(return|earnings|commission|revenue|income|profit)/i.test(m.key);
-          });
-          return escapeHtml(fin ? fin.key + ': ' + fin.val : '—');
-        })
-      ),
-      compareRow(
         'Cost breakdown',
         items.map(function (item) {
           return q && q.hasCostBreakdown(item) ? 'Yes' : 'No';

@@ -1,6 +1,14 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
-const { normalizeType, normalizeMeta, rejectOpportunityListing, rowToListing } = require('../supabase-opportunities');
+const {
+  normalizeType,
+  normalizeMeta,
+  rejectOpportunityListing,
+  rowToListing,
+  deriveOpportunityGeo,
+  writeOpportunityRow,
+} = require('../supabase-opportunities');
+const { stripEarningsMeta } = require('../opportunity-moderation');
 const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths } = require('../opportunity-listing-pricing');
@@ -20,7 +28,6 @@ const TEST_SAMPLE_LISTINGS = [
     ],
     meta: [
       { key: 'Investment', val: '£25,000' },
-      { key: 'Return est.', val: '18 months' },
       { key: 'Location', val: 'Yorkshire' },
       { key: 'Commitment', val: 'Full-time' },
     ],
@@ -39,7 +46,6 @@ const TEST_SAMPLE_LISTINGS = [
     ],
     meta: [
       { key: 'Investment', val: '£500' },
-      { key: 'Earnings', val: '£800–£2k/mo' },
       { key: 'Location', val: 'Remote' },
       { key: 'Commitment', val: 'Part-time OK' },
     ],
@@ -56,7 +62,6 @@ const TEST_SAMPLE_LISTINGS = [
     ],
     meta: [
       { key: 'Investment', val: '£0' },
-      { key: 'Commission', val: '15%' },
       { key: 'Location', val: 'UK-wide' },
       { key: 'Commitment', val: 'Flexible' },
     ],
@@ -165,6 +170,7 @@ function mapOpportunityRow(row) {
   const meta = normalizeMeta(row.meta);
   return {
     id: row.id,
+    slug: row.slug || '',
     title: String(row.title || '').trim(),
     description: String(row.description || '').trim(),
     about: Array.isArray(row.about) ? row.about.map(String) : [],
@@ -197,20 +203,17 @@ function mapOpportunityRow(row) {
 }
 
 function buildMetaFromAdminInput(input) {
-  if (Array.isArray(input.meta)) return normalizeMeta(input.meta);
+  if (Array.isArray(input.meta)) return stripEarningsMeta(normalizeMeta(input.meta));
   const meta = [];
   const investment = String(input.investment || '').trim();
   const includes = String(input.investment_includes || input.investmentIncludes || '').trim();
   const location = String(input.location || '').trim();
   const commitment = String(input.commitment || '').trim();
-  const financialKey = String(input.financial_key || input.financialKey || '').trim();
-  const financialVal = String(input.financial_val || input.financialVal || '').trim();
   if (investment) meta.push({ key: 'Investment', val: investment });
   if (includes) meta.push({ key: 'Investment includes', val: includes });
-  if (financialKey && financialVal) meta.push({ key: financialKey, val: financialVal });
   if (location) meta.push({ key: 'Location', val: location });
   if (commitment) meta.push({ key: 'Commitment', val: commitment });
-  return normalizeMeta(meta);
+  return stripEarningsMeta(normalizeMeta(meta));
 }
 
 async function listOpportunitiesForAdmin(query) {
@@ -319,6 +322,7 @@ async function createAdminOpportunity(input) {
   const type = normalizeType(input.type || 'business-opportunity');
   const about = parseAbout(input.about != null ? input.about : input.about_text || input.aboutText);
   const meta = buildMetaFromAdminInput(input);
+  const geo = deriveOpportunityGeo(input, meta);
 
   const row = {
     organiser_id: null,
@@ -337,6 +341,8 @@ async function createAdminOpportunity(input) {
     host_initials: hostInitials(host),
     host_color: input.host_color || '#374151',
     meta,
+    outcode: geo.outcode,
+    region_slug: geo.regionSlug,
     tags: isTest ? ['admin-test', type] : [type],
     image_url: String(input.image_url || input.photo_url || '').trim() || null,
     logo_url: String(input.logo_url || '').trim() || null,
@@ -355,8 +361,7 @@ async function createAdminOpportunity(input) {
     currentSlug: null,
   });
 
-  const { data, error } = await sb.from('business_opportunities').insert(row).select('*').single();
-  if (error) throw new Error(error.message);
+  const data = await writeOpportunityRow(sb, 'insert', row);
 
   const imagePatch = {};
   const imageUrl = await resolveAdminOpportunityImage(input, data.id);
@@ -366,13 +371,7 @@ async function createAdminOpportunity(input) {
 
   if (Object.keys(imagePatch).length) {
     imagePatch.updated_at = now.toISOString();
-    const { data: updated, error: updateErr } = await sb
-      .from('business_opportunities')
-      .update(imagePatch)
-      .eq('id', data.id)
-      .select('*')
-      .single();
-    if (updateErr) throw new Error(updateErr.message);
+    const updated = await writeOpportunityRow(sb, 'update', imagePatch, data.id);
     return mapOpportunityRow(updated);
   }
 
@@ -473,8 +472,6 @@ module.exports = async function handler(req, res) {
           investment_includes: body.investment_includes || body.investmentIncludes,
           location: body.location,
           commitment: body.commitment,
-          financial_key: body.financial_key || body.financialKey,
-          financial_val: body.financial_val || body.financialVal,
           meta: body.meta,
           photo_base64: body.photo_base64 || body.photoBase64,
           photo_mime: body.photo_mime || body.photoMime,
@@ -520,7 +517,15 @@ module.exports = async function handler(req, res) {
           .select('status, published_at, listing_expires_at, listing_paid_at')
           .eq('id', id)
           .maybeSingle();
-        applyPublishedListingPayment(patch, current, now);
+        // Browse requires status=published + Approved. Organiser submits already
+        // published; Command Centre drafts need status flipped on Approve.
+        if (String(current?.status || '').toLowerCase() !== 'published') {
+          patch.status = 'published';
+        }
+        if (!current?.published_at) {
+          patch.published_at = now.toISOString();
+        }
+        applyPublishedListingPayment(patch, { ...(current || {}), status: 'published' }, now);
         const { data, error } = await sb
           .from('business_opportunities')
           .update(patch)
@@ -622,11 +627,12 @@ module.exports = async function handler(req, res) {
       Object.prototype.hasOwnProperty.call(body, 'investment') ||
       Object.prototype.hasOwnProperty.call(body, 'location') ||
       Object.prototype.hasOwnProperty.call(body, 'commitment') ||
-      Object.prototype.hasOwnProperty.call(body, 'investment_includes') ||
-      Object.prototype.hasOwnProperty.call(body, 'financial_key') ||
-      Object.prototype.hasOwnProperty.call(body, 'financial_val')
+      Object.prototype.hasOwnProperty.call(body, 'investment_includes')
     ) {
       patch.meta = buildMetaFromAdminInput(body);
+      const geo = deriveOpportunityGeo(body, patch.meta);
+      patch.outcode = geo.outcode;
+      patch.region_slug = geo.regionSlug;
     }
     if (Object.prototype.hasOwnProperty.call(body, 'host')) {
       patch.host = String(body.host || '').trim() || null;
@@ -683,13 +689,7 @@ module.exports = async function handler(req, res) {
           .maybeSingle();
         applyPublishedListingPayment(patch, { ...current, status: 'published' }, now);
       }
-      const { data, error } = await sb
-        .from('business_opportunities')
-        .update(patch)
-        .eq('id', id)
-        .select('*')
-        .single();
-      if (error) throw new Error(error.message);
+      const data = await writeOpportunityRow(sb, 'update', patch, id);
       return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'update_failed', message: e.message });

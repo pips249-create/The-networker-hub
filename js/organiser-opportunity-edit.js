@@ -96,12 +96,6 @@
     return true;
   }
 
-  function hasFinancialClaimsInForm() {
-    const finKey = document.getElementById('oe-financial-key')?.value.trim() || '';
-    const finVal = document.getElementById('oe-financial-val')?.value.trim() || '';
-    return Boolean(finKey && finVal);
-  }
-
   function parseInvestmentFromForm() {
     const raw = document.getElementById('oe-investment')?.value.trim() || '';
     const num = parseInt(raw.replace(/[^0-9]/g, ''), 10);
@@ -120,23 +114,13 @@
     return hasHighRiskOpportunityType() || (investment != null && investment >= 10000);
   }
 
-  function updateEarningsAttestVisibility() {
-    const wrap = document.getElementById('oe-earnings-attest-wrap');
-    if (!wrap) return;
-    const show = hasFinancialClaimsInForm();
-    wrap.hidden = !show;
-    if (!show) {
-      const box = document.getElementById('oe-earnings-attest');
-      if (box) box.checked = false;
-    }
-    updateFcaAttestVisibility();
-  }
-
   function updateFcaAttestVisibility() {
     const wrap = document.getElementById('oe-fca-attest-wrap');
+    const field = document.getElementById('oe-fca-attest-field');
     if (!wrap) return;
     const show = requiresFcaDisclaimer();
     wrap.hidden = !show;
+    if (field) field.hidden = !show;
     if (!show) {
       const box = document.getElementById('oe-fca-attest');
       if (box) box.checked = false;
@@ -150,11 +134,6 @@
       submitBtn.textContent = 'Opening secure checkout…';
     }
     const checkoutBody = { opportunityId: opportunityId, months: months };
-    if (hasFinancialClaimsInForm()) {
-      checkoutBody.earningsClaimsAttested = Boolean(
-        document.getElementById('oe-earnings-attest')?.checked
-      );
-    }
     if (requiresFcaDisclaimer()) {
       checkoutBody.fcaDisclaimerAttested = Boolean(document.getElementById('oe-fca-attest')?.checked);
     }
@@ -250,18 +229,9 @@
     document.getElementById('oe-investment-includes').value = metaValue(opp.meta, /^investment includes$/i);
     document.getElementById('oe-location').value = metaValue(opp.meta, /^location$/i);
     document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
-
-    const financial = (opp.meta || []).find((m) =>
-      /^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)
-    );
-    if (financial) {
-      document.getElementById('oe-financial-key').value = financial.key;
-      document.getElementById('oe-financial-val').value = financial.val;
-    }
-    updateEarningsAttestVisibility();
+    updateFcaAttestVisibility();
 
     const usedKeys = new Set(['investment', 'investment includes', 'location', 'commitment', 'companies house']);
-    if (financial) usedKeys.add(financial.key.toLowerCase());
     const extra = (opp.meta || []).find((m) => {
       const k = String(m.key || '').toLowerCase();
       return !usedKeys.has(k) && !/^(return|earnings|commission|revenue|income|profit)/i.test(m.key);
@@ -416,8 +386,6 @@
     const investment = document.getElementById('oe-investment').value.trim();
     const location = document.getElementById('oe-location').value.trim();
     const commitment = document.getElementById('oe-commitment').value.trim();
-    const finKey = document.getElementById('oe-financial-key').value.trim();
-    const finVal = document.getElementById('oe-financial-val').value.trim();
     const extraKey = document.getElementById('oe-extra-key').value.trim();
     const extraVal = document.getElementById('oe-extra-val').value.trim();
 
@@ -426,9 +394,10 @@
     if (includes) meta.push({ key: 'Investment includes', val: includes });
     const companiesHouse = document.getElementById('oe-companies-house')?.value.trim() || '';
     if (companiesHouse) meta.push({ key: 'Companies House', val: companiesHouse });
-    if (finKey && finVal) meta.push({ key: finKey, val: finVal });
     if (location) meta.push({ key: 'Location', val: location });
-    if (extraKey && extraVal) meta.push({ key: extraKey, val: extraVal });
+    if (extraKey && extraVal && !/^(return|earnings|commission|revenue|income|profit)/i.test(extraKey)) {
+      meta.push({ key: extraKey, val: extraVal });
+    }
     if (commitment) meta.push({ key: 'Commitment', val: commitment });
     return meta;
   }
@@ -458,9 +427,6 @@
       listingStatus,
       photoUrl: document.getElementById('oe-photo-url').value.trim(),
       logoUrl: document.getElementById('oe-logo-url').value.trim(),
-      earningsClaimsAttested: hasFinancialClaimsInForm()
-        ? Boolean(document.getElementById('oe-earnings-attest')?.checked)
-        : false,
       fcaDisclaimerAttested: requiresFcaDisclaimer()
         ? Boolean(document.getElementById('oe-fca-attest')?.checked)
         : false,
@@ -625,8 +591,6 @@
       'oe-location',
       'oe-commitment',
       'oe-companies-house',
-      'oe-financial-key',
-      'oe-financial-val',
       'oe-extra-key',
       'oe-extra-val',
     ];
@@ -660,9 +624,6 @@
       return 'Enter the territory or location for this opportunity.';
     }
     if (!payload.meta.some((m) => /^commitment$/i.test(m.key))) return 'Select a commitment level.';
-    if (hasFinancialClaimsInForm() && !payload.earningsClaimsAttested) {
-      return 'Confirm your earnings or return figures are truthful and substantiated.';
-    }
     if (requiresFcaDisclaimer() && !payload.fcaDisclaimerAttested) {
       return 'Confirm this is not a regulated investment and you will not make guaranteed return claims.';
     }
@@ -827,16 +788,15 @@
     refreshModerationWarnings(false);
     refreshCompleteness();
 
-    ['oe-financial-key', 'oe-financial-val', 'oe-investment'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('input', updateEarningsAttestVisibility);
-      el.addEventListener('change', updateEarningsAttestVisibility);
-    });
+    const investmentEl = document.getElementById('oe-investment');
+    if (investmentEl) {
+      investmentEl.addEventListener('input', updateFcaAttestVisibility);
+      investmentEl.addEventListener('change', updateFcaAttestVisibility);
+    }
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
-      input.addEventListener('change', updateEarningsAttestVisibility);
+      input.addEventListener('change', updateFcaAttestVisibility);
     });
-    updateEarningsAttestVisibility();
+    updateFcaAttestVisibility();
 
     const backLink = document.getElementById('oe-back-link');
     if (backLink && editId) {

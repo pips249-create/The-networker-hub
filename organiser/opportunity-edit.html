@@ -14,12 +14,12 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/hub.css?v=20260714cls" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260726m" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
     <div id="oe-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -89,6 +89,7 @@
               <option value="education">Education &amp; Coaching</option>
               <option value="finance">Finance &amp; Admin</option>
               <option value="pets">Pets &amp; Animals</option>
+              <option value="mlm">MLM &amp; Network Marketing</option>
               <option value="general">Other</option>
             </select>
           </div>
@@ -185,28 +186,8 @@
               <option>Flexible</option>
             </select>
           </div>
-          <div class="ee-field">
-            <label for="oe-financial-key">Earnings / return (optional)</label>
-            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">
-              Only include figures you can substantiate. The Hub does not verify earnings claims and prohibits guaranteed-income language.
-            </p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
-              <select id="oe-financial-key">
-                <option value="">None</option>
-                <option value="Earnings">Earnings</option>
-                <option value="Commission">Commission</option>
-                <option value="Return est.">Return est.</option>
-                <option value="Revenue">Revenue</option>
-                <option value="Income">Income</option>
-                <option value="Profit">Profit</option>
-              </select>
-              <input type="text" id="oe-financial-val" placeholder="e.g. £400–£900/mo" />
-            </div>
-            <label class="auth-terms-check auth-terms-check--optional" id="oe-earnings-attest-wrap" hidden style="margin-top: 12px">
-              <input type="checkbox" id="oe-earnings-attest" />
-              <span>I confirm any earnings or return figures are truthful, typical for this opportunity, and not guaranteed.</span>
-            </label>
-            <label class="auth-terms-check auth-terms-check--optional" id="oe-fca-attest-wrap" hidden style="margin-top: 12px">
+          <div class="ee-field" id="oe-fca-attest-field">
+            <label class="auth-terms-check auth-terms-check--optional" id="oe-fca-attest-wrap" hidden>
               <input type="checkbox" id="oe-fca-attest" />
               <span>I confirm this is not a regulated investment and I will not make guaranteed return claims.</span>
             </label>
@@ -282,6 +263,6 @@
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260710" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260710d" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260710d" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260728earn" defer></script>
   </body>
 </html>
