@@ -2023,10 +2023,25 @@
 }
 
 .opp-browse-page .opp-browse-disclaimer {
-  margin: 12px 0 0;
+  margin: 16px 0 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+.opp-browse-page .opp-promo-section[hidden] {
+  display: none !important;
+}
+
+.opp-browse-page .opp-results-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.opp-browse-page .events-filter-shell .filter-clear-btn[hidden] {
+  display: none !important;
 }
 
 /* Filter bar — navy shell, gold accents (matches hero palette) */
@@ -2085,36 +2100,206 @@
   color: var(--opp-navy);
 }
 
+.opp-browse-page .events-filter-shell .filter-more-toggle {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  box-shadow: none;
+}
+
 .opp-browse-page .events-filter-shell .filter-more-toggle[aria-expanded='true'],
 .opp-browse-page .events-filter-shell .filter-more-toggle:hover {
   border-color: var(--opp-gold-border);
   color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  transform: none;
+  box-shadow: none;
+}
+
+.opp-browse-page .events-filter-shell .filter-more-toggle[aria-expanded='true'] {
+  background: var(--opp-gold);
+  border-color: var(--opp-gold);
+  border-style: solid;
+  color: var(--opp-navy);
 }
 
 .opp-browse-page .events-filter-shell .filter-clear-btn {
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--opp-navy);
 }
 
 .opp-browse-page .events-filter-shell .filter-clear-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: #fff;
   border-color: var(--opp-gold-border);
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .filter-more-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--opp-gold);
+  color: var(--opp-navy);
+}
+
+.opp-browse-page .filter-more-toggle[aria-expanded='true'] .filter-more-badge {
+  background: var(--opp-navy);
+  color: #fff;
+}
+
+.opp-browse-page .filter-more-badge[hidden] {
+  display: none !important;
 }
 
 .opp-browse-page .filter-opp-invest-group .filter-format-pill-face {
-  min-width: 7.5rem;
+  min-width: 6.75rem;
   justify-content: center;
 }
 
-.opp-browse-page .filter-opp-commitment-group {
+.opp-browse-page .filter-opp-more-panel:not([hidden]) {
+  padding: 14px 0 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  margin-top: 2px;
+}
+
+.opp-browse-page .filter-opp-more-grid {
+  display: grid;
+  grid-template-columns: minmax(11rem, 1fr) minmax(16rem, 1.4fr) auto;
+  gap: 14px 20px;
+  align-items: end;
+  width: 100%;
+}
+
+.opp-browse-page .filter-opp-category-wrap,
+.opp-browse-page .filter-opp-commitment-group,
+.opp-browse-page .filter-opp-custom-invest {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.opp-browse-page .filter-opp-commitment-group {
+  width: 100%;
+}
+
+.opp-browse-page .filter-opp-commitment-group .filter-format-pills {
   flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 14px;
+}
+
+.opp-browse-page .filter-opp-commitment-group .filter-format-pill-face {
+  min-width: 0;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .opp-browse-page .filter-opp-category-wrap select {
   min-width: 11rem;
+  width: 100%;
+  max-width: 18rem;
+  min-height: 42px;
+  border-radius: 999px;
+  padding-left: 14px;
+  background: var(--cream, #f7f3ea);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.opp-browse-page .filter-opp-custom-invest {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.opp-browse-page .filter-opp-custom-invest .filter-price-range-controls {
+  width: auto;
+}
+
+.opp-browse-page .events-filter-shell .event-type-chip.is-zero:not(.is-active) {
+  opacity: 0.42;
+}
+
+.opp-browse-page .filter-bar-row-types--nested {
+  padding-top: 2px;
+}
+
+@media (max-width: 1100px) {
+  .opp-browse-page .filter-opp-more-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .opp-browse-page .filter-opp-custom-invest {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .opp-browse-page .filter-opp-more-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .opp-browse-page .filter-opp-category-wrap select {
+    max-width: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .opp-browse-page .opp-results-tools {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .opp-browse-page .opp-results-tools .opp-copy-link-btn,
+  .opp-browse-page .opp-results-tools .opp-save-search-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+.opp-browse-page .filter-opp-commitment-group .filter-format-pill input[type='checkbox']:checked + .filter-format-pill-face::before {
+  border-color: var(--opp-navy);
+  background-color: var(--opp-gold);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230d1f3c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.2l2.8 2.8 6.2-6.2'/%3E%3C/svg%3E");
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-bar-row-types::before {
+  content: 'Opportunity type';
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-opp-more-panel,
+.opp-browse-page .filter-mobile-sheet-body .filter-opp-more-panel[hidden] {
+  padding-top: 0;
+  border-top: none;
+  margin-top: 0;
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-opp-more-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-opp-category-wrap select {
+  max-width: none;
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-more-toggle {
+  display: none;
 }
 
 .opp-browse-page .events-results-meta {
@@ -4362,65 +4547,6 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   margin-bottom: 0;
 }
 
-/* Hubert strip on browse */
-.opportunities-page .opp-hubert-strip {
-  margin: 16px 0 24px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f5f0e8 0%, #fff 100%);
-  border: 1px solid #e8d9a8;
-}
-
-.opportunities-page .opp-hubert-strip-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 16px;
-}
-
-.opportunities-page .opp-hubert-strip-copy {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: min(100%, 280px);
-}
-
-.opportunities-page .opp-hubert-strip-copy strong {
-  display: block;
-  color: var(--opp-navy, #0d1f3c);
-  font-size: 14px;
-}
-
-.opportunities-page .opp-hubert-strip-copy span {
-  display: block;
-  font-size: 13px;
-  color: #5c6470;
-  margin-top: 2px;
-}
-
-.opportunities-page .opp-hubert-strip-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.opportunities-page .opp-hubert-chip {
-  border: 1px solid #d4c4a0;
-  background: #fff;
-  color: var(--opp-navy, #0d1f3c);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.opportunities-page .opp-hubert-chip:hover {
-  border-color: var(--opp-gold, #c9961f);
-  color: #7a5c0a;
-}
-
 /* Saved search alert */
 .opportunities-page .opp-listings-toolbar {
   flex-wrap: wrap;
@@ -4473,12 +4599,6 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 
 .opportunities-page .opp-save-search-status.is-error {
   color: #b91c1c;
-}
-
-@media (max-width: 860px) {
-  .opportunities-page .opp-hubert-strip-actions {
-    width: 100%;
-  }
 }
 
 /* Compare nudge after saving 2 opportunities */

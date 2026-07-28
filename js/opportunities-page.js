@@ -396,8 +396,8 @@
     els.filterCategory = document.getElementById('opp-filter-category');
     els.moreToggle = document.getElementById('filter-more-toggle');
     els.morePanel = document.getElementById('filter-more-panel');
+    els.moreBadge = document.getElementById('filter-more-badge');
     els.clearBar = document.getElementById('clear-filters-bar');
-    els.clearResults = document.getElementById('clear-filters');
     els.viewGrid = document.getElementById('opp-view-grid');
     els.viewMap = document.getElementById('opp-view-map');
     els.spotlightTrack = document.getElementById('opp-spotlight-track');
@@ -458,19 +458,9 @@
   }
 
   function getGridListings() {
-    var filtered = getFilteredList();
-    var spotlightVisible = getSpotlightVisible();
-    if (!spotlightVisible.length) return filtered;
-
-    var inSpotlight = {};
-    spotlightVisible.forEach(function (item) {
-      inSpotlight[String(item.id)] = true;
-    });
-
-    var gridOnly = filtered.filter(function (item) {
-      return !inSpotlight[String(item.id)];
-    });
-    return gridOnly;
+    /* Match events browse: featured items stay in the main grid as well as spotlight.
+       Hiding them from the grid made a Featured-only catalogue look empty. */
+    return getFilteredList();
   }
 
   function getSpotlightCardStep() {
@@ -500,8 +490,12 @@
   }
 
   function layoutSpotlightTrack(cardsHtml, itemCount) {
+    if (!els.spotlightTrack) return;
     var sc = window.HubSpotlightCarousel;
-    if (!sc || !els.spotlightTrack) return;
+    if (!sc || typeof sc.applyLoopLayout !== 'function') {
+      els.spotlightTrack.innerHTML = cardsHtml || '';
+      return;
+    }
     var section = els.spotlightSection || els.spotlightTrack.closest('.premium-spotlight');
     sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.opp-premium-card', cardsHtml);
   }
@@ -555,6 +549,8 @@
 
   function startSpotlightAuto() {
     stopSpotlightAuto();
+    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var sc = window.HubSpotlightCarousel;
     if (!els.spotlightTrack || !sc || !sc.canAutoAdvance(els.spotlightTrack, getSpotlightVisible().length)) return;
     spotlightTimer = window.setInterval(function () {
@@ -671,58 +667,21 @@
     );
   }
 
-  function hasAnyFeaturedOpportunities() {
-    return allListings.some(function (item) {
-      return item.featured;
-    });
-  }
-
-  function spotlightBoostPromoCard() {
-    if (window.HubOrganiserActions && window.HubOrganiserActions.spotlightBoostCardHtml) {
-      return window.HubOrganiserActions.spotlightBoostCardHtml('opportunity');
-    }
-    return (
-      '<article class="premium-card premium-card--boost-cta opp-premium-card">' +
-      '<a class="premium-card-link" href="/opportunities/list">' +
-      '<div class="premium-card-media" aria-hidden="true">' +
-      '<div class="premium-card-bg premium-card-bg--boost">' +
-      '<span class="premium-card-boost-icon" aria-hidden="true">★</span></div>' +
-      '<div class="premium-card-overlay"></div></div>' +
-      '<div class="premium-card-top"><span class="premium-badge">Premium</span>' +
-      '<span class="premium-price">£55/mo</span></div>' +
-      '<div class="premium-card-body"><h3 class="premium-card-title">Boost your listing here</h3>' +
-      '<div class="premium-card-meta">' +
-      '<p class="premium-meta-row"><span>Premium Spotlight on business opportunities</span></p>' +
-      '<p class="premium-meta-row premium-meta-row--cta"><span>List or upgrade to premium →</span></p>' +
-      '</div></div></a></article>'
-    );
-  }
-
-  function bindSpotlightBoostPromo() {
-    if (window.HubOrganiserActions && window.HubOrganiserActions.bindSpotlightBoost) {
-      window.HubOrganiserActions.bindSpotlightBoost(els.spotlightTrack);
-    }
-  }
-
   function renderSpotlight() {
     if (!els.spotlightTrack) return;
 
     var featured = getSpotlightVisible();
-    var promo = document.querySelector('.opp-promo-section');
+    var promo =
+      document.getElementById('opp-promo-section') ||
+      document.querySelector('.opp-promo-section');
 
     if (!featured.length) {
-      if (hasAnyFeaturedOpportunities()) {
-        els.spotlightTrack.innerHTML =
-          '<p class="spotlight-empty">No premium listings match your current filters. Try clearing filters or widening your search.</p>';
-      } else {
-        els.spotlightTrack.innerHTML = spotlightBoostPromoCard();
-        bindSpotlightBoostPromo();
-      }
+      stopSpotlightAuto();
+      els.spotlightTrack.innerHTML = '';
       els.spotlightTrack.classList.remove('spotlight-track--carousel');
       els.spotlightTrack.removeAttribute('data-loop-width');
       els.spotlightTrack.scrollLeft = 0;
-      stopSpotlightAuto();
-      if (promo) promo.hidden = false;
+      if (promo) promo.hidden = true;
       return;
     }
 
@@ -735,6 +694,13 @@
       syncSpotlightLoopScroll();
       startSpotlightAuto();
     });
+  }
+
+  function syncClearFiltersVisibility() {
+    var active = hasActiveOppMobileFilters();
+    if (els.clearBar) {
+      els.clearBar.hidden = !active;
+    }
   }
 
   function escapeHtml(s) {
@@ -1330,6 +1296,15 @@
   function updateResultsCount(total) {
     if (!els.resultsCount) return;
     els.resultsCount.textContent = String(total);
+    var wrap = els.resultsCount.closest('.events-results-count');
+    if (wrap) {
+      wrap.innerHTML =
+        'Showing <strong id="opp-results-count">' +
+        String(total) +
+        '</strong> result' +
+        (total === 1 ? '' : 's');
+      els.resultsCount = document.getElementById('opp-results-count');
+    }
   }
 
   function updateLoadMoreControls(filtered, shown, hasMore) {
@@ -1485,7 +1460,30 @@
               return hasTag(item, type);
             });
       countEl.textContent = '(' + n + ')';
+      chip.classList.toggle('is-zero', n === 0);
     });
+  }
+
+  function countAdvancedFilters() {
+    var n = 0;
+    if (activeCategory) n += 1;
+    if (activeCommitments.length) n += 1;
+    if (minInvest != null || maxInvest != null) n += 1;
+    return n;
+  }
+
+  function syncMoreFiltersBadge() {
+    if (!els.moreBadge) return;
+    var n = countAdvancedFilters();
+    if (n > 0) {
+      els.moreBadge.hidden = false;
+      els.moreBadge.setAttribute('aria-hidden', 'false');
+      els.moreBadge.textContent = String(n);
+    } else {
+      els.moreBadge.hidden = true;
+      els.moreBadge.setAttribute('aria-hidden', 'true');
+      els.moreBadge.textContent = '';
+    }
   }
 
   function syncCategorySelect() {
@@ -1509,13 +1507,6 @@
 
     if (!filtered.length) {
       disconnectLazyObserver();
-      if (totalMatches.length) {
-        els.mount.innerHTML =
-          '<p class="opp-listings-spotlight-only" role="status">Matching premium listings are shown in Premium Spotlight above.</p>';
-        updateResultsCount(totalMatches.length);
-        updateTypeChipCounts();
-        return;
-      }
       els.mount.innerHTML =
         '<div class="events-empty" role="status"><p>No opportunities match your filters. <button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button></p></div>';
       updateResultsCount(totalMatches.length);
@@ -1676,11 +1667,36 @@
     syncTypeChipUi();
     syncInvestPills();
     syncCommitmentChecks();
+    syncMoreFiltersBadge();
+    syncClearFiltersVisibility();
     resetListingPagination();
     writeFiltersToUrl();
     renderListings();
     renderSpotlight();
     if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
+    logOpportunityBrowseSearch();
+  }
+
+  function logOpportunityBrowseSearch() {
+    if (!window.HubBrowseAnalytics || typeof window.HubBrowseAnalytics.logSearch !== 'function') return;
+    if (!hasActiveOppMobileFilters() && !(window.hubOppRegionalLanding && window.hubOppRegionalLanding.slug)) {
+      return;
+    }
+    var regional = window.hubOppRegionalLanding || null;
+    var filtered = typeof getGridListings === 'function' ? getGridListings() : [];
+    window.HubBrowseAnalytics.logSearch({
+      source: 'opportunities_browse',
+      q: searchQ || '',
+      location: locationQ || activeLocationTag || (regional && (regional.location || regional.name)) || '',
+      regionSlug: (regional && regional.slug) || activeLocationTag || '',
+      types: activeTypes.join(','),
+      category: activeCategory || '',
+      invest: activeInvestTier || '',
+      commitment: activeCommitments.join(','),
+      locationTag: activeLocationTag || '',
+      sort: sortBy || '',
+      resultCount: filtered.length,
+    });
   }
 
   function resetFilters() {
@@ -1725,6 +1741,8 @@
     syncCategorySelect();
     syncInvestPills();
     syncCommitmentChecks();
+    syncMoreFiltersBadge();
+    syncClearFiltersVisibility();
     writeFiltersToUrl();
     renderListings();
     renderSpotlight();
@@ -1831,19 +1849,6 @@
     if (!els.saveSearchBtn || els.saveSearchBtn.dataset.bound) return;
     els.saveSearchBtn.dataset.bound = '1';
     els.saveSearchBtn.addEventListener('click', saveSearchAlert);
-  }
-
-  function initHubertStrip() {
-    var strip = document.getElementById('opp-hubert-strip');
-    if (!strip || strip.dataset.bound) return;
-    strip.dataset.bound = '1';
-    strip.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-hubert-prompt]');
-      if (!btn) return;
-      var prompt = btn.getAttribute('data-hubert-prompt') || '';
-      if (window.HubertWidget && window.HubertWidget.ask) window.HubertWidget.ask(prompt);
-      else if (window.HubertWidget && window.HubertWidget.open) window.HubertWidget.open();
-    });
   }
 
   function initSearch() {
@@ -1962,7 +1967,6 @@
     }
 
     if (els.clearBar) els.clearBar.addEventListener('click', resetFilters);
-    if (els.clearResults) els.clearResults.addEventListener('click', resetFilters);
 
     if (window.HUB_initMobileFilterSheet) {
       var sheetCtrl = window.HUB_initMobileFilterSheet({
@@ -2091,6 +2095,8 @@
     }
     updateFilterCounts();
     initFilterBar();
+    syncMoreFiltersBadge();
+    syncClearFiltersVisibility();
     initSearch();
     initSort();
     initViewToggle();
@@ -2099,7 +2105,6 @@
     initFavClicks();
     initCopyLink();
     initSaveSearch();
-    initHubertStrip();
     syncTypeChipUi();
     syncInvestPills();
     syncCommitmentChecks();
