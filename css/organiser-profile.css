@@ -102,81 +102,41 @@
   color: #1e3a5f;
 }
 
-.org-ranking-panel {
-  margin: 0 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(37, 99, 235, 0.18);
-  background: linear-gradient(135deg, #f8fbff 0%, #fdf8ec 100%);
-  overflow: hidden;
-}
-
-.org-ranking-panel[hidden] {
-  display: none !important;
-}
-
-.org-ranking-panel-toggle {
+.org-ranking-mark {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 14px;
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  color: #1e3a5f;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 14px;
 }
 
-.org-ranking-panel-toggle:hover {
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.org-ranking-panel-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #2563eb;
-}
-
-.org-ranking-panel-summary {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.org-ranking-panel-chev {
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #2563eb;
-}
-
-.org-ranking-panel-body {
-  padding: 0 14px 14px;
-  border-top: 1px solid rgba(37, 99, 235, 0.12);
-}
-
-.org-ranking-panel-body[hidden] {
+.org-ranking-mark[hidden] {
   display: none !important;
 }
 
 .org-profile-ranking {
   display: inline-block;
-  margin: 12px 0 8px;
+  margin: 0;
 }
 
 .org-ranking-panel-meta {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-muted, #64748b);
+}
+
+.org-ranking-board-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d6e7a;
+  text-decoration: none;
+}
+
+.org-ranking-board-link:hover {
+  text-decoration: underline;
+  color: #084a52;
 }
 
 .org-showcase-rating {
