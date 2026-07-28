@@ -60,6 +60,11 @@ function isOnlineAttendance(ev) {
   return fmt.includes('online') || fmt.includes('virtual');
 }
 
+function isHybridAttendance(ev) {
+  const fmt = String(ev.meetingType || ev.format || '').toLowerCase();
+  return fmt.includes('hybrid');
+}
+
 function isoDateValue(value) {
   if (!value) return '';
   const raw = String(value).trim();
@@ -105,6 +110,9 @@ function buildEventPlaceLocation(ev) {
 }
 
 function buildEventAvailability(ev, ticketSoldOut) {
+  if (ev.isEventPast || ev.salesClosedReason === 'ended') {
+    return 'https://schema.org/SoldOut';
+  }
   if (ticketSoldOut || ev.isSoldOut || ev.salesClosedReason === 'sold_out') {
     return 'https://schema.org/SoldOut';
   }
@@ -149,17 +157,18 @@ function buildEventOffers(ev, url) {
     return offer;
   }
 
-  const isFree = ev.priceKey === 'free' || ev.hasFreeTickets;
+  const isFree = ev.priceKey === 'free' || ev.hasFreeTickets || Number(ev.priceNum) === 0;
   const isPaid = Number(ev.priceNum) > 0 || ev.hasPaidTickets;
-  if (!isFree && !isPaid) return null;
 
+  // Google Event rich results expect an Offer — default to free when price is unknown.
   const offer = {
     '@type': 'Offer',
-    price: isFree && !isPaid ? 0 : Number(ev.priceNum) || 0,
+    price: isPaid ? Number(ev.priceNum) || 0 : 0,
     priceCurrency: 'GBP',
     availability: buildEventAvailability(ev, false),
     url,
   };
+  if (isFree && !isPaid) offer.name = 'Free entry';
   if (validFrom) offer.validFrom = validFrom;
   return offer;
 }
@@ -169,10 +178,20 @@ function buildEventSchema(ev, origin) {
   const slug = ev.slug || publicEventSlug({ slug: ev.slug, title: ev.title });
   const url = absoluteUrl(origin, '/events/' + encodeURIComponent(slug));
   const online = isOnlineAttendance(ev);
+  const hybrid = isHybridAttendance(ev);
   const place = buildEventPlaceLocation(ev);
+  const statusRaw = String(ev.status || ev.listingStatus || '').toLowerCase();
 
   let eventAttendanceMode = 'https://schema.org/OfflineEventAttendanceMode';
-  if (online) eventAttendanceMode = 'https://schema.org/OnlineEventAttendanceMode';
+  if (hybrid) eventAttendanceMode = 'https://schema.org/MixedEventAttendanceMode';
+  else if (online) eventAttendanceMode = 'https://schema.org/OnlineEventAttendanceMode';
+
+  let eventStatus = 'https://schema.org/EventScheduled';
+  if (statusRaw === 'cancelled' || statusRaw === 'canceled') {
+    eventStatus = 'https://schema.org/EventCancelled';
+  } else if (statusRaw === 'postponed') {
+    eventStatus = 'https://schema.org/EventPostponed';
+  }
 
   const schema = {
     '@context': 'https://schema.org',
@@ -182,7 +201,7 @@ function buildEventSchema(ev, origin) {
     description: trimText(ev.description, 500),
     url,
     eventAttendanceMode,
-    eventStatus: 'https://schema.org/EventScheduled',
+    eventStatus,
   };
 
   const startDate = isoDateValue(ev.dateRaw || ev.nextDate || ev.dateFieldRaw);
@@ -190,7 +209,9 @@ function buildEventSchema(ev, origin) {
   if (startDate) schema.startDate = startDate;
   if (endDate) schema.endDate = endDate;
 
-  if (online && !place) {
+  if (hybrid && place) {
+    schema.location = [place, { '@type': 'VirtualLocation', url }];
+  } else if (online && !place) {
     schema.location = { '@type': 'VirtualLocation', url };
   } else if (place) {
     schema.location = place;
@@ -244,6 +265,8 @@ function buildOrganiserSchema(org, origin) {
       '@type': 'AggregateRating',
       ratingValue: String(org.rating),
       reviewCount: String(org.reviews),
+      bestRating: '5',
+      worstRating: '1',
     };
   }
 

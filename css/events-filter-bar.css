@@ -2471,7 +2471,7 @@ body.browse-mode-organisers .events-toolbar {
 /* ─── Mobile: compact search bar + full-page filter sheet ─── */
 @media (max-width: 900px) {
   .events-page .events-filter-wrap {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .events-page .events-filter-heading {
@@ -2492,38 +2492,65 @@ body.browse-mode-organisers .events-toolbar {
   .events-page .filter-bar-row-compact {
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     margin: 0;
     padding: 0;
     border: none;
   }
 
-  .events-page .filter-bar-row-compact .filter-field-search {
+  /* Beat hub-mobile width:100% so search + Filters stay one row */
+  .events-page .filter-bar-row-compact .filter-field-search,
+  .events-page .filter-bar-row-top .filter-field-search {
     flex: 1 1 auto;
+    width: auto;
     min-width: 0;
     background: #fff;
-    border: 1px solid rgba(45, 35, 50, 0.12);
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(45, 35, 50, 0.06);
+    border: 2px solid rgba(122, 82, 144, 0.42);
+    border-radius: 14px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.8) inset,
+      0 6px 18px rgba(74, 44, 92, 0.12);
   }
 
-  .events-page .filter-bar-row-compact .filter-field-search input {
-    min-height: 44px;
-    padding: 10px 36px 10px 12px;
+  .events-page .filter-bar-row-compact .filter-field-search:focus-within,
+  .events-page .filter-bar-row-top .filter-field-search:focus-within {
+    border-color: var(--filter-surface, #7a5290);
+    box-shadow:
+      0 0 0 3px rgba(122, 82, 144, 0.18),
+      0 8px 22px rgba(74, 44, 92, 0.16);
+  }
+
+  .events-page .filter-bar-row-compact .filter-field-search input,
+  .events-page .filter-bar-row-top .filter-field-search input {
+    min-height: 48px;
+    padding: 12px 40px 12px 14px;
     border: none;
     background: transparent;
     box-shadow: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--charcoal, #2d2332);
   }
 
-  .events-page .filter-bar-row-compact .filter-field-search input:focus {
+  .events-page .filter-bar-row-compact .filter-field-search input::placeholder,
+  .events-page .filter-bar-row-top .filter-field-search input::placeholder {
+    color: rgba(45, 35, 50, 0.48);
+    font-weight: 500;
+  }
+
+  .events-page .filter-bar-row-compact .filter-field-search input:focus,
+  .events-page .filter-bar-row-top .filter-field-search input:focus {
     outline: none;
     box-shadow: none;
   }
 
-  .events-page .filter-bar-row-compact .filter-field-icon-end {
-    right: 10px;
-    color: rgba(74, 68, 70, 0.45);
+  .events-page .filter-bar-row-compact .filter-field-icon-end,
+  .events-page .filter-bar-row-top .filter-field-search .filter-field-icon-end {
+    right: 12px;
+    color: var(--filter-surface, #7a5290);
+    opacity: 0.85;
   }
 
   .events-page .filter-mobile-toggle {
@@ -2532,26 +2559,30 @@ body.browse-mode-organisers .events-toolbar {
     justify-content: center;
     gap: 4px;
     flex: 0 0 auto;
+    align-self: stretch;
     width: auto;
-    min-width: 84px;
-    min-height: 44px;
+    min-width: 76px;
+    min-height: 48px;
     margin: 0;
     padding: 0 14px;
-    border: none;
-    border-radius: 12px;
-    background: var(--filter-surface);
-    color: #fff;
+    border: 1.5px solid rgba(122, 82, 144, 0.35);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--filter-surface, #7a5290);
     font-family: inherit;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(74, 44, 92, 0.22);
+    box-shadow: 0 2px 10px rgba(45, 35, 50, 0.06);
   }
 
   .events-page .filter-mobile-toggle.is-active-hint {
+    background: var(--filter-surface, #7a5290);
+    border-color: var(--filter-surface, #7a5290);
+    color: #fff;
     box-shadow:
       0 0 0 2px #fff,
-      0 0 0 4px var(--gold),
+      0 0 0 4px var(--gold, #d4a574),
       0 4px 14px rgba(74, 44, 92, 0.22);
   }
 
@@ -2562,7 +2593,11 @@ body.browse-mode-organisers .events-toolbar {
     min-width: 8px;
     font-size: 18px;
     line-height: 1;
-    color: var(--gold);
+    color: var(--gold, #d4a574);
+  }
+
+  .events-page .filter-mobile-toggle.is-active-hint .filter-mobile-toggle-badge {
+    color: var(--gold, #d4a574);
   }
 
   .events-page .events-filter-bar .filter-bar-location-group,
@@ -2851,6 +2886,30 @@ body.events-filter-sheet-open {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   width: 100%;
+}
+
+.filter-mobile-sheet-body .filter-checkbox {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.filter-mobile-sheet-body .filter-checkbox-box {
+  border-color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.filter-mobile-sheet-body .filter-checkbox input:checked + .filter-checkbox-box {
+  background: var(--gold, #d4a574);
+  border-color: var(--gold, #d4a574);
+}
+
+.filter-mobile-sheet-body .filter-checkbox input:checked + .filter-checkbox-box::after {
+  border-color: var(--filter-surface-deep, #634268);
+}
+
+.filter-mobile-sheet-body .filter-location-radius select {
+  color: var(--charcoal, #2d2332);
+  background: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
 .filter-mobile-sheet-body .filter-checkbox-free {

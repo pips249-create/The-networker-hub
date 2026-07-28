@@ -73,19 +73,20 @@
         );
       }
     } else if (params.location) {
+      params.radius = String(
+        window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15
+      );
       var filterCoords = window.hubLocationFilterCoords;
-      var prefersGeo =
+      if (filterCoords && filterCoords.length === 2) {
+        params.lat = String(filterCoords[0]);
+        params.lng = String(filterCoords[1]);
+      } else if (
         window.hubPrefersGeoRadiusForLocation &&
-        window.hubPrefersGeoRadiusForLocation(params.location);
-      if (prefersGeo) {
-        params.radius = String(
-          window.hubLocationRadiusMiles ? window.hubLocationRadiusMiles() : 15
-        );
-        if (filterCoords && filterCoords.length === 2) {
-          params.lat = String(filterCoords[0]);
-          params.lng = String(filterCoords[1]);
-        }
+        window.hubPrefersGeoRadiusForLocation(params.location)
+      ) {
+        /* Full postcode: server geocodes when lat/lng are missing. */
       } else if (window.hubAllowedOutcodesForQuery) {
+        /* Geocode pending/failed — keep sector match so results still filter. */
         var outcodes = window.hubAllowedOutcodesForQuery(params.location);
         if (outcodes && outcodes.length) {
           params.outcodes = outcodes.join(',');

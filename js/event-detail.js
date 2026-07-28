@@ -1631,6 +1631,71 @@
     setSeriesDatePickerOpen(false);
   }
 
+  function applyEndedEventBanner(ev, options) {
+    const opts = options || {};
+    const banner = document.getElementById('ev-ended-banner');
+    const titleEl = document.getElementById('ev-ended-banner-title');
+    const textEl = document.getElementById('ev-ended-banner-text');
+    const actionsEl = document.getElementById('ev-ended-banner-actions');
+    if (!banner) return;
+
+    const ended = Boolean(opts.force || (ev && ev.isEventPast));
+    if (!ended) {
+      banner.hidden = true;
+      return;
+    }
+
+    const city = String((ev && (ev.city || ev.outcode)) || '').trim();
+    const orgName = String((ev && ev.organiser) || '').trim();
+    const title =
+      opts.title ||
+      (opts.cancelled ? 'This event was cancelled' : 'This event has ended');
+    const text =
+      opts.text ||
+      (opts.cancelled
+        ? 'It is no longer available to book. See upcoming events' +
+          (orgName ? ' from ' + orgName : '') +
+          (city ? ' or more in ' + city : '') +
+          '.'
+        : 'Tickets are no longer available. See upcoming events' +
+          (orgName ? ' from ' + orgName : '') +
+          (city ? ' or more networking in ' + city : '') +
+          '.');
+
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = text;
+
+    const links = [];
+    const orgHref = organiserProfileHref(ev || {});
+    if (orgHref) {
+      links.push(
+        '<a class="ev-ended-primary" href="' +
+          escapeHtml(orgHref) +
+          '">View organiser page</a>'
+      );
+    }
+    links.push('<a href="/events/">Browse upcoming events</a>');
+    if (actionsEl) actionsEl.innerHTML = links.join('');
+    banner.hidden = false;
+
+    if (window.HUB_applyDetailRegionCta && city) {
+      const regionCta = document.getElementById('ev-region-cta');
+      if (regionCta) {
+        window.HUB_applyDetailRegionCta(regionCta, {
+          context: 'events',
+          locationTexts: [ev.postcode, ev.city, ev.outcode, ev.location],
+        });
+        if (!regionCta.hidden) {
+          const clone = regionCta.cloneNode(true);
+          clone.id = '';
+          clone.hidden = false;
+          clone.classList.add('ev-ended-region-link');
+          if (actionsEl) actionsEl.appendChild(clone);
+        }
+      }
+    }
+  }
+
   function populateFromEvent(ev) {
     currentEvent = ev;
     document.title = ev.title + ' – The Networker Hub';
@@ -1681,12 +1746,18 @@
     renderRatingBlock(ev);
     applyHostBlock(ev);
     renderAboutSection(ev);
+    applyEndedEventBanner(ev);
 
     if (!eventIsGuestProgramme(ev)) {
       renderTicketPanel(ev);
     }
     renderRefundPolicy(ev);
-    setText('ev-related-title', 'More from ' + (ev.organiser || 'this organiser'));
+    setText(
+      'ev-related-title',
+      ev.isEventPast
+        ? 'Upcoming from ' + (ev.organiser || 'this organiser')
+        : 'More from ' + (ev.organiser || 'this organiser')
+    );
     renderOrganiserReviews(ev);
     applyTicketPanelState(ev);
     refreshEventApplicationUi(ev);
@@ -3317,7 +3388,7 @@
 
     panel.dataset.approvalRequired = eventIsCategoryExclusivity(ev) ? 'true' : 'false';
     panel.dataset.soldOut = ev.isSoldOut ? 'true' : 'false';
-    panel.dataset.salesClosed = ev.isSalesClosed ? 'true' : 'false';
+    panel.dataset.salesClosed = ev.isSalesClosed || ev.isEventPast ? 'true' : 'false';
 
     panel.classList.remove(
       'is-unavailable',
@@ -3331,6 +3402,26 @@
     showCheckoutDetails(false);
     if (nudgePanel) nudgePanel.hidden = true;
     if (scheduledPanel) scheduledPanel.hidden = true;
+
+    if (ev.isEventPast) {
+      panel.classList.add('is-unavailable');
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      buy.textContent = 'Event ended';
+      if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
+      document.querySelectorAll('#ticket-tiers .tier:not(.sold-out)').forEach((tier) => {
+        tier.classList.add('tier-disabled');
+        tier.setAttribute('aria-disabled', 'true');
+        tier.style.pointerEvents = 'none';
+      });
+      const qtyDown = document.getElementById('qty-down');
+      const qtyUp = document.getElementById('qty-up');
+      if (qtyDown) qtyDown.disabled = true;
+      if (qtyUp) qtyUp.disabled = true;
+      if (appForm) appForm.hidden = true;
+      applyEventApplicationUi(ev);
+      return;
+    }
 
     if (ev.isTicketSalesScheduled) {
       panel.classList.add('is-sales-scheduled');
@@ -4533,6 +4624,73 @@
     }
     setText('ev-title', 'Event unavailable');
     setText('ev-trail-current', 'Event unavailable');
+    applyEndedEventBanner(
+      {},
+      {
+        force: true,
+        title: 'Event unavailable',
+        text: message || 'This listing is no longer available.',
+      }
+    );
+  }
+
+  function showEventSoftLanding(data) {
+    const stub = data.eventStub || {};
+    const title = stub.title || 'Event';
+    const cancelled = data.error === 'event_cancelled';
+    const ended = data.error === 'event_ended' || stub.isEventPast;
+    document.title = title + ' – The Networker Hub';
+    setText('ev-title', title);
+    setText('ev-trail-current', title);
+    setText('ev-about-lead', data.message || 'This event is no longer available to book.');
+    const aboutExtra = document.getElementById('ev-about-extra');
+    if (aboutExtra) {
+      aboutExtra.hidden = false;
+      aboutExtra.textContent =
+        'Explore upcoming networking from this organiser or across the Hub.';
+    }
+    applyEndedEventBanner(stub, {
+      force: true,
+      cancelled: cancelled,
+      title: cancelled
+        ? 'This event was cancelled'
+        : ended
+          ? 'This event has ended'
+          : 'Event unavailable',
+      text: data.message || '',
+    });
+    const buy = document.getElementById('buy-btn');
+    const panel = document.getElementById('tickets');
+    if (panel) panel.classList.add('is-unavailable');
+    if (buy) {
+      buy.disabled = true;
+      buy.classList.add('cta-btn-disabled');
+      buy.textContent = cancelled ? 'Cancelled' : ended ? 'Event ended' : 'Unavailable';
+    }
+    const tiersEl = document.getElementById('ticket-tiers');
+    if (tiersEl) {
+      tiersEl.innerHTML =
+        '<p class="ticket-load-hint">' +
+        escapeHtml(data.message || 'Tickets are not available.') +
+        '</p>';
+    }
+    setText(
+      'ev-related-title',
+      stub.organiser ? 'Upcoming from ' + stub.organiser : 'Upcoming events'
+    );
+    if (Array.isArray(data.related) && data.related.length) {
+      renderRelated(data.related);
+    } else if (stub.organiserId) {
+      loadRelatedFallback({
+        id: stub.id,
+        organiserId: stub.organiserId,
+        organiser: stub.organiser,
+      }).then(function (related) {
+        renderRelated(related || []);
+      });
+    } else {
+      renderRelated([]);
+    }
   }
 
   async function bootWork(params, id, slug) {
@@ -4612,6 +4770,11 @@
           } else {
             renderRelated([]);
           }
+          return;
+        }
+        if (data.softLanding || data.eventStub) {
+          setEventLoading(false);
+          showEventSoftLanding(data);
           return;
         }
         showEventLoadError(

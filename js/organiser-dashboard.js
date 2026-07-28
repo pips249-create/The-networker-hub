@@ -440,6 +440,82 @@
     return origin + '/events/organiser?id=' + encodeURIComponent(groupId);
   }
 
+  function partnerBadgeEmbedHtml(profileUrl, groupName) {
+    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const badgeSrc = origin + '/assets/partner-badge.svg';
+    const alt = (groupName || 'Our group') + ' on The Networker Hub';
+    return (
+      '<a href="' +
+      profileUrl +
+      '" target="_blank" rel="noopener noreferrer" title="' +
+      alt.replace(/"/g, '&quot;') +
+      '">' +
+      '<img src="' +
+      badgeSrc +
+      '" alt="' +
+      alt.replace(/"/g, '&quot;') +
+      '" width="220" height="56" style="border:0;display:inline-block;" />' +
+      '</a>'
+    );
+  }
+
+  function buildPartnerBadgeCardHtml(g) {
+    const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
+    const embed = partnerBadgeEmbedHtml(profileUrl, g.name);
+    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    return (
+      '<article class="org-partner-badge-card">' +
+      '<div class="org-partner-badge-card-head">' +
+      '<div><h3 class="org-partner-badge-card-name">' +
+      esc(g.name || 'Your group') +
+      '</h3>' +
+      '<p class="org-partner-badge-meta">Links to your public profile · paste into your website HTML</p></div>' +
+      '<div class="hub-partner-badge-preview">' +
+      '<img src="' +
+      esc(origin + '/assets/partner-badge.svg') +
+      '" alt="" width="220" height="56" /></div></div>' +
+      '<label for="partner-badge-code-' +
+      esc(g.id) +
+      '" class="org-partner-badge-meta">Embed code</label>' +
+      '<textarea readonly class="org-partner-badge-code" id="partner-badge-code-' +
+      esc(g.id) +
+      '" rows="4">' +
+      esc(embed) +
+      '</textarea>' +
+      '<div class="org-partner-badge-actions">' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-partner-embed="' +
+      esc(embed) +
+      '">Copy embed code</button>' +
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
+      esc(profileUrl) +
+      '">Copy profile link</button>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+      esc(groupPublicProfileUrl(g.id, g.slug)) +
+      '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
+      '</div></article>'
+    );
+  }
+
+  function renderOrganiserPartnerBadge() {
+    const root = document.getElementById('org-partner-badge-cards');
+    if (!root) return;
+    const groups = (state.groups || []).filter(function (g) {
+      return g && g.id;
+    });
+    if (!groups.length) {
+      root.innerHTML =
+        '<p class="org-section-sub">Publish a group profile first — then your website badge will appear here.</p>';
+      return;
+    }
+    root.innerHTML = groups.map(buildPartnerBadgeCardHtml).join('');
+    root.querySelectorAll('[data-copy-partner-embed]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyOrganiserText(btn.getAttribute('data-copy-partner-embed') || '', btn);
+      });
+    });
+    bindRankingShareActions(root);
+  }
+
   function rankingShareText(groupName, row) {
     const badge = rankingBadgeText(row);
     const absUrl = groupPublicProfileAbsUrl(row.id, row.slug);
@@ -1290,6 +1366,7 @@
     if (tab === 'spotlight') ensureFeaturedUpgradePanelReady();
     if (tab === 'linkedin') ensureLinkedInPostBuilder({ force: true });
     if (tab === 'ranking') renderOrganiserRankingShare();
+    if (tab === 'partner') renderOrganiserPartnerBadge();
 
     if (!options.skipStore) {
       try {
@@ -1303,7 +1380,9 @@
   function socialTabFromHash() {
     const hash = String(location.hash || '').toLowerCase();
     if (hash.includes('spotlight') || hash.includes('featured')) return 'spotlight';
-    if (hash.includes('ranking') || hash.includes('badge')) return 'ranking';
+    if (hash.includes('ranking') || hash.includes('review-badge')) return 'ranking';
+    if (hash.includes('partner') || hash.includes('website-badge') || hash.includes('embed'))
+      return 'partner';
     if (hash.includes('linkedin') || hash.includes('social')) return 'linkedin';
     return '';
   }
@@ -1322,7 +1401,7 @@
     if (!socialTabFromHash()) {
       try {
         const stored = sessionStorage.getItem(SOCIAL_TAB_STORAGE_KEY);
-        if (stored === 'spotlight' || stored === 'ranking' || stored === 'linkedin') {
+        if (stored === 'spotlight' || stored === 'ranking' || stored === 'linkedin' || stored === 'partner') {
           tab = stored;
         }
       } catch {

@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260618" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260726m" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706" />
+    <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260723vis" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
@@ -1172,6 +1173,19 @@
               <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z"/></svg>
               <span class="org-events-tab-label">Your badge</span>
             </button>
+            <button
+              type="button"
+              role="tab"
+              class="org-events-tab"
+              id="org-social-tab-partner"
+              aria-selected="false"
+              aria-controls="org-social-panel-partner"
+              data-social-tab="partner"
+              tabindex="-1"
+            >
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h7M7 16h5"/></svg>
+              <span class="org-events-tab-label">Website badge</span>
+            </button>
           </nav>
 
           <div
@@ -1253,6 +1267,28 @@
                   </details>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div
+            class="org-sub-page org-sub-page--social"
+            id="org-social-panel-partner"
+            role="tabpanel"
+            aria-labelledby="org-social-tab-partner"
+            data-social-panel="partner"
+            hidden
+          >
+            <div class="org-partner-panel" id="org-social-partner">
+              <header class="org-social-panel-head org-social-panel-head--flush">
+                <h2 class="org-section-title">Add us to your website</h2>
+                <p class="org-section-sub">
+                  Copy this badge onto your site footer or About page. It links to your public organiser profile on The Networker Hub — great for trust, and it helps people find your listings.
+                </p>
+              </header>
+              <div id="org-partner-badge-cards" class="org-partner-badge-cards"></div>
+              <p class="org-section-sub" style="margin-top: 0.75rem">
+                Tip: Featured organiser spotlight on the Hub is based on listing quality and activity — this badge is free for every published profile.
+              </p>
             </div>
           </div>
         </section>
@@ -2661,7 +2697,7 @@
     <script src="../js/organiser-linkedin-post-builder.js?v=20260722styles" defer></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260723oppclaim" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260727partner" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260723vis" defer></script>
   </body>
 </html>

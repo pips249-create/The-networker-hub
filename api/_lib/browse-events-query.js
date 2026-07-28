@@ -9,9 +9,8 @@ const {
   bboxForRadiusMiles,
   cityRegionFromInput,
   regionLocationTextFilters,
-  parseFullUkPostcode,
 } = require('./uk-outcode');
-const { geocodeUkPostcode } = require('./postcode-geocode');
+const { geocodeUkLocation } = require('./postcode-geocode');
 const {
   eventsFromPublishedRows,
   isUpcomingBrowseEvent,
@@ -123,17 +122,17 @@ function hasGeoRadius(params) {
   );
 }
 
-/** Full postcodes need lat/lng for mile radius — geocode on server when the client did not. */
+/** When radius is set without lat/lng, geocode location (full postcode, outcode, or city). */
 async function enrichGeoParams(params) {
   if (hasGeoRadius(params)) return params;
-  const fullPc = parseFullUkPostcode(params.location);
-  if (!fullPc) return params;
-  const geo = await geocodeUkPostcode(fullPc);
+  const radiusMi =
+    Number.isFinite(params.radiusMi) && params.radiusMi > 0 ? params.radiusMi : null;
+  if (!radiusMi || !params.location) return params;
+
+  const geo = await geocodeUkLocation(params.location);
   if (!geo || !Number.isFinite(geo.latitude) || !Number.isFinite(geo.longitude)) {
     return params;
   }
-  const radiusMi =
-    Number.isFinite(params.radiusMi) && params.radiusMi > 0 ? params.radiusMi : 15;
   return {
     ...params,
     lat: geo.latitude,

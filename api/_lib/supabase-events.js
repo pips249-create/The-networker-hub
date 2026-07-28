@@ -372,12 +372,14 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     );
   const eventHasEnded = isEventPast(row);
   const isSalesClosed =
+    eventHasEnded ||
     isSoldOut ||
     !ticketSalesEnabled ||
     !ticketsOnSale ||
     (connectRequired && !connectReady);
   let salesClosedReason = '';
-  if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
+  if (eventHasEnded) salesClosedReason = 'ended';
+  else if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
   else if (!hasTicketTiers) salesClosedReason = 'no_tickets';
   else if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
   else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
@@ -938,6 +940,80 @@ async function fetchPublishedEventBySlug(sb, slug) {
   return fetchPublishedEventById(sb, slimHit.id);
 }
 
+/**
+ * Resolve an event by slug/id even if unpublished/cancelled — for soft landings (no hard 404).
+ */
+async function fetchEventRowBySlugLoose(sb, slug) {
+  const s = String(slug || '').trim();
+  if (!s) return null;
+  const { isUuid } = require('./uuid');
+  if (isUuid(s)) {
+    const { data, error } = await sb.from('events').select('*').eq('id', s).maybeSingle();
+    if (error) throw new Error(error.message);
+    return data || null;
+  }
+
+  const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
+  if (tableRes.error) throw new Error(tableRes.error.message);
+  if (tableRes.data) return tableRes.data;
+
+  const prefix = s.replace(/-\d+$/, '') || s;
+  const { data: candidates, error } = await sb
+    .from('events')
+    .select('*')
+    .ilike('slug', prefix + '%')
+    .order('starts_at', { ascending: false, nullsFirst: false })
+    .limit(40);
+  if (error) throw new Error(error.message);
+  return (candidates || []).find((row) => slugMatchesPublicRow(row, s)) || null;
+}
+
+async function buildEventSoftLanding(sb, row, organiser) {
+  const status = String(row.status || '').toLowerCase();
+  const past = isEventPast(row);
+  let error = 'event_unavailable';
+  let message = 'This event is no longer available on The Networker Hub.';
+  if (status === 'cancelled' || status === 'canceled') {
+    error = 'event_cancelled';
+    message = 'This event was cancelled.';
+  } else if (past) {
+    error = 'event_ended';
+    message = 'This event has ended.';
+  }
+
+  const relatedRows = row.organiser_id
+    ? await fetchRelatedPublishedRows(sb, row.organiser_id, [row.id], 6)
+    : [];
+  const related = await eventsFromPublishedRows(sb, relatedRows, organiser);
+  const publicRelated = related.filter(
+    (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
+  );
+
+  const city = String(row.city || '').trim();
+  const orgName = organiser ? String(organiser.name || '').trim() : '';
+  const orgSlug = organiser ? publicOrganiserSlug(organiser) : '';
+
+  return {
+    configured: true,
+    provider: 'supabase',
+    softLanding: true,
+    error,
+    message,
+    event: null,
+    eventStub: {
+      id: row.id,
+      title: String(row.title || 'Event').trim() || 'Event',
+      city,
+      status,
+      isEventPast: past,
+      organiser: orgName,
+      organiserId: row.organiser_id || null,
+      organiserSlug: orgSlug || null,
+    },
+    related: publicRelated,
+  };
+}
+
 async function fetchTicketedEventIds(sb) {
   const ids = new Set();
   const { data, error } = await sb.from('tickets').select('event_id');
@@ -1003,10 +1079,30 @@ async function handle(req, res) {
     }
 
     if (recordId || slug) {
-      const row = recordId
+      let row = recordId
         ? await fetchPublishedEventById(sb, recordId)
         : await fetchPublishedEventBySlug(sb, slug);
+
       if (!row) {
+        const loose = recordId
+          ? (
+              await sb.from('events').select('*').eq('id', recordId).maybeSingle()
+            ).data
+          : await fetchEventRowBySlugLoose(sb, slug);
+        if (loose) {
+          let organiser = null;
+          if (loose.organiser_id) {
+            const { data: org } = await sb
+              .from('organisers')
+              .select('*')
+              .eq('id', loose.organiser_id)
+              .maybeSingle();
+            organiser = org;
+          }
+          const soft = await buildEventSoftLanding(sb, loose, organiser);
+          res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+          return res.status(200).json(soft);
+        }
         return res.status(404).json({
           configured: true,
           provider: 'supabase',
@@ -1021,12 +1117,9 @@ async function handle(req, res) {
         const { data: org } = await sb.from('organisers').select('*').eq('id', row.organiser_id).maybeSingle();
         organiser = org;
         if (organiser && !isPublicEvent(row, organiser)) {
-          return res.status(404).json({
-            configured: true,
-            provider: 'supabase',
-            error: 'not_found',
-            event: null,
-          });
+          const soft = await buildEventSoftLanding(sb, row, organiser);
+          res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+          return res.status(200).json(soft);
         }
       }
 

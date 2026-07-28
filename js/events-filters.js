@@ -674,20 +674,26 @@
       return !center;
     }
 
-    // City names / outcodes (e.g. Birmingham, B1) match by sector — not a mile radius.
-    if (pc && locationHasOutcodeFilter(pc) && window.hubMatchOutcode) {
-      return window.hubMatchOutcode(pc, ev);
-    }
-
+    /* Prefer mile radius whenever we have a geocoded centre (city or postcode). */
+    var geoCenter = center || locationFilterCenter();
     var evCoords = eventCoords(ev);
-    if (center && evCoords && window.hubDistanceMiles) {
+    if (geoCenter && evCoords && window.hubDistanceMiles) {
       return (
-        window.hubDistanceMiles(center[0], center[1], evCoords[0], evCoords[1]) <=
+        window.hubDistanceMiles(geoCenter[0], geoCenter[1], evCoords[0], evCoords[1]) <=
         getLocationRadiusMiles()
       );
     }
 
-    if (center) return false;
+    if (geoCenter) {
+      /* Centre known but event has no coords — fall back to outcode/sector match. */
+      if (pc && window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
+      return false;
+    }
+
+    // No geocode yet: city names / outcodes match by sector.
+    if (pc && locationHasOutcodeFilter(pc) && window.hubMatchOutcode) {
+      return window.hubMatchOutcode(pc, ev);
+    }
 
     if (pc && window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
     if (pc && window.hubParseOutcode) {
@@ -704,11 +710,8 @@
       window.hubLocationFilterCoords = null;
       return Promise.resolve(null);
     }
-    // Skip geocoding when we already have city/outcode sectors — avoids a 15–25mi override.
-    if (locationHasOutcodeFilter(value)) {
-      window.hubLocationFilterCoords = null;
-      return Promise.resolve(null);
-    }
+    /* Always geocode so the mile-radius control works for cities and postcodes.
+       Outcode matching remains a fallback when geocoding fails. */
     if (window.hubGeocodeLocationQuery) {
       return window.hubGeocodeLocationQuery(value).then(function (coords) {
         window.hubLocationFilterCoords = coords;

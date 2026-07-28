@@ -1529,6 +1529,55 @@ a:hover {
   cursor: not-allowed;
 }
 
+.ev-ended-banner {
+  margin: 0.85rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.ev-ended-banner-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ev-ended-banner-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.ev-ended-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ev-ended-banner-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+}
+
+.ev-ended-banner-actions a.ev-ended-primary {
+  border-color: #1e3a5f;
+  background: #1e3a5f;
+  color: #fff;
+}
+
 .ticket-panel.is-sales-pending #buy-btn {
   display: none;
 }
