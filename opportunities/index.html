@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="/css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260722lede" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260728ux" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260728alert1" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="stylesheet" href="/css/home-page.css?v=20260726city" />
     <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any" />
@@ -282,6 +282,44 @@
         </div>
       </div>
 
+      <div class="opp-alert-dialog" id="opp-alert-dialog" hidden aria-hidden="true">
+        <div class="opp-alert-dialog-backdrop" id="opp-alert-dialog-backdrop" tabindex="-1"></div>
+        <div
+          class="opp-alert-dialog-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="opp-alert-dialog-title"
+        >
+          <header class="opp-alert-dialog-head">
+            <h2 class="opp-alert-dialog-title" id="opp-alert-dialog-title">Save search alert</h2>
+            <button type="button" class="opp-alert-dialog-close" id="opp-alert-dialog-close" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="opp-alert-dialog-body">
+            <p class="opp-alert-dialog-lede">We’ll email you when a new listing matches these filters. Review or trim them before saving.</p>
+            <label class="opp-alert-dialog-field" for="opp-alert-label">
+              <span class="opp-alert-dialog-label">Alert name</span>
+              <input type="text" id="opp-alert-label" maxlength="80" autocomplete="off" placeholder="e.g. Franchises under £10k">
+            </label>
+            <div class="opp-alert-dialog-summary-wrap">
+              <span class="opp-alert-dialog-label">Matching</span>
+              <ul class="opp-alert-dialog-chips" id="opp-alert-chips" aria-label="Filters included in this alert"></ul>
+              <p class="opp-alert-dialog-hint" id="opp-alert-chips-hint">Remove any filter you don’t want in the alert. To change filters further, close this and adjust the bar above.</p>
+            </div>
+            <label class="opp-alert-dialog-check">
+              <input type="checkbox" id="opp-alert-notify-email" checked>
+              <span>Send email when something new matches</span>
+            </label>
+            <p class="opp-alert-dialog-status" id="opp-alert-dialog-status" hidden role="status"></p>
+          </div>
+          <footer class="opp-alert-dialog-foot">
+            <button type="button" class="opp-alert-dialog-cancel" id="opp-alert-dialog-cancel">Cancel</button>
+            <button type="button" class="opp-alert-dialog-save" id="opp-alert-dialog-save">Save alert</button>
+          </footer>
+        </div>
+      </div>
+
       <div class="events-results-meta" id="results">
         <span class="events-results-count" aria-live="polite">Showing <strong id="opp-results-count">0</strong> results</span>
         <div class="events-results-actions">
@@ -530,7 +568,7 @@
     <script src="/js/cms-ad-blocks.js?v=20260722cp11" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260710" data-root="/" defer></script>
     <script src="/js/opportunities-catalog.js?v=20260728ux" defer></script>
-    <script src="/js/opportunity-listing-quality.js?v=20260710d" defer></script>
+    <script src="/js/opportunity-listing-quality.js?v=20260728alert1" defer></script>
     <script src="/js/opportunity-investment-breakdown.js?v=20260710" defer></script>
     <script src="/js/opportunities-saves.js?v=20260714a" defer></script>
     <script src="/js/region-landmark-icons.js?v=20260714clarity" defer></script>
@@ -541,7 +579,7 @@
     <script src="/js/postcode-geo.js?v=20260609b" defer></script>
     <script src="/js/hub-spotlight-carousel.js?v=20260723loop" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260728ux" defer></script>
+    <script src="/js/opportunities-page.js?v=20260728alert1" defer></script>
     <script src="/js/opportunities-map.js?v=20260611" defer></script>
   </body>
 </html>

@@ -1888,33 +1888,250 @@
     els.saveSearchStatus.classList.toggle('is-error', Boolean(isError));
   }
 
-  function saveSearchAlert() {
-    var criteria = currentFilterCriteria();
-    var hasFilter =
-      (criteria.type && criteria.type !== 'all') ||
-      criteria.category ||
-      criteria.invest ||
-      criteria.location ||
-      criteria.commitment ||
-      criteria.q ||
-      criteria.minInvest !== '' ||
-      criteria.maxInvest !== '';
+  var alertDraft = null;
+  var alertLabelTouched = false;
+  var alertDialogLastFocus = null;
 
-    if (!hasFilter) {
+  var CATEGORY_LABELS = {
+    cleaning: 'Cleaning',
+    food: 'Food & Drink',
+    tech: 'Tech & Digital',
+    health: 'Health & Fitness',
+    property: 'Property',
+    education: 'Education & Coaching',
+    pets: 'Pets & Animals',
+    finance: 'Finance & Admin',
+    mlm: 'MLM & Network Marketing',
+  };
+
+  var INVEST_LABELS = {
+    'low-invest': 'Under £2.5k',
+    'mid-invest': '£2.5k–£10k',
+    'high-invest': '£10k+',
+  };
+
+  function criteriaHasAlertableFilter(criteria) {
+    if (!criteria) return false;
+    return Boolean(
+      (criteria.type && criteria.type !== 'all') ||
+        criteria.category ||
+        criteria.invest ||
+        criteria.location ||
+        criteria.commitment ||
+        criteria.q ||
+        (criteria.minInvest !== '' && criteria.minInvest != null) ||
+        (criteria.maxInvest !== '' && criteria.maxInvest != null)
+    );
+  }
+
+  function defaultAlertLabel(criteria) {
+    if (quality && quality.criteriaLabel) return quality.criteriaLabel(criteria);
+    return 'Opportunity search alert';
+  }
+
+  function typeChipLabel(id) {
+    for (var i = 0; i < TYPE_CHIPS.length; i++) {
+      if (TYPE_CHIPS[i].id === id) return TYPE_CHIPS[i].label;
+    }
+    return String(id || '').replace(/-/g, ' ');
+  }
+
+  function commitmentChipLabel(id) {
+    for (var i = 0; i < COMMITMENTS.length; i++) {
+      if (COMMITMENTS[i].id === id) return COMMITMENTS[i].label;
+    }
+    return String(id || '').replace(/-/g, ' ');
+  }
+
+  function alertSummaryChips(criteria) {
+    var chips = [];
+    if (criteria.type && criteria.type !== 'all') {
+      String(criteria.type)
+        .split(',')
+        .filter(Boolean)
+        .forEach(function (id) {
+          chips.push({ key: 'type', value: id, label: typeChipLabel(id) });
+        });
+    }
+    if (criteria.category) {
+      chips.push({
+        key: 'category',
+        value: criteria.category,
+        label: CATEGORY_LABELS[criteria.category] || criteria.category,
+      });
+    }
+    if (criteria.invest) {
+      chips.push({
+        key: 'invest',
+        value: criteria.invest,
+        label: INVEST_LABELS[criteria.invest] || criteria.invest,
+      });
+    }
+    if (criteria.minInvest != null && criteria.minInvest !== '') {
+      chips.push({ key: 'minInvest', value: String(criteria.minInvest), label: 'Min £' + criteria.minInvest });
+    }
+    if (criteria.maxInvest != null && criteria.maxInvest !== '') {
+      chips.push({ key: 'maxInvest', value: String(criteria.maxInvest), label: 'Max £' + criteria.maxInvest });
+    }
+    if (criteria.commitment) {
+      String(criteria.commitment)
+        .split(',')
+        .filter(Boolean)
+        .forEach(function (id) {
+          chips.push({ key: 'commitment', value: id, label: commitmentChipLabel(id) });
+        });
+    }
+    if (criteria.location) {
+      chips.push({
+        key: 'location',
+        value: criteria.location,
+        label: String(criteria.location).replace(/-/g, ' '),
+      });
+    }
+    if (criteria.q) {
+      chips.push({ key: 'q', value: criteria.q, label: '“' + criteria.q + '”' });
+    }
+    return chips;
+  }
+
+  function setAlertDialogStatus(msg, isError) {
+    var el = document.getElementById('opp-alert-dialog-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.hidden = !msg;
+    el.classList.toggle('is-error', Boolean(isError));
+  }
+
+  function removeAlertDraftChip(key, value) {
+    if (!alertDraft) return;
+    if (key === 'type') {
+      var types = String(alertDraft.type || '')
+        .split(',')
+        .filter(Boolean)
+        .filter(function (t) {
+          return t !== value;
+        });
+      alertDraft.type = types.length ? types.join(',') : 'all';
+    } else if (key === 'commitment') {
+      var commitments = String(alertDraft.commitment || '')
+        .split(',')
+        .filter(Boolean)
+        .filter(function (c) {
+          return c !== value;
+        });
+      alertDraft.commitment = commitments.join(',');
+    } else if (key === 'category' || key === 'invest' || key === 'location' || key === 'q') {
+      alertDraft[key] = '';
+    } else if (key === 'minInvest' || key === 'maxInvest') {
+      alertDraft[key] = '';
+    }
+  }
+
+  function renderAlertDialogChips() {
+    var root = document.getElementById('opp-alert-chips');
+    if (!root || !alertDraft) return;
+    var chips = alertSummaryChips(alertDraft);
+    if (!chips.length) {
+      root.innerHTML = '<li class="opp-alert-dialog-chip-empty">No filters left — add some on the page, then try again.</li>';
+      return;
+    }
+    root.innerHTML = chips
+      .map(function (chip) {
+        return (
+          '<li><button type="button" class="opp-alert-dialog-chip" data-alert-key="' +
+          escapeHtml(chip.key) +
+          '" data-alert-value="' +
+          escapeHtml(chip.value) +
+          '">' +
+          '<span>' +
+          escapeHtml(chip.label) +
+          '</span>' +
+          '<span class="opp-alert-dialog-chip-x" aria-hidden="true">×</span>' +
+          '<span class="visually-hidden">Remove</span>' +
+          '</button></li>'
+        );
+      })
+      .join('');
+  }
+
+  function syncAlertDialogLabel() {
+    var input = document.getElementById('opp-alert-label');
+    if (!input || !alertDraft || alertLabelTouched) return;
+    input.value = defaultAlertLabel(alertDraft);
+  }
+
+  function closeAlertDialog() {
+    var dialog = document.getElementById('opp-alert-dialog');
+    if (!dialog) return;
+    dialog.hidden = true;
+    dialog.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('opp-alert-dialog-open');
+    alertDraft = null;
+    alertLabelTouched = false;
+    setAlertDialogStatus('');
+    if (alertDialogLastFocus && typeof alertDialogLastFocus.focus === 'function') {
+      alertDialogLastFocus.focus();
+    }
+    alertDialogLastFocus = null;
+  }
+
+  function openAlertDialog() {
+    readFiltersFromControls();
+    var criteria = currentFilterCriteria();
+    if (!criteriaHasAlertableFilter(criteria)) {
       setSaveSearchStatus('Set at least one filter before saving an alert.', true);
       return;
     }
 
+    setSaveSearchStatus('');
+    alertDraft = JSON.parse(JSON.stringify(criteria));
+    alertLabelTouched = false;
+    alertDialogLastFocus = document.activeElement;
+
+    var dialog = document.getElementById('opp-alert-dialog');
+    var labelInput = document.getElementById('opp-alert-label');
+    var notifyInput = document.getElementById('opp-alert-notify-email');
+    if (!dialog) return;
+
+    if (labelInput) labelInput.value = defaultAlertLabel(alertDraft);
+    if (notifyInput) notifyInput.checked = true;
+    renderAlertDialogChips();
+    setAlertDialogStatus('');
+
+    dialog.hidden = false;
+    dialog.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('opp-alert-dialog-open');
+    if (labelInput) {
+      labelInput.focus();
+      labelInput.select();
+    }
+  }
+
+  function confirmSaveAlert() {
+    if (!alertDraft || !criteriaHasAlertableFilter(alertDraft)) {
+      setAlertDialogStatus('Keep at least one filter on this alert.', true);
+      renderAlertDialogChips();
+      return;
+    }
+
+    var labelInput = document.getElementById('opp-alert-label');
+    var notifyInput = document.getElementById('opp-alert-notify-email');
+    var saveBtn = document.getElementById('opp-alert-dialog-save');
+    var label = labelInput ? String(labelInput.value || '').trim() : '';
+    if (!label) label = defaultAlertLabel(alertDraft);
+
+    if (saveBtn) saveBtn.disabled = true;
     if (els.saveSearchBtn) els.saveSearchBtn.disabled = true;
-    setSaveSearchStatus('Saving alert…');
+    setAlertDialogStatus('Saving alert…');
 
     fetch('/api/auth/opportunity-saved-searches', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        criteria: criteria,
-        label: quality && quality.criteriaLabel ? quality.criteriaLabel(criteria) : '',
+        criteria: alertDraft,
+        label: label,
+        notifyEmail: !notifyInput || notifyInput.checked,
       }),
     })
       .then(function (r) {
@@ -1929,14 +2146,72 @@
           return;
         }
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.message) || 'Could not save alert');
-        setSaveSearchStatus('Alert saved — we will email you when new listings match. Manage alerts in My Hub → Saved listings → Search alerts.');
+        closeAlertDialog();
+        setSaveSearchStatus(
+          'Alert saved — we will email you when new listings match. Manage alerts in My Hub → Saved listings → Search alerts.'
+        );
       })
       .catch(function (e) {
-        setSaveSearchStatus(e.message || 'Could not save alert. Try again.', true);
+        setAlertDialogStatus(e.message || 'Could not save alert. Try again.', true);
       })
       .finally(function () {
+        if (saveBtn) saveBtn.disabled = false;
         if (els.saveSearchBtn) els.saveSearchBtn.disabled = false;
       });
+  }
+
+  function initAlertDialog() {
+    var dialog = document.getElementById('opp-alert-dialog');
+    if (!dialog || dialog.dataset.bound) return;
+    dialog.dataset.bound = '1';
+
+    var labelInput = document.getElementById('opp-alert-label');
+    var chips = document.getElementById('opp-alert-chips');
+    var closeBtn = document.getElementById('opp-alert-dialog-close');
+    var cancelBtn = document.getElementById('opp-alert-dialog-cancel');
+    var saveBtn = document.getElementById('opp-alert-dialog-save');
+    var backdrop = document.getElementById('opp-alert-dialog-backdrop');
+
+    if (labelInput) {
+      labelInput.addEventListener('input', function () {
+        alertLabelTouched = true;
+      });
+    }
+
+    if (chips) {
+      chips.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-alert-key]');
+        if (!btn) return;
+        removeAlertDraftChip(btn.getAttribute('data-alert-key'), btn.getAttribute('data-alert-value'));
+        renderAlertDialogChips();
+        syncAlertDialogLabel();
+        if (!criteriaHasAlertableFilter(alertDraft)) {
+          setAlertDialogStatus('Keep at least one filter on this alert.', true);
+        } else {
+          setAlertDialogStatus('');
+        }
+      });
+    }
+
+    function onClose() {
+      closeAlertDialog();
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', onClose);
+    if (cancelBtn) cancelBtn.addEventListener('click', onClose);
+    if (backdrop) backdrop.addEventListener('click', onClose);
+    if (saveBtn) saveBtn.addEventListener('click', confirmSaveAlert);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (!dialog || dialog.hidden) return;
+      e.preventDefault();
+      closeAlertDialog();
+    });
+  }
+
+  function saveSearchAlert() {
+    openAlertDialog();
   }
 
   function initCopyLink() {
@@ -2246,6 +2521,7 @@
     initFavClicks();
     initCopyLink();
     initSaveSearch();
+    initAlertDialog();
     syncTypeChipUi();
     syncInvestPills();
     syncCommitmentChecks();

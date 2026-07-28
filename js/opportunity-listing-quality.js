@@ -194,7 +194,15 @@
 
   function criteriaLabel(criteria) {
     var parts = [];
-    if (criteria.type && criteria.type !== 'all') parts.push(criteria.type.replace(/-/g, ' '));
+    if (criteria.type && criteria.type !== 'all') {
+      String(criteria.type)
+        .split(',')
+        .filter(Boolean)
+        .forEach(function (t) {
+          parts.push(String(t).replace(/-/g, ' '));
+        });
+    }
+    if (criteria.category) parts.push(String(criteria.category).replace(/-/g, ' '));
     if (criteria.invest) {
       var investLabels = {
         'low-invest': 'under £2.5k',
@@ -203,7 +211,17 @@
       };
       parts.push(investLabels[criteria.invest] || criteria.invest);
     }
-    if (criteria.location) parts.push(criteria.location.replace(/-/g, ' '));
+    if (criteria.minInvest != null && criteria.minInvest !== '') parts.push('from £' + criteria.minInvest);
+    if (criteria.maxInvest != null && criteria.maxInvest !== '') parts.push('up to £' + criteria.maxInvest);
+    if (criteria.commitment) {
+      String(criteria.commitment)
+        .split(',')
+        .filter(Boolean)
+        .forEach(function (c) {
+          parts.push(String(c).replace(/-/g, ' '));
+        });
+    }
+    if (criteria.location) parts.push(String(criteria.location).replace(/-/g, ' '));
     if (criteria.q) parts.push('“' + criteria.q + '”');
     return parts.length ? parts.join(', ') : 'All opportunities';
   }
