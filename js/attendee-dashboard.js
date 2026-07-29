@@ -4016,8 +4016,9 @@
         if (note) {
           note.hidden = false;
           note.textContent =
-            'Membership payment received. Your membership expiry will update shortly — refresh if it still looks old.';
+            'Membership payment received. Updating your expiry date…';
         }
+        const successOrganiserId = membershipParams.get('organiserId') || '';
         membershipParams.delete('membership');
         membershipParams.delete('organiserId');
         const clean =
@@ -4025,6 +4026,36 @@
           (membershipParams.toString() ? '?' + membershipParams.toString() : '') +
           (location.hash || '#memberships');
         history.replaceState(null, '', clean);
+
+        async function syncMembershipExpiry() {
+          try {
+            await fetch('/api/auth/membership-sync', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(
+                successOrganiserId ? { organiserId: successOrganiserId } : {}
+              ),
+            });
+          } catch {
+            /* webhook may still land */
+          }
+          await reloadDashboard();
+          if (note) {
+            note.hidden = false;
+            note.textContent = 'Membership payment received. Your expiry date is up to date.';
+          }
+        }
+
+        window.setTimeout(function () {
+          syncMembershipExpiry().catch(function () {
+            if (note) {
+              note.hidden = false;
+              note.textContent =
+                'Membership payment received. Refresh the page if your expiry date still looks old.';
+            }
+          });
+        }, 1500);
       } else {
         const demoNote = document.getElementById('ad-demo-note');
         if (demoNote) demoNote.hidden = !data.isDemo;

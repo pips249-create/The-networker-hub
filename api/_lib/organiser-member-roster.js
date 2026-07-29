@@ -1389,14 +1389,41 @@ async function listRosterGroupsForAttendee(email) {
   const { data, error } = await sb
     .from('organiser_member_roster')
     .select(
-      'id, expires_at, claimed_at, invite_sent_at, status, stripe_subscription_id, stripe_customer_id, billing_interval, subscription_status, membership_amount_pence, organisers(id, name, slug, photo_url, industries, average_rating)'
+      'id, email, organiser_id, expires_at, claimed_at, invite_sent_at, status, stripe_subscription_id, stripe_customer_id, billing_interval, subscription_status, membership_amount_pence, organisers(id, name, slug, photo_url, industries, average_rating)'
     )
     .eq('status', ROSTER_STATUS_ACTIVE)
     .ilike('email', em)
     .order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
 
-  return (data || []).map((row) => {
+  const rows = data || [];
+  const { repairMembershipRosterExpiry } = require('./membership-billing');
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    if (!row.stripe_subscription_id) continue;
+    const today = new Date().toISOString().slice(0, 10);
+    const expiry = row.expires_at ? String(row.expires_at).slice(0, 10) : '';
+    const missingOrLapsed = !expiry || expiry < today;
+    if (!missingOrLapsed) continue;
+    try {
+      const repaired = await repairMembershipRosterExpiry(row, { force: true });
+      if (repaired?.row) {
+        rows[i] = {
+          ...row,
+          ...repaired.row,
+          organisers: row.organisers,
+        };
+      }
+    } catch (err) {
+      console.error(
+        '[member-roster] expiry repair failed',
+        row.id,
+        err?.message || err
+      );
+    }
+  }
+
+  return rows.map((row) => {
     const org = row.organisers || {};
     const industries = Array.isArray(org.industries) ? org.industries : [];
     const client = rosterRowToClient(row);

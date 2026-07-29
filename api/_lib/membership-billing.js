@@ -274,9 +274,26 @@ function amountPenceForInterval(plan, interval) {
   return null;
 }
 
+function periodEndTimestamp(subscription) {
+  const top = Number(subscription?.current_period_end);
+  if (Number.isFinite(top) && top > 0) return top;
+
+  // Stripe API 2025-03-31+ (Basil): period lives on subscription items, not the subscription.
+  const items = subscription?.items?.data;
+  if (Array.isArray(items) && items.length) {
+    let max = 0;
+    for (const item of items) {
+      const ts = Number(item?.current_period_end);
+      if (Number.isFinite(ts) && ts > max) max = ts;
+    }
+    if (max > 0) return max;
+  }
+  return null;
+}
+
 function periodEndDateString(subscription) {
-  const ts = Number(subscription?.current_period_end);
-  if (!Number.isFinite(ts) || ts <= 0) return null;
+  const ts = periodEndTimestamp(subscription);
+  if (!ts) return null;
   return new Date(ts * 1000).toISOString().slice(0, 10);
 }
 
@@ -394,7 +411,7 @@ async function syncRosterFromSubscription(subscription, options) {
 
   const status = String(subscription?.status || opts.subscriptionStatus || '').trim() || null;
   const canceled = status === 'canceled' || status === 'unpaid' || opts.deleted;
-  let expiresAt = periodEndDateString(subscription);
+  let expiresAt = periodEndDateString(subscription) || opts.expiresAt || null;
   if (canceled && !expiresAt) {
     expiresAt = new Date().toISOString().slice(0, 10);
   }
@@ -536,10 +553,10 @@ async function notifyMembershipPaymentFailed({ organiserId, email, memberName, e
   const greetingName = emailGreetingName(memberName, memberEmail);
   const organiserName = String(organiser.name || 'your networking group').trim();
   const manageUrl = membershipManageUrl(organiser, site, memberEmail);
+  // Keep this as one template literal — Vercel's bytecode compiler misparses
+  // a string that starts with " while" after a multi-line `+` concatenation.
   const expiresLabel = expiresAt
-    ? 'Your membership stays active until ' +
-      String(expiresAt).slice(0, 10) +
-      ' while Stripe retries the card.'
+    ? `Your membership stays active until ${String(expiresAt).slice(0, 10)} while Stripe retries the card.`
     : 'Update your card soon so your membership continues without interruption.';
 
   const common = {
@@ -678,7 +695,20 @@ async function handleMembershipInvoicePaid(invoice) {
     subscription = await retrieveMembershipSubscription(subscriptionId);
   }
 
-  const result = await syncRosterFromSubscription(subscription);
+  let invoicePeriodEnd = null;
+  const lines = Array.isArray(invoice?.lines?.data) ? invoice.lines.data : [];
+  let maxPeriod = 0;
+  for (const line of lines) {
+    const ts = Number(line?.period?.end);
+    if (Number.isFinite(ts) && ts > maxPeriod) maxPeriod = ts;
+  }
+  if (maxPeriod > 0) {
+    invoicePeriodEnd = new Date(maxPeriod * 1000).toISOString().slice(0, 10);
+  }
+
+  const result = await syncRosterFromSubscription(subscription, {
+    expiresAt: invoicePeriodEnd,
+  });
   const reason = String(invoice?.billing_reason || '');
   if (
     result.ok &&
@@ -713,6 +743,19 @@ async function handleMembershipInvoicePaymentFailed(invoice) {
   });
 }
 
+async function repairMembershipRosterExpiry(row, options) {
+  const opts = options || {};
+  const subId = String(row?.stripe_subscription_id || '').trim();
+  if (!subId) return null;
+  if (row.expires_at && !opts.force) return null;
+  const subscription = await retrieveMembershipSubscription(subId);
+  return syncRosterFromSubscription(subscription, {
+    force: true,
+    organiserId: row.organiser_id,
+    email: row.email,
+  });
+}
+
 module.exports = {
   ORGANISER_VAT_RATE,
   MEMBERSHIP_HUB_FEE_RATE,
@@ -732,9 +775,11 @@ module.exports = {
   getMembershipPlanForOrganiser,
   upsertMembershipPlan,
   amountPenceForInterval,
+  periodEndDateString,
   isMembershipCheckoutMetadata,
   applyMembershipSubscriptionToRoster,
   syncRosterFromSubscription,
+  repairMembershipRosterExpiry,
   handleMembershipCheckoutCompleted,
   handleMembershipSubscriptionUpdated,
   handleMembershipSubscriptionDeleted,

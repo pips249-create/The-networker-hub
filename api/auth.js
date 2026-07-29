@@ -30,6 +30,7 @@ const routes = {
   'create-checkout': require('./_lib/routes/auth-create-checkout'),
   'membership-checkout': require('./_lib/routes/auth-membership-checkout'),
   'membership-portal': require('./_lib/routes/auth-membership-portal'),
+  'membership-sync': require('./_lib/routes/auth-membership-sync'),
   'roster-eligibility': require('./_lib/routes/auth-roster-eligibility'),
   'guest-visit-eligibility': require('./_lib/routes/auth-guest-visit-eligibility'),
   'alumni-eligibility': require('./_lib/routes/auth-alumni-eligibility'),

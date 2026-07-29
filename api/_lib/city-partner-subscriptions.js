@@ -54,8 +54,18 @@ function subscriptionIdFromSession(session) {
 }
 
 function periodEndIso(subscription) {
-  const ts = Number(subscription?.current_period_end);
-  if (!Number.isFinite(ts) || ts <= 0) return null;
+  const top = Number(subscription?.current_period_end);
+  let ts = Number.isFinite(top) && top > 0 ? top : 0;
+  if (!ts) {
+    const items = subscription?.items?.data;
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        const itemTs = Number(item?.current_period_end);
+        if (Number.isFinite(itemTs) && itemTs > ts) ts = itemTs;
+      }
+    }
+  }
+  if (!ts) return null;
   return new Date(ts * 1000).toISOString();
 }
 
