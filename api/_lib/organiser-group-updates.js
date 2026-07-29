@@ -122,16 +122,39 @@ async function countSendsThisMonth(organiserId, key) {
 async function getAllowance(organiserId) {
   const sb = getSupabaseAdmin();
   const key = periodKey();
-  const used = await countSendsThisMonth(organiserId, key);
-  const { data: org, error } = await sb
+  let used = 0;
+  try {
+    used = await countSendsThisMonth(organiserId, key);
+  } catch (e) {
+    // Table may not exist yet if migration 212 is only partially applied.
+    if (!/organiser_group_updates|does not exist/i.test(String(e.message || ''))) throw e;
+  }
+
+  let extras = 0;
+  let orgName = '';
+  const withCredits = await sb
     .from('organisers')
     .select('id, name, group_update_extra_credits')
     .eq('id', organiserId)
     .maybeSingle();
-  if (error) throw new Error(error.message);
-  const extras = Math.max(0, Number(org && org.group_update_extra_credits) || 0);
+  if (withCredits.error && /group_update_extra_credits/i.test(String(withCredits.error.message || ''))) {
+    const fallback = await sb
+      .from('organisers')
+      .select('id, name')
+      .eq('id', organiserId)
+      .maybeSingle();
+    if (fallback.error) throw new Error(fallback.error.message);
+    orgName = (fallback.data && fallback.data.name) || '';
+  } else if (withCredits.error) {
+    throw new Error(withCredits.error.message);
+  } else {
+    orgName = (withCredits.data && withCredits.data.name) || '';
+    extras = Math.max(0, Number(withCredits.data && withCredits.data.group_update_extra_credits) || 0);
+  }
+
   const freeLeft = Math.max(0, FREE_PER_MONTH - used);
   const hardLeft = Math.max(0, HARD_CAP_PER_MONTH - used);
+  // Without extra-credits column, still allow the free monthly send.
   const canSend = hardLeft > 0 && (freeLeft > 0 || extras > 0);
   let nextBillable = 'none';
   if (canSend) nextBillable = freeLeft > 0 ? 'free' : 'extra';
@@ -151,6 +174,7 @@ async function getAllowance(organiserId) {
         ? 'hard_cap'
         : 'no_credits'
       : null,
+    organiserName: orgName,
   };
 }
 
@@ -479,13 +503,39 @@ async function queueUpdateSend({ organiserId, updateId }) {
   if (qErr) throw new Error(qErr.message);
 
   if (useExtra) {
-    const { data: org } = await sb
-      .from('organisers')
-      .select('group_update_extra_credits')
-      .eq('id', organiserId)
-      .maybeSingle();
-    const next = Math.max(0, (Number(org && org.group_update_extra_credits) || 0) - 1);
-    await sb.from('organisers').update({ group_update_extra_credits: next }).eq('id', organiserId);
+    try {
+      const { data: org, error: creditErr } = await sb
+        .from('organisers')
+        .select('group_update_extra_credits')
+        .eq('id', organiserId)
+        .maybeSingle();
+      if (creditErr && /group_update_extra_credits/i.test(String(creditErr.message || ''))) {
+        const err = new Error(
+          'Extra credits are not available yet — run migration 212 (group_update_extra_credits).'
+        );
+        err.status = 402;
+        err.code = 'no_credits';
+        throw err;
+      }
+      if (creditErr) throw new Error(creditErr.message);
+      const next = Math.max(0, (Number(org && org.group_update_extra_credits) || 0) - 1);
+      const { error: upErr } = await sb
+        .from('organisers')
+        .update({ group_update_extra_credits: next })
+        .eq('id', organiserId);
+      if (upErr && /group_update_extra_credits/i.test(String(upErr.message || ''))) {
+        const err = new Error(
+          'Extra credits are not available yet — run migration 212 (group_update_extra_credits).'
+        );
+        err.status = 402;
+        err.code = 'no_credits';
+        throw err;
+      }
+      if (upErr) throw new Error(upErr.message);
+    } catch (e) {
+      if (e.status) throw e;
+      throw e;
+    }
   }
 
   const { data: updated, error } = await sb
