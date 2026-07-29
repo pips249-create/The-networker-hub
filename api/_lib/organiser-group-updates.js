@@ -204,16 +204,38 @@ async function getUpdate(updateId) {
 async function listUpcomingEventsForOrganiser(organiserId) {
   const sb = getSupabaseAdmin();
   const now = new Date().toISOString();
-  // Only columns that exist on public.events — avoid speculative fields (e.g. event_format).
+  // events use status + approval_status (listing_status is on organisers).
   const { data, error } = await sb
     .from('events')
-    .select('id, title, starts_at, slug, venue, city, location_label, listing_status')
+    .select('id, title, starts_at, slug, venue, city, location_label, status, approval_status')
     .eq('organiser_id', organiserId)
-    .eq('listing_status', 'published')
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
     .gte('starts_at', now)
     .order('starts_at', { ascending: true })
     .limit(12);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Fallback if status filter shape differs in an older DB.
+    if (/column events\.(status|approval_status)/i.test(String(error.message || ''))) {
+      const retry = await sb
+        .from('events')
+        .select('id, title, starts_at, slug, venue, city, location_label')
+        .eq('organiser_id', organiserId)
+        .gte('starts_at', now)
+        .order('starts_at', { ascending: true })
+        .limit(12);
+      if (retry.error) throw new Error(retry.error.message);
+      return (retry.data || []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        startsAt: row.starts_at,
+        slug: row.slug,
+        location: String(row.location_label || row.city || row.venue || '').trim(),
+        imageUrl: eventImageUrl(row),
+      }));
+    }
+    throw new Error(error.message);
+  }
   return (data || []).map((row) => ({
     id: row.id,
     title: row.title,
