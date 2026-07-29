@@ -7,7 +7,31 @@
     updateId: '',
     bootstrap: null,
     bound: false,
+    autosaveTimer: null,
+    dirty: false,
   };
+
+  function draftStorageKey(organiserId) {
+    return 'ogu-draft-id:' + String(organiserId || '');
+  }
+
+  function rememberDraftId(organiserId, updateId) {
+    try {
+      if (organiserId && updateId) {
+        sessionStorage.setItem(draftStorageKey(organiserId), String(updateId));
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function recalledDraftId(organiserId) {
+    try {
+      return sessionStorage.getItem(draftStorageKey(organiserId)) || '';
+    } catch (e) {
+      return '';
+    }
+  }
 
   function api(path, options) {
     return fetch(path, {
@@ -171,7 +195,7 @@
     var el = els().history;
     if (!el) return;
     if (!updates || !updates.length) {
-      el.innerHTML = '<p class="org-group-update-hint">No updates yet.</p>';
+      el.innerHTML = '<p class="org-group-update-hint">No drafts or sends yet.</p>';
       return;
     }
     el.innerHTML =
@@ -179,13 +203,25 @@
       updates
         .slice(0, 8)
         .map(function (u) {
+          var isDraft = String(u.status || '') === 'draft';
+          var meta = isDraft
+            ? 'Draft · click to open'
+            : String(u.status || '') + (u.sent_count ? ' · ' + u.sent_count + ' sent' : '');
+          var tag = isDraft
+            ? 'button type="button" class="ogu-history-open" data-update-id="' + u.id + '"'
+            : 'div class="ogu-history-item"';
+          var close = isDraft ? 'button' : 'div';
           return (
-            '<li><strong>' +
+            '<' +
+            tag +
+            '>' +
+            '<strong>' +
             (u.subject || 'Untitled') +
             '</strong><br><span>' +
-            (u.status || '') +
-            (u.sent_count ? ' · ' + u.sent_count + ' sent' : '') +
-            '</span></li>'
+            meta +
+            '</span></' +
+            close +
+            '>'
           );
         })
         .join('') +
@@ -196,8 +232,16 @@
     var e = els();
     if (!update) return;
     state.updateId = update.id || '';
+    rememberDraftId(state.organiserId, state.updateId);
     if (e.subject) e.subject.value = update.subject || '';
     var c = update.content || {};
+    if (typeof c === 'string') {
+      try {
+        c = JSON.parse(c);
+      } catch (err) {
+        c = {};
+      }
+    }
     if (e.note) e.note.value = c.organiserNote || '';
     if (e.recap) e.recap.value = c.monthRecap || '';
     if (e.includeEvents) e.includeEvents.checked = c.includeUpcomingEvents !== false;
@@ -209,6 +253,22 @@
     if (e.volunteer) e.volunteer.value = c.volunteerCta || '';
     if (e.includeSocials) e.includeSocials.checked = c.includeSocialLinks !== false;
     renderEvents((state.bootstrap && state.bootstrap.events) || [], c.eventIds || []);
+    state.dirty = false;
+  }
+
+  function openUpdateFromHistory(updateId) {
+    var updates = (state.bootstrap && state.bootstrap.updates) || [];
+    var found = updates.find(function (u) {
+      return String(u.id) === String(updateId);
+    });
+    if (!found) {
+      setStatus('Could not open that draft.', 'error');
+      return;
+    }
+    fillFromUpdate(found);
+    setStatus(found.status === 'draft' ? 'Draft opened — keep editing, then save.' : 'Loaded previous update.', 'ok');
+    var form = els().form;
+    if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function syncGroupOptions(groups) {
@@ -244,44 +304,103 @@
     renderAllowance(res.data.allowance, res.data.recipientEstimate);
     renderEvents(res.data.events || [], []);
     renderHistory(res.data.updates || []);
-    var draft = (res.data.updates || []).find(function (u) {
-      return u.status === 'draft';
-    });
+    var updates = res.data.updates || [];
+    var remembered = recalledDraftId(state.organiserId);
+    var draft =
+      updates.find(function (u) {
+        return u.status === 'draft' && String(u.id) === String(remembered);
+      }) ||
+      updates.find(function (u) {
+        return u.status === 'draft';
+      });
     if (draft) {
       fillFromUpdate(draft);
+      setStatus('Loaded your saved draft for ' + ((res.data.allowance && res.data.allowance.periodLabel) || 'this month') + '.', 'ok');
     } else if (e.subject && !e.subject.value) {
       e.subject.value = (res.data.defaults && res.data.defaults.subject) || '';
+      setStatus(
+        (res.data.recipientEstimate || 0) +
+          ' people who booked via the Hub can receive this update.',
+        'ok'
+      );
+    } else {
+      setStatus(
+        (res.data.recipientEstimate || 0) +
+          ' people who booked via the Hub can receive this update.',
+        'ok'
+      );
     }
-    setStatus(
-      (res.data.recipientEstimate || 0) +
-        ' people who booked via the Hub can receive this update.',
-      'ok'
-    );
   }
 
-  async function saveDraft() {
+  async function saveDraft(options) {
+    options = options || {};
     var e = els();
-    var res = await api('/api/organiser/group-updates', {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'save',
-        organiserId: state.organiserId,
-        id: state.updateId || undefined,
-        subject: e.subject ? e.subject.value : '',
-        content: readContent(),
-      }),
-    });
-    if (!res.ok || !res.data || !res.data.ok) {
-      throw new Error((res.data && (res.data.message || res.data.error)) || 'Save failed');
+    if (e.save && !options.silent) {
+      e.save.disabled = true;
+      e.save.textContent = 'Saving…';
     }
-    state.updateId = res.data.update && res.data.update.id;
-    if (res.data.allowance) renderAllowance(res.data.allowance, state.bootstrap && state.bootstrap.recipientEstimate);
-    setStatus('Draft saved.', 'ok');
-    return res.data.update;
+    try {
+      var res = await api('/api/organiser/group-updates', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'save',
+          organiserId: state.organiserId,
+          id: state.updateId || undefined,
+          subject: e.subject ? e.subject.value : '',
+          content: readContent(),
+        }),
+      });
+      if (!res.ok || !res.data || !res.data.ok) {
+        throw new Error((res.data && (res.data.message || res.data.error)) || 'Save failed');
+      }
+      state.updateId = res.data.update && res.data.update.id;
+      rememberDraftId(state.organiserId, state.updateId);
+      state.dirty = false;
+      if (res.data.allowance) {
+        renderAllowance(res.data.allowance, state.bootstrap && state.bootstrap.recipientEstimate);
+      }
+      if (state.bootstrap && res.data.update) {
+        var list = state.bootstrap.updates || [];
+        var idx = list.findIndex(function (u) {
+          return String(u.id) === String(state.updateId);
+        });
+        if (idx >= 0) list[idx] = res.data.update;
+        else list.unshift(res.data.update);
+        state.bootstrap.updates = list;
+        renderHistory(list);
+      }
+      if (!options.silent) setStatus('Draft saved. You can leave and come back to it.', 'ok');
+      return res.data.update;
+    } finally {
+      if (e.save) {
+        e.save.disabled = false;
+        e.save.textContent = 'Save draft';
+      }
+    }
+  }
+
+  function scheduleAutosave() {
+    state.dirty = true;
+    if (state.autosaveTimer) clearTimeout(state.autosaveTimer);
+    state.autosaveTimer = setTimeout(function () {
+      if (!state.dirty || !state.organiserId) return;
+      saveDraft({ silent: true })
+        .then(function () {
+          setStatus('Draft auto-saved.', 'ok');
+        })
+        .catch(function (err) {
+          setStatus(err.message || 'Could not auto-save draft.', 'error');
+        });
+    }, 1200);
   }
 
   async function preview() {
     var e = els();
+    try {
+      await saveDraft({ silent: true });
+    } catch (err) {
+      /* still allow preview if save fails */
+    }
     var res = await api('/api/organiser/group-updates', {
       method: 'POST',
       body: JSON.stringify({
@@ -302,7 +421,7 @@
           '<p class="org-group-update-hint">Nothing to preview yet — add a note or tick some modules.</p>') +
         '</div>';
     }
-    setStatus('Preview updated.', 'ok');
+    setStatus('Draft saved · preview updated.', 'ok');
   }
 
   async function sendUpdate() {
@@ -343,6 +462,17 @@
           setStatus(err.message || 'Could not load', 'error');
         });
       });
+    }
+    if (e.history) {
+      e.history.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-update-id]');
+        if (!btn) return;
+        openUpdateFromHistory(btn.getAttribute('data-update-id'));
+      });
+    }
+    if (e.form) {
+      e.form.addEventListener('input', scheduleAutosave);
+      e.form.addEventListener('change', scheduleAutosave);
     }
     if (e.save) {
       e.save.addEventListener('click', function () {

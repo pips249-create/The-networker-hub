@@ -494,22 +494,33 @@ async function saveDraft({ organiserId, updateId, subject, content, audience }) 
     updated_at: new Date().toISOString(),
   };
 
-  if (updateId) {
-    const existing = await getUpdate(updateId);
-    if (!existing || existing.organiser_id !== organiserId) {
-      const err = new Error('update_not_found');
-      err.status = 404;
-      throw err;
+  let targetId = updateId || null;
+  if (targetId) {
+    const existing = await getUpdate(targetId);
+    if (!existing || existing.organiser_id !== organiserId || existing.status !== 'draft') {
+      targetId = null;
     }
-    if (existing.status !== 'draft') {
-      const err = new Error('not_a_draft');
-      err.status = 400;
-      throw err;
-    }
+  }
+
+  // One working draft per organiser per month — reuse it if the client lost the id.
+  if (!targetId) {
+    const { data: existingDrafts, error: findErr } = await sb
+      .from('organiser_group_updates')
+      .select('id')
+      .eq('organiser_id', organiserId)
+      .eq('period_key', key)
+      .eq('status', 'draft')
+      .order('updated_at', { ascending: false })
+      .limit(1);
+    if (findErr) throw new Error(findErr.message);
+    if (existingDrafts && existingDrafts[0]) targetId = existingDrafts[0].id;
+  }
+
+  if (targetId) {
     const { data, error } = await sb
       .from('organiser_group_updates')
       .update(payload)
-      .eq('id', updateId)
+      .eq('id', targetId)
       .select('*')
       .single();
     if (error) throw new Error(error.message);

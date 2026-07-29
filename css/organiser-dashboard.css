@@ -1757,14 +1757,41 @@
   padding: 0;
 }
 
-.org-group-update-history-list li {
+.org-group-update-history-list li,
+.org-group-update-history-list .ogu-history-item,
+.org-group-update-history-list .ogu-history-open {
+  display: block;
+  width: 100%;
+  text-align: left;
   padding: 8px 0;
   border-top: 1px solid var(--od-border-soft);
   font-size: 13px;
   line-height: 1.45;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  color: inherit;
+  font: inherit;
 }
 
-.org-group-update-history-list li:first-child {
+.org-group-update-history-list .ogu-history-open {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 4px 0;
+  border: 1px solid rgba(13, 110, 122, 0.18);
+  background: rgba(13, 110, 122, 0.05);
+}
+
+.org-group-update-history-list .ogu-history-open:hover,
+.org-group-update-history-list .ogu-history-open:focus-visible {
+  outline: 2px solid rgba(13, 110, 122, 0.35);
+  outline-offset: 1px;
+}
+
+.org-group-update-history-list li:first-child,
+.org-group-update-history-list .ogu-history-item:first-child {
   border-top: 0;
   padding-top: 0;
 }

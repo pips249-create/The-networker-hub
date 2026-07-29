@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729preview" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729drafts" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -728,7 +728,8 @@
                 <div>
                   <h2 class="omr-section-title">Pay monthly or annually through the Hub</h2>
                   <p class="omr-billing-lead">
-                    Members pay your price plus a Hub fee (4.5% + 20p). You receive <strong>100%</strong> of the membership price — same as tickets.
+                    Members pay your price plus a Hub fee (4.5% + 20p) <strong>and VAT on that Hub fee</strong>.
+                    You receive <strong>100%</strong> of the membership price you set — same as tickets.
                   </p>
                   <p class="omr-billing-lead omr-billing-lead--note">
                     Saving a new price only applies to <strong>new</strong> joiners. People already subscribed keep their current rate until they cancel and rejoin (or you invite them to renew at the new price).
@@ -746,6 +747,17 @@
                     <span>Annual price (£)</span>
                     <input type="number" id="omr-billing-annual" name="annual" min="1" step="0.01" placeholder="e.g. 250" inputmode="decimal" />
                   </label>
+                  <fieldset class="omr-billing-vat" aria-label="VAT on membership price">
+                    <legend>VAT on your membership price</legend>
+                    <label class="omr-billing-vat-option">
+                      <input type="radio" name="omr-billing-vat" id="omr-billing-vat-included" value="included" checked />
+                      <span><strong>VAT included</strong> — the price above is what members pay you (final)</span>
+                    </label>
+                    <label class="omr-billing-vat-option">
+                      <input type="radio" name="omr-billing-vat" id="omr-billing-vat-added" value="added" />
+                      <span><strong>Add 20% VAT at checkout</strong> — price above is ex VAT; members pay VAT on top (you receive it)</span>
+                    </label>
+                  </fieldset>
                   <label class="omr-billing-toggle">
                     <input type="checkbox" id="omr-billing-active" name="active" checked />
                     <span>Offer paid membership on your public page</span>
@@ -1254,7 +1266,8 @@
                 <div id="ogu-preview-body"></div>
               </div>
               <div class="org-group-update-history">
-                <h2 class="org-section-title">Recent sends</h2>
+                <h2 class="org-section-title">Drafts &amp; recent sends</h2>
+                <p class="org-group-update-hint">Saved drafts reopen here. Click one to keep editing.</p>
                 <div id="ogu-history"></div>
               </div>
             </aside>
@@ -3107,7 +3120,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260729brand3" defer></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
-    <script src="../js/organiser-group-updates.js?v=20260729preview" defer></script>
+    <script src="../js/organiser-group-updates.js?v=20260729drafts" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/ranking-badge-png.js?v=20260728png" defer></script>
     <script src="../js/rankings.js?v=20260728ux" defer></script>
