@@ -9,6 +9,7 @@
     bound: false,
     autosaveTimer: null,
     dirty: false,
+    switchingGroup: false,
   };
 
   function draftStorageKey(organiserId) {
@@ -274,17 +275,74 @@
   function syncGroupOptions(groups) {
     var e = els();
     if (!e.group) return;
+    var list = Array.isArray(groups) ? groups.filter(Boolean) : [];
     var prev = e.group.value || state.organiserId;
     e.group.innerHTML = '';
-    (groups || []).forEach(function (g, idx) {
+    e.group.disabled = false;
+    e.group.removeAttribute('aria-disabled');
+    if (!list.length) {
+      var empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = 'No organiser pages yet';
+      e.group.appendChild(empty);
+      e.group.disabled = true;
+      state.organiserId = '';
+      return;
+    }
+    list.forEach(function (g, idx) {
       var opt = document.createElement('option');
-      opt.value = g.id;
+      opt.value = String(g.id);
       opt.textContent = g.name || 'Organiser page';
       e.group.appendChild(opt);
-      if (!prev && idx === 0) prev = g.id;
+      if (!prev && idx === 0) prev = String(g.id);
     });
-    if (prev) e.group.value = prev;
+    var hasPrev = list.some(function (g) {
+      return String(g.id) === String(prev);
+    });
+    e.group.value = hasPrev ? String(prev) : String(list[0].id);
     state.organiserId = e.group.value || '';
+    var wrap = document.getElementById('ogu-group-wrap');
+    if (wrap) wrap.hidden = false;
+  }
+
+  function cancelAutosave() {
+    if (state.autosaveTimer) {
+      clearTimeout(state.autosaveTimer);
+      state.autosaveTimer = null;
+    }
+  }
+
+  function scheduleAutosave() {
+    if (state.switchingGroup) return;
+    state.dirty = true;
+    cancelAutosave();
+    state.autosaveTimer = setTimeout(function () {
+      if (state.switchingGroup || !state.dirty || !state.organiserId) return;
+      saveDraft({ silent: true })
+        .then(function () {
+          if (!state.switchingGroup) setStatus('Draft auto-saved.', 'ok');
+        })
+        .catch(function (err) {
+          if (!state.switchingGroup) {
+            setStatus(err.message || 'Could not auto-save draft.', 'error');
+          }
+        });
+    }, 1200);
+  }
+
+  async function switchOrganiserPage(nextId) {
+    var id = String(nextId || '').trim();
+    if (!id || id === String(state.organiserId)) return;
+    cancelAutosave();
+    state.switchingGroup = true;
+    state.dirty = false;
+    state.organiserId = id;
+    state.updateId = '';
+    try {
+      await loadBootstrap();
+    } finally {
+      state.switchingGroup = false;
+    }
   }
 
   async function loadBootstrap() {
@@ -379,23 +437,9 @@
     }
   }
 
-  function scheduleAutosave() {
-    state.dirty = true;
-    if (state.autosaveTimer) clearTimeout(state.autosaveTimer);
-    state.autosaveTimer = setTimeout(function () {
-      if (!state.dirty || !state.organiserId) return;
-      saveDraft({ silent: true })
-        .then(function () {
-          setStatus('Draft auto-saved.', 'ok');
-        })
-        .catch(function (err) {
-          setStatus(err.message || 'Could not auto-save draft.', 'error');
-        });
-    }, 1200);
-  }
-
   async function preview() {
     var e = els();
+    if (state.switchingGroup) return;
     try {
       await saveDraft({ silent: true });
     } catch (err) {
@@ -456,10 +500,8 @@
     state.bound = true;
     if (e.group) {
       e.group.addEventListener('change', function () {
-        state.organiserId = e.group.value;
-        state.updateId = '';
-        loadBootstrap().catch(function (err) {
-          setStatus(err.message || 'Could not load', 'error');
+        switchOrganiserPage(e.group.value).catch(function (err) {
+          setStatus(err.message || 'Could not switch organiser page.', 'error');
         });
       });
     }
@@ -471,8 +513,14 @@
       });
     }
     if (e.form) {
-      e.form.addEventListener('input', scheduleAutosave);
-      e.form.addEventListener('change', scheduleAutosave);
+      e.form.addEventListener('input', function (ev) {
+        if (ev.target && ev.target.id === 'ogu-group') return;
+        scheduleAutosave();
+      });
+      e.form.addEventListener('change', function (ev) {
+        if (ev.target && ev.target.id === 'ogu-group') return;
+        scheduleAutosave();
+      });
     }
     if (e.save) {
       e.save.addEventListener('click', function () {
@@ -502,12 +550,21 @@
     bind();
     var groups = options.groups || [];
     syncGroupOptions(groups);
-    if (!state.organiserId && groups[0]) state.organiserId = groups[0].id;
+    if (!state.organiserId) {
+      setStatus(
+        groups.length
+          ? 'Choose an organiser page to start your round-up.'
+          : 'Create an organiser page first, then come back here.',
+        groups.length ? 'ok' : 'error'
+      );
+      return;
+    }
     await loadBootstrap();
   }
 
   global.HubOrganiserGroupUpdates = {
     init: init,
     refresh: loadBootstrap,
+    syncGroups: syncGroupOptions,
   };
 })(typeof window !== 'undefined' ? window : global);

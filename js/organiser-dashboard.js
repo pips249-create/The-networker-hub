@@ -12680,6 +12680,13 @@
       if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
         maybeRedirectToSingleMemberList();
       }
+      if (
+        parseRoute().page === 'group-updates' &&
+        window.HubOrganiserGroupUpdates &&
+        window.HubOrganiserGroupUpdates.init
+      ) {
+        window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+      }
     };
     } catch (e) {
       if (!silent) {

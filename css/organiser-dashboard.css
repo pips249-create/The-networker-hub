@@ -1624,6 +1624,20 @@
   margin-bottom: 6px;
 }
 
+.org-group-update-row {
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.org-group-update-row select {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: pointer;
+  background: var(--od-white);
+}
+
 .org-group-update-field em {
   font-style: normal;
   font-weight: 500;
