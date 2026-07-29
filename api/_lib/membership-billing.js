@@ -310,11 +310,12 @@ async function applyMembershipSubscriptionToRoster({
 
   const { data: existing, error: findError } = await sb
     .from('organiser_member_roster')
-    .select('id, name, attendee_id')
+    .select('id, name, attendee_id, subscription_status')
     .eq('organiser_id', orgId)
     .ilike('email', em)
     .maybeSingle();
   if (findError) throw new Error(findError.message);
+  const previousSubscriptionStatus = String(existing?.subscription_status || '').trim() || null;
 
   const now = new Date().toISOString();
   const patch = {
@@ -346,7 +347,12 @@ async function applyMembershipSubscriptionToRoster({
       .select('*')
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return { ok: true, created: false, row: data };
+    return {
+      ok: true,
+      created: false,
+      row: data,
+      previousSubscriptionStatus,
+    };
   }
 
   const { data, error } = await sb
@@ -359,7 +365,12 @@ async function applyMembershipSubscriptionToRoster({
     .select('*')
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return { ok: true, created: true, row: data };
+  return {
+    ok: true,
+    created: true,
+    row: data,
+    previousSubscriptionStatus: null,
+  };
 }
 
 async function syncRosterFromSubscription(subscription, options) {
@@ -408,7 +419,21 @@ async function syncRosterFromSubscription(subscription, options) {
     expiresAt,
   });
 
-  return { ok: true, ...result, canceled: Boolean(canceled) };
+  const nextStatus = canceled ? 'canceled' : status;
+  const becamePastDue =
+    nextStatus === 'past_due' && result.previousSubscriptionStatus !== 'past_due';
+  if (becamePastDue && result.row) {
+    notifyMembershipPaymentFailed({
+      organiserId,
+      email,
+      memberName: result.row.name || meta.attendee_name || opts.name || '',
+      expiresAt: result.row.expires_at || expiresAt,
+    }).catch((err) => {
+      console.error('[membership] payment_failed notify', err?.message || err);
+    });
+  }
+
+  return { ok: true, ...result, canceled: Boolean(canceled), becamePastDue };
 }
 
 async function handleMembershipCheckoutCompleted(session) {
@@ -464,6 +489,177 @@ async function handleMembershipSubscriptionDeleted(subscription) {
   return syncRosterFromSubscription(subscription, { deleted: true });
 }
 
+async function loadMembershipOrganiser(organiserId) {
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id, name, slug, photo_url, email, contact_email')
+    .eq('id', String(organiserId || '').trim())
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data || null;
+}
+
+function membershipManageUrl(organiserRow, site, email) {
+  const { siteBase } = require('./hub-email-urls');
+  const base = site || siteBase();
+  return (
+    base +
+    '/login?email=' +
+    encodeURIComponent(email) +
+    '&next=' +
+    encodeURIComponent('/account/#memberships')
+  );
+}
+
+async function notifyMembershipPaymentFailed({ organiserId, email, memberName, expiresAt }) {
+  const { sendTemplatedEmail } = require('./send-template-email');
+  const {
+    siteBase,
+    hubAccountUrl,
+    organiserPublicUrl,
+    legalPolicyUrl,
+    contactUrl,
+    logoNavUrl,
+    logoFooterUrl,
+  } = require('./hub-email-urls');
+  const { emailGreetingName } = require('./email-display-name');
+
+  const organiser = await loadMembershipOrganiser(organiserId);
+  if (!organiser) return { sent: false, reason: 'organiser_not_found' };
+  const site = siteBase();
+  const memberEmail = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (!memberEmail) return { sent: false, reason: 'missing_email' };
+
+  const greetingName = emailGreetingName(memberName, memberEmail);
+  const organiserName = String(organiser.name || 'your networking group').trim();
+  const manageUrl = membershipManageUrl(organiser, site, memberEmail);
+  const expiresLabel = expiresAt
+    ? 'Your membership stays active until ' +
+      String(expiresAt).slice(0, 10) +
+      ' while Stripe retries the card.'
+    : 'Update your card soon so your membership continues without interruption.';
+
+  const common = {
+    organiser_name: organiserName,
+    organiser_url: organiserPublicUrl(organiser, site),
+    hub_account_url: hubAccountUrl(site),
+    site_url: site,
+    logo_url: logoNavUrl(site),
+    logo_footer_url: logoFooterUrl(site),
+    privacy_url: legalPolicyUrl(site, 'privacy'),
+    terms_url: legalPolicyUrl(site, 'terms'),
+    contact_url: contactUrl(site),
+    expires_note: expiresLabel,
+  };
+
+  await sendTemplatedEmail({
+    slug: 'member_roster_payment_failed',
+    to: memberEmail,
+    variables: {
+      ...common,
+      user_name: greetingName,
+      user_email: memberEmail,
+      cta_url: manageUrl,
+      cta_label: 'Update payment details',
+    },
+  });
+
+  const organiserEmail = String(organiser.contact_email || organiser.email || '')
+    .trim()
+    .toLowerCase();
+  if (organiserEmail && organiserEmail !== memberEmail) {
+    await sendTemplatedEmail({
+      slug: 'member_roster_payment_failed_organiser',
+      to: organiserEmail,
+      variables: {
+        ...common,
+        user_name: greetingName,
+        user_email: memberEmail,
+        member_name: greetingName,
+        member_email: memberEmail,
+        cta_url: site + '/organiser/#memberships?membershipGroup=' + encodeURIComponent(organiser.id),
+        cta_label: 'Open membership',
+      },
+    });
+  }
+
+  return { sent: true };
+}
+
+async function sendMembershipRenewalReceipt({ invoice, subscription, rosterRow }) {
+  const { sendTemplatedEmail } = require('./send-template-email');
+  const {
+    siteBase,
+    hubAccountUrl,
+    organiserPublicUrl,
+    legalPolicyUrl,
+    contactUrl,
+    logoNavUrl,
+    logoFooterUrl,
+  } = require('./hub-email-urls');
+  const { emailGreetingName } = require('./email-display-name');
+
+  const meta = normalizeMeta(subscription?.metadata);
+  const organiserId = String(meta.organiser_id || rosterRow?.organiser_id || '').trim();
+  const email = String(meta.attendee_email || meta.email || rosterRow?.email || '')
+    .trim()
+    .toLowerCase();
+  if (!organiserId || !email) return { sent: false, reason: 'missing_identity' };
+
+  const organiser = await loadMembershipOrganiser(organiserId);
+  if (!organiser) return { sent: false, reason: 'organiser_not_found' };
+
+  const site = siteBase();
+  const amountPaid = Number(invoice?.amount_paid);
+  const amountLabel = Number.isFinite(amountPaid)
+    ? '£' + (amountPaid / 100).toFixed(2).replace(/\.00$/, '')
+    : '';
+  const periodEnd = periodEndDateString(subscription);
+  const reason = String(invoice?.billing_reason || '');
+  const isRenewal = reason === 'subscription_cycle';
+  const interval = normalizeInterval(meta.billing_interval || rosterRow?.billing_interval);
+  const intervalLabel = interval === 'month' ? 'monthly' : interval === 'year' ? 'annual' : '';
+
+  await sendTemplatedEmail({
+    slug: 'member_roster_renewal_receipt',
+    to: email,
+    variables: {
+      user_name: emailGreetingName(rosterRow?.name || meta.attendee_name, email),
+      user_email: email,
+      organiser_name: String(organiser.name || 'your networking group').trim(),
+      organiser_url: organiserPublicUrl(organiser, site),
+      amount_paid: amountLabel,
+      billing_interval: intervalLabel,
+      next_billing_date: periodEnd || '',
+      receipt_intro: isRenewal
+        ? 'Thanks — your membership renewal went through.'
+        : 'Thanks — your membership payment went through.',
+      period_note: periodEnd
+        ? 'Your membership is current until ' + periodEnd + '.'
+        : 'You can manage or cancel anytime from My Hub → Memberships.',
+      cta_url: site + '/login?email=' + encodeURIComponent(email) + '&next=' + encodeURIComponent('/account/#memberships'),
+      cta_label: 'Manage membership',
+      hub_account_url: hubAccountUrl(site),
+      site_url: site,
+      logo_url: logoNavUrl(site),
+      logo_footer_url: logoFooterUrl(site),
+      privacy_url: legalPolicyUrl(site, 'privacy'),
+      terms_url: legalPolicyUrl(site, 'terms'),
+      contact_url: contactUrl(site),
+    },
+  });
+  return { sent: true };
+}
+
+async function retrieveMembershipSubscription(subscriptionId) {
+  const { getStripeClient } = require('./stripe-checkout');
+  const stripe = getStripeClient();
+  return stripe.subscriptions.retrieve(String(subscriptionId || '').trim());
+}
+
 async function handleMembershipInvoicePaid(invoice) {
   const subscriptionId =
     typeof invoice?.subscription === 'string'
@@ -472,21 +668,49 @@ async function handleMembershipInvoicePaid(invoice) {
   if (!subscriptionId) return { ok: false, skipped: true, reason: 'no_subscription' };
 
   const meta = normalizeMeta(invoice?.subscription_details?.metadata || invoice?.metadata);
+  let subscription;
   if (!isMembershipCheckoutMetadata(meta)) {
-    // Fall back to loading the subscription — invoice metadata may be empty.
-    const { getStripeClient } = require('./stripe-checkout');
-    const stripe = getStripeClient();
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    subscription = await retrieveMembershipSubscription(subscriptionId);
     if (!isMembershipCheckoutMetadata(subscription.metadata)) {
       return { ok: false, skipped: true, reason: 'not_membership' };
     }
-    return syncRosterFromSubscription(subscription);
+  } else {
+    subscription = await retrieveMembershipSubscription(subscriptionId);
   }
 
-  const { getStripeClient } = require('./stripe-checkout');
-  const stripe = getStripeClient();
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  return syncRosterFromSubscription(subscription);
+  const result = await syncRosterFromSubscription(subscription);
+  const reason = String(invoice?.billing_reason || '');
+  if (
+    result.ok &&
+    !result.skipped &&
+    (reason === 'subscription_cycle' || reason === 'subscription_create')
+  ) {
+    sendMembershipRenewalReceipt({
+      invoice,
+      subscription,
+      rosterRow: result.row,
+    }).catch((err) => {
+      console.error('[membership] renewal receipt', err?.message || err);
+    });
+  }
+  return result;
+}
+
+async function handleMembershipInvoicePaymentFailed(invoice) {
+  const subscriptionId =
+    typeof invoice?.subscription === 'string'
+      ? invoice.subscription
+      : String(invoice?.subscription?.id || '').trim();
+  if (!subscriptionId) return { ok: false, skipped: true, reason: 'no_subscription' };
+
+  const subscription = await retrieveMembershipSubscription(subscriptionId);
+  if (!isMembershipCheckoutMetadata(subscription.metadata)) {
+    return { ok: false, skipped: true, reason: 'not_membership' };
+  }
+  // Force past_due sync even if Stripe still reports another status briefly.
+  return syncRosterFromSubscription(subscription, {
+    subscriptionStatus: String(subscription.status || 'past_due'),
+  });
 }
 
 module.exports = {
@@ -515,4 +739,7 @@ module.exports = {
   handleMembershipSubscriptionUpdated,
   handleMembershipSubscriptionDeleted,
   handleMembershipInvoicePaid,
+  handleMembershipInvoicePaymentFailed,
+  notifyMembershipPaymentFailed,
+  sendMembershipRenewalReceipt,
 };

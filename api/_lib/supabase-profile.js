@@ -103,6 +103,7 @@ function rowToProfile(session, hub, attendee) {
     emailsEnabled: hub?.emails_enabled !== false,
     emailPrefEventReminders: hub?.email_pref_event_reminders !== false,
     emailPrefOrganiserAlerts: hub?.email_pref_organiser_alerts !== false,
+    emailPrefOrganiserRoundups: hub?.email_pref_organiser_roundups !== false,
   };
 }
 
@@ -222,6 +223,9 @@ async function updateProfile(session, body) {
   if (body.emailPrefOrganiserAlerts !== undefined && uid) {
     hubPatch.email_pref_organiser_alerts = Boolean(body.emailPrefOrganiserAlerts);
   }
+  if (body.emailPrefOrganiserRoundups !== undefined && uid) {
+    hubPatch.email_pref_organiser_roundups = Boolean(body.emailPrefOrganiserRoundups);
+  }
 
   if (Object.keys(hubPatch).length && uid) {
     let updated = null;
@@ -239,11 +243,13 @@ async function updateProfile(session, body) {
       const msg = String(primary.error.message || '').toLowerCase();
       if (
         msg.includes('email_pref_event_reminders') ||
-        msg.includes('email_pref_organiser_alerts')
+        msg.includes('email_pref_organiser_alerts') ||
+        msg.includes('email_pref_organiser_roundups')
       ) {
         const fallback = { ...hubPatch };
         delete fallback.email_pref_event_reminders;
         delete fallback.email_pref_organiser_alerts;
+        delete fallback.email_pref_organiser_roundups;
         if (Object.keys(fallback).length) {
           const retry = await sb
             .from('hub_accounts')

@@ -29,6 +29,7 @@ const routes = {
   'event-application': require('./_lib/routes/auth-event-application'),
   'create-checkout': require('./_lib/routes/auth-create-checkout'),
   'membership-checkout': require('./_lib/routes/auth-membership-checkout'),
+  'membership-portal': require('./_lib/routes/auth-membership-portal'),
   'roster-eligibility': require('./_lib/routes/auth-roster-eligibility'),
   'guest-visit-eligibility': require('./_lib/routes/auth-guest-visit-eligibility'),
   'alumni-eligibility': require('./_lib/routes/auth-alumni-eligibility'),

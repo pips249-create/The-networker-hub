@@ -474,6 +474,20 @@ async function createMembershipCheckoutSession(opts) {
   return stripe.checkout.sessions.create(sessionParams);
 }
 
+/**
+ * Member self-serve cancel / update card — Stripe Billing Portal on the platform customer.
+ */
+async function createMembershipBillingPortalSession(opts) {
+  const stripe = getStripeClient();
+  const customerId = String(opts.customerId || '').trim();
+  if (!customerId) throw new Error('missing_customer');
+  const returnUrl = String(opts.returnUrl || siteBaseUrl() + '/account/#memberships').trim();
+  return stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+}
+
 module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
@@ -484,6 +498,7 @@ module.exports = {
   createEventFeaturedCheckoutSession,
   createCityPartnerCheckoutSession,
   createMembershipCheckoutSession,
+  createMembershipBillingPortalSession,
   retrieveCheckoutSession,
   siteBaseUrl,
 };

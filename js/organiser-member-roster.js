@@ -909,6 +909,12 @@
     if (strong) strong.textContent = label;
   }
 
+  function syncBulkPayInvite(totalActive) {
+    const btn = document.getElementById('omr-bulk-pay-invite');
+    if (!btn) return;
+    btn.hidden = !(billingOffered && totalActive > 0);
+  }
+
   async function loadEvents() {
     try {
       const data = await api('/api/organiser/events');
@@ -1021,15 +1027,21 @@
     }
 
     const h = reports.rosterHealth || {};
+    const hubBilling = reports.hubBilling || {};
     const booked = reports.bookedForEvent;
     const attendance = reports.eventAttendance;
     const missed = reports.missedRecentMeetings;
     const expiry = reports.membershipExpiry || {};
     const lapsed = expiry.lapsed || [];
+    const pastDue = expiry.pastDue || [];
     const upcoming = reports.upcomingEventBookings;
     let html = '';
 
     if (activeReportTab === 'overview') {
+      const mrr =
+        hubBilling.estimatedMrrPounds != null
+          ? '£' + Number(hubBilling.estimatedMrrPounds).toFixed(2).replace(/\.00$/, '')
+          : '£0';
       html =
         '<div class="omr-report-card omr-report-card--stat">' +
         '<p class="omr-report-kicker">Member list</p>' +
@@ -1049,7 +1061,33 @@
         '<span><strong>' +
         esc(h.expired || 0) +
         '</strong> lapsed</span>' +
+        (h.pastDue
+          ? '<span><strong>' + esc(h.pastDue) + '</strong> payment failed</span>'
+          : '') +
         '</div></div>';
+      if (hubBilling.activePaid || hubBilling.pastDue) {
+        html +=
+          '<div class="omr-report-card omr-report-card--stat">' +
+          '<p class="omr-report-kicker">Hub billing</p>' +
+          '<p class="omr-report-stat">' +
+          esc(mrr) +
+          '<span> estimated monthly</span></p>' +
+          '<div class="omr-report-metrics">' +
+          '<span><strong>' +
+          esc(hubBilling.activePaid || 0) +
+          '</strong> paying via Hub</span>' +
+          '<span><strong>' +
+          esc(hubBilling.monthlyCount || 0) +
+          '</strong> monthly</span>' +
+          '<span><strong>' +
+          esc(hubBilling.annualCount || 0) +
+          '</strong> annual</span>' +
+          (hubBilling.pastDue
+            ? '<span><strong>' + esc(hubBilling.pastDue) + '</strong> payment failed</span>'
+            : '') +
+          '</div>' +
+          '<p class="omr-report-note">Estimated from your membership prices on active Hub subscriptions (annual ÷ 12). Past-due cards are excluded from the monthly figure.</p></div>';
+      }
     }
 
     if (activeReportTab === 'upcoming') {
@@ -1138,13 +1176,36 @@
             esc(reportMemberLabel(m)) +
             ' — ' +
             esc(m.expiresAt) +
+            (m.paymentFailed ? ' <span class="omr-badge-past-due">Payment failed</span>' : '') +
             '</li>';
         });
-        html += '</ul></div>';
+        html += '</ul>';
+        if (billingOffered) {
+          html +=
+            '<div class="omr-report-actions"><button type="button" class="org-btn org-btn-outline org-btn-sm" data-omr-bulk-pay-scope="expiring">Invite these to pay</button></div>';
+        }
+        html += '</div>';
       } else {
         html =
           '<div class="omr-report-card omr-report-card--empty"><h3>Expiring within 14 days</h3>' +
           '<p>No memberships expiring in the next 14 days.</p></div>';
+      }
+      if (pastDue.length) {
+        html +=
+          '<div class="omr-report-card"><h3>Payment failed</h3><ul>';
+        pastDue.forEach(function (m) {
+          html +=
+            '<li>' +
+            esc(reportMemberLabel(m)) +
+            (m.expiresAt ? ' — until ' + esc(m.expiresAt) : '') +
+            '</li>';
+        });
+        html += '</ul>';
+        if (billingOffered) {
+          html +=
+            '<div class="omr-report-actions"><button type="button" class="org-btn org-btn-outline org-btn-sm" data-omr-bulk-pay-scope="past_due">Invite these to pay</button></div>';
+        }
+        html += '</div>';
       }
     }
 
@@ -1160,7 +1221,12 @@
             (m.daysSinceExpiry != null ? ' (' + esc(m.daysSinceExpiry) + ' days ago)' : '') +
             '</li>';
         });
-        html += '</ul></div>';
+        html += '</ul>';
+        if (billingOffered) {
+          html +=
+            '<div class="omr-report-actions"><button type="button" class="org-btn org-btn-outline org-btn-sm" data-omr-bulk-pay-scope="lapsed">Invite these to pay</button></div>';
+        }
+        html += '</div>';
       } else {
         html =
           '<div class="omr-report-card omr-report-card--empty"><h3>Lapsed memberships</h3>' +
@@ -1516,6 +1582,7 @@
       const totalActive = rosterActiveTotal;
       syncAddPanel(totalActive);
       syncBulkResend(totalActive);
+      syncBulkPayInvite(totalActive);
 
       const tabCount = document.getElementById('omr-tab-count-members');
       if (tabCount) tabCount.textContent = String(totalActive);
@@ -1569,6 +1636,10 @@
             ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
             : esc(m.expiresAt)
           : '—';
+        const payFail =
+          m.paymentFailed || m.subscriptionStatus === 'past_due'
+            ? '<span class="omr-badge-past-due">Payment failed</span>'
+            : '';
         tr.innerHTML =
           '<td class="org-td-name omr-name-cell" data-label="Name" data-id="' +
           esc(m.id) +
@@ -1580,6 +1651,7 @@
           esc(m.id) +
           '">' +
           exp +
+          payFail +
           '</td><td data-label="Hub account">' +
           hub +
           '</td><td data-label="Invite">' +
@@ -1841,6 +1913,53 @@
     }
   }
 
+  async function bulkPayInvites(scope) {
+    closeAllActionMenus();
+    if (!billingOffered) {
+      showAlert('Set a membership price before sending pay invites.', 'error');
+      return;
+    }
+    const nextScope = String(scope || 'renewal').trim() || 'renewal';
+    const labels = {
+      renewal: 'unpaid, expiring, lapsed, and payment-failed members',
+      expiring: 'members expiring within 14 days',
+      lapsed: 'lapsed members',
+      past_due: 'members with a failed payment',
+      unpaid: 'members not yet paying through the Hub',
+    };
+    if (
+      !confirm(
+        'Queue pay invites for ' +
+          (labels[nextScope] || 'eligible members') +
+          '? Emails send gradually over the next 2 hours.'
+      )
+    ) {
+      return;
+    }
+    try {
+      const data = await api(rosterUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organiserId: getOrganiserId(),
+          action: 'queue-pay-invites',
+          scope: nextScope,
+        }),
+      });
+      showAlert(
+        'Queued ' +
+          (data.queued || 0) +
+          ' pay invite' +
+          ((data.queued || 0) === 1 ? '' : 's') +
+          (data.eligible != null ? ' (' + data.eligible + ' eligible)' : '') +
+          ' — sending over the next 2 hours.',
+        (data.queued || 0) ? 'success' : 'error'
+      );
+    } catch (err) {
+      showAlert(err.message, 'error');
+    }
+  }
+
   async function fetchRosterPage(pageNum, options) {
     const groupId = getOrganiserId();
     if (!groupId) return;
@@ -2076,6 +2195,14 @@
     });
     document.getElementById('omr-download-template')?.addEventListener('click', downloadTemplateCsv);
     document.getElementById('omr-bulk-resend')?.addEventListener('click', bulkResendInvites);
+    document.getElementById('omr-bulk-pay-invite')?.addEventListener('click', function () {
+      bulkPayInvites('renewal');
+    });
+    document.getElementById('omr-reports')?.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-omr-bulk-pay-scope]');
+      if (!btn) return;
+      bulkPayInvites(btn.getAttribute('data-omr-bulk-pay-scope') || 'renewal');
+    });
 
     document.getElementById('omr-add-form')?.addEventListener('submit', async function (e) {
       e.preventDefault();

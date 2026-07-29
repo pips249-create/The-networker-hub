@@ -35,6 +35,7 @@ const QUEUE_KINDS = {
   INVITE: 'invite',
   NEW_EVENT: 'new_event',
   BOOKING_REMINDER: 'booking_reminder',
+  PAY_INVITE: 'pay_invite',
 };
 
 const MAX_SPREAD_MS = 2 * 60 * 60 * 1000;
@@ -126,6 +127,23 @@ async function queueBookingReminders(organiserId, eventId, members, options) {
   return enqueueRosterEmailQueue(rows);
 }
 
+async function queueMembershipPayInviteEmails(organiserId, memberRows, options) {
+  const orgId = String(organiserId || '').trim();
+  const members = (memberRows || []).filter((m) => m && m.id && m.email);
+  if (!orgId || !members.length) return { queued: 0 };
+
+  const base = options?.baseTime || new Date();
+  const rows = members.map((member, index) => ({
+    kind: QUEUE_KINDS.PAY_INVITE,
+    organiser_id: orgId,
+    roster_member_id: member.id,
+    event_id: null,
+    scheduled_for: scheduledForQueueRow(index, members.length, base, options),
+  }));
+
+  return enqueueRosterEmailQueue(rows);
+}
+
 async function sendQueuedBookingReminder(sb, { eventRow, organiser, member }) {
   const { normalizeRosterEmail } = rosterHelpers();
   const email = normalizeRosterEmail(member.email);
@@ -194,6 +212,7 @@ async function processDueRosterEmails(sb, options) {
     normalizeRosterEmail,
     rosterRowToClient,
     sendMemberRosterInviteEmail,
+    sendMemberRosterPayInviteEmail,
     sendMemberRosterNewEventAlert,
   } = rosterHelpers();
 
@@ -233,6 +252,15 @@ async function processDueRosterEmails(sb, options) {
           memberName: client.name,
           rosterRowId: client.id,
           attendeeId: client.attendeeId,
+        });
+        outcome = invite.sent ? 'sent' : 'skipped';
+      } else if (row.kind === QUEUE_KINDS.PAY_INVITE) {
+        const client = rosterRowToClient(memberRow);
+        const invite = await sendMemberRosterPayInviteEmail({
+          organiserRow: organiserRes.data,
+          memberEmail: client.email,
+          memberName: client.name,
+          rosterRowId: client.id,
         });
         outcome = invite.sent ? 'sent' : 'skipped';
       } else if (row.kind === QUEUE_KINDS.NEW_EVENT) {
@@ -333,6 +361,7 @@ module.exports = {
   queueMemberRosterInvites,
   queueNewEventAlerts,
   queueBookingReminders,
+  queueMembershipPayInviteEmails,
   processDueRosterEmails,
   drainDueRosterEmails,
 };

@@ -12,6 +12,7 @@ const {
   sendMemberRosterPayInviteEmail,
   enrichMembersWithBookings,
   queueUnclaimedMemberInvites,
+  queueMembershipPayInvites,
 } = require('../organiser-member-roster');
 const { getSupabaseAdmin } = require('../supabase');
 
@@ -146,6 +147,12 @@ module.exports = async function handler(req, res) {
 
       if (action === 'queue-invites' || action === 'queue_invites') {
         const result = await queueUnclaimedMemberInvites(groupId);
+        return json(res, 200, { ok: true, ...result });
+      }
+
+      if (action === 'queue-pay-invites' || action === 'queue_pay_invites') {
+        const scope = String(body.scope || 'renewal').trim().toLowerCase();
+        const result = await queueMembershipPayInvites(groupId, { scope });
         return json(res, 200, { ok: true, ...result });
       }
 

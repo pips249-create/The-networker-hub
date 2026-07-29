@@ -58,9 +58,11 @@
 
   function fillEmailPrefs(profile) {
     const master = document.getElementById('as-email-master');
+    const roundups = document.getElementById('as-email-roundups');
     const reminders = document.getElementById('as-email-reminders');
     const organiserAlerts = document.getElementById('as-email-organiser-alerts');
     if (master) master.checked = profile.emailsEnabled === true;
+    if (roundups) roundups.checked = profile.emailPrefOrganiserRoundups !== false;
     if (reminders) reminders.checked = profile.emailPrefEventReminders !== false;
     if (organiserAlerts) organiserAlerts.checked = profile.emailPrefOrganiserAlerts !== false;
     syncEmailPrefDisabled();
@@ -69,6 +71,7 @@
   function syncEmailPrefDisabled() {
     const master = document.getElementById('as-email-master');
     const disabled = master ? !master.checked : false;
+    // Round-ups stay independent of Hub marketing.
     ['as-email-reminders', 'as-email-organiser-alerts'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -201,6 +204,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           emailsEnabled,
+          emailPrefOrganiserRoundups:
+            document.getElementById('as-email-roundups')?.checked ?? true,
           emailPrefEventReminders: document.getElementById('as-email-reminders')?.checked ?? true,
           emailPrefOrganiserAlerts:
             document.getElementById('as-email-organiser-alerts')?.checked ?? true,

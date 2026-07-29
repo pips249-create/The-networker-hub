@@ -591,12 +591,18 @@ async function fetchActivity(sb) {
 }
 
 async function fetchUsers(sb) {
-  const [accountsRes, attendeesRes, organisersRes, authRes] = await Promise.all([
-    sb
-      .from('hub_accounts')
-      .select(
-        'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, created_at'
-      ),
+  const accountsSelectWithRoundups =
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, created_at';
+  const accountsSelectFallback =
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, created_at';
+  let accountsRes = await sb.from('hub_accounts').select(accountsSelectWithRoundups);
+  if (
+    accountsRes.error &&
+    /email_pref_organiser_roundups/i.test(String(accountsRes.error.message || ''))
+  ) {
+    accountsRes = await sb.from('hub_accounts').select(accountsSelectFallback);
+  }
+  const [attendeesRes, organisersRes, authRes] = await Promise.all([
     sb.from('attendees').select('supabase_user_id, name, email, location'),
     sb
       .from('organisers')
@@ -643,6 +649,7 @@ async function fetchUsers(sb) {
       displayName: acc.display_name || null,
       emailPrefEventReminders: acc.email_pref_event_reminders !== false,
       emailPrefOrganiserAlerts: acc.email_pref_organiser_alerts !== false,
+      emailPrefOrganiserRoundups: acc.email_pref_organiser_roundups !== false,
       organiserTermsAcceptedAt: acc.organiser_terms_accepted_at || null,
       organiserListingStatus: org?.listing_status || null,
       accountCreatedAt: acc.created_at || auth?.created_at || null,
@@ -672,6 +679,7 @@ async function fetchUsers(sb) {
       emailPrefNewsletter: true,
       emailPrefEventReminders: true,
       emailPrefOrganiserAlerts: true,
+      emailPrefOrganiserRoundups: true,
       organiserTermsAcceptedAt: null,
       organiserListingStatus: null,
       accountCreatedAt: auth?.created_at || null,

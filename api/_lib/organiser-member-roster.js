@@ -700,6 +700,8 @@ async function listRosterPage(organiserId, options = {}) {
     const today = new Date().toISOString().slice(0, 10);
     const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
     q = q.not('expires_at', 'is', null).gte('expires_at', today).lte('expires_at', in14);
+  } else if (filter === 'past_due' || filter === 'payment_failed') {
+    q = q.eq('subscription_status', 'past_due');
   }
 
   q = q
@@ -750,11 +752,13 @@ function rosterRowToClient(row) {
     daysUntilExpiry: days,
     expiringSoon: days != null && days >= 0 && days <= 14,
     stripeSubscriptionId: row.stripe_subscription_id || null,
+    stripeCustomerId: row.stripe_customer_id || null,
     billingInterval: row.billing_interval || null,
     subscriptionStatus: row.subscription_status || null,
     membershipAmountPence:
       row.membership_amount_pence != null ? Math.round(Number(row.membership_amount_pence)) : null,
     billedThroughHub: Boolean(row.stripe_subscription_id),
+    paymentFailed: String(row.subscription_status || '').trim() === 'past_due',
   };
 }
 
@@ -1037,6 +1041,27 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
   const unclaimed = activeRoster.length - claimed;
   const expiringSoon = activeRoster.filter((r) => r.expiringSoon).length;
   const expired = activeRoster.filter((r) => !r.membershipActive && r.expiresAt).length;
+  const pastDue = activeRoster.filter((r) => r.paymentFailed).length;
+
+  let mrrPence = 0;
+  let hubActivePaid = 0;
+  let hubMonthly = 0;
+  let hubAnnual = 0;
+  activeRoster.forEach((r) => {
+    if (!r.billedThroughHub) return;
+    const status = String(r.subscriptionStatus || '').toLowerCase();
+    if (status && status !== 'active' && status !== 'trialing') return;
+    const amount = Number(r.membershipAmountPence) || 0;
+    if (amount <= 0) return;
+    hubActivePaid += 1;
+    if (r.billingInterval === 'month') {
+      hubMonthly += 1;
+      mrrPence += amount;
+    } else if (r.billingInterval === 'year') {
+      hubAnnual += 1;
+      mrrPence += Math.round(amount / 12);
+    }
+  });
 
   const reports = {
     rosterHealth: {
@@ -1045,6 +1070,15 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
       unclaimed,
       expiringSoon,
       expired,
+      pastDue,
+    },
+    hubBilling: {
+      activePaid: hubActivePaid,
+      pastDue,
+      monthlyCount: hubMonthly,
+      annualCount: hubAnnual,
+      estimatedMrrPence: mrrPence,
+      estimatedMrrPounds: Math.round(mrrPence) / 100,
     },
     membershipExpiry: {
       within14Days: activeRoster
@@ -1055,6 +1089,8 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
           email: r.email,
           expiresAt: r.expiresAt,
           daysUntilExpiry: r.daysUntilExpiry,
+          paymentFailed: Boolean(r.paymentFailed),
+          billedThroughHub: Boolean(r.billedThroughHub),
         })),
       lapsed: activeRoster
         .filter((r) => !r.membershipActive && r.expiresAt)
@@ -1065,8 +1101,18 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
           expiresAt: r.expiresAt,
           daysSinceExpiry:
             r.daysUntilExpiry != null && r.daysUntilExpiry < 0 ? Math.abs(r.daysUntilExpiry) : null,
+          billedThroughHub: Boolean(r.billedThroughHub),
         }))
         .sort((a, b) => String(b.expiresAt || '').localeCompare(String(a.expiresAt || ''))),
+      pastDue: activeRoster
+        .filter((r) => r.paymentFailed)
+        .map((r) => ({
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          expiresAt: r.expiresAt,
+          billedThroughHub: Boolean(r.billedThroughHub),
+        })),
     },
     upcomingEventBookings: null,
     bookedForEvent: null,
@@ -1343,7 +1389,7 @@ async function listRosterGroupsForAttendee(email) {
   const { data, error } = await sb
     .from('organiser_member_roster')
     .select(
-      'id, expires_at, claimed_at, invite_sent_at, status, stripe_subscription_id, billing_interval, subscription_status, membership_amount_pence, organisers(id, name, slug, photo_url, industries, average_rating)'
+      'id, expires_at, claimed_at, invite_sent_at, status, stripe_subscription_id, stripe_customer_id, billing_interval, subscription_status, membership_amount_pence, organisers(id, name, slug, photo_url, industries, average_rating)'
     )
     .eq('status', ROSTER_STATUS_ACTIVE)
     .ilike('email', em)
@@ -1661,6 +1707,44 @@ async function queueUnclaimedMemberInvites(organiserId) {
   return queueMemberRosterInvites(orgId, unclaimed);
 }
 
+/**
+ * Queue Invite to pay emails for renewal targets: past_due, expiring, lapsed, or not Hub-billed.
+ */
+async function queueMembershipPayInvites(organiserId, options) {
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) return { queued: 0, eligible: 0 };
+  const opts = options || {};
+  const scope = String(opts.scope || 'renewal').trim().toLowerCase();
+  const { getMembershipPlanForOrganiser } = require('./membership-billing');
+  const plan = await getMembershipPlanForOrganiser(orgId);
+  if (!plan || !plan.offered) {
+    const err = new Error('membership_not_offered');
+    err.status = 400;
+    err.message = 'Set a monthly or annual membership price before sending pay invites.';
+    throw err;
+  }
+
+  const members = await listRosterForOrganiser(orgId, { status: 'active' });
+  const eligible = (members || []).filter((m) => {
+    if (!m.email) return false;
+    if (scope === 'past_due' || scope === 'payment_failed') return m.paymentFailed;
+    if (scope === 'expiring') return m.expiringSoon;
+    if (scope === 'lapsed') return !m.membershipActive && m.expiresAt;
+    if (scope === 'unpaid') return !m.billedThroughHub;
+    // renewal (default): anyone who should be nudged to pay/renew
+    return (
+      m.paymentFailed ||
+      m.expiringSoon ||
+      (!m.membershipActive && m.expiresAt) ||
+      !m.billedThroughHub
+    );
+  });
+  if (!eligible.length) return { queued: 0, eligible: 0 };
+  const { queueMembershipPayInviteEmails } = require('./organiser-roster-email-queue');
+  const queued = await queueMembershipPayInviteEmails(orgId, eligible);
+  return { ...queued, eligible: eligible.length };
+}
+
 module.exports = {
   ROSTER_STATUS_ACTIVE,
   ROSTER_STATUS_REMOVED,
@@ -1693,5 +1777,6 @@ module.exports = {
   buildRosterSummariesForOrganisers,
   sendMemberRosterBookingReminders,
   queueUnclaimedMemberInvites,
+  queueMembershipPayInvites,
   countActiveRosterMembers,
 };

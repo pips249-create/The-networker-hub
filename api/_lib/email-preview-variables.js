@@ -503,6 +503,40 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     }
   }
 
+  if (
+    slug === 'member_roster_payment_failed' ||
+    slug === 'member_roster_payment_failed_organiser' ||
+    slug === 'member_roster_renewal_receipt'
+  ) {
+    vars.organiser_name = vars.organiser_name || 'City Connectors';
+    vars.member_name = vars.member_name || vars.user_name || 'Alex';
+    vars.member_email = vars.member_email || vars.user_email;
+    vars.expires_note =
+      vars.expires_note ||
+      'Your membership stays active until 2026-08-31 while Stripe retries the card.';
+    vars.amount_paid = vars.amount_paid || '£25.75';
+    vars.billing_interval = vars.billing_interval || 'monthly';
+    vars.next_billing_date = vars.next_billing_date || '2026-08-29';
+    vars.receipt_intro =
+      vars.receipt_intro || 'Thanks — your membership renewal went through.';
+    vars.period_note =
+      vars.period_note || 'Your membership is current until 2026-08-29.';
+    vars.cta_label =
+      vars.cta_label ||
+      (slug === 'member_roster_renewal_receipt'
+        ? 'Manage membership'
+        : slug === 'member_roster_payment_failed_organiser'
+          ? 'Open membership'
+          : 'Update payment details');
+    vars.cta_url =
+      vars.cta_url ||
+      site +
+        '/login?email=' +
+        encodeURIComponent(vars.user_email) +
+        '&next=' +
+        encodeURIComponent('/account/#memberships');
+  }
+
   return vars;
 }
 

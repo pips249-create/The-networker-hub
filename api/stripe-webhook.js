@@ -23,6 +23,7 @@ const {
   handleMembershipSubscriptionUpdated,
   handleMembershipSubscriptionDeleted,
   handleMembershipInvoicePaid,
+  handleMembershipInvoicePaymentFailed,
 } = require('./_lib/membership-billing');
 
 const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
@@ -168,6 +169,13 @@ async function handler(req, res) {
       const membershipResult = await handleMembershipInvoicePaid(invoice);
       res.statusCode = 200;
       return res.end(JSON.stringify({ ok: true, revenueResult, membershipResult }));
+    }
+
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object || {};
+      const membershipResult = await handleMembershipInvoicePaymentFailed(invoice);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ ok: true, membershipResult }));
     }
 
     if (event.type === 'charge.refunded') {

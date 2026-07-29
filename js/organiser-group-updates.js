@@ -135,7 +135,7 @@
         ' sends used'
     );
     bits.push(
-      'Free remaining: <strong>' +
+      'Free remaining for this page: <strong>' +
         allowance.freeRemaining +
         '</strong> · Extra credits: <strong>' +
         allowance.extraCredits +
@@ -150,11 +150,11 @@
     if (!allowance.canSend) {
       bits.push(
         allowance.blockedReason === 'hard_cap'
-          ? 'You’ve hit this month’s send limit.'
-          : 'Free send used. Extra paid sends coming soon — or wait until next month.'
+          ? 'You’ve hit this page’s send limit for the month.'
+          : 'This page’s free send is used. Extra paid sends coming soon — or wait until next month.'
       );
     } else if (allowance.freeRemaining > 0) {
-      bits.push('Your free monthly update is ready when you are.');
+      bits.push('Each organiser page gets its own free monthly update.');
     }
     el.innerHTML = bits.map(function (b) {
       return '<p>' + b + '</p>';
@@ -235,6 +235,25 @@
         })
         .join('') +
       '</ul>';
+  }
+
+  function clearComposer() {
+    var e = els();
+    state.updateId = '';
+    state.dirty = false;
+    if (e.subject) e.subject.value = '';
+    if (e.note) e.note.value = '';
+    if (e.recap) e.recap.value = '';
+    if (e.includeEvents) e.includeEvents.checked = true;
+    if (e.spotlightName) e.spotlightName.value = '';
+    if (e.spotlightCompany) e.spotlightCompany.value = '';
+    if (e.spotlightText) e.spotlightText.value = '';
+    if (e.spotlightLinkedin) e.spotlightLinkedin.value = '';
+    if (e.ask) e.ask.value = '';
+    if (e.volunteer) e.volunteer.value = '';
+    if (e.includeSocials) e.includeSocials.checked = true;
+    if (e.previewBody) e.previewBody.innerHTML = '';
+    renderEvents((state.bootstrap && state.bootstrap.events) || [], []);
   }
 
   function fillFromUpdate(update) {
@@ -346,6 +365,7 @@
     state.dirty = false;
     state.organiserId = id;
     state.updateId = '';
+    clearComposer();
     try {
       await loadBootstrap();
     } finally {
@@ -381,15 +401,31 @@
       });
     if (draft) {
       fillFromUpdate(draft);
-      setStatus('Loaded your saved draft for ' + ((res.data.allowance && res.data.allowance.periodLabel) || 'this month') + '.', 'ok');
-    } else if (e.subject && !e.subject.value) {
-      e.subject.value = (res.data.defaults && res.data.defaults.subject) || '';
+      // If an old draft still has another group's auto-subject, refresh it.
+      var orgName = (res.data.allowance && res.data.allowance.organiserName) || '';
+      var defaultSubject = (res.data.defaults && res.data.defaults.subject) || '';
+      if (
+        e.subject &&
+        defaultSubject &&
+        orgName &&
+        e.subject.value &&
+        e.subject.value.indexOf(orgName) === -1 &&
+        /— .+ update\s*$/.test(e.subject.value)
+      ) {
+        e.subject.value = defaultSubject;
+        state.dirty = true;
+      }
       setStatus(
-        (res.data.recipientEstimate || 0) +
-          ' people who booked via the Hub can receive this update.',
+        'Loaded your saved draft for ' +
+          ((res.data.allowance && res.data.allowance.periodLabel) || 'this month') +
+          '.',
         'ok'
       );
     } else {
+      clearComposer();
+      if (e.subject) {
+        e.subject.value = (res.data.defaults && res.data.defaults.subject) || '';
+      }
       setStatus(
         (res.data.recipientEstimate || 0) +
           ' people who booked via the Hub can receive this update.',

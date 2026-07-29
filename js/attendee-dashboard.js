@@ -115,6 +115,7 @@
   }
 
   function membershipStatusLabel(item) {
+    if (item.paymentFailed || item.subscriptionStatus === 'past_due') return 'Payment failed';
     if (!item.membershipActive) return 'Expired';
     if (item.expiringSoon) return 'Expiring soon';
     if (item.expiresAt) return 'Until ' + formatDateShort(item.expiresAt);
@@ -124,7 +125,8 @@
   function membershipStatusBadge(item) {
     const label = membershipStatusLabel(item);
     let cls = 'ad-badge ad-badge-green';
-    if (!item.membershipActive) cls = 'ad-badge ad-badge-grey';
+    if (item.paymentFailed || item.subscriptionStatus === 'past_due') cls = 'ad-badge ad-badge-gold';
+    else if (!item.membershipActive) cls = 'ad-badge ad-badge-grey';
     else if (item.expiringSoon) cls = 'ad-badge ad-badge-gold';
     return '<span class="' + cls + '">' + esc(label) + '</span>';
   }
@@ -3323,8 +3325,14 @@
             esc(item.organiserId) +
             '" data-membership-interval="' +
             esc(item.billingInterval === 'month' ? 'month' : 'year') +
+            '" data-membership-portal="' +
+            (item.billedThroughHub && item.stripeCustomerId ? '1' : '0') +
             '">' +
-            (item.billedThroughHub && item.membershipActive ? 'Manage / renew' : 'Pay / renew via Hub') +
+            (item.billedThroughHub && item.membershipActive
+              ? item.paymentFailed
+                ? 'Update payment'
+                : 'Manage membership'
+              : 'Pay / renew via Hub') +
             '</button>'
           : '') +
         '</div>';
@@ -3341,9 +3349,26 @@
   async function renewMembershipViaHub(btn) {
     const organiserId = btn.getAttribute('data-membership-renew');
     let interval = btn.getAttribute('data-membership-interval') || 'year';
+    const usePortal = btn.getAttribute('data-membership-portal') === '1';
     if (!organiserId) return;
     btn.disabled = true;
     try {
+      if (usePortal) {
+        const portalRes = await fetch('/api/auth/membership-portal', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ organiserId: organiserId }),
+        });
+        const portalData = await portalRes.json().catch(function () {
+          return {};
+        });
+        if (portalRes.ok && portalData.url) {
+          location.href = portalData.url;
+          return;
+        }
+        // Fall through to checkout if portal unavailable.
+      }
       // Prefer annual when renewing from account unless they already pay monthly.
       if (interval !== 'month' && interval !== 'year') interval = 'year';
       const res = await fetch('/api/auth/membership-checkout', {

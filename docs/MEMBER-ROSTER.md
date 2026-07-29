@@ -17,18 +17,25 @@ Organisers can still renew people off-platform and update expiry dates manually.
 - Five organiser reports on the membership page
 - Label PDF: only **confirmed** attendees (approved, paid or free)
 - Booking reminder emails for members who have not booked a selected event
-- **Hub-billed memberships (monthly / annual)** via Stripe Connect destination charges
+- Hub-billed memberships (monthly / annual) via Stripe Connect destination charges
   - `organiser_membership_plans` — monthly and/or annual price per organiser page
   - `POST /api/auth/membership-checkout` — member Checkout (`mode: subscription`)
-  - Webhooks sync roster `expires_at` / `subscription_status` from Stripe
-  - Public join CTA on organiser profile; renew from My Hub → Memberships
+  - `POST /api/auth/membership-portal` — Stripe Customer Portal (update card / cancel)
+  - Webhooks sync roster `expires_at` / `subscription_status` from Stripe (`past_due` emails member + organiser)
+  - Renewal/receipt email on successful `invoice.paid`
+  - Public join CTA on organiser profile; renew/manage from My Hub → Memberships
   - **Invite to pay** from the member register (Actions) or when adding a member — emails the Join / renew link
+  - Bulk **Invite unpaid / expiring to pay** (+ report buttons on Expiring / Lapsed)
+  - Overview report shows estimated Hub MRR from active paid subscriptions
 
 ## Member emails — when they go out
 
 | Trigger | When | Template |
 |---------|------|----------|
 | **Added to membership** | Immediately when organiser adds with “Email invite” ticked, or resend invite. CSV import queues invites (first batch sends straight away). | `member_roster_invite` / `member_roster_existing` |
+| **Invite to pay** | Organiser invites one member or bulk-queues renewals | `member_roster_pay_invite` |
+| **Payment failed** | Stripe renewal card fails (`past_due`) | `member_roster_payment_failed` (+ organiser copy) |
+| **Renewal receipt** | Successful first payment or subscription renewal | `member_roster_renewal_receipt` |
 | **New event published** | Sent when you publish an Approved event (all members processed on publish; daily cron catches anything missed) | `member_roster_new_event` |
 | **Missed publish email** | Daily cron safety net for events published in the last 14 days | `member_roster_new_event` |
 | **Rejoin / reinstated** | When a member is added back to an active membership | Upcoming live events (`member_roster_new_event`) |
@@ -66,5 +73,5 @@ Uses `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD` (or `SMOKE_ORGANISER_*`) from `loc
 
 - Paid membership seat limits (discuss later)
 - Top / worst attendee league tables
-- Member self-serve cancel portal UI (Stripe Customer Portal) — follow-up
 - Proration / mid-cycle plan switches — follow-up
+- Chapter industry exclusivity — follow-up

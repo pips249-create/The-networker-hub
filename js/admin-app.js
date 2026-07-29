@@ -5768,7 +5768,8 @@
       '<div class="border-t border-slate-100 pt-4 mt-4">' +
       '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Account settings (as user sees)</p>' +
       '<dl class="space-y-3 text-sm">' +
-      emailPrefRow('All hub emails', u.emailsEnabled !== false) +
+      emailPrefRow('Hub marketing', u.emailsEnabled === true) +
+      emailPrefRow('Organiser round-ups', u.emailPrefOrganiserRoundups !== false) +
       emailPrefRow('Event reminders', u.emailPrefEventReminders !== false) +
       emailPrefRow('Organiser alerts', u.emailPrefOrganiserAlerts !== false) +
       (u.organiserTermsAcceptedAt

@@ -108,7 +108,7 @@ const KNOWLEDGE_SECTIONS = [
       'When you publish a new Approved event, people on the member list are emailed automatically (Members only rates apply when they sign in with that email). ' +
       'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning among your uploaded members only, members who missed recent meetings, memberships expiring within 14 days. Reports never include non-members who booked the event — use Attendees for full event lists. Download members CSV or an event report CSV. Email booking reminders to members who have not booked; members are also auto-emailed when you publish Approved events. ' +
       'MEMBERS: when added, they see the group under My Hub → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
-      'RENEWALS: Stripe membership billing is not on the Hub yet — renew off-platform and update expiry dates on the member list. ' +
+      'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a 3% Hub fee (VAT inclusive); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My Hub → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
       'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
   },
   {
@@ -493,7 +493,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what is (a |the )?member (list|roster)|how does (the )?member (list|roster) work|explain.*member (list|roster)|member (list|roster) do/i,
     reply:
-      'A Member list is your per-group list of members (name, email, optional expiry) at /organiser/member-roster. It unlocks Members only tickets — people on the list see those rates when signed in with their membership email; the public does not. Add members individually or import CSV, track who has signed up, and use reports for bookings and expiring memberships. Renew memberships off-platform and update expiry dates here.',
+      'A Member list is your per-group list of members (name, email, optional expiry) at /organiser/#memberships. It unlocks Members only tickets — people on the list see those rates when signed in with their membership email; the public does not. Add members individually or import CSV, track who has signed up, and use reports for bookings and expiring memberships. You can collect dues through the Hub (monthly/annual prices on Memberships) or renew off-platform and update expiry dates.',
   },
   {
     match: /added (me|to my).*member (list|roster)|on (a|the) member (list|roster)|member (lists|rosters) in my hub|why.*member (list|roster) email|group added me/i,
@@ -518,7 +518,7 @@ const FALLBACK_REPLIES = [
   {
     match: /membership expir|expiring membership|renew.*membership.*(list|roster)|(list|roster).*expir/i,
     reply:
-      'Optional expiry dates on /organiser/member-roster flag memberships expiring soon in your reports. Full subscription billing is not on the Hub yet — renew members off-platform, then update the expiry date on their member list row.',
+      'Optional expiry dates on /organiser/#memberships flag memberships expiring soon in your reports. Groups can also bill monthly or annual dues through the Hub — set prices on Memberships, then members pay from the public Join section or My Hub → Memberships. Use Invite to pay (or bulk invite) for renewals; failed card payments show as Payment failed on the list.',
   },
   {
     match: /access code|private ticket|members? only ticket|member (list|roster) ticket|hidden ticket/i,

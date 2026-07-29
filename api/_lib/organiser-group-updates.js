@@ -8,9 +8,9 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { sendTemplatedEmail } = require('./send-template-email');
-const { publicSiteBase, unsubscribeUrl } = require('./hub-email-urls');
-const { publicOrganiserSlug } = require('./organiser-slug');
+const { publicSiteBase, unsubscribeUrl, logoNavUrl } = require('./hub-email-urls');
 const { eventImageUrl } = require('./event-image');
+const { organiserLogoUrlForEmail } = require('./organiser-member-roster');
 
 const SLUG = 'organiser_monthly_group_update';
 const FREE_PER_MONTH = 1;
@@ -402,10 +402,16 @@ async function resolveSelectedEvents(organiserId, content) {
 
 async function buildTemplateVariables({ group, update, content, events, recipient }) {
   const siteUrl = publicSiteBase();
-  const slug = publicOrganiserSlug(group) || group.id;
   const organiserUrl = siteUrl + '/events/organiser?id=' + encodeURIComponent(group.id);
   const subject =
     clampText(update.subject, MAX_SUBJECT) || defaultSubject(group.name, update.period_key);
+  const organiserLogo = organiserLogoUrlForEmail(
+    {
+      photo_url: group.photo_url || group.photoUrl || group.imageUrl,
+      name: group.name,
+    },
+    siteUrl
+  );
 
   return {
     user_name: recipient.name || 'there',
@@ -413,6 +419,12 @@ async function buildTemplateVariables({ group, update, content, events, recipien
     email_subject: subject,
     organiser_name: group.name || 'Our group',
     organiser_url: organiserUrl,
+    organiser_logo_url: organiserLogo,
+    organiser_logo_html: buildOrganiserLogoHtml({
+      name: group.name || 'Our group',
+      logoUrl: organiserLogo,
+      organiserUrl,
+    }),
     period_label: periodLabel(update.period_key),
     organiser_note_html: sectionHtml('A note from us', textToHtmlParagraphs(content.organiserNote)),
     month_recap_html: sectionHtml('Month in brief', textToHtmlParagraphs(content.monthRecap)),
@@ -437,10 +449,39 @@ async function buildTemplateVariables({ group, update, content, events, recipien
   };
 }
 
+function buildOrganiserLogoHtml({ name, logoUrl, organiserUrl }) {
+  const safeName = escapeHtml(name || 'Your group');
+  const href = escapeHtml(organiserUrl || '#');
+  if (logoUrl) {
+    return (
+      '<a href="' +
+      href +
+      '" style="text-decoration:none;display:inline-block;margin:0 0 14px;">' +
+      '<img src="' +
+      escapeHtml(logoUrl) +
+      '" alt="' +
+      safeName +
+      '" width="72" height="72" style="display:block;width:72px;height:72px;object-fit:cover;border:0;border-radius:50%;margin:0 auto;box-shadow:0 4px 14px rgba(28,32,64,0.12);" />' +
+      '</a>'
+    );
+  }
+  const initial = escapeHtml(String(name || '?').trim().charAt(0).toUpperCase() || '?');
+  return (
+    '<a href="' +
+    href +
+    '" style="text-decoration:none;display:inline-block;margin:0 0 14px;">' +
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;"><tr>' +
+    '<td style="width:72px;height:72px;background:#d9eef1;border-radius:50%;text-align:center;vertical-align:middle;' +
+    'font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:700;color:#0d6e7a;line-height:72px;">' +
+    initial +
+    '</td></tr></table></a>'
+  );
+}
+
 /** Inbox-style HTML for the organiser workspace preview pane. */
 function buildPreviewDocument(variables) {
   const v = variables || {};
-  const logo = String(v.site_url || '').replace(/\/$/, '') + '/images/logo-nav.png';
+  const logo = logoNavUrl(v.site_url || publicSiteBase());
   const sections = [
     v.organiser_note_html,
     v.month_recap_html,
@@ -463,6 +504,7 @@ function buildPreviewDocument(variables) {
     '</div>' +
     '<div style="background:#f5f0e8;height:18px;border-radius:0 0 50% 50% / 0 0 100% 100%;"></div>' +
     '<div style="padding:18px 22px 8px;text-align:center;">' +
+    (v.organiser_logo_html || '') +
     '<p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0d6e7a;">' +
     escapeHtml(v.period_label || 'This month') +
     '</p>' +
@@ -485,9 +527,12 @@ function buildPreviewDocument(variables) {
     '</div>' +
     '<div style="background:#1c2040;padding:18px 20px 22px;text-align:center;color:rgba(255,255,255,0.65);font-size:11px;line-height:1.5;">' +
     '<p style="margin:0 0 6px;">Sent via The Networker Hub</p>' +
-    '<p style="margin:0;opacity:0.75;">You received this because you booked with ' +
+    '<p style="margin:0 0 8px;opacity:0.75;">You received this because you booked with ' +
     escapeHtml(v.organiser_name || 'this group') +
     '.</p>' +
+    '<p style="margin:0;opacity:0.85;"><a href="' +
+    escapeHtml(v.unsubscribe_url || '#') +
+    '" style="color:rgba(255,255,255,0.85);">Manage email preferences</a></p>' +
     '</div>' +
     '</div>' +
     '</div>'

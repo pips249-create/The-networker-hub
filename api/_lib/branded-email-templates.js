@@ -166,6 +166,21 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Pay for your {{organiser_name}} membership',
   },
+  member_roster_payment_failed: {
+    file: 'member-roster-payment-failed.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Update your card for {{organiser_name}} membership',
+  },
+  member_roster_payment_failed_organiser: {
+    file: 'member-roster-payment-failed-organiser.html',
+    marker: 'organiser-email-layout-v2',
+    subject: 'Membership payment failed — {{member_name}}',
+  },
+  member_roster_renewal_receipt: {
+    file: 'member-roster-renewal-receipt.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Membership receipt — {{organiser_name}}',
+  },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',
     marker: 'hub-email-layout-v2',

@@ -59,75 +59,89 @@
 
   var TEMPLATES = [
     {
-      id: 'new_event',
-      label: 'Event photo',
+      id: 'photo_takeover',
+      label: 'Photo takeover',
       group: 'events',
       groupLabel: 'Events & group',
       theme: 'event_photo_hero',
-      styleHint: 'Large event photo with your logo in the corner',
+      styleHint: 'Full-bleed event photo with text overlaid at the bottom',
       accent: '#9a7aa8',
-      kicker: 'NEW EVENT',
+      kicker: 'NEXT EVENT',
       line1: 'We have just added',
       line2: 'a new event',
       line3: 'Book your place on The Networker Hub',
       caption:
         "We've just added a new event: {eventTitle}\n\n{dateLine}{locationLine}Buy tickets now on The Networker Hub:\n{url}",
+      captionPast:
+        'Thank you to everyone who joined us for {eventTitle}.\n\n{dateLine}{locationLine}Find our next date on The Networker Hub:\n{url}',
     },
     {
-      id: 'events',
-      label: 'Room full of referrals',
+      id: 'split_frame',
+      label: 'Split frame',
       group: 'events',
       groupLabel: 'Events & group',
-      styleHint: 'Bold quote on a soft background',
-      accent: '#9a7aa8',
-      kicker: 'NETWORKING EVENT',
+      theme: 'event_split',
+      styleHint: 'Photo on one side, bold brand colour and logo on the other',
+      accent: '#0d1f3c',
+      kicker: 'JOIN US',
+      line1: 'Save the date',
+      line2: 'for our next meet',
+      line3: 'Tickets open on The Networker Hub',
+      caption:
+        'Save the date for {eventTitle}.\n\n{dateLine}{locationLine}Book via The Networker Hub:\n{url}',
+      captionPast:
+        'What a room — thank you for coming to {eventTitle}.\n\n{dateLine}{locationLine}See what’s next on The Networker Hub:\n{url}',
+    },
+    {
+      id: 'big_type',
+      label: 'Big type poster',
+      group: 'events',
+      groupLabel: 'Events & group',
+      theme: 'event_poster',
+      styleHint: 'Bold typographic poster — large date and logo, no photo needed',
+      accent: '#c9961f',
+      kicker: 'NETWORKING',
       line1: 'A room full',
       line2: 'of warm referrals',
       line3: 'Meet local business owners ready to swap introductions',
       caption:
-        "Our next networking event is built around warm conversations, useful introductions, and people who actually follow up.\n\n{name}\nFind us on The Networker Hub -> {url}",
+        'Our next networking event: {eventTitle}\n\n{dateLine}{locationLine}Find us on The Networker Hub → {url}',
+      captionPast:
+        'Grateful for everyone who came to {eventTitle}.\n\n{dateLine}{locationLine}Next gathering on The Networker Hub → {url}',
     },
     {
-      id: 'meet',
-      label: 'Coffee before inboxes',
+      id: 'magazine',
+      label: 'Magazine strip',
       group: 'events',
       groupLabel: 'Events & group',
-      styleHint: 'Bold quote on a soft background',
+      theme: 'event_magazine',
+      styleHint: 'Photo strip across the top, editorial headline below',
       accent: '#4a4446',
-      kicker: 'REAL CONNECTIONS',
+      kicker: 'THIS WEEK',
       line1: 'Coffee first',
       line2: 'inbox later',
-      line3: 'Meet the people behind the profiles before the follow-up',
+      line3: 'Meet the people behind the profiles',
       caption:
-        'Swap the cold message for a warm conversation. Come and meet the people behind the profiles at our next event.\n\n{name}\nOn The Networker Hub -> {url}',
+        'Come and meet us at {eventTitle}.\n\n{dateLine}{locationLine}Details on The Networker Hub → {url}',
+      captionPast:
+        'Thanks for the conversations at {eventTitle}.\n\n{dateLine}{locationLine}Our next date is on The Networker Hub → {url}',
     },
     {
-      id: 'guest',
-      label: 'Bring a business friend',
+      id: 'brand_spotlight',
+      label: 'Brand spotlight',
       group: 'events',
       groupLabel: 'Events & group',
-      styleHint: 'Bold quote on a soft background',
-      accent: '#c299d1',
-      kicker: 'GUEST INVITE',
-      line1: 'Bring a business',
-      line2: 'friend along',
-      line3: 'Guest visits are welcome for curious connectors',
-      caption:
-        'Know someone who would enjoy a room of useful business conversations? Guest visits are welcome at our next meeting.\n\n{name}\nDetails on The Networker Hub -> {url}',
-    },
-    {
-      id: 'book',
-      label: 'Seat at the table',
-      group: 'events',
-      groupLabel: 'Events & group',
-      styleHint: 'Bold quote on a soft background',
-      accent: '#b8956a',
+      theme: 'event_spotlight',
+      styleHint: 'Large logo header, photo card, and clear event details',
+      accent: '#9a7aa8',
       kicker: 'TICKETS OPEN',
       line1: 'Save your seat',
       line2: 'at the table',
-      line3: 'Tickets are open for people ready to make useful connections',
+      line3: 'Book on The Networker Hub',
       caption:
-        'Tickets are open for our next event. Save your seat, bring your best intro, and leave with conversations worth continuing.\n\n{name}\nBook via The Networker Hub -> {url}',
+        'Tickets are open for {eventTitle}.\n\n{dateLine}{locationLine}Book via The Networker Hub → {url}',
+      captionPast:
+        'Thank you for joining {eventTitle}.\n\n{dateLine}{locationLine}Book the next one on The Networker Hub → {url}',
     },
     {
       id: 'opportunity',
@@ -466,9 +480,27 @@
     var eventImage = opts.eventImageImg || null;
     var isEventSpotlight = tpl.theme === 'event_spotlight';
     var isPhotoHero = tpl.theme === 'event_photo_hero';
+    var isSplit = tpl.theme === 'event_split';
+    var isPoster = tpl.theme === 'event_poster';
+    var isMagazine = tpl.theme === 'event_magazine';
     var isEventGroup = tpl.group === 'events';
     var quietBrand = Boolean(opts.quietBrand);
     var isDark = Boolean(bg.dark);
+    var kickerText = opts.isPast
+      ? 'THANK YOU'
+      : String(tpl.kicker || (isEventGroup ? 'EVENT' : '')).toUpperCase();
+
+    function drawOrgLogoBox(x, y, boxW, boxH, pad) {
+      pad = pad == null ? 16 : pad;
+      ctx.fillStyle = 'rgba(255,255,255,0.96)';
+      roundRect(ctx, x, y, boxW, boxH, 14);
+      ctx.fill();
+      if (orgLogo) {
+        drawContainedImage(ctx, orgLogo, x + pad, y + pad, boxW - pad * 2, boxH - pad * 2);
+      } else {
+        drawLogoPlaceholder(ctx, x + pad, y + pad, boxW - pad * 2, boxH - pad * 2, bg.accent || '#9a7aa8');
+      }
+    }
 
     if (isPhotoHero && !quietBrand) {
       ctx.clearRect(0, 0, W, H);
@@ -490,33 +522,24 @@
         ctx.textAlign = 'left';
       }
 
-      var overlay = ctx.createLinearGradient(0, H * 0.32, 0, H);
+      var overlay = ctx.createLinearGradient(0, H * 0.28, 0, H);
       overlay.addColorStop(0, 'rgba(8, 12, 18, 0)');
-      overlay.addColorStop(0.45, 'rgba(8, 12, 18, 0.55)');
-      overlay.addColorStop(1, 'rgba(8, 12, 18, 0.9)');
+      overlay.addColorStop(0.4, 'rgba(8, 12, 18, 0.5)');
+      overlay.addColorStop(1, 'rgba(8, 12, 18, 0.92)');
       ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, W, H);
 
       ctx.fillStyle = bg.accent || tpl.accent || '#9a7aa8';
-      ctx.fillRect(0, 0, W, 12);
+      ctx.fillRect(0, 0, W, 14);
 
-      var logoBoxW = 168;
-      var logoBoxH = 88;
-      var logoBoxX = W - logoBoxW - 36;
-      var logoBoxY = 40;
-      ctx.fillStyle = 'rgba(255,255,255,0.94)';
-      roundRect(ctx, logoBoxX, logoBoxY, logoBoxW, logoBoxH, 12);
-      ctx.fill();
-      if (orgLogo) {
-        drawContainedImage(ctx, orgLogo, logoBoxX + 12, logoBoxY + 8, logoBoxW - 24, logoBoxH - 16);
-      } else {
-        drawLogoPlaceholder(ctx, logoBoxX + 12, logoBoxY + 8, logoBoxW - 24, logoBoxH - 16, '#9a7aa8');
-      }
+      var logoBoxW = 360;
+      var logoBoxH = 190;
+      drawOrgLogoBox(W - logoBoxW - 36, 32, logoBoxW, logoBoxH, 20);
 
-      var textBaseY = H - 250;
+      var textBaseY = H - 270;
       ctx.fillStyle = '#e8b84b';
-      ctx.font = '700 20px "DM Sans", Arial, Helvetica, sans-serif';
-      ctx.fillText(String(tpl.kicker || 'NEW EVENT').toUpperCase(), 56, textBaseY);
+      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillText(kickerText, 56, textBaseY);
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '400 58px "DM Serif Display", Georgia, "Times New Roman", serif';
@@ -537,9 +560,138 @@
       }
 
       if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, {
-          textColor: 'rgba(255,255,255,0.78)',
-        });
+        drawHubCredit(ctx, hubLogo, { textColor: 'rgba(255,255,255,0.78)' });
+      }
+      return;
+    }
+
+    if (isSplit && !quietBrand) {
+      ctx.clearRect(0, 0, W, H);
+      var splitX = Math.round(W * 0.52);
+      if (eventImage) {
+        drawCoverImage(ctx, eventImage, 0, 0, splitX, H, opts.eventImagePosition);
+      } else {
+        ctx.fillStyle = bg.stops[1] || '#ebe0f0';
+        ctx.fillRect(0, 0, splitX, H);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.font = '600 22px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Add an event photo', splitX / 2, H / 2);
+        ctx.textAlign = 'left';
+      }
+      var panelColor = bg.dark ? bg.stops[0] : '#0d1f3c';
+      ctx.fillStyle = panelColor;
+      ctx.fillRect(splitX, 0, W - splitX, H);
+      ctx.fillStyle = bg.accent || tpl.accent || '#c9961f';
+      ctx.fillRect(splitX, 0, 10, H);
+
+      drawOrgLogoBox(splitX + 40, 48, 400, 210, 22);
+
+      ctx.fillStyle = '#e8b84b';
+      ctx.font = '700 20px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillText(kickerText, splitX + 48, 320);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '400 48px "DM Serif Display", Georgia, "Times New Roman", serif';
+      var splitTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), W - splitX - 100);
+      var sy = 390;
+      for (var st = 0; st < Math.min(4, splitTitle.length); st++) {
+        ctx.fillText(splitTitle[st], splitX + 48, sy);
+        sy += 56;
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.font = '400 22px "DM Sans", Arial, Helvetica, sans-serif';
+      var splitSub = wrapText(ctx, line3, W - splitX - 100);
+      sy += 16;
+      for (var ss = 0; ss < Math.min(3, splitSub.length); ss++) {
+        ctx.fillText(splitSub[ss], splitX + 48, sy);
+        sy += 32;
+      }
+      if (hubLogo) {
+        drawHubCredit(ctx, hubLogo, { textColor: 'rgba(255,255,255,0.7)' });
+      }
+      return;
+    }
+
+    if (isPoster && !quietBrand) {
+      var gPoster = ctx.createLinearGradient(0, 0, W, H);
+      gPoster.addColorStop(0, bg.stops[0]);
+      gPoster.addColorStop(1, bg.stops[2] || bg.stops[1] || bg.stops[0]);
+      ctx.fillStyle = gPoster;
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = bg.accent || tpl.accent || '#c9961f';
+      ctx.fillRect(0, 0, W, 18);
+      ctx.fillRect(0, H - 18, W, 18);
+
+      drawOrgLogoBox(W / 2 - 230, 56, 460, 230, 24);
+
+      ctx.fillStyle = bg.kicker;
+      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(kickerText, W / 2, 340);
+
+      ctx.fillStyle = bg.title;
+      ctx.font = '400 78px "DM Serif Display", Georgia, "Times New Roman", serif';
+      var posterTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
+      var py = 440;
+      for (var pt = 0; pt < Math.min(3, posterTitle.length); pt++) {
+        ctx.fillText(posterTitle[pt], W / 2, py);
+        py += 88;
+      }
+
+      ctx.fillStyle = bg.sub;
+      ctx.font = '400 28px "DM Sans", Arial, Helvetica, sans-serif';
+      var posterSub = wrapText(ctx, line3, 900);
+      py += 20;
+      for (var ps = 0; ps < Math.min(3, posterSub.length); ps++) {
+        ctx.fillText(posterSub[ps], W / 2, py);
+        py += 38;
+      }
+      ctx.textAlign = 'left';
+      if (hubLogo) {
+        drawHubCredit(ctx, hubLogo, { textColor: bg.credit });
+      }
+      return;
+    }
+
+    if (isMagazine && !quietBrand) {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#f7f1e8';
+      ctx.fillRect(0, 0, W, H);
+      var stripH = 420;
+      if (eventImage) {
+        drawCoverImage(ctx, eventImage, 0, 0, W, stripH, opts.eventImagePosition);
+      } else {
+        ctx.fillStyle = bg.stops[0];
+        ctx.fillRect(0, 0, W, stripH);
+      }
+      ctx.fillStyle = bg.accent || tpl.accent || '#4a4446';
+      ctx.fillRect(0, stripH, W, 12);
+
+      drawOrgLogoBox(48, stripH + 36, 320, 170, 18);
+
+      ctx.fillStyle = bg.accent || '#4a4446';
+      ctx.font = '700 20px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillText(kickerText, 400, stripH + 78);
+
+      ctx.fillStyle = '#2c2826';
+      ctx.font = '400 56px "DM Serif Display", Georgia, "Times New Roman", serif';
+      var magTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 720);
+      var my = stripH + 150;
+      for (var mt = 0; mt < Math.min(3, magTitle.length); mt++) {
+        ctx.fillText(magTitle[mt], 400, my);
+        my += 62;
+      }
+      ctx.fillStyle = '#5c5557';
+      ctx.font = '400 24px "DM Sans", Arial, Helvetica, sans-serif';
+      var magSub = wrapText(ctx, line3, 720);
+      my += 8;
+      for (var ms = 0; ms < Math.min(3, magSub.length); ms++) {
+        ctx.fillText(magSub[ms], 400, my);
+        my += 34;
+      }
+      if (hubLogo) {
+        drawHubCredit(ctx, hubLogo, { textColor: '#5c5557' });
       }
       return;
     }
@@ -570,18 +722,61 @@
     var brandHint = bg.brandHint;
     var creditColor = bg.credit;
 
+    if (isEventSpotlight && !quietBrand) {
+      drawOrgLogoBox(56, 40, 460, 230, 24);
+      ctx.fillStyle = kickerColor;
+      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillText(kickerText, 540, 100);
+      ctx.fillStyle = titleColor;
+      ctx.font = '700 36px "DM Serif Display", Georgia, serif';
+      var spotName = wrapText(ctx, name || 'Your group', 560);
+      for (var sn = 0; sn < Math.min(2, spotName.length); sn++) {
+        ctx.fillText(spotName[sn], 540, 160 + sn * 42);
+      }
+
+      var coverY = 300;
+      var coverAreaW = 1056;
+      var coverH = eventImage ? 380 : 0;
+      var coverW = eventImage ? Math.round(coverH * (16 / 10)) : 0;
+      var coverX = eventImage ? 72 + Math.round((coverAreaW - coverW) / 2) : 72;
+      if (eventImage) {
+        drawCoverImage(ctx, eventImage, coverX, coverY, coverW, coverH, opts.eventImagePosition);
+      }
+      var spotlightTextY = eventImage ? 720 : 360;
+      ctx.fillStyle = titleColor;
+      ctx.font = '400 58px "DM Serif Display", Georgia, "Times New Roman", serif';
+      var eventTitleLines = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
+      var eventY = spotlightTextY;
+      for (var et = 0; et < Math.min(3, eventTitleLines.length); et++) {
+        ctx.fillText(eventTitleLines[et], 72, eventY);
+        eventY += 64;
+      }
+      ctx.fillStyle = subColor;
+      ctx.font = '400 26px "DM Sans", Arial, Helvetica, sans-serif';
+      var eventSubLines = wrapText(ctx, line3, 900);
+      eventY += 10;
+      for (var es = 0; es < Math.min(2, eventSubLines.length); es++) {
+        ctx.fillText(eventSubLines[es], 72, eventY);
+        eventY += 34;
+      }
+      if (hubLogo) {
+        drawHubCredit(ctx, hubLogo, { textColor: creditColor });
+      }
+      return;
+    }
+
     if (!quietBrand) {
       var brandBoxX = 72;
       var brandBoxY = 56;
       var brandBoxW = 1056;
-      var brandBoxH = 220;
+      var brandBoxH = 240;
       ctx.fillStyle = bg.brandBox;
       roundRect(ctx, brandBoxX, brandBoxY, brandBoxW, brandBoxH, 18);
       ctx.fill();
 
       if (orgLogo) {
-        var logoW = 360;
-        var logoH = 180;
+        var logoW = 400;
+        var logoH = 200;
         var logoX = brandBoxX + 28;
         var logoY = brandBoxY + (brandBoxH - logoH) / 2;
         drawContainedImage(ctx, orgLogo, logoX, logoY, logoW, logoH);
@@ -592,76 +787,23 @@
         for (var n = 0; n < Math.min(2, nameLines.length); n++) {
           ctx.fillText(nameLines[n], logoX + logoW + 32, nameY + n * 46);
         }
-      } else if (isEventGroup) {
-        var phLogoW = 360;
-        var phLogoH = 180;
-        var phLogoX = brandBoxX + 28;
-        var phLogoY = brandBoxY + (brandBoxH - phLogoH) / 2;
-        drawLogoPlaceholder(ctx, phLogoX, phLogoY, phLogoW, phLogoH, brandHint);
-        ctx.fillStyle = brandText;
-        ctx.font = '700 40px "DM Serif Display", Georgia, serif';
-        var eventNameLines = wrapText(ctx, name || 'Your group name', brandBoxW - phLogoW - 80);
-        var eventNameY = brandBoxY + (brandBoxH - Math.min(2, eventNameLines.length) * 46) / 2 + 36;
-        for (var en = 0; en < Math.min(2, eventNameLines.length); en++) {
-          ctx.fillText(eventNameLines[en], phLogoX + phLogoW + 32, eventNameY + en * 46);
-        }
       } else {
         ctx.fillStyle = brandText;
         ctx.font = '700 44px "DM Serif Display", Georgia, serif';
         var solo = wrapText(ctx, name || 'Your group name', 980);
         for (var s = 0; s < Math.min(2, solo.length); s++) {
-          ctx.fillText(solo[s], brandBoxX + 36, brandBoxY + 72 + s * 50);
+          ctx.fillText(solo[s], brandBoxX + 36, brandBoxY + 80 + s * 50);
         }
-        if (!name) {
-          ctx.fillStyle = brandHint;
-          ctx.font = '400 22px "DM Sans", Arial, Helvetica, sans-serif';
-          ctx.fillText('Add your logo for a stronger post', brandBoxX + 36, brandBoxY + 168);
-        }
+        ctx.fillStyle = brandHint;
+        ctx.font = '400 22px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.fillText('Add your logo for a stronger post', brandBoxX + 36, brandBoxY + 180);
       }
     }
 
-    if (isEventSpotlight && !quietBrand) {
-      // Match the organiser listing crop frame (16:10) so object-position lines up.
-      var coverY = 300;
-      var coverAreaW = 1056;
-      var coverH = eventImage ? 410 : 0;
-      var coverW = eventImage ? Math.round(coverH * (16 / 10)) : 0;
-      var coverX = eventImage ? 72 + Math.round((coverAreaW - coverW) / 2) : 72;
-      if (eventImage) {
-        drawCoverImage(ctx, eventImage, coverX, coverY, coverW, coverH, opts.eventImagePosition);
-      }
-      var spotlightTextY = eventImage ? 780 : 390;
-      ctx.fillStyle = kickerColor;
-      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
-      ctx.fillText(String(tpl.kicker || '').toUpperCase(), 72, spotlightTextY);
-      ctx.fillStyle = titleColor;
-      ctx.font = '400 62px "DM Serif Display", Georgia, "Times New Roman", serif';
-      var eventTitleLines = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
-      var eventY = spotlightTextY + 70;
-      for (var et = 0; et < Math.min(3, eventTitleLines.length); et++) {
-        ctx.fillText(eventTitleLines[et], 72, eventY);
-        eventY += 68;
-      }
-      ctx.fillStyle = subColor;
-      ctx.font = '400 27px "DM Sans", Arial, Helvetica, sans-serif';
-      var eventSubLines = wrapText(ctx, line3, 820);
-      eventY += 12;
-      for (var es = 0; es < Math.min(2, eventSubLines.length); es++) {
-        ctx.fillText(eventSubLines[es], 72, eventY);
-        eventY += 36;
-      }
-      if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, {
-          textColor: creditColor,
-        });
-      }
-      return;
-    }
-
-    var textY = quietBrand ? 340 : 500;
+    var textY = quietBrand ? 340 : 520;
     ctx.fillStyle = kickerColor;
     ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
-    ctx.fillText(String(tpl.kicker || '').toUpperCase(), 72, textY);
+    ctx.fillText(kickerText, 72, textY);
 
     ctx.fillStyle = titleColor;
     ctx.font = '400 72px "DM Serif Display", Georgia, "Times New Roman", serif';
@@ -794,7 +936,7 @@
     var name = o.name || 'Our group';
     var listing = o.listingTitle || name;
     var url = o.url || siteOrigin() + '/events';
-    var raw = tpl.caption || '';
+    var raw = o.isPast && tpl.captionPast ? tpl.captionPast : tpl.caption || '';
     return raw
       .replace(/\{listing\}/g, listing)
       .replace(/\{name\}/g, name)
@@ -802,6 +944,19 @@
       .replace(/\{dateLine\}/g, o.dateLine ? o.dateLine + '\n' : '')
       .replace(/\{locationLine\}/g, o.location ? o.location + '\n\n' : '\n')
       .replace(/\{url\}/g, url);
+  }
+
+  function eventStartTimestamp(ev) {
+    var raw = ev && (ev.date || ev.startsAt || ev.starts_at);
+    if (!raw) return 0;
+    var t = new Date(raw).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+
+  function isPastEvent(ev) {
+    var t = eventStartTimestamp(ev);
+    if (!t) return false;
+    return t < Date.now() - 12 * 60 * 60 * 1000;
   }
 
   function initLinkedInPostBuilder(root, options) {
@@ -833,7 +988,7 @@
     ];
 
     var DEFAULT_TEMPLATE_BY_CATEGORY = {
-      events: 'new_event',
+      events: 'photo_takeover',
       opportunities: 'opportunity',
       badges: 'verified',
     };
@@ -1095,16 +1250,21 @@
 
     function styleHintFor(tpl) {
       if (tpl.styleHint) return tpl.styleHint;
-      if (tpl.theme === 'event_photo_hero') return 'Large event photo with your logo in the corner';
-      if (tpl.theme === 'event_spotlight') return 'Event photo with headline underneath';
+      if (tpl.theme === 'event_photo_hero') return 'Full-bleed event photo with text at the bottom';
+      if (tpl.theme === 'event_split') return 'Photo beside a bold brand colour panel';
+      if (tpl.theme === 'event_poster') return 'Bold typographic poster with a large logo';
+      if (tpl.theme === 'event_magazine') return 'Photo strip across the top with editorial type';
+      if (tpl.theme === 'event_spotlight') return 'Large logo header with a photo card underneath';
       if (tpl.theme === 'opportunity') return 'Professional layout for business listings';
       return 'Text on a coloured background';
     }
 
     function styleThumbClass(tpl) {
-      if (tpl.theme === 'event_photo_hero' || tpl.theme === 'event_spotlight') {
-        return 'org-post-caption-option-thumb--photo';
-      }
+      if (tpl.theme === 'event_photo_hero') return 'org-post-caption-option-thumb--photo';
+      if (tpl.theme === 'event_split') return 'org-post-caption-option-thumb--split';
+      if (tpl.theme === 'event_poster') return 'org-post-caption-option-thumb--poster';
+      if (tpl.theme === 'event_magazine') return 'org-post-caption-option-thumb--magazine';
+      if (tpl.theme === 'event_spotlight') return 'org-post-caption-option-thumb--spotlight';
       if (tpl.theme === 'opportunity') return 'org-post-caption-option-thumb--listing';
       return 'org-post-caption-option-thumb--quote';
     }
@@ -1164,7 +1324,15 @@
 
     function isEventTemplate(tpl) {
       tpl = tpl || currentTemplate();
-      return tpl.theme === 'event_spotlight' || tpl.theme === 'event_photo_hero';
+      var theme = String((tpl && tpl.theme) || '');
+      return (
+        theme === 'event_spotlight' ||
+        theme === 'event_photo_hero' ||
+        theme === 'event_split' ||
+        theme === 'event_poster' ||
+        theme === 'event_magazine' ||
+        (tpl && tpl.group === 'events')
+      );
     }
 
     function publishedListings() {
@@ -1278,6 +1446,7 @@
           dateLine: eventDateLine(event),
           location: eventPlaceLine(event),
           url: eventPublicUrl(event),
+          isPast: isPastEvent(event),
         };
       }
       if (isOppTemplate(tpl) && listing) {
@@ -1445,9 +1614,15 @@
         state.groupId = String(eventGroupId);
         elGroup.value = state.groupId;
       }
-      state.line1 = event.title || 'New event';
+      var past = isPastEvent(event);
+      state.line1 = event.title || (past ? 'Thank you' : 'New event');
       state.line2 = eventDateLine(event);
-      state.line3 = [eventPlaceLine(event), 'Buy tickets now'].filter(Boolean).join(' · ');
+      state.line3 = [
+        eventPlaceLine(event),
+        past ? 'Thanks for coming' : 'Buy tickets now',
+      ]
+        .filter(Boolean)
+        .join(' · ');
       elLine1.value = state.line1;
       elLine2.value = state.line2;
       elLine3.value = state.line3;
@@ -1687,6 +1862,7 @@
         eventImagePosition: position,
         hubLogoImg: hubImg || null,
         quietBrand: quietBrand,
+        isPast: Boolean(event && isPastEvent(event)),
       };
     }
 
@@ -2012,7 +2188,7 @@
       },
       prefillEvent: function (eventId) {
         state.eventId = String(eventId || '');
-        selectTemplate('new_event');
+        selectTemplate('photo_takeover');
         syncEventField();
         if (currentEvent()) applyEventToFields();
         fillCaptionFromTemplate();

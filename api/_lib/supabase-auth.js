@@ -188,7 +188,7 @@ async function getEmailsEnabledForEmail(email) {
   return hub.emails_enabled !== false;
 }
 
-/** @param {'event_reminders'|'organiser_alerts'|'marketing'} category */
+/** @param {'event_reminders'|'organiser_alerts'|'marketing'|'organiser_roundups'} category */
 async function canSendEmailCategory(email, category) {
   const hub = await getHubAccountForEmail(email);
   if (!hub) return true;
@@ -197,6 +197,13 @@ async function canSendEmailCategory(email, category) {
   }
   if (category === 'organiser_alerts') {
     return hubPrefEnabled(hub, 'email_pref_organiser_alerts');
+  }
+  if (category === 'organiser_roundups') {
+    // Independent of Hub marketing. Pre-migration DBs fall back to marketing opt-in.
+    if (!Object.prototype.hasOwnProperty.call(hub, 'email_pref_organiser_roundups')) {
+      return hub.emails_enabled === true;
+    }
+    return hub.email_pref_organiser_roundups !== false;
   }
   if (category === 'marketing') {
     return hub.emails_enabled === true;
@@ -350,18 +357,24 @@ async function registerUser({ email, password, name, marketingOptIn }) {
     throw new Error('An account with this email already exists. Sign in instead.');
   }
 
-  const accountResult = await sb.from('hub_accounts').upsert(
-    {
-      user_id: userId,
-      role: USER_ROLES.CLIENT,
-      hub_view: 'attendee',
-      display_name: name || null,
-      emails_enabled: optedInToMarketing,
-      email_pref_event_reminders: true,
-      email_pref_organiser_alerts: true,
-    },
-    { onConflict: 'user_id' }
-  );
+  const accountPayload = {
+    user_id: userId,
+    role: USER_ROLES.CLIENT,
+    hub_view: 'attendee',
+    display_name: name || null,
+    emails_enabled: optedInToMarketing,
+    email_pref_event_reminders: true,
+    email_pref_organiser_alerts: true,
+    email_pref_organiser_roundups: true,
+  };
+  let accountResult = await sb.from('hub_accounts').upsert(accountPayload, { onConflict: 'user_id' });
+  if (
+    accountResult.error &&
+    /email_pref_organiser_roundups/i.test(String(accountResult.error.message || ''))
+  ) {
+    delete accountPayload.email_pref_organiser_roundups;
+    accountResult = await sb.from('hub_accounts').upsert(accountPayload, { onConflict: 'user_id' });
+  }
   if (accountResult.error) throw new Error(accountResult.error.message);
 
   const attendeeUpsert = await sb.from('attendees').upsert(

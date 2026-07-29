@@ -2766,6 +2766,70 @@
   background: rgba(255, 255, 255, 0.92);
 }
 
+.org-post-caption-option-thumb--split {
+  background: linear-gradient(90deg, #6b8f9c 0 48%, #0d1f3c 48% 100%);
+}
+
+.org-post-caption-option-thumb--split::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  width: 16px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.org-post-caption-option-thumb--poster {
+  background:
+    radial-gradient(circle at 50% 28%, #fff 0%, transparent 40%),
+    linear-gradient(160deg, #faf6ee 0%, #ebe0f0 55%, #c9961f 100%);
+}
+
+.org-post-caption-option-thumb--poster::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 18px;
+  height: 5px;
+  border-radius: 2px;
+  background: rgba(74, 68, 70, 0.22);
+  box-shadow: 0 10px 0 rgba(74, 68, 70, 0.14);
+}
+
+.org-post-caption-option-thumb--magazine {
+  background: linear-gradient(180deg, #6b8f9c 0 42%, #f7f1e8 42% 100%);
+}
+
+.org-post-caption-option-thumb--magazine::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 14px;
+  height: 9px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(74, 68, 70, 0.12);
+}
+
+.org-post-caption-option-thumb--spotlight {
+  background: linear-gradient(180deg, #ebe0f0 0 30%, #9a7aa8 30% 34%, #f5f0e8 34% 100%);
+}
+
+.org-post-caption-option-thumb--spotlight::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 18px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
 .org-post-caption-option-thumb--quote {
   background:
     radial-gradient(circle at 85% 15%, rgba(194, 153, 209, 0.35), transparent 42%),

@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729brand4" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729styles1" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -872,6 +872,7 @@
                   <option value="claimed">Signed up to the Hub</option>
                   <option value="unclaimed">Not signed up yet</option>
                   <option value="expiring">Expiring soon</option>
+                  <option value="past_due">Payment failed</option>
                   <option value="has_bookings">Has event bookings</option>
                   <option value="no_bookings">No event bookings yet</option>
                   <option value="booked">Booked for selected event</option>
@@ -894,6 +895,10 @@
                     <button type="button" class="org-action-item" id="omr-bulk-resend" hidden role="menuitem">
                       <span class="org-action-icon">✉</span>
                       <span class="org-action-text"><strong>Resend invites to not signed up</strong></span>
+                    </button>
+                    <button type="button" class="org-action-item" id="omr-bulk-pay-invite" hidden role="menuitem">
+                      <span class="org-action-icon">£</span>
+                      <span class="org-action-text"><strong>Invite unpaid / expiring to pay</strong></span>
                     </button>
                     <button type="button" class="org-action-item omr-event-action" id="omr-remind-not-booked" hidden disabled role="menuitem">
                       <span class="org-action-icon">✉</span>
@@ -3125,7 +3130,7 @@
     <script src="../js/review-report.js?v=20260708" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260727" defer></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
-    <script src="../js/organiser-linkedin-post-builder.js?v=20260729events1" defer></script>
+    <script src="../js/organiser-linkedin-post-builder.js?v=20260729styles1" defer></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
     <script src="../js/organiser-group-updates.js?v=20260729groupfix" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
