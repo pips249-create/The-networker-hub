@@ -256,6 +256,16 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
         vars.browse_events_url
       );
+    vars.add_location_url = String(vars.site_url || '').replace(/\/$/, '') + '/account/settings/';
+    vars.location_tip_html =
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 8px;background:#f7f4fb;border:1px solid rgba(69,45,92,0.12);border-radius:10px;">' +
+      '<tr><td style="padding:16px 18px;text-align:left;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;margin:0 0 6px;">Add your city or postcode</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;margin:0 0 12px;">Tell us where you are so we can pick events near you next time — takes about 10 seconds.</p>' +
+      '<a href="' +
+      vars.add_location_url +
+      '" style="display:inline-block;padding:10px 18px;background:#5b2f99;border-radius:8px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;text-decoration:none;">Add location in Account settings &rarr;</a>' +
+      '</td></tr></table>';
   }
 
   if (slug === 'attendee_signup_events_nudge_followup') {
@@ -274,6 +284,16 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         'City Connectors · Tuesday 12 August 2026 · 8:00 AM · The Shard, London',
         vars.event_url
       );
+    vars.add_location_url = String(vars.site_url || '').replace(/\/$/, '') + '/account/settings/';
+    vars.location_tip_html =
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 8px;background:#f7f4fb;border:1px solid rgba(69,45,92,0.12);border-radius:10px;">' +
+      '<tr><td style="padding:16px 18px;text-align:left;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;margin:0 0 6px;">Add your city or postcode</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;margin:0 0 12px;">Tell us where you are so we can pick events near you next time — takes about 10 seconds.</p>' +
+      '<a href="' +
+      vars.add_location_url +
+      '" style="display:inline-block;padding:10px 18px;background:#5b2f99;border-radius:8px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;text-decoration:none;">Add location in Account settings &rarr;</a>' +
+      '</td></tr></table>';
   }
 
   if (slug === 'attendee_hubert_event_concierge') {

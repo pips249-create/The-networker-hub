@@ -27,6 +27,12 @@
   color: #4a5168;
 }
 
+.omr-billing-lead--note {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  color: #5a6478;
+}
+
 .omr-billing-connect {
   margin: 0;
   font-size: 0.88rem;

@@ -24,6 +24,27 @@ const {
   fetchPopularEvents,
   nearbySectionHeading,
 } = require('./nearby-events');
+
+function accountSettingsUrl(siteUrl) {
+  return String(siteUrl || siteBase()).replace(/\/$/, '') + '/account/settings/';
+}
+
+/** Soft CTA when the attendee has no city/postcode saved yet. */
+function locationTipHtml(siteUrl, location) {
+  if (String(location || '').trim()) return '';
+  const href = accountSettingsUrl(siteUrl);
+  return (
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 8px;background:#f7f4fb;border:1px solid rgba(69,45,92,0.12);border-radius:10px;">' +
+    '<tr><td style="padding:16px 18px;text-align:left;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;margin:0 0 6px;">Add your city or postcode</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;margin:0 0 12px;">Tell us where you are so we can pick events near you next time — takes about 10 seconds.</p>' +
+    '<a href="' +
+    href +
+    '" style="display:inline-block;padding:10px 18px;background:#5b2f99;border-radius:8px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;text-decoration:none;">Add location in Account settings &rarr;</a>' +
+    '</td></tr></table>'
+  );
+}
+
 const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
 const LOW_EVENTS_MAX_UPCOMING = 3;
@@ -437,6 +458,8 @@ async function sendDueSignupEventsNudgeEmails(sb) {
           nearby_events_html: eventSections.nearby_events_html,
           popular_events_html: eventSections.popular_events_html,
           browse_events_url: browseEventsUrl(siteUrl),
+          location_tip_html: locationTipHtml(siteUrl, attendee.location),
+          add_location_url: accountSettingsUrl(siteUrl),
         },
         subject: 'Events picked for you on The Networker Hub',
       });
@@ -515,6 +538,8 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
           popular_events_html: eventSections.popular_events_html,
           browse_events_url: browseEventsUrl(siteUrl),
           opportunities_url: opportunitiesBrowseUrl(siteUrl),
+          location_tip_html: locationTipHtml(siteUrl, attendee.location),
+          add_location_url: accountSettingsUrl(siteUrl),
         },
         subject: 'Still looking for your first event?',
       });
