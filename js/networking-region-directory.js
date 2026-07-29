@@ -1,37 +1,49 @@
 /**
- * Curated UK networking region directory — browser allow-list.
- * Keep in sync with api/_lib/networking-regions.js.
+ * Curated UK networking region directory — browser allow-list (cities + counties).
+ * Keep in sync with api/_lib/networking-regions.js and api/_lib/networking-county-sectors.js.
  */
 (function (global) {
   var REGIONS = {
-    'central-london': { name: 'Central London', location: 'Central London' },
-    'north-london': { name: 'North London', location: 'North London' },
-    'south-london': { name: 'South London', location: 'South London' },
-    'east-london': { name: 'East London', location: 'East London' },
-    'west-london': { name: 'West London', location: 'West London' },
-    manchester: { name: 'Manchester', location: 'Manchester' },
-    birmingham: { name: 'Birmingham', location: 'Birmingham' },
-    glasgow: { name: 'Glasgow', location: 'Glasgow' },
-    edinburgh: { name: 'Edinburgh', location: 'Edinburgh' },
-    leeds: { name: 'Leeds', location: 'Leeds' },
-    liverpool: { name: 'Liverpool', location: 'Liverpool' },
-    newcastle: { name: 'Newcastle', location: 'Newcastle' },
-    bristol: { name: 'Bristol', location: 'Bristol' },
-    sheffield: { name: 'Sheffield', location: 'Sheffield' },
-    nottingham: { name: 'Nottingham', location: 'Nottingham' },
-    cardiff: { name: 'Cardiff', location: 'Cardiff' },
-    brighton: { name: 'Brighton', location: 'Brighton' },
-    cambridge: { name: 'Cambridge', location: 'Cambridge' },
-    oxford: { name: 'Oxford', location: 'Oxford' },
-    chester: { name: 'Chester', location: 'Chester' },
-    belfast: { name: 'Belfast', location: 'Belfast' },
-    reading: { name: 'Reading', location: 'Reading' },
-    leicester: { name: 'Leicester', location: 'Leicester' },
-    bournemouth: { name: 'Bournemouth', location: 'Bournemouth' },
+    'central-london': { name: 'Central London', location: 'Central London', areaType: 'London area' },
+    'north-london': { name: 'North London', location: 'North London', areaType: 'London area' },
+    'south-london': { name: 'South London', location: 'South London', areaType: 'London area' },
+    'east-london': { name: 'East London', location: 'East London', areaType: 'London area' },
+    'west-london': { name: 'West London', location: 'West London', areaType: 'London area' },
+    manchester: { name: 'Manchester', location: 'Manchester', areaType: 'city' },
+    birmingham: { name: 'Birmingham', location: 'Birmingham', areaType: 'city' },
+    glasgow: { name: 'Glasgow', location: 'Glasgow', areaType: 'city' },
+    edinburgh: { name: 'Edinburgh', location: 'Edinburgh', areaType: 'city' },
+    leeds: { name: 'Leeds', location: 'Leeds', areaType: 'city' },
+    liverpool: { name: 'Liverpool', location: 'Liverpool', areaType: 'city' },
+    newcastle: { name: 'Newcastle', location: 'Newcastle', areaType: 'city' },
+    bristol: { name: 'Bristol', location: 'Bristol', areaType: 'city' },
+    sheffield: { name: 'Sheffield', location: 'Sheffield', areaType: 'city' },
+    nottingham: { name: 'Nottingham', location: 'Nottingham', areaType: 'city' },
+    cardiff: { name: 'Cardiff', location: 'Cardiff', areaType: 'city' },
+    brighton: { name: 'Brighton', location: 'Brighton', areaType: 'city' },
+    cambridge: { name: 'Cambridge', location: 'Cambridge', areaType: 'city' },
+    oxford: { name: 'Oxford', location: 'Oxford', areaType: 'city' },
+    chester: { name: 'Chester', location: 'Chester', areaType: 'city' },
+    belfast: { name: 'Belfast', location: 'Belfast', areaType: 'city' },
+    reading: { name: 'Reading', location: 'Reading', areaType: 'city' },
+    leicester: { name: 'Leicester', location: 'Leicester', areaType: 'city' },
+    bournemouth: { name: 'Bournemouth', location: 'Bournemouth', areaType: 'city' },
+    cheshire: { name: 'Cheshire', location: 'Cheshire', areaType: 'county' },
+    surrey: { name: 'Surrey', location: 'Surrey', areaType: 'county' },
+    kent: { name: 'Kent', location: 'Kent', areaType: 'county' },
+    hampshire: { name: 'Hampshire', location: 'Hampshire', areaType: 'county' },
+    lancashire: { name: 'Lancashire', location: 'Lancashire', areaType: 'county' },
+    essex: { name: 'Essex', location: 'Essex', areaType: 'county' },
+    hertfordshire: { name: 'Hertfordshire', location: 'Hertfordshire', areaType: 'county' },
+    berkshire: { name: 'Berkshire', location: 'Berkshire', areaType: 'county' },
   };
 
   var ALIASES = {
     london: 'central-london',
+    hants: 'hampshire',
+    lancs: 'lancashire',
+    herts: 'hertfordshire',
+    berks: 'berkshire',
   };
 
   function normalize(raw) {
@@ -46,6 +58,11 @@
     return REGIONS[key] || null;
   }
 
+  function isCounty(slug) {
+    var region = getRegion(slug);
+    return Boolean(region && region.areaType === 'county');
+  }
+
   function resolveSlug(query) {
     var q = normalize(query);
     if (!q) return '';
@@ -53,9 +70,27 @@
     if (ALIASES[q]) return ALIASES[q];
 
     var slug;
+    var countyMatch = '';
     for (slug in REGIONS) {
       if (!Object.prototype.hasOwnProperty.call(REGIONS, slug)) continue;
-      if (normalize(REGIONS[slug].name) === q) return slug;
+      if (normalize(REGIONS[slug].name) === q) {
+        if (REGIONS[slug].areaType === 'county') countyMatch = slug;
+        else return slug;
+      }
+    }
+    if (countyMatch) return countyMatch;
+
+    // Prefer longer names so "Cheshire" does not resolve via a shorter city substring.
+    var names = [];
+    for (slug in REGIONS) {
+      if (!Object.prototype.hasOwnProperty.call(REGIONS, slug)) continue;
+      names.push({ slug: slug, name: normalize(REGIONS[slug].name) });
+    }
+    names.sort(function (a, b) {
+      return b.name.length - a.name.length;
+    });
+    for (var i = 0; i < names.length; i++) {
+      if (names[i].name === q) return names[i].slug;
     }
     return '';
   }
@@ -73,7 +108,11 @@
       var region = REGIONS[slug];
       var name = normalize(region.name);
       if (name.indexOf(q) === 0 || name.indexOf(q) !== -1 || q.indexOf(name) !== -1) {
-        matches.push({ slug: slug, name: region.name });
+        matches.push({
+          slug: slug,
+          name: region.name,
+          areaType: region.areaType || 'city',
+        });
       }
     }
 
@@ -84,6 +123,9 @@
       if (bName === q && aName !== q) return 1;
       if (aName.indexOf(q) === 0 && bName.indexOf(q) !== 0) return -1;
       if (bName.indexOf(q) === 0 && aName.indexOf(q) !== 0) return 1;
+      // Prefer cities slightly over counties when scores are equal.
+      if (a.areaType === 'county' && b.areaType !== 'county') return 1;
+      if (b.areaType === 'county' && a.areaType !== 'county') return -1;
       return a.name.localeCompare(b.name);
     });
 
@@ -99,6 +141,7 @@
   global.HUB_searchNetworkingRegions = search;
   global.HUB_networkingRegionPath = regionPath;
   global.HUB_getNetworkingRegion = getRegion;
+  global.HUB_isNetworkingCounty = isCounty;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /**
@@ -184,6 +227,8 @@
     if (!slug) return;
     if (window.hubRegionalLanding && window.hubRegionalLanding.slug === slug) return;
     if (window.HUB_getNetworkingRegion && !window.HUB_getNetworkingRegion(slug)) return;
+    // Prefer city landings for near-you; counties are wider browse targets.
+    if (window.HUB_isNetworkingCounty && window.HUB_isNetworkingCounty(slug)) return;
 
     var chip = ensureChip();
     if (!chip) return;

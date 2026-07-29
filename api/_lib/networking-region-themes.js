@@ -33,6 +33,8 @@ const REGION_THEMES = {
   liverpool: theme('#15608a', 'From the Albert Dock and Baltic Triangle to the wider Merseyside business community.', 'liverpool', '#7dd3fc'),
   leeds: theme('#7a2840', 'From the city centre to the wider West Yorkshire business community.', 'leeds', '#e8aab8'),
   chester: theme('#8f5020', 'From the city walls and Rows to the wider Cheshire business network.', 'chester', '#d4a870'),
+  cheshire: theme('#7a4a28', 'From Chester and Crewe to Warrington and the wider Cheshire business network.', 'cheshire', '#d4a870'),
+  lancashire: theme('#1e5a6e', 'From Preston and Blackpool to Burnley and business communities across Lancashire.', 'lancashire', '#7dd3fc'),
   // North East England
   newcastle: theme('#1e4d8c', 'From the Quayside and city centre to the wider North East.', 'newcastle', '#93c5fd'),
   // Midlands & Yorkshire
@@ -45,6 +47,12 @@ const REGION_THEMES = {
   // South East & East Anglia
   cambridge: theme('#7a4e28', 'From the science park and city centre to the wider Cambridgeshire network.', 'cambridge', '#d4a878'),
   oxford: theme('#1c3d72', 'From the city centre to business communities across Oxfordshire.', 'oxford', '#93c5fd'),
+  surrey: theme('#2d5a48', 'From Guildford and Woking to Reigate and business communities across Surrey.', 'surrey', '#86efac'),
+  kent: theme('#6a3048', 'From Canterbury and Maidstone to Tunbridge Wells and the wider Kent network.', 'kent', '#e8a8bc'),
+  hampshire: theme('#1a5870', 'From Southampton and Portsmouth to Winchester and business communities across Hampshire.', 'hampshire', '#7dd3fc'),
+  essex: theme('#6a4020', 'From Chelmsford and Colchester to Southend and business communities across Essex.', 'essex', '#d4a870'),
+  hertfordshire: theme('#284868', 'From St Albans and Watford to Hertford and business communities across Hertfordshire.', 'hertfordshire', '#93c5fd'),
+  berkshire: theme('#5a3850', 'From Reading and Maidenhead to Newbury and business communities across Berkshire.', 'berkshire', '#e8c4d0'),
   // Scotland
   glasgow: theme('#0a7088', 'Connect with entrepreneurs across the Clyde and the city centre.', 'glasgow', '#67e8f9'),
   edinburgh: theme('#6a3068', 'From the Old Town and New Town to Leith and the wider Lothians.', 'edinburgh', '#e0a8d8'),

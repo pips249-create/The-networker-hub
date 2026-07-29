@@ -31,6 +31,7 @@
     slug: slug,
     name: region.name,
     cityQuery: region.name,
+    areaType: region.areaType || 'city',
     accent: theme.accent || '',
   };
 
@@ -38,13 +39,17 @@
   document.body.classList.add('opp-regional-landing');
   document.body.setAttribute('data-opp-region', slug);
   document.body.setAttribute('data-region', slug);
+  if (region.areaType === 'county') {
+    document.body.classList.add('networking-county-page');
+    document.body.setAttribute('data-area-type', 'county');
+  }
 
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el) el.textContent = text;
   }
 
-  setText('opp-hero-badge', 'Local opportunity directory');
+  setText('opp-hero-badge', region.areaType === 'county' ? 'County opportunity directory' : 'Local opportunity directory');
   var heading = document.getElementById('opp-hero-heading');
   if (heading) {
     heading.innerHTML =

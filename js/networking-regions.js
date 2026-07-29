@@ -26,17 +26,25 @@
     slug: slug,
     name: region.name,
     location: region.location,
+    areaType: region.areaType || 'city',
     accent: theme.accent || '',
   };
   document.body.classList.add('networking-region-page');
   document.body.setAttribute('data-region', slug);
+  if (region.areaType === 'county') {
+    document.body.classList.add('networking-county-page');
+    document.body.setAttribute('data-area-type', 'county');
+  }
 
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el) el.textContent = text;
   }
 
-  setText('events-hero-badge', 'Local networking directory');
+  setText(
+    'events-hero-badge',
+    region.areaType === 'county' ? 'County networking directory' : 'Local networking directory'
+  );
   var heading = document.getElementById('events-hero-heading');
   if (heading) {
     heading.innerHTML =
@@ -92,7 +100,10 @@
   var directory = document.getElementById('networking-location-directory');
   if (directory) {
     directory.classList.add('is-regional-landing');
-    setText('networking-location-directory-heading', 'Other UK locations');
+    setText(
+      'networking-location-directory-heading',
+      region.areaType === 'county' ? 'Cities & other UK locations' : 'Other UK locations'
+    );
   }
 
   var currentLink = document.querySelector(

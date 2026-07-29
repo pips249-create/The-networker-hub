@@ -201,7 +201,14 @@
   var activeAdSection = 'events';
 
   var ENQUIRY_PACKAGES = {
-    events: ['Headline Sponsor', 'Event Page Partner', 'Featured Event Boost', 'Not sure yet'],
+    events: [
+      'Headline Sponsor',
+      'Event Page Partner',
+      'City Sponsor',
+      'County Sponsor',
+      'Featured Event Boost',
+      'Not sure yet',
+    ],
     organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Organiser Boost', 'Not sure yet'],
     opportunities: [
       'Headline Sponsor',

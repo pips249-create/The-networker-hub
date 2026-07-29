@@ -1,10 +1,12 @@
 /**
- * Curated regional directory landing pages.
+ * Curated regional directory landing pages (cities + counties).
  *
  * Slugs are deliberately allow-listed so arbitrary thin SEO pages cannot be
- * generated. Keep the browser labels in js/networking-regions.js in sync.
+ * generated. Keep the browser labels in js/networking-region-directory.js in sync.
  */
-const NETWORKING_REGIONS = {
+const { buildNetworkingCountyRegions, NETWORKING_COUNTY_SLUGS } = require('./networking-county-sectors');
+
+const NETWORKING_CITY_REGIONS = {
   'central-london': {
     name: 'Central London',
     location: 'Central London',
@@ -74,7 +76,17 @@ const NETWORKING_REGIONS = {
   bournemouth: { name: 'Bournemouth', location: 'Bournemouth', areaType: 'city' },
 };
 
+const NETWORKING_COUNTY_REGIONS = buildNetworkingCountyRegions();
+
+const NETWORKING_REGIONS = Object.assign({}, NETWORKING_CITY_REGIONS, NETWORKING_COUNTY_REGIONS);
+
 const NETWORKING_REGION_SLUGS = Object.keys(NETWORKING_REGIONS);
+const NETWORKING_CITY_SLUGS = Object.keys(NETWORKING_CITY_REGIONS);
+
+function isNetworkingCounty(slug) {
+  const key = String(slug || '').trim().toLowerCase();
+  return Boolean(NETWORKING_COUNTY_REGIONS[key]);
+}
 
 function getNetworkingRegion(slug) {
   const key = String(slug || '').trim().toLowerCase();
@@ -90,5 +102,10 @@ function getNetworkingRegion(slug) {
 module.exports = {
   NETWORKING_REGIONS,
   NETWORKING_REGION_SLUGS,
+  NETWORKING_CITY_REGIONS,
+  NETWORKING_CITY_SLUGS,
+  NETWORKING_COUNTY_REGIONS,
+  NETWORKING_COUNTY_SLUGS,
+  isNetworkingCounty,
   getNetworkingRegion,
 };

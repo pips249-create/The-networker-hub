@@ -144,6 +144,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'alumni_fast_pass_invite',
   'member_roster_invite',
   'member_roster_existing',
+  'member_roster_pay_invite',
   'member_roster_new_event',
   'member_roster_booking_reminder',
   'booking_confirmation',
@@ -552,6 +553,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
 const MEMBER_ROSTER_EMAIL_SLUGS = new Set([
   'member_roster_invite',
   'member_roster_existing',
+  'member_roster_pay_invite',
   'member_roster_new_event',
   'member_roster_booking_reminder',
   'organiser_monthly_group_update',

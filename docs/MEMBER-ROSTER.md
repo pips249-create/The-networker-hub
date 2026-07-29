@@ -22,6 +22,7 @@ Organisers can still renew people off-platform and update expiry dates manually.
   - `POST /api/auth/membership-checkout` — member Checkout (`mode: subscription`)
   - Webhooks sync roster `expires_at` / `subscription_status` from Stripe
   - Public join CTA on organiser profile; renew from My Hub → Memberships
+  - **Invite to pay** from the member register (Actions) or when adding a member — emails the Join / renew link
 
 ## Member emails — when they go out
 

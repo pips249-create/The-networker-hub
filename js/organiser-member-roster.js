@@ -19,8 +19,10 @@
   let activeReportTab = 'overview';
   let reportsLoadedKey = '';
   let reportsStale = false;
+  let reportsSetupEditing = false;
   let groupRosterSummary = null;
   let reportPeriod = 6;
+  let billingOffered = false;
   const filters = { search: '', status: 'all' };
 
   function isLoadInFlight() {
@@ -458,6 +460,7 @@
   }
 
   function collapseReportsSetup() {
+    reportsSetupEditing = false;
     const setup = document.getElementById('omr-reports-setup');
     const compact = document.getElementById('omr-reports-compact');
     const summary = document.getElementById('omr-reports-compact-summary');
@@ -492,6 +495,7 @@
     const hasMembers = rosterActiveTotal > 0 || rosterTotal > 0;
 
     if (!onReportsTab) {
+      reportsSetupEditing = false;
       if (empty) empty.hidden = true;
       if (wrap) wrap.hidden = true;
       if (results) results.hidden = true;
@@ -503,6 +507,7 @@
     if (reportsLoading) return;
 
     if (!hasMembers) {
+      reportsSetupEditing = false;
       if (empty) empty.hidden = false;
       if (wrap) wrap.hidden = true;
       if (results) results.hidden = true;
@@ -517,12 +522,20 @@
     if (runBtn) runBtn.disabled = false;
     if (empty) empty.hidden = true;
 
-    if (!hasLoaded || reportsStale) {
+    if (!hasLoaded || reportsStale || reportsSetupEditing) {
       expandReportsSetup();
-      if (wrap) wrap.hidden = true;
-      if (results) results.hidden = true;
-      if (refreshBtn) refreshBtn.hidden = !reportsStale;
-      if (stale) stale.hidden = !reportsStale;
+      if (!hasLoaded || reportsStale) {
+        if (wrap) wrap.hidden = true;
+        if (results) results.hidden = true;
+        if (refreshBtn) refreshBtn.hidden = !reportsStale;
+        if (stale) stale.hidden = !reportsStale;
+      } else {
+        // Editing settings with a loaded report — keep results visible underneath
+        if (wrap) wrap.hidden = false;
+        if (results) results.hidden = false;
+        if (refreshBtn) refreshBtn.hidden = true;
+        if (stale) stale.hidden = true;
+      }
       return;
     }
 
@@ -571,6 +584,16 @@
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
       btn.tabIndex = active ? 0 : -1;
     });
+    // Bookings need an event — open settings so organisers can pick one
+    if (activeReportTab === 'bookings' && !selectedReportsEventId() && lastReports && !reportsStale) {
+      reportsSetupEditing = true;
+      syncReportsSetupFields();
+    }
+    const summary = document.getElementById('omr-reports-compact-summary');
+    const compact = document.getElementById('omr-reports-compact');
+    if (summary && compact && !compact.hidden) {
+      summary.textContent = reportsCompactSummaryLine();
+    }
     renderReports(lastReports);
   }
 
@@ -732,6 +755,15 @@
           '" data-email="' +
           esc(m.email) +
           '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Resend invite</strong><span>Send Hub sign-up email again</span></span></button>'
+      );
+    }
+    if (billingOffered) {
+      items.push(
+        '<button type="button" class="org-action-item omr-action-invite-pay" data-id="' +
+          esc(m.id) +
+          '" data-email="' +
+          esc(m.email) +
+          '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Invite to pay</strong><span>Email the Join / renew membership link</span></span></button>'
       );
     }
     items.push(
@@ -1191,6 +1223,7 @@
 
     const cacheKey = reportsCacheKey(eventId, period, selectedUpcomingLimit());
     if (!force && lastReports && reportsLoadedKey === cacheKey && !reportsStale) {
+      reportsSetupEditing = false;
       renderReports(lastReports);
       syncReportsPanelState();
       return lastReports;
@@ -1218,6 +1251,7 @@
       lastReports = data.reports || null;
       reportsLoadedKey = reportsCacheKey(eventId, recentCount, upcomingLimit);
       reportsStale = false;
+      reportsSetupEditing = false;
       renderReports(data.reports);
     } finally {
       setReportsLoading(false);
@@ -1642,6 +1676,34 @@
         return;
       }
 
+      const invitePayBtn = e.target.closest('.omr-action-invite-pay');
+      if (invitePayBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllActionMenus();
+        invitePayBtn.disabled = true;
+        (async function () {
+          try {
+            await api(rosterUrl(), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                organiserId: getOrganiserId(),
+                action: 'invite-to-pay',
+                id: invitePayBtn.dataset.id,
+                email: invitePayBtn.dataset.email,
+              }),
+            });
+            showAlert('Pay invite sent.', 'success');
+          } catch (err) {
+            showAlert(err.message || 'Could not send pay invite.', 'error');
+          } finally {
+            invitePayBtn.disabled = false;
+          }
+        })();
+        return;
+      }
+
       const editExpiryBtn = e.target.closest('.omr-action-edit-expiry');
       if (editExpiryBtn) {
         e.preventDefault();
@@ -1903,7 +1965,8 @@
     });
 
     document.getElementById('omr-reports-edit-settings')?.addEventListener('click', function () {
-      expandReportsSetup();
+      reportsSetupEditing = true;
+      syncReportsSetupFields();
       syncReportsPanelState();
     });
 
@@ -2018,9 +2081,11 @@
       e.preventDefault();
       const name = document.getElementById('omr-name')?.value.trim() || '';
       const email = document.getElementById('omr-email')?.value.trim() || '';
+      const sendPayInvite =
+        billingOffered && document.getElementById('omr-send-pay-invite')?.checked === true;
       if (!duplicateMemberConfirm(name, email)) return;
       try {
-        await api(rosterUrl(), {
+        const added = await api(rosterUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2031,8 +2096,25 @@
             sendInvite: document.getElementById('omr-send-invite')?.checked !== false,
           }),
         });
+        if (sendPayInvite) {
+          const memberId = added && added.member && added.member.id ? added.member.id : null;
+          await api(rosterUrl(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              organiserId: getOrganiserId(),
+              action: 'invite-to-pay',
+              id: memberId,
+              email: email,
+            }),
+          });
+        }
         document.getElementById('omr-add-form')?.reset();
-        showAlert('Member added.', 'success');
+        const payBox = document.getElementById('omr-send-pay-invite');
+        if (payBox) payBox.checked = false;
+        const inviteBox = document.getElementById('omr-send-invite');
+        if (inviteBox) inviteBox.checked = true;
+        showAlert(sendPayInvite ? 'Member added and pay invite sent.' : 'Member added.', 'success');
         await refresh();
       } catch (err) {
         showAlert(err.message, 'error');
@@ -2180,6 +2262,9 @@
     const id = getOrganiserId();
     if (!id) {
       panel.hidden = true;
+      billingOffered = false;
+      const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
+      if (payInviteWrap) payInviteWrap.hidden = true;
       return;
     }
     panel.hidden = false;
@@ -2204,6 +2289,14 @@
             : '';
       }
       if (active) active.checked = plan ? plan.active !== false && plan.offered : true;
+      billingOffered = Boolean(plan && plan.offered);
+      const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
+      if (payInviteWrap) payInviteWrap.hidden = !billingOffered;
+      try {
+        renderRoster();
+      } catch {
+        /* roster may not be painted yet */
+      }
       const connectNote = document.getElementById('omr-billing-connect');
       const connectLink = document.getElementById('omr-billing-connect-link');
       if (data.connectReady === false) {
@@ -2219,6 +2312,9 @@
       }
       updateBillingPreview();
     } catch (e) {
+      billingOffered = false;
+      const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
+      if (payInviteWrap) payInviteWrap.hidden = true;
       /* panel stays visible; organiser can still try save */
       updateBillingPreview();
     }
@@ -2319,6 +2415,7 @@
       lastReports = null;
       reportsLoadedKey = '';
       reportsStale = false;
+      reportsSetupEditing = false;
       groupRosterSummary = null;
       page = 1;
       setRegisterTab('members');
@@ -2342,6 +2439,7 @@
       lastReports = null;
       reportsLoadedKey = '';
       reportsStale = false;
+      reportsSetupEditing = false;
       groupRosterSummary = null;
       page = 1;
       setRegisterTab('members');

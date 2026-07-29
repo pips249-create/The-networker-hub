@@ -2,6 +2,12 @@
  * UK outcode helpers for server-side browse location filters.
  * Keep sector lists in sync with js/postcode-outcode.js.
  */
+const {
+  NETWORKING_COUNTY_SECTORS,
+  NETWORKING_COUNTY_ALIASES,
+  NETWORKING_COUNTY_SLUGS,
+} = require('./networking-county-sectors');
+
 const REGION_SECTORS = {
   manchester: [
     'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9',
@@ -52,6 +58,7 @@ const REGION_SECTORS = {
     reading: ['RG1', 'RG2', 'RG4', 'RG5', 'RG6', 'RG7', 'RG8', 'RG10', 'RG30', 'RG31', 'RG40', 'RG41', 'RG42'],
     leicester: ['LE1', 'LE2', 'LE3', 'LE4', 'LE5', 'LE7', 'LE8', 'LE9', 'LE19'],
     bournemouth: ['BH1', 'BH2', 'BH3', 'BH4', 'BH5', 'BH6', 'BH7', 'BH8', 'BH9', 'BH10', 'BH11', 'BH12', 'BH23'],
+    ...NETWORKING_COUNTY_SECTORS,
 };
 
 const CITY_ALIASES = {
@@ -82,7 +89,10 @@ const CITY_ALIASES = {
   reading: 'reading',
   leicester: 'leicester',
   bournemouth: 'bournemouth',
+  ...NETWORKING_COUNTY_ALIASES,
 };
+
+const COUNTY_SLUG_SET = new Set(NETWORKING_COUNTY_SLUGS);
 
 const UK_OUTCODE_RE = /\b([A-Z]{1,2}\d{1,2}[A-Z]?)/i;
 const sectorSetCache = Object.create(null);
@@ -108,6 +118,10 @@ function sectorOf(outcode) {
 
 function findRegionForSector(sec) {
   const keys = Object.keys(REGION_SECTORS).sort((a, b) => {
+    // Prefer city / London-area mappings over wider counties for postcode → slug.
+    const aCounty = COUNTY_SLUG_SET.has(a) ? 1 : 0;
+    const bCounty = COUNTY_SLUG_SET.has(b) ? 1 : 0;
+    if (aCounty !== bCounty) return aCounty - bCounty;
     if (a === 'london') return 1;
     if (b === 'london') return -1;
     return 0;

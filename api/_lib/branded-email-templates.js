@@ -161,6 +161,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: '{{organiser_name}} added you to their membership',
   },
+  member_roster_pay_invite: {
+    file: 'member-roster-pay-invite.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Pay for your {{organiser_name}} membership',
+  },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',
     marker: 'hub-email-layout-v2',

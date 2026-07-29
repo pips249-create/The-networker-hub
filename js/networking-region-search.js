@@ -118,8 +118,13 @@
             '" tabindex="-1">' +
             '<span class="networking-region-suggest-name">' +
             escAttr(item.name) +
+            (item.areaType === 'county'
+              ? ' <span class="networking-region-suggest-type">County</span>'
+              : '') +
             '</span>' +
-            '<span class="networking-region-suggest-hint">View networking hub →</span>' +
+            '<span class="networking-region-suggest-hint">' +
+            (item.areaType === 'county' ? 'View county hub →' : 'View networking hub →') +
+            '</span>' +
             '</li>'
           );
         })

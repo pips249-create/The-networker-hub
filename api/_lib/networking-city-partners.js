@@ -30,8 +30,9 @@ function parseCityPartnerSlot(slot) {
   const key = String(slot || '').trim();
   if (!key.startsWith(CITY_PARTNER_SLOT_PREFIX)) return null;
   const slug = key.slice(CITY_PARTNER_SLOT_PREFIX.length);
-  if (!NETWORKING_REGIONS[slug]) return null;
-  return { slug, slot: key, region: NETWORKING_REGIONS[slug] };
+  const region = NETWORKING_REGIONS[slug];
+  if (!region || region.areaType === 'county') return null;
+  return { slug, slot: key, region };
 }
 
 function isCityPartnerSlot(slot) {
@@ -39,12 +40,25 @@ function isCityPartnerSlot(slot) {
 }
 
 function listCityPartnerRegions() {
-  return Object.keys(NETWORKING_REGIONS).map((slug) => ({
-    slug,
-    name: NETWORKING_REGIONS[slug].name,
-    slot: cityPartnerSlotKey(slug),
-    path: '/networking/' + slug,
-  }));
+  return Object.keys(NETWORKING_REGIONS)
+    .filter((slug) => NETWORKING_REGIONS[slug].areaType !== 'county')
+    .map((slug) => ({
+      slug,
+      name: NETWORKING_REGIONS[slug].name,
+      slot: cityPartnerSlotKey(slug),
+      path: '/networking/' + slug,
+    }));
+}
+
+function listCountyPartnerRegions() {
+  return Object.keys(NETWORKING_REGIONS)
+    .filter((slug) => NETWORKING_REGIONS[slug].areaType === 'county')
+    .map((slug) => ({
+      slug,
+      name: NETWORKING_REGIONS[slug].name,
+      slot: cityPartnerSlotKey(slug),
+      path: '/networking/' + slug,
+    }));
 }
 
 function isLaunchPricingActive(now = new Date()) {
@@ -84,7 +98,8 @@ function normalizeCitySlugs(input) {
   const seen = new Set();
   raw.forEach((item) => {
     const slug = String(item || '').trim().toLowerCase();
-    if (!slug || !NETWORKING_REGIONS[slug] || seen.has(slug)) return;
+    const region = NETWORKING_REGIONS[slug];
+    if (!slug || !region || region.areaType === 'county' || seen.has(slug)) return;
     seen.add(slug);
     out.push(slug);
   });
@@ -213,6 +228,7 @@ module.exports = {
   parseCityPartnerSlot,
   isCityPartnerSlot,
   listCityPartnerRegions,
+  listCountyPartnerRegions,
   isLaunchPricingActive,
   activePricing,
   calculateCityPartnerQuote,

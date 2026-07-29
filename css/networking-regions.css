@@ -584,3 +584,59 @@ body.networking-region-page .networking-region-intro {
   font-weight: 600;
   text-decoration: none;
 }
+
+.networking-region-suggest-type {
+  display: inline-block;
+  margin-left: 0.35em;
+  padding: 0.05em 0.4em;
+  border-radius: 4px;
+  background: rgba(50, 43, 120, 0.08);
+  color: #4a4570;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.home-locations-county-block {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(50, 43, 120, 0.12);
+}
+
+.networking-county-directory-heading {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2c2848;
+}
+
+.networking-county-directory-lede {
+  margin: 0 0 0.85rem;
+  color: #635c5e;
+  font-size: 0.92rem;
+  max-width: 40rem;
+}
+
+.home-locations-track--counties {
+  gap: 0.55rem;
+}
+
+.home-location-chip--county {
+  min-height: 2.6rem;
+  padding: 0.45rem 0.9rem;
+  background: #f7f6fb;
+  border: 1px solid rgba(50, 43, 120, 0.14);
+}
+
+.home-location-chip--county:hover,
+.home-location-chip--county:focus-visible {
+  background: #eeecf8;
+  border-color: rgba(50, 43, 120, 0.28);
+}
+
+.networking-county-page .home-locations-county-block {
+  opacity: 0.92;
+}
+

@@ -531,6 +531,26 @@ async function buildNetworkingRegionMeta(slug, origin) {
   const title = `Business Networking Events in ${region.name} ${year} – The Networker Hub`;
   const meta = { title, description, canonical, image, ogType: 'website' };
   const pageName = `The best business networking events and groups in ${region.name} ${year}`;
+  const about =
+    region.areaType === 'county'
+      ? {
+          '@type': 'Place',
+          name: region.name,
+          address: {
+            '@type': 'PostalAddress',
+            addressRegion: region.name,
+            addressCountry: 'GB',
+          },
+        }
+      : {
+          '@type': 'Place',
+          name: region.name,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: region.name,
+            addressCountry: 'GB',
+          },
+        };
   const collectionPage = {
     '@type': 'CollectionPage',
     '@id': canonical + '#directory',
@@ -542,15 +562,7 @@ async function buildNetworkingRegionMeta(slug, origin) {
       name: 'The Networker Hub',
       url: absoluteUrl(origin, '/'),
     },
-    about: {
-      '@type': 'Place',
-      name: region.name,
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: region.name,
-        addressCountry: 'GB',
-      },
-    },
+    about,
   };
   const breadcrumbs = buildBreadcrumbListSchema(
     [
@@ -573,6 +585,7 @@ async function buildNetworkingRegionMeta(slug, origin) {
       name: region.name,
       location: region.location,
       path: region.path,
+      areaType: region.areaType || 'city',
       year,
     },
     listingsHtml: ssr.listingsHtml,

@@ -273,7 +273,9 @@ function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, var
   const safeName = escapeRosterEmailHtml(name);
   const safeUser = escapeRosterEmailHtml(userName);
   const avatar = buildOrganiserAvatarMarkup(organiserRow, siteUrl);
-  const bodyCopy =
+  let eyebrow = 'Membership invite';
+  let title = safeName + ' invited you';
+  let bodyCopy =
     variant === 'existing'
       ? 'Hi ' +
         safeUser +
@@ -282,15 +284,26 @@ function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, var
         safeUser +
         ', you&apos;ve been added to their membership on The Networker Hub. Create your free account with this email address to book member meetings and see member-only ticket rates.';
 
+  if (variant === 'pay') {
+    eyebrow = 'Membership payment';
+    title = 'Pay for your ' + safeName + ' membership';
+    bodyCopy =
+      'Hi ' +
+      safeUser +
+      ', you can pay monthly or annually through The Networker Hub. After you pay, your membership unlocks member-only ticket rates automatically.';
+  }
+
   return (
     '<tr><td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">' +
     '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;"><tr><td style="text-align:center;vertical-align:middle;">' +
     avatar +
     '</td></tr></table>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#6b4c9a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Membership invite</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#6b4c9a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">' +
+    eyebrow +
+    '</p>' +
     '<h1 class="hero-title" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">' +
-    safeName +
-    ' invited you</h1>' +
+    title +
+    '</h1>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">' +
     bodyCopy +
     '</p></td></tr>'
@@ -427,6 +440,97 @@ async function sendMemberRosterInviteEmail({
   }
 
   return { sent: true, template: slug, existingUser: isExistingUser };
+}
+
+function formatMoneyPounds(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return '£0';
+  return '£' + n.toFixed(2).replace(/\.00$/, '');
+}
+
+async function sendMemberRosterPayInviteEmail({ organiserRow, memberEmail, memberName, rosterRowId }) {
+  const email = normalizeRosterEmail(memberEmail);
+  if (!email || !organiserRow?.id) {
+    const err = new Error('invalid_pay_invite');
+    err.status = 400;
+    throw err;
+  }
+
+  const { getMembershipPlanForOrganiser } = require('./membership-billing');
+  const plan = await getMembershipPlanForOrganiser(organiserRow.id);
+  if (!plan || !plan.offered) {
+    const err = new Error('membership_not_offered');
+    err.status = 400;
+    err.message =
+      'Set a monthly or annual membership price before sending a pay invite.';
+    throw err;
+  }
+
+  const site = siteBase();
+  const organiserUrl = organiserPublicUrl(organiserRow, site);
+  const joinPath =
+    (organiserRow.slug
+      ? '/organisers/' + encodeURIComponent(String(organiserRow.slug).trim())
+      : '/events/organiser?id=' + encodeURIComponent(organiserRow.id)) + '#org-membership-join';
+  const joinUrl = site + joinPath;
+  const greetingName = emailGreetingName(memberName, email);
+  const priceParts = [];
+  if (plan.monthly) {
+    priceParts.push(formatMoneyPounds(plan.monthly.amountPounds) + ' / month');
+  }
+  if (plan.annual) {
+    priceParts.push(formatMoneyPounds(plan.annual.amountPounds) + ' / year');
+  }
+  const priceSummary =
+    priceParts.length === 1
+      ? 'Membership is ' + priceParts[0] + ' to the group.'
+      : 'Choose ' + priceParts.join(' or ') + ' — paid to the group.';
+
+  try {
+    await sendTemplatedEmail({
+      slug: 'member_roster_pay_invite',
+      to: email,
+      variables: {
+        user_name: greetingName,
+        user_email: email,
+        organiser_name: String(organiserRow.name || 'your networking group').trim(),
+        organiser_url: organiserUrl,
+        organiser_logo_url: organiserLogoUrlForEmail(organiserRow, site),
+        hub_account_url: hubAccountUrl(site),
+        site_url: site,
+        logo_url: logoNavUrl(site),
+        logo_footer_url: logoFooterUrl(site),
+        privacy_url: legalPolicyUrl(site, 'privacy'),
+        terms_url: legalPolicyUrl(site, 'terms'),
+        contact_url: contactUrl(site),
+        organiser_invite_intro_section: buildOrganiserInviteIntroSection(organiserRow, site, {
+          userName: greetingName,
+          variant: 'pay',
+        }),
+        price_summary: priceSummary,
+        fee_note:
+          plan.feeExplanation ||
+          'A small Hub fee (4.5% + 20p) is added at checkout. The group receives 100% of the membership price.',
+        cta_url: loginUrlWithNext(site, email, joinPath),
+        cta_label: 'Pay for membership',
+      },
+    });
+  } catch (e) {
+    if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+      return { sent: false, skipped: 'emails_disabled' };
+    }
+    throw e;
+  }
+
+  if (rosterRowId) {
+    const sb = getSupabaseAdmin();
+    await sb
+      .from('organiser_member_roster')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', rosterRowId);
+  }
+
+  return { sent: true, template: 'member_roster_pay_invite', joinUrl };
 }
 
 async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
@@ -1577,6 +1681,7 @@ module.exports = {
   enrichMembersWithBookings,
   listRosterGroupsForAttendee,
   sendMemberRosterInviteEmail,
+  sendMemberRosterPayInviteEmail,
   sendMemberRosterNewEventAlert,
   buildOrganiserInviteIntroSection,
   buildRosterUpcomingEventSection,

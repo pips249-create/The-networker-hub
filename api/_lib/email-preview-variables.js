@@ -421,7 +421,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.verify_code = '482917';
   }
 
-  if (slug === 'member_roster_invite' || slug === 'member_roster_existing') {
+  if (slug === 'member_roster_invite' || slug === 'member_roster_existing' || slug === 'member_roster_pay_invite') {
     const {
       buildOrganiserInviteIntroSection,
       buildRosterUpcomingEventSection,
@@ -437,29 +437,49 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.organiser_logo_url = organiserLogoUrlForEmail(previewOrganiser, rosterSite);
     vars.organiser_invite_intro_section = buildOrganiserInviteIntroSection(previewOrganiser, rosterSite, {
       userName: vars.user_name,
-      variant: slug === 'member_roster_existing' ? 'existing' : 'invite',
+      variant:
+        slug === 'member_roster_pay_invite'
+          ? 'pay'
+          : slug === 'member_roster_existing'
+            ? 'existing'
+            : 'invite',
     });
-    vars.upcoming_event_section = buildRosterUpcomingEventSection({
-      title: vars.event_name,
-      starts_at: '2026-08-12T08:00:00.000Z',
-      location_label: vars.event_location,
-    });
-    if (slug === 'member_roster_invite') {
-      vars.register_url =
-        rosterSite +
-        '/register?email=' +
-        encodeURIComponent(vars.user_email) +
-        '&next=' +
-        encodeURIComponent(vars.event_url);
-    } else {
+    if (slug === 'member_roster_pay_invite') {
+      vars.price_summary =
+        vars.price_summary || 'Membership is £25 / month or £250 / year — paid to the group.';
+      vars.fee_note =
+        vars.fee_note ||
+        'A small Hub fee (4.5% + 20p) is added at checkout. The group receives 100% of the membership price.';
+      vars.cta_label = vars.cta_label || 'Pay for membership';
       vars.cta_url =
         rosterSite +
         '/login?email=' +
         encodeURIComponent(vars.user_email) +
         '&next=' +
-        encodeURIComponent(vars.event_url);
-      vars.cta_label = 'Book member tickets';
-      vars.hub_groups_url = vars.hub_account_url + '#memberships';
+        encodeURIComponent('/organisers/city-connectors#org-membership-join');
+    } else {
+      vars.upcoming_event_section = buildRosterUpcomingEventSection({
+        title: vars.event_name,
+        starts_at: '2026-08-12T08:00:00.000Z',
+        location_label: vars.event_location,
+      });
+      if (slug === 'member_roster_invite') {
+        vars.register_url =
+          rosterSite +
+          '/register?email=' +
+          encodeURIComponent(vars.user_email) +
+          '&next=' +
+          encodeURIComponent(vars.event_url);
+      } else {
+        vars.cta_url =
+          rosterSite +
+          '/login?email=' +
+          encodeURIComponent(vars.user_email) +
+          '&next=' +
+          encodeURIComponent(vars.event_url);
+        vars.cta_label = 'Book member tickets';
+        vars.hub_groups_url = vars.hub_account_url + '#memberships';
+      }
     }
   }
 

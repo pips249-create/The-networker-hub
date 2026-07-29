@@ -9,9 +9,11 @@ const {
   parseRosterCsv,
   buildRosterReports,
   sendMemberRosterBookingReminders,
+  sendMemberRosterPayInviteEmail,
   enrichMembersWithBookings,
   queueUnclaimedMemberInvites,
 } = require('../organiser-member-roster');
+const { getSupabaseAdmin } = require('../supabase');
 
 function parseBody(req) {
   let body = req.body;
@@ -144,6 +146,40 @@ module.exports = async function handler(req, res) {
 
       if (action === 'queue-invites' || action === 'queue_invites') {
         const result = await queueUnclaimedMemberInvites(groupId);
+        return json(res, 200, { ok: true, ...result });
+      }
+
+      if (action === 'invite-to-pay' || action === 'invite_to_pay') {
+        const memberId = String(body.id || body.memberId || body.member_id || '').trim();
+        const email = String(body.email || '').trim().toLowerCase();
+        if (!memberId && !email) {
+          return json(res, 400, { ok: false, error: 'missing_member' });
+        }
+        const sb = getSupabaseAdmin();
+        let memberQuery = sb
+          .from('organiser_member_roster')
+          .select('id, email, name, status')
+          .eq('organiser_id', groupId);
+        if (memberId) memberQuery = memberQuery.eq('id', memberId);
+        else memberQuery = memberQuery.ilike('email', email);
+        const { data: member, error: memberError } = await memberQuery.maybeSingle();
+        if (memberError) throw new Error(memberError.message);
+        if (!member) return json(res, 404, { ok: false, error: 'roster_member_not_found' });
+
+        const { data: organiser, error: orgError } = await sb
+          .from('organisers')
+          .select('id, name, slug, photo_url')
+          .eq('id', groupId)
+          .maybeSingle();
+        if (orgError) throw new Error(orgError.message);
+        if (!organiser) return json(res, 404, { ok: false, error: 'organiser_not_found' });
+
+        const result = await sendMemberRosterPayInviteEmail({
+          organiserRow: organiser,
+          memberEmail: member.email,
+          memberName: member.name,
+          rosterRowId: member.id,
+        });
         return json(res, 200, { ok: true, ...result });
       }
 
