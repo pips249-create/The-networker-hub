@@ -119,25 +119,29 @@
   }
 
   var partnerShell = document.getElementById('networking-region-city-partner');
+  var partnerSlot =
+    region.areaType === 'county'
+      ? 'networking_county_partner_' + slug
+      : 'networking_city_partner_' + slug;
   showCityPartnerLayout();
   if (partnerShell && window.CmsAdBlocks) {
     if (window.CmsAdBlocks.mountCityPartnerSlot) {
-      window.CmsAdBlocks.mountCityPartnerSlot(partnerShell, 'networking_city_partner_' + slug);
+      window.CmsAdBlocks.mountCityPartnerSlot(partnerShell, partnerSlot);
     } else if (
       !partnerShell.querySelector('.networking-city-partner-ad') &&
       window.CmsAdBlocks.renderCityPartnerPlaceholder
     ) {
-      window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
-      window.CmsAdBlocks.loadCmsAd('networking_city_partner_' + slug)
+      window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell, partnerSlot);
+      window.CmsAdBlocks.loadCmsAd(partnerSlot)
         .then(function (block) {
-          if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block)) return;
+          if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block, partnerSlot)) return;
           if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
-            window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+            window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell, partnerSlot);
           }
         })
         .catch(function () {
           if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
-            window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell);
+            window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell, partnerSlot);
           }
         });
     }

@@ -1362,16 +1362,14 @@ body.hub-organiser-terms-open {
 
 /* CMS sponsor CTA — custom colour from Command Centre */
 .sponsor-cta.cms-cta--custom,
-.cms-ad-compact-cta.cms-cta--custom,
-.cms-ad-banner-cta.cms-cta--custom {
+.cms-ad-compact-cta.cms-cta--custom {
   background: var(--sponsor-cta-bg) !important;
   color: var(--sponsor-cta-fg, #fff) !important;
   border-color: var(--sponsor-cta-bg) !important;
 }
 
 .sponsor-cta.cms-cta--custom:hover,
-.cms-ad-compact-cta.cms-cta--custom:hover,
-.cms-ad-banner-cta.cms-cta--custom:hover {
+.cms-ad-compact-cta.cms-cta--custom:hover {
   filter: brightness(0.9);
   background: var(--sponsor-cta-bg) !important;
   color: var(--sponsor-cta-fg, #fff) !important;

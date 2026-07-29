@@ -1006,10 +1006,9 @@
     if (!container) return;
     block = block || DEMO_SPONSOR;
     var logo = String(block.logo_url || '').trim();
-    var ctaLabel = String(block.cta_label || 'Find out more →').trim();
 
     container.innerHTML =
-      '<aside class="ad-mock-compact">' +
+      '<aside class="ad-mock-compact ad-mock-compact--logo-only">' +
       '<span class="ad-mock-compact-badge">Sponsored</span>' +
       '<div class="ad-mock-compact-logo-wrap">' +
       (logo
@@ -1018,9 +1017,6 @@
           '" alt="" class="ad-mock-compact-logo-img" loading="lazy" decoding="async">'
         : '<span class="ad-mock-compact-logo-placeholder">Your logo</span>') +
       '</div>' +
-      '<span class="ad-mock-compact-cta">' +
-      esc(ctaLabel) +
-      '</span>' +
       '</aside>';
   }
 

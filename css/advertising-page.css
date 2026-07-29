@@ -2765,6 +2765,10 @@ body.advertising-page {
   box-shadow: 0 4px 14px rgba(13, 31, 60, 0.08);
 }
 
+.ad-mock-compact--logo-only {
+  padding-bottom: 14px;
+}
+
 .ad-mock-compact-badge {
   position: absolute;
   top: 8px;

@@ -68,9 +68,17 @@ function isCityPartnerSlot(slot) {
   return String(slot || '').trim().startsWith('networking_city_partner_');
 }
 
+function isCountyPartnerSlot(slot) {
+  return String(slot || '').trim().startsWith('networking_county_partner_');
+}
+
+function isRegionPartnerSlot(slot) {
+  return isCityPartnerSlot(slot) || isCountyPartnerSlot(slot);
+}
+
 function isCompactSponsorSlot(slot) {
   const key = String(slot || '').trim();
-  return key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad' || isCityPartnerSlot(key);
+  return key.endsWith('_sidebar_ad') || isRegionPartnerSlot(key);
 }
 
 /** Whether a cms_blocks row is ready for booking emails (logo/name + website link). */
@@ -88,13 +96,8 @@ function isPublishableSponsorBlock(block, slot) {
   const ctaUrl = String(block.cta_url || '').trim();
   if (!hasValidCtaUrl(ctaUrl)) return false;
 
-  // City partner: logo + website only (no on-page button).
-  if (isCityPartnerSlot(key)) return hasSponsorLogo(block);
-
-  // Compact / banner: logo + labelled CTA button.
-  if (key.endsWith('_sidebar_ad') || key === 'event_page_banner_ad') {
-    return hasSponsorLogo(block) && Boolean(ctaLabel);
-  }
+  // City/county partners + opportunity sidebar: logo + website only (no on-page button).
+  if (isRegionPartnerSlot(key) || key.endsWith('_sidebar_ad')) return hasSponsorLogo(block);
 
   // Browse heroes: logo-only when a logo is set; otherwise tagline/company + CTA.
   if (hasSponsorLogo(block)) return true;
@@ -179,6 +182,8 @@ module.exports = {
   hasValidCtaUrl,
   isCompactSponsorSlot,
   isCityPartnerSlot,
+  isCountyPartnerSlot,
+  isRegionPartnerSlot,
   isEmailSponsorBlock,
   isPublishableSponsorBlock,
   normalizeSponsorBlock,

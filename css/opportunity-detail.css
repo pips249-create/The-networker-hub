@@ -507,6 +507,18 @@
   color: var(--sponsor-cta-fg, #fff) !important;
 }
 
+.opportunity-detail-page .cms-ad-compact--logo-only {
+  gap: 0;
+  padding-bottom: 14px;
+}
+
+.opportunity-detail-page .cms-ad-compact-logo-link,
+.opportunity-detail-page .cms-ad-compact-placeholder-link {
+  display: block;
+  text-decoration: none !important;
+  color: inherit;
+}
+
 .opportunity-detail-page .opp-enquire-card {
   background: var(--opp-navy, #0d1f3c);
   color: #fff;

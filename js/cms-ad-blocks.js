@@ -9,7 +9,6 @@
     event_page_carousel_ads: '/advertising#ad-panel-events',
     organiser_page_carousel_ads: '/advertising#ad-panel-organisers',
     opportunity_page_sidebar_ad: '/advertising#ad-panel-opportunities',
-    event_page_banner_ad: '/advertising#ad-panel-events',
   };
 
   var PLACEHOLDER_CTA = 'View sponsorship options →';
@@ -17,6 +16,8 @@
   function advertisingPathForSlot(slotOrSubject) {
     var key = String(slotOrSubject || '').trim().toLowerCase();
     if (PLACEMENT_AD_PATHS[key]) return PLACEMENT_AD_PATHS[key];
+    if (key.indexOf('networking_county_partner_') === 0) return '/advertising#county-partner-package';
+    if (key.indexOf('networking_city_partner_') === 0) return '/advertising#city-partner-package';
     var subject = String(slotOrSubject || '');
     if (/organiser/i.test(subject)) return PLACEMENT_AD_PATHS.organiser_page_carousel_ads;
     if (/opportunit/i.test(subject)) return PLACEMENT_AD_PATHS.opportunity_page_sidebar_ad;
@@ -58,17 +59,6 @@
         return li.textContent.trim();
       })
       .filter(Boolean);
-  }
-
-  function bodyTextFromBlock(block) {
-    var bullets = bulletsFromBody(block.body);
-    if (bullets.length) return bullets.join(' · ');
-    var temp = document.createElement('div');
-    temp.innerHTML = String(block.body || '');
-    temp.querySelectorAll('h3').forEach(function (el) {
-      el.remove();
-    });
-    return temp.textContent.replace(/\s+/g, ' ').trim();
   }
 
   function taglineHtml(text) {
@@ -162,91 +152,15 @@
     }
   }
 
-  function isBannerRenderable(block) {
-    if (!block || block.active === false) return false;
-    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
-    var hasLogo = window.CmsSponsorFields
-      ? window.CmsSponsorFields.isLogoUrl(logo)
-      : /^https?:\/\//i.test(String(logo || '').trim());
-    var company = window.CmsSponsorFields
-      ? window.CmsSponsorFields.companyName(block)
-      : String(block.company_name || '').trim();
-    var tagline = taglineFromBlock(block);
-    var ctaLabel = String(block.cta_label || '').trim();
-    var ctaUrl = String(block.cta_url || '').trim();
-    var hasCtaUrl = /^https?:\/\//i.test(ctaUrl) && ctaUrl.replace(/^https?:\/\//i, '').trim().length > 0;
-    return (hasLogo || company || tagline) && ctaLabel && hasCtaUrl;
-  }
-
-  function renderBannerPlaceholder(container, slot) {
-    if (!container) return false;
-    var href = advertisingPathForSlot(slot || 'event_page_banner_ad');
-    container.hidden = false;
-    container.innerHTML =
-      '<aside class="cms-ad-banner cms-ad-banner--available" aria-label="Sponsored banner placement available">' +
-      '<span class="cms-ad-banner-badge">Sponsored</span>' +
-      '<a class="cms-ad-banner-placeholder-link" href="' +
-      esc(href) +
-      '">' +
-      '<div class="cms-ad-banner-logo">' +
-      '<div class="cms-ad-banner-logo-placeholder">Your logo here</div>' +
-      '</div>' +
-      '<div class="cms-ad-banner-copy">' +
-      '<p class="cms-ad-banner-title">Promote your brand on event pages</p>' +
-      '</div>' +
-      '<span class="cms-ad-banner-cta cms-ad-banner-cta--placeholder">' +
-      esc(PLACEHOLDER_CTA) +
-      '</span>' +
-      '</a></aside>';
-    return true;
-  }
-
-  function renderBannerAd(container, block) {
-    if (!container || !block) return;
-    var company = window.CmsSponsorFields
-      ? window.CmsSponsorFields.companyName(block)
-      : String(block.company_name || '').trim();
-    var title = taglineFromBlock(block);
-    var bodyText = bodyTextFromBlock(block);
-    var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
-    var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
-    var ctaUrl = normalizeCta(block.cta_url);
-
-    container.hidden = false;
-    container.innerHTML =
-      '<aside class="cms-ad-banner">' +
-      '<span class="cms-ad-banner-badge">Sponsored</span>' +
-      '<div class="cms-ad-banner-logo">' +
-      logoMarkup(logo, 'cms-ad-banner-logo-img', 'cms-ad-banner-logo-placeholder', block) +
-      '</div>' +
-      '<div class="cms-ad-banner-copy">' +
-      (company ? '<p class="cms-ad-banner-company">' + esc(company) + '</p>' : '') +
-      (title ? '<p class="cms-ad-banner-title">' + taglineHtml(title) + '</p>' : '') +
-      (bodyText ? '<p class="cms-ad-banner-body">' + esc(bodyText) + '</p>' : '') +
-      '</div>' +
-      '<a class="cms-ad-banner-cta" href="' +
-      esc(ctaUrl) +
-      '">' +
-      esc(ctaLabel) +
-      '</a>' +
-      '</aside>';
-    var bannerCta = container.querySelector('.cms-ad-banner-cta');
-    if (bannerCta && window.CmsSponsorFields) {
-      window.CmsSponsorFields.applyCtaColor(bannerCta, window.CmsSponsorFields.ctaColor(block));
-      window.CmsSponsorFields.applyCtaLink(bannerCta, ctaUrl);
-    }
-  }
-
   function isCompactRenderable(block) {
     if (!block || block.active === false) return false;
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var hasLogo = window.CmsSponsorFields
       ? window.CmsSponsorFields.isLogoUrl(logo)
       : /^https?:\/\//i.test(String(logo || '').trim());
-    var ctaLabel = String(block.cta_label || '').trim();
     var ctaUrl = String(block.cta_url || '').trim();
     var hasCtaUrl = /^https?:\/\//i.test(ctaUrl) && ctaUrl.replace(/^https?:\/\//i, '').trim().length > 0;
-    return hasLogo && ctaLabel && hasCtaUrl;
+    return hasLogo && hasCtaUrl;
   }
 
   function renderCompactAd(container, block, slot) {
@@ -255,24 +169,26 @@
       return renderCompactPlaceholder(container, slot);
     }
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
-    var ctaLabel = String(block.cta_label || '').trim() || 'Learn more';
     var ctaUrl = normalizeCta(block.cta_url);
+    var company = window.CmsSponsorFields
+      ? window.CmsSponsorFields.companyName(block)
+      : String(block.company_name || '').trim();
 
     container.hidden = false;
     container.innerHTML =
-      '<aside class="cms-ad-compact">' +
+      '<aside class="cms-ad-compact cms-ad-compact--logo-only">' +
       '<span class="cms-ad-compact-badge">Sponsored</span>' +
-      logoMarkup(logo, 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder', block) +
-      '<a class="cms-ad-compact-cta" href="' +
+      '<a class="cms-ad-compact-logo-link" href="' +
       esc(ctaUrl) +
-      '">' +
-      esc(ctaLabel) +
+      '"' +
+      (company ? ' title="' + esc(company) + '"' : '') +
+      '>' +
+      logoMarkup(logo, 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder', block) +
       '</a>' +
       '</aside>';
-    var compactCta = container.querySelector('.cms-ad-compact-cta');
-    if (compactCta && window.CmsSponsorFields) {
-      window.CmsSponsorFields.applyCtaColor(compactCta, window.CmsSponsorFields.ctaColor(block));
-      window.CmsSponsorFields.applyCtaLink(compactCta, ctaUrl);
+    var logoLink = container.querySelector('.cms-ad-compact-logo-link');
+    if (logoLink && window.CmsSponsorFields) {
+      window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl);
     }
     return true;
   }
@@ -292,15 +208,23 @@
     return '<div class="networking-city-partner-logo-placeholder">Your logo here</div>';
   }
 
-  function renderCityPartnerPlaceholder(container) {
+  function renderCityPartnerPlaceholder(container, slot) {
     if (!container) return false;
+    var badge = regionPartnerBadge(slot);
+    var href = regionPartnerAdvertiseHref(slot);
     container.hidden = false;
     container.removeAttribute('hidden');
     container.removeAttribute('data-company');
     container.innerHTML =
-      '<aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="City Sponsor slot available">' +
-      '<span class="networking-city-partner-badge">City Sponsor</span>' +
-      '<a class="networking-city-partner-logo-link" href="/advertising#city-partner-package">' +
+      '<aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="' +
+      esc(badge) +
+      ' slot available">' +
+      '<span class="networking-city-partner-badge">' +
+      esc(badge) +
+      '</span>' +
+      '<a class="networking-city-partner-logo-link" href="' +
+      esc(href) +
+      '">' +
       '<div class="networking-city-partner-logo-placeholder">Your logo here</div>' +
       '</a>' +
       '</aside>';
@@ -359,11 +283,12 @@
     return hasLogo && hasCtaUrl;
   }
 
-  function renderCityPartnerAd(container, block) {
+  function renderCityPartnerAd(container, block, slot) {
     if (!container || !block) return false;
     if (!isCityPartnerRenderable(block)) {
-      return renderCityPartnerPlaceholder(container);
+      return renderCityPartnerPlaceholder(container, slot);
     }
+    var badge = regionPartnerBadge(slot);
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var ctaUrl = normalizeCta(block.cta_url);
     var company = window.CmsSponsorFields ? window.CmsSponsorFields.companyName(block) : block.company_name;
@@ -372,8 +297,12 @@
     container.hidden = false;
     container.removeAttribute('hidden');
     container.innerHTML =
-      '<aside class="networking-city-partner-ad" aria-label="City Sponsor">' +
-      '<span class="networking-city-partner-badge">City Sponsor</span>' +
+      '<aside class="networking-city-partner-ad" aria-label="' +
+      esc(badge) +
+      '">' +
+      '<span class="networking-city-partner-badge">' +
+      esc(badge) +
+      '</span>' +
       '<a class="networking-city-partner-logo-link" href="' +
       esc(ctaUrl) +
       '">' +
@@ -426,14 +355,18 @@
     if (!container) return Promise.resolve(false);
     return loadCityPartnerSlot(slot)
       .then(function (result) {
-        if (result.block && renderCityPartnerAd(container, result.block)) return true;
-        if (result.cityPartner && renderCityPartnerWaitlist(container, result.cityPartner)) {
+        if (result.block && renderCityPartnerAd(container, result.block, slot)) return true;
+        if (
+          String(slot || '').indexOf('networking_city_partner_') === 0 &&
+          result.cityPartner &&
+          renderCityPartnerWaitlist(container, result.cityPartner)
+        ) {
           return true;
         }
-        return renderCityPartnerPlaceholder(container);
+        return renderCityPartnerPlaceholder(container, slot);
       })
       .catch(function () {
-        return renderCityPartnerPlaceholder(container);
+        return renderCityPartnerPlaceholder(container, slot);
       });
   }
 
@@ -471,17 +404,26 @@
     var href = advertisingPathForSlot(slot || 'opportunity_page_sidebar_ad');
     container.hidden = false;
     container.innerHTML =
-      '<aside class="cms-ad-compact cms-ad-compact--available" aria-label="Sponsored sidebar placement available">' +
+      '<aside class="cms-ad-compact cms-ad-compact--available cms-ad-compact--logo-only" aria-label="Sponsored sidebar placement available">' +
       '<span class="cms-ad-compact-badge">Sponsored</span>' +
       '<a class="cms-ad-compact-placeholder-link" href="' +
       esc(href) +
       '">' +
       logoMarkup('', 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
-      '<span class="cms-ad-compact-cta cms-ad-compact-cta--placeholder">' +
-      esc(PLACEHOLDER_CTA) +
-      '</span>' +
       '</a></aside>';
     return true;
+  }
+
+  function regionPartnerBadge(slot) {
+    return String(slot || '').indexOf('networking_county_partner_') === 0
+      ? 'County Sponsor'
+      : 'City Sponsor';
+  }
+
+  function regionPartnerAdvertiseHref(slot) {
+    return String(slot || '').indexOf('networking_county_partner_') === 0
+      ? '/advertising#county-partner-package'
+      : '/advertising#city-partner-package';
   }
 
   function loadCarouselAds(slot) {
@@ -756,29 +698,9 @@
     });
   }
 
-  function loadBannerAd(container, options) {
-    if (!container) return Promise.resolve(false);
-    var opts = options || {};
-    var slot = String(opts.slot || 'event_page_banner_ad').trim() || 'event_page_banner_ad';
-    return loadCmsAd(slot)
-      .then(function (block) {
-        if (!block || !isBannerRenderable(block)) {
-          return renderBannerPlaceholder(container, slot);
-        }
-        renderBannerAd(container, block);
-        return true;
-      })
-      .catch(function () {
-        return renderBannerPlaceholder(container, slot);
-      });
-  }
-
   window.CmsAdBlocks = {
     renderSidebarAd: renderSidebarAd,
     renderHeroSponsorAd: renderHeroSponsorAd,
-    renderBannerAd: renderBannerAd,
-    renderBannerPlaceholder: renderBannerPlaceholder,
-    isBannerRenderable: isBannerRenderable,
     renderCompactAd: renderCompactAd,
     renderCompactPlaceholder: renderCompactPlaceholder,
     renderCityPartnerAd: renderCityPartnerAd,
@@ -796,7 +718,6 @@
     loadOrganiserPageCarousel: loadOrganiserPageCarousel,
     loadPageCarouselAds: loadPageCarouselAds,
     loadOrganiserPageCarouselAds: loadOrganiserPageCarouselAds,
-    loadBannerAd: loadBannerAd,
     initCarousel: initCarousel,
   };
 })();

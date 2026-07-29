@@ -377,7 +377,7 @@
       title: 'How to manage ads and sponsors',
       steps: [
         'Pick a placement — browse heroes, detail-page ads, email mini sponsors, city partners, or home partners.',
-        'Browse heroes (events / organisers / opportunities): logo + website link only. Sidebar and banner ads also need a button label and colour.',
+        'Browse heroes (events / organisers / opportunities): logo + website link only. Opportunity sidebar and city/county partners are also logo + link. Mini carousels need logo + link per slot.',
         'Mini sponsor carousels: logo + click-through link per slot. Tick Active, then Save.',
         'Check Ad active (or Mini sponsors active), save, and confirm on the live page.',
       ],
@@ -554,19 +554,51 @@
     { slug: 'chester', name: 'Chester' },
   ];
 
+  /** Launch County Sponsor inventory — enquiry + manual logo placement. */
+  var NETWORKING_COUNTY_PARTNER_SLUGS = [
+    { slug: 'berkshire', name: 'Berkshire' },
+    { slug: 'cheshire', name: 'Cheshire' },
+    { slug: 'essex', name: 'Essex' },
+    { slug: 'hampshire', name: 'Hampshire' },
+    { slug: 'hertfordshire', name: 'Hertfordshire' },
+    { slug: 'kent', name: 'Kent' },
+    { slug: 'lancashire', name: 'Lancashire' },
+    { slug: 'surrey', name: 'Surrey' },
+  ];
+
   function isCityPartnerSlotKey(key) {
     return String(key || '').indexOf('networking_city_partner_') === 0;
+  }
+
+  function isCountyPartnerSlotKey(key) {
+    return String(key || '').indexOf('networking_county_partner_') === 0;
+  }
+
+  function isRegionPartnerSlotKey(key) {
+    return isCityPartnerSlotKey(key) || isCountyPartnerSlotKey(key);
   }
 
   function cityPartnerSlugFromSlot(slotKey) {
     return String(slotKey || '').replace(/^networking_city_partner_/, '');
   }
 
+  function countyPartnerSlugFromSlot(slotKey) {
+    return String(slotKey || '').replace(/^networking_county_partner_/, '');
+  }
+
   function cityPartnerSlotFromSlug(slug) {
     return 'networking_city_partner_' + String(slug || '').trim();
   }
 
+  function countyPartnerSlotFromSlug(slug) {
+    return 'networking_county_partner_' + String(slug || '').trim();
+  }
+
   function cityPartnerPlacementPaths(slug) {
+    return '/networking/' + slug + ' and /opportunities/networking/' + slug;
+  }
+
+  function countyPartnerPlacementPaths(slug) {
     return '/networking/' + slug + ' and /opportunities/networking/' + slug;
   }
 
@@ -628,17 +660,6 @@
       ctaColor: '#2d2636',
     },
     {
-      key: 'event_page_banner_ad',
-      group: 'Detail pages',
-      label: 'Event page — In-content banner',
-      preview: 'banner',
-      help: 'Horizontal sponsored banner in the main column on individual event pages (below the about section).',
-      tagline: 'Example headline — edit to match your sponsor package',
-      ctaLabel: 'Find out more',
-      ctaUrl: 'https://',
-      ctaColor: '#2d2636',
-    },
-    {
       key: 'event_email_mini_sponsors',
       group: 'Email',
       label: 'Event emails — Mini Sponsors (3 slots)',
@@ -676,9 +697,9 @@
       group: 'Detail pages',
       label: 'Opportunity page — Sidebar ad',
       preview: 'compact',
-      help: 'Compact logo + button above the enquiry form on individual business opportunity pages (/opportunities/{id}). Shows a sellable placeholder when empty.',
+      help: 'Clickable logo above the enquiry form on individual business opportunity pages (/opportunities/{id}). Logo + destination URL only — shows a sellable placeholder when empty.',
       tagline: '',
-      ctaLabel: 'Enquire now',
+      ctaLabel: '',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
@@ -706,6 +727,30 @@
         ctaColor: '#2d2636',
       };
     }
+    if (isCountyPartnerSlotKey(key)) {
+      var countySlug = countyPartnerSlugFromSlot(key);
+      var county = null;
+      for (var c = 0; c < NETWORKING_COUNTY_PARTNER_SLUGS.length; c++) {
+        if (NETWORKING_COUNTY_PARTNER_SLUGS[c].slug === countySlug) {
+          county = NETWORKING_COUNTY_PARTNER_SLUGS[c];
+          break;
+        }
+      }
+      return {
+        key: key,
+        group: 'County pages',
+        label: 'County Partner — ' + (county ? county.name : countySlug),
+        preview: 'city_partner',
+        help:
+          'Logo + link on ' +
+          countyPartnerPlacementPaths(countySlug) +
+          ' — website only, not in emails. Manual placement from enquiry for launch counties.',
+        tagline: '',
+        ctaLabel: 'Find out more',
+        ctaUrl: 'https://',
+        ctaColor: '#2d2636',
+      };
+    }
     for (var j = 0; j < CMS_AD_SLOTS.length; j++) {
       if (CMS_AD_SLOTS[j].key === key) return CMS_AD_SLOTS[j];
     }
@@ -713,7 +758,7 @@
   }
 
   function cmsSlotExists(key) {
-    if (isCityPartnerSlotKey(key)) return true;
+    if (isRegionPartnerSlotKey(key)) return true;
     for (var i = 0; i < CMS_AD_SLOTS.length; i++) {
       if (CMS_AD_SLOTS[i].key === key && CMS_AD_SLOTS[i].preview !== 'carousel') return true;
     }
@@ -920,8 +965,8 @@
       return 'Progress against your sales targets.';
     }
     if (route === 'sponsorship') {
-      if (hash.indexOf('partners') !== -1 || hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1) {
-        return 'Home and city partner placements.';
+      if (hash.indexOf('partners') !== -1 || hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1 || hash.indexOf('county-partners') !== -1) {
+        return 'Home, city, and county partner placements.';
       }
       if (hash.indexOf('enquir') !== -1) return 'Advertising enquiries from the public form.';
       return 'Choose an ad placement to edit creatives and booking windows.';
@@ -988,6 +1033,10 @@
         title = 'City Partner placements';
         subtitle =
           'Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in hub emails.';
+      } else if (fullHash === 'sponsorship/county-partners') {
+        title = 'County Partner placements';
+        subtitle =
+          'Logo + link on launch county pages — website only. Place manually from advertising enquiries.';
       } else if (fullHash === 'sponsorship/advertising-enquiries') {
         title = 'Advertising enquiries';
         subtitle =
@@ -7045,7 +7094,8 @@
     } else if (
       hash === 'sponsorship/partners' ||
       hash.indexOf('home-partners') !== -1 ||
-      hash.indexOf('city-partners') !== -1
+      hash.indexOf('city-partners') !== -1 ||
+      hash.indexOf('county-partners') !== -1
     ) {
       tab = 'partners';
       rememberHubTab('sponsorship', 'partners');
@@ -7080,12 +7130,17 @@
         withHubTabs(tabsHtml, renderCityPartnersPage);
         return;
       }
+      if (hash.indexOf('county-partners') !== -1) {
+        withHubTabs(tabsHtml, renderCountyPartnersPage);
+        return;
+      }
       withHubTabs(tabsHtml, function () {
         main.innerHTML =
           '<div class="space-y-4">' +
-          '<div class="grid gap-3 sm:grid-cols-2">' +
+          '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">' +
           '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Homepage partner logos and links</p></a>' +
           '<a href="#sponsorship/city-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">City partners</p><p class="text-xs text-slate-500 mt-1">City exclusivity waitlist and slots</p></a>' +
+          '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">County partners</p><p class="text-xs text-slate-500 mt-1">Eight launch counties — enquiry + manual logo</p></a>' +
           '</div></div>';
       });
       return;
@@ -7108,6 +7163,10 @@
     }
     if (hash === 'sponsorship/city-partners') {
       renderCityPartnersPage();
+      return;
+    }
+    if (hash === 'sponsorship/county-partners') {
+      renderCountyPartnersPage();
       return;
     }
     if (hash === 'sponsorship/advertising-enquiries') {
@@ -7193,9 +7252,7 @@
               var typeLabel =
                 slot.preview === 'compact'
                   ? 'Sidebar ad'
-                  : slot.preview === 'banner'
-                    ? 'In-content banner'
-                    : 'Powered by hero';
+                  : 'Powered by hero';
               return (
                 '<a href="#sponsorship/' +
                 esc(slot.key) +
@@ -7253,6 +7310,18 @@
       '<p class="admin-ad-picker-label">City Partner placements</p>' +
       '<p class="admin-ad-picker-help">Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in emails.</p>' +
       '<span class="admin-ad-picker-action">Manage cities →</span>' +
+      '</a></div></section>' +
+      '<section class="admin-ad-picker-group">' +
+      '<h3 class="admin-ad-picker-group-title">County pages</h3>' +
+      '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
+      '<a href="#sponsorship/county-partners" class="admin-ad-picker-card admin-ad-picker-card--county-partners">' +
+      '<div class="admin-ad-picker-card-head">' +
+      '<span class="admin-ad-picker-type">Regional</span>' +
+      '<span class="admin-ad-picker-status" id="county-partners-picker-status">…</span>' +
+      '</div>' +
+      '<p class="admin-ad-picker-label">County Partner placements</p>' +
+      '<p class="admin-ad-picker-help">Eight launch counties — logo + link on county networking pages. Place from enquiries.</p>' +
+      '<span class="admin-ad-picker-action">Manage counties →</span>' +
       '</a></div></section>' +
       '<section class="admin-ad-picker-group">' +
       '<h3 class="admin-ad-picker-group-title">Home page</h3>' +
@@ -7395,6 +7464,30 @@
         el.innerHTML = '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
         return;
       }
+      el.innerHTML =
+        live > 0
+          ? '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' + live + ' live</span>'
+          : '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+    });
+
+    Promise.all(
+      NETWORKING_COUNTY_PARTNER_SLUGS.map(function (region) {
+        var slotKey = countyPartnerSlotFromSlug(region.slug);
+        return adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slotKey))
+          .then(function (data) {
+            return { slotKey: slotKey, data: data };
+          })
+          .catch(function () {
+            return { slotKey: slotKey, data: null };
+          });
+      })
+    ).then(function (rows) {
+      var live = 0;
+      rows.forEach(function (row) {
+        if (row.data && row.data.block && row.data.block.active !== false) live += 1;
+      });
+      var el = document.getElementById('county-partners-picker-status');
+      if (!el) return;
       el.innerHTML =
         live > 0
           ? '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' + live + ' live</span>'
@@ -7746,6 +7839,69 @@
         })
         .catch(function () {
           var el = document.querySelector('[data-city-partner-status="' + slotKey + '"]');
+          if (el) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          }
+        });
+    });
+  }
+
+  function renderCountyPartnersPage() {
+    var cards = NETWORKING_COUNTY_PARTNER_SLUGS.map(function (region) {
+      var slotKey = countyPartnerSlotFromSlug(region.slug);
+      return (
+        '<a href="#sponsorship/' +
+        esc(slotKey) +
+        '" class="admin-ad-picker-card" data-county-partner-slot="' +
+        attrEsc(slotKey) +
+        '">' +
+        '<div class="admin-ad-picker-card-head">' +
+        '<span class="admin-ad-picker-type">County</span>' +
+        '<span class="admin-ad-picker-status" data-county-partner-status="' +
+        attrEsc(slotKey) +
+        '">…</span>' +
+        '</div>' +
+        '<p class="admin-ad-picker-label">' +
+        esc(region.name) +
+        '</p>' +
+        '<p class="admin-ad-picker-help">/networking/' +
+        esc(region.slug) +
+        ' · /opportunities/networking/' +
+        esc(region.slug) +
+        '</p>' +
+        '<span class="admin-ad-picker-action">Edit placement →</span>' +
+        '</a>'
+      );
+    }).join('');
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="space-y-3">' +
+      '<h3 class="font-bold text-brand-900">County Partner placements</h3>' +
+      '<p class="text-sm text-slate-600">Logo + link on launch county pages (/networking/:county and /opportunities/networking/:county). Place manually after an advertising enquiry — Stripe self-serve can come later. Website only — never included in hub emails.</p>' +
+      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Surrey.</p>' +
+      '</section>' +
+      '<div class="admin-ad-picker-grid">' +
+      cards +
+      '</div></div>';
+
+    NETWORKING_COUNTY_PARTNER_SLUGS.forEach(function (region) {
+      var slotKey = countyPartnerSlotFromSlug(region.slug);
+      adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slotKey))
+        .then(function (data) {
+          var el = document.querySelector('[data-county-partner-status="' + slotKey + '"]');
+          if (!el) return;
+          if (!data || data.error) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+            return;
+          }
+          el.innerHTML = sponsorSlotStatusBadge(data.block);
+        })
+        .catch(function () {
+          var el = document.querySelector('[data-county-partner-status="' + slotKey + '"]');
           if (el) {
             el.innerHTML =
               '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
@@ -8108,7 +8264,12 @@
         includeWrap.classList.toggle('flex', Boolean(emailScopes[currentSlotKey]));
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
-      if (slotFields) slotFields.classList.toggle('hidden', slot.preview !== 'city_partner');
+      if (slotFields) {
+        slotFields.classList.toggle(
+          'hidden',
+          slot.preview !== 'city_partner' || !isCityPartnerSlotKey(currentSlotKey)
+        );
+      }
       if (logoOnlyNote) logoOnlyNote.classList.add('hidden');
 
       if (slot.preview === 'hero') {
@@ -8125,55 +8286,38 @@
             'Sponsor website URL (https:// — opens in a new tab) <span class="text-brand-700">*</span>';
         }
         if (requiredCopy) {
-          requiredCopy.textContent =
-            'Required: company logo and website link. Live city partner block is logo + link only (no button or colour).';
-        }
-      } else if (slot.preview === 'banner') {
-        setAdminElHidden(heroFields, false);
-        setAdminElHidden(ctaFields, false);
-        setAdminElHidden(ctaColorWrap, false);
-        if (ctaLabelLabel) {
-          ctaLabelLabel.innerHTML = 'Button label <span class="text-brand-700">*</span>';
-        }
-        if (ctaUrlLabel) {
-          ctaUrlLabel.innerHTML =
-            'Sponsor website URL (https:// — opens in a new tab) <span class="text-brand-700">*</span>';
-        }
-        if (requiredCopy) {
-          requiredCopy.textContent =
-            'Required: logo, button label, button colour, and website link. Optional: company name and headline.';
+          requiredCopy.textContent = isCountyPartnerSlotKey(currentSlotKey)
+            ? 'Required: company logo and website link. Live county partner block is logo + link only (no button or colour).'
+            : 'Required: company logo and website link. Live city partner block is logo + link only (no button or colour).';
         }
       } else {
-        // compact sidebar
+        // compact sidebar — logo + link only
         setAdminElHidden(heroFields, true);
-        setAdminElHidden(ctaFields, false);
-        setAdminElHidden(ctaColorWrap, false);
-        if (ctaLabelLabel) {
-          ctaLabelLabel.innerHTML = 'CTA button label <span class="text-brand-700">*</span>';
-        }
+        setAdminElHidden(ctaFields, true);
+        setAdminElHidden(ctaColorWrap, true);
         if (ctaUrlLabel) {
           ctaUrlLabel.innerHTML =
             'Sponsor website URL (https:// — opens in a new tab) <span class="text-brand-700">*</span>';
         }
         if (requiredCopy) {
           requiredCopy.textContent =
-            'Required: logo, button label, button colour, and website link.';
+            'Required: company logo and website link. Live sidebar is a clickable logo only (no button).';
         }
       }
 
       if (previewHint) {
         if (slot.preview === 'city_partner') {
-          previewHint.textContent =
-            'Logo + link — matches the City Partner block on ' +
-            cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
-            ' (not included in emails).';
-        } else if (slot.preview === 'banner') {
-          previewHint.textContent =
-            'Horizontal in-content banner — matches the sponsored block below About on event detail pages.';
+          previewHint.textContent = isCountyPartnerSlotKey(currentSlotKey)
+            ? 'Logo + link — matches the County Sponsor block on ' +
+              countyPartnerPlacementPaths(countyPartnerSlugFromSlot(currentSlotKey)) +
+              ' (not included in emails).'
+            : 'Logo + link — matches the City Partner block on ' +
+              cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
+              ' (not included in emails).';
         } else {
           previewHint.textContent =
             slot.preview === 'compact'
-              ? 'Logo centred above the button — matches ' + slot.label.toLowerCase() + '.'
+              ? 'Clickable logo only — matches ' + slot.label.toLowerCase() + '.'
               : 'Matches ' +
                 slot.label.toLowerCase() +
                 '. Upload a logo for logo-only hero, or leave the logo empty to show tagline and CTA.';
@@ -8202,9 +8346,9 @@
         ';--region-accent-border:rgba(118,104,206,0.35)"></div>';
       var shell = document.getElementById('admin-city-partner-preview-shell');
       if (!shell || !window.CmsAdBlocks) return;
-      if (window.CmsAdBlocks.renderCityPartnerAd(shell, block)) return;
+      if (window.CmsAdBlocks.renderCityPartnerAd(shell, block, currentSlotKey)) return;
       if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
-        window.CmsAdBlocks.renderCityPartnerPlaceholder(shell);
+        window.CmsAdBlocks.renderCityPartnerPlaceholder(shell, currentSlotKey);
       }
     }
 
@@ -8226,27 +8370,18 @@
         el.innerHTML =
           slot.preview === 'compact'
             ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this ad slot is hidden on site.</div>'
-            : slot.preview === 'banner'
-              ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this banner is hidden on event pages.</div>'
-              : '<div class="events-hero-sponsor-slot"><div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
-                '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
-                '<p class="text-sm text-slate-500">Inactive — hidden on site until <strong>Ad active</strong> is checked. With a logo live, this placement is logo-only (no CTA button).</p></div></div>';
+            : '<div class="events-hero-sponsor-slot"><div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
+              '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
+              '<p class="text-sm text-slate-500">Inactive — hidden on site until <strong>Ad active</strong> is checked. With a logo live, this placement is logo-only (no CTA button).</p></div></div>';
         return;
       }
 
       var block = creativeToBlock(true);
 
-      if (slot.preview === 'banner' && window.CmsAdBlocks && window.CmsAdBlocks.renderBannerAd) {
-        el.innerHTML = '';
-        el.className = 'max-w-2xl';
-        window.CmsAdBlocks.renderBannerAd(el, block);
-        return;
-      }
-
       if (slot.preview === 'compact' && window.CmsAdBlocks && window.CmsAdBlocks.renderCompactAd) {
         el.innerHTML = '';
         el.className = 'max-w-xs opportunity-detail-page';
-        window.CmsAdBlocks.renderCompactAd(el, block);
+        window.CmsAdBlocks.renderCompactAd(el, block, currentSlotKey);
         return;
       }
 
@@ -8263,7 +8398,9 @@
       if (slot.preview === 'compact' || slot.preview === 'city_partner') {
         var badge =
           slot.preview === 'city_partner'
-            ? 'City partner'
+            ? isCountyPartnerSlotKey(currentSlotKey)
+              ? 'County Sponsor'
+              : 'City Sponsor'
             : 'Sponsored';
         el.innerHTML =
           '<aside class="relative rounded-xl border border-slate-200 bg-white p-4 pt-8 shadow-sm max-w-xs flex flex-col gap-3">' +
@@ -8271,10 +8408,7 @@
           esc(badge) +
           '</span>' +
           sponsorPreviewLogoHtml(creative.logoUrl, true, creative.logoBandDark) +
-          '<span data-sponsor-preview-cta class="inline-block w-full text-center rounded-lg bg-[#2d2636] text-white text-xs font-bold px-3 py-2.5">' +
-          esc(creative.ctaLabel) +
-          '</span></aside>';
-        applyPreviewCtaColor(el, creative.ctaColor);
+          '</aside>';
         return;
       }
 
@@ -8430,7 +8564,8 @@
       var slot = slotDefaults();
       var hasLogo = /^(https?:|\/|data:image\/)/i.test(String(creative.logoUrl || '').trim());
       var logoOnlyHero = slot.preview === 'hero' && hasLogo;
-      var logoOnlyPlacement = logoOnlyHero || slot.preview === 'city_partner';
+      var logoOnlyPlacement =
+        logoOnlyHero || slot.preview === 'city_partner' || slot.preview === 'compact';
 
       if (
         creative.active &&
@@ -8446,20 +8581,20 @@
         slot.preview === 'city_partner' &&
         !creative.logoUrl
       ) {
-        setSponsorStatus('Upload or paste a logo before publishing an active city partner ad.', 'error');
+        setSponsorStatus(
+          isCountyPartnerSlotKey(currentSlotKey)
+            ? 'Upload or paste a logo before publishing an active county partner ad.'
+            : 'Upload or paste a logo before publishing an active city partner ad.',
+          'error'
+        );
         return;
       }
       if (
         creative.active &&
-        (slot.preview === 'compact' || slot.preview === 'banner') &&
+        slot.preview === 'compact' &&
         !creative.logoUrl
       ) {
-        setSponsorStatus(
-          slot.preview === 'banner'
-            ? 'Upload or paste a logo before publishing an active banner.'
-            : 'Upload or paste a logo before publishing an active sidebar ad.',
-          'error'
-        );
+        setSponsorStatus('Upload or paste a logo before publishing an active sidebar ad.', 'error');
         return;
       }
       if (creative.active && logoOnlyPlacement) {
@@ -8474,14 +8609,6 @@
         setSponsorStatus('Button label and link are required for an active ad.', 'error');
         return;
       }
-      if (
-        creative.active &&
-        (slot.preview === 'compact' || slot.preview === 'banner') &&
-        !sponsorHasValidWebsiteUrl(creative.ctaUrl)
-      ) {
-        setSponsorStatus('Enter the full sponsor website URL (https://example.com) — opens in a new tab.', 'error');
-        return;
-      }
 
       if (btn) btn.disabled = true;
       setSponsorStatus('Publishing…');
@@ -8491,9 +8618,11 @@
         title:
           slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.tagline,
         body: '',
-        cta_label: creative.ctaLabel,
+        cta_label:
+          slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.ctaLabel,
         cta_url: creative.ctaUrl,
-        cta_color: creative.ctaColor,
+        cta_color:
+          slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.ctaColor,
         company_name:
           slot.preview === 'compact' || slot.preview === 'city_partner' ? '' : creative.companyName,
         logo_url: sponsorLogoBase64 ? '' : document.getElementById('sponsor-logo-url').value.trim(),
@@ -8506,7 +8635,7 @@
         payload.logoMime = sponsorLogoMime;
         payload.logoFilename = sponsorLogoFilename;
       }
-      if (slot.preview === 'city_partner') {
+      if (slot.preview === 'city_partner' && isCityPartnerSlotKey(currentSlotKey)) {
         var slotEmailEl = document.getElementById('sponsor-slot-email');
         var slotOpensEl = document.getElementById('sponsor-slot-available-from');
         payload.sponsor_email = slotEmailEl ? slotEmailEl.value.trim() : '';

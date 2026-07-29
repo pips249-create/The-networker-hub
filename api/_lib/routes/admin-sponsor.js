@@ -3,7 +3,7 @@ const { getAdminSponsor, saveSponsorBlock, copySponsorBlock } = require('../admi
 const { BOOKING_EMAIL_SPONSOR_SLOT, EVENTS_SPONSOR_SLOT } = require('../email-booking-defaults');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
-const { isCityPartnerSlot } = require('../cms-sponsor-fields');
+const { isCityPartnerSlot, isRegionPartnerSlot } = require('../cms-sponsor-fields');
 
 function parseBody(req) {
   let body = req.body;
@@ -98,11 +98,12 @@ module.exports = async function handler(req, res) {
     const company_name = String(body.company_name || '').trim();
     const cta_color = String(body.cta_color || '').trim();
     const isCityPartner = isCityPartnerSlot(slot);
+    const isRegionPartner = isRegionPartnerSlot(slot);
 
-    // Logo-only placements (browse heroes with a logo, city partners) do not show a button,
-    // but the API still stores a label for schema consistency / email fallbacks.
+    // Logo-only placements (browse heroes with a logo, city/county partners, opportunity sidebar)
+    // do not show a button, but the API still stores a label for schema consistency.
     if (!cta_label) {
-      cta_label = isCityPartner ? 'Find out more' : 'Enquire now';
+      cta_label = isRegionPartner ? 'Find out more' : 'Enquire now';
     }
 
     if (!cta_url) {
@@ -122,7 +123,7 @@ module.exports = async function handler(req, res) {
         logo_url,
         company_name,
         active: body.active !== false,
-        include_in_emails: isCityPartner ? false : body.include_in_emails !== false,
+        include_in_emails: isRegionPartner ? false : body.include_in_emails !== false,
         logo_band_dark: body.logo_band_dark === true,
       };
       if (isCityPartner) {
