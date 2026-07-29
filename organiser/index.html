@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729brand3" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729gu1" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -91,6 +91,9 @@
             <a href="#groups" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="groups">Organiser pages</a>
             <a href="#memberships" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
               Memberships
+            </a>
+            <a href="#group-updates" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="group-updates">
+              Monthly updates
             </a>
 
             <span class="hub-side-nav-divider">Business opportunities</span>
@@ -673,7 +676,7 @@
             <p class="org-page-kicker">My events</p>
             <h1 class="org-page-title">Memberships</h1>
             <p class="org-page-lead org-member-list-intro">
-              Upload members for each organiser page, then add a <strong>Members only</strong> ticket on your events.
+              Upload members for each organiser page, offer pay monthly or annually through the Hub, then add a <strong>Members only</strong> ticket on your events.
             </p>
           </header>
 
@@ -685,10 +688,14 @@
             <div class="org-revenue-info-body">
               <p>
                 Members see the member rate when signed in with their membership email; everyone else never sees it.
-                Add people here, then set a <strong>Members only</strong> ticket on your event (Tickets step).
+                Add people here (or let them join and pay through the Hub), then set a <strong>Members only</strong> ticket on your event (Tickets step).
               </p>
               <p>
-                Reports cover only people on <strong>your uploaded member list</strong> — not every event attendee (use Attendees for that).
+                Paid memberships use the same rule as tickets: you receive <strong>100%</strong> of the price you set; members pay a Hub fee (4.5% + 20p) on top.
+                Bank details (Stripe Connect) are required before members can pay you.
+              </p>
+              <p>
+                Reports cover only people on <strong>your member list</strong> — not every event attendee (use Attendees for that).
                 Members are emailed when you publish events and when you send booking reminders.
                 Export CSV anytime for your own records.
               </p>
@@ -718,6 +725,39 @@
 
           <div id="memberships-workspace" class="org-memberships-workspace" hidden>
             <p class="org-memberships-network-summary" id="memberships-network-summary" hidden></p>
+
+            <div class="omr-billing-panel" id="omr-billing-panel" hidden>
+              <div class="omr-billing-panel-head">
+                <div>
+                  <h2 class="omr-section-title">Pay monthly or annually through the Hub</h2>
+                  <p class="omr-billing-lead">
+                    Members pay your price plus a Hub fee (4.5% + 20p). You receive <strong>100%</strong> of the membership price — same as tickets.
+                  </p>
+                </div>
+                <p class="omr-billing-connect" id="omr-billing-connect" hidden></p>
+              </div>
+              <form id="omr-billing-form" class="omr-billing-form">
+                <div class="omr-billing-fields">
+                  <label class="omr-billing-field">
+                    <span>Monthly price (£)</span>
+                    <input type="number" id="omr-billing-monthly" name="monthly" min="1" step="0.01" placeholder="e.g. 25" inputmode="decimal" />
+                  </label>
+                  <label class="omr-billing-field">
+                    <span>Annual price (£)</span>
+                    <input type="number" id="omr-billing-annual" name="annual" min="1" step="0.01" placeholder="e.g. 250" inputmode="decimal" />
+                  </label>
+                  <label class="omr-billing-toggle">
+                    <input type="checkbox" id="omr-billing-active" name="active" checked />
+                    <span>Offer paid membership on your public page</span>
+                  </label>
+                </div>
+                <p class="omr-billing-preview" id="omr-billing-preview" aria-live="polite"></p>
+                <div class="omr-billing-actions">
+                  <button type="submit" class="org-btn org-btn-gold" id="omr-billing-save">Save membership prices</button>
+                  <a class="org-btn org-btn-outline" href="/organiser/payment-setup" id="omr-billing-connect-link" hidden>Add bank details</a>
+                </div>
+              </form>
+            </div>
 
             <div class="org-memberships-page-card" id="memberships-page-card" hidden>
               <div class="org-memberships-page-card-inner">
@@ -1118,6 +1158,102 @@
                 </div>
               </div>
             </section>
+          </div>
+        </section>
+
+        <!-- Monthly group updates -->
+        <section class="org-page" id="org-page-group-updates" data-org-page="group-updates">
+          <header class="org-page-head">
+            <p class="org-page-kicker">Keep your community warm</p>
+            <h1 class="org-page-title">Monthly updates</h1>
+            <p class="org-page-lead">
+              Send a short branded update to people who booked your events on the Hub.
+              <strong>1 free send per organiser page each month</strong> — extras coming soon (hard cap 4/month).
+            </p>
+          </header>
+
+          <aside class="org-group-update-allowance" id="ogu-allowance" role="status"></aside>
+          <p class="org-group-update-status" id="ogu-status" role="status"></p>
+
+          <div class="org-group-update-layout">
+            <form class="org-group-update-form" id="ogu-form" autocomplete="off">
+              <div class="org-group-update-row" id="ogu-group-wrap">
+                <label for="ogu-group">Organiser page</label>
+                <select id="ogu-group" aria-label="Organiser page for monthly update"></select>
+              </div>
+
+              <label class="org-group-update-field">
+                <span>Subject line</span>
+                <input type="text" id="ogu-subject" maxlength="90" placeholder="Your group — March 2026 update" />
+              </label>
+
+              <fieldset class="org-group-update-fieldset">
+                <legend>Core (recommended)</legend>
+                <label class="org-group-update-field">
+                  <span>Organiser note <em>always on</em></span>
+                  <textarea id="ogu-note" rows="4" maxlength="1200" placeholder="A short hello from you — what you’re proud of this month, and what’s next."></textarea>
+                </label>
+                <label class="org-group-update-field">
+                  <span>Month in brief <em>optional</em></span>
+                  <textarea id="ogu-recap" rows="3" maxlength="800" placeholder="2–3 lines on recent meetups or highlights for anyone who missed them."></textarea>
+                </label>
+                <label class="org-group-update-check">
+                  <input type="checkbox" id="ogu-include-events" checked />
+                  <span>Include upcoming Hub events (auto-filled)</span>
+                </label>
+                <div class="org-group-update-events" id="ogu-events"></div>
+              </fieldset>
+
+              <fieldset class="org-group-update-fieldset">
+                <legend>Optional add-ons <span>(pick what you need)</span></legend>
+                <label class="org-group-update-field">
+                  <span>Member spotlight — name</span>
+                  <input type="text" id="ogu-spotlight-name" maxlength="80" placeholder="Alex Morgan" />
+                </label>
+                <label class="org-group-update-field">
+                  <span>Company</span>
+                  <input type="text" id="ogu-spotlight-company" maxlength="80" placeholder="Acme Coaching" />
+                </label>
+                <label class="org-group-update-field">
+                  <span>Spotlight blurb</span>
+                  <textarea id="ogu-spotlight-text" rows="3" maxlength="600" placeholder="Mini intro, expertise, ideal referral…"></textarea>
+                </label>
+                <label class="org-group-update-field">
+                  <span>Spotlight LinkedIn URL</span>
+                  <input type="url" id="ogu-spotlight-linkedin" maxlength="200" placeholder="https://www.linkedin.com/in/…" />
+                </label>
+                <label class="org-group-update-field">
+                  <span>Member ask</span>
+                  <textarea id="ogu-ask" rows="2" maxlength="400" placeholder="e.g. Looking for intros to HR directors in Manchester…"></textarea>
+                </label>
+                <label class="org-group-update-field">
+                  <span>Get involved / volunteer CTA</span>
+                  <textarea id="ogu-volunteer" rows="2" maxlength="300" placeholder="Want to host a table or suggest a speaker? Reply to this email."></textarea>
+                </label>
+                <label class="org-group-update-check">
+                  <input type="checkbox" id="ogu-include-socials" checked />
+                  <span>Include social links from Brand kit</span>
+                </label>
+              </fieldset>
+
+              <div class="org-group-update-actions">
+                <button type="button" class="org-btn org-btn-outline" id="ogu-save">Save draft</button>
+                <button type="button" class="org-btn org-btn-outline" id="ogu-preview">Preview</button>
+                <button type="button" class="org-btn org-btn-gold" id="ogu-send">Send this month’s update</button>
+              </div>
+            </form>
+
+            <aside class="org-group-update-side">
+              <div class="org-group-update-preview" id="ogu-preview-panel">
+                <h2 class="org-section-title">Preview</h2>
+                <p class="org-group-update-hint">Save or preview to see how modules stack.</p>
+                <div id="ogu-preview-body"></div>
+              </div>
+              <div class="org-group-update-history">
+                <h2 class="org-section-title">Recent sends</h2>
+                <div id="ogu-history"></div>
+              </div>
+            </aside>
           </div>
         </section>
 
@@ -2926,10 +3062,11 @@
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
     <script src="../js/organiser-linkedin-post-builder.js?v=20260729brand3" defer></script>
     <script src="../js/organiser-member-roster.js?v=20260721mem4" defer></script>
+    <script src="../js/organiser-group-updates.js?v=20260729gu1" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/ranking-badge-png.js?v=20260728png" defer></script>
     <script src="../js/rankings.js?v=20260728ux" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260729brand3" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260729gu1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260723vis" defer></script>
   </body>
 </html>

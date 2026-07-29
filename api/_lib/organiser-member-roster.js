@@ -645,6 +645,12 @@ function rosterRowToClient(row) {
     membershipActive: rosterRowIsActive(row),
     daysUntilExpiry: days,
     expiringSoon: days != null && days >= 0 && days <= 14,
+    stripeSubscriptionId: row.stripe_subscription_id || null,
+    billingInterval: row.billing_interval || null,
+    subscriptionStatus: row.subscription_status || null,
+    membershipAmountPence:
+      row.membership_amount_pence != null ? Math.round(Number(row.membership_amount_pence)) : null,
+    billedThroughHub: Boolean(row.stripe_subscription_id),
   };
 }
 
@@ -1233,7 +1239,7 @@ async function listRosterGroupsForAttendee(email) {
   const { data, error } = await sb
     .from('organiser_member_roster')
     .select(
-      'id, expires_at, claimed_at, invite_sent_at, status, organisers(id, name, slug, photo_url, industries, average_rating)'
+      'id, expires_at, claimed_at, invite_sent_at, status, stripe_subscription_id, billing_interval, subscription_status, membership_amount_pence, organisers(id, name, slug, photo_url, industries, average_rating)'
     )
     .eq('status', ROSTER_STATUS_ACTIVE)
     .ilike('email', em)

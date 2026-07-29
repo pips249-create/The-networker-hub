@@ -32,8 +32,10 @@ const routes = {
   'event-featured-quote': require('./_lib/routes/organiser-event-featured-quote'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
   roster: require('./_lib/routes/organiser-roster'),
+  'membership-plans': require('./_lib/routes/organiser-membership-plans'),
   'logo-proxy': require('./_lib/routes/organiser-logo-proxy'),
   'website-brand': require('./_lib/routes/organiser-website-brand'),
+  'group-updates': require('./_lib/routes/organiser-group-updates'),
 };
 
 module.exports = async function handler(req, res) {

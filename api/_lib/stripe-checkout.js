@@ -355,6 +355,105 @@ async function createCityPartnerCheckoutSession(opts) {
   });
 }
 
+/**
+ * Membership dues subscription — membership price + Hub fee, destination charge to organiser.
+ */
+async function createMembershipCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const {
+    MEMBERSHIP_CHECKOUT_TYPE,
+    MEMBERSHIP_FEE_LABEL,
+    calculateMembershipTotals,
+    applicationFeePercentFromPence,
+    poundsFromPence,
+  } = require('./membership-billing');
+  const { BOOKING_FEE_NON_REFUNDABLE_NOTE } = require('./booking-fees');
+
+  const membershipPence = Math.round(Number(opts.membershipAmountPence) || 0);
+  if (membershipPence < 100) throw new Error('invalid_membership_price');
+
+  const interval = opts.interval === 'year' ? 'year' : 'month';
+  const totals = calculateMembershipTotals(poundsFromPence(membershipPence));
+  const feePence = Math.round(totals.fee * 100);
+  const orgName = String(opts.organiserName || 'Networking group').trim();
+  const intervalLabel = interval === 'year' ? 'annual' : 'monthly';
+
+  const metadata = {
+    checkout_type: MEMBERSHIP_CHECKOUT_TYPE,
+    organiser_id: String(opts.organiserId || '').trim(),
+    attendee_email: String(opts.email || '').trim().toLowerCase(),
+    attendee_name: String(opts.name || '').trim().slice(0, 200),
+    attendee_id: String(opts.attendeeId || '').trim(),
+    billing_interval: interval,
+    membership_amount_pence: String(membershipPence),
+    hub_fee_pence: String(feePence),
+  };
+
+  const lineItems = [
+    {
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: `${orgName} — ${intervalLabel} membership`,
+        },
+        unit_amount: membershipPence,
+        recurring: { interval },
+      },
+      quantity: 1,
+    },
+  ];
+
+  if (feePence > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: MEMBERSHIP_FEE_LABEL,
+          description: BOOKING_FEE_NON_REFUNDABLE_NOTE,
+        },
+        unit_amount: feePence,
+        recurring: { interval },
+      },
+      quantity: 1,
+    });
+  }
+
+  const sessionParams = {
+    mode: 'subscription',
+    customer_email: opts.email,
+    client_reference_id: String(opts.clientReferenceId || '').slice(0, 200),
+    metadata,
+    subscription_data: {
+      metadata,
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: lineItems,
+  };
+
+  if (opts.subscriptionData && typeof opts.subscriptionData === 'object') {
+    sessionParams.subscription_data = {
+      ...sessionParams.subscription_data,
+      ...opts.subscriptionData,
+      metadata: {
+        ...metadata,
+        ...(opts.subscriptionData.metadata || {}),
+      },
+    };
+  } else if (opts.stripeAccountId && feePence > 0) {
+    // Fallback if caller only passed account id
+    sessionParams.subscription_data.application_fee_percent = applicationFeePercentFromPence(
+      membershipPence,
+      feePence
+    );
+    sessionParams.subscription_data.transfer_data = {
+      destination: String(opts.stripeAccountId).trim(),
+    };
+  }
+
+  return stripe.checkout.sessions.create(sessionParams);
+}
+
 module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
@@ -364,6 +463,7 @@ module.exports = {
   createOpportunityPremiumCheckoutSession,
   createEventFeaturedCheckoutSession,
   createCityPartnerCheckoutSession,
+  createMembershipCheckoutSession,
   retrieveCheckoutSession,
   siteBaseUrl,
 };

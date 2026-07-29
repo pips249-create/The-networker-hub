@@ -2,6 +2,91 @@
   margin: 0 0 22px;
 }
 
+.omr-billing-panel {
+  margin: 0 0 22px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(28, 32, 64, 0.12);
+  background: linear-gradient(180deg, #f7f4ef 0%, #fff 72%);
+}
+
+.omr-billing-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.omr-billing-lead {
+  margin: 6px 0 0;
+  max-width: 52rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #4a5168;
+}
+
+.omr-billing-connect {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #8a4b12;
+  max-width: 16rem;
+}
+
+.omr-billing-form {
+  display: grid;
+  gap: 12px;
+}
+
+.omr-billing-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+}
+
+.omr-billing-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1c2040;
+}
+
+.omr-billing-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(28, 32, 64, 0.16);
+  font: inherit;
+  font-weight: 500;
+}
+
+.omr-billing-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1c2040;
+  grid-column: 1 / -1;
+}
+
+.omr-billing-preview {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #5a6478;
+}
+
+.omr-billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
 .omr-intro-title {
   margin: 0 0 12px;
   font-size: 13px;

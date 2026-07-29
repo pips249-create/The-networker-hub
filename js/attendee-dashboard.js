@@ -3318,9 +3318,69 @@
         '<a class="ad-btn ad-btn-primary" href="' +
         esc(href) +
         '">View member events</a>' +
+        (item.organiserId
+          ? '<button type="button" class="ad-btn ad-btn-ghost" data-membership-renew="' +
+            esc(item.organiserId) +
+            '" data-membership-interval="' +
+            esc(item.billingInterval === 'month' ? 'month' : 'year') +
+            '">' +
+            (item.billedThroughHub && item.membershipActive ? 'Manage / renew' : 'Pay / renew via Hub') +
+            '</button>'
+          : '') +
         '</div>';
       list.appendChild(card);
     });
+
+    list.querySelectorAll('[data-membership-renew]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        renewMembershipViaHub(btn);
+      });
+    });
+  }
+
+  async function renewMembershipViaHub(btn) {
+    const organiserId = btn.getAttribute('data-membership-renew');
+    let interval = btn.getAttribute('data-membership-interval') || 'year';
+    if (!organiserId) return;
+    btn.disabled = true;
+    try {
+      // Prefer annual when renewing from account unless they already pay monthly.
+      if (interval !== 'month' && interval !== 'year') interval = 'year';
+      const res = await fetch('/api/auth/membership-checkout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organiserId: organiserId, interval: interval }),
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok || !data.url) {
+        // If preferred interval isn't offered, try the other.
+        if (data.error === 'membership_not_offered') {
+          const alt = interval === 'month' ? 'year' : 'month';
+          const res2 = await fetch('/api/auth/membership-checkout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ organiserId: organiserId, interval: alt }),
+          });
+          const data2 = await res2.json().catch(function () {
+            return {};
+          });
+          if (!res2.ok || !data2.url) {
+            throw new Error(data2.message || data.message || 'Membership checkout unavailable');
+          }
+          location.href = data2.url;
+          return;
+        }
+        throw new Error(data.message || data.error || 'Could not start checkout');
+      }
+      location.href = data.url;
+    } catch (e) {
+      alert(e.message || 'Could not start membership checkout.');
+      btn.disabled = false;
+    }
   }
 
   function renderSavedOrganisersTable() {
@@ -3924,8 +3984,26 @@
       maybeDefaultSavedScope();
       openCompareFromQuery();
 
-      const demoNote = document.getElementById('ad-demo-note');
-      if (demoNote) demoNote.hidden = !data.isDemo;
+      const membershipParams = new URLSearchParams(location.search);
+      const membershipSuccess = membershipParams.get('membership') === 'success';
+      if (membershipSuccess) {
+        const note = document.getElementById('ad-demo-note');
+        if (note) {
+          note.hidden = false;
+          note.textContent =
+            'Membership payment received. Your membership expiry will update shortly — refresh if it still looks old.';
+        }
+        membershipParams.delete('membership');
+        membershipParams.delete('organiserId');
+        const clean =
+          location.pathname +
+          (membershipParams.toString() ? '?' + membershipParams.toString() : '') +
+          (location.hash || '#memberships');
+        history.replaceState(null, '', clean);
+      } else {
+        const demoNote = document.getElementById('ad-demo-note');
+        if (demoNote) demoNote.hidden = !data.isDemo;
+      }
 
       openPaymentFromQuery();
       openReviewFromQuery();

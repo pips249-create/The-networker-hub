@@ -236,6 +236,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: '{{listing_subject}}',
   },
+  organiser_monthly_group_update: {
+    file: 'organiser-monthly-group-update.html',
+    marker: 'hub-email-layout-v2',
+    subject: '{{email_subject}}',
+  },
   member_roster_booking_reminder: {
     file: 'member-roster-booking-reminder.html',
     marker: 'hub-email-layout-v2',

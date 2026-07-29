@@ -51,7 +51,7 @@ Redeploy after changing env vars.
 3. Events: **`checkout.session.completed`**, **`customer.subscription.updated`**, **`customer.subscription.deleted`**, **`invoice.paid`**, and **`charge.refunded`**
 4. Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel
 
-`customer.subscription.updated` / `customer.subscription.deleted` drive City Partner slot release, waitlist emails, and scheduled open dates when a sponsor cancels at period end.
+`customer.subscription.updated` / `customer.subscription.deleted` drive City Partner slot release, waitlist emails, and scheduled open dates when a sponsor cancels at period end. The same events (plus `checkout.session.completed` / `invoice.paid`) sync Hub-billed organiser memberships on the member roster (`checkout_type=organiser_membership`).
 
 `invoice.paid` logs sponsorship & advertising invoices into Revenue targets when invoice metadata includes `revenue_category` (see `docs/STRIPE-SPONSORSHIP-INVOICES.md`).
 

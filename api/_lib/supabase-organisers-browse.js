@@ -123,6 +123,32 @@ function rowToPublicOrganiser(row, eventCount, options) {
     claimable: isOrganiserClaimable(row),
   };
 
+  if (options.membershipPlan && options.membershipPlan.offered) {
+    base.membershipPlan = {
+      offered: true,
+      monthly: options.membershipPlan.monthly
+        ? {
+            amountPounds: options.membershipPlan.monthly.amountPounds,
+            total: options.membershipPlan.monthly.total,
+            fee: options.membershipPlan.monthly.fee,
+            interval: 'month',
+            label: 'Monthly',
+          }
+        : null,
+      annual: options.membershipPlan.annual
+        ? {
+            amountPounds: options.membershipPlan.annual.amountPounds,
+            total: options.membershipPlan.annual.total,
+            fee: options.membershipPlan.annual.fee,
+            interval: 'year',
+            label: 'Annually',
+          }
+        : null,
+      feeLabel: options.membershipPlan.feeLabel,
+      feeExplanation: options.membershipPlan.feeExplanation,
+    };
+  }
+
   if (options.includeEvents && Array.isArray(options.events)) {
     base.events = options.events;
   }
@@ -323,6 +349,15 @@ async function getPublicOrganiserBySlug(slug) {
     rankingHistory = [];
   }
 
+  let membershipPlan = null;
+  try {
+    const { getMembershipPlanForOrganiser } = require('./membership-billing');
+    membershipPlan = await getMembershipPlanForOrganiser(row.id);
+    if (membershipPlan && !membershipPlan.offered) membershipPlan = null;
+  } catch {
+    membershipPlan = null;
+  }
+
   return rowToPublicOrganiser(row, events.length, {
     includeEvents: true,
     events,
@@ -330,6 +365,7 @@ async function getPublicOrganiserBySlug(slug) {
     reviewItems,
     ranking: rankings[row.id] || null,
     rankingHistory,
+    membershipPlan,
   });
 }
 
@@ -359,6 +395,15 @@ async function getPublicOrganiserById(id) {
     rankingHistory = [];
   }
 
+  let membershipPlan = null;
+  try {
+    const { getMembershipPlanForOrganiser } = require('./membership-billing');
+    membershipPlan = await getMembershipPlanForOrganiser(row.id);
+    if (membershipPlan && !membershipPlan.offered) membershipPlan = null;
+  } catch {
+    membershipPlan = null;
+  }
+
   return rowToPublicOrganiser(row, events.length, {
     includeEvents: true,
     events,
@@ -366,6 +411,7 @@ async function getPublicOrganiserById(id) {
     reviewItems,
     ranking: rankings[row.id] || null,
     rankingHistory,
+    membershipPlan,
   });
 }
 

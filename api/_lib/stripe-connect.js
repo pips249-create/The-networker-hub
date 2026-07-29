@@ -306,21 +306,16 @@ async function createExpressDashboardLinkForOrganiser(organiserId) {
   return createExpressDashboardLink(organiser.stripe_account_id);
 }
 
-async function getOrganiserConnectForEvent(sb, eventId) {
-  const { data: eventRow, error: eventError } = await sb
-    .from('events')
-    .select('id, organiser_id')
-    .eq('id', eventId)
-    .maybeSingle();
-  if (eventError) throw new Error(eventError.message);
-  if (!eventRow?.organiser_id) return null;
+async function getOrganiserConnectById(sb, organiserId) {
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) return null;
 
   const { data: organiser, error: orgError } = await sb
     .from('organisers')
     .select(
       'id, name, email, contact_email, stripe_account_id, stripe_charges_enabled, stripe_connect_details_submitted'
     )
-    .eq('id', eventRow.organiser_id)
+    .eq('id', orgId)
     .maybeSingle();
   if (orgError) throw new Error(orgError.message);
   if (!organiser) return null;
@@ -351,6 +346,38 @@ async function getOrganiserConnectForEvent(sb, eventId) {
       Boolean(row.stripe_account_id) &&
       Boolean(row.stripe_charges_enabled) &&
       Boolean(row.stripe_connect_details_submitted),
+  };
+}
+
+async function getOrganiserConnectForEvent(sb, eventId) {
+  const { data: eventRow, error: eventError } = await sb
+    .from('events')
+    .select('id, organiser_id')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (eventError) throw new Error(eventError.message);
+  if (!eventRow?.organiser_id) return null;
+  return getOrganiserConnectById(sb, eventRow.organiser_id);
+}
+
+/**
+ * Destination-charge subscription params — organiser receives membership price;
+ * Hub keeps the fee via application_fee_percent (Stripe processing absorbed from the fee).
+ */
+function buildConnectSubscriptionParams({ connect, membershipPence, feePence, metadata }) {
+  if (!connect?.ready || !connect.stripeAccountId) return null;
+  const { applicationFeePercentFromPence } = require('./membership-billing');
+  const applicationFeePercent = applicationFeePercentFromPence(membershipPence, feePence);
+  if (applicationFeePercent <= 0) return null;
+
+  return {
+    subscriptionData: {
+      application_fee_percent: applicationFeePercent,
+      transfer_data: {
+        destination: connect.stripeAccountId,
+      },
+      metadata: metadata && typeof metadata === 'object' ? metadata : {},
+    },
   };
 }
 
@@ -418,7 +445,9 @@ module.exports = {
   createConnectOnboardingLink,
   createExpressDashboardLink,
   createExpressDashboardLinkForOrganiser,
+  getOrganiserConnectById,
   getOrganiserConnectForEvent,
   assertOrganiserReadyForPaidPublish,
   buildConnectCheckoutParams,
+  buildConnectSubscriptionParams,
 };

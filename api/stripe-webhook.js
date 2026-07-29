@@ -18,6 +18,12 @@ const {
   handleCityPartnerSubscriptionUpdated,
   handleCityPartnerSubscriptionDeleted,
 } = require('./_lib/city-partner-subscriptions');
+const {
+  handleMembershipCheckoutCompleted,
+  handleMembershipSubscriptionUpdated,
+  handleMembershipSubscriptionDeleted,
+  handleMembershipInvoicePaid,
+} = require('./_lib/membership-billing');
 
 const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
 
@@ -120,6 +126,7 @@ async function handler(req, res) {
       const session = event.data.object || {};
       const sponsorshipResult = await handleSponsorshipCheckoutCompleted(session);
       const cityPartnerResult = await handleCityPartnerCheckoutCompleted(session);
+      const membershipResult = await handleMembershipCheckoutCompleted(session);
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
       const featuredResult = await handleEventFeaturedCheckout(session);
@@ -130,6 +137,7 @@ async function handler(req, res) {
           ok: true,
           sponsorshipResult,
           cityPartnerResult,
+          membershipResult,
           premiumResult,
           listingResult,
           featuredResult,
@@ -141,22 +149,25 @@ async function handler(req, res) {
     if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionUpdated(subscription);
+      const membershipResult = await handleMembershipSubscriptionUpdated(subscription);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, cityPartnerResult }));
+      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult }));
     }
 
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionDeleted(subscription);
+      const membershipResult = await handleMembershipSubscriptionDeleted(subscription);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, cityPartnerResult }));
+      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult }));
     }
 
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object || {};
       const revenueResult = await handleInvoicePaid(invoice);
+      const membershipResult = await handleMembershipInvoicePaid(invoice);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, revenueResult }));
+      return res.end(JSON.stringify({ ok: true, revenueResult, membershipResult }));
     }
 
     if (event.type === 'charge.refunded') {

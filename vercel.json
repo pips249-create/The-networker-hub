@@ -172,6 +172,10 @@
     {
       "path": "/api/cron/roster-emails",
       "schedule": "45 10 * * *"
+    },
+    {
+      "path": "/api/cron/group-updates",
+      "schedule": "50 10 * * *"
     }
   ],
   "functions": {

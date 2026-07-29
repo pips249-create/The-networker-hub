@@ -1839,6 +1839,7 @@
     if (controlsBound) return;
     controlsBound = true;
 
+    bindBillingControls();
     removeDuplicateAddPanels();
     bindMemberActionHandlers();
 
@@ -2173,6 +2174,137 @@
     });
   }
 
+  async function loadBillingPlan() {
+    const panel = document.getElementById('omr-billing-panel');
+    if (!panel || !isDashboardEmbed) return;
+    const id = getOrganiserId();
+    if (!id) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    try {
+      const data = await api(
+        '/api/organiser/membership-plans?organiserId=' + encodeURIComponent(id)
+      );
+      const plan = data.plan || null;
+      const monthly = document.getElementById('omr-billing-monthly');
+      const annual = document.getElementById('omr-billing-annual');
+      const active = document.getElementById('omr-billing-active');
+      if (monthly) {
+        monthly.value =
+          plan && plan.monthlyAmountPence != null
+            ? String((plan.monthlyAmountPence / 100).toFixed(2)).replace(/\.00$/, '')
+            : '';
+      }
+      if (annual) {
+        annual.value =
+          plan && plan.annualAmountPence != null
+            ? String((plan.annualAmountPence / 100).toFixed(2)).replace(/\.00$/, '')
+            : '';
+      }
+      if (active) active.checked = plan ? plan.active !== false && plan.offered : true;
+      const connectNote = document.getElementById('omr-billing-connect');
+      const connectLink = document.getElementById('omr-billing-connect-link');
+      if (data.connectReady === false) {
+        if (connectNote) {
+          connectNote.hidden = false;
+          connectNote.textContent =
+            'Add bank details before members can pay you through the Hub.';
+        }
+        if (connectLink) connectLink.hidden = false;
+      } else {
+        if (connectNote) connectNote.hidden = true;
+        if (connectLink) connectLink.hidden = true;
+      }
+      updateBillingPreview();
+    } catch (e) {
+      /* panel stays visible; organiser can still try save */
+      updateBillingPreview();
+    }
+  }
+
+  function updateBillingPreview() {
+    const el = document.getElementById('omr-billing-preview');
+    if (!el) return;
+    const monthly = Number(document.getElementById('omr-billing-monthly')?.value || 0);
+    const annual = Number(document.getElementById('omr-billing-annual')?.value || 0);
+    function fee(amount) {
+      if (!amount || amount < 1) return null;
+      const f = Math.round((amount * 0.045 + 0.2) * 100) / 100;
+      const total = Math.round((amount + f) * 100) / 100;
+      return { fee: f, total: total };
+    }
+    const parts = [];
+    const m = fee(monthly);
+    if (m) {
+      parts.push(
+        'Monthly: member pays £' +
+          m.total.toFixed(2) +
+          ' (you get £' +
+          monthly.toFixed(2) +
+          ')'
+      );
+    }
+    const a = fee(annual);
+    if (a) {
+      parts.push(
+        'Annually: member pays £' +
+          a.total.toFixed(2) +
+          ' (you get £' +
+          annual.toFixed(2) +
+          ')'
+      );
+    }
+    el.textContent = parts.length
+      ? parts.join(' · ')
+      : 'Enter a monthly and/or annual price. Leave blank to not offer that option.';
+  }
+
+  async function saveBillingPlan(e) {
+    if (e) e.preventDefault();
+    const id = requireOrganiserId();
+    const monthlyEl = document.getElementById('omr-billing-monthly');
+    const annualEl = document.getElementById('omr-billing-annual');
+    const activeEl = document.getElementById('omr-billing-active');
+    const monthlyRaw = String(monthlyEl?.value || '').trim();
+    const annualRaw = String(annualEl?.value || '').trim();
+    const body = {
+      organiserId: id,
+      active: activeEl ? activeEl.checked : true,
+      monthlyAmountPounds: monthlyRaw === '' ? null : monthlyRaw,
+      annualAmountPounds: annualRaw === '' ? null : annualRaw,
+      clearMonthly: monthlyRaw === '',
+      clearAnnual: annualRaw === '',
+    };
+    const btn = document.getElementById('omr-billing-save');
+    if (btn) btn.disabled = true;
+    try {
+      await api('/api/organiser/membership-plans', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      showAlert('Membership prices saved.', 'success');
+      await loadBillingPlan();
+    } catch (err) {
+      showAlert(err.message || 'Could not save membership prices.', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function bindBillingControls() {
+    const form = document.getElementById('omr-billing-form');
+    if (!form || form.dataset.bound === '1') return;
+    form.dataset.bound = '1';
+    form.addEventListener('submit', saveBillingPlan);
+    ['omr-billing-monthly', 'omr-billing-annual'].forEach(function (fid) {
+      const el = document.getElementById(fid);
+      if (el) el.addEventListener('input', updateBillingPreview);
+    });
+  }
+
   async function loadForGroup(groupId) {
     const id = String(groupId || '').trim();
     bindControlsOnce();
@@ -2191,6 +2323,8 @@
       page = 1;
       setRegisterTab('members');
       renderRoster();
+      const billingPanel = document.getElementById('omr-billing-panel');
+      if (billingPanel) billingPanel.hidden = true;
       const mount = document.getElementById('omr-reports');
       const wrap = document.getElementById('omr-reports-wrap');
       if (mount) mount.innerHTML = '';
@@ -2235,6 +2369,8 @@
       }
 
       await loadEvents();
+      if (getOrganiserId() !== id) return;
+      await loadBillingPlan();
       if (getOrganiserId() !== id) return;
       await refresh();
     })().finally(function () {

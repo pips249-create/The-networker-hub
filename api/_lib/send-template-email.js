@@ -545,6 +545,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'saved_event_tickets_open',
   'saved_opportunity_closing_soon',
   'opportunity_saved_search_match',
+  'organiser_monthly_group_update',
 ]);
 
 /** Member-list mail — organiser-uploaded recipients; bypass pre-launch allowlist. */
@@ -553,6 +554,7 @@ const MEMBER_ROSTER_EMAIL_SLUGS = new Set([
   'member_roster_existing',
   'member_roster_new_event',
   'member_roster_booking_reminder',
+  'organiser_monthly_group_update',
 ]);
 
 /**

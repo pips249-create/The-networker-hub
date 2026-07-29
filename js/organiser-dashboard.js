@@ -8660,6 +8660,13 @@
         });
       }
     }
+    if (page === 'group-updates') {
+      requestAnimationFrame(function () {
+        if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
+          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+        }
+      });
+    }
 
     // Route lives in the hash only (/organiser/#events-list). Do not also write ?panel=
     // — that produced clunky URLs like /organiser/?panel=events-list#events-list.

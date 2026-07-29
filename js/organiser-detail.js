@@ -271,6 +271,127 @@
     });
   }
 
+  function money(n) {
+    var v = Number(n);
+    if (!Number.isFinite(v)) return '£0';
+    return '£' + v.toFixed(2).replace(/\.00$/, '');
+  }
+
+  function renderMembershipJoin(org) {
+    var section = document.getElementById('org-membership-join');
+    var plansEl = document.getElementById('org-membership-plans');
+    var statusEl = document.getElementById('org-membership-join-status');
+    if (!section || !plansEl) return;
+
+    var plan = org.membershipPlan;
+    if (!plan || !plan.offered || (!plan.monthly && !plan.annual)) {
+      section.hidden = true;
+      plansEl.innerHTML = '';
+      return;
+    }
+
+    section.hidden = false;
+    if (statusEl) {
+      statusEl.hidden = true;
+      statusEl.textContent = '';
+    }
+
+    var options = [];
+    if (plan.monthly) {
+      options.push({
+        interval: 'month',
+        label: 'Pay monthly',
+        amount: plan.monthly.amountPounds,
+        total: plan.monthly.total,
+        fee: plan.monthly.fee,
+      });
+    }
+    if (plan.annual) {
+      options.push({
+        interval: 'year',
+        label: 'Pay annually',
+        amount: plan.annual.amountPounds,
+        total: plan.annual.total,
+        fee: plan.annual.fee,
+      });
+    }
+
+    plansEl.innerHTML = options
+      .map(function (opt) {
+        return (
+          '<div class="org-membership-plan-card">' +
+          '<div class="org-membership-plan-copy">' +
+          '<strong>' +
+          escapeHtml(opt.label) +
+          '</strong>' +
+          '<p>' +
+          money(opt.amount) +
+          (opt.interval === 'year' ? ' / year' : ' / month') +
+          ' to the group · member pays ' +
+          money(opt.total) +
+          ' incl. Hub fee</p>' +
+          '</div>' +
+          '<button type="button" class="org-profile-btn org-profile-btn--primary" data-membership-interval="' +
+          escapeHtml(opt.interval) +
+          '">Join</button>' +
+          '</div>'
+        );
+      })
+      .join('');
+
+    plansEl.querySelectorAll('[data-membership-interval]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        startMembershipCheckout(org, btn.getAttribute('data-membership-interval'), btn);
+      });
+    });
+  }
+
+  async function startMembershipCheckout(org, interval, btn) {
+    var statusEl = document.getElementById('org-membership-join-status');
+    function setJoinStatus(msg, isError) {
+      if (!statusEl) return;
+      statusEl.hidden = !msg;
+      statusEl.textContent = msg || '';
+      statusEl.classList.toggle('is-error', Boolean(isError));
+    }
+
+    if (btn) btn.disabled = true;
+    setJoinStatus('Checking your account…');
+
+    try {
+      var sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+      var session = await sessionRes.json();
+      if (!session.ok || !session.user) {
+        var next = encodeURIComponent(location.pathname + location.search + '#org-membership-join');
+        location.href = '/login?next=' + next;
+        return;
+      }
+
+      setJoinStatus('Opening secure checkout…');
+      var res = await fetch('/api/auth/membership-checkout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organiserId: org.id,
+          interval: interval,
+          name: session.user.name || '',
+          email: session.user.email || '',
+        }),
+      });
+      var data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || data.error || 'Could not start checkout');
+      }
+      location.href = data.url;
+    } catch (e) {
+      setJoinStatus(e.message || 'Could not start membership checkout.', true);
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function renderEvents(events) {
     var list = document.getElementById('org-events');
     var empty = document.getElementById('org-events-empty');
@@ -508,6 +629,8 @@
     } else if (formatsSection) {
       formatsSection.hidden = true;
     }
+
+    renderMembershipJoin(org);
 
     var website = document.getElementById('org-website');
     if (website) {

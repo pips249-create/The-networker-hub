@@ -15,6 +15,7 @@ const routes = {
   'online-join-reminders': require('./_lib/routes/cron-online-join-reminders'),
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
   'roster-emails': require('./_lib/routes/cron-roster-emails'),
+  'group-updates': require('./_lib/routes/cron-group-updates'),
 };
 
 module.exports = async function handler(req, res) {

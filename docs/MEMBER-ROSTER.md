@@ -2,7 +2,9 @@
 
 ## What we are building
 
-Per **organiser page** (group profile), organisers maintain a **Membership** (name, email, optional membership expiry). Members sign in with that email to unlock **Members only** ticket tiers at checkout. The hub enforces access server-side, flags expiring memberships for the organiser, and surfaces five practical reports (membership health, booked vs not booked for an event, new vs returning at an event, members who missed recent meetings, memberships expiring soon). Confirmed bookings flow straight into the attendee register and **name badge PDF** export. Organisers renew members off-platform and update expiry dates on the membership.
+Per **organiser page** (group profile), organisers maintain a **Membership** (name, email, optional membership expiry). Members sign in with that email to unlock **Members only** ticket tiers at checkout. The hub enforces access server-side, flags expiring memberships for the organiser, and surfaces five practical reports (membership health, booked vs not booked for an event, new vs returning at an event, members who missed recent meetings, memberships expiring soon). Confirmed bookings flow straight into the attendee register and **name badge PDF** export.
+
+Organisers can still renew people off-platform and update expiry dates manually. They can also **offer pay monthly or annually through the Hub** (Stripe Connect): members pay the published membership price plus the Hub fee (4.5% + 20p); organisers receive **100%** of the price they set — same motto as tickets. Successful payments create/update the roster row and set `expires_at` from the Stripe billing period.
 
 ## In scope
 
@@ -15,6 +17,11 @@ Per **organiser page** (group profile), organisers maintain a **Membership** (na
 - Five organiser reports on the membership page
 - Label PDF: only **confirmed** attendees (approved, paid or free)
 - Booking reminder emails for members who have not booked a selected event
+- **Hub-billed memberships (monthly / annual)** via Stripe Connect destination charges
+  - `organiser_membership_plans` — monthly and/or annual price per organiser page
+  - `POST /api/auth/membership-checkout` — member Checkout (`mode: subscription`)
+  - Webhooks sync roster `expires_at` / `subscription_status` from Stripe
+  - Public join CTA on organiser profile; renew from My Hub → Memberships
 
 ## Member emails — when they go out
 
@@ -28,6 +35,14 @@ Per **organiser page** (group profile), organisers maintain a **Membership** (na
 
 Members see the group under **My Hub → My groups** once added. They book member tickets when signed in with their membership email.
 
+## Hub-billed memberships — money flow
+
+1. Organiser sets monthly and/or annual price on Memberships (requires Stripe Connect bank details).
+2. Member joins from the organiser public page or renews from My Hub.
+3. Checkout charges **membership price + Hub fee (4.5% + 20p)** each billing period.
+4. Destination charge: organiser connected account receives the membership price; Hub keeps the fee (Stripe processing absorbed from the fee).
+5. Webhooks update the roster expiry to the subscription period end.
+
 ## Security and lifecycle guarantees
 
 - Membership is many-to-many: each `(organiser_id, normalized email)` row has its own `expires_at`.
@@ -35,6 +50,7 @@ Members see the group under **My Hub → My groups** once added. They book membe
 - Checkout requires an authenticated session whose email matches an active, unexpired membership row for the event's organiser.
 - Registration and login claim every active, unexpired membership row matching the account email.
 - Once booked, member tickets use the same confirmation, reminder, event update, cancellation, refund, online-link and post-event review lifecycle as standard confirmed tickets.
+- Hub-billed rows store `stripe_subscription_id` / `billing_interval`; cancelled subscriptions expire at period end.
 
 ## Smoke test
 
@@ -47,6 +63,7 @@ Uses `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD` (or `SMOKE_ORGANISER_*`) from `loc
 
 ## Out of scope
 
-- Stripe membership renewals / chapter SaaS billing (Phase 3 abandoned)
 - Paid membership seat limits (discuss later)
 - Top / worst attendee league tables
+- Member self-serve cancel portal UI (Stripe Customer Portal) — follow-up
+- Proration / mid-cycle plan switches — follow-up
