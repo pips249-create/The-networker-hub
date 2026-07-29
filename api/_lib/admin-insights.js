@@ -507,6 +507,20 @@ async function getAdminInsights(periodRaw) {
     ),
   };
 
+  let promoteRoi = {
+    configured: false,
+    totals: {},
+    uniqueOrganisers: 0,
+    landings: 0,
+    toolUses: 0,
+  };
+  try {
+    const { getPromoteActionStats } = require('./organiser-promote-log');
+    promoteRoi = await getPromoteActionStats(period);
+  } catch {
+    /* table may not exist yet */
+  }
+
   return {
     configured: true,
     provider: 'supabase',
@@ -514,6 +528,7 @@ async function getAdminInsights(periodRaw) {
     currency: 'GBP',
     updatedAt: new Date().toISOString(),
     revenueComparison,
+    promoteRoi,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
     userLocations: aggregateUserLocations(attendeeLocations),
     growthPulse: {

@@ -59,7 +59,7 @@ window.HUB_SEO_STATIC = {
   "for-organisers": {
     "path": "/for-organisers",
     "title": "Find your next attendees – For organisers – The Networker Hub",
-    "description": "Find your next attendees, bookings, and discovery on The Networker Hub. Ticketing built for UK networking groups with tools generic platforms do not offer.",
+    "description": "Find your next attendees on The Networker Hub — ticketing for UK networking groups, plus LinkedIn posts, branded monthly email updates, ranking badges, and tools Eventbrite does not offer.",
     "image": "/assets/logo.png",
     "ogType": "website"
   },

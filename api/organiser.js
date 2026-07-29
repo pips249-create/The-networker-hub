@@ -38,6 +38,7 @@ const routes = {
   'logo-proxy': require('./_lib/routes/organiser-logo-proxy'),
   'website-brand': require('./_lib/routes/organiser-website-brand'),
   'group-updates': require('./_lib/routes/organiser-group-updates'),
+  'promote-action': require('./_lib/routes/organiser-promote-action'),
 };
 
 module.exports = async function handler(req, res) {

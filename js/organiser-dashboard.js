@@ -1583,7 +1583,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260729events1';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260729roi1';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260721mem4';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260721mem5';
 

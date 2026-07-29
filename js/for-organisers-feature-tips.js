@@ -38,6 +38,31 @@
       body:
         'Build ready-made LinkedIn captions and post images from your dashboard so you can promote an event without rewriting copy from scratch each week.',
     },
+    'fo-linkedin-posts': {
+      title: 'LinkedIn posts with your brand colours',
+      body:
+        'Create a caption and branded picture from any live event in Promote. Save your colours and type style once — every post picks them up. Free to use.',
+    },
+    'fo-ranking-badges': {
+      title: 'Ranking badges & Top groups',
+      body:
+        'When your group ranks on the Hub Top groups list, download a shareable badge for LinkedIn and your site. Opt into public rankings and Hub shout-outs from Promote.',
+    },
+    'fo-monthly-email-updates': {
+      title: 'Monthly email updates to Hub attendees',
+      body:
+        'Send a branded Hub round-up to people who booked your events — personal greeting, month stats, upcoming dates, and a spotlight. One free send per organiser page each month; extra sends from £9 (hard cap 4/month). Replies go to your contact email.',
+    },
+    'fo-smart-audiences': {
+      title: 'Smart audiences (once, recent, favourites)',
+      body:
+        'Choose who gets the round-up: everyone who booked via the Hub, people who came once, recent bookers (last 30 days), or people who saved your page but have not booked yet.',
+    },
+    'fo-engagement-report': {
+      title: 'Post-send engagement report',
+      body:
+        'After a send, see opens, link clicks, and how many recipients booked one of your Hub events afterwards — so you know the update drove real return visits, not just inbox noise.',
+    },
     'fo-event-pages': {
       title: 'Custom event pages & ticket types',
       body:

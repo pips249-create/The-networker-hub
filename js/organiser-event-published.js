@@ -119,6 +119,7 @@
     : origin + '/events/';
   let sharePack = null;
   let sharePackPromise = null;
+  let previewEvent = null;
   let shareCardDataUrl = '';
 
   const sharePackEl = document.getElementById('ep-share-pack');
@@ -231,21 +232,57 @@
     }
   }
 
-  function markShareDone() {
+  function markShareDone(action) {
     if (window.HubCommsPack && window.HubCommsPack.markEventShareDone) {
       window.HubCommsPack.markEventShareDone();
     }
+    var promoteAction =
+      action === 'download' || action === 'copy_caption' || action === 'open_linkedin'
+        ? action
+        : 'open_linkedin';
     try {
       if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
-        window.HubAnalytics.track('organiser_linkedin_open', { source: 'event_published' });
+        window.HubAnalytics.track(
+          promoteAction === 'copy_caption'
+            ? 'organiser_linkedin_copy_caption'
+            : promoteAction === 'download'
+              ? 'organiser_linkedin_download'
+              : 'organiser_linkedin_open',
+          { source: 'event_published' }
+        );
       } else if (typeof window.va === 'function') {
         window.va('event', {
-          name: 'organiser_linkedin_open',
+          name:
+            promoteAction === 'copy_caption'
+              ? 'organiser_linkedin_copy_caption'
+              : promoteAction === 'download'
+                ? 'organiser_linkedin_download'
+                : 'organiser_linkedin_open',
           data: { source: 'event_published' },
         });
       }
     } catch {
       /* analytics optional */
+    }
+    try {
+      var ev = previewEvent || null;
+      fetch('/api/organiser/promote-action', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: promoteAction,
+          source: 'event_published',
+          organiserId: (ev && (ev.organiserId || ev.groupId || ev.organiser_id)) || null,
+          eventId: (ev && ev.id) || primaryId || null,
+          templateId: 'event_published',
+        }),
+        keepalive: true,
+      }).catch(function () {
+        /* non-fatal */
+      });
+    } catch {
+      /* non-fatal */
     }
   }
 
@@ -319,7 +356,7 @@
         const original = btn.textContent;
         const copied = await copyText(text, feedback, '', 'Copied to clipboard');
         if (copied) {
-          markShareDone();
+          markShareDone('copy_caption');
           btn.textContent = 'Copied!';
           setTimeout(function () {
             btn.textContent = original;
@@ -448,7 +485,7 @@
     } else {
       window.open(href, '_blank', 'noopener,noreferrer');
     }
-    markShareDone();
+    markShareDone('open_linkedin');
   }
 
   function bindShareQuickButtons() {
@@ -641,6 +678,7 @@
     const descEl = document.getElementById('ep-preview-desc');
     const previewLink = document.getElementById('ep-preview-link');
 
+    previewEvent = ev || null;
     listingUrl = buildListingUrl(ev);
 
     const title = ev.title || fallbackTitle || 'Your event';
@@ -874,7 +912,7 @@
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
     const copied = await copyText(listingUrl, feedback, '', 'Link copied to clipboard');
-    if (copied) markShareDone();
+    if (copied) markShareDone('copy_caption');
     if (!copied) {
       const input = document.getElementById('ep-share-url');
       if (input) {
@@ -891,7 +929,7 @@
     const original = btn ? btn.textContent : '';
     const copied = await copyText(sharePack && sharePack.caption, feedback, '', 'Caption copied to clipboard');
     if (copied) {
-      markShareDone();
+      markShareDone('copy_caption');
       if (btn) {
         btn.textContent = 'Copied!';
         setTimeout(() => {
@@ -927,7 +965,7 @@
       btn.textContent = copied ? 'Copied — opening LinkedIn…' : original || 'Copy post & open LinkedIn';
     }
     window.open('https://www.linkedin.com/feed/', '_blank', 'noopener,noreferrer');
-    if (copied) markShareDone();
+    if (copied) markShareDone('open_linkedin');
     if (copied && btn) {
       setTimeout(function () {
         btn.textContent = original || 'Copy post & open LinkedIn';
@@ -951,7 +989,7 @@
     const name =
       window.HubOrganiserEventShare.safeFilename(sharePack && sharePack.title) + '-event-promo.png';
     window.HubOrganiserEventShare.downloadPngDataUrl(shareCardDataUrl, name);
-    markShareDone();
+    markShareDone('download');
   }
 
   downloadImageBtn?.addEventListener('click', downloadShareImage);

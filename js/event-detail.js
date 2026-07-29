@@ -3813,6 +3813,44 @@
     return { title, text, details, message, url: shareUrl };
   }
 
+  function trackOrganiserShareLanding(ev) {
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      var campaign = String(params.get('utm_campaign') || '')
+        .trim()
+        .toLowerCase();
+      if (campaign !== 'organiser_share') return;
+      var key =
+        'hub_promote_landing:' +
+        String((ev && ev.id) || params.get('id') || window.location.pathname || '');
+      try {
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+      } catch (e) {
+        /* private mode — still send once per page load */
+      }
+      fetch('/api/promote-analytics', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'landing',
+          source: 'event_page',
+          eventId: (ev && ev.id) || null,
+          organiserId: (ev && (ev.organiserId || ev.organiser_id)) || null,
+          utmCampaign: campaign,
+          utmSource: params.get('utm_source') || null,
+          utmMedium: params.get('utm_medium') || null,
+          utmContent: params.get('utm_content') || null,
+          path: String(window.location.pathname || '').slice(0, 200),
+        }),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (e) {
+      /* non-fatal */
+    }
+  }
+
   function initActions(ev) {
     const saveBtn = document.getElementById('save-btn');
     const shareBtn = document.getElementById('share-btn');
@@ -4772,6 +4810,7 @@
           initTicketPanel(displayEv);
           initSeriesDatePicker(displayEv);
           initActions(displayEv);
+          trackOrganiserShareLanding(displayEv);
           setEventLoading(false);
           if (eventIsGuestProgramme(displayEv)) {
             fetchSessionData().then(function (sessionData) {
@@ -4854,6 +4893,7 @@
       }
       initTicketPanel(ev);
       initActions(ev);
+      trackOrganiserShareLanding(ev);
     }
   }
 

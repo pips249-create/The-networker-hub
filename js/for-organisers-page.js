@@ -42,8 +42,8 @@
       text: 'See tickets sold, revenue, and shortcuts into events, memberships, and business opportunities from one home screen.'
     },
     social: {
-      title: 'Promote & social',
-      text: 'Upgrade events to Premium Spotlight, build LinkedIn post images, copy ready-made social captions, and share ranking badges when you earn one.'
+      title: 'Promote',
+      text: 'Build LinkedIn posts with your brand colours, send monthly Hub email updates (smart audiences + engagement report), feature events, and share ranking badges when you earn one.'
     },
     events: {
       title: 'My events',

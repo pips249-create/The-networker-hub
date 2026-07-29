@@ -4057,6 +4057,8 @@
     var repeat = data.repeatAttendees || {};
     var growth = data.growthPulse || {};
     var funnel = data.applicationFunnel || {};
+    var promote = data.promoteRoi || {};
+    var promoteTotals = promote.totals || {};
     var periodLabel = analyticsPeriodLabel(data.period || analyticsState.period);
     var orgCount = (data.topOrganisers || []).length;
     var eventCount = (data.topEvents || []).length;
@@ -4067,6 +4069,7 @@
       '<nav class="admin-insights-jump" aria-label="Insights sections">' +
       '<a href="#insights-performers" class="admin-insights-jump-link">Performers</a>' +
       '<a href="#insights-growth" class="admin-insights-jump-link">Growth</a>' +
+      '<a href="#insights-promote" class="admin-insights-jump-link">Promote ROI</a>' +
       '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
       '</nav>' +
       '<section id="insights-performers" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
@@ -4148,6 +4151,48 @@
         'brand'
       ) +
       '</div></section>' +
+      '<section id="insights-promote" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Promote ROI</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">First-party LinkedIn/Promote tool usage and UTM landings — works without cookie consent. ' +
+      esc(periodLabel) +
+      '.</p></div>' +
+      (promote.configured === false
+        ? '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">' +
+          esc(
+            promote.message ||
+              'Apply migration 221_organiser_promote_actions.sql in Supabase to start collecting Promote ROI.'
+          ) +
+          '</p>'
+        : '<div class="admin-metric-grid admin-metric-grid--4">' +
+          card(
+            'Tool uses',
+            String(promote.toolUses || 0),
+            String(promoteTotals.download || 0) +
+              ' downloads · ' +
+              String(promoteTotals.copy_caption || 0) +
+              ' captions · ' +
+              String(promoteTotals.open_linkedin || 0) +
+              ' LinkedIn opens'
+          ) +
+          card(
+            'Landings from posts',
+            String(promote.landings || 0),
+            'Event page hits with utm_campaign=organiser_share'
+          ) +
+          card(
+            'Active organisers',
+            String(promote.uniqueOrganisers || 0),
+            'Distinct groups that used Promote tools'
+          ) +
+          card(
+            'Landing rate',
+            promote.toolUses
+              ? Math.round(((promote.landings || 0) / promote.toolUses) * 100) + '%'
+              : '—',
+            'Landings ÷ tool uses (rough conversion)'
+          ) +
+          '</div>') +
+      '</section>' +
       '<section id="insights-places" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Places &amp; ratings</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">Longer lists stay in a fixed-height scroll so the page does not grow forever.</p></div>' +

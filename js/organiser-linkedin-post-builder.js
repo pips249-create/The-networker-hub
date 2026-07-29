@@ -948,9 +948,10 @@
   }
 
   function trackShareAction(name, props) {
+    props = props || {};
     try {
       if (global.HubAnalytics && typeof global.HubAnalytics.track === 'function') {
-        global.HubAnalytics.track(name, props || {});
+        global.HubAnalytics.track(name, props);
       } else if (typeof global.va === 'function') {
         global.va('event', {
           name: name,
@@ -959,6 +960,36 @@
       }
     } catch (e) {
       /* analytics optional */
+    }
+    try {
+      var action =
+        name === 'organiser_linkedin_download'
+          ? 'download'
+          : name === 'organiser_linkedin_copy_caption'
+            ? 'copy_caption'
+            : name === 'organiser_linkedin_open'
+              ? 'open_linkedin'
+              : '';
+      if (action) {
+        fetch('/api/organiser/promote-action', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: action,
+            source: props.source || 'post_builder',
+            organiserId: props.organiserId || null,
+            eventId: props.eventId || null,
+            templateId: props.template || props.templateId || null,
+            templateGroup: props.group || props.templateGroup || null,
+          }),
+          keepalive: true,
+        }).catch(function () {
+          /* non-fatal */
+        });
+      }
+    } catch (e) {
+      /* non-fatal */
     }
     if (global.HubCommsPack && typeof global.HubCommsPack.markEventShareDone === 'function') {
       global.HubCommsPack.markEventShareDone();
@@ -2103,9 +2134,14 @@
         }
         link.click();
         setStatus('Downloaded — attach this picture when you post on LinkedIn.');
+        var g = currentGroup();
+        var ev = currentEvent();
         trackShareAction('organiser_linkedin_download', {
           template: tpl.id,
           group: tpl.group,
+          source: 'post_builder',
+          organiserId: (g && g.id) || state.groupId || null,
+          eventId: (ev && ev.id) || state.eventId || null,
         });
       });
     }
@@ -2138,8 +2174,13 @@
         done();
       }
       setStatus('Text copied — paste it into your LinkedIn post along with the picture.');
+      var gCopy = currentGroup();
+      var evCopy = currentEvent();
       trackShareAction('organiser_linkedin_copy_caption', {
         template: currentTemplate().id,
+        source: 'post_builder',
+        organiserId: (gCopy && gCopy.id) || state.groupId || null,
+        eventId: (evCopy && evCopy.id) || state.eventId || null,
       });
     }
 
@@ -2172,8 +2213,13 @@
       }
       window.open('https://www.linkedin.com/feed/', '_blank', 'noopener,noreferrer');
       setStatus('Text copied. On LinkedIn, click Start a post, paste the text, and attach your downloaded picture.');
+      var gOpen = currentGroup();
+      var evOpen = currentEvent();
       trackShareAction('organiser_linkedin_open', {
         template: currentTemplate().id,
+        source: 'post_builder',
+        organiserId: (gOpen && gOpen.id) || state.groupId || null,
+        eventId: (evOpen && evOpen.id) || state.eventId || null,
       });
     }
 

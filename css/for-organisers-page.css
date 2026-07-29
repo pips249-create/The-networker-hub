@@ -1706,6 +1706,16 @@ a.fo-hero-badge:hover {
   text-transform: uppercase;
 }
 
+.fo-org-badge--free {
+  background: #e8f5ef;
+  color: #1a5c3a;
+  letter-spacing: 0.02em;
+}
+
+.fo-org-social-card--email {
+  background: linear-gradient(165deg, #f7fafb 0%, #fff 55%);
+}
+
 .fo-org-post-preview {
   display: grid;
   gap: 10px;
