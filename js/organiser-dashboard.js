@@ -469,7 +469,7 @@
       '<div><h3 class="org-partner-badge-card-name">' +
       esc(g.name || 'Your group') +
       '</h3>' +
-      '<p class="org-partner-badge-meta">Links to your public profile · paste into your website HTML</p></div>' +
+      '<p class="org-partner-badge-meta">Hub partner badge · links to your public profile</p></div>' +
       '<div class="hub-partner-badge-preview">' +
       '<img src="' +
       esc(origin + '/assets/partner-badge.svg?v=20260729logo') +
@@ -642,7 +642,7 @@
       esc(String(row.reviewCount)) +
       ' reviews</p>' +
       '<div class="org-ranking-embed">' +
-      '<p class="org-ranking-share-preview-label">Website badge</p>' +
+      '<p class="org-ranking-share-preview-label">Ranking award badge</p>' +
       '<div class="org-ranking-embed-preview"><img src="' +
       esc(imgPreview) +
       '" alt="" width="340" height="120" /></div>' +
@@ -682,7 +682,7 @@
       '<a class="org-btn org-btn-outline org-btn-sm" href="#social" data-org-route="social">Make a LinkedIn picture</a>' +
       '</div>' +
       (row.badgeImpressions != null
-        ? '<p class="org-ranking-share-meta">Website badge loads this month: <strong>' +
+        ? '<p class="org-ranking-share-meta">Award badge loads this month: <strong>' +
           esc(String(row.badgeImpressions)) +
           '</strong></p>'
         : '') +
@@ -797,7 +797,10 @@
 
   function updateSocialRankingNav(hasRanking) {
     const navRanking = document.getElementById('org-social-tab-ranking');
-    if (navRanking) navRanking.hidden = !hasRanking;
+    if (!navRanking) return;
+    // Always show Top groups under Promote; badge tools appear when ranked.
+    navRanking.hidden = false;
+    navRanking.classList.toggle('has-badge', Boolean(hasRanking));
   }
 
   function renderOrganiserRankingShare() {
@@ -1575,6 +1578,93 @@
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
   let socialTabsBound = false;
 
+  function socialHashForTab(tabId) {
+    const tab = String(tabId || 'linkedin').toLowerCase();
+    if (tab === 'spotlight') return 'social-spotlight';
+    if (tab === 'ranking') return 'social-ranking';
+    if (tab === 'partner') return 'social-partner';
+    if (tab === 'brand') return 'social-brand';
+    if (tab === 'reach') return 'social-reach';
+    return 'social';
+  }
+
+  function isSocialRoute(route) {
+    const r = String(route || '').toLowerCase();
+    return (
+      r === 'social' ||
+      r === 'promote' ||
+      r === 'social-linkedin' ||
+      r === 'social-spotlight' ||
+      r === 'event-spotlight' ||
+      r === 'social-ranking' ||
+      r === 'ranking-badge' ||
+      r === 'review-badge' ||
+      r === 'ranking-embed' ||
+      r === 'social-partner' ||
+      r === 'partner' ||
+      r === 'website-badge' ||
+      r === 'social-brand' ||
+      r === 'brand' ||
+      r === 'brand-kit' ||
+      r === 'social-reach' ||
+      r === 'reach'
+    );
+  }
+
+  function socialTabFromRoute(route) {
+    const r = String(route || '').toLowerCase();
+    if (r === 'social-spotlight' || r === 'event-spotlight') return 'spotlight';
+    if (
+      r === 'social-ranking' ||
+      r === 'ranking-badge' ||
+      r === 'review-badge' ||
+      r === 'ranking-embed' ||
+      r === 'leaderboard' ||
+      r === 'rankings'
+    ) {
+      return 'ranking';
+    }
+    if (r === 'social-partner' || r === 'partner' || r === 'website-badge') return 'partner';
+    if (r === 'social-brand' || r === 'brand' || r === 'brand-kit') return 'brand';
+    if (
+      r === 'social-reach' ||
+      r === 'reach' ||
+      r === 'visibility' ||
+      r === 'grow-visibility'
+    ) {
+      return 'reach';
+    }
+    if (r === 'social-linkedin') return 'linkedin';
+    return '';
+  }
+
+  function storedSocialTab() {
+    try {
+      const stored = sessionStorage.getItem(SOCIAL_TAB_STORAGE_KEY);
+      if (
+        stored === 'spotlight' ||
+        stored === 'ranking' ||
+        stored === 'linkedin' ||
+        stored === 'partner' ||
+        stored === 'brand' ||
+        stored === 'reach'
+      ) {
+        return stored;
+      }
+    } catch {
+      /* ignore */
+    }
+    return '';
+  }
+
+  function syncSocialHash(tabId) {
+    const nextHash = socialHashForTab(tabId);
+    const url = new URL(window.location.href);
+    if ((url.hash || '').replace(/^#/, '') === nextHash) return;
+    url.hash = '#' + nextHash;
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+
   function setSocialTab(tabId, options) {
     options = options || {};
     const tab = String(tabId || 'linkedin').toLowerCase();
@@ -1606,9 +1696,13 @@
       ensureLinkedInPostBuilder({ force: true });
       renderBrandKitNudge();
     }
-    if (tab === 'ranking') renderOrganiserRankingShare();
+    if (tab === 'ranking') {
+      renderOrganiserRankingShare();
+      ensurePromoteLeaderboardReady();
+    }
     if (tab === 'partner') renderOrganiserPartnerBadge();
     if (tab === 'brand') ensureBrandKitPanelReady();
+    if (tab === 'reach') ensurePromoteReachReady();
 
     if (!options.skipStore) {
       try {
@@ -1617,22 +1711,30 @@
         /* ignore */
       }
     }
+
+    // Keep the URL in sync with the open tab so deep links (e.g. #social-spotlight)
+    // do not snap users back after they switch to Colours & logo / another tab.
+    if (!options.skipHash) {
+      syncSocialHash(tab);
+    }
   }
 
   function socialTabFromHash() {
-    const hash = String(location.hash || '').toLowerCase();
+    const hash = String(location.hash || '')
+      .replace(/^#/, '')
+      .toLowerCase();
+    if (!hash) return '';
     if (hash.includes('spotlight') || hash.includes('featured')) return 'spotlight';
     if (hash.includes('ranking') || hash.includes('review-badge') || hash.includes('ranking-embed'))
       return 'ranking';
-    if (hash.includes('partner') || hash.includes('website-badge') || hash.includes('embed'))
-      return 'partner';
-    if (hash.includes('brand') || hash.includes('brand-kit') || hash.includes('colour') || hash.includes('color'))
-      return 'brand';
-    if (hash.includes('linkedin') || hash === 'social') return 'linkedin';
+    if (hash.includes('partner') || hash.includes('website-badge')) return 'partner';
+    if (hash.includes('brand') || hash.includes('colour') || hash.includes('color')) return 'brand';
+    if (hash.includes('reach') || hash === 'visibility' || hash === 'grow-visibility') return 'reach';
+    if (hash.includes('linkedin') || hash === 'social' || hash === 'promote') return 'linkedin';
     return '';
   }
 
-  function initSocialPageTabs() {
+  function initSocialPageTabs(preferredTab) {
     if (!socialTabsBound) {
       socialTabsBound = true;
       document.querySelectorAll('[data-social-tab]').forEach(function (btn) {
@@ -1642,28 +1744,8 @@
       });
     }
 
-    let tab = socialTabFromHash() || 'linkedin';
-    if (!socialTabFromHash()) {
-      try {
-        const stored = sessionStorage.getItem(SOCIAL_TAB_STORAGE_KEY);
-        if (
-          stored === 'spotlight' ||
-          stored === 'ranking' ||
-          stored === 'linkedin' ||
-          stored === 'partner' ||
-          stored === 'brand'
-        ) {
-          tab = stored;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-
-    const rankingTab = document.getElementById('org-social-tab-ranking');
-    if (tab === 'ranking' && rankingTab && rankingTab.hidden) tab = 'linkedin';
-
-    setSocialTab(tab, { skipStore: true });
+    let tab = preferredTab || socialTabFromHash() || storedSocialTab() || 'linkedin';
+    setSocialTab(tab, { skipStore: !preferredTab, skipHash: true });
   }
 
   function isSocialPageActive() {
@@ -1697,6 +1779,7 @@
   var brandKitBound = false;
   var brandKitSuggestedColors = [];
   var brandKitPendingImport = null;
+  var brandKitHydratedGroupId = null;
 
   function normalizeBrandHex(value, fallback) {
     var v = String(value || '')
@@ -1747,6 +1830,10 @@
       nudge: document.getElementById('org-brand-kit-nudge'),
       nudgeShare: document.getElementById('org-brand-kit-nudge-share'),
       contrast: document.getElementById('org-brand-contrast'),
+      profileText: document.getElementById('org-brand-profile-text'),
+      profileLogo: document.getElementById('org-brand-profile-logo'),
+      profileLogoPh: document.getElementById('org-brand-profile-logo-ph'),
+      openOrganiser: document.getElementById('org-brand-open-organiser'),
     };
   }
 
@@ -1843,21 +1930,21 @@
       html = '';
     } else if (info.done >= info.total) {
       html =
-        '<strong>Brand kit complete (' +
+        '<strong>Colours &amp; logo complete (' +
         info.done +
         '/' +
         info.total +
         ').</strong> Your LinkedIn posts can use your colours, and we can tag you when we share.';
     } else {
       html =
-        '<strong>Brand kit ' +
+        '<strong>Colours &amp; logo ' +
         info.done +
         '/' +
         info.total +
         '.</strong> Add ' +
         info.missing.slice(0, 2).join(' and ') +
         (info.missing.length > 2 ? '…' : '') +
-        ' so posts look on-brand.';
+        ' so posts look like your group.';
     }
 
     [els.nudge, els.nudgeShare].forEach(function (el, idx) {
@@ -1871,12 +1958,65 @@
         el.hidden = false;
         el.innerHTML =
           html +
-          ' <button type="button" class="org-brand-kit-nudge-link" data-brand-open-kit>Open Brand kit</button>';
+          ' <button type="button" class="org-brand-kit-nudge-link" data-brand-open-kit>Add colours &amp; logo</button>';
         return;
       }
       el.hidden = false;
       el.innerHTML = html;
     });
+  }
+
+  function renderBrandProfileSummary() {
+    var els = brandKitEls();
+    var group = currentBrandKitGroup();
+    if (!els.profileText) return;
+
+    if (els.profileLogo && els.profileLogoPh) {
+      if (group && group.imageUrl) {
+        els.profileLogo.src = group.imageUrl;
+        els.profileLogo.alt = (group.name || 'Organiser') + ' logo';
+        els.profileLogo.hidden = false;
+        els.profileLogoPh.hidden = true;
+      } else {
+        els.profileLogo.removeAttribute('src');
+        els.profileLogo.alt = '';
+        els.profileLogo.hidden = true;
+        els.profileLogoPh.hidden = false;
+        els.profileLogoPh.textContent = group ? 'Add logo' : 'No page';
+      }
+    }
+
+    if (!group) {
+      els.profileText.textContent =
+        'Create an organiser page first, then add your logo, website and social links there.';
+      return;
+    }
+    var parts = [];
+    parts.push(group.imageUrl ? 'Logo added' : 'No logo yet');
+    parts.push(group.website ? 'Website set' : 'No website yet');
+    var socialCount = [group.instagramUrl, group.facebookUrl, group.linkedinUrl, group.xUrl].filter(
+      Boolean
+    ).length;
+    parts.push(
+      socialCount
+        ? socialCount + ' social link' + (socialCount === 1 ? '' : 's')
+        : 'No social links yet'
+    );
+    els.profileText.innerHTML =
+      '<strong>' +
+      esc(group.name || 'Your organiser page') +
+      '</strong> — ' +
+      esc(parts.join(' · ')) +
+      '. Edit these once on your organiser page; LinkedIn posts pick them up automatically.';
+  }
+
+  function openBrandKitOrganiserPage() {
+    var group = currentBrandKitGroup();
+    if (!group || !group.id) {
+      openGroupEditorDrawer('', { focusBrand: true });
+      return;
+    }
+    openGroupEditorDrawer(group, { focusBrand: true });
   }
 
   function openBrandKitFromNudge() {
@@ -2182,12 +2322,19 @@
         items.length +
         ' item' +
         (items.length === 1 ? '' : 's') +
-        '. Choose what to apply, then save.',
+        '. Tick what you want, then Apply & save.',
       'ok'
     );
+    requestAnimationFrame(function () {
+      if (els.reviewApply && els.reviewApply.scrollIntoView) {
+        els.reviewApply.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else if (els.review && els.review.scrollIntoView) {
+        els.review.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
   }
 
-  function applyBrandImportSelection() {
+  async function applyBrandImportSelection() {
     var els = brandKitEls();
     if (!brandKitPendingImport || !els.reviewList) return;
     var selected = {};
@@ -2217,10 +2364,26 @@
     renderBrandColorSuggestions(brandKitPendingImport.colors || []);
     updateBrandPreview();
     hideBrandImportReview();
-    setBrandKitStatus(
-      'Applied selected fields. Click Save brand kit to keep them.',
-      'ok'
-    );
+    if (els.reviewApply) {
+      els.reviewApply.disabled = true;
+      els.reviewApply.textContent = 'Saving…';
+    }
+    setBrandKitStatus('Saving to your organiser page…');
+    try {
+      await saveBrandKit();
+    } finally {
+      if (els.reviewApply) {
+        els.reviewApply.disabled = false;
+        els.reviewApply.textContent = 'Apply & save';
+      }
+    }
+  }
+
+  function preferBrandOnLinkedIn(groupId) {
+    ensureLinkedInPostBuilder({ force: true });
+    if (linkedInPostBuilder && linkedInPostBuilder.useBrandBackground) {
+      linkedInPostBuilder.useBrandBackground(groupId);
+    }
   }
 
   function currentBrandKitGroup() {
@@ -2249,6 +2412,7 @@
     if (els.x) els.x.value = g.xUrl || '';
     updateBrandPreview();
     renderBrandKitNudge();
+    renderBrandProfileSummary();
     if (els.useLinkedIn) {
       els.useLinkedIn.hidden = !g.brandPrimaryColor;
     }
@@ -2360,7 +2524,7 @@
       els.save.disabled = true;
       els.save.textContent = 'Saving…';
     }
-    setBrandKitStatus('Saving brand kit…');
+    setBrandKitStatus('Saving colours…');
     try {
       var res = await api('/api/organiser/groups', {
         method: 'PATCH',
@@ -2387,21 +2551,20 @@
         state.groups[idx] = { ...state.groups[idx], ...updated };
       }
       fillBrandKitForm(state.groups[idx] || updated);
-      if (linkedInPostBuilder && linkedInPostBuilder.refreshGroups) {
-        linkedInPostBuilder.refreshGroups();
-      }
+      preferBrandOnLinkedIn(group.id);
       renderBrandKitNudge();
+      renderBrandProfileSummary();
       if (els.useLinkedIn) els.useLinkedIn.hidden = !readBrandColors().primary;
       setBrandKitStatus(
-        'Brand kit saved. Use on LinkedIn post to try your colours straight away.',
+        'Colours saved to your organiser page. LinkedIn posts will use Your brand by default.',
         'ok'
       );
     } catch (e) {
-      setBrandKitStatus(e.message || 'Could not save brand kit.', 'error');
+      setBrandKitStatus(e.message || 'Could not save colours.', 'error');
     } finally {
       if (els.save) {
         els.save.disabled = false;
-        els.save.textContent = 'Save brand kit';
+        els.save.textContent = 'Save colours';
       }
     }
   }
@@ -2417,15 +2580,22 @@
     if (els.reviewApply) els.reviewApply.addEventListener('click', applyBrandImportSelection);
     if (els.reviewDismiss) els.reviewDismiss.addEventListener('click', hideBrandImportReview);
     if (els.useLinkedIn) els.useLinkedIn.addEventListener('click', useBrandKitOnLinkedIn);
+    if (els.openOrganiser) els.openOrganiser.addEventListener('click', openBrandKitOrganiserPage);
     document.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-brand-open-kit]');
       if (btn) {
         e.preventDefault();
         openBrandKitFromNudge();
       }
+      var editOrg = e.target.closest('[data-brand-open-organiser]');
+      if (editOrg) {
+        e.preventDefault();
+        openBrandKitOrganiserPage();
+      }
     });
     if (els.group) {
       els.group.addEventListener('change', function () {
+        brandKitHydratedGroupId = els.group.value || null;
         fillBrandKitForm(currentBrandKitGroup());
         renderBrandColorSuggestions([]);
         hideBrandImportReview();
@@ -2479,9 +2649,18 @@
   function ensureBrandKitPanelReady() {
     bindBrandKitPanel();
     syncBrandKitGroupOptions();
-    fillBrandKitForm(currentBrandKitGroup());
-    renderBrandKitNudge();
-    updateBrandContrastCheck();
+    var group = currentBrandKitGroup();
+    var groupId = group && group.id != null ? String(group.id) : '';
+    // Only hydrate once per organiser page. Re-running fill on every tab click
+    // was wiping imported colours before the organiser could save.
+    if (brandKitHydratedGroupId !== groupId) {
+      brandKitHydratedGroupId = groupId;
+      fillBrandKitForm(group);
+    } else {
+      renderBrandKitNudge();
+      renderBrandProfileSummary();
+      updateBrandContrastCheck();
+    }
   }
 
   function formatTicketsSoldLabel(sold, capacity) {
@@ -2589,6 +2768,7 @@
   function renderVisibilityHubMeta() {
     const eventsMeta = document.getElementById('org-visibility-events-meta');
     const oppMeta = document.getElementById('org-visibility-opp-meta');
+    // Optional: only present if a Feature-event meta node exists elsewhere.
     if (eventsMeta) {
       const eligible = liveEventsForFeaturedUpgrade();
       const featuredCount = (state.events || []).filter(function (ev) {
@@ -4280,16 +4460,18 @@
     }
     if (hash === 'team') return { page: 'team', sub: null };
     if (hash === 'member-lists' || hash === 'memberships') return { page: 'memberships', sub: null };
-    if (hash === 'visibility' || hash === 'grow-visibility') return { page: 'visibility', sub: null };
-    if (hash === 'leaderboard' || hash === 'rankings') return { page: 'leaderboard', sub: null };
-    if (hash === 'social-spotlight' || hash === 'event-spotlight') return { page: 'social-spotlight', sub: null };
-    if (
-      hash === 'social-ranking' ||
-      hash === 'ranking-badge' ||
-      hash === 'review-badge' ||
-      hash === 'ranking-embed'
-    ) {
-      return { page: 'social', sub: null };
+    if (hash === 'visibility' || hash === 'grow-visibility') {
+      return { page: 'visibility', sub: null };
+    }
+    if (hash === 'leaderboard' || hash === 'rankings') {
+      return { page: 'leaderboard', sub: null };
+    }
+    if (isSocialRoute(hash)) {
+      const socialTab = socialTabFromRoute(hash);
+      return {
+        page: socialTab === 'spotlight' ? 'social-spotlight' : 'social',
+        sub: null,
+      };
     }
     return { page: hash, sub: null };
   }
@@ -6546,14 +6728,19 @@
     }, 280);
   }
 
-  function openGroupEditorDrawer(groupOrId) {
+  function openGroupEditorDrawer(groupOrId, options) {
+    options = options || {};
     const drawer = document.getElementById('org-group-drawer');
     if (!drawer || !window.HubGroupEdit) {
       const id =
         typeof groupOrId === 'object' && groupOrId && groupOrId.id
           ? groupOrId.id
           : groupOrId || '';
-      location.href = id ? '/organiser/group-edit?id=' + encodeURIComponent(id) : '/organiser/group-edit';
+      location.href = id
+        ? '/organiser/group-edit?id=' +
+          encodeURIComponent(id) +
+          (options.focusBrand ? '#ge-brand-fields' : '')
+        : '/organiser/group-edit';
       return;
     }
 
@@ -6563,18 +6750,21 @@
         ? groupOrId.id
         : groupOrId || '';
 
+    const refreshAfterSave = async function () {
+      brandKitHydratedGroupId = null;
+      await loadBootstrap();
+      renderAll();
+      if (isSocialPageActive()) ensureBrandKitPanelReady();
+    };
+
     if (!groupEditReady) {
       window.HubGroupEdit.init({
         root: drawer,
         embedded: true,
         onClose: closeGroupEditorDrawer,
-        onSaved: async function () {
-          await loadBootstrap();
-          renderAll();
-        },
+        onSaved: refreshAfterSave,
         onContinue: async function (saved) {
-          await loadBootstrap();
-          renderAll();
+          await refreshAfterSave();
           requestAnimationFrame(function () {
             handleGroupContinueToEvent(saved);
           });
@@ -6586,14 +6776,11 @@
     window.HubGroupEdit.open({
       editId,
       embedded: true,
+      focusBrand: Boolean(options.focusBrand),
       onClose: closeGroupEditorDrawer,
-      onSaved: async function () {
-        await loadBootstrap();
-        renderAll();
-      },
+      onSaved: refreshAfterSave,
       onContinue: async function (saved) {
-        await loadBootstrap();
-        renderAll();
+        await refreshAfterSave();
         requestAnimationFrame(function () {
           handleGroupContinueToEvent(saved);
         });
@@ -8388,6 +8575,8 @@
     if (page === 'events') {
       return 'events-list';
     }
+    // Grow visibility + Top groups live under Promote now.
+    if (page === 'visibility' || page === 'leaderboard' || page === 'social') return 'social';
     return page;
   }
 
@@ -8523,6 +8712,75 @@
     });
   }
 
+  function ensurePromotePanelsFolded() {
+    const reach = document.getElementById('org-social-panel-reach');
+    const vis = document.getElementById('org-page-visibility');
+    if (reach && vis && !reach.dataset.folded) {
+      reach.textContent = '';
+      while (vis.firstChild) {
+        reach.appendChild(vis.firstChild);
+      }
+      reach.dataset.folded = '1';
+      vis.hidden = true;
+      vis.setAttribute('aria-hidden', 'true');
+    }
+
+    const ranking = document.getElementById('org-social-panel-ranking');
+    const board = document.getElementById('org-page-leaderboard');
+    if (ranking && board && !ranking.dataset.folded) {
+      const mount = document.createElement('div');
+      mount.className = 'org-promote-leaderboard-fold';
+      mount.id = 'org-promote-leaderboard-fold';
+      while (board.firstChild) {
+        mount.appendChild(board.firstChild);
+      }
+      ranking.appendChild(mount);
+      ranking.dataset.folded = '1';
+      board.hidden = true;
+      board.setAttribute('aria-hidden', 'true');
+      // Badge share cards already live in the ranking panel — hide the folded duplicate mount.
+      const dupShare = document.getElementById('org-ranking-share-groups-mount');
+      if (dupShare) {
+        dupShare.hidden = true;
+        dupShare.setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+
+  function ensurePromoteLeaderboardReady() {
+    ensurePromotePanelsFolded();
+    if (window.HubRankings) {
+      if (typeof window.HubRankings.setMyGroupIds === 'function') {
+        window.HubRankings.setMyGroupIds(
+          (state.groups || []).map(function (g) {
+            return g.id;
+          })
+        );
+      }
+      if (typeof window.HubRankings.ensure === 'function') {
+        window.HubRankings.ensure();
+      }
+    }
+  }
+
+  function ensurePromoteReachReady() {
+    ensurePromotePanelsFolded();
+    renderVisibilityHubMeta();
+    if (!state.eventsLoaded || !state.opportunitiesLoaded) {
+      requestAnimationFrame(function () {
+        if (!state.eventsLoaded) refresh();
+        if (!state.opportunitiesLoaded) {
+          loadOpportunitiesList().then(function () {
+            renderVisibilityHubMeta();
+          });
+        }
+        loadFeaturedSpotlightSlots().then(function () {
+          renderVisibilityHubMeta();
+        });
+      });
+    }
+  }
+
   function setRoute(route, options) {
     options = options || {};
     closeNotificationsPanel();
@@ -8563,11 +8821,15 @@
     } else if (route === 'team') {
       page = 'team';
     } else if (route === 'visibility' || route === 'grow-visibility') {
-      page = 'visibility';
-    } else if (route === 'leaderboard' || route === 'rankings') {
-      page = 'leaderboard';
-    } else if (route === 'social' || route === 'promote' || route === 'social-spotlight' || route === 'event-spotlight') {
       page = 'social';
+    } else if (route === 'leaderboard' || route === 'rankings') {
+      page = 'social';
+    } else if (isSocialRoute(route)) {
+      page = 'social';
+    }
+
+    if (page === 'social') {
+      ensurePromotePanelsFolded();
     }
 
     document.querySelectorAll('[data-org-page]').forEach((p) => {
@@ -8583,10 +8845,36 @@
       syncEventsTabHighlights(null, false);
       syncBusinessTabHighlights(null, false);
     }
+    const fromRoute = page === 'social' ? socialTabFromRoute(route) : '';
+    const fromHash = page === 'social' ? socialTabFromHash() : '';
+    const socialTabPreferred = fromRoute || fromHash || '';
     if (page === 'social') {
-      initSocialPageTabs();
+      // Sidebar "Promote" (#social / #promote) always opens LinkedIn — don't restore a stored tab.
+      const barePromote =
+        !fromRoute &&
+        (route === 'social' || route === 'promote' || route === '') &&
+        (!fromHash || fromHash === 'linkedin');
+      const tabToOpen = barePromote ? 'linkedin' : socialTabPreferred || undefined;
+      initSocialPageTabs(tabToOpen);
+      if (barePromote || tabToOpen === 'linkedin') {
+        try {
+          sessionStorage.setItem(SOCIAL_TAB_STORAGE_KEY, 'linkedin');
+        } catch {
+          /* ignore */
+        }
+      }
+      // Canonicalise legacy deep links so guides and shares match the tab.
+      if (fromRoute === 'reach' || fromRoute === 'ranking') {
+        syncSocialHash(fromRoute);
+      }
       renderOrganiserRankingShare();
       ensureFeaturedUpgradePanelReady();
+      if (tabToOpen === 'ranking' || socialTabPreferred === 'ranking') {
+        ensurePromoteLeaderboardReady();
+      }
+      if (tabToOpen === 'reach' || socialTabPreferred === 'reach') {
+        ensurePromoteReachReady();
+      }
       requestAnimationFrame(function () {
         ensureLinkedInPostBuilder({ force: true });
         loadOpportunitiesList().then(function () {
@@ -8595,37 +8883,6 @@
           }
         });
       });
-    }
-    if (page === 'visibility') {
-      renderVisibilityHubMeta();
-      if (!state.eventsLoaded || !state.opportunitiesLoaded) {
-        requestAnimationFrame(function () {
-          if (!state.eventsLoaded) refresh();
-          if (!state.opportunitiesLoaded) {
-            loadOpportunitiesList().then(function () {
-              renderVisibilityHubMeta();
-            });
-          }
-          loadFeaturedSpotlightSlots().then(function () {
-            renderVisibilityHubMeta();
-          });
-        });
-      }
-    }
-    if (page === 'leaderboard') {
-      if (window.HubRankings) {
-        if (typeof window.HubRankings.setMyGroupIds === 'function') {
-          window.HubRankings.setMyGroupIds(
-            (state.groups || []).map(function (g) {
-              return g.id;
-            })
-          );
-        }
-        if (typeof window.HubRankings.ensure === 'function') {
-          window.HubRankings.ensure();
-        }
-      }
-      renderOrganiserRankingShare();
     }
     if (page === 'team') {
       ensureTeamLoaded().then(function () {
@@ -8679,9 +8936,9 @@
           : page === 'business-list'
             ? 'business-list'
             : page === 'social'
-              ? route === 'social-spotlight' || route === 'event-spotlight'
-                ? 'social-spotlight'
-                : 'social'
+              ? socialHashForTab(
+                  socialTabPreferred || socialTabFromHash() || storedSocialTab() || 'linkedin'
+                )
               : page === 'dashboard'
                 ? ''
                 : page;
@@ -11543,8 +11800,9 @@
 
   function scrollToSocialLinkedIn() {
     setRoute('social');
+    setSocialTab('linkedin');
     requestAnimationFrame(function () {
-      const el = document.getElementById('org-social-linkedin');
+      const el = document.getElementById('org-social-panel-linkedin');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
@@ -13439,7 +13697,6 @@
       applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
       setRoute(r.sub || r.page);
-      if (r.page === 'social' || r.page === 'social-spotlight') initSocialPageTabs();
       if (
         r.page === 'groups' ||
         r.page === 'memberships' ||

@@ -93,11 +93,11 @@
       ],
     },
     social: {
-      title: 'How to share your event',
+      title: 'How to promote your group',
       steps: [
-        'Pick an event or listing to build a social post draft.',
-        'Edit the caption, then copy it or open LinkedIn, Facebook, or X to share.',
-        'Featured upgrade options appear here if you want extra visibility.',
+        'Start with a free LinkedIn post — we write the words and make the picture.',
+        'Add your colours & logo, website badge, or Top groups tools from the tabs.',
+        'Use More reach for paid listing boosts and hub sponsorship options.',
       ],
     },
     'social-spotlight': {
@@ -109,12 +109,20 @@
       ],
     },
     visibility: {
-      title: 'How to grow your visibility',
+      title: 'How to get more reach',
       steps: [
-        'Feature your own event or business opportunity to show it first when people browse the hub.',
-        'Open Grow your visibility any time to compare self-serve upgrades and sponsorship options.',
-        'Sponsorship packages are for third-party B2B brands reaching audiences across directories — not for pinning your own listings.',
+        'Feature a business opportunity to show it first in the opportunities directory.',
+        'Sponsor the hub as a brand to reach people browsing events, opportunities, or organiser pages.',
+        'To pin an event higher on the hub, use Feature event (£55/mo) — checkout lives on that tab.',
         'City Sponsor checks out online; Headline Sponsor and Page Partner are confirmed by enquiry.',
+      ],
+    },
+    leaderboard: {
+      title: 'How Top groups works',
+      steps: [
+        'Groups are ranked by attendee ratings, then review rate.',
+        'Share your ranking award badge when you place, and choose whether to appear on the public list.',
+        'The Hub partner badge (listed-on seal) is separate — find it under Promote → Hub partner badge.',
       ],
     },
     team: {
@@ -136,9 +144,33 @@
   function guideKeyFromLocation() {
     var hash = (location.hash || '').replace(/^#/, '').trim().toLowerCase();
     if (!hash || hash === 'dashboard') return 'dashboard';
+    if (
+      hash === 'promote' ||
+      hash === 'social' ||
+      hash === 'social-linkedin' ||
+      hash === 'social-brand' ||
+      hash === 'brand' ||
+      hash === 'brand-kit' ||
+      hash === 'social-partner' ||
+      hash === 'partner' ||
+      hash === 'website-badge'
+    ) {
+      return 'social';
+    }
+    if (
+      hash === 'social-ranking' ||
+      hash === 'ranking-badge' ||
+      hash === 'review-badge' ||
+      hash === 'ranking-embed' ||
+      hash === 'leaderboard' ||
+      hash === 'rankings'
+    ) {
+      return 'leaderboard';
+    }
+    if (hash === 'social-reach' || hash === 'reach' || hash === 'visibility' || hash === 'grow-visibility') {
+      return 'visibility';
+    }
     if (hash === 'social-spotlight' || hash === 'event-spotlight') return 'social-spotlight';
-    if (hash === 'promote' || hash === 'social') return 'social';
-    if (hash === 'visibility' || hash === 'grow-visibility') return 'visibility';
     if (
       hash === 'business-overview' ||
       hash === 'business-listings' ||
