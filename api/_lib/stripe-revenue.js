@@ -28,6 +28,7 @@ const SELF_SERVE_CHECKOUT_TYPES = new Set([
   'opportunity_listing',
   'opportunity_premium',
   'event_featured',
+  'group_update_credits',
 ]);
 
 const PLACEMENT_CATEGORIES = {

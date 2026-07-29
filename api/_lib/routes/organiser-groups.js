@@ -101,6 +101,8 @@ module.exports = async function handler(req, res) {
       body.brand_secondary_color !== undefined ||
       body.brandAccentColor !== undefined ||
       body.brand_accent_color !== undefined ||
+      body.brandTypeStyle !== undefined ||
+      body.brand_type_style !== undefined ||
       body.location !== undefined ||
       body.logoUrl ||
       body.logoBase64 ||
@@ -131,6 +133,7 @@ module.exports = async function handler(req, res) {
         brandPrimaryColor: body.brandPrimaryColor ?? body.brand_primary_color,
         brandSecondaryColor: body.brandSecondaryColor ?? body.brand_secondary_color,
         brandAccentColor: body.brandAccentColor ?? body.brand_accent_color,
+        brandTypeStyle: body.brandTypeStyle ?? body.brand_type_style,
         location: body.location,
         contactEmail: body.contactEmail,
         industries: body.industries,

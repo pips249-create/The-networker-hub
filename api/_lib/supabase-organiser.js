@@ -43,6 +43,7 @@ function rowToGroup(row) {
     brandPrimaryColor: String(row.brand_primary_color || '').trim(),
     brandSecondaryColor: String(row.brand_secondary_color || '').trim(),
     brandAccentColor: String(row.brand_accent_color || '').trim(),
+    brandTypeStyle: String(row.brand_type_style || 'classic').trim() || 'classic',
     industries,
     meetingFormats,
     location: industries.join(', '),
@@ -112,10 +113,13 @@ async function listGroupsForAdminOverview(session) {
   const mine = await listGroupsForUser(session.sub || '', session.email);
   const byId = new Map(mine.map((g) => [g.id, g]));
 
+  // Recent events only — avoids scanning every event row on admin dashboard load.
   const { data: eventRows, error } = await sb
     .from('events')
     .select('organiser_id')
-    .not('organiser_id', 'is', null);
+    .not('organiser_id', 'is', null)
+    .order('starts_at', { ascending: false })
+    .limit(800);
   if (error) throw new Error(error.message);
 
   const orgIds = [...new Set((eventRows || []).map((r) => r.organiser_id).filter(Boolean))].slice(0, 150);
@@ -353,6 +357,13 @@ async function updateGroup(groupId, payload) {
     const hex = normalizeBrandColor(payload.brandAccentColor ?? payload.brand_accent_color);
     patch.brand_accent_color = hex || null;
   }
+  if (payload.brandTypeStyle !== undefined || payload.brand_type_style !== undefined) {
+    const style = String(payload.brandTypeStyle ?? payload.brand_type_style ?? '')
+      .trim()
+      .toLowerCase();
+    const allowed = new Set(['classic', 'editorial', 'modern', 'bold', 'friendly']);
+    patch.brand_type_style = allowed.has(style) ? style : 'classic';
+  }
   if (payload.contactEmail !== undefined) {
     patch.contact_email = payload.contactEmail || null;
     patch.email = payload.contactEmail || null;
@@ -462,11 +473,12 @@ async function updateGroup(groupId, payload) {
     error &&
     (patch.brand_primary_color !== undefined ||
       patch.brand_secondary_color !== undefined ||
-      patch.brand_accent_color !== undefined) &&
-    /brand_(primary|secondary|accent)_color/i.test(String(error.message || ''))
+      patch.brand_accent_color !== undefined ||
+      patch.brand_type_style !== undefined) &&
+    /brand_(primary|secondary|accent)_color|brand_type_style/i.test(String(error.message || ''))
   ) {
     throw new Error(
-      'Brand colours could not be saved — the database is missing brand colour columns. Apply migration 210_organiser_brand_kit.sql, then try again.'
+      'Brand kit could not be saved — the database is missing brand columns. Apply migrations 210 and 220, then try again.'
     );
   }
   if (error) throw new Error(error.message);

@@ -263,36 +263,61 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
-  /** Hub credit mark — bottom-right, clear on mobile feeds, never dominating the graphic. */
+  /** Hub credit mark — bottom-right; sized to read on mobile LinkedIn feeds. */
   function hubCreditBox(opts) {
     opts = opts || {};
     var emphasis = Boolean(opts.emphasis);
-    var dark = Boolean(opts.dark);
-    var w = emphasis ? 248 : dark ? 236 : 228;
-    var h = emphasis ? 66 : dark ? 64 : 60;
+    var w = emphasis ? 380 : 340;
+    var h = emphasis ? 102 : 92;
     return {
       w: w,
       h: h,
-      x: W - w - 48,
-      y: H - h - (opts.textBelow === false ? 48 : dark ? 52 : 68),
-      textBelow: opts.textBelow !== false,
+      x: W - w - 40,
+      y: H - h - (opts.hideText ? 44 : 78),
+      textBelow: !opts.hideText,
       label: emphasis ? 'The Networker Hub' : 'on The Networker Hub',
     };
   }
 
-  function drawHubCredit(ctx, hubLogo, style) {
+  function drawHubCredit(ctx, logos, style) {
     style = style || {};
+    logos = logos || {};
+    var onDark = Boolean(style.onDark);
+    var hubLogo = onDark ? logos.onDark || logos.onLight : logos.onLight || logos.onDark;
     if (!hubLogo) return null;
     var box = hubCreditBox(style);
+    var padX = 16;
+    var padY = 12;
+    var textExtra = box.textBelow && style.hideText !== true ? 34 : 0;
+    ctx.fillStyle = onDark ? 'rgba(8, 12, 18, 0.62)' : 'rgba(255, 255, 255, 0.94)';
+    roundRect(
+      ctx,
+      box.x - padX,
+      box.y - padY,
+      box.w + padX * 2,
+      box.h + padY * 2 + textExtra,
+      18
+    );
+    ctx.fill();
     drawContainedImage(ctx, hubLogo, box.x, box.y, box.w, box.h);
     if (box.textBelow && style.hideText !== true) {
-      ctx.fillStyle = style.textColor || 'rgba(255,255,255,0.78)';
-      ctx.font = '400 17px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.fillStyle = style.textColor || (onDark ? 'rgba(255,255,255,0.9)' : 'rgba(44,40,38,0.78)');
+      ctx.font = '600 20px "DM Sans", Arial, Helvetica, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(box.label, box.x + box.w / 2, box.y + box.h + 24);
+      ctx.fillText(box.label, box.x + box.w / 2, box.y + box.h + 28);
       ctx.textAlign = 'left';
     }
     return box;
+  }
+
+  /** Prefer light Hub mark on dark corners; dark mark on light/gold corners. */
+  function hubCreditOnDark(bg, layoutHint) {
+    if (layoutHint === 'photo' || layoutHint === 'split') return true;
+    if (layoutHint === 'magazine') return false;
+    if (!bg) return false;
+    // Navy & gold puts a bright gold blob in the credit corner.
+    if (bg.id === 'navy') return false;
+    return Boolean(bg.dark);
   }
 
   function drawLogoPlaceholder(ctx, x, y, w, h, hintColor) {
@@ -468,6 +493,46 @@
     return 'cream';
   }
 
+  var TYPE_STYLES = {
+    classic: {
+      title: '"DM Serif Display", Georgia, "Times New Roman", serif',
+      body: '"DM Sans", Arial, Helvetica, sans-serif',
+    },
+    editorial: {
+      title: '"Playfair Display", Georgia, "Times New Roman", serif',
+      body: '"Source Sans 3", Arial, Helvetica, sans-serif',
+    },
+    modern: {
+      title: '"Source Sans 3", Arial, Helvetica, sans-serif',
+      body: '"Source Sans 3", Arial, Helvetica, sans-serif',
+    },
+    bold: {
+      title: '"Oswald", "Arial Narrow", Arial, sans-serif',
+      body: '"DM Sans", Arial, Helvetica, sans-serif',
+    },
+    friendly: {
+      title: '"Nunito", Arial, Helvetica, sans-serif',
+      body: '"Nunito", Arial, Helvetica, sans-serif',
+    },
+  };
+
+  function typeFacesFor(styleId) {
+    var id = String(styleId || 'classic').toLowerCase();
+    return TYPE_STYLES[id] || TYPE_STYLES.classic;
+  }
+
+  function ensureTypeFonts(styleId) {
+    var faces = typeFacesFor(styleId);
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.all([
+      document.fonts.load('400 72px ' + faces.title),
+      document.fonts.load('700 28px ' + faces.body),
+      document.fonts.load('400 24px ' + faces.body),
+    ]).catch(function () {
+      return null;
+    });
+  }
+
   function paintPost(ctx, opts) {
     var tpl = opts.template;
     var bg = opts.background || BACKGROUNDS[0];
@@ -476,7 +541,10 @@
     var line2 = String(opts.line2 != null ? opts.line2 : tpl.line2).trim();
     var line3 = String(opts.line3 != null ? opts.line3 : tpl.line3).trim();
     var orgLogo = opts.orgLogoImg || null;
-    var hubLogo = opts.hubLogoImg || null;
+    var hubLogos = opts.hubLogos || {
+      onDark: opts.hubLogoImg || null,
+      onLight: opts.hubLogoImg || null,
+    };
     var eventImage = opts.eventImageImg || null;
     var isEventSpotlight = tpl.theme === 'event_spotlight';
     var isPhotoHero = tpl.theme === 'event_photo_hero';
@@ -486,6 +554,9 @@
     var isEventGroup = tpl.group === 'events';
     var quietBrand = Boolean(opts.quietBrand);
     var isDark = Boolean(bg.dark);
+    var faces = typeFacesFor(opts.typeStyle);
+    var titleFace = faces.title;
+    var bodyFace = faces.body;
     var kickerText = opts.isPast
       ? 'THANK YOU'
       : String(tpl.kicker || (isEventGroup ? 'EVENT' : '')).toUpperCase();
@@ -513,11 +584,11 @@
         ctx.fillStyle = ph;
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = 'rgba(255,255,255,0.72)';
-        ctx.font = '600 28px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.font = '600 28px ' + bodyFace;
         ctx.textAlign = 'center';
         ctx.fillText('Your event photo will appear here', W / 2, H / 2 - 12);
         ctx.fillStyle = 'rgba(255,255,255,0.55)';
-        ctx.font = '400 20px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.font = '400 20px ' + bodyFace;
         ctx.fillText('Pick an event with a photo for the best result', W / 2, H / 2 + 28);
         ctx.textAlign = 'left';
       }
@@ -538,11 +609,11 @@
 
       var textBaseY = H - 270;
       ctx.fillStyle = '#e8b84b';
-      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '700 22px ' + bodyFace;
       ctx.fillText(kickerText, 56, textBaseY);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = '400 58px "DM Serif Display", Georgia, "Times New Roman", serif';
+      ctx.font = '400 58px ' + titleFace;
       var heroTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 920);
       var heroY = textBaseY + 62;
       for (var hi = 0; hi < Math.min(3, heroTitle.length); hi++) {
@@ -551,7 +622,7 @@
       }
 
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = '400 24px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '400 24px ' + bodyFace;
       var heroSub = wrapText(ctx, line3, 880);
       heroY += 10;
       for (var hs = 0; hs < Math.min(2, heroSub.length); hs++) {
@@ -559,8 +630,11 @@
         heroY += 34;
       }
 
-      if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, { textColor: 'rgba(255,255,255,0.78)' });
+      if (hubLogos.onDark || hubLogos.onLight) {
+        drawHubCredit(ctx, hubLogos, {
+          onDark: true,
+          textColor: 'rgba(255,255,255,0.9)',
+        });
       }
       return;
     }
@@ -574,7 +648,7 @@
         ctx.fillStyle = bg.stops[1] || '#ebe0f0';
         ctx.fillRect(0, 0, splitX, H);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.font = '600 22px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.font = '600 22px ' + bodyFace;
         ctx.textAlign = 'center';
         ctx.fillText('Add an event photo', splitX / 2, H / 2);
         ctx.textAlign = 'left';
@@ -588,11 +662,11 @@
       drawOrgLogoBox(splitX + 40, 48, 400, 210, 22);
 
       ctx.fillStyle = '#e8b84b';
-      ctx.font = '700 20px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '700 20px ' + bodyFace;
       ctx.fillText(kickerText, splitX + 48, 320);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = '400 48px "DM Serif Display", Georgia, "Times New Roman", serif';
+      ctx.font = '400 48px ' + titleFace;
       var splitTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), W - splitX - 100);
       var sy = 390;
       for (var st = 0; st < Math.min(4, splitTitle.length); st++) {
@@ -600,15 +674,18 @@
         sy += 56;
       }
       ctx.fillStyle = 'rgba(255,255,255,0.82)';
-      ctx.font = '400 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '400 22px ' + bodyFace;
       var splitSub = wrapText(ctx, line3, W - splitX - 100);
       sy += 16;
       for (var ss = 0; ss < Math.min(3, splitSub.length); ss++) {
         ctx.fillText(splitSub[ss], splitX + 48, sy);
         sy += 32;
       }
-      if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, { textColor: 'rgba(255,255,255,0.7)' });
+      if (hubLogos.onDark || hubLogos.onLight) {
+        drawHubCredit(ctx, hubLogos, {
+          onDark: true,
+          textColor: 'rgba(255,255,255,0.9)',
+        });
       }
       return;
     }
@@ -626,12 +703,12 @@
       drawOrgLogoBox(W / 2 - 230, 56, 460, 230, 24);
 
       ctx.fillStyle = bg.kicker;
-      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '700 22px ' + bodyFace;
       ctx.textAlign = 'center';
       ctx.fillText(kickerText, W / 2, 340);
 
       ctx.fillStyle = bg.title;
-      ctx.font = '400 78px "DM Serif Display", Georgia, "Times New Roman", serif';
+      ctx.font = '400 78px ' + titleFace;
       var posterTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
       var py = 440;
       for (var pt = 0; pt < Math.min(3, posterTitle.length); pt++) {
@@ -640,7 +717,7 @@
       }
 
       ctx.fillStyle = bg.sub;
-      ctx.font = '400 28px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '400 28px ' + bodyFace;
       var posterSub = wrapText(ctx, line3, 900);
       py += 20;
       for (var ps = 0; ps < Math.min(3, posterSub.length); ps++) {
@@ -648,8 +725,11 @@
         py += 38;
       }
       ctx.textAlign = 'left';
-      if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, { textColor: bg.credit });
+      if (hubLogos.onDark || hubLogos.onLight) {
+        drawHubCredit(ctx, hubLogos, {
+          onDark: hubCreditOnDark(bg, 'poster'),
+          textColor: bg.credit,
+        });
       }
       return;
     }
@@ -671,11 +751,11 @@
       drawOrgLogoBox(48, stripH + 36, 320, 170, 18);
 
       ctx.fillStyle = bg.accent || '#4a4446';
-      ctx.font = '700 20px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '700 20px ' + bodyFace;
       ctx.fillText(kickerText, 400, stripH + 78);
 
       ctx.fillStyle = '#2c2826';
-      ctx.font = '400 56px "DM Serif Display", Georgia, "Times New Roman", serif';
+      ctx.font = '400 56px ' + titleFace;
       var magTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 720);
       var my = stripH + 150;
       for (var mt = 0; mt < Math.min(3, magTitle.length); mt++) {
@@ -683,15 +763,18 @@
         my += 62;
       }
       ctx.fillStyle = '#5c5557';
-      ctx.font = '400 24px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '400 24px ' + bodyFace;
       var magSub = wrapText(ctx, line3, 720);
       my += 8;
       for (var ms = 0; ms < Math.min(3, magSub.length); ms++) {
         ctx.fillText(magSub[ms], 400, my);
         my += 34;
       }
-      if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, { textColor: '#5c5557' });
+      if (hubLogos.onDark || hubLogos.onLight) {
+        drawHubCredit(ctx, hubLogos, {
+          onDark: false,
+          textColor: '#5c5557',
+        });
       }
       return;
     }
@@ -725,10 +808,10 @@
     if (isEventSpotlight && !quietBrand) {
       drawOrgLogoBox(56, 40, 460, 230, 24);
       ctx.fillStyle = kickerColor;
-      ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '700 22px ' + bodyFace;
       ctx.fillText(kickerText, 540, 100);
       ctx.fillStyle = titleColor;
-      ctx.font = '700 36px "DM Serif Display", Georgia, serif';
+      ctx.font = '700 36px ' + titleFace;
       var spotName = wrapText(ctx, name || 'Your group', 560);
       for (var sn = 0; sn < Math.min(2, spotName.length); sn++) {
         ctx.fillText(spotName[sn], 540, 160 + sn * 42);
@@ -744,7 +827,7 @@
       }
       var spotlightTextY = eventImage ? 720 : 360;
       ctx.fillStyle = titleColor;
-      ctx.font = '400 58px "DM Serif Display", Georgia, "Times New Roman", serif';
+      ctx.font = '400 58px ' + titleFace;
       var eventTitleLines = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
       var eventY = spotlightTextY;
       for (var et = 0; et < Math.min(3, eventTitleLines.length); et++) {
@@ -752,15 +835,18 @@
         eventY += 64;
       }
       ctx.fillStyle = subColor;
-      ctx.font = '400 26px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.font = '400 26px ' + bodyFace;
       var eventSubLines = wrapText(ctx, line3, 900);
       eventY += 10;
       for (var es = 0; es < Math.min(2, eventSubLines.length); es++) {
         ctx.fillText(eventSubLines[es], 72, eventY);
         eventY += 34;
       }
-      if (hubLogo) {
-        drawHubCredit(ctx, hubLogo, { textColor: creditColor });
+      if (hubLogos.onDark || hubLogos.onLight) {
+        drawHubCredit(ctx, hubLogos, {
+          onDark: hubCreditOnDark(bg, 'spotlight'),
+          textColor: creditColor,
+        });
       }
       return;
     }
@@ -781,7 +867,7 @@
         var logoY = brandBoxY + (brandBoxH - logoH) / 2;
         drawContainedImage(ctx, orgLogo, logoX, logoY, logoW, logoH);
         ctx.fillStyle = brandText;
-        ctx.font = '700 40px "DM Serif Display", Georgia, serif';
+        ctx.font = '700 40px ' + titleFace;
         var nameLines = wrapText(ctx, name || 'Your group', brandBoxW - logoW - 80);
         var nameY = brandBoxY + (brandBoxH - Math.min(2, nameLines.length) * 46) / 2 + 36;
         for (var n = 0; n < Math.min(2, nameLines.length); n++) {
@@ -789,24 +875,24 @@
         }
       } else {
         ctx.fillStyle = brandText;
-        ctx.font = '700 44px "DM Serif Display", Georgia, serif';
+        ctx.font = '700 44px ' + titleFace;
         var solo = wrapText(ctx, name || 'Your group name', 980);
         for (var s = 0; s < Math.min(2, solo.length); s++) {
           ctx.fillText(solo[s], brandBoxX + 36, brandBoxY + 80 + s * 50);
         }
         ctx.fillStyle = brandHint;
-        ctx.font = '400 22px "DM Sans", Arial, Helvetica, sans-serif';
+        ctx.font = '400 22px ' + bodyFace;
         ctx.fillText('Add your logo for a stronger post', brandBoxX + 36, brandBoxY + 180);
       }
     }
 
     var textY = quietBrand ? 340 : 520;
     ctx.fillStyle = kickerColor;
-    ctx.font = '700 22px "DM Sans", Arial, Helvetica, sans-serif';
+    ctx.font = '700 22px ' + bodyFace;
     ctx.fillText(kickerText, 72, textY);
 
     ctx.fillStyle = titleColor;
-    ctx.font = '400 72px "DM Serif Display", Georgia, "Times New Roman", serif';
+    ctx.font = '400 72px ' + titleFace;
     var h1 = wrapText(ctx, line1.slice(0, 48), 1050);
     var y = textY + 80;
     for (var a = 0; a < Math.min(2, h1.length); a++) {
@@ -820,7 +906,7 @@
     }
 
     ctx.fillStyle = subColor;
-    ctx.font = '400 28px "DM Sans", Arial, Helvetica, sans-serif';
+    ctx.font = '400 28px ' + bodyFace;
     var subLines = wrapText(ctx, line3, 1050);
     y += 18;
     for (var i = 0; i < Math.min(3, subLines.length); i++) {
@@ -828,12 +914,11 @@
       y += 38;
     }
 
-    var isDarkHub = Boolean(isDark && hubLogo);
-    if (hubLogo) {
-      drawHubCredit(ctx, hubLogo, {
+    if (hubLogos.onDark || hubLogos.onLight) {
+      drawHubCredit(ctx, hubLogos, {
         emphasis: Boolean(tpl.hubEmphasis),
-        dark: isDarkHub,
-        hideText: isDarkHub,
+        onDark: hubCreditOnDark(bg, 'default'),
+        hideText: Boolean(tpl.hubEmphasis),
         textColor: creditColor,
       });
     }
@@ -843,6 +928,41 @@
   function siteOrigin() {
     if (global.location && global.location.origin) return global.location.origin;
     return 'https://www.thenetworkerhub.com';
+  }
+
+  function withShareUtm(url, content) {
+    var raw = String(url || '').trim();
+    if (!raw) return raw;
+    try {
+      var u = new URL(raw, siteOrigin());
+      if (!u.searchParams.has('utm_source')) u.searchParams.set('utm_source', 'linkedin');
+      if (!u.searchParams.has('utm_medium')) u.searchParams.set('utm_medium', 'organic');
+      if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', 'organiser_share');
+      if (content && !u.searchParams.has('utm_content')) {
+        u.searchParams.set('utm_content', String(content).slice(0, 64));
+      }
+      return u.toString();
+    } catch (e) {
+      return raw;
+    }
+  }
+
+  function trackShareAction(name, props) {
+    try {
+      if (global.HubAnalytics && typeof global.HubAnalytics.track === 'function') {
+        global.HubAnalytics.track(name, props || {});
+      } else if (typeof global.va === 'function') {
+        global.va('event', {
+          name: name,
+          data: props || undefined,
+        });
+      }
+    } catch (e) {
+      /* analytics optional */
+    }
+    if (global.HubCommsPack && typeof global.HubCommsPack.markEventShareDone === 'function') {
+      global.HubCommsPack.markEventShareDone();
+    }
   }
 
   function isPublishedOpportunity(o) {
@@ -1340,7 +1460,17 @@
     }
 
     function publishedEvents() {
-      return (getEvents() || []).filter(isPublishedEvent);
+      var liveIds = {};
+      promotableGroups().forEach(function (g) {
+        if (g && g.id) liveIds[String(g.id)] = true;
+      });
+      return (getEvents() || []).filter(function (ev) {
+        if (!isPublishedEvent(ev)) return false;
+        var gid = eventGroupId(ev);
+        // If we know the group and it isn't live/published, skip.
+        if (gid && Object.keys(liveIds).length) return Boolean(liveIds[gid]);
+        return true;
+      });
     }
 
     function eventGroupId(ev) {
@@ -1402,8 +1532,23 @@
       return publishedListings().length > 0;
     }
 
+    function isLiveOrganiserGroup(g) {
+      if (!g) return false;
+      var key = String(g.statusKey || g.status || g.statusRaw || g.listingStatus || '')
+        .trim()
+        .toLowerCase();
+      if (!key) return false;
+      if (/unpublish/.test(key)) return false;
+      if (key === 'draft' || /^(pending|hidden|inactive)/.test(key)) return false;
+      return key === 'live' || key === 'published' || /publish|live|active|public|approved|visible/.test(key);
+    }
+
+    function promotableGroups() {
+      return (getGroups() || []).filter(isLiveOrganiserGroup);
+    }
+
     function currentGroup() {
-      var groups = getGroups() || [];
+      var groups = promotableGroups();
       return (
         groups.find(function (x) {
           return String(x.id) === String(state.groupId);
@@ -1438,6 +1583,7 @@
       var listing = currentListing();
       var event = currentEvent();
       var name = state.displayName || elName.value || 'Our group';
+      var utmContent = (tpl && tpl.id) || 'post';
       if (isEventTemplate(tpl) && event) {
         return {
           name: name,
@@ -1445,7 +1591,7 @@
           eventTitle: event.title || 'Our event',
           dateLine: eventDateLine(event),
           location: eventPlaceLine(event),
-          url: eventPublicUrl(event),
+          url: withShareUtm(eventPublicUrl(event), utmContent),
           isPast: isPastEvent(event),
         };
       }
@@ -1453,13 +1599,13 @@
         return {
           name: name,
           listingTitle: listing.title || name,
-          url: opportunityPublicUrl(listing),
+          url: withShareUtm(opportunityPublicUrl(listing), utmContent),
         };
       }
       return {
         name: name,
         listingTitle: name,
-        url: profileUrlForGroup(group),
+        url: withShareUtm(profileUrlForGroup(group), utmContent),
       };
     }
 
@@ -1609,10 +1755,15 @@
     function applyEventToFields() {
       var event = currentEvent();
       if (!event) return;
-      var eventGroupId = event.organiserGroupId || event.organiser_id || event.groupId || '';
-      if (eventGroupId) {
-        state.groupId = String(eventGroupId);
-        elGroup.value = state.groupId;
+      var nextGroupId = event.organiserGroupId || event.organiser_id || event.groupId || '';
+      if (nextGroupId) {
+        var live = promotableGroups().some(function (g) {
+          return String(g.id) === String(nextGroupId);
+        });
+        if (live) {
+          state.groupId = String(nextGroupId);
+          elGroup.value = state.groupId;
+        }
       }
       var past = isPastEvent(event);
       state.line1 = event.title || (past ? 'Thank you' : 'New event');
@@ -1648,14 +1799,15 @@
     }
 
     function syncGroupOptions() {
-      var groups = getGroups() || [];
+      var groups = promotableGroups();
       var prev = state.groupId;
       elGroup.innerHTML = '';
       if (!groups.length) {
         var empty = document.createElement('option');
         empty.value = '';
-        empty.textContent = 'No organiser page yet — type a name below';
+        empty.textContent = 'No live organiser page — publish a group to promote it';
         elGroup.appendChild(empty);
+        state.groupId = '';
         return;
       }
       groups.forEach(function (g, idx) {
@@ -1668,7 +1820,7 @@
       if (
         prev &&
         groups.some(function (g) {
-          return g.id === prev;
+          return String(g.id) === String(prev);
         })
       ) {
         elGroup.value = prev;
@@ -1738,11 +1890,18 @@
       return null;
     }
 
-    async function ensureHubLogo(tpl) {
-      var bg = currentBackground();
-      var useDark = Boolean(bg.dark);
-      if (useDark) {
-        if (state.hubLogoDarkImg) return state.hubLogoDarkImg;
+    async function ensureHubLogos() {
+      if (!state.hubLogoImg) {
+        try {
+          state.hubLogoImg = await loadAsset([
+            '../assets/logo-nav-transparent.png',
+            '/assets/logo-nav-transparent.png',
+          ]);
+        } catch (e) {
+          state.hubLogoImg = null;
+        }
+      }
+      if (!state.hubLogoDarkImg) {
         try {
           state.hubLogoDarkImg = await loadAsset([
             '../assets/logo-hub-dark.png',
@@ -1751,22 +1910,17 @@
         } catch (e) {
           state.hubLogoDarkImg = null;
         }
-        return state.hubLogoDarkImg || ensureHubLogoLight();
       }
-      return ensureHubLogoLight();
+      return {
+        // Light mark for dark corners; full-colour mark for light/gold corners.
+        onDark: state.hubLogoDarkImg || state.hubLogoImg,
+        onLight: state.hubLogoImg || state.hubLogoDarkImg,
+      };
     }
 
-    async function ensureHubLogoLight() {
-      if (state.hubLogoImg) return state.hubLogoImg;
-      try {
-        state.hubLogoImg = await loadAsset([
-          '../assets/logo-nav-transparent.png',
-          '/assets/logo-nav-transparent.png',
-        ]);
-      } catch (e) {
-        state.hubLogoImg = null;
-      }
-      return state.hubLogoImg;
+    async function ensureHubLogo() {
+      var logos = await ensureHubLogos();
+      return logos.onDark || logos.onLight;
     }
 
     async function ensureOrgLogo() {
@@ -1860,9 +2014,24 @@
         orgLogoImg: quietBrand ? null : state.orgLogoImg,
         eventImageImg: quietBrand ? null : state.eventImageImg,
         eventImagePosition: position,
-        hubLogoImg: hubImg || null,
+        hubLogoImg: (hubImg && hubImg.onDark) || hubImg || null,
+        hubLogos: hubImg && hubImg.onDark !== undefined
+          ? hubImg
+          : { onDark: hubImg || null, onLight: hubImg || null },
         quietBrand: quietBrand,
         isPast: Boolean(event && isPastEvent(event)),
+        typeStyle:
+          (currentGroup() &&
+            (currentGroup().brandTypeStyle ||
+              currentGroup().brand_type_style ||
+              (function () {
+                try {
+                  return localStorage.getItem('hub_brand_type_style:' + currentGroup().id);
+                } catch (e) {
+                  return '';
+                }
+              })())) ||
+          'classic',
       };
     }
 
@@ -1874,9 +2043,22 @@
       state.rendering = true;
       try {
         var tpl = currentTemplate();
-        var hubImg = await ensureHubLogo(tpl);
+        var hubImg = await ensureHubLogos();
         await ensureOrgLogo();
         await ensureEventImage();
+        var typeStyle =
+          (currentGroup() &&
+            (currentGroup().brandTypeStyle ||
+              currentGroup().brand_type_style ||
+              (function () {
+                try {
+                  return localStorage.getItem('hub_brand_type_style:' + currentGroup().id);
+                } catch (e) {
+                  return '';
+                }
+              })())) ||
+          'classic';
+        await ensureTypeFonts(typeStyle);
         state.line1 = elLine1.value;
         state.line2 = elLine2.value;
         state.line3 = elLine3.value;
@@ -1921,6 +2103,10 @@
         }
         link.click();
         setStatus('Downloaded — attach this picture when you post on LinkedIn.');
+        trackShareAction('organiser_linkedin_download', {
+          template: tpl.id,
+          group: tpl.group,
+        });
       });
     }
 
@@ -1952,6 +2138,9 @@
         done();
       }
       setStatus('Text copied — paste it into your LinkedIn post along with the picture.');
+      trackShareAction('organiser_linkedin_copy_caption', {
+        template: currentTemplate().id,
+      });
     }
 
     function copyCaptionAndOpenLinkedIn() {
@@ -1983,6 +2172,9 @@
       }
       window.open('https://www.linkedin.com/feed/', '_blank', 'noopener,noreferrer');
       setStatus('Text copied. On LinkedIn, click Start a post, paste the text, and attach your downloaded picture.');
+      trackShareAction('organiser_linkedin_open', {
+        template: currentTemplate().id,
+      });
     }
 
     function selectCategory(categoryId) {

@@ -343,7 +343,7 @@ async function searchEventsForHubert(userMessage, limit) {
     configured: true,
   };
 
-  const all = await fetchApprovedEvents(getSupabaseAdmin());
+  const all = await fetchApprovedEvents(getSupabaseAdmin(), { hardCap: 3000, browseList: true });
   const now = Date.now() - 12 * 60 * 60 * 1000;
 
   const ranked = (all || [])

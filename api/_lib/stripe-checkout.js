@@ -280,6 +280,47 @@ async function createEventFeaturedCheckoutSession(opts) {
 }
 
 /**
+ * Extra monthly group-update send credits (platform one-time payment).
+ */
+async function createGroupUpdateCreditsCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const { getCreditPack } = require('./group-update-credits');
+  const organiserId = String(opts.organiserId || '').trim();
+  const pack = getCreditPack(opts.packId);
+  if (!organiserId) throw new Error('missing_organiser_id');
+  if (!pack) throw new Error('invalid_pack');
+
+  const groupName = String(opts.groupName || 'Your group').trim() || 'Your group';
+  const amountPence = pack.amountPence;
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: opts.email,
+    client_reference_id: 'ogu-credits-' + organiserId + '-' + pack.id,
+    metadata: {
+      checkout_type: 'group_update_credits',
+      organiser_id: organiserId,
+      credit_pack: pack.id,
+      credit_quantity: String(pack.credits),
+      amount_pence: String(amountPence),
+      owner_email: String(opts.email || '').toLowerCase(),
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: [
+      lineItemFromCatalog(pack.catalogKey, {
+        currency: 'gbp',
+        product_data: {
+          name: 'Monthly group update — ' + pack.label,
+          description: pack.blurb + ' · ' + groupName,
+        },
+        unit_amount: amountPence,
+      }),
+    ],
+  });
+}
+
+/**
  * City Partner subscription — auto-bundles every 3 cities at the pack rate.
  */
 async function createCityPartnerCheckoutSession(opts) {
@@ -496,6 +537,7 @@ module.exports = {
   createOpportunityListingCheckoutSession,
   createOpportunityPremiumCheckoutSession,
   createEventFeaturedCheckoutSession,
+  createGroupUpdateCreditsCheckoutSession,
   createCityPartnerCheckoutSession,
   createMembershipCheckoutSession,
   createMembershipBillingPortalSession,

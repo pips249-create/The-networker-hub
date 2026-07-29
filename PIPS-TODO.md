@@ -4,7 +4,38 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 14 July 2026 (evening — infrastructure upgrade reminders added)*
+*Last updated: 29 July 2026 (evening — membership lifecycle shipped; scale unbounded paths; tomorrow checklist)*
+
+---
+
+## Tomorrow — 30 July 2026
+
+Ship/verify membership work, then scale readiness before loading more of the alphabet.
+
+### Morning — membership ship & verify
+1. Push `5d685ca` (+ scale unbounded-path commit) and deploy
+2. Apply migrations `216` (round-up email pref) + `217` (membership lifecycle emails / `pay_invite`)
+3. Enable **Stripe Customer Portal** (update card + cancel) in Dashboard
+4. Smoke-test: join → portal manage → failed payment emails → renewal receipt (watch for double Stripe receipts)
+
+### Midday — organiser checks
+5. Past-due / invite-to-pay tools on Memberships
+6. Round-up email preference independent of Hub marketing
+7. LinkedIn post builder: one upcoming + one past event
+
+### Afternoon — launch E2E (pick at least one)
+8. **Guest visit programme E2E** (priority before beta email)
+9. Category exclusivity (seat approval) E2E — if time
+10. Connect destination-charge spot-check — if time
+
+### Scale readiness (catalogue already ~900 events from A–C alone)
+11. Confirm **Supabase Pro** plan / RAM headroom before loading D–Z (nano already noted ~48% with ~1k groups)
+12. Spot-check `/api/organisers` and events browse + map pins under current catalogue (unbounded paths fixed 29 Jul — verify latency/payload)
+13. Note Resend free-tier ceiling before July beta send; upgrade if daily sends approach 80–90
+14. Optional: load-test browse + organiser pages (was week-8 item) once D–F groups are in
+
+### Park (not tomorrow)
+- Proration / mid-cycle plan switches · monthly-update extra credits · chapter industry exclusivity · SEO/GSC/redirect · beta email send itself
 
 ---
 
@@ -118,7 +149,8 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [ ] | 6–7 | Deploy SEO assets; confirm sitemap indexes all groups + published events |
 | [ ] | 7 | **Beta email** to 50–100 organisers — see `docs/BETA-EMAIL-JULY.md` |
 | [ ] | 7–8 | Fix beta feedback; target **20 groups** with at least 1 published event |
-| [ ] | 8 | Load test: browse + organiser pages with 1,000+ group profiles |
+| [x] | 8 | Bound organiser directory + geo/pins paths (paginated slim queries; `?all=1` removed) — 29 Jul |
+| [ ] | 8 | Load test: browse + organiser pages with 1,000+ group profiles (+ ~9k-event catalogue projection) |
 | [ ] | 8 | Optional: city landing pages or server-side meta for top SEO win |
 
 ### August — Scale, redirect, comms
@@ -280,7 +312,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [ ] | **Guest visit programme — end-to-end test** (complimentary visits → guest pass booking → exhausted → paid member ticket) |
 | [ ] | **Category Exclusivity (seat approval) — end-to-end test** (apply → organiser approve/deny → payment link → booking) |
 | [ ] | July beta: **200+ groups claimed** and **20+ with a published event** |
-| [ ] | Load test: browse + organiser pages with 1,000+ profiles (week 8) |
+| [ ] | Load test: browse + organiser pages with 1,000+ profiles + multi-k events (week 8) |
 
 **Fee model (current):**
 

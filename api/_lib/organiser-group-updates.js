@@ -11,6 +11,7 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const { publicSiteBase, unsubscribeUrl, logoNavUrl } = require('./hub-email-urls');
 const { eventImageUrl } = require('./event-image');
 const { organiserLogoUrlForEmail } = require('./organiser-member-roster');
+const { normalizeHexColor } = require('./website-meta');
 
 const SLUG = 'organiser_monthly_group_update';
 const FREE_PER_MONTH = 1;
@@ -24,6 +25,22 @@ const MAX_VOLUNTEER = 300;
 const MAX_EVENTS = 6;
 const QUEUE_SPREAD_MS = 2 * 60 * 60 * 1000;
 const QUEUE_MIN_GAP_MS = 5000;
+const DEFAULT_ACCENT = '#0d6e7a';
+const DEFAULT_CTA = '#4aa8f0';
+const DEFAULT_INK = '#1c2040';
+
+function brandColorsFromGroup(group) {
+  const primary =
+    normalizeHexColor(group && (group.brandPrimaryColor || group.brand_primary_color)) ||
+    DEFAULT_ACCENT;
+  const accent =
+    normalizeHexColor(group && (group.brandAccentColor || group.brand_accent_color)) ||
+    primary;
+  const cta =
+    normalizeHexColor(group && (group.brandSecondaryColor || group.brand_secondary_color)) ||
+    DEFAULT_CTA;
+  return { primary, accent, cta, ink: DEFAULT_INK };
+}
 
 function periodKey(d) {
   const date = d instanceof Date ? d : new Date(d || Date.now());
@@ -70,11 +87,14 @@ function textToHtmlParagraphs(value) {
     .join('');
 }
 
-function sectionHtml(title, bodyHtml) {
+function sectionHtml(title, bodyHtml, accentColor) {
   if (!bodyHtml) return '';
+  const accent = normalizeHexColor(accentColor) || DEFAULT_ACCENT;
   return (
     '<tr><td class="mobile-pad" style="padding:8px 40px 16px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:' +
+    accent +
+    ';text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">' +
     escapeHtml(title) +
     '</p>' +
     bodyHtml +
@@ -90,6 +110,8 @@ function normalizeContent(raw) {
   return {
     organiserNote: clampText(c.organiserNote, MAX_NOTE),
     monthRecap: clampText(c.monthRecap, MAX_RECAP),
+    includeMonthStats: c.includeMonthStats !== false,
+    includeGreeting: c.includeGreeting !== false,
     includeUpcomingEvents: c.includeUpcomingEvents !== false,
     eventIds,
     spotlightName: clampText(c.spotlightName, 80),
@@ -99,7 +121,40 @@ function normalizeContent(raw) {
     memberAsk: clampText(c.memberAsk, MAX_ASK),
     volunteerCta: clampText(c.volunteerCta, MAX_VOLUNTEER),
     includeSocialLinks: c.includeSocialLinks !== false,
+    audienceSlice: normalizeAudienceSlice(c.audienceSlice || c.audience_slice),
   };
+}
+
+const AUDIENCE_SLICES = {
+  all: {
+    id: 'all',
+    label: 'Everyone who booked via the Hub',
+    blurb: 'All Hub attendees for this organiser page',
+  },
+  once: {
+    id: 'once',
+    label: 'Came once — invite them back',
+    blurb: 'People with exactly one booking',
+  },
+  recent: {
+    id: 'recent',
+    label: 'Booked in the last 30 days',
+    blurb: 'Warm leads from the past month',
+  },
+  favourites: {
+    id: 'favourites',
+    label: 'Saved your page — never booked',
+    blurb: 'Favourited the group but haven’t booked yet',
+  },
+};
+
+function normalizeAudienceSlice(raw) {
+  const id = String(raw || 'all').trim().toLowerCase();
+  return AUDIENCE_SLICES[id] ? id : 'all';
+}
+
+function listAudienceSlices() {
+  return Object.values(AUDIENCE_SLICES);
 }
 
 function defaultSubject(organiserName, key) {
@@ -230,10 +285,12 @@ async function getUpdate(updateId) {
 async function listUpcomingEventsForOrganiser(organiserId) {
   const sb = getSupabaseAdmin();
   const now = new Date().toISOString();
+  const selectCols =
+    'id, title, starts_at, slug, venue, city, location_label, status, approval_status, image_url, photo_url';
   // events use status + approval_status (listing_status is on organisers).
   const { data, error } = await sb
     .from('events')
-    .select('id, title, starts_at, slug, venue, city, location_label, status, approval_status')
+    .select(selectCols)
     .eq('organiser_id', organiserId)
     .eq('status', 'published')
     .eq('approval_status', 'Approved')
@@ -242,72 +299,258 @@ async function listUpcomingEventsForOrganiser(organiserId) {
     .limit(12);
   if (error) {
     // Fallback if status filter shape differs in an older DB.
-    if (/column events\.(status|approval_status)/i.test(String(error.message || ''))) {
+    if (/column events\.(status|approval_status|image_url|photo_url)/i.test(String(error.message || ''))) {
       const retry = await sb
         .from('events')
-        .select('id, title, starts_at, slug, venue, city, location_label')
+        .select('id, title, starts_at, slug, venue, city, location_label, image_url, photo_url')
         .eq('organiser_id', organiserId)
         .gte('starts_at', now)
         .order('starts_at', { ascending: true })
         .limit(12);
-      if (retry.error) throw new Error(retry.error.message);
-      return (retry.data || []).map((row) => ({
-        id: row.id,
-        title: row.title,
-        startsAt: row.starts_at,
-        slug: row.slug,
-        location: String(row.location_label || row.city || row.venue || '').trim(),
-        imageUrl: eventImageUrl(row),
-      }));
+      if (retry.error) {
+        const bare = await sb
+          .from('events')
+          .select('id, title, starts_at, slug, venue, city, location_label')
+          .eq('organiser_id', organiserId)
+          .gte('starts_at', now)
+          .order('starts_at', { ascending: true })
+          .limit(12);
+        if (bare.error) throw new Error(bare.error.message);
+        return (bare.data || []).map(mapEventRow);
+      }
+      return (retry.data || []).map(mapEventRow);
     }
     throw new Error(error.message);
   }
-  return (data || []).map((row) => ({
+  return (data || []).map(mapEventRow);
+}
+
+function mapEventRow(row) {
+  return {
     id: row.id,
     title: row.title,
     startsAt: row.starts_at,
     slug: row.slug,
     location: String(row.location_label || row.city || row.venue || '').trim(),
     imageUrl: eventImageUrl(row),
-  }));
+  };
 }
 
-async function listHubAttendeeRecipients(organiserId) {
+/**
+ * Auto Hub stats for the round-up period — events hosted + people who booked.
+ * This is the mail-merge killer: DIY export can't assemble this cleanly.
+ */
+async function getMonthStatsForOrganiser(organiserId, key) {
   const sb = getSupabaseAdmin();
-  const { data: events, error: evErr } = await sb
+  const match = String(key || periodKey()).match(/^(\d{4})-(\d{2})$/);
+  if (!match) {
+    return { eventsHosted: 0, bookings: 0, uniqueGuests: 0, rating: null, periodLabel: periodLabel(key) };
+  }
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const startIso = new Date(Date.UTC(y, m - 1, 1)).toISOString();
+  const endIso = new Date(Date.UTC(y, m, 1)).toISOString();
+  const nowIso = new Date().toISOString();
+  const until = endIso < nowIso ? endIso : nowIso;
+
+  let events = [];
+  const primary = await sb
     .from('events')
-    .select('id')
-    .eq('organiser_id', organiserId);
-  if (evErr) throw new Error(evErr.message);
-  const eventIds = (events || []).map((e) => e.id).filter(Boolean);
-  if (!eventIds.length) return [];
+    .select('id, title, starts_at, average_rating')
+    .eq('organiser_id', organiserId)
+    .gte('starts_at', startIso)
+    .lt('starts_at', until)
+    .order('starts_at', { ascending: true })
+    .limit(40);
+  if (primary.error && /average_rating/i.test(String(primary.error.message || ''))) {
+    const retry = await sb
+      .from('events')
+      .select('id, title, starts_at')
+      .eq('organiser_id', organiserId)
+      .gte('starts_at', startIso)
+      .lt('starts_at', until)
+      .order('starts_at', { ascending: true })
+      .limit(40);
+    if (retry.error) throw new Error(retry.error.message);
+    events = retry.data || [];
+  } else if (primary.error) {
+    throw new Error(primary.error.message);
+  } else {
+    events = primary.data || [];
+  }
 
-  const { data: regs, error } = await sb
-    .from('registrations')
-    .select('id, attendees ( name, email )')
-    .in('event_id', eventIds)
-    .is('cancelled_at', null)
-    .limit(5000);
-  if (error) throw new Error(error.message);
+  const eventIds = events.map((e) => e.id).filter(Boolean);
+  let bookings = 0;
+  let uniqueGuests = 0;
+  if (eventIds.length) {
+    const { data: regs, error } = await sb
+      .from('registrations')
+      .select('id, attendees ( email )')
+      .in('event_id', eventIds)
+      .is('cancelled_at', null)
+      .limit(5000);
+    if (!error && regs) {
+      bookings = regs.length;
+      const emails = new Set();
+      regs.forEach((row) => {
+        const email = String((row.attendees && row.attendees.email) || '')
+          .trim()
+          .toLowerCase();
+        if (email) emails.add(email);
+      });
+      uniqueGuests = emails.size;
+    }
+  }
 
-  const byEmail = new Map();
-  (regs || []).forEach((row) => {
-    const att = row.attendees || {};
-    const email = String(att.email || '')
-      .trim()
-      .toLowerCase();
-    if (!email || !email.includes('@')) return;
-    if (byEmail.has(email)) return;
-    byEmail.set(email, {
-      email,
-      name: String(att.name || '').trim(),
-    });
-  });
-  return [...byEmail.values()];
+  let rating = null;
+  const org = await sb
+    .from('organisers')
+    .select('average_rating')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (!org.error && org.data && org.data.average_rating != null) {
+    const n = Number(org.data.average_rating);
+    if (Number.isFinite(n) && n > 0) rating = Math.round(n * 10) / 10;
+  }
+
+  return {
+    eventsHosted: events.length,
+    bookings,
+    uniqueGuests,
+    rating,
+    periodLabel: periodLabel(key),
+    eventTitles: events.slice(0, 3).map((e) => e.title).filter(Boolean),
+  };
 }
 
-function buildEventsHtml(events, siteUrl) {
+function buildGreetingHtml(recipient, accentColor) {
+  const name = String((recipient && recipient.name) || '').trim();
+  const first = name.split(/\s+/)[0] || '';
+  const label = first && !/^there$/i.test(first) ? first : 'there';
+  const accent = normalizeHexColor(accentColor) || DEFAULT_ACCENT;
+  return (
+    '<tr><td class="mobile-pad" style="padding:4px 40px 4px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:600;color:#1c2040;margin:0 0 4px;">Hi ' +
+    escapeHtml(label) +
+    ',</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;color:#8a8386;margin:0 0 8px;border-bottom:2px solid ' +
+    accent +
+    ';padding-bottom:12px;">Your personalised update from the Hub</p>' +
+    '</td></tr>'
+  );
+}
+
+function buildMonthStatsHtml(stats, accentColor) {
+  if (!stats) return '';
+  const items = [];
+  if (stats.eventsHosted > 0) {
+    items.push({
+      value: String(stats.eventsHosted),
+      label: stats.eventsHosted === 1 ? 'event hosted' : 'events hosted',
+    });
+  }
+  if (stats.uniqueGuests > 0) {
+    items.push({
+      value: String(stats.uniqueGuests),
+      label: stats.uniqueGuests === 1 ? 'guest joined' : 'guests joined',
+    });
+  } else if (stats.bookings > 0) {
+    items.push({
+      value: String(stats.bookings),
+      label: stats.bookings === 1 ? 'booking' : 'bookings',
+    });
+  }
+  if (stats.rating != null) {
+    items.push({ value: String(stats.rating), label: 'Hub rating' });
+  }
+  if (!items.length) return '';
+  const accent = normalizeHexColor(accentColor) || DEFAULT_ACCENT;
+  const cells = items
+    .map(
+      (item) =>
+        '<td style="width:' +
+        Math.floor(100 / items.length) +
+        '%;padding:10px 8px;text-align:center;vertical-align:top;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:22px;font-weight:700;color:' +
+        accent +
+        ';margin:0 0 2px;line-height:1.2;">' +
+        escapeHtml(item.value) +
+        '</p>' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#635c5e;margin:0;line-height:1.35;">' +
+        escapeHtml(item.label) +
+        '</p></td>'
+    )
+    .join('');
+  return sectionHtml(
+    (stats.periodLabel || 'This month') + ' on the Hub',
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7fafb;border-radius:14px;border:1px solid #e4eef0;">' +
+      '<tr>' +
+      cells +
+      '</tr></table>',
+    accent
+  );
+}
+
+function trackBaseUrl() {
+  return publicSiteBase() + '/api/track';
+}
+
+function wrapTrackedUrl(url, trackToken) {
+  const target = String(url || '').trim();
+  if (!trackToken || !target || !/^https?:\/\//i.test(target)) return target;
+  return (
+    trackBaseUrl() +
+    '?kind=click&t=' +
+    encodeURIComponent(trackToken) +
+    '&u=' +
+    encodeURIComponent(target)
+  );
+}
+
+function trackingPixelHtml(trackToken) {
+  if (!trackToken) return '';
+  const src = trackBaseUrl() + '?kind=open&t=' + encodeURIComponent(trackToken);
+  return (
+    '<img src="' +
+    escapeHtml(src) +
+    '" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />'
+  );
+}
+
+function buildReplyHintHtml(organiserName, replyTo) {
+  const name = String(organiserName || 'your organiser').trim();
+  const email = String(replyTo || '').trim();
+  if (!email) {
+    return (
+      '<tr><td class="mobile-pad" style="padding:4px 40px 12px;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:#8a8386;margin:0;font-style:italic;">' +
+      'Want to reply? Use the Hub contact details on their organiser page.' +
+      '</p></td></tr>'
+    );
+  }
+  return (
+    '<tr><td class="mobile-pad" style="padding:4px 40px 12px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;color:#635c5e;margin:0;padding:12px 14px;background:#f7fafb;border-radius:12px;border:1px solid #e4eef0;">' +
+    '<strong style="color:#1c2040;">Reply to this email</strong> to reach ' +
+    escapeHtml(name) +
+    ' directly — your message goes to their inbox, not a mail-merge black hole.' +
+    '</p></td></tr>'
+  );
+}
+
+function eventPublicUrl(ev, siteUrl) {
+  return (
+    siteUrl +
+    (ev.slug && !/^[0-9a-f-]{36}$/i.test(ev.slug)
+      ? '/events/' + encodeURIComponent(ev.slug)
+      : '/events/event?id=' + encodeURIComponent(ev.id))
+  );
+}
+
+function buildEventsHtml(events, siteUrl, brand, trackToken) {
   if (!events || !events.length) return '';
+  const accent = (brand && brand.primary) || DEFAULT_ACCENT;
+  const cta = (brand && brand.cta) || DEFAULT_CTA;
   const rows = events
     .map((ev) => {
       const when = ev.startsAt
@@ -319,36 +562,156 @@ function buildEventsHtml(events, siteUrl) {
             minute: '2-digit',
           })
         : '';
-      const url =
-        siteUrl +
-        (ev.slug && !/^[0-9a-f-]{36}$/i.test(ev.slug)
-          ? '/events/' + encodeURIComponent(ev.slug)
-          : '/events/event?id=' + encodeURIComponent(ev.id));
+      const url = wrapTrackedUrl(eventPublicUrl(ev, siteUrl), trackToken);
+      const img = String(ev.imageUrl || '').trim();
+      const imageCell = img
+        ? '<td width="88" style="padding:12px 12px 12px 0;vertical-align:top;">' +
+          '<a href="' +
+          escapeHtml(url) +
+          '" style="text-decoration:none;display:block;">' +
+          '<img src="' +
+          escapeHtml(img) +
+          '" alt="" width="76" height="76" style="display:block;width:76px;height:76px;object-fit:cover;border-radius:12px;border:0;" />' +
+          '</a></td>'
+        : '';
       return (
-        '<tr><td style="padding:10px 0;border-top:1px solid #ece7df;">' +
+        '<tr><td style="padding:4px 0;border-top:1px solid #ece7df;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
+        imageCell +
+        '<td style="padding:12px 0;vertical-align:middle;">' +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#1c2040;margin:0 0 4px;">' +
         escapeHtml(ev.title || 'Event') +
         '</p>' +
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;color:#635c5e;margin:0 0 6px;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;color:#635c5e;margin:0 0 8px;">' +
         escapeHtml([when, ev.location].filter(Boolean).join(' · ')) +
         '</p>' +
         '<a href="' +
         escapeHtml(url) +
-        '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:#0d6e7a;text-decoration:none;">Book / details →</a>' +
-        '</td></tr>'
+        '" style="display:inline-block;padding:8px 14px;background:' +
+        cta +
+        ';border-radius:999px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;text-decoration:none;">Book your place →</a>' +
+        '</td></tr></table></td></tr>'
       );
     })
     .join('');
   return sectionHtml(
-    'Coming up',
+    'Coming up — book on the Hub',
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
       rows +
-      '</table>'
+      '</table>',
+    accent
   );
 }
 
-function buildSpotlightHtml(content) {
+async function listHubAttendeeRecipients(organiserId) {
+  const enriched = await listHubAttendeeRecipientsEnriched(organiserId);
+  return enriched.map((r) => ({ email: r.email, name: r.name }));
+}
+
+async function listHubAttendeeRecipientsEnriched(organiserId) {
+  const sb = getSupabaseAdmin();
+  const { data: events, error: evErr } = await sb
+    .from('events')
+    .select('id')
+    .eq('organiser_id', organiserId);
+  if (evErr) throw new Error(evErr.message);
+  const eventIds = (events || []).map((e) => e.id).filter(Boolean);
+  if (!eventIds.length) return [];
+
+  const { data: regs, error } = await sb
+    .from('registrations')
+    .select('id, created_at, attendees ( name, email )')
+    .in('event_id', eventIds)
+    .is('cancelled_at', null)
+    .limit(8000);
+  if (error) throw new Error(error.message);
+
+  const byEmail = new Map();
+  (regs || []).forEach((row) => {
+    const att = row.attendees || {};
+    const email = String(att.email || '')
+      .trim()
+      .toLowerCase();
+    if (!email || !email.includes('@')) return;
+    const created = row.created_at ? new Date(row.created_at).getTime() : 0;
+    const prev = byEmail.get(email);
+    if (!prev) {
+      byEmail.set(email, {
+        email,
+        name: String(att.name || '').trim(),
+        bookingCount: 1,
+        lastBookedAt: created || 0,
+      });
+      return;
+    }
+    prev.bookingCount += 1;
+    if (created > prev.lastBookedAt) prev.lastBookedAt = created;
+    if (!prev.name && att.name) prev.name = String(att.name || '').trim();
+  });
+  return [...byEmail.values()];
+}
+
+async function listFavouriteNeverBookedRecipients(organiserId) {
+  const sb = getSupabaseAdmin();
+  const booked = await listHubAttendeeRecipientsEnriched(organiserId);
+  const bookedEmails = new Set(booked.map((r) => r.email));
+
+  const { data: favs, error } = await sb
+    .from('organiser_favourites')
+    .select('attendees ( name, email )')
+    .eq('organiser_id', organiserId)
+    .limit(5000);
+  if (error) {
+    if (/organiser_favourites|schema cache|does not exist/i.test(String(error.message || ''))) {
+      return [];
+    }
+    throw new Error(error.message);
+  }
+
+  const out = [];
+  const seen = new Set();
+  (favs || []).forEach((row) => {
+    const att = row.attendees || {};
+    const email = String(att.email || '')
+      .trim()
+      .toLowerCase();
+    if (!email || !email.includes('@') || bookedEmails.has(email) || seen.has(email)) return;
+    seen.add(email);
+    out.push({ email, name: String(att.name || '').trim() });
+  });
+  return out;
+}
+
+async function listRecipientsForSlice(organiserId, slice) {
+  const key = normalizeAudienceSlice(slice);
+  if (key === 'favourites') return listFavouriteNeverBookedRecipients(organiserId);
+
+  const all = await listHubAttendeeRecipientsEnriched(organiserId);
+  if (key === 'once') return all.filter((r) => r.bookingCount === 1);
+  if (key === 'recent') {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return all.filter((r) => r.lastBookedAt >= cutoff);
+  }
+  return all.map((r) => ({ email: r.email, name: r.name }));
+}
+
+async function estimateAudienceSlices(organiserId) {
+  const [all, favs] = await Promise.all([
+    listHubAttendeeRecipientsEnriched(organiserId),
+    listFavouriteNeverBookedRecipients(organiserId),
+  ]);
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  return {
+    all: all.length,
+    once: all.filter((r) => r.bookingCount === 1).length,
+    recent: all.filter((r) => r.lastBookedAt >= cutoff).length,
+    favourites: favs.length,
+  };
+}
+
+function buildSpotlightHtml(content, accentColor, trackToken) {
   if (!content.spotlightName && !content.spotlightText) return '';
+  const accent = normalizeHexColor(accentColor) || DEFAULT_ACCENT;
   const head = [content.spotlightName, content.spotlightCompany].filter(Boolean).join(' · ');
   let body = '';
   if (head) {
@@ -361,13 +724,15 @@ function buildSpotlightHtml(content) {
   if (content.spotlightLinkedin) {
     body +=
       '<p style="margin:8px 0 0;"><a href="' +
-      escapeHtml(content.spotlightLinkedin) +
-      '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:#0d6e7a;text-decoration:none;">Connect on LinkedIn →</a></p>';
+      escapeHtml(wrapTrackedUrl(content.spotlightLinkedin, trackToken)) +
+      '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:' +
+      accent +
+      ';text-decoration:none;">Connect on LinkedIn →</a></p>';
   }
-  return sectionHtml('Member spotlight', body);
+  return sectionHtml('Member spotlight', body, accent);
 }
 
-function buildSocialHtml(group) {
+function buildSocialHtml(group, accentColor, trackToken) {
   const links = [
     ['Website', group.website],
     ['Instagram', group.instagramUrl || group.instagram_url],
@@ -376,17 +741,20 @@ function buildSocialHtml(group) {
     ['X', group.xUrl || group.x_url],
   ].filter((pair) => pair[1]);
   if (!links.length) return '';
+  const accent = normalizeHexColor(accentColor) || DEFAULT_ACCENT;
   const html = links
     .map(
       ([label, url]) =>
         '<a href="' +
-        escapeHtml(url) +
-        '" style="display:inline-block;margin:0 10px 8px 0;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:#0d6e7a;text-decoration:none;">' +
+        escapeHtml(wrapTrackedUrl(url, trackToken)) +
+        '" style="display:inline-block;margin:0 10px 8px 0;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:' +
+        accent +
+        ';text-decoration:none;">' +
         escapeHtml(label) +
         '</a>'
     )
     .join('');
-  return sectionHtml('Stay connected', html);
+  return sectionHtml('Stay connected', html, accent);
 }
 
 async function resolveSelectedEvents(organiserId, content) {
@@ -400,11 +768,22 @@ async function resolveSelectedEvents(organiserId, content) {
   return upcoming.slice(0, 3);
 }
 
-async function buildTemplateVariables({ group, update, content, events, recipient }) {
+async function buildTemplateVariables({
+  group,
+  update,
+  content,
+  events,
+  recipient,
+  monthStats,
+  trackToken,
+  replyTo,
+}) {
   const siteUrl = publicSiteBase();
-  const organiserUrl = siteUrl + '/events/organiser?id=' + encodeURIComponent(group.id);
+  const organiserUrlRaw = siteUrl + '/events/organiser?id=' + encodeURIComponent(group.id);
+  const organiserUrl = wrapTrackedUrl(organiserUrlRaw, trackToken);
   const subject =
     clampText(update.subject, MAX_SUBJECT) || defaultSubject(group.name, update.period_key);
+  const brand = brandColorsFromGroup(group);
   const organiserLogo = organiserLogoUrlForEmail(
     {
       photo_url: group.photo_url || group.photoUrl || group.imageUrl,
@@ -412,6 +791,13 @@ async function buildTemplateVariables({ group, update, content, events, recipien
     },
     siteUrl
   );
+  const stats =
+    monthStats ||
+    (content.includeMonthStats
+      ? await getMonthStatsForOrganiser(group.id, update.period_key)
+      : null);
+  const replyAddress =
+    replyTo || group.contact_email || group.contactEmail || group.email || '';
 
   return {
     user_name: recipient.name || 'there',
@@ -425,22 +811,38 @@ async function buildTemplateVariables({ group, update, content, events, recipien
       logoUrl: organiserLogo,
       organiserUrl,
     }),
+    brand_primary: brand.primary,
+    brand_cta: brand.cta,
     period_label: periodLabel(update.period_key),
-    organiser_note_html: sectionHtml('A note from us', textToHtmlParagraphs(content.organiserNote)),
-    month_recap_html: sectionHtml('Month in brief', textToHtmlParagraphs(content.monthRecap)),
-    events_html: buildEventsHtml(events, siteUrl),
-    spotlight_html: buildSpotlightHtml(content),
+    greeting_html: content.includeGreeting ? buildGreetingHtml(recipient, brand.primary) : '',
+    month_stats_html: content.includeMonthStats ? buildMonthStatsHtml(stats, brand.primary) : '',
+    organiser_note_html: sectionHtml(
+      'A note from us',
+      textToHtmlParagraphs(content.organiserNote),
+      brand.primary
+    ),
+    month_recap_html: sectionHtml(
+      'Month in brief',
+      textToHtmlParagraphs(content.monthRecap),
+      brand.primary
+    ),
+    events_html: buildEventsHtml(events, siteUrl, brand, trackToken),
+    spotlight_html: buildSpotlightHtml(content, brand.primary, trackToken),
     ask_html: content.memberAsk
-      ? sectionHtml('Member ask', textToHtmlParagraphs(content.memberAsk))
+      ? sectionHtml('Member ask', textToHtmlParagraphs(content.memberAsk), brand.primary)
       : '',
     volunteer_html: content.volunteerCta
-      ? sectionHtml('Get involved', textToHtmlParagraphs(content.volunteerCta))
+      ? sectionHtml('Get involved', textToHtmlParagraphs(content.volunteerCta), brand.primary)
       : '',
-    social_html: content.includeSocialLinks ? buildSocialHtml(group) : '',
-    cta_url: siteUrl + '/events',
-    cta_label: 'Browse events on the Hub',
-    hub_account_url: siteUrl + '/account',
-    browse_events_url: siteUrl + '/events',
+    social_html: content.includeSocialLinks
+      ? buildSocialHtml(group, brand.primary, trackToken)
+      : '',
+    reply_hint_html: buildReplyHintHtml(group.name || 'your organiser', replyAddress),
+    tracking_pixel_html: trackingPixelHtml(trackToken),
+    cta_url: organiserUrl,
+    cta_label: 'Visit our Hub page',
+    hub_account_url: wrapTrackedUrl(siteUrl + '/account', trackToken),
+    browse_events_url: wrapTrackedUrl(siteUrl + '/events', trackToken),
     contact_url: siteUrl + '/contact',
     privacy_url: siteUrl + '/privacy',
     terms_url: siteUrl + '/terms',
@@ -482,7 +884,11 @@ function buildOrganiserLogoHtml({ name, logoUrl, organiserUrl }) {
 function buildPreviewDocument(variables) {
   const v = variables || {};
   const logo = logoNavUrl(v.site_url || publicSiteBase());
+  const accent = normalizeHexColor(v.brand_primary) || DEFAULT_ACCENT;
+  const cta = normalizeHexColor(v.brand_cta) || DEFAULT_CTA;
   const sections = [
+    v.greeting_html,
+    v.month_stats_html,
     v.organiser_note_html,
     v.month_recap_html,
     v.events_html,
@@ -490,6 +896,7 @@ function buildPreviewDocument(variables) {
     v.ask_html,
     v.volunteer_html,
     v.social_html,
+    v.reply_hint_html,
   ]
     .filter(Boolean)
     .join('');
@@ -505,7 +912,9 @@ function buildPreviewDocument(variables) {
     '<div style="background:#f5f0e8;height:18px;border-radius:0 0 50% 50% / 0 0 100% 100%;"></div>' +
     '<div style="padding:18px 22px 8px;text-align:center;">' +
     (v.organiser_logo_html || '') +
-    '<p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0d6e7a;">' +
+    '<p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:' +
+    accent +
+    ';">' +
     escapeHtml(v.period_label || 'This month') +
     '</p>' +
     '<h2 style="margin:0 0 4px;font-size:20px;line-height:1.25;font-weight:600;color:#1c2040;">Update from ' +
@@ -521,8 +930,10 @@ function buildPreviewDocument(variables) {
     '<div style="padding:8px 22px 22px;text-align:center;">' +
     '<a href="' +
     escapeHtml(v.cta_url || '#') +
-    '" style="display:inline-block;padding:11px 22px;background:#4aa8f0;border-radius:999px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">' +
-    escapeHtml(v.cta_label || 'Browse events') +
+    '" style="display:inline-block;padding:11px 22px;background:' +
+    cta +
+    ';border-radius:999px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">' +
+    escapeHtml(v.cta_label || 'Visit our Hub page') +
     ' →</a>' +
     '</div>' +
     '<div style="background:#1c2040;padding:18px 20px 22px;text-align:center;color:rgba(255,255,255,0.65);font-size:11px;line-height:1.5;">' +
@@ -614,7 +1025,7 @@ async function queueUpdateSend({ organiserId, updateId }) {
     const err = new Error(
       allowance.blockedReason === 'hard_cap'
         ? 'Monthly send limit reached (max ' + HARD_CAP_PER_MONTH + ').'
-        : 'No free sends left this month. Extra credits coming soon — or wait until next month.'
+        : 'No free sends left this month. Buy an extra credit below, or wait until next month.'
     );
     err.status = 402;
     err.code = allowance.blockedReason || 'allowance_exhausted';
@@ -640,9 +1051,17 @@ async function queueUpdateSend({ organiserId, updateId }) {
     throw err;
   }
 
-  const recipients = await listHubAttendeeRecipients(organiserId);
+  const recipients = await listRecipientsForSlice(organiserId, content.audienceSlice);
   if (!recipients.length) {
-    const err = new Error('No Hub attendees found for this group yet.');
+    const err = new Error(
+      content.audienceSlice === 'favourites'
+        ? 'No favourited-but-never-booked people found for this slice yet.'
+        : content.audienceSlice === 'once'
+          ? 'No one-time bookers found for this slice yet.'
+          : content.audienceSlice === 'recent'
+            ? 'No recent bookers (last 30 days) found for this slice yet.'
+            : 'No Hub attendees found for this group yet.'
+    );
     err.status = 400;
     throw err;
   }
@@ -653,15 +1072,24 @@ async function queueUpdateSend({ organiserId, updateId }) {
     QUEUE_MIN_GAP_MS,
     Math.floor(QUEUE_SPREAD_MS / Math.max(1, recipients.length))
   );
+  const crypto = require('crypto');
   const rows = recipients.map((r, idx) => ({
     update_id: updateId,
     organiser_id: organiserId,
     email: r.email,
     recipient_name: r.name || '',
     scheduled_for: new Date(now + idx * gap).toISOString(),
+    tracking_token: crypto.randomUUID(),
   }));
 
-  const { error: qErr } = await sb.from('organiser_group_update_queue').insert(rows);
+  let qErr;
+  ({ error: qErr } = await sb.from('organiser_group_update_queue').insert(rows));
+  if (qErr && /tracking_token/i.test(String(qErr.message || ''))) {
+    // Migration 218 not applied yet — queue without tracking tokens.
+    ({ error: qErr } = await sb.from('organiser_group_update_queue').insert(
+      rows.map(({ tracking_token, ...rest }) => rest)
+    ));
+  }
   if (qErr) throwGroupUpdatesDbError(qErr);
 
   if (useExtra) {
@@ -769,6 +1197,8 @@ async function processDueGroupUpdateEmails(sb, { batchSize } = {}) {
 
       const content = normalizeContent(update.content);
       const events = await resolveSelectedEvents(row.organiser_id, content);
+      const replyTo = group.contact_email || group.email || undefined;
+      const trackToken = row.tracking_token || null;
       const variables = await buildTemplateVariables({
         group: {
           ...group,
@@ -777,29 +1207,38 @@ async function processDueGroupUpdateEmails(sb, { batchSize } = {}) {
           facebookUrl: group.facebook_url,
           linkedinUrl: group.linkedin_url,
           xUrl: group.x_url,
+          brandPrimaryColor: group.brand_primary_color,
+          brandSecondaryColor: group.brand_secondary_color,
+          brandAccentColor: group.brand_accent_color,
+          photo_url: group.photo_url,
         },
         update,
         content,
         events,
         recipient: { email: row.email, name: row.recipient_name },
+        trackToken,
+        replyTo,
       });
 
-      await sendTemplatedEmail({
+      const sendResult = await sendTemplatedEmail({
         slug: SLUG,
         to: row.email,
         subject: variables.email_subject,
         variables,
-        replyTo: group.contact_email || group.email || undefined,
+        replyTo,
         resendTags: [
           { name: 'email_type', value: 'organiser_monthly_group_update' },
           { name: 'organiser_id', value: String(row.organiser_id).slice(0, 36) },
+          { name: 'update_id', value: String(row.update_id).slice(0, 36) },
         ],
       });
 
-      await sb
-        .from('organiser_group_update_queue')
-        .update({ sent_at: new Date().toISOString(), last_error: null })
-        .eq('id', row.id);
+      const sentPatch = {
+        sent_at: new Date().toISOString(),
+        last_error: null,
+      };
+      if (sendResult && sendResult.id) sentPatch.resend_email_id = String(sendResult.id);
+      await sb.from('organiser_group_update_queue').update(sentPatch).eq('id', row.id);
       sent++;
     } catch (e) {
       const code = e && e.code;
@@ -873,6 +1312,91 @@ async function drainDueGroupUpdateEmails(sb, opts) {
   return { batches, sent, failed };
 }
 
+async function getEngagementReport(updateId, organiserId) {
+  const sb = getSupabaseAdmin();
+  const update = await getUpdate(updateId);
+  if (!update || String(update.organiser_id) !== String(organiserId)) {
+    const err = new Error('update_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const { data: queueRows, error } = await sb
+    .from('organiser_group_update_queue')
+    .select('email, sent_at, failed_at, opened_at, open_count, clicked_at, click_count')
+    .eq('update_id', updateId);
+  if (error && !/opened_at|schema cache|does not exist/i.test(String(error.message || ''))) {
+    throw new Error(error.message);
+  }
+  const rows = queueRows || [];
+  const sentRows = rows.filter((r) => r.sent_at);
+  const opened = sentRows.filter((r) => r.opened_at).length;
+  const clicked = sentRows.filter((r) => r.clicked_at).length;
+  const failed = rows.filter((r) => r.failed_at).length;
+  const pending = rows.filter((r) => !r.sent_at && !r.failed_at).length;
+
+  let topLinks = [];
+  const linksRes = await sb
+    .from('organiser_group_update_link_clicks')
+    .select('url, click_count')
+    .eq('update_id', updateId)
+    .order('click_count', { ascending: false })
+    .limit(8);
+  if (!linksRes.error) topLinks = linksRes.data || [];
+
+  let bookingsAfter = 0;
+  const queuedAt = update.queued_at || update.sent_at || update.created_at;
+  if (queuedAt && sentRows.length) {
+    const emails = sentRows.map((r) => String(r.email || '').toLowerCase()).filter(Boolean);
+    const { data: events } = await sb.from('events').select('id').eq('organiser_id', organiserId);
+    const eventIds = (events || []).map((e) => e.id).filter(Boolean);
+    if (eventIds.length && emails.length) {
+      const { data: regs } = await sb
+        .from('registrations')
+        .select('id, created_at, attendees ( email )')
+        .in('event_id', eventIds)
+        .is('cancelled_at', null)
+        .gte('created_at', queuedAt)
+        .limit(5000);
+      const emailSet = new Set(emails);
+      const seen = new Set();
+      (regs || []).forEach((row) => {
+        const email = String((row.attendees && row.attendees.email) || '')
+          .trim()
+          .toLowerCase();
+        if (!email || !emailSet.has(email) || seen.has(email)) return;
+        seen.add(email);
+        bookingsAfter += 1;
+      });
+    }
+  }
+
+  const sentCount = sentRows.length;
+  return {
+    updateId,
+    status: update.status,
+    subject: update.subject,
+    queuedAt,
+    sentAt: update.sent_at,
+    audienceSlice: normalizeAudienceSlice(
+      (update.content && (update.content.audienceSlice || update.content.audience_slice)) || 'all'
+    ),
+    recipientCount: Number(update.recipient_count) || rows.length,
+    sent: sentCount,
+    pending,
+    failed,
+    opened,
+    clicked,
+    openRate: sentCount ? Math.round((opened / sentCount) * 1000) / 10 : 0,
+    clickRate: sentCount ? Math.round((clicked / sentCount) * 1000) / 10 : 0,
+    bookingsAfter,
+    topLinks: topLinks.map((l) => ({
+      url: l.url,
+      clicks: Number(l.click_count) || 0,
+    })),
+  };
+}
+
 module.exports = {
   SLUG,
   FREE_PER_MONTH,
@@ -886,6 +1410,9 @@ module.exports = {
   getUpdate,
   listUpcomingEventsForOrganiser,
   listHubAttendeeRecipients,
+  listRecipientsForSlice,
+  estimateAudienceSlices,
+  listAudienceSlices,
   saveDraft,
   queueUpdateSend,
   processDueGroupUpdateEmails,
@@ -893,4 +1420,6 @@ module.exports = {
   buildTemplateVariables,
   buildPreviewDocument,
   resolveSelectedEvents,
+  getMonthStatsForOrganiser,
+  getEngagementReport,
 };

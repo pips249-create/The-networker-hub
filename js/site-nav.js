@@ -123,7 +123,7 @@
   if (!window.__hubComplianceAssets) {
     window.__hubComplianceAssets = true;
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
-    loadComplianceAsset('js/hub-analytics.js?v=20260727local');
+    loadComplianceAsset('js/hub-analytics.js?v=20260729events1');
     loadComplianceAsset('js/cookie-consent.js?v=20260727demand');
   }
 

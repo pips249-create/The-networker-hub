@@ -95,9 +95,9 @@
     social: {
       title: 'How to promote your group',
       steps: [
-        'Start with a free LinkedIn post — we write the words and make the picture.',
-        'Add your colours & logo, website badge, or Top groups tools from the tabs.',
-        'Use More reach for paid listing boosts and hub sponsorship options.',
+        'Reach out with a free LinkedIn post or an email update to people who booked with you.',
+        'Set colours & type once — LinkedIn pictures and branded emails use them.',
+        'Get found on the Hub with Feature event, Top groups, partner badge, or More reach.',
       ],
     },
     'social-spotlight': {

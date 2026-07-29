@@ -848,45 +848,93 @@ function isStalePublishedEventsView(error) {
   return msg.includes('published_events') && msg.includes('image_url');
 }
 
+const PUBLISHED_EVENT_PAGE_SIZE = 1000;
+/** Safety ceiling so a runaway loop cannot pull the entire historical catalogue. */
+const PUBLISHED_EVENT_HARD_CAP = 25000;
+
+/**
+ * Page through PostgREST results — default max-rows is 1000, so unbounded
+ * `.select()` silently truncates once the catalogue grows past that.
+ */
+async function fetchAllPaged(sb, buildQuery, options = {}) {
+  const pageSize = Math.min(
+    Math.max(Number(options.pageSize) || PUBLISHED_EVENT_PAGE_SIZE, 1),
+    PUBLISHED_EVENT_PAGE_SIZE
+  );
+  const hardCap = Math.min(
+    Math.max(Number(options.hardCap) || PUBLISHED_EVENT_HARD_CAP, pageSize),
+    PUBLISHED_EVENT_HARD_CAP
+  );
+  const rows = [];
+  let from = 0;
+  while (from < hardCap) {
+    const to = Math.min(from + pageSize - 1, hardCap - 1);
+    const { data, error } = await buildQuery(from, to);
+    if (error) throw new Error(error.message);
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
+  return rows;
+}
+
 /** Query events table directly — published_events view can lag behind new columns (e.g. image_url). */
 async function fetchPublishedEventsFromTable(sb, options = {}) {
-  let query = sb
-    .from('events')
-    .select('*')
-    .eq('approval_status', 'Approved')
-    .eq('status', 'published')
-    .not('starts_at', 'is', null)
-    .order('starts_at', { ascending: true, nullsFirst: false });
-  if (options.upcomingOnly) {
-    query = applyUpcomingBrowseFilter(query);
-  }
-  const tableRes = await query;
-  if (tableRes.error) throw new Error(tableRes.error.message);
-  return (tableRes.data || []).map((row) => ({ ...row, next_date: row.starts_at }));
+  const select = options.select || '*';
+  const organiserId = String(options.organiserId || '').trim() || null;
+  const rows = await fetchAllPaged(
+    sb,
+    (from, to) => {
+      let query = sb
+        .from('events')
+        .select(select)
+        .eq('approval_status', 'Approved')
+        .eq('status', 'published')
+        .not('starts_at', 'is', null)
+        .order('starts_at', { ascending: true, nullsFirst: false })
+        .range(from, to);
+      if (organiserId) query = query.eq('organiser_id', organiserId);
+      if (options.upcomingOnly) query = applyUpcomingBrowseFilter(query);
+      return query;
+    },
+    options
+  );
+  return rows.map((row) => ({ ...row, next_date: row.starts_at }));
 }
 
 async function fetchPublishedEventRows(sb, options = {}) {
-  let query = sb
-    .from('published_events')
-    .select('*')
-    .order('next_date', { ascending: true, nullsFirst: false });
-  if (options.upcomingOnly) {
-    query = applyUpcomingBrowseFilter(query);
+  const select = options.select || '*';
+  const organiserId = String(options.organiserId || '').trim() || null;
+  // Slim / scoped queries always use the events table (paginated).
+  if (select !== '*' || organiserId) {
+    return fetchPublishedEventsFromTable(sb, options);
   }
-  const viewRes = await query;
-  if (!viewRes.error) {
-    const rows = viewRes.data || [];
+
+  try {
+    const rows = await fetchAllPaged(
+      sb,
+      (from, to) => {
+        let query = sb
+          .from('published_events')
+          .select(select)
+          .order('next_date', { ascending: true, nullsFirst: false })
+          .range(from, to);
+        if (options.upcomingOnly) query = applyUpcomingBrowseFilter(query);
+        return query;
+      },
+      options
+    );
     if (rows.length && rows[0].image_url === undefined && rows[0].photo_url !== undefined) {
       return fetchPublishedEventsFromTable(sb, options);
     }
     return rows;
+  } catch (err) {
+    if (!isMissingPublishedEventsView(err) && !isStalePublishedEventsView(err)) {
+      throw err;
+    }
+    return fetchPublishedEventsFromTable(sb, options);
   }
-
-  if (!isMissingPublishedEventsView(viewRes.error) && !isStalePublishedEventsView(viewRes.error)) {
-    throw new Error(viewRes.error.message);
-  }
-
-  return fetchPublishedEventsFromTable(sb, options);
 }
 
 async function fetchPublishedEventById(sb, recordId) {
@@ -1052,7 +1100,13 @@ async function fetchTicketedEventIds(sb) {
 
 async function fetchApprovedEvents(sb, options = {}) {
   const browseList = options.browseList !== false;
-  const rows = await fetchPublishedEventRows(sb, { upcomingOnly: browseList });
+  const rows = await fetchPublishedEventRows(sb, {
+    upcomingOnly: browseList,
+    hardCap: options.hardCap,
+    pageSize: options.pageSize,
+    organiserId: options.organiserId,
+    select: options.select,
+  });
   const mapped = await eventsFromPublishedRows(sb, rows, null, { browseList });
   return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
@@ -1212,8 +1266,14 @@ async function handle(req, res) {
     }
 
     if (String(req.query?.all || '') === '1') {
-      const events = await fetchApprovedEvents(sb);
-      return res.status(200).json({ configured: true, provider: 'supabase', events });
+      // Full catalogue dump removed — silent PostgREST truncation + payload blow-ups at scale.
+      return res.status(410).json({
+        configured: true,
+        provider: 'supabase',
+        error: 'gone',
+        message: 'Full event dump (?all=1) removed. Use paginated browse (?page=&limit=).',
+        events: [],
+      });
     }
 
     const meta = String(req.query?.meta || '').trim();
@@ -1257,6 +1317,7 @@ module.exports = {
   ticketRowToTier,
   fetchRegistrationCountsByTicket,
   fetchApprovedEvents,
+  fetchAllPaged,
   fetchPublishedEventRows,
   fetchPublishedEventBySlug,
   fetchEventSeriesDates,

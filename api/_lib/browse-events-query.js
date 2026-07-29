@@ -21,7 +21,11 @@ const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
 const BROWSE_VIEW = 'browse_events_index';
 const MAX_LIMIT = 48;
 const DEFAULT_LIMIT = 12;
-const MAX_PINS = 2500;
+/** Map pins — keep payload under serverless limits as the catalogue grows. */
+const MAX_PINS = 800;
+/** Max bbox candidates pulled into Node for haversine filter / type counts. */
+const GEO_MATCH_CAP = 1500;
+const TYPE_COUNT_CAP = 2000;
 const IN_CHUNK = 80;
 const PIN_SELECT =
   'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating';
@@ -400,7 +404,13 @@ async function fetchMatchingRows(sb, params, select, options) {
   let query = sb.from(BROWSE_VIEW).select(select);
   query = applyBrowseFilters(query, params);
   if (opts.sort) query = applySqlSort(query, opts.sort);
-  if (opts.limit) query = query.limit(opts.limit);
+  else if (hasGeoRadius(params) && !opts.limit) {
+    // Prefer sooner events when we must cap geo candidates.
+    query = query.order('starts_at', { ascending: true });
+  }
+  const geoCap = hasGeoRadius(params) ? GEO_MATCH_CAP : null;
+  const limit = opts.limit != null ? opts.limit : geoCap;
+  if (limit) query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
@@ -421,6 +431,11 @@ async function fetchBrowseTypeCounts(sb, params) {
   const base = { ...params, types: [] };
   let query = sb.from(BROWSE_VIEW).select('type_tab, latitude, longitude, format_tab');
   query = applyBrowseFilters(query, base);
+  if (hasGeoRadius(params)) {
+    query = query.order('starts_at', { ascending: true }).limit(GEO_MATCH_CAP);
+  } else {
+    query = query.limit(TYPE_COUNT_CAP);
+  }
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
@@ -521,12 +536,14 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
   if (params.mode === 'pins') {
     const pinParams = { ...params, limit: MAX_PINS, offset: 0 };
     if (hasGeoRadius(params)) {
-      const slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT);
+      const slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
+        limit: Math.min(GEO_MATCH_CAP, MAX_PINS * 2),
+      });
       const filtered = slim.filter((row) => rowPassesGeo(row, params));
       const sorted = sortRows(filtered, params.sort);
       return {
         events: sorted.slice(0, MAX_PINS).map(rowToBrowsePin),
-        pagination: { total: filtered.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+        pagination: { total: Math.min(filtered.length, MAX_PINS), page: 1, limit: MAX_PINS, totalPages: 1 },
         meta: null,
         featured: [],
       };

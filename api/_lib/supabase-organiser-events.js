@@ -413,8 +413,10 @@ async function listEventsForSeriesGroup(groupIds, seriesGroupId) {
   return (data || []).map(rowToEvent);
 }
 
-async function listEventSummariesForOrganiserGroups(groupIds, allEvents) {
+async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options) {
   const ids = groupIds || [];
+  const opts = options && typeof options === 'object' ? options : {};
+  const limit = Number(opts.limit) > 0 ? Math.min(Math.floor(Number(opts.limit)), 500) : null;
   if (!ids.length && !allEvents) return [];
   const sb = getSupabaseAdmin();
   let query = sb
@@ -427,6 +429,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents) {
     if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
     else query = query.in('organiser_id', ids);
   }
+  if (limit) query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data || []).map((row) => {
@@ -462,13 +465,19 @@ function applyGroupSalesSummary(groups, summary) {
 }
 
 /** Enrich lean-bootstrap groups with event counts, revenue, and membership stats. */
-function enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries) {
+function enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries, eventCountsByGroup) {
   const eventsByGroup = new Map();
-  (eventSummaries || []).forEach((ev) => {
-    const orgId = ev.organiserId;
-    if (!orgId) return;
-    eventsByGroup.set(orgId, (eventsByGroup.get(orgId) || 0) + 1);
-  });
+  if (eventCountsByGroup && typeof eventCountsByGroup.get === 'function') {
+    eventCountsByGroup.forEach((count, orgId) => {
+      eventsByGroup.set(orgId, Number(count) || 0);
+    });
+  } else {
+    (eventSummaries || []).forEach((ev) => {
+      const orgId = ev.organiserId;
+      if (!orgId) return;
+      eventsByGroup.set(orgId, (eventsByGroup.get(orgId) || 0) + 1);
+    });
+  }
 
   let enriched = (groups || []).map((g) => {
     const status = deriveGroupListingStatus(g.statusRaw);
@@ -2440,18 +2449,30 @@ async function getLeanOrganiserWorkspace(req) {
   const access = scope.access;
   const groupsError = scope.groupsError;
   const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
-  const [pendingClaims, eventSummaries, accessStatus, rosterSummaries] = await Promise.all([
-    pendingClaimsPromise,
-    listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
-    accessStatusPromise,
-    buildRosterSummariesForOrganisers(groupIds).catch(() => new Map()),
-  ]);
+  const LEAN_EVENT_SUMMARY_LIMIT = 120;
+  // Lean path must stay bounded: never scan all platform events for admin view.
+  const [pendingClaims, eventSummaries, eventCountsByGroup, accessStatus, rosterSummaries] =
+    await Promise.all([
+      pendingClaimsPromise,
+      listEventSummariesForOrganiserGroups(groupIds, false, {
+        limit: LEAN_EVENT_SUMMARY_LIMIT,
+      }).catch(() => []),
+      countEventsByOrganiserGroup(groupIds).catch(() => new Map()),
+      accessStatusPromise,
+      buildRosterSummariesForOrganisers(groupIds).catch(() => new Map()),
+    ]);
   const pendingClaimGroups = pendingClaims.groups || [];
   const pendingClaimOpportunities = pendingClaims.opportunities || [];
 
   const workspaceSummary = null;
 
-  groups = enrichGroupsFromLeanData(groups, eventSummaries, workspaceSummary, rosterSummaries);
+  groups = enrichGroupsFromLeanData(
+    groups,
+    eventSummaries,
+    workspaceSummary,
+    rosterSummaries,
+    eventCountsByGroup
+  );
 
   let stripeConnectEnabled = false;
   try {
@@ -2459,6 +2480,15 @@ async function getLeanOrganiserWorkspace(req) {
     stripeConnectEnabled = isStripeConnectEnabled();
   } catch {
     stripeConnectEnabled = false;
+  }
+
+  let eventsTotal = 0;
+  if (eventCountsByGroup && typeof eventCountsByGroup.forEach === 'function') {
+    eventCountsByGroup.forEach((count) => {
+      eventsTotal += Number(count) || 0;
+    });
+  } else {
+    eventsTotal = eventSummaries.length;
   }
 
   return {
@@ -2471,10 +2501,10 @@ async function getLeanOrganiserWorkspace(req) {
     upcomingEvents: [],
     tickets: [],
     eventsPagination: {
-      total: eventSummaries.length,
-      limit: 0,
+      total: eventsTotal,
+      limit: eventSummaries.length,
       offset: 0,
-      hasMore: false,
+      hasMore: eventsTotal > eventSummaries.length,
     },
     workspaceSummary,
     eventSummaries,

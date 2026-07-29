@@ -10,15 +10,21 @@ const {
   getUpdate,
   listUpcomingEventsForOrganiser,
   listHubAttendeeRecipients,
+  estimateAudienceSlices,
+  listAudienceSlices,
   saveDraft,
   queueUpdateSend,
+  periodKey,
   periodLabel,
   normalizeContent,
   defaultSubject,
   buildTemplateVariables,
   buildPreviewDocument,
   resolveSelectedEvents,
+  getMonthStatsForOrganiser,
+  getEngagementReport,
 } = require('../organiser-group-updates');
+const { listCreditPacks } = require('../group-update-credits');
 
 function parseBody(req) {
   let body = req.body;
@@ -86,20 +92,42 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, update });
       }
 
-      const [allowance, updates, events, recipients] = await Promise.all([
-        getAllowance(organiserId),
-        listUpdatesForOrganiser(organiserId),
-        listUpcomingEventsForOrganiser(organiserId),
-        listHubAttendeeRecipients(organiserId),
-      ]);
+      if (action === 'report' && id) {
+        const report = await getEngagementReport(id, organiserId);
+        return json(res, 200, { ok: true, report });
+      }
+
+      const [allowance, updates, events, recipients, monthStats, audienceCounts] =
+        await Promise.all([
+          getAllowance(organiserId),
+          listUpdatesForOrganiser(organiserId),
+          listUpcomingEventsForOrganiser(organiserId),
+          listHubAttendeeRecipients(organiserId),
+          getMonthStatsForOrganiser(organiserId, periodKey()).catch(() => null),
+          estimateAudienceSlices(organiserId).catch(() => ({
+            all: 0,
+            once: 0,
+            recent: 0,
+            favourites: 0,
+          })),
+        ]);
       const group = groups.find((g) => String(g.id) === organiserId) || null;
+      const replyTo =
+        (group && (group.contactEmail || group.ownerEmail || group.email)) || '';
       return json(res, 200, {
         ok: true,
         group,
         allowance,
         updates,
         events,
+        monthStats,
+        audienceSlices: listAudienceSlices().map((s) => ({
+          ...s,
+          count: Number(audienceCounts[s.id]) || 0,
+        })),
+        replyTo,
         recipientEstimate: recipients.length,
+        creditPacks: listCreditPacks(),
         defaults: {
           subject: defaultSubject(group && group.name, allowance.periodKey),
           periodLabel: periodLabel(allowance.periodKey),
@@ -144,6 +172,8 @@ module.exports = async function handler(req, res) {
           content,
           events,
           recipient: { name: 'Alex', email: 'preview@example.com' },
+          replyTo:
+            (groupRow && (groupRow.contactEmail || groupRow.ownerEmail || groupRow.email)) || '',
         });
         return json(res, 200, {
           ok: true,

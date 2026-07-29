@@ -6,10 +6,12 @@
     organiserId: '',
     updateId: '',
     bootstrap: null,
+    creditPacks: [],
     bound: false,
     autosaveTimer: null,
     dirty: false,
     switchingGroup: false,
+    saveGeneration: 0,
   };
 
   function draftStorageKey(organiserId) {
@@ -57,15 +59,21 @@
 
   function els() {
     return {
-      page: document.getElementById('org-page-group-updates'),
+      page: document.getElementById('org-social-email') || document.getElementById('org-social-panel-email'),
       allowance: document.getElementById('ogu-allowance'),
       status: document.getElementById('ogu-status'),
       form: document.getElementById('ogu-form'),
       group: document.getElementById('ogu-group'),
+      audienceSlice: document.getElementById('ogu-audience-slice'),
+      audienceHint: document.getElementById('ogu-audience-hint'),
+      replyHint: document.getElementById('ogu-reply-hint'),
       subject: document.getElementById('ogu-subject'),
       note: document.getElementById('ogu-note'),
       recap: document.getElementById('ogu-recap'),
       includeEvents: document.getElementById('ogu-include-events'),
+      includeGreeting: document.getElementById('ogu-include-greeting'),
+      includeStats: document.getElementById('ogu-include-stats'),
+      statsHint: document.getElementById('ogu-stats-hint'),
       events: document.getElementById('ogu-events'),
       spotlightName: document.getElementById('ogu-spotlight-name'),
       spotlightCompany: document.getElementById('ogu-spotlight-company'),
@@ -79,6 +87,7 @@
       send: document.getElementById('ogu-send'),
       previewBody: document.getElementById('ogu-preview-body'),
       history: document.getElementById('ogu-history'),
+      report: document.getElementById('ogu-report'),
     };
   }
 
@@ -109,8 +118,11 @@
     return {
       organiserNote: (e.note && e.note.value) || '',
       monthRecap: (e.recap && e.recap.value) || '',
+      includeGreeting: !!(e.includeGreeting && e.includeGreeting.checked),
+      includeMonthStats: !!(e.includeStats && e.includeStats.checked),
       includeUpcomingEvents: !!(e.includeEvents && e.includeEvents.checked),
       eventIds: eventIds,
+      audienceSlice: (e.audienceSlice && e.audienceSlice.value) || 'all',
       spotlightName: (e.spotlightName && e.spotlightName.value) || '',
       spotlightCompany: (e.spotlightCompany && e.spotlightCompany.value) || '',
       spotlightText: (e.spotlightText && e.spotlightText.value) || '',
@@ -119,6 +131,55 @@
       volunteerCta: (e.volunteer && e.volunteer.value) || '',
       includeSocialLinks: !!(e.includeSocials && e.includeSocials.checked),
     };
+  }
+
+  function renderAudienceHint() {
+    var e = els();
+    if (!e.audienceHint) return;
+    var slices = (state.bootstrap && state.bootstrap.audienceSlices) || [];
+    var selected = (e.audienceSlice && e.audienceSlice.value) || 'all';
+    var match = slices.find(function (s) {
+      return String(s.id) === String(selected);
+    });
+    if (!match) {
+      e.audienceHint.textContent = '';
+      return;
+    }
+    e.audienceHint.textContent =
+      (match.count || 0) +
+      ' people in this slice' +
+      (match.blurb ? ' · ' + match.blurb : '');
+  }
+
+  function renderReplyHint(replyTo) {
+    var el = els().replyHint;
+    if (!el) return;
+    var addr = String(replyTo || '').trim();
+    if (addr) {
+      el.textContent =
+        'Replies go to ' + addr + ' — attendees can write you back from the round-up.';
+    } else {
+      el.textContent =
+        'Add a contact email on your organiser page so replies reach you (not just the Hub).';
+    }
+  }
+
+  function renderMonthStatsHint(stats) {
+    var el = els().statsHint;
+    if (!el) return;
+    if (!stats || !(stats.eventsHosted || stats.uniqueGuests || stats.bookings || stats.rating)) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    var bits = [];
+    if (stats.eventsHosted) bits.push(stats.eventsHosted + ' event' + (stats.eventsHosted === 1 ? '' : 's'));
+    if (stats.uniqueGuests) bits.push(stats.uniqueGuests + ' guest' + (stats.uniqueGuests === 1 ? '' : 's'));
+    else if (stats.bookings) bits.push(stats.bookings + ' booking' + (stats.bookings === 1 ? '' : 's'));
+    if (stats.rating != null) bits.push(stats.rating + ' Hub rating');
+    el.hidden = false;
+    el.textContent =
+      'This month so far: ' + bits.join(' · ') + ' — included automatically when the stats module is on.';
   }
 
   function renderAllowance(allowance, recipientEstimate) {
@@ -143,24 +204,107 @@
     );
     bits.push(
       'Audience estimate: <strong>' +
-        (recipientEstimate || 0) +
-        '</strong> Hub attendee' +
-        ((recipientEstimate || 0) === 1 ? '' : 's')
+        (function () {
+          var e = els();
+          var selected = (e.audienceSlice && e.audienceSlice.value) || 'all';
+          var slices = (state.bootstrap && state.bootstrap.audienceSlices) || [];
+          var match = slices.find(function (s) {
+            return String(s.id) === String(selected);
+          });
+          if (match) return match.count || 0;
+          return recipientEstimate || 0;
+        })() +
+        '</strong> in the selected slice'
     );
     if (!allowance.canSend) {
       bits.push(
         allowance.blockedReason === 'hard_cap'
-          ? 'You’ve hit this page’s send limit for the month.'
-          : 'This page’s free send is used. Extra paid sends coming soon — or wait until next month.'
+          ? 'You’ve hit this page’s send limit for the month. Unused credits roll into next month.'
+          : 'This page’s free send is used. Buy an extra credit to send again this month (max ' +
+              allowance.hardCapPerMonth +
+              ').'
       );
     } else if (allowance.freeRemaining > 0) {
       bits.push('Each organiser page gets its own free monthly update.');
+    } else if (allowance.extraCredits > 0) {
+      bits.push('Your next send will use 1 extra credit.');
     }
+
+    var packs = (state.bootstrap && state.bootstrap.creditPacks) || state.creditPacks || [];
+    if (packs.length && state.organiserId) {
+      bits.push(
+        '<span class="ogu-credit-buy-label">Buy extra sends</span> ' +
+          packs
+            .map(function (p) {
+              return (
+                '<button type="button" class="org-btn org-btn-outline org-btn-sm ogu-buy-credits" data-pack-id="' +
+                String(p.id) +
+                '">' +
+                (p.label || p.id + ' credit') +
+                ' · ' +
+                (p.amountLabel || '') +
+                '</button>'
+              );
+            })
+            .join(' ')
+      );
+    }
+
     el.innerHTML = bits.map(function (b) {
       return '<p>' + b + '</p>';
     }).join('');
     var sendBtn = els().send;
     if (sendBtn) sendBtn.disabled = !allowance.canSend;
+  }
+
+  async function buyCredits(packId) {
+    if (!state.organiserId) {
+      setStatus('Choose an organiser page first.', 'error');
+      return;
+    }
+    setStatus('Opening secure checkout…');
+    var res = await api('/api/organiser/group-update-credits-checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        organiserId: state.organiserId,
+        packId: packId,
+      }),
+    });
+    if (!res.ok || !res.data || !res.data.ok || !res.data.url) {
+      throw new Error((res.data && (res.data.message || res.data.error)) || 'Checkout failed');
+    }
+    window.location.href = res.data.url;
+  }
+
+  async function completeCreditsPurchase(sessionId) {
+    var sid = String(sessionId || '').trim();
+    if (!sid) return;
+    setStatus('Confirming your credit purchase…');
+    var res = await api('/api/organiser/group-update-credits-complete', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId: sid }),
+    });
+    if (!res.ok || !res.data || !res.data.ok) {
+      throw new Error((res.data && (res.data.message || res.data.error)) || 'Could not confirm purchase');
+    }
+    var added =
+      (res.data.result && res.data.result.creditsAdded) ||
+      (res.data.result && res.data.result.alreadyApplied ? 'your' : '');
+    setStatus(
+      added
+        ? 'Payment received — ' +
+            (res.data.result.alreadyApplied ? 'credits already on this page.' : added + ' credit(s) added.')
+        : 'Payment received — credits updated.',
+      'ok'
+    );
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.delete('credits_session');
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    } catch (e) {
+      /* ignore */
+    }
+    await loadBootstrap();
   }
 
   function renderEvents(events, selectedIds) {
@@ -212,14 +356,22 @@
       updates
         .slice(0, 8)
         .map(function (u) {
-          var isDraft = String(u.status || '') === 'draft';
+          var status = String(u.status || '');
+          var isDraft = status === 'draft';
+          var canReport = status === 'sent' || status === 'queued' || status === 'sending';
           var meta = isDraft
             ? 'Draft · click to open'
-            : String(u.status || '') + (u.sent_count ? ' · ' + u.sent_count + ' sent' : '');
-          var tag = isDraft
-            ? 'button type="button" class="ogu-history-open" data-update-id="' + u.id + '"'
-            : 'div class="ogu-history-item"';
-          var close = isDraft ? 'button' : 'div';
+            : canReport
+              ? status + (u.sent_count ? ' · ' + u.sent_count + ' sent' : '') + ' · view report'
+              : status + (u.sent_count ? ' · ' + u.sent_count + ' sent' : '');
+          var tag =
+            isDraft || canReport
+              ? 'button type="button" class="ogu-history-open" data-update-id="' +
+                u.id +
+                '"' +
+                (canReport ? ' data-report="1"' : '')
+              : 'div class="ogu-history-item"';
+          var close = isDraft || canReport ? 'button' : 'div';
           return (
             '<' +
             tag +
@@ -237,6 +389,92 @@
       '</ul>';
   }
 
+  function renderReport(report) {
+    var el = els().report;
+    if (!el) return;
+    if (!report) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    var links =
+      report.topLinks && report.topLinks.length
+        ? '<ul class="ogu-report-links">' +
+          report.topLinks
+            .map(function (l) {
+              return (
+                '<li><span>' +
+                l.clicks +
+                ' clicks</span> · <a href="' +
+                String(l.url || '#').replace(/"/g, '') +
+                '" target="_blank" rel="noopener">' +
+                String(l.url || '').replace(/^https?:\/\//, '').slice(0, 48) +
+                '</a></li>'
+              );
+            })
+            .join('') +
+          '</ul>'
+        : '<p class="org-group-update-hint">No link clicks yet.</p>';
+    el.hidden = false;
+    el.innerHTML =
+      '<h3 class="org-section-title">Engagement report</h3>' +
+      '<p class="org-group-update-hint">' +
+      (report.subject || 'Update') +
+      '</p>' +
+      '<dl class="ogu-report-stats">' +
+      '<div><dt>Sent</dt><dd>' +
+      report.sent +
+      '</dd></div>' +
+      '<div><dt>Opened</dt><dd>' +
+      report.opened +
+      ' <span>(' +
+      report.openRate +
+      '%)</span></dd></div>' +
+      '<div><dt>Clicked</dt><dd>' +
+      report.clicked +
+      ' <span>(' +
+      report.clickRate +
+      '%)</span></dd></div>' +
+      '<div><dt>Booked after</dt><dd>' +
+      report.bookingsAfter +
+      '</dd></div>' +
+      '</dl>' +
+      '<p class="org-group-update-hint">Booked after = unique recipients who booked one of your Hub events after this send.</p>' +
+      links;
+  }
+
+  async function loadReport(updateId) {
+    if (!state.organiserId || !updateId) return;
+    setStatus('Loading engagement report…');
+    var res = await api(
+      '/api/organiser/group-updates?action=report&organiserId=' +
+        encodeURIComponent(state.organiserId) +
+        '&id=' +
+        encodeURIComponent(updateId)
+    );
+    if (!res.ok || !res.data || !res.data.ok) {
+      throw new Error((res.data && (res.data.message || res.data.error)) || 'Could not load report');
+    }
+    renderReport(res.data.report);
+    setStatus('Engagement report updated.', 'ok');
+  }
+
+  function subjectMatchesGroup(subject, orgName) {
+    var sub = String(subject || '').trim().toLowerCase();
+    var name = String(orgName || '').trim().toLowerCase();
+    if (!sub || !name) return false;
+    return sub.indexOf(name) !== -1;
+  }
+
+  function applyDefaultSubject(defaults, orgName) {
+    var e = els();
+    if (!e.subject) return;
+    var next =
+      (defaults && defaults.subject) ||
+      (orgName ? String(orgName).trim() + ' update' : '');
+    if (next) e.subject.value = next;
+  }
+
   function clearComposer() {
     var e = els();
     state.updateId = '';
@@ -245,6 +483,8 @@
     if (e.note) e.note.value = '';
     if (e.recap) e.recap.value = '';
     if (e.includeEvents) e.includeEvents.checked = true;
+    if (e.includeGreeting) e.includeGreeting.checked = true;
+    if (e.includeStats) e.includeStats.checked = true;
     if (e.spotlightName) e.spotlightName.value = '';
     if (e.spotlightCompany) e.spotlightCompany.value = '';
     if (e.spotlightText) e.spotlightText.value = '';
@@ -252,7 +492,9 @@
     if (e.ask) e.ask.value = '';
     if (e.volunteer) e.volunteer.value = '';
     if (e.includeSocials) e.includeSocials.checked = true;
+    if (e.audienceSlice) e.audienceSlice.value = 'all';
     if (e.previewBody) e.previewBody.innerHTML = '';
+    renderReport(null);
     renderEvents((state.bootstrap && state.bootstrap.events) || [], []);
   }
 
@@ -273,6 +515,9 @@
     if (e.note) e.note.value = c.organiserNote || '';
     if (e.recap) e.recap.value = c.monthRecap || '';
     if (e.includeEvents) e.includeEvents.checked = c.includeUpcomingEvents !== false;
+    if (e.includeGreeting) e.includeGreeting.checked = c.includeGreeting !== false;
+    if (e.includeStats) e.includeStats.checked = c.includeMonthStats !== false;
+    if (e.audienceSlice) e.audienceSlice.value = c.audienceSlice || 'all';
     if (e.spotlightName) e.spotlightName.value = c.spotlightName || '';
     if (e.spotlightCompany) e.spotlightCompany.value = c.spotlightCompany || '';
     if (e.spotlightText) e.spotlightText.value = c.spotlightText || '';
@@ -280,17 +525,24 @@
     if (e.ask) e.ask.value = c.memberAsk || '';
     if (e.volunteer) e.volunteer.value = c.volunteerCta || '';
     if (e.includeSocials) e.includeSocials.checked = c.includeSocialLinks !== false;
+    renderAudienceHint();
     renderEvents((state.bootstrap && state.bootstrap.events) || [], c.eventIds || []);
     state.dirty = false;
   }
 
-  function openUpdateFromHistory(updateId) {
+  function openUpdateFromHistory(updateId, asReport) {
     var updates = (state.bootstrap && state.bootstrap.updates) || [];
     var found = updates.find(function (u) {
       return String(u.id) === String(updateId);
     });
     if (!found) {
-      setStatus('Could not open that draft.', 'error');
+      setStatus('Could not open that update.', 'error');
+      return;
+    }
+    if (asReport || (found.status !== 'draft' && found.status !== 'cancelled')) {
+      loadReport(found.id).catch(function (err) {
+        setStatus(friendlyError(err) || 'Could not load report.', 'error');
+      });
       return;
     }
     fillFromUpdate(found);
@@ -362,6 +614,7 @@
     if (!id || id === String(state.organiserId)) return;
     cancelAutosave();
     state.switchingGroup = true;
+    state.saveGeneration = (state.saveGeneration || 0) + 1;
     state.dirty = false;
     state.organiserId = id;
     state.updateId = '';
@@ -370,6 +623,7 @@
       await loadBootstrap();
     } finally {
       state.switchingGroup = false;
+      if (state.dirty) scheduleAutosave();
     }
   }
 
@@ -387,9 +641,14 @@
       throw new Error((res.data && (res.data.message || res.data.error)) || 'Could not load');
     }
     state.bootstrap = res.data;
+    state.creditPacks = res.data.creditPacks || state.creditPacks || [];
     renderAllowance(res.data.allowance, res.data.recipientEstimate);
+    renderMonthStatsHint(res.data.monthStats);
+    renderReplyHint(res.data.replyTo);
+    renderAudienceHint();
     renderEvents(res.data.events || [], []);
     renderHistory(res.data.updates || []);
+    renderReport(null);
     var updates = res.data.updates || [];
     var remembered = recalledDraftId(state.organiserId);
     var draft =
@@ -399,20 +658,15 @@
       updates.find(function (u) {
         return u.status === 'draft';
       });
+    var orgName =
+      (res.data.allowance && res.data.allowance.organiserName) ||
+      (res.data.group && res.data.group.name) ||
+      '';
     if (draft) {
       fillFromUpdate(draft);
-      // If an old draft still has another group's auto-subject, refresh it.
-      var orgName = (res.data.allowance && res.data.allowance.organiserName) || '';
-      var defaultSubject = (res.data.defaults && res.data.defaults.subject) || '';
-      if (
-        e.subject &&
-        defaultSubject &&
-        orgName &&
-        e.subject.value &&
-        e.subject.value.indexOf(orgName) === -1 &&
-        /— .+ update\s*$/.test(e.subject.value)
-      ) {
-        e.subject.value = defaultSubject;
+      // Always keep the subject aligned to this organiser page when switching.
+      if (!subjectMatchesGroup(e.subject && e.subject.value, orgName)) {
+        applyDefaultSubject(res.data.defaults, orgName);
         state.dirty = true;
       }
       setStatus(
@@ -423,9 +677,7 @@
       );
     } else {
       clearComposer();
-      if (e.subject) {
-        e.subject.value = (res.data.defaults && res.data.defaults.subject) || '';
-      }
+      applyDefaultSubject(res.data.defaults, orgName);
       setStatus(
         (res.data.recipientEstimate || 0) +
           ' people who booked via the Hub can receive this update.',
@@ -436,27 +688,42 @@
 
   async function saveDraft(options) {
     options = options || {};
+    if (state.switchingGroup) return null;
+    var organiserIdAtStart = String(state.organiserId || '');
+    var updateIdAtStart = String(state.updateId || '');
+    var generationAtStart = state.saveGeneration || 0;
     var e = els();
     if (e.save && !options.silent) {
       e.save.disabled = true;
       e.save.textContent = 'Saving…';
     }
     try {
+      var subjectValue = e.subject ? e.subject.value : '';
+      var contentValue = readContent();
+      if (state.switchingGroup || String(state.organiserId || '') !== organiserIdAtStart) {
+        return null;
+      }
       var res = await api('/api/organiser/group-updates', {
         method: 'POST',
         body: JSON.stringify({
           action: 'save',
-          organiserId: state.organiserId,
-          id: state.updateId || undefined,
-          subject: e.subject ? e.subject.value : '',
-          content: readContent(),
+          organiserId: organiserIdAtStart,
+          id: updateIdAtStart || undefined,
+          subject: subjectValue,
+          content: contentValue,
         }),
       });
+      if (state.switchingGroup || (state.saveGeneration || 0) !== generationAtStart) {
+        return null;
+      }
+      if (String(state.organiserId || '') !== organiserIdAtStart) {
+        return null;
+      }
       if (!res.ok || !res.data || !res.data.ok) {
         throw new Error((res.data && (res.data.message || res.data.error)) || 'Save failed');
       }
       state.updateId = res.data.update && res.data.update.id;
-      rememberDraftId(state.organiserId, state.updateId);
+      rememberDraftId(organiserIdAtStart, state.updateId);
       state.dirty = false;
       if (res.data.allowance) {
         renderAllowance(res.data.allowance, state.bootstrap && state.bootstrap.recipientEstimate);
@@ -553,7 +820,26 @@
       e.history.addEventListener('click', function (ev) {
         var btn = ev.target.closest('[data-update-id]');
         if (!btn) return;
-        openUpdateFromHistory(btn.getAttribute('data-update-id'));
+        openUpdateFromHistory(btn.getAttribute('data-update-id'), btn.getAttribute('data-report') === '1');
+      });
+    }
+    if (e.audienceSlice) {
+      e.audienceSlice.addEventListener('change', function () {
+        renderAudienceHint();
+        if (state.bootstrap && state.bootstrap.allowance) {
+          renderAllowance(state.bootstrap.allowance, state.bootstrap.recipientEstimate);
+        }
+        scheduleAutosave();
+      });
+    }
+    var allowanceEl = els().allowance;
+    if (allowanceEl) {
+      allowanceEl.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('.ogu-buy-credits');
+        if (!btn) return;
+        buyCredits(btn.getAttribute('data-pack-id')).catch(function (err) {
+          setStatus(friendlyError(err) || 'Could not open checkout.', 'error');
+        });
       });
     }
     if (e.form) {
@@ -603,7 +889,18 @@
       );
       return;
     }
+    var pendingSession = '';
+    try {
+      pendingSession = new URLSearchParams(window.location.search).get('credits_session') || '';
+    } catch (e) {
+      pendingSession = '';
+    }
     await loadBootstrap();
+    if (pendingSession) {
+      await completeCreditsPurchase(pendingSession).catch(function (err) {
+        setStatus(friendlyError(err) || 'Payment received, but credits need a moment to appear — refresh shortly.', 'error');
+      });
+    }
   }
 
   global.HubOrganiserGroupUpdates = {

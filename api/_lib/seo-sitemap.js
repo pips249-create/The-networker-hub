@@ -92,7 +92,9 @@ async function buildSitemapXml(originOverride) {
 
   const sb = getSupabaseAdmin();
   const [eventRows, organisers, opportunityRows] = await Promise.all([
-    fetchPublishedEventRows(sb),
+    fetchPublishedEventRows(sb, {
+      select: 'id, slug, title, organiser_id, starts_at, updated_at, created_at, approval_status, status',
+    }),
     fetchAllOrganiserRows(sb),
     sb
       .from('business_opportunities')
@@ -105,10 +107,14 @@ async function buildSitemapXml(originOverride) {
 
   const orgIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
   let orgById = new Map();
-  if (orgIds.length) {
-    const { data: orgs, error: orgErr } = await sb.from('organisers').select('*').in('id', orgIds);
+  for (let i = 0; i < orgIds.length; i += 80) {
+    const chunk = orgIds.slice(i, i + 80);
+    const { data: orgs, error: orgErr } = await sb
+      .from('organisers')
+      .select('id, name, slug, listing_status, created_at')
+      .in('id', chunk);
     if (orgErr) throw new Error(orgErr.message);
-    orgById = new Map((orgs || []).map((o) => [o.id, o]));
+    (orgs || []).forEach((o) => orgById.set(o.id, o));
   }
 
   const events = (eventRows || []).filter((row) => {

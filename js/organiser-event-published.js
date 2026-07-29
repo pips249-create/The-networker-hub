@@ -171,14 +171,25 @@
 
   function buildListingUrl(ev) {
     const slug = ev && ev.slug ? String(ev.slug).trim() : '';
+    let url = origin + '/events/';
     if (slug) {
-      return origin + '/events/' + encodeURIComponent(slug);
+      url = origin + '/events/' + encodeURIComponent(slug);
+    } else {
+      const id = (ev && ev.id) || primaryId;
+      if (id) {
+        url = origin + '/events/event?id=' + encodeURIComponent(id);
+      }
     }
-    const id = (ev && ev.id) || primaryId;
-    if (id) {
-      return origin + '/events/event?id=' + encodeURIComponent(id);
+    try {
+      const u = new URL(url);
+      u.searchParams.set('utm_source', 'linkedin');
+      u.searchParams.set('utm_medium', 'organic');
+      u.searchParams.set('utm_campaign', 'organiser_share');
+      u.searchParams.set('utm_content', 'event_published');
+      return u.toString();
+    } catch {
+      return url;
     }
-    return origin + '/events/';
   }
 
   const promoteSection = document.getElementById('ep-promote-section');
@@ -223,6 +234,18 @@
   function markShareDone() {
     if (window.HubCommsPack && window.HubCommsPack.markEventShareDone) {
       window.HubCommsPack.markEventShareDone();
+    }
+    try {
+      if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+        window.HubAnalytics.track('organiser_linkedin_open', { source: 'event_published' });
+      } else if (typeof window.va === 'function') {
+        window.va('event', {
+          name: 'organiser_linkedin_open',
+          data: { source: 'event_published' },
+        });
+      }
+    } catch {
+      /* analytics optional */
     }
   }
 

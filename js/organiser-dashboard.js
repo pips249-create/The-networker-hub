@@ -837,6 +837,14 @@
     }
 
     const ranked = (state.groups || [])
+      .filter(function (g) {
+        const key = String((g && (g.statusKey || g.status || g.statusRaw)) || '')
+          .trim()
+          .toLowerCase();
+        if (/unpublish/.test(key)) return false;
+        if (key === 'draft' || /pending|hidden|inactive/.test(key)) return false;
+        return true;
+      })
       .map(function (g) {
         const row = state.groupRankings?.[g.id];
         if (!row?.label) return null;
@@ -1574,6 +1582,78 @@
   }
 
   let linkedInPostBuilder = null;
+  const deferredAssetPromises = {};
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260729events1';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260721mem4';
+  const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260721mem5';
+
+  function loadStylesheetOnce(href) {
+    if (!href) return Promise.resolve();
+    if (deferredAssetPromises[href]) return deferredAssetPromises[href];
+    deferredAssetPromises[href] = new Promise(function (resolve) {
+      if (document.querySelector('link[data-hub-deferred="' + href + '"]')) {
+        resolve();
+        return;
+      }
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.setAttribute('data-hub-deferred', href);
+      link.onload = function () {
+        resolve();
+      };
+      link.onerror = function () {
+        resolve();
+      };
+      document.head.appendChild(link);
+    });
+    return deferredAssetPromises[href];
+  }
+
+  function loadScriptOnce(src) {
+    if (!src) return Promise.resolve();
+    if (deferredAssetPromises[src]) return deferredAssetPromises[src];
+    deferredAssetPromises[src] = new Promise(function (resolve, reject) {
+      const existing = document.querySelector('script[data-hub-deferred="' + src + '"]');
+      if (existing) {
+        if (existing.dataset.hubLoaded === '1') {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', function () {
+          resolve();
+        });
+        existing.addEventListener('error', function () {
+          reject(new Error('Failed to load ' + src));
+        });
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.setAttribute('data-hub-deferred', src);
+      script.onload = function () {
+        script.dataset.hubLoaded = '1';
+        resolve();
+      };
+      script.onerror = function () {
+        reject(new Error('Failed to load ' + src));
+      };
+      document.body.appendChild(script);
+    });
+    return deferredAssetPromises[src];
+  }
+
+  function ensureLinkedInPostBuilderAssets() {
+    if (window.HubLinkedInPostBuilder) return Promise.resolve();
+    return loadScriptOnce(LINKEDIN_POST_BUILDER_SRC);
+  }
+
+  function ensureMemberRosterAssets() {
+    const cssReady = loadStylesheetOnce(MEMBER_ROSTER_CSS);
+    if (window.OrganiserMemberRoster) return cssReady;
+    return Promise.all([cssReady, loadScriptOnce(MEMBER_ROSTER_SRC)]).then(function () {});
+  }
 
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
   let socialTabsBound = false;
@@ -1585,6 +1665,7 @@
     if (tab === 'partner') return 'social-partner';
     if (tab === 'brand') return 'social-brand';
     if (tab === 'reach') return 'social-reach';
+    if (tab === 'email') return 'social-email';
     return 'social';
   }
 
@@ -1607,7 +1688,11 @@
       r === 'brand' ||
       r === 'brand-kit' ||
       r === 'social-reach' ||
-      r === 'reach'
+      r === 'reach' ||
+      r === 'social-email' ||
+      r === 'email' ||
+      r === 'group-updates' ||
+      r === 'monthly-updates'
     );
   }
 
@@ -1634,6 +1719,9 @@
     ) {
       return 'reach';
     }
+    if (r === 'social-email' || r === 'email' || r === 'group-updates' || r === 'monthly-updates') {
+      return 'email';
+    }
     if (r === 'social-linkedin') return 'linkedin';
     return '';
   }
@@ -1647,7 +1735,8 @@
         stored === 'linkedin' ||
         stored === 'partner' ||
         stored === 'brand' ||
-        stored === 'reach'
+        stored === 'reach' ||
+        stored === 'email'
       ) {
         return stored;
       }
@@ -1696,6 +1785,7 @@
       ensureLinkedInPostBuilder({ force: true });
       renderBrandKitNudge();
     }
+    if (tab === 'email') ensureEmailUpdatesPanelReady();
     if (tab === 'ranking') {
       renderOrganiserRankingShare();
       ensurePromoteLeaderboardReady();
@@ -1712,8 +1802,6 @@
       }
     }
 
-    // Keep the URL in sync with the open tab so deep links (e.g. #social-spotlight)
-    // do not snap users back after they switch to Colours & logo / another tab.
     if (!options.skipHash) {
       syncSocialHash(tab);
     }
@@ -1730,8 +1818,21 @@
     if (hash.includes('partner') || hash.includes('website-badge')) return 'partner';
     if (hash.includes('brand') || hash.includes('colour') || hash.includes('color')) return 'brand';
     if (hash.includes('reach') || hash === 'visibility' || hash === 'grow-visibility') return 'reach';
+    if (
+      hash.includes('email') ||
+      hash === 'group-updates' ||
+      hash === 'monthly-updates'
+    ) {
+      return 'email';
+    }
     if (hash.includes('linkedin') || hash === 'social' || hash === 'promote') return 'linkedin';
     return '';
+  }
+
+  function ensureEmailUpdatesPanelReady() {
+    if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
+      window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+    }
   }
 
   function initSocialPageTabs(preferredTab) {
@@ -1919,14 +2020,14 @@
       html = '';
     } else if (info.done >= info.total) {
       html =
-        '<strong>Colours &amp; logo complete (' +
+        '<strong>Colours &amp; type complete (' +
         info.done +
         '/' +
         info.total +
         ').</strong> Your LinkedIn posts can use your colours, and we can tag you when we share.';
     } else {
       html =
-        '<strong>Colours &amp; logo ' +
+        '<strong>Colours &amp; type ' +
         info.done +
         '/' +
         info.total +
@@ -2395,6 +2496,10 @@
     syncBrandColorPair(els.primary, els.primaryHex, g.brandPrimaryColor || '#0d1f3c');
     syncBrandColorPair(els.secondary, els.secondaryHex, g.brandSecondaryColor || '#f7f1e8');
     syncBrandColorPair(els.accent, els.accentHex, g.brandAccentColor || '#c9961f');
+    var typeStyle = resolveBrandTypeStyle(g);
+    document.querySelectorAll('input[name="org-brand-type"]').forEach(function (input) {
+      input.checked = input.value === typeStyle;
+    });
     if (els.instagram) els.instagram.value = g.instagramUrl || '';
     if (els.facebook) els.facebook.value = g.facebookUrl || '';
     if (els.linkedin) els.linkedin.value = g.linkedinUrl || '';
@@ -2500,6 +2605,63 @@
     }
   }
 
+  function readBrandTypeStyle() {
+    var checked = document.querySelector('input[name="org-brand-type"]:checked');
+    var value = checked ? String(checked.value || '').toLowerCase() : 'classic';
+    if (
+      value === 'editorial' ||
+      value === 'modern' ||
+      value === 'bold' ||
+      value === 'friendly'
+    ) {
+      return value;
+    }
+    return 'classic';
+  }
+
+  function rememberBrandTypeStyle(groupId, style) {
+    if (!groupId) return;
+    try {
+      localStorage.setItem('hub_brand_type_style:' + groupId, style || 'classic');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function rememberedBrandTypeStyle(groupId) {
+    if (!groupId) return '';
+    try {
+      return String(localStorage.getItem('hub_brand_type_style:' + groupId) || '').toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function resolveBrandTypeStyle(group) {
+    var g = group || {};
+    var fromGroup = String(g.brandTypeStyle || g.brand_type_style || '').toLowerCase();
+    if (
+      fromGroup === 'editorial' ||
+      fromGroup === 'modern' ||
+      fromGroup === 'bold' ||
+      fromGroup === 'friendly' ||
+      fromGroup === 'classic'
+    ) {
+      return fromGroup;
+    }
+    var remembered = rememberedBrandTypeStyle(g.id);
+    if (
+      remembered === 'editorial' ||
+      remembered === 'modern' ||
+      remembered === 'bold' ||
+      remembered === 'friendly' ||
+      remembered === 'classic'
+    ) {
+      return remembered;
+    }
+    return 'classic';
+  }
+
   async function saveBrandKit(ev) {
     if (ev) ev.preventDefault();
     var els = brandKitEls();
@@ -2509,11 +2671,12 @@
       return;
     }
     var colors = readBrandColors();
+    var typeStyle = readBrandTypeStyle();
     if (els.save) {
       els.save.disabled = true;
       els.save.textContent = 'Saving…';
     }
-    setBrandKitStatus('Saving colours…');
+    setBrandKitStatus('Saving colours & type…');
     try {
       var res = await api('/api/organiser/groups', {
         method: 'PATCH',
@@ -2523,6 +2686,7 @@
           brandPrimaryColor: colors.primary || '',
           brandSecondaryColor: colors.secondary || '',
           brandAccentColor: colors.accent || '',
+          brandTypeStyle: typeStyle,
           instagramUrl: els.instagram ? els.instagram.value.trim() : '',
           facebookUrl: els.facebook ? els.facebook.value.trim() : '',
           linkedinUrl: els.linkedin ? els.linkedin.value.trim() : '',
@@ -2537,23 +2701,33 @@
         return g.id === group.id;
       });
       if (idx >= 0) {
-        state.groups[idx] = { ...state.groups[idx], ...updated };
+        state.groups[idx] = { ...state.groups[idx], ...updated, brandTypeStyle: typeStyle };
       }
+      rememberBrandTypeStyle(group.id, typeStyle);
       fillBrandKitForm(state.groups[idx] || updated);
       preferBrandOnLinkedIn(group.id);
       renderBrandKitNudge();
       renderBrandProfileSummary();
       if (els.useLinkedIn) els.useLinkedIn.hidden = !readBrandColors().primary;
+      if (linkedInPostBuilder && linkedInPostBuilder.refreshGroups) {
+        linkedInPostBuilder.refreshGroups();
+      }
       setBrandKitStatus(
-        'Colours saved to your organiser page. LinkedIn posts will use Your brand by default.',
+        'Colours and type saved. LinkedIn posts will use Your brand by default.',
         'ok'
       );
     } catch (e) {
+      // Type column may be missing until migration 220 — still keep the local choice.
+      rememberBrandTypeStyle(group.id, typeStyle);
+      var gi = (state.groups || []).findIndex(function (g) {
+        return g.id === group.id;
+      });
+      if (gi >= 0) state.groups[gi].brandTypeStyle = typeStyle;
       setBrandKitStatus(e.message || 'Could not save colours.', 'error');
     } finally {
       if (els.save) {
         els.save.disabled = false;
-        els.save.textContent = 'Save colours';
+        els.save.textContent = 'Save colours & type';
       }
     }
   }
@@ -3903,7 +4077,7 @@
     return (
       '<button type="button" class="org-action-item" data-promote-event="' +
       esc(ev.id) +
-      '"><span class="org-action-icon">📣</span><span class="org-action-text"><strong>Share your event</strong><span>Social post, image and listing link</span></span></button>'
+      '"><span class="org-action-icon">📣</span><span class="org-action-text"><strong>LinkedIn post</strong><span>Free picture and ready-made caption</span></span></button>'
     );
   }
 
@@ -7413,7 +7587,14 @@
       e.stopPropagation();
       closeAllActionMenus();
       const eid = promoteEventBtn.getAttribute('data-promote-event');
-      if (eid) location.href = '/organiser/event-published?ids=' + encodeURIComponent(eid) + '&published=1';
+      if (eid) {
+        setRoute('social');
+        ensureLinkedInPostBuilder({ force: true });
+        if (linkedInPostBuilder && linkedInPostBuilder.prefillEvent) {
+          linkedInPostBuilder.prefillEvent(eid);
+        }
+        showOrganiserAlert('LinkedIn post ready — pick a picture style, then copy and share.', false);
+      }
       return true;
     }
 
@@ -8491,48 +8672,54 @@
         membershipsRosterLoadedFor = '';
         updateMembershipPageCard(filters.membershipsGroup);
         syncMembershipGroupUrl();
-        if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
-          window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup).catch(function (err) {
+        ensureMemberRosterAssets()
+          .then(function () {
+            if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
+              return window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup);
+            }
+          })
+          .catch(function (err) {
             showOrganiserAlert(err.message || 'Could not load membership', true);
           });
-        }
       });
     }
 
     const groupId = filters.membershipsGroup;
-    const roster = window.OrganiserMemberRoster;
-    if (roster) {
-      const selectedGroup = findGroupById(groupId);
-      if (
-        selectedGroup &&
-        selectedGroup.rosterSummary &&
-        typeof roster.setGroupRosterSummary === 'function'
-      ) {
-        roster.setGroupRosterSummary(groupId, selectedGroup.rosterSummary);
-      }
-      if (typeof roster.bindControls === 'function') roster.bindControls();
-      if (typeof roster.clearStuckLoading === 'function') roster.clearStuckLoading();
-      if (groupId && typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
+    ensureMemberRosterAssets()
+      .then(function () {
+        const roster = window.OrganiserMemberRoster;
+        if (!roster) return;
+        if (filters.membershipsGroup !== groupId) return;
+        const selectedGroup = findGroupById(groupId);
+        if (
+          selectedGroup &&
+          selectedGroup.rosterSummary &&
+          typeof roster.setGroupRosterSummary === 'function'
+        ) {
+          roster.setGroupRosterSummary(groupId, selectedGroup.rosterSummary);
+        }
+        if (typeof roster.bindControls === 'function') roster.bindControls();
+        if (typeof roster.clearStuckLoading === 'function') roster.clearStuckLoading();
+        if (groupId && typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
 
-      const shouldLoad =
-        typeof roster.loadForGroup === 'function' &&
-        groupId &&
-        (!membershipsRosterAppearsPainted() ||
-          (typeof roster.getActiveGroupId === 'function' && roster.getActiveGroupId() !== groupId));
+        const shouldLoad =
+          typeof roster.loadForGroup === 'function' &&
+          groupId &&
+          (!membershipsRosterAppearsPainted() ||
+            (typeof roster.getActiveGroupId === 'function' && roster.getActiveGroupId() !== groupId));
 
-      if (shouldLoad) {
-        roster.loadForGroup(groupId)
-          .then(function () {
+        if (shouldLoad) {
+          return roster.loadForGroup(groupId).then(function () {
             if (groupId === filters.membershipsGroup && membershipsRosterAppearsPainted()) {
               membershipsRosterLoadedFor = groupId;
             }
-          })
-          .catch(function (err) {
-            membershipsRosterLoadedFor = '';
-            showOrganiserAlert(err.message || 'Could not load membership', true);
           });
-      }
-    }
+        }
+      })
+      .catch(function (err) {
+        membershipsRosterLoadedFor = '';
+        showOrganiserAlert(err.message || 'Could not load membership', true);
+      });
   }
 
   async function navigateToMemberships() {
@@ -8570,7 +8757,11 @@
   }
 
   function syncSidebarNavHighlight(page, sub) {
-    const activeRoute = sidebarRouteForPage(page, sub);
+    let activeRoute = sidebarRouteForPage(page, sub);
+    if (page === 'social') {
+      const tab = socialTabFromHash() || storedSocialTab() || 'linkedin';
+      activeRoute = tab === 'email' ? 'social-email' : 'social';
+    }
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       const isActive = a.getAttribute('data-org-route') === activeRoute;
       a.classList.toggle('is-active', isActive);
@@ -8906,12 +9097,13 @@
         });
       }
     }
-    if (page === 'group-updates') {
-      requestAnimationFrame(function () {
-        if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
-          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
-        }
-      });
+    if (page === 'social') {
+      const tab = socialTabFromHash() || socialTabFromRoute(route) || storedSocialTab();
+      if (tab === 'email') {
+        requestAnimationFrame(function () {
+          ensureEmailUpdatesPanelReady();
+        });
+      }
     }
 
     // Route lives in the hash only (/organiser/#events-list). Do not also write ?panel=
@@ -9466,6 +9658,7 @@
       });
       updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       maybePrefetchEvents();
+      updateLinkedInShareNudge();
       return;
     }
     setOrgEmpty(empty, { show: false });
@@ -9485,6 +9678,20 @@
     updateEventsSortHeaders();
     syncSharedEventFiltersUi();
     maybePrefetchEvents();
+    updateLinkedInShareNudge();
+  }
+
+  function updateLinkedInShareNudge() {
+    const nudge = document.getElementById('org-events-linkedin-nudge');
+    if (!nudge) return;
+    const hasLive = (state.events || []).some(function (ev) {
+      return eventCanPromote(ev);
+    });
+    const shared =
+      window.HubCommsPack &&
+      typeof window.HubCommsPack.isEventShareDone === 'function' &&
+      window.HubCommsPack.isEventShareDone();
+    nudge.hidden = !hasLive || shared;
   }
 
   function renderTickets() {
@@ -12570,10 +12777,11 @@
 
   async function loadBootstrap(options) {
     const silent = Boolean(options && options.silent);
+    const prefetch = options && options.prefetch;
     if (!silent) setDashboardLoading(true);
     let postReady = null;
     try {
-    const { ok, data } = await apiWithTimeout('/api/organiser/bootstrap', {}, 30000);
+    const { ok, data } = await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, 30000));
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
@@ -12597,7 +12805,11 @@
     state.workspaceSummary =
       data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
     state.eventSummaries = data.eventSummaries || [];
-    if (!state.events.length && state.eventSummaries.length) {
+    if (
+      !state.events.length &&
+      state.eventSummaries.length &&
+      data.eventsPagination?.total == null
+    ) {
       state.eventsHasMore = state.eventSummaries.length > EVENTS_FETCH_SIZE;
     }
     state.eventsFullyLoaded = !state.eventsHasMore;
@@ -12670,7 +12882,7 @@
         maybeRedirectToSingleMemberList();
       }
       if (
-        parseRoute().page === 'group-updates' &&
+        (parseRoute().page === 'social' && socialTabFromHash() === 'email') &&
         window.HubOrganiserGroupUpdates &&
         window.HubOrganiserGroupUpdates.init
       ) {
@@ -13976,6 +14188,8 @@
         alumniSendBtn.addEventListener('click', submitAlumniInvites);
       }
 
+      // Start bootstrap while binding the large DOM — overlaps network with CPU work.
+      const bootstrapPrefetch = apiWithTimeout('/api/organiser/bootstrap', {}, 30000);
       bindForms();
       bindTeamUi();
       bindOnboardingPipeline();
@@ -13986,7 +14200,7 @@
       bindUi();
       const initial = resolveInitialRoute();
       setRoute(initial.sub || initial.page);
-      await loadBootstrap({ silent: true });
+      await loadBootstrap({ silent: true, prefetch: bootstrapPrefetch });
       applyPendingGroupContinue();
       try {
         const bootParams = new URLSearchParams(window.location.search);
@@ -14028,7 +14242,7 @@
           linkedInPostBuilder.prefillEvent(pendingPromoteEventId);
         }
         showOrganiserAlert(
-          'Your event is live. We created a social post draft in Promote & social.',
+          'Your event is live. We opened a LinkedIn post draft in Promote.',
           false
         );
       }
@@ -14079,8 +14293,16 @@
     }
   }
 
-  fetch('/api/auth/session', { credentials: 'include' })
-    .then((res) => res.json())
+  const sessionFetcher =
+    typeof window.hubFetchSession === 'function'
+      ? window.hubFetchSession
+      : function () {
+          return fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+            return res.json();
+          });
+        };
+
+  sessionFetcher()
     .then((data) => {
       if (!data.ok || !data.user) {
         setDashboardLoading(false);

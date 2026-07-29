@@ -1679,6 +1679,7 @@ async function buildRosterSummariesForOrganisers(organiserIds) {
   if (!ids.length) return map;
 
   const sb = getSupabaseAdmin();
+  const today = new Date().toISOString().slice(0, 10);
   const CHUNK = 100;
   for (let i = 0; i < ids.length; i += CHUNK) {
     const chunk = ids.slice(i, i + CHUNK);
@@ -1686,7 +1687,8 @@ async function buildRosterSummariesForOrganisers(organiserIds) {
       .from('organiser_member_roster')
       .select('organiser_id, status, expires_at, claimed_at, attendee_id')
       .in('organiser_id', chunk)
-      .eq('status', ROSTER_STATUS_ACTIVE);
+      .eq('status', ROSTER_STATUS_ACTIVE)
+      .or(`expires_at.is.null,expires_at.gte.${today}`);
     if (error) throw new Error(error.message);
     (data || []).forEach((row) => {
       if (!rosterRowIsActive(row)) return;

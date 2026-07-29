@@ -3,9 +3,15 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./supabase');
 const { publicOrganiserSlug } = require('./organiser-slug');
-const { fetchPublishedEventRows, isPublicEvent } = require('./supabase-events');
+const { fetchPublishedEventRows, isPublicEvent, fetchAllPaged } = require('./supabase-events');
 const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
 const { getOrganiserRankingHistory } = require('./organiser-ranking-snapshot');
+
+/** Slim columns for directory counts / regional location matching — never select *. */
+const DIRECTORY_EVENT_SELECT =
+  'id, organiser_id, title, slug, starts_at, city, postcode, outcode, location_label, venue, meeting_type, approval_status, status';
+const MAX_LOCATIONS_PER_ORG = 16;
+const ORG_PAGE_SIZE = 1000;
 
 function slugIndustry(ind) {
   return String(ind || '')
@@ -194,19 +200,39 @@ function rowToPublicOrganiser(row, eventCount, options) {
 }
 
 async function fetchPublicOrganiserRows(sb) {
-  const { data, error } = await sb.from('organisers').select('*').order('name');
-  if (error) throw new Error(error.message);
-  return (data || []).filter(isPublicOrganiser);
+  const rows = await fetchAllPaged(
+    sb,
+    (from, to) =>
+      sb.from('organisers').select('*').order('name').range(from, to),
+    { pageSize: ORG_PAGE_SIZE }
+  );
+  return rows.filter(isPublicOrganiser);
 }
-async function loadPublishedEventIndex(sb) {
-  const eventRows = await fetchPublishedEventRows(sb);
-  const orgIds = [...new Set((eventRows || []).map((e) => e.organiser_id).filter(Boolean))];
+
+async function loadPublishedEventIndex(sb, options = {}) {
+  const organiserId = String(options.organiserId || '').trim() || null;
+  const eventRows = await fetchPublishedEventRows(sb, {
+    select: DIRECTORY_EVENT_SELECT,
+    organiserId,
+  });
 
   let orgById = new Map();
-  if (orgIds.length) {
-    const { data: orgs, error: orgErr } = await sb.from('organisers').select('*').in('id', orgIds);
+  if (organiserId) {
+    const { data: org, error: orgErr } = await sb
+      .from('organisers')
+      .select('*')
+      .eq('id', organiserId)
+      .maybeSingle();
     if (orgErr) throw new Error(orgErr.message);
-    orgById = new Map((orgs || []).map((o) => [o.id, o]));
+    if (org) orgById.set(org.id, org);
+  } else {
+    const orgIds = [...new Set((eventRows || []).map((e) => e.organiser_id).filter(Boolean))];
+    for (let i = 0; i < orgIds.length; i += 80) {
+      const chunk = orgIds.slice(i, i + 80);
+      const { data: orgs, error: orgErr } = await sb.from('organisers').select('*').in('id', chunk);
+      if (orgErr) throw new Error(orgErr.message);
+      (orgs || []).forEach((o) => orgById.set(o.id, o));
+    }
   }
 
   const visibleEvents = (eventRows || []).filter((row) => {
@@ -253,6 +279,26 @@ function eventsForOrganiser(organiserId, visibleEvents, orgById) {
     });
 }
 
+function locationsForOrganiser(organiserId, visibleEvents) {
+  const seen = new Set();
+  const locations = [];
+  for (const event of visibleEvents || []) {
+    if (event.organiser_id !== organiserId) continue;
+    const city = String(event.city || '').trim();
+    const postcode = String(event.postcode || '').trim();
+    const outcode = String(event.outcode || '').trim();
+    const location = String(event.location_label || '').trim();
+    const venue = String(event.venue || '').trim();
+    if (!city && !postcode && !outcode && !location && !venue) continue;
+    const key = [outcode, city, postcode].join('|').toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    locations.push({ city, postcode, outcode, location, venue });
+    if (locations.length >= MAX_LOCATIONS_PER_ORG) break;
+  }
+  return locations;
+}
+
 async function fetchOrganiserReviews(sb, organiserId) {
   const { data, error } = await sb
     .from('reviews')
@@ -295,20 +341,36 @@ async function listPublicOrganisers() {
     rankings = {};
   }
 
+  // Index locations by organiser once — avoid O(orgs × events) rescans.
+  const locationsByOrg = new Map();
+  (visibleEvents || []).forEach((event) => {
+    if (!event.organiser_id) return;
+    if (!locationsByOrg.has(event.organiser_id)) {
+      locationsByOrg.set(event.organiser_id, []);
+    }
+    const list = locationsByOrg.get(event.organiser_id);
+    if (list.length >= MAX_LOCATIONS_PER_ORG) return;
+    const city = String(event.city || '').trim();
+    const postcode = String(event.postcode || '').trim();
+    const outcode = String(event.outcode || '').trim();
+    const location = String(event.location_label || '').trim();
+    const venue = String(event.venue || '').trim();
+    if (!city && !postcode && !outcode && !location && !venue) return;
+    const key = [outcode, city, postcode].join('|').toLowerCase();
+    if (list._seen?.has(key)) return;
+    if (!list._seen) list._seen = new Set();
+    list._seen.add(key);
+    list.push({ city, postcode, outcode, location, venue });
+  });
+  locationsByOrg.forEach((list) => {
+    delete list._seen;
+  });
+
   return organisers
     .map((org) => {
-      const locations = (visibleEvents || [])
-        .filter((event) => event.organiser_id === org.id)
-        .map((event) => ({
-          city: String(event.city || '').trim(),
-          postcode: String(event.postcode || '').trim(),
-          outcode: String(event.outcode || '').trim(),
-          location: String(event.location_label || '').trim(),
-          venue: String(event.venue || '').trim(),
-        }));
       return rowToPublicOrganiser(org, counts.get(org.id) || 0, {
         ranking: rankings[org.id] || null,
-        locations,
+        locations: locationsByOrg.get(org.id) || [],
       });
     })
     .sort((a, b) => {
@@ -316,6 +378,44 @@ async function listPublicOrganisers() {
       if (b.rating !== a.rating) return b.rating - a.rating;
       return String(a.name).localeCompare(String(b.name));
     });
+}
+
+async function enrichPublicOrganiserDetail(sb, row) {
+  const { visibleEvents, orgById } = await loadPublishedEventIndex(sb, { organiserId: row.id });
+  const events = eventsForOrganiser(row.id, visibleEvents, orgById);
+  const reviewItems = await fetchOrganiserReviews(sb, row.id);
+  let rankings = {};
+  try {
+    rankings = await getGroupRankingsForOrganiser([row.id]);
+  } catch {
+    rankings = {};
+  }
+  let rankingHistory = [];
+  try {
+    rankingHistory = await getOrganiserRankingHistory(row.id, { limit: 18 });
+  } catch {
+    rankingHistory = [];
+  }
+
+  let membershipPlan = null;
+  try {
+    const { getMembershipPlanForOrganiser } = require('./membership-billing');
+    membershipPlan = await getMembershipPlanForOrganiser(row.id);
+    if (membershipPlan && !membershipPlan.offered) membershipPlan = null;
+  } catch {
+    membershipPlan = null;
+  }
+
+  return rowToPublicOrganiser(row, events.length, {
+    includeEvents: true,
+    events,
+    includeReviews: true,
+    reviewItems,
+    ranking: rankings[row.id] || null,
+    rankingHistory,
+    membershipPlan,
+    locations: locationsForOrganiser(row.id, visibleEvents),
+  });
 }
 
 async function getPublicOrganiserBySlug(slug) {
@@ -331,6 +431,7 @@ async function getPublicOrganiserBySlug(slug) {
   if (byStored && isPublicOrganiser(byStored)) row = byStored;
 
   if (!row) {
+    // Fallback for legacy title-derived slugs — paginated, not a single unbounded select.
     const rows = await fetchPublicOrganiserRows(sb);
     row =
       rows.find((candidate) => {
@@ -340,41 +441,7 @@ async function getPublicOrganiserBySlug(slug) {
   }
 
   if (!row || !isPublicOrganiser(row)) return null;
-
-  const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);
-  const events = eventsForOrganiser(row.id, visibleEvents, orgById);
-  const reviewItems = await fetchOrganiserReviews(sb, row.id);
-  let rankings = {};
-  try {
-    rankings = await getGroupRankingsForOrganiser([row.id]);
-  } catch {
-    rankings = {};
-  }
-  let rankingHistory = [];
-  try {
-    rankingHistory = await getOrganiserRankingHistory(row.id, { limit: 18 });
-  } catch {
-    rankingHistory = [];
-  }
-
-  let membershipPlan = null;
-  try {
-    const { getMembershipPlanForOrganiser } = require('./membership-billing');
-    membershipPlan = await getMembershipPlanForOrganiser(row.id);
-    if (membershipPlan && !membershipPlan.offered) membershipPlan = null;
-  } catch {
-    membershipPlan = null;
-  }
-
-  return rowToPublicOrganiser(row, events.length, {
-    includeEvents: true,
-    events,
-    includeReviews: true,
-    reviewItems,
-    ranking: rankings[row.id] || null,
-    rankingHistory,
-    membershipPlan,
-  });
+  return enrichPublicOrganiserDetail(sb, row);
 }
 
 async function getPublicOrganiserById(id) {
@@ -387,40 +454,7 @@ async function getPublicOrganiserById(id) {
   if (error) throw new Error(error.message);
   if (!row || !isPublicOrganiser(row)) return null;
 
-  const { visibleEvents, orgById } = await loadPublishedEventIndex(sb);
-  const events = eventsForOrganiser(row.id, visibleEvents, orgById);
-  const reviewItems = await fetchOrganiserReviews(sb, row.id);
-  let rankings = {};
-  try {
-    rankings = await getGroupRankingsForOrganiser([row.id]);
-  } catch {
-    rankings = {};
-  }
-  let rankingHistory = [];
-  try {
-    rankingHistory = await getOrganiserRankingHistory(row.id, { limit: 18 });
-  } catch {
-    rankingHistory = [];
-  }
-
-  let membershipPlan = null;
-  try {
-    const { getMembershipPlanForOrganiser } = require('./membership-billing');
-    membershipPlan = await getMembershipPlanForOrganiser(row.id);
-    if (membershipPlan && !membershipPlan.offered) membershipPlan = null;
-  } catch {
-    membershipPlan = null;
-  }
-
-  return rowToPublicOrganiser(row, events.length, {
-    includeEvents: true,
-    events,
-    includeReviews: true,
-    reviewItems,
-    ranking: rankings[row.id] || null,
-    rankingHistory,
-    membershipPlan,
-  });
+  return enrichPublicOrganiserDetail(sb, row);
 }
 
 module.exports = {

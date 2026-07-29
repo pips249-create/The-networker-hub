@@ -319,14 +319,17 @@ async function syncEmailMatchedOrganiserClaims(session) {
     .or(`email.eq.${em},contact_email.eq.${em}`);
   if (error) throw new Error(error.message);
 
-  let synced = 0;
-  for (const row of data || []) {
-    if (!row?.id || row.ownership_claim_status === 'disputed') continue;
-    if (row.ownership_claim_status === 'claimed') continue;
-    const result = await ensureOrganiserClaimedForAdminEvent(row.id);
-    if (result.claimed) synced += 1;
-  }
-  return { synced };
+  const toClaim = (data || []).filter(
+    (row) => row?.id && row.ownership_claim_status !== 'disputed' && row.ownership_claim_status !== 'claimed'
+  );
+  if (!toClaim.length) return { synced: 0 };
+
+  const results = await Promise.all(
+    toClaim.map((row) =>
+      ensureOrganiserClaimedForAdminEvent(row.id).catch(() => ({ claimed: false }))
+    )
+  );
+  return { synced: results.filter((r) => r && r.claimed).length };
 }
 
 module.exports = {

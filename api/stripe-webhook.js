@@ -11,6 +11,7 @@ const {
 const { isSupabaseConfigured } = require('./_lib/supabase');
 const { handleOpportunityPremiumCheckout, handleOpportunityListingCheckout } = require('./_lib/supabase-opportunities');
 const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
+const { handleGroupUpdateCreditsCheckout } = require('./_lib/group-update-credits');
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
 const { handleInvoicePaid, handleSponsorshipCheckoutCompleted } = require('./_lib/stripe-revenue');
 const {
@@ -131,6 +132,7 @@ async function handler(req, res) {
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
       const featuredResult = await handleEventFeaturedCheckout(session);
+      const groupUpdateCreditsResult = await handleGroupUpdateCreditsCheckout(session);
       const registrationResult = await handleCheckoutSessionCompleted(session);
       res.statusCode = 200;
       return res.end(
@@ -142,6 +144,7 @@ async function handler(req, res) {
           premiumResult,
           listingResult,
           featuredResult,
+          groupUpdateCreditsResult,
           registrationResult,
         })
       );

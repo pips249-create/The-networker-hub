@@ -257,6 +257,150 @@
   display: none;
 }
 
+.org-social-more-tabs {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+  background: #f7f4ef;
+  border: 1px solid rgba(74, 68, 70, 0.1);
+  border-top: none;
+  border-radius: 0 0 var(--od-radius) var(--od-radius);
+}
+
+.org-social-more-tabs[hidden] {
+  display: none;
+}
+
+.org-social-more-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #635c5e;
+}
+
+.org-events-subnav--promote-more {
+  border-radius: var(--od-radius);
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.org-events-tab--more.is-expanded,
+.org-events-tab--more.is-active {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+#org-events-linkedin-nudge[hidden] {
+  display: none;
+}
+
+.org-promote-groups {
+  display: grid;
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.org-promote-group-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #635c5e;
+}
+
+.org-events-subnav--promote,
+.org-events-subnav--promote-hub {
+  border-radius: var(--od-radius);
+  margin-bottom: 0;
+}
+
+.org-events-subnav--promote-hub {
+  background: linear-gradient(135deg, #1a3a5c 0%, #0d1f3c 55%, #2c2826 100%);
+}
+
+.org-brand-type-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.org-brand-type-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(74, 68, 70, 0.14);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.org-brand-type-option:has(input:checked) {
+  border-color: #9a7aa8;
+  box-shadow: 0 0 0 2px rgba(154, 122, 168, 0.2);
+}
+
+.org-brand-type-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.org-brand-type-sample {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.org-brand-type-sample strong {
+  font-size: 1.55rem;
+  line-height: 1;
+  color: #2c2826;
+}
+
+.org-brand-type-sample em {
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #635c5e;
+}
+
+.org-brand-type-sample--classic strong {
+  font-family: 'DM Serif Display', Georgia, serif;
+}
+
+.org-brand-type-sample--editorial strong {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.org-brand-type-sample--modern strong {
+  font-family: 'Source Sans 3', Arial, sans-serif;
+  font-weight: 700;
+}
+
+.org-brand-type-sample--bold strong {
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.org-brand-type-sample--friendly strong {
+  font-family: 'Nunito', Arial, sans-serif;
+}
+
+.org-brand-type-meta {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #635c5e;
+}
+
+.org-social-email-panel .org-social-panel-head {
+  margin-bottom: 1rem;
+}
+
 .org-events-tab {
   position: relative;
   display: inline-flex;
@@ -1596,6 +1740,59 @@
 
 .org-group-update-allowance p:last-child {
   margin-bottom: 0;
+}
+
+.org-group-update-allowance .ogu-credit-buy-label {
+  display: block;
+  font-weight: 600;
+  color: var(--od-text);
+  margin-bottom: 6px;
+}
+
+.org-group-update-allowance .ogu-buy-credits {
+  margin: 0 8px 6px 0;
+}
+
+.org-group-update-report {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--od-radius-sm);
+  background: rgba(28, 32, 64, 0.04);
+  border: 1px solid rgba(28, 32, 64, 0.1);
+}
+
+.ogu-report-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin: 10px 0 12px;
+}
+
+.ogu-report-stats dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--od-text-mid);
+}
+
+.ogu-report-stats dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--od-text);
+}
+
+.ogu-report-stats dd span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--od-text-mid);
+}
+
+.ogu-report-links {
+  margin: 0;
+  padding-left: 1.1em;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .org-group-update-status {

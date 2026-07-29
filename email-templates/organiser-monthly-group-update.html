@@ -46,11 +46,13 @@
         <tr>
           <td class="mobile-pad" style="padding:28px 40px 8px;text-align:center;">
             {{organiser_logo_html}}
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">{{period_label}}</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:{{brand_primary}};text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">{{period_label}}</p>
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 8px;line-height:1.15;">Update from {{organiser_name}}</h1>
           </td>
         </tr>
 
+        {{greeting_html}}
+        {{month_stats_html}}
         {{organiser_note_html}}
         {{month_recap_html}}
         {{events_html}}
@@ -58,10 +60,11 @@
         {{ask_html}}
         {{volunteer_html}}
         {{social_html}}
+        {{reply_hint_html}}
 
         <tr>
           <td class="mobile-pad email-cta" style="padding:8px 40px 28px;text-align:center;">
-            <a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;">{{cta_label}} &rarr;</a>
+            <a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:{{brand_cta}};border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;">{{cta_label}} &rarr;</a>
           </td>
         </tr>
 
@@ -77,6 +80,7 @@
               &nbsp;·&nbsp;
               <a href="{{privacy_url}}" style="color:rgba(255,255,255,0.7);">Privacy</a>
             </p>
+            {{tracking_pixel_html}}
           </td>
         </tr>
       </table>

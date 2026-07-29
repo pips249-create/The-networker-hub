@@ -523,7 +523,12 @@ function normalizeAttendeeExtraText(input) {
  */
 async function handleCheckoutSessionCompleted(session) {
   const metadata = session.metadata || {};
-  if (metadata.checkout_type === 'event_featured' || metadata.checkout_type === 'opportunity_premium' || metadata.checkout_type === 'opportunity_listing') {
+  if (
+    metadata.checkout_type === 'event_featured' ||
+    metadata.checkout_type === 'opportunity_premium' ||
+    metadata.checkout_type === 'opportunity_listing' ||
+    metadata.checkout_type === 'group_update_credits'
+  ) {
     return { skipped: true, reason: 'not_ticket_checkout' };
   }
 
