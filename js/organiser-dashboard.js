@@ -1863,32 +1863,21 @@
     var colors = readBrandColors();
     if (!colors.primary || !colors.accent) {
       els.contrast.hidden = true;
+      els.contrast.textContent = '';
       return;
     }
     var ratio = brandKitContrastRatio(colors.primary, colors.accent);
-    var secondaryRatio = colors.secondary
-      ? brandKitContrastRatio(colors.primary, colors.secondary)
-      : 21;
-    if (ratio < 2.2) {
+    // Only nudge when accent nearly disappears on the primary — organisers
+    // don’t need WCAG ratios or a “looks good” message every time.
+    if (ratio < 1.4) {
       els.contrast.hidden = false;
       els.contrast.classList.remove('is-ok');
       els.contrast.textContent =
-        'Accent on primary may be hard to read (contrast ' +
-        ratio.toFixed(1) +
-        ':1). Try a lighter or darker accent.';
+        'That accent colour is very close to your primary — headlines on LinkedIn pictures may be hard to see. Try a lighter or darker accent.';
       return;
     }
-    if (secondaryRatio < 1.4) {
-      els.contrast.hidden = false;
-      els.contrast.classList.remove('is-ok');
-      els.contrast.textContent =
-        'Primary and secondary are very similar — LinkedIn backgrounds may look flat.';
-      return;
-    }
-    els.contrast.hidden = false;
-    els.contrast.classList.add('is-ok');
-    els.contrast.textContent =
-      'Colour contrast looks good for LinkedIn graphics (' + ratio.toFixed(1) + ':1).';
+    els.contrast.hidden = true;
+    els.contrast.textContent = '';
   }
 
   function brandKitCompleteness(group) {

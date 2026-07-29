@@ -1175,6 +1175,61 @@
       return (getEvents() || []).filter(isPublishedEvent);
     }
 
+    function eventGroupId(ev) {
+      if (!ev) return '';
+      return String(ev.organiserGroupId || ev.organiser_id || ev.groupId || '').trim();
+    }
+
+    function eventsForSelectedGroup() {
+      var groupId = String(state.groupId || '').trim();
+      var list = publishedEvents();
+      if (!groupId) return list;
+      var forGroup = list.filter(function (ev) {
+        var gid = eventGroupId(ev);
+        // Keep events with no group id so older rows still appear.
+        return !gid || gid === groupId;
+      });
+      return forGroup.length ? forGroup : list.filter(function (ev) {
+        return eventGroupId(ev) === groupId;
+      });
+    }
+
+    function eventStartMs(ev) {
+      var raw = ev && (ev.date || ev.startsAt || ev.starts_at);
+      if (!raw) return 0;
+      var t = new Date(raw).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    }
+
+    function eventsForPicker() {
+      var now = Date.now() - 12 * 60 * 60 * 1000; // include events from earlier today
+      var list = eventsForSelectedGroup()
+        .slice()
+        .sort(function (a, b) {
+          var da = eventStartMs(a);
+          var db = eventStartMs(b);
+          if (da !== db) return da - db;
+          return String(a.title || '').localeCompare(String(b.title || ''));
+        });
+      var upcoming = list.filter(function (ev) {
+        var t = eventStartMs(ev);
+        return !t || t >= now;
+      });
+      var past = list.filter(function (ev) {
+        var t = eventStartMs(ev);
+        return t && t < now;
+      });
+      // Prefer upcoming; keep a short past tail so recently run events stay reachable.
+      var MAX_UPCOMING = 40;
+      var MAX_PAST = 8;
+      return {
+        upcoming: upcoming.slice(0, MAX_UPCOMING),
+        past: past.slice(-MAX_PAST).reverse(),
+        upcomingTotal: upcoming.length,
+        pastTotal: past.length,
+      };
+    }
+
     function hasLiveListings() {
       return publishedListings().length > 0;
     }
@@ -1301,30 +1356,50 @@
       var show = isEventTemplate();
       setFieldVisible(elEventField, show);
       if (!show) return;
-      var list = publishedEvents()
-        .slice()
-        .sort(function (a, b) {
-          var da = a.date ? new Date(a.date).getTime() : 0;
-          var db = b.date ? new Date(b.date).getTime() : 0;
-          if (da !== db) return da - db;
-          return String(a.title || '').localeCompare(String(b.title || ''));
-        });
+      var buckets = eventsForPicker();
+      var list = buckets.upcoming.concat(buckets.past);
       var preferred = String(state.eventId || '');
       elEvent.innerHTML = '';
       if (!list.length) {
         var empty = document.createElement('option');
         empty.value = preferred || '';
-        empty.textContent = preferred ? 'Published event (loading…)' : 'No published events yet';
+        empty.textContent = preferred
+          ? 'Published event (loading…)'
+          : 'No published events for this organiser page';
         elEvent.appendChild(empty);
         if (!preferred) state.eventImagePosition = '';
         return;
       }
-      list.forEach(function (ev) {
-        var option = document.createElement('option');
-        option.value = ev.id;
-        option.textContent = eventOptionLabel(ev);
-        elEvent.appendChild(option);
-      });
+
+      if (buckets.upcoming.length) {
+        var upGroup = document.createElement('optgroup');
+        upGroup.label =
+          buckets.upcomingTotal > buckets.upcoming.length
+            ? 'Upcoming (next ' + buckets.upcoming.length + ' of ' + buckets.upcomingTotal + ')'
+            : 'Upcoming';
+        buckets.upcoming.forEach(function (ev) {
+          var option = document.createElement('option');
+          option.value = ev.id;
+          option.textContent = eventOptionLabel(ev);
+          upGroup.appendChild(option);
+        });
+        elEvent.appendChild(upGroup);
+      }
+      if (buckets.past.length) {
+        var pastGroup = document.createElement('optgroup');
+        pastGroup.label =
+          buckets.pastTotal > buckets.past.length
+            ? 'Recent past (last ' + buckets.past.length + ')'
+            : 'Recent past';
+        buckets.past.forEach(function (ev) {
+          var option = document.createElement('option');
+          option.value = ev.id;
+          option.textContent = eventOptionLabel(ev);
+          pastGroup.appendChild(option);
+        });
+        elEvent.appendChild(pastGroup);
+      }
+
       var inList = list.some(function (ev) {
         return String(ev.id) === preferred;
       });
@@ -1332,13 +1407,21 @@
         elEvent.value = preferred;
         state.eventId = preferred;
       } else if (preferred) {
-        // Prefill can race ahead of bootstrap — keep the id and show a temporary row.
-        var pending = document.createElement('option');
-        pending.value = preferred;
-        pending.textContent = 'Selected event (loading…)';
-        elEvent.insertBefore(pending, elEvent.firstChild);
-        elEvent.value = preferred;
-        state.eventId = preferred;
+        // Prefill can race ahead of bootstrap, or event belongs to another group.
+        var selected = publishedEvents().find(function (ev) {
+          return String(ev.id) === preferred;
+        });
+        if (selected && eventGroupId(selected) && eventGroupId(selected) !== String(state.groupId || '')) {
+          elEvent.value = list[0].id;
+          state.eventId = list[0].id;
+        } else {
+          var pending = document.createElement('option');
+          pending.value = preferred;
+          pending.textContent = selected ? eventOptionLabel(selected) : 'Selected event (loading…)';
+          elEvent.insertBefore(pending, elEvent.firstChild);
+          elEvent.value = preferred;
+          state.eventId = preferred;
+        }
       } else {
         elEvent.value = list[0].id;
         state.eventId = list[0].id;
@@ -1816,8 +1899,12 @@
     elGroup.addEventListener('change', function () {
       state.groupId = elGroup.value;
       state.backgroundTouched = false;
+      state.eventId = '';
       applyGroupToFields(false);
       syncBrandBackground({ preferBrand: true });
+      syncEventField();
+      if (isEventTemplate() && currentEvent()) applyEventToFields();
+      fillCaptionFromTemplate();
       refresh();
     });
     elListing.addEventListener('change', function () {
