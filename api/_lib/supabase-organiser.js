@@ -465,23 +465,9 @@ async function updateGroup(groupId, payload) {
       patch.brand_accent_color !== undefined) &&
     /brand_(primary|secondary|accent)_color/i.test(String(error.message || ''))
   ) {
-    const retryPatch = { ...patch };
-    delete retryPatch.brand_primary_color;
-    delete retryPatch.brand_secondary_color;
-    delete retryPatch.brand_accent_color;
-    if (!Object.keys(retryPatch).length) {
-      const existing = await sb.from('organisers').select('*').eq('id', groupId).maybeSingle();
-      if (existing.error) throw new Error(existing.error.message);
-      data = existing.data;
-      error = null;
-    } else {
-      ({ data, error } = await sb
-        .from('organisers')
-        .update(retryPatch)
-        .eq('id', groupId)
-        .select('*')
-        .single());
-    }
+    throw new Error(
+      'Brand colours could not be saved — the database is missing brand colour columns. Apply migration 210_organiser_brand_kit.sql, then try again.'
+    );
   }
   if (error) throw new Error(error.message);
 

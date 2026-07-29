@@ -3735,6 +3735,45 @@ a.ee-btn.ee-btn-primary {
   margin-top: 0;
 }
 
+.ge-brand-color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ge-brand-color {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5c5557;
+}
+
+.ge-brand-color input[type='color'] {
+  width: 100%;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #d9d2d4;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ge-brand-color input[type='text'] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d9d2d4;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .ge-brand-color-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ee-label-block {
   display: block;
   font-size: 13px;

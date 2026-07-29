@@ -34,6 +34,62 @@
     alertEl.hidden = !msg;
   }
 
+  function normalizeBrandHex(value, fallback) {
+    var raw = String(value || '').trim();
+    if (!raw && fallback) raw = String(fallback).trim();
+    if (!raw) return '';
+    if (raw[0] !== '#') raw = '#' + raw;
+    if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
+      raw =
+        '#' +
+        raw[1] +
+        raw[1] +
+        raw[2] +
+        raw[2] +
+        raw[3] +
+        raw[3];
+    }
+    return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw.toLowerCase() : '';
+  }
+
+  function syncBrandColorPair(colorEl, hexEl, value) {
+    var hex = normalizeBrandHex(value, colorEl ? colorEl.value : '#000000');
+    if (colorEl && hex) colorEl.value = hex;
+    if (hexEl) hexEl.value = hex || '';
+  }
+
+  function readBrandColorsFromForm() {
+    return {
+      primary: normalizeBrandHex(
+        el('ge-brand-primary-hex') && el('ge-brand-primary-hex').value,
+        el('ge-brand-primary') && el('ge-brand-primary').value
+      ),
+      secondary: normalizeBrandHex(
+        el('ge-brand-secondary-hex') && el('ge-brand-secondary-hex').value,
+        el('ge-brand-secondary') && el('ge-brand-secondary').value
+      ),
+      accent: normalizeBrandHex(
+        el('ge-brand-accent-hex') && el('ge-brand-accent-hex').value,
+        el('ge-brand-accent') && el('ge-brand-accent').value
+      ),
+    };
+  }
+
+  function focusBrandFields() {
+    var section = el('ge-brand-fields');
+    if (section && section.scrollIntoView) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    var primary = el('ge-brand-primary');
+    if (primary && primary.focus) {
+      try {
+        primary.focus({ preventScroll: true });
+      } catch {
+        primary.focus();
+      }
+    }
+  }
+
   async function api(path, opts) {
     const res = await fetch(path, {
       credentials: 'include',
@@ -268,6 +324,9 @@
     if (el('ge-facebook')) el('ge-facebook').value = g.facebookUrl || '';
     if (el('ge-linkedin')) el('ge-linkedin').value = g.linkedinUrl || '';
     if (el('ge-x')) el('ge-x').value = g.xUrl || '';
+    syncBrandColorPair(el('ge-brand-primary'), el('ge-brand-primary-hex'), g.brandPrimaryColor || '#0d1f3c');
+    syncBrandColorPair(el('ge-brand-secondary'), el('ge-brand-secondary-hex'), g.brandSecondaryColor || '#f7f1e8');
+    syncBrandColorPair(el('ge-brand-accent'), el('ge-brand-accent-hex'), g.brandAccentColor || '#c9961f');
     if (el('ge-contact-email')) el('ge-contact-email').value = g.contactEmail || '';
     const visitsEl = el('ge-complimentary-visits');
     if (visitsEl) {
@@ -394,6 +453,9 @@
       facebookUrl: el('ge-facebook') ? el('ge-facebook').value.trim() : '',
       linkedinUrl: el('ge-linkedin') ? el('ge-linkedin').value.trim() : '',
       xUrl: el('ge-x') ? el('ge-x').value.trim() : '',
+      brandPrimaryColor: readBrandColorsFromForm().primary || '',
+      brandSecondaryColor: readBrandColorsFromForm().secondary || '',
+      brandAccentColor: readBrandColorsFromForm().accent || '',
       logoUrl: el('ge-logo-url').value.trim(),
       contactEmail,
       complimentaryVisitsAllowed: el('ge-complimentary-visits')
@@ -625,6 +687,13 @@
         window.HubFlowTour.startGroupTour({ isEdit: false, delay: 350 });
       }
     }
+
+    if (config && config.focusBrand) {
+      config.focusBrand = false;
+      requestAnimationFrame(function () {
+        focusBrandFields();
+      });
+    }
   }
 
   function bindEvents() {
@@ -670,6 +739,25 @@
         if (config.onClose) config.onClose();
       });
     }
+
+    function wireColorInputs(colorEl, hexEl) {
+      if (!colorEl || !hexEl || colorEl.dataset.geBound) return;
+      colorEl.dataset.geBound = '1';
+      hexEl.dataset.geBound = '1';
+      colorEl.addEventListener('input', function () {
+        hexEl.value = colorEl.value;
+      });
+      hexEl.addEventListener('change', function () {
+        var hex = normalizeBrandHex(hexEl.value, colorEl.value);
+        if (hex) {
+          colorEl.value = hex;
+          hexEl.value = hex;
+        }
+      });
+    }
+    wireColorInputs(el('ge-brand-primary'), el('ge-brand-primary-hex'));
+    wireColorInputs(el('ge-brand-secondary'), el('ge-brand-secondary-hex'));
+    wireColorInputs(el('ge-brand-accent'), el('ge-brand-accent-hex'));
   }
 
   function init(options) {
@@ -703,6 +791,7 @@
       if (options.onClose) config.onClose = options.onClose;
       if (options.onSaved) config.onSaved = options.onSaved;
       if (options.onContinue) config.onContinue = options.onContinue;
+      if (options.focusBrand != null) config.focusBrand = Boolean(options.focusBrand);
     }
     if (!config) init(options || {});
     resetFormState();

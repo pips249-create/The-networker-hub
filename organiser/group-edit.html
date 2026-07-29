@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260614" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260729brand" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260708" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
@@ -86,6 +86,29 @@
             <label class="ge-social-label" for="ge-x">X (Twitter)</label>
             <input type="url" id="ge-x" placeholder="https://x.com/yourgroup" autocomplete="url" />
           </div>
+          <div class="ee-field ge-brand-fields" id="ge-brand-fields">
+            <span class="ee-label-block">Brand colours <span class="ee-optional">(optional)</span></span>
+            <p class="ee-hint" style="margin:0 0 10px">
+              Used on LinkedIn post pictures in Share your event. Set them here once — you won’t need to enter them again.
+            </p>
+            <div class="ge-brand-color-grid">
+              <label class="ge-brand-color" for="ge-brand-primary">
+                <span>Primary</span>
+                <input type="color" id="ge-brand-primary" value="#0d1f3c" />
+                <input type="text" id="ge-brand-primary-hex" maxlength="7" placeholder="#0d1f3c" spellcheck="false" aria-label="Primary colour hex" />
+              </label>
+              <label class="ge-brand-color" for="ge-brand-secondary">
+                <span>Secondary</span>
+                <input type="color" id="ge-brand-secondary" value="#f7f1e8" />
+                <input type="text" id="ge-brand-secondary-hex" maxlength="7" placeholder="#f7f1e8" spellcheck="false" aria-label="Secondary colour hex" />
+              </label>
+              <label class="ge-brand-color" for="ge-brand-accent">
+                <span>Accent</span>
+                <input type="color" id="ge-brand-accent" value="#c9961f" />
+                <input type="text" id="ge-brand-accent-hex" maxlength="7" placeholder="#c9961f" spellcheck="false" aria-label="Accent colour hex" />
+              </label>
+            </div>
+          </div>
           <div class="ee-field">
             <label for="ge-contact-email">Contact email</label>
             <input type="email" id="ge-contact-email" required placeholder="hello@yourcompany.com" autocomplete="email" />
@@ -146,6 +169,6 @@
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
-    <script src="../js/organiser-group-edit.js?v=20260727publish" defer></script>
+    <script src="../js/organiser-group-edit.js?v=20260729brand" defer></script>
   </body>
 </html>
