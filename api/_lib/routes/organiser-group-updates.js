@@ -178,8 +178,37 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     return json(res, e.status || 500, {
       ok: false,
-      error: e.code || e.message || 'group_updates_failed',
-      message: e.message || 'Something went wrong',
+      error: e.code || 'group_updates_failed',
+      message: friendlyGroupUpdateMessage(e),
     });
   }
 };
+
+function friendlyGroupUpdateMessage(err) {
+  const raw = String((err && (err.message || err.code)) || '');
+  if (/organiser_group_updates|schema cache|does not exist/i.test(raw)) {
+    return 'Monthly updates are still being set up on our side. Please try again shortly — your draft isn’t lost on this page.';
+  }
+  if (/run migration|group_update_extra_credits/i.test(raw)) {
+    return 'Monthly updates are almost ready. Please try again in a moment.';
+  }
+  if (/group_not_owned|not_allowed|403/i.test(raw)) {
+    return 'You don’t have access to that organiser page.';
+  }
+  if (/missing_organiser|organiser_not_found/i.test(raw)) {
+    return 'Choose an organiser page first.';
+  }
+  if (/No Hub attendees/i.test(raw)) {
+    return raw;
+  }
+  if (/Monthly send limit|No free sends|Extra credits/i.test(raw)) {
+    return raw;
+  }
+  if (/Add a short organiser note|already_sent|not_a_draft/i.test(raw)) {
+    return raw;
+  }
+  if (err && err.status && err.status >= 400 && err.status < 500 && raw && raw.length < 180) {
+    return raw;
+  }
+  return 'Something went wrong saving your round-up. Please try again in a moment.';
+}

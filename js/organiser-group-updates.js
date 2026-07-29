@@ -82,6 +82,14 @@
     };
   }
 
+  function friendlyError(err) {
+    var msg = String((err && err.message) || '');
+    if (/schema cache|does not exist|organiser_group_updates|PGRST/i.test(msg)) {
+      return 'Monthly updates are still being set up. Please try again shortly.';
+    }
+    return msg || 'Something went wrong. Please try again.';
+  }
+
   function setStatus(msg, kind) {
     var el = els().status;
     if (!el) return;
@@ -324,7 +332,7 @@
         })
         .catch(function (err) {
           if (!state.switchingGroup) {
-            setStatus(err.message || 'Could not auto-save draft.', 'error');
+            setStatus(friendlyError(err) || 'Could not auto-save draft.', 'error');
           }
         });
     }, 1200);
@@ -501,7 +509,7 @@
     if (e.group) {
       e.group.addEventListener('change', function () {
         switchOrganiserPage(e.group.value).catch(function (err) {
-          setStatus(err.message || 'Could not switch organiser page.', 'error');
+          setStatus(friendlyError(err) || 'Could not switch organiser page.', 'error');
         });
       });
     }
@@ -525,21 +533,21 @@
     if (e.save) {
       e.save.addEventListener('click', function () {
         saveDraft().catch(function (err) {
-          setStatus(err.message || 'Save failed', 'error');
+          setStatus(friendlyError(err) || 'Save failed', 'error');
         });
       });
     }
     if (e.preview) {
       e.preview.addEventListener('click', function () {
         preview().catch(function (err) {
-          setStatus(err.message || 'Preview failed', 'error');
+          setStatus(friendlyError(err) || 'Preview failed', 'error');
         });
       });
     }
     if (e.send) {
       e.send.addEventListener('click', function () {
         sendUpdate().catch(function (err) {
-          setStatus(err.message || 'Send failed', 'error');
+          setStatus(friendlyError(err) || 'Send failed', 'error');
         });
       });
     }

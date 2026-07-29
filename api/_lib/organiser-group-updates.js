@@ -115,8 +115,43 @@ async function countSendsThisMonth(organiserId, key) {
     .eq('organiser_id', organiserId)
     .eq('period_key', key || periodKey())
     .in('status', ['queued', 'sending', 'sent']);
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingGroupUpdatesTable(error)) return 0;
+    throw new Error(error.message);
+  }
   return Number(count) || 0;
+}
+
+function isMissingGroupUpdatesTable(error) {
+  const msg = String((error && error.message) || error || '');
+  return /organiser_group_updates|schema cache|does not exist/i.test(msg);
+}
+
+function throwGroupUpdatesDbError(error) {
+  if (isMissingGroupUpdatesTable(error)) {
+    const err = new Error(
+      'Monthly updates are still being set up on our side. Please try again shortly — your draft isn’t lost on this page.'
+    );
+    err.status = 503;
+    err.code = 'group_updates_not_ready';
+    throw err;
+  }
+  throw new Error((error && error.message) || 'group_updates_failed');
+}
+
+async function listUpdatesForOrganiser(organiserId, limit) {
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organiser_group_updates')
+    .select('*')
+    .eq('organiser_id', organiserId)
+    .order('created_at', { ascending: false })
+    .limit(Math.min(40, Math.max(1, Number(limit) || 12)));
+  if (error) {
+    if (isMissingGroupUpdatesTable(error)) return [];
+    throw new Error(error.message);
+  }
+  return data || [];
 }
 
 async function getAllowance(organiserId) {
@@ -178,18 +213,6 @@ async function getAllowance(organiserId) {
   };
 }
 
-async function listUpdatesForOrganiser(organiserId, limit) {
-  const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('organiser_group_updates')
-    .select('*')
-    .eq('organiser_id', organiserId)
-    .order('created_at', { ascending: false })
-    .limit(Math.min(40, Math.max(1, Number(limit) || 12)));
-  if (error) throw new Error(error.message);
-  return data || [];
-}
-
 async function getUpdate(updateId) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
@@ -197,7 +220,10 @@ async function getUpdate(updateId) {
     .select('*')
     .eq('id', updateId)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingGroupUpdatesTable(error)) return null;
+    throwGroupUpdatesDbError(error);
+  }
   return data || null;
 }
 
@@ -512,7 +538,7 @@ async function saveDraft({ organiserId, updateId, subject, content, audience }) 
       .eq('status', 'draft')
       .order('updated_at', { ascending: false })
       .limit(1);
-    if (findErr) throw new Error(findErr.message);
+    if (findErr) throwGroupUpdatesDbError(findErr);
     if (existingDrafts && existingDrafts[0]) targetId = existingDrafts[0].id;
   }
 
@@ -523,7 +549,7 @@ async function saveDraft({ organiserId, updateId, subject, content, audience }) 
       .eq('id', targetId)
       .select('*')
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throwGroupUpdatesDbError(error);
     return data;
   }
 
@@ -532,7 +558,7 @@ async function saveDraft({ organiserId, updateId, subject, content, audience }) 
     .insert(payload)
     .select('*')
     .single();
-  if (error) throw new Error(error.message);
+  if (error) throwGroupUpdatesDbError(error);
   return data;
 }
 
@@ -591,7 +617,7 @@ async function queueUpdateSend({ organiserId, updateId }) {
   }));
 
   const { error: qErr } = await sb.from('organiser_group_update_queue').insert(rows);
-  if (qErr) throw new Error(qErr.message);
+  if (qErr) throwGroupUpdatesDbError(qErr);
 
   if (useExtra) {
     try {
@@ -602,7 +628,7 @@ async function queueUpdateSend({ organiserId, updateId }) {
         .maybeSingle();
       if (creditErr && /group_update_extra_credits/i.test(String(creditErr.message || ''))) {
         const err = new Error(
-          'Extra credits are not available yet — run migration 212 (group_update_extra_credits).'
+          'No free sends left this month. Extra credits aren’t available yet — try again next month.'
         );
         err.status = 402;
         err.code = 'no_credits';
@@ -616,7 +642,7 @@ async function queueUpdateSend({ organiserId, updateId }) {
         .eq('id', organiserId);
       if (upErr && /group_update_extra_credits/i.test(String(upErr.message || ''))) {
         const err = new Error(
-          'Extra credits are not available yet — run migration 212 (group_update_extra_credits).'
+          'No free sends left this month. Extra credits aren’t available yet — try again next month.'
         );
         err.status = 402;
         err.code = 'no_credits';
@@ -642,7 +668,7 @@ async function queueUpdateSend({ organiserId, updateId }) {
     .eq('id', updateId)
     .select('*')
     .single();
-  if (error) throw new Error(error.message);
+  if (error) throwGroupUpdatesDbError(error);
   return { update: updated, recipientCount: recipients.length, allowance: await getAllowance(organiserId) };
 }
 
