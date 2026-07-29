@@ -665,6 +665,11 @@
       '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-ranking-embed="' +
       esc(embed) +
       '">Copy embed code</button>' +
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-download-ranking-png="' +
+      esc(imgPreview) +
+      '" data-download-name="' +
+      esc((g.name || 'group').replace(/[^\w\-]+/g, '-').slice(0, 40) + '-ranking-badge.png') +
+      '">Download PNG</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-share="' +
       esc(shareText) +
       '">Copy post text</button>' +
@@ -675,7 +680,13 @@
       esc(badgeShareUrl) +
       '" target="_blank" rel="noopener noreferrer">Open share page</a>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="#social" data-org-route="social">Make a LinkedIn picture</a>' +
-      '</div></article>'
+      '</div>' +
+      (row.badgeImpressions != null
+        ? '<p class="org-ranking-share-meta">Website badge loads this month: <strong>' +
+          esc(String(row.badgeImpressions)) +
+          '</strong></p>'
+        : '') +
+      '</article>'
     );
   }
 
@@ -694,6 +705,33 @@
     root.querySelectorAll('[data-copy-ranking-embed]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         copyOrganiserText(btn.getAttribute('data-copy-ranking-embed') || '', btn);
+      });
+    });
+    root.querySelectorAll('[data-download-ranking-png]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var url = btn.getAttribute('data-download-ranking-png') || '';
+        var name = btn.getAttribute('data-download-name') || 'ranking-badge.png';
+        var prev = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Preparing…';
+        var done = function () {
+          btn.disabled = false;
+          btn.textContent = prev;
+        };
+        if (window.HubRankingBadgePng && HubRankingBadgePng.download) {
+          HubRankingBadgePng.download(url, name)
+            .then(function () {
+              btn.textContent = 'Downloaded';
+              setTimeout(done, 1400);
+            })
+            .catch(function () {
+              btn.textContent = 'Failed';
+              setTimeout(done, 1600);
+            });
+        } else {
+          window.open(url, '_blank', 'noopener');
+          done();
+        }
       });
     });
   }
@@ -803,59 +841,162 @@
       })
       .filter(Boolean);
 
-    const cardsHtml = ranked.length
-      ? ranked
-          .map(function (item) {
-            return buildRankingShareCardHtml(item.group, item.row);
-          })
-          .join('')
-      : '';
-
-    const summaryText = ranked.length ? rankingBadgeText(ranked[0].row) : '';
-    updateRankingPanelSummaries(summaryText);
-    updateSocialRankingNav(ranked.length > 0);
-
-    if (shareRoot) {
-      if (cardsEl) cardsEl.innerHTML = cardsHtml;
-      bindRankingShareActions(shareRoot);
-    }
-
-    if (groupsMount) {
-      if (ranked.length) {
-        groupsMount.innerHTML =
-          '<section class="org-ranking-share org-ranking-share--board">' +
-          '<h2 class="org-section-title">Your award badge</h2>' +
-          '<p class="org-section-sub">Embed this on your website — it links to your Hub profile and this month&rsquo;s Top groups list.</p>' +
-          '<div class="org-ranking-share-cards">' +
-          cardsHtml +
-          '</div></section>';
-        bindRankingShareActions(groupsMount);
-      } else {
-        groupsMount.innerHTML =
-          '<section class="org-ranking-share org-ranking-share--board org-ranking-share--empty">' +
-          '<h2 class="org-section-title">Your award badge</h2>' +
-          '<p class="org-section-sub">When your group lands in the Top 10, 25 or 50, your website award badge and embed code appear here.</p>' +
-          '<div class="org-ranking-tier-examples org-ranking-tier-examples--board">' +
-          [
-            { tier: 'top10', sample: 'Top 10' },
-            { tier: 'top25', sample: 'Top 25' },
-            { tier: 'top50', sample: 'Top 50' },
-          ]
+    function paintRankingCards(withImpressions) {
+      const cardsHtml = ranked.length
+        ? ranked
             .map(function (item) {
-              return (
-                '<div class="org-ranking-tier-example">' +
-                '<img class="org-ranking-tier-example-img" src="' +
-                esc(rankingBadgeImageUrl(item.tier, periodLabel)) +
-                '" alt="' +
-                esc(item.sample + ' award badge example') +
-                '" width="340" height="120" loading="lazy" />' +
-                '</div>'
-              );
+              const row = { ...item.row };
+              if (withImpressions && withImpressions[item.group.id] != null) {
+                row.badgeImpressions = withImpressions[item.group.id];
+              }
+              return buildRankingShareCardHtml(item.group, row);
             })
-            .join('') +
-          '</div></section>';
+            .join('')
+        : '';
+
+      const summaryText = ranked.length ? rankingBadgeText(ranked[0].row) : '';
+      updateRankingPanelSummaries(summaryText);
+      updateSocialRankingNav(ranked.length > 0);
+
+      if (shareRoot) {
+        if (cardsEl) cardsEl.innerHTML = cardsHtml;
+        bindRankingShareActions(shareRoot);
+      }
+
+      if (groupsMount) {
+        if (ranked.length) {
+          groupsMount.innerHTML =
+            '<section class="org-ranking-share org-ranking-share--board">' +
+            '<h2 class="org-section-title">Your award badge</h2>' +
+            '<p class="org-section-sub">Embed this on your website — it links to your Hub profile and this month&rsquo;s Top groups list.</p>' +
+            '<div class="org-ranking-share-cards">' +
+            cardsHtml +
+            '</div></section>';
+          bindRankingShareActions(groupsMount);
+        } else {
+          groupsMount.innerHTML =
+            '<section class="org-ranking-share org-ranking-share--board org-ranking-share--empty">' +
+            '<h2 class="org-section-title">Your award badge</h2>' +
+            '<p class="org-section-sub">When your group lands in the Top 10, 25 or 50, your website award badge and embed code appear here.</p>' +
+            '<div class="org-ranking-tier-examples org-ranking-tier-examples--board">' +
+            [
+              { tier: 'top10', sample: 'Top 10' },
+              { tier: 'top25', sample: 'Top 25' },
+              { tier: 'top50', sample: 'Top 50' },
+            ]
+              .map(function (item) {
+                return (
+                  '<div class="org-ranking-tier-example">' +
+                  '<img class="org-ranking-tier-example-img" src="' +
+                  esc(rankingBadgeImageUrl(item.tier, periodLabel)) +
+                  '" alt="' +
+                  esc(item.sample + ' award badge example') +
+                  '" width="340" height="120" loading="lazy" />' +
+                  '</div>'
+                );
+              })
+              .join('') +
+            '</div></section>';
+        }
       }
     }
+
+    paintRankingCards(null);
+    renderRankingShoutoutPrefs();
+
+    if (ranked.length) {
+      const ids = ranked.map(function (item) {
+        return item.group.id;
+      });
+      fetch('/api/rankings?impressions=' + encodeURIComponent(ids.join(',')), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (data && data.badgeImpressions) paintRankingCards(data.badgeImpressions);
+        })
+        .catch(function () {
+          /* ignore */
+        });
+    }
+  }
+
+  function renderRankingShoutoutPrefs() {
+    const list = document.getElementById('org-ranking-prefs-list');
+    if (!list) return;
+    const groups = state.groups || [];
+    if (!groups.length) {
+      list.innerHTML = '<p class="org-section-sub">Create a group to choose public naming preferences.</p>';
+      return;
+    }
+    list.innerHTML = groups
+      .map(function (g) {
+        const optedIn = g.rankingShoutoutOptIn !== false;
+        return (
+          '<div class="org-ranking-pref-row" data-group-id="' +
+          esc(g.id) +
+          '">' +
+          '<span>' +
+          esc(g.name || 'Group') +
+          '</span>' +
+          '<label>' +
+          '<input type="checkbox" data-ranking-shoutout="' +
+          esc(g.id) +
+          '"' +
+          (optedIn ? ' checked' : '') +
+          ' />' +
+          ' Show on Top groups / LinkedIn shout-outs' +
+          '</label>' +
+          '<span class="org-ranking-pref-status" data-ranking-shoutout-status="' +
+          esc(g.id) +
+          '"></span>' +
+          '</div>'
+        );
+      })
+      .join('');
+
+    list.querySelectorAll('[data-ranking-shoutout]').forEach(function (input) {
+      if (input.getAttribute('data-bound') === '1') return;
+      input.setAttribute('data-bound', '1');
+      input.addEventListener('change', async function () {
+        const groupId = input.getAttribute('data-ranking-shoutout');
+        const status = list.querySelector('[data-ranking-shoutout-status="' + groupId + '"]');
+        if (status) status.textContent = 'Saving…';
+        input.disabled = true;
+        const { ok, data } = await api('/api/organiser/groups', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            id: groupId,
+            rankingShoutoutOptIn: Boolean(input.checked),
+          }),
+        });
+        input.disabled = false;
+        if (!ok) {
+          input.checked = !input.checked;
+          if (status) status.textContent = data.message || data.error || 'Could not save';
+          return;
+        }
+        const idx = state.groups.findIndex(function (g) {
+          return g.id === groupId;
+        });
+        if (idx >= 0) {
+          state.groups[idx] = {
+            ...state.groups[idx],
+            ...(data.group || {}),
+            rankingShoutoutOptIn: Boolean(input.checked),
+          };
+        }
+        if (status) {
+          status.textContent = 'Saved';
+          setTimeout(function () {
+            status.textContent = '';
+          }, 1600);
+        }
+      });
+    });
   }
 
   const FEATURED_LISTING_PRICE = '£55.00';
@@ -1461,9 +1602,13 @@
     }
 
     if (tab === 'spotlight') ensureFeaturedUpgradePanelReady();
-    if (tab === 'linkedin') ensureLinkedInPostBuilder({ force: true });
+    if (tab === 'linkedin') {
+      ensureLinkedInPostBuilder({ force: true });
+      renderBrandKitNudge();
+    }
     if (tab === 'ranking') renderOrganiserRankingShare();
     if (tab === 'partner') renderOrganiserPartnerBadge();
+    if (tab === 'brand') ensureBrandKitPanelReady();
 
     if (!options.skipStore) {
       try {
@@ -1481,6 +1626,8 @@
       return 'ranking';
     if (hash.includes('partner') || hash.includes('website-badge') || hash.includes('embed'))
       return 'partner';
+    if (hash.includes('brand') || hash.includes('brand-kit') || hash.includes('colour') || hash.includes('color'))
+      return 'brand';
     if (hash.includes('linkedin') || hash === 'social') return 'linkedin';
     return '';
   }
@@ -1499,7 +1646,13 @@
     if (!socialTabFromHash()) {
       try {
         const stored = sessionStorage.getItem(SOCIAL_TAB_STORAGE_KEY);
-        if (stored === 'spotlight' || stored === 'ranking' || stored === 'linkedin' || stored === 'partner') {
+        if (
+          stored === 'spotlight' ||
+          stored === 'ranking' ||
+          stored === 'linkedin' ||
+          stored === 'partner' ||
+          stored === 'brand'
+        ) {
           tab = stored;
         }
       } catch {
@@ -1539,6 +1692,796 @@
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
       if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     }
+  }
+
+  var brandKitBound = false;
+  var brandKitSuggestedColors = [];
+  var brandKitPendingImport = null;
+
+  function normalizeBrandHex(value, fallback) {
+    var v = String(value || '')
+      .trim()
+      .toLowerCase();
+    if (/^#[0-9a-f]{3}$/.test(v)) {
+      v =
+        '#' +
+        v
+          .slice(1)
+          .split('')
+          .map(function (c) {
+            return c + c;
+          })
+          .join('');
+    }
+    if (/^#[0-9a-f]{6}$/.test(v)) return v;
+    return fallback || '';
+  }
+
+  function brandKitEls() {
+    return {
+      form: document.getElementById('org-brand-kit-form'),
+      groupWrap: document.getElementById('org-brand-group-wrap'),
+      group: document.getElementById('org-brand-group'),
+      website: document.getElementById('org-brand-website'),
+      importBtn: document.getElementById('org-brand-import'),
+      status: document.getElementById('org-brand-status'),
+      review: document.getElementById('org-brand-import-review'),
+      reviewList: document.getElementById('org-brand-import-review-list'),
+      reviewApply: document.getElementById('org-brand-import-apply'),
+      reviewDismiss: document.getElementById('org-brand-import-dismiss'),
+      suggestions: document.getElementById('org-brand-color-suggestions'),
+      primary: document.getElementById('org-brand-primary'),
+      primaryHex: document.getElementById('org-brand-primary-hex'),
+      secondary: document.getElementById('org-brand-secondary'),
+      secondaryHex: document.getElementById('org-brand-secondary-hex'),
+      accent: document.getElementById('org-brand-accent'),
+      accentHex: document.getElementById('org-brand-accent-hex'),
+      preview: document.getElementById('org-brand-preview'),
+      instagram: document.getElementById('org-brand-instagram'),
+      facebook: document.getElementById('org-brand-facebook'),
+      linkedin: document.getElementById('org-brand-linkedin'),
+      x: document.getElementById('org-brand-x'),
+      save: document.getElementById('org-brand-save'),
+      useLinkedIn: document.getElementById('org-brand-use-linkedin'),
+      clear: document.getElementById('org-brand-clear-colors'),
+      nudge: document.getElementById('org-brand-kit-nudge'),
+      nudgeShare: document.getElementById('org-brand-kit-nudge-share'),
+      contrast: document.getElementById('org-brand-contrast'),
+    };
+  }
+
+  function brandKitRelativeLuminance(hex) {
+    var h = normalizeBrandHex(hex, '');
+    if (!h) return 0.5;
+    var r = parseInt(h.slice(1, 3), 16) / 255;
+    var g = parseInt(h.slice(3, 5), 16) / 255;
+    var b = parseInt(h.slice(5, 7), 16) / 255;
+    var lin = function (c) {
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+
+  function brandKitContrastRatio(a, b) {
+    var l1 = brandKitRelativeLuminance(a);
+    var l2 = brandKitRelativeLuminance(b);
+    var light = Math.max(l1, l2);
+    var dark = Math.min(l1, l2);
+    return (light + 0.05) / (dark + 0.05);
+  }
+
+  function updateBrandContrastCheck() {
+    var els = brandKitEls();
+    if (!els.contrast) return;
+    var colors = readBrandColors();
+    if (!colors.primary || !colors.accent) {
+      els.contrast.hidden = true;
+      return;
+    }
+    var ratio = brandKitContrastRatio(colors.primary, colors.accent);
+    var secondaryRatio = colors.secondary
+      ? brandKitContrastRatio(colors.primary, colors.secondary)
+      : 21;
+    if (ratio < 2.2) {
+      els.contrast.hidden = false;
+      els.contrast.classList.remove('is-ok');
+      els.contrast.textContent =
+        'Accent on primary may be hard to read (contrast ' +
+        ratio.toFixed(1) +
+        ':1). Try a lighter or darker accent.';
+      return;
+    }
+    if (secondaryRatio < 1.4) {
+      els.contrast.hidden = false;
+      els.contrast.classList.remove('is-ok');
+      els.contrast.textContent =
+        'Primary and secondary are very similar — LinkedIn backgrounds may look flat.';
+      return;
+    }
+    els.contrast.hidden = false;
+    els.contrast.classList.add('is-ok');
+    els.contrast.textContent =
+      'Colour contrast looks good for LinkedIn graphics (' + ratio.toFixed(1) + ':1).';
+  }
+
+  function brandKitCompleteness(group) {
+    var g = group || currentBrandKitGroup() || {};
+    var checks = [
+      { id: 'logo', ok: Boolean(g.imageUrl), label: 'logo' },
+      { id: 'website', ok: Boolean(g.website), label: 'website' },
+      { id: 'colour', ok: Boolean(g.brandPrimaryColor), label: 'brand colours' },
+      {
+        id: 'social',
+        ok: Boolean(g.instagramUrl || g.facebookUrl || g.linkedinUrl || g.xUrl),
+        label: 'a social link',
+      },
+      {
+        id: 'linkedin',
+        ok: Boolean(g.linkedinUrl),
+        label: 'LinkedIn (for tagging)',
+      },
+    ];
+    var done = checks.filter(function (c) {
+      return c.ok;
+    }).length;
+    var missing = checks
+      .filter(function (c) {
+        return !c.ok;
+      })
+      .map(function (c) {
+        return c.label;
+      });
+    return { done: done, total: checks.length, missing: missing, checks: checks };
+  }
+
+  function renderBrandKitNudge() {
+    var els = brandKitEls();
+    var group = currentBrandKitGroup();
+    var info = brandKitCompleteness(group);
+    var html = '';
+    if (!group) {
+      html = '';
+    } else if (info.done >= info.total) {
+      html =
+        '<strong>Brand kit complete (' +
+        info.done +
+        '/' +
+        info.total +
+        ').</strong> Your LinkedIn posts can use your colours, and we can tag you when we share.';
+    } else {
+      html =
+        '<strong>Brand kit ' +
+        info.done +
+        '/' +
+        info.total +
+        '.</strong> Add ' +
+        info.missing.slice(0, 2).join(' and ') +
+        (info.missing.length > 2 ? '…' : '') +
+        ' so posts look on-brand.';
+    }
+
+    [els.nudge, els.nudgeShare].forEach(function (el, idx) {
+      if (!el) return;
+      if (!html || (idx === 1 && info.done >= info.total)) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      if (idx === 1 && info.done < info.total) {
+        el.hidden = false;
+        el.innerHTML =
+          html +
+          ' <button type="button" class="org-brand-kit-nudge-link" data-brand-open-kit>Open Brand kit</button>';
+        return;
+      }
+      el.hidden = false;
+      el.innerHTML = html;
+    });
+  }
+
+  function openBrandKitFromNudge() {
+    setSocialTab('brand');
+    var panel = document.getElementById('org-social-panel-brand');
+    if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function useBrandKitOnLinkedIn() {
+    var group = currentBrandKitGroup();
+    ensureLinkedInPostBuilder({ force: true });
+    setSocialTab('linkedin');
+    if (linkedInPostBuilder && linkedInPostBuilder.useBrandBackground) {
+      linkedInPostBuilder.useBrandBackground(group && group.id);
+    }
+    setBrandKitStatus('Opened LinkedIn post with your brand colours selected.', 'ok');
+  }
+
+  function setBrandKitStatus(msg, kind) {
+    var el = brandKitEls().status;
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('is-error', kind === 'error');
+    el.classList.toggle('is-ok', kind === 'ok');
+  }
+
+  function syncBrandColorPair(colorEl, hexEl, value) {
+    var hex = normalizeBrandHex(value, colorEl ? colorEl.value : '#000000');
+    if (colorEl && hex) colorEl.value = hex;
+    if (hexEl) hexEl.value = hex || '';
+  }
+
+  function readBrandColors() {
+    var els = brandKitEls();
+    return {
+      primary: normalizeBrandHex(els.primaryHex && els.primaryHex.value, els.primary && els.primary.value),
+      secondary: normalizeBrandHex(
+        els.secondaryHex && els.secondaryHex.value,
+        els.secondary && els.secondary.value
+      ),
+      accent: normalizeBrandHex(els.accentHex && els.accentHex.value, els.accent && els.accent.value),
+    };
+  }
+
+  function updateBrandPreview() {
+    var els = brandKitEls();
+    var colors = readBrandColors();
+    if (!els.preview) return;
+    els.preview.style.setProperty('--org-brand-primary', colors.primary || '#0d1f3c');
+    els.preview.style.setProperty('--org-brand-secondary', colors.secondary || '#f7f1e8');
+    els.preview.style.setProperty('--org-brand-accent', colors.accent || '#c9961f');
+    updateBrandContrastCheck();
+  }
+
+  function renderBrandColorSuggestions(colors) {
+    var els = brandKitEls();
+    brandKitSuggestedColors = (colors || [])
+      .map(function (c) {
+        return normalizeBrandHex(c, '');
+      })
+      .filter(Boolean);
+    if (!els.suggestions) return;
+    if (!brandKitSuggestedColors.length) {
+      els.suggestions.hidden = true;
+      els.suggestions.innerHTML = '';
+      return;
+    }
+    els.suggestions.hidden = false;
+    els.suggestions.innerHTML = brandKitSuggestedColors
+      .map(function (hex, idx) {
+        return (
+          '<button type="button" class="org-brand-kit-suggest" data-brand-suggest="' +
+          idx +
+          '" title="Use ' +
+          hex +
+          '" style="background:' +
+          hex +
+          '" aria-label="Use colour ' +
+          hex +
+          '"></button>'
+        );
+      })
+      .join('');
+  }
+
+  function rgbPartsToHex(r, g, b) {
+    function part(v) {
+      var h = Math.max(0, Math.min(255, Math.round(v))).toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }
+    return '#' + part(r) + part(g) + part(b);
+  }
+
+  function sampleLogoPaletteFromImage(img) {
+    try {
+      var canvas = document.createElement('canvas');
+      var size = 48;
+      canvas.width = size;
+      canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return [];
+      ctx.drawImage(img, 0, 0, size, size);
+      var data = ctx.getImageData(0, 0, size, size).data;
+      var buckets = {};
+      var allR = 0;
+      var allG = 0;
+      var allB = 0;
+      var allN = 0;
+      for (var i = 0; i < data.length; i += 4) {
+        if (data[i + 3] < 40) continue;
+        var pr = data[i];
+        var pg = data[i + 1];
+        var pb = data[i + 2];
+        allR += pr;
+        allG += pg;
+        allB += pb;
+        allN++;
+        var mx = Math.max(pr, pg, pb);
+        var mn = Math.min(pr, pg, pb);
+        if (mx > 245 && mn > 235) continue;
+        if (mx < 28) continue;
+        if (mx - mn < 28) continue;
+        var key =
+          Math.round(pr / 24) + ',' + Math.round(pg / 24) + ',' + Math.round(pb / 24);
+        if (!buckets[key]) buckets[key] = { r: 0, g: 0, b: 0, n: 0 };
+        buckets[key].r += pr;
+        buckets[key].g += pg;
+        buckets[key].b += pb;
+        buckets[key].n += 1;
+      }
+      var ranked = Object.keys(buckets)
+        .map(function (k) {
+          var b = buckets[k];
+          return {
+            hex: rgbPartsToHex(b.r / b.n, b.g / b.n, b.b / b.n),
+            n: b.n,
+          };
+        })
+        .sort(function (a, b) {
+          return b.n - a.n;
+        });
+      var out = ranked.map(function (x) {
+        return x.hex;
+      });
+      if (!out.length && allN > 0) {
+        out.push(rgbPartsToHex(allR / allN, allG / allN, allB / allN));
+      }
+      return out.slice(0, 4);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function loadImageForBrandSample(src) {
+    return new Promise(function (resolve) {
+      if (!src) {
+        resolve(null);
+        return;
+      }
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        resolve(img);
+      };
+      img.onerror = function () {
+        resolve(null);
+      };
+      img.src = src;
+    });
+  }
+
+  async function sampleLogoColorsForGroup(group, importedLogoUrl) {
+    var urls = [];
+    if (group && group.id && group.imageUrl) {
+      urls.push('/api/organiser/logo-proxy?groupId=' + encodeURIComponent(group.id));
+    }
+    if (importedLogoUrl) urls.push(importedLogoUrl);
+    if (group && group.imageUrl) urls.push(group.imageUrl);
+    for (var i = 0; i < urls.length; i++) {
+      var img = await loadImageForBrandSample(urls[i]);
+      if (!img) continue;
+      var colors = sampleLogoPaletteFromImage(img);
+      if (colors.length) return colors;
+    }
+    return [];
+  }
+
+  function mergeBrandColorLists() {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < arguments.length; i++) {
+      (arguments[i] || []).forEach(function (c) {
+        var hex = normalizeBrandHex(c, '');
+        if (!hex || seen[hex]) return;
+        seen[hex] = true;
+        out.push(hex);
+      });
+    }
+    return out.slice(0, 8);
+  }
+
+  function fieldHasValue(value) {
+    return Boolean(String(value || '').trim());
+  }
+
+  function currentBrandFieldSnapshot(group) {
+    var els = brandKitEls();
+    var g = group || {};
+    return {
+      website: g.website || (els.website && els.website.value) || '',
+      // Only treat colours as "already set" when saved on the group — form pickers always have a default.
+      brandPrimaryColor: g.brandPrimaryColor || '',
+      brandSecondaryColor: g.brandSecondaryColor || '',
+      brandAccentColor: g.brandAccentColor || '',
+      instagramUrl: g.instagramUrl || (els.instagram && els.instagram.value) || '',
+      facebookUrl: g.facebookUrl || (els.facebook && els.facebook.value) || '',
+      linkedinUrl: g.linkedinUrl || (els.linkedin && els.linkedin.value) || '',
+      xUrl: g.xUrl || (els.x && els.x.value) || '',
+    };
+  }
+
+  function hideBrandImportReview() {
+    var els = brandKitEls();
+    brandKitPendingImport = null;
+    if (els.review) els.review.hidden = true;
+    if (els.reviewList) els.reviewList.innerHTML = '';
+  }
+
+  function showBrandImportReview(importData, existing) {
+    var els = brandKitEls();
+    if (!els.review || !els.reviewList) return;
+    var items = [];
+    function pushItem(key, label, value, isColor) {
+      if (!fieldHasValue(value)) return;
+      var already = fieldHasValue(existing[key]);
+      items.push({
+        key: key,
+        label: label,
+        value: value,
+        isColor: Boolean(isColor),
+        already: already,
+        checked: !already,
+      });
+    }
+    pushItem('brandPrimaryColor', 'Primary colour', importData.brandPrimaryColor, true);
+    pushItem('brandSecondaryColor', 'Secondary colour', importData.brandSecondaryColor, true);
+    pushItem('brandAccentColor', 'Accent colour', importData.brandAccentColor, true);
+    pushItem('instagramUrl', 'Instagram', importData.instagramUrl);
+    pushItem('facebookUrl', 'Facebook', importData.facebookUrl);
+    pushItem('linkedinUrl', 'LinkedIn', importData.linkedinUrl);
+    pushItem('xUrl', 'X (Twitter)', importData.xUrl);
+    pushItem('website', 'Website URL', importData.url || importData.website);
+
+    brandKitPendingImport = {
+      data: importData,
+      items: items,
+      colors: importData.colors || [],
+    };
+
+    if (!items.length) {
+      hideBrandImportReview();
+      setBrandKitStatus(
+        'We couldn’t find colours or social links to import. Enter them by hand, or try another URL.',
+        'error'
+      );
+      return;
+    }
+
+    els.reviewList.innerHTML = items
+      .map(function (item, idx) {
+        var preview = item.isColor
+          ? '<span class="org-brand-kit-review-swatch" style="background:' +
+            item.value +
+            '"></span>' +
+            item.value
+          : item.value;
+        return (
+          '<label class="org-brand-kit-review-item">' +
+          '<input type="checkbox" data-brand-import-idx="' +
+          idx +
+          '"' +
+          (item.checked ? ' checked' : '') +
+          ' />' +
+          '<span>' +
+          '<strong>' +
+          item.label +
+          '</strong>' +
+          '<span>' +
+          preview +
+          '</span>' +
+          (item.already
+            ? '<span class="org-brand-kit-review-note">Already set — tick to replace</span>'
+            : '') +
+          '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
+    els.review.hidden = false;
+    renderBrandColorSuggestions(importData.colors || []);
+    setBrandKitStatus(
+      'Found ' +
+        items.length +
+        ' item' +
+        (items.length === 1 ? '' : 's') +
+        '. Choose what to apply, then save.',
+      'ok'
+    );
+  }
+
+  function applyBrandImportSelection() {
+    var els = brandKitEls();
+    if (!brandKitPendingImport || !els.reviewList) return;
+    var selected = {};
+    els.reviewList.querySelectorAll('[data-brand-import-idx]').forEach(function (input) {
+      if (!input.checked) return;
+      var item = brandKitPendingImport.items[Number(input.getAttribute('data-brand-import-idx'))];
+      if (item) selected[item.key] = item.value;
+    });
+    if (!Object.keys(selected).length) {
+      setBrandKitStatus('Tick at least one item to apply.', 'error');
+      return;
+    }
+    if (selected.website && els.website) els.website.value = selected.website;
+    if (selected.brandPrimaryColor) {
+      syncBrandColorPair(els.primary, els.primaryHex, selected.brandPrimaryColor);
+    }
+    if (selected.brandSecondaryColor) {
+      syncBrandColorPair(els.secondary, els.secondaryHex, selected.brandSecondaryColor);
+    }
+    if (selected.brandAccentColor) {
+      syncBrandColorPair(els.accent, els.accentHex, selected.brandAccentColor);
+    }
+    if (selected.instagramUrl && els.instagram) els.instagram.value = selected.instagramUrl;
+    if (selected.facebookUrl && els.facebook) els.facebook.value = selected.facebookUrl;
+    if (selected.linkedinUrl && els.linkedin) els.linkedin.value = selected.linkedinUrl;
+    if (selected.xUrl && els.x) els.x.value = selected.xUrl;
+    renderBrandColorSuggestions(brandKitPendingImport.colors || []);
+    updateBrandPreview();
+    hideBrandImportReview();
+    setBrandKitStatus(
+      'Applied selected fields. Click Save brand kit to keep them.',
+      'ok'
+    );
+  }
+
+  function currentBrandKitGroup() {
+    var els = brandKitEls();
+    var groups = state.groups || [];
+    if (!groups.length) return null;
+    var id = els.group && els.group.value;
+    return (
+      groups.find(function (g) {
+        return String(g.id) === String(id);
+      }) || groups[0]
+    );
+  }
+
+  function fillBrandKitForm(group) {
+    var els = brandKitEls();
+    if (!els.form) return;
+    var g = group || currentBrandKitGroup() || {};
+    if (els.website) els.website.value = g.website || '';
+    syncBrandColorPair(els.primary, els.primaryHex, g.brandPrimaryColor || '#0d1f3c');
+    syncBrandColorPair(els.secondary, els.secondaryHex, g.brandSecondaryColor || '#f7f1e8');
+    syncBrandColorPair(els.accent, els.accentHex, g.brandAccentColor || '#c9961f');
+    if (els.instagram) els.instagram.value = g.instagramUrl || '';
+    if (els.facebook) els.facebook.value = g.facebookUrl || '';
+    if (els.linkedin) els.linkedin.value = g.linkedinUrl || '';
+    if (els.x) els.x.value = g.xUrl || '';
+    updateBrandPreview();
+    renderBrandKitNudge();
+    if (els.useLinkedIn) {
+      els.useLinkedIn.hidden = !g.brandPrimaryColor;
+    }
+  }
+
+  function syncBrandKitGroupOptions() {
+    var els = brandKitEls();
+    if (!els.group) return;
+    var groups = state.groups || [];
+    var prev = els.group.value;
+    els.group.innerHTML = '';
+    if (els.groupWrap) els.groupWrap.hidden = groups.length < 2;
+    if (!groups.length) {
+      var empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = 'Create an organiser page first';
+      els.group.appendChild(empty);
+      return;
+    }
+    groups.forEach(function (g, idx) {
+      var opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = g.name || 'Organiser page';
+      els.group.appendChild(opt);
+      if (!prev && idx === 0) els.group.value = g.id;
+    });
+    if (
+      prev &&
+      groups.some(function (g) {
+        return String(g.id) === String(prev);
+      })
+    ) {
+      els.group.value = prev;
+    } else {
+      els.group.value = groups[0].id;
+    }
+  }
+
+  async function importBrandKitFromWebsite() {
+    var els = brandKitEls();
+    var url = String((els.website && els.website.value) || '').trim();
+    if (!url) {
+      setBrandKitStatus('Enter your website URL first.', 'error');
+      if (els.website) els.website.focus();
+      return;
+    }
+    if (els.importBtn) {
+      els.importBtn.disabled = true;
+      els.importBtn.textContent = 'Importing…';
+    }
+    hideBrandImportReview();
+    setBrandKitStatus('Reading your website…');
+    try {
+      var res = await api('/api/organiser/website-brand', {
+        method: 'POST',
+        body: JSON.stringify({ url: url }),
+      });
+      if (!res.ok || !res.data || !res.data.ok) {
+        throw new Error((res.data && (res.data.message || res.data.error)) || 'Import failed');
+      }
+      var data = res.data;
+      var group = currentBrandKitGroup();
+      setBrandKitStatus('Sampling colours from your logo…');
+      var logoColors = await sampleLogoColorsForGroup(group, data.logoUrl || '');
+      var mergedColors = mergeBrandColorLists(logoColors, data.colors || []);
+      if (logoColors[0] && !data.brandPrimaryColor) {
+        data.brandPrimaryColor = logoColors[0];
+      }
+      if (logoColors[1] && !data.brandAccentColor) {
+        data.brandAccentColor = logoColors[1];
+      }
+      if (logoColors[2] && !data.brandSecondaryColor) {
+        data.brandSecondaryColor = logoColors[2];
+      }
+      if (!data.brandPrimaryColor && mergedColors[0]) data.brandPrimaryColor = mergedColors[0];
+      if (!data.brandAccentColor && mergedColors[1]) data.brandAccentColor = mergedColors[1];
+      if (!data.brandSecondaryColor && mergedColors[2]) data.brandSecondaryColor = mergedColors[2];
+      data.colors = mergedColors;
+      if (logoColors.length) {
+        data.message =
+          (data.message ? data.message + ' ' : '') +
+          'Also sampled ' +
+          logoColors.length +
+          ' colour' +
+          (logoColors.length === 1 ? '' : 's') +
+          ' from your logo.';
+      }
+      showBrandImportReview(data, currentBrandFieldSnapshot(group));
+    } catch (e) {
+      setBrandKitStatus(e.message || 'Could not read that website.', 'error');
+    } finally {
+      if (els.importBtn) {
+        els.importBtn.disabled = false;
+        els.importBtn.textContent = 'Import from website';
+      }
+    }
+  }
+
+  async function saveBrandKit(ev) {
+    if (ev) ev.preventDefault();
+    var els = brandKitEls();
+    var group = currentBrandKitGroup();
+    if (!group || !group.id) {
+      setBrandKitStatus('Create an organiser page first.', 'error');
+      return;
+    }
+    var colors = readBrandColors();
+    if (els.save) {
+      els.save.disabled = true;
+      els.save.textContent = 'Saving…';
+    }
+    setBrandKitStatus('Saving brand kit…');
+    try {
+      var res = await api('/api/organiser/groups', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          id: group.id,
+          website: els.website ? els.website.value.trim() : undefined,
+          brandPrimaryColor: colors.primary || '',
+          brandSecondaryColor: colors.secondary || '',
+          brandAccentColor: colors.accent || '',
+          instagramUrl: els.instagram ? els.instagram.value.trim() : '',
+          facebookUrl: els.facebook ? els.facebook.value.trim() : '',
+          linkedinUrl: els.linkedin ? els.linkedin.value.trim() : '',
+          xUrl: els.x ? els.x.value.trim() : '',
+        }),
+      });
+      if (!res.ok || !res.data || !res.data.ok) {
+        throw new Error((res.data && (res.data.message || res.data.error)) || 'Save failed');
+      }
+      var updated = res.data.group || {};
+      var idx = state.groups.findIndex(function (g) {
+        return g.id === group.id;
+      });
+      if (idx >= 0) {
+        state.groups[idx] = { ...state.groups[idx], ...updated };
+      }
+      fillBrandKitForm(state.groups[idx] || updated);
+      if (linkedInPostBuilder && linkedInPostBuilder.refreshGroups) {
+        linkedInPostBuilder.refreshGroups();
+      }
+      renderBrandKitNudge();
+      if (els.useLinkedIn) els.useLinkedIn.hidden = !readBrandColors().primary;
+      setBrandKitStatus(
+        'Brand kit saved. Use on LinkedIn post to try your colours straight away.',
+        'ok'
+      );
+    } catch (e) {
+      setBrandKitStatus(e.message || 'Could not save brand kit.', 'error');
+    } finally {
+      if (els.save) {
+        els.save.disabled = false;
+        els.save.textContent = 'Save brand kit';
+      }
+    }
+  }
+
+  function bindBrandKitPanel() {
+    if (brandKitBound) return;
+    var els = brandKitEls();
+    if (!els.form) return;
+    brandKitBound = true;
+
+    els.form.addEventListener('submit', saveBrandKit);
+    if (els.importBtn) els.importBtn.addEventListener('click', importBrandKitFromWebsite);
+    if (els.reviewApply) els.reviewApply.addEventListener('click', applyBrandImportSelection);
+    if (els.reviewDismiss) els.reviewDismiss.addEventListener('click', hideBrandImportReview);
+    if (els.useLinkedIn) els.useLinkedIn.addEventListener('click', useBrandKitOnLinkedIn);
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-brand-open-kit]');
+      if (btn) {
+        e.preventDefault();
+        openBrandKitFromNudge();
+      }
+    });
+    if (els.group) {
+      els.group.addEventListener('change', function () {
+        fillBrandKitForm(currentBrandKitGroup());
+        renderBrandColorSuggestions([]);
+        hideBrandImportReview();
+        setBrandKitStatus('');
+      });
+    }
+    if (els.clear) {
+      els.clear.addEventListener('click', function () {
+        syncBrandColorPair(els.primary, els.primaryHex, '#0d1f3c');
+        syncBrandColorPair(els.secondary, els.secondaryHex, '#f7f1e8');
+        syncBrandColorPair(els.accent, els.accentHex, '#c9961f');
+        renderBrandColorSuggestions([]);
+        updateBrandPreview();
+        setBrandKitStatus('Colours reset to defaults — save to apply.', 'ok');
+      });
+    }
+    if (els.suggestions) {
+      els.suggestions.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-brand-suggest]');
+        if (!btn) return;
+        var hex = brandKitSuggestedColors[Number(btn.getAttribute('data-brand-suggest'))];
+        if (!hex) return;
+        syncBrandColorPair(els.primary, els.primaryHex, hex);
+        updateBrandPreview();
+      });
+    }
+
+    function wireColorInputs(colorEl, hexEl) {
+      if (colorEl) {
+        colorEl.addEventListener('input', function () {
+          if (hexEl) hexEl.value = colorEl.value;
+          updateBrandPreview();
+        });
+      }
+      if (hexEl) {
+        hexEl.addEventListener('change', function () {
+          var hex = normalizeBrandHex(hexEl.value, '');
+          if (hex) {
+            hexEl.value = hex;
+            if (colorEl) colorEl.value = hex;
+            updateBrandPreview();
+          }
+        });
+      }
+    }
+    wireColorInputs(els.primary, els.primaryHex);
+    wireColorInputs(els.secondary, els.secondaryHex);
+    wireColorInputs(els.accent, els.accentHex);
+  }
+
+  function ensureBrandKitPanelReady() {
+    bindBrandKitPanel();
+    syncBrandKitGroupOptions();
+    fillBrandKitForm(currentBrandKitGroup());
+    renderBrandKitNudge();
+    updateBrandContrastCheck();
   }
 
   function formatTicketsSoldLabel(sold, capacity) {
@@ -7670,8 +8613,17 @@
       }
     }
     if (page === 'leaderboard') {
-      if (window.HubRankings && typeof window.HubRankings.ensure === 'function') {
-        window.HubRankings.ensure();
+      if (window.HubRankings) {
+        if (typeof window.HubRankings.setMyGroupIds === 'function') {
+          window.HubRankings.setMyGroupIds(
+            (state.groups || []).map(function (g) {
+              return g.id;
+            })
+          );
+        }
+        if (typeof window.HubRankings.ensure === 'function') {
+          window.HubRankings.ensure();
+        }
       }
       renderOrganiserRankingShare();
     }

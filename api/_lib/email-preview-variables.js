@@ -128,8 +128,12 @@ function basePreviewVars(siteUrl) {
     review_count: '27',
     profile_url: organiserPublicUrl(organiserRow, site),
     badge_url: site + '/rankings/badge?id=' + encodeURIComponent(organiserRow.id || 'demo'),
-    dashboard_url: site + '/organiser/#social-ranking',
+    dashboard_url: site + '/organiser/#leaderboard',
     rankings_url: site + '/rankings',
+    primary_cta_url: site + '/rankings/badge?id=' + encodeURIComponent(organiserRow.id || 'demo'),
+    primary_cta_label: 'Get your website badge',
+    secondary_cta_url: site + '/rankings',
+    secondary_cta_label: 'See this month’s top groups',
     social_share_text:
       'City Connectors is a Top 10 networking group on The Networker Hub for June 2026.',
     screening_industry: 'Financial services',

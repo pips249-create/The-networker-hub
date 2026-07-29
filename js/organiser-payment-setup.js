@@ -189,7 +189,7 @@
     );
   }
 
-  function reuseBankDetailsButtonHtml(group, sourceGroup, buttonClass) {
+  function reuseBankDetailsButtonHtml(group, sourceGroup, buttonClass, label) {
     if (!sourceGroup || !group || String(sourceGroup.id) === String(group.id)) return '';
     return (
       '<button type="button" class="' +
@@ -198,7 +198,9 @@
       esc(group.id || '') +
       '" data-payment-link-source="' +
       esc(sourceGroup.id) +
-      '">Use same bank details</button>'
+      '">' +
+      esc(label || 'Use same bank details') +
+      '</button>'
     );
   }
 
@@ -261,27 +263,39 @@
     const opts = options || {};
     const pending = state?.pendingGroups || [];
     const compact = Boolean(opts.compact);
+    const manyGroups = pending.length > 3;
+    const dense = compact && manyGroups;
     const title = opts.title || 'Add bank details to sell paid tickets';
-    const lead =
-      opts.lead ||
-      pending.length +
-        ' organiser page' +
-        (pending.length === 1 ? '' : 's') +
-        ' still need payment setup before you can sell paid tickets.';
-    const buttonClass = opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary org-btn-sm';
+    const lead = dense
+      ? pending.length +
+        ' organiser pages still need bank details before paid tickets can go live.'
+      : opts.lead ||
+        pending.length +
+          ' organiser page' +
+          (pending.length === 1 ? '' : 's') +
+          ' still need payment setup before you can sell paid tickets.';
+    const buttonClass =
+      opts.buttonClass || 'hub-payment-setup-btn org-btn org-btn-primary org-btn-sm';
     const sourceGroup = readySourceGroup(state);
+    const previewLimit = dense ? 3 : pending.length;
 
     const items = pending
-      .map(function (group) {
+      .map(function (group, index) {
         const name = group?.name ? esc(group.name) : 'Untitled page';
         const href = launcherHref(group?.id, opts.returnPath);
         const linkBtn = reuseBankDetailsButtonHtml(
           group,
           sourceGroup,
-          'hub-payment-setup-btn org-btn org-btn-secondary org-btn-sm'
+          'hub-payment-setup-btn org-btn org-btn-secondary org-btn-sm',
+          dense ? 'Reuse' : null
         );
+        const collapsed = dense && index >= previewLimit;
         return (
-          '<li class="hub-payment-setup-checklist-item">' +
+          '<li class="hub-payment-setup-checklist-item' +
+          (collapsed ? ' is-collapsed' : '') +
+          '"' +
+          (collapsed ? ' hidden' : '') +
+          '>' +
           '<span class="hub-payment-setup-checklist-name">' +
           name +
           '</span>' +
@@ -293,7 +307,9 @@
           esc(href) +
           '" target="_blank" rel="noopener noreferrer" data-payment-setup="' +
           esc(group?.id || '') +
-          '">Add bank details</a>' +
+          '">' +
+          (dense ? 'Add' : 'Add bank details') +
+          '</a>' +
           '</div>' +
           '</li>'
         );
@@ -301,10 +317,19 @@
       .join('');
 
     const showReuseButton = Boolean(sourceGroup);
+    const hiddenCount = dense ? Math.max(0, pending.length - previewLimit) : 0;
+    const expandToggle =
+      hiddenCount > 0
+        ? '<button type="button" class="hub-payment-setup-expand" data-payment-expand aria-expanded="false">' +
+          'Show all ' +
+          pending.length +
+          ' pages</button>'
+        : '';
 
     return (
       '<div class="hub-payment-setup-card hub-payment-setup-card--checklist' +
       (compact ? ' hub-payment-setup-card--compact' : '') +
+      (dense ? ' hub-payment-setup-card--dense' : '') +
       '" role="status">' +
       '<div class="hub-payment-setup-icon" aria-hidden="true">🏦</div>' +
       '<div class="hub-payment-setup-body">' +
@@ -317,8 +342,11 @@
       '<ul class="hub-payment-setup-checklist">' +
       items +
       '</ul>' +
-      '<p class="hub-payment-setup-note">Opens Stripe in a new tab — return here when finished. Free events do not need bank details.</p>' +
-      multiProfileNoteHtml(state, { showReuseButton: showReuseButton }) +
+      expandToggle +
+      (dense
+        ? ''
+        : '<p class="hub-payment-setup-note">Opens Stripe in a new tab — return here when finished. Free events do not need bank details.</p>' +
+          multiProfileNoteHtml(state, { showReuseButton: showReuseButton })) +
       '</div></div>'
     );
   }
@@ -328,6 +356,28 @@
     root.dataset.paymentBound = '1';
     const opts = options || {};
     root.addEventListener('click', function (e) {
+      const expandBtn = e.target.closest('[data-payment-expand]');
+      if (expandBtn && root.contains(expandBtn)) {
+        e.preventDefault();
+        const card = expandBtn.closest('.hub-payment-setup-card');
+        const collapsed = card
+          ? card.querySelectorAll('.hub-payment-setup-checklist-item.is-collapsed')
+          : [];
+        const expanded = expandBtn.getAttribute('aria-expanded') === 'true';
+        const nextExpanded = !expanded;
+        expandBtn.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+        collapsed.forEach(function (item) {
+          item.hidden = !nextExpanded;
+        });
+        const total = card
+          ? card.querySelectorAll('.hub-payment-setup-checklist-item').length
+          : 0;
+        expandBtn.textContent = nextExpanded
+          ? 'Show fewer'
+          : 'Show all ' + total + ' pages';
+        return;
+      }
+
       const btn = e.target.closest('[data-payment-link]');
       if (!btn || !root.contains(btn)) return;
       e.preventDefault();

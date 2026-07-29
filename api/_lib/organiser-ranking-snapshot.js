@@ -130,14 +130,27 @@ function entryToRanking(row, snapshot) {
 }
 
 async function computeLiveRankingIndex(sb) {
-  const [{ data, error }, eligibleByOrganiser] = await Promise.all([
-    sb
+  let data = null;
+  let error = null;
+  {
+    const first = await sb
       .from('organisers')
       .select(
-        'id, average_rating, review_count, verification_status, listing_status, name, email, contact_email, slug'
-      ),
-    loadEligibleAttendeeCountsByOrganiser(sb),
-  ]);
+        'id, average_rating, review_count, verification_status, listing_status, name, email, contact_email, slug, photo_url, ranking_shoutout_opt_in'
+      );
+    data = first.data;
+    error = first.error;
+    if (error && /ranking_shoutout_opt_in/i.test(String(error.message || ''))) {
+      const second = await sb
+        .from('organisers')
+        .select(
+          'id, average_rating, review_count, verification_status, listing_status, name, email, contact_email, slug, photo_url'
+        );
+      data = second.data;
+      error = second.error;
+    }
+  }
+  const eligibleByOrganiser = await loadEligibleAttendeeCountsByOrganiser(sb);
   if (error) throw new Error(error.message);
 
   const ranked = (data || [])
@@ -405,6 +418,14 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
       const badgeShort = publicBadgeLabel(row.label);
       const socialShareText = `Proud to share that ${orgRow.name || 'our group'} is a ${badgeShort} on The Networker Hub for ${periodLabel}. ⭐ ${profileUrl}`;
       const badgeUrl = `${siteUrl}/rankings/badge?id=${encodeURIComponent(row.organiserId)}`;
+      const rankingsUrl = `${siteUrl}/rankings`;
+      const primaryCta = Math.random() < 0.5 ? 'badge' : 'rankings';
+      const primaryUrl = primaryCta === 'badge' ? badgeUrl : rankingsUrl;
+      const primaryLabel =
+        primaryCta === 'badge' ? 'Get your website badge' : 'See this month’s top groups';
+      const secondaryUrl = primaryCta === 'badge' ? rankingsUrl : badgeUrl;
+      const secondaryLabel =
+        primaryCta === 'badge' ? 'See this month’s top groups' : 'Get your website badge';
 
       try {
         await sendTemplatedEmail({
@@ -421,8 +442,12 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
             review_count: String(row.reviewCount),
             profile_url: profileUrl,
             badge_url: badgeUrl,
-            dashboard_url: `${siteUrl}/organiser/#social-ranking`,
-            rankings_url: `${siteUrl}/rankings`,
+            dashboard_url: `${siteUrl}/organiser/#leaderboard`,
+            rankings_url: rankingsUrl,
+            primary_cta_url: primaryUrl,
+            primary_cta_label: primaryLabel,
+            secondary_cta_url: secondaryUrl,
+            secondary_cta_label: secondaryLabel,
             social_share_text: socialShareText,
           },
         });
@@ -434,9 +459,23 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
           tier: row.tier,
           period_label: periodLabel,
           reason: prevTier ? 'upgrade' : 'new',
+          primary_cta: primaryCta,
+        }).then(async (ins) => {
+          if (ins.error && /primary_cta/i.test(String(ins.error.message || ''))) {
+            await sb.from('organiser_ranking_emails').insert({
+              organiser_id: row.organiserId,
+              snapshot_id: snapshot.id,
+              email_to: to,
+              tier: row.tier,
+              period_label: periodLabel,
+              reason: prevTier ? 'upgrade' : 'new',
+            });
+          } else if (ins.error) {
+            throw new Error(ins.error.message);
+          }
         });
 
-        emailsSent.push({ organiserId: row.organiserId, email: to, tier: row.tier });
+        emailsSent.push({ organiserId: row.organiserId, email: to, tier: row.tier, primaryCta });
       } catch (e) {
         emailSkipped.push({
           organiserId: row.organiserId,
@@ -537,6 +576,7 @@ async function getPublicRankingLeaderboard() {
   }
 
   const mapPublicEntry = (row, ranking, org) => {
+    if (org && org.ranking_shoutout_opt_in === false) return null;
     const slug = publicOrganiserSlug(org || {});
     const label = ranking.label || rankingLabel(ranking.rank);
     const periodLabel = ranking.periodLabel || snapshot?.period_label || '';
@@ -556,12 +596,14 @@ async function getPublicRankingLeaderboard() {
       eligibleAttendees: Number(ranking.eligibleAttendees) || 0,
       reviewRate: Number(ranking.reviewRate) || 0,
       periodLabel,
+      cities: Array.isArray(ranking.cities) ? ranking.cities : [],
       organiser: {
         id: ranking.organiserId || org?.id || null,
         name: org?.name || 'Networking group',
         slug: slug || null,
         photoUrl: org?.photo_url || null,
         profilePath,
+        shoutoutOptIn: org?.ranking_shoutout_opt_in !== false,
       },
     };
   };
@@ -571,23 +613,29 @@ async function getPublicRankingLeaderboard() {
       const index = await computeLiveRankingIndex(sb);
       const ranked = [...index.values()].sort((a, b) => a.rank - b.rank).slice(0, 50);
       const periodLabel = currentPeriodLabel();
-      const entries = ranked.map((row) =>
-        mapPublicEntry(
-          null,
-          {
-            rank: row.rank,
-            tier: row.tier,
-            label: row.label,
-            rating: row.rating,
-            reviewCount: row.reviewCount,
-            eligibleAttendees: row.eligibleAttendees,
-            reviewRate: row.reviewRate,
-            periodLabel,
-            organiserId: row.organiserId,
-          },
-          row.organiserRow
+      const publicEntries = ranked
+        .map((row) =>
+          mapPublicEntry(
+            null,
+            {
+              rank: row.rank,
+              tier: row.tier,
+              label: row.label,
+              rating: row.rating,
+              reviewCount: row.reviewCount,
+              eligibleAttendees: row.eligibleAttendees,
+              reviewRate: row.reviewRate,
+              periodLabel,
+              organiserId: row.organiserId,
+              cities: [],
+            },
+            row.organiserRow
+          )
         )
-      );
+        .filter(Boolean);
+
+      await attachCitiesToRankingEntries(sb, publicEntries);
+
       return {
         configured: true,
         live: true,
@@ -596,7 +644,7 @@ async function getPublicRankingLeaderboard() {
           period_label: periodLabel,
           total_ranked: ranked[0]?.totalRanked || ranked.length,
         },
-        entries,
+        entries: publicEntries,
         minReviews: MIN_REVIEWS_FOR_RANKING,
       };
     } catch (error) {
@@ -613,8 +661,10 @@ async function getPublicRankingLeaderboard() {
   }
 
   const entrySelectWithRate =
-    'rank, tier, label, rating, review_count, eligible_attendees, review_rate, organiser_id, organisers(id, name, photo_url, slug, listing_status)';
+    'rank, tier, label, rating, review_count, eligible_attendees, review_rate, organiser_id, organisers(id, name, photo_url, slug, listing_status, ranking_shoutout_opt_in)';
   const entrySelectBasic =
+    'rank, tier, label, rating, review_count, organiser_id, organisers(id, name, photo_url, slug, listing_status, ranking_shoutout_opt_in)';
+  const entrySelectLegacy =
     'rank, tier, label, rating, review_count, organiser_id, organisers(id, name, photo_url, slug, listing_status)';
 
   let entries = null;
@@ -637,6 +687,16 @@ async function getPublicRankingLeaderboard() {
         .limit(50);
       entries = second.data;
       entErr = second.error;
+    }
+    if (entErr && /ranking_shoutout_opt_in/i.test(String(entErr.message || ''))) {
+      const third = await sb
+        .from('organiser_ranking_entries')
+        .select(entrySelectLegacy)
+        .eq('snapshot_id', snapshot.id)
+        .order('rank', { ascending: true })
+        .limit(50);
+      entries = third.data;
+      entErr = third.error;
     }
   }
   if (entErr) {
@@ -672,10 +732,14 @@ async function getPublicRankingLeaderboard() {
               : reviewRate(row.review_count, row.eligible_attendees),
           periodLabel: snapshot.period_label,
           organiserId: row.organiser_id,
+          cities: [],
         },
         row.organisers
       )
-    );
+    )
+    .filter(Boolean);
+
+  await attachCitiesToRankingEntries(sb, publicEntries);
 
   return {
     configured: true,
@@ -691,6 +755,85 @@ async function getPublicRankingLeaderboard() {
   };
 }
 
+async function attachCitiesToRankingEntries(sb, publicEntries) {
+  try {
+    const ids = (publicEntries || []).map((e) => e.organiser?.id).filter(Boolean);
+    if (!ids.length) return;
+    const { data: eventRows } = await sb
+      .from('events')
+      .select('organiser_id, city, status')
+      .in('organiser_id', ids)
+      .limit(2000);
+    const citiesByOrg = new Map();
+    (eventRows || []).forEach((ev) => {
+      if (String(ev.status || '').toLowerCase() !== 'published') return;
+      const city = String(ev.city || '').trim();
+      if (!city) return;
+      if (!citiesByOrg.has(ev.organiser_id)) citiesByOrg.set(ev.organiser_id, new Set());
+      citiesByOrg.get(ev.organiser_id).add(city);
+    });
+    publicEntries.forEach((entry) => {
+      const set = citiesByOrg.get(entry.organiser?.id);
+      entry.cities = set ? [...set].sort((a, b) => a.localeCompare(b)) : [];
+    });
+  } catch {
+    /* ignore city enrichment failures */
+  }
+}
+
+async function getBadgeImpressionCounts(organiserIds) {
+  if (!isSupabaseConfigured()) return {};
+  const ids = (organiserIds || []).filter(Boolean);
+  if (!ids.length) return {};
+  const sb = getSupabaseAdmin();
+  const out = {};
+  ids.forEach((id) => {
+    out[id] = 0;
+  });
+  try {
+    const { data, error } = await sb
+      .from('ranking_badge_impressions')
+      .select('organiser_id')
+      .in('organiser_id', ids)
+      .limit(5000);
+    if (error) return out;
+    (data || []).forEach((row) => {
+      const id = row.organiser_id;
+      if (!id) return;
+      out[id] = (out[id] || 0) + 1;
+    });
+  } catch {
+    /* table may not exist yet */
+  }
+  return out;
+}
+
+async function getOrganiserRankingHistory(organiserId, options) {
+  const id = String(organiserId || '').trim();
+  if (!id || !isSupabaseConfigured()) return [];
+  const limit = Math.min(36, Math.max(1, Number(options?.limit) || 24));
+  const sb = getSupabaseAdmin();
+
+  const { data, error } = await sb
+    .from('organiser_ranking_entries')
+    .select(
+      'rank, tier, label, rating, review_count, eligible_attendees, review_rate, snapshot_id, organiser_ranking_snapshots ( period_key, period_label, created_at, total_ranked )'
+    )
+    .eq('organiser_id', id)
+    .limit(80);
+
+  if (error) {
+    if (isMissingRankingTableError(error)) return [];
+    throw new Error(error.message);
+  }
+
+  return (data || [])
+    .map((row) => entryToRanking(row, row.organiser_ranking_snapshots || null))
+    .filter(Boolean)
+    .sort((a, b) => String(b.periodKey || '').localeCompare(String(a.periodKey || '')))
+    .slice(0, limit);
+}
+
 module.exports = {
   MIN_REVIEWS_FOR_RANKING,
   currentPeriodKey,
@@ -701,6 +844,8 @@ module.exports = {
   computeLiveRankingIndex,
   loadCurrentRankingsByOrganiserId,
   getGroupRankingsForOrganiser,
+  getOrganiserRankingHistory,
+  getBadgeImpressionCounts,
   runMonthlyOrganiserRankingSnapshot,
   getRankingAdminReport,
   getPublicRankingLeaderboard,

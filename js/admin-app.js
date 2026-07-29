@@ -14710,8 +14710,18 @@
         '<div class="flex flex-wrap gap-2">' +
         '<button type="button" id="rankings-run-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Run snapshot now</button>' +
         '<button type="button" id="rankings-run-no-email-btn" class="rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Snapshot only (no emails)</button>' +
+        '<button type="button" id="rankings-top10-graphic-btn" class="rounded-lg border border-amber-300 bg-amber-50 text-amber-950 text-sm font-semibold px-4 py-2 hover:bg-amber-100">Make Top 10 graphic</button>' +
         '</div></div>' +
         '<p id="rankings-run-msg" class="text-xs text-slate-500 mb-3"></p>' +
+        '<div id="rankings-top10-graphic-panel" class="hidden mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4">' +
+        '<label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1" for="rankings-top10-caption">Caption</label>' +
+        '<textarea id="rankings-top10-caption" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mb-3" rows="6"></textarea>' +
+        '<div class="flex flex-wrap gap-2 mb-3">' +
+        '<button type="button" id="rankings-top10-copy-caption" class="rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold px-3 py-1.5 hover:bg-white">Copy caption</button>' +
+        '<a id="rankings-top10-download" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-1.5 hover:bg-brand-900" download="networker-top10.png" hidden>Download PNG</a>' +
+        '</div>' +
+        '<img id="rankings-top10-preview" alt="Top 10 graphic preview" class="max-w-full rounded-lg border border-slate-200 hidden" />' +
+        '</div>' +
         (entryRows
           ? '<div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
             '<th class="py-2 pr-3">Rank</th><th class="py-2 pr-3">Group</th><th class="py-2 pr-3">Badge</th><th class="py-2 pr-3">Rating / rate</th></tr></thead><tbody>' +
@@ -14764,6 +14774,85 @@
       if (runBtn) runBtn.addEventListener('click', function () { runSnapshot(true); });
       if (runNoEmailBtn)
         runNoEmailBtn.addEventListener('click', function () { runSnapshot(false); });
+
+      var top10Btn = document.getElementById('rankings-top10-graphic-btn');
+      if (top10Btn) {
+        top10Btn.addEventListener('click', function () {
+          var panel = document.getElementById('rankings-top10-graphic-panel');
+          var captionEl = document.getElementById('rankings-top10-caption');
+          var preview = document.getElementById('rankings-top10-preview');
+          var download = document.getElementById('rankings-top10-download');
+          var msg = document.getElementById('rankings-run-msg');
+          var top10 = (data.entries || [])
+            .filter(function (row) {
+              return String(row.tier || '') === 'top10' || Number(row.rank) <= 10;
+            })
+            .slice(0, 10);
+          if (!top10.length) {
+            if (msg) msg.textContent = 'No Top 10 groups in this snapshot yet.';
+            return;
+          }
+          var periodLabel = (data.snapshot && data.snapshot.period_label) || 'this month';
+          var listFull = top10
+            .map(function (row) {
+              var org = row.organisers || {};
+              var rating = Number(row.rating);
+              return (
+                String(row.rank) +
+                '. ' +
+                (org.name || 'Networking group') +
+                (Number.isFinite(rating) ? ' ★ ' + rating.toFixed(1) : '')
+              );
+            })
+            .join('\n');
+          var caption =
+            '🏆 Top 10 networking groups on The Networker Hub — ' +
+            periodLabel +
+            '\n\n' +
+            listFull +
+            '\n\nBrowse events and groups: https://www.thenetworkerhub.com/rankings';
+          if (captionEl) captionEl.value = caption;
+          if (panel) panel.classList.remove('hidden');
+          if (msg) msg.textContent = 'Generating Top 10 graphic…';
+          var generator =
+            window.AdminSocialPosts && window.AdminSocialPosts.generateRankingCardImage;
+          if (!generator) {
+            if (msg) msg.textContent = 'Graphic helper not loaded — open Social posts instead.';
+            return;
+          }
+          generator(top10, periodLabel)
+            .then(function (dataUrl) {
+              if (preview) {
+                preview.src = dataUrl;
+                preview.classList.remove('hidden');
+              }
+              if (download) {
+                download.href = dataUrl;
+                download.hidden = false;
+              }
+              if (msg) msg.textContent = 'Top 10 graphic ready — copy the caption and download the PNG.';
+            })
+            .catch(function () {
+              if (msg) msg.textContent = 'Could not generate Top 10 graphic.';
+            });
+        });
+      }
+      var copyCaptionBtn = document.getElementById('rankings-top10-copy-caption');
+      if (copyCaptionBtn) {
+        copyCaptionBtn.addEventListener('click', function () {
+          var captionEl = document.getElementById('rankings-top10-caption');
+          var text = (captionEl && captionEl.value) || '';
+          if (!text) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+              copyCaptionBtn.textContent = 'Copied';
+              setTimeout(function () {
+                copyCaptionBtn.textContent = 'Copy caption';
+              }, 1400);
+            });
+          }
+        });
+      }
     }
 
     var searchEl = document.getElementById('rankings-search');

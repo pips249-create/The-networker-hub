@@ -15,6 +15,11 @@ const {
   GUEST_VISIT_SCOPE_ACROSS_GROUPS,
 } = require('./guest-visits');
 const { publicOrganiserSlug } = require('./organiser-slug');
+const { normalizeHexColor } = require('./website-meta');
+
+function normalizeBrandColor(value) {
+  return normalizeHexColor(value) || '';
+}
 
 function rowToGroup(row) {
   if (!row) return null;
@@ -35,6 +40,9 @@ function rowToGroup(row) {
     facebookUrl: String(row.facebook_url || '').trim(),
     linkedinUrl: String(row.linkedin_url || '').trim(),
     xUrl: String(row.x_url || '').trim(),
+    brandPrimaryColor: String(row.brand_primary_color || '').trim(),
+    brandSecondaryColor: String(row.brand_secondary_color || '').trim(),
+    brandAccentColor: String(row.brand_accent_color || '').trim(),
     industries,
     meetingFormats,
     location: industries.join(', '),
@@ -56,6 +64,7 @@ function rowToGroup(row) {
     ownershipClaimedAt: row.ownership_claimed_at || null,
     complimentaryVisitsAllowed: clampComplimentaryVisitsAllowed(row.complimentary_visits_allowed),
     complimentaryVisitsScope: normalizeComplimentaryVisitsScope(row.complimentary_visits_scope),
+    rankingShoutoutOptIn: row.ranking_shoutout_opt_in !== false,
   };
 }
 
@@ -332,6 +341,18 @@ async function updateGroup(groupId, payload) {
   if (payload.xUrl !== undefined || payload.x_url !== undefined) {
     patch.x_url = String(payload.xUrl ?? payload.x_url ?? '').trim() || null;
   }
+  if (payload.brandPrimaryColor !== undefined || payload.brand_primary_color !== undefined) {
+    const hex = normalizeBrandColor(payload.brandPrimaryColor ?? payload.brand_primary_color);
+    patch.brand_primary_color = hex || null;
+  }
+  if (payload.brandSecondaryColor !== undefined || payload.brand_secondary_color !== undefined) {
+    const hex = normalizeBrandColor(payload.brandSecondaryColor ?? payload.brand_secondary_color);
+    patch.brand_secondary_color = hex || null;
+  }
+  if (payload.brandAccentColor !== undefined || payload.brand_accent_color !== undefined) {
+    const hex = normalizeBrandColor(payload.brandAccentColor ?? payload.brand_accent_color);
+    patch.brand_accent_color = hex || null;
+  }
   if (payload.contactEmail !== undefined) {
     patch.contact_email = payload.contactEmail || null;
     patch.email = payload.contactEmail || null;
@@ -360,6 +381,13 @@ async function updateGroup(groupId, payload) {
   }
   if (payload.listingStatus != null) {
     patch.listing_status = normalizeListingStatus(payload.listingStatus);
+  }
+  if (
+    payload.rankingShoutoutOptIn !== undefined ||
+    payload.ranking_shoutout_opt_in !== undefined
+  ) {
+    const raw = payload.rankingShoutoutOptIn ?? payload.ranking_shoutout_opt_in;
+    patch.ranking_shoutout_opt_in = !(raw === false || raw === 'false' || raw === 0 || raw === '0');
   }
 
   const hasLogo =
@@ -395,6 +423,52 @@ async function updateGroup(groupId, payload) {
   ) {
     const retryPatch = { ...patch };
     delete retryPatch.complimentary_visits_scope;
+    if (!Object.keys(retryPatch).length) {
+      const existing = await sb.from('organisers').select('*').eq('id', groupId).maybeSingle();
+      if (existing.error) throw new Error(existing.error.message);
+      data = existing.data;
+      error = null;
+    } else {
+      ({ data, error } = await sb
+        .from('organisers')
+        .update(retryPatch)
+        .eq('id', groupId)
+        .select('*')
+        .single());
+    }
+  }
+  if (
+    error &&
+    patch.ranking_shoutout_opt_in !== undefined &&
+    /ranking_shoutout_opt_in/i.test(String(error.message || ''))
+  ) {
+    const retryPatch = { ...patch };
+    delete retryPatch.ranking_shoutout_opt_in;
+    if (!Object.keys(retryPatch).length) {
+      const existing = await sb.from('organisers').select('*').eq('id', groupId).maybeSingle();
+      if (existing.error) throw new Error(existing.error.message);
+      data = existing.data;
+      error = null;
+    } else {
+      ({ data, error } = await sb
+        .from('organisers')
+        .update(retryPatch)
+        .eq('id', groupId)
+        .select('*')
+        .single());
+    }
+  }
+  if (
+    error &&
+    (patch.brand_primary_color !== undefined ||
+      patch.brand_secondary_color !== undefined ||
+      patch.brand_accent_color !== undefined) &&
+    /brand_(primary|secondary|accent)_color/i.test(String(error.message || ''))
+  ) {
+    const retryPatch = { ...patch };
+    delete retryPatch.brand_primary_color;
+    delete retryPatch.brand_secondary_color;
+    delete retryPatch.brand_accent_color;
     if (!Object.keys(retryPatch).length) {
       const existing = await sb.from('organisers').select('*').eq('id', groupId).maybeSingle();
       if (existing.error) throw new Error(existing.error.message);

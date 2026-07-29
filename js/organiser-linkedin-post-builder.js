@@ -249,6 +249,38 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
+  /** Hub credit mark — bottom-right, clear on mobile feeds, never dominating the graphic. */
+  function hubCreditBox(opts) {
+    opts = opts || {};
+    var emphasis = Boolean(opts.emphasis);
+    var dark = Boolean(opts.dark);
+    var w = emphasis ? 248 : dark ? 236 : 228;
+    var h = emphasis ? 66 : dark ? 64 : 60;
+    return {
+      w: w,
+      h: h,
+      x: W - w - 48,
+      y: H - h - (opts.textBelow === false ? 48 : dark ? 52 : 68),
+      textBelow: opts.textBelow !== false,
+      label: emphasis ? 'The Networker Hub' : 'on The Networker Hub',
+    };
+  }
+
+  function drawHubCredit(ctx, hubLogo, style) {
+    style = style || {};
+    if (!hubLogo) return null;
+    var box = hubCreditBox(style);
+    drawContainedImage(ctx, hubLogo, box.x, box.y, box.w, box.h);
+    if (box.textBelow && style.hideText !== true) {
+      ctx.fillStyle = style.textColor || 'rgba(255,255,255,0.78)';
+      ctx.font = '400 17px "DM Sans", Arial, Helvetica, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(box.label, box.x + box.w / 2, box.y + box.h + 24);
+      ctx.textAlign = 'left';
+    }
+    return box;
+  }
+
   function drawLogoPlaceholder(ctx, x, y, w, h, hintColor) {
     ctx.save();
     ctx.setLineDash([14, 10]);
@@ -321,12 +353,100 @@
     ctx.closePath();
   }
 
-  function backgroundById(id) {
+  function backgroundById(id, brandBg) {
+    if (brandBg && brandBg.id === id) return brandBg;
     return (
       BACKGROUNDS.find(function (b) {
         return b.id === id;
-      }) || BACKGROUNDS[0]
+      }) ||
+      brandBg ||
+      BACKGROUNDS[0]
     );
+  }
+
+  function hexLuminance(hex) {
+    var h = String(hex || '').replace('#', '');
+    if (h.length === 3) {
+      h = h
+        .split('')
+        .map(function (c) {
+          return c + c;
+        })
+        .join('');
+    }
+    if (h.length !== 6) return 0.5;
+    var r = parseInt(h.slice(0, 2), 16) / 255;
+    var g = parseInt(h.slice(2, 4), 16) / 255;
+    var b = parseInt(h.slice(4, 6), 16) / 255;
+    var lin = function (c) {
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+
+  function hexToRgba(hex, alpha) {
+    var h = String(hex || '').replace('#', '');
+    if (h.length === 3) {
+      h = h
+        .split('')
+        .map(function (c) {
+          return c + c;
+        })
+        .join('');
+    }
+    if (h.length !== 6) return 'rgba(0,0,0,' + alpha + ')';
+    var r = parseInt(h.slice(0, 2), 16);
+    var g = parseInt(h.slice(2, 4), 16);
+    var b = parseInt(h.slice(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
+  function normalizeHex(value, fallback) {
+    var v = String(value || '')
+      .trim()
+      .toLowerCase();
+    if (/^#[0-9a-f]{3}$/.test(v)) {
+      v =
+        '#' +
+        v
+          .slice(1)
+          .split('')
+          .map(function (c) {
+            return c + c;
+          })
+          .join('');
+    }
+    if (/^#[0-9a-f]{6}$/.test(v)) return v;
+    return fallback || '';
+  }
+
+  function buildBrandBackground(group) {
+    if (!group) return null;
+    var primary = normalizeHex(group.brandPrimaryColor || group.brand_primary_color, '');
+    var secondary = normalizeHex(group.brandSecondaryColor || group.brand_secondary_color, '');
+    var accent = normalizeHex(group.brandAccentColor || group.brand_accent_color, '');
+    if (!primary) return null;
+    if (!secondary) secondary = hexLuminance(primary) < 0.45 ? '#f7f1e8' : '#1a1a1a';
+    if (!accent) accent = primary;
+    var dark = hexLuminance(primary) < 0.55;
+    var textOnDark = '#f7f1e8';
+    var textOnLight = '#2c2826';
+    return {
+      id: 'brand',
+      label: 'Your brand',
+      dark: dark,
+      accent: accent,
+      stops: [primary, secondary, accent],
+      blob1: hexToRgba(accent, 0.22),
+      blob2: hexToRgba(secondary, 0.16),
+      kicker: accent,
+      title: dark ? textOnDark : textOnLight,
+      sub: dark ? '#c8c0b6' : '#5c5557',
+      brandText: textOnLight,
+      brandHint: accent,
+      brandBox: dark ? 'rgba(247,241,232,0.95)' : 'rgba(255,255,255,0.88)',
+      credit: dark ? '#c8c0b6' : '#5c5557',
+    };
   }
 
   function defaultBackgroundIdForTemplate(tpl) {
@@ -416,12 +536,11 @@
         heroY += 34;
       }
 
-      if (hubLogo) drawContainedImage(ctx, hubLogo, W - 210, H - 82, 170, 46);
-      ctx.fillStyle = 'rgba(255,255,255,0.78)';
-      ctx.font = '400 16px "DM Sans", Arial, Helvetica, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText('on The Networker Hub', W - 56, H - 28);
-      ctx.textAlign = 'left';
+      if (hubLogo) {
+        drawHubCredit(ctx, hubLogo, {
+          textColor: 'rgba(255,255,255,0.78)',
+        });
+      }
       return;
     }
 
@@ -531,12 +650,11 @@
         ctx.fillText(eventSubLines[es], 72, eventY);
         eventY += 36;
       }
-      if (hubLogo) drawContainedImage(ctx, hubLogo, W - 230, H - 116, 170, 46);
-      ctx.fillStyle = creditColor;
-      ctx.font = '400 18px "DM Sans", Arial, Helvetica, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('on The Networker Hub', W - 145, H - 42);
-      ctx.textAlign = 'left';
+      if (hubLogo) {
+        drawHubCredit(ctx, hubLogo, {
+          textColor: creditColor,
+        });
+      }
       return;
     }
 
@@ -569,22 +687,13 @@
     }
 
     var isDarkHub = Boolean(isDark && hubLogo);
-    var creditW = tpl.hubEmphasis ? 210 : isDarkHub ? 200 : 170;
-    var creditH = tpl.hubEmphasis ? 56 : isDarkHub ? 54 : 46;
-    var cx = W - creditW - 48;
-    var cy = H - creditH - (isDarkHub ? 48 : 64);
     if (hubLogo) {
-      drawContainedImage(ctx, hubLogo, cx, cy, creditW, creditH);
-    }
-    if (!isDarkHub) {
-      ctx.fillStyle = creditColor;
-      ctx.font = '400 18px "DM Sans", Arial, Helvetica, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        tpl.hubEmphasis ? 'The Networker Hub' : 'on The Networker Hub',
-        cx + creditW / 2,
-        cy + creditH + 26
-      );
+      drawHubCredit(ctx, hubLogo, {
+        emphasis: Boolean(tpl.hubEmphasis),
+        dark: isDarkHub,
+        hideText: isDarkHub,
+        textColor: creditColor,
+      });
     }
     ctx.textAlign = 'left';
   }
@@ -893,6 +1002,7 @@
     var elOppGate = root.querySelector('#post-opp-gate');
     var canvas = root.querySelector('#post-preview-canvas');
     var ctx = canvas.getContext('2d');
+    var brandBg = null;
 
     function currentTemplate() {
       return (
@@ -903,7 +1013,42 @@
     }
 
     function currentBackground() {
-      return backgroundById(state.backgroundId);
+      return backgroundById(state.backgroundId, brandBg);
+    }
+
+    function syncBrandBackground(options) {
+      options = options || {};
+      brandBg = buildBrandBackground(currentGroup());
+      var picker = root.querySelector('#post-bg-picker');
+      if (picker) {
+        var existing = picker.querySelector('[data-background-id="brand"]');
+        if (brandBg && !existing) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'org-post-bg-option';
+          btn.setAttribute('role', 'option');
+          btn.setAttribute('data-background-id', 'brand');
+          btn.setAttribute('aria-selected', 'false');
+          btn.innerHTML =
+            '<span class="org-post-bg-swatch org-post-bg-swatch--brand" aria-hidden="true"></span>' +
+            '<span class="org-post-bg-label">Your brand</span>';
+          picker.insertBefore(btn, picker.firstChild);
+        } else if (!brandBg && existing) {
+          existing.remove();
+          if (state.backgroundId === 'brand') {
+            state.backgroundId = defaultBackgroundIdForTemplate(currentTemplate());
+          }
+        }
+        if (brandBg) {
+          picker.style.setProperty('--org-post-brand-primary', brandBg.stops[0]);
+          picker.style.setProperty('--org-post-brand-secondary', brandBg.stops[1]);
+          picker.style.setProperty('--org-post-brand-accent', brandBg.accent);
+        }
+      }
+      if (brandBg && options.preferBrand && !state.backgroundTouched) {
+        state.backgroundId = 'brand';
+      }
+      syncBackgroundSelection();
     }
 
     function syncBackgroundSelection() {
@@ -915,7 +1060,7 @@
     }
 
     function selectBackground(id, flags) {
-      var bg = backgroundById(id);
+      var bg = backgroundById(id, brandBg);
       if (!bg) return;
       state.backgroundId = bg.id;
       if (!flags || !flags.silent) state.backgroundTouched = true;
@@ -1670,7 +1815,9 @@
 
     elGroup.addEventListener('change', function () {
       state.groupId = elGroup.value;
+      state.backgroundTouched = false;
       applyGroupToFields(false);
+      syncBrandBackground({ preferBrand: true });
       refresh();
     });
     elListing.addEventListener('change', function () {
@@ -1739,6 +1886,7 @@
       syncOpportunityGate();
       syncListingField();
       syncEventField();
+      syncBrandBackground({ preferBrand: true });
       syncBackgroundSelection();
       if (isEventTemplate() && currentEvent()) applyEventToFields();
       else applyGroupToFields(true);
@@ -1759,6 +1907,7 @@
         syncOpportunityGate();
         syncListingField();
         syncEventField();
+        syncBrandBackground({ preferBrand: !state.backgroundTouched });
         if (isEventTemplate() && currentEvent()) applyEventToFields();
         else applyGroupToFields(false);
         refresh();
@@ -1780,6 +1929,22 @@
         syncEventField();
         if (currentEvent()) applyEventToFields();
         fillCaptionFromTemplate();
+        refresh();
+      },
+      useBrandBackground: function (groupId) {
+        if (groupId) {
+          state.groupId = String(groupId);
+          syncGroupOptions();
+          elGroup.value = state.groupId;
+        }
+        state.backgroundTouched = false;
+        applyGroupToFields(false);
+        syncBrandBackground({ preferBrand: true });
+        if (brandBg) {
+          state.backgroundId = 'brand';
+          state.backgroundTouched = true;
+        }
+        syncBackgroundSelection();
         refresh();
       },
       refresh: refresh,

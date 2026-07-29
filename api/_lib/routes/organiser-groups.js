@@ -95,13 +95,21 @@ module.exports = async function handler(req, res) {
       body.facebookUrl !== undefined ||
       body.linkedinUrl !== undefined ||
       body.xUrl !== undefined ||
+      body.brandPrimaryColor !== undefined ||
+      body.brand_primary_color !== undefined ||
+      body.brandSecondaryColor !== undefined ||
+      body.brand_secondary_color !== undefined ||
+      body.brandAccentColor !== undefined ||
+      body.brand_accent_color !== undefined ||
       body.location !== undefined ||
       body.logoUrl ||
       body.logoBase64 ||
       body.complimentaryVisitsAllowed !== undefined ||
       body.complimentary_visits_allowed !== undefined ||
       body.complimentaryVisitsScope !== undefined ||
-      body.complimentary_visits_scope !== undefined;
+      body.complimentary_visits_scope !== undefined ||
+      body.rankingShoutoutOptIn !== undefined ||
+      body.ranking_shoutout_opt_in !== undefined;
     if (!hasProfileFields) return json(res, 400, { error: 'missing_fields' });
 
     try {
@@ -120,6 +128,9 @@ module.exports = async function handler(req, res) {
         facebookUrl: body.facebookUrl,
         linkedinUrl: body.linkedinUrl,
         xUrl: body.xUrl,
+        brandPrimaryColor: body.brandPrimaryColor ?? body.brand_primary_color,
+        brandSecondaryColor: body.brandSecondaryColor ?? body.brand_secondary_color,
+        brandAccentColor: body.brandAccentColor ?? body.brand_accent_color,
         location: body.location,
         contactEmail: body.contactEmail,
         industries: body.industries,
@@ -133,6 +144,8 @@ module.exports = async function handler(req, res) {
           body.complimentaryVisitsAllowed ?? body.complimentary_visits_allowed,
         complimentaryVisitsScope:
           body.complimentaryVisitsScope ?? body.complimentary_visits_scope,
+        rankingShoutoutOptIn:
+          body.rankingShoutoutOptIn ?? body.ranking_shoutout_opt_in,
       });
       try {
         const { resolveOrganiserAccess } = require('../supabase-organiser-access');
@@ -145,6 +158,12 @@ module.exports = async function handler(req, res) {
         if (body.website !== undefined) changed.push('website');
         if (body.location !== undefined) changed.push('location');
         if (body.logoUrl || body.logoBase64) changed.push('logo');
+        if (
+          body.rankingShoutoutOptIn !== undefined ||
+          body.ranking_shoutout_opt_in !== undefined
+        ) {
+          changed.push('rankingShoutoutOptIn');
+        }
         if (
           body.complimentaryVisitsAllowed !== undefined ||
           body.complimentary_visits_allowed !== undefined

@@ -111,6 +111,7 @@
     var profile = document.getElementById('badge-share-profile');
     var title = document.getElementById('badge-share-title');
     var lede = document.getElementById('badge-share-lede');
+    var pngBtn = document.getElementById('badge-share-png');
 
     if (status) status.hidden = true;
     if (content) content.hidden = false;
@@ -132,10 +133,11 @@
         ? org.profilePath
         : origin() + (org.profilePath || '/rankings');
 
+    var imgUrl = badgeImageUrl(entry.tier, entry.periodLabel);
     if (preview) {
       preview.innerHTML =
         '<img src="' +
-        esc(badgeImageUrl(entry.tier, entry.periodLabel)) +
+        esc(imgUrl) +
         '" alt="' +
         esc(badgeLabel) +
         '" width="340" height="120" />';
@@ -154,10 +156,19 @@
       profile.href = profileUrl;
       profile.textContent = 'View profile';
     }
+    if (pngBtn) {
+      pngBtn.setAttribute('data-img', imgUrl);
+      pngBtn.setAttribute(
+        'data-name',
+        String(name || 'group')
+          .replace(/[^\w\-]+/g, '-')
+          .slice(0, 40) + '-ranking-badge.png'
+      );
+    }
 
     try {
       var ogImage = document.querySelector('meta[property="og:image"]');
-      if (ogImage) ogImage.setAttribute('content', badgeImageUrl(entry.tier, entry.periodLabel));
+      if (ogImage) ogImage.setAttribute('content', imgUrl);
       var ogTitle = document.querySelector('meta[property="og:title"]');
       if (ogTitle) ogTitle.setAttribute('content', name + ' — ' + badgeLabel);
       var ogUrl = document.querySelector('meta[property="og:url"]');
@@ -194,6 +205,41 @@
     });
   }
 
+  function bindPng() {
+    var btn = document.getElementById('badge-share-png');
+    if (!btn || btn.getAttribute('data-bound') === '1') return;
+    btn.setAttribute('data-bound', '1');
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-img') || '';
+      var name = btn.getAttribute('data-name') || 'ranking-badge.png';
+      if (!url) return;
+      var prev = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Preparing…';
+      function done(label) {
+        btn.textContent = label || prev;
+        btn.disabled = false;
+        if (label) {
+          setTimeout(function () {
+            btn.textContent = prev;
+          }, 1400);
+        }
+      }
+      if (window.HubRankingBadgePng && HubRankingBadgePng.download) {
+        HubRankingBadgePng.download(url, name)
+          .then(function () {
+            done('Downloaded');
+          })
+          .catch(function () {
+            done('Failed');
+          });
+      } else {
+        window.open(url, '_blank', 'noopener');
+        done();
+      }
+    });
+  }
+
   function load() {
     var q = params();
     if (!q.get('id') && !q.get('organiser') && !q.get('organiserId') && !q.get('slug')) {
@@ -207,7 +253,6 @@
       })
       .then(function (data) {
         var entries = (data && data.entries) || [];
-        // Attach totalRanked from snapshot when missing on entry
         var total = data && data.snapshot && data.snapshot.total_ranked;
         entries = entries.map(function (entry) {
           if (entry.totalRanked == null && total != null) {
@@ -230,5 +275,6 @@
   }
 
   bindCopy();
+  bindPng();
   load();
 })();

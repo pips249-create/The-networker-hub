@@ -437,6 +437,32 @@
           ' rated groups' +
           (org.ranking.periodLabel ? ' · ' + org.ranking.periodLabel : '');
       }
+
+      var historyEl = document.getElementById('org-ranking-history');
+      if (historyEl) {
+        var history = Array.isArray(org.rankingHistory) ? org.rankingHistory.slice() : [];
+        if (history.length) {
+          historyEl.hidden = false;
+          historyEl.innerHTML =
+            '<p class="org-ranking-history-label">Past recognition</p>' +
+            '<ul class="org-ranking-history-list">' +
+            history
+              .slice(0, 12)
+              .map(function (row) {
+                var label =
+                  row.cardLabel ||
+                  row.displayLabel ||
+                  String(row.label || '').replace(' on the Hub', '') ||
+                  'Top group';
+                return '<li>' + escapeHtml(label) + '</li>';
+              })
+              .join('') +
+            '</ul>';
+        } else {
+          historyEl.hidden = true;
+          historyEl.innerHTML = '';
+        }
+      }
     } else {
       if (panel) panel.hidden = true;
       if (rankingEl) {
@@ -445,6 +471,11 @@
         rankingEl.removeAttribute('title');
       }
       if (metaEl) metaEl.textContent = '';
+      var historyEmpty = document.getElementById('org-ranking-history');
+      if (historyEmpty) {
+        historyEmpty.hidden = true;
+        historyEmpty.innerHTML = '';
+      }
     }
 
     renderReviews(org);

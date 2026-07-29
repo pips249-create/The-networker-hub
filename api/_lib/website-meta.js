@@ -277,6 +277,190 @@ function pickDescription(html) {
   return '';
 }
 
+function normalizeHexColor(raw) {
+  let value = String(raw || '').trim().toLowerCase();
+  if (!value) return '';
+  if (/^#[0-9a-f]{3}$/i.test(value)) {
+    value =
+      '#' +
+      value
+        .slice(1)
+        .split('')
+        .map((c) => c + c)
+        .join('');
+  }
+  if (!/^#[0-9a-f]{6}$/i.test(value)) return '';
+  return value;
+}
+
+function rgbToHex(r, g, b) {
+  const clamp = (n) => Math.max(0, Math.min(255, Math.round(Number(n) || 0)));
+  return (
+    '#' +
+    [clamp(r), clamp(g), clamp(b)]
+      .map((n) => n.toString(16).padStart(2, '0'))
+      .join('')
+  );
+}
+
+function parseCssColor(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  const hex = normalizeHexColor(value);
+  if (hex) return hex;
+  const rgb = value.match(
+    /^rgba?\(\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*[,\s]\s*([\d.]+)(?:\s*[/,]\s*[\d.]+%?)?\s*\)$/i
+  );
+  if (rgb) return rgbToHex(rgb[1], rgb[2], rgb[3]);
+  return '';
+}
+
+function colorLuminance(hex) {
+  const h = normalizeHexColor(hex);
+  if (!h) return 1;
+  const r = parseInt(h.slice(1, 3), 16) / 255;
+  const g = parseInt(h.slice(3, 5), 16) / 255;
+  const b = parseInt(h.slice(5, 7), 16) / 255;
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+function isBoringColor(hex) {
+  const h = normalizeHexColor(hex);
+  if (!h) return true;
+  const r = parseInt(h.slice(1, 3), 16);
+  const g = parseInt(h.slice(3, 5), 16);
+  const b = parseInt(h.slice(5, 7), 16);
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  if (mx > 245 && mn > 230) return true; // near white
+  if (mx < 28) return true; // near black
+  if (mx - mn < 12 && mx > 200) return true; // light grey
+  if (mx - mn < 12 && mx < 60) return true; // dark grey
+  return false;
+}
+
+function pickColors(html) {
+  const scored = new Map();
+
+  function add(raw, weight) {
+    const hex = parseCssColor(raw) || normalizeHexColor(raw);
+    if (!hex || isBoringColor(hex)) return;
+    scored.set(hex, (scored.get(hex) || 0) + weight);
+  }
+
+  [
+    metaContent(html, 'theme-color'),
+    metaContent(html, 'msapplication-TileColor'),
+    metaContent(html, 'msapplication-navbutton-color'),
+  ].forEach((c) => add(c, 12));
+
+  const cssVarRe =
+    /--(?:brand|primary|secondary|accent|main|color|theme|bg|background|highlight)[-a-z0-9]*\s*:\s*([^;}{"']+)/gi;
+  let match;
+  while ((match = cssVarRe.exec(html))) {
+    add(match[1], 8);
+  }
+
+  const styleBlocks = String(html || '').match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [];
+  styleBlocks.slice(0, 8).forEach((block) => {
+    const hexes = block.match(/#(?:[0-9a-f]{6}|[0-9a-f]{3})\b/gi) || [];
+    hexes.slice(0, 40).forEach((h) => add(h, 2));
+  });
+
+  const inlineColors =
+    String(html || '').match(
+      /(?:background(?:-color)?|color)\s*:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/gi
+    ) || [];
+  inlineColors.slice(0, 60).forEach((decl) => {
+    const part = decl.split(':')[1];
+    add(part, 3);
+  });
+
+  return [...scored.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([hex]) => hex)
+    .slice(0, 6);
+}
+
+function classifySocialHref(href) {
+  let parsed;
+  try {
+    parsed = new URL(href);
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+  const path = parsed.pathname || '/';
+  if (host.includes('instagram.com')) {
+    if (/^\/(p|reel|stories|explore)\b/i.test(path)) return null;
+    return { key: 'instagram_url', url: parsed.href.split('?')[0].replace(/\/$/, '') };
+  }
+  if (host.includes('facebook.com') || host.includes('fb.com') || host.includes('fb.me')) {
+    if (/^\/(share|sharer|dialog|groups)\b/i.test(path)) return null;
+    return { key: 'facebook_url', url: parsed.href.split('?')[0].replace(/\/$/, '') };
+  }
+  if (host.includes('linkedin.com')) {
+    if (!/^\/(company|in|school)\b/i.test(path)) return null;
+    return { key: 'linkedin_url', url: parsed.href.split('?')[0].replace(/\/$/, '') };
+  }
+  if (host === 'x.com' || host === 'twitter.com' || host === 't.co') {
+    if (/^\/(i|intent|share|search|hashtag)\b/i.test(path)) return null;
+    if (path === '/' || path.length < 2) return null;
+    return { key: 'x_url', url: parsed.href.split('?')[0].replace(/\/$/, '') };
+  }
+  return null;
+}
+
+function pickSocialLinks(html, pageUrl) {
+  const found = {
+    instagram_url: '',
+    facebook_url: '',
+    linkedin_url: '',
+    x_url: '',
+  };
+  const hrefRe = /<a[^>]+href=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = hrefRe.exec(html))) {
+    const resolved = resolveUrl(pageUrl, decodeHtmlEntities(match[1].trim()));
+    if (!resolved || !/^https?:\/\//i.test(resolved)) continue;
+    const classified = classifySocialHref(resolved);
+    if (!classified) continue;
+    if (!found[classified.key]) found[classified.key] = classified.url;
+  }
+
+  // Also catch plain URLs in footer/schema text
+  const plainRe =
+    /https?:\/\/(?:www\.)?(?:instagram\.com|facebook\.com|fb\.com|linkedin\.com|x\.com|twitter\.com)\/[^\s"'<>]+/gi;
+  let plain;
+  while ((plain = plainRe.exec(html))) {
+    const classified = classifySocialHref(plain[0].replace(/[.,;)]+$/, ''));
+    if (!classified) continue;
+    if (!found[classified.key]) found[classified.key] = classified.url;
+  }
+
+  return found;
+}
+
+function assignPalette(colors) {
+  const list = (colors || []).map(normalizeHexColor).filter(Boolean);
+  const primary = list[0] || '';
+  const accent =
+    list.find((c) => c !== primary && Math.abs(colorLuminance(c) - colorLuminance(primary)) > 0.15) ||
+    list[1] ||
+    '';
+  const secondary =
+    list.find((c) => c !== primary && c !== accent) ||
+    (primary && colorLuminance(primary) < 0.45 ? '#f7f1e8' : '#1a1a1a') ||
+    '';
+  return {
+    brand_primary_color: primary,
+    brand_secondary_color: secondary && secondary !== primary ? secondary : '',
+    brand_accent_color: accent && accent !== primary ? accent : '',
+    colors: list,
+  };
+}
+
 function googleFaviconUrl(hostname) {
   const host = String(hostname || '')
     .replace(/^www\./i, '')
@@ -333,20 +517,27 @@ async function fetchDescriptionViaReader(url) {
   return '';
 }
 
-function buildResultMessage({ logo_url, description, blocked }) {
+function buildResultMessage({ logo_url, description, socials, colors, blocked }) {
   const parts = [];
   if (logo_url) parts.push('logo');
   if (description) parts.push('description');
+  const socialCount = socials
+    ? ['instagram_url', 'facebook_url', 'linkedin_url', 'x_url'].filter((k) => socials[k]).length
+    : 0;
+  if (socialCount) parts.push(socialCount === 1 ? '1 social link' : socialCount + ' social links');
+  if (colors && colors.length) {
+    parts.push(colors.length === 1 ? '1 brand colour' : colors.length + ' brand colours');
+  }
   if (!parts.length) return '';
 
   if (blocked) {
     return (
       'This site blocks automated access — filled ' +
-      parts.join(' and ') +
-      ' from fallback sources. Review and Save.'
+      parts.join(', ').replace(/, ([^,]*)$/, ' and $1') +
+      ' from fallback sources. Review and save.'
     );
   }
-  return 'Found ' + parts.join(' and ') + ' on the website.';
+  return 'Found ' + parts.join(', ').replace(/, ([^,]*)$/, ' and $1') + ' on the website.';
 }
 
 async function fetchWebsiteMeta(rawUrl) {
@@ -365,11 +556,22 @@ async function fetchWebsiteMeta(rawUrl) {
   let logo_url = '';
   let description = '';
   let blocked = false;
+  let socials = {
+    instagram_url: '',
+    facebook_url: '',
+    linkedin_url: '',
+    x_url: '',
+  };
+  let colors = [];
+  let palette = assignPalette([]);
 
   const page = await fetchPageHtml(url);
   if (page) {
     logo_url = pickLogo(page.html, page.pageUrl);
     description = pickDescription(page.html);
+    socials = pickSocialLinks(page.html, page.pageUrl);
+    colors = pickColors(page.html);
+    palette = assignPalette(colors);
   } else {
     blocked = true;
   }
@@ -397,11 +599,12 @@ async function fetchWebsiteMeta(rawUrl) {
 
   description = cleanDescription(description);
 
-  if (!logo_url && !description) {
+  const hasSocial = Object.values(socials).some(Boolean);
+  if (!logo_url && !description && !hasSocial && !colors.length) {
     const err = new Error('no_meta');
     err.status = 422;
     err.message =
-      'Could not read that website (it may block bots). Paste the logo and description manually.';
+      'Could not read that website (it may block bots). Enter colours and social links manually.';
     throw err;
   }
 
@@ -410,7 +613,21 @@ async function fetchWebsiteMeta(rawUrl) {
     logo_url,
     description,
     blocked,
-    message: buildResultMessage({ logo_url, description, blocked }),
+    instagram_url: socials.instagram_url,
+    facebook_url: socials.facebook_url,
+    linkedin_url: socials.linkedin_url,
+    x_url: socials.x_url,
+    colors,
+    brand_primary_color: palette.brand_primary_color,
+    brand_secondary_color: palette.brand_secondary_color,
+    brand_accent_color: palette.brand_accent_color,
+    message: buildResultMessage({
+      logo_url,
+      description,
+      socials,
+      colors,
+      blocked,
+    }),
   };
   writeMetaCache(url, result);
   return result;
@@ -420,4 +637,6 @@ module.exports = {
   fetchWebsiteMeta,
   normalizeWebsiteUrl,
   cleanDescription,
+  normalizeHexColor,
+  assignPalette,
 };

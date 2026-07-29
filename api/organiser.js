@@ -33,6 +33,7 @@ const routes = {
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
   roster: require('./_lib/routes/organiser-roster'),
   'logo-proxy': require('./_lib/routes/organiser-logo-proxy'),
+  'website-brand': require('./_lib/routes/organiser-website-brand'),
 };
 
 module.exports = async function handler(req, res) {

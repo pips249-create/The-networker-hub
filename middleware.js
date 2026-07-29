@@ -49,6 +49,7 @@ function isPublicListingPath(pathname) {
   if (oppMatch && !SKIP_OPPORTUNITY_SLUGS.has(decodeURIComponent(oppMatch[1]))) return true;
   if (/^\/networking\/[^/]+$/.test(path)) return true;
   if (/^\/opportunities\/networking\/[^/]+$/.test(path)) return true;
+  if (path === '/rankings/badge') return true;
   return false;
 }
 
@@ -535,7 +536,9 @@ async function maybeGateSiteAccess(request, url) {
     pathname === '/events/index' ||
     pathname === '/events/event' ||
     pathname === '/events/organiser' ||
-    pathname === '/opportunities/opportunity';
+    pathname === '/opportunities/opportunity' ||
+    pathname === '/rankings/badge' ||
+    pathname === '/rankings/badge.html';
   if (
     previewInternalSeo &&
     (
@@ -596,6 +599,7 @@ export default async function middleware(request) {
   const orgMatch = pathname.match(/^\/organisers\/([^/]+)$/);
   const oppMatch = pathname.match(/^\/opportunities\/([^/]+)$/);
   const networkingMatch = pathname.match(/^\/networking\/([^/]+)$/);
+  const rankingBadgePath = pathname === '/rankings/badge';
 
   if (eventMatch) {
     slug = decodeURIComponent(eventMatch[1]);
@@ -616,6 +620,15 @@ export default async function middleware(request) {
     slug = decodeURIComponent(networkingMatch[1]);
     type = 'networking-region';
     templatePath = '/events/';
+  } else if (rankingBadgePath) {
+    type = 'ranking-badge';
+    slug =
+      url.searchParams.get('id') ||
+      url.searchParams.get('organiserId') ||
+      url.searchParams.get('organiser') ||
+      url.searchParams.get('slug') ||
+      'default';
+    templatePath = '/rankings/badge.html';
   } else {
     return passThroughIfGated(siteGated);
   }

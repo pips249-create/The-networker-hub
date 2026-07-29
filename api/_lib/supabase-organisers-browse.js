@@ -5,6 +5,7 @@ const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./su
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { fetchPublishedEventRows, isPublicEvent } = require('./supabase-events');
 const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
+const { getOrganiserRankingHistory } = require('./organiser-ranking-snapshot');
 
 function slugIndustry(ind) {
   return String(ind || '')
@@ -140,6 +141,19 @@ function rowToPublicOrganiser(row, eventCount, options) {
       displayLabel: options.ranking.displayLabel || options.ranking.label,
       cardLabel: options.ranking.cardLabel || options.ranking.displayLabel,
     };
+  }
+
+  if (Array.isArray(options.rankingHistory) && options.rankingHistory.length) {
+    base.rankingHistory = options.rankingHistory.map((row) => ({
+      rank: row.rank,
+      totalRanked: row.totalRanked,
+      tier: row.tier,
+      label: row.label,
+      periodLabel: row.periodLabel || '',
+      periodKey: row.periodKey || '',
+      displayLabel: row.displayLabel || row.label,
+      cardLabel: row.cardLabel || row.displayLabel || row.label,
+    }));
   }
 
   return base;
@@ -302,6 +316,12 @@ async function getPublicOrganiserBySlug(slug) {
   } catch {
     rankings = {};
   }
+  let rankingHistory = [];
+  try {
+    rankingHistory = await getOrganiserRankingHistory(row.id, { limit: 18 });
+  } catch {
+    rankingHistory = [];
+  }
 
   return rowToPublicOrganiser(row, events.length, {
     includeEvents: true,
@@ -309,6 +329,7 @@ async function getPublicOrganiserBySlug(slug) {
     includeReviews: true,
     reviewItems,
     ranking: rankings[row.id] || null,
+    rankingHistory,
   });
 }
 
@@ -331,6 +352,12 @@ async function getPublicOrganiserById(id) {
   } catch {
     rankings = {};
   }
+  let rankingHistory = [];
+  try {
+    rankingHistory = await getOrganiserRankingHistory(row.id, { limit: 18 });
+  } catch {
+    rankingHistory = [];
+  }
 
   return rowToPublicOrganiser(row, events.length, {
     includeEvents: true,
@@ -338,6 +365,7 @@ async function getPublicOrganiserById(id) {
     includeReviews: true,
     reviewItems,
     ranking: rankings[row.id] || null,
+    rankingHistory,
   });
 }
 

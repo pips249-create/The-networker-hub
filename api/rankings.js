@@ -5,7 +5,10 @@
  */
 const { json, setCors } = require('./_lib/auth');
 const { isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
-const { getPublicRankingLeaderboard } = require('./_lib/organiser-ranking-snapshot');
+const {
+  getPublicRankingLeaderboard,
+  getBadgeImpressionCounts,
+} = require('./_lib/organiser-ranking-snapshot');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -34,7 +37,19 @@ module.exports = async function handler(req, res) {
 
   try {
     const report = await getPublicRankingLeaderboard();
-    return json(res, 200, { ok: true, ...report });
+    const impressionIds = String(req.query?.impressions || req.query?.organiserIds || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    let badgeImpressions = null;
+    if (impressionIds.length) {
+      badgeImpressions = await getBadgeImpressionCounts(impressionIds);
+    }
+    return json(res, 200, {
+      ok: true,
+      ...report,
+      ...(badgeImpressions ? { badgeImpressions } : {}),
+    });
   } catch (e) {
     return json(res, 500, {
       ok: false,

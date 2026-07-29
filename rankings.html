@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css?v=20260711e">
 <link rel="stylesheet" href="css/hub-ranking-badge.css?v=20260728lb2">
-<link rel="stylesheet" href="css/rankings-page.css?v=20260728soft">
+<link rel="stylesheet" href="css/rankings-page.css?v=20260728ux">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -57,12 +57,22 @@
 
   <section class="rankings-board" aria-labelledby="rankings-board-heading">
     <h2 id="rankings-board-heading" class="visually-hidden">Leaderboard</h2>
+    <div id="rankings-your-place" class="rankings-your-place" hidden></div>
     <div class="rankings-board-shell">
-      <div class="rankings-filters" role="tablist" aria-label="Filter by badge tier">
-        <button type="button" class="rankings-filter is-active" data-tier="all" role="tab" aria-selected="true">All</button>
-        <button type="button" class="rankings-filter" data-tier="top10" role="tab" aria-selected="false">Top 10</button>
-        <button type="button" class="rankings-filter" data-tier="top25" role="tab" aria-selected="false">Top 25</button>
-        <button type="button" class="rankings-filter" data-tier="top50" role="tab" aria-selected="false">Top 50</button>
+      <div class="rankings-board-tools">
+        <div class="rankings-filters" role="tablist" aria-label="Filter by badge tier">
+          <button type="button" class="rankings-filter is-active" data-tier="all" role="tab" aria-selected="true">All</button>
+          <button type="button" class="rankings-filter" data-tier="top10" role="tab" aria-selected="false">Top 10</button>
+          <button type="button" class="rankings-filter" data-tier="top25" role="tab" aria-selected="false">Top 25</button>
+          <button type="button" class="rankings-filter" data-tier="top50" role="tab" aria-selected="false">Top 50</button>
+        </div>
+        <div class="rankings-board-controls">
+          <label class="visually-hidden" for="rankings-city-filter">Filter by city</label>
+          <select id="rankings-city-filter" class="rankings-city-filter" hidden>
+            <option value="all">All cities</option>
+          </select>
+          <button type="button" class="rankings-theme-toggle" id="rankings-theme-toggle" aria-pressed="false">Light board</button>
+        </div>
       </div>
       <p id="rankings-status" class="rankings-status">Loading this month&rsquo;s rankings&hellip;</p>
       <ol id="rankings-list" class="rankings-list" hidden></ol>
@@ -76,6 +86,6 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260728footer" data-root=""></script>
-<script src="js/rankings.js?v=20260728lb2" defer></script>
+<script src="js/rankings.js?v=20260728ux" defer></script>
 </body>
 </html>

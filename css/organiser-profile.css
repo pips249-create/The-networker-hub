@@ -139,6 +139,41 @@
   color: #084a52;
 }
 
+.org-ranking-history {
+  margin: 4px 0 0;
+}
+
+.org-ranking-history[hidden] {
+  display: none !important;
+}
+
+.org-ranking-history-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+
+.org-ranking-history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.org-ranking-history-list li {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0d6e7a;
+  background: rgba(13, 110, 122, 0.08);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
 .org-showcase-rating {
   display: flex;
   flex-wrap: wrap;

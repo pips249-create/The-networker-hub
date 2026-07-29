@@ -1411,5 +1411,9 @@
       });
   }
 
-  global.AdminSocialPosts = { render: render };
+  global.AdminSocialPosts = {
+    render: render,
+    generateRankingCardImage: generateRankingCardImage,
+    rankedListText: rankedListText,
+  };
 })(typeof window !== 'undefined' ? window : global);

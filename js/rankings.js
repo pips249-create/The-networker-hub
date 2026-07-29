@@ -90,6 +90,10 @@
     root: null,
     loaded: false,
     loading: false,
+    entries: [],
+    snapshot: null,
+    cityFilter: 'all',
+    myGroupIds: [],
   };
 
   function esc(value) {
@@ -158,6 +162,15 @@
     var rating = Number(entry.rating || 0).toFixed(1);
     var reviews = String(entry.reviewCount || 0);
     var dashboard = isDashboardMount();
+    var cities = Array.isArray(entry.cities) ? entry.cities : [];
+    var cityAttr = cities
+      .map(function (c) {
+        return String(c || '')
+          .trim()
+          .toLowerCase();
+      })
+      .filter(Boolean)
+      .join('|');
 
     var avatar = org.photoUrl
       ? '<img class="rankings-avatar" src="' +
@@ -170,6 +183,7 @@
     var tag = !options.preview && path && path !== '#' ? 'a' : 'div';
     var hrefAttr = tag === 'a' ? ' href="' + esc(path) + '"' : '';
     var previewAttr = options.preview ? ' aria-disabled="true"' : '';
+    var mine = state.myGroupIds.indexOf(String(org.id || '')) >= 0;
 
     var metrics;
     if (dashboard) {
@@ -194,6 +208,7 @@
         esc(reviews) +
         ' reviews' +
         (rateLabel ? ' · ' + rateLabel + ' review rate' : '') +
+        (cities.length ? ' · ' + esc(cities.slice(0, 2).join(', ')) : '') +
         '</p>';
     }
 
@@ -203,8 +218,11 @@
       ' class="rankings-row' +
       (dashboard ? ' org-leaderboard-row' : '') +
       (tier === 'top10' ? ' rankings-row--top10' : '') +
+      (mine ? ' rankings-row--mine' : '') +
       '" data-tier="' +
       esc(tier) +
+      '" data-cities="' +
+      esc(cityAttr) +
       '"' +
       hrefAttr +
       previewAttr +
@@ -217,6 +235,7 @@
       '<div class="rankings-org-text">' +
       '<p class="rankings-org-name">' +
       esc(org.name || 'Networking group') +
+      (mine ? ' <span class="rankings-you-pill">You</span>' : '') +
       '</p>' +
       metrics +
       '</div></div>' +
@@ -233,25 +252,31 @@
     );
   }
 
-  function setFilter(tier) {
+  function activeTierFilter() {
     var root = state.root || document;
-    var buttons = root.querySelectorAll('.rankings-filter');
-    buttons.forEach(function (btn) {
-      var active = btn.getAttribute('data-tier') === tier;
-      btn.classList.toggle('is-active', active);
-      btn.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
+    var active = root.querySelector('.rankings-filter.is-active');
+    return (active && active.getAttribute('data-tier')) || 'all';
+  }
 
+  function applyRowFilters() {
+    var tier = activeTierFilter();
+    var city = String(state.cityFilter || 'all').toLowerCase();
     var list = qs('rankings-list');
     var rows = list ? list.querySelectorAll('.rankings-row') : [];
     var shown = 0;
     rows.forEach(function (row) {
       var rowTier = row.getAttribute('data-tier');
-      var match =
+      var tierMatch =
         tier === 'all' ||
         (tier === 'top10' && rowTier === 'top10') ||
         (tier === 'top25' && (rowTier === 'top10' || rowTier === 'top25')) ||
         (tier === 'top50' && (rowTier === 'top10' || rowTier === 'top25' || rowTier === 'top50'));
+      var cities = String(row.getAttribute('data-cities') || '');
+      var cityMatch =
+        city === 'all' ||
+        cities.split('|').indexOf(city) >= 0 ||
+        (city === '__none__' && !cities);
+      var match = tierMatch && cityMatch;
       row.hidden = !match;
       if (match) shown += 1;
     });
@@ -261,12 +286,23 @@
     if (status) {
       if (shown === 0) {
         status.hidden = false;
-        status.textContent = 'No groups in this tier for the current period.';
+        status.textContent = 'No groups match these filters for the current period.';
       } else {
         status.hidden = true;
       }
     }
     if (list) list.hidden = shown === 0;
+  }
+
+  function setFilter(tier) {
+    var root = state.root || document;
+    var buttons = root.querySelectorAll('.rankings-filter');
+    buttons.forEach(function (btn) {
+      var active = btn.getAttribute('data-tier') === tier;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    applyRowFilters();
   }
 
   function setPreviewMode(isPreview) {
@@ -296,6 +332,95 @@
     setFilter('all');
   }
 
+  function paintYourPlace(entries) {
+    var card = qs('rankings-your-place');
+    if (!card) return;
+    var mine = (entries || []).filter(function (entry) {
+      return state.myGroupIds.indexOf(String((entry.organiser || {}).id || '')) >= 0;
+    });
+    if (!mine.length) {
+      card.hidden = true;
+      card.innerHTML = '';
+      return;
+    }
+    mine.sort(function (a, b) {
+      return Number(a.rank) - Number(b.rank);
+    });
+    var best = mine[0];
+    var tier = best.tier || 'top50';
+    var nextTarget =
+      tier === 'top10'
+        ? null
+        : tier === 'top25'
+          ? { label: 'Top 10', rank: 10 }
+          : { label: 'Top 25', rank: 25 };
+    var tip;
+    if (!nextTarget) {
+      tip = 'You’re in the Top 10 — keep collecting reviews this month.';
+    } else {
+      var gap = Math.max(0, Number(best.rank) - nextTarget.rank);
+      tip =
+        gap <= 0
+          ? 'You’re on the edge of ' + nextTarget.label + ' — every extra review helps.'
+          : 'Climb ' +
+            gap +
+            ' place' +
+            (gap === 1 ? '' : 's') +
+            ' for ' +
+            nextTarget.label +
+            ' — ask past attendees for a quick review.';
+    }
+    card.hidden = false;
+    card.innerHTML =
+      '<p class="rankings-your-place-kicker">Your place</p>' +
+      '<p class="rankings-your-place-rank">#' +
+      esc(String(best.rank)) +
+      ' · ' +
+      esc(best.cardLabel || best.displayLabel || 'Top groups') +
+      '</p>' +
+      '<p class="rankings-your-place-name">' +
+      esc((best.organiser && best.organiser.name) || 'Your group') +
+      '</p>' +
+      '<p class="rankings-your-place-tip">' +
+      esc(tip) +
+      '</p>';
+  }
+
+  function paintCityFilter(entries) {
+    var select = qs('rankings-city-filter');
+    if (!select) return;
+    var cities = {};
+    (entries || []).forEach(function (entry) {
+      (entry.cities || []).forEach(function (city) {
+        var c = String(city || '').trim();
+        if (c) cities[c] = true;
+      });
+    });
+    var list = Object.keys(cities).sort(function (a, b) {
+      return a.localeCompare(b);
+    });
+    var current = state.cityFilter || 'all';
+    select.innerHTML =
+      '<option value="all">All cities</option>' +
+      list
+        .map(function (city) {
+          return (
+            '<option value="' +
+            esc(city.toLowerCase()) +
+            '">' +
+            esc(city) +
+            '</option>'
+          );
+        })
+        .join('');
+    var hasCurrent = Array.prototype.some.call(select.options, function (o) {
+      return o.value === current;
+    });
+    select.value = hasCurrent ? current : 'all';
+    state.cityFilter = select.value;
+    select.hidden = list.length < 2;
+  }
+
   function paint(data) {
     var status = qs('rankings-status');
     var list = qs('rankings-list');
@@ -304,14 +429,18 @@
 
     if (!data || data.ok === false) {
       paintPreview();
+      paintYourPlace([]);
       return;
     }
 
     var snap = data.snapshot;
     var entries = data.entries || [];
+    state.entries = entries;
+    state.snapshot = snap;
 
     if (!entries.length) {
       paintPreview();
+      paintYourPlace([]);
       return;
     }
 
@@ -332,7 +461,54 @@
     }).join('');
     list.hidden = false;
     status.hidden = true;
+    paintCityFilter(entries);
+    paintYourPlace(entries);
     setFilter('all');
+  }
+
+  function bindThemeToggle() {
+    var root = state.root || document;
+    var btn = qs('rankings-theme-toggle');
+    var shell = root.querySelector
+      ? root.querySelector('.rankings-board-shell') || document.querySelector('.rankings-board-shell')
+      : document.querySelector('.rankings-board-shell');
+    var page = document.getElementById('org-page-leaderboard') || document.body;
+    if (!btn || btn.getAttribute('data-rankings-bound') === '1') return;
+    btn.setAttribute('data-rankings-bound', '1');
+    var key = 'hub_rankings_board_theme_v1';
+    function apply(theme) {
+      var light = theme === 'light';
+      if (shell) shell.classList.toggle('rankings-board-shell--light', light);
+      if (page) page.classList.toggle('rankings-board--light', light);
+      btn.setAttribute('aria-pressed', light ? 'true' : 'false');
+      btn.textContent = light ? 'Dusk board' : 'Light board';
+      try {
+        localStorage.setItem(key, light ? 'light' : 'dusk');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    var stored = 'dusk';
+    try {
+      stored = localStorage.getItem(key) || 'dusk';
+    } catch (e) {
+      stored = 'dusk';
+    }
+    apply(stored);
+    btn.addEventListener('click', function () {
+      var next = shell && shell.classList.contains('rankings-board-shell--light') ? 'dusk' : 'light';
+      apply(next);
+    });
+  }
+
+  function bindCityFilter() {
+    var select = qs('rankings-city-filter');
+    if (!select || select.getAttribute('data-rankings-bound') === '1') return;
+    select.setAttribute('data-rankings-bound', '1');
+    select.addEventListener('change', function () {
+      state.cityFilter = select.value || 'all';
+      applyRowFilters();
+    });
   }
 
   function bindFilters() {
@@ -344,6 +520,8 @@
         setFilter(btn.getAttribute('data-tier') || 'all');
       });
     });
+    bindCityFilter();
+    bindThemeToggle();
   }
 
   function load() {
@@ -390,6 +568,19 @@
     reload: function () {
       state.loaded = false;
       return load();
+    },
+    setMyGroupIds: function (ids) {
+      state.myGroupIds = (ids || []).map(String).filter(Boolean);
+      if (state.entries && state.entries.length) {
+        paintYourPlace(state.entries);
+        var list = qs('rankings-list');
+        if (list && state.entries.length) {
+          list.innerHTML = state.entries.map(function (entry) {
+            return rowHtml(entry);
+          }).join('');
+          applyRowFilters();
+        }
+      }
     },
   };
 

@@ -524,3 +524,194 @@ a.rankings-row:hover {
     transform: none;
   }
 }
+
+.rankings-your-place {
+  max-width: 900px;
+  margin: 0 auto 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(13, 110, 122, 0.1), rgba(189, 147, 46, 0.12));
+  border: 1px solid rgba(13, 110, 122, 0.18);
+}
+
+.rankings-your-place[hidden] {
+  display: none !important;
+}
+
+.rankings-your-place-kicker {
+  margin: 0 0 4px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rankings-teal-dark, #084a52);
+}
+
+.rankings-your-place-rank {
+  margin: 0;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.25rem;
+  color: var(--rankings-ink, #1c2040);
+}
+
+.rankings-your-place-name {
+  margin: 2px 0 6px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--rankings-ink, #1c2040);
+}
+
+.rankings-your-place-tip {
+  margin: 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.88rem;
+  color: var(--rankings-muted, #4a6272);
+}
+
+.rankings-board-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  margin: 0 0 12px;
+}
+
+.rankings-board-tools .rankings-filters {
+  margin: 0;
+}
+
+.rankings-board-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.rankings-city-filter,
+.rankings-theme-toggle {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(236, 232, 224, 0.88);
+  padding: 6px 12px;
+}
+
+.rankings-theme-toggle {
+  cursor: pointer;
+}
+
+.rankings-city-filter:focus,
+.rankings-theme-toggle:hover {
+  border-color: rgba(196, 168, 110, 0.55);
+  color: #f3efe6;
+}
+
+.rankings-you-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
+  background: rgba(196, 168, 110, 0.28);
+  color: #f3efe6;
+}
+
+.rankings-row--mine {
+  outline: 1px solid rgba(196, 168, 110, 0.45);
+}
+
+.rankings-board-shell--light {
+  background: #f7f4ee;
+  border-color: rgba(28, 32, 64, 0.08);
+}
+
+.rankings-board-shell--light .rankings-filter,
+.rankings-board-shell--light .rankings-city-filter,
+.rankings-board-shell--light .rankings-theme-toggle {
+  border-color: rgba(28, 32, 64, 0.14);
+  background: rgba(255, 255, 255, 0.85);
+  color: #3a4254;
+}
+
+.rankings-board-shell--light .rankings-filter.is-active {
+  background: rgba(13, 110, 122, 0.12);
+  border-color: rgba(13, 110, 122, 0.35);
+  color: #084a52;
+}
+
+.rankings-board-shell--light .rankings-status {
+  color: #64748b;
+}
+
+.rankings-board-shell--light .rankings-row {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.rankings-board-shell--light .rankings-org-name,
+.rankings-board-shell--light .rankings-place {
+  color: #1c2040;
+}
+
+.rankings-board-shell--light .rankings-org-stats,
+.rankings-board-shell--light .org-leaderboard-metrics-line {
+  color: #64748b;
+}
+
+.rankings-board-shell--light .rankings-you-pill {
+  background: rgba(13, 110, 122, 0.12);
+  color: #084a52;
+}
+
+.rankings-board-shell--light .rankings-row--mine {
+  outline-color: rgba(13, 110, 122, 0.35);
+}
+
+.org-ranking-prefs {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.org-ranking-prefs-lead {
+  margin: 0 0 10px;
+}
+
+.org-ranking-prefs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.org-ranking-pref-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.9rem;
+}
+
+.org-ranking-pref-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #1c2040;
+}
+
+.org-ranking-pref-status {
+  font-size: 0.78rem;
+  color: #64748b;
+}

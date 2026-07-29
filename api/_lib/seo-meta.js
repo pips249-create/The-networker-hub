@@ -17,6 +17,21 @@ const { publicOpportunitySlug } = require('./opportunity-slug');
 const { eventImageUrl } = require('./event-image');
 const { getNetworkingRegion } = require('./networking-regions');
 const { buildNetworkingRegionSsr } = require('./networking-region-ssr');
+const { getPublicRankingLeaderboard } = require('./organiser-ranking-snapshot');
+const { rankingBadgeImageUrl } = require('./ranking-badge-svg');
+
+function buildRankingBadgeImageUrl(origin, opts) {
+  const o = opts || {};
+  const url = rankingBadgeImageUrl(origin, o.tier, o.period);
+  if (!o.organiserId) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.set('organiserId', String(o.organiserId));
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
 
 function trimText(text, max) {
   const raw = String(text || '')
@@ -569,10 +584,75 @@ async function buildNetworkingRegionMeta(slug, origin) {
   };
 }
 
+async function buildRankingBadgeMeta(lookup, origin) {
+  const key = String(lookup || '').trim();
+  const base = siteOrigin(origin);
+  const report = await getPublicRankingLeaderboard().catch(() => null);
+  const entries = (report && report.entries) || [];
+  let entry = null;
+  if (key && key !== 'default') {
+    const keyLower = key.toLowerCase();
+    entry =
+      entries.find((row) => String(row.organiser?.id || '') === key) ||
+      entries.find((row) => String(row.organiser?.slug || '').toLowerCase() === keyLower) ||
+      null;
+  }
+
+  if (!entry) {
+    const title = 'Ranking badge – The Networker Hub';
+    const description =
+      'Share your Top 10, Top 25 or Top 50 networking group ranking badge from The Networker Hub.';
+    const canonical = absoluteUrl(origin, '/rankings/badge');
+    const meta = {
+      ok: true,
+      type: 'ranking-badge',
+      title,
+      description,
+      canonical,
+      image: absoluteUrl(origin, '/assets/logo.png'),
+      ogType: 'website',
+    };
+    return { ...meta, openGraph: buildOpenGraphTags(meta) };
+  }
+
+  const org = entry.organiser || {};
+  const badgeLabel = entry.cardLabel || entry.displayLabel || entry.label || 'Top ranking';
+  const name = org.name || 'Networking group';
+  const title = `${name} — ${badgeLabel} | The Networker Hub`;
+  const description = `${name} is recognised as a ${badgeLabel} on The Networker Hub — ranked by attendee ratings, then review rate.`;
+  const qs = new URLSearchParams();
+  if (org.id) qs.set('id', org.id);
+  else if (org.slug) qs.set('slug', org.slug);
+  const canonical = absoluteUrl(origin, '/rankings/badge' + (qs.toString() ? '?' + qs.toString() : ''));
+  const image = buildRankingBadgeImageUrl(base, {
+    tier: entry.tier,
+    period: entry.periodLabel,
+    organiserId: org.id,
+  });
+  const meta = {
+    ok: true,
+    type: 'ranking-badge',
+    title,
+    description,
+    canonical,
+    image,
+    ogType: 'website',
+    ranking: {
+      tier: entry.tier,
+      rank: entry.rank,
+      periodLabel: entry.periodLabel,
+      cardLabel: badgeLabel,
+      organiserName: name,
+    },
+  };
+  return { ...meta, openGraph: buildOpenGraphTags(meta) };
+}
+
 async function buildSeoMeta(type, slug, origin) {
   const t = String(type || '').toLowerCase();
   const s = String(slug || '').trim();
   if (t === 'page') return buildStaticPageMeta(s, origin);
+  if (t === 'ranking-badge') return buildRankingBadgeMeta(s || 'default', origin);
   if (!s) return null;
   if (t === 'event') return buildEventMeta(s, origin);
   if (t === 'organiser') return buildOrganiserMeta(s, origin);
@@ -589,6 +669,7 @@ module.exports = {
   buildOpportunityMeta,
   buildStaticPageMeta,
   buildNetworkingRegionMeta,
+  buildRankingBadgeMeta,
   absoluteUrl,
   trimText,
 };
