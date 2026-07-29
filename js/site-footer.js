@@ -23,8 +23,8 @@
     href('/') +
     '" class="footer-brand" aria-label="Home">' +
     '<img class="footer-logo" src="' +
-    href('/assets/logo-nav-transparent.png?v=20260723a') +
-    '" alt="" width="714" height="193" aria-hidden="true">' +
+    href('/assets/logo-nav-transparent.png?v=20260729a') +
+    '" alt="" width="550" height="255" aria-hidden="true">' +
     '</a>' +
     '<div class="footer-columns">' +
     '<div class="footer-col">' +

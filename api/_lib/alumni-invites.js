@@ -1,7 +1,7 @@
 /**
  * Previous Attendees — invite-only discounted tickets for past confirmed attendees.
  */
-const { siteBase } = require('./hub-email-urls');
+const { siteBase, logoNavUrl, logoFooterUrl } = require('./hub-email-urls');
 const { formatEventDateTime } = require('./favourite-sales-emails');
 
 const ALUMNI_TICKET_TYPE = 'Alumni';
@@ -236,8 +236,8 @@ function inviteEmailVariables({
   const alumniPrice = priceNum > 0 ? '£' + priceNum.toFixed(2) : 'Free';
   return {
     site_url: site,
-    logo_url: site + '/images/logo-email.png',
-    logo_footer_url: site + '/images/logo-email-footer.png',
+    logo_url: logoNavUrl(site),
+    logo_footer_url: logoFooterUrl(site),
     privacy_url: site + '/legal-policies#privacy',
     terms_url: site + '/legal-policies#terms',
     contact_url: site + '/contact',

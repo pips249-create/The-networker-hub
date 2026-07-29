@@ -139,12 +139,15 @@ function opportunityPublicUrl(opportunityRow, siteUrl) {
   return site + '/opportunities/' + encodeURIComponent(id);
 }
 
+/** Cache-bust so inbox clients pick up logo asset updates. */
+const LOGO_ASSET_VERSION = '20260729a';
+
 function logoNavUrl(siteUrl) {
-  return toPublicAssetUrl('/assets/logo-nav-transparent.png', siteUrl);
+  return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
 function logoFooterUrl(siteUrl) {
-  return toPublicAssetUrl('/assets/logo-email-footer.png', siteUrl);
+  return toPublicAssetUrl('/assets/logo-email-footer.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
 function supportEmail() {

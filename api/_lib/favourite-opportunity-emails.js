@@ -6,6 +6,7 @@ const {
   legalPolicyUrl,
   contactUrl,
   opportunityPublicUrl,
+  logoNavUrl,
 } = require('./hub-email-urls');
 
 const CLOSING_SOON_DAYS = 7;
@@ -40,7 +41,7 @@ function buildSavedOpportunityClosingSoonVars({ attendee, opportunityRow, siteUr
     terms_url: legalPolicyUrl(site, 'terms'),
     refunds_url: legalPolicyUrl(site, 'refunds'),
     site_url: site,
-    logo_url: site + '/assets/logo-nav-transparent.png',
+    logo_url: logoNavUrl(site),
   };
 }
 

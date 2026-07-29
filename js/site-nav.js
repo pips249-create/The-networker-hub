@@ -732,8 +732,8 @@
       href('/') +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
-      href('assets/logo-nav-transparent.png?v=20260709h') +
-      '" alt="The Networker Hub" width="714" height="193">' +
+      href('assets/logo-nav-transparent.png?v=20260729a') +
+      '" alt="The Networker Hub" width="550" height="255">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +

@@ -15,6 +15,7 @@ const {
   contactUrl,
   eventPublicUrl: buildEventPublicUrl,
   organiserDashboardUrl,
+  logoNavUrl,
 } = require('./hub-email-urls');
 const { computeEventTicketStats } = require('./organiser-registration-stats');
 const { sendEventAlmostFullEmail, buildMeetingLinkEmailSection } = require('./lifecycle-emails');
@@ -131,7 +132,7 @@ function buildAttendeeEmailVars({
             ? eventRow.refund_cutoff_days
             : null,
     site_url: siteUrl,
-    logo_url: siteUrl + '/assets/logo-nav-transparent.png',
+    logo_url: logoNavUrl(siteUrl),
     dashboard_url: organiserDashboardUrl(siteUrl),
   };
 }

@@ -1,5 +1,12 @@
 const { sendTemplatedEmail } = require('./send-template-email');
-const { siteBase, hubAccountUrl, legalPolicyUrl, contactUrl, opportunityPublicUrl } = require('./hub-email-urls');
+const {
+  siteBase,
+  hubAccountUrl,
+  legalPolicyUrl,
+  contactUrl,
+  opportunityPublicUrl,
+  logoNavUrl,
+} = require('./hub-email-urls');
 
 function hasTag(item, tag) {
   const tags = [...(item.filterTags || []), ...(item.tags || [])];
@@ -172,7 +179,7 @@ async function sendDueSavedSearchMatchEmails(sb) {
           privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
           terms_url: legalPolicyUrl(siteUrl, 'terms'),
           site_url: siteUrl,
-          logo_url: siteUrl + '/assets/logo-nav-transparent.png',
+          logo_url: logoNavUrl(siteUrl),
         },
       });
 

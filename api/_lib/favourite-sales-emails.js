@@ -6,6 +6,7 @@ const {
   legalPolicyUrl,
   contactUrl,
   eventPublicUrl,
+  logoNavUrl,
 } = require('./hub-email-urls');
 const {
   eventHasTicketsOnSale,
@@ -50,7 +51,7 @@ function buildSavedEventTicketsOpenVars({ attendee, eventRow, siteUrl }) {
     terms_url: legalPolicyUrl(site, 'terms'),
     refunds_url: legalPolicyUrl(site, 'refunds'),
     site_url: site,
-    logo_url: site + '/assets/logo-nav-transparent.png',
+    logo_url: logoNavUrl(site),
   };
 }
 
