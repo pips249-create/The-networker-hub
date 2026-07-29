@@ -1,17 +1,16 @@
 /**
  * Organiser membership dues billed through Hub Stripe Connect.
- * Same fee model as tickets: members pay price + 4.5% + 20p; organiser gets 100% of price.
+ * Members pay: membership (+ organiser VAT if added) + Hub fee (3%, VAT inclusive).
+ * Organisers receive 100% of membership (+ any membership VAT they charge).
+ * Tickets keep 4.5% + 20p; memberships use a simpler 3% all-in Hub fee.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const {
-  BOOKING_FEE_RATE,
-  BOOKING_FEE_PER_TICKET,
-  calculateBookingFee,
-} = require('./booking-fees');
 
-const MEMBERSHIP_FEE_LABEL = 'Hub fee (4.5% + 20p)';
+const ORGANISER_VAT_RATE = 0.2;
+const MEMBERSHIP_HUB_FEE_RATE = 0.03;
+const MEMBERSHIP_FEE_LABEL = 'Hub fee (3% incl. VAT)';
 const MEMBERSHIP_FEE_EXPLANATION =
-  'The Hub fee covers platform and payment processing. Organisers receive 100% of the membership price they set.';
+  'The Hub fee is 3% of the membership price you set (VAT inclusive). Organisers receive 100% of that membership price (and membership VAT if they add it).';
 const MEMBERSHIP_CHECKOUT_TYPE = 'organiser_membership';
 
 function roundMoney(amount) {
@@ -35,31 +34,63 @@ function normalizeInterval(raw) {
   return '';
 }
 
+function normalizeVatTreatment(raw) {
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase();
+  return v === 'added' ? 'added' : 'included';
+}
+
 function calculateMembershipFeePounds(amountPounds) {
   const amount = Number(amountPounds) || 0;
   if (amount <= 0) return 0;
-  return calculateBookingFee(amount, 1);
+  return roundMoney(amount * MEMBERSHIP_HUB_FEE_RATE);
 }
 
-function calculateMembershipTotals(amountPounds) {
+/**
+ * @param {number} amountPounds membership face price organiser set
+ * @param {'included'|'added'} [vatTreatment]
+ */
+function calculateMembershipTotals(amountPounds, vatTreatment) {
   const amount = roundMoney(Number(amountPounds) || 0);
+  const treatment = normalizeVatTreatment(vatTreatment);
+  const membershipVat = treatment === 'added' ? roundMoney(amount * ORGANISER_VAT_RATE) : 0;
+  const membershipGross = roundMoney(amount + membershipVat);
   const fee = calculateMembershipFeePounds(amount);
   return {
     amount,
+    membershipVat,
+    membershipGross,
     fee,
-    total: roundMoney(amount + fee),
-    feeRate: BOOKING_FEE_RATE,
-    feeFixed: BOOKING_FEE_PER_TICKET,
+    feeVat: 0,
+    hubGross: fee,
+    total: roundMoney(membershipGross + fee),
+    vatTreatment: treatment,
+    feeRate: MEMBERSHIP_HUB_FEE_RATE,
+    feeFixed: 0,
+    vatRate: ORGANISER_VAT_RATE,
   };
 }
 
-/** Stripe application_fee_percent (2 d.p.) so Hub keeps the fee; organiser gets the membership price. */
-function applicationFeePercentFromPence(membershipPence, feePence) {
-  const mem = Math.max(0, Math.round(Number(membershipPence) || 0));
-  const fee = Math.max(0, Math.round(Number(feePence) || 0));
-  const total = mem + fee;
-  if (total <= 0 || fee <= 0) return 0;
-  return Math.round((fee / total) * 10000) / 100;
+/** Stripe application_fee_percent so Hub keeps the 3% fee; organiser gets membership (+ membership VAT). */
+function applicationFeePercentFromPence(organiserPence, hubPence) {
+  const org = Math.max(0, Math.round(Number(organiserPence) || 0));
+  const hub = Math.max(0, Math.round(Number(hubPence) || 0));
+  const total = org + hub;
+  if (total <= 0 || hub <= 0) return 0;
+  return Math.round((hub / total) * 10000) / 100;
+}
+
+function planIntervalClient(amountPence, vatTreatment, interval, label) {
+  if (amountPence == null || amountPence < 100) return null;
+  const totals = calculateMembershipTotals(poundsFromPence(amountPence), vatTreatment);
+  return {
+    amountPence,
+    amountPounds: totals.amount,
+    ...totals,
+    interval,
+    label,
+  };
 }
 
 function planRowToClient(row) {
@@ -69,30 +100,20 @@ function planRowToClient(row) {
   const annualPence =
     row.annual_amount_pence != null ? Math.round(Number(row.annual_amount_pence)) : null;
   const active = row.active !== false;
+  const vatTreatment = normalizeVatTreatment(row.vat_treatment);
   const monthly =
-    active && monthlyPence != null && monthlyPence >= 100
-      ? {
-          amountPence: monthlyPence,
-          amountPounds: poundsFromPence(monthlyPence),
-          ...calculateMembershipTotals(poundsFromPence(monthlyPence)),
-          interval: 'month',
-          label: 'Monthly',
-        }
+    active && monthlyPence != null
+      ? planIntervalClient(monthlyPence, vatTreatment, 'month', 'Monthly')
       : null;
   const annual =
-    active && annualPence != null && annualPence >= 100
-      ? {
-          amountPence: annualPence,
-          amountPounds: poundsFromPence(annualPence),
-          ...calculateMembershipTotals(poundsFromPence(annualPence)),
-          interval: 'year',
-          label: 'Annually',
-        }
+    active && annualPence != null
+      ? planIntervalClient(annualPence, vatTreatment, 'year', 'Annually')
       : null;
   return {
     id: row.id,
     organiserId: row.organiser_id,
     active,
+    vatTreatment,
     monthlyAmountPence: monthlyPence,
     annualAmountPence: annualPence,
     monthly,
@@ -189,6 +210,13 @@ async function upsertMembershipPlan(organiserId, payload) {
           ? existing.active !== false
           : true;
 
+  const hasVatKey =
+    Object.prototype.hasOwnProperty.call(payload, 'vatTreatment') ||
+    Object.prototype.hasOwnProperty.call(payload, 'vat_treatment');
+  const vatTreatment = hasVatKey
+    ? normalizeVatTreatment(payload.vatTreatment ?? payload.vat_treatment)
+    : normalizeVatTreatment(existing?.vat_treatment);
+
   if (active && monthlyPence == null && annualPence == null) {
     const err = new Error('missing_membership_price');
     err.status = 400;
@@ -225,6 +253,7 @@ async function upsertMembershipPlan(organiserId, payload) {
     organiser_id: orgId,
     monthly_amount_pence: monthlyPence,
     annual_amount_pence: annualPence,
+    vat_treatment: vatTreatment,
     active: active && (monthlyPence != null || annualPence != null),
     updated_at: now,
   };
@@ -461,14 +490,17 @@ async function handleMembershipInvoicePaid(invoice) {
 }
 
 module.exports = {
+  ORGANISER_VAT_RATE,
+  MEMBERSHIP_HUB_FEE_RATE,
   MEMBERSHIP_FEE_LABEL,
   MEMBERSHIP_FEE_EXPLANATION,
   MEMBERSHIP_CHECKOUT_TYPE,
-  MEMBERSHIP_FEE_RATE: BOOKING_FEE_RATE,
-  MEMBERSHIP_FEE_FIXED: BOOKING_FEE_PER_TICKET,
+  MEMBERSHIP_FEE_RATE: MEMBERSHIP_HUB_FEE_RATE,
+  MEMBERSHIP_FEE_FIXED: 0,
   poundsFromPence,
   penceFromPounds,
   normalizeInterval,
+  normalizeVatTreatment,
   calculateMembershipFeePounds,
   calculateMembershipTotals,
   applicationFeePercentFromPence,

@@ -356,7 +356,7 @@ async function createCityPartnerCheckoutSession(opts) {
 }
 
 /**
- * Membership dues subscription — membership price + Hub fee, destination charge to organiser.
+ * Membership dues subscription — membership (+ optional organiser VAT) + Hub fee (3% incl. VAT).
  */
 async function createMembershipCheckoutSession(opts) {
   const stripe = getStripeClient();
@@ -366,6 +366,7 @@ async function createMembershipCheckoutSession(opts) {
     calculateMembershipTotals,
     applicationFeePercentFromPence,
     poundsFromPence,
+    normalizeVatTreatment,
   } = require('./membership-billing');
   const { BOOKING_FEE_NON_REFUNDABLE_NOTE } = require('./booking-fees');
 
@@ -373,8 +374,12 @@ async function createMembershipCheckoutSession(opts) {
   if (membershipPence < 100) throw new Error('invalid_membership_price');
 
   const interval = opts.interval === 'year' ? 'year' : 'month';
-  const totals = calculateMembershipTotals(poundsFromPence(membershipPence));
+  const vatTreatment = normalizeVatTreatment(opts.vatTreatment);
+  const totals = calculateMembershipTotals(poundsFromPence(membershipPence), vatTreatment);
+  const membershipVatPence = Math.round(totals.membershipVat * 100);
   const feePence = Math.round(totals.fee * 100);
+  const organiserPence = membershipPence + membershipVatPence;
+  const hubPence = feePence;
   const orgName = String(opts.organiserName || 'Networking group').trim();
   const intervalLabel = interval === 'year' ? 'annual' : 'monthly';
 
@@ -386,7 +391,9 @@ async function createMembershipCheckoutSession(opts) {
     attendee_id: String(opts.attendeeId || '').trim(),
     billing_interval: interval,
     membership_amount_pence: String(membershipPence),
+    membership_vat_pence: String(membershipVatPence),
     hub_fee_pence: String(feePence),
+    vat_treatment: vatTreatment,
   };
 
   const lineItems = [
@@ -402,6 +409,20 @@ async function createMembershipCheckoutSession(opts) {
       quantity: 1,
     },
   ];
+
+  if (membershipVatPence > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'VAT on membership (20%)',
+        },
+        unit_amount: membershipVatPence,
+        recurring: { interval },
+      },
+      quantity: 1,
+    });
+  }
 
   if (feePence > 0) {
     lineItems.push({
@@ -440,11 +461,10 @@ async function createMembershipCheckoutSession(opts) {
         ...(opts.subscriptionData.metadata || {}),
       },
     };
-  } else if (opts.stripeAccountId && feePence > 0) {
-    // Fallback if caller only passed account id
+  } else if (opts.stripeAccountId && hubPence > 0) {
     sessionParams.subscription_data.application_fee_percent = applicationFeePercentFromPence(
-      membershipPence,
-      feePence
+      organiserPence,
+      hubPence
     );
     sessionParams.subscription_data.transfer_data = {
       destination: String(opts.stripeAccountId).trim(),

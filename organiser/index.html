@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729groupfix" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260729brand4" />
     <link rel="stylesheet" href="../css/organiser-member-roster.css?v=20260721mem5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
@@ -687,7 +687,7 @@
                 Add people here (or let them join and pay through the Hub), then set a <strong>Members only</strong> ticket on your event (Tickets step).
               </p>
               <p>
-                Paid memberships use the same rule as tickets: you receive <strong>100%</strong> of the price you set; members pay a Hub fee (4.5% + 20p) on top.
+                Paid memberships: you receive <strong>100%</strong> of the price you set; members pay a <strong>3% Hub fee (VAT inclusive)</strong> on top. Your membership VAT is separate.
                 Bank details (Stripe Connect) are required before members can pay you.
                 Changing the monthly or annual price only affects <strong>new</strong> joiners — existing subscribers keep their rate until they cancel and rejoin (use <strong>Invite to pay</strong> if you want them on the new price).
               </p>
@@ -728,8 +728,8 @@
                 <div>
                   <h2 class="omr-section-title">Pay monthly or annually through the Hub</h2>
                   <p class="omr-billing-lead">
-                    Members pay your price plus a Hub fee (4.5% + 20p) <strong>and VAT on that Hub fee</strong>.
-                    You receive <strong>100%</strong> of the membership price you set — same as tickets.
+                    Members pay your price plus a <strong>3% Hub fee (VAT inclusive)</strong>.
+                    You receive <strong>100%</strong> of the membership price you set. Your own VAT (if any) is separate — choose below.
                   </p>
                   <p class="omr-billing-lead omr-billing-lead--note">
                     Saving a new price only applies to <strong>new</strong> joiners. People already subscribed keep their current rate until they cancel and rejoin (or you invite them to renew at the new price).
@@ -738,7 +738,7 @@
                 <p class="omr-billing-connect" id="omr-billing-connect" hidden></p>
               </div>
               <form id="omr-billing-form" class="omr-billing-form">
-                <div class="omr-billing-fields">
+                <div class="omr-billing-prices">
                   <label class="omr-billing-field">
                     <span>Monthly price (£)</span>
                     <input type="number" id="omr-billing-monthly" name="monthly" min="1" step="0.01" placeholder="e.g. 25" inputmode="decimal" />
@@ -747,22 +747,31 @@
                     <span>Annual price (£)</span>
                     <input type="number" id="omr-billing-annual" name="annual" min="1" step="0.01" placeholder="e.g. 250" inputmode="decimal" />
                   </label>
-                  <fieldset class="omr-billing-vat" aria-label="VAT on membership price">
-                    <legend>VAT on your membership price</legend>
-                    <label class="omr-billing-vat-option">
-                      <input type="radio" name="omr-billing-vat" id="omr-billing-vat-included" value="included" checked />
-                      <span><strong>VAT included</strong> — the price above is what members pay you (final)</span>
-                    </label>
-                    <label class="omr-billing-vat-option">
-                      <input type="radio" name="omr-billing-vat" id="omr-billing-vat-added" value="added" />
-                      <span><strong>Add 20% VAT at checkout</strong> — price above is ex VAT; members pay VAT on top (you receive it)</span>
-                    </label>
-                  </fieldset>
-                  <label class="omr-billing-toggle">
-                    <input type="checkbox" id="omr-billing-active" name="active" checked />
-                    <span>Offer paid membership on your public page</span>
-                  </label>
                 </div>
+                <fieldset class="omr-billing-vat" aria-label="VAT on membership price">
+                  <legend>VAT on your membership price</legend>
+                  <p class="omr-billing-vat-hint">This is your group’s VAT — separate from the Hub’s 3% fee.</p>
+                  <div class="omr-billing-vat-options">
+                    <label class="omr-billing-vat-card">
+                      <input type="radio" name="omr-billing-vat" id="omr-billing-vat-included" value="included" checked />
+                      <span class="omr-billing-vat-card-copy">
+                        <strong>VAT included</strong>
+                        <span>Price above is final — what members pay you</span>
+                      </span>
+                    </label>
+                    <label class="omr-billing-vat-card">
+                      <input type="radio" name="omr-billing-vat" id="omr-billing-vat-added" value="added" />
+                      <span class="omr-billing-vat-card-copy">
+                        <strong>Add 20% VAT at checkout</strong>
+                        <span>Price above is ex VAT; you receive the VAT</span>
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+                <label class="omr-billing-toggle">
+                  <input type="checkbox" id="omr-billing-active" name="active" checked />
+                  <span>Offer paid membership on your public page</span>
+                </label>
                 <p class="omr-billing-preview" id="omr-billing-preview" aria-live="polite"></p>
                 <div class="omr-billing-actions">
                   <button type="submit" class="org-btn org-btn-gold" id="omr-billing-save">Save membership prices</button>
@@ -1475,20 +1484,20 @@
                   <p class="org-brand-kit-hint">Pick or tweak the colours used on your LinkedIn post pictures. These also save on your organiser page.</p>
                   <div class="org-brand-kit-colors" id="org-brand-color-suggestions" hidden></div>
                   <div class="org-brand-kit-color-grid">
-                    <label class="org-brand-kit-color">
-                      <span>Primary</span>
-                      <input type="color" id="org-brand-primary" value="#0d1f3c" />
-                      <input type="text" id="org-brand-primary-hex" maxlength="7" placeholder="#0d1f3c" spellcheck="false" />
+                    <label class="org-brand-kit-color" for="org-brand-primary">
+                      <span class="org-brand-kit-color-label">Primary</span>
+                      <input type="color" id="org-brand-primary" value="#0d1f3c" aria-label="Primary colour" />
+                      <input type="text" id="org-brand-primary-hex" maxlength="7" placeholder="#0d1f3c" spellcheck="false" aria-label="Primary colour hex code" />
                     </label>
-                    <label class="org-brand-kit-color">
-                      <span>Secondary</span>
-                      <input type="color" id="org-brand-secondary" value="#f7f1e8" />
-                      <input type="text" id="org-brand-secondary-hex" maxlength="7" placeholder="#f7f1e8" spellcheck="false" />
+                    <label class="org-brand-kit-color" for="org-brand-secondary">
+                      <span class="org-brand-kit-color-label">Secondary</span>
+                      <input type="color" id="org-brand-secondary" value="#f7f1e8" aria-label="Secondary colour" />
+                      <input type="text" id="org-brand-secondary-hex" maxlength="7" placeholder="#f7f1e8" spellcheck="false" aria-label="Secondary colour hex code" />
                     </label>
-                    <label class="org-brand-kit-color">
-                      <span>Accent</span>
-                      <input type="color" id="org-brand-accent" value="#c9961f" />
-                      <input type="text" id="org-brand-accent-hex" maxlength="7" placeholder="#c9961f" spellcheck="false" />
+                    <label class="org-brand-kit-color" for="org-brand-accent">
+                      <span class="org-brand-kit-color-label">Accent</span>
+                      <input type="color" id="org-brand-accent" value="#c9961f" aria-label="Accent colour" />
+                      <input type="text" id="org-brand-accent-hex" maxlength="7" placeholder="#c9961f" spellcheck="false" aria-label="Accent colour hex code" />
                     </label>
                   </div>
                   <div class="org-brand-kit-preview" id="org-brand-preview" aria-hidden="true">
@@ -1499,13 +1508,11 @@
                   </div>
                 </fieldset>
 
-                <!-- Hidden social fields — still used by import/save; edited on organiser page -->
-                <div class="org-brand-kit-socials" hidden aria-hidden="true">
-                  <input type="url" id="org-brand-instagram" tabindex="-1" />
-                  <input type="url" id="org-brand-facebook" tabindex="-1" />
-                  <input type="url" id="org-brand-linkedin" tabindex="-1" />
-                  <input type="url" id="org-brand-x" tabindex="-1" />
-                </div>
+                <!-- Stored for import/save; edited on organiser page — not shown here -->
+                <input type="hidden" id="org-brand-instagram" />
+                <input type="hidden" id="org-brand-facebook" />
+                <input type="hidden" id="org-brand-linkedin" />
+                <input type="hidden" id="org-brand-x" />
 
                 <div class="org-brand-kit-actions">
                   <button type="submit" class="org-btn org-btn-gold" id="org-brand-save">Save colours</button>

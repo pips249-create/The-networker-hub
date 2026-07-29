@@ -2289,6 +2289,11 @@
             : '';
       }
       if (active) active.checked = plan ? plan.active !== false && plan.offered : true;
+      const vatIncluded = document.getElementById('omr-billing-vat-included');
+      const vatAdded = document.getElementById('omr-billing-vat-added');
+      const vat = plan && plan.vatTreatment === 'added' ? 'added' : 'included';
+      if (vatIncluded) vatIncluded.checked = vat === 'included';
+      if (vatAdded) vatAdded.checked = vat === 'added';
       billingOffered = Boolean(plan && plan.offered);
       const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
       if (payInviteWrap) payInviteWrap.hidden = !billingOffered;
@@ -2325,31 +2330,41 @@
     if (!el) return;
     const monthly = Number(document.getElementById('omr-billing-monthly')?.value || 0);
     const annual = Number(document.getElementById('omr-billing-annual')?.value || 0);
-    function fee(amount) {
+    const vatAdded = document.getElementById('omr-billing-vat-added')?.checked === true;
+    function money(n) {
+      return '£' + Number(n).toFixed(2).replace(/\.00$/, '');
+    }
+    function quote(amount) {
       if (!amount || amount < 1) return null;
-      const f = Math.round((amount * 0.045 + 0.2) * 100) / 100;
-      const total = Math.round((amount + f) * 100) / 100;
-      return { fee: f, total: total };
+      const membershipVat = vatAdded ? Math.round(amount * 0.2 * 100) / 100 : 0;
+      const fee = Math.round(amount * 0.03 * 100) / 100;
+      const youGet = Math.round((amount + membershipVat) * 100) / 100;
+      const memberPays = Math.round((amount + membershipVat + fee) * 100) / 100;
+      return { youGet: youGet, memberPays: memberPays, fee: fee, membershipVat: membershipVat };
     }
     const parts = [];
-    const m = fee(monthly);
+    const m = quote(monthly);
     if (m) {
       parts.push(
-        'Monthly: member pays £' +
-          m.total.toFixed(2) +
-          ' (you get £' +
-          monthly.toFixed(2) +
-          ')'
+        'Monthly: member pays ' +
+          money(m.memberPays) +
+          ' (you get ' +
+          money(m.youGet) +
+          '; Hub fee ' +
+          money(m.fee) +
+          ' incl. VAT)'
       );
     }
-    const a = fee(annual);
+    const a = quote(annual);
     if (a) {
       parts.push(
-        'Annually: member pays £' +
-          a.total.toFixed(2) +
-          ' (you get £' +
-          annual.toFixed(2) +
-          ')'
+        'Annually: member pays ' +
+          money(a.memberPays) +
+          ' (you get ' +
+          money(a.youGet) +
+          '; Hub fee ' +
+          money(a.fee) +
+          ' incl. VAT)'
       );
     }
     el.textContent = parts.length
@@ -2368,6 +2383,8 @@
     const body = {
       organiserId: id,
       active: activeEl ? activeEl.checked : true,
+      vatTreatment:
+        document.getElementById('omr-billing-vat-added')?.checked === true ? 'added' : 'included',
       monthlyAmountPounds: monthlyRaw === '' ? null : monthlyRaw,
       annualAmountPounds: annualRaw === '' ? null : annualRaw,
       clearMonthly: monthlyRaw === '',
@@ -2398,6 +2415,9 @@
     ['omr-billing-monthly', 'omr-billing-annual'].forEach(function (fid) {
       const el = document.getElementById(fid);
       if (el) el.addEventListener('input', updateBillingPreview);
+    });
+    document.querySelectorAll('input[name="omr-billing-vat"]').forEach(function (el) {
+      el.addEventListener('change', updateBillingPreview);
     });
   }
 

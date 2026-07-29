@@ -12,7 +12,9 @@
 | Supply | Who provides it | VAT |
 |--------|-----------------|-----|
 | **Ticket to attend an event** | Event organiser (seller) | Organiser’s responsibility — depends on whether they are VAT-registered and the nature of the event |
-| **Booking fee (4.5% + 20p)** | The Networker Group Ltd (platform) | Charged by the Hub; VAT may apply on the platform fee |
+| **Membership dues (monthly / annual)** | Event organiser (seller) | Organiser’s responsibility — choose **VAT included** or **Add 20% VAT at checkout** on Memberships |
+| **Booking fee on tickets (4.5% + 20p)** | The Networker Group Ltd (platform) | Charged by the Hub on event tickets |
+| **Hub fee on memberships (3%)** | The Networker Group Ltd (platform) | **VAT inclusive** — shown as one line; do not add VAT again on this fee |
 
 Attendees see ticket price + booking fee at checkout. The organiser receives the **full ticket price** they set (via Stripe Connect).
 

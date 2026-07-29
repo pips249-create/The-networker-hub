@@ -469,7 +469,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         vars.price_summary || 'Membership is £25 / month or £250 / year — paid to the group.';
       vars.fee_note =
         vars.fee_note ||
-        'A small Hub fee (4.5% + 20p) is added at checkout. The group receives 100% of the membership price.';
+        'A 3% Hub fee (VAT inclusive) is added at checkout. The group receives 100% of the membership price.';
       vars.cta_label = vars.cta_label || 'Pay for membership';
       vars.cta_url =
         rosterSite +

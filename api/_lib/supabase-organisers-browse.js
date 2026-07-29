@@ -126,11 +126,15 @@ function rowToPublicOrganiser(row, eventCount, options) {
   if (options.membershipPlan && options.membershipPlan.offered) {
     base.membershipPlan = {
       offered: true,
+      vatTreatment: options.membershipPlan.vatTreatment || 'included',
       monthly: options.membershipPlan.monthly
         ? {
             amountPounds: options.membershipPlan.monthly.amountPounds,
-            total: options.membershipPlan.monthly.total,
+            membershipVat: options.membershipPlan.monthly.membershipVat,
+            membershipGross: options.membershipPlan.monthly.membershipGross,
             fee: options.membershipPlan.monthly.fee,
+            feeVat: options.membershipPlan.monthly.feeVat,
+            total: options.membershipPlan.monthly.total,
             interval: 'month',
             label: 'Monthly',
           }
@@ -138,13 +142,17 @@ function rowToPublicOrganiser(row, eventCount, options) {
       annual: options.membershipPlan.annual
         ? {
             amountPounds: options.membershipPlan.annual.amountPounds,
-            total: options.membershipPlan.annual.total,
+            membershipVat: options.membershipPlan.annual.membershipVat,
+            membershipGross: options.membershipPlan.annual.membershipGross,
             fee: options.membershipPlan.annual.fee,
+            feeVat: options.membershipPlan.annual.feeVat,
+            total: options.membershipPlan.annual.total,
             interval: 'year',
             label: 'Annually',
           }
         : null,
       feeLabel: options.membershipPlan.feeLabel,
+      feeVatLabel: options.membershipPlan.feeVatLabel,
       feeExplanation: options.membershipPlan.feeExplanation,
     };
   }

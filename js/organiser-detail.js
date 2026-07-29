@@ -327,9 +327,10 @@
           '<p>' +
           money(opt.amount) +
           (opt.interval === 'year' ? ' / year' : ' / month') +
+          (plan.vatTreatment === 'added' ? ' + VAT' : '') +
           ' to the group · member pays ' +
           money(opt.total) +
-          ' incl. Hub fee</p>' +
+          ' incl. 3% Hub fee</p>' +
           '</div>' +
           '<button type="button" class="org-profile-btn org-profile-btn--primary" data-membership-interval="' +
           escapeHtml(opt.interval) +

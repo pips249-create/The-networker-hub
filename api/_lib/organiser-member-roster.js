@@ -510,7 +510,7 @@ async function sendMemberRosterPayInviteEmail({ organiserRow, memberEmail, membe
         price_summary: priceSummary,
         fee_note:
           plan.feeExplanation ||
-          'A small Hub fee (4.5% + 20p) is added at checkout. The group receives 100% of the membership price.',
+          'A 3% Hub fee (VAT inclusive) is added at checkout. The group receives 100% of the membership price (and membership VAT if they add it).',
         cta_url: loginUrlWithNext(site, email, joinPath),
         cta_label: 'Pay for membership',
       },

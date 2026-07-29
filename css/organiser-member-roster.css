@@ -42,14 +42,21 @@
 
 .omr-billing-form {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
-.omr-billing-fields {
+.omr-billing-prices {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 28rem;
+}
+
+@media (max-width: 520px) {
+  .omr-billing-prices {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
 }
 
 .omr-billing-field {
@@ -70,6 +77,87 @@
   font-weight: 500;
 }
 
+.omr-billing-vat {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.omr-billing-vat legend {
+  padding: 0;
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.omr-billing-vat-hint {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #5a6478;
+}
+
+.omr-billing-vat-options {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .omr-billing-vat-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.omr-billing-vat-card {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(28, 32, 64, 0.14);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.omr-billing-vat-card:hover {
+  border-color: rgba(13, 110, 122, 0.35);
+}
+
+.omr-billing-vat-card:has(input:checked) {
+  border-color: #0d6e7a;
+  background: rgba(13, 110, 122, 0.06);
+}
+
+.omr-billing-vat-card input {
+  margin: 2px 0 0;
+  accent-color: #0d6e7a;
+}
+
+.omr-billing-vat-card-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.omr-billing-vat-card-copy strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.omr-billing-vat-card-copy span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #5a6478;
+}
+
 .omr-billing-toggle {
   display: flex;
   gap: 8px;
@@ -77,7 +165,6 @@
   font-size: 0.9rem;
   font-weight: 500;
   color: #1c2040;
-  grid-column: 1 / -1;
 }
 
 .omr-billing-preview {

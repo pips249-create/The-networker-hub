@@ -112,6 +112,13 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const vatTreatment = plan.vatTreatment || 'included';
+    const totals = calculateMembershipTotals(poundsFromPence(amountPence), vatTreatment);
+    const membershipVatPence = Math.round(totals.membershipVat * 100);
+    const feePence = Math.round(totals.fee * 100);
+    const organiserPence = amountPence + membershipVatPence;
+    const hubPence = feePence;
+
     let subscriptionData = null;
     if (connectRequiredForPaidCheckout()) {
       const connect = await getOrganiserConnectById(sb, organiserId);
@@ -123,11 +130,10 @@ module.exports = async function handler(req, res) {
             'This organiser has not finished payment setup. Membership checkout is temporarily unavailable.',
         });
       }
-      const feePence = Math.round(calculateMembershipTotals(poundsFromPence(amountPence)).fee * 100);
       const connectParams = buildConnectSubscriptionParams({
         connect,
-        membershipPence: amountPence,
-        feePence,
+        organiserPence,
+        hubPence,
         metadata: {
           checkout_type: 'organiser_membership',
           organiser_id: organiserId,
@@ -135,6 +141,7 @@ module.exports = async function handler(req, res) {
           attendee_name: checkoutName,
           billing_interval: interval,
           membership_amount_pence: String(amountPence),
+          vat_treatment: vatTreatment,
         },
       });
       subscriptionData = connectParams?.subscriptionData || null;
@@ -159,7 +166,6 @@ module.exports = async function handler(req, res) {
       : `/events/organiser?id=${encodeURIComponent(organiserId)}`;
     const successPath = `/account/?membership=success&organiserId=${encodeURIComponent(organiserId)}#memberships`;
 
-    const totals = calculateMembershipTotals(poundsFromPence(amountPence));
     const checkoutSession = await createMembershipCheckoutSession({
       email: checkoutEmail,
       name: checkoutName,
@@ -168,6 +174,7 @@ module.exports = async function handler(req, res) {
       organiserName: organiser.name,
       membershipAmountPence: amountPence,
       interval,
+      vatTreatment,
       subscriptionData,
       successUrl: `${siteUrl}${successPath}`,
       cancelUrl: `${siteUrl}${cancelPath}?membership=cancelled`,
@@ -180,9 +187,11 @@ module.exports = async function handler(req, res) {
       sessionId: checkoutSession.id,
       totals: {
         amount: totals.amount,
+        membershipVat: totals.membershipVat,
         fee: totals.fee,
         total: totals.total,
         interval,
+        vatTreatment,
         feeLabel: MEMBERSHIP_FEE_LABEL,
         feeExplanation: MEMBERSHIP_FEE_EXPLANATION,
       },

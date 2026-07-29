@@ -361,13 +361,18 @@ async function getOrganiserConnectForEvent(sb, eventId) {
 }
 
 /**
- * Destination-charge subscription params — organiser receives membership price;
- * Hub keeps the fee via application_fee_percent (Stripe processing absorbed from the fee).
+ * Destination-charge subscription params — organiser receives membership (+ membership VAT);
+ * Hub keeps the 3% fee (VAT inclusive) via application_fee_percent.
  */
-function buildConnectSubscriptionParams({ connect, membershipPence, feePence, metadata }) {
+function buildConnectSubscriptionParams({ connect, organiserPence, hubPence, membershipPence, feePence, metadata }) {
   if (!connect?.ready || !connect.stripeAccountId) return null;
   const { applicationFeePercentFromPence } = require('./membership-billing');
-  const applicationFeePercent = applicationFeePercentFromPence(membershipPence, feePence);
+  const org = Math.max(
+    0,
+    Math.round(Number(organiserPence != null ? organiserPence : membershipPence) || 0)
+  );
+  const hub = Math.max(0, Math.round(Number(hubPence != null ? hubPence : feePence) || 0));
+  const applicationFeePercent = applicationFeePercentFromPence(org, hub);
   if (applicationFeePercent <= 0) return null;
 
   return {
