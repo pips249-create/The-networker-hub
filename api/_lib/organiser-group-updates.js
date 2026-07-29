@@ -206,7 +206,9 @@ async function listUpcomingEventsForOrganiser(organiserId) {
   const now = new Date().toISOString();
   const { data, error } = await sb
     .from('events')
-    .select('id, title, starts_at, slug, location, venue, meeting_type, event_format, listing_status')
+    .select(
+      'id, title, starts_at, slug, venue, city, location_label, meeting_type, event_format, listing_status'
+    )
     .eq('organiser_id', organiserId)
     .eq('listing_status', 'published')
     .gte('starts_at', now)
@@ -218,7 +220,7 @@ async function listUpcomingEventsForOrganiser(organiserId) {
     title: row.title,
     startsAt: row.starts_at,
     slug: row.slug,
-    location: row.location || row.venue || '',
+    location: String(row.location_label || row.city || row.venue || '').trim(),
     imageUrl: eventImageUrl(row),
   }));
 }
