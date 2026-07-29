@@ -57,6 +57,7 @@ function isPublicListingPath(pathname) {
 const GATE_BYPASS_PREFIXES = [
   '/api/stripe-webhook',
   '/api/cron/',
+  '/api/track',
   '/api/site-access',
   '/api/auth/site-access',
   '/site-access',
