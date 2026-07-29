@@ -204,11 +204,10 @@ async function getUpdate(updateId) {
 async function listUpcomingEventsForOrganiser(organiserId) {
   const sb = getSupabaseAdmin();
   const now = new Date().toISOString();
+  // Only columns that exist on public.events — avoid speculative fields (e.g. event_format).
   const { data, error } = await sb
     .from('events')
-    .select(
-      'id, title, starts_at, slug, venue, city, location_label, meeting_type, event_format, listing_status'
-    )
+    .select('id, title, starts_at, slug, venue, city, location_label, listing_status')
     .eq('organiser_id', organiserId)
     .eq('listing_status', 'published')
     .gte('starts_at', now)
