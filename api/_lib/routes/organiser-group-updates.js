@@ -16,6 +16,7 @@ const {
   normalizeContent,
   defaultSubject,
   buildTemplateVariables,
+  buildPreviewDocument,
   resolveSelectedEvents,
 } = require('../organiser-group-updates');
 
@@ -148,13 +149,7 @@ module.exports = async function handler(req, res) {
           ok: true,
           preview: {
             subject: variables.email_subject,
-            organiserNoteHtml: variables.organiser_note_html,
-            monthRecapHtml: variables.month_recap_html,
-            eventsHtml: variables.events_html,
-            spotlightHtml: variables.spotlight_html,
-            askHtml: variables.ask_html,
-            volunteerHtml: variables.volunteer_html,
-            socialHtml: variables.social_html,
+            html: buildPreviewDocument(variables),
             eventCount: events.length,
           },
         });

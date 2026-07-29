@@ -1708,6 +1708,38 @@
   margin-bottom: 14px;
 }
 
+.org-group-update-preview {
+  padding: 12px;
+  background: #f3f0ea;
+}
+
+.org-group-update-preview .org-section-title {
+  margin: 0 12px 6px;
+}
+
+.org-group-update-preview .org-group-update-hint {
+  margin: 0 12px 10px;
+}
+
+.ogu-preview-frame {
+  max-height: min(70vh, 720px);
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.ogu-preview-frame .ogu-mail {
+  min-height: 120px;
+}
+
+.ogu-preview-frame table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ogu-preview-frame td {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
 .org-group-update-hint {
   font-size: 13px;
   color: var(--od-text-muted, #6b6567);

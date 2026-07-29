@@ -297,16 +297,10 @@
     var p = res.data.preview || {};
     if (e.previewBody) {
       e.previewBody.innerHTML =
-        '<p class="org-group-update-preview-subject"><strong>' +
-        (p.subject || '') +
-        '</strong></p>' +
-        (p.organiserNoteHtml || '') +
-        (p.monthRecapHtml || '') +
-        (p.eventsHtml || '') +
-        (p.spotlightHtml || '') +
-        (p.askHtml || '') +
-        (p.volunteerHtml || '') +
-        (p.socialHtml || '');
+        '<div class="ogu-preview-frame">' +
+        (p.html ||
+          '<p class="org-group-update-hint">Nothing to preview yet — add a note or tick some modules.</p>') +
+        '</div>';
     }
     setStatus('Preview updated.', 'ok');
   }

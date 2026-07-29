@@ -411,6 +411,63 @@ async function buildTemplateVariables({ group, update, content, events, recipien
   };
 }
 
+/** Inbox-style HTML for the organiser workspace preview pane. */
+function buildPreviewDocument(variables) {
+  const v = variables || {};
+  const logo = String(v.site_url || '').replace(/\/$/, '') + '/images/logo-nav.png';
+  const sections = [
+    v.organiser_note_html,
+    v.month_recap_html,
+    v.events_html,
+    v.spotlight_html,
+    v.ask_html,
+    v.volunteer_html,
+    v.social_html,
+  ]
+    .filter(Boolean)
+    .join('');
+
+  return (
+    '<div class="ogu-mail" style="font-family:\'DM Sans\',system-ui,sans-serif;background:#e8ecf5;padding:16px 12px 20px;border-radius:12px;">' +
+    '<div style="max-width:420px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 28px rgba(28,32,64,0.12);">' +
+    '<div style="background:#f5f0e8;padding:20px 22px 8px;text-align:center;">' +
+    '<img src="' +
+    escapeHtml(logo) +
+    '" alt="The Networker Hub" width="160" style="height:auto;max-width:160px;margin:0 auto;display:block;" onerror="this.style.display=\'none\'" />' +
+    '</div>' +
+    '<div style="background:#f5f0e8;height:18px;border-radius:0 0 50% 50% / 0 0 100% 100%;"></div>' +
+    '<div style="padding:18px 22px 8px;text-align:center;">' +
+    '<p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0d6e7a;">' +
+    escapeHtml(v.period_label || 'This month') +
+    '</p>' +
+    '<h2 style="margin:0 0 4px;font-size:20px;line-height:1.25;font-weight:600;color:#1c2040;">Update from ' +
+    escapeHtml(v.organiser_name || 'Your group') +
+    '</h2>' +
+    '<p style="margin:0 0 12px;font-size:12px;color:#8a8386;">Subject: ' +
+    escapeHtml(v.email_subject || '') +
+    '</p>' +
+    '</div>' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">' +
+    sections +
+    '</table>' +
+    '<div style="padding:8px 22px 22px;text-align:center;">' +
+    '<a href="' +
+    escapeHtml(v.cta_url || '#') +
+    '" style="display:inline-block;padding:11px 22px;background:#4aa8f0;border-radius:999px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">' +
+    escapeHtml(v.cta_label || 'Browse events') +
+    ' →</a>' +
+    '</div>' +
+    '<div style="background:#1c2040;padding:18px 20px 22px;text-align:center;color:rgba(255,255,255,0.65);font-size:11px;line-height:1.5;">' +
+    '<p style="margin:0 0 6px;">Sent via The Networker Hub</p>' +
+    '<p style="margin:0;opacity:0.75;">You received this because you booked with ' +
+    escapeHtml(v.organiser_name || 'this group') +
+    '.</p>' +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
 async function saveDraft({ organiserId, updateId, subject, content, audience }) {
   const sb = getSupabaseAdmin();
   const key = periodKey();
@@ -752,5 +809,6 @@ module.exports = {
   processDueGroupUpdateEmails,
   drainDueGroupUpdateEmails,
   buildTemplateVariables,
+  buildPreviewDocument,
   resolveSelectedEvents,
 };
