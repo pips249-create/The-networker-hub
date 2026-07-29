@@ -904,9 +904,12 @@
     var company = String(block.company_name || '').trim();
     var tagline = String(block.title || block.tagline || '').trim();
     var ctaLabel = String(block.cta_label || 'Find out more →').trim();
+    var logoOnly = Boolean(logo);
 
     container.innerHTML =
-      '<aside class="ad-mock-sponsor">' +
+      '<aside class="ad-mock-sponsor' +
+      (logoOnly ? ' ad-mock-sponsor--logo-only' : '') +
+      '">' +
       '<span class="ad-mock-sponsor-badge">Sponsored</span>' +
       '<div class="ad-mock-logo-band">' +
       (logo
@@ -917,11 +920,9 @@
           '" class="ad-mock-sponsor-logo-img" loading="lazy" decoding="async">'
         : '<span class="ad-mock-logo">' + esc(company || 'Your logo') + '</span>') +
       '</div>' +
-      (company ? '<p class="ad-mock-tagline"><strong>' + esc(company) + '</strong></p>' : '') +
-      (tagline ? '<p class="ad-mock-tagline-desc">' + esc(tagline) + '</p>' : '') +
-      '<span class="ad-mock-cta">' +
-      esc(ctaLabel) +
-      '</span>' +
+      (!logoOnly && company ? '<p class="ad-mock-tagline"><strong>' + esc(company) + '</strong></p>' : '') +
+      (!logoOnly && tagline ? '<p class="ad-mock-tagline-desc">' + esc(tagline) + '</p>' : '') +
+      (!logoOnly ? '<span class="ad-mock-cta">' + esc(ctaLabel) + '</span>' : '') +
       '</aside>';
   }
 

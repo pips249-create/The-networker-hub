@@ -115,7 +115,7 @@
       '" alt="' +
       esc(p.name) +
       '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.closest(\'.home-partner-item\').hidden=true" />';
-    var title = esc(p.name) + (p.url ? ' — ' + esc(p.label) : '');
+    var title = esc(p.name);
     if (/^(https?:|mailto:)/i.test(p.url)) {
       return (
         '<a class="home-partner-item" href="' +

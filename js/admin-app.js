@@ -676,7 +676,7 @@
       group: 'Detail pages',
       label: 'Opportunity page — Sidebar ad',
       preview: 'compact',
-      help: 'Compact logo + CTA above the enquiry form on individual business opportunity pages (/opportunities/{id}). Shows a sellable placeholder when empty.',
+      help: 'Compact logo + button above the enquiry form on individual business opportunity pages (/opportunities/{id}). Shows a sellable placeholder when empty.',
       tagline: '',
       ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
@@ -983,7 +983,7 @@
       if (fullHash === 'sponsorship/home-partners') {
         title = 'Home page — Partners & sponsors';
         subtitle =
-          'Logo strip on the home page. Add companies with logo, name, and CTA — shown when the section is active.';
+          'Logo strip on the home page. Add companies with logo, name, and website link — clickable logos only (no CTA button).';
       } else if (fullHash === 'sponsorship/city-partners') {
         title = 'City Partner placements';
         subtitle =
@@ -7880,7 +7880,7 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. For each company: name, logo, CTA label, and link — shown when the section is active.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. For each company: name, logo, and website link (logo is clickable — no CTA button on the live page).</p></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
       '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
       'Show on home page</label></div>' +
@@ -8230,8 +8230,7 @@
               ? '<div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Inactive — this banner is hidden on event pages.</div>'
               : '<div class="events-hero-sponsor-slot"><div class="relative rounded-xl border border-[#c9a8d8] bg-white p-5 text-[#2d1b3d] shadow-[0_4px_18px_rgba(91,47,153,0.1)]">' +
                 '<div class="text-xs font-bold uppercase tracking-wide text-[#7a3d8a] mb-3">★ Powered by</div>' +
-                '<p class="text-base font-extrabold mb-4">Your brand here</p>' +
-                '<span class="inline-block rounded-lg border border-[#c9a8d8] text-[#5b2f99] text-sm font-bold px-4 py-2">Find out more →</span></div></div>';
+                '<p class="text-sm text-slate-500">Inactive — hidden on site until <strong>Ad active</strong> is checked. With a logo live, this placement is logo-only (no CTA button).</p></div></div>';
         return;
       }
 
@@ -8618,15 +8617,11 @@
           ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
           : '') +
         '</div>' +
-        '<div class="grid sm:grid-cols-2 gap-3">' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA label <span class="text-brand-700">*</span></label>' +
-        '<input type="text" class="home-partner-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-        attrEsc(p.cta_label || 'Visit website') +
-        '"></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">CTA link <span class="text-brand-700">*</span></label>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Website link <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="home-partner-cta-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(p.cta_url || '') +
-        '" placeholder="https://… or mailto:…"></div></div></div>'
+        '" placeholder="https://… or mailto:…"></div>' +
+        '<p class="text-xs text-slate-500">Live home page shows a clickable logo only — no separate CTA button. The company name is used for the logo title text.</p></div>'
       );
     }
 
@@ -8637,7 +8632,6 @@
         var id = row.getAttribute('data-partner-id') || newPartnerId();
         var nameEl = row.querySelector('.home-partner-name');
         var logoUrlEl = row.querySelector('.home-partner-logo-url');
-        var ctaLabelEl = row.querySelector('.home-partner-cta-label');
         var ctaUrlEl = row.querySelector('.home-partner-cta-url');
         var activeCheckbox = row.querySelector('.home-partner-active');
         var existing = partnersState.find(function (p) {
@@ -8646,11 +8640,12 @@
         var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
         if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
         if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
+        var companyName = nameEl ? nameEl.value.trim() : '';
         out.push({
           id: id,
-          company_name: nameEl ? nameEl.value.trim() : '',
+          company_name: companyName,
           logo_url: logoUrl,
-          cta_label: ctaLabelEl ? ctaLabelEl.value.trim() : 'Visit website',
+          cta_label: companyName || 'Visit website',
           cta_url: ctaUrlEl ? ctaUrlEl.value.trim() : '',
           active: activeCheckbox ? activeCheckbox.checked : true,
         });
@@ -8783,6 +8778,20 @@
         .then(function (r) {
           return r.json().then(function (data) {
             if (!r.ok || data.ok === false) {
+              var code = data.error || '';
+              if (code === 'missing_partner_link' || code === 'missing_partner_cta') {
+                throw new Error(
+                  'Add a website link (https://…) for ' +
+                    (data.partner || 'each active partner') +
+                    '.'
+                );
+              }
+              if (code === 'missing_partner_logo') {
+                throw new Error('Add a logo for ' + (data.partner || 'each active partner') + '.');
+              }
+              if (code === 'missing_company_name') {
+                throw new Error('Add a company name for each active partner.');
+              }
               throw new Error(data.message || data.error || 'Save failed');
             }
             return data;

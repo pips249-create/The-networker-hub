@@ -112,8 +112,11 @@ module.exports = async function handler(req, res) {
         if (!hasValidPartnerLogo(p.logo_url)) {
           return json(res, 400, { ok: false, error: 'missing_partner_logo', partner: p.company_name });
         }
-        if (!p.cta_label || !hasValidPartnerCta(p.cta_url)) {
-          return json(res, 400, { ok: false, error: 'missing_partner_cta', partner: p.company_name });
+        if (!hasValidPartnerCta(p.cta_url)) {
+          return json(res, 400, { ok: false, error: 'missing_partner_link', partner: p.company_name });
+        }
+        if (!p.cta_label) {
+          p.cta_label = p.company_name || 'Visit website';
         }
       }
 
