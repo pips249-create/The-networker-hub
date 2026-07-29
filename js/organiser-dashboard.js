@@ -442,7 +442,7 @@
 
   function partnerBadgeEmbedHtml(profileUrl, groupName) {
     const origin = location.origin || 'https://www.thenetworkerhub.com';
-    const badgeSrc = origin + '/assets/partner-badge.svg';
+    const badgeSrc = origin + '/assets/partner-badge.svg?v=20260729logo';
     const alt = (groupName || 'Our group') + ' on The Networker Hub';
     return (
       '<a href="' +
@@ -454,7 +454,7 @@
       badgeSrc +
       '" alt="' +
       alt.replace(/"/g, '&quot;') +
-      '" width="220" height="56" style="border:0;display:inline-block;" />' +
+      '" width="220" height="88" style="border:0;display:inline-block;" />' +
       '</a>'
     );
   }
@@ -472,8 +472,8 @@
       '<p class="org-partner-badge-meta">Links to your public profile · paste into your website HTML</p></div>' +
       '<div class="hub-partner-badge-preview">' +
       '<img src="' +
-      esc(origin + '/assets/partner-badge.svg') +
-      '" alt="" width="220" height="56" /></div></div>' +
+      esc(origin + '/assets/partner-badge.svg?v=20260729logo') +
+      '" alt="" width="220" height="88" /></div></div>' +
       '<label for="partner-badge-code-' +
       esc(g.id) +
       '" class="org-partner-badge-meta">Embed code</label>' +
