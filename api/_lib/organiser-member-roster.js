@@ -1401,10 +1401,12 @@ async function listRosterGroupsForAttendee(email) {
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i];
     if (!row.stripe_subscription_id) continue;
-    const today = new Date().toISOString().slice(0, 10);
-    const expiry = row.expires_at ? String(row.expires_at).slice(0, 10) : '';
-    const missingOrLapsed = !expiry || expiry < today;
-    if (!missingOrLapsed) continue;
+    const status = String(row.subscription_status || '').toLowerCase();
+    // Refresh live Hub subscriptions from Stripe so Basil-era missing/stale
+    // expires_at values self-heal on the next My Hub load.
+    if (status && status !== 'active' && status !== 'trialing' && status !== 'past_due') {
+      continue;
+    }
     try {
       const repaired = await repairMembershipRosterExpiry(row, { force: true });
       if (repaired?.row) {
