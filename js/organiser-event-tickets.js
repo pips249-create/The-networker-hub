@@ -711,7 +711,7 @@
     }
 
     const attendeeExtras = document.getElementById('ee-attendee-extras-card');
-    if (attendeeExtras) sections.push({ el: attendeeExtras, optional: true });
+    if (attendeeExtras && !attendeeExtras.hidden) sections.push({ el: attendeeExtras, optional: true });
 
     sections.forEach(function (section, index) {
       setStepLabelText(section.el.querySelector('[data-ee-step-label]'), index + 1, section.optional);
