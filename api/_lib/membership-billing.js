@@ -597,7 +597,7 @@ async function notifyMembershipPaymentFailed({ organiserId, email, memberName, e
         user_email: memberEmail,
         member_name: greetingName,
         member_email: memberEmail,
-        cta_url: site + '/organiser/#memberships?membershipGroup=' + encodeURIComponent(organiser.id),
+        cta_url: site + '/organiser/?membershipGroup=' + encodeURIComponent(organiser.id) + '#memberships',
         cta_label: 'Open membership',
       },
     });

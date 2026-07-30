@@ -64,6 +64,8 @@
     groupRankings: {},
     teamMembers: [],
     teamLoaded: false,
+    teamActivityItems: [],
+    teamActivityLoaded: false,
     teamMax: 100,
     teamCount: 0,
     teamSlotsRemaining: 10,
@@ -171,9 +173,13 @@
 
   function setOrganiserScopeCookie(mode) {
     const secure = location.protocol === 'https:' ? '; Secure' : '';
-    if (mode === 'my') {
+    const maxAge = 60 * 60 * 24 * 90;
+    if (mode === 'all') {
       document.cookie =
-        ORGANISER_SCOPE_COOKIE + '=my; path=/; max-age=' + 60 * 60 * 24 * 90 + '; SameSite=Lax' + secure;
+        ORGANISER_SCOPE_COOKIE + '=all; path=/; max-age=' + maxAge + '; SameSite=Lax' + secure;
+    } else if (mode === 'my') {
+      document.cookie =
+        ORGANISER_SCOPE_COOKIE + '=my; path=/; max-age=' + maxAge + '; SameSite=Lax' + secure;
     } else {
       document.cookie = ORGANISER_SCOPE_COOKIE + '=; path=/; max-age=0; SameSite=Lax' + secure;
     }
@@ -718,20 +724,21 @@
           btn.disabled = false;
           btn.textContent = prev;
         };
-        if (window.HubRankingBadgePng && HubRankingBadgePng.download) {
-          HubRankingBadgePng.download(url, name)
-            .then(function () {
-              btn.textContent = 'Downloaded';
-              setTimeout(done, 1400);
-            })
-            .catch(function () {
-              btn.textContent = 'Failed';
-              setTimeout(done, 1600);
-            });
-        } else {
-          window.open(url, '_blank', 'noopener');
-          done();
-        }
+        ensureRankingsAssets()
+          .then(function () {
+            if (window.HubRankingBadgePng && HubRankingBadgePng.download) {
+              return HubRankingBadgePng.download(url, name).then(function () {
+                btn.textContent = 'Downloaded';
+                setTimeout(done, 1400);
+              });
+            }
+            window.open(url, '_blank', 'noopener');
+            done();
+          })
+          .catch(function () {
+            btn.textContent = 'Failed';
+            setTimeout(done, 1600);
+          });
       });
     });
   }
@@ -804,6 +811,9 @@
   }
 
   function renderOrganiserRankingShare() {
+    ensureRankingsAssets().catch(function () {
+      /* non-fatal — badges still render with CSS classes once stylesheet arrives */
+    });
     const shareRoot = document.getElementById('org-ranking-share-events');
     const cardsEl = document.getElementById('org-ranking-share-cards');
     const examplesEl = document.getElementById('org-ranking-tier-examples');
@@ -1583,9 +1593,15 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260729roi1';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260721mem4';
-  const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260721mem5';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260730promote3';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260730memfix2';
+  const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260730memfix2';
+  const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260729brand';
+  const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260728ux';
+  const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
+  const RANKINGS_JS = '../js/rankings.js?v=20260728ux';
+  const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260729engage1';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1650,9 +1666,32 @@
   }
 
   function ensureMemberRosterAssets() {
-    const cssReady = loadStylesheetOnce(MEMBER_ROSTER_CSS);
-    if (window.OrganiserMemberRoster) return cssReady;
+    const cssReady = Promise.all([
+      loadStylesheetOnce(MEMBER_ROSTER_CSS),
+      loadStylesheetOnce(EVENT_EDIT_CSS),
+    ]);
+    if (window.OrganiserMemberRoster) return cssReady.then(function () {});
     return Promise.all([cssReady, loadScriptOnce(MEMBER_ROSTER_SRC)]).then(function () {});
+  }
+
+  function ensureEventEditCss() {
+    return loadStylesheetOnce(EVENT_EDIT_CSS);
+  }
+
+  function ensureRankingsAssets() {
+    const cssReady = Promise.all([
+      loadStylesheetOnce(RANKINGS_PAGE_CSS),
+      loadStylesheetOnce(RANKING_BADGE_CSS),
+    ]);
+    const scripts = [];
+    if (!window.HubRankings) scripts.push(loadScriptOnce(RANKINGS_JS));
+    if (!window.HubRankingBadgePng) scripts.push(loadScriptOnce(RANKING_BADGE_PNG_JS));
+    return Promise.all([cssReady].concat(scripts)).then(function () {});
+  }
+
+  function ensureGroupUpdatesAssets() {
+    if (window.HubOrganiserGroupUpdates) return Promise.resolve();
+    return loadScriptOnce(GROUP_UPDATES_JS);
   }
 
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
@@ -1777,7 +1816,15 @@
     });
 
     if (hint) {
-      hint.hidden = tab !== 'linkedin';
+      // Tip points people toward LinkedIn — hide when they are already there.
+      hint.hidden = tab === 'linkedin' || tab === 'spotlight' || tab === 'ranking' || tab === 'partner' || tab === 'reach';
+    }
+
+    var socialPage = document.getElementById('org-page-social');
+    if (socialPage) {
+      var hubTab = tab === 'spotlight' || tab === 'ranking' || tab === 'partner' || tab === 'reach';
+      socialPage.classList.toggle('org-promote--hub', hubTab);
+      socialPage.classList.toggle('org-promote--reach', !hubTab);
     }
 
     if (tab === 'spotlight') ensureFeaturedUpgradePanelReady();
@@ -1829,12 +1876,6 @@
     return '';
   }
 
-  function ensureEmailUpdatesPanelReady() {
-    if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
-      window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
-    }
-  }
-
   function initSocialPageTabs(preferredTab) {
     if (!socialTabsBound) {
       socialTabsBound = true;
@@ -1856,7 +1897,17 @@
   function ensureLinkedInPostBuilder(options) {
     options = options || {};
     const root = document.getElementById('org-post-builder-root');
-    if (!root || !window.HubLinkedInPostBuilder) return;
+    if (!root) return;
+    if (!window.HubLinkedInPostBuilder) {
+      ensureLinkedInPostBuilderAssets()
+        .then(function () {
+          ensureLinkedInPostBuilder(options);
+        })
+        .catch(function () {
+          /* non-fatal */
+        });
+      return;
+    }
     if (!options.force && !isSocialPageActive()) return;
     if (!linkedInPostBuilder) {
       linkedInPostBuilder = window.HubLinkedInPostBuilder.init(root, {
@@ -1875,6 +1926,18 @@
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
       if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     }
+  }
+
+  function ensureEmailUpdatesPanelReady() {
+    ensureGroupUpdatesAssets()
+      .then(function () {
+        if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
+          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+        }
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
   }
 
   var brandKitBound = false;
@@ -2499,6 +2562,8 @@
     var typeStyle = resolveBrandTypeStyle(g);
     document.querySelectorAll('input[name="org-brand-type"]').forEach(function (input) {
       input.checked = input.value === typeStyle;
+      var option = input.closest('.org-brand-type-option');
+      if (option) option.classList.toggle('is-selected', input.checked);
     });
     if (els.instagram) els.instagram.value = g.instagramUrl || '';
     if (els.facebook) els.facebook.value = g.facebookUrl || '';
@@ -2807,6 +2872,34 @@
     wireColorInputs(els.primary, els.primaryHex);
     wireColorInputs(els.secondary, els.secondaryHex);
     wireColorInputs(els.accent, els.accentHex);
+
+    document.querySelectorAll('input[name="org-brand-type"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        try {
+          document.querySelectorAll('.org-brand-type-option').forEach(function (opt) {
+            var radio = opt.querySelector('input[name="org-brand-type"]');
+            opt.classList.toggle('is-selected', Boolean(radio && radio.checked));
+          });
+          var group = currentBrandKitGroup();
+          var style = readBrandTypeStyle();
+          if (group && group.id) {
+            rememberBrandTypeStyle(group.id, style);
+            group.brandTypeStyle = style;
+            var gi = (state.groups || []).findIndex(function (g) {
+              return g.id === group.id;
+            });
+            if (gi >= 0) state.groups[gi].brandTypeStyle = style;
+          }
+          if (linkedInPostBuilder && typeof linkedInPostBuilder.refresh === 'function') {
+            linkedInPostBuilder.refresh();
+          }
+          setBrandKitStatus('Type style selected — save to keep it on your organiser page.', 'ok');
+        } catch (err) {
+          console.warn('brand type change failed', err);
+          setBrandKitStatus('Could not preview that type style. Try Save colours & type.', 'error');
+        }
+      });
+    });
   }
 
   function ensureBrandKitPanelReady() {
@@ -4472,14 +4565,33 @@
 
   function parseDeepLinkFromUrl() {
     const params = new URLSearchParams(window.location.search);
+    const hashRaw = (location.hash.replace('#', '') || '').trim();
+    const hashParts = hashRaw.split('?');
+    const hashRoute = String(hashParts[0] || '').toLowerCase();
+    const hashParams = new URLSearchParams(hashParts[1] || '');
     const panel = String(params.get('panel') || '').trim().toLowerCase();
-    const eventId = String(params.get('eventId') || params.get('event_id') || '').trim();
-    const membershipGroup = String(
-      params.get('membershipGroup') || params.get('membership_group') || params.get('id') || ''
+    const eventId = String(
+      params.get('eventId') ||
+        params.get('event_id') ||
+        hashParams.get('eventId') ||
+        hashParams.get('event_id') ||
+        ''
     ).trim();
-    const applications = String(params.get('applications') || '').trim().toLowerCase();
-    const hash = (location.hash.replace('#', '') || '').toLowerCase();
-    const route = panel || hash || '';
+    // Prefer ?membershipGroup=…; also accept legacy #memberships?membershipGroup=…
+    const membershipGroup = String(
+      params.get('membershipGroup') ||
+        params.get('membership_group') ||
+        hashParams.get('membershipGroup') ||
+        hashParams.get('membership_group') ||
+        params.get('id') ||
+        ''
+    ).trim();
+    const applications = String(
+      params.get('applications') || hashParams.get('applications') || ''
+    )
+      .trim()
+      .toLowerCase();
+    const route = panel || hashRoute || '';
     return {
       route,
       eventId,
@@ -4560,6 +4672,10 @@
       setRoute(deepLinkRoute);
       return;
     }
+    if (filters.membershipsGroup) {
+      setRoute('memberships');
+      return;
+    }
     if (filters.attendeesEvent !== 'all' || filters.attendeesPendingOnly) {
       if (needsOrganiserPageFirst()) {
         redirectEventsToOrganiserSetup('events-attendees');
@@ -4604,7 +4720,8 @@
   }
 
   function parseRoute() {
-    const hash = (location.hash.replace('#', '') || 'dashboard').toLowerCase();
+    const hashRaw = (location.hash.replace('#', '') || 'dashboard').trim();
+    const hash = hashRaw.split('?')[0].toLowerCase();
     if (hash === 'business-list') return { page: 'business-list', sub: null };
     if (hash === 'opportunity-enquiries' || hash === 'business-enquiries') {
       return { page: 'business-overview', sub: 'business-enquiries' };
@@ -6603,6 +6720,9 @@
 
   function openEventEditorDrawer(eventOrId, drawerOpts) {
     drawerOpts = drawerOpts || {};
+    ensureEventEditCss().catch(function () {
+      /* non-fatal */
+    });
     const drawer = document.getElementById('org-event-drawer');
     const frame = document.getElementById('org-event-drawer-frame');
     const titleEl = document.getElementById('org-event-drawer-title');
@@ -8422,13 +8542,19 @@
     return [...byKey.values()];
   }
 
-  function memberListGroups() {
-    return dedupeGroupsForMembership(state.groups);
+  function memberListGroups(preferredId) {
+    const list = dedupeGroupsForMembership(state.groups);
+    const wanted = String(preferredId || filters.membershipsGroup || '').trim();
+    if (wanted && !list.some(function (g) { return g.id === wanted; })) {
+      const raw = findGroupById(wanted);
+      if (raw) list.push(raw);
+    }
+    return list;
   }
 
   function memberRosterUrl(groupId) {
     const id = encodeURIComponent(groupId);
-    return '/organiser/#memberships?membershipGroup=' + id;
+    return '/organiser/?membershipGroup=' + id + '#memberships';
   }
 
   function maybeRedirectToSingleMemberList() {
@@ -8476,19 +8602,15 @@
       return groupMembershipPriority(b) - groupMembershipPriority(a);
     });
     if (!list.length) return '';
-    const best = list[0];
     const wanted = String(preferredId || '').trim();
     if (wanted) {
       const match = list.find(function (g) {
         return g.id === wanted;
       });
-      if (match) {
-        const matchActive = Number(match.rosterSummary && match.rosterSummary.active) || 0;
-        const bestActive = Number(best.rosterSummary && best.rosterSummary.active) || 0;
-        if (matchActive > 0 || bestActive === 0) return match.id;
-      }
+      // Honour an explicit deep-link / switcher choice even when the roster is empty.
+      if (match) return match.id;
     }
-    return best.id;
+    return list[0].id;
   }
 
   function fillMembershipsGroupFilter() {
@@ -8705,7 +8827,8 @@
         const shouldLoad =
           typeof roster.loadForGroup === 'function' &&
           groupId &&
-          (!membershipsRosterAppearsPainted() ||
+          (membershipsRosterLoadedFor !== groupId ||
+            !membershipsRosterAppearsPainted() ||
             (typeof roster.getActiveGroupId === 'function' && roster.getActiveGroupId() !== groupId));
 
         if (shouldLoad) {
@@ -8929,18 +9052,24 @@
 
   function ensurePromoteLeaderboardReady() {
     ensurePromotePanelsFolded();
-    if (window.HubRankings) {
-      if (typeof window.HubRankings.setMyGroupIds === 'function') {
-        window.HubRankings.setMyGroupIds(
-          (state.groups || []).map(function (g) {
-            return g.id;
-          })
-        );
-      }
-      if (typeof window.HubRankings.ensure === 'function') {
-        window.HubRankings.ensure();
-      }
-    }
+    ensureRankingsAssets()
+      .then(function () {
+        if (window.HubRankings) {
+          if (typeof window.HubRankings.setMyGroupIds === 'function') {
+            window.HubRankings.setMyGroupIds(
+              (state.groups || []).map(function (g) {
+                return g.id;
+              })
+            );
+          }
+          if (typeof window.HubRankings.ensure === 'function') {
+            window.HubRankings.ensure();
+          }
+        }
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
   }
 
   function ensurePromoteReachReady() {
@@ -10293,6 +10422,97 @@
     }
   }
 
+  function teamActivityRoleLabel(role) {
+    const r = String(role || '').toLowerCase();
+    if (r === 'owner') return 'Owner';
+    if (r === 'team' || r === 'editor') return 'Team member';
+    if (r === 'admin') return 'Hub support';
+    if (r === 'system') return 'System';
+    return 'Unknown';
+  }
+
+  function renderTeamActivityItems(items) {
+    if (!items || !items.length) {
+      return '<p class="org-team-activity-empty">No activity recorded yet. Edits to events, organiser pages, and team access will show here.</p>';
+    }
+    return (
+      '<ul class="org-team-activity-list">' +
+      items
+        .map(function (item) {
+          const when = item.createdAt
+            ? formatRelativeAge(item.createdAt) || formatDate(item.createdAt)
+            : '—';
+          const whenExact = item.createdAt ? formatDate(item.createdAt) : '';
+          const roleLabel = teamActivityRoleLabel(item.actorRole);
+          const who =
+            String(item.actorRole || '').toLowerCase() === 'admin'
+              ? roleLabel
+              : (item.actorEmail || 'Unknown user') + ' · ' + roleLabel;
+          return (
+            '<li class="org-team-activity-item">' +
+            '<p class="org-team-activity-summary">' +
+            esc(item.summary || item.action || 'Change') +
+            '</p>' +
+            '<p class="org-team-activity-meta"' +
+            (whenExact ? ' title="' + esc(whenExact) + '"' : '') +
+            '>' +
+            esc(who) +
+            ' · ' +
+            esc(when) +
+            '</p></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  async function loadTeamActivity(options) {
+    const force = Boolean(options && options.force);
+    const panel = document.getElementById('org-team-activity');
+    const body = document.getElementById('org-team-activity-body');
+    if (!panel || !body) return;
+    if (!state.canManageTeam) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    if (state.teamActivityLoaded && !force) {
+      body.innerHTML = renderTeamActivityItems(state.teamActivityItems || []);
+      return;
+    }
+    body.innerHTML = '<p class="org-team-activity-loading">Loading activity…</p>';
+    const refreshBtn = document.getElementById('btn-team-activity-refresh');
+    if (refreshBtn) refreshBtn.disabled = true;
+    try {
+      const { ok, data } = await api('/api/organiser/activity?limit=40');
+      if (refreshBtn) refreshBtn.disabled = false;
+      if (!ok || !data || data.ok === false) {
+        body.innerHTML =
+          '<p class="org-team-activity-error">' +
+          esc((data && (data.message || data.error)) || 'Could not load activity.') +
+          '</p>';
+        return;
+      }
+      if (data.unavailable) {
+        body.innerHTML =
+          '<p class="org-team-activity-empty">' +
+          esc(data.message || 'Activity history is not available yet.') +
+          '</p>';
+        return;
+      }
+      state.teamActivityItems = data.items || [];
+      state.teamActivityLoaded = true;
+      body.innerHTML = renderTeamActivityItems(state.teamActivityItems);
+    } catch (err) {
+      if (refreshBtn) refreshBtn.disabled = false;
+      body.innerHTML =
+        '<p class="org-team-activity-error">' +
+        esc((err && err.message) || 'Could not load activity.') +
+        '</p>';
+    }
+  }
+
   function renderTeam() {
     const body = document.getElementById('team-body');
     const empty = document.getElementById('team-empty');
@@ -10312,6 +10532,13 @@
     const permissionsPanel = document.getElementById('org-team-permissions');
     if (permissionsPanel) {
       permissionsPanel.hidden = !state.canManageTeam;
+    }
+    const activityPanel = document.getElementById('org-team-activity');
+    if (activityPanel) {
+      activityPanel.hidden = !state.canManageTeam;
+    }
+    if (state.canManageTeam) {
+      loadTeamActivity();
     }
     updateTeamLimitUi();
     if (teamPage) {
@@ -10448,9 +10675,16 @@
         closeModals();
         form.reset();
         await loadTeamMembers({ force: true });
+        state.teamActivityLoaded = false;
         renderTeam();
         updateGettingStartedPanel();
         showOrganiserAlert(data.message || (data.emailSent === false ? 'Invite saved but email not sent.' : 'Invite sent.'), data.emailSent === false);
+      });
+    }
+    const activityRefresh = document.getElementById('btn-team-activity-refresh');
+    if (activityRefresh) {
+      activityRefresh.addEventListener('click', function () {
+        loadTeamActivity({ force: true });
       });
     }
     const teamPage = document.getElementById('org-page-team');
@@ -10492,6 +10726,7 @@
           if (!ok) alert(data.message || data.error || 'Could not remove member');
           else {
             await loadTeamMembers({ force: true });
+            state.teamActivityLoaded = false;
             renderTeam();
             updateGettingStartedPanel();
           }
@@ -10529,6 +10764,7 @@
         }
         closeModals();
         await loadTeamMembers({ force: true });
+        state.teamActivityLoaded = false;
         renderTeam();
         showOrganiserAlert(data.message || 'Group access updated.');
       });
@@ -10648,7 +10884,7 @@
       refresh();
     }
     if (e.target.id === 'btn-scope-all') {
-      setOrganiserScopeCookie('clear');
+      setOrganiserScopeCookie('all');
       closeNotificationsPanel();
       refresh();
     }
@@ -12849,6 +13085,14 @@
     } else if (data.personalScope && data.isAdmin) {
       state.dashboardScope = { kind: 'personal_admin' };
       bindScopeButtonOnce();
+      // Persist the faster default so refreshes stay on personal scope.
+      try {
+        if (!/(?:^|; )hub_organiser_scope=/.test(document.cookie)) {
+          setOrganiserScopeCookie('my');
+        }
+      } catch {
+        /* ignore */
+      }
     } else if (data.groupsError) {
       state.dashboardScope = { kind: 'groups_error', message: data.groupsError };
     } else if (!state.groups.length && !state.pendingClaimGroups.length && !(state.pendingClaimOpportunities || []).length) {
@@ -12882,11 +13126,20 @@
         maybeRedirectToSingleMemberList();
       }
       if (
-        (parseRoute().page === 'social' && socialTabFromHash() === 'email') &&
-        window.HubOrganiserGroupUpdates &&
-        window.HubOrganiserGroupUpdates.init
+        parseRoute().page === 'social' &&
+        socialTabFromHash() === 'email'
       ) {
-        window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+        ensureEmailUpdatesPanelReady();
+      }
+      // Warm editor CSS after first paint so group/event drawers open without a flash.
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(function () {
+          ensureEventEditCss();
+        }, { timeout: 4000 });
+      } else {
+        setTimeout(function () {
+          ensureEventEditCss();
+        }, 1800);
       }
     };
     } catch (e) {

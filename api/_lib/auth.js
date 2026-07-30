@@ -198,10 +198,15 @@ function clearSessionCookie(res) {
 const HUB_VIEW_COOKIE = 'hub_view';
 const HUB_ORGANISER_SCOPE_COOKIE = 'hub_organiser_scope';
 
-/** When `my`, platform admins see only their own organiser groups/events (not all data). */
+/**
+ * Platform-admin workspace scope.
+ * - `all` → full platform admin view
+ * - `my` or unset → personal organiser data only (default: faster first paint)
+ */
 function organiserPersonalScopeFromRequest(req) {
   const cookies = parseCookies(req);
-  return String(cookies[HUB_ORGANISER_SCOPE_COOKIE] || '').toLowerCase() === 'my';
+  const raw = String(cookies[HUB_ORGANISER_SCOPE_COOKIE] || '').toLowerCase();
+  return raw !== 'all';
 }
 
 function hubViewFromRequest(req) {

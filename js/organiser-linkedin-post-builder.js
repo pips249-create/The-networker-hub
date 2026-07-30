@@ -524,10 +524,17 @@
   function ensureTypeFonts(styleId) {
     var faces = typeFacesFor(styleId);
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    function primaryFamily(stack) {
+      var m = String(stack || '').match(/"([^"]+)"|'([^']+)'|([^,]+)/);
+      if (!m) return 'sans-serif';
+      return (m[1] || m[2] || m[3] || 'sans-serif').trim();
+    }
+    var titleFamily = primaryFamily(faces.title);
+    var bodyFamily = primaryFamily(faces.body);
     return Promise.all([
-      document.fonts.load('400 72px ' + faces.title),
-      document.fonts.load('700 28px ' + faces.body),
-      document.fonts.load('400 24px ' + faces.body),
+      document.fonts.load('400 72px "' + titleFamily + '"'),
+      document.fonts.load('700 28px "' + bodyFamily + '"'),
+      document.fonts.load('400 24px "' + bodyFamily + '"'),
     ]).catch(function () {
       return null;
     });
@@ -2073,6 +2080,7 @@
       }
       state.rendering = true;
       try {
+        if (!ctx || !canvas) return;
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogos();
         await ensureOrgLogo();
@@ -2096,6 +2104,8 @@
         state.displayName = elName.value;
         paintPost(ctx, paintOpts(tpl, false, hubImg));
         updateCaptionPreview();
+      } catch (err) {
+        console.warn('LinkedIn preview render failed', err);
       } finally {
         state.rendering = false;
         if (state.renderPending) {

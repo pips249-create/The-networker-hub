@@ -76,6 +76,34 @@ async function logFromSession(session, access, entry) {
   return logEntityActivity({ ...entry, ...actor });
 }
 
+function mapActivityRow(r) {
+  return {
+    id: r.id,
+    createdAt: r.created_at,
+    actorUserId: r.actor_user_id,
+    actorEmail: r.actor_email || '',
+    actorRole: r.actor_role || 'unknown',
+    entityType: r.entity_type,
+    entityId: r.entity_id,
+    organiserId: r.organiser_id,
+    action: r.action,
+    summary: r.summary || '',
+    metadata: r.metadata || {},
+  };
+}
+
+function activityUnavailablePayload(error) {
+  if (error && /entity_activity_log|does not exist|schema cache/i.test(error.message)) {
+    return {
+      configured: true,
+      items: [],
+      unavailable: true,
+      message: 'Run migration 206_entity_activity_log.sql to enable activity history.',
+    };
+  }
+  return null;
+}
+
 async function fetchEntityActivity(options = {}) {
   if (!isSupabaseConfigured()) return { configured: false, items: [] };
   const sb = getSupabaseAdmin();
@@ -102,33 +130,68 @@ async function fetchEntityActivity(options = {}) {
 
   const { data, error } = await query;
   if (error) {
-    if (/entity_activity_log|does not exist|schema cache/i.test(error.message)) {
-      return {
-        configured: true,
-        items: [],
-        unavailable: true,
-        message: 'Run migration 206_entity_activity_log.sql to enable activity history.',
-      };
-    }
+    const unavailable = activityUnavailablePayload(error);
+    if (unavailable) return unavailable;
     throw new Error(error.message);
   }
 
   return {
     configured: true,
-    items: (data || []).map((r) => ({
-      id: r.id,
-      createdAt: r.created_at,
-      actorUserId: r.actor_user_id,
-      actorEmail: r.actor_email || '',
-      actorRole: r.actor_role || 'unknown',
-      entityType: r.entity_type,
-      entityId: r.entity_id,
-      organiserId: r.organiser_id,
-      action: r.action,
-      summary: r.summary || '',
-      metadata: r.metadata || {},
-    })),
+    items: (data || []).map(mapActivityRow),
   };
+}
+
+/**
+ * Account-scoped activity for organiser owners (all pages + team actions on the account).
+ * organiser_id on rows is usually a group/page id; team_invite_accepted may use account id.
+ */
+async function fetchAccountActivity(options = {}) {
+  if (!isSupabaseConfigured()) return { configured: false, items: [] };
+  const groupIds = Array.isArray(options.groupIds) ? options.groupIds : [];
+  const accountId = String(options.accountId || options.account_id || '').trim();
+  const scopeIds = [
+    ...new Set(
+      [...groupIds, accountId]
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)
+    ),
+  ];
+  if (!scopeIds.length) {
+    return { configured: true, items: [], error: 'missing_filter' };
+  }
+
+  const sb = getSupabaseAdmin();
+  const limit = Math.min(Math.max(parseInt(String(options.limit || 40), 10) || 40, 1), 100);
+  const idList = scopeIds.join(',');
+  const orParts = [`organiser_id.in.(${idList})`, `and(entity_type.eq.organiser,entity_id.in.(${idList}))`];
+  if (accountId) {
+    orParts.push(`and(entity_type.eq.team_member,metadata->>accountId.eq.${accountId})`);
+  }
+
+  const { data, error } = await sb
+    .from('entity_activity_log')
+    .select(
+      'id, created_at, actor_user_id, actor_email, actor_role, entity_type, entity_id, organiser_id, action, summary, metadata'
+    )
+    .or(orParts.join(','))
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    const unavailable = activityUnavailablePayload(error);
+    if (unavailable) return unavailable;
+    throw new Error(error.message);
+  }
+
+  const seen = new Set();
+  const items = [];
+  (data || []).forEach((r) => {
+    if (!r?.id || seen.has(r.id)) return;
+    seen.add(r.id);
+    items.push(mapActivityRow(r));
+  });
+
+  return { configured: true, items };
 }
 
 function changedKeys(before, after, keys) {
@@ -145,6 +208,7 @@ module.exports = {
   logEntityActivity,
   logFromSession,
   fetchEntityActivity,
+  fetchAccountActivity,
   actorFromSession,
   mapActorRole,
   changedKeys,

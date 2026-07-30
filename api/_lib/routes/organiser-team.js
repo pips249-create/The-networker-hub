@@ -80,7 +80,7 @@ module.exports = async function handler(req, res) {
         await logFromSession(auth.session, access, {
           entity_type: 'team_member',
           entity_id: member.id,
-          organiser_id: (access?.groupIds && access.groupIds[0]) || null,
+          organiser_id: (access?.groupIds && access.groupIds[0]) || access?.accountId || null,
           action: 'team_invite_sent',
           summary: 'Invited team member ' + (member.email || email),
           metadata: {
@@ -125,7 +125,7 @@ module.exports = async function handler(req, res) {
         await logFromSession(auth.session, access, {
           entity_type: 'team_member',
           entity_id: memberId,
-          organiser_id: (access?.groupIds && access.groupIds[0]) || null,
+          organiser_id: (access?.groupIds && access.groupIds[0]) || access?.accountId || null,
           action: 'team_access_updated',
           summary: 'Updated group access for ' + (member.email || 'team member'),
           metadata: {
@@ -156,7 +156,7 @@ module.exports = async function handler(req, res) {
         await logFromSession(auth.session, access, {
           entity_type: 'team_member',
           entity_id: memberId,
-          organiser_id: (access?.groupIds && access.groupIds[0]) || null,
+          organiser_id: (access?.groupIds && access.groupIds[0]) || access?.accountId || null,
           action: 'team_member_removed',
           summary: 'Removed team member access',
           metadata: { accountId: access?.accountId || null },

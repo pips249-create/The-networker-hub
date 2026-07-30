@@ -619,6 +619,14 @@
   gap: 10px;
 }
 
+.org-page--memberships .omr-add-actions .org-btn,
+.org-page--memberships .omr-roster-quick-actions .org-btn,
+.org-page--memberships .omr-billing-actions .org-btn {
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .omr-add-section--compact .omr-import-body {
   padding: 0 14px 14px;
 }

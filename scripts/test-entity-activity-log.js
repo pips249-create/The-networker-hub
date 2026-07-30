@@ -6,6 +6,7 @@ const {
   actorFromSession,
   mapActorRole,
   changedKeys,
+  fetchAccountActivity,
 } = require('../api/_lib/entity-activity-log');
 
 assert.strictEqual(mapActorRole({ email: 'a@b.com' }, { role: 'owner' }), 'owner');
@@ -21,5 +22,7 @@ assert.deepStrictEqual(
   changedKeys({ title: 'A', city: 'London' }, { title: 'B', city: 'London' }, ['title', 'city']),
   ['title']
 );
+
+assert.strictEqual(typeof fetchAccountActivity, 'function');
 
 console.log('test-entity-activity-log: ok');

@@ -18,6 +18,7 @@ const routes = {
   'alumni-invites': require('./_lib/routes/organiser-alumni-invites'),
   reviews: require('./_lib/routes/organiser-reviews'),
   team: require('./_lib/routes/organiser-team'),
+  activity: require('./_lib/routes/organiser-activity'),
   cancellations: require('./_lib/routes/organiser-cancellations'),
   'stripe-connect': require('./_lib/routes/organiser-stripe-connect'),
   payouts: require('./_lib/routes/organiser-payouts'),

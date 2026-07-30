@@ -522,6 +522,20 @@ async function countEventsByOrganiserGroup(groupIds) {
   if (!ids.length) return counts;
 
   const sb = getSupabaseAdmin();
+  // Typical organiser workspaces are small — parallel head counts avoid shipping every event row.
+  if (ids.length <= 40) {
+    await Promise.all(
+      ids.map(async (id) => {
+        const { count, error } = await sb
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organiser_id', id);
+        if (!error) counts.set(id, count || 0);
+      })
+    );
+    return counts;
+  }
+
   const CHUNK = 100;
   for (let i = 0; i < ids.length; i += CHUNK) {
     const chunk = ids.slice(i, i + CHUNK);
@@ -2450,16 +2464,26 @@ async function getLeanOrganiserWorkspace(req) {
   const groupsError = scope.groupsError;
   const { buildRosterSummariesForOrganisers } = require('./organiser-member-roster');
   const LEAN_EVENT_SUMMARY_LIMIT = 120;
+  const leanGroupCount = (groupIds || []).length;
+  // Skip per-group roster/count scans on huge admin overviews — still return a total event count.
+  const skipHeavyEnrichment = leanGroupCount > 40;
   // Lean path must stay bounded: never scan all platform events for admin view.
-  const [pendingClaims, eventSummaries, eventCountsByGroup, accessStatus, rosterSummaries] =
+  const [pendingClaims, eventSummaries, eventCountsByGroup, accessStatus, rosterSummaries, leanEventsTotal] =
     await Promise.all([
       pendingClaimsPromise,
       listEventSummariesForOrganiserGroups(groupIds, false, {
         limit: LEAN_EVENT_SUMMARY_LIMIT,
       }).catch(() => []),
-      countEventsByOrganiserGroup(groupIds).catch(() => new Map()),
+      skipHeavyEnrichment
+        ? Promise.resolve(new Map())
+        : countEventsByOrganiserGroup(groupIds).catch(() => new Map()),
       accessStatusPromise,
-      buildRosterSummariesForOrganisers(groupIds).catch(() => new Map()),
+      skipHeavyEnrichment
+        ? Promise.resolve(new Map())
+        : buildRosterSummariesForOrganisers(groupIds).catch(() => new Map()),
+      skipHeavyEnrichment
+        ? countEventsForOrganiser(groupIds).catch(() => 0)
+        : Promise.resolve(null),
     ]);
   const pendingClaimGroups = pendingClaims.groups || [];
   const pendingClaimOpportunities = pendingClaims.opportunities || [];
@@ -2483,7 +2507,9 @@ async function getLeanOrganiserWorkspace(req) {
   }
 
   let eventsTotal = 0;
-  if (eventCountsByGroup && typeof eventCountsByGroup.forEach === 'function') {
+  if (leanEventsTotal != null) {
+    eventsTotal = Number(leanEventsTotal) || 0;
+  } else if (eventCountsByGroup && typeof eventCountsByGroup.forEach === 'function') {
     eventCountsByGroup.forEach((count) => {
       eventsTotal += Number(count) || 0;
     });
