@@ -33,6 +33,7 @@ const routes = {
   'event-featured-quote': require('./_lib/routes/organiser-event-featured-quote'),
   'group-update-credits-checkout': require('./_lib/routes/organiser-group-update-credits-checkout'),
   'group-update-credits-complete': require('./_lib/routes/organiser-group-update-credits-complete'),
+  'event-connections': require('./_lib/routes/organiser-event-connections'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
   roster: require('./_lib/routes/organiser-roster'),
   'member-roster': require('./_lib/routes/organiser-roster'),

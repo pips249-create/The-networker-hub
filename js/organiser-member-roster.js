@@ -292,7 +292,7 @@
     if (type === 'bookings') {
       el.textContent = eventLabel
         ? 'You will see who on your list has booked ' + eventLabel + '.'
-        : 'Choose an event above, then run the report.';
+        : 'Choose an event, then run the report.';
       return;
     }
     el.textContent =
@@ -644,6 +644,39 @@
       summary.textContent = reportsCompactSummaryLine();
     }
     renderReports(lastReports);
+    syncReportsPanelState();
+  }
+
+  function recentPastMeetingIds(limit) {
+    const now = Date.now();
+    const n = Math.max(Number(limit) || 6, 1);
+    return events
+      .filter(function (ev) {
+        const start = ev.startsAt || ev.starts_at || ev.date || '';
+        if (!start) return false;
+        const t = new Date(start).getTime();
+        return Number.isFinite(t) && t < now;
+      })
+      .slice(0, n)
+      .map(function (ev) {
+        return ev.id;
+      })
+      .filter(Boolean);
+  }
+
+  function openReportsEventSettings() {
+    reportsSetupEditing = true;
+    syncReportTypePicker(activeReportTab);
+    syncReportsSetupFields();
+    syncReportsPanelState();
+    const eventSel = document.getElementById('omr-reports-event-select');
+    if (eventSel) {
+      try {
+        eventSel.focus();
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   async function refreshGroupRosterSummary(groupId) {
@@ -1186,7 +1219,8 @@
       if (!eventSelected) {
         html =
           '<div class="omr-report-card omr-report-card--empty"><h3>Event bookings</h3>' +
-          '<p>Choose an event above, then run the report to see who has booked.</p></div>';
+          '<p>Choose an event in settings, then run the report to see who has booked.</p>' +
+          '<p class="omr-report-note"><button type="button" class="omr-inline-link-btn" data-omr-open-report-settings="1">Choose an event</button></p></div>';
       } else if (booked) {
         html =
           '<div class="omr-report-card"><h3>Your members — booked for selected event</h3>' +
@@ -1287,6 +1321,10 @@
       html = '';
       const eventLabel = selectedEventLabel();
       const eventSelected = Boolean(selectedReportsEventId() || selectedEventId());
+      const recentIds = (missed && missed.recentEventIds) || [];
+      const hasRecentMeetings = recentIds.length > 0;
+      const pickEventCta =
+        '<p class="omr-report-note"><button type="button" class="omr-inline-link-btn" data-omr-open-report-settings="1">Choose an event</button> for new vs returning attendance split.</p>';
       if (eventSelected && attendance) {
         html +=
           '<div class="omr-report-card"><h3>Your members at this event</h3>' +
@@ -1305,13 +1343,27 @@
         });
         html += '</ul></div>';
       } else if (!html) {
-        html =
-          '<div class="omr-report-card omr-report-card--empty"><h3>Engagement</h3>' +
-          '<p>No missed-meeting patterns to show yet. Choose an event above for attendance split.</p></div>';
+        if (!hasRecentMeetings) {
+          html =
+            '<div class="omr-report-card omr-report-card--empty"><h3>Engagement</h3>' +
+            '<p>No past meetings to analyse yet. After you hold events, missed-meeting patterns show up here.</p>' +
+            (eventSelected ? '' : pickEventCta) +
+            '</div>';
+        } else {
+          html =
+            '<div class="omr-report-card omr-report-card--empty"><h3>Engagement</h3>' +
+            '<p>Everyone on your list has booked at least one of your recent meetings.</p>' +
+            (eventSelected ? '' : pickEventCta) +
+            '</div>';
+        }
       } else if (!missed || !missed.members || !missed.members.length) {
         html +=
           '<div class="omr-report-card omr-report-card--empty"><h3>Missed recent meetings</h3>' +
-          '<p>Everyone on your list has booked at least one of your recent meetings.</p></div>';
+          '<p>' +
+          (hasRecentMeetings
+            ? 'Everyone on your list has booked at least one of your recent meetings.'
+            : 'No past meetings to analyse yet.') +
+          '</p></div>';
       }
     }
 
@@ -1332,7 +1384,7 @@
 
     if (type === 'bookings' && !eventId) {
       showAlert('Choose an event for the booking report.', 'error');
-      syncReportsSetupFields();
+      openReportsEventSettings();
       return null;
     }
 
@@ -1354,13 +1406,9 @@
       if (eventId) qs += '&eventId=' + encodeURIComponent(eventId);
       const recentCount = Math.max(Number(period || selectedReportPeriod()) || 6, 1);
       const upcomingLimit = selectedUpcomingLimit();
-      const recent = events
-        .slice(0, recentCount)
-        .map(function (e) {
-          return e.id;
-        })
-        .join(',');
+      const recent = recentPastMeetingIds(recentCount).join(',');
       if (recent) qs += '&recentEventIds=' + encodeURIComponent(recent);
+      qs += '&recentCount=' + encodeURIComponent(String(recentCount));
       qs += '&upcomingLimit=' + encodeURIComponent(String(upcomingLimit));
       const data = await api(rosterUrl(qs));
       lastReports = data.reports || null;
@@ -2274,6 +2322,11 @@
       bulkPayInvites('renewal');
     });
     document.getElementById('omr-reports')?.addEventListener('click', function (e) {
+      const settingsBtn = e.target.closest('[data-omr-open-report-settings]');
+      if (settingsBtn) {
+        openReportsEventSettings();
+        return;
+      }
       const btn = e.target.closest('[data-omr-bulk-pay-scope]');
       if (!btn) return;
       bulkPayInvites(btn.getAttribute('data-omr-bulk-pay-scope') || 'renewal');
@@ -2539,7 +2592,7 @@
     function quote(amount) {
       if (!amount || amount < 1) return null;
       const membershipVat = vatAdded ? Math.round(amount * 0.2 * 100) / 100 : 0;
-      const fee = Math.round(amount * 0.03 * 100) / 100;
+      const fee = Math.round((amount * 0.045 + 0.2) * 100) / 100;
       const youGet = Math.round((amount + membershipVat) * 100) / 100;
       const memberPays = Math.round((amount + membershipVat + fee) * 100) / 100;
       return { youGet: youGet, memberPays: memberPays, fee: fee, membershipVat: membershipVat };
@@ -2552,9 +2605,9 @@
           money(m.memberPays) +
           ' (you get ' +
           money(m.youGet) +
-          '; Hub fee ' +
+          '; booking fee ' +
           money(m.fee) +
-          ' incl. VAT)'
+          ')'
       );
     }
     const a = quote(annual);
@@ -2564,9 +2617,9 @@
           money(a.memberPays) +
           ' (you get ' +
           money(a.youGet) +
-          '; Hub fee ' +
+          '; booking fee ' +
           money(a.fee) +
-          ' incl. VAT)'
+          ')'
       );
     }
     el.textContent = parts.length

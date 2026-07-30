@@ -1,0 +1,84 @@
+/**
+ * Organiser event connections email API — preview + send attendee list.
+ */
+const { getOrganiserApi } = require('../organiser-provider');
+const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const {
+  getConnectionsPreview,
+  sendConnectionsEmail,
+} = require('../event-connections-email');
+
+function parseBody(req) {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  return body || {};
+}
+
+module.exports = async function handler(req, res) {
+  const api = getOrganiserApi();
+  const { json, setCors, requireOrganiserSession } = api;
+
+  setCors(req, res);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const auth = requireOrganiserSession(req);
+  if (!auth.ok) return json(res, auth.status, { error: auth.error });
+
+  const verified = await assertOrganiserEmailVerified(auth.session);
+  if (!verified.ok) {
+    return json(res, verified.status, {
+      ok: false,
+      error: verified.error,
+      message: verified.message,
+    });
+  }
+
+  try {
+    if (req.method === 'GET') {
+      const url = new URL(req.url, 'http://localhost');
+      const eventId = String(
+        req.query?.eventId ||
+          req.query?.event_id ||
+          url.searchParams.get('eventId') ||
+          url.searchParams.get('event_id') ||
+          ''
+      ).trim();
+      if (!eventId) return json(res, 400, { ok: false, error: 'missing_event_id' });
+      const preview = await getConnectionsPreview(auth.session, eventId);
+      return json(res, 200, { ok: true, ...preview });
+    }
+
+    if (req.method === 'POST') {
+      const body = parseBody(req);
+      const eventId = String(body.eventId || body.event_id || '').trim();
+      if (!eventId) return json(res, 400, { ok: false, error: 'missing_event_id' });
+      const result = await sendConnectionsEmail(auth.session, {
+        eventId,
+        organiserNote: body.organiserNote || body.organiser_note || '',
+        subject: body.subject || '',
+        force: body.force === true || body.resend === true,
+      });
+      return json(res, 200, result);
+    }
+
+    return json(res, 405, { error: 'method_not_allowed' });
+  } catch (e) {
+    const status = e.status || 500;
+    return json(res, status, {
+      ok: false,
+      error: e.code || e.message || 'event_connections_failed',
+      message: e.message || String(e),
+      lastSentAt: e.lastSentAt || null,
+    });
+  }
+};

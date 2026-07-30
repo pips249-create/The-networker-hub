@@ -55,6 +55,41 @@
     }
   }
 
+  function clearCache() {
+    try {
+      global.sessionStorage.removeItem(CACHE_KEY);
+    } catch {
+      /* ignore */
+    }
+    parentPayload = null;
+  }
+
+  function patchCachedGroup(groupId, patch) {
+    const gid = String(groupId || '').trim();
+    if (!gid || !patch || typeof patch !== 'object') return false;
+    let changed = false;
+    const apply = function (groups) {
+      if (!Array.isArray(groups)) return groups;
+      return groups.map(function (g) {
+        if (String(g && g.id) !== gid) return g;
+        changed = true;
+        return Object.assign({}, g, patch);
+      });
+    };
+    if (parentPayload && Array.isArray(parentPayload.groups)) {
+      parentPayload = {
+        groups: apply(parentPayload.groups),
+        events: parentPayload.events || [],
+      };
+    }
+    const cached = readCache();
+    if (cached) {
+      const groups = apply(cached.groups);
+      if (changed) writeCache(groups, cached.events);
+    }
+    return changed;
+  }
+
   let parentPayload = null;
   let parentWaiters = [];
 
@@ -158,6 +193,8 @@
     isEmbedDrawer: isEmbedDrawer,
     readCache: readCache,
     writeCache: writeCache,
+    clearCache: clearCache,
+    patchCachedGroup: patchCachedGroup,
     loadOrganiserBootstrapData: loadOrganiserBootstrapData,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

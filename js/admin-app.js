@@ -5814,7 +5814,6 @@
       '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Account settings (as user sees)</p>' +
       '<dl class="space-y-3 text-sm">' +
       emailPrefRow('Hub marketing', u.emailsEnabled === true) +
-      emailPrefRow('Organiser round-ups', u.emailPrefOrganiserRoundups !== false) +
       emailPrefRow('Event reminders', u.emailPrefEventReminders !== false) +
       emailPrefRow('Organiser alerts', u.emailPrefOrganiserAlerts !== false) +
       (u.organiserTermsAcceptedAt
@@ -9820,6 +9819,7 @@
       'attendee_signup_events_nudge',
       'attendee_signup_events_nudge_followup',
       'attendee_hubert_event_concierge',
+      'event_connections_list',
       'password_reset',
     ];
     var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite', 'organiser_launch_invite', 'organiser_rebrand_announcement'];

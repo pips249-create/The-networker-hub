@@ -375,6 +375,35 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.invite_url = vars.event_url + '&alumni_token=preview-token';
   }
 
+  if (slug === 'event_connections_list') {
+    vars.event_date = 'Tuesday 14 July 2026';
+    vars.event_date_clause = ' on Tuesday 14 July 2026';
+    vars.attendee_count = '3';
+    vars.organiser_note_html =
+      '<tr><td class="mobile-pad" style="padding:8px 40px 16px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;">' +
+      '<tr><td style="padding:18px 20px;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">A note from the organiser</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Lovely to see you all — here are the people who came along so you can keep the conversations going.</p>' +
+      '</td></tr></table></td></tr>';
+    vars.connections_list_html =
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
+      '<tr><td style="padding:14px 0;border-bottom:1px solid #ece7df;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#1c2040;margin:0 0 2px;">Alex Morgan</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.5;color:#635c5e;margin:0 0 4px;">Founder · Acme Coaching</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;margin:0;"><a href="mailto:alex@example.com" style="color:#0d6e7a;text-decoration:underline;">alex@example.com</a></p>' +
+      '</td></tr>' +
+      '<tr><td style="padding:14px 0;border-bottom:1px solid #ece7df;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#1c2040;margin:0 0 2px;">Sam Patel</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.5;color:#635c5e;margin:0 0 4px;">Marketing Director · Bright Labs</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;margin:0;"><a href="mailto:sam@example.com" style="color:#0d6e7a;text-decoration:underline;">sam@example.com</a></p>' +
+      '</td></tr>' +
+      '<tr><td style="padding:14px 0;border-bottom:1px solid #ece7df;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#1c2040;margin:0 0 2px;">Jordan Lee</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;margin:0;"><a href="mailto:jordan@example.com" style="color:#0d6e7a;text-decoration:underline;">jordan@example.com</a></p>' +
+      '</td></tr></table>';
+  }
+
   if (slug === 'organiser_ticket_sales_nudge') {
     vars.nudger_name = 'Alex Morgan';
     vars.tickets_url = site + '/organiser/event-tickets?eventId=preview-event';
@@ -421,7 +450,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'application_approved' ||
     slug === 'application_denied' ||
     slug === 'post_event_review_request' ||
-    slug === 'guest_visit_followup'
+    slug === 'guest_visit_followup' ||
+    slug === 'event_connections_list'
   ) {
     if (!String(vars.sponsor_row || '').trim()) {
       vars.sponsor_row = sampleSponsorRow(site);
@@ -469,7 +499,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         vars.price_summary || 'Membership is £25 / month or £250 / year — paid to the group.';
       vars.fee_note =
         vars.fee_note ||
-        'A 3% Hub fee (VAT inclusive) is added at checkout. The group receives 100% of the membership price.';
+        'A booking fee (4.5% + 20p) is added at checkout. The group receives 100% of the membership price.';
       vars.cta_label = vars.cta_label || 'Pay for membership';
       vars.cta_url =
         rosterSite +

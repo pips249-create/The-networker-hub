@@ -2053,6 +2053,35 @@
   margin: 0 0 10px;
 }
 
+.oec-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oec-preview-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--od-border, #ece7df);
+}
+
+.oec-preview-row strong {
+  font-size: 15px;
+  color: var(--od-ink, #1c2040);
+}
+
+.oec-preview-row span {
+  font-size: 13px;
+  color: var(--od-text-muted, #6b6567);
+}
+
+.oec-preview-row a {
+  font-size: 13px;
+  color: var(--od-accent, #0d6e7a);
+}
+
 .org-group-update-preview-subject {
   margin: 0 0 12px;
   font-size: 15px;

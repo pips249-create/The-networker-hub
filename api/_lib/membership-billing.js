@@ -1,16 +1,22 @@
 /**
  * Organiser membership dues billed through Hub Stripe Connect.
- * Members pay: membership (+ organiser VAT if added) + Hub fee (3%, VAT inclusive).
+ * Members pay: membership (+ organiser VAT if added) + booking fee (4.5% + 20p).
  * Organisers receive 100% of membership (+ any membership VAT they charge).
- * Tickets keep 4.5% + 20p; memberships use a simpler 3% all-in Hub fee.
+ * Same fee formula as tickets — covers platform and Stripe processing.
  */
 const { getSupabaseAdmin } = require('./supabase');
+const {
+  BOOKING_FEE_RATE,
+  BOOKING_FEE_PER_TICKET,
+  calculateBookingFee,
+} = require('./booking-fees');
 
 const ORGANISER_VAT_RATE = 0.2;
-const MEMBERSHIP_HUB_FEE_RATE = 0.03;
-const MEMBERSHIP_FEE_LABEL = 'Hub fee (3% incl. VAT)';
+const MEMBERSHIP_HUB_FEE_RATE = BOOKING_FEE_RATE;
+const MEMBERSHIP_HUB_FEE_FIXED = BOOKING_FEE_PER_TICKET;
+const MEMBERSHIP_FEE_LABEL = 'Booking fee (4.5% + 20p)';
 const MEMBERSHIP_FEE_EXPLANATION =
-  'The Hub fee is 3% of the membership price you set (VAT inclusive). Organisers receive 100% of that membership price (and membership VAT if they add it).';
+  'The booking fee (4.5% + 20p) covers platform and payment processing. Organisers receive 100% of the membership price they set (and membership VAT if they add it).';
 const MEMBERSHIP_CHECKOUT_TYPE = 'organiser_membership';
 
 function roundMoney(amount) {
@@ -44,7 +50,7 @@ function normalizeVatTreatment(raw) {
 function calculateMembershipFeePounds(amountPounds) {
   const amount = Number(amountPounds) || 0;
   if (amount <= 0) return 0;
-  return roundMoney(amount * MEMBERSHIP_HUB_FEE_RATE);
+  return calculateBookingFee(amount, 1);
 }
 
 /**
@@ -67,12 +73,12 @@ function calculateMembershipTotals(amountPounds, vatTreatment) {
     total: roundMoney(membershipGross + fee),
     vatTreatment: treatment,
     feeRate: MEMBERSHIP_HUB_FEE_RATE,
-    feeFixed: 0,
+    feeFixed: MEMBERSHIP_HUB_FEE_FIXED,
     vatRate: ORGANISER_VAT_RATE,
   };
 }
 
-/** Stripe application_fee_percent so Hub keeps the 3% fee; organiser gets membership (+ membership VAT). */
+/** Stripe application_fee_percent so Hub keeps the booking fee; organiser gets membership (+ membership VAT). */
 function applicationFeePercentFromPence(organiserPence, hubPence) {
   const org = Math.max(0, Math.round(Number(organiserPence) || 0));
   const hub = Math.max(0, Math.round(Number(hubPence) || 0));
@@ -859,11 +865,12 @@ async function repairMembershipRosterExpiry(row, options) {
 module.exports = {
   ORGANISER_VAT_RATE,
   MEMBERSHIP_HUB_FEE_RATE,
+  MEMBERSHIP_HUB_FEE_FIXED,
   MEMBERSHIP_FEE_LABEL,
   MEMBERSHIP_FEE_EXPLANATION,
   MEMBERSHIP_CHECKOUT_TYPE,
   MEMBERSHIP_FEE_RATE: MEMBERSHIP_HUB_FEE_RATE,
-  MEMBERSHIP_FEE_FIXED: 0,
+  MEMBERSHIP_FEE_FIXED: MEMBERSHIP_HUB_FEE_FIXED,
   poundsFromPence,
   penceFromPounds,
   normalizeInterval,

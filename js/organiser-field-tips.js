@@ -76,9 +76,9 @@
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
     'members-only-ticket': {
-      title: 'Members-only rate (keeps public tickets)',
+      title: 'Member price (public can still book)',
       body:
-        'An extra ticket the public cannot see, shown only to people on your member list when they sign in. Use when non-members can still book a public ticket above, and members get a hidden or different rate. It does not replace public tickets. For a meeting only members can book, use “This event is for my members only” instead.',
+        'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets above stay on sale for everyone else. It does not make the event members-only. For a meeting only members can book, use “This event is for my members only” instead.',
       hubertPrompt: 'What is the difference between a members-only rate and a members-only event?',
     },
     'members-only-event-listing': {

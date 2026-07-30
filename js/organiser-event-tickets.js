@@ -2072,6 +2072,7 @@
       lead:
         'You can finish your event setup first. When you are ready, add your UK bank account via Stripe — your event stays as a draft until this is complete.',
       singleGroupOnly: true,
+      onLinked: handlePaymentSetupLinked,
     });
     // Persist ticket form before leaving for Stripe, so return does not lose tiers.
     mount.querySelectorAll('[data-payment-setup]').forEach(function (btn) {
@@ -2086,6 +2087,20 @@
     }
   }
 
+  async function handlePaymentSetupLinked(status) {
+    await loadPaymentSetupState({ bypassCache: true });
+    if (status && status.ready === false) {
+      showAlert(
+        status.incompleteHint ||
+          'Bank details were linked, but Stripe still needs a few steps. Click Add bank details to finish.',
+        'warn'
+      );
+    } else {
+      showAlert('Bank details linked — you can publish paid tickets now.', 'ok');
+    }
+    updatePublishButton();
+  }
+
   async function handleStripeConnectReturn() {
     const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
     if (connectParam !== 'return' && connectParam !== 'refresh') return;
@@ -2097,7 +2112,7 @@
         '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(group.id)
       );
       status = ok ? data : null;
-      await loadPaymentSetupState();
+      await loadPaymentSetupState({ bypassCache: true });
     }
     if (status && status.ready) {
       showAlert('Bank details saved — you can publish paid tickets now.', 'ok');
@@ -2115,12 +2130,12 @@
     }
   }
 
-  async function loadPaymentSetupState() {
+  async function loadPaymentSetupState(options) {
     if (!window.HubOrganiserPaymentSetup) {
       paymentSetupState = null;
       return;
     }
-    paymentSetupState = await window.HubOrganiserPaymentSetup.fetchState();
+    paymentSetupState = await window.HubOrganiserPaymentSetup.fetchState(options || {});
   }
 
   function syncPaidOnlySections(tiers) {

@@ -142,6 +142,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_saved_search_match',
   'guest_visit_followup',
   'alumni_fast_pass_invite',
+  'event_connections_list',
   'member_roster_invite',
   'member_roster_existing',
   'member_roster_pay_invite',

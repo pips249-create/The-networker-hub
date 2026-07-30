@@ -108,7 +108,7 @@ const KNOWLEDGE_SECTIONS = [
       'When you publish a new Approved event, people on the member list are emailed automatically (Members only rates apply when they sign in with that email). ' +
       'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning among your uploaded members only, members who missed recent meetings, memberships expiring within 14 days. Reports never include non-members who booked the event — use Attendees for full event lists. Download members CSV or an event report CSV. Email booking reminders to members who have not booked; members are also auto-emailed when you publish Approved events. ' +
       'MEMBERS: when added, they see the group under My Hub → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
-      'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a 3% Hub fee (VAT inclusive); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My Hub → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
+      'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a booking fee (4.5% + 20p, same as tickets); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My Hub → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
       'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
   },
   {
@@ -503,7 +503,7 @@ const FALLBACK_REPLIES = [
   {
     match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)|import.*(spreadsheet|excel).*member/i,
     reply:
-      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. You can tick to send invite emails after import — new accounts get a sign-up link; existing Hub accounts get a sign-in link.',
+      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. Invite emails are queued by default after import (untick to skip) — new accounts get a sign-up link; existing Hub accounts get a sign-in link. Sends gradually over about 2 hours.',
   },
   {
     match: /add.*(to|someone).*(member list|member roster|roster)|manage member (list|roster)|set up member (list|roster)|open member (list|roster)|where.*member (list|roster)/i,
@@ -581,9 +581,14 @@ const FALLBACK_REPLIES = [
       'Previous Attendees lets you invite past confirmed attendees to an exclusive returning ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your previous attendee price, and send invites from the organiser dashboard. Only invited past attendees can book the returning ticket.',
   },
   {
+    match: /connections email|attendee connections|who else (was|attended)|share attendee (emails|list)|email.*who attended/i,
+    reply:
+      'After an event, open Promote → Connections email (or Events → Attendees, pick one event, then Email connections list). Confirmed attendees receive a list of who else was there — name, company, job title and email — so they can follow up. Pending applications and cancelled tickets are left out.',
+  },
+  {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
     reply:
-      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
+      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. After the event, use Email connections list to share who attended with the other guests. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
   },
   {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,

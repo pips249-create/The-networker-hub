@@ -362,7 +362,7 @@ async function getOrganiserConnectForEvent(sb, eventId) {
 
 /**
  * Destination-charge subscription params — organiser receives membership (+ membership VAT);
- * Hub keeps the 3% fee (VAT inclusive) via application_fee_percent.
+ * Hub keeps the booking fee (4.5% + 20p) via application_fee_percent.
  */
 function buildConnectSubscriptionParams({ connect, organiserPence, hubPence, membershipPence, feePence, metadata }) {
   if (!connect?.ready || !connect.stripeAccountId) return null;

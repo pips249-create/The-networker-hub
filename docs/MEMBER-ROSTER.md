@@ -4,7 +4,7 @@
 
 Per **organiser page** (group profile), organisers maintain a **Membership** (name, email, optional membership expiry). Members sign in with that email to unlock **Members only** ticket tiers at checkout. The hub enforces access server-side, flags expiring memberships for the organiser, and surfaces five practical reports (membership health, booked vs not booked for an event, new vs returning at an event, members who missed recent meetings, memberships expiring soon). Confirmed bookings flow straight into the attendee register and **name badge PDF** export.
 
-Organisers can still renew people off-platform and update expiry dates manually. They can also **offer pay monthly or annually through the Hub** (Stripe Connect): members pay the published membership price (plus organiser VAT if set to “added”), plus a **3% Hub fee (VAT inclusive)**; organisers receive **100%** of the membership price they set (and membership VAT if added). Successful payments create/update the roster row and set `expires_at` from the Stripe billing period.
+Organisers can still renew people off-platform and update expiry dates manually. They can also **offer pay monthly or annually through the Hub** (Stripe Connect): members pay the published membership price (plus organiser VAT if set to “added”), plus a **booking fee (4.5% + 20p)** — same as tickets; organisers receive **100%** of the membership price they set (and membership VAT if added). Successful payments create/update the roster row and set `expires_at` from the Stripe billing period.
 
 ## In scope
 
@@ -47,7 +47,7 @@ Members see the group under **My Hub → My groups** once added. They book membe
 
 1. Organiser sets monthly and/or annual price on Memberships (requires Stripe Connect bank details).
 2. Member joins from the organiser public page or renews from My Hub.
-3. Checkout charges **membership (+ organiser VAT if added) + 3% Hub fee (VAT inclusive)** each billing period.
+3. Checkout charges **membership (+ organiser VAT if added) + booking fee (4.5% + 20p)** each billing period.
 4. Destination charge: organiser connected account receives the membership price; Hub keeps the fee (Stripe processing absorbed from the fee).
 5. Webhooks update the roster expiry to the subscription period end.
 

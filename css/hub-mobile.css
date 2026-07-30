@@ -1141,7 +1141,9 @@ body.nav-menu-open {
 
   .organiser-dashboard-page .org-sidebar,
   .attendee-dashboard-page .ad-sidebar {
-    position: static !important;
+    position: sticky !important;
+    top: 64px;
+    z-index: 40;
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
@@ -1182,8 +1184,11 @@ body.nav-menu-open {
     display: none;
   }
 
-  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link {
+  .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link,
+  .hub-side-nav.hub-side-nav--minimal button.hub-side-nav-link {
     flex: 0 0 auto;
+    width: auto !important;
+    max-width: none;
     scroll-snap-align: start;
     border-left: none !important;
     border-bottom: 3px solid transparent;
@@ -1204,22 +1209,25 @@ body.nav-menu-open {
 
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-divider {
     flex: 0 0 auto;
-    align-self: center;
-    padding: 8px 8px;
-    margin: 0 2px 0 4px;
+    align-self: stretch;
+    width: 1px;
+    min-width: 1px;
+    padding: 0;
+    margin: 6px 6px;
     border-top: none;
-    border-left: 1px solid rgba(0, 0, 0, 0.12);
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    opacity: 0.75;
+    border-left: 1px solid rgba(0, 0, 0, 0.16);
+    font-size: 0;
+    line-height: 0;
+    color: transparent;
+    overflow: hidden;
     white-space: nowrap;
-    scroll-snap-align: start;
+    opacity: 1;
+    scroll-snap-align: none;
+    pointer-events: none;
   }
 
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-divider--first {
-    border-left: none;
-    margin-left: 0;
-    padding-left: 2px;
+    display: none;
   }
 
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-link--nested,
@@ -1239,6 +1247,7 @@ body.nav-menu-open {
 
   .hub-side-nav.hub-side-nav--minimal .hub-side-nav-util a {
     flex: 0 0 auto;
+    width: auto !important;
     white-space: nowrap;
     padding: 10px 12px;
     scroll-snap-align: start;
@@ -1248,12 +1257,19 @@ body.nav-menu-open {
 
   .hub-side-nav.hub-side-nav--minimal .org-notifications-nav {
     flex: 0 0 auto;
+    width: auto !important;
+    max-width: none;
+    gap: 6px;
     scroll-snap-align: start;
     border-left: none !important;
     border-bottom: 3px solid transparent;
     padding: 10px 12px;
     white-space: nowrap;
     font-size: 12px;
+  }
+
+  .hub-side-nav.hub-side-nav--minimal .org-notifications-nav-label {
+    flex: 0 0 auto;
   }
 
   .organiser-dashboard-page .hub-side-nav--minimal .org-notifications-nav.is-panel-open {

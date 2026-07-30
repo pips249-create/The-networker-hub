@@ -75,6 +75,10 @@ module.exports = async function handler(req, res) {
         const recentEventIds = recentRaw
           ? recentRaw.split(',').map((s) => s.trim()).filter(Boolean)
           : [];
+        const recentCount = Math.min(
+          Math.max(Number(req.query?.recentCount || req.query?.recent_count) || 6, 1),
+          12
+        );
         const upcomingLimit = Math.min(
           Math.max(Number(req.query?.upcomingLimit || req.query?.upcoming_limit) || 6, 1),
           12
@@ -83,6 +87,7 @@ module.exports = async function handler(req, res) {
         const reports = await buildRosterReports(organiserId, {
           eventId,
           recentEventIds,
+          recentCount,
           upcomingLimit,
         });
         return json(res, 200, {

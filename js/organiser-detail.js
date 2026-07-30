@@ -344,7 +344,7 @@
           (plan.vatTreatment === 'added' ? ' + VAT' : '') +
           ' to the group · member pays ' +
           money(opt.total) +
-          ' incl. 3% Hub fee</p>' +
+          ' incl. booking fee</p>' +
           '</div>' +
           '<button type="button" class="org-profile-btn org-profile-btn--primary" data-membership-interval="' +
           escapeHtml(opt.interval) +

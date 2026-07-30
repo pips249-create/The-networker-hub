@@ -261,6 +261,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: '{{email_subject}}',
   },
+  event_connections_list: {
+    file: 'event-connections-list.html',
+    marker: 'hub-email-layout-v2',
+    subject: 'Your connections from {{event_name}}',
+  },
   member_roster_booking_reminder: {
     file: 'member-roster-booking-reminder.html',
     marker: 'hub-email-layout-v2',

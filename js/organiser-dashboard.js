@@ -1608,7 +1608,7 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260728ux';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260729engage1';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260730conn1';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1696,9 +1696,9 @@
     return Promise.all([cssReady].concat(scripts)).then(function () {});
   }
 
-  function ensureGroupUpdatesAssets() {
-    if (window.HubOrganiserGroupUpdates) return Promise.resolve();
-    return loadScriptOnce(GROUP_UPDATES_JS);
+  function ensureEventConnectionsAssets() {
+    if (window.HubOrganiserEventConnections) return Promise.resolve();
+    return loadScriptOnce(EVENT_CONNECTIONS_JS);
   }
 
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
@@ -1953,15 +1953,34 @@
     });
   }
 
-  function ensureEmailUpdatesPanelReady() {
-    ensureGroupUpdatesAssets()
+  function ensureEmailUpdatesPanelReady(preferredEventId) {
+    ensureEventConnectionsAssets()
       .then(function () {
-        if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
-          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+        if (window.HubOrganiserEventConnections && window.HubOrganiserEventConnections.init) {
+          var events =
+            (state.events && state.events.length ? state.events : null) ||
+            state.eventSummaries ||
+            [];
+          window.HubOrganiserEventConnections.init({
+            groups: state.groups || [],
+            events: events,
+            eventId: preferredEventId || '',
+          });
         }
       })
       .catch(function () {
         /* non-fatal */
+      });
+  }
+
+  function openConnectionsEmailForEvent(eventId) {
+    setRoute('social-email');
+    ensureEventsLoaded()
+      .catch(function () {
+        return false;
+      })
+      .then(function () {
+        ensureEmailUpdatesPanelReady(eventId);
       });
   }
 
@@ -4542,6 +4561,10 @@
           esc(id) +
           '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Invite previous attendees</strong><span>Email past attendees a locked ticket link</span></span></button>'
         : '';
+    const connectionsItem =
+      '<button type="button" class="org-action-item" data-send-connections-email="' +
+      esc(id) +
+      '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Email connections list</strong><span>Send attendees who else was there</span></span></button>';
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -4557,6 +4580,7 @@
       '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
+      connectionsItem +
       '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
       '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
@@ -5927,6 +5951,11 @@
   function renderAttendees() {
     const body = document.getElementById('attendees-body');
     const empty = document.getElementById('attendees-empty');
+    const connectionsBtn = document.getElementById('btn-email-connections');
+    if (connectionsBtn) {
+      const eventId = String(filters.attendeesEvent || 'all');
+      connectionsBtn.hidden = !eventId || eventId === 'all';
+    }
     if (!body) return;
     renderAttendeesFilterNote();
     renderAttendeesArchiveNav();
@@ -7750,6 +7779,16 @@
       closeAllActionMenus();
       const eid = alumniInvitesBtn.getAttribute('data-send-alumni-invites');
       if (eid) openAlumniInvitesModal(eid);
+      return true;
+    }
+
+    const connectionsEmailBtn = e.target.closest('[data-send-connections-email]');
+    if (connectionsEmailBtn && !connectionsEmailBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = connectionsEmailBtn.getAttribute('data-send-connections-email');
+      if (eid) openConnectionsEmailForEvent(eid);
       return true;
     }
 
@@ -13863,6 +13902,17 @@
     if (btnDownloadAttendees) {
       btnDownloadAttendees.addEventListener('click', exportAttendeesCsv);
     }
+    const btnEmailConnections = document.getElementById('btn-email-connections');
+    if (btnEmailConnections) {
+      btnEmailConnections.addEventListener('click', function () {
+        const eventId = String(filters.attendeesEvent || 'all');
+        if (!eventId || eventId === 'all') {
+          showOrganiserAlert('Pick a single event first, then email the connections list.', true);
+          return;
+        }
+        openConnectionsEmailForEvent(eventId);
+      });
+    }
     const btnDownloadBadges = document.getElementById('btn-download-name-badges');
     if (btnDownloadBadges) {
       btnDownloadBadges.addEventListener('click', exportNameBadgesPdf);
@@ -14297,6 +14347,19 @@
           eventDrawerProgressStep = e.data.progressStep;
           renderEventDrawerProgress(eventDrawerProgressStep);
         }
+        return;
+      }
+      if (e.data && e.data.type === 'hub-payment-setup-linked') {
+        // Tickets drawer linked bank details in an iframe — CustomEvents stay in-frame.
+        window.dispatchEvent(
+          new CustomEvent('hub-payment-setup-linked', {
+            detail: {
+              groupId: e.data.groupId,
+              sourceGroupId: e.data.sourceGroupId,
+              status: e.data.status,
+            },
+          })
+        );
         return;
       }
       if (e.data && e.data.type === 'hub-event-drawer-busy') {

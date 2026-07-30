@@ -397,7 +397,7 @@ async function createCityPartnerCheckoutSession(opts) {
 }
 
 /**
- * Membership dues subscription — membership (+ optional organiser VAT) + Hub fee (3% incl. VAT).
+ * Membership dues subscription — membership (+ optional organiser VAT) + booking fee (4.5% + 20p).
  */
 async function createMembershipCheckoutSession(opts) {
   const stripe = getStripeClient();

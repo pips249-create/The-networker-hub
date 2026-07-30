@@ -510,7 +510,7 @@ async function sendMemberRosterPayInviteEmail({ organiserRow, memberEmail, membe
         price_summary: priceSummary,
         fee_note:
           plan.feeExplanation ||
-          'A 3% Hub fee (VAT inclusive) is added at checkout. The group receives 100% of the membership price (and membership VAT if they add it).',
+          'A booking fee (4.5% + 20p) is added at checkout. The group receives 100% of the membership price (and membership VAT if they add it).',
         cta_url: loginUrlWithNext(site, email, joinPath),
         cta_label: 'Pay for membership',
       },
@@ -1077,6 +1077,22 @@ async function loadUpcomingOrganiserEvents(sb, orgId, limit = 6) {
   return data || [];
 }
 
+async function loadRecentPastOrganiserEvents(sb, orgId, limit = 6) {
+  const now = new Date().toISOString();
+  const cap = Math.min(Math.max(Number(limit) || 6, 1), 12);
+  const { data, error } = await sb
+    .from('events')
+    .select('id, title, starts_at, status, approval_status')
+    .eq('organiser_id', orgId)
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .lt('starts_at', now)
+    .order('starts_at', { ascending: false })
+    .limit(cap);
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
 function registrationRowCountsForRoster(regs, eligibleEmails) {
   const bookedEmails = new Set();
   (regs || []).forEach((row) => {
@@ -1093,7 +1109,10 @@ function registrationRowCountsForRoster(regs, eligibleEmails) {
   return { bookedCount, notBookedCount, bookedPercent, bookedEmails };
 }
 
-async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomingLimit } = {}) {
+async function buildRosterReports(
+  organiserId,
+  { eventId, recentEventIds, recentCount, upcomingLimit } = {}
+) {
   const sb = getSupabaseAdmin();
   const orgId = String(organiserId || '').trim();
   const roster = await listRosterForOrganiser(orgId, { status: 'all' });
@@ -1248,7 +1267,13 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
     };
   }
 
-  const recentIds = (recentEventIds || []).filter(Boolean).slice(0, 12);
+  let recentIds = (recentEventIds || []).filter(Boolean).slice(0, 12);
+  const pastMeetingCap = Math.min(Math.max(Number(recentCount) || recentIds.length || 6, 1), 12);
+  const pastEvents = await loadRecentPastOrganiserEvents(sb, orgId, pastMeetingCap);
+  const pastIdSet = new Set(pastEvents.map((ev) => String(ev.id)));
+  const onlyPast = recentIds.filter((id) => pastIdSet.has(String(id)));
+  recentIds = onlyPast.length ? onlyPast.map(String) : pastEvents.map((ev) => String(ev.id)).filter(Boolean);
+
   if (recentIds.length) {
     const { data: recentRegs, error: recentErr } = await sb
       .from('registrations')
@@ -1264,16 +1289,16 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
       const pay = String(row.payment_status || '');
       if (app === 'Denied' || pay === 'Refunded') return;
       const em = normalizeRosterEmail(row.attendees?.email);
-      if (!em) return;
+      if (!em || !row.event_id) return;
       if (!bookedByEmail.has(em)) bookedByEmail.set(em, new Set());
-      bookedByEmail.get(em).add(row.event_id);
+      bookedByEmail.get(em).add(String(row.event_id));
     });
 
     const missed = activeRoster
       .filter((m) => m.membershipActive)
       .map((member) => {
         const attended = bookedByEmail.get(member.email);
-        const missedCount = recentIds.filter((id) => !(attended && attended.has(id))).length;
+        const missedCount = recentIds.filter((id) => !(attended && attended.has(String(id)))).length;
         return {
           id: member.id,
           name: member.name,
@@ -1288,6 +1313,11 @@ async function buildRosterReports(organiserId, { eventId, recentEventIds, upcomi
     reports.missedRecentMeetings = {
       recentEventIds: recentIds,
       members: missed,
+    };
+  } else {
+    reports.missedRecentMeetings = {
+      recentEventIds: [],
+      members: [],
     };
   }
 

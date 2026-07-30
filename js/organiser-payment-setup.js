@@ -25,10 +25,24 @@
     };
   }
 
-  async function fetchState() {
+  function applyConnectStatusToCache(groupId, status) {
+    const embedBootstrap = global.HubOrganiserEmbedBootstrap;
+    if (!embedBootstrap || !embedBootstrap.patchCachedGroup || !status) return;
+    const ready = Boolean(status.ready);
+    embedBootstrap.patchCachedGroup(groupId, {
+      stripeAccountId: status.accountId || null,
+      stripeChargesEnabled: Boolean(status.chargesEnabled),
+      stripePayoutsEnabled: Boolean(status.payoutsEnabled),
+      stripeConnectDetailsSubmitted: Boolean(status.detailsSubmitted),
+      stripeConnectReady: ready,
+    });
+  }
+
+  async function fetchState(options) {
+    const opts = options || {};
     try {
       const embedBootstrap = global.HubOrganiserEmbedBootstrap;
-      if (embedBootstrap && embedBootstrap.readCache) {
+      if (!opts.bypassCache && embedBootstrap && embedBootstrap.readCache) {
         const cached = embedBootstrap.readCache();
         if (cached && Array.isArray(cached.groups) && cached.groups.length) {
           return buildStateFromGroups(cached.groups, true);
@@ -43,6 +57,10 @@
       const data = await res.json();
       if (!data.ok) {
         return buildStateFromGroups([], false);
+      }
+      if (embedBootstrap && embedBootstrap.writeCache && Array.isArray(data.groups)) {
+        const previous = embedBootstrap.readCache && embedBootstrap.readCache();
+        embedBootstrap.writeCache(data.groups, (previous && previous.events) || []);
       }
       return buildStateFromGroups(data.groups, data.stripeConnectEnabled);
     } catch {
@@ -454,14 +472,35 @@
         alert(message);
         return false;
       }
+      applyConnectStatusToCache(gid, data);
       setLinkBusyState(gid, true, { busyLabel: 'Linked — refreshing…' });
       global.dispatchEvent(
         new CustomEvent('hub-payment-setup-linked', {
           detail: { groupId: gid, sourceGroupId: sourceId, status: data },
         })
       );
-      if (typeof opts.onLinked === 'function') {
-        await opts.onLinked(data);
+      try {
+        if (global.parent && global.parent !== global) {
+          global.parent.postMessage(
+            {
+              type: 'hub-payment-setup-linked',
+              groupId: gid,
+              sourceGroupId: sourceId,
+              status: data,
+            },
+            global.location.origin
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+      try {
+        if (typeof opts.onLinked === 'function') {
+          await opts.onLinked(data);
+        }
+      } finally {
+        // Card re-render usually removes the button; if UI stayed put, unstick it.
+        setLinkBusyState(gid, false);
       }
       return true;
     } catch {
