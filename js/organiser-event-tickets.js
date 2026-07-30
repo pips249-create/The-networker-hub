@@ -752,8 +752,50 @@
     });
   }
 
+  function unparkStep2Panels() {
+    const form = document.getElementById('ee-tickets-form');
+    const home = document.getElementById('ee-step2-home');
+    if (!form) return;
+    const anchor =
+      document.getElementById('ee-panel-optional-extras') ||
+      document.getElementById('ee-paid-setup-wrap') ||
+      document.getElementById('ee-attendee-extras-card');
+    ['ee-panel-tickets', 'ee-panel-category-exclusivity'].forEach(function (id) {
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      if (home && panel.parentElement === home) {
+        if (anchor && anchor.parentElement === form) {
+          form.insertBefore(panel, anchor);
+        } else {
+          form.appendChild(panel);
+        }
+      } else if (!panel.parentElement) {
+        if (anchor && anchor.parentElement === form) {
+          form.insertBefore(panel, anchor);
+        } else {
+          form.appendChild(panel);
+        }
+      }
+    });
+  }
+
+  function hideLaterTicketSteps() {
+    const optionalExtras = document.getElementById('ee-panel-optional-extras');
+    const paidWrap = document.getElementById('ee-paid-setup-wrap');
+    const attendeeExtras = document.getElementById('ee-attendee-extras-card');
+    const actions = document.getElementById('ee-tickets-actions');
+    if (optionalExtras) optionalExtras.hidden = true;
+    if (paidWrap) paidWrap.hidden = true;
+    if (attendeeExtras) attendeeExtras.hidden = true;
+    if (actions) actions.hidden = true;
+    document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
+      el.hidden = true;
+    });
+  }
+
   function openStep2Modal() {
     parkStep2Panels();
+    hideLaterTicketSteps();
     const modal = document.getElementById('ee-step2-modal');
     const body = document.getElementById('ee-step2-modal-body');
     const panel = activeStep2Panel();
@@ -786,15 +828,25 @@
     if (confirm) {
       step2Confirmed = true;
       revealPostStep2();
+    } else {
+      hideLaterTicketSteps();
+      parkStep2Panels();
+      const ticketsPanel = document.getElementById('ee-panel-tickets');
+      const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+      if (ticketsPanel) ticketsPanel.hidden = true;
+      if (categoryPanel) categoryPanel.hidden = true;
+      syncTicketStepLabels();
     }
   }
 
   function revealPostStep2() {
+    unparkStep2Panels();
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
     const optionalExtras = document.getElementById('ee-panel-optional-extras');
     const paidWrap = document.getElementById('ee-paid-setup-wrap');
     const attendeeExtras = document.getElementById('ee-attendee-extras-card');
+    const actions = document.getElementById('ee-tickets-actions');
     const rest = document.getElementById('ee-tickets-rest');
     const openBooking = isOpenBookingMode(attendanceMode);
     const isCategory = attendanceMode === 'category_exclusivity';
@@ -804,6 +856,7 @@
     if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
     if (paidWrap) paidWrap.hidden = false;
     if (attendeeExtras) attendeeExtras.hidden = false;
+    if (actions) actions.hidden = false;
     if (rest) rest.hidden = false;
     document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
       el.hidden = false;
@@ -851,10 +904,17 @@
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = true;
       if (optionalExtras) optionalExtras.hidden = true;
+      hideLaterTicketSteps();
     } else if (modalOpen) {
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
       if (optionalExtras) optionalExtras.hidden = true;
+      const paidWrap = document.getElementById('ee-paid-setup-wrap');
+      const attendeeExtras = document.getElementById('ee-attendee-extras-card');
+      const actions = document.getElementById('ee-tickets-actions');
+      if (paidWrap) paidWrap.hidden = true;
+      if (attendeeExtras) attendeeExtras.hidden = true;
+      if (actions) actions.hidden = true;
     } else {
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
       if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
@@ -2578,12 +2638,7 @@
       step2Confirmed = true;
       revealPostStep2();
     } else {
-      document.getElementById('ee-panel-optional-extras') &&
-        (document.getElementById('ee-panel-optional-extras').hidden = true);
-      const paidWrap = document.getElementById('ee-paid-setup-wrap');
-      if (paidWrap) paidWrap.hidden = true;
-      const attendeeExtras = document.getElementById('ee-attendee-extras-card');
-      if (attendeeExtras) attendeeExtras.hidden = true;
+      hideLaterTicketSteps();
     }
     bindPrivateTicketFields();
     bindMembersOnlyEventToggle();

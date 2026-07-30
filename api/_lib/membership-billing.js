@@ -489,13 +489,30 @@ async function handleMembershipCheckoutCompleted(session) {
     });
   }
 
-  return syncRosterFromSubscription(subscription, {
+  const result = await syncRosterFromSubscription(subscription, {
     email: meta.attendee_email || session.customer_email,
     name: meta.attendee_name,
     attendeeId: meta.attendee_id,
     interval: meta.billing_interval,
     amountPence: meta.membership_amount_pence,
   });
+
+  // First-payment receipt from checkout — more reliable than invoice.paid alone
+  // (invoice can arrive before subscription metadata is readable, and would skip).
+  if (result.ok && !result.skipped) {
+    const amountPaid =
+      session?.amount_total != null ? Math.round(Number(session.amount_total)) : null;
+    sendMembershipRenewalReceipt({
+      invoice: amountPaid != null ? { amount_paid: amountPaid, billing_reason: 'subscription_create' } : null,
+      subscription,
+      rosterRow: result.row,
+      forceFirstPayment: true,
+    }).catch((err) => {
+      console.error('[membership] checkout receipt', err?.message || err);
+    });
+  }
+
+  return result;
 }
 
 async function handleMembershipSubscriptionUpdated(subscription) {
@@ -606,7 +623,7 @@ async function notifyMembershipPaymentFailed({ organiserId, email, memberName, e
   return { sent: true };
 }
 
-async function sendMembershipRenewalReceipt({ invoice, subscription, rosterRow }) {
+async function sendMembershipRenewalReceipt({ invoice, subscription, rosterRow, forceFirstPayment }) {
   const { sendTemplatedEmail } = require('./send-template-email');
   const {
     siteBase,
@@ -636,7 +653,7 @@ async function sendMembershipRenewalReceipt({ invoice, subscription, rosterRow }
     : '';
   const periodEnd = periodEndDateString(subscription);
   const reason = String(invoice?.billing_reason || '');
-  const isRenewal = reason === 'subscription_cycle';
+  const isRenewal = !forceFirstPayment && reason === 'subscription_cycle';
   const interval = normalizeInterval(meta.billing_interval || rosterRow?.billing_interval);
   const intervalLabel = interval === 'month' ? 'monthly' : interval === 'year' ? 'annual' : '';
 
@@ -710,11 +727,9 @@ async function handleMembershipInvoicePaid(invoice) {
     expiresAt: invoicePeriodEnd,
   });
   const reason = String(invoice?.billing_reason || '');
-  if (
-    result.ok &&
-    !result.skipped &&
-    (reason === 'subscription_cycle' || reason === 'subscription_create')
-  ) {
+  // Renewals only — first payment receipt is sent from checkout.session.completed
+  // so members always get one even if this invoice event is skipped/raced.
+  if (result.ok && !result.skipped && reason === 'subscription_cycle') {
     sendMembershipRenewalReceipt({
       invoice,
       subscription,

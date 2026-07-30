@@ -35,6 +35,7 @@ const routes = {
   'group-update-credits-complete': require('./_lib/routes/organiser-group-update-credits-complete'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
   roster: require('./_lib/routes/organiser-roster'),
+  'member-roster': require('./_lib/routes/organiser-roster'),
   'membership-plans': require('./_lib/routes/organiser-membership-plans'),
   'logo-proxy': require('./_lib/routes/organiser-logo-proxy'),
   'website-brand': require('./_lib/routes/organiser-website-brand'),

@@ -66,6 +66,35 @@
     return d.innerHTML;
   }
 
+  /** Hub-billed members only — Monthly / Annually next to expiry. */
+  function billingIntervalLabel(m) {
+    if (!m || !(m.billedThroughHub || m.stripeSubscriptionId)) return '';
+    const interval = String(m.billingInterval || '').toLowerCase();
+    if (interval === 'month') return 'Monthly';
+    if (interval === 'year') return 'Annually';
+    return '';
+  }
+
+  function renderExpiresCell(m) {
+    const dateHtml = m.expiresAt
+      ? m.expiringSoon
+        ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
+        : esc(m.expiresAt)
+      : '—';
+    const interval = billingIntervalLabel(m);
+    const intervalHtml = interval
+      ? '<span class="omr-billing-interval" title="Billed through the Hub">' +
+        (m.expiresAt ? ' · ' : '') +
+        esc(interval) +
+        '</span>'
+      : '';
+    const payFail =
+      m.paymentFailed || m.subscriptionStatus === 'past_due'
+        ? '<span class="omr-badge-past-due">Payment failed</span>'
+        : '';
+    return dateHtml + intervalHtml + payFail;
+  }
+
   function showAlert(msg, tone) {
     const el = document.getElementById('omr-alert');
     if (!el) return;
@@ -1631,15 +1660,6 @@
           : m.inviteSentAt
             ? '<span class="omr-badge-claimed">Sent</span>'
             : '<span class="omr-badge-pending">Not sent</span>';
-        const exp = m.expiresAt
-          ? m.expiringSoon
-            ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
-            : esc(m.expiresAt)
-          : '—';
-        const payFail =
-          m.paymentFailed || m.subscriptionStatus === 'past_due'
-            ? '<span class="omr-badge-past-due">Payment failed</span>'
-            : '';
         tr.innerHTML =
           '<td class="org-td-name omr-name-cell" data-label="Name" data-id="' +
           esc(m.id) +
@@ -1650,8 +1670,7 @@
           '</td><td class="omr-expires-cell" data-label="Expires" data-id="' +
           esc(m.id) +
           '">' +
-          exp +
-          payFail +
+          renderExpiresCell(m) +
           '</td><td data-label="Hub account">' +
           hub +
           '</td><td data-label="Invite">' +

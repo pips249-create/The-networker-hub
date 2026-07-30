@@ -1089,6 +1089,13 @@
   font-weight: 600;
 }
 
+.omr-billing-interval {
+  color: #5a6478;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .omr-badge-past-due {
   display: inline-block;
   margin-left: 6px;

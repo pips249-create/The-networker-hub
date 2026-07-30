@@ -147,7 +147,7 @@
           </div>
         </div>
 
-        <div class="ee-card" id="ee-panel-tickets">
+        <div class="ee-card" id="ee-panel-tickets" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 id="ee-tickets-panel-title">Public ticket types</h2>
           <p class="ee-hint" id="ee-tickets-panel-lead" style="margin-top:0">
@@ -205,7 +205,7 @@
           </div>
         </div>
 
-        <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras">
+        <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
           <h2>Optional extras</h2>
           <p class="ee-hint" style="margin-top:0">
@@ -336,7 +336,7 @@
           All your ticket types are free — VAT and refund policy are not required.
         </p>
 
-        <div id="ee-paid-setup-wrap">
+        <div id="ee-paid-setup-wrap" hidden>
           <div class="ee-card" id="ee-vat-card">
             <p class="ee-step-label" data-ee-step-label>Step 4</p>
             <h2 data-hub-tip="vat-treatment">VAT on ticket prices</h2>
@@ -401,7 +401,7 @@
           </div>
         </div>
 
-        <div class="ee-card" id="ee-attendee-extras-card">
+        <div class="ee-card" id="ee-attendee-extras-card" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 5 <span class="ee-optional">(optional)</span></p>
           <h2>Attendee information at booking</h2>
           <p class="ee-hint" style="margin-top:0">
@@ -421,7 +421,7 @@
           </label>
         </div>
 
-        <div class="ee-actions ee-actions--split">
+        <div class="ee-actions ee-actions--split" id="ee-tickets-actions" hidden>
           <a class="ee-btn ee-btn-outline ee-fullpage-back" href="/organiser/#events-tickets">Back to dashboard</a>
           <button type="submit" class="ee-btn ee-btn-gold" id="ee-tickets-submit">Continue to review →</button>
           <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ee-tickets-back-edit" hidden>
@@ -445,6 +445,6 @@
     <script src="../js/organiser-field-tips.js?v=20260730memticket" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260730memticket" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260730stepgate" defer></script>
   </body>
 </html>
