@@ -2,7 +2,12 @@ const { isEventStarted } = require('./event-timezone');
 
 const FEATURED_MONTH_DAYS = 30;
 const FEATURED_DEFAULT_MONTHLY_PENCE = 5500;
+/** Floor when spotlight inventory is scarce (≤ FEATURED_SCARCE_AVAILABLE_THRESHOLD left). */
 const FEATURED_DEFAULT_MIN_PENCE = 1000;
+/** Soft floor when slots are open — prefer fill rate over protecting ARPU. */
+const FEATURED_DEFAULT_OPEN_MIN_PENCE = 500;
+/** Match published-page scarcity copy (warns at 1–3 places left). */
+const FEATURED_SCARCE_AVAILABLE_THRESHOLD = 3;
 
 function parseEnvPence(name, fallback) {
   const raw = process.env[name];
@@ -17,6 +22,27 @@ function featuredMonthlyPricePence() {
 
 function featuredMinPricePence() {
   return parseEnvPence('FEATURED_LISTING_MIN_PENCE', FEATURED_DEFAULT_MIN_PENCE);
+}
+
+function featuredOpenMinPricePence() {
+  return parseEnvPence('FEATURED_LISTING_OPEN_MIN_PENCE', FEATURED_DEFAULT_OPEN_MIN_PENCE);
+}
+
+/**
+ * Pick the prorated floor from remaining spotlight slots.
+ * Unknown availability defaults to the scarce (higher) floor.
+ * @param {number|null|undefined} slotsAvailable
+ */
+function featuredMinPricePenceForSlots(slotsAvailable) {
+  const scarceMin = featuredMinPricePence();
+  const openMin = Math.min(featuredOpenMinPricePence(), scarceMin);
+  if (slotsAvailable == null || !Number.isFinite(Number(slotsAvailable))) {
+    return scarceMin;
+  }
+  if (Number(slotsAvailable) <= FEATURED_SCARCE_AVAILABLE_THRESHOLD) {
+    return scarceMin;
+  }
+  return openMin;
 }
 
 function formatGbp(pence) {
@@ -105,10 +131,15 @@ function visibleDaysUntilFeaturedEnd(featuredUntil, at) {
   return Math.max(1, Math.ceil((untilMs - now) / 86400000));
 }
 
-function calculateFeaturedListingQuote({ currentUntil, planId, eventStartsAt } = {}) {
+function calculateFeaturedListingQuote({
+  currentUntil,
+  planId,
+  eventStartsAt,
+  slotsAvailable,
+} = {}) {
   const placement = previewFeaturedPlacement({ currentUntil, planId, eventStartsAt });
   const fullPricePence = featuredMonthlyPricePence();
-  const minPricePence = featuredMinPricePence();
+  const minPricePence = featuredMinPricePenceForSlots(slotsAvailable);
   const visibleDays = visibleDaysUntilFeaturedEnd(placement.featuredUntil);
 
   if (!placement.cappedByEvent || fullPricePence <= 0) {
@@ -118,6 +149,7 @@ function calculateFeaturedListingQuote({ currentUntil, planId, eventStartsAt } =
       displayPrice: formatGbp(fullPricePence),
       pricingMode: fullPricePence > 0 ? 'full_month' : 'dev_free',
       visibleDays: placement.planDays,
+      minPricePence,
       pricingNote:
         fullPricePence > 0
           ? 'Full month — up to 30 days on the browse page.'
@@ -135,6 +167,7 @@ function calculateFeaturedListingQuote({ currentUntil, planId, eventStartsAt } =
     displayPrice: formatGbp(amountPence),
     pricingMode: 'prorated',
     visibleDays,
+    minPricePence,
     pricingNote:
       'Price covers ' +
       visibleDays +
@@ -156,9 +189,13 @@ module.exports = {
   FEATURED_MONTH_DAYS,
   FEATURED_DEFAULT_MONTHLY_PENCE,
   FEATURED_DEFAULT_MIN_PENCE,
+  FEATURED_DEFAULT_OPEN_MIN_PENCE,
+  FEATURED_SCARCE_AVAILABLE_THRESHOLD,
   FEATURED_PLANS,
   featuredMonthlyPricePence,
   featuredMinPricePence,
+  featuredOpenMinPricePence,
+  featuredMinPricePenceForSlots,
   formatGbp,
   normalizePlanId,
   isEventCurrentlyFeatured,
