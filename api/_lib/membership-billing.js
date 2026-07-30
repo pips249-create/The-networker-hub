@@ -723,6 +723,43 @@ async function retrieveMembershipSubscription(subscriptionId) {
   });
 }
 
+/**
+ * Find a live Hub membership subscription for an email (and optional organiser).
+ * Used when checkout webhooks never linked stripe_subscription_id onto the roster row.
+ */
+async function findMembershipSubscriptionForEmail(email, organiserId) {
+  const em = String(email || '')
+    .trim()
+    .toLowerCase();
+  const orgId = String(organiserId || '').trim();
+  if (!em) return null;
+
+  const { getStripeClient } = require('./stripe-checkout');
+  const stripe = getStripeClient();
+  const customers = await stripe.customers.list({ email: em, limit: 5 });
+  let best = null;
+  for (const customer of customers.data || []) {
+    const subs = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'all',
+      limit: 15,
+      expand: ['data.items.data', 'data.latest_invoice'],
+    });
+    for (const sub of subs.data || []) {
+      const meta = normalizeMeta(sub.metadata);
+      if (!isMembershipCheckoutMetadata(meta)) continue;
+      if (orgId && String(meta.organiser_id || '').trim() !== orgId) continue;
+      const status = String(sub.status || '').toLowerCase();
+      if (status === 'canceled' || status === 'incomplete' || status === 'incomplete_expired') {
+        continue;
+      }
+      if (status === 'active' || status === 'trialing') return sub;
+      if (!best) best = sub;
+    }
+  }
+  return best;
+}
+
 async function handleMembershipInvoicePaid(invoice) {
   const subscriptionId =
     typeof invoice?.subscription === 'string'
@@ -789,8 +826,6 @@ async function handleMembershipInvoicePaymentFailed(invoice) {
 
 async function repairMembershipRosterExpiry(row, options) {
   const opts = options || {};
-  const subId = String(row?.stripe_subscription_id || '').trim();
-  if (!subId) return null;
   const status = String(row?.subscription_status || '')
     .trim()
     .toLowerCase();
@@ -799,11 +834,21 @@ async function repairMembershipRosterExpiry(row, options) {
   const today = new Date().toISOString().slice(0, 10);
   const expires = String(row?.expires_at || '').trim().slice(0, 10);
   const missing = !expires;
-  // Basil-era syncs sometimes wrote today (or left null). Refresh live Hub subs
-  // when the stored date is missing or already due while Stripe still says live.
   const staleWhileLive = live && expires && expires <= today;
-  if (!opts.force && !missing && !staleWhileLive) return null;
-  const subscription = await retrieveMembershipSubscription(subId);
+  let subId = String(row?.stripe_subscription_id || '').trim();
+
+  let subscription = null;
+  if (subId) {
+    if (!opts.force && !missing && !staleWhileLive) return null;
+    subscription = await retrieveMembershipSubscription(subId);
+  } else {
+    // No Stripe link on the roster — only probe Stripe when expiry is blank (or forced).
+    // Avoids rewriting manual expiry dates for people who never paid through the Hub.
+    if (!opts.force && !missing) return null;
+    subscription = await findMembershipSubscriptionForEmail(row?.email, row?.organiser_id);
+    if (!subscription) return null;
+  }
+
   return syncRosterFromSubscription(subscription, {
     force: true,
     organiserId: row.organiser_id,
@@ -837,6 +882,7 @@ module.exports = {
   syncRosterFromSubscription,
   repairMembershipRosterExpiry,
   retrieveMembershipSubscription,
+  findMembershipSubscriptionForEmail,
   handleMembershipCheckoutCompleted,
   handleMembershipSubscriptionUpdated,
   handleMembershipSubscriptionDeleted,

@@ -2,7 +2,7 @@ const { setCors, json, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { isUuid } = require('../uuid');
 const { isStripeCheckoutConfigured } = require('../stripe-checkout');
-const { repairMembershipRosterExpiry, syncRosterFromSubscription, retrieveMembershipSubscription } = require('../membership-billing');
+const { repairMembershipRosterExpiry, syncRosterFromSubscription, retrieveMembershipSubscription, findMembershipSubscriptionForEmail } = require('../membership-billing');
 
 function parseBody(req) {
   let body = req.body;
@@ -18,7 +18,7 @@ function parseBody(req) {
 
 /**
  * POST /api/auth/membership-sync — refresh roster expiry from Stripe after Checkout.
- * Also heals rows where Basil API left expires_at blank.
+ * Also heals rows where Basil API left expires_at blank, or checkout never linked the sub id.
  */
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -54,8 +54,7 @@ module.exports = async function handler(req, res) {
       'id, email, organiser_id, expires_at, stripe_subscription_id, subscription_status, status'
     )
     .eq('status', 'active')
-    .ilike('email', email)
-    .not('stripe_subscription_id', 'is', null);
+    .ilike('email', email);
   if (organiserId) {
     if (!isUuid(organiserId)) {
       return json(res, 400, { ok: false, error: 'invalid_organiser' });
@@ -63,9 +62,36 @@ module.exports = async function handler(req, res) {
     query = query.eq('organiser_id', organiserId);
   }
 
-  const { data: rows, error } = await query.limit(10);
+  const { data: allRows, error } = await query.limit(20);
   if (error) throw new Error(error.message);
-  if (!(rows || []).length) {
+  let rows = (allRows || []).filter((r) => r.stripe_subscription_id);
+
+  // Checkout sometimes activated the Stripe sub without writing stripe_subscription_id.
+  if (!rows.length) {
+    try {
+      const found = await findMembershipSubscriptionForEmail(email, organiserId || null);
+      if (found) {
+        const linked = await syncRosterFromSubscription(found, {
+          force: true,
+          email,
+          organiserId: organiserId || found.metadata?.organiser_id,
+        });
+        if (linked?.ok && linked.row) {
+          return json(res, 200, {
+            ok: true,
+            synced: [
+              {
+                organiserId: linked.row.organiser_id,
+                expiresAt: linked.row.expires_at || null,
+                subscriptionStatus: linked.row.subscription_status || null,
+              },
+            ],
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[membership-sync] email lookup', e?.message || e);
+    }
     return json(res, 404, {
       ok: false,
       error: 'no_hub_subscription',

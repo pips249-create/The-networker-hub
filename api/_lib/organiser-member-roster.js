@@ -620,13 +620,31 @@ async function healHubBilledRosterExpiries(rows) {
     return list;
   }
   const out = [];
+  let emailLookups = 0;
+  const EMAIL_LOOKUP_CAP = 8;
   for (const row of list) {
-    if (!row || !row.stripe_subscription_id) {
+    if (!row) {
       out.push(row);
       continue;
     }
+    const hasSub = Boolean(String(row.stripe_subscription_id || '').trim());
+    const missingExpires = !String(row.expires_at || '').trim();
+    if (!hasSub && !missingExpires) {
+      out.push(row);
+      continue;
+    }
+    if (!hasSub) {
+      if (emailLookups >= EMAIL_LOOKUP_CAP) {
+        out.push(row);
+        continue;
+      }
+      emailLookups += 1;
+    }
     try {
-      const repaired = await repairMembershipRosterExpiry(row);
+      const repaired = await repairMembershipRosterExpiry(
+        row,
+        hasSub ? {} : { force: true }
+      );
       if (repaired?.row) {
         out.push({ ...row, ...repaired.row });
       } else {
