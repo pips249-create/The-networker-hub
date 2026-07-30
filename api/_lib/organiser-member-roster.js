@@ -1441,6 +1441,53 @@ async function listRosterGroupsForAttendee(email) {
   });
 }
 
+function isMissingRelationError(err) {
+  const code = String(err?.code || '').trim();
+  const message = String(err?.message || err || '');
+  return (
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    /could not find the table|relation .* does not exist|schema cache/i.test(message)
+  );
+}
+
+/**
+ * Members already notified for this event via listing-alerts table and/or
+ * roster email queue (covers environments where migration 169 is not applied).
+ */
+async function loadAlreadyNotifiedRosterMemberIds(sb, eventId, memberIds) {
+  const already = new Set();
+  const ids = (memberIds || []).map((id) => String(id || '').trim()).filter(Boolean);
+  const evId = String(eventId || '').trim();
+  if (!evId || !ids.length) return already;
+
+  const alertedRes = await sb
+    .from('organiser_roster_listing_alerts')
+    .select('roster_member_id')
+    .eq('event_id', evId)
+    .in('roster_member_id', ids);
+  if (alertedRes.error) {
+    if (!isMissingRelationError(alertedRes.error)) throw new Error(alertedRes.error.message);
+    console.error(
+      '[member-roster] organiser_roster_listing_alerts missing — run migration 169; falling back to queue dedupe'
+    );
+  } else {
+    (alertedRes.data || []).forEach((r) => already.add(String(r.roster_member_id)));
+  }
+
+  const queueRes = await sb
+    .from('organiser_roster_email_queue')
+    .select('roster_member_id')
+    .eq('kind', 'new_event')
+    .eq('event_id', evId)
+    .in('roster_member_id', ids)
+    .not('sent_at', 'is', null);
+  if (queueRes.error) throw new Error(queueRes.error.message);
+  (queueRes.data || []).forEach((r) => already.add(String(r.roster_member_id)));
+
+  return already;
+}
+
 /**
  * Send one member-list new-event email and record dedupe row.
  * Returns 'sent' | 'skipped' | throws on hard failure.
@@ -1456,12 +1503,18 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
   if (!email || !member.membershipActive) return 'skipped';
 
   const seriesPeers = await loadListingAlertSeriesPeers(sb, eventRow);
-  const unalertedEvents = await loadUnalertedEventsForRecipient(sb, {
-    eventRows: seriesPeers,
-    alertTable: 'organiser_roster_listing_alerts',
-    recipientColumn: 'roster_member_id',
-    recipientId: memberId,
-  });
+  let unalertedEvents;
+  try {
+    unalertedEvents = await loadUnalertedEventsForRecipient(sb, {
+      eventRows: seriesPeers,
+      alertTable: 'organiser_roster_listing_alerts',
+      recipientColumn: 'roster_member_id',
+      recipientId: memberId,
+    });
+  } catch (err) {
+    if (!isMissingRelationError(err)) throw err;
+    unalertedEvents = seriesPeers || [];
+  }
   if (!unalertedEvents.length) return 'skipped';
   if (!unalertedEvents.some((row) => String(row.id) === eventId)) return 'skipped';
 
@@ -1516,12 +1569,20 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
     },
   });
 
-  await sb.from('organiser_roster_listing_alerts').insert(
+  const insertRes = await sb.from('organiser_roster_listing_alerts').insert(
     unalertedEvents.map((row) => ({
       roster_member_id: memberId,
       event_id: row.id,
     }))
   );
+  if (insertRes.error) {
+    if (!isMissingRelationError(insertRes.error)) throw new Error(insertRes.error.message);
+    console.error(
+      '[member-roster] could not record listing alert — run migration 169',
+      eventId,
+      memberId
+    );
+  }
   if (alreadyAlerted) alreadyAlerted.add(memberId);
 
   if (member.attendeeId) {
@@ -1635,20 +1696,17 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
   if (!activeMembers.length) return result;
 
   const memberIds = activeMembers.map((m) => m.id);
-  const alertedRes = await sb
-    .from('organiser_roster_listing_alerts')
-    .select('roster_member_id')
-    .eq('event_id', eventId)
-    .in('roster_member_id', memberIds);
-  if (alertedRes.error) throw new Error(alertedRes.error.message);
-  const already = new Set((alertedRes.data || []).map((r) => String(r.roster_member_id)));
+  const already = await loadAlreadyNotifiedRosterMemberIds(sb, eventId, memberIds);
   const toQueue = activeMembers.filter((m) => !already.has(m.id));
   result.skipped = activeMembers.length - toQueue.length;
 
   if (!toQueue.length) return result;
 
   const { queueNewEventAlerts, drainDueRosterEmails } = require('./organiser-roster-email-queue');
-  const queued = await queueNewEventAlerts(eventRow, toQueue, { immediate: true });
+  // Small lists: send now. Larger lists: stagger over up to 2 hours (queue + cron drain).
+  const queued = await queueNewEventAlerts(eventRow, toQueue, {
+    immediate: toQueue.length <= 40,
+  });
   result.queued = queued.queued || 0;
   result.sent = result.queued;
 

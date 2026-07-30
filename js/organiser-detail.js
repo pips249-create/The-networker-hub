@@ -86,6 +86,20 @@
     document.documentElement.classList.add('org-page-ready');
   }
 
+  function scrollToHashTarget() {
+    var hash = String(location.hash || '').replace(/^#/, '');
+    if (!hash) return;
+    var el = document.getElementById(hash);
+    if (!el) return;
+    el.classList.add('is-hash-target');
+    requestAnimationFrame(function () {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    window.setTimeout(function () {
+      el.classList.remove('is-hash-target');
+    }, 2200);
+  }
+
   function setLoading(on) {
     var overlay = document.getElementById('org-load-overlay');
     if (window.hubLoading) {
@@ -873,6 +887,7 @@
       }
     } finally {
       setLoading(false);
+      scrollToHashTarget();
     }
   }
 
