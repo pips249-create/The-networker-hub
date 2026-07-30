@@ -1579,17 +1579,31 @@
 
     function isLiveOrganiserGroup(g) {
       if (!g) return false;
-      var key = String(g.statusKey || g.status || g.statusRaw || g.listingStatus || '')
+      // Match public directory rules: Verified OR published listing, never unpublished.
+      var listing = String(
+        g.listingStatus || g.listing_status || g.statusRaw || g.statusKey || g.status || ''
+      )
         .trim()
         .toLowerCase();
-      if (!key) return false;
-      if (/unpublish/.test(key)) return false;
-      if (key === 'draft' || /^(pending|hidden|inactive)/.test(key)) return false;
-      return key === 'live' || key === 'published' || /publish|live|active|public|approved|visible/.test(key);
+      if (/unpublish/.test(listing)) return false;
+      var verified = String(g.verificationStatus || g.verification_status || '')
+        .trim()
+        .toLowerCase();
+      if (verified === 'verified') return true;
+      if (!listing) return true; // Lean rows can omit status — still allow Promote.
+      if (listing === 'draft' || /^(pending|hidden|inactive)/.test(listing)) return false;
+      return (
+        listing === 'live' ||
+        listing === 'published' ||
+        /publish|live|active|public|approved|visible/.test(listing)
+      );
     }
 
     function promotableGroups() {
-      return (getGroups() || []).filter(isLiveOrganiserGroup);
+      var all = getGroups() || [];
+      var live = all.filter(isLiveOrganiserGroup);
+      // Never leave the picker empty if the organiser has pages — show all as fallback.
+      return live.length ? live : all;
     }
 
     function currentGroup() {
@@ -1656,24 +1670,11 @@
 
     function syncOpportunityGate() {
       var unlocked = hasLiveListings();
-      if (elOppGate) elOppGate.hidden = unlocked || state.categoryId !== 'opportunities';
-      if (!unlocked && state.categoryId === 'opportunities') {
-        state.categoryId = 'events';
-        state.customCaption = false;
-        var fallback = defaultTemplateForCategory('events');
-        state.templateId = fallback.id;
-        state.line1 = fallback.line1;
-        state.line2 = fallback.line2;
-        state.line3 = fallback.line3;
-        if (elLine1) elLine1.value = state.line1;
-        if (elLine2) elLine2.value = state.line2;
-        if (elLine3) elLine3.value = state.line3;
-        syncCategoryTabs();
-        syncCaptionOptions();
-        fillCaptionFromTemplate();
-      } else {
-        syncCaptionOptions();
-      }
+      var onOpp = state.categoryId === 'opportunities';
+      if (elOppGate) elOppGate.hidden = unlocked || !onOpp;
+      // Stay on the Opportunities tab so the unlock message is visible — do not yank back to Events.
+      syncCaptionOptions();
+      syncListingField();
     }
 
     function setFieldVisible(el, show) {
@@ -2239,13 +2240,25 @@
         return c.id === categoryId;
       });
       if (!cat) return;
-      if (categoryId === 'opportunities' && !hasLiveListings()) {
-        setStatus('Publish a live business opportunity listing to unlock these captions.', true);
-        syncOpportunityGate();
-        return;
-      }
       state.categoryId = categoryId;
       state.customCaption = false;
+      syncCategoryTabs();
+      if (categoryId === 'opportunities' && !hasLiveListings()) {
+        var oppTpl = defaultTemplateForCategory('opportunities');
+        state.templateId = oppTpl.id;
+        state.line1 = oppTpl.line1;
+        state.line2 = oppTpl.line2;
+        state.line3 = oppTpl.line3;
+        if (elLine1) elLine1.value = state.line1;
+        if (elLine2) elLine2.value = state.line2;
+        if (elLine3) elLine3.value = state.line3;
+        syncOpportunityGate();
+        syncEventField();
+        fillCaptionFromTemplate();
+        setStatus('Publish a live business opportunity listing to unlock these captions.', true);
+        refresh();
+        return;
+      }
       var tpl = defaultTemplateForCategory(categoryId);
       selectTemplate(tpl.id, { fromCategory: true });
     }
@@ -2269,7 +2282,12 @@
       });
       if (!tpl) return;
       if (tpl.group === 'opportunities' && !hasLiveListings()) {
+        state.categoryId = 'opportunities';
+        state.templateId = tpl.id;
+        syncCategoryTabs();
+        syncOpportunityGate();
         setStatus('Publish a live business opportunity listing to unlock these captions.', true);
+        refresh();
         return;
       }
       if (flags && flags.skipResetIfSame && state.templateId === id && !state.customCaption) {
@@ -2282,20 +2300,22 @@
       state.line1 = tpl.line1;
       state.line2 = tpl.line2;
       state.line3 = tpl.line3;
-      elLine1.value = state.line1;
-      elLine2.value = state.line2;
-      elLine3.value = state.line3;
+      if (elLine1) elLine1.value = state.line1;
+      if (elLine2) elLine2.value = state.line2;
+      if (elLine3) elLine3.value = state.line3;
       if (!state.backgroundTouched) {
         state.backgroundId = defaultBackgroundIdForTemplate(tpl);
         syncBackgroundSelection();
       }
       syncCategoryTabs();
+      syncOpportunityGate();
       syncListingField();
       syncEventField();
       if (isEventTemplate(tpl) && currentEvent()) applyEventToFields();
       else applyGroupToFields(false);
       fillCaptionFromTemplate();
       syncCaptionOptions();
+      setStatus('');
       refresh();
     }
 
