@@ -2,7 +2,7 @@ const { setCors, json, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { isUuid } = require('../uuid');
 const { isStripeCheckoutConfigured } = require('../stripe-checkout');
-const { repairMembershipRosterExpiry, syncRosterFromSubscription } = require('../membership-billing');
+const { repairMembershipRosterExpiry, syncRosterFromSubscription, retrieveMembershipSubscription } = require('../membership-billing');
 
 function parseBody(req) {
   let body = req.body;
@@ -73,17 +73,20 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const { getStripeClient } = require('../stripe-checkout');
-  const stripe = getStripeClient();
   const synced = [];
   for (const row of rows) {
     try {
-      const subscription = await stripe.subscriptions.retrieve(String(row.stripe_subscription_id));
-      const result = await syncRosterFromSubscription(subscription, {
-        force: true,
-        organiserId: row.organiser_id,
-        email: row.email || email,
-      });
+      let result = null;
+      try {
+        const subscription = await retrieveMembershipSubscription(String(row.stripe_subscription_id));
+        result = await syncRosterFromSubscription(subscription, {
+          force: true,
+          organiserId: row.organiser_id,
+          email: row.email || email,
+        });
+      } catch (retrieveErr) {
+        console.error('[membership-sync] retrieve', row.id, retrieveErr?.message || retrieveErr);
+      }
       if (result?.ok && result.row) {
         synced.push({
           organiserId: row.organiser_id,
@@ -91,7 +94,7 @@ module.exports = async function handler(req, res) {
           subscriptionStatus: result.row.subscription_status || null,
         });
       } else {
-        const repaired = await repairMembershipRosterExpiry(row);
+        const repaired = await repairMembershipRosterExpiry(row, { force: true });
         if (repaired?.row) {
           synced.push({
             organiserId: row.organiser_id,

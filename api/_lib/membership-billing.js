@@ -288,6 +288,21 @@ function periodEndTimestamp(subscription) {
     }
     if (max > 0) return max;
   }
+
+  // Fallback: latest invoice line period (useful when items are omitted from a thin webhook payload).
+  const invoice =
+    subscription?.latest_invoice && typeof subscription.latest_invoice === 'object'
+      ? subscription.latest_invoice
+      : null;
+  if (invoice) {
+    const lines = Array.isArray(invoice.lines?.data) ? invoice.lines.data : [];
+    let max = 0;
+    for (const line of lines) {
+      const ts = Number(line?.period?.end);
+      if (Number.isFinite(ts) && ts > max) max = ts;
+    }
+    if (max > 0) return max;
+  }
   return null;
 }
 
@@ -295,6 +310,18 @@ function periodEndDateString(subscription) {
   const ts = periodEndTimestamp(subscription);
   if (!ts) return null;
   return new Date(ts * 1000).toISOString().slice(0, 10);
+}
+
+/** Prefer the latest YYYY-MM-DD among candidates (subscription vs invoice period). */
+function pickLatestExpiresAt(...candidates) {
+  const dates = [];
+  for (const raw of candidates) {
+    const d = String(raw || '').trim().slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) dates.push(d);
+  }
+  if (!dates.length) return null;
+  dates.sort();
+  return dates[dates.length - 1];
 }
 
 function normalizeMeta(metadata) {
@@ -411,7 +438,7 @@ async function syncRosterFromSubscription(subscription, options) {
 
   const status = String(subscription?.status || opts.subscriptionStatus || '').trim() || null;
   const canceled = status === 'canceled' || status === 'unpaid' || opts.deleted;
-  let expiresAt = periodEndDateString(subscription) || opts.expiresAt || null;
+  let expiresAt = pickLatestExpiresAt(periodEndDateString(subscription), opts.expiresAt);
   if (canceled && !expiresAt) {
     expiresAt = new Date().toISOString().slice(0, 10);
   }
@@ -691,7 +718,9 @@ async function sendMembershipRenewalReceipt({ invoice, subscription, rosterRow, 
 async function retrieveMembershipSubscription(subscriptionId) {
   const { getStripeClient } = require('./stripe-checkout');
   const stripe = getStripeClient();
-  return stripe.subscriptions.retrieve(String(subscriptionId || '').trim());
+  return stripe.subscriptions.retrieve(String(subscriptionId || '').trim(), {
+    expand: ['latest_invoice', 'items.data'],
+  });
 }
 
 async function handleMembershipInvoicePaid(invoice) {
@@ -762,7 +791,18 @@ async function repairMembershipRosterExpiry(row, options) {
   const opts = options || {};
   const subId = String(row?.stripe_subscription_id || '').trim();
   if (!subId) return null;
-  if (row.expires_at && !opts.force) return null;
+  const status = String(row?.subscription_status || '')
+    .trim()
+    .toLowerCase();
+  const live =
+    !status || status === 'active' || status === 'trialing' || status === 'past_due';
+  const today = new Date().toISOString().slice(0, 10);
+  const expires = String(row?.expires_at || '').trim().slice(0, 10);
+  const missing = !expires;
+  // Basil-era syncs sometimes wrote today (or left null). Refresh live Hub subs
+  // when the stored date is missing or already due while Stripe still says live.
+  const staleWhileLive = live && expires && expires <= today;
+  if (!opts.force && !missing && !staleWhileLive) return null;
   const subscription = await retrieveMembershipSubscription(subId);
   return syncRosterFromSubscription(subscription, {
     force: true,
@@ -791,10 +831,12 @@ module.exports = {
   upsertMembershipPlan,
   amountPenceForInterval,
   periodEndDateString,
+  pickLatestExpiresAt,
   isMembershipCheckoutMetadata,
   applyMembershipSubscriptionToRoster,
   syncRosterFromSubscription,
   repairMembershipRosterExpiry,
+  retrieveMembershipSubscription,
   handleMembershipCheckoutCompleted,
   handleMembershipSubscriptionUpdated,
   handleMembershipSubscriptionDeleted,

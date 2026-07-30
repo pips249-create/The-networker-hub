@@ -602,7 +602,46 @@ async function listRosterForOrganiser(organiserId, { status } = {}) {
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-  return (data || []).map(rosterRowToClient);
+  const healed = await healHubBilledRosterExpiries(data || []);
+  return healed.map(rosterRowToClient);
+}
+
+/**
+ * Refresh expires_at from Stripe for Hub-billed members when missing or already due
+ * while the subscription is still live (covers Basil-era blank/same-day writes).
+ */
+async function healHubBilledRosterExpiries(rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) return list;
+  let repairMembershipRosterExpiry;
+  try {
+    ({ repairMembershipRosterExpiry } = require('./membership-billing'));
+  } catch {
+    return list;
+  }
+  const out = [];
+  for (const row of list) {
+    if (!row || !row.stripe_subscription_id) {
+      out.push(row);
+      continue;
+    }
+    try {
+      const repaired = await repairMembershipRosterExpiry(row);
+      if (repaired?.row) {
+        out.push({ ...row, ...repaired.row });
+      } else {
+        out.push(row);
+      }
+    } catch (err) {
+      console.error(
+        '[member-roster] organiser expiry heal failed',
+        row.id,
+        err?.message || err
+      );
+      out.push(row);
+    }
+  }
+  return out;
 }
 
 const ROSTER_PAGE_SIZE_DEFAULT = 25;
@@ -711,7 +750,8 @@ async function listRosterPage(organiserId, options = {}) {
 
   const { data, error, count } = await q;
   if (error) throw new Error(error.message);
-  const rows = (data || []).map(rosterRowToClient);
+  const healed = await healHubBilledRosterExpiries(data || []);
+  const rows = healed.map(rosterRowToClient);
   const members = enrichBookings
     ? await enrichMembersWithBookings(orgId, rows, { emails: rows.map((m) => m.email) })
     : rows;
