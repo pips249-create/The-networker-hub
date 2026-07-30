@@ -132,7 +132,11 @@
   }
 
   function membershipOrganiserHref(item) {
-    return '/events/organiser.html?slug=' + encodeURIComponent(item.organiserSlug || item.organiserId || '');
+    return (
+      '/events/organiser.html?slug=' +
+      encodeURIComponent(item.organiserSlug || item.organiserId || '') +
+      '#org-upcoming'
+    );
   }
 
   function goToMemberships() {

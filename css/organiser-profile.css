@@ -426,6 +426,17 @@
   border-bottom: 1px solid var(--border-soft);
 }
 
+.org-profile-section--events {
+  scroll-margin-top: 88px;
+}
+
+.org-profile-section--events.is-hash-target {
+  border-radius: 12px;
+  outline: 2px solid rgba(28, 32, 64, 0.18);
+  outline-offset: 8px;
+  background: linear-gradient(180deg, rgba(28, 32, 64, 0.04), transparent 70%);
+}
+
 .org-profile-section:first-child {
   padding-top: 0;
 }
