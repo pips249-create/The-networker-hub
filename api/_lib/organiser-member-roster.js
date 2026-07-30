@@ -759,6 +759,10 @@ async function listRosterPage(organiserId, options = {}) {
     q = q.not('expires_at', 'is', null).gte('expires_at', today).lte('expires_at', in14);
   } else if (filter === 'past_due' || filter === 'payment_failed') {
     q = q.eq('subscription_status', 'past_due');
+  } else if (filter === 'hub_billed' || filter === 'paying') {
+    q = q.not('stripe_subscription_id', 'is', null);
+  } else if (filter === 'not_hub_billed' || filter === 'unpaid' || filter === 'manual') {
+    q = q.is('stripe_subscription_id', null);
   }
 
   q = q

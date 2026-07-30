@@ -3,6 +3,8 @@ const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const {
   getMembershipPlanForOrganiser,
   upsertMembershipPlan,
+  MEMBERSHIP_FEE_LABEL,
+  MEMBERSHIP_FEE_EXPLANATION,
 } = require('../membership-billing');
 const {
   connectRequiredForPaidCheckout,
@@ -82,10 +84,8 @@ module.exports = async function handler(req, res) {
         ok: true,
         plan,
         connectReady: connect ? Boolean(connect.ready) : !connectRequiredForPaidCheckout(),
-        feeLabel: plan?.feeLabel || 'Hub fee (4.5% + 20p)',
-        feeExplanation:
-          plan?.feeExplanation ||
-          'Members pay the Hub fee on top. You receive 100% of the membership price you set.',
+        feeLabel: plan?.feeLabel || MEMBERSHIP_FEE_LABEL,
+        feeExplanation: plan?.feeExplanation || MEMBERSHIP_FEE_EXPLANATION,
       });
     }
 

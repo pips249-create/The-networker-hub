@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260730memfix2" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260730promote-hub" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -868,18 +868,30 @@
                 />
                 <select id="omr-status-filter" aria-label="Filter members by status">
                   <option value="all">All members</option>
-                  <option value="claimed">Signed up to the Hub</option>
-                  <option value="unclaimed">Not signed up yet</option>
-                  <option value="expiring">Expiring soon</option>
-                  <option value="past_due">Payment failed</option>
-                  <option value="has_bookings">Has event bookings</option>
-                  <option value="no_bookings">No event bookings yet</option>
-                  <option value="booked">Booked for selected event</option>
-                  <option value="not_booked">Not booked for selected event</option>
+                  <optgroup label="Hub account">
+                    <option value="claimed">Signed up to the Hub</option>
+                    <option value="unclaimed">Not signed up yet</option>
+                  </optgroup>
+                  <optgroup label="Membership billing">
+                    <option value="hub_billed">Paying through the Hub</option>
+                    <option value="not_hub_billed">Not paying through the Hub</option>
+                    <option value="expiring">Expiring soon</option>
+                    <option value="past_due">Payment failed</option>
+                  </optgroup>
+                  <optgroup label="Bookings">
+                    <option value="has_bookings">Has event bookings</option>
+                    <option value="no_bookings">No event bookings yet</option>
+                    <option value="booked">Booked for a chosen event</option>
+                    <option value="not_booked">Not booked for a chosen event</option>
+                  </optgroup>
                 </select>
-                <select id="omr-event-select" class="omr-filter-event" aria-label="Filter members by event" hidden>
-                  <option value="">All events</option>
-                </select>
+                <label class="omr-event-filter-label" id="omr-event-filter-wrap" hidden>
+                  <span class="omr-event-filter-caption">Event</span>
+                  <select id="omr-event-select" class="omr-filter-event" aria-label="Choose an event for booking filters">
+                    <option value="">Choose an event…</option>
+                  </select>
+                </label>
+                <p class="omr-filter-hint" id="omr-filter-hint" hidden></p>
                 <div class="org-action-wrap omr-more-actions-wrap" id="omr-more-actions">
                   <button
                     type="button"
@@ -1223,22 +1235,23 @@
                 </button>
               </nav>
             </div>
-            <div class="org-promote-group">
+            <div class="org-promote-group org-promote-group--hub-top" id="org-promote-hub-group-top">
               <p class="org-promote-group-label">Get found on the Hub</p>
               <nav class="org-events-subnav org-events-subnav--promote org-events-subnav--promote-hub" role="tablist" aria-label="Get found on the Hub">
-                <button type="button" role="tab" class="org-events-tab" id="org-social-tab-spotlight" aria-selected="false" aria-controls="org-social-panel-spotlight" data-social-tab="spotlight" tabindex="-1">
+                <!-- IDs live on the hub-adjacent copy below; these are for Reach-out discovery only -->
+                <button type="button" role="tab" class="org-events-tab" aria-selected="false" aria-controls="org-social-panel-spotlight" data-social-tab="spotlight" tabindex="-1">
                   <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a2 2 0 0 0 2 2h1l4 4V5L6 9H5a2 2 0 0 0-2 2z"/><path d="M13 8.5a4 4 0 0 1 0 7"/><path d="M17 6a7 7 0 0 1 0 12"/></svg>
                   <span class="org-events-tab-label">Feature event <span class="org-events-tab-count org-events-tab-count--paid">£55/mo</span></span>
                 </button>
-                <button type="button" role="tab" class="org-events-tab" id="org-social-tab-ranking" aria-selected="false" aria-controls="org-social-panel-ranking" data-social-tab="ranking" tabindex="-1">
+                <button type="button" role="tab" class="org-events-tab" aria-selected="false" aria-controls="org-social-panel-ranking" data-social-tab="ranking" tabindex="-1">
                   <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z"/></svg>
                   <span class="org-events-tab-label">Top groups</span>
                 </button>
-                <button type="button" role="tab" class="org-events-tab" id="org-social-tab-partner" aria-selected="false" aria-controls="org-social-panel-partner" data-social-tab="partner" tabindex="-1">
+                <button type="button" role="tab" class="org-events-tab" aria-selected="false" aria-controls="org-social-panel-partner" data-social-tab="partner" tabindex="-1">
                   <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h7M7 16h5"/></svg>
                   <span class="org-events-tab-label">Hub partner badge</span>
                 </button>
-                <button type="button" role="tab" class="org-events-tab" id="org-social-tab-reach" aria-selected="false" aria-controls="org-social-panel-reach" data-social-tab="reach" tabindex="-1">
+                <button type="button" role="tab" class="org-events-tab" aria-selected="false" aria-controls="org-social-panel-reach" data-social-tab="reach" tabindex="-1">
                   <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
                   <span class="org-events-tab-label">More reach</span>
                 </button>

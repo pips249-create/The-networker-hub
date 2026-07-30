@@ -760,6 +760,36 @@
   margin-bottom: 14px;
 }
 
+.omr-event-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.omr-event-filter-caption {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #084a52;
+  white-space: nowrap;
+}
+
+.omr-event-filter-label.is-needed .omr-filter-event,
+.omr-filter-event.omr-filter-event--pulse {
+  border-color: #0d6e7a;
+  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.22);
+}
+
+.omr-filter-hint {
+  flex: 1 1 100%;
+  margin: -2px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #084a52;
+}
+
 .omr-table-search {
   flex: 1;
   min-width: 180px;

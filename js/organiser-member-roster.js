@@ -204,13 +204,33 @@
 
   function syncMembersEventFilter() {
     const sel = document.getElementById('omr-event-select');
+    const wrap = document.getElementById('omr-event-filter-wrap');
+    const hint = document.getElementById('omr-filter-hint');
     if (!sel) return;
-    const needsEvent =
-      filters.status === 'booked' ||
-      filters.status === 'not_booked' ||
-      Boolean(sel.value);
-    sel.hidden = !needsEvent && activeRegisterTab !== 'members';
-    if (needsEvent) sel.hidden = false;
+    const needsEvent = filters.status === 'booked' || filters.status === 'not_booked';
+    const showEvent = needsEvent || Boolean(sel.value);
+    if (wrap) {
+      wrap.hidden = !showEvent;
+      wrap.classList.toggle('is-needed', needsEvent && !sel.value);
+    } else {
+      sel.hidden = !showEvent;
+    }
+    if (hint) {
+      if (needsEvent && !sel.value) {
+        hint.hidden = false;
+        hint.textContent =
+          'Next: choose an event in the Event box — then you’ll see who has (or hasn’t) booked.';
+      } else if (needsEvent && sel.value) {
+        hint.hidden = false;
+        hint.textContent =
+          filters.status === 'booked'
+            ? 'Showing members who booked this event.'
+            : 'Showing members who have not booked this event.';
+      } else {
+        hint.hidden = true;
+        hint.textContent = '';
+      }
+    }
   }
 
   function syncReportsSetupFields() {
@@ -328,7 +348,7 @@
       return sel.value;
     }
 
-    fillSelect(memberSel, 'All events');
+    fillSelect(memberSel, 'Choose an event…');
     fillSelect(reportSel, 'Choose an event…');
     syncMembersEventFilter();
     syncEventActionButtons();
@@ -1361,6 +1381,19 @@
       if (filters.status === 'claimed' && !isClaimed(m)) return false;
       if (filters.status === 'unclaimed' && isClaimed(m)) return false;
       if (filters.status === 'expiring' && !m.expiringSoon) return false;
+      if (filters.status === 'past_due' && !m.paymentFailed) return false;
+      if (
+        filters.status === 'hub_billed' &&
+        !(m.billedThroughHub || m.stripeSubscriptionId)
+      ) {
+        return false;
+      }
+      if (
+        (filters.status === 'not_hub_billed' || filters.status === 'unpaid') &&
+        (m.billedThroughHub || m.stripeSubscriptionId)
+      ) {
+        return false;
+      }
       if (filters.status === 'has_bookings' && !memberBookings(m).total) return false;
       if (filters.status === 'no_bookings' && memberBookings(m).total) return false;
       if (filters.status === 'booked') {
@@ -1632,19 +1665,30 @@
           empty.hidden = false;
           const title = empty.querySelector('.org-empty-state-title');
           const text = empty.querySelector('.org-empty-state-text');
-          if (totalActive > 0 && title && text) {
+          const needsEvent =
+            (filters.status === 'booked' || filters.status === 'not_booked') &&
+            !selectedEventId();
+          if (needsEvent && title && text) {
+            title.textContent = 'Choose an event';
+            text.textContent =
+              'Use the Event box above to pick a date — then we can show who has booked.';
+          } else if (totalActive > 0 && title && text) {
             title.textContent = 'No members match these filters';
-            text.textContent = 'Try a different search or filter, or clear the event filter.';
+            text.textContent =
+              filters.status === 'hub_billed'
+                ? 'Nobody on this list is paying through the Hub yet. Use Invite to pay, or try Not paying through the Hub.'
+                : 'Try a different search or filter, or clear the event filter.';
           } else if (title && text) {
             title.textContent = 'No members yet';
             text.textContent =
               'Use + Add a member or Import spreadsheet, then add a Members only ticket on your event (Tickets step).';
           }
         }
-      renderPagination(rosterTotal);
-      syncReportsPanelState();
-      return;
-    }
+        syncMembersEventFilter();
+        renderPagination(rosterTotal);
+        syncReportsPanelState();
+        return;
+      }
     if (empty) empty.hidden = true;
 
     renderPagination(rosterTotal);
@@ -2147,15 +2191,27 @@
     });
     document.getElementById('omr-status-filter')?.addEventListener('change', function (e) {
       filters.status = e.target.value || 'all';
-      if (
-        (filters.status === 'booked' || filters.status === 'not_booked') &&
-        !selectedEventId()
-      ) {
-        showAlert('Choose an event first to filter by booking status.', 'error');
-        filters.status = 'all';
-        e.target.value = 'all';
-      }
+      const needsEvent = filters.status === 'booked' || filters.status === 'not_booked';
       syncMembersEventFilter();
+      if (needsEvent && !selectedEventId()) {
+        showAlert(
+          'Choose an event in the Event box (next to the filter) to see booking status.',
+          'error'
+        );
+        const eventSel = document.getElementById('omr-event-select');
+        if (eventSel) {
+          eventSel.focus();
+          eventSel.classList.add('omr-filter-event--pulse');
+          setTimeout(function () {
+            eventSel.classList.remove('omr-filter-event--pulse');
+          }, 1600);
+        }
+        // Keep the filter selected so the Event picker stays visible — don't reset to All.
+        page = 1;
+        members = [];
+        renderRoster();
+        return;
+      }
       page = 1;
       fetchRosterPage(1);
     });
