@@ -93,12 +93,13 @@ async function buildSitemapXml(originOverride) {
   const sb = getSupabaseAdmin();
   const [eventRows, organisers, opportunityRows] = await Promise.all([
     fetchPublishedEventRows(sb, {
-      select: 'id, slug, title, organiser_id, starts_at, updated_at, created_at, approval_status, status',
+      // events has created_at only (no updated_at column)
+      select: 'id, slug, title, organiser_id, starts_at, created_at, approval_status, status',
     }),
     fetchAllOrganiserRows(sb),
     sb
       .from('business_opportunities')
-      .select('id, title, slug, updated_at, published_at, status, approval_status, listing_expires_at')
+      .select('id, title, slug, updated_at, published_at, created_at, status, approval_status, listing_expires_at')
       .eq('status', 'published')
       .eq('approval_status', 'Approved')
       .order('published_at', { ascending: false, nullsFirst: false }),
@@ -134,7 +135,7 @@ async function buildSitemapXml(originOverride) {
     body += urlEntry(
       origin,
       '/events/' + encodeURIComponent(slug),
-      isoDate(row.updated_at || row.starts_at || row.created_at)
+      isoDate(row.starts_at || row.created_at)
     );
   });
 
