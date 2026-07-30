@@ -77,11 +77,11 @@
     },
     {
       id: 'split_frame',
-      label: 'Split frame',
+      label: 'Photo banner',
       group: 'events',
       groupLabel: 'Events & group',
       theme: 'event_split',
-      styleHint: 'Photo on one side, bold brand colour and logo on the other',
+      styleHint: 'Landscape photo across the top, brand colour and logo below — made for typical event photos',
       accent: '#0d1f3c',
       kicker: 'JOIN US',
       line1: 'Save the date',
@@ -263,61 +263,69 @@
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
+  /** Organiser logo without a white card — works better on photos and brand panels. */
+  function drawOrgLogoClear(ctx, img, x, y, w, h, accent) {
+    if (img) {
+      drawContainedImage(ctx, img, x, y, w, h);
+      return;
+    }
+    drawLogoPlaceholder(ctx, x, y, w, h, accent || '#9a7aa8');
+  }
+
   /** Hub credit mark — bottom-right; sized to read on mobile LinkedIn feeds. */
   function hubCreditBox(opts) {
     opts = opts || {};
     var emphasis = Boolean(opts.emphasis);
-    var w = emphasis ? 380 : 340;
-    var h = emphasis ? 102 : 92;
+    // Landscape wordmark (logo-nav-transparent) — not the square stacked mark.
+    var w = emphasis ? 300 : 260;
+    var h = emphasis ? 110 : 96;
     return {
       w: w,
       h: h,
       x: W - w - 40,
-      y: H - h - (opts.hideText ? 44 : 78),
-      textBelow: !opts.hideText,
-      label: emphasis ? 'The Networker Hub' : 'on The Networker Hub',
+      y: H - h - 40,
+      textBelow: false,
+      label: 'The Networker Hub',
     };
   }
 
   function drawHubCredit(ctx, logos, style) {
     style = style || {};
     logos = logos || {};
-    var onDark = Boolean(style.onDark);
-    var hubLogo = onDark ? logos.onDark || logos.onLight : logos.onLight || logos.onDark;
+    // Always prefer the landscape nav wordmark on a light pill — logo-hub-dark is a
+    // square with a baked black fill and looks wrong in this corner.
+    var hubLogo = logos.onLight || logos.onDark;
     if (!hubLogo) return null;
     var box = hubCreditBox(style);
-    var padX = 16;
-    var padY = 12;
-    var textExtra = box.textBelow && style.hideText !== true ? 34 : 0;
-    ctx.fillStyle = onDark ? 'rgba(8, 12, 18, 0.62)' : 'rgba(255, 255, 255, 0.94)';
+    var padX = 18;
+    var padY = 14;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
     roundRect(
       ctx,
       box.x - padX,
       box.y - padY,
       box.w + padX * 2,
-      box.h + padY * 2 + textExtra,
+      box.h + padY * 2,
       18
     );
     ctx.fill();
     drawContainedImage(ctx, hubLogo, box.x, box.y, box.w, box.h);
-    if (box.textBelow && style.hideText !== true) {
-      ctx.fillStyle = style.textColor || (onDark ? 'rgba(255,255,255,0.9)' : 'rgba(44,40,38,0.78)');
-      ctx.font = '600 20px "DM Sans", Arial, Helvetica, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(box.label, box.x + box.w / 2, box.y + box.h + 28);
-      ctx.textAlign = 'left';
-    }
     return box;
   }
 
-  /** Prefer light Hub mark on dark corners; dark mark on light/gold corners. */
-  function hubCreditOnDark(bg, layoutHint) {
-    if (layoutHint === 'photo' || layoutHint === 'split') return true;
-    if (layoutHint === 'magazine') return false;
-    if (!bg) return false;
-    // Navy & gold puts a bright gold blob in the credit corner.
-    if (bg.id === 'navy') return false;
-    return Boolean(bg.dark);
+  /** @deprecated kept for call sites — credit always uses the light pill + nav wordmark. */
+  function hubCreditOnDark() {
+    return false;
+  }
+
+  /** Readable text colours for dark photo / split overlays, driven by brand kit. */
+  function overlayTextColors(bg) {
+    bg = bg || {};
+    return {
+      kicker: bg.accent || bg.kicker || '#e8b84b',
+      title: '#ffffff',
+      sub: 'rgba(255,255,255,0.9)',
+    };
   }
 
   function drawLogoPlaceholder(ctx, x, y, w, h, hintColor) {
@@ -611,15 +619,16 @@
       ctx.fillRect(0, 0, W, 14);
 
       var logoBoxW = 360;
-      var logoBoxH = 190;
-      drawOrgLogoBox(W - logoBoxW - 36, 32, logoBoxW, logoBoxH, 20);
+      var logoBoxH = 150;
+      drawOrgLogoClear(ctx, orgLogo, W - logoBoxW - 36, 40, logoBoxW, logoBoxH, bg.accent || '#9a7aa8');
 
+      var overlay = overlayTextColors(bg);
       var textBaseY = H - 270;
-      ctx.fillStyle = '#e8b84b';
+      ctx.fillStyle = overlay.kicker;
       ctx.font = '700 22px ' + bodyFace;
       ctx.fillText(kickerText, 56, textBaseY);
 
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = overlay.title;
       ctx.font = '400 58px ' + titleFace;
       var heroTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 920);
       var heroY = textBaseY + 62;
@@ -628,7 +637,7 @@
         heroY += 64;
       }
 
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillStyle = overlay.sub;
       ctx.font = '400 24px ' + bodyFace;
       var heroSub = wrapText(ctx, line3, 880);
       heroY += 10;
@@ -638,61 +647,58 @@
       }
 
       if (hubLogos.onDark || hubLogos.onLight) {
-        drawHubCredit(ctx, hubLogos, {
-          onDark: true,
-          textColor: 'rgba(255,255,255,0.9)',
-        });
+        drawHubCredit(ctx, hubLogos, { onDark: false });
       }
       return;
     }
 
     if (isSplit && !quietBrand) {
+      // Landscape-friendly: photo across the top, brand panel below (not a portrait side-split).
       ctx.clearRect(0, 0, W, H);
-      var splitX = Math.round(W * 0.52);
+      var photoH = Math.round(H * 0.5);
       if (eventImage) {
-        drawCoverImage(ctx, eventImage, 0, 0, splitX, H, opts.eventImagePosition);
+        drawCoverImage(ctx, eventImage, 0, 0, W, photoH, opts.eventImagePosition);
       } else {
         ctx.fillStyle = bg.stops[1] || '#ebe0f0';
-        ctx.fillRect(0, 0, splitX, H);
+        ctx.fillRect(0, 0, W, photoH);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.font = '600 22px ' + bodyFace;
         ctx.textAlign = 'center';
-        ctx.fillText('Add an event photo', splitX / 2, H / 2);
+        ctx.fillText('Add an event photo', W / 2, photoH / 2);
         ctx.textAlign = 'left';
       }
       var panelColor = bg.dark ? bg.stops[0] : '#0d1f3c';
       ctx.fillStyle = panelColor;
-      ctx.fillRect(splitX, 0, W - splitX, H);
+      ctx.fillRect(0, photoH, W, H - photoH);
       ctx.fillStyle = bg.accent || tpl.accent || '#c9961f';
-      ctx.fillRect(splitX, 0, 10, H);
+      ctx.fillRect(0, photoH, W, 10);
 
-      drawOrgLogoBox(splitX + 40, 48, 400, 210, 22);
+      drawOrgLogoClear(ctx, orgLogo, 48, photoH + 36, 340, 140, bg.accent || '#c9961f');
 
-      ctx.fillStyle = '#e8b84b';
+      var splitColors = overlayTextColors(bg);
+      var textX = 420;
+      ctx.fillStyle = splitColors.kicker;
       ctx.font = '700 20px ' + bodyFace;
-      ctx.fillText(kickerText, splitX + 48, 320);
+      ctx.fillText(kickerText, textX, photoH + 70);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '400 48px ' + titleFace;
-      var splitTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), W - splitX - 100);
-      var sy = 390;
-      for (var st = 0; st < Math.min(4, splitTitle.length); st++) {
-        ctx.fillText(splitTitle[st], splitX + 48, sy);
-        sy += 56;
+      ctx.fillStyle = splitColors.title;
+      ctx.font = '400 44px ' + titleFace;
+      var splitTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), W - textX - 56);
+      var sy = photoH + 130;
+      for (var st = 0; st < Math.min(3, splitTitle.length); st++) {
+        ctx.fillText(splitTitle[st], textX, sy);
+        sy += 52;
       }
-      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.fillStyle = splitColors.sub;
       ctx.font = '400 22px ' + bodyFace;
-      var splitSub = wrapText(ctx, line3, W - splitX - 100);
-      sy += 16;
-      for (var ss = 0; ss < Math.min(3, splitSub.length); ss++) {
-        ctx.fillText(splitSub[ss], splitX + 48, sy);
-        sy += 32;
+      var splitSub = wrapText(ctx, line3, W - textX - 56);
+      sy += 8;
+      for (var ss = 0; ss < Math.min(2, splitSub.length); ss++) {
+        ctx.fillText(splitSub[ss], textX, sy);
+        sy += 30;
       }
       if (hubLogos.onDark || hubLogos.onLight) {
-        drawHubCredit(ctx, hubLogos, {
-          onDark: true,
-          textColor: 'rgba(255,255,255,0.9)',
-        });
+        drawHubCredit(ctx, hubLogos, { onDark: false });
       }
       return;
     }
@@ -707,7 +713,7 @@
       ctx.fillRect(0, 0, W, 18);
       ctx.fillRect(0, H - 18, W, 18);
 
-      drawOrgLogoBox(W / 2 - 230, 56, 460, 230, 24);
+      drawOrgLogoClear(ctx, orgLogo, W / 2 - 200, 56, 400, 180, bg.accent || '#c9961f');
 
       ctx.fillStyle = bg.kicker;
       ctx.font = '700 22px ' + bodyFace;
@@ -755,13 +761,13 @@
       ctx.fillStyle = bg.accent || tpl.accent || '#4a4446';
       ctx.fillRect(0, stripH, W, 12);
 
-      drawOrgLogoBox(48, stripH + 36, 320, 170, 18);
+      drawOrgLogoClear(ctx, orgLogo, 48, stripH + 36, 300, 140, bg.accent || '#4a4446');
 
-      ctx.fillStyle = bg.accent || '#4a4446';
+      ctx.fillStyle = bg.accent || bg.kicker || '#4a4446';
       ctx.font = '700 20px ' + bodyFace;
       ctx.fillText(kickerText, 400, stripH + 78);
 
-      ctx.fillStyle = '#2c2826';
+      ctx.fillStyle = bg.title || '#2c2826';
       ctx.font = '400 56px ' + titleFace;
       var magTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 720);
       var my = stripH + 150;
@@ -769,7 +775,7 @@
         ctx.fillText(magTitle[mt], 400, my);
         my += 62;
       }
-      ctx.fillStyle = '#5c5557';
+      ctx.fillStyle = bg.sub || '#5c5557';
       ctx.font = '400 24px ' + bodyFace;
       var magSub = wrapText(ctx, line3, 720);
       my += 8;
@@ -778,10 +784,7 @@
         my += 34;
       }
       if (hubLogos.onDark || hubLogos.onLight) {
-        drawHubCredit(ctx, hubLogos, {
-          onDark: false,
-          textColor: '#5c5557',
-        });
+        drawHubCredit(ctx, hubLogos, { onDark: false });
       }
       return;
     }
@@ -813,7 +816,7 @@
     var creditColor = bg.credit;
 
     if (isEventSpotlight && !quietBrand) {
-      drawOrgLogoBox(56, 40, 460, 230, 24);
+      drawOrgLogoClear(ctx, orgLogo, 56, 48, 420, 180, bg.accent || '#9a7aa8');
       ctx.fillStyle = kickerColor;
       ctx.font = '700 22px ' + bodyFace;
       ctx.fillText(kickerText, 540, 100);
@@ -1012,7 +1015,10 @@
   function isPublishedEvent(ev) {
     if (!ev) return false;
     var status = String(ev.status || ev.listingStatus || '').toLowerCase();
-    return status === 'published' || status === 'live';
+    if (status === 'published' || status === 'live') return true;
+    // Lean bootstrap summaries expose statusKey (upcoming / live / archived), not status.
+    var key = String(ev.statusKey || '').toLowerCase();
+    return key === 'live' || key === 'upcoming' || key === 'archived' || key === 'published';
   }
 
   function eventPublicUrl(ev) {
@@ -1244,7 +1250,7 @@
       '</div>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Your post message</span>' +
-      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="6" maxlength="1200" aria-label="Post text"></textarea>' +
+      '<textarea id="post-caption-edit" class="org-post-caption-edit" rows="11" maxlength="1200" aria-label="Post text"></textarea>' +
       '</label>' +
       '<details class="org-post-advanced org-post-advanced--picture">' +
       '<summary>Customise your picture (optional)</summary>' +
@@ -1276,6 +1282,7 @@
       '</details>' +
       '<div class="org-post-actions org-post-actions-primary">' +
       '<button type="button" class="org-btn org-btn-gold" id="post-linkedin-primary">Copy text &amp; open LinkedIn</button>' +
+      '<p class="org-post-hint org-post-hint--share">Works on Facebook too — download the picture, copy the text, then paste into either app.</p>' +
       '</div>' +
       '<div class="org-post-actions">' +
       '<button type="button" class="org-btn org-btn-outline" id="post-download">Download picture</button>' +
@@ -1293,7 +1300,7 @@
       H +
       '" aria-label="LinkedIn post image preview"></canvas>' +
       '</div>' +
-      '<p class="org-post-hint">Download the picture, then paste your text when you create a post on LinkedIn. The picture is square — ideal for LinkedIn.</p>' +
+      '<p class="org-post-hint">Download the picture, then paste your text when you create a post. The square image works on LinkedIn and Facebook.</p>' +
       '</div>' +
       '</div>' +
       '</div>';
@@ -1409,7 +1416,7 @@
     function styleHintFor(tpl) {
       if (tpl.styleHint) return tpl.styleHint;
       if (tpl.theme === 'event_photo_hero') return 'Full-bleed event photo with text at the bottom';
-      if (tpl.theme === 'event_split') return 'Photo beside a bold brand colour panel';
+      if (tpl.theme === 'event_split') return 'Landscape photo across the top, brand colour below';
       if (tpl.theme === 'event_poster') return 'Bold typographic poster with a large logo';
       if (tpl.theme === 'event_magazine') return 'Photo strip across the top with editorial type';
       if (tpl.theme === 'event_spotlight') return 'Large logo header with a photo card underneath';
@@ -1525,9 +1532,9 @@
         // Keep events with no group id so older rows still appear.
         return !gid || gid === groupId;
       });
-      return forGroup.length ? forGroup : list.filter(function (ev) {
-        return eventGroupId(ev) === groupId;
-      });
+      // If this organiser page has none, fall back to all published events
+      // rather than showing an empty picker while other pages have events.
+      return forGroup.length ? forGroup : list;
     }
 
     function eventStartMs(ev) {
@@ -1716,9 +1723,13 @@
       if (!list.length) {
         var empty = document.createElement('option');
         empty.value = preferred || '';
+        var eventsReady =
+          typeof opts.getEventsReady === 'function' ? opts.getEventsReady() : true;
         empty.textContent = preferred
           ? 'Published event (loading…)'
-          : 'No published events for this organiser page';
+          : eventsReady
+            ? 'No published events yet — publish an event first'
+            : 'Loading events…';
         elEvent.appendChild(empty);
         if (!preferred) state.eventImagePosition = '';
         return;
@@ -1939,20 +1950,10 @@
           state.hubLogoImg = null;
         }
       }
-      if (!state.hubLogoDarkImg) {
-        try {
-          state.hubLogoDarkImg = await loadAsset([
-            '../assets/logo-hub-dark.png',
-            '/assets/logo-hub-dark.png',
-          ]);
-        } catch (e) {
-          state.hubLogoDarkImg = null;
-        }
-      }
+      // Landscape wordmark only — skip logo-hub-dark (square, baked black fill).
       return {
-        // Light mark for dark corners; full-colour mark for light/gold corners.
-        onDark: state.hubLogoDarkImg || state.hubLogoImg,
-        onLight: state.hubLogoImg || state.hubLogoDarkImg,
+        onDark: state.hubLogoImg,
+        onLight: state.hubLogoImg,
       };
     }
 

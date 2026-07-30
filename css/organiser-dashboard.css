@@ -304,6 +304,15 @@
   margin: 1.5rem 0 0;
 }
 
+/* One hub tab row at a time: top copy for Reach-out discovery, adjacent copy when a Hub tool is open */
+#org-page-social.org-promote--hub .org-promote-group--hub-top {
+  display: none;
+}
+
+#org-page-social.org-promote--reach .org-promote-group--hub {
+  display: none;
+}
+
 .org-promote-group-label {
   margin: 0 0 0.45rem;
   font-size: 0.78rem;
@@ -3190,7 +3199,7 @@
 
 .org-post-caption-edit {
   width: 100%;
-  min-height: 160px;
+  min-height: 240px;
   border: 1px solid var(--od-border, #e8dfd0);
   border-radius: 8px;
   padding: 0.85rem 0.9rem;
@@ -3200,6 +3209,10 @@
   color: var(--od-text-dark, #4a4446);
   background: #fff;
   resize: vertical;
+}
+
+.org-post-hint--share {
+  margin: 0.35rem 0 0.75rem;
 }
 
 .org-post-advanced {

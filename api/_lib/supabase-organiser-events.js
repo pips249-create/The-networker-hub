@@ -2285,11 +2285,53 @@ async function countAllEvents() {
   return count || 0;
 }
 
+/**
+ * Attach tickets-sold + revenue from registrations (no payout tables).
+ * Used for the Events list lite load and as a fallback when payout enrichment fails.
+ */
+async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, tickets, groups, groupEventCounts) {
+  const {
+    enrichEventsWithRegistrationSales,
+    enrichTicketsWithSales,
+    listRegistrationsForEvents,
+    listCancellationsForEvents,
+    buildRevenueContext,
+    mapLatestCancellationsByEvent,
+  } = require('./supabase-organiser-payouts');
+
+  const enrichedEvents = await enrichEventsWithRegistrationSales(overview.events);
+  const upcomingEvents = await enrichEventsWithRegistrationSales(upcomingOverview.events);
+  const regs = await listRegistrationsForEvents([
+    ...new Set([...enrichedEvents.map((e) => e.id), ...upcomingEvents.map((e) => e.id)]),
+  ]);
+  const cancellations = await listCancellationsForEvents([
+    ...new Set(regs.map((row) => row.event_id).filter(Boolean)),
+  ]);
+  const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
+  const revenueContextByEventId = {};
+  [...enrichedEvents, ...upcomingEvents].forEach((ev) => {
+    if (!ev?.id || revenueContextByEventId[ev.id]) return;
+    revenueContextByEventId[ev.id] = buildRevenueContext(ev, cancellationsByEvent[ev.id] || null);
+  });
+
+  return {
+    overview: {
+      ...overview,
+      events: enrichedEvents,
+      groups: enrichOrganiserOverview(groups, enrichedEvents, tickets, groupEventCounts).groups,
+    },
+    upcomingEvents,
+    tickets: enrichTicketsWithSales(tickets, regs, revenueContextByEventId),
+  };
+}
+
 async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pagination, options) {
   const opts = options || {};
   const { limit, offset, knownTotal, eventsLite } = pagination;
   const skipSideLoads = offset > 0 && knownTotal != null;
-  const skipSalesEnrichment = Boolean(eventsLite || opts.eventsLite);
+  // Lite skips payout enrichment (slow), but still needs registration sales for
+  // Tickets sold / Revenue columns on the Events list.
+  const skipPayoutEnrichment = Boolean(eventsLite || opts.eventsLite);
 
   const [groupEventCounts, upcomingRaw, total] = await Promise.all([
     skipSideLoads ? Promise.resolve(null) : countEventsByOrganiserGroup(groupIds),
@@ -2311,13 +2353,13 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
   const eventIds = events.map((e) => e.id);
   const upcomingIds = upcomingRaw.map((e) => e.id);
   const ticketEventIds = [...new Set([...eventIds, ...upcomingIds])];
-  const tickets = await listTicketsForSession(session, ticketEventIds, adminView);
+  let tickets = await listTicketsForSession(session, ticketEventIds, adminView);
   let overview = enrichOrganiserOverview(groups, events, tickets, groupEventCounts);
   const upcomingOverview = enrichOrganiserOverview(groups, upcomingRaw, tickets, groupEventCounts);
 
-  if (!skipSalesEnrichment) {
+  if (!skipPayoutEnrichment) {
     try {
-      const { enrichOrganiserWorkspaceSales, enrichEventsWithRegistrationSales } = require('./supabase-organiser-payouts');
+      const { enrichOrganiserWorkspaceSales } = require('./supabase-organiser-payouts');
       const sales = await enrichOrganiserWorkspaceSales(overview.events, tickets);
       overview = {
         ...overview,
@@ -2330,39 +2372,34 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
       tickets = sales.tickets;
     } catch {
       try {
-        const { enrichEventsWithRegistrationSales, enrichTicketsWithSales, listRegistrationsForEvents } =
-          require('./supabase-organiser-payouts');
-        const enrichedEvents = await enrichEventsWithRegistrationSales(overview.events);
-        const regs = await listRegistrationsForEvents([
-          ...new Set([
-            ...enrichedEvents.map((e) => e.id),
-            ...upcomingOverview.events.map((e) => e.id),
-          ]),
-        ]);
-        const { listCancellationsForEvents, buildRevenueContext, mapLatestCancellationsByEvent } =
-          require('./supabase-organiser-payouts');
-        const cancellations = await listCancellationsForEvents([
-          ...new Set(regs.map((row) => row.event_id).filter(Boolean)),
-        ]);
-        const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
-        const revenueContextByEventId = {};
-        [...enrichedEvents, ...upcomingOverview.events].forEach((ev) => {
-          if (!ev?.id || revenueContextByEventId[ev.id]) return;
-          revenueContextByEventId[ev.id] = buildRevenueContext(
-            ev,
-            cancellationsByEvent[ev.id] || null
-          );
-        });
-        overview = {
-          ...overview,
-          events: enrichedEvents,
-          groups: enrichOrganiserOverview(groups, enrichedEvents, tickets, groupEventCounts).groups,
-        };
-        upcomingOverview.events = await enrichEventsWithRegistrationSales(upcomingOverview.events);
-        tickets = enrichTicketsWithSales(tickets, regs, revenueContextByEventId);
+        const lite = await applyRegistrationSalesToEventsPage(
+          overview,
+          upcomingOverview,
+          tickets,
+          groups,
+          groupEventCounts
+        );
+        overview = lite.overview;
+        upcomingOverview.events = lite.upcomingEvents;
+        tickets = lite.tickets;
       } catch {
         /* registration enrichment optional */
       }
+    }
+  } else {
+    try {
+      const lite = await applyRegistrationSalesToEventsPage(
+        overview,
+        upcomingOverview,
+        tickets,
+        groups,
+        groupEventCounts
+      );
+      overview = lite.overview;
+      upcomingOverview.events = lite.upcomingEvents;
+      tickets = lite.tickets;
+    } catch {
+      /* registration enrichment optional */
     }
   }
 

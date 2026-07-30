@@ -261,6 +261,12 @@
   function summaryToEventRow(summary) {
     if (!summary || !summary.id) return null;
     const orgId = summary.organiserId || summary.organiserGroupId || '';
+    const statusKey = String(summary.statusKey || 'draft').toLowerCase();
+    const promotable =
+      statusKey === 'live' ||
+      statusKey === 'upcoming' ||
+      statusKey === 'archived' ||
+      statusKey === 'published';
     return {
       id: summary.id,
       title: summary.title || 'Untitled event',
@@ -268,6 +274,7 @@
       endDate: summary.endDate || null,
       organiserGroupId: orgId,
       organiserId: orgId,
+      status: promotable ? 'published' : statusKey || 'draft',
       statusKey: summary.statusKey || 'draft',
       statusLabel: summary.statusLabel || 'Draft',
       ticketsSoldLabel: '…',
@@ -1593,7 +1600,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260730promote3';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260730social2';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260730billing1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260730billing1';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260729brand';
@@ -1918,7 +1925,16 @@
           return state.opportunities || [];
         },
         getEvents: function () {
-          return state.events || [];
+          // Lean bootstrap leaves state.events empty and fills eventSummaries —
+          // use the same source as the Events list so Promote sees live events.
+          return eventsSourceList();
+        },
+        getEventsReady: function () {
+          return Boolean(
+            state.eventsLoaded ||
+              (state.eventSummaries && state.eventSummaries.length) ||
+              (state.events && state.events.length)
+          );
         },
       });
     } else if (options.force || isSocialPageActive()) {
@@ -1926,6 +1942,11 @@
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
       if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     }
+    // Warm full event rows (photos, etc.) after first paint — summaries cover the picker immediately.
+    ensureEventsLoaded().then(function (ok) {
+      if (!ok || !linkedInPostBuilder || !linkedInPostBuilder.refreshEvents) return;
+      linkedInPostBuilder.refreshEvents();
+    });
   }
 
   function ensureEmailUpdatesPanelReady() {
@@ -9545,7 +9566,11 @@
       tr.tabIndex = 0;
     }
 
-    const revClass = ev.revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
+    const sold = eventEffectiveTicketsSold(ev);
+    const capacity = Number(ev.ticketsCapacity) || 0;
+    const soldLabel = formatTicketsSoldLabel(sold, capacity);
+    const revenueNum = Number(ev.revenueNum) || 0;
+    const revClass = revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
 
     tr.innerHTML =
       '<td>' +
@@ -9557,11 +9582,11 @@
       '</td><td>' +
       esc(formatTimeRange(ev.date, ev.endDate)) +
       '</td><td>' +
-      esc(ev.ticketsSoldLabel || '0') +
+      esc(soldLabel || ev.ticketsSoldLabel || '0') +
       '</td><td class="' +
       revClass +
       '">' +
-      esc(ev.revenueDisplay || '£0') +
+      esc(ev.revenueDisplay || formatGbpAmount(revenueNum) || '£0') +
       '</td><td>' +
       statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
       '</td><td class="org-td-actions">' +
