@@ -76,16 +76,16 @@
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
     'members-only-ticket': {
-      title: 'Members only ticket',
+      title: 'Members-only rate (keeps public tickets)',
       body:
-        'Adds a ticket that the public cannot see. People on your member list see it automatically when they sign in with their membership email. Use for member rates or invite-only pricing — without putting the price on the public listing.',
-      hubertPrompt: 'How do I set up a members only ticket with the member list?',
+        'An extra ticket the public cannot see, shown only to people on your member list when they sign in. Use when non-members can still book a public ticket above, and members get a hidden or different rate. It does not replace public tickets. For a meeting only members can book, use “This event is for my members only” instead.',
+      hubertPrompt: 'What is the difference between a members-only rate and a members-only event?',
     },
     'members-only-event-listing': {
       title: 'Members-only event',
       body:
-        'Your event stays on the directory so members can find it, but only people on your member list can book. Add your member list first under Member list on your organiser page. Non-members see the event but not a bookable public ticket.',
-      hubertPrompt: 'How do I set up a members only ticket with the member list?',
+        'Your event stays on the directory so members can find it, but only people on your member list can book — no public ticket needed. Add your member list first under Memberships. Non-members see the listing but cannot buy a ticket.',
+      hubertPrompt: 'How do I make an event members only with no public ticket?',
     },
     'category-exclusivity': {
       title: 'Category Exclusivity',

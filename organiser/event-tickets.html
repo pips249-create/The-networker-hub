@@ -160,7 +160,7 @@
               <span>This event is for my members only</span>
             </label>
             <p class="ee-hint">
-              Your event stays on the directory for visibility. Only people on your member list can book — no public ticket needed.
+              Use this for member meetings. Only people on your member list can book — no public ticket needed. Your listing stays on the directory for visibility.
             </p>
           </div>
 
@@ -209,7 +209,8 @@
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
           <h2>Optional extras</h2>
           <p class="ee-hint" style="margin-top:0">
-            Turn on only what you need. Most events get by with public ticket types alone.
+            Add-ons for events that already have public tickets above. For a meeting only your members can book, skip this section and use
+            <strong>This event is for my members only</strong> instead — no public ticket needed.
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon" data-hub-tip="guest-visit-programme">
@@ -271,11 +272,22 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong>Members only ticket</strong>
-                <span class="ee-addon-summary">Hidden from the public — visible to people on your member list</span>
+                <strong>Members-only rate (keeps public tickets)</strong>
+                <span class="ee-addon-summary"
+                  >Extra hidden rate for your member list — you still need a public ticket above. Not for members-only meetings.</span
+                >
               </span>
             </label>
-            <div class="ee-addon-body" id="ee-private-ticket-fields-mount" hidden></div>
+            <div class="ee-addon-body" id="ee-private-ticket-fields-mount" hidden>
+              <div class="ee-info-box ee-private-ticket-how" id="ee-private-ticket-how">
+                <strong>Alongside public tickets</strong>
+                <p>
+                  Non-members book from <strong>Public ticket types</strong> above. Members on your list also see this hidden rate when
+                  signed in. If only members should book, turn this off and use
+                  <strong>This event is for my members only</strong> instead.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div class="ee-addon-card" id="ee-alumni-addon" data-hub-tip="alumni-fast-pass">
@@ -430,9 +442,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260722a" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260715guest" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260730memticket" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260727step2" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260730memticket" defer></script>
   </body>
 </html>

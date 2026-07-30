@@ -31,7 +31,10 @@
   let organiserComplimentaryVisits = 0;
   let organiserComplimentaryVisitsScope = 'per_group';
   let anchorEvent = null;
+  /** @type {number|null} active member count once loaded; null while unknown */
   let memberRosterActiveCount = null;
+  /** idle | loading | ready | error */
+  let memberRosterLoadState = 'idle';
   let organiserGroupName = '';
 
   const FORMAT_LABELS = {
@@ -170,10 +173,12 @@
       blockers.push('Add a name for your members-only ticket');
     }
     if (membersOnlyEventEnabled()) {
-      if (memberRosterActiveCount === 0) {
-        blockers.push('Add at least one person to your member list before publishing');
-      } else if (memberRosterActiveCount == null) {
+      if (memberRosterLoadState === 'loading' || memberRosterLoadState === 'idle') {
+        blockers.push('Checking your member list…');
+      } else if (memberRosterLoadState === 'error' || memberRosterActiveCount == null) {
         blockers.push('Could not verify your member list — refresh and try again');
+      } else if (memberRosterActiveCount === 0) {
+        blockers.push('Add at least one person to your member list before publishing');
       }
     }
     const alumni = collectAlumniFastPass();
@@ -1205,6 +1210,11 @@
     if (!el) return;
     el.checked = Boolean(enabled);
     syncMembersOnlyEventMode();
+    if (enabled) {
+      loadMemberRosterStatus();
+    } else {
+      setMemberRosterStatusMessage('');
+    }
   }
 
   function ticketsAreMembersOnlyEvent(tickets) {
@@ -1229,7 +1239,6 @@
 
   function handleMembersOnlyEventToggle() {
     if (membersOnlyEventEnabled()) {
-      loadMemberRosterStatus();
       const guestEl = document.getElementById('ee-guest-programme-enabled');
       if (guestEl && guestEl.checked) {
         guestEl.checked = false;
@@ -1298,6 +1307,8 @@
       targetMount.appendChild(config);
     }
     if (addonMount) addonMount.hidden = !addonOnly;
+    const privateHow = document.getElementById('ee-private-ticket-how');
+    if (privateHow) privateHow.hidden = !addonOnly;
 
     const rosterLink = document.getElementById('ee-members-only-roster-link');
     const groupId = String(seriesMeta.organiserGroupId || '').trim();
@@ -1344,51 +1355,118 @@
   }
 
   async function loadMemberRosterStatus() {
-    const groupId = String(seriesMeta.organiserGroupId || '').trim();
-    if (!groupId) {
-      memberRosterActiveCount = 0;
-      setMemberRosterStatusMessage(
-        membersOnlyEventEnabled()
-          ? 'Link this event to an organiser page before publishing a members-only event.'
-          : '',
-        'warn'
-      );
-      return;
-    }
-    const { ok, data } = await api(
-      '/api/organiser/member-roster?organiserId=' +
-        encodeURIComponent(groupId) +
-        '&limit=1&offset=0'
-    );
-    if (!ok) {
+    if (loadMemberRosterStatus._inflight) return loadMemberRosterStatus._inflight;
+    loadMemberRosterStatus._inflight = (async function () {
+      const groupId = String(seriesMeta.organiserGroupId || '').trim();
+      memberRosterLoadState = 'loading';
       memberRosterActiveCount = null;
-      if (membersOnlyEventEnabled()) {
-        setMemberRosterStatusMessage('Could not load your member list — refresh and try again.', 'warn');
-      }
-      return;
-    }
-    memberRosterActiveCount = Math.max(0, Number(data.totalActive) || 0);
-    if (membersOnlyEventEnabled()) {
-      if (memberRosterActiveCount > 0) {
+      if (!groupId) {
+        memberRosterActiveCount = 0;
+        memberRosterLoadState = 'ready';
         setMemberRosterStatusMessage(
-          memberRosterActiveCount === 1
-            ? '1 active member on your list — ready to publish.'
-            : memberRosterActiveCount + ' active members on your list — ready to publish.',
-          'ok'
-        );
-      } else {
-        setMemberRosterStatusMessage(
-          'Add at least one person to your member list before you publish.',
+          membersOnlyEventEnabled()
+            ? 'Link this event to an organiser page before publishing a members-only event.'
+            : '',
           'warn'
         );
+        updatePublishButton();
+        return;
       }
-    } else {
-      setMemberRosterStatusMessage('');
-    }
+      if (membersOnlyEventEnabled()) {
+        setMemberRosterStatusMessage('Checking your member list…', '');
+      }
+      updatePublishButton();
+      let ok = false;
+      let data = {};
+      try {
+        const result = await api(
+          '/api/organiser/roster?organiserId=' +
+            encodeURIComponent(groupId) +
+            '&limit=1&offset=0'
+        );
+        ok = Boolean(result && result.ok);
+        data = (result && result.data) || {};
+      } catch {
+        ok = false;
+        data = {};
+      }
+      if (!ok) {
+        memberRosterActiveCount = null;
+        memberRosterLoadState = 'error';
+        if (membersOnlyEventEnabled()) {
+          setMemberRosterStatusMessage('Could not load your member list — refresh and try again.', 'warn');
+        }
+        updatePublishButton();
+        return;
+      }
+      memberRosterActiveCount = Math.max(0, Number(data.totalActive) || 0);
+      memberRosterLoadState = 'ready';
+      if (membersOnlyEventEnabled()) {
+        if (memberRosterActiveCount > 0) {
+          setMemberRosterStatusMessage(
+            memberRosterActiveCount === 1
+              ? '1 active member on your list — ready to publish.'
+              : memberRosterActiveCount + ' active members on your list — ready to publish.',
+            'ok'
+          );
+        } else {
+          setMemberRosterStatusMessage(
+            'Add at least one person to your member list before you publish.',
+            'warn'
+          );
+        }
+      } else {
+        setMemberRosterStatusMessage('');
+      }
+      updatePublishButton();
+    })().finally(function () {
+      loadMemberRosterStatus._inflight = null;
+    });
+    return loadMemberRosterStatus._inflight;
+  }
+
+  /** Wait for an in-flight roster check (or start one) before publish/continue. */
+  async function ensureMemberRosterStatus() {
+    if (!membersOnlyEventEnabled()) return;
+    if (memberRosterLoadState === 'ready' || memberRosterLoadState === 'error') return;
+    await loadMemberRosterStatus();
   }
 
   function privateTicketEnabled() {
     return membersOnlyEventEnabled() || Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
+  }
+
+  /** True when public tiers look intentionally set up (not just the auto-seeded default row). */
+  function hasIntentionalPublicTickets() {
+    const rows = Array.from(document.querySelectorAll('#ee-tier-rows .ee-tier-row'));
+    if (rows.length > 1) return true;
+    if (!rows.length) return false;
+    const name = rows[0].querySelector('.ee-tier-name')?.value.trim() || '';
+    if (!name) return false;
+    if (name !== DEFAULT_TIER_NAME) return true;
+    const priceRaw = rows[0].querySelector('.ee-tier-price')?.value;
+    const price = Number(priceRaw);
+    return Number.isFinite(price) && price > 0;
+  }
+
+  function preferMembersOnlyEventFromAddon() {
+    const addonEl = document.getElementById('ee-private-ticket-enabled');
+    if (addonEl) addonEl.checked = false;
+    setMembersOnlyEventEnabled(true);
+    showAlert(
+      'Switched to “This event is for my members only” — no public ticket needed. Set the member ticket details above.',
+      'ok'
+    );
+    updatePublishButton();
+  }
+
+  function handlePrivateTicketAddonToggle() {
+    const addonEl = document.getElementById('ee-private-ticket-enabled');
+    if (addonEl && addonEl.checked && !hasIntentionalPublicTickets()) {
+      preferMembersOnlyEventFromAddon();
+      return;
+    }
+    syncPrivateTicketFields();
   }
 
   function setMembersOnlyTicketHint(msg, tone) {
@@ -1475,7 +1553,7 @@
 
   function bindPrivateTicketFields() {
     const enabled = document.getElementById('ee-private-ticket-enabled');
-    if (enabled) enabled.addEventListener('change', syncPrivateTicketFields);
+    if (enabled) enabled.addEventListener('change', handlePrivateTicketAddonToggle);
     ['ee-private-ticket-name', 'ee-private-ticket-price', 'ee-private-ticket-qty'].forEach(
       (id) => {
         const el = document.getElementById(id);
@@ -1941,6 +2019,9 @@
       return;
     }
     try {
+      if (membersOnlyEventEnabled() && memberRosterLoadState === 'idle') {
+        loadMemberRosterStatus();
+      }
       const tiers = collectActiveTiers();
       syncPaidOnlySections(tiers);
       const blockers = getPublishBlockers(tiers);
@@ -1965,6 +2046,16 @@
           }
           warn.textContent = parts.join(' ');
         }
+      }
+      // Clear a stale top-of-page alert once member-list / publish blockers are resolved.
+      const alertEl = document.getElementById('ee-tickets-alert');
+      if (
+        alertEl &&
+        !alertEl.hidden &&
+        /member list/i.test(alertEl.textContent || '') &&
+        !blockers.some((b) => /member list/i.test(b))
+      ) {
+        showAlert('');
       }
     } catch {
       btn.disabled = false;
@@ -2596,6 +2687,7 @@
       return;
     }
 
+    await ensureMemberRosterStatus();
     const blockers = getPublishBlockers(tiers, { includeBankDetails: false });
     if (blockers.length) {
       showAlert('Before this event can go live: ' + blockers.join('; ') + '.', 'warn');
@@ -2693,6 +2785,7 @@
     const hasPaidTickets = tiersHavePaidPrice(tiers);
     const refund = hasPaidTickets ? collectRefundPayload() : {};
     if (publish) {
+      await ensureMemberRosterStatus();
       const blockers = getPublishBlockers(tiers);
       if (blockers.length) {
         showAlert('Before this event can go live: ' + blockers.join('; ') + '.', 'warn');
