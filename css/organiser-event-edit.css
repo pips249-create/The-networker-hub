@@ -1350,9 +1350,44 @@ body.ee-step2-modal-open {
 
 #ee-tickets-form .ee-card[hidden],
 #ee-paid-setup-wrap[hidden],
+#ee-tickets-actions[hidden],
 #ee-public-tickets-wrap[hidden],
 #ee-members-only-event-wrap[hidden] {
   display: none !important;
+}
+
+.ee-attendance-card-wrap.is-collapsed .ee-attendance-options,
+.ee-attendance-card-wrap.is-collapsed .ee-attendance-lead,
+.ee-attendance-card-wrap.is-collapsed .ee-attendance-next {
+  display: none !important;
+}
+
+.ee-attendance-summary {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f4f7f8;
+  border: 1px solid var(--ee-border);
+}
+
+.ee-attendance-card-wrap.is-collapsed .ee-attendance-summary {
+  display: flex;
+}
+
+.ee-attendance-summary-copy {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ee-text);
+  line-height: 1.4;
+}
+
+.ee-attendance-summary-copy strong {
+  font-weight: 700;
 }
 
 .ee-optional-extras {

@@ -721,6 +721,62 @@
   let step2Confirmed = false;
   let step2Home = null;
 
+  function attendanceModeLabel() {
+    if (attendanceMode === 'category_exclusivity') return 'Category Exclusivity';
+    if (attendanceMode === 'guest_programme') return 'Open booking with guest visits';
+    return 'Open ticket booking';
+  }
+
+  function ensureAttendanceSummary() {
+    const wrap = document.getElementById('ee-attendance-card-wrap');
+    if (!wrap) return null;
+    let summary = document.getElementById('ee-attendance-summary');
+    if (summary) return summary;
+    summary = document.createElement('div');
+    summary.id = 'ee-attendance-summary';
+    summary.className = 'ee-attendance-summary';
+    summary.innerHTML =
+      '<p class="ee-attendance-summary-copy" id="ee-attendance-summary-text"></p>' +
+      '<button type="button" class="ee-btn ee-btn-outline" id="ee-attendance-change">Change</button>';
+    wrap.appendChild(summary);
+    document.getElementById('ee-attendance-change')?.addEventListener('click', function () {
+      step2Confirmed = false;
+      showAlert('');
+      syncAttendanceStepUi();
+      hideLaterTicketSteps();
+      parkStep2Panels();
+      const ticketsPanel = document.getElementById('ee-panel-tickets');
+      const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+      if (ticketsPanel) ticketsPanel.hidden = true;
+      if (categoryPanel) categoryPanel.hidden = true;
+      syncTicketStepLabels();
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    return summary;
+  }
+
+  function syncAttendanceStepUi() {
+    const wrap = document.getElementById('ee-attendance-card-wrap');
+    if (!wrap) return;
+    ensureAttendanceSummary();
+    wrap.classList.toggle('is-collapsed', Boolean(step2Confirmed));
+    const text = document.getElementById('ee-attendance-summary-text');
+    if (text) {
+      text.innerHTML =
+        '<strong>' +
+        esc(attendanceModeLabel()) +
+        '</strong> — chosen for this event. Change only if you need a different attendance mode.';
+    }
+  }
+
+  function step2HasUsableTiers() {
+    try {
+      return collectActiveTiers().length > 0;
+    } catch {
+      return false;
+    }
+  }
+
   function activeStep2Panel() {
     return attendanceMode === 'category_exclusivity'
       ? document.getElementById('ee-panel-category-exclusivity')
@@ -796,6 +852,7 @@
   function openStep2Modal() {
     parkStep2Panels();
     hideLaterTicketSteps();
+    showAlert('');
     const modal = document.getElementById('ee-step2-modal');
     const body = document.getElementById('ee-step2-modal-body');
     const panel = activeStep2Panel();
@@ -814,7 +871,10 @@
   }
 
   function closeStep2Modal(opts) {
-    const confirm = !opts || opts.confirm !== false;
+    const requestedConfirm = !opts || opts.confirm !== false;
+    // If they filled ticket types then hit Close/backdrop, keep their work —
+    // dumping them back on Step 1 felt like a glitch.
+    const confirm = requestedConfirm || step2HasUsableTiers();
     const modal = document.getElementById('ee-step2-modal');
     const home = ensureStep2Home();
     const body = document.getElementById('ee-step2-modal-body');
@@ -827,7 +887,17 @@
     document.body.classList.remove('ee-step2-modal-open');
     if (confirm) {
       step2Confirmed = true;
+      showAlert('');
       revealPostStep2();
+      const focusEl =
+        activeStep2Panel() ||
+        document.getElementById('ee-paid-setup-wrap') ||
+        document.getElementById('ee-tickets-actions');
+      try {
+        focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        /* ignore */
+      }
     } else {
       hideLaterTicketSteps();
       parkStep2Panels();
@@ -835,6 +905,7 @@
       const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryPanel) categoryPanel.hidden = true;
+      syncAttendanceStepUi();
       syncTicketStepLabels();
     }
   }
@@ -861,6 +932,7 @@
     document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
       el.hidden = false;
     });
+    syncAttendanceStepUi();
     syncTicketStepLabels();
     updatePublishButton();
   }
@@ -2639,6 +2711,7 @@
       revealPostStep2();
     } else {
       hideLaterTicketSteps();
+      syncAttendanceStepUi();
     }
     bindPrivateTicketFields();
     bindMembersOnlyEventToggle();
@@ -2700,9 +2773,15 @@
 
   async function continueToReview() {
     if (!step2Confirmed) {
-      openStep2Modal();
-      showAlert('Finish ticket setup in the step 2 window, then click Done — continue.', 'warn');
-      return;
+      // Tiers already filled (e.g. closed the step 2 window after editing) — continue.
+      if (step2HasUsableTiers()) {
+        step2Confirmed = true;
+        revealPostStep2();
+      } else {
+        openStep2Modal();
+        showAlert('Finish ticket setup in the step 2 window, then click Done — continue.', 'warn');
+        return;
+      }
     }
     if (ticketsLocked) {
       showAlert(
