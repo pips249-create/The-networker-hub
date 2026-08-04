@@ -128,6 +128,10 @@
   }
 
   var mount = document.getElementById('hub-site-nav');
+  /** null = unknown; false = waitlist gate (hide public catalogue); true = browse open */
+  var catalogueOpen = null;
+  var lastNavUser = null;
+  var lastNavPending = false;
   if (!mount) return;
 
   if (!document.querySelector('link[rel="icon"]')) {
@@ -306,22 +310,32 @@
     );
   }
 
-  function moreNavDropdownHtml() {
+  function moreNavDropdownHtml(opts) {
+    var early = opts && opts.earlyAccess;
     var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
     var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
     var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
-    return (
-      '<div class="nav-dropdown nav-more-dropdown" id="nav-more">' +
-      '<button type="button" class="nav-dropdown-toggle' +
-      (isMoreNavActive() ? ' is-active' : '') +
-      '" id="nav-more-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-more-menu">' +
-      'More <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
-      '<div class="nav-dropdown-menu" id="nav-more-menu" role="menu" hidden>' +
-      '<a role="menuitem" class="nav-dropdown-item" href="' +
-      href('/events/?mode=organisers') +
-      '"' +
-      organiserActive +
-      '>Organisers</a>' +
+    var guidesActive = isLinkActive('guides') ? ' aria-current="page"' : '';
+    var items = '';
+    if (early) {
+      items +=
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/for-organisers') +
+        '">For organisers</a>' +
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/guides') +
+        '"' +
+        guidesActive +
+        '>Guides</a>';
+    } else {
+      items +=
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/events/?mode=organisers') +
+        '"' +
+        organiserActive +
+        '>Organisers</a>';
+    }
+    items +=
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/faq') +
       '"' +
@@ -331,21 +345,36 @@
       href('/contact') +
       '"' +
       contactActive +
-      '>Contact</a>' +
+      '>Contact</a>';
+    return (
+      '<div class="nav-dropdown nav-more-dropdown" id="nav-more">' +
+      '<button type="button" class="nav-dropdown-toggle' +
+      (isMoreNavActive() ? ' is-active' : '') +
+      '" id="nav-more-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-more-menu">' +
+      'More <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
+      '<div class="nav-dropdown-menu" id="nav-more-menu" role="menu" hidden>' +
+      items +
       '</div></div>'
     );
   }
 
   function buildNavLinks(user, pending) {
+    var early = catalogueOpen === false;
     var html = '';
-    if (user) {
+    if (user && !early) {
       html += link('/', 'Home', 'home');
     }
-    html += link('/events/', 'Events', 'events');
-    html += link('/opportunities/', 'Opportunities', 'opportunities');
-    if (user) {
-      html += link('/events/?mode=organisers', 'Organisers', 'organisers');
+    if (early) {
+      html += link('/for-organisers', 'For organisers', 'for-organisers');
+      html += link('/guides', 'Guides', 'guides');
       html += link('/faq', 'Help', 'faq');
+    } else {
+      html += link('/events/', 'Events', 'events');
+      html += link('/opportunities/', 'Opportunities', 'opportunities');
+      if (user) {
+        html += link('/events/?mode=organisers', 'Organisers', 'organisers');
+        html += link('/faq', 'Help', 'faq');
+      }
     }
     if (pending && !user) {
       html +=
@@ -356,15 +385,15 @@
         '</span>';
       return html;
     }
-    if (!user) {
-      html += moreNavDropdownHtml();
+    if (!user && !early) {
+      html += moreNavDropdownHtml({ earlyAccess: false });
+    } else if (!user && early) {
+      html += moreNavDropdownHtml({ earlyAccess: true });
     }
     if (showListEventCta(user)) {
       html += listEventCta(user);
     }
     if (user) {
-      // Same top bar for every signed-in user. Account-specific links (organiser
-      // workspace, Command Center) live only under My account.
       html += myHubDropdownHtml(user);
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
@@ -399,21 +428,31 @@
   }
 
   function buildMobileDrawerLinks(user, pending) {
+    var early = catalogueOpen === false;
     var html = '';
-    if (user) {
+    if (user && !early) {
       html += link('/', 'Home', 'home', 'nav-mobile-item');
     }
-    html += link('/events/', 'Events', 'events', 'nav-mobile-item');
-    html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
-    html += buildMobileDrawerCities();
-    if (user) {
-      html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
-      html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
-    } else {
+    if (early) {
+      html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
+      html += link('/guides', 'Guides', 'guides', 'nav-mobile-item');
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
-      html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
+      html += link('/about', 'About', 'about', 'nav-mobile-item');
+    } else {
+      html += link('/events/', 'Events', 'events', 'nav-mobile-item');
+      html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
+      html += buildMobileDrawerCities();
+      if (user) {
+        html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+        html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+      } else {
+        html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
+        html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+        html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+        html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
+      }
     }
     if (pending && !user) {
       html +=
@@ -722,6 +761,10 @@
   }
 
   function renderNav(user, pending) {
+    lastNavUser = user || null;
+    lastNavPending = Boolean(pending);
+    var early = catalogueOpen === false;
+    var homeHref = early ? href('/for-organisers') : href('/');
     var pendingClass = pending ? ' is-session-pending' : '';
     mount.innerHTML =
       '<a class="skip-to-content" href="#hub-main-content">Skip to main content</a>' +
@@ -729,7 +772,7 @@
       pendingClass +
       '" id="site-nav">' +
       '<a class="nav-logo" href="' +
-      href('/') +
+      homeHref +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
       href('assets/logo-nav-transparent.png?v=20260729a') +
@@ -798,11 +841,40 @@
   }
 
   var cachedUser = readCachedUser();
+  // Until we know the catalogue is open, render organiser early-access nav
+  // so Email 1 visitors never see Events / Opportunities links.
+  catalogueOpen = false;
   if (cachedUser) {
     renderNav(cachedUser, false);
   } else {
     renderNav(null, true);
   }
+
+  function probeCatalogueAccess() {
+    return fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
+      .then(function (res) {
+        return res.status !== 403;
+      })
+      .catch(function () {
+        return false;
+      })
+      .then(function (open) {
+        var prev = catalogueOpen;
+        catalogueOpen = open;
+        window.HubCatalogueOpen = open;
+        try {
+          window.dispatchEvent(new CustomEvent('hub-catalogue-access', { detail: { open: open } }));
+        } catch (e) {
+          /* ignore */
+        }
+        if (prev !== open) {
+          renderNav(lastNavUser, lastNavPending && !lastNavUser);
+        }
+        return open;
+      });
+  }
+
+  probeCatalogueAccess();
 
   var sessionPromise = null;
   window.hubFetchSession = function () {
@@ -822,6 +894,8 @@
   window.hubFetchSession()
     .then(function (data) {
       applySessionData(data);
+      // Session unlocks the gate — re-check catalogue APIs after login.
+      probeCatalogueAccess();
     })
     .catch(function () {
       if (!cachedUser) {

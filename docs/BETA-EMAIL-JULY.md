@@ -77,7 +77,7 @@ npm run check:organiser-journey
 # or: node scripts/smoke-test-organiser-journey.js https://www.thenetworkerhub.com
 ```
 
-That checks every anonymous organiser path (for-organisers, guides, FAQ, pricing, login/claim, events/organisers browse + APIs) opens **without** the preview password, and that `/for-organisers` internal links are not gated.
+That checks the Email 1 funnel opens **without** the preview password (for-organisers, guides, FAQ, pricing, login/claim), while the public catalogue (`/events`, `/opportunities`, organiser browse) **stays gated**. Nav/footer on those pages hide catalogue links until the gate is off or the visitor is signed in.
 
 Middleware early-access + signed-in session bypass live in `middleware.js` (`ORGANISER_EARLY_ACCESS_PREFIXES`). Deploy that before sending.
 

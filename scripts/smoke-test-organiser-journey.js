@@ -45,22 +45,25 @@ const ANON_PAGES = [
   { path: '/register', expect: /register|sign\s*up|create/i },
   { path: '/forgot-password', expect: /password|reset|forgot/i },
   { path: '/organiser/', expect: /organis|dashboard|sign\s*in|log\s*in/i },
-  { path: '/events/', expect: /event/i },
-  { path: '/events/?mode=organisers', expect: /organis|event/i },
-  { path: '/organisers/circle-networks', expect: /circle|organis|network/i },
-  { path: '/opportunities/', expect: /opportunit/i },
-  { path: '/for-attendees', expect: /attendee|My Hub|network/i },
 ];
 
-const ANON_APIS = [
-  { path: '/api/auth/session', expectOkJson: true },
-  { path: '/api/events?limit=1', expectOkJson: true },
-  { path: '/api/organisers?limit=1', expectOkJson: true },
-  { path: '/api/opportunities?limit=1', expectOkJson: true },
+const ANON_APIS = [{ path: '/api/auth/session', expectOkJson: true }];
+
+/** Must stay gated for anonymous visitors (catalogue + cold homepage). */
+const MUST_STAY_GATED = [
+  '/',
+  '/events/',
+  '/events/?mode=organisers',
+  '/organisers/circle-networks',
+  '/opportunities/',
+  '/for-attendees',
 ];
 
-/** Must stay gated for anonymous visitors (cold traffic waitlist). */
-const MUST_STAY_GATED = ['/'];
+const MUST_STAY_PRIVATE_APIS = [
+  '/api/events?limit=1',
+  '/api/organisers?limit=1',
+  '/api/opportunities?limit=1',
+];
 
 let failed = 0;
 
@@ -144,15 +147,37 @@ async function checkApi(item) {
 
 async function checkStaysGated(urlPath) {
   const res = await fetchUrl(urlPath);
-  if (isSiteAccessRedirect(res) || (res.status === 200 && /Preview password|Join the preview/i.test(await res.clone().text()))) {
-    printResult(true, urlPath, 'still gated for cold traffic (expected)');
+  if (isSiteAccessRedirect(res)) {
+    printResult(true, urlPath, 'still gated (expected)');
+    return;
+  }
+  if (res.status === 403) {
+    printResult(true, urlPath, '403 site_private (expected)');
     return;
   }
   if (res.status === 200) {
-    printResult(false, urlPath, 'homepage is open anonymously — waitlist gate ineffective');
+    const body = await res.text();
+    if (/Preview password|Join the preview/i.test(body)) {
+      printResult(true, urlPath, 'still gated for cold traffic (expected)');
+      return;
+    }
+    printResult(false, urlPath, 'open anonymously — catalogue should stay behind the waitlist');
     return;
   }
-  printResult(true, urlPath, 'HTTP ' + res.status + ' (not a plain open homepage)');
+  printResult(true, urlPath, 'HTTP ' + res.status + ' (not anonymously open)');
+}
+
+async function checkPrivateApi(urlPath) {
+  const res = await fetchUrl(urlPath);
+  if (res.status === 403) {
+    printResult(true, urlPath, '403 site_private (catalogue locked)');
+    return;
+  }
+  if (isSiteAccessRedirect(res)) {
+    printResult(true, urlPath, 'gated');
+    return;
+  }
+  printResult(false, urlPath, 'HTTP ' + res.status + ' — catalogue API should be private anonymously');
 }
 
 async function extractForOrganisersLinks() {
@@ -176,19 +201,22 @@ async function main() {
   console.log('Organiser journey smoke (anonymous / no preview password)');
   console.log('Base: ' + base + '\n');
 
-  console.log('1. Email 1 + claim path pages');
+  console.log('1. Email 1 + claim path pages (open)');
   for (const page of ANON_PAGES) {
     await checkPage(page);
   }
 
-  console.log('\n2. Browse APIs used by organiser discovery');
+  console.log('\n2. Auth API (open)');
   for (const api of ANON_APIS) {
     await checkApi(api);
   }
 
-  console.log('\n3. Cold-traffic homepage should stay gated');
+  console.log('\n3. Public catalogue must stay gated');
   for (const p of MUST_STAY_GATED) {
     await checkStaysGated(p);
+  }
+  for (const api of MUST_STAY_PRIVATE_APIS) {
+    await checkPrivateApi(api);
   }
 
   console.log('\n4. Every internal link on /for-organisers must be early-access');
@@ -214,7 +242,7 @@ async function main() {
     console.error('Failed: ' + failed + ' check(s). Deploy middleware early-access fixes before Email 1.');
     process.exit(1);
   }
-  console.log('✅ Organiser journey pages are open for Email 1 / claim traffic.');
+  console.log('✅ Organiser Email 1 funnel open; public catalogue still gated.');
 }
 
 main().catch((e) => {
