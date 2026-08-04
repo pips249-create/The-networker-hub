@@ -299,15 +299,21 @@ async function fetchPaidRegistrationTotals(sb) {
 }
 
 async function fetchDashboardMetrics(sb) {
+  const { applyPublicOrganiserBrowseFilter } = require('./supabase-organisers-browse');
+  const nowIso = new Date().toISOString();
   const cutoff = new Date(Date.now() - 86400000).toISOString();
+  let browseOrgQuery = sb.from('organisers').select('id', { count: 'exact', head: true });
+  browseOrgQuery = applyPublicOrganiserBrowseFilter(browseOrgQuery);
   const [
     approvedTotalRes,
     exhibitionsRes,
     workshopsRes,
     orgRes,
+    browseOrgRes,
     attendeesRes,
     accountsRes,
     paidTotals,
+    browseUpcomingRes,
     liveDatedRes,
     liveUndatedRes,
   ] = await Promise.all([
@@ -319,9 +325,15 @@ async function fetchDashboardMetrics(sb) {
       .or('event_type.eq.Exhibition,event_type.ilike.%exhibit%'),
     sb.from('workshops').select('id', { count: 'exact', head: true }),
     sb.from('organisers').select('id', { count: 'exact', head: true }),
+    browseOrgQuery,
     sb.from('attendees').select('id', { count: 'exact', head: true }),
     sb.from('hub_accounts').select('user_id', { count: 'exact', head: true }),
     fetchPaidRegistrationTotals(sb),
+    // Same catalogue as /events/ — published Approved rows in browse_events_index that have not started.
+    sb
+      .from('browse_events_index')
+      .select('id', { count: 'exact', head: true })
+      .gt('starts_at', nowIso),
     sb
       .from('events')
       .select('id', { count: 'exact', head: true })
@@ -341,6 +353,10 @@ async function fetchDashboardMetrics(sb) {
   const exhibitions = exhibitionsRes.count || 0;
   const meetings = Math.max(0, total - exhibitions);
   const training = workshopsRes.count || 0;
+  const browseFallback = (liveDatedRes.count || 0) + (liveUndatedRes.count || 0);
+  const liveEvents = browseUpcomingRes.error ? browseFallback : browseUpcomingRes.count || 0;
+  const organisersAll = orgRes.count || 0;
+  const browseOrganisers = browseOrgRes.error ? organisersAll : browseOrgRes.count || 0;
 
   return {
     revenue: paidTotals.revenue,
@@ -351,10 +367,14 @@ async function fetchDashboardMetrics(sb) {
       training,
       total,
     },
-    organisers: orgRes.count || 0,
+    /** All group profiles — drafts and unpublished included. */
+    organisers: organisersAll,
+    /** Public directory size — matches organiser browse. */
+    browseOrganisers,
     providers: training,
     attendees: Math.max(attendeesRes.count || 0, accountsRes.count || 0),
-    liveEvents: (liveDatedRes.count || 0) + (liveUndatedRes.count || 0),
+    /** Upcoming catalogue size — matches the unfiltered /events/ browse total. */
+    liveEvents,
     currency: 'GBP',
   };
 }

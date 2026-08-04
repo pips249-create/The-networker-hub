@@ -49,8 +49,18 @@ function parseListQuery(query) {
   const q = String(query?.q || '').trim();
   const incomplete = query?.incomplete === '1' || query?.incomplete === 'true';
   const excludeHidden = query?.exclude_hidden === '1' || query?.exclude_hidden === 'true';
+  const visibilityRaw = String(query?.visibility || '').trim().toLowerCase();
+  const visibility =
+    visibilityRaw === 'browse' ||
+    visibilityRaw === 'on_browse' ||
+    visibilityRaw === 'draft' ||
+    visibilityRaw === 'unpublished'
+      ? visibilityRaw === 'on_browse'
+        ? 'browse'
+        : visibilityRaw
+      : '';
   const organiserId = String(query?.id || query?.organiser || '').trim();
-  return { offset, limit, q, incomplete, excludeHidden, organiserId };
+  return { offset, limit, q, incomplete, excludeHidden, visibility, organiserId };
 }
 
 async function eventCountsForOrganisers(sb, organiserIds) {
@@ -315,7 +325,8 @@ function buildOrganiserPatch(body, photo_url) {
 
 async function listOrganisersForAdmin(query) {
   const sb = getSupabaseAdmin();
-  const { offset, limit, q, incomplete, excludeHidden, organiserId } = parseListQuery(query);
+  const { applyPublicOrganiserBrowseFilter } = require('../supabase-organisers-browse');
+  const { offset, limit, q, incomplete, excludeHidden, visibility, organiserId } = parseListQuery(query);
 
   let dbQuery = sb
     .from('organisers')
@@ -336,7 +347,15 @@ async function listOrganisersForAdmin(query) {
       }
     }
     if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
-    if (excludeHidden) dbQuery = dbQuery.neq('listing_status', 'unpublished');
+    if (visibility === 'browse') {
+      dbQuery = applyPublicOrganiserBrowseFilter(dbQuery);
+    } else if (visibility === 'draft') {
+      dbQuery = dbQuery.or('listing_status.eq.draft,listing_status.is.null');
+    } else if (visibility === 'unpublished') {
+      dbQuery = dbQuery.eq('listing_status', 'unpublished');
+    } else if (excludeHidden) {
+      dbQuery = dbQuery.neq('listing_status', 'unpublished');
+    }
   }
 
   const res = organiserId ? await dbQuery.limit(1) : await dbQuery.range(offset, offset + limit - 1);

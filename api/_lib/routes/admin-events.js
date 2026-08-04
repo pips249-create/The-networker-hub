@@ -153,6 +153,13 @@ async function listEventsForAdmin(query) {
   const organiserId = String(query.organiser_id || '').trim();
   const unlinked = query.unlinked === '1' || query.unlinked === 'true';
   const noDate = query.no_date === '1' || query.no_date === 'true';
+  const whenRaw = String(query.when || '').trim().toLowerCase();
+  const when =
+    whenRaw === 'upcoming' || whenRaw === 'live'
+      ? 'upcoming'
+      : whenRaw === 'past'
+        ? 'past'
+        : '';
   const status = String(query.status || '').trim();
   const approvalStatus = String(query.approval_status || '').trim();
   const search = String(query.q || '').trim();
@@ -164,6 +171,7 @@ async function listEventsForAdmin(query) {
     String(query.view || '').trim().toLowerCase() === 'spotlight';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
   const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
+  const nowIso = new Date().toISOString();
 
   let dbQuery = sb.from('events').select(
     light
@@ -175,7 +183,10 @@ async function listEventsForAdmin(query) {
   if (sort === 'title') {
     dbQuery = dbQuery.order('title', { ascending: true });
   } else if (sort === 'date') {
-    dbQuery = dbQuery.order('starts_at', { ascending: false, nullsFirst: false });
+    dbQuery = dbQuery.order('starts_at', {
+      ascending: when === 'upcoming',
+      nullsFirst: false,
+    });
   } else {
     dbQuery = dbQuery.order('created_at', { ascending: false });
   }
@@ -188,6 +199,10 @@ async function listEventsForAdmin(query) {
 
   if (noDate) {
     dbQuery = dbQuery.is('starts_at', null);
+  } else if (when === 'upcoming') {
+    dbQuery = dbQuery.gt('starts_at', nowIso);
+  } else if (when === 'past') {
+    dbQuery = dbQuery.lte('starts_at', nowIso);
   }
 
   if (status) {

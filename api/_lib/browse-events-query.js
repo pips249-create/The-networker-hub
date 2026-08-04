@@ -23,9 +23,8 @@ const MAX_LIMIT = 48;
 const DEFAULT_LIMIT = 12;
 /** Map pins — keep payload under serverless limits as the catalogue grows. */
 const MAX_PINS = 800;
-/** Max bbox candidates pulled into Node for haversine filter / type counts. */
+/** Max bbox candidates pulled into Node for haversine filter. */
 const GEO_MATCH_CAP = 1500;
-const TYPE_COUNT_CAP = 2000;
 const IN_CHUNK = 80;
 const PIN_SELECT =
   'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating';
@@ -429,25 +428,54 @@ async function fetchBrowseTypeCounts(sb, params) {
     'masterclass',
   ];
   const base = { ...params, types: [] };
-  let query = sb.from(BROWSE_VIEW).select('type_tab, latitude, longitude, format_tab');
-  query = applyBrowseFilters(query, base);
-  if (hasGeoRadius(params)) {
-    query = query.order('starts_at', { ascending: true }).limit(GEO_MATCH_CAP);
-  } else {
-    query = query.limit(TYPE_COUNT_CAP);
-  }
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
 
-  const rows = (data || []).filter((row) => rowPassesGeo(row, params));
-  const counts = { all: rows.length };
-  types.forEach((type) => {
-    counts[type] = 0;
-  });
-  rows.forEach((row) => {
-    const type = String(row.type_tab || 'meeting').toLowerCase();
-    if (counts[type] != null) counts[type] += 1;
-  });
+  // Geo radius needs haversine in Node — page past PostgREST max-rows (1000).
+  if (hasGeoRadius(params)) {
+    const pageSize = 1000;
+    const rows = [];
+    let from = 0;
+    while (from < GEO_MATCH_CAP) {
+      const to = Math.min(from + pageSize - 1, GEO_MATCH_CAP - 1);
+      let query = sb
+        .from(BROWSE_VIEW)
+        .select('type_tab, latitude, longitude, format_tab')
+        .order('starts_at', { ascending: true })
+        .range(from, to);
+      query = applyBrowseFilters(query, base);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      const batch = data || [];
+      rows.push(...batch);
+      if (batch.length < pageSize) break;
+      from += pageSize;
+    }
+    const filtered = rows.filter((row) => rowPassesGeo(row, params));
+    const counts = { all: filtered.length };
+    types.forEach((type) => {
+      counts[type] = 0;
+    });
+    filtered.forEach((row) => {
+      const type = String(row.type_tab || 'meeting').toLowerCase();
+      if (counts[type] != null) counts[type] += 1;
+    });
+    return counts;
+  }
+
+  // Exact SQL counts — avoids silent truncation once the catalogue exceeds max-rows.
+  async function countFor(typeList) {
+    let query = sb.from(BROWSE_VIEW).select('id', { count: 'exact', head: true });
+    query = applyBrowseFilters(query, { ...base, types: typeList });
+    const { count, error } = await query;
+    if (error) throw new Error(error.message);
+    return Number(count) || 0;
+  }
+
+  const counts = { all: await countFor([]) };
+  await Promise.all(
+    types.map(async (type) => {
+      counts[type] = await countFor([type]);
+    })
+  );
   return counts;
 }
 

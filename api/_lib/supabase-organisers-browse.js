@@ -39,6 +39,24 @@ function isPublicOrganiser(row) {
   return verified || published;
 }
 
+/**
+ * Apply the same visibility rules as organiser browse.
+ * PostgREST-safe equivalent of isPublicOrganiser (excludes unpublished even if Verified).
+ */
+function applyPublicOrganiserBrowseFilter(query) {
+  return query
+    .not('name', 'is', null)
+    .neq('name', '')
+    .or(
+      [
+        'listing_status.eq.published',
+        'and(verification_status.eq.Verified,listing_status.is.null)',
+        'and(verification_status.eq.Verified,listing_status.eq.draft)',
+        'and(verification_status.eq.Verified,listing_status.eq.published)',
+      ].join(',')
+    );
+}
+
 function isOrganiserClaimable(row) {
   if (!isPublicOrganiser(row)) return false;
   const status = String(row.ownership_claim_status || '').toLowerCase();
@@ -466,4 +484,5 @@ module.exports = {
   resolvePhotoUrl,
   isPublicOrganiser,
   isOrganiserClaimable,
+  applyPublicOrganiserBrowseFilter,
 };

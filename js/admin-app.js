@@ -464,6 +464,7 @@
     q: '',
     incomplete: false,
     excludeHidden: false,
+    visibility: '',
     total: 0,
     loading: false,
     selected: {},
@@ -475,6 +476,7 @@
     organiserId: '',
     unlinked: false,
     noDate: false,
+    when: '',
     status: '',
     approval: '',
     sort: 'recent',
@@ -4549,15 +4551,21 @@
         metricsEl.innerHTML =
           card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue') +
           card(
-            'Approved events',
-            String(listings.total || 0),
-            'Meetings ' +
+            'On events browse',
+            String(m.liveEvents || 0),
+            (listings.total || 0) +
+              ' approved all-time · Meetings ' +
               (listings.meetings || 0) +
               ' · Exhibitions ' +
               (listings.exhibitions || 0),
             'brand'
           ) +
-          card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles', 'violet') +
+          card(
+            'On organiser browse',
+            String(m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0),
+            (m.organisers || 0) + ' group profiles all-time',
+            'violet'
+          ) +
           card(
             'Paid ticket revenue',
             fmtMoney(m.revenue || 0),
@@ -4602,8 +4610,8 @@
       '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
       '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
       card('Hub accounts', '…', 'Loading…', 'blue') +
-      card('Approved events', '…', 'Loading…', 'brand') +
-      card('Organisers', '…', 'Loading…', 'violet') +
+      card('On events browse', '…', 'Loading…', 'brand') +
+      card('On organiser browse', '…', 'Loading…', 'violet') +
       card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
       '</div></section>' +
       '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
@@ -4686,14 +4694,19 @@
           'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations'
         ) +
         card(
-          'Approved events',
-          String(listings.total || 0),
-          'Meetings ' +
+          'On events browse',
+          String(m.liveEvents || 0),
+          (listings.total || 0) +
+            ' approved all-time · Meetings ' +
             (listings.meetings || 0) +
             ' · Exhibitions ' +
             (listings.exhibitions || 0)
         ) +
-        card('Organisers', String(m.organisers || 0), String(m.providers || 0) + ' group profiles') +
+        card(
+          'On organiser browse',
+          String(m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0),
+          (m.organisers || 0) + ' group profiles all-time'
+        ) +
         card('Member accounts', String(m.attendees || 0), 'People signed up on the Hub');
     }
 
@@ -5309,8 +5322,8 @@
         '<div class="space-y-5">' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
         card('Paid ticket revenue', '…', 'Loading…') +
-        card('Approved events', '…', 'Loading…') +
-        card('Organisers', '…', 'Loading…') +
+        card('On events browse', '…', 'Loading…') +
+        card('On organiser browse', '…', 'Loading…') +
         card('Member accounts', '…', 'Loading…') +
         '</section>' +
         '<section class="admin-dash-section">' +
@@ -5388,13 +5401,16 @@
     var updated = data.updatedAt ? fmtTime(data.updatedAt) : '—';
     return (
       '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">' +
-      '<div><dt>Approved events</dt><dd>' +
-      esc(String(listings.total || 0)) +
-      '</dd></div>' +
-      '<div><dt>Upcoming events</dt><dd>' +
+      '<div><dt>On events browse</dt><dd>' +
       esc(String(m.liveEvents || 0)) +
       '</dd></div>' +
-      '<div><dt>Organisers</dt><dd>' +
+      '<div><dt>Approved all-time</dt><dd>' +
+      esc(String(listings.total || 0)) +
+      '</dd></div>' +
+      '<div><dt>On organiser browse</dt><dd>' +
+      esc(String(m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0)) +
+      '</dd></div>' +
+      '<div><dt>Group profiles all-time</dt><dd>' +
       esc(String(m.organisers || 0)) +
       '</dd></div>' +
       '<div><dt>Workshops listed</dt><dd>' +
@@ -11223,6 +11239,7 @@
       eventCleanupState.organiserId ||
       eventCleanupState.unlinked ||
       eventCleanupState.noDate ||
+      eventCleanupState.when ||
       eventCleanupState.status ||
       eventCleanupState.approval
     );
@@ -11238,6 +11255,8 @@
     if (el) el.checked = !!eventCleanupState.unlinked;
     el = document.getElementById('event-cleanup-no-date');
     if (el) el.checked = !!eventCleanupState.noDate;
+    el = document.getElementById('event-cleanup-when');
+    if (el) el.value = eventCleanupState.when || '';
     el = document.getElementById('event-cleanup-status-filter');
     if (el) el.value = eventCleanupState.status || '';
     el = document.getElementById('event-cleanup-approval-filter');
@@ -11249,6 +11268,8 @@
       var active = false;
       if (key === 'unlinked') active = eventCleanupState.unlinked;
       else if (key === 'no_date') active = eventCleanupState.noDate;
+      else if (key === 'live') active = eventCleanupState.when === 'upcoming';
+      else if (key === 'past') active = eventCleanupState.when === 'past';
       else if (key === 'draft') active = eventCleanupState.status === 'draft';
       else if (key === 'pending') active = eventCleanupState.approval === 'Pending Review';
       btn.classList.toggle('ring-2', active);
@@ -12084,6 +12105,28 @@
     });
   }
 
+  function syncGroupCleanupFilterUi() {
+    var el = document.getElementById('group-cleanup-visibility');
+    if (el) el.value = groupCleanupState.visibility || '';
+    el = document.getElementById('group-cleanup-incomplete');
+    if (el) el.checked = !!groupCleanupState.incomplete;
+    el = document.getElementById('group-cleanup-exclude-hidden');
+    if (el) el.checked = !!groupCleanupState.excludeHidden && !groupCleanupState.visibility;
+    if (!main) return;
+    main.querySelectorAll('[data-group-quick]').forEach(function (btn) {
+      var key = btn.getAttribute('data-group-quick');
+      var active = false;
+      if (key === 'browse' || key === 'draft' || key === 'unpublished') {
+        active = groupCleanupState.visibility === key;
+      } else if (key === 'incomplete') {
+        active = !!groupCleanupState.incomplete;
+      }
+      btn.classList.toggle('ring-2', active);
+      btn.classList.toggle('ring-brand-700', active);
+      btn.classList.toggle('bg-brand-50', active);
+    });
+  }
+
   function fetchGroupCleanup(pageIndex, options) {
     options = options || {};
     if (groupCleanupState.loading) return Promise.resolve(groupCleanupCache);
@@ -12096,7 +12139,8 @@
     params.set('limit', String(GROUP_PAGE_SIZE));
     if (groupCleanupState.q) params.set('q', groupCleanupState.q);
     if (groupCleanupState.incomplete) params.set('incomplete', '1');
-    if (groupCleanupState.excludeHidden) params.set('exclude_hidden', '1');
+    if (groupCleanupState.visibility) params.set('visibility', groupCleanupState.visibility);
+    else if (groupCleanupState.excludeHidden) params.set('exclude_hidden', '1');
     if (options.organiserId || groupCleanupState.focusOrganiserId) {
       params.set('id', String(options.organiserId || groupCleanupState.focusOrganiserId));
     }
@@ -12127,6 +12171,7 @@
     if (eventCleanupState.organiserId) params.set('organiser_id', eventCleanupState.organiserId);
     if (eventCleanupState.unlinked) params.set('unlinked', '1');
     if (eventCleanupState.noDate) params.set('no_date', '1');
+    if (eventCleanupState.when) params.set('when', eventCleanupState.when);
     if (eventCleanupState.status) params.set('status', eventCleanupState.status);
     if (eventCleanupState.approval) params.set('approval_status', eventCleanupState.approval);
     if (eventCleanupState.sort) params.set('sort', eventCleanupState.sort);
@@ -12860,6 +12905,31 @@
   }
 
   function handleGroupCleanupClick(e) {
+    var groupQuick = e.target.closest('[data-group-quick]');
+    if (groupQuick) {
+      var gKey = groupQuick.getAttribute('data-group-quick');
+      if (gKey === 'clear') {
+        groupCleanupState.q = '';
+        groupCleanupState.incomplete = false;
+        groupCleanupState.excludeHidden = false;
+        groupCleanupState.visibility = '';
+      } else if (gKey === 'browse' || gKey === 'draft' || gKey === 'unpublished') {
+        groupCleanupState.visibility = groupCleanupState.visibility === gKey ? '' : gKey;
+        if (groupCleanupState.visibility) groupCleanupState.excludeHidden = false;
+      } else if (gKey === 'incomplete') {
+        groupCleanupState.incomplete = !groupCleanupState.incomplete;
+      }
+      groupCleanupState.page = 0;
+      syncGroupCleanupFilterUi();
+      var searchEl = document.getElementById('group-cleanup-search');
+      if (searchEl) searchEl.value = groupCleanupState.q || '';
+      fetchGroupCleanup(0).then(function (data) {
+        renderGroupCleanupList(data);
+        bindGroupCleanupPageUi();
+      });
+      return;
+    }
+
     var activityLoad = e.target.closest('.entity-activity-load');
     if (activityLoad) {
       loadEntityActivityPanel(activityLoad.closest('.entity-activity-panel'));
@@ -13216,9 +13286,22 @@
         });
         return;
       }
+      if (e.target.id === 'group-cleanup-visibility') {
+        groupCleanupState.visibility = e.target.value || '';
+        if (groupCleanupState.visibility) groupCleanupState.excludeHidden = false;
+        groupCleanupState.page = 0;
+        syncGroupCleanupFilterUi();
+        fetchGroupCleanup(0).then(function (data) {
+          renderGroupCleanupList(data);
+          bindGroupCleanupPageUi();
+        });
+        return;
+      }
       if (e.target.id === 'group-cleanup-exclude-hidden') {
         groupCleanupState.excludeHidden = e.target.checked;
+        if (groupCleanupState.excludeHidden) groupCleanupState.visibility = '';
         groupCleanupState.page = 0;
+        syncGroupCleanupFilterUi();
         fetchGroupCleanup(0).then(function (data) {
           renderGroupCleanupList(data);
           bindGroupCleanupPageUi();
@@ -13488,6 +13571,7 @@
         eventCleanupState.organiserId = '';
         eventCleanupState.unlinked = false;
         eventCleanupState.noDate = false;
+        eventCleanupState.when = '';
         eventCleanupState.status = '';
         eventCleanupState.approval = '';
         eventCleanupState.q = '';
@@ -13495,6 +13579,13 @@
         eventCleanupState.unlinked = !eventCleanupState.unlinked;
       } else if (key === 'no_date') {
         eventCleanupState.noDate = !eventCleanupState.noDate;
+        if (eventCleanupState.noDate) eventCleanupState.when = '';
+      } else if (key === 'live') {
+        eventCleanupState.when = eventCleanupState.when === 'upcoming' ? '' : 'upcoming';
+        if (eventCleanupState.when) eventCleanupState.noDate = false;
+      } else if (key === 'past') {
+        eventCleanupState.when = eventCleanupState.when === 'past' ? '' : 'past';
+        if (eventCleanupState.when) eventCleanupState.noDate = false;
       } else if (key === 'draft') {
         eventCleanupState.status = eventCleanupState.status === 'draft' ? '' : 'draft';
       } else if (key === 'pending') {
@@ -13536,6 +13627,13 @@
       }
       if (e.target.id === 'event-cleanup-no-date') {
         eventCleanupState.noDate = e.target.checked;
+        if (eventCleanupState.noDate) eventCleanupState.when = '';
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+      }
+      if (e.target.id === 'event-cleanup-when') {
+        eventCleanupState.when = e.target.value || '';
+        if (eventCleanupState.when) eventCleanupState.noDate = false;
         syncEventCleanupFilterUi();
         refreshEventCleanupData();
       }
@@ -13813,25 +13911,42 @@
       '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(groupCleanupState.q) +
       '">' +
+      '<select id="group-cleanup-visibility" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[12rem]" aria-label="Browse visibility">' +
+      '<option value=""' +
+      (groupCleanupState.visibility === '' ? ' selected' : '') +
+      '>Any visibility</option>' +
+      '<option value="browse"' +
+      (groupCleanupState.visibility === 'browse' ? ' selected' : '') +
+      '>On organiser browse</option>' +
+      '<option value="draft"' +
+      (groupCleanupState.visibility === 'draft' ? ' selected' : '') +
+      '>Draft</option>' +
+      '<option value="unpublished"' +
+      (groupCleanupState.visibility === 'unpublished' ? ' selected' : '') +
+      '>Unpublished / hidden</option></select>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"' +
       (groupCleanupState.incomplete ? ' checked' : '') +
       '> Show incomplete only</label>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="group-cleanup-exclude-hidden" class="rounded border-slate-300"' +
-      (groupCleanupState.excludeHidden ? ' checked' : '') +
-      '> Hide hidden from browse</label>' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" data-group-quick="browse" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">On browse</button>' +
+      '<button type="button" data-group-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
+      '<button type="button" data-group-quick="unpublished" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unpublished</button>' +
+      '<button type="button" data-group-quick="incomplete" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Incomplete</button>' +
+      '<button type="button" data-group-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers below to browse.</p>' +
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;
     refreshAdminNotifications();
+    syncGroupCleanupFilterUi();
     fetchGroupCleanup(0, { organiserId: focusId })
       .then(function (data) {
         renderGroupCleanupList(data || { error: 'load_failed' });
         bindGroupCleanupPageUi();
+        syncGroupCleanupFilterUi();
         if (focusId) focusOrganiserInGroupCleanup(focusId);
       })
       .catch(function () {
@@ -14683,6 +14798,16 @@
       '<option value="Rejected"' +
       (eventCleanupState.approval === 'Rejected' ? ' selected' : '') +
       '>Rejected</option></select>' +
+      '<select id="event-cleanup-when" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[11rem]" aria-label="Event date timing">' +
+      '<option value=""' +
+      (eventCleanupState.when === '' ? ' selected' : '') +
+      '>Any date</option>' +
+      '<option value="upcoming"' +
+      (eventCleanupState.when === 'upcoming' ? ' selected' : '') +
+      '>Live / upcoming</option>' +
+      '<option value="past"' +
+      (eventCleanupState.when === 'past' ? ' selected' : '') +
+      '>Past</option></select>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="event-cleanup-unlinked" class="rounded border-slate-300"' +
       (eventCleanupState.unlinked ? ' checked' : '') +
@@ -14692,6 +14817,8 @@
       (eventCleanupState.noDate ? ' checked' : '') +
       '> No date</label></div>' +
       '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" data-event-quick="live" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Live / upcoming</button>' +
+      '<button type="button" data-event-quick="past" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Past</button>' +
       '<button type="button" data-event-quick="unlinked" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unlinked</button>' +
       '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
       '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
