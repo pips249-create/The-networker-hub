@@ -46,7 +46,8 @@ const ANON_PAGES = [
   { path: '/forgot-password', expect: /password|reset|forgot/i },
   { path: '/organiser/', expect: /organis|dashboard|sign\s*in|log\s*in/i },
   { path: '/events/', expect: /event/i },
-  { path: '/organisers/', expect: /organis/i },
+  { path: '/events/?mode=organisers', expect: /organis|event/i },
+  { path: '/organisers/circle-networks', expect: /circle|organis|network/i },
   { path: '/opportunities/', expect: /opportunit/i },
   { path: '/for-attendees', expect: /attendee|My Hub|network/i },
 ];
