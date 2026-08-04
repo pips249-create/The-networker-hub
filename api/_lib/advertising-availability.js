@@ -6,7 +6,7 @@ const { isPublishableSponsorBlock } = require('./cms-sponsor-fields');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
-  OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
+  OPPORTUNITY_PAGE_CAROUSEL_SLOT,
   parseCarouselBody,
   publishableCarouselAds,
 } = require('./event-page-carousel');
@@ -20,7 +20,7 @@ const HEADLINE_SLOTS = {
 const PAGE_PARTNER_SLOTS = {
   events: { slot: EVENT_PAGE_CAROUSEL_SLOT, max: 3 },
   organisers: { slot: ORGANISER_PAGE_CAROUSEL_SLOT, max: 3 },
-  opportunities: { slot: OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT, max: 3 },
+  opportunities: { slot: OPPORTUNITY_PAGE_CAROUSEL_SLOT, max: 3 },
 };
 
 function headlineAvailability(row, slot) {
@@ -51,7 +51,7 @@ async function getAdvertisingAvailability() {
     ...Object.values(HEADLINE_SLOTS),
     EVENT_PAGE_CAROUSEL_SLOT,
     ORGANISER_PAGE_CAROUSEL_SLOT,
-    OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
+    OPPORTUNITY_PAGE_CAROUSEL_SLOT,
   ];
 
   const res = await sb.from('cms_blocks').select('*').in('slot', slotKeys);

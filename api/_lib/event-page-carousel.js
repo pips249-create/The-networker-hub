@@ -1,10 +1,15 @@
 const EVENT_PAGE_CAROUSEL_SLOT = 'event_page_carousel_ads';
 const ORGANISER_PAGE_CAROUSEL_SLOT = 'organiser_page_carousel_ads';
+const OPPORTUNITY_PAGE_CAROUSEL_SLOT = 'opportunity_page_carousel_ads';
 const EVENT_PAGE_CAROUSEL_SIZE = 3;
 const EVENT_EMAIL_MINI_SPONSORS_SLOT = 'event_email_mini_sponsors';
 const ORGANISER_EMAIL_MINI_SPONSORS_SLOT = 'organiser_email_mini_sponsors';
 const OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT = 'opportunity_email_mini_sponsors';
-const PAGE_CAROUSEL_SLOTS = new Set([EVENT_PAGE_CAROUSEL_SLOT, ORGANISER_PAGE_CAROUSEL_SLOT]);
+const PAGE_CAROUSEL_SLOTS = new Set([
+  EVENT_PAGE_CAROUSEL_SLOT,
+  ORGANISER_PAGE_CAROUSEL_SLOT,
+  OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+]);
 const EMAIL_MINI_SPONSOR_SLOTS = new Set([
   EVENT_EMAIL_MINI_SPONSORS_SLOT,
   ORGANISER_EMAIL_MINI_SPONSORS_SLOT,
@@ -49,7 +54,9 @@ function sanitizeCtaColor(color) {
 }
 
 function carouselIdPrefix(slot) {
-  return slot === ORGANISER_PAGE_CAROUSEL_SLOT ? 'organiser_carousel' : 'event_carousel';
+  if (slot === ORGANISER_PAGE_CAROUSEL_SLOT) return 'organiser_carousel';
+  if (slot === OPPORTUNITY_PAGE_CAROUSEL_SLOT) return 'opportunity_carousel';
+  return 'event_carousel';
 }
 
 function normalizeCarouselAd(raw, index, slot) {
@@ -120,6 +127,7 @@ function publishableCarouselAds(ads, slot) {
 module.exports = {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
+  OPPORTUNITY_PAGE_CAROUSEL_SLOT,
   PAGE_CAROUSEL_SLOTS,
   EVENT_PAGE_CAROUSEL_SIZE,
   carouselIdPrefix,

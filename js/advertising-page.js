@@ -1224,10 +1224,10 @@
   }
 
   function loadOpportunitySidebarPreview() {
-    renderCompactInShell(
-      document.getElementById('ad-live-opportunity-sidebar'),
-      DEMO_OPPORTUNITIES_SPONSOR,
-      'opportunity_page_sidebar_ad'
+    renderMiniInShell(
+      document.getElementById('ad-live-mini-opportunity'),
+      DEMO_MINI_SPONSORS,
+      'opportunity_page_carousel_ads'
     );
     renderOpportunityMiniSponsorEmailPreview(
       document.getElementById('ad-live-opportunity-mini-email')

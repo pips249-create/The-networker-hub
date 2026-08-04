@@ -693,13 +693,13 @@
       ctaColor: '#2d2636',
     },
     {
-      key: 'opportunity_page_sidebar_ad',
+      key: 'opportunity_page_carousel_ads',
       group: 'Detail pages',
-      label: 'Opportunity page — Sidebar ad',
-      preview: 'compact',
-      help: 'Clickable logo above the enquiry form on individual business opportunity pages (/opportunities/{id}). Logo + destination URL only — shows a sellable placeholder when empty.',
+      label: 'Opportunity pages — Mini Sponsors (3 slots)',
+      preview: 'carousel',
+      help: 'Up to three rotating Mini Sponsor logos in the sidebar on individual business opportunity pages. Separate inventory from opportunity email mini sponsors.',
       tagline: '',
-      ctaLabel: '',
+      ctaLabel: 'Enquire now',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
@@ -8426,7 +8426,7 @@
       if (slot.preview === 'compact' && window.CmsAdBlocks && window.CmsAdBlocks.renderCompactAd) {
         el.innerHTML = '';
         el.className = 'max-w-xs opportunity-detail-page';
-        window.CmsAdBlocks.renderCompactAd(el, block, currentSlotKey);
+        window.CmsAdBlocks.renderCompactAd(el, block, currentSlotKey, { showPlaceholder: true });
         return;
       }
 
@@ -8992,10 +8992,13 @@
     var slot = cmsSlotByKey(slotKey || 'event_page_carousel_ads');
     var isEventPageInventory = slot.key === 'event_page_carousel_ads';
     var isOrganiserPageInventory = slot.key === 'organiser_page_carousel_ads';
+    var isOpportunityPageInventory = slot.key === 'opportunity_page_carousel_ads';
     var detailText = isEventPageInventory
       ? 'Three Mini Sponsor slots used on individual event detail pages.'
       : isOrganiserPageInventory
         ? 'Three Mini Sponsor slots used on public organiser profile pages (separate from event page inventory).'
+        : isOpportunityPageInventory
+          ? 'Three Mini Sponsor slots used on individual business opportunity pages (separate from opportunity email inventory).'
       : 'Three Mini Sponsor slots used on selected ' +
         (slot.key === 'event_email_mini_sponsors'
           ? 'event and attendee'
@@ -9049,10 +9052,16 @@
     }
 
     function defaultAds() {
+      var prefix = 'event_carousel_';
+      if (slotKey === 'organiser_page_carousel_ads') prefix = 'organiser_carousel_';
+      else if (slotKey === 'opportunity_page_carousel_ads') prefix = 'opportunity_carousel_';
+      else if (slotKey === 'event_email_mini_sponsors') prefix = 'event_email_mini_';
+      else if (slotKey === 'organiser_email_mini_sponsors') prefix = 'organiser_email_mini_';
+      else if (slotKey === 'opportunity_email_mini_sponsors') prefix = 'opportunity_email_mini_';
       var out = [];
       for (var i = 0; i < CAROUSEL_SIZE; i++) {
         out.push({
-          id: 'event_carousel_' + (i + 1),
+          id: prefix + (i + 1),
           slot_index: i,
           logo_url: '',
           cta_url: '',

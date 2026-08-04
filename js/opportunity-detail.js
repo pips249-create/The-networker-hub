@@ -646,9 +646,16 @@
     var el = document.getElementById('opportunity-page-sidebar-ad');
     if (!el) return;
 
-    window.CmsAdBlocks.loadCmsAd('opportunity_page_sidebar_ad')
-      .then(function (block) {
-        window.CmsAdBlocks.renderCompactAd(el, block, 'opportunity_page_sidebar_ad');
+    var loadCarousel = window.CmsAdBlocks.loadOpportunityPageCarouselAds
+      ? window.CmsAdBlocks.loadOpportunityPageCarouselAds(el)
+      : window.CmsAdBlocks.loadPageCarouselAds(el, { slot: 'opportunity_page_carousel_ads' });
+
+    Promise.resolve(loadCarousel)
+      .then(function (shown) {
+        if (shown) return true;
+        return window.CmsAdBlocks.loadCmsAd('opportunity_page_sidebar_ad').then(function (block) {
+          return window.CmsAdBlocks.renderCompactAd(el, block, 'opportunity_page_sidebar_ad');
+        });
       })
       .catch(function () {});
   }

@@ -4,6 +4,7 @@ const { resolveImageUrl } = require('../supabase-storage');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
+  OPPORTUNITY_PAGE_CAROUSEL_SLOT,
   PAGE_CAROUSEL_SLOTS,
   EVENT_PAGE_CAROUSEL_SIZE,
   EMAIL_MINI_SPONSOR_SLOTS,
@@ -17,6 +18,7 @@ const {
 function carouselTitle(slot) {
   if (slot === EVENT_PAGE_CAROUSEL_SLOT) return 'Event page carousel ads';
   if (slot === ORGANISER_PAGE_CAROUSEL_SLOT) return 'Organiser page carousel ads';
+  if (slot === OPPORTUNITY_PAGE_CAROUSEL_SLOT) return 'Opportunity page carousel ads';
   return 'Email mini sponsors';
 }
 

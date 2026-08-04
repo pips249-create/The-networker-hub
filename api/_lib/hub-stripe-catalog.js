@@ -151,13 +151,13 @@ const HUB_STRIPE_CATALOG = [
     productMetadata: {
       revenue_category: 'opportunities',
       placement: 'opportunities_mini_sponsor',
-      cms_slot: 'opportunity_page_sidebar_ad',
+      cms_slot: 'opportunity_page_carousel_ads',
     },
     paymentLinkMetadata: {
       checkout_type: 'hub_sponsorship',
       revenue_category: 'opportunities',
       placement: 'opportunities_mini_sponsor',
-      cms_slot: 'opportunity_page_sidebar_ad',
+      cms_slot: 'opportunity_page_carousel_ads',
       package_name: 'Opportunities Mini Sponsor',
     },
   },

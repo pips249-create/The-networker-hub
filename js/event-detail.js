@@ -4667,6 +4667,19 @@
     }
   }
 
+  async function loadEventPageAds() {
+    if (!window.CmsAdBlocks) return;
+    const sidebarEl = document.getElementById('event-page-sidebar-ad');
+    if (!sidebarEl) return;
+    try {
+      await window.CmsAdBlocks.loadPageCarouselAds(sidebarEl, {
+        slot: 'event_page_carousel_ads',
+      });
+    } catch {
+      /* non-fatal */
+    }
+  }
+
   function showEventLoadError(message) {
     const lead = document.getElementById('ev-about-lead');
     if (lead) lead.textContent = message;
@@ -4832,6 +4845,7 @@
           } else {
             renderRelated([], relatedOpts);
           }
+          loadEventPageAds();
           return;
         }
         if (data.softLanding || data.eventStub) {
@@ -4894,6 +4908,7 @@
       initTicketPanel(ev);
       initActions(ev);
       trackOrganiserShareLanding(ev);
+      loadEventPageAds();
     }
   }
 
