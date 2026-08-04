@@ -235,7 +235,7 @@ function buildOrganiserNoteHtml(note) {
 
 function defaultSubject(eventTitle) {
   const title = String(eventTitle || 'your event').trim() || 'your event';
-  return clampText('Your connections from ' + title, MAX_SUBJECT);
+  return clampText('Who attended — ' + title, MAX_SUBJECT);
 }
 
 async function getConnectionsPreview(session, eventId) {
@@ -282,7 +282,7 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
 
   if (attendees.length < 2) {
     const err = new Error(
-      'You need at least two confirmed attendees before you can share a connections list.'
+      'You need at least two confirmed attendees before you can email the attendee list.'
     );
     err.status = 400;
     err.code = 'not_enough_attendees';
@@ -291,7 +291,7 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
 
   if (event.connections_email_sent_at && !force) {
     const err = new Error(
-      'A connections email was already sent for this event. Confirm to send again.'
+      'An attendee list email was already sent for this event. Confirm to send again.'
     );
     err.status = 409;
     err.code = 'already_sent';
@@ -384,14 +384,14 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
     errors,
     message:
       sent > 0
-        ? 'Sent the connections list to ' +
+        ? 'Sent the attendee list to ' +
           sent +
           ' attendee' +
           (sent === 1 ? '' : 's') +
           (skipped ? ' (' + skipped + ' opted out)' : '') +
           (failed ? '. ' + failed + ' failed.' : '.')
         : failed
-          ? 'Could not send the connections email.'
+          ? 'Could not send the attendee list email.'
           : 'No emails were sent — recipients may have email turned off.',
   };
 }

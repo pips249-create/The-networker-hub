@@ -243,7 +243,7 @@
     }
     var already = Boolean(preview.lastSentAt);
     var confirmMsg = already
-      ? 'A connections email was already sent for this event. Send again to all confirmed attendees?'
+      ? 'An attendee list email was already sent for this event. Send again to all confirmed attendees?'
       : 'Email the attendee list (names + emails) to all ' +
         preview.attendeeCount +
         ' confirmed attendees for this event?';

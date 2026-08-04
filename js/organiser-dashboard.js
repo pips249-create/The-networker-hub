@@ -1711,8 +1711,17 @@
     if (tab === 'partner') return 'social-partner';
     if (tab === 'brand') return 'social-brand';
     if (tab === 'reach') return 'social-reach';
-    if (tab === 'email') return 'social-email';
     return 'social';
+  }
+
+  function isAttendeeListEmailRoute(route) {
+    const r = String(route || '').toLowerCase();
+    return (
+      r === 'social-email' ||
+      r === 'email' ||
+      r === 'group-updates' ||
+      r === 'monthly-updates'
+    );
   }
 
   function isSocialRoute(route) {
@@ -1734,11 +1743,7 @@
       r === 'brand' ||
       r === 'brand-kit' ||
       r === 'social-reach' ||
-      r === 'reach' ||
-      r === 'social-email' ||
-      r === 'email' ||
-      r === 'group-updates' ||
-      r === 'monthly-updates'
+      r === 'reach'
     );
   }
 
@@ -1764,9 +1769,6 @@
       r === 'grow-visibility'
     ) {
       return 'reach';
-    }
-    if (r === 'social-email' || r === 'email' || r === 'group-updates' || r === 'monthly-updates') {
-      return 'email';
     }
     if (r === 'social-linkedin') return 'linkedin';
     return '';
@@ -1839,7 +1841,6 @@
       ensureLinkedInPostBuilder({ force: true });
       renderBrandKitNudge();
     }
-    if (tab === 'email') ensureEmailUpdatesPanelReady();
     if (tab === 'ranking') {
       renderOrganiserRankingShare();
       ensurePromoteLeaderboardReady();
@@ -1875,9 +1876,10 @@
     if (
       hash.includes('email') ||
       hash === 'group-updates' ||
-      hash === 'monthly-updates'
+      hash === 'monthly-updates' ||
+      hash === 'social-email'
     ) {
-      return 'email';
+      return '';
     }
     if (hash.includes('linkedin') || hash === 'social' || hash === 'promote') return 'linkedin';
     return '';
@@ -1953,7 +1955,7 @@
     });
   }
 
-  function ensureEmailUpdatesPanelReady(preferredEventId) {
+  function ensureAttendeeEmailPanelReady(preferredEventId) {
     ensureEventConnectionsAssets()
       .then(function () {
         if (window.HubOrganiserEventConnections && window.HubOrganiserEventConnections.init) {
@@ -1964,7 +1966,7 @@
           window.HubOrganiserEventConnections.init({
             groups: state.groups || [],
             events: events,
-            eventId: preferredEventId || '',
+            eventId: preferredEventId || filters.attendeesEvent || '',
           });
         }
       })
@@ -1973,14 +1975,31 @@
       });
   }
 
-  function openConnectionsEmailForEvent(eventId) {
-    setRoute('social-email');
+  function setAttendeeEmailPanelVisible(show) {
+    const panel = document.getElementById('org-attendee-email-panel');
+    if (!panel) return;
+    panel.hidden = !show;
+  }
+
+  function openAttendeeEmailForEvent(eventId) {
+    if (eventId && eventId !== 'all') {
+      filters.attendeesEvent = eventId;
+    }
+    setRoute('events-attendees');
+    setAttendeeEmailPanelVisible(true);
     ensureEventsLoaded()
       .catch(function () {
         return false;
       })
       .then(function () {
-        ensureEmailUpdatesPanelReady(eventId);
+        fillAttendeesEventFilter();
+        renderAttendees();
+        const eid = eventId && eventId !== 'all' ? eventId : filters.attendeesEvent;
+        ensureAttendeeEmailPanelReady(eid && eid !== 'all' ? eid : '');
+        const panel = document.getElementById('org-attendee-email-panel');
+        if (panel && panel.scrollIntoView) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
   }
 
@@ -4562,9 +4581,9 @@
           '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Invite previous attendees</strong><span>Email past attendees a locked ticket link</span></span></button>'
         : '';
     const connectionsItem =
-      '<button type="button" class="org-action-item" data-send-connections-email="' +
+      '<button type="button" class="org-action-item" data-send-attendee-email="' +
       esc(id) +
-      '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Email connections list</strong><span>Send attendees who else was there</span></span></button>';
+      '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Email who attended</strong><span>Send the attendee list to everyone who came</span></span></button>';
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -4783,6 +4802,9 @@
     if (hash === 'events-overview') return { page: 'events', sub: 'events-list' };
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
+    if (isAttendeeListEmailRoute(hash)) {
+      return { page: 'events', sub: 'events-attendees', openAttendeeEmail: true };
+    }
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
     if (hash === 'academy' || hash.startsWith('academy-') || hash === 'training-overview') {
       return { page: 'dashboard', sub: null };
@@ -4807,6 +4829,9 @@
 
   function setEventsSub(sub) {
     eventsSubRoute = sub || 'events-list';
+    if (eventsSubRoute !== 'events-attendees') {
+      setAttendeeEmailPanelVisible(false);
+    }
     document.querySelectorAll('[data-events-panel]').forEach((panel) => {
       const isActive = panel.getAttribute('data-events-panel') === eventsSubRoute;
       panel.classList.toggle('is-active', isActive);
@@ -5951,7 +5976,7 @@
   function renderAttendees() {
     const body = document.getElementById('attendees-body');
     const empty = document.getElementById('attendees-empty');
-    const connectionsBtn = document.getElementById('btn-email-connections');
+    const connectionsBtn = document.getElementById('btn-email-attendee-list');
     if (connectionsBtn) {
       const eventId = String(filters.attendeesEvent || 'all');
       connectionsBtn.hidden = !eventId || eventId === 'all';
@@ -7782,13 +7807,13 @@
       return true;
     }
 
-    const connectionsEmailBtn = e.target.closest('[data-send-connections-email]');
+    const connectionsEmailBtn = e.target.closest('[data-send-attendee-email]');
     if (connectionsEmailBtn && !connectionsEmailBtn.disabled) {
       e.preventDefault();
       e.stopPropagation();
       closeAllActionMenus();
-      const eid = connectionsEmailBtn.getAttribute('data-send-connections-email');
-      if (eid) openConnectionsEmailForEvent(eid);
+      const eid = connectionsEmailBtn.getAttribute('data-send-attendee-email');
+      if (eid) openAttendeeEmailForEvent(eid);
       return true;
     }
 
@@ -8947,7 +8972,7 @@
     let activeRoute = sidebarRouteForPage(page, sub);
     if (page === 'social') {
       const tab = socialTabFromHash() || storedSocialTab() || 'linkedin';
-      activeRoute = tab === 'email' ? 'social-email' : 'social';
+      activeRoute = 'social';
     }
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       const isActive = a.getAttribute('data-org-route') === activeRoute;
@@ -9156,6 +9181,10 @@
 
   function setRoute(route, options) {
     options = options || {};
+    if (isAttendeeListEmailRoute(route)) {
+      options.openAttendeeEmail = true;
+      route = 'events-attendees';
+    }
     closeNotificationsPanel();
     if (bootstrapReady && !options.skipEventsGuard && needsOrganiserPageFirst() && isEventsRoute(route)) {
       redirectEventsToOrganiserSetup();
@@ -9211,6 +9240,12 @@
 
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
+      if (isAttendeeListEmailRoute(route) || options.openAttendeeEmail) {
+        requestAnimationFrame(function () {
+          setAttendeeEmailPanelVisible(true);
+          ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
+        });
+      }
     } else if (page === 'business-overview') {
       setBusinessSub(businessSub || businessSubRoute || 'business-listings');
     } else {
@@ -9287,14 +9322,6 @@
           if (document.querySelector('[data-org-page="memberships"].is-active')) {
             renderMembershipsPage();
           }
-        });
-      }
-    }
-    if (page === 'social') {
-      const tab = socialTabFromHash() || socialTabFromRoute(route) || storedSocialTab();
-      if (tab === 'email') {
-        requestAnimationFrame(function () {
-          ensureEmailUpdatesPanelReady();
         });
       }
     }
@@ -13194,10 +13221,12 @@
         maybeRedirectToSingleMemberList();
       }
       if (
-        parseRoute().page === 'social' &&
-        socialTabFromHash() === 'email'
+        parseRoute().page === 'events' &&
+        parseRoute().sub === 'events-attendees' &&
+        parseRoute().openAttendeeEmail
       ) {
-        ensureEmailUpdatesPanelReady();
+        setAttendeeEmailPanelVisible(true);
+        ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
       }
       // Warm editor CSS after first paint so group/event drawers open without a flash.
       if (typeof requestIdleCallback === 'function') {
@@ -13902,15 +13931,21 @@
     if (btnDownloadAttendees) {
       btnDownloadAttendees.addEventListener('click', exportAttendeesCsv);
     }
-    const btnEmailConnections = document.getElementById('btn-email-connections');
-    if (btnEmailConnections) {
-      btnEmailConnections.addEventListener('click', function () {
+    const btnEmailAttendeeList = document.getElementById('btn-email-attendee-list');
+    if (btnEmailAttendeeList) {
+      btnEmailAttendeeList.addEventListener('click', function () {
         const eventId = String(filters.attendeesEvent || 'all');
         if (!eventId || eventId === 'all') {
-          showOrganiserAlert('Pick a single event first, then email the connections list.', true);
+          showOrganiserAlert('Pick a single event first, then email the attendee list.', true);
           return;
         }
-        openConnectionsEmailForEvent(eventId);
+        openAttendeeEmailForEvent(eventId);
+      });
+    }
+    const btnCloseAttendeeEmail = document.getElementById('btn-close-attendee-email');
+    if (btnCloseAttendeeEmail) {
+      btnCloseAttendeeEmail.addEventListener('click', function () {
+        setAttendeeEmailPanelVisible(false);
       });
     }
     const btnDownloadBadges = document.getElementById('btn-download-name-badges');

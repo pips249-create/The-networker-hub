@@ -442,6 +442,26 @@
   color: #635c5e;
 }
 
+.org-attendee-email-panel {
+  margin: 0 0 20px;
+  padding: 20px 22px;
+  background: var(--od-surface-muted, #f8f6f2);
+  border: 1px solid var(--od-border, #e4ddd4);
+  border-radius: 16px;
+}
+
+.org-attendee-email-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.org-attendee-email-panel-head .org-section-title {
+  margin: 0 0 6px;
+}
+
 .org-social-email-panel .org-social-panel-head {
   margin-bottom: 1rem;
 }

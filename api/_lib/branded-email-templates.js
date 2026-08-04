@@ -264,7 +264,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   event_connections_list: {
     file: 'event-connections-list.html',
     marker: 'hub-email-layout-v2',
-    subject: 'Your connections from {{event_name}}',
+    subject: 'Who attended — {{event_name}}',
   },
   member_roster_booking_reminder: {
     file: 'member-roster-booking-reminder.html',

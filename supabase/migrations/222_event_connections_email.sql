@@ -17,7 +17,7 @@ values (
   'event_connections_list',
   'Event connections list (attendee)',
   'Organiser-triggered email after an event — list of confirmed co-attendees with name, company, job title and email.',
-  'Your connections from {{event_name}}',
+  'Who attended — {{event_name}}',
   '<p>stub — see email-templates/event-connections-list.html</p>',
   array[
     'user_name', 'event_name', 'event_date', 'event_date_clause', 'organiser_name',
