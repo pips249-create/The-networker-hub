@@ -461,7 +461,7 @@
         '</span>';
       return html;
     }
-    if (showListEventCta(user)) {
+    if (showListEventCta(user) && catalogueOpen !== false) {
       html += listEventCta(user, 'nav-mobile-item nav-mobile-list-event');
     }
     if (user) {
