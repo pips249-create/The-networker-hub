@@ -244,10 +244,28 @@
     );
   }
 
+  function initEmail1Ctas() {
+    function apply(open) {
+      document.querySelectorAll('[data-fo-cta-open]').forEach(function (el) {
+        var showWhenOpen = el.getAttribute('data-fo-cta-open') === '1';
+        el.hidden = open ? !showWhenOpen : showWhenOpen;
+      });
+    }
+    if (typeof window.HubCatalogueOpen === 'boolean') {
+      apply(window.HubCatalogueOpen);
+    } else {
+      apply(false);
+    }
+    window.addEventListener('hub-catalogue-access', function (ev) {
+      apply(Boolean(ev && ev.detail && ev.detail.open));
+    });
+  }
+
   function init() {
     initReveal();
     initDashPreview();
     initHeroSlogan();
+    initEmail1Ctas();
   }
 
   if (document.readyState === 'loading') {

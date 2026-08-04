@@ -323,10 +323,8 @@
         href('/for-organisers') +
         '">For organisers</a>' +
         '<a role="menuitem" class="nav-dropdown-item" href="' +
-        href('/guides') +
-        '"' +
-        guidesActive +
-        '>Guides</a>';
+        href('/about') +
+        '">About</a>';
     } else {
       items +=
         '<a role="menuitem" class="nav-dropdown-item" href="' +
@@ -335,12 +333,15 @@
         organiserActive +
         '>Organisers</a>';
     }
+    if (!early) {
+      items +=
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/faq') +
+        '"' +
+        faqActive +
+        '>Help</a>';
+    }
     items +=
-      '<a role="menuitem" class="nav-dropdown-item" href="' +
-      href('/faq') +
-      '"' +
-      faqActive +
-      '>Help</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/contact') +
       '"' +
@@ -366,8 +367,7 @@
     }
     if (early) {
       html += link('/for-organisers', 'For organisers', 'for-organisers');
-      html += link('/guides', 'Guides', 'guides');
-      html += link('/faq', 'Help', 'faq');
+      html += link('/contact', 'Contact', 'contact');
     } else {
       html += link('/events/', 'Events', 'events');
       html += link('/opportunities/', 'Opportunities', 'opportunities');
@@ -390,7 +390,7 @@
     } else if (!user && early) {
       html += moreNavDropdownHtml({ earlyAccess: true });
     }
-    if (showListEventCta(user)) {
+    if (showListEventCta(user) && catalogueOpen !== false) {
       html += listEventCta(user);
     }
     if (user) {
@@ -435,11 +435,10 @@
     }
     if (early) {
       html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
-      html += link('/guides', 'Guides', 'guides', 'nav-mobile-item');
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
-      html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/about', 'About', 'about', 'nav-mobile-item');
+      html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
     } else {
       html += link('/events/', 'Events', 'events', 'nav-mobile-item');
       html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');

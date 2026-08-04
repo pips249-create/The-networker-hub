@@ -26,18 +26,7 @@ const base = (process.argv[2] || process.env.SITE_URL || 'https://www.thenetwork
 
 /** Must open anonymously (no site-access redirect) before Email 1. */
 const ANON_PAGES = [
-  { path: '/for-organisers', expect: /organis|list your|claim/i },
-  { path: '/guides', expect: /guide/i },
-  { path: '/guides/list-an-event', expect: /event|list/i },
-  { path: '/guides/claim-your-organiser-page', expect: /claim/i },
-  { path: '/guides/list-a-conference-or-exhibition', expect: /conference|exhibition/i },
-  { path: '/guides/list-a-business-opportunity', expect: /opportunit/i },
-  { path: '/guides/invite-your-team', expect: /team|invite/i },
-  { path: '/guides/export-attendees-and-visits', expect: /attendee|visit/i },
-  { path: '/help/pricing-fees', expect: /fee|pricing/i },
-  { path: '/help/organiser-payouts', expect: /payout/i },
-  { path: '/faq', expect: /faq|question|guest visit/i },
-  { path: '/advertising', expect: /advertis|sponsor/i },
+  { path: '/for-organisers', expect: /organis|what.?s included|contact|september/i },
   { path: '/contact', expect: /contact|hubert|hello/i },
   { path: '/about', expect: /about|networker/i },
   { path: '/legal-policies', expect: /privacy|terms|legal/i },
@@ -49,7 +38,7 @@ const ANON_PAGES = [
 
 const ANON_APIS = [{ path: '/api/auth/session', expectOkJson: true }];
 
-/** Must stay gated for anonymous visitors (catalogue + cold homepage). */
+/** Must stay gated for anonymous visitors (catalogue + deeper help). */
 const MUST_STAY_GATED = [
   '/',
   '/events/',
@@ -57,6 +46,11 @@ const MUST_STAY_GATED = [
   '/organisers/circle-networks',
   '/opportunities/',
   '/for-attendees',
+  '/guides',
+  '/guides/list-an-event',
+  '/faq',
+  '/advertising',
+  '/help/pricing-fees',
 ];
 
 const MUST_STAY_PRIVATE_APIS = [

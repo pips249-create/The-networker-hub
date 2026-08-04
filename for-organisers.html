@@ -24,7 +24,7 @@
 <body class="for-organisers-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260804early" data-root="" data-page="for-organisers"></script>
+<script src="js/site-nav.js?v=20260804email1" data-root="" data-page="for-organisers"></script>
 
 <main class="fo-flow">
 
@@ -44,13 +44,19 @@
           <li><a class="fo-hero-badge" href="#benefits">LinkedIn posts</a></li>
           <li><a class="fo-hero-badge" href="#benefits">Guest visit programme</a></li>
         </ul>
-        <div class="fo-hero-actions">
-          <a class="btn btn-primary" href="/login?next=/organiser/&amp;intent=organiser">List your first event</a>
-          <a class="btn btn-secondary" href="/login?next=/organiser/?onboard=claim&amp;intent=organiser-claim">Claim your page</a>
+        <div class="fo-hero-actions" data-fo-cta="hero">
+          <a class="btn btn-primary" href="#benefits" data-fo-cta-open="0">See what&rsquo;s included</a>
+          <a class="btn btn-secondary" href="/contact" data-fo-cta-open="0">Questions? Contact us</a>
+          <a class="btn btn-primary" href="/login?next=/organiser/&amp;intent=organiser" data-fo-cta-open="1" hidden>List your first event</a>
+          <a class="btn btn-secondary" href="/login?next=/organiser/?onboard=claim&amp;intent=organiser-claim" data-fo-cta-open="1" hidden>Claim your page</a>
         </div>
-        <p class="fo-path-hint">New group? List your first event. Already listed on the Hub? Claim your page.</p>
+        <p class="fo-path-hint" data-fo-cta-open="0">Nothing to set up today — we&rsquo;ll email you a simple link to confirm your page in a few days.</p>
+        <p class="fo-path-hint" data-fo-cta-open="1" hidden>New group? List your first event. Already listed on the Hub? Claim your page.</p>
         <p class="fo-hero-trust">Free to list · Keep 100% of ticket price · Built for UK networking</p>
-        <p class="fo-hero-note">
+        <p class="fo-hero-note" data-fo-cta-open="0">
+          Same team as <strong>the-networker.co.uk</strong> · Launching 1st September 2026
+        </p>
+        <p class="fo-hero-note" data-fo-cta-open="1" hidden>
           <a href="/guides/list-an-event">Getting started guide</a> · <a href="/faq">Organiser FAQs →</a>
         </p>
       </div>
@@ -539,13 +545,17 @@
   <section class="fo-cta" aria-labelledby="fo-cta-heading">
     <div class="fo-flow-inner">
       <div class="fo-cta-panel">
-        <p class="fo-cta-pricing"><strong>Free to list.</strong> No monthly subscription. You receive the full ticket price; attendees pay one booking fee at checkout. <span class="fo-cta-pricing-links"><a href="/help/pricing-fees">Pricing &amp; fees →</a><span aria-hidden="true"> · </span><a href="/faq">Organiser FAQs →</a></span></p>
-        <p class="fo-cta-pricing fo-cta-pricing--sponsor">Third-party brands can <a href="/advertising">sponsor directory placements</a> — separate from listing your own events or profile.</p>
-        <h2 id="fo-cta-heading">Ready to get started?</h2>
-        <div class="fo-cta-actions">
+        <p class="fo-cta-pricing"><strong>Free to list.</strong> No monthly subscription. You receive the full ticket price; attendees pay one booking fee at checkout.</p>
+        <p class="fo-cta-pricing fo-cta-pricing--sponsor" data-fo-cta-open="0">Third-party brands can sponsor directory placements later — separate from listing your own events or profile.</p>
+        <p class="fo-cta-pricing fo-cta-pricing--sponsor" data-fo-cta-open="1" hidden>Third-party brands can <a href="/advertising">sponsor directory placements</a> — separate from listing your own events or profile.</p>
+        <h2 id="fo-cta-heading" data-fo-cta-open="0">We&rsquo;ll be in touch</h2>
+        <h2 id="fo-cta-heading-open" data-fo-cta-open="1" hidden>Ready to get started?</h2>
+        <p class="fo-path-hint" data-fo-cta-open="0" style="margin-top:0">Your next email will include a personal link to confirm your organiser page. Questions before then? <a href="/contact">Contact us</a>.</p>
+        <div class="fo-cta-actions" data-fo-cta-open="1" hidden>
           <a class="btn btn-primary fo-cta-primary" href="/login?next=/organiser/&amp;intent=organiser">List your first event</a>
           <a class="btn btn-secondary fo-cta-secondary-btn" href="/login?next=/organiser/?onboard=claim&amp;intent=organiser-claim">Claim your page</a>
         </div>
+        <p class="fo-cta-pricing" data-fo-cta-open="1" hidden><span class="fo-cta-pricing-links"><a href="/help/pricing-fees">Pricing &amp; fees →</a><span aria-hidden="true"> · </span><a href="/faq">Organiser FAQs →</a></span></p>
       </div>
     </div>
   </section>
@@ -553,11 +563,11 @@
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260804early" data-root=""></script>
+<script src="js/site-footer.js?v=20260804email1" data-root=""></script>
 <script src="js/find-your-next-rotate.js?v=20260714"></script>
 <script src="js/for-organisers-feature-tips.js?v=20260729benefits"></script>
 <script src="js/hub-field-tip.js?v=20260721"></script>
-<script src="js/for-organisers-page.js?v=20260729benefits"></script>
+<script src="js/for-organisers-page.js?v=20260804email1"></script>
 
 </body>
 </html>

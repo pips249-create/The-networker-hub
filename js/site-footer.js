@@ -4,7 +4,7 @@
  * When the public catalogue is gated, Explore links stay on the organiser funnel.
  */
 (function () {
-  var FOOTER_BUILD = '20260804early';
+  var FOOTER_BUILD = '20260804email1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -36,36 +36,39 @@
       href('/for-organisers') +
       '">For organisers</a>' +
       '<a href="' +
-      href('/guides') +
-      '">Organiser guides</a>' +
-      '<a href="' +
-      href('/advertising') +
-      '">Advertising</a>'
+      href('/about') +
+      '">About us</a>'
     );
   }
 
   function helpLinksHtml(catalogueOpen) {
-    var html =
-      '<a href="' +
-      href('/faq') +
-      '">FAQ</a>';
     if (catalogueOpen) {
-      html +=
+      return (
+        '<a href="' +
+        href('/faq') +
+        '">FAQ</a>' +
         '<a href="' +
         href('/for-attendees') +
-        '">For Attendees</a>';
+        '">For Attendees</a>' +
+        '<a href="' +
+        href('/for-organisers') +
+        '">For Organisers</a>' +
+        '<a href="' +
+        href('/guides') +
+        '">Organiser guides</a>' +
+        '<a href="' +
+        href('/contact') +
+        '">Contact us</a>'
+      );
     }
-    html +=
+    return (
       '<a href="' +
       href('/for-organisers') +
       '">For Organisers</a>' +
       '<a href="' +
-      href('/guides') +
-      '">Organiser guides</a>' +
-      '<a href="' +
       href('/contact') +
-      '">Contact us</a>';
-    return html;
+      '">Contact us</a>'
+    );
   }
 
   function renderFooter(catalogueOpen) {
@@ -99,9 +102,9 @@
       '<a href="' +
       href('/about') +
       '">About us</a>' +
-      '<a href="' +
-      href('/advertising') +
-      '">Advertising &amp; sponsorship</a>' +
+      (catalogueOpen
+        ? '<a href="' + href('/advertising') + '">Advertising &amp; sponsorship</a>'
+        : '') +
       '</nav>' +
       '</div>' +
       '<div class="footer-col">' +

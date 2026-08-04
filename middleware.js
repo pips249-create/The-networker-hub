@@ -88,10 +88,10 @@ const INTERNAL_SALES_PREFIXES = [
 
 /**
  * Organiser early-access paths — reachable while the public site gate is on.
- * Email 1 / claim funnel only: marketing, guides, help, auth, organiser dashboard.
- * Do NOT include the public catalogue (/events, /organisers, /opportunities) —
- * those stay behind the waitlist until soft launch. Signed-in hub sessions
- * still bypass the gate entirely (see maybeGateSiteAccess).
+ * Email 1: for-organisers + trust pages only (contact / legal / about).
+ * Auth + /organiser stay open so Email 2 claim links work without another deploy.
+ * Guides, FAQ, advertising, help, and the public catalogue stay gated.
+ * Signed-in hub sessions still bypass the gate entirely (see maybeGateSiteAccess).
  */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
@@ -101,17 +101,11 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/welcome',
   '/organiser',
   '/for-organisers',
-  '/guides',
-  '/faq',
-  '/faq.html',
   '/about',
   '/about.html',
   '/contact',
   '/contact.html',
   '/legal-policies',
-  '/advertising',
-  '/help/organiser-payouts',
-  '/help/pricing-fees',
   '/api/auth',
   '/api/organiser',
   '/api/contact-chat',
