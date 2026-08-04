@@ -86,7 +86,11 @@ const INTERNAL_SALES_PREFIXES = [
   '/p-tnh-embed-dash-wibn',
 ];
 
-/** Organiser early-access paths — reachable while the public site gate is on. */
+/**
+ * Organiser early-access paths — reachable while the public site gate is on.
+ * Covers Email 1 (/for-organisers + linked help) and Email 2 (auth → claim → dashboard).
+ * Signed-in hub sessions also bypass the gate entirely (see maybeGateSiteAccess).
+ */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
   '/register',
@@ -95,15 +99,29 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/welcome',
   '/organiser',
   '/for-organisers',
-  '/guides/list-an-event',
-  '/guides/list-a-conference-or-exhibition',
-  '/guides/list-a-business-opportunity',
-  '/guides/invite-your-team',
+  '/guides',
+  '/faq',
+  '/faq.html',
+  '/about',
+  '/about.html',
+  '/contact',
+  '/contact.html',
+  '/legal-policies',
+  '/advertising',
   '/help/organiser-payouts',
   '/help/pricing-fees',
+  '/events',
+  '/organisers',
+  '/opportunities',
+  '/for-attendees',
   '/api/auth',
   '/api/organiser',
   '/api/contact-chat',
+  '/api/events',
+  '/api/organisers',
+  '/api/opportunities',
+  '/api/seo-meta',
+  '/api/seo',
 ];
 
 function escapeHtml(text) {
@@ -586,6 +604,12 @@ async function maybeGateSiteAccess(request, url) {
   }
 
   if (await hasSiteAccess(request)) {
+    return { authorized: true };
+  }
+
+  // Signed-in organisers/members must reach every page and API after claim/login —
+  // not only the early-access allowlist (public profiles, browse, account, etc.).
+  if (await hasValidSession(request)) {
     return { authorized: true };
   }
 

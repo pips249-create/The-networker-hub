@@ -68,6 +68,19 @@ Has account:  {SITE_URL}/login?email={EMAIL}&next=/organiser/?onboard=claim&inte
 
 Organisers do **not** need the site preview password (`SITE_ACCESS_PASSWORD`).
 
+### Pre-send page gate (must pass)
+
+Before Email 1, run:
+
+```bash
+npm run check:organiser-journey
+# or: node scripts/smoke-test-organiser-journey.js https://www.thenetworkerhub.com
+```
+
+That checks every anonymous organiser path (for-organisers, guides, FAQ, pricing, login/claim, events/organisers browse + APIs) opens **without** the preview password, and that `/for-organisers` internal links are not gated.
+
+Middleware early-access + signed-in session bypass live in `middleware.js` (`ORGANISER_EARLY_ACCESS_PREFIXES`). Deploy that before sending.
+
 ---
 
 ## Segment your list

@@ -21,6 +21,8 @@
     "seed-browse-events": "node scripts/seed-browse-events.js",
     "delete-seed-events": "node scripts/delete-seed-events.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
+    "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",
+    "check:organiser-journey": "node scripts/smoke-test-organiser-journey.js",
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",
     "check:dpas": "node scripts/check-dpa-register.js",

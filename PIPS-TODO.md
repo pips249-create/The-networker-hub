@@ -4,7 +4,7 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 29 July 2026 (evening — membership lifecycle shipped; scale unbounded paths; tomorrow checklist)*
+*Last updated: 4 August 2026 (guest-visit E2E passed; beta email blocked by email allowlist)*
 
 ---
 
@@ -56,7 +56,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 
 ### Critical path (do these next)
 
-1. **Guest visit programme end-to-end test** — complimentary visits on organiser page → guest pass booking → member tickets unlock after visits used
+1. ~~**Guest visit programme end-to-end test**~~ ✅ 4 Aug (`scripts/guest-visit-e2e-test.js`)
 2. **Category Exclusivity (seat approval) end-to-end test** — apply → approve/deny in Attendees → payment link
 3. **Connect destination charge test** — one paid ticket; verify money split in Stripe (see Tab 9)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
@@ -94,7 +94,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 
 Training and workshops, organiser messaging, review replies, PDF tickets, calendar export polish.
 
-**Pre-September (moved up):** seat-approval / Category Exclusivity workflows must work for launch. Guest visit programme must be tested before beta email.
+**Pre-September (moved up):** seat-approval / Category Exclusivity workflows must work for launch. Guest visit programme E2E passed 4 Aug 2026 — beta email unblocked on that gate.
 
 ---
 
@@ -309,7 +309,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Events + groups **auto-approve** when publish criteria met |
 | [x] | Stripe Connect Express onboarding + `STRIPE_CONNECT_ENABLED=true` on prod |
 | [ ] | **Connect destination charge test** (Tab 9) |
-| [ ] | **Guest visit programme — end-to-end test** (complimentary visits → guest pass booking → exhausted → paid member ticket) |
+| [x] | **Guest visit programme — end-to-end test** (complimentary visits → guest pass booking → exhausted → paid member ticket) — `node scripts/guest-visit-e2e-test.js` (4 Aug 2026) |
 | [ ] | **Category Exclusivity (seat approval) — end-to-end test** (apply → organiser approve/deny → payment link → booking) |
 | [ ] | July beta: **200+ groups claimed** and **20+ with a published event** |
 | [ ] | Load test: browse + organiser pages with 1,000+ profiles + multi-k events (week 8) |
