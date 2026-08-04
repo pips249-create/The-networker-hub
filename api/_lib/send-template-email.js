@@ -276,7 +276,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged = enrichBookingConfirmationVars(merged, sponsorSection);
   } else if (slug === 'booking_reminder') {
     merged = enrichBookingReminderVars(merged, sponsorSection);
-  } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+  } else if (slug === 'account_welcome') {
     merged = enrichAccountWelcomeVars(merged, sponsorSection);
   } else if (slug === 'organiser_new_registration') {
     merged = enrichOrganiserRegistrationVars(merged, sponsorSection);
@@ -313,10 +313,14 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoNavUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
-  // Live CMS sponsor resolution always wins over preview/sample variables.
-  merged.sponsor_row = sponsorSection;
-  merged.sponsor_section = sponsorSection;
-  merged.mini_sponsors_row = dbMiniSponsorsRow;
+  // Live CMS sponsor resolution wins when configured; keep preview/sample rows when CMS is empty.
+  if (String(sponsorSection || '').trim()) {
+    merged.sponsor_row = sponsorSection;
+    merged.sponsor_section = sponsorSection;
+  }
+  if (String(dbMiniSponsorsRow || '').trim()) {
+    merged.mini_sponsors_row = dbMiniSponsorsRow;
+  }
 
   let bodyHtml = template.body_html;
   bodyHtml = ensureUnsubscribePlaceholder(bodyHtml);
@@ -387,7 +391,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   } else if (slug === 'booking_reminder') {
     html = stripUnresolvedBookingReminderPlaceholders(html);
     html = replacePlaceholders(html, merged);
-  } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+  } else if (slug === 'account_welcome') {
     html = stripUnresolvedAccountWelcomePlaceholders(html);
     html = replacePlaceholders(html, merged);
   } else if (slug === 'organiser_new_registration' || slug === 'organiser_new_application' || slug === 'organiser_booking_cancelled') {

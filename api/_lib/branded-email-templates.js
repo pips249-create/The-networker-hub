@@ -141,6 +141,18 @@ const BRANDED_EMAIL_TEMPLATES = {
     file: 'event-saved-search-match.html',
     subject: 'New event matching your saved search',
   },
+  saved_event_tickets_open: {
+    file: 'saved-event-tickets-open.html',
+    subject: 'Tickets are on sale for {{event_name}}',
+  },
+  saved_opportunity_closing_soon: {
+    file: 'saved-opportunity-closing-soon.html',
+    subject: 'An opportunity you saved is closing soon — {{opportunity_title}}',
+  },
+  opportunity_saved_search_match: {
+    file: 'opportunity-saved-search-match.html',
+    subject: 'New opportunity matching your saved search',
+  },
   guest_visit_followup: {
     file: 'guest-visit-followup.html',
     marker: 'hub-email-layout-v2',

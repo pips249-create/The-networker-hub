@@ -20,7 +20,17 @@ const {
 } = require('./hub-email-urls');
 const { buildDenialEmailVars } = require('./registration-emails');
 const { buildMeetingLinkEmailSection } = require('./lifecycle-emails');
-const { buildMiniSponsorsRow } = require('./email-sponsor-sections');
+const {
+  buildMiniSponsorsRow,
+  EVENT_MAIN_SPONSOR_SLUGS,
+  EVENT_MINI_SPONSOR_SLUGS,
+  ORGANISER_EMAIL_SLUGS,
+  ORGANISER_MINI_SPONSOR_SLUGS,
+  OPPORTUNITY_EMAIL_SLUGS,
+  OPPORTUNITY_MINI_SPONSOR_SLUGS,
+  HUB_PARTNER_SPONSOR_SLUGS,
+} = require('./email-sponsor-sections');
+const { campaignSiteVars } = require('./organiser-campaign-defaults');
 const {
   EMAIL_SPONSOR_LOGO_BAND_FALLBACK,
   buildSponsorLogoMarkup,
@@ -534,6 +544,159 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (
+    slug === 'city_partner_opening_soon' ||
+    slug === 'city_partner_slot_open' ||
+    slug === 'city_partner_payment_welcome'
+  ) {
+    vars.contact_name = vars.contact_name || 'Alex';
+    vars.city_name = vars.city_name || 'York';
+    vars.city_names = vars.city_names || 'York';
+    vars.available_from = vars.available_from || '1 September 2026';
+    vars.available_from_note = vars.available_from_note || ' — checkout is open now';
+    vars.advertising_url = vars.advertising_url || site + '/advertising#city-partner-package';
+    vars.creative_email = vars.creative_email || supportEmail();
+    vars.monthly_note =
+      vars.monthly_note ||
+      'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
+    if (!String(vars.sponsor_row || '').trim()) {
+      vars.sponsor_row = sampleSponsorRow(site);
+    }
+  }
+
+  if (slug === 'event_details_updated') {
+    vars.changes_section =
+      vars.changes_section ||
+      '<p style="margin:0 0 16px;">' +
+        '<span style="display:block;color:rgba(255,255,255,0.75);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">What changed</span>' +
+        '<span style="color:#ffffff;font-size:16px;line-height:1.6;">Doors open 15 minutes earlier — please arrive from 7:45 AM.</span></p>';
+  }
+
+  if (slug === 'event_saved_search_match') {
+    vars.search_label = vars.search_label || 'Networking in London';
+    vars.match_count = vars.match_count || '3';
+  }
+
+  if (slug === 'opportunity_saved_search_match') {
+    vars.search_label = vars.search_label || 'Marketing partnerships';
+    vars.match_count = vars.match_count || '2';
+    vars.browse_opportunities_url = vars.browse_opportunities_url || vars.opportunities_url || site + '/opportunities/';
+  }
+
+  if (slug === 'listing_report_upheld_reporter') {
+    vars.reporter_name = vars.reporter_name || vars.user_name || 'Alex Morgan';
+    vars.listing_title = vars.listing_title || vars.event_name || 'London Founders Breakfast';
+    if (!String(vars.sponsor_row || '').trim()) {
+      vars.sponsor_row = sampleSponsorRow(site);
+    }
+  }
+
+  if (slug === 'member_roster_booking_reminder') {
+    vars.cta_url = vars.cta_url || vars.event_url;
+    vars.cta_label = vars.cta_label || 'Book member tickets';
+    if (!String(vars.sponsor_row || '').trim()) {
+      vars.sponsor_row = sampleSponsorRow(site);
+    }
+    if (!String(vars.mini_sponsors_row || '').trim()) {
+      vars.mini_sponsors_row = sampleMiniSponsorsRow();
+    }
+  }
+
+  if (slug === 'opportunity_enquiry_received') {
+    vars.enquiry_message =
+      vars.enquiry_message ||
+      'Hi — I run a marketing agency and would like to discuss a referral partnership. Are you free for a short call this week?';
+    vars.enquirer_email = vars.enquirer_email || 'sam@example.com';
+    vars.reply_mailto_url =
+      vars.reply_mailto_url ||
+      'mailto:' +
+        encodeURIComponent('sam@example.com') +
+        '?subject=' +
+        encodeURIComponent('Re: ' + (vars.opportunity_title || 'Your enquiry'));
+  }
+
+  if (slug === 'organiser_claim_invite') {
+    vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-claim-token';
+  }
+
+  if (slug === 'organiser_featured_expiry_reminder') {
+    vars.extend_url =
+      vars.extend_url || site + '/organiser/event-promote?eventId=preview-event';
+  }
+
+  if (slug === 'organiser_hub_warning') {
+    vars.warning_count = vars.warning_count || '1';
+    vars.warning_limit = vars.warning_limit || '3';
+    vars.warning_reason =
+      vars.warning_reason || 'A listing was published with misleading venue details.';
+    vars.warning_details_row = vars.warning_details_row || '';
+    vars.suspension_notice_row = vars.suspension_notice_row || '';
+  }
+
+  if (slug === 'organiser_hub_suspended') {
+    vars.warning_count = vars.warning_count || '3';
+    vars.suspension_reason =
+      vars.suspension_reason || 'Repeated breaches of Hub rules after prior warnings.';
+    vars.suspension_details_row = vars.suspension_details_row || '';
+  }
+
+  if (slug === 'organiser_launch_invite' || slug === 'organiser_rebrand_announcement') {
+    Object.assign(vars, campaignSiteVars(site));
+    if (slug === 'organiser_launch_invite') {
+      vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-launch-token';
+    }
+  }
+
+  if (slug === 'organiser_team_invite') {
+    vars.inviter_name = vars.inviter_name || 'Jordan Lee';
+    vars.account_name = vars.account_name || vars.organiser_name || 'City Connectors';
+    vars.accept_url = vars.accept_url || site + '/organiser/team/accept?token=preview-team-token';
+  }
+
+  if (slug === 'saved_opportunity_closing_soon') {
+    vars.opportunity_host = vars.opportunity_host || 'Northbridge Network';
+  }
+
+  if (slug === 'organiser_monthly_group_update') {
+    vars.email_subject = vars.email_subject || 'Update from ' + (vars.organiser_name || 'City Connectors');
+    vars.brand_primary = vars.brand_primary || '#0d6e7a';
+    vars.brand_cta = vars.brand_cta || '#5b2f99';
+    vars.organiser_logo_html =
+      vars.organiser_logo_html ||
+      '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 14px;"><tr>' +
+        '<td style="width:72px;height:72px;background:#d9eef1;border-radius:50%;text-align:center;vertical-align:middle;' +
+        'font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:700;color:#0d6e7a;line-height:72px;">C</td></tr></table>';
+    vars.greeting_html =
+      vars.greeting_html ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 16px;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi Alex — here is what we have been up to this month.</p></td></tr>';
+    vars.month_stats_html =
+      vars.month_stats_html ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 20px;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:#635c5e;margin:0;">24 tickets sold · 4.8 average rating · 3 upcoming events</p></td></tr>';
+    vars.organiser_note_html =
+      vars.organiser_note_html ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 20px;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#635c5e;margin:0;">Thanks for another great month — see you at the next breakfast.</p></td></tr>';
+    vars.month_recap_html = vars.month_recap_html || '';
+    vars.events_html =
+      vars.events_html ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
+        sampleRecommendationCard(
+          vars.event_name || 'London Founders Breakfast',
+          'Tuesday 12 August 2026 · The Shard',
+          vars.event_url
+        ) +
+        '</td></tr>';
+    vars.spotlight_html = vars.spotlight_html || '';
+    vars.ask_html = vars.ask_html || '';
+    vars.volunteer_html = vars.volunteer_html || '';
+    vars.social_html = vars.social_html || '';
+    vars.reply_hint_html =
+      vars.reply_hint_html ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 12px;text-align:center;"><p style="font-size:14px;color:#635c5e;margin:0;">Reply to this email to reach the organiser team directly.</p></td></tr>';
+    vars.cta_url = vars.cta_url || vars.organiser_url;
+    vars.cta_label = vars.cta_label || 'Visit our Hub page';
+    vars.tracking_pixel_html = vars.tracking_pixel_html || '';
+  }
+
+  if (
     slug === 'member_roster_payment_failed' ||
     slug === 'member_roster_payment_failed_organiser' ||
     slug === 'member_roster_renewal_receipt'
@@ -565,6 +728,26 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         encodeURIComponent(vars.user_email) +
         '&next=' +
         encodeURIComponent('/account/#memberships');
+  }
+
+  const needsMainSponsor =
+    EVENT_MAIN_SPONSOR_SLUGS.has(slug) ||
+    ORGANISER_EMAIL_SLUGS.has(slug) ||
+    OPPORTUNITY_EMAIL_SLUGS.has(slug);
+  const needsMiniSponsor =
+    EVENT_MINI_SPONSOR_SLUGS.has(slug) ||
+    ORGANISER_MINI_SPONSOR_SLUGS.has(slug) ||
+    OPPORTUNITY_MINI_SPONSOR_SLUGS.has(slug) ||
+    HUB_PARTNER_SPONSOR_SLUGS.has(slug);
+
+  if (needsMainSponsor && !String(vars.sponsor_row || '').trim()) {
+    vars.sponsor_row = sampleSponsorRow(site);
+  }
+  if (needsMainSponsor || needsMiniSponsor) {
+    vars.sponsor_section = vars.sponsor_row || vars.sponsor_section || '';
+  }
+  if (needsMiniSponsor && !String(vars.mini_sponsors_row || '').trim()) {
+    vars.mini_sponsors_row = sampleMiniSponsorsRow();
   }
 
   return vars;
