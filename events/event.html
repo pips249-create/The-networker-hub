@@ -53,7 +53,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20260805hostrate" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20260805cta2" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -63,9 +63,9 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
-        Back to all events
+        Back to events
       </a>
-      <div class="trail">
+      <div class="trail" id="ev-breadcrumb-trail">
         <a href="/events/" id="ev-trail-events">Events</a>
         <span class="sep">/</span>
         <a href="/events/" id="ev-trail-category" hidden>Category</a>
@@ -120,6 +120,11 @@
         </div>
 
         <div class="title-block">
+          <div class="title-tags" id="ev-title-tags" hidden>
+            <span class="title-tag" id="ev-title-tag-category"></span>
+            <span class="title-tag" id="ev-title-tag-format"></span>
+            <span class="title-tag title-tag--price" id="ev-title-tag-price"></span>
+          </div>
           <h1 id="ev-title">Loading event…</h1>
           <div class="ev-ended-banner" id="ev-ended-banner" hidden role="status">
             <p class="ev-ended-banner-title" id="ev-ended-banner-title">This event has ended</p>
@@ -164,10 +169,10 @@
             <svg class="action-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
             </svg>
-            <span class="action-btn-label">Save event</span>
+            <span class="action-btn-label">Save</span>
           </button>
           <div class="action-dropdown-wrap">
-            <button type="button" class="action-btn" id="share-btn" aria-expanded="false" aria-haspopup="true" aria-controls="share-menu">
+            <button type="button" class="action-btn" id="share-btn" aria-label="Share" aria-expanded="false" aria-haspopup="true" aria-controls="share-menu">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="18" cy="5" r="3" />
                 <circle cx="6" cy="12" r="3" />
@@ -175,7 +180,7 @@
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
-              Share
+              <span class="action-btn-label">Share</span>
             </button>
             <div class="action-dropdown" id="share-menu" role="menu" hidden>
               <p class="action-dropdown-label">Share this event</p>
@@ -187,7 +192,7 @@
             </div>
           </div>
           <div class="action-dropdown-wrap">
-            <button type="button" class="action-btn" id="calendar-btn" aria-expanded="false" aria-haspopup="true" aria-controls="calendar-menu">
+            <button type="button" class="action-btn" id="calendar-btn" aria-label="Add to calendar" aria-expanded="false" aria-haspopup="true" aria-controls="calendar-menu">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
@@ -196,7 +201,7 @@
                 <line x1="12" y1="14" x2="12" y2="18" />
                 <line x1="10" y1="16" x2="14" y2="16" />
               </svg>
-              Add to calendar
+              <span class="action-btn-label">Calendar</span>
             </button>
             <div class="action-dropdown" id="calendar-menu" role="menu" hidden>
               <p class="action-dropdown-label">Add to your calendar</p>
@@ -466,9 +471,9 @@
 
           <div class="ticket-sales-nudge" id="ticket-sales-nudge" hidden>
             <p class="ticket-sales-nudge-lead">
-              Unfortunately you can&apos;t buy tickets for this event until the organiser allows ticket sales.
+              Interested in attending? Nudge the host to release tickets for this event.
             </p>
-            <p class="ticket-sales-nudge-sub"><strong>Why not nudge them now?</strong></p>
+            <p class="ticket-sales-nudge-sub" hidden><strong>Why not nudge them now?</strong></p>
             <label class="form-field" for="ticket-nudge-email">
               <span>Your email</span>
               <input type="email" id="ticket-nudge-email" name="nudge_email" autocomplete="email" />
@@ -478,7 +483,15 @@
               <input type="text" id="ticket-nudge-name" name="nudge_name" autocomplete="name" />
             </label>
             <p class="ticket-nudge-status" id="ticket-nudge-status" hidden role="status"></p>
-            <button type="button" class="cta-btn ticket-nudge-btn" id="ticket-nudge-btn">Nudge the organiser</button>
+            <button type="button" class="cta-btn ticket-nudge-btn" id="ticket-nudge-btn">Nudge organiser to add tickets</button>
+          </div>
+
+          <div class="ticket-sales-alert" id="ticket-sales-alert" hidden>
+            <p class="ticket-sales-alert-lead" id="ticket-sales-alert-lead">
+              Registration is closed for now. Save this event and we&rsquo;ll email you if tickets open again.
+            </p>
+            <p class="ticket-sales-alert-status" id="ticket-sales-alert-status" hidden role="status"></p>
+            <button type="button" class="cta-btn ticket-sales-alert-btn" id="ticket-sales-alert-btn">Alert me if tickets open</button>
           </div>
 
           <div class="checkout-signin-gate" id="checkout-signin-gate" hidden>
@@ -565,7 +578,7 @@
     <script src="../js/detail-region-cta.js?v=20260727city"></script>
     <script src="../js/how-reviews-work.js?v=20260728a"></script>
     <script src="../js/plain-text-format.js?v=20260728paras1"></script>
-    <script src="../js/event-detail.js?v=20260805hostrate"></script>
+    <script src="../js/event-detail.js?v=20260805cta2"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
@@ -619,7 +632,8 @@
           return (
             s.indexOf("https:") === 0 ||
             s.indexOf("http:") === 0 ||
-            s.indexOf("data:image/") === 0
+            s.indexOf("data:image/") === 0 ||
+            s.indexOf("/") === 0
           );
         }
 
@@ -627,14 +641,38 @@
           if (!avatarEl) return;
           avatarEl.classList.remove("has-logo");
           avatarEl.innerHTML = "";
+          var initials = document.createElement("span");
+          initials.id = "ev-host-initials";
+          initials.className = "host-initials";
+          initials.setAttribute("aria-hidden", "true");
+          initials.textContent = initialsFallback || "?";
           if (logoSrc && isSafeLogoSrc(logoSrc)) {
             var im = document.createElement("img");
+            im.id = "ev-host-logo";
             im.src = logoSrc;
             im.alt = "";
+            im.width = 64;
+            im.height = 64;
+            im.hidden = true;
+            im.onload = function () {
+              im.hidden = false;
+              initials.hidden = true;
+              avatarEl.classList.add("has-logo");
+            };
+            im.onerror = function () {
+              im.hidden = true;
+              initials.hidden = false;
+              avatarEl.classList.remove("has-logo");
+            };
             avatarEl.appendChild(im);
-            avatarEl.classList.add("has-logo");
+            avatarEl.appendChild(initials);
           } else {
-            avatarEl.textContent = initialsFallback || "?";
+            var emptyLogo = document.createElement("img");
+            emptyLogo.id = "ev-host-logo";
+            emptyLogo.hidden = true;
+            emptyLogo.alt = "";
+            avatarEl.appendChild(emptyLogo);
+            avatarEl.appendChild(initials);
           }
         }
 

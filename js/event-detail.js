@@ -85,7 +85,46 @@
 
   function isSafeImgSrc(u) {
     const s = String(u || '').trim().toLowerCase();
-    return s.indexOf('https:') === 0 || s.indexOf('http:') === 0 || s.indexOf('data:image/') === 0;
+    return (
+      s.indexOf('https:') === 0 ||
+      s.indexOf('http:') === 0 ||
+      s.indexOf('data:image/') === 0 ||
+      s.indexOf('/') === 0
+    );
+  }
+
+  function ensureHostAvatarStructure(avatar) {
+    if (!avatar) return { logoEl: null, initialsEl: null };
+    let logoEl = document.getElementById('ev-host-logo');
+    let initialsEl = document.getElementById('ev-host-initials');
+    if (!logoEl || !initialsEl || logoEl.parentNode !== avatar || initialsEl.parentNode !== avatar) {
+      avatar.innerHTML = '';
+      logoEl = document.createElement('img');
+      logoEl.id = 'ev-host-logo';
+      logoEl.width = 64;
+      logoEl.height = 64;
+      logoEl.alt = '';
+      logoEl.hidden = true;
+      initialsEl = document.createElement('span');
+      initialsEl.id = 'ev-host-initials';
+      initialsEl.className = 'host-initials';
+      initialsEl.setAttribute('aria-hidden', 'true');
+      avatar.appendChild(logoEl);
+      avatar.appendChild(initialsEl);
+    }
+    return { logoEl: logoEl, initialsEl: initialsEl };
+  }
+
+  function showHostInitials(avatar, logoEl, initialsEl, host) {
+    if (!avatar || !initialsEl) return;
+    if (logoEl) {
+      logoEl.hidden = true;
+      logoEl.removeAttribute('src');
+      logoEl.onerror = null;
+    }
+    initialsEl.hidden = false;
+    initialsEl.textContent = hostInitials(host);
+    avatar.classList.remove('has-logo');
   }
 
   let localSessionPromise = null;
@@ -273,6 +312,32 @@
     const m = String(fmt || '').toLowerCase();
     if (m.includes('online') && !m.includes('person')) return 'Online event';
     return 'In-person event';
+  }
+
+  function syncTitleTags(ev) {
+    const wrap = document.getElementById('ev-title-tags');
+    const cat = document.getElementById('ev-title-tag-category');
+    const format = document.getElementById('ev-title-tag-format');
+    const price = document.getElementById('ev-title-tag-price');
+    if (!wrap) return;
+    const categoryLabel = String(ev.typeRaw || ev.typeCategory || ev.eventType || '').trim();
+    const formatLabel = formatTagLabel(ev.format);
+    const priceLabel = publicListingPriceLabel(ev, { withFrom: false });
+    if (cat) {
+      cat.textContent = categoryLabel || 'Event';
+      cat.hidden = !categoryLabel && !formatLabel;
+    }
+    if (format) {
+      format.textContent = formatLabel;
+      format.className =
+        'title-tag' +
+        (formatTagClass(ev.format) ? ' title-tag--online' : ' title-tag--inperson');
+    }
+    if (price) {
+      price.textContent = priceLabel || '';
+      price.hidden = !priceLabel || priceLabel === '—';
+    }
+    wrap.hidden = false;
   }
 
   function formatTagClass(fmt) {
@@ -916,24 +981,27 @@
       }
     }
 
-    const logoEl = document.getElementById('ev-host-logo');
-    const initialsEl = document.getElementById('ev-host-initials');
     const avatar = document.getElementById('ev-host-avatar');
     const logo = ev.organiserLogo || '';
+    const { logoEl, initialsEl } = ensureHostAvatarStructure(avatar);
 
     if (logoEl && initialsEl && avatar) {
       if (logo && isSafeImgSrc(logo)) {
-        logoEl.src = logo;
+        logoEl.onload = function () {
+          logoEl.hidden = false;
+          initialsEl.hidden = true;
+          avatar.classList.add('has-logo');
+        };
+        logoEl.onerror = function () {
+          showHostInitials(avatar, logoEl, initialsEl, host);
+        };
         logoEl.alt = host + ' logo';
-        logoEl.hidden = false;
-        initialsEl.hidden = true;
-        avatar.classList.add('has-logo');
-      } else {
-        logoEl.hidden = true;
-        logoEl.removeAttribute('src');
+        logoEl.src = logo;
+        /* Keep initials visible until load succeeds so the circle is never blank */
         initialsEl.hidden = false;
         initialsEl.textContent = hostInitials(host);
-        avatar.classList.remove('has-logo');
+      } else {
+        showHostInitials(avatar, logoEl, initialsEl, host);
       }
     }
 
@@ -1002,7 +1070,7 @@
         (reviewCount === 1 ? '' : 's');
       metaWrap.hidden = false;
     } else if (metaWrap && ratingMeta) {
-      ratingMeta.textContent = 'No reviews yet — be the first after you attend.';
+      ratingMeta.textContent = 'New on the Hub — be among the first to review after you attend.';
       metaWrap.hidden = false;
     } else if (metaWrap) metaWrap.hidden = true;
   }
@@ -1751,6 +1819,7 @@
     setText('ev-price', publicListingPriceLabel(ev));
     syncTicketHeader(ev);
     setText('ev-format', formatHeroLabel(ev.format));
+    syncTitleTags(ev);
 
     const hero = document.getElementById('ev-hero-img');
     if (hero) {
@@ -3192,6 +3261,7 @@
           statusEl.textContent = data.message || 'Nudge sent — thank you!';
         }
         btn.textContent = 'Nudge sent';
+        btn.dataset.sent = '1';
       } catch (e) {
         if (statusEl) {
           statusEl.hidden = false;
@@ -3230,6 +3300,72 @@
     );
   }
 
+  let alertUiBound = false;
+
+  function bindTicketSalesAlertUi(ev) {
+    const panel = document.getElementById('ticket-sales-alert');
+    const btn = document.getElementById('ticket-sales-alert-btn');
+    const statusEl = document.getElementById('ticket-sales-alert-status');
+    if (!panel || !btn) return;
+
+    function refreshAlertSaveUi() {
+      const eventId = String(document.body.getAttribute('data-event-id') || ev.id || '');
+      const saved = window.HubFavourites ? window.HubFavourites.isSaved(eventId) : false;
+      btn.textContent = saved ? "Saved — we'll notify you" : 'Alert me if tickets open';
+      btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      btn.classList.toggle('is-saved', saved);
+    }
+
+    refreshAlertSaveUi();
+    if (window.HubFavourites) {
+      window.HubFavourites.sync().then(function () {
+        refreshAlertSaveUi();
+      });
+    }
+
+    if (alertUiBound) return;
+    alertUiBound = true;
+    btn.addEventListener('click', async function () {
+      if (!window.HubFavourites) return;
+      const current = activeEvent() || ev;
+      if (
+        !(await requireSignedInAttendee({
+          gate: {
+            title: 'Sign in to get ticket alerts',
+            lead: "Create a free account or sign in — we'll email you if tickets open again.",
+            checkoutFlag: true,
+          },
+          intent: {
+            ev: current,
+            data: { action: 'save_event', qty: 1, termsAgreed: false, ticketId: null },
+          },
+        }))
+      ) {
+        return;
+      }
+      const eventId = String(document.body.getAttribute('data-event-id') || current.id || '');
+      const organiserId = String(current.organiserId || '').trim();
+      btn.disabled = true;
+      if (statusEl) statusEl.hidden = true;
+      try {
+        await window.HubFavourites.toggle(eventId, { organiserId: organiserId });
+        refreshAlertSaveUi();
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-sales-alert-status is-ok';
+          statusEl.textContent = 'Saved — we\u2019ll email you if tickets open.';
+        }
+      } catch (e) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ticket-sales-alert-status is-error';
+          statusEl.textContent = e.message || 'Could not save this event. Please try again.';
+        }
+      }
+      btn.disabled = false;
+    });
+  }
+
   function bindTicketSalesScheduledUi(ev) {
     const panel = document.getElementById('ticket-sales-scheduled');
     const lead = document.getElementById('ticket-sales-scheduled-lead');
@@ -3256,7 +3392,7 @@
         saveBtn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save event');
         saveBtn.classList.toggle('is-saved', saved);
         const label = saveBtn.querySelector('.action-btn-label');
-        if (label) label.textContent = saved ? 'Saved' : 'Save event';
+        if (label) label.textContent = saved ? 'Saved' : 'Save';
       }
     }
 
@@ -3489,6 +3625,8 @@
     showCheckoutDetails(false);
     if (nudgePanel) nudgePanel.hidden = true;
     if (scheduledPanel) scheduledPanel.hidden = true;
+    const alertPanelReset = document.getElementById('ticket-sales-alert');
+    if (alertPanelReset) alertPanelReset.hidden = true;
 
     if (ev.isEventPast) {
       panel.classList.add('is-unavailable');
@@ -3507,6 +3645,7 @@
       if (qtyUp) qtyUp.disabled = true;
       if (appForm) appForm.hidden = true;
       applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
       return;
     }
 
@@ -3520,6 +3659,7 @@
         bindTicketSalesScheduledUi(ev);
       }
       applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
       return;
     }
 
@@ -3987,7 +4127,7 @@
       saveBtn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save event');
       saveBtn.classList.toggle('is-saved', saved);
       const label = saveBtn.querySelector('.action-btn-label');
-      if (label) label.textContent = saved ? 'Saved' : 'Save event';
+      if (label) label.textContent = saved ? 'Saved' : 'Save';
     }
 
     refreshSaveUi();
