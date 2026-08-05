@@ -5373,12 +5373,12 @@
     const count = pendingApplicationsCount();
     if (badge) {
       badge.hidden = count < 1;
-      badge.textContent = count > 1 ? String(count) + ' pending' : 'New';
+      badge.textContent = count > 99 ? '99+' : count > 1 ? String(count) : 'Review';
     }
     const tabBadge = document.getElementById('org-events-tab-applications-badge');
     if (tabBadge) {
       tabBadge.hidden = count < 1;
-      tabBadge.textContent = count > 1 ? String(count) : 'New';
+      tabBadge.textContent = count > 99 ? '99+' : count > 1 ? String(count) : 'Review';
     }
     renderPendingApplicationsBanner();
     renderOrganiserNotices();
@@ -9995,7 +9995,7 @@
       (m) => String(m.status || '').toLowerCase() === 'pending'
     ).length;
     badge.hidden = pendingCount < 1;
-    badge.textContent = pendingCount > 1 ? String(pendingCount) + ' new' : 'New';
+    badge.textContent = pendingCount > 99 ? '99+' : pendingCount > 1 ? String(pendingCount) : 'Invite';
   }
 
   function openModal(id) {
@@ -13243,7 +13243,7 @@
 
     if (navBadge) {
       navBadge.hidden = newCount < 1;
-      navBadge.textContent = newCount > 1 ? String(newCount) + ' new' : 'New';
+      navBadge.textContent = newCount > 99 ? '99+' : newCount > 1 ? String(newCount) : 'Reply';
     }
     updateBusinessTabCounts();
     renderOrganiserNotices();
