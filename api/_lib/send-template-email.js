@@ -620,6 +620,25 @@ function shouldSkipEmailAllowlist(slug) {
   return MEMBER_ROSTER_EMAIL_SLUGS.has(slug) || ORGANISER_MODERATION_EMAIL_SLUGS.has(slug);
 }
 
+/**
+ * List-Unsubscribe headers make Apple Mail show “This message is from a mailing list”.
+ * Attach them only for marketing / campaign mail — not payouts, bookings, or security.
+ */
+function shouldAttachListUnsubscribe(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return false;
+  if (MARKETING_EMAIL_SLUGS.has(s)) return true;
+  if (
+    s === 'organiser_rebrand_announcement' ||
+    s === 'organiser_launch_invite' ||
+    s === 'organiser_claim_invite' ||
+    s === 'organiser_monthly_group_update'
+  ) {
+    return true;
+  }
+  return false;
+}
+
 async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo, from }) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
@@ -665,7 +684,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     replyTo,
     from,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
-    listUnsubscribeUrl: unsubscribeUrl(siteUrl),
+    listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
   });
   return {
     ...result,
@@ -681,4 +700,5 @@ module.exports = {
   sendTemplatedEmail,
   sendViaResend,
   formatResendFrom,
+  shouldAttachListUnsubscribe,
 };
