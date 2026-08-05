@@ -34,47 +34,47 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   opportunity_listing_live: {
     file: 'opportunity-listing-live.html',
-    marker: 'hub-email-layout-v3-purple-details',
+    marker: 'hub-email-layout-v3-navy-gold-details',
     subject: 'Your opportunity is live — {{opportunity_title}}',
   },
   opportunity_listing_expiry_reminder: {
     file: 'opportunity-listing-expiry-reminder.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'Your opportunity listing expires on {{expiry_date}}',
   },
   opportunity_premium_expiry_reminder: {
     file: 'opportunity-premium-expiry-reminder.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'Your premium placement expires on {{expiry_date}}',
   },
   opportunity_premium_live: {
     file: 'opportunity-premium-live.html',
-    marker: 'hub-email-layout-v3-purple-details',
+    marker: 'hub-email-layout-v3-navy-gold-details',
     subject: 'Premium placement active — {{opportunity_title}}',
   },
   opportunity_enquiry_received: {
     file: 'opportunity-enquiry-received.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'New enquiry: {{enquirer_name}} — {{opportunity_title}}',
   },
   opportunity_enquiry_sent: {
     file: 'opportunity-enquiry-sent.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'Your enquiry was sent — {{opportunity_title}}',
   },
   opportunity_listing_expired: {
     file: 'opportunity-listing-expired.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'Your listing has expired — {{opportunity_title}}',
   },
   opportunity_premium_expired: {
     file: 'opportunity-premium-expired.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'Premium placement ended — {{opportunity_title}}',
   },
   opportunity_listing_rejected: {
     file: 'opportunity-listing-rejected.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'Your listing was not approved — {{opportunity_title}}',
   },
   city_partner_payment_welcome: {
@@ -163,12 +163,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   saved_opportunity_closing_soon: {
     file: 'saved-opportunity-closing-soon.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'An opportunity you saved is closing soon — {{opportunity_title}}',
   },
   opportunity_saved_search_match: {
     file: 'opportunity-saved-search-match.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold',
     subject: 'New opportunity matching your saved search',
   },
   guest_visit_followup: {
