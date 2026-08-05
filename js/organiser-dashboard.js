@@ -1609,6 +1609,7 @@
   const RANKINGS_JS = '../js/rankings.js?v=20260728ux';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
   const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260730conn1';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260805email1';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1701,6 +1702,11 @@
     return loadScriptOnce(EVENT_CONNECTIONS_JS);
   }
 
+  function ensureGroupUpdatesAssets() {
+    if (window.HubOrganiserGroupUpdates) return Promise.resolve();
+    return loadScriptOnce(GROUP_UPDATES_JS);
+  }
+
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
   let socialTabsBound = false;
 
@@ -1711,16 +1717,16 @@
     if (tab === 'partner') return 'social-partner';
     if (tab === 'brand') return 'social-brand';
     if (tab === 'reach') return 'social-reach';
+    if (tab === 'email') return 'social-email';
     return 'social';
   }
 
   function isAttendeeListEmailRoute(route) {
     const r = String(route || '').toLowerCase();
     return (
-      r === 'social-email' ||
-      r === 'email' ||
-      r === 'group-updates' ||
-      r === 'monthly-updates'
+      r === 'email-who-attended' ||
+      r === 'attendee-email' ||
+      r === 'connections-email'
     );
   }
 
@@ -1743,7 +1749,11 @@
       r === 'brand' ||
       r === 'brand-kit' ||
       r === 'social-reach' ||
-      r === 'reach'
+      r === 'reach' ||
+      r === 'social-email' ||
+      r === 'email' ||
+      r === 'group-updates' ||
+      r === 'monthly-updates'
     );
   }
 
@@ -1769,6 +1779,9 @@
       r === 'grow-visibility'
     ) {
       return 'reach';
+    }
+    if (r === 'social-email' || r === 'email' || r === 'group-updates' || r === 'monthly-updates') {
+      return 'email';
     }
     if (r === 'social-linkedin') return 'linkedin';
     return '';
@@ -1825,8 +1838,14 @@
     });
 
     if (hint) {
-      // Tip points people toward LinkedIn — hide when they are already there.
-      hint.hidden = tab === 'linkedin' || tab === 'spotlight' || tab === 'ranking' || tab === 'partner' || tab === 'reach';
+      // Tip points people toward LinkedIn — hide when they are already there or on a focused tool.
+      hint.hidden =
+        tab === 'linkedin' ||
+        tab === 'email' ||
+        tab === 'spotlight' ||
+        tab === 'ranking' ||
+        tab === 'partner' ||
+        tab === 'reach';
     }
 
     var socialPage = document.getElementById('org-page-social');
@@ -1841,6 +1860,7 @@
       ensureLinkedInPostBuilder({ force: true });
       renderBrandKitNudge();
     }
+    if (tab === 'email') ensureEmailUpdatesPanelReady();
     if (tab === 'ranking') {
       renderOrganiserRankingShare();
       ensurePromoteLeaderboardReady();
@@ -1874,12 +1894,19 @@
     if (hash.includes('brand') || hash.includes('colour') || hash.includes('color')) return 'brand';
     if (hash.includes('reach') || hash === 'visibility' || hash === 'grow-visibility') return 'reach';
     if (
+      hash === 'email-who-attended' ||
+      hash === 'attendee-email' ||
+      hash === 'connections-email'
+    ) {
+      return '';
+    }
+    if (
       hash.includes('email') ||
       hash === 'group-updates' ||
       hash === 'monthly-updates' ||
       hash === 'social-email'
     ) {
-      return '';
+      return 'email';
     }
     if (hash.includes('linkedin') || hash === 'social' || hash === 'promote') return 'linkedin';
     return '';
@@ -1968,6 +1995,18 @@
             events: events,
             eventId: preferredEventId || filters.attendeesEvent || '',
           });
+        }
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
+  }
+
+  function ensureEmailUpdatesPanelReady() {
+    ensureGroupUpdatesAssets()
+      .then(function () {
+        if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
+          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
         }
       })
       .catch(function () {
@@ -9096,7 +9135,7 @@
     let activeRoute = sidebarRouteForPage(page, sub);
     if (page === 'social') {
       const tab = socialTabFromHash() || storedSocialTab() || 'linkedin';
-      activeRoute = 'social';
+      activeRoute = tab === 'email' ? 'social-email' : 'social';
     }
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       const isActive = a.getAttribute('data-org-route') === activeRoute;
@@ -9406,6 +9445,11 @@
       }
       if (tabToOpen === 'reach' || socialTabPreferred === 'reach') {
         ensurePromoteReachReady();
+      }
+      if (tabToOpen === 'email' || socialTabPreferred === 'email') {
+        requestAnimationFrame(function () {
+          ensureEmailUpdatesPanelReady();
+        });
       }
       requestAnimationFrame(function () {
         ensureLinkedInPostBuilder({ force: true });
@@ -13351,6 +13395,9 @@
       ) {
         setAttendeeEmailPanelVisible(true);
         ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
+      }
+      if (parseRoute().page === 'social' && socialTabFromHash() === 'email') {
+        ensureEmailUpdatesPanelReady();
       }
       // Warm editor CSS after first paint so group/event drawers open without a flash.
       if (typeof requestIdleCallback === 'function') {

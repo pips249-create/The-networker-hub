@@ -95,8 +95,9 @@
     social: {
       title: 'How to promote your group',
       steps: [
-        'Reach out with a free LinkedIn post, or email who attended from Events → Attendees.',
+        'Reach out with a free LinkedIn post or monthly Email updates under Promote.',
         'Set colours & type once — LinkedIn pictures and branded emails use them.',
+        'After an event, email who attended from Events → Attendees.',
         'Get found on the Hub with Feature event, Top groups, partner badge, or More reach.',
       ],
     },
