@@ -525,6 +525,8 @@ async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllow
   if (unsub) {
     body.headers = {
       'List-Unsubscribe': '<' + unsub + '>',
+      // One-click header — required by Gmail/Yahoo/Outlook for bulk/marketing mail.
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     };
   }
 

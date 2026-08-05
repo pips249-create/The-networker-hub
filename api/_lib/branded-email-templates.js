@@ -20,7 +20,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_rebrand_announcement: {
     file: 'organiser-rebrand-announcement.html',
     marker: 'hub-email-layout-v2-legacy',
-    subject: "We've been quietly rebuilding The Networker",
+    subject: "The Networker's new chapter",
   },
   organiser_team_invite: {
     file: 'organiser-team-invite.html',
@@ -210,17 +210,17 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   attendee_signup_events_nudge: {
     file: 'attendee-signup-events-nudge.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v2-loc',
     subject: 'Events picked for you on The Networker Hub',
   },
   attendee_signup_events_nudge_followup: {
     file: 'attendee-signup-events-nudge-followup.html',
-    marker: 'hub-email-layout-v2-followup',
+    marker: 'hub-email-layout-v2-followup-loc',
     subject: 'Still looking for your first event?',
   },
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v2-loc',
     subject: "Hubert's event picks for {{month_label}}",
   },
   organiser_low_upcoming_events: {

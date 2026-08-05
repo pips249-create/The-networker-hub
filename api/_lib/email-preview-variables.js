@@ -171,13 +171,13 @@ function sampleSponsorRow(site) {
     EMAIL_SPONSOR_LOGO_BAND_FALLBACK
   );
   return (
-    '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
-    '<tr><td style="padding:16px 20px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Powered by</p>' +
+    '<tr><td class="mobile-pad" style="padding:10px 40px 6px;text-align:center;background:#ffffff;">' +
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e8e2e9;">' +
+    '<tr><td style="padding:10px 22px 12px;text-align:center;vertical-align:middle;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 6px;line-height:1;">Powered by</p>' +
     '<a href="' +
     site +
-    '/advertising" style="display:inline-block;text-decoration:none;">' +
+    '/advertising" style="display:inline-block;text-decoration:none;line-height:0;">' +
     logoHtml +
     '</a></td></tr></table></td></tr>'
   );
@@ -247,6 +247,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'attendee_signup_events_nudge') {
+    vars.near_location_phrase = 'near London';
     vars.nearby_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events near London</p>' +
       sampleRecommendationCard(
@@ -279,6 +280,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'attendee_signup_events_nudge_followup') {
+    vars.near_location_phrase = 'near London';
     vars.opportunities_url = vars.opportunities_url || site + '/opportunities/';
     vars.popular_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Popular right now</p>' +
@@ -308,7 +310,12 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'attendee_hubert_event_concierge') {
     vars.month_label = 'July 2026';
+    vars.near_location_phrase = 'near York';
     vars.account_settings_url = site + '/account/settings';
+    vars.location_footer_html =
+      'Picks based on <strong style="color:#635c5e;">York</strong>. Change your location in <a href="' +
+      vars.account_settings_url +
+      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> anytime. You receive this digest because marketing emails are turned on.';
     vars.nearby_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events within 25 miles of York</p>' +
       sampleRecommendationCard(

@@ -42,8 +42,8 @@ function buildSponsorLogoMarkup(logo, name, logoBandBg) {
     safeLogo +
     '" alt="' +
     safeName +
-    '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">';
-  // No coloured CTA band — logo sits cleanly on the white Powered by card.
+    '" width="120" style="max-width:120px;width:auto;max-height:40px;height:auto;display:block;margin:0 auto;border:0;">';
+  // No coloured CTA band — logo sits cleanly under the Powered by label.
   void logoBandBg;
   return imgHtml;
 }
@@ -57,17 +57,17 @@ function buildSponsorSection(block, options) {
   if (!url) return '';
   const safeUrl = url.replace(/"/g, '&quot;');
   const logoHtml = buildSponsorLogoMarkup(logo, name);
-  // Sits in the cream logo-hero band as a clean white card (not cream-on-cream).
+  // Compact strip under the Hub logo — white so it sits cleanly under cream or purple headers.
   return (
-    '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
-    '<tr><td style="padding:16px 20px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
+    '<tr><td class="mobile-pad" style="padding:10px 40px 6px;text-align:center;background:#ffffff;">' +
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e8e2e9;">' +
+    '<tr><td style="padding:10px 22px 12px;text-align:center;vertical-align:middle;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 6px;line-height:1;">' +
     label +
     '</p>' +
     '<a href="' +
     safeUrl +
-    '" style="display:inline-block;text-decoration:none;">' +
+    '" style="display:inline-block;text-decoration:none;line-height:0;">' +
     logoHtml +
     '</a></td></tr></table></td></tr>'
   );

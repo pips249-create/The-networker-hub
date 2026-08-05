@@ -23,10 +23,19 @@ const {
   fetchNearbyEvents,
   fetchPopularEvents,
   nearbySectionHeading,
+  nearbyLocationLabel,
 } = require('./nearby-events');
+const { escapeHtml } = require('./event-refund-policy');
 
 function accountSettingsUrl(siteUrl) {
   return String(siteUrl || siteBase()).replace(/\/$/, '') + '/account/settings/';
+}
+
+/** "near Manchester" when a profile location is set, otherwise "near you". */
+function nearLocationPhrase(location) {
+  const label = nearbyLocationLabel(location);
+  if (!label) return 'near you';
+  return 'near ' + label;
 }
 
 /** Soft CTA when the attendee has no city/postcode saved yet. */
@@ -45,6 +54,26 @@ function locationTipHtml(siteUrl, location) {
   );
 }
 
+/** Hubert digest footer — acknowledge saved location instead of always asking for it. */
+function hubertLocationFooterHtml(siteUrl, location) {
+  const href = accountSettingsUrl(siteUrl);
+  const label = nearbyLocationLabel(location);
+  if (label) {
+    return (
+      'Picks based on <strong style="color:#635c5e;">' +
+      escapeHtml(label) +
+      '</strong>. Change your location in <a href="' +
+      href +
+      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> anytime. You receive this digest because marketing emails are turned on.'
+    );
+  }
+  return (
+    'Update your location in <a href="' +
+    href +
+    '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> to refine nearby picks. You receive this digest because marketing emails are turned on.'
+  );
+}
+
 const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
 const LOW_EVENTS_MAX_UPCOMING = 3;
@@ -60,7 +89,11 @@ const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
 const SIGNUP_NUDGE_FOLLOWUP_DAYS = 10;
+/** Min days after Email 1 before Email 2 — stops catch-up from sending both in one cron. */
+const SIGNUP_NUDGE_FOLLOWUP_GAP_DAYS = 7;
 const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
+/** Skip Hubert if a signup nurture email landed this recently (avoids same-day doubles). */
+const HUBERT_AFTER_NURTURE_COOLDOWN_DAYS = 7;
 const HUBERT_CONCIERGE_BATCH_LIMIT = 50;
 const REENGAGEMENT_BATCH_LIMIT = 25;
 
@@ -455,6 +488,7 @@ async function sendDueSignupEventsNudgeEmails(sb) {
         variables: {
           ...baseEmailVars(siteUrl),
           user_name: String(attendee.name || '').trim() || 'there',
+          near_location_phrase: nearLocationPhrase(attendee.location),
           nearby_events_html: eventSections.nearby_events_html,
           popular_events_html: eventSections.popular_events_html,
           browse_events_url: browseEventsUrl(siteUrl),
@@ -481,6 +515,7 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 async function sendDueSignupEventsNudgeFollowupEmails(sb) {
   const eligibleAfter = daysAgo(SIGNUP_NUDGE_FOLLOWUP_DAYS);
   const eligibleBefore = daysAgo(SIGNUP_NUDGE_MAX_AGE_DAYS);
+  const nudgeSentBefore = daysAgo(SIGNUP_NUDGE_FOLLOWUP_GAP_DAYS);
   const result = { sent: 0, skipped: 0, errors: [] };
 
   const { data: registrations, error: regErr } = await sb
@@ -504,6 +539,7 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
     .lte('created_at', eligibleAfter)
     .gte('created_at', eligibleBefore)
     .not('signup_events_nudge_sent_at', 'is', null)
+    .lte('signup_events_nudge_sent_at', nudgeSentBefore)
     .is('signup_events_nudge_followup_sent_at', null);
   if (attErr) throw new Error(attErr.message);
 
@@ -534,6 +570,7 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
         variables: {
           ...baseEmailVars(siteUrl),
           user_name: String(attendee.name || '').trim() || 'there',
+          near_location_phrase: nearLocationPhrase(attendee.location),
           nearby_events_html: eventSections.nearby_events_html,
           popular_events_html: eventSections.popular_events_html,
           browse_events_url: browseEventsUrl(siteUrl),
@@ -1272,6 +1309,17 @@ function isDueForHubertConcierge(sentAt) {
   );
 }
 
+function recentlyReceivedSignupNurture(attendee, withinDays) {
+  const cutoff = Date.now() - withinDays * 24 * 60 * 60 * 1000;
+  for (const key of ['signup_events_nudge_sent_at', 'signup_events_nudge_followup_sent_at']) {
+    const raw = attendee?.[key];
+    if (!raw) continue;
+    const sent = new Date(raw).getTime();
+    if (!Number.isNaN(sent) && sent >= cutoff) return true;
+  }
+  return false;
+}
+
 function hubertConciergeMonthLabel(date) {
   return date.toLocaleDateString('en-GB', {
     month: 'long',
@@ -1288,7 +1336,9 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
   const { data: attendees, error } = await sb
     .from('attendees')
-    .select('id, email, name, location, hubert_event_concierge_sent_at')
+    .select(
+      'id, email, name, location, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+    )
     .not('email', 'is', null)
     .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
     .limit(250);
@@ -1303,6 +1353,11 @@ async function sendDueHubertEventConciergeEmails(sb) {
     if (result.sent >= HUBERT_CONCIERGE_BATCH_LIMIT) break;
 
     if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (recentlyReceivedSignupNurture(attendee, HUBERT_AFTER_NURTURE_COOLDOWN_DAYS)) {
       result.skipped += 1;
       continue;
     }
@@ -1327,10 +1382,12 @@ async function sendDueHubertEventConciergeEmails(sb) {
           ...baseEmailVars(siteUrl),
           user_name: String(attendee.name || '').trim() || 'there',
           month_label: monthLabel,
+          near_location_phrase: nearLocationPhrase(attendee.location),
           nearby_events_html: eventSections.nearby_events_html,
           popular_events_html: eventSections.popular_events_html,
           browse_events_url: browseEventsUrl(siteUrl),
-          account_settings_url: siteUrl + '/account/settings',
+          account_settings_url: accountSettingsUrl(siteUrl),
+          location_footer_html: hubertLocationFooterHtml(siteUrl, attendee.location),
         },
         subject: "Hubert's event picks for " + monthLabel,
       });

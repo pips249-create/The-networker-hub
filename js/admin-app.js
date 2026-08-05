@@ -9639,6 +9639,7 @@
       } else if (slug === 'attendee_reengagement') {
         SAMPLE_VARS.recommendations_html = previewRecommendationsHtml();
       } else if (slug === 'attendee_signup_events_nudge') {
+        SAMPLE_VARS.near_location_phrase = 'near London';
         SAMPLE_VARS.nearby_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of London</p>' +
           previewRecommendationsHtml();
@@ -9646,6 +9647,7 @@
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
           previewRecommendationsHtml();
       } else if (slug === 'attendee_signup_events_nudge_followup') {
+        SAMPLE_VARS.near_location_phrase = 'near London';
         SAMPLE_VARS.opportunities_url = SAMPLE_VARS.opportunities_url || previewOrigin + '/opportunities/';
         SAMPLE_VARS.popular_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Popular right now</p>' +
@@ -9655,7 +9657,12 @@
           previewRecommendationsHtml();
       } else if (slug === 'attendee_hubert_event_concierge') {
         SAMPLE_VARS.month_label = 'July 2026';
+        SAMPLE_VARS.near_location_phrase = 'near York';
         SAMPLE_VARS.account_settings_url = previewOrigin + '/account/settings';
+        SAMPLE_VARS.location_footer_html =
+          'Picks based on <strong style="color:#635c5e;">York</strong>. Change your location in <a href="' +
+          SAMPLE_VARS.account_settings_url +
+          '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> anytime. You receive this digest because marketing emails are turned on.';
         SAMPLE_VARS.nearby_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of York</p>' +
           previewRecommendationsHtml();
