@@ -1592,19 +1592,41 @@ tr.ad-row-highlight td {
   font-weight: 700;
 }
 
-.ad-review-name-block input[type='text'] {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--ad-border-soft);
-  border-radius: var(--ad-radius-sm);
-  padding: 10px 12px;
-  font-family: inherit;
-  font-size: 14px;
+.ad-review-name-choices {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
 }
 
-.ad-review-name-block input[type='text']:focus {
-  outline: 2px solid var(--ad-teal-light);
+.ad-review-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius-sm);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ad-text-dark);
+}
+
+.ad-review-choice input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.ad-review-choice-meta {
+  color: var(--ad-text-soft);
+  font-weight: 500;
+}
+
+.ad-review-choice:has(input:checked) {
   border-color: var(--ad-teal);
+  background: #f3fbf9;
 }
 
 .ad-review-form textarea {

@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20260715locationtip" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20260805sticky" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
 
   </head>
@@ -41,25 +41,28 @@
           <h2>Your details</h2>
           <p class="as-card-sub">
             Full name, company and job title appear on printable name badges and organiser attendee lists.
-            Your public review name is optional and only used on reviews.
+            Reviews show your first name and last initial by default, or Networker with a number if you stay anonymous.
           </p>
 
           <div class="as-field">
             <label for="as-email">Email</label>
             <input type="email" id="as-email" disabled autocomplete="email" />
+            <p class="as-field-hint" id="as-email-hint">
+              Email is linked to your account login. Contact support to update it.
+            </p>
           </div>
           <div class="as-field">
             <label for="as-name">Full name</label>
             <input type="text" id="as-name" name="name" autocomplete="name" required />
           </div>
-          <div class="as-field">
+          <div class="as-field" id="as-review-name-field">
             <div class="as-field-label-row">
-              <label for="as-public-review-name">Public review name</label>
+              <span class="as-fieldset-legend" id="as-review-name-legend">Name on reviews</span>
               <button
                 type="button"
                 class="as-field-tip-btn"
                 data-as-field-tip="as-public-review-name-tip-text"
-                aria-label="What is a public review name?"
+                aria-label="How review names work"
                 aria-expanded="false"
                 aria-controls="as-public-review-name-tip-text"
               >
@@ -67,38 +70,47 @@
               </button>
             </div>
             <div id="as-public-review-name-tip-text" class="as-field-tip-popover" role="tooltip" hidden>
-              One name for your account, used on all your public reviews. Leave blank to use your first name
-              and last initial (e.g. Alex M.). Your full name still appears on tickets and organiser attendee
-              lists. Hate, abuse or impersonation names are not allowed.
+              Default is your first name and last initial (e.g. Alex M.). Choose anonymous to appear as
+              Networker with a number instead. Your full name still appears on tickets and organiser lists.
             </div>
-            <input
-              type="text"
-              id="as-public-review-name"
-              name="publicReviewName"
-              maxlength="40"
-              placeholder="e.g. Alex M or Networking Alex"
-              autocomplete="nickname"
-            />
+            <fieldset class="as-review-name-choices" aria-labelledby="as-review-name-legend">
+              <label class="as-choice">
+                <input type="radio" name="reviewNameMode" id="as-review-name-mode-name" value="name" checked />
+                <span>
+                  First name + last initial
+                  <span class="as-choice-meta" id="as-review-name-example">e.g. Alex M.</span>
+                </span>
+              </label>
+              <label class="as-choice">
+                <input type="radio" name="reviewNameMode" id="as-review-name-mode-anonymous" value="anonymous" />
+                <span>
+                  Stay anonymous
+                  <span class="as-choice-meta" id="as-networker-alias">Networker ####</span>
+                </span>
+              </label>
+            </fieldset>
           </div>
-          <div class="as-field">
-            <label for="as-company">Company</label>
-            <input
-              type="text"
-              id="as-company"
-              name="company"
-              placeholder="e.g. Acme Ltd"
-              autocomplete="organization"
-            />
-          </div>
-          <div class="as-field">
-            <label for="as-job-title">Job title</label>
-            <input
-              type="text"
-              id="as-job-title"
-              name="jobTitle"
-              placeholder="e.g. Business development manager"
-              autocomplete="organization-title"
-            />
+          <div class="as-field-row">
+            <div class="as-field">
+              <label for="as-company">Company</label>
+              <input
+                type="text"
+                id="as-company"
+                name="company"
+                placeholder="e.g. Acme Ltd"
+                autocomplete="organization"
+              />
+            </div>
+            <div class="as-field">
+              <label for="as-job-title">Job title</label>
+              <input
+                type="text"
+                id="as-job-title"
+                name="jobTitle"
+                placeholder="e.g. Business development manager"
+                autocomplete="organization-title"
+              />
+            </div>
           </div>
           <div class="as-field">
             <div class="as-field-label-row">
@@ -155,11 +167,17 @@
               autocomplete="address-level2"
             />
           </div>
-          <div class="as-actions">
+          <div class="as-actions as-actions--profile">
             <button type="submit" class="as-btn as-btn-primary" id="as-save-profile">Save changes</button>
           </div>
         </section>
       </form>
+
+      <div class="as-sticky-save" id="as-sticky-save" hidden>
+        <button type="button" class="as-btn as-btn-primary" id="as-sticky-save-btn" disabled>
+          Save changes
+        </button>
+      </div>
 
       <form id="as-email-prefs-form">
         <section class="as-card" id="email-preferences">
@@ -265,6 +283,6 @@
     </main>
 
     <script src="../js/site-nav.js?v=20260804early" data-root="../" data-page="settings"></script>
-    <script src="../js/account-settings.js?v=20260805reviewname3"></script>
+    <script src="../js/account-settings.js?v=20260805sticky"></script>
   </body>
 </html>

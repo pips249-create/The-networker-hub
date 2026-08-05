@@ -3,7 +3,14 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const sbAuth = require('./supabase-auth');
-const { assertPublicReviewNameAllowed } = require('./public-review-name-moderation');
+const {
+  ANONYMOUS_REVIEW_NAME,
+  isAnonymousPublicReviewName,
+  networkerAlias,
+  firstNameLastInitial,
+  reviewerDisplayName,
+  normalizeStoredPublicReviewName,
+} = require('./reviewer-display-name');
 
 const WRITABLE = {
   name: true,
@@ -16,35 +23,20 @@ const WRITABLE = {
   businessSector: true,
 };
 
-const MAX_PUBLIC_REVIEW_NAME = 40;
-
-function normalizePublicReviewName(raw) {
-  let s = String(raw == null ? '' : raw)
-    .replace(/\u0000/g, '')
-    .trim()
-    .replace(/\s+/g, ' ');
-  if (!s) return null;
-  if (s.includes('@') || /https?:\/\//i.test(s)) {
-    const err = new Error('Choose a public review name without an email or link.');
-    err.status = 400;
-    throw err;
+function resolvePublicReviewNameInput(body) {
+  if (body.reviewNameMode != null || body.review_name_mode != null) {
+    const mode = String(body.reviewNameMode != null ? body.reviewNameMode : body.review_name_mode)
+      .trim()
+      .toLowerCase();
+    if (mode === 'anonymous' || mode === 'networker') return ANONYMOUS_REVIEW_NAME;
+    if (mode === 'name' || mode === 'default' || mode === '') return null;
   }
-  // Letters (incl. common accented Latin), numbers, spaces, and light punctuation only.
-  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ0-9][A-Za-zÀ-ÖØ-öø-ÿ0-9 .'_-]{0,39}$/.test(s)) {
-    const err = new Error(
-      'Public review name can use letters, numbers, spaces, hyphens, apostrophes or full stops.'
+  if (body.publicReviewName !== undefined || body.public_review_name !== undefined) {
+    return normalizeStoredPublicReviewName(
+      body.publicReviewName !== undefined ? body.publicReviewName : body.public_review_name
     );
-    err.status = 400;
-    throw err;
   }
-  if (s.length < 2) {
-    const err = new Error('Public review name needs at least 2 characters.');
-    err.status = 400;
-    throw err;
-  }
-  if (s.length > MAX_PUBLIC_REVIEW_NAME) s = s.slice(0, MAX_PUBLIC_REVIEW_NAME).trim();
-  assertPublicReviewNameAllowed(s);
-  return s;
+  return undefined;
 }
 
 const PROFESSIONAL_ROLES = new Set([
@@ -124,10 +116,22 @@ function rowToProfile(session, hub, attendee) {
       ? String(attendee.market_preferences || '').trim()
       : interestsToPreferences(attendee?.interests);
 
+  const storedPublic = String(attendee?.public_review_name || '').trim();
+  const anonymous = isAnonymousPublicReviewName(storedPublic);
+  const legalName = String(hub?.display_name || attendee?.name || '').trim();
+
   return {
     email: String(session.email || attendee?.email || '').toLowerCase(),
-    name: String(hub?.display_name || attendee?.name || '').trim(),
-    publicReviewName: String(attendee?.public_review_name || '').trim(),
+    name: legalName,
+    publicReviewName: anonymous ? ANONYMOUS_REVIEW_NAME : '',
+    reviewNameMode: anonymous ? 'anonymous' : 'name',
+    networkerAlias: networkerAlias(attendee || {}),
+    reviewDisplayName: reviewerDisplayName({
+      id: attendee?.id,
+      name: legalName,
+      public_review_name: anonymous ? ANONYMOUS_REVIEW_NAME : null,
+    }),
+    reviewNameExample: firstNameLastInitial(legalName) || 'Alex M.',
     location: String(attendee?.location || '').trim(),
     company: String(attendee?.company || '').trim(),
     jobTitle: String(attendee?.job_title || '').trim(),
@@ -183,10 +187,11 @@ async function updateProfile(session, body) {
 
   const attendeePatch = {};
   if (body.name !== undefined) attendeePatch.name = String(body.name || '').trim();
-  if (body.publicReviewName !== undefined || body.public_review_name !== undefined) {
-    attendeePatch.public_review_name = normalizePublicReviewName(
-      body.publicReviewName !== undefined ? body.publicReviewName : body.public_review_name
-    );
+  if (body.publicReviewName !== undefined || body.public_review_name !== undefined || body.reviewNameMode != null || body.review_name_mode != null) {
+    const resolved = resolvePublicReviewNameInput(body);
+    if (resolved !== undefined) {
+      attendeePatch.public_review_name = resolved;
+    }
   }
   if (body.location !== undefined) attendeePatch.location = String(body.location || '').trim();
   if (body.company !== undefined) {

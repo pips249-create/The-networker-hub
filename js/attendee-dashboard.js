@@ -698,20 +698,22 @@
   }
 
   function secondaryActionLinksHtml(reg) {
+    const links = [
+      '<a class="ad-action-link" href="' + esc(eventHref(reg)) + '">View event</a>',
+    ];
     const directions = directionsHref(reg);
-    let html = '';
     if (directions) {
-      html +=
-        '<a class="ad-btn ad-btn-ghost" href="' +
-        esc(directions) +
-        '" target="_blank" rel="noopener noreferrer">Get directions</a>';
+      links.push(
+        '<a class="ad-action-link" href="' +
+          esc(directions) +
+          '" target="_blank" rel="noopener noreferrer">Get directions</a>'
+      );
     }
-    html +=
+    return (
       '<div class="ad-action-links">' +
-      '<a class="ad-action-link" href="' +
-      esc(eventHref(reg)) +
-      '">View event</a></div>';
-    return html;
+      links.join('<span class="ad-action-sep" aria-hidden="true">·</span>') +
+      '</div>'
+    );
   }
 
   function actionCell(reg, options) {
@@ -1393,33 +1395,46 @@
   let reviewRating = 0;
   let reviewModalOpen = false;
   let viewReviewModalOpen = false;
-  let reviewNameState = { legalName: '', publicReviewName: '' };
+  let reviewNameState = {
+    legalName: '',
+    reviewNameMode: 'name',
+    networkerAlias: 'Networker ####',
+    reviewNameExample: 'Alex M.',
+    reviewDisplayName: 'Attendee',
+  };
 
-  function formatReviewDisplayName(legalName, publicReviewName) {
-    const publicName = String(publicReviewName || '').trim();
-    if (publicName) return publicName;
-    const name = String(legalName || '').trim();
-    if (!name) return 'Attendee';
-    const parts = name.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0];
-    const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
-    if (!lastInitial) return parts[0];
-    return parts[0] + ' ' + lastInitial + '.';
+  function selectedAdReviewNameMode() {
+    const checked = document.querySelector('#ad-review-form input[name="reviewNameMode"]:checked');
+    return checked && checked.value === 'anonymous' ? 'anonymous' : 'name';
+  }
+
+  function formatReviewDisplayName() {
+    if (selectedAdReviewNameMode() === 'anonymous') {
+      return reviewNameState.networkerAlias || 'Networker ####';
+    }
+    return reviewNameState.reviewNameExample || reviewNameState.reviewDisplayName || 'Attendee';
   }
 
   function updateReviewNamePreview() {
     const preview = document.getElementById('ad-review-name-preview');
-    const input = document.getElementById('ad-review-public-name');
     if (!preview) return;
-    preview.textContent = formatReviewDisplayName(
-      reviewNameState.legalName,
-      input ? input.value : reviewNameState.publicReviewName
-    );
+    preview.textContent = formatReviewDisplayName();
   }
 
   function syncReviewNameFields() {
-    const input = document.getElementById('ad-review-public-name');
-    if (input) input.value = reviewNameState.publicReviewName || '';
+    const nameRadio = document.getElementById('ad-review-name-mode-name');
+    const anonRadio = document.getElementById('ad-review-name-mode-anonymous');
+    const mode = reviewNameState.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+    if (nameRadio) nameRadio.checked = mode === 'name';
+    if (anonRadio) anonRadio.checked = mode === 'anonymous';
+    const example = document.getElementById('ad-review-name-example');
+    if (example) {
+      example.textContent = reviewNameState.reviewNameExample
+        ? '(' + reviewNameState.reviewNameExample + ')'
+        : '';
+    }
+    const alias = document.getElementById('ad-review-networker-alias');
+    if (alias) alias.textContent = reviewNameState.networkerAlias || 'Networker ####';
     updateReviewNamePreview();
   }
 
@@ -1429,7 +1444,14 @@
       const data = await res.json();
       if (data.ok && data.profile) {
         reviewNameState.legalName = String(data.profile.name || '').trim();
-        reviewNameState.publicReviewName = String(data.profile.publicReviewName || '').trim();
+        reviewNameState.reviewNameMode =
+          data.profile.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+        reviewNameState.networkerAlias =
+          String(data.profile.networkerAlias || '').trim() || 'Networker ####';
+        reviewNameState.reviewNameExample =
+          String(data.profile.reviewNameExample || '').trim() || 'Alex M.';
+        reviewNameState.reviewDisplayName =
+          String(data.profile.reviewDisplayName || '').trim() || 'Attendee';
       }
     } catch {
       /* keep existing state */
@@ -1438,30 +1460,32 @@
   }
 
   async function savePublicReviewNameIfChanged() {
-    const input = document.getElementById('ad-review-public-name');
-    if (!input) return true;
-    const next = String(input.value || '').trim();
-    const prev = String(reviewNameState.publicReviewName || '').trim();
+    const next = selectedAdReviewNameMode();
+    const prev = reviewNameState.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
     if (next === prev) return true;
     const res = await fetch('/api/auth/profile', {
       method: 'PATCH',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ publicReviewName: next }),
+      body: JSON.stringify({ reviewNameMode: next }),
     });
     const data = await res.json();
     if (!data.ok) {
-      const err = new Error(data.message || data.error || 'Could not save public review name.');
+      const err = new Error(data.message || data.error || 'Could not save review name preference.');
       throw err;
     }
-    const saved = String(data.profile?.publicReviewName || '').trim();
-    if (data.profile?.name) reviewNameState.legalName = String(data.profile.name).trim();
-    reviewNameState.publicReviewName = saved;
-    if (next && saved !== next) {
-      throw new Error(
-        'Public review name could not be saved yet. Leave it blank to use first name + last initial, or try again later.'
-      );
+    if (data.profile) {
+      reviewNameState.legalName = String(data.profile.name || reviewNameState.legalName || '').trim();
+      reviewNameState.reviewNameMode =
+        data.profile.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+      reviewNameState.networkerAlias =
+        String(data.profile.networkerAlias || '').trim() || reviewNameState.networkerAlias;
+      reviewNameState.reviewNameExample =
+        String(data.profile.reviewNameExample || '').trim() || reviewNameState.reviewNameExample;
+      reviewNameState.reviewDisplayName =
+        String(data.profile.reviewDisplayName || '').trim() || reviewNameState.reviewDisplayName;
     }
+    syncReviewNameFields();
     return true;
   }
   let paymentModalOpen = false;
@@ -1654,10 +1678,9 @@
       });
     }
 
-    const publicNameInput = document.getElementById('ad-review-public-name');
-    if (publicNameInput) {
-      publicNameInput.addEventListener('input', updateReviewNamePreview);
-    }
+    document.querySelectorAll('#ad-review-form input[name="reviewNameMode"]').forEach((input) => {
+      input.addEventListener('change', updateReviewNamePreview);
+    });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && reviewModalOpen) closeReviewModal();

@@ -27,14 +27,18 @@
     }
   }
 
-  function scrollAlertIntoView() {
-    if (alertEl) alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  function setReviewNameWritable(enabled) {
+    const field = document.getElementById('as-review-name-field');
+    if (field) field.hidden = !enabled;
+    document.querySelectorAll('input[name="reviewNameMode"]').forEach((input) => {
+      input.disabled = !enabled;
+    });
   }
 
   function applyWritable(writable) {
     const w = writable || {};
     setFieldWritable('as-name', w.name !== false);
-    setFieldWritable('as-public-review-name', w.publicReviewName !== false);
+    setReviewNameWritable(w.publicReviewName !== false);
     // Default on so fields stay visible even if an older API omits these flags.
     setFieldWritable('as-company', w.company !== false);
     setFieldWritable('as-job-title', w.jobTitle !== false);
@@ -42,20 +46,48 @@
     setFieldWritable('as-location', w.location !== false);
   }
 
+  function scrollAlertIntoView() {
+    if (alertEl) alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   function setFieldValue(id, value) {
     const el = document.getElementById(id);
     if (el) el.value = value ?? '';
   }
 
+  function fillReviewNameMode(profile) {
+    const mode = profile.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+    const nameRadio = document.getElementById('as-review-name-mode-name');
+    const anonRadio = document.getElementById('as-review-name-mode-anonymous');
+    if (nameRadio) nameRadio.checked = mode === 'name';
+    if (anonRadio) anonRadio.checked = mode === 'anonymous';
+    const example = document.getElementById('as-review-name-example');
+    if (example) {
+      example.textContent = profile.reviewNameExample
+        ? 'e.g. ' + profile.reviewNameExample
+        : 'e.g. Alex M.';
+    }
+    const alias = document.getElementById('as-networker-alias');
+    if (alias) {
+      alias.textContent = profile.networkerAlias || 'Networker ####';
+    }
+  }
+
+  function selectedReviewNameMode() {
+    const checked = document.querySelector('input[name="reviewNameMode"]:checked');
+    return checked && checked.value === 'anonymous' ? 'anonymous' : 'name';
+  }
+
   function fillForm(profile) {
     setFieldValue('as-email', profile.email || '');
     setFieldValue('as-name', profile.name || '');
-    setFieldValue('as-public-review-name', profile.publicReviewName || '');
+    fillReviewNameMode(profile);
     setFieldValue('as-company', profile.company || '');
     setFieldValue('as-job-title', profile.jobTitle || '');
     setFieldValue('as-professional-role', profile.professionalRole || '');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);
+    rememberProfileBaseline();
   }
 
   function fillEmailPrefs(profile) {
@@ -221,11 +253,66 @@
     }
   });
 
+  let profileBaseline = '';
+
+  function profileSnapshot() {
+    return JSON.stringify({
+      name: document.getElementById('as-name')?.value.trim() || '',
+      reviewNameMode: selectedReviewNameMode(),
+      company: document.getElementById('as-company')?.value.trim() || '',
+      jobTitle: document.getElementById('as-job-title')?.value.trim() || '',
+      professionalRole: document.getElementById('as-professional-role')
+        ? document.getElementById('as-professional-role').value.trim()
+        : '',
+      location: document.getElementById('as-location')?.value.trim() || '',
+    });
+  }
+
+  function setProfileDirty(dirty) {
+    document.body.classList.toggle('is-profile-dirty', dirty);
+    const sticky = document.getElementById('as-sticky-save');
+    const stickyBtn = document.getElementById('as-sticky-save-btn');
+    const saveBtn = document.getElementById('as-save-profile');
+    if (sticky) sticky.hidden = !dirty;
+    if (stickyBtn) stickyBtn.disabled = !dirty;
+    if (saveBtn && !saveBtn.dataset.saving) saveBtn.disabled = false;
+  }
+
+  function syncProfileDirty() {
+    if (!profileBaseline) {
+      setProfileDirty(false);
+      return;
+    }
+    setProfileDirty(profileSnapshot() !== profileBaseline);
+  }
+
+  function rememberProfileBaseline() {
+    profileBaseline = profileSnapshot();
+    setProfileDirty(false);
+  }
+
+  const profileForm = document.getElementById('as-profile-form');
+  profileForm?.addEventListener('input', syncProfileDirty);
+  profileForm?.addEventListener('change', syncProfileDirty);
+
+  document.getElementById('as-sticky-save-btn')?.addEventListener('click', () => {
+    if (profileForm && typeof profileForm.requestSubmit === 'function') {
+      profileForm.requestSubmit();
+    } else {
+      profileForm?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+  });
+
   document.getElementById('as-profile-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
     const btn = document.getElementById('as-save-profile');
-    if (btn) btn.disabled = true;
+    const stickyBtn = document.getElementById('as-sticky-save-btn');
+    if (btn) {
+      btn.dataset.saving = '1';
+      btn.disabled = true;
+    }
+    if (stickyBtn) stickyBtn.disabled = true;
     try {
       const res = await fetch('/api/auth/profile', {
         method: 'PATCH',
@@ -233,9 +320,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: document.getElementById('as-name').value.trim(),
-          publicReviewName: document.getElementById('as-public-review-name')
-            ? document.getElementById('as-public-review-name').value.trim()
-            : '',
+          reviewNameMode: selectedReviewNameMode(),
           company: document.getElementById('as-company').value.trim(),
           jobTitle: document.getElementById('as-job-title').value.trim(),
           professionalRole: document.getElementById('as-professional-role')
@@ -247,6 +332,7 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.message || data.error || 'save_failed');
       await loadProfile();
+      rememberProfileBaseline();
       let msg = data.message || 'Your details were saved.';
       if (data.partial && data.skipped && data.skipped.length) {
         msg =
@@ -265,8 +351,12 @@
     } catch (err) {
       showAlert(err.message || 'Could not save.', false);
       scrollAlertIntoView();
+      syncProfileDirty();
     } finally {
-      if (btn) btn.disabled = false;
+      if (btn) {
+        delete btn.dataset.saving;
+        btn.disabled = false;
+      }
     }
   });
 
@@ -320,7 +410,13 @@
     let activePopover = null;
 
     function closeFieldTip() {
-      if (activePopover) activePopover.hidden = true;
+      if (activePopover) {
+        activePopover.hidden = true;
+        activePopover.classList.remove('is-sheet');
+        activePopover.style.left = '';
+        activePopover.style.top = '';
+        activePopover.style.visibility = '';
+      }
       if (activeBtn) {
         activeBtn.setAttribute('aria-expanded', 'false');
         activeBtn = null;
@@ -329,11 +425,19 @@
     }
 
     function positionFieldTip(btn, pop) {
-      const rect = btn.getBoundingClientRect();
+      const useSheet = window.matchMedia('(max-width: 720px)').matches;
+      pop.classList.toggle('is-sheet', useSheet);
       pop.hidden = false;
+      if (useSheet) {
+        pop.style.left = '';
+        pop.style.top = '';
+        pop.style.visibility = '';
+        return;
+      }
       pop.style.visibility = 'hidden';
       pop.style.left = '0';
       pop.style.top = '0';
+      const rect = btn.getBoundingClientRect();
       const width = pop.offsetWidth;
       const height = pop.offsetHeight;
       let left = rect.left + rect.width / 2 - width / 2;

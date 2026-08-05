@@ -5,37 +5,50 @@
   var reviewRating = 0;
   var modalOpen = false;
   var onSubmittedCb = null;
-  var reviewNameState = { legalName: '', publicReviewName: '' };
+  var reviewNameState = {
+    legalName: '',
+    reviewNameMode: 'name',
+    networkerAlias: 'Networker ####',
+    reviewNameExample: 'Alex M.',
+    reviewDisplayName: 'Attendee',
+  };
 
   function el(id) {
     return document.getElementById(id);
   }
 
-  function formatReviewDisplayName(legalName, publicReviewName) {
-    var publicName = String(publicReviewName || '').trim();
-    if (publicName) return publicName;
-    var name = String(legalName || '').trim();
-    if (!name) return 'Attendee';
-    var parts = name.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0];
-    var lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
-    if (!lastInitial) return parts[0];
-    return parts[0] + ' ' + lastInitial + '.';
+  function selectedReviewNameMode() {
+    var checked = document.querySelector('#hub-rm-form input[name="reviewNameMode"]:checked');
+    return checked && checked.value === 'anonymous' ? 'anonymous' : 'name';
+  }
+
+  function formatReviewDisplayName() {
+    if (selectedReviewNameMode() === 'anonymous') {
+      return reviewNameState.networkerAlias || 'Networker ####';
+    }
+    return reviewNameState.reviewNameExample || reviewNameState.reviewDisplayName || 'Attendee';
   }
 
   function updateReviewNamePreview() {
     var preview = el('hub-rm-name-preview');
-    var input = el('hub-rm-public-name');
     if (!preview) return;
-    preview.textContent = formatReviewDisplayName(
-      reviewNameState.legalName,
-      input ? input.value : reviewNameState.publicReviewName
-    );
+    preview.textContent = formatReviewDisplayName();
   }
 
   function syncReviewNameFields() {
-    var input = el('hub-rm-public-name');
-    if (input) input.value = reviewNameState.publicReviewName || '';
+    var nameRadio = el('hub-rm-name-mode-name');
+    var anonRadio = el('hub-rm-name-mode-anonymous');
+    var mode = reviewNameState.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+    if (nameRadio) nameRadio.checked = mode === 'name';
+    if (anonRadio) anonRadio.checked = mode === 'anonymous';
+    var example = el('hub-rm-name-example');
+    if (example) {
+      example.textContent = reviewNameState.reviewNameExample
+        ? '(' + reviewNameState.reviewNameExample + ')'
+        : '';
+    }
+    var alias = el('hub-rm-networker-alias');
+    if (alias) alias.textContent = reviewNameState.networkerAlias || 'Networker ####';
     updateReviewNamePreview();
   }
 
@@ -45,7 +58,14 @@
       var data = await res.json();
       if (data.ok && data.profile) {
         reviewNameState.legalName = String(data.profile.name || '').trim();
-        reviewNameState.publicReviewName = String(data.profile.publicReviewName || '').trim();
+        reviewNameState.reviewNameMode =
+          data.profile.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+        reviewNameState.networkerAlias =
+          String(data.profile.networkerAlias || '').trim() || 'Networker ####';
+        reviewNameState.reviewNameExample =
+          String(data.profile.reviewNameExample || '').trim() || 'Alex M.';
+        reviewNameState.reviewDisplayName =
+          String(data.profile.reviewDisplayName || '').trim() || 'Attendee';
       }
     } catch (e) {
       /* keep existing state */
@@ -54,31 +74,31 @@
   }
 
   async function savePublicReviewNameIfChanged() {
-    var input = el('hub-rm-public-name');
-    if (!input) return true;
-    var next = String(input.value || '').trim();
-    var prev = String(reviewNameState.publicReviewName || '').trim();
+    var next = selectedReviewNameMode();
+    var prev = reviewNameState.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
     if (next === prev) return true;
     var res = await fetch('/api/auth/profile', {
       method: 'PATCH',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ publicReviewName: next }),
+      body: JSON.stringify({ reviewNameMode: next }),
     });
     var data = await res.json();
     if (!data.ok) {
-      throw new Error(data.message || data.error || 'Could not save public review name.');
+      throw new Error(data.message || data.error || 'Could not save review name preference.');
     }
-    var saved = String((data.profile && data.profile.publicReviewName) || '').trim();
-    if (data.profile && data.profile.name) {
-      reviewNameState.legalName = String(data.profile.name).trim();
+    if (data.profile) {
+      reviewNameState.legalName = String(data.profile.name || reviewNameState.legalName || '').trim();
+      reviewNameState.reviewNameMode =
+        data.profile.reviewNameMode === 'anonymous' ? 'anonymous' : 'name';
+      reviewNameState.networkerAlias =
+        String(data.profile.networkerAlias || '').trim() || reviewNameState.networkerAlias;
+      reviewNameState.reviewNameExample =
+        String(data.profile.reviewNameExample || '').trim() || reviewNameState.reviewNameExample;
+      reviewNameState.reviewDisplayName =
+        String(data.profile.reviewDisplayName || '').trim() || reviewNameState.reviewDisplayName;
     }
-    reviewNameState.publicReviewName = saved;
-    if (next && saved !== next) {
-      throw new Error(
-        'Public review name could not be saved yet. Leave it blank to use first name + last initial, or try again later.'
-      );
-    }
+    syncReviewNameFields();
     return true;
   }
 
@@ -217,7 +237,6 @@
     var changeRatingBtn = el('hub-rm-change-rating');
     var form = el('hub-rm-form');
     var stars = el('hub-rm-stars');
-    var publicNameInput = el('hub-rm-public-name');
 
     [backdrop, closeBtn, cancelBtn].forEach(function (node) {
       if (!node) return;
@@ -241,9 +260,9 @@
       });
     }
 
-    if (publicNameInput) {
-      publicNameInput.addEventListener('input', updateReviewNamePreview);
-    }
+    document.querySelectorAll('#hub-rm-form input[name="reviewNameMode"]').forEach(function (input) {
+      input.addEventListener('change', updateReviewNamePreview);
+    });
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && modalOpen) close();

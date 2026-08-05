@@ -75,6 +75,53 @@
   margin-bottom: 16px;
 }
 
+.as-fieldset-legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #2b2140);
+}
+
+.as-review-name-choices {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.as-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border, #e6dff0);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--ink, #2b2140);
+  line-height: 1.35;
+}
+
+.as-choice input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.as-choice-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-muted, #6b6280);
+}
+
+.as-choice:has(input:checked) {
+  border-color: #9a7aa8;
+  background: #faf7fc;
+}
+
 .as-field label {
   display: block;
   font-size: 12px;
@@ -304,4 +351,73 @@
 #as-organiser-hide-form[hidden],
 #as-organiser-linked[hidden] {
   display: none !important;
+}
+
+.as-field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--as-text-soft);
+}
+
+.as-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+.as-sticky-save {
+  display: none;
+}
+
+.as-sticky-save[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .as-field-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .account-settings-page.is-profile-dirty {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .as-sticky-save {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 11000;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid var(--as-border-soft);
+    box-shadow: 0 -8px 24px rgba(45, 27, 61, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .as-sticky-save .as-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .as-actions--profile {
+    display: none;
+  }
+
+  .as-field-tip-popover.is-sheet {
+    left: 12px !important;
+    right: 12px;
+    top: auto !important;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+    width: auto;
+    padding: 16px 18px;
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(45, 27, 61, 0.2);
+    font-size: 13px;
+  }
 }
