@@ -1,6 +1,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const { reviewerDisplayName, reviewerInitials } = require('./reviewer-display-name');
 const { isUuid } = require('./uuid');
 
 const MAX_ORGANISER_REPLY = 2000;
@@ -118,24 +119,6 @@ async function submitReview(session, input) {
     reviewText: ins.data.review_text,
     createdAt: ins.data.created_at,
   };
-}
-
-function reviewerDisplayName(attendee) {
-  const name = String(attendee?.name || '').trim();
-  if (name) return name;
-  const email = String(attendee?.email || '').trim();
-  if (email) return email.split('@')[0];
-  return 'Attendee';
-}
-
-function reviewerInitials(name) {
-  const parts = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (!parts.length) return '?';
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 async function replyToReviewAsOrganiser(session, reviewId, replyText) {
@@ -263,5 +246,7 @@ module.exports = {
   eventHasEnded,
   isEligibleRegistration,
   listReviewsForOrganiserGroups,
+  reviewerDisplayName,
+  reviewerInitials,
   MAX_ORGANISER_REPLY,
 };

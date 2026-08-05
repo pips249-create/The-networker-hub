@@ -6,6 +6,7 @@ const { publicOrganiserSlug } = require('./organiser-slug');
 const { fetchPublishedEventRows, isPublicEvent, fetchAllPaged } = require('./supabase-events');
 const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
 const { getOrganiserRankingHistory } = require('./organiser-ranking-snapshot');
+const { reviewerDisplayName } = require('./reviewer-display-name');
 
 /** Slim columns for directory counts / regional location matching — never select *. */
 const DIRECTORY_EVENT_SELECT =
@@ -332,7 +333,7 @@ async function fetchOrganiserReviews(sb, organiserId) {
       rating: Number(row.rating) || 0,
       text: String(row.review_text || '').trim(),
       reply: String(row.organiser_response || '').trim() || null,
-      name: row.attendees?.name || row.attendees?.email || 'Attendee',
+      name: reviewerDisplayName(row.attendees),
       date: row.created_at
         ? new Date(row.created_at).toLocaleDateString('en-GB', {
             day: 'numeric',
