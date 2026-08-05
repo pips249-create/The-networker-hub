@@ -813,6 +813,21 @@
       return;
     }
     if (eventIsCategoryExclusivity(ev)) {
+      if (isRosterMemberForEvent()) {
+        const memberOnly = (rosterMemberTickets || []).find(function (t) {
+          return t.isMembersOnly;
+        });
+        labelEl.textContent = 'Member ticket';
+        if (memberOnly) {
+          priceEl.textContent =
+            memberOnly.priceKey === 'free' ? 'Free' : memberOnly.price || memberTicketPriceLabel(ev);
+        } else {
+          const priceNum = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
+          priceEl.textContent =
+            priceNum > 0 ? publicListingPriceLabel(ev, { withFrom: false }) : 'Free';
+        }
+        return;
+      }
       labelEl.textContent = 'Price if approved';
       const priceNum = ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0;
       priceEl.textContent =
@@ -2465,12 +2480,14 @@
     const memberTiers = isGuestProg ? tiers : tiers;
     tiersEl.innerHTML = '';
 
-    if (rosterMember && (eventHasMembersOnlyTickets(ev) || isGuestProg)) {
+    if (rosterMember && (eventHasMembersOnlyTickets(ev) || isGuestProg || isCategoryExclusivity)) {
       const banner = document.createElement('p');
       banner.className = 'ticket-load-hint ticket-load-hint--member';
-      banner.textContent = eventHasMembersOnlyTickets(ev)
-        ? 'You\u2019re on this group\u2019s membership list — your member rates are included below.'
-        : 'You\u2019re on this group\u2019s membership list — book with your member rate below.';
+      banner.textContent = isCategoryExclusivity
+        ? 'You\u2019re on this group\u2019s membership list — book without applying. Guests still need host approval.'
+        : eventHasMembersOnlyTickets(ev)
+          ? 'You\u2019re on this group\u2019s membership list — your member rates are included below.'
+          : 'You\u2019re on this group\u2019s membership list — book with your member rate below.';
       tiersEl.appendChild(banner);
     } else if (
       isGuestProg &&
@@ -2517,7 +2534,7 @@
       tiersEl.appendChild(tier);
     }
 
-    if (isCategoryExclusivity && tiers.length) {
+    if (isCategoryExclusivity && tiers.length && !rosterMember) {
       const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
       let soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
@@ -2599,6 +2616,8 @@
           ? 'All dates included — one checkout'
           : isMemberTier
           ? 'Member rate — your membership'
+          : rosterMember && isCategoryExclusivity
+          ? 'Member booking — no application needed'
           : rosterMember && isGuestProg
           ? 'Member rate — your membership'
           : remainingLabel || t.description || '';
@@ -3749,7 +3768,11 @@
     if (purchaseView) purchaseView.removeAttribute('aria-hidden');
 
     if (eventIsCategoryExclusivity(ev)) {
-      panel.classList.add('is-approval-mode');
+      if (isRosterMemberForEvent()) {
+        panel.classList.remove('is-approval-mode');
+      } else {
+        panel.classList.add('is-approval-mode');
+      }
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       const footText = document.getElementById('category-exclusivity-apply-foot-text');
       if (isRosterMemberForEvent()) {
@@ -3864,7 +3887,8 @@
     else if (ev.isTicketSalesScheduled) labelText = 'Tickets opening soon';
     else if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
-    else if (eventIsCategoryExclusivity(ev)) labelText = 'Apply for a seat';
+    else if (eventIsCategoryExclusivity(ev))
+      labelText = isRosterMemberForEvent() ? 'Book as a member' : 'Apply for a seat';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -5070,15 +5094,18 @@
             renderTicketPanel(displayEv);
             setText('ev-price', publicListingPriceLabel(displayEv));
             syncTicketHeader(displayEv);
+            applyTicketPanelState(displayEv);
           } else if (displayEv.alumniFastPassEnabled || alumniInviteToken) {
             await loadAlumniEligibility(displayEv);
             renderTicketPanel(displayEv);
-          } else if (displayEv.hasMembersOnlyTiers) {
+            applyTicketPanelState(displayEv);
+          } else if (displayEv.hasMembersOnlyTiers || eventIsCategoryExclusivity(displayEv)) {
             await loadRosterEligibility(displayEv);
             syncGuestVisitStateForRosterMember();
             await ensureRosterMemberTickets(displayEv);
             renderTicketPanel(displayEv);
             syncTicketHeader(displayEv);
+            applyTicketPanelState(displayEv);
           }
           initTicketPanel(displayEv);
           initSeriesDatePicker(displayEv);
