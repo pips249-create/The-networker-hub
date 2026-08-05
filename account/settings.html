@@ -40,7 +40,8 @@
         <section class="as-card">
           <h2>Your details</h2>
           <p class="as-card-sub">
-            Name, company and job title appear on printable name badges and organiser attendee lists.
+            Full name, company and job title appear on printable name badges and organiser attendee lists.
+            Your public review name is optional and only used on reviews.
           </p>
 
           <div class="as-field">
@@ -50,6 +51,34 @@
           <div class="as-field">
             <label for="as-name">Full name</label>
             <input type="text" id="as-name" name="name" autocomplete="name" required />
+          </div>
+          <div class="as-field">
+            <div class="as-field-label-row">
+              <label for="as-public-review-name">Public review name</label>
+              <button
+                type="button"
+                class="as-field-tip-btn"
+                data-as-field-tip="as-public-review-name-tip-text"
+                aria-label="What is a public review name?"
+                aria-expanded="false"
+                aria-controls="as-public-review-name-tip-text"
+              >
+                <span aria-hidden="true">?</span>
+              </button>
+            </div>
+            <div id="as-public-review-name-tip-text" class="as-field-tip-popover" role="tooltip" hidden>
+              One name for your account, used on all your public reviews. Leave blank to use your first name
+              and last initial (e.g. Alex M.). Your full name still appears on tickets and organiser attendee
+              lists. Hate, abuse or impersonation names are not allowed.
+            </div>
+            <input
+              type="text"
+              id="as-public-review-name"
+              name="publicReviewName"
+              maxlength="40"
+              placeholder="e.g. Alex M or Networking Alex"
+              autocomplete="nickname"
+            />
           </div>
           <div class="as-field">
             <label for="as-company">Company</label>
@@ -236,6 +265,6 @@
     </main>
 
     <script src="../js/site-nav.js?v=20260804early" data-root="../" data-page="settings"></script>
-    <script src="../js/account-settings.js?v=20260728role1"></script>
+    <script src="../js/account-settings.js?v=20260805reviewname3"></script>
   </body>
 </html>

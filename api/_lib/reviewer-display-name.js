@@ -1,8 +1,14 @@
 /**
- * Public review attribution — first name + last initial only.
+ * Public review attribution.
+ * Prefer optional public_review_name; otherwise first name + last initial.
  * Never publish a full legal name or email on public review surfaces.
  */
 function reviewerDisplayName(attendee) {
+  const publicName = String(
+    attendee?.public_review_name || attendee?.publicReviewName || ''
+  ).trim();
+  if (publicName) return publicName;
+
   const name = String(attendee?.name || '').trim();
   if (!name) return 'Attendee';
   const parts = name.split(/\s+/).filter(Boolean);

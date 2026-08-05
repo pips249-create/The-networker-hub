@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260805bottom" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260805reviewname3" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260805bottom" />
 
   </head>
@@ -832,6 +832,27 @@
               maxlength="2000"
               placeholder="What was the host like? Would you attend again?"
             ></textarea>
+            <div class="ad-review-name-block">
+              <p class="ad-review-name-preview-line">
+                Shown publicly as
+                <strong id="ad-review-name-preview">Attendee</strong>
+              </p>
+              <label class="ad-review-label" for="ad-review-public-name">
+                Public review name
+                <span class="ad-review-label-hint"
+                  >One name for your account, used on all reviews. Leave blank for first name + last
+                  initial. Full name stays on tickets only.</span
+                >
+              </label>
+              <input
+                type="text"
+                id="ad-review-public-name"
+                name="publicReviewName"
+                maxlength="40"
+                placeholder="e.g. Alex M or Networking Alex"
+                autocomplete="nickname"
+              />
+            </div>
             <button type="button" class="ad-review-change-rating" id="ad-review-change-rating">Change rating</button>
           </div>
           <p class="ad-review-error" id="ad-review-error" hidden></p>
@@ -897,6 +918,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260805drag2"></script>
-    <script src="../js/attendee-dashboard.js?v=20260805bottom"></script>
+    <script src="../js/attendee-dashboard.js?v=20260805reviewname2"></script>
   </body>
 </html>

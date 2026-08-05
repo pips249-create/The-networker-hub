@@ -1495,6 +1495,36 @@ tr.ad-row-highlight td {
   margin-top: 4px;
 }
 
+.ad-review-name-block {
+  margin-top: 14px;
+}
+
+.ad-review-name-preview-line {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ad-text-soft);
+}
+
+.ad-review-name-preview-line strong {
+  color: var(--ad-text-dark);
+  font-weight: 700;
+}
+
+.ad-review-name-block input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius-sm);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.ad-review-name-block input[type='text']:focus {
+  outline: 2px solid var(--ad-teal-light);
+  border-color: var(--ad-teal);
+}
+
 .ad-review-form textarea {
   width: 100%;
   box-sizing: border-box;

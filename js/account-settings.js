@@ -34,6 +34,7 @@
   function applyWritable(writable) {
     const w = writable || {};
     setFieldWritable('as-name', w.name !== false);
+    setFieldWritable('as-public-review-name', w.publicReviewName !== false);
     // Default on so fields stay visible even if an older API omits these flags.
     setFieldWritable('as-company', w.company !== false);
     setFieldWritable('as-job-title', w.jobTitle !== false);
@@ -49,6 +50,7 @@
   function fillForm(profile) {
     setFieldValue('as-email', profile.email || '');
     setFieldValue('as-name', profile.name || '');
+    setFieldValue('as-public-review-name', profile.publicReviewName || '');
     setFieldValue('as-company', profile.company || '');
     setFieldValue('as-job-title', profile.jobTitle || '');
     setFieldValue('as-professional-role', profile.professionalRole || '');
@@ -231,6 +233,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: document.getElementById('as-name').value.trim(),
+          publicReviewName: document.getElementById('as-public-review-name')
+            ? document.getElementById('as-public-review-name').value.trim()
+            : '',
           company: document.getElementById('as-company').value.trim(),
           jobTitle: document.getElementById('as-job-title').value.trim(),
           professionalRole: document.getElementById('as-professional-role')

@@ -1326,6 +1326,77 @@
   let reviewRating = 0;
   let reviewModalOpen = false;
   let viewReviewModalOpen = false;
+  let reviewNameState = { legalName: '', publicReviewName: '' };
+
+  function formatReviewDisplayName(legalName, publicReviewName) {
+    const publicName = String(publicReviewName || '').trim();
+    if (publicName) return publicName;
+    const name = String(legalName || '').trim();
+    if (!name) return 'Attendee';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0];
+    const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+    if (!lastInitial) return parts[0];
+    return parts[0] + ' ' + lastInitial + '.';
+  }
+
+  function updateReviewNamePreview() {
+    const preview = document.getElementById('ad-review-name-preview');
+    const input = document.getElementById('ad-review-public-name');
+    if (!preview) return;
+    preview.textContent = formatReviewDisplayName(
+      reviewNameState.legalName,
+      input ? input.value : reviewNameState.publicReviewName
+    );
+  }
+
+  function syncReviewNameFields() {
+    const input = document.getElementById('ad-review-public-name');
+    if (input) input.value = reviewNameState.publicReviewName || '';
+    updateReviewNamePreview();
+  }
+
+  async function loadReviewNameState() {
+    try {
+      const res = await fetch('/api/auth/profile', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok && data.profile) {
+        reviewNameState.legalName = String(data.profile.name || '').trim();
+        reviewNameState.publicReviewName = String(data.profile.publicReviewName || '').trim();
+      }
+    } catch {
+      /* keep existing state */
+    }
+    syncReviewNameFields();
+  }
+
+  async function savePublicReviewNameIfChanged() {
+    const input = document.getElementById('ad-review-public-name');
+    if (!input) return true;
+    const next = String(input.value || '').trim();
+    const prev = String(reviewNameState.publicReviewName || '').trim();
+    if (next === prev) return true;
+    const res = await fetch('/api/auth/profile', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ publicReviewName: next }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      const err = new Error(data.message || data.error || 'Could not save public review name.');
+      throw err;
+    }
+    const saved = String(data.profile?.publicReviewName || '').trim();
+    if (data.profile?.name) reviewNameState.legalName = String(data.profile.name).trim();
+    reviewNameState.publicReviewName = saved;
+    if (next && saved !== next) {
+      throw new Error(
+        'Public review name could not be saved yet. Leave it blank to use first name + last initial, or try again later.'
+      );
+    }
+    return true;
+  }
   let paymentModalOpen = false;
   let cancelModalOpen = false;
   let pendingCancelRegistration = null;
@@ -1406,6 +1477,8 @@
     if (err) err.hidden = true;
     setReviewStars(0);
     resetReviewFeedbackStep();
+    syncReviewNameFields();
+    loadReviewNameState();
     modal.hidden = false;
     reviewModalOpen = true;
     document.body.classList.add('ad-review-modal-open');
@@ -1514,6 +1587,11 @@
       });
     }
 
+    const publicNameInput = document.getElementById('ad-review-public-name');
+    if (publicNameInput) {
+      publicNameInput.addEventListener('input', updateReviewNamePreview);
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && reviewModalOpen) closeReviewModal();
       if (e.key === 'Escape' && viewReviewModalOpen) closeViewReviewModal();
@@ -1538,6 +1616,7 @@
 
         if (submitBtn) submitBtn.disabled = true;
         try {
+          await savePublicReviewNameIfChanged();
           const res = await fetch('/api/auth/reviews', {
             method: 'POST',
             credentials: 'include',
@@ -1566,9 +1645,10 @@
           }
           closeReviewModal();
           await reloadDashboard();
-        } catch {
+        } catch (submitErr) {
           if (err) {
-            err.textContent = 'Something went wrong. Please try again.';
+            err.textContent =
+              (submitErr && submitErr.message) || 'Something went wrong. Please try again.';
             err.hidden = false;
           }
         } finally {

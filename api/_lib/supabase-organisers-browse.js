@@ -319,15 +319,32 @@ function locationsForOrganiser(organiserId, visibleEvents) {
 }
 
 async function fetchOrganiserReviews(sb, organiserId) {
-  const { data, error } = await sb
-    .from('reviews')
-    .select('id, rating, review_text, organiser_response, created_at, attendees(name, email)')
-    .eq('organiser_id', organiserId)
-    .order('created_at', { ascending: false })
-    .limit(12);
-  if (error) throw new Error(error.message);
+  async function run(select) {
+    const { data, error } = await sb
+      .from('reviews')
+      .select(select)
+      .eq('organiser_id', organiserId)
+      .order('created_at', { ascending: false })
+      .limit(12);
+    if (error) throw new Error(error.message);
+    return data || [];
+  }
 
-  return (data || [])
+  let data = [];
+  try {
+    data = await run(
+      'id, rating, review_text, organiser_response, created_at, attendees(name, email, public_review_name)'
+    );
+  } catch (err) {
+    const msg = String(err?.message || '').toLowerCase();
+    if (msg.includes('public_review_name')) {
+      data = await run('id, rating, review_text, organiser_response, created_at, attendees(name, email)');
+    } else {
+      throw err;
+    }
+  }
+
+  return data
     .map((row) => ({
       id: row.id,
       rating: Number(row.rating) || 0,

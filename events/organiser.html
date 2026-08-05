@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
   <link rel="stylesheet" href="../css/fact-loader.css?v=20260723">
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728mark">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260730events">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260805reviewname2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f">
 </head>
 <body class="organiser-profile-page hub-is-page-loading">
@@ -207,6 +207,27 @@
             maxlength="2000"
             placeholder="What was the host like? Would you attend again?"
           ></textarea>
+          <div class="hub-rm-name-block">
+            <p class="hub-rm-name-preview-line">
+              Shown publicly as
+              <strong id="hub-rm-name-preview">Attendee</strong>
+            </p>
+            <label class="hub-rm-label" for="hub-rm-public-name">
+              Public review name
+              <span class="hub-rm-label-hint"
+                >One name for your account, used on all reviews. Leave blank for first name + last
+                initial. Full name stays on tickets only.</span
+              >
+            </label>
+            <input
+              type="text"
+              id="hub-rm-public-name"
+              name="publicReviewName"
+              maxlength="40"
+              placeholder="e.g. Alex M or Networking Alex"
+              autocomplete="nickname"
+            />
+          </div>
           <button type="button" class="hub-rm-change-rating" id="hub-rm-change-rating">Change rating</button>
         </div>
       </div>
@@ -230,7 +251,7 @@
 <script src="../js/review-report.js?v=20260609"></script>
 <script src="../js/how-reviews-work.js?v=20260728a"></script>
 <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
-<script src="../js/hub-review-modal.js?v=20260710"></script>
+<script src="../js/hub-review-modal.js?v=20260805reviewname2"></script>
 <script src="../js/networking-region-directory.js?v=20260727city"></script>
 <script src="../js/postcode-outcode.js?v=20260727city"></script>
 <script src="../js/detail-region-cta.js?v=20260727city"></script>

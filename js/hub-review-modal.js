@@ -5,9 +5,81 @@
   var reviewRating = 0;
   var modalOpen = false;
   var onSubmittedCb = null;
+  var reviewNameState = { legalName: '', publicReviewName: '' };
 
   function el(id) {
     return document.getElementById(id);
+  }
+
+  function formatReviewDisplayName(legalName, publicReviewName) {
+    var publicName = String(publicReviewName || '').trim();
+    if (publicName) return publicName;
+    var name = String(legalName || '').trim();
+    if (!name) return 'Attendee';
+    var parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0];
+    var lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+    if (!lastInitial) return parts[0];
+    return parts[0] + ' ' + lastInitial + '.';
+  }
+
+  function updateReviewNamePreview() {
+    var preview = el('hub-rm-name-preview');
+    var input = el('hub-rm-public-name');
+    if (!preview) return;
+    preview.textContent = formatReviewDisplayName(
+      reviewNameState.legalName,
+      input ? input.value : reviewNameState.publicReviewName
+    );
+  }
+
+  function syncReviewNameFields() {
+    var input = el('hub-rm-public-name');
+    if (input) input.value = reviewNameState.publicReviewName || '';
+    updateReviewNamePreview();
+  }
+
+  async function loadReviewNameState() {
+    try {
+      var res = await fetch('/api/auth/profile', { credentials: 'include' });
+      var data = await res.json();
+      if (data.ok && data.profile) {
+        reviewNameState.legalName = String(data.profile.name || '').trim();
+        reviewNameState.publicReviewName = String(data.profile.publicReviewName || '').trim();
+      }
+    } catch (e) {
+      /* keep existing state */
+    }
+    syncReviewNameFields();
+  }
+
+  async function savePublicReviewNameIfChanged() {
+    var input = el('hub-rm-public-name');
+    if (!input) return true;
+    var next = String(input.value || '').trim();
+    var prev = String(reviewNameState.publicReviewName || '').trim();
+    if (next === prev) return true;
+    var res = await fetch('/api/auth/profile', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ publicReviewName: next }),
+    });
+    var data = await res.json();
+    if (!data.ok) {
+      throw new Error(data.message || data.error || 'Could not save public review name.');
+    }
+    var saved = String((data.profile && data.profile.publicReviewName) || '').trim();
+    if (data.profile && data.profile.name) {
+      reviewNameState.legalName = String(data.profile.name).trim();
+    }
+    reviewNameState.publicReviewName = saved;
+    if (next && saved !== next) {
+      throw new Error(
+        'Public review name could not be saved yet. Leave it blank to use first name + last initial, or try again later.'
+      );
+    }
+    return true;
   }
 
   function setReviewStars(rating) {
@@ -81,6 +153,8 @@
     setReviewStars(0);
     resetFeedbackStep();
     showPickStep(false);
+    syncReviewNameFields();
+    loadReviewNameState();
     modal.hidden = false;
     modalOpen = true;
     document.body.classList.add('hub-rm-modal-open');
@@ -143,6 +217,7 @@
     var changeRatingBtn = el('hub-rm-change-rating');
     var form = el('hub-rm-form');
     var stars = el('hub-rm-stars');
+    var publicNameInput = el('hub-rm-public-name');
 
     [backdrop, closeBtn, cancelBtn].forEach(function (node) {
       if (!node) return;
@@ -164,6 +239,10 @@
           showFeedbackStep();
         });
       });
+    }
+
+    if (publicNameInput) {
+      publicNameInput.addEventListener('input', updateReviewNamePreview);
     }
 
     document.addEventListener('keydown', function (e) {
@@ -189,6 +268,7 @@
 
         if (submitBtn) submitBtn.disabled = true;
         try {
+          await savePublicReviewNameIfChanged();
           var res = await fetch('/api/auth/reviews', {
             method: 'POST',
             credentials: 'include',
@@ -219,7 +299,8 @@
           if (typeof onSubmittedCb === 'function') onSubmittedCb(data.review);
         } catch (submitErr) {
           if (err) {
-            err.textContent = 'Something went wrong. Please try again.';
+            err.textContent =
+              (submitErr && submitErr.message) || 'Something went wrong. Please try again.';
             err.hidden = false;
           }
         } finally {

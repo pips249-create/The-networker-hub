@@ -3,9 +3,11 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const sbAuth = require('./supabase-auth');
+const { assertPublicReviewNameAllowed } = require('./public-review-name-moderation');
 
 const WRITABLE = {
   name: true,
+  publicReviewName: true,
   location: true,
   company: true,
   jobTitle: true,
@@ -13,6 +15,37 @@ const WRITABLE = {
   marketPreferences: true,
   businessSector: true,
 };
+
+const MAX_PUBLIC_REVIEW_NAME = 40;
+
+function normalizePublicReviewName(raw) {
+  let s = String(raw == null ? '' : raw)
+    .replace(/\u0000/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!s) return null;
+  if (s.includes('@') || /https?:\/\//i.test(s)) {
+    const err = new Error('Choose a public review name without an email or link.');
+    err.status = 400;
+    throw err;
+  }
+  // Letters (incl. common accented Latin), numbers, spaces, and light punctuation only.
+  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ0-9][A-Za-zÀ-ÖØ-öø-ÿ0-9 .'_-]{0,39}$/.test(s)) {
+    const err = new Error(
+      'Public review name can use letters, numbers, spaces, hyphens, apostrophes or full stops.'
+    );
+    err.status = 400;
+    throw err;
+  }
+  if (s.length < 2) {
+    const err = new Error('Public review name needs at least 2 characters.');
+    err.status = 400;
+    throw err;
+  }
+  if (s.length > MAX_PUBLIC_REVIEW_NAME) s = s.slice(0, MAX_PUBLIC_REVIEW_NAME).trim();
+  assertPublicReviewNameAllowed(s);
+  return s;
+}
 
 const PROFESSIONAL_ROLES = new Set([
   'founder',
@@ -94,6 +127,7 @@ function rowToProfile(session, hub, attendee) {
   return {
     email: String(session.email || attendee?.email || '').toLowerCase(),
     name: String(hub?.display_name || attendee?.name || '').trim(),
+    publicReviewName: String(attendee?.public_review_name || '').trim(),
     location: String(attendee?.location || '').trim(),
     company: String(attendee?.company || '').trim(),
     jobTitle: String(attendee?.job_title || '').trim(),
@@ -149,6 +183,11 @@ async function updateProfile(session, body) {
 
   const attendeePatch = {};
   if (body.name !== undefined) attendeePatch.name = String(body.name || '').trim();
+  if (body.publicReviewName !== undefined || body.public_review_name !== undefined) {
+    attendeePatch.public_review_name = normalizePublicReviewName(
+      body.publicReviewName !== undefined ? body.publicReviewName : body.public_review_name
+    );
+  }
   if (body.location !== undefined) attendeePatch.location = String(body.location || '').trim();
   if (body.company !== undefined) {
     attendeePatch.company = String(body.company || '').trim() || null;
@@ -186,13 +225,15 @@ async function updateProfile(session, body) {
         msg.includes('business_sector') ||
         msg.includes('market_preferences') ||
         msg.includes('job_title') ||
-        msg.includes('professional_role')
+        msg.includes('professional_role') ||
+        msg.includes('public_review_name')
       ) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
         delete fallback.market_preferences;
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
+        if (msg.includes('public_review_name')) delete fallback.public_review_name;
         if (Object.keys(fallback).length) {
           const retry = await sb
             .from('attendees')
@@ -202,6 +243,9 @@ async function updateProfile(session, body) {
             .single();
           if (!retry.error) updated = retry.data;
           else updateErr = retry.error;
+        } else {
+          // Only unsupported columns were in the patch — treat as no-op success.
+          updated = attendee;
         }
       }
     }

@@ -193,7 +193,7 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
 
   async function runQuery(withAttendees) {
     const select = withAttendees
-      ? 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email )'
+      ? 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email, public_review_name )'
       : 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title )';
     let query = sb
       .from('reviews')
@@ -215,8 +215,31 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
   let rows = [];
   try {
     rows = await runQuery(true);
-  } catch {
-    rows = await runQuery(false);
+  } catch (err) {
+    const msg = String(err?.message || '').toLowerCase();
+    if (msg.includes('public_review_name')) {
+      try {
+        const select =
+          'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email )';
+        let query = sb
+          .from('reviews')
+          .select(select)
+          .order('created_at', { ascending: false })
+          .limit(500);
+        if (!adminView) {
+          if (!ids.length) return [];
+          if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+          else query = query.in('organiser_id', ids);
+        }
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        rows = data || [];
+      } catch {
+        rows = await runQuery(false);
+      }
+    } else {
+      rows = await runQuery(false);
+    }
   }
 
   return rows.map((row) => {
