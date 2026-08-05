@@ -20,6 +20,7 @@ const {
   getActiveRosterMembership,
 } = require('./organiser-member-roster');
 const { parseBundleMetadata, newBookingGroupId } = require('./series-bundle-checkout');
+const { requiresApprovedApplication } = require('./category-exclusivity');
 
 /**
  * Insert a registration after successful checkout.
@@ -243,6 +244,15 @@ async function createRegistrationFromPayment(input) {
     } else {
       registrationKind = 'standard';
     }
+  }
+
+  if (
+    requiresApprovedApplication({ attendance_mode: eventAttendanceMode }, ticketRow) ||
+    registrationKind === 'application'
+  ) {
+    const err = new Error('application_required');
+    err.status = 400;
+    throw err;
   }
 
   const alumniInviteToken = String(input.alumniInviteToken || input.alumni_invite_token || '').trim();

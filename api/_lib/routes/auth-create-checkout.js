@@ -30,6 +30,7 @@ const {
   resolveSeriesPassItems,
   bundleMetadataFromItems,
 } = require('../series-bundle-checkout');
+const { requiresApprovedApplication } = require('../category-exclusivity');
 
 function parseBody(req) {
   let body = req.body;
@@ -233,6 +234,17 @@ module.exports = async function handler(req, res) {
     const isGuestVisit = Boolean(ticketRow && isGuestVisitTicket(ticketRow));
     const isAlumni = Boolean(ticketRow && isAlumniTicket(ticketRow));
     const isMembersOnly = Boolean(ticketRow && isMembersOnlyTicket(ticketRow));
+
+    // Category Exclusivity: must pay via an approved application registration.
+    if (requiresApprovedApplication(evRes.data, ticketRow) && !registrationId) {
+      return json(res, 400, {
+        ok: false,
+        error: 'application_required',
+        message:
+          'This event uses Category Exclusivity. Apply first, wait for approval, then pay from My Hub.',
+      });
+    }
+
     const alumniInviteToken = String(body.alumniInviteToken || body.alumni_invite_token || '').trim();
     if (isAlumni) {
       requestedQty = 1;
