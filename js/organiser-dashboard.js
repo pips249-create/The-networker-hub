@@ -1605,7 +1605,7 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260730pages2';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260730billing1';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260805industry';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260730billing1';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260729brand';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260728ux';
@@ -3762,11 +3762,16 @@
   function updateNotificationsNavBadge(notices) {
     const badge = document.getElementById('org-notifications-count');
     const navBtn = document.getElementById('org-notifications-nav');
+    const moreBadge = document.getElementById('org-more-notifications-badge');
     const count = organiserNoticeBadgeCount(notices);
     if (badge) {
       badge.hidden = count < 1;
       badge.textContent = count > 99 ? '99+' : String(count);
       badge.setAttribute('aria-hidden', count < 1 ? 'true' : 'false');
+    }
+    if (moreBadge) {
+      moreBadge.hidden = count < 1;
+      moreBadge.textContent = count > 99 ? '99+' : count > 1 ? String(count) : 'New';
     }
     if (navBtn) {
       navBtn.setAttribute(
@@ -3774,6 +3779,7 @@
         count > 0 ? 'Notifications, ' + count + ' need action' : 'Notifications'
       );
     }
+    refreshOrgBottomMoreCount(count);
   }
 
   let notificationsPanelBound = false;
@@ -3835,7 +3841,101 @@
     document.getElementById('org-notifications-backdrop')?.addEventListener('click', closeNotificationsPanel);
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && notificationsPanelOpen) closeNotificationsPanel();
+      else if (e.key === 'Escape' && moreSheetOpen) closeOrgMoreSheet();
     });
+  }
+
+  let moreSheetBound = false;
+  let moreSheetOpen = false;
+
+  function openOrgMoreSheet() {
+    const sheet = document.getElementById('org-more-sheet');
+    const btn = document.getElementById('org-bottom-more-btn');
+    if (!sheet) return;
+    closeNotificationsPanel();
+    sheet.hidden = false;
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-more-sheet-open');
+    moreSheetOpen = true;
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeOrgMoreSheet() {
+    const sheet = document.getElementById('org-more-sheet');
+    const btn = document.getElementById('org-bottom-more-btn');
+    if (!sheet) return;
+    sheet.hidden = true;
+    sheet.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('org-more-sheet-open');
+    moreSheetOpen = false;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindOrgMoreSheetOnce() {
+    if (moreSheetBound) return;
+    moreSheetBound = true;
+    const sheet = document.getElementById('org-more-sheet');
+    if (sheet && sheet.parentElement !== document.body) {
+      document.body.appendChild(sheet);
+    }
+    document.getElementById('org-bottom-more-btn')?.addEventListener('click', function () {
+      if (moreSheetOpen) closeOrgMoreSheet();
+      else openOrgMoreSheet();
+    });
+    document.getElementById('org-more-sheet-close')?.addEventListener('click', closeOrgMoreSheet);
+    document.getElementById('org-more-sheet-backdrop')?.addEventListener('click', closeOrgMoreSheet);
+    document.getElementById('org-more-notifications')?.addEventListener('click', function () {
+      closeOrgMoreSheet();
+      openNotificationsPanel();
+    });
+    document.querySelectorAll('#org-more-sheet [data-org-route]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        closeOrgMoreSheet();
+      });
+    });
+  }
+
+  function setOrgBottomCount(id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (n < 1) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.hidden = false;
+    el.textContent = n > 99 ? '99+' : String(n);
+  }
+
+  function refreshOrgBottomEventsCount() {
+    const apps = pendingApplicationsCount();
+    const reviews = unrepliedReviewsList().length;
+    let payment = 0;
+    try {
+      if (state.canManagePayments && paymentSetupStateFromDashboard().needsSetup) payment = 1;
+    } catch (_) {
+      /* ignore if payment helpers not ready */
+    }
+    setOrgBottomCount('org-bottom-events-count', apps + reviews + payment);
+  }
+
+  function refreshOrgBottomBusinessCount() {
+    setOrgBottomCount('org-bottom-business-count', Number(state.opportunityEnquiriesNewCount) || 0);
+  }
+
+  function refreshOrgBottomMoreCount(noticeCount) {
+    let notif = typeof noticeCount === 'number' ? noticeCount : 0;
+    if (typeof noticeCount !== 'number') {
+      const badge = document.getElementById('org-notifications-count');
+      if (badge && !badge.hidden) {
+        const parsed = parseInt(badge.textContent, 10);
+        notif = Number.isFinite(parsed) ? parsed : badge.textContent ? 1 : 0;
+      }
+    }
+    const teamPending = (state.teamMembers || []).filter(function (m) {
+      return String(m.status || '').toLowerCase() === 'pending';
+    }).length;
+    setOrgBottomCount('org-bottom-more-count', notif + teamPending);
   }
 
   function renderOrganiserNotices() {
@@ -4601,6 +4701,7 @@
       // Same cue as the Reviews tab — “New” is too vague next to My events.
       navBadge.textContent = unreplied > 99 ? '99+' : unreplied > 1 ? String(unreplied) : 'Reply';
     }
+    refreshOrgBottomEventsCount();
   }
 
   function actionMenuHtml(kind, id, title, item) {
@@ -5380,6 +5481,7 @@
       tabBadge.hidden = count < 1;
       tabBadge.textContent = count > 99 ? '99+' : count > 1 ? String(count) : 'Review';
     }
+    refreshOrgBottomEventsCount();
     renderPendingApplicationsBanner();
     renderOrganiserNotices();
     renderHubPortalMeta();
@@ -5880,7 +5982,7 @@
         a.ticketName,
         a.quantity,
         attendeeStatusLabel(a),
-        a.screeningIndustry || a.businessSector || '',
+        a.screeningIndustry || a.rosterIndustry || a.businessSector || '',
         a.dietaryRequirements || '',
         a.accessibilityRequirements || '',
         a.amountDisplay || a.paymentStatus || '',
@@ -5961,8 +6063,10 @@
     const applicationStatus = String(a.applicationStatus || '').trim();
     const isPending = applicationStatus === 'Pending';
     const isDenied = applicationStatus === 'Denied';
-    const industry = String(a.screeningIndustry || '').trim();
-    const jobTitle = String(a.screeningJobTitle || '').trim();
+    const industry = String(
+      a.screeningIndustry || a.rosterIndustry || a.businessSector || ''
+    ).trim();
+    const jobTitle = String(a.screeningJobTitle || a.jobTitle || '').trim();
     const dietary = String(a.dietaryRequirements || '').trim();
     const accessibility = String(a.accessibilityRequirements || '').trim();
     const denialReason = String(a.applicationDenialReason || '').trim();
@@ -8984,6 +9088,7 @@
         legacyBanner.hidden = true;
         legacyBanner.innerHTML = '';
       }
+      refreshOrgBottomEventsCount();
       return;
     }
 
@@ -9000,6 +9105,7 @@
       revenueTabBadge.hidden = !setupState.needsSetup;
       revenueTabBadge.textContent = navBadge ? navBadge.textContent : 'Setup';
     }
+    refreshOrgBottomEventsCount();
 
     const legacyBanner = document.getElementById('stripe-connect-banner');
     if (legacyBanner) {
@@ -9500,6 +9606,27 @@
       if (isActive) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
+
+    let bottomPrimary = 'more';
+    if (page === 'dashboard' || activeRoute === 'dashboard') bottomPrimary = 'dashboard';
+    else if (page === 'events' || activeRoute === 'events-list') bottomPrimary = 'events-list';
+    else if (page === 'business-overview' || activeRoute === 'business-overview') {
+      bottomPrimary = 'business-overview';
+    }
+
+    document.querySelectorAll('.org-bottom-nav-link[data-org-route]').forEach((a) => {
+      const isActive = a.getAttribute('data-org-route') === bottomPrimary;
+      a.classList.toggle('is-active', isActive);
+      if (isActive) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    const moreBtn = document.getElementById('org-bottom-more-btn');
+    if (moreBtn) {
+      moreBtn.classList.toggle('is-active', bottomPrimary === 'more');
+    }
+    document.querySelectorAll('.org-more-sheet-link[data-org-route]').forEach((a) => {
+      a.classList.toggle('is-active', a.getAttribute('data-org-route') === activeRoute);
+    });
   }
 
   function syncEventsTabHighlights(sub, enabled) {
@@ -9710,6 +9837,7 @@
       route = 'communicate';
     }
     closeNotificationsPanel();
+    closeOrgMoreSheet();
     if (bootstrapReady && !options.skipEventsGuard && needsOrganiserPageFirst() && isEventsRoute(route)) {
       redirectEventsToOrganiserSetup();
       return;
@@ -9990,12 +10118,20 @@
 
   function updateTeamNavBadge() {
     const badge = document.getElementById('org-team-nav-badge');
-    if (!badge) return;
+    const moreBadge = document.getElementById('org-more-team-badge');
     const pendingCount = (state.teamMembers || []).filter(
       (m) => String(m.status || '').toLowerCase() === 'pending'
     ).length;
-    badge.hidden = pendingCount < 1;
-    badge.textContent = pendingCount > 99 ? '99+' : pendingCount > 1 ? String(pendingCount) : 'Invite';
+    const label = pendingCount > 99 ? '99+' : pendingCount > 1 ? String(pendingCount) : 'Invite';
+    if (badge) {
+      badge.hidden = pendingCount < 1;
+      badge.textContent = label;
+    }
+    if (moreBadge) {
+      moreBadge.hidden = pendingCount < 1;
+      moreBadge.textContent = label;
+    }
+    refreshOrgBottomMoreCount();
   }
 
   function openModal(id) {
@@ -13245,6 +13381,7 @@
       navBadge.hidden = newCount < 1;
       navBadge.textContent = newCount > 99 ? '99+' : newCount > 1 ? String(newCount) : 'Reply';
     }
+    refreshOrgBottomBusinessCount();
     updateBusinessTabCounts();
     renderOrganiserNotices();
   }
@@ -14177,6 +14314,7 @@
 
   function bindUi() {
     bindNotificationsPanelOnce();
+    bindOrgMoreSheetOnce();
     bindScopeButtonOnce();
 
     if (!window.__hubPaymentSetupLinkedBound) {

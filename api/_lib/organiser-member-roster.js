@@ -36,6 +36,7 @@ const ROSTER_CSV_MAX_CHARS = 512 * 1024;
 const ROSTER_CSV_MAX_ROWS = 5000;
 const ROSTER_EMAIL_MAX_LEN = 254;
 const ROSTER_NAME_MAX_LEN = 200;
+const ROSTER_INDUSTRY_MAX_LEN = 120;
 
 function normalizeRosterEmail(raw) {
   return String(raw || '')
@@ -53,6 +54,28 @@ function sanitizeRosterName(raw) {
     .trim();
   if (name.length > ROSTER_NAME_MAX_LEN) name = name.slice(0, ROSTER_NAME_MAX_LEN).trim();
   return name || null;
+}
+
+function sanitizeRosterIndustry(raw) {
+  let industry = String(raw == null ? '' : raw)
+    .replace(/\u0000/g, '')
+    .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (industry.length > ROSTER_INDUSTRY_MAX_LEN) {
+    industry = industry.slice(0, ROSTER_INDUSTRY_MAX_LEN).trim();
+  }
+  return industry || null;
+}
+
+function payloadHasIndustry(payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  return (
+    Object.prototype.hasOwnProperty.call(payload, 'industry') ||
+    Object.prototype.hasOwnProperty.call(payload, 'category') ||
+    Object.prototype.hasOwnProperty.call(payload, 'businessSector') ||
+    Object.prototype.hasOwnProperty.call(payload, 'business_sector')
+  );
 }
 
 function isValidRosterEmail(email) {
@@ -864,6 +887,7 @@ function rosterRowToClient(row) {
     organiserId: row.organiser_id,
     email: normalizeRosterEmail(row.email),
     name: String(row.name || '').trim(),
+    industry: String(row.industry || '').trim(),
     expiresAt,
     status: String(row.status || ROSTER_STATUS_ACTIVE),
     attendeeId: row.attendee_id || null,
@@ -916,10 +940,15 @@ async function upsertRosterMember(organiserId, payload, options) {
     updated_at: now,
     ...(attendeeId ? { claimed_at: now } : {}),
   };
+  if (payloadHasIndustry(payload)) {
+    row.industry = sanitizeRosterIndustry(
+      payload.industry ?? payload.category ?? payload.businessSector ?? payload.business_sector
+    );
+  }
 
   const { data: existing } = await sb
     .from('organiser_member_roster')
-    .select('id, status, claimed_at, invite_sent_at')
+    .select('id, status, claimed_at, invite_sent_at, industry')
     .eq('organiser_id', orgId)
     .eq('email', email)
     .maybeSingle();
@@ -929,6 +958,9 @@ async function upsertRosterMember(organiserId, payload, options) {
 
   if (existing?.id) {
     if (existing.claimed_at) row.claimed_at = existing.claimed_at;
+    if (!payloadHasIndustry(payload) && existing.industry != null) {
+      row.industry = existing.industry;
+    }
     const { data, error } = await sb
       .from('organiser_member_roster')
       .update(row)
@@ -938,6 +970,7 @@ async function upsertRosterMember(organiserId, payload, options) {
     if (error) throw new Error(error.message);
     saved = data;
   } else {
+    if (row.industry === undefined) row.industry = null;
     row.invited_at = now;
     const { data, error } = await sb
       .from('organiser_member_roster')
@@ -1037,6 +1070,7 @@ async function importRosterCsv(organiserId, rows, options) {
     byEmail.set(email, {
       email,
       name: sanitizeRosterName(row.name),
+      industry: sanitizeRosterIndustry(row.industry ?? row.category ?? row.business_sector),
       expiresAt: parseExpiresAt(row.expiresAt ?? row.expires_at),
     });
   }
@@ -1050,6 +1084,7 @@ async function importRosterCsv(organiserId, rows, options) {
         {
           email: row.email,
           name: row.name,
+          industry: row.industry,
           expiresAt: row.expiresAt,
           sendInvite: false,
         },
@@ -1100,6 +1135,9 @@ function parseRosterCsv(text) {
   const header = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/^"|"$/g, ''));
   const emailIdx = header.findIndex((h) => h === 'email' || h === 'e-mail');
   const nameIdx = header.findIndex((h) => h === 'name' || h === 'full name' || h === 'member name');
+  const industryIdx = header.findIndex((h) =>
+    ['industry', 'category', 'sector', 'business sector', 'business_sector'].includes(h)
+  );
   const expiryIdx = header.findIndex((h) =>
     ['expires', 'expires_at', 'expiry', 'membership expiry', 'membership_expiry'].includes(h)
   );
@@ -1116,6 +1154,7 @@ function parseRosterCsv(text) {
     rows.push({
       email,
       name: nameIdx >= 0 ? cols[nameIdx] : '',
+      industry: industryIdx >= 0 ? cols[industryIdx] : '',
       expiresAt: expiryIdx >= 0 ? cols[expiryIdx] : null,
     });
   }

@@ -1154,18 +1154,34 @@ body.nav-menu-open {
   }
 
   .organiser-dashboard-page .org-sidebar {
-    border-bottom: 1px solid var(--od-border-soft, #cfe4ea);
-    background: var(--od-purple-light, #d4f0f3);
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    touch-action: pan-x pan-y;
-    scrollbar-width: none;
+    display: none !important;
   }
 
-  .organiser-dashboard-page .org-sidebar::-webkit-scrollbar {
-    display: none;
+  .organiser-dashboard-page .org-bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    background: var(--od-white, #fff);
+    border-top: 1px solid var(--od-border-soft, #cfe4ea);
+    box-shadow: 0 -4px 18px rgba(26, 46, 59, 0.1);
+  }
+
+  .organiser-dashboard-page #org-shell,
+  .organiser-dashboard-page .org-dashboard-layout,
+  .organiser-dashboard-page .org-main {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .organiser-dashboard-page .org-wrap {
+    padding-bottom: 24px !important;
   }
 
   .attendee-dashboard-page .ad-sidebar {

@@ -252,6 +252,12 @@ module.exports = async function handler(req, res) {
       const result = await upsertRosterMember(groupId, {
         email: body.email || existing.data.email,
         name: body.name != null ? body.name : existing.data.name,
+        industry:
+          body.industry != null
+            ? body.industry
+            : body.category != null
+              ? body.category
+              : existing.data.industry,
         expiresAt:
           body.expiresAt != null
             ? body.expiresAt

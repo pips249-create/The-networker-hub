@@ -124,19 +124,34 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
     ),
   ];
   const rosterMemberKeys = new Set();
+  const rosterIndustryByKey = new Map();
   if (orgIds.length) {
     const { normalizeRosterEmail, rosterRowIsActive } = require('./organiser-member-roster');
-    const { data: rosterRows, error: rosterErr } = await sb
+    let rosterRows = [];
+    let rosterErr = null;
+    ({ data: rosterRows, error: rosterErr } = await sb
       .from('organiser_member_roster')
-      .select('organiser_id, email, status, expires_at')
+      .select('organiser_id, email, status, expires_at, industry')
       .in('organiser_id', orgIds)
-      .eq('status', 'active');
+      .eq('status', 'active'));
+    if (rosterErr && /industry|column/i.test(String(rosterErr.message || ''))) {
+      ({ data: rosterRows, error: rosterErr } = await sb
+        .from('organiser_member_roster')
+        .select('organiser_id, email, status, expires_at')
+        .in('organiser_id', orgIds)
+        .eq('status', 'active'));
+    }
     if (rosterErr) throw new Error(rosterErr.message);
     (rosterRows || []).forEach((row) => {
       if (!rosterRowIsActive(row)) return;
       const orgId = String(row.organiser_id || '').trim();
       const email = normalizeRosterEmail(row.email);
-      if (orgId && email) rosterMemberKeys.add(orgId + '\0' + email);
+      if (orgId && email) {
+        const key = orgId + '\0' + email;
+        rosterMemberKeys.add(key);
+        const industry = String(row.industry || '').trim();
+        if (industry) rosterIndustryByKey.set(key, industry);
+      }
     });
   }
 
@@ -174,9 +189,9 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       const relationship = relationshipForRegistration(row, relationshipMap);
       const organiserId = String(row.organiser_id || event.organiser_id || '').trim();
       const rosterEmail = normalizeRosterEmail(email);
-      const isRosterMember = Boolean(
-        organiserId && rosterEmail && rosterMemberKeys.has(organiserId + '\0' + rosterEmail)
-      );
+      const rosterKey = organiserId && rosterEmail ? organiserId + '\0' + rosterEmail : '';
+      const isRosterMember = Boolean(rosterKey && rosterMemberKeys.has(rosterKey));
+      const rosterIndustry = rosterKey ? rosterIndustryByKey.get(rosterKey) || '' : '';
 
       return {
         id: row.id,
@@ -189,6 +204,7 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         company: String(attendee.company || '').trim(),
         jobTitle: String(attendee.job_title || '').trim(),
         businessSector: String(attendee.business_sector || '').trim(),
+        rosterIndustry,
         guestNames,
         dietaryRequirements: String(row.dietary_requirements || '').trim(),
         accessibilityRequirements: String(row.accessibility_requirements || '').trim(),

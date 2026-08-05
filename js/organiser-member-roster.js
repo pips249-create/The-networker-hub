@@ -837,6 +837,13 @@
         '" data-name="' +
         esc(m.name || '') +
         '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit name</strong><span>Update display name</span></span></button>',
+      '<button type="button" class="org-action-item omr-action-edit-industry" data-id="' +
+        esc(m.id) +
+        '" data-email="' +
+        esc(m.email) +
+        '" data-industry="' +
+        esc(m.industry || '') +
+        '"><span class="org-action-icon">◎</span><span class="org-action-text"><strong>Edit industry</strong><span>Category for exclusivity</span></span></button>',
       '<button type="button" class="org-action-item omr-action-edit-expiry" data-id="' +
         esc(m.id) +
         '" data-email="' +
@@ -1468,7 +1475,7 @@
         if (isBookedForSelectedEvent(m) !== false) return false;
       }
       if (q) {
-        const hay = ((m.name || '') + ' ' + (m.email || '')).toLowerCase();
+        const hay = ((m.name || '') + ' ' + (m.email || '') + ' ' + (m.industry || '')).toLowerCase();
         if (hay.indexOf(q) === -1) return false;
       }
       return true;
@@ -1494,7 +1501,7 @@
   function downloadTemplateCsv() {
     downloadCsvFile(
       'member-list-template.csv',
-      ['email,name,expires', 'jane@example.com,Jane Smith,2026-12-31']
+      ['email,name,industry,expires', 'jane@example.com,Jane Smith,Accountancy,2026-12-31']
     );
   }
 
@@ -1516,6 +1523,7 @@
     const header = [
       'Name',
       'Email',
+      'Industry',
       'Membership expires',
       'Expiring soon',
       'Hub account',
@@ -1534,6 +1542,7 @@
       const row = [
         m.name || '',
         m.email,
+        m.industry || '',
         m.expiresAt || '',
         m.expiringSoon ? 'Yes' : '',
         isClaimed(m) ? 'Signed up' : 'Not yet',
@@ -1781,6 +1790,10 @@
           esc(m.name || '—') +
           '</span></td><td data-label="Email">' +
           esc(m.email) +
+          '</td><td class="omr-industry-cell" data-label="Industry" data-id="' +
+          esc(m.id) +
+          '">' +
+          esc(m.industry || '—') +
           '</td><td class="omr-expires-cell" data-label="Expires" data-id="' +
           esc(m.id) +
           '">' +
@@ -1918,6 +1931,19 @@
         return;
       }
 
+      const editIndustryBtn = e.target.closest('.omr-action-edit-industry');
+      if (editIndustryBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllActionMenus();
+        startIndustryEdit(
+          editIndustryBtn.dataset.id,
+          editIndustryBtn.dataset.email,
+          editIndustryBtn.dataset.industry
+        );
+        return;
+      }
+
       const editNameBtn = e.target.closest('.omr-action-edit-name');
       if (editNameBtn) {
         e.preventDefault();
@@ -1959,6 +1985,41 @@
           }),
         });
         showAlert('Name updated.', 'success');
+        await refresh();
+      } catch (e) {
+        showAlert(e.message, 'error');
+      }
+    });
+  }
+
+  function startIndustryEdit(memberId, email, currentIndustry) {
+    const cell = document.querySelector('.omr-industry-cell[data-id="' + memberId + '"]');
+    if (!cell || cell.querySelector('input')) return;
+    cell.innerHTML =
+      '<span class="omr-expiry-edit">' +
+      '<input type="text" value="' +
+      esc(currentIndustry || '') +
+      '" aria-label="Member industry" placeholder="e.g. Accountancy" />' +
+      '<button type="button" class="ee-btn ee-btn-gold omr-btn-sm omr-industry-save">Save</button>' +
+      '<button type="button" class="ee-btn ee-btn-outline omr-btn-sm omr-industry-cancel">Cancel</button>' +
+      '</span>';
+    cell.querySelector('.omr-industry-cancel').addEventListener('click', function () {
+      renderRoster();
+    });
+    cell.querySelector('.omr-industry-save').addEventListener('click', async function () {
+      const value = cell.querySelector('input').value.trim();
+      try {
+        await api(rosterUrl(), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organiserId: getOrganiserId(),
+            id: memberId,
+            email: email,
+            industry: value,
+          }),
+        });
+        showAlert('Industry updated.', 'success');
         await refresh();
       } catch (e) {
         showAlert(e.message, 'error');
@@ -2360,6 +2421,7 @@
       e.preventDefault();
       const name = document.getElementById('omr-name')?.value.trim() || '';
       const email = document.getElementById('omr-email')?.value.trim() || '';
+      const industry = document.getElementById('omr-industry')?.value.trim() || '';
       const sendPayInvite =
         billingOffered && document.getElementById('omr-send-pay-invite')?.checked === true;
       if (!duplicateMemberConfirm(name, email)) return;
@@ -2371,6 +2433,7 @@
             organiserId: getOrganiserId(),
             name: name,
             email: email,
+            industry: industry,
             expiresAt: document.getElementById('omr-expires')?.value || null,
             sendInvite: document.getElementById('omr-send-invite')?.checked !== false,
           }),
