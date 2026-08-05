@@ -239,12 +239,17 @@
     document.querySelectorAll('.ad-saved-scope').forEach(bindDragScroll);
   }
 
+  function bindOrgSectionTabStrips() {
+    document.querySelectorAll('.org-events-subnav').forEach(bindDragScroll);
+  }
+
   function bindAllScrollPorts() {
     document.querySelectorAll('.hub-side-nav-scroll, .hub-side-nav--minimal').forEach(function (el) {
       if (el.classList.contains('hub-side-nav-scroll')) bindDragScroll(el);
       else bindDragScroll(scrollPortFor(el));
     });
     bindSavedScopeStrips();
+    bindOrgSectionTabStrips();
   }
 
   window.HubSideNav = {

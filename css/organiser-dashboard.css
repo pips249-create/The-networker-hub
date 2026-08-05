@@ -11384,3 +11384,9 @@ body.org-event-drawer-open {
 body.org-more-sheet-open {
   overflow: hidden;
 }
+
+@media (min-width: 769px) {
+  .org-more-sheet {
+    display: none !important;
+  }
+}

@@ -1379,13 +1379,50 @@ body.nav-menu-open {
     box-sizing: border-box;
   }
 
+  /* Keep Events / Business section tabs clear of the bottom nav */
+  #org-page-events,
+  #org-page-business-overview {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #org-page-events > .org-page-head,
+  #org-page-business-overview > .org-hub-back,
+  #org-page-business-overview > .org-page-head {
+    order: 0;
+  }
+
+  #org-page-business-overview > .org-inline-banner {
+    order: 0;
+  }
+
+  #org-page-events > .org-events-nav-hint {
+    display: none;
+  }
+
+  #org-page-events > .org-events-subnav,
+  #org-page-business-overview > .org-events-subnav {
+    order: 1;
+  }
+
+  #org-page-events > .org-events-hub-summary,
+  #org-page-business-overview > #org-business-hub-summary {
+    order: 2;
+  }
+
+  #org-page-events > .org-sub-page,
+  #org-page-events > [data-events-panel],
+  #org-page-business-overview > .org-sub-page,
+  #org-page-business-overview > [data-business-panel] {
+    order: 3;
+  }
+
   .organiser-dashboard-page .org-events-subnav {
     position: sticky;
-    top: 0;
-    z-index: 20;
+    top: 64px;
+    z-index: 25;
     background: linear-gradient(135deg, var(--od-purple-deep, #1e3a4f) 0%, var(--od-purple, #0d6e7a) 52%, #1096a8 100%);
-    margin-left: -4px;
-    margin-right: -4px;
+    margin: 0 -4px 12px;
     padding: 8px 8px 0;
     border-radius: var(--od-radius, 12px) var(--od-radius, 12px) 0 0;
   }

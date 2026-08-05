@@ -281,7 +281,9 @@
 
 /* Hide launcher while mobile nav is open so it cannot cover the drawer */
 body.nav-menu-open .hubert-widget,
-body.events-filter-sheet-open .hubert-widget {
+body.events-filter-sheet-open .hubert-widget,
+body.org-more-sheet-open .hubert-widget,
+body.org-notifications-open .hubert-widget {
   visibility: hidden;
   pointer-events: none;
 }
@@ -298,6 +300,20 @@ body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
   }
 
   body.events-page .hubert-launcher-icon {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Clear fixed hub bottom nav (organiser + My Hub) */
+  body.organiser-dashboard-page .hubert-widget:not(.hubert-widget--open),
+  body.attendee-dashboard-page .hubert-widget:not(.hubert-widget--open) {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.organiser-dashboard-page .hubert-launcher-icon,
+  body.attendee-dashboard-page .hubert-launcher-icon {
     width: 48px;
     height: 48px;
   }
@@ -321,6 +337,12 @@ body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
   /* Sit above mobile sticky CTAs (e.g. advertising page) */
   body.advertising-page .hubert-widget:not(.hubert-widget--open) {
     bottom: max(76px, calc(16px + env(safe-area-inset-bottom)));
+  }
+
+  body.organiser-dashboard-page .hubert-launcher-icon,
+  body.attendee-dashboard-page .hubert-launcher-icon {
+    width: 48px;
+    height: 48px;
   }
 
   /* Fade off the footer so Legal / Cookie links stay tappable */
