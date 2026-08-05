@@ -6,7 +6,6 @@ const { isMembersOnlyTicket } = require('./ticket-visibility');
 const { ticketRowToTier, fetchRegistrationCountsByTicket } = require('./supabase-events');
 const { sendTemplatedEmail } = require('./send-template-email');
 const {
-  siteBase,
   emailSiteBase,
   hubAccountUrl,
   organiserPublicUrl,
@@ -443,7 +442,7 @@ async function sendMemberRosterInviteEmail({
   const isExistingUser = Boolean(attId);
   const nextEvent = await fetchNextUpcomingEventForOrganiser(sb, organiserRow.id);
 
-  const site = siteBase();
+  const site = emailSiteBase();
   const organiserUrl = organiserPublicUrl(organiserRow, site);
   const organiserName = String(organiserRow.name || 'your networking group').trim();
   const destinationUrl = nextEvent ? eventPublicUrl(nextEvent, site) : organiserUrl;
@@ -552,7 +551,7 @@ async function sendMemberRosterPayInviteEmail({ organiserRow, memberEmail, membe
     throw err;
   }
 
-  const site = siteBase();
+  const site = emailSiteBase();
   const organiserUrl = organiserPublicUrl(organiserRow, site);
   const joinPath =
     (organiserRow.slug

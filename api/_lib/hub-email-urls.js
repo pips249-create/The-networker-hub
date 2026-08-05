@@ -165,33 +165,53 @@ function emailSiteBase(siteUrl) {
 const EMAIL_URL_HTML_KEYS =
   /(_html|_row|_rows|_section|_block|_markup|listing_follow_on|recommendations|nearby_events|popular_events|location_footer)$/i;
 
+/** Replace localhost / 127.0.0.1 origins in plain and URL-encoded form. */
+function replaceLocalOrigins(value, publicBase) {
+  const raw = String(value || '');
+  if (!raw) return raw;
+  const encodedPublic = encodeURIComponent(publicBase);
+  return raw
+    .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/gi, publicBase)
+    .replace(/https?%3A%2F%2F(?:localhost|127\.0\.0\.1)(?:%3A\d+)?/gi, encodedPublic);
+}
+
 /**
  * Rewrite localhost / private origins in email template variables to the public site.
  * Keeps logos on the public CDN and stops preview/test sends linking to 127.0.0.1.
+ * Also rewrites localhost inside query params (e.g. login?next=http%3A%2F%2Flocalhost...).
  */
 function rewriteEmailVarsToPublicSite(vars, siteUrl) {
   const publicBase = emailSiteBase(siteUrl);
   const out = vars && typeof vars === 'object' ? { ...vars } : {};
   const localOriginRe = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/gi;
+  const localEncodedRe = /https?%3A%2F%2F(?:localhost|127\.0\.0\.1)(?:%3A\d+)?/gi;
 
   Object.keys(out).forEach(function (key) {
     const val = out[key];
     if (typeof val !== 'string' || !val) return;
-    if (!localOriginRe.test(val) && !isNonPublicSiteUrl(val)) return;
+    const hasLocal =
+      localOriginRe.test(val) ||
+      localEncodedRe.test(val) ||
+      isNonPublicSiteUrl(val);
     localOriginRe.lastIndex = 0;
+    localEncodedRe.lastIndex = 0;
+    if (!hasLocal) return;
 
     if (EMAIL_URL_HTML_KEYS.test(key) || /<[^>]+>/.test(val)) {
-      out[key] = val.replace(localOriginRe, publicBase);
+      out[key] = replaceLocalOrigins(val, publicBase);
       return;
     }
 
     try {
       const parsed = new URL(val);
       if (isNonPublicSiteUrl(parsed.origin) || /localhost|127\.0\.0\.1/i.test(parsed.hostname)) {
-        out[key] = publicBase + parsed.pathname + parsed.search + parsed.hash;
+        const rewritten = publicBase + parsed.pathname + parsed.search + parsed.hash;
+        out[key] = replaceLocalOrigins(rewritten, publicBase);
+      } else {
+        out[key] = replaceLocalOrigins(val, publicBase);
       }
     } catch {
-      out[key] = val.replace(localOriginRe, publicBase);
+      out[key] = replaceLocalOrigins(val, publicBase);
     }
   });
 

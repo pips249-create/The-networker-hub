@@ -4,7 +4,7 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { sendTemplatedEmail } = require('./send-template-email');
 const {
-  siteBase,
+  emailSiteBase,
   hubAccountUrl,
   organiserPublicUrl,
   eventPublicUrl,
@@ -149,7 +149,7 @@ async function sendQueuedBookingReminder(sb, { eventRow, organiser, member }) {
   const email = normalizeRosterEmail(member.email);
   if (!email) return 'skipped';
 
-  const site = siteBase();
+  const site = emailSiteBase();
   const { event_date, event_time } = formatEventDateTime(eventRow.starts_at);
   const eventLocation =
     String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
