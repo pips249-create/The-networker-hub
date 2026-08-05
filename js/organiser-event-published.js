@@ -6,12 +6,21 @@
 
   function applyFeaturedQuote(quote) {
     if (!quote) return;
-    document.querySelectorAll('.ep-featured-plan-price').forEach(function (el) {
+    document.querySelectorAll('.ep-featured-single-price .ep-featured-plan-price').forEach(function (el) {
       el.textContent = quote.displayPrice || '£55.00';
     });
     if (featuredPlanDuration) {
+      var planId = selectedPlanId();
+      var termLabel =
+        planId === '12months'
+          ? 'for 1 year'
+          : planId === '3months'
+            ? 'for 3 months'
+            : planId === '6months'
+              ? 'for 6 months'
+              : 'for 1 month';
       featuredPlanDuration.textContent =
-        quote.pricingMode === 'prorated' ? 'until your event' : 'per month';
+        quote.pricingMode === 'prorated' ? 'until your event' : termLabel;
     }
     if (featuredDurationNote && quote.pricingNote) {
       featuredDurationNote.textContent = quote.pricingNote;
@@ -1101,6 +1110,12 @@
   }
 
   if (featuredYes) featuredYes.addEventListener('click', startFeaturedCheckout);
+
+  document.querySelectorAll('input[name="featured-plan"]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      updateFeaturedDurationNote();
+    });
+  });
 
   async function loadFeaturedSlotStatus() {
     if (!featuredUpsell) return;

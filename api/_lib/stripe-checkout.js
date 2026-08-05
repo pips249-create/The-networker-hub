@@ -346,51 +346,64 @@ async function createCityPartnerCheckoutSession(opts) {
   const pricing = quote.pricing;
   const launchNote = quote.isLaunch ? ' Launch rate until 1 Dec 2026.' : '';
   const termLabel = prepaid
-    ? quote.termMonths + ' month' + (quote.termMonths === 1 ? '' : 's') + ' prepaid'
+    ? quote.termMonths === 12
+      ? '1 year prepaid'
+      : quote.termMonths + ' month' + (quote.termMonths === 1 ? '' : 's') + ' prepaid'
     : 'monthly';
+  const discountNote =
+    prepaid && quote.discountPercent > 0
+      ? ' Includes ' + quote.discountPercent + '% prepaid discount.'
+      : '';
 
-  if (quote.bundles > 0) {
-    const unitAmount = prepaid
-      ? pricing.bundle3MonthlyPence * quote.termMonths
-      : pricing.bundle3MonthlyPence;
+  if (prepaid) {
     lineItems.push({
       price_data: {
         currency: 'gbp',
         product_data: {
-          name: prepaid
-            ? 'City Partner — 3-city pack (' + termLabel + ')'
-            : 'City Partner — 3-city pack',
+          name: 'City Partner — ' + cityNames + ' (' + termLabel + ')',
           description:
-            'Logo + CTA on three regional networking pages. Website only — not in hub emails.' +
-            launchNote,
+            'Logo + CTA on regional networking pages. Website only — not in hub emails.' +
+            launchNote +
+            discountNote,
         },
-        unit_amount: unitAmount,
-        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
+        unit_amount: quote.subtotalExVatPence,
       },
-      quantity: quote.bundles,
+      quantity: 1,
     });
-  }
+  } else {
+    if (quote.bundles > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'City Partner — 3-city pack',
+            description:
+              'Logo + CTA on three regional networking pages. Website only — not in hub emails.' +
+              launchNote,
+          },
+          unit_amount: pricing.bundle3MonthlyPence,
+          recurring: { interval: 'month' },
+        },
+        quantity: quote.bundles,
+      });
+    }
 
-  if (quote.singles > 0) {
-    const unitAmount = prepaid
-      ? pricing.singleMonthlyPence * quote.termMonths
-      : pricing.singleMonthlyPence;
-    lineItems.push({
-      price_data: {
-        currency: 'gbp',
-        product_data: {
-          name: prepaid
-            ? 'City Partner — single city (' + termLabel + ')'
-            : 'City Partner — single city',
-          description:
-            'Logo + CTA on one regional networking page. Website only — not in hub emails.' +
-            launchNote,
+    if (quote.singles > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'City Partner — single city',
+            description:
+              'Logo + CTA on one regional networking page. Website only — not in hub emails.' +
+              launchNote,
+          },
+          unit_amount: pricing.singleMonthlyPence,
+          recurring: { interval: 'month' },
         },
-        unit_amount: unitAmount,
-        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
-      },
-      quantity: quote.singles,
-    });
+        quantity: quote.singles,
+      });
+    }
   }
 
   if (quote.vatPence > 0) {
@@ -420,6 +433,7 @@ async function createCityPartnerCheckoutSession(opts) {
     city_partner_singles: String(quote.singles),
     billing_mode: quote.billingMode,
     term_months: prepaid ? String(quote.termMonths) : 'monthly',
+    discount_percent: String(quote.discountPercent || 0),
   };
 
   const sessionParams = {

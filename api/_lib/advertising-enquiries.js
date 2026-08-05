@@ -32,6 +32,7 @@ function normalizeEnquiryInput(body) {
     email: normalizeEmail(body.email),
     section: String(body.section || '').trim(),
     packageName: String(body.package || body.packageName || body.package_name || '').trim(),
+    duration: String(body.duration || body.term || body.preferredTerm || '').trim() || null,
     budget: String(body.budget || '').trim() || null,
     message: String(body.message || '').trim() || null,
     website: String(body.website || '').trim(),
@@ -73,6 +74,11 @@ function buildStaffEmailHtml(input) {
     '">' +
     escHtml(input.email) +
     '</a></td></tr>' +
+    (input.duration
+      ? '<tr><td style="padding:4px 12px 4px 0;color:#666;">Preferred term</td><td>' +
+        escHtml(input.duration) +
+        '</td></tr>'
+      : '') +
     (input.budget
       ? '<tr><td style="padding:4px 12px 4px 0;color:#666;">Budget</td><td>' +
         escHtml(input.budget) +
@@ -119,6 +125,9 @@ async function submitAdvertisingEnquiry(body) {
   }
 
   const sb = getSupabaseAdmin();
+  const messageWithTerm = input.duration
+    ? 'Preferred term: ' + input.duration + (input.message ? '\n\n' + input.message : '')
+    : input.message;
   const { data, error } = await sb
     .from('advertising_enquiries')
     .insert({
@@ -128,7 +137,7 @@ async function submitAdvertisingEnquiry(body) {
       section: input.section,
       package_name: input.packageName,
       budget: input.budget,
-      message: input.message,
+      message: messageWithTerm,
     })
     .select('id, created_at')
     .single();

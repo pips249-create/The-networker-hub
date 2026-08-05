@@ -11,6 +11,23 @@ const PERIOD_START = '2026-07-03T00:00:00.000Z';
 const PERIOD_END = '2027-09-01T00:00:00.000Z';
 const PREMIUM_OPPORTUNITY_MONTHLY_GBP = 55;
 
+function hasPaidOpportunityListing(row) {
+  return Boolean(String(row?.listing_stripe_session_id || '').trim());
+}
+
+function hasPaidOpportunityPremium(row) {
+  return Boolean(String(row?.premium_stripe_session_id || '').trim());
+}
+
+function isAdminCompedOpportunity(row) {
+  const tags = Array.isArray(row?.tags) ? row.tags : [];
+  return tags.some(function (tag) {
+    return String(tag || '')
+      .toLowerCase()
+      .includes('admin-test');
+  });
+}
+
 const TARGET_CATEGORIES = [
   {
     id: 'events',
@@ -67,6 +84,8 @@ function overlapDays(startA, endA, startB, endB) {
 }
 
 function premiumOpportunityRevenueInPeriod(row, startMs, endMs) {
+  // Only Stripe-paid premium — admin spotlight grants must not count as revenue.
+  if (!hasPaidOpportunityPremium(row)) return 0;
   if (String(row.package_tier || '').toLowerCase() !== 'premium' && !row.featured) return 0;
   const untilMs = parseMs(row.featured_until);
   if (!untilMs || untilMs <= startMs) return 0;
@@ -149,7 +168,7 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
     sb
       .from('business_opportunities')
       .select(
-        'id, title, listing_months, listing_paid_at, listing_expires_at, featured, featured_until, package_tier, published_at, created_at'
+        'id, title, tags, listing_months, listing_paid_at, listing_expires_at, listing_stripe_session_id, featured, featured_until, package_tier, premium_stripe_session_id, published_at, created_at'
       )
       .not('listing_paid_at', 'is', null),
     sb
@@ -176,8 +195,11 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
   });
 
   (oppsRes.data || []).forEach((row) => {
-    if (isTestFixtureText(row.title)) return;
-    if (inPeriod(row.listing_paid_at, startMs, endMs)) {
+    if (isTestFixtureText(row.title) || isAdminCompedOpportunity(row)) return;
+
+    // Listing fee: only real Stripe checkouts. Admin comps set listing_paid_at
+    // without a session id and must not inflate Sales targets.
+    if (hasPaidOpportunityListing(row) && inPeriod(row.listing_paid_at, startMs, endMs)) {
       const months = row.listing_months || 3;
       const totals = calculateOpportunityListingTotals(months);
       const amount = round2(totals.totalPence / 100);

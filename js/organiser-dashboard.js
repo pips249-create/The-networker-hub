@@ -1035,6 +1035,9 @@
   const FEATURED_UPGRADE_QUEUE_KEY = 'hub_featured_upgrade_queue';
   const FEATURED_PLAN_OPTIONS = [
     { id: '1month', label: '1 month', price: FEATURED_LISTING_PRICE },
+    { id: '3months', label: '3 months', price: '£156.75', note: 'Save 5%' },
+    { id: '6months', label: '6 months', price: '£297.00', note: 'Save 10%' },
+    { id: '12months', label: 'Yearly', price: '£561.00', note: 'Save 15%' },
   ];
   let featuredSpotlightSlots = null;
   let featuredQuoteCache = Object.create(null);
@@ -1479,6 +1482,7 @@
         esc(plan.label) +
         ' · ' +
         esc(plan.price) +
+        (plan.note ? ' <span class="org-featured-upgrade-plan-save">' + esc(plan.note) + '</span>' : '') +
         '</label>'
       );
     }).join('');

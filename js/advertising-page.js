@@ -193,8 +193,8 @@
   };
 
   var STICKY_CTA_BY_SECTION = {
-    events: { href: '#city-partner-package', text: 'City Sponsor · from £29/mo' },
-    organisers: { href: '#ad-pkg-organisers-main', text: 'Headline · from £1,000/mo' },
+    events: { href: '#city-partner-package', text: 'City Sponsor · from £29/mo · flexible terms' },
+    organisers: { href: '#ad-pkg-organisers-main', text: 'Headline · from £1,000/mo · flexible terms' },
     opportunities: { href: '#ad-pkg-opportunities-listing', text: 'List from £25/mo + VAT' },
   };
 
@@ -579,6 +579,7 @@
         email: String(fd.get('email') || '').trim(),
         section: String(fd.get('section') || '').trim(),
         package: String(fd.get('package') || '').trim(),
+        duration: String(fd.get('duration') || '').trim(),
         budget: String(fd.get('budget') || '').trim(),
         message: String(fd.get('message') || '').trim(),
         website: String(fd.get('website') || '').trim(),

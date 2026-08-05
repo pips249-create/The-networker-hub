@@ -23,9 +23,16 @@ This creates Products, Prices, and Payment Links for all sponsorship tiers and w
 
 `checkout.session.completed` is already enabled — it also records sponsorship if you use Stripe Checkout / Payment Links with the metadata below.
 
-### City Partner subscriptions (self-serve)
+### City Partner (self-serve)
 
-City Partner checkout uses **Stripe Subscriptions** (rolling monthly). Enable these webhook events on the same endpoint:
+City Partner checkout supports two billing modes:
+
+| Mode | Stripe Checkout | Behaviour |
+|------|-----------------|-----------|
+| **Monthly** (default) | `mode: subscription` | Rolling monthly until cancelled |
+| **Prepaid 1 / 3 / 6 / 12 months** | `mode: payment` | One-time charge; slot held until term end |
+
+Enable these webhook events on the same endpoint:
 
 | Event | Purpose |
 |-------|---------|
@@ -33,9 +40,13 @@ City Partner checkout uses **Stripe Subscriptions** (rolling monthly). Enable th
 | `customer.subscription.updated` | When `cancel_at_period_end` is set, store the slot open date and email waitlist “opening soon” |
 | `customer.subscription.deleted` | Release slots and email waitlist “slot open” |
 
+Prepaid holds use `sponsor_subscription_id` prefixed with `prepaid:` and `sponsor_available_from` set to the term end. The featured-listing cron also clears expired prepaid city slots.
+
+Prepaid discounts: **5% off 3 months**, **10% off 6 months**, **15% off yearly (12 months)** (monthly and 1-month prepaid stay full rate).
+
 Run Supabase migrations `189_city_partner_waitlist.sql` and `190_city_partner_emails.sql` before go-live.
 
-Checkout metadata uses `placement=city_partner` and `networking_cities` (comma-separated slugs). Slot state is stored on `cms_blocks` (`sponsor_subscription_id`, `sponsor_email`, `sponsor_available_from`).
+Checkout metadata uses `placement=city_partner`, `networking_cities` (comma-separated slugs), `billing_mode` (`monthly` \| `prepaid`), and `term_months` (`monthly` or `1`/`3`/`6`/`12`). Slot state is stored on `cms_blocks` (`sponsor_subscription_id`, `sponsor_email`, `sponsor_available_from`).
 
 ## Creating an invoice in Stripe
 

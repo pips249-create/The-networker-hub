@@ -1,4 +1,5 @@
 const { isEventStarted } = require('./event-timezone');
+const { applyPrepaidTermDiscount } = require('./sponsorship-term-discounts');
 
 const FEATURED_MONTH_DAYS = 30;
 const FEATURED_DEFAULT_MONTHLY_PENCE = 5500;
@@ -51,20 +52,41 @@ function formatGbp(pence) {
   return '£' + (n / 100).toFixed(2);
 }
 
+function featuredPlanAmountPence(months) {
+  const m = Math.max(1, Math.floor(Number(months) || 1));
+  const list = featuredMonthlyPricePence() * m;
+  return applyPrepaidTermDiscount(list, m).netPence;
+}
+
+function buildFeaturedPlan(months, label) {
+  const amountPence = featuredPlanAmountPence(months);
+  const discounted = applyPrepaidTermDiscount(featuredMonthlyPricePence() * months, months);
+  return {
+    label,
+    days: FEATURED_MONTH_DAYS * months,
+    months,
+    amountPence,
+    listAmountPence: discounted.listPence,
+    discountPercent: discounted.discountPercent,
+    displayPrice: formatGbp(amountPence),
+  };
+}
+
 const FEATURED_PLANS = {
-  '1month': {
-    label: '1 month',
-    days: FEATURED_MONTH_DAYS,
-    amountPence: featuredMonthlyPricePence(),
-    displayPrice: formatGbp(featuredMonthlyPricePence()),
-  },
-  /** @deprecated Legacy plans — checkout UI offers 1 month only; kept for older sessions */
-  '1week': { label: '1 week', days: 7, amountPence: 2000, displayPrice: '£20.00' },
-  '2months': { label: '2 months', days: 60, amountPence: 10000, displayPrice: '£100.00' },
+  '1month': buildFeaturedPlan(1, '1 month'),
+  '3months': buildFeaturedPlan(3, '3 months'),
+  '6months': buildFeaturedPlan(6, '6 months'),
+  '12months': buildFeaturedPlan(12, '12 months'),
+  /** @deprecated Legacy plans — checkout UI offers 1 / 3 / 6 / 12 months; kept for older sessions */
+  '1week': { label: '1 week', days: 7, months: 0, amountPence: 2000, displayPrice: '£20.00', discountPercent: 0 },
+  '2months': { label: '2 months', days: 60, months: 2, amountPence: 10000, displayPrice: '£100.00', discountPercent: 0 },
 };
 
 const PLAN_ALIASES = {
   '4weeks': '1month',
+  yearly: '12months',
+  year: '12months',
+  annual: '12months',
 };
 
 function normalizePlanId(planId) {
@@ -138,27 +160,44 @@ function calculateFeaturedListingQuote({
   slotsAvailable,
 } = {}) {
   const placement = previewFeaturedPlacement({ currentUntil, planId, eventStartsAt });
-  const fullPricePence = featuredMonthlyPricePence();
+  const plan = FEATURED_PLANS[placement.planId] || FEATURED_PLANS['1month'];
+  const fullPricePence = plan.amountPence;
   const minPricePence = featuredMinPricePenceForSlots(slotsAvailable);
   const visibleDays = visibleDaysUntilFeaturedEnd(placement.featuredUntil);
+  const planMonths = Math.max(1, Math.round((plan.days || FEATURED_MONTH_DAYS) / FEATURED_MONTH_DAYS));
 
   if (!placement.cappedByEvent || fullPricePence <= 0) {
+    const saveNote =
+      plan.discountPercent > 0 ? ' Save ' + plan.discountPercent + '% vs monthly.' : '';
     return {
       ...placement,
       amountPence: fullPricePence,
       displayPrice: formatGbp(fullPricePence),
-      pricingMode: fullPricePence > 0 ? 'full_month' : 'dev_free',
+      pricingMode: fullPricePence > 0 ? 'full_term' : 'dev_free',
       visibleDays: placement.planDays,
       minPricePence,
+      discountPercent: plan.discountPercent || 0,
       pricingNote:
         fullPricePence > 0
-          ? 'Full month — up to 30 days on the browse page.'
+          ? planMonths === 1
+            ? 'Full month — up to 30 days on the browse page.'
+            : plan.label +
+              ' — up to ' +
+              plan.days +
+              ' days on the browse page.' +
+              saveNote
           : 'Test checkout — no charge in this environment.',
-      lineItemDescription: 'Premium spotlight — up to 1 month on the events browse page',
+      lineItemDescription:
+        planMonths === 1
+          ? 'Premium spotlight — up to 1 month on the events browse page'
+          : 'Premium spotlight — ' +
+            plan.label +
+            ' on the events browse page' +
+            (plan.discountPercent > 0 ? ' (' + plan.discountPercent + '% off)' : ''),
     };
   }
 
-  const prorated = Math.round((visibleDays / FEATURED_MONTH_DAYS) * fullPricePence);
+  const prorated = Math.round((visibleDays / Math.max(1, plan.days)) * fullPricePence);
   const amountPence = Math.min(fullPricePence, Math.max(minPricePence, prorated));
 
   return {

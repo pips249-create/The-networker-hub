@@ -4,12 +4,13 @@
  */
 const { NETWORKING_REGIONS } = require('./networking-regions');
 const { isPublishableSponsorBlock } = require('./cms-sponsor-fields');
+const { applyPrepaidTermDiscount } = require('./sponsorship-term-discounts');
 
 const CITY_PARTNER_SLOT_PREFIX = 'networking_city_partner_';
 const LAUNCH_END_ISO = '2026-12-01T00:00:00.000Z';
 const CITY_PARTNER_VAT_RATE = 0.2;
 /** Prepaid fixed terms offered alongside rolling monthly. */
-const CITY_PARTNER_PREPAID_TERMS = [1, 3, 6];
+const CITY_PARTNER_PREPAID_TERMS = [1, 3, 6, 12];
 
 const LAUNCH_PRICING = {
   singleMonthlyPence: 2900,
@@ -33,6 +34,9 @@ function normalizeCityPartnerTerm(value) {
   const raw = String(value == null ? '' : value).trim().toLowerCase();
   if (!raw || raw === 'monthly' || raw === 'month' || raw === 'rolling' || raw === '0') {
     return { billingMode: 'monthly', termMonths: null };
+  }
+  if (raw === 'yearly' || raw === 'year' || raw === 'annual' || raw === 'annually') {
+    return { billingMode: 'prepaid', termMonths: 12 };
   }
   const n = parseInt(raw, 10);
   if (CITY_PARTNER_PREPAID_TERMS.includes(n)) {
@@ -118,7 +122,17 @@ function calculateCityPartnerQuote(cityCount, now = new Date(), term = null) {
     bundles * pricing.bundle3MonthlyPence + singles * pricing.singleMonthlyPence;
   const { billingMode, termMonths } = normalizeCityPartnerTerm(term);
   const billableMonths = billingMode === 'prepaid' ? termMonths : 1;
-  const subtotalExVatPence = monthlyPence * billableMonths;
+  const listSubtotalExVatPence = monthlyPence * billableMonths;
+  const discounted =
+    billingMode === 'prepaid'
+      ? applyPrepaidTermDiscount(listSubtotalExVatPence, termMonths)
+      : {
+          listPence: listSubtotalExVatPence,
+          discountPercent: 0,
+          discountPence: 0,
+          netPence: listSubtotalExVatPence,
+        };
+  const subtotalExVatPence = discounted.netPence;
   const vatPence = Math.round(subtotalExVatPence * CITY_PARTNER_VAT_RATE);
   return {
     cityCount: count,
@@ -128,6 +142,9 @@ function calculateCityPartnerQuote(cityCount, now = new Date(), term = null) {
     termMonths,
     monthlyPence,
     monthlyGbp: monthlyPence / 100,
+    listSubtotalExVatPence: discounted.listPence,
+    discountPercent: discounted.discountPercent,
+    discountPence: discounted.discountPence,
     subtotalExVatPence,
     vatPence,
     totalPence: subtotalExVatPence + vatPence,
@@ -236,7 +253,8 @@ async function getCityPartnerAvailability(sb) {
       prepaidTerms: CITY_PARTNER_PREPAID_TERMS.slice(),
       bundleNote: 'Every 3 cities automatically use the 3-city pack rate; any remainder is charged per city.',
       termNote:
-        'Pay monthly and cancel any time, or prepay 1, 3 or 6 months at the same monthly rate.',
+        'Pay monthly and cancel any time, or prepay 1, 3, 6 or 12 months — 5% off 3 months, 10% off 6 months, 15% off yearly.',
+      prepaidDiscounts: { 3: 5, 6: 10, 12: 15 },
     },
     cities,
     availableCities: cities.filter((c) => c.available),

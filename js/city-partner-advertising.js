@@ -39,6 +39,7 @@
   var bookedSummaryListEl = document.getElementById('city-partner-booked-summary-list');
   var bookedWrapEl = document.getElementById('city-partner-booked-wrap');
   var bookedListEl = document.getElementById('city-partner-booked-list');
+  var termOptionsEl = document.getElementById('city-partner-term-options');
 
   var state = {
     cities: [],
@@ -47,6 +48,23 @@
     launchEnds: '2026-12-01T00:00:00.000Z',
     waitlist: {},
   };
+
+  function selectedTerm() {
+    if (!termOptionsEl) return 'monthly';
+    var checked = termOptionsEl.querySelector('input[name="city-partner-term"]:checked');
+    return checked ? String(checked.value || 'monthly') : 'monthly';
+  }
+
+  function isPrepaidTerm(term) {
+    return term === '1' || term === '3' || term === '6' || term === '12' || term === 'yearly';
+  }
+
+  function prepaidDiscountPercent(termMonths) {
+    if (termMonths === 3) return 5;
+    if (termMonths === 6) return 10;
+    if (termMonths === 12) return 15;
+    return 0;
+  }
 
   function formatAvailableFrom(iso) {
     if (!iso) return '';
@@ -151,7 +169,7 @@
 
     if (!slugs.length) {
       quoteEl.innerHTML =
-        '<p class="city-partner-quote-empty">Select one or more available cities to see the monthly price (+ VAT).</p>';
+        '<p class="city-partner-quote-empty">Select one or more available cities to see the price (+ VAT).</p>';
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
@@ -161,28 +179,66 @@
     var singles = count % 3;
     var pricing = state.pricing || { singleMonthlyGbp: 29, bundle3MonthlyGbp: 75 };
     var monthlyNet = bundles * pricing.bundle3MonthlyGbp + singles * pricing.singleMonthlyGbp;
-    var priced = priceWithVat(monthlyNet);
+    var term = selectedTerm();
+    var prepaid = isPrepaidTerm(term);
+    var termMonths = prepaid
+      ? term === 'yearly'
+        ? 12
+        : parseInt(term, 10)
+      : 1;
+    var listNet = monthlyNet * termMonths;
+    var discountPct = prepaid ? prepaidDiscountPercent(termMonths) : 0;
+    var discountNet = Math.round(listNet * discountPct) / 100;
+    var billedNet = Math.round((listNet - discountNet) * 100) / 100;
+    var priced = priceWithVat(billedNet);
     var parts = [];
     if (bundles) parts.push(bundles + ' × 3-city pack (' + formatGbp(pricing.bundle3MonthlyGbp) + ' + VAT)');
     if (singles) parts.push(singles + ' × single city (' + formatGbp(pricing.singleMonthlyGbp) + ' + VAT)');
 
+    var periodLabel = prepaid
+      ? termMonths === 12
+        ? 'for 1 year (prepaid)'
+        : 'for ' + termMonths + ' month' + (termMonths === 1 ? '' : 's') + ' (prepaid)'
+      : 'per month';
+    var totalSuffix = prepaid ? ' total' : ' per month';
+
     quoteEl.innerHTML =
       '<p class="city-partner-quote-total"><strong>' +
       formatGbp(priced.net) +
-      '</strong> <span>per month + VAT</span></p>' +
+      '</strong> <span>' +
+      periodLabel +
+      ' + VAT</span></p>' +
+      (discountPct
+        ? '<p class="city-partner-quote-save">Save ' +
+          discountPct +
+          '% vs monthly · was ' +
+          formatGbp(listNet) +
+          ' + VAT</p>'
+        : '') +
       '<p class="city-partner-quote-vat">VAT (20%): ' +
       formatGbp(priced.vat) +
       ' · <strong>' +
       formatGbp(priced.gross) +
-      ' incl. VAT</strong> per month</p>' +
-      '<p class="city-partner-quote-breakdown">' +
-      esc(parts.join(' + ')) +
+      ' incl. VAT</strong>' +
+      totalSuffix +
       '</p>' +
+      (prepaid
+        ? '<p class="city-partner-quote-breakdown">' +
+          formatGbp(monthlyNet) +
+          ' / month × ' +
+          termMonths +
+          (discountPct ? ' − ' + discountPct + '%' : '') +
+          ' · ' +
+          esc(parts.join(' + ')) +
+          '</p>'
+        : '<p class="city-partner-quote-breakdown">' + esc(parts.join(' + ')) + '</p>') +
       '<p class="city-partner-quote-cities">' +
       count +
       ' ' +
       (count === 1 ? 'city' : 'cities') +
-      ' selected</p>';
+      ' selected' +
+      (prepaid ? '' : ' · renews monthly until you cancel') +
+      '</p>';
 
     if (submitBtn) submitBtn.disabled = !slugs.length;
   }
@@ -441,10 +497,17 @@
     emailEl.addEventListener('blur', refreshWaitlistStatus);
   }
 
+  if (termOptionsEl) {
+    termOptionsEl.querySelectorAll('input[name="city-partner-term"]').forEach(function (input) {
+      input.addEventListener('change', updateQuote);
+    });
+  }
+
   if (submitBtn) {
     submitBtn.addEventListener('click', function () {
       var slugs = selectedSlugs();
       var email = emailEl ? String(emailEl.value || '').trim() : '';
+      var term = selectedTerm();
       if (!slugs.length) {
         setStatus('Select at least one city.', 'error');
         return;
@@ -461,7 +524,7 @@
       fetch('/api/city-partner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, cities: slugs }),
+        body: JSON.stringify({ email: email, cities: slugs, termMonths: term }),
       })
         .then(readJsonResponse)
         .then(function (result) {

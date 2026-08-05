@@ -2,10 +2,22 @@
  * Client-side featured placement duration preview — mirrors api/_lib/event-featured-plans.js.
  */
 (function (global) {
-  var PLAN_DAYS = { '1month': 30, '1week': 7, '2months': 60, '4weeks': 30 };
+  var PLAN_DAYS = {
+    '1month': 30,
+    '3months': 90,
+    '6months': 180,
+    '12months': 360,
+    '1week': 7,
+    '2months': 60,
+    '4weeks': 30,
+  };
   var PLAN_LABELS = {
     '1week': '1 week',
     '1month': '1 month',
+    '3months': '3 months',
+    '6months': '6 months',
+    '12months': '12 months',
+    yearly: '12 months',
     '4weeks': '1 month',
     '2months': '2 months',
   };
@@ -14,6 +26,7 @@
     var key = String(planId || '').trim().toLowerCase();
     if (!key) return '1month';
     if (key === '4weeks') return '1month';
+    if (key === 'yearly' || key === 'year' || key === 'annual') return '12months';
     return PLAN_DAYS[key] ? key : '1month';
   }
 
