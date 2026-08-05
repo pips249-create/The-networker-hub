@@ -4,32 +4,32 @@ const path = require('path');
 const BRANDED_EMAIL_TEMPLATES = {
   organiser_featured_expiry_reminder: {
     file: 'organiser-featured-expiry-reminder.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your featured listing for {{event_name}} expires soon',
   },
   organiser_claim_invite: {
     file: 'organiser-claim-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Claim your page & finish setup — The Networker Hub',
   },
   organiser_launch_invite: {
     file: 'organiser-launch-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Confirm your page & finish setup — The Networker Hub',
   },
   organiser_rebrand_announcement: {
     file: 'organiser-rebrand-announcement.html',
-    marker: 'hub-email-layout-v2-legacy',
+    marker: 'hub-email-layout-v3-purple',
     subject: "The Networker's new chapter",
   },
   organiser_team_invite: {
     file: 'organiser-team-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: '{{inviter_name}} invited you to help manage {{account_name}}',
   },
   organiser_ticket_sales_nudge: {
     file: 'organiser-ticket-sales-nudge.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Someone wants tickets for {{event_name}}',
   },
   opportunity_listing_live: {
@@ -238,7 +238,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   organiser_low_upcoming_events: {
     file: 'organiser-low-upcoming-events.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Only {{upcoming_count}} events left on your calendar',
   },
   event_removed_by_hub: {
@@ -253,7 +253,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   organiser_listing_unpublished_by_hub: {
     file: 'organiser-listing-unpublished-by-hub.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your organiser page has been unpublished on The Networker Hub',
   },
   listing_report_upheld_reporter: {
@@ -263,12 +263,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   organiser_hub_warning: {
     file: 'organiser-hub-warning.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Warning {{warning_count}} of {{warning_limit}} — The Networker Hub',
   },
   organiser_hub_suspended: {
     file: 'organiser-hub-suspended.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your organiser account has been suspended — The Networker Hub',
   },
   saved_organiser_new_listing: {
@@ -283,7 +283,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   organiser_monthly_group_update: {
     file: 'organiser-monthly-group-update.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: '{{email_subject}}',
   },
   event_connections_list: {
@@ -303,7 +303,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   organiser_email_verify: {
     file: 'organiser-email-verify.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Confirm your email for organiser access',
   },
 };
