@@ -7,6 +7,7 @@ const { ticketRowToTier, fetchRegistrationCountsByTicket } = require('./supabase
 const { sendTemplatedEmail } = require('./send-template-email');
 const {
   siteBase,
+  emailSiteBase,
   hubAccountUrl,
   organiserPublicUrl,
   eventPublicUrl,
@@ -1739,7 +1740,7 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
   if (!unalertedEvents.length) return 'skipped';
   if (!unalertedEvents.some((row) => String(row.id) === eventId)) return 'skipped';
 
-  const site = siteBase();
+  const site = emailSiteBase();
   const fields = buildListingAlertEmailFields(unalertedEvents, site, {
     variant: 'member_roster',
     organiserName: organiser.name,
@@ -1755,7 +1756,23 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
       encodeURIComponent(email) +
       '&next=' +
       encodeURIComponent(fields.event_url);
-  const ctaLabel = hasAccount ? 'View member tickets' : 'Create account & view event';
+  const attendanceMode = String(
+    fields.attendanceMode ||
+      unalertedEvents[0]?.attendance_mode ||
+      eventRow?.attendance_mode ||
+      ''
+  )
+    .trim()
+    .toLowerCase();
+  const isCategoryExclusivity =
+    attendanceMode === 'category_exclusivity' || attendanceMode === 'osop';
+  const ctaLabel = hasAccount
+    ? isCategoryExclusivity
+      ? 'View event'
+      : attendanceMode === 'guest_programme'
+        ? 'View member tickets'
+        : 'View event'
+    : 'Create account & view event';
 
   await sendTemplatedEmail({
     slug: 'member_roster_new_event',

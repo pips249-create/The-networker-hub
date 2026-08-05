@@ -154,6 +154,51 @@ function hubertIconUrl(siteUrl) {
   return toPublicAssetUrl('/assets/hubert-icon.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/**
+ * Canonical public origin for every link in outbound email (never localhost).
+ * Prefer PUBLIC_SITE_URL, then a public SITE_URL, else production.
+ */
+function emailSiteBase(siteUrl) {
+  return publicSiteBase(siteUrl);
+}
+
+const EMAIL_URL_HTML_KEYS =
+  /(_html|_row|_rows|_section|_block|_markup|listing_follow_on|recommendations|nearby_events|popular_events|location_footer)$/i;
+
+/**
+ * Rewrite localhost / private origins in email template variables to the public site.
+ * Keeps logos on the public CDN and stops preview/test sends linking to 127.0.0.1.
+ */
+function rewriteEmailVarsToPublicSite(vars, siteUrl) {
+  const publicBase = emailSiteBase(siteUrl);
+  const out = vars && typeof vars === 'object' ? { ...vars } : {};
+  const localOriginRe = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/gi;
+
+  Object.keys(out).forEach(function (key) {
+    const val = out[key];
+    if (typeof val !== 'string' || !val) return;
+    if (!localOriginRe.test(val) && !isNonPublicSiteUrl(val)) return;
+    localOriginRe.lastIndex = 0;
+
+    if (EMAIL_URL_HTML_KEYS.test(key) || /<[^>]+>/.test(val)) {
+      out[key] = val.replace(localOriginRe, publicBase);
+      return;
+    }
+
+    try {
+      const parsed = new URL(val);
+      if (isNonPublicSiteUrl(parsed.origin) || /localhost|127\.0\.0\.1/i.test(parsed.hostname)) {
+        out[key] = publicBase + parsed.pathname + parsed.search + parsed.hash;
+      }
+    } catch {
+      out[key] = val.replace(localOriginRe, publicBase);
+    }
+  });
+
+  out.site_url = publicBase;
+  return out;
+}
+
 function supportEmail() {
   const configured = String(process.env.SUPPORT_EMAIL || '').trim();
   if (configured) return configured.toLowerCase();
@@ -178,6 +223,8 @@ function supportEmail() {
 module.exports = {
   siteBase,
   publicSiteBase,
+  emailSiteBase,
+  rewriteEmailVarsToPublicSite,
   toPublicAssetUrl,
   isNonPublicSiteUrl,
   homeUrl,

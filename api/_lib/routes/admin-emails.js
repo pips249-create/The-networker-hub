@@ -126,10 +126,16 @@ module.exports = async function handler(req, res) {
       try {
         const variables = mergeEmailPreviewVariables(slug, body.variables || {});
         const sponsorVars = await getEmailSponsorVars(slug);
-        // Match live sends: CMS inventory only — never leave "Sample sponsor" placeholders.
-        variables.sponsor_row = String(sponsorVars.sponsor_row || '').trim();
-        variables.sponsor_section = variables.sponsor_row;
-        variables.mini_sponsors_row = String(sponsorVars.mini_sponsors_row || '').trim();
+        // Prefer live CMS sponsors; keep preview sample when the Events/Organisers slot is empty.
+        const liveSponsor = String(sponsorVars.sponsor_row || '').trim();
+        const liveMini = String(sponsorVars.mini_sponsors_row || '').trim();
+        if (liveSponsor) {
+          variables.sponsor_row = liveSponsor;
+          variables.sponsor_section = liveSponsor;
+        }
+        if (liveMini) {
+          variables.mini_sponsors_row = liveMini;
+        }
         const built = await buildEmailFromTemplate(slug, variables, {
           subject: body.subject,
           body_html: body.body_html,

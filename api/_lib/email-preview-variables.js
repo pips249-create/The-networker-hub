@@ -3,6 +3,7 @@
  */
 const {
   siteBase,
+  emailSiteBase,
   browseEventsUrl,
   hubAccountUrl,
   hubPaymentUrl,
@@ -56,7 +57,7 @@ function sampleRecommendationCard(title, subtitle, url) {
 }
 
 function basePreviewVars(siteUrl) {
-  const site = siteBase(siteUrl);
+  const site = emailSiteBase(siteUrl);
   const eventSlug = 'london-founders-breakfast';
   const eventRow = { slug: eventSlug, id: '00000000-0000-4000-8000-000000000010' };
   const organiserRow = { slug: 'city-connectors', id: '00000000-0000-4000-8000-000000000020' };
@@ -208,7 +209,7 @@ function sampleMiniSponsorsRow() {
 }
 
 function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
-  const site = siteBase(siteUrl);
+  const site = emailSiteBase(siteUrl);
   const vars = { ...basePreviewVars(siteUrl), ...(extraVars || {}) };
 
   if (slug === 'application_denied') {
@@ -320,7 +321,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   if (slug === 'member_roster_new_event') {
     vars.event_time = ' · ' + (vars.event_time || '8:00 AM');
     vars.cta_url = vars.event_url;
-    vars.cta_label = 'View member tickets';
+    vars.cta_label = 'View event';
     Object.assign(
       vars,
       buildListingAlertSeriesCopy({
@@ -329,6 +330,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         organiserName: vars.organiser_name,
         userName: vars.user_name,
         eventName: vars.event_name,
+        attendanceMode: vars.attendance_mode || 'tickets',
       })
     );
   }
@@ -470,7 +472,18 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'application_denied' ||
     slug === 'post_event_review_request' ||
     slug === 'guest_visit_followup' ||
-    slug === 'event_connections_list'
+    slug === 'event_connections_list' ||
+    slug === 'saved_organiser_new_listing' ||
+    slug === 'member_roster_new_event' ||
+    slug === 'saved_event_tickets_open' ||
+    slug === 'event_saved_search_match' ||
+    slug === 'meeting_link_added' ||
+    slug === 'event_details_updated' ||
+    slug === 'post_event_review_reminder' ||
+    slug === 'category_exclusivity_payment_reminder' ||
+    slug === 'alumni_fast_pass_invite' ||
+    slug === 'ce_member_invite' ||
+    slug === 'event_almost_full'
   ) {
     if (!String(vars.sponsor_row || '').trim()) {
       vars.sponsor_row = sampleSponsorRow(site);

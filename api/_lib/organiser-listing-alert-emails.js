@@ -1,6 +1,6 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const {
-  siteBase,
+  emailSiteBase,
   browseEventsUrl,
   hubAccountUrl,
   legalPolicyUrl,
@@ -18,7 +18,7 @@ const {
 } = require('./listing-alert-series');
 
 function buildSavedOrganiserNewListingVars({ attendee, organiser, eventRow, eventRows, siteUrl }) {
-  const site = siteBase(siteUrl);
+  const site = emailSiteBase(siteUrl);
   const name = String(attendee?.name || '').trim() || 'there';
   const email = String(attendee?.email || '').trim().toLowerCase();
   const rows = eventRows && eventRows.length ? eventRows : eventRow ? [eventRow] : [];

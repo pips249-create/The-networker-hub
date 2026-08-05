@@ -28,6 +28,8 @@ const {
   hubertIconUrl,
   supportEmail,
   unsubscribeUrl,
+  emailSiteBase,
+  rewriteEmailVarsToPublicSite,
 } = require('./hub-email-urls');
 const {
   ensureUnsubscribePlaceholder,
@@ -258,7 +260,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     templateSource = resolved.source || 'file';
   }
 
-  const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+  const siteUrl = emailSiteBase(process.env.SITE_URL);
   const usesBookingEmailDefaults =
     slug === 'booking_confirmation' ||
     slug === 'booking_reminder' ||
@@ -343,10 +345,23 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   merged.logo_url = logoNavUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
   merged.hubert_icon_url = hubertIconUrl(siteUrl);
-  // Always use live CMS sponsors — never keep Sample / preview form leftovers.
-  merged.sponsor_row = String(sponsorSection || '').trim();
-  merged.sponsor_section = merged.sponsor_row;
-  merged.mini_sponsors_row = String(dbMiniSponsorsRow || '').trim();
+  // Prefer live CMS sponsors. If the slot is empty, keep any caller-provided row
+  // (admin preview samples); live sends do not pass sample sponsors.
+  if (sponsorSection) {
+    merged.sponsor_row = sponsorSection;
+    merged.sponsor_section = sponsorSection;
+  } else {
+    const fromVars = String(merged.sponsor_row || merged.sponsor_section || '').trim();
+    merged.sponsor_row = fromVars;
+    merged.sponsor_section = fromVars;
+  }
+  if (dbMiniSponsorsRow) {
+    merged.mini_sponsors_row = dbMiniSponsorsRow;
+  } else {
+    merged.mini_sponsors_row = String(merged.mini_sponsors_row || '').trim();
+  }
+  // Preview/test vars from local admin often carry localhost — force public links.
+  merged = rewriteEmailVarsToPublicSite(merged, siteUrl);
 
   let bodyHtml = template.body_html;
   bodyHtml = ensureUnsubscribePlaceholder(bodyHtml);
