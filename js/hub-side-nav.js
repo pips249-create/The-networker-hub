@@ -236,7 +236,12 @@
   }
 
   function bindSavedScopeStrips() {
-    document.querySelectorAll('.ad-saved-scope').forEach(bindDragScroll);
+    document.querySelectorAll('.ad-saved-scope').forEach(function (el) {
+      /* Segmented controls wrap — drag-scroll fights that and clips tabs. */
+      if (el.classList.contains('ad-saved-scope--segments')) return;
+      if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return;
+      bindDragScroll(el);
+    });
   }
 
   function bindOrgSectionTabStrips() {

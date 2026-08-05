@@ -1002,6 +1002,79 @@ button.ad-stat-link:focus-visible::after {
   display: none;
 }
 
+/* My Hub mobile: full-width segments (no sideways scroll) */
+@media (max-width: 768px) {
+  .attendee-dashboard-page .ad-subpage-kicker,
+  .attendee-dashboard-page .ad-saved-scope-kicker {
+    display: none !important;
+  }
+
+  .attendee-dashboard-page .ad-subpage-sub {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .attendee-dashboard-page .ad-saved-scope {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    flex-wrap: unset;
+    border-bottom: none !important;
+    padding: 4px;
+    margin: 0;
+    background: var(--ad-teal-pale);
+    border-radius: 12px;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .attendee-dashboard-page .ad-saved-scope--pair {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .attendee-dashboard-page .ad-saved-scope-btn {
+    display: inline-flex !important;
+    flex: unset !important;
+    width: 100%;
+    min-width: 0 !important;
+    max-width: none;
+    min-height: 40px;
+    margin: 0 !important;
+    padding: 8px 6px !important;
+    border: none !important;
+    border-bottom: none !important;
+    border-radius: 9px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .attendee-dashboard-page .ad-saved-scope-btn.is-active {
+    background: var(--ad-white) !important;
+    color: var(--ad-teal-dark) !important;
+    border-bottom-color: transparent !important;
+    box-shadow: 0 1px 4px rgba(45, 27, 94, 0.1);
+  }
+
+  .attendee-dashboard-page .ad-scope-label--full {
+    display: none !important;
+  }
+
+  .attendee-dashboard-page .ad-scope-label--short {
+    display: inline !important;
+  }
+
+  .attendee-dashboard-page .ad-saved-scope-wrap {
+    padding: 12px 12px 10px;
+  }
+}
+
 .ad-saved-pane {
   padding: 0;
   background: var(--ad-white);
