@@ -210,9 +210,8 @@ module.exports = async function handler(req, res) {
           previewVars.sponsor_row = sponsorVars.sponsor_row;
           previewVars.sponsor_section = sponsorVars.sponsor_row;
         }
-        if (String(sponsorVars.mini_sponsors_row || '').trim()) {
-          previewVars.mini_sponsors_row = sponsorVars.mini_sponsors_row;
-        }
+        // Always use live CMS minis (or empty) — never ship placehold.co sample logos.
+        previewVars.mini_sponsors_row = String(sponsorVars.mini_sponsors_row || '').trim();
         const result = await sendTemplatedEmail({
           slug,
           to,
