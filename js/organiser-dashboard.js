@@ -4596,7 +4596,8 @@
     const navBadge = document.getElementById('org-pending-reviews-nav-badge');
     if (navBadge) {
       navBadge.hidden = unreplied < 1;
-      navBadge.textContent = unreplied > 99 ? '99+' : unreplied > 1 ? String(unreplied) : 'New';
+      // Same cue as the Reviews tab — “New” is too vague next to My events.
+      navBadge.textContent = unreplied > 99 ? '99+' : unreplied > 1 ? String(unreplied) : 'Reply';
     }
   }
 
