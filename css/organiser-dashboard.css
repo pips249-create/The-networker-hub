@@ -6958,6 +6958,36 @@ body.org-notifications-open {
   color: #e0d0e8;
 }
 
+.org-rating--empty {
+  color: #8a8284;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.org-rating--high {
+  color: #b8860b;
+}
+
+.org-rating--high .org-rating-star {
+  color: #d4a017;
+}
+
+.org-rating--mid {
+  color: #6b5a2e;
+}
+
+.org-rating--mid .org-rating-star {
+  color: #c9a227;
+}
+
+.org-rating--low {
+  color: #635c5e;
+}
+
+.org-rating--low .org-rating-star {
+  color: #b0a49a;
+}
+
 .org-badge-gold {
   background: var(--od-gold-light);
   color: #7a5c10;

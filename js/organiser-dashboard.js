@@ -3704,6 +3704,50 @@
       });
     }
 
+    const unrepliedReviews = unrepliedReviewsList();
+    if (unrepliedReviews.length) {
+      const firstReview = unrepliedReviews[0];
+      const preview = unrepliedReviews
+        .slice(0, 3)
+        .map(function (r) {
+          return (
+            '<button type="button" class="org-notice-chip" data-org-route="events-reviews">' +
+            esc(r.authorName || 'Guest') +
+            ' · ' +
+            esc(r.eventTitle || 'Event') +
+            '</button>'
+          );
+        })
+        .join('');
+      const more =
+        unrepliedReviews.length > 3
+          ? '<span class="org-notice-chip-more">+' +
+            String(unrepliedReviews.length - 3) +
+            ' more</span>'
+          : '';
+      notices.push({
+        id: 'reviews-reply',
+        type: 'action',
+        title:
+          unrepliedReviews.length === 1
+            ? 'A review is waiting for your reply'
+            : unrepliedReviews.length + ' reviews are waiting for your reply',
+        text:
+          unrepliedReviews.length === 1
+            ? '<strong>' +
+              esc(firstReview.authorName || 'Someone') +
+              '</strong> left feedback on <strong>' +
+              esc(firstReview.eventTitle || 'your event') +
+              '</strong>. A short public reply helps future guests trust your group.'
+            : 'Attendees have left feedback you have not replied to yet. Responding publicly builds trust for future bookings.',
+        actions:
+          '<div class="org-notice-chips">' +
+          preview +
+          more +
+          '</div><button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-reviews">Open reviews</button>',
+      });
+    }
+
     return notices;
   }
 
@@ -3740,6 +3784,13 @@
     refreshPendingApplicationsSummary().finally(function () {
       renderOrganiserNotices();
     });
+    ensureReviewsLoaded()
+      .catch(function () {
+        return false;
+      })
+      .finally(function () {
+        renderOrganiserNotices();
+      });
     renderOrganiserNotices();
     panel.hidden = false;
     panel.setAttribute('aria-hidden', 'false');
@@ -3792,6 +3843,7 @@
     const notices = buildOrganiserNotices();
 
     updateNotificationsNavBadge(notices);
+    updateReviewsReplyBadge();
 
     if (!root) return;
 
@@ -4508,14 +4560,44 @@
   }
 
   function ratingHtml(rating) {
-    if (rating == null || Number.isNaN(Number(rating))) {
-      return '<span class="org-rating muted">—</span>';
+    const n = rating == null || rating === '' ? NaN : Number(rating);
+    // Hub ratings are 1–5; 0 / null means no reviews yet — don't show a gold “0.0”.
+    if (!Number.isFinite(n) || n <= 0) {
+      return '<span class="org-rating org-rating--empty">No reviews</span>';
     }
+    let tier = 'mid';
+    if (n >= 4.5) tier = 'high';
+    else if (n < 3.5) tier = 'low';
     return (
-      '<span class="org-rating"><span class="org-rating-star" aria-hidden="true">★</span> ' +
-      esc(Number(rating).toFixed(1)) +
+      '<span class="org-rating org-rating--' +
+      tier +
+      '" title="' +
+      esc(n.toFixed(1)) +
+      ' out of 5">' +
+      '<span class="org-rating-star" aria-hidden="true">★</span> ' +
+      esc(n.toFixed(1)) +
       '</span>'
     );
+  }
+
+  function unrepliedReviewsList() {
+    return (state.reviews || []).filter(function (r) {
+      return r && r.id && !String(r.reply || '').trim();
+    });
+  }
+
+  function updateReviewsReplyBadge() {
+    const unreplied = unrepliedReviewsList().length;
+    const tabBadge = document.getElementById('org-events-tab-reviews-badge');
+    if (tabBadge) {
+      tabBadge.hidden = unreplied < 1;
+      tabBadge.textContent = unreplied > 99 ? '99+' : unreplied > 1 ? String(unreplied) : 'Reply';
+    }
+    const navBadge = document.getElementById('org-pending-reviews-nav-badge');
+    if (navBadge) {
+      navBadge.hidden = unreplied < 1;
+      navBadge.textContent = unreplied > 99 ? '99+' : unreplied > 1 ? String(unreplied) : 'New';
+    }
   }
 
   function actionMenuHtml(kind, id, title, item) {
@@ -5050,6 +5132,7 @@
         state.reviewsLoaded = true;
         listPages.reviews = 1;
         updateMyEventsTabCounts();
+        renderOrganiserNotices();
         return true;
       })
       .catch((err) => {
@@ -5091,6 +5174,7 @@
     set('tab-count-events', String(eventsVisibleCount()));
     set('tab-count-tickets', String(state.tickets.length));
     set('tab-count-reviews', String(state.reviews.length));
+    updateReviewsReplyBadge();
   }
 
   function archivedApplicationsList() {
@@ -10598,6 +10682,8 @@
       review.reply = data.review && data.review.reply ? data.review.reply : null;
       review._composing = false;
       renderReviews();
+      renderOrganiserNotices();
+      updateMyEventsTabCounts();
       showOrganiserAlert(data.message || 'Reply saved.', false);
     } catch (err) {
       if (errEl) {
