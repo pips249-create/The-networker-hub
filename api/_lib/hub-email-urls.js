@@ -140,7 +140,7 @@ function opportunityPublicUrl(opportunityRow, siteUrl) {
 }
 
 /** Cache-bust so inbox clients pick up logo asset updates. */
-const LOGO_ASSET_VERSION = '20260729a';
+const LOGO_ASSET_VERSION = '20260805footer';
 
 function logoNavUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
@@ -148,6 +148,10 @@ function logoNavUrl(siteUrl) {
 
 function logoFooterUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
+function hubertIconUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/hubert-icon.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
 function supportEmail() {
@@ -192,5 +196,6 @@ module.exports = {
   opportunityPublicUrl,
   logoNavUrl,
   logoFooterUrl,
+  hubertIconUrl,
   supportEmail,
 };

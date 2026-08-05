@@ -11,6 +11,7 @@ const {
   unsubscribeUrl,
   logoNavUrl,
   logoFooterUrl,
+  hubertIconUrl,
   supportEmail,
   eventPublicUrl,
   organiserPublicUrl,
@@ -115,6 +116,7 @@ function basePreviewVars(siteUrl) {
     site_url: site,
     logo_url: logoNavUrl(site),
     logo_footer_url: logoFooterUrl(site),
+    hubert_icon_url: hubertIconUrl(site),
     support_email: supportEmail(),
     owner_name: 'Jordan',
     opportunity_title: 'Marketing agency partnership',
@@ -171,15 +173,13 @@ function sampleSponsorRow(site) {
     EMAIL_SPONSOR_LOGO_BAND_FALLBACK
   );
   return (
-    '<tr><td class="mobile-pad" style="padding:10px 40px 6px;text-align:center;background:#ffffff;">' +
-    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e8e2e9;">' +
-    '<tr><td style="padding:10px 22px 12px;text-align:center;vertical-align:middle;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 6px;line-height:1;">Powered by</p>' +
+    '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:#f5f0e8;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 8px;line-height:1;">Powered by</p>' +
     '<a href="' +
     site +
     '/advertising" style="display:inline-block;text-decoration:none;line-height:0;">' +
     logoHtml +
-    '</a></td></tr></table></td></tr>'
+    '</a></td></tr>'
   );
 }
 
@@ -661,6 +661,23 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'saved_opportunity_closing_soon') {
     vars.opportunity_host = vars.opportunity_host || 'Northbridge Network';
+  }
+
+  if (slug === 'saved_event_tickets_open') {
+    vars.organiser_name = vars.organiser_name || 'City Connectors';
+    vars.organiser_url = vars.organiser_url || organiserPublicUrl({ id: 'preview-org', slug: 'city-connectors', name: 'City Connectors' }, site);
+    vars.organiser_avatar_html =
+      vars.organiser_avatar_html ||
+      '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;"><tr>' +
+      '<td style="width:72px;height:72px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;' +
+      'font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:700;color:#9a7aa8;line-height:72px;">C</td></tr></table>';
+    vars.logo_footer_url = vars.logo_footer_url || logoFooterUrl(site);
+  }
+
+  if (slug === 'opportunity_saved_search_match') {
+    vars.search_label = vars.search_label || 'Marketing partnerships';
+    vars.match_count = vars.match_count || '2';
+    vars.logo_footer_url = vars.logo_footer_url || logoFooterUrl(site);
   }
 
   if (slug === 'organiser_monthly_group_update') {

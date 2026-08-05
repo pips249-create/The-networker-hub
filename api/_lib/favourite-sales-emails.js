@@ -7,12 +7,16 @@ const {
   contactUrl,
   eventPublicUrl,
   logoNavUrl,
+  logoFooterUrl,
+  organiserPublicUrl,
+  toPublicAssetUrl,
 } = require('./hub-email-urls');
 const {
   eventHasTicketsOnSale,
   isEventPublishedForSale,
   groupTicketsByEventId,
 } = require('./ticket-sales');
+const { resolvePhotoUrl } = require('./supabase-organisers-browse');
 
 const { formatDateOnly, formatTime } = require('./event-timezone');
 
@@ -27,7 +31,48 @@ function formatEventDateTime(startsAt) {
   };
 }
 
-function buildSavedEventTicketsOpenVars({ attendee, eventRow, siteUrl }) {
+function escapeEmailHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;');
+}
+
+function organiserLogoUrlForEmail(organiserRow, siteUrl) {
+  const raw = resolvePhotoUrl(organiserRow?.photo_url);
+  if (!raw) return '';
+  return toPublicAssetUrl(raw, siteUrl);
+}
+
+function buildOrganiserAvatarHtml(organiserRow, siteUrl) {
+  const name = String(organiserRow?.name || 'Networking group').trim();
+  const logoUrl = organiserLogoUrlForEmail(organiserRow, siteUrl);
+  const organiserUrl = organiserPublicUrl(organiserRow, siteUrl);
+  const initial = escapeEmailHtml(name.charAt(0).toUpperCase() || '?');
+
+  if (logoUrl) {
+    return (
+      '<a href="' +
+      escapeEmailHtml(organiserUrl) +
+      '" style="text-decoration:none;display:inline-block;">' +
+      '<img src="' +
+      escapeEmailHtml(logoUrl) +
+      '" alt="' +
+      escapeEmailHtml(name) +
+      '" width="72" height="72" style="display:block;width:72px;height:72px;object-fit:cover;border:0;border-radius:50%;margin:0 auto;" />' +
+      '</a>'
+    );
+  }
+
+  return (
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
+    '<tr><td style="width:72px;height:72px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-family:\'DM Sans\',system-ui,sans-serif;font-size:28px;font-weight:700;color:#9a7aa8;line-height:72px;">' +
+    initial +
+    '</td></tr></table>'
+  );
+}
+
+function buildSavedEventTicketsOpenVars({ attendee, eventRow, organiserRow, siteUrl }) {
   const site = siteBase(siteUrl);
   const name = String(attendee?.name || '').trim() || 'there';
   const email = String(attendee?.email || '').trim().toLowerCase();
@@ -35,6 +80,13 @@ function buildSavedEventTicketsOpenVars({ attendee, eventRow, siteUrl }) {
   const eventLocation =
     String(eventRow.location_label || eventRow.venue || eventRow.city || '').trim() ||
     'See event page';
+  const organiser =
+    organiserRow ||
+    eventRow?.organisers ||
+    (eventRow?.organiser_id
+      ? { id: eventRow.organiser_id, name: eventRow.organiser_name, photo_url: eventRow.organiser_photo_url }
+      : null);
+  const organiserName = String(organiser?.name || '').trim();
 
   return {
     user_name: name,
@@ -44,6 +96,12 @@ function buildSavedEventTicketsOpenVars({ attendee, eventRow, siteUrl }) {
     event_time,
     event_location: eventLocation,
     event_url: eventPublicUrl(eventRow, site),
+    organiser_name: organiserName || 'Networking group',
+    organiser_url: organiser ? organiserPublicUrl(organiser, site) : browseEventsUrl(site),
+    organiser_logo_url: organiser ? organiserLogoUrlForEmail(organiser, site) : '',
+    organiser_avatar_html: organiser
+      ? buildOrganiserAvatarHtml(organiser, site)
+      : '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;"><tr><td style="width:72px;height:72px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-size:28px;color:#9a7aa8;line-height:72px;">&#9733;</td></tr></table>',
     hub_account_url: hubAccountUrl(site),
     browse_events_url: browseEventsUrl(site),
     contact_url: contactUrl(site),
@@ -52,6 +110,7 @@ function buildSavedEventTicketsOpenVars({ attendee, eventRow, siteUrl }) {
     refunds_url: legalPolicyUrl(site, 'refunds'),
     site_url: site,
     logo_url: logoNavUrl(site),
+    logo_footer_url: logoFooterUrl(site),
   };
 }
 
@@ -65,7 +124,7 @@ async function sendDueFavouriteSalesEmails(sb) {
   const favRes = await sb
     .from('event_favourites')
     .select(
-      'id, attendee_id, event_id, created_at, notify_email, reminded_at, attendees(id, email, name), events(id, title, slug, starts_at, status, approval_status, venue, city, location_label, meeting_type, meeting_link)'
+      'id, attendee_id, event_id, created_at, notify_email, reminded_at, attendees(id, email, name), events(id, title, slug, starts_at, status, approval_status, venue, city, location_label, meeting_type, meeting_link, organiser_id, organisers(id, name, slug, photo_url))'
     )
     .eq('notify_email', true)
     .is('reminded_at', null);
@@ -115,6 +174,7 @@ async function sendDueFavouriteSalesEmails(sb) {
     const vars = buildSavedEventTicketsOpenVars({
       attendee,
       eventRow,
+      organiserRow: eventRow.organisers || null,
     });
 
     try {

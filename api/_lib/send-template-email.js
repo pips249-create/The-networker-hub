@@ -25,6 +25,7 @@ const {
   contactUrl,
   logoNavUrl,
   logoFooterUrl,
+  hubertIconUrl,
   supportEmail,
   unsubscribeUrl,
 } = require('./hub-email-urls');
@@ -283,6 +284,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     site_url: siteUrl,
     logo_url: logoNavUrl(siteUrl),
     logo_footer_url: logoFooterUrl(siteUrl),
+    hubert_icon_url: hubertIconUrl(siteUrl),
     privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
     terms_url: legalPolicyUrl(siteUrl, 'terms'),
     hub_rules_url: legalPolicyUrl(siteUrl, 'hub-rules'),
@@ -338,6 +340,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoNavUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
+  merged.hubert_icon_url = hubertIconUrl(siteUrl);
   // Live CMS sponsor resolution wins when configured; keep preview/sample rows when CMS is empty.
   if (String(sponsorSection || '').trim()) {
     merged.sponsor_row = sponsorSection;

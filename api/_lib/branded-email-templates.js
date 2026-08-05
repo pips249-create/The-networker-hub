@@ -143,6 +143,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   saved_event_tickets_open: {
     file: 'saved-event-tickets-open.html',
+    marker: 'hub-email-layout-v2-saved-event',
     subject: 'Tickets are on sale for {{event_name}}',
   },
   saved_opportunity_closing_soon: {
@@ -151,6 +152,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   opportunity_saved_search_match: {
     file: 'opportunity-saved-search-match.html',
+    marker: 'hub-email-layout-v2-opp-search',
     subject: 'New opportunity matching your saved search',
   },
   guest_visit_followup: {
@@ -220,7 +222,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
-    marker: 'hub-email-layout-v2-loc',
+    marker: 'hub-email-layout-v2-hubert-icon',
     subject: "Hubert's event picks for {{month_label}}",
   },
   organiser_low_upcoming_events: {

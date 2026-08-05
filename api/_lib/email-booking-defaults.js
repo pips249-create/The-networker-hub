@@ -4,6 +4,8 @@ const {
   isEmailSponsorBlock,
   sponsorLogoUrl,
   sponsorCompanyName,
+  sponsorLogoBandDark,
+  hasSponsorLogo,
 } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 
@@ -18,12 +20,21 @@ const SPONSOR_FALLBACK_SLOTS = [
 
 /** Soft neutral pad for logos — never use sponsor CTA colour (that looked like a blue button). */
 const EMAIL_SPONSOR_LOGO_BAND_FALLBACK = '#ffffff';
+/** Matches website sponsor-logo-band--dark so light logos stay visible in emails. */
+const EMAIL_SPONSOR_LOGO_BAND_DARK = '#1a1a2e';
+
+function isEmailSafeLogoUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return false;
+  if (/^data:image\/svg/i.test(raw)) return false;
+  if (/\.svg(?:[?#]|$)/i.test(raw)) return false;
+  return /^(https?:|\/|data:image\/)/i.test(raw);
+}
 
 function sponsorEmailLogoBandColor(block, override) {
   const fromOptions = String(override || '').trim();
   if (/^#[0-9a-f]{3,6}$/i.test(fromOptions)) return fromOptions.toLowerCase();
-  // Ignore block.cta_color in emails — CTA colours are for website buttons, not logo pads.
-  void block;
+  if (sponsorLogoBandDark(block)) return EMAIL_SPONSOR_LOGO_BAND_DARK;
   return EMAIL_SPONSOR_LOGO_BAND_FALLBACK;
 }
 
@@ -43,33 +54,43 @@ function buildSponsorLogoMarkup(logo, name, logoBandBg) {
     '" alt="' +
     safeName +
     '" width="120" style="max-width:120px;width:auto;max-height:40px;height:auto;display:block;margin:0 auto;border:0;">';
-  // No coloured CTA band — logo sits cleanly under the Powered by label.
-  void logoBandBg;
+  const band = String(logoBandBg || '').trim().toLowerCase();
+  if (band && band !== EMAIL_SPONSOR_LOGO_BAND_FALLBACK) {
+    return (
+      '<span style="display:inline-block;padding:12px 18px;background:' +
+      band.replace(/"/g, '') +
+      ';border-radius:8px;line-height:0;">' +
+      imgHtml +
+      '</span>'
+    );
+  }
   return imgHtml;
 }
 
 function buildSponsorSection(block, options) {
   if (!block) return '';
   const label = String(options?.label || '').trim() || 'Powered by';
-  const logo = toPublicAssetUrl(sponsorLogoUrl(block), process.env.SITE_URL);
+  const rawLogo = sponsorLogoUrl(block);
+  if (!hasSponsorLogo(block) || !isEmailSafeLogoUrl(rawLogo)) return '';
+  const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL);
+  if (!logo) return '';
   const url = String(block.cta_url || '').trim();
   const name = sponsorCompanyName(block) || 'Our sponsor';
   if (!url) return '';
   const safeUrl = url.replace(/"/g, '&quot;');
-  const logoHtml = buildSponsorLogoMarkup(logo, name);
-  // Compact strip under the Hub logo — white so it sits cleanly under cream or purple headers.
+  const bandBg = sponsorEmailLogoBandColor(block, options?.logoBandBg);
+  const logoHtml = buildSponsorLogoMarkup(logo, name, bandBg);
+  // Sit on the cream header band — no bordered white card (that fought the wave layout).
   return (
-    '<tr><td class="mobile-pad" style="padding:10px 40px 6px;text-align:center;background:#ffffff;">' +
-    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e8e2e9;">' +
-    '<tr><td style="padding:10px 22px 12px;text-align:center;vertical-align:middle;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 6px;line-height:1;">' +
+    '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:#f5f0e8;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 8px;line-height:1;">' +
     label +
     '</p>' +
     '<a href="' +
     safeUrl +
     '" style="display:inline-block;text-decoration:none;line-height:0;">' +
     logoHtml +
-    '</a></td></tr></table></td></tr>'
+    '</a></td></tr>'
   );
 }
 
@@ -82,7 +103,10 @@ async function fetchSponsorBlockForSlot(sb, slot) {
 async function resolveBookingEmailSponsorBlock(sb) {
   for (const slot of SPONSOR_FALLBACK_SLOTS) {
     const data = await fetchSponsorBlockForSlot(sb, slot);
-    if (data && isEmailSponsorBlock(data)) return { block: data, slot };
+    if (!data || !isEmailSponsorBlock(data)) continue;
+    const raw = sponsorLogoUrl(data);
+    if (!hasSponsorLogo(data) || !isEmailSafeLogoUrl(raw)) continue;
+    return { block: data, slot };
   }
   return { block: null, slot: '' };
 }
@@ -103,10 +127,12 @@ module.exports = {
   BOOKING_EMAIL_SPONSOR_SLOT,
   EVENTS_SPONSOR_SLOT,
   EMAIL_SPONSOR_LOGO_BAND_FALLBACK,
+  EMAIL_SPONSOR_LOGO_BAND_DARK,
   buildSponsorLogoMarkup,
   buildSponsorSection,
   getBookingEmailDefaultVars,
   resolveBookingEmailSponsorBlock,
   fetchSponsorBlockForSlot,
   sponsorEmailLogoBandColor,
+  isEmailSafeLogoUrl,
 };

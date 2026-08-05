@@ -9353,8 +9353,8 @@
       welcome_url: previewOrigin + '/welcome',
       dashboard_url: previewOrigin + '/organiser/',
       site_url: previewOrigin,
-      logo_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260729a',
-      logo_footer_url: previewOrigin + '/assets/logo-email-footer.png?v=20260729a',
+      logo_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260805footer',
+      logo_footer_url: previewOrigin + '/assets/logo-email-footer.png?v=20260805footer',
       screening_industry: 'Financial services',
       screening_job_title: 'Business development manager',
       denial_closing: '',
@@ -9824,11 +9824,13 @@
       attendee_reengagement:
         'Sends after 30 days without a booking (60-day cooldown), marketing opt-in only.',
       attendee_signup_events_nudge:
-        'Sends 3 days after signup if no booking yet, marketing opt-in only.',
+        'One-off nurture 3 days after signup if no booking yet (marketing opt-in). Different from Hubert’s monthly digest.',
       attendee_signup_events_nudge_followup:
         'Sends 10 days after signup if still no booking, marketing opt-in only.',
       saved_event_tickets_open:
-        'Sends when a saved event opens ticket sales, marketing opt-in only.',
+        'When tickets go on sale for an event you saved. Saving an event also follows the group — new listings from that group use a separate email.',
+      saved_organiser_new_listing:
+        'When a saved/followed group publishes a new event (including groups auto-saved when you save one of their events).',
       saved_opportunity_closing_soon:
         'Sends when a saved business opportunity is about 7 days from expiry.',
       opportunity_saved_search_match:
@@ -10012,15 +10014,13 @@
           esc(label) +
           '</span>';
       return (
-        '<tr><td class="mobile-pad" style="padding:12px 40px 10px;text-align:center;background:#f5f0e8;">' +
-        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #d9c4e0;">' +
-        '<tr><td style="padding:16px 20px;text-align:center;">' +
-        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Powered by</p>' +
+        '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:#f5f0e8;">' +
+        '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 8px;line-height:1;">Powered by</p>' +
         '<a href="' +
         attrEsc(link) +
-        '" style="display:inline-block;text-decoration:none;">' +
+        '" style="display:inline-block;text-decoration:none;line-height:0;">' +
         logoHtml +
-        '</a></td></tr></table></td></tr>'
+        '</a></td></tr>'
       );
     }
 

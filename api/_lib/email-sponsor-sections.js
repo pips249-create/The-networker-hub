@@ -6,8 +6,9 @@ const {
   buildSponsorSection,
   fetchSponsorBlockForSlot,
   EVENTS_SPONSOR_SLOT,
+  isEmailSafeLogoUrl,
 } = require('./email-booking-defaults');
-const { isEmailSponsorBlock } = require('./cms-sponsor-fields');
+const { isEmailSponsorBlock, hasSponsorLogo, sponsorLogoUrl } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
@@ -156,7 +157,11 @@ function buildMiniSponsorsRow(ads, options = {}) {
 
   const cells = list
     .map(function (ad) {
-      const logo = toPublicAssetUrl(ad.logo_url || '', process.env.SITE_URL).replace(/"/g, '&quot;');
+      const rawLogo = String(ad.logo_url || '').trim();
+      if (!rawLogo || /\.svg(?:[?#]|$)/i.test(rawLogo) || /^data:image\/svg/i.test(rawLogo)) {
+        return '';
+      }
+      const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL).replace(/"/g, '&quot;');
       const url = String(ad.cta_url || '').replace(/"/g, '&quot;');
       const name = String(ad.company_name || 'Sponsor').replace(/"/g, '&quot;');
       if (!logo || !url) return '';
@@ -178,6 +183,10 @@ function buildMiniSponsorsRow(ads, options = {}) {
 
   if (!cells) return '';
 
+  const cellCount = (cells.match(/mini-sponsor-cell/g) || []).length;
+  const widthPct = cellCount === 1 ? '100%' : cellCount === 2 ? '50%' : '33.33%';
+  const sizedCells = cells.replace(/width:33\.33%;/g, 'width:' + widthPct + ';');
+
   return (
     '<tr><td class="mobile-pad" style="padding:8px 40px 24px;text-align:center;background:#ffffff;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #e6e0e2;">' +
@@ -188,23 +197,29 @@ function buildMiniSponsorsRow(ads, options = {}) {
     '</td></tr>' +
     '<tr><td style="padding:0 12px 16px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
-    cells +
+    sizedCells +
     '</tr></table></td></tr></table></td></tr>'
   );
 }
 
+function isRenderableEmailSponsor(block) {
+  if (!isEmailSponsorBlock(block)) return false;
+  if (!hasSponsorLogo(block)) return false;
+  return isEmailSafeLogoUrl(sponsorLogoUrl(block));
+}
+
 async function resolveEventsMainSponsorBlock(sb) {
   const eventsBlock = await fetchSponsorBlockForSlot(sb, EVENTS_SPONSOR_SLOT);
-  if (eventsBlock && eventsBlock.include_in_emails !== false && isEmailSponsorBlock(eventsBlock)) {
+  if (eventsBlock && eventsBlock.include_in_emails !== false && isRenderableEmailSponsor(eventsBlock)) {
     return eventsBlock;
   }
-  if (eventsBlock) return null;
 
+  // Events slot missing, incomplete, or opted out of emails — use the dedicated email creative.
   const bookingBlock = await fetchSponsorBlockForSlot(sb, 'booking_email_sponsor');
-  if (bookingBlock && isEmailSponsorBlock(bookingBlock)) return bookingBlock;
+  if (isRenderableEmailSponsor(bookingBlock)) return bookingBlock;
 
   const legacy = await fetchSponsorBlockForSlot(sb, 'sponsor_hub');
-  if (legacy && isEmailSponsorBlock(legacy)) return legacy;
+  if (isRenderableEmailSponsor(legacy)) return legacy;
 
   return null;
 }
@@ -212,17 +227,17 @@ async function resolveEventsMainSponsorBlock(sb) {
 async function resolveOpportunitySponsorBlock(sb) {
   const primary = await fetchSponsorBlockForSlot(sb, OPPORTUNITIES_SPONSOR_SLOT);
   if (primary) {
-    if (primary.include_in_emails !== false && isEmailSponsorBlock(primary)) return primary;
-    return null;
+    if (primary.include_in_emails !== false && isRenderableEmailSponsor(primary)) return primary;
+  } else {
+    const legacy = await fetchSponsorBlockForSlot(sb, OPPORTUNITY_SIDEBAR_SLOT);
+    if (legacy && legacy.include_in_emails !== false && isRenderableEmailSponsor(legacy)) return legacy;
   }
-  const legacy = await fetchSponsorBlockForSlot(sb, OPPORTUNITY_SIDEBAR_SLOT);
-  if (legacy && legacy.include_in_emails !== false && isEmailSponsorBlock(legacy)) return legacy;
   return null;
 }
 
 async function resolveOrganiserSponsorBlock(sb) {
   const block = await fetchSponsorBlockForSlot(sb, 'organisers_sponsor_hub');
-  if (block && block.include_in_emails !== false && isEmailSponsorBlock(block)) return block;
+  if (block && block.include_in_emails !== false && isRenderableEmailSponsor(block)) return block;
   return null;
 }
 
