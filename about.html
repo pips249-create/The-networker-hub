@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css?v=20260711e">
+<link rel="stylesheet" href="css/about-page.css?v=20260804about3">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -20,192 +21,244 @@
 <script src="js/hub-seo-data.js?v=20260612" defer></script>
 <script src="js/hub-seo-schema.js?v=20260612" defer></script>
 </head>
-<body>
+<body class="about-page">
 
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260804early" data-root="" data-page="about"></script>
 
-<main class="content-page-main">
-  <header class="content-hero">
-    <div class="content-hero-inner">
-      <p class="section-kicker">About us</p>
-      <h1>Built for people who grow business through connection</h1>
-      <p class="content-hero-lede">
-        The Networker Hub is your central place to discover UK networking meetings, exhibitions, and business opportunities — and the home for organisers who run them.
-      </p>
-    </div>
-  </header>
+<main class="about-main">
 
-  <div class="content-flow">
-    <span class="content-flow-orb content-flow-orb--1" aria-hidden="true"></span>
-    <span class="content-flow-orb content-flow-orb--2" aria-hidden="true"></span>
-    <span class="content-flow-orb content-flow-orb--3" aria-hidden="true"></span>
-
-    <div class="content-platform-stats-wrap">
-      <div class="hub-platform-stats" aria-label="Platform scale last year">
-        <div class="hub-platform-stat">
-          <strong>27,000+</strong>
-          <span>Events listed last year</span>
+  <section class="about-hero about-reveal is-visible" aria-label="About The Networker Hub">
+    <span class="about-hero-orb about-hero-orb--1" aria-hidden="true"></span>
+    <span class="about-hero-orb about-hero-orb--2" aria-hidden="true"></span>
+    <span class="about-hero-orb about-hero-orb--3" aria-hidden="true"></span>
+    <div class="about-hero-inner">
+      <div class="about-hero-copy about-reveal-child">
+        <p class="about-brand">The Networker Hub</p>
+        <h1>Events, organisers &amp; opportunities in one place</h1>
+        <p class="about-hero-lede">
+          A UK platform to help people find networking meetings, exhibitions, and business opportunities — and to help organisers list and run them.
+        </p>
+        <div class="about-hero-actions">
+          <a class="btn btn-primary" href="/events/">Browse events</a>
+          <a class="btn btn-secondary" href="/contact">Talk to us</a>
         </div>
-        <div class="hub-platform-stat">
-          <strong>17,000+</strong>
-          <span>Networkers last year</span>
-        </div>
-        <div class="hub-platform-stat">
-          <strong>UK-wide</strong>
-          <span>Networking directory</span>
+      </div>
+      <div class="about-hero-stage about-reveal-child" role="group" aria-label="Where to start">
+        <div class="about-hero-stack">
+          <a class="about-hero-tile about-hero-tile--events" href="/events/">
+            <span class="about-hero-tile-kicker">Events</span>
+            <strong>Networking meetings, conferences &amp; exhibitions</strong>
+            <span class="about-hero-tile-meta">27,000+ listed last year →</span>
+          </a>
+          <a class="about-hero-tile about-hero-tile--orgs" href="/events/?mode=organisers">
+            <span class="about-hero-tile-kicker">Organisers</span>
+            <strong>Profiles, tickets &amp; payouts</strong>
+            <span class="about-hero-tile-meta">For independent groups →</span>
+          </a>
+          <a class="about-hero-tile about-hero-tile--opps" href="/opportunities/">
+            <span class="about-hero-tile-kicker">Opportunities</span>
+            <strong>Franchises, partnerships &amp; new ventures</strong>
+            <span class="about-hero-tile-meta">Enquire directly →</span>
+          </a>
         </div>
       </div>
     </div>
+  </section>
 
-    <section class="content-story">
-      <h2 class="content-story-heading">Our Story: From a Garden Tea to an Event Infrastructure</h2>
+  <section class="about-stats-band about-reveal" aria-label="Platform scale last year">
+    <div class="about-stats-inner">
+      <div class="about-stat about-reveal-child">
+        <strong>27,000+</strong>
+        <span>Events listed last year</span>
+      </div>
+      <div class="about-stat about-reveal-child">
+        <strong>17,000+</strong>
+        <span>Networkers last year</span>
+      </div>
+      <div class="about-stat about-reveal-child">
+        <strong>UK-wide</strong>
+        <span>Meetings to exhibitions</span>
+      </div>
+    </div>
+  </section>
 
-      <div class="content-story-feature">
-        <div class="content-story-split content-flow-diagonal content-flow-diagonal--down">
-          <div class="content-story-copy content-flow-anchor content-flow-anchor--start">
-            <p class="content-flow-step" aria-hidden="true">01</p>
-            <h3>Born in a Garden Over a Cup of Tea</h3>
+  <section class="about-story about-reveal" aria-labelledby="about-story-heading">
+    <div class="about-story-inner">
+      <header class="about-story-head about-reveal-child">
+        <p class="section-kicker">Our story</p>
+        <h2 id="about-story-heading">From a UK directory to a fuller platform</h2>
+      </header>
+
+      <div class="about-story-rail">
+        <article class="about-era about-era--then about-reveal-child">
+          <div class="about-era-visual" aria-hidden="true">
+            <div class="about-era-scatter">
+              <span>Meetings</span>
+              <span>Webinars</span>
+              <span>Exhibitions</span>
+              <span>Funding</span>
+              <span>Directories</span>
+              <span>Groups</span>
+            </div>
+          </div>
+          <div class="about-era-copy">
+            <p class="about-era-year">2023</p>
+            <h3>One place to look</h3>
             <p>
-              The Networker framework was originally founded by Sue and Rosie in the summer of 2023. Sitting in a garden comparing notes on the industry, they couldn&rsquo;t believe how fragmented the landscape was. There wasn&rsquo;t a single place that cleanly unified face-to-face meetings, online webinars, and large exhibitions across the UK. Realizing that a similar discovery roadblock existed for small businesses looking for funding, they took matters into their own hands and built the original The-Networker.co.uk&mdash;operating it as a massive, comprehensive business directory and regional marketplace. Last year alone, more than 27,000 Events were listed on the platform and 17,000+ networkers used The Networker to find their next meeting, group, or opportunity.
+              Networking was spread thinly across the web — face-to-face meetings, online sessions, exhibitions, and funding opportunities sat on different sites. The Networker launched as a UK directory and regional marketplace so people could find them in one place.
+            </p>
+            <p>
+              Last year more than 27,000 events were listed, and 17,000+ networkers used the platform to find a meeting, group, or opportunity.
             </p>
           </div>
-          <div class="content-story-graphic content-flow-anchor content-flow-anchor--end" aria-hidden="true">
-          <div class="content-story-calendar">
-            <div class="content-story-calendar-rings">
-              <span></span><span></span><span></span>
-            </div>
-            <header class="content-story-calendar-head">
-              <span class="content-story-calendar-season">Summer 2023</span>
-              <span class="content-story-calendar-sub">June &ndash; August</span>
-            </header>
-            <div class="content-story-calendar-body">
-              <p class="content-story-calendar-month-label">July</p>
-              <div class="content-story-calendar-weekdays">
-                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-              </div>
-              <div class="content-story-calendar-grid">
-                <span class="is-empty"></span><span class="is-empty"></span><span class="is-empty"></span><span class="is-empty"></span><span class="is-empty"></span><span>1</span><span>2</span>
-                <span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
-                <span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span class="is-highlight" title="Garden table idea">15</span><span>16</span>
-                <span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span>
-                <span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span>
-                <span>31</span>
-              </div>
-              <p class="content-story-calendar-caption">Garden table idea</p>
-              <ul class="content-story-calendar-tags">
-                <li>Directory</li>
-                <li>Webinars</li>
-                <li>Exhibitions</li>
-                <li>Funding</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
-    </section>
-
-    <section class="content-infrastructure-band">
-      <div class="content-infrastructure-panel content-flow-diagonal content-flow-diagonal--up">
-        <div class="content-infrastructure-copy content-flow-anchor content-flow-anchor--end">
-          <p class="content-flow-step" aria-hidden="true">02</p>
-          <h3>The Next Generation: Redesigned for Infrastructure</h3>
-          <p>
-            As our community rapidly scaled, the operational demands of independent organisers grew far beyond what a static directory could handle. To support this expanding ecosystem, the platform underwent a complete technical and structural modernisation under the direction of Catherine.
-          </p>
-          <p>
-            Transitioning the platform away from a passive information hub, Catherine entirely re-engineered the architecture into a high-performance ticketing ecosystem and a targeted B2B opportunities network. Rebuilt from the ground up for speed, financial security, and seamless event execution, the modern Hub provides independent organisers with a robust, secure, and transactional workspace to manage their entire lifecycle, protect their ticket revenues, and scale their local chapters.
-          </p>
-        </div>
-        <div class="content-dashboard-mock content-flow-anchor content-flow-anchor--start" aria-hidden="true">
-          <div class="content-dashboard-bar">
-            <span></span><span></span><span></span>
-            <em>Organiser workspace</em>
-          </div>
-          <div class="content-dashboard-body">
-            <div class="content-dashboard-sidebar">
-              <span class="is-active">Overview</span>
-              <span>Events</span>
-              <span>Tickets</span>
-              <span>Attendees</span>
-              <span>Opportunities</span>
-            </div>
-            <div class="content-dashboard-main">
-              <div class="content-dashboard-stat-row">
-                <span><strong>148</strong> tickets sold</span>
-                <span><strong>£2.4k</strong> protected revenue</span>
-              </div>
-              <div class="content-dashboard-card">
-                <strong>Next event</strong>
-                <span>Business breakfast · 23 attendees</span>
-              </div>
-              <div class="content-dashboard-card content-dashboard-card--lavender">
-                <strong>Category Exclusivity</strong>
-                <span>2 applications ready to review</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="content-founders content-flow-diagonal content-flow-diagonal--down">
-      <h2 class="content-founders-heading">Leadership &amp; Legacy</h2>
-      <p class="content-flow-step content-flow-step--center" aria-hidden="true">03</p>
-      <div class="content-team-row">
-        <article class="content-team-card content-flow-anchor content-flow-anchor--start">
-          <img src="assets/about-rosie.png" alt="Rosie" width="600" height="600" loading="lazy" decoding="async" />
-          <h3>Rosie</h3>
-          <p>Co-founder &amp; Commercial Director</p>
         </article>
-        <article class="content-team-card content-flow-anchor content-flow-anchor--end">
-          <img src="assets/about-catherine.png" alt="Catherine" width="450" height="600" loading="lazy" decoding="async" />
-          <h3>Catherine</h3>
-          <p>Incoming Operations Director</p>
+
+        <div class="about-era-bridge about-reveal-child" aria-hidden="true">
+          <span>Since then</span>
+        </div>
+
+        <article class="about-era about-era--now about-reveal-child">
+          <div class="about-era-copy">
+            <p class="about-era-year">Today</p>
+            <h3>More support for organisers</h3>
+            <p>
+              As more groups used the directory, organisers needed tools beyond a listing. With Catherine leading the rebuild, the Hub grew into a ticketing platform and business opportunities network — with payouts, attendee tools, and a workspace for independent groups.
+            </p>
+            <p>
+              Members can still browse everything in one place. Organisers can manage listings, tickets, and enquiries from the same Hub.
+            </p>
+          </div>
+          <div class="about-era-visual about-era-visual--product" aria-hidden="true">
+            <div class="about-product-mock">
+              <div class="about-product-bar">
+                <span></span><span></span><span></span>
+                <em>Organiser workspace</em>
+              </div>
+              <div class="about-product-body">
+                <div class="about-product-nav">
+                  <span class="is-active">Overview</span>
+                  <span>Events</span>
+                  <span>Tickets</span>
+                  <span>Attendees</span>
+                  <span>Opportunities</span>
+                </div>
+                <div class="about-product-main">
+                  <div class="about-product-metrics">
+                    <span><strong>148</strong> tickets sold</span>
+                    <span><strong>£2.4k</strong> protected</span>
+                  </div>
+                  <div class="about-product-panel">
+                    <strong>Next event</strong>
+                    <span>Business breakfast · 23 attending</span>
+                  </div>
+                  <div class="about-product-panel about-product-panel--accent">
+                    <strong>Applications</strong>
+                    <span>2 Category Exclusivity reviews</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </article>
       </div>
+    </div>
+  </section>
 
-      <aside class="content-family-callout">
-        <h3>A Proud Family Enterprise</h3>
-        <p>
-          Today, The Networker Hub operates as a proud, multi-generational, family-owned business enterprise led by Rosie and incoming Operations Director, Catherine. By blending decades of grassroots community-building experience with rigorous modern software engineering, our leadership team provides an unmatched level of personal stability, accountability, and boots-on-the-ground support that automated, faceless corporate ticketing giants simply cannot replicate.
-        </p>
-      </aside>
-    </section>
+  <section class="about-pillars about-reveal" aria-labelledby="about-pillars-heading">
+    <div class="about-pillars-inner">
+      <header class="about-section-head about-reveal-child">
+        <p class="section-kicker">What you&rsquo;ll find</p>
+        <h2 id="about-pillars-heading">Three parts of the Hub</h2>
+        <p class="about-section-lede">Built around how UK networking tends to work day to day.</p>
+      </header>
+      <ul class="about-pillar-grid">
+        <li class="about-pillar about-reveal-child">
+          <span class="about-pillar-num" aria-hidden="true">01</span>
+          <h3>Discover events</h3>
+          <p>Search UK networking meetings, conferences, and exhibitions, and filter by what matters to you.</p>
+          <a href="/events/">Browse events →</a>
+        </li>
+        <li class="about-pillar about-reveal-child">
+          <span class="about-pillar-num" aria-hidden="true">02</span>
+          <h3>Find organisers</h3>
+          <p>Organiser pages, reviews, guest visits, and the tools groups need to sell tickets and receive payouts.</p>
+          <a href="/events/?mode=organisers">Browse organisers →</a>
+        </li>
+        <li class="about-pillar about-reveal-child">
+          <span class="about-pillar-num" aria-hidden="true">03</span>
+          <h3>Explore opportunities</h3>
+          <p>Franchises, partnerships, and new ventures listed alongside events — enquire when you&rsquo;re ready.</p>
+          <a href="/opportunities/">Browse opportunities →</a>
+        </li>
+      </ul>
+    </div>
+  </section>
 
-    <section class="content-flow-tail">
-      <div class="content-flow-mission content-flow-anchor content-flow-anchor--start">
-        <h2>Our mission</h2>
-        <p>
-          We believe the right room at the right time changes careers and companies. The Networker Hub brings together event listings, organiser pages, and business opportunities in one trusted platform so members can find what matters locally and nationally, and organisers can reach the audiences they deserve.
-        </p>
+  <section class="about-team about-reveal" aria-labelledby="about-team-heading">
+    <div class="about-team-inner">
+      <header class="about-section-head about-section-head--left about-reveal-child">
+        <p class="section-kicker">Who we are</p>
+        <h2 id="about-team-heading">Rosie and Catherine</h2>
+        <p class="about-section-lede">The Networker Hub is run by Rosie and Catherine at The Networker Group Ltd.</p>
+      </header>
+      <div class="about-team-stage">
+        <article class="about-person about-person--rosie about-reveal-child">
+          <div class="about-person-photo">
+            <img src="assets/about-rosie.png" alt="Rosie" width="600" height="600" loading="lazy" decoding="async" />
+          </div>
+          <div class="about-person-copy">
+            <h3>Rosie</h3>
+            <p class="about-person-role">Co-founder &amp; Commercial Director</p>
+            <p>Looks after partnerships, organiser relationships, and day-to-day growth across the UK networking community.</p>
+          </div>
+        </article>
+        <article class="about-person about-person--catherine about-reveal-child">
+          <div class="about-person-photo">
+            <img src="assets/about-catherine.png" alt="Catherine" width="450" height="600" loading="lazy" decoding="async" />
+          </div>
+          <div class="about-person-copy">
+            <h3>Catherine</h3>
+            <p class="about-person-role">Co-founder &amp; Operations Director</p>
+            <p>Leads the product and technical side — ticketing, payouts, and the organiser tools on the Hub.</p>
+          </div>
+        </article>
       </div>
+    </div>
+  </section>
 
-      <div class="content-callout content-flow-anchor content-flow-anchor--center">
-        <p>
-          The Networker Hub is operated by <strong>The Networker Group Ltd</strong>. We work with organisers across the UK to list quality networking and professional development opportunities.
-        </p>
-        <p>
-          Want to sponsor the directory or partner with us? See our <a href="/advertising">advertising &amp; sponsorship</a> page.
-        </p>
-      </div>
+  <section class="about-mission about-reveal" aria-labelledby="about-mission-heading">
+    <div class="about-mission-inner about-reveal-child">
+      <p class="section-kicker">Our aim</p>
+      <h2 id="about-mission-heading">Help people find the right room at the right time.</h2>
+      <p>
+        We bring event listings, organiser pages, and business opportunities together so members can find what they need, and organisers can reach people who are looking.
+      </p>
+    </div>
+  </section>
 
-      <div class="content-flow-cta content-flow-anchor content-flow-anchor--end">
-        <h2>Get started</h2>
-        <p>
-          Browse events and business opportunities for free across the UK. When you&rsquo;re ready to buy a ticket or enquire about an opportunity, <a href="/register">create a free account</a> — it only takes 2 minutes. See our <a href="/faq">frequently asked questions</a> for more detail.
-        </p>
-        <p>
-          <a class="btn btn-primary" href="/events/">Browse events</a>
-        </p>
+  <section class="about-cta about-reveal" aria-labelledby="about-cta-heading">
+    <div class="about-cta-inner about-reveal-child">
+      <h2 id="about-cta-heading">Get started</h2>
+      <p>
+        Browse free across the UK. Create an account in about two minutes when you want to book a ticket or enquire about an opportunity.
+      </p>
+      <div class="about-cta-actions">
+        <a class="btn btn-primary" href="/events/">Browse events</a>
+        <a class="btn btn-secondary" href="/register">Create free account</a>
+        <a class="btn btn-secondary" href="/faq">FAQ</a>
       </div>
-    </section>
-  </div>
+      <p class="about-cta-legal">
+        Operated by <strong>The Networker Group Ltd</strong> · <a href="/advertising">Advertising &amp; sponsorship</a>
+      </p>
+    </div>
+  </section>
+
 </main>
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260804early" data-root=""></script>
+<script src="js/about-page.js?v=20260804about2" defer></script>
 
 </body>
 </html>
