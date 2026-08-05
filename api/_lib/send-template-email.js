@@ -607,6 +607,14 @@ const ORGANISER_MODERATION_EMAIL_SLUGS = new Set([
 ]);
 
 function shouldSkipEmailAllowlist(slug) {
+  // Auth / security mail must reach new organisers during pre-launch allowlist.
+  if (
+    slug === 'password_reset' ||
+    slug === 'organiser_email_verify' ||
+    slug === 'account_welcome'
+  ) {
+    return true;
+  }
   return MEMBER_ROSTER_EMAIL_SLUGS.has(slug) || ORGANISER_MODERATION_EMAIL_SLUGS.has(slug);
 }
 

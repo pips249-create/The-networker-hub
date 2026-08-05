@@ -239,7 +239,7 @@
 
     window.HubFindYourNextRotate(
       wordEl,
-      ['attendees', 'bookings', 'discovery', 'community', 'ticketing platform'],
+      ['attendee', 'booking', 'ticketing platform'],
       3000
     );
   }

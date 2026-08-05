@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260805email1d';
+  var FOOTER_BUILD = '20260805email1f';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -15,12 +15,10 @@
     return root + path;
   }
 
-  /** Email 1 / pre-launch marketing + auth pages — never show catalogue footer links. */
+  /** Email 1 / pre-launch marketing pages — never show catalogue footer links. */
   function forceEarlyAccessChrome() {
     var p = String(window.location.pathname || '').toLowerCase();
-    return /\/(for-organisers|about|contact|legal-policies|login|register|forgot-password)(?:\.html)?\/?$/.test(
-      p
-    );
+    return /\/(for-organisers|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
   }
 
   function effectiveCatalogueOpen(open) {

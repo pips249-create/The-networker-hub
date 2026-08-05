@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260805email1d';
+  var NAV_BUILD = '20260805email1f';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -105,9 +105,9 @@
   /** Email 1 / pre-launch marketing + auth — always early-access nav chrome. */
   function forceEarlyAccessChrome() {
     var p = String(window.location.pathname || '').toLowerCase();
-    return /\/(for-organisers|about|contact|legal-policies|login|register|forgot-password)(?:\.html)?\/?$/.test(
-      p
-    );
+    // Marketing / trust pages only — login & register must follow real catalogue state
+    // so the full signup form returns when the gate is off / claim links arrive.
+    return /\/(for-organisers|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
   }
 
   function loadComplianceAsset(path) {

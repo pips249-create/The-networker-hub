@@ -596,7 +596,7 @@
       },
       organiser: {
         kicker: 'For organisers',
-        titleHtml: 'Find your next <span class="auth-panel-accent" id="login-hero-word">attendees</span>',
+        titleHtml: 'Find your next <span class="auth-panel-accent" id="login-hero-word">attendee</span>',
         lede: 'Ticketing and discovery for UK networking groups \u2014 from weekly breakfasts to annual conferences.',
         points: [
           'List events & sell tickets with guest-visit tools',
@@ -613,7 +613,7 @@
         createHint: '27,000+ Events listed last year \u00b7 free to list',
         panelProof: '17,000+ people used the directory last year \u00b7 27,000+ Events listed',
         showNote: false,
-        rotate: ['attendees', 'bookings', 'discovery'],
+        rotate: ['attendee', 'booking', 'ticketing platform'],
       },
     };
 
@@ -760,7 +760,64 @@
       });
   }
 
+  function showRegisterFullForm() {
+    var early = document.getElementById('register-early-access');
+    var full = document.getElementById('register-full');
+    var steps = document.getElementById('auth-wizard-steps');
+    if (early) early.hidden = true;
+    if (full) full.hidden = false;
+    if (steps) steps.hidden = false;
+  }
+
+  function showRegisterEarlyAccess() {
+    var early = document.getElementById('register-early-access');
+    var full = document.getElementById('register-full');
+    var steps = document.getElementById('auth-wizard-steps');
+    if (early) early.hidden = false;
+    if (full) full.hidden = true;
+    if (steps) steps.hidden = true;
+  }
+
+  /**
+   * While the public catalogue is gated, hide the full signup form unless this is
+   * an Email 2 claim-link visit (intent=organiser-claim) or ?signup=1 override.
+   */
+  function applyEarlyAccessRegisterMode() {
+    var early = document.getElementById('register-early-access');
+    var full = document.getElementById('register-full');
+    if (!early || !full) return;
+
+    var params = new URLSearchParams(window.location.search);
+    var forceFull =
+      params.get('intent') === 'organiser-claim' ||
+      params.get('signup') === '1' ||
+      params.get('signup') === 'true';
+
+    if (forceFull) {
+      showRegisterFullForm();
+      return;
+    }
+
+    // Soft panel by default during Email 1; open full form only if catalogue APIs are live.
+    showRegisterEarlyAccess();
+    document.title = 'Nothing to set up today – The Networker Hub';
+
+    fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
+      .then(function (res) {
+        return res.status === 200;
+      })
+      .catch(function () {
+        return false;
+      })
+      .then(function (open) {
+        if (forceFull) return;
+        if (open) showRegisterFullForm();
+        else showRegisterEarlyAccess();
+      });
+  }
+
   applyCheckoutContext();
+  applyEarlyAccessRegisterMode();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
   initLoginAudienceToggle();
