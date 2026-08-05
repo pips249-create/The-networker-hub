@@ -118,7 +118,7 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 - [ ] Google Search Console → Page indexing / “Not found” for co.uk referring URLs
 - [ ] Hub `/sitemap.xml` 200 and submitted
 - [ ] Spot-check 10 old bookmarks (home, browse, 3 organisers, 3 events, login)
-- [ ] GBP website field → `https://www.thenetworkerhub.com`
+- [ ] If GBP exists (no Magpas pin): website field → `https://www.thenetworkerhub.com`
 - [ ] Support inbox: “where did the old site go?” FAQ ready
 
 ---

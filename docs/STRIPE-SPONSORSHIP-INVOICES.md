@@ -48,6 +48,17 @@ Run Supabase migrations `189_city_partner_waitlist.sql` and `190_city_partner_em
 
 Checkout metadata uses `placement=city_partner`, `networking_cities` (comma-separated slugs), `billing_mode` (`monthly` \| `prepaid`), and `term_months` (`monthly` or `1`/`3`/`6`/`12`). Slot state is stored on `cms_blocks` (`sponsor_subscription_id`, `sponsor_email`, `sponsor_available_from`).
 
+### Manual placements (Headline / Page Partner)
+
+In Command Centre → **Ads & sponsors**:
+
+| Placement | Field | Behaviour |
+|-----------|-------|-----------|
+| Headline heroes | **Placement ends (UTC)** | Stored as `cms_blocks.sponsor_available_from`. After this date the ad stops showing and is deactivated by cron. |
+| Page Partner mini slots | **Placement ends (UTC)** per ad | Stored as `ends_at` on each carousel ad in the slot JSON. Expired ads are hidden and deactivated by cron. |
+
+Use the +1 / +3 / +6 / +12 month presets when logging an offline deal. Leave blank for no automatic end.
+
 ## Creating an invoice in Stripe
 
 When you create an invoice for a sponsor, add **metadata** on the invoice (Stripe Dashboard → Invoice → Additional options → Metadata, or via API).

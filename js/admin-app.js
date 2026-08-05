@@ -378,8 +378,8 @@
       title: 'How to manage ads and sponsors',
       steps: [
         'Pick a placement — browse heroes, Page Partner mini sponsors, city partners, or home partners.',
-        'Browse heroes (events / organisers / opportunities): logo + website link only. Opportunity sidebar and city/county partners are also logo + link. Mini carousels need logo + link per slot.',
-        'Page Partner mini sponsors: logo + click-through link per slot — same logos appear on detail pages and selected emails. Tick Active, then Save.',
+        'Browse heroes (events / organisers / opportunities): logo + website link only. Set Placement ends for manual deal terms. Opportunity sidebar and city/county partners are also logo + link. Mini carousels need logo + link per slot (each can have its own end date).',
+        'Page Partner mini sponsors: logo + click-through link per slot — same logos appear on detail pages and selected emails. Tick Active, set Placement ends if needed, then Save.',
         'Check Ad active (or Mini sponsors active), save, and confirm on the live page.',
       ],
     },
@@ -7758,6 +7758,18 @@
     return d.toISOString();
   }
 
+  function setPlacementEndsMonthsFromNow(inputEl, months) {
+    if (!inputEl) return;
+    var n = Math.floor(Number(months) || 0);
+    if (n <= 0) {
+      inputEl.value = '';
+      return;
+    }
+    var d = new Date();
+    d.setUTCMonth(d.getUTCMonth() + n);
+    inputEl.value = d.toISOString().slice(0, 16);
+  }
+
   function initCityPartnerWaitlistAdmin() {
     var statusEl = document.getElementById('city-partner-waitlist-status');
     var bodyEl = document.getElementById('city-partner-waitlist-body');
@@ -8289,13 +8301,22 @@
       '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">What you need</p>' +
       '<p id="sponsor-required-copy" class="text-sm text-slate-700"></p></div>' +
       '<div id="city-partner-subscription-meta" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm space-y-1"></div>' +
-      '<div id="city-partner-slot-fields" class="hidden space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">' +
-      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slot booking details</p>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-slot-email">Billing / hold email</label>' +
-      '<input type="email" id="sponsor-slot-email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="sponsor@company.com" autocomplete="off"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-slot-available-from">Slot opens (UTC)</label>' +
+      '<div id="sponsor-placement-term-fields" class="space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Placement term</p>' +
+      '<div id="city-partner-email-wrap" class="hidden">' +
+      '<label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-slot-email">Billing / hold email</label>' +
+      '<input type="email" id="sponsor-slot-email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="sponsor@company.com" autocomplete="off">' +
+      '</div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-slot-available-from">Placement ends (UTC)</label>' +
       '<input type="datetime-local" id="sponsor-slot-available-from" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      '<p class="text-xs text-slate-500 mt-1">Leave blank for an immediate hold. Stripe subscriptions update these automatically.</p></div>' +
+      '<div class="flex flex-wrap gap-2 mt-2" id="sponsor-placement-presets">' +
+      '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="1">+1 month</button>' +
+      '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="3">+3 months</button>' +
+      '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="6">+6 months</button>' +
+      '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="12">+12 months</button>' +
+      '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="0">Clear</button>' +
+      '</div>' +
+      '<p class="text-xs text-slate-500 mt-1">Leave blank for no automatic end. After this date the placement stops showing and the slot shows as available again. City Partner Stripe subscriptions update this automatically.</p></div>' +
       '</div>' +
       '<label id="sponsor-include-emails-wrap" class="hidden items-start gap-2 text-sm text-slate-700 rounded-lg border border-violet-100 bg-violet-50 px-3 py-3">' +
       '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
@@ -8436,7 +8457,8 @@
       var includeWrap = document.getElementById('sponsor-include-emails-wrap');
       var emailScope = document.getElementById('sponsor-email-scope');
       var logoOnlyNote = document.getElementById('sponsor-hero-logo-only-note');
-      var slotFields = document.getElementById('city-partner-slot-fields');
+      var slotFields = document.getElementById('sponsor-placement-term-fields');
+      var cityEmailWrap = document.getElementById('city-partner-email-wrap');
       var requiredCopy = document.getElementById('sponsor-required-copy');
       var emailScopes = {
         events_sponsor_hub: 'Shown in event and attendee emails selected for sponsorship.',
@@ -8449,7 +8471,10 @@
       }
       if (emailScope) emailScope.textContent = emailScopes[currentSlotKey] || '';
       if (slotFields) {
-        slotFields.classList.toggle(
+        slotFields.classList.toggle('hidden', slot.preview === 'carousel');
+      }
+      if (cityEmailWrap) {
+        cityEmailWrap.classList.toggle(
           'hidden',
           slot.preview !== 'city_partner' || !isCityPartnerSlotKey(currentSlotKey)
         );
@@ -8644,7 +8669,7 @@
                 metaLines.push('Stripe subscription: ' + block.sponsor_subscription_id);
               }
               if (block.sponsor_available_from) {
-                metaLines.push('Opens: ' + formatAdminDateTime(block.sponsor_available_from));
+                metaLines.push('Placement ends: ' + formatAdminDateTime(block.sponsor_available_from));
               }
               if (metaLines.length) {
                 metaEl.classList.remove('hidden');
@@ -8681,6 +8706,12 @@
     }
 
     document.getElementById('sponsor-preview-btn').addEventListener('click', renderPreview);
+    document.querySelectorAll('.sponsor-placement-preset').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById('sponsor-slot-available-from');
+        setPlacementEndsMonthsFromNow(input, btn.getAttribute('data-months'));
+      });
+    });
     [
       'sponsor-company',
       'sponsor-logo-url',
@@ -8821,11 +8852,11 @@
       }
       if (slot.preview === 'city_partner' && isCityPartnerSlotKey(currentSlotKey)) {
         var slotEmailEl = document.getElementById('sponsor-slot-email');
-        var slotOpensEl = document.getElementById('sponsor-slot-available-from');
         payload.sponsor_email = slotEmailEl ? slotEmailEl.value.trim() : '';
-        payload.sponsor_available_from = slotOpensEl
-          ? datetimeLocalUtcToIso(slotOpensEl.value)
-          : null;
+      }
+      var slotOpensEl = document.getElementById('sponsor-slot-available-from');
+      if (slotOpensEl) {
+        payload.sponsor_available_from = datetimeLocalUtcToIso(slotOpensEl.value);
       }
 
       fetch('/api/admin/sponsor', {
@@ -9227,7 +9258,19 @@
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Click-through link <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-link-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(ad.cta_url || '') +
-        '" placeholder="https://… — opens when someone clicks the logo"></div></div>'
+        '" placeholder="https://… — opens when someone clicks the logo"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Placement ends (UTC)</label>' +
+        '<input type="datetime-local" class="event-carousel-ad-ends-at w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(isoToDatetimeLocalUtc(ad.ends_at)) +
+        '">' +
+        '<div class="flex flex-wrap gap-2 mt-2">' +
+        '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="1">+1 mo</button>' +
+        '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="3">+3 mo</button>' +
+        '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="6">+6 mo</button>' +
+        '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="12">+12 mo</button>' +
+        '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="0">Clear</button>' +
+        '</div>' +
+        '<p class="text-xs text-slate-500 mt-1">Leave blank for no automatic end. After this date the mini sponsor stops showing.</p></div></div>'
       );
     }
 
@@ -9238,6 +9281,7 @@
         var id = row.getAttribute('data-carousel-ad-id') || 'event_carousel_' + (index + 1);
         var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
         var linkUrlEl = row.querySelector('.event-carousel-ad-link-url');
+        var endsAtEl = row.querySelector('.event-carousel-ad-ends-at');
         var activeCheckbox = row.querySelector('.event-carousel-ad-active');
         var existing = adsState.find(function (ad) {
           return ad.id === id;
@@ -9251,6 +9295,7 @@
           logo_url: logoUrl,
           cta_url: linkUrlEl ? linkUrlEl.value.trim() : '',
           active: activeCheckbox ? activeCheckbox.checked : false,
+          ends_at: endsAtEl ? datetimeLocalUtcToIso(endsAtEl.value) : null,
         });
       });
       return out;
@@ -9291,6 +9336,15 @@
           setCarouselStatus('Could not load carousel.', 'error');
         });
     }
+
+    listEl.addEventListener('click', function (ev) {
+      var preset = ev.target.closest('.event-carousel-ends-preset');
+      if (!preset) return;
+      var row = preset.closest('[data-carousel-ad-id]');
+      if (!row) return;
+      var input = row.querySelector('.event-carousel-ad-ends-at');
+      setPlacementEndsMonthsFromNow(input, preset.getAttribute('data-months'));
+    });
 
     listEl.addEventListener('change', function (ev) {
       var fileInput = ev.target.closest('.event-carousel-ad-logo-file');

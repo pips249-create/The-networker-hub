@@ -351,7 +351,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [ ] | Verify `/sitemap.xml` after deploy — counts match published events + organisers |
 | [x] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
 | [ ] | **Google Search Console** — verify `www.thenetworkerhub.com`; submit sitemap |
-| [ ] | **Google Business Profile** — Software company; Magpas HQ; hub URL |
+| [ ] | **Google Business Profile** — Software/online, no Magpas pin (hide address / UK service area); hub URL; park if unverifiable |
 | [ ] | Launch week: remove `SITE_ACCESS_PASSWORD` → confirm `/robots.txt` Allow, `/llms.txt` 200 |
 | [x] | `the-networker.co.uk` 301 redirect map ready (Tab 7) — draft `docs/LEGACY-REDIRECT-MAP.md` |
 | [ ] | City/region landing pages (post-launch — not a 100% blocker) |

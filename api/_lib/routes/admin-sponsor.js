@@ -3,7 +3,7 @@ const { getAdminSponsor, saveSponsorBlock, copySponsorBlock } = require('../admi
 const { BOOKING_EMAIL_SPONSOR_SLOT, EVENTS_SPONSOR_SLOT } = require('../email-booking-defaults');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
-const { isCityPartnerSlot, isRegionPartnerSlot } = require('../cms-sponsor-fields');
+const { isRegionPartnerSlot } = require('../cms-sponsor-fields');
 
 function parseBody(req) {
   let body = req.body;
@@ -97,7 +97,6 @@ module.exports = async function handler(req, res) {
     const cta_url = String(body.cta_url || '').trim();
     const company_name = String(body.company_name || '').trim();
     const cta_color = String(body.cta_color || '').trim();
-    const isCityPartner = isCityPartnerSlot(slot);
     const isRegionPartner = isRegionPartnerSlot(slot);
 
     // Logo-only placements (browse heroes with a logo, city/county partners, opportunity sidebar)
@@ -126,16 +125,14 @@ module.exports = async function handler(req, res) {
         include_in_emails: isRegionPartner ? false : body.include_in_emails !== false,
         logo_band_dark: body.logo_band_dark === true,
       };
-      if (isCityPartner) {
-        if (body.sponsor_email !== undefined) {
-          savePayload.sponsor_email =
-            String(body.sponsor_email || '')
-              .trim()
-              .toLowerCase() || null;
-        }
-        if (body.sponsor_available_from !== undefined) {
-          savePayload.sponsor_available_from = parseSlotAvailableFrom(body.sponsor_available_from);
-        }
+      if (body.sponsor_email !== undefined) {
+        savePayload.sponsor_email =
+          String(body.sponsor_email || '')
+            .trim()
+            .toLowerCase() || null;
+      }
+      if (body.sponsor_available_from !== undefined) {
+        savePayload.sponsor_available_from = parseSlotAvailableFrom(body.sponsor_available_from);
       }
       const block = await saveSponsorBlock(sb, savePayload);
       return json(res, 200, { ok: true, block, slot, updatedAt: new Date().toISOString() });

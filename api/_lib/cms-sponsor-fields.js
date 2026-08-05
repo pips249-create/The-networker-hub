@@ -76,6 +76,18 @@ function isRegionPartnerSlot(slot) {
   return isCityPartnerSlot(slot) || isCountyPartnerSlot(slot);
 }
 
+/**
+ * True when sponsor_available_from is set and that moment has passed
+ * (placement end / slot re-opens for the next partner).
+ */
+function sponsorPlacementEnded(block, now = new Date()) {
+  const raw = block?.sponsor_available_from;
+  if (!raw) return false;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return false;
+  return d.getTime() <= now.getTime();
+}
+
 function isCompactSponsorSlot(slot) {
   const key = String(slot || '').trim();
   return key.endsWith('_sidebar_ad') || isRegionPartnerSlot(key);
@@ -84,6 +96,7 @@ function isCompactSponsorSlot(slot) {
 /** Whether a cms_blocks row is ready for booking emails (logo/name + website link). */
 function isEmailSponsorBlock(block) {
   if (!block || block.active === false) return false;
+  if (sponsorPlacementEnded(block)) return false;
   if (!hasValidCtaUrl(block.cta_url)) return false;
   return hasSponsorLogo(block) || Boolean(sponsorCompanyName(block)) || Boolean(sponsorTagline(block));
 }
@@ -91,6 +104,7 @@ function isEmailSponsorBlock(block) {
 /** Whether a cms_blocks row is ready to show on the public site for its slot. */
 function isPublishableSponsorBlock(block, slot) {
   if (!block || block.active === false) return false;
+  if (sponsorPlacementEnded(block)) return false;
   const key = String(slot || block.slot || '').trim();
   const ctaLabel = String(block.cta_label || '').trim();
   const ctaUrl = String(block.cta_url || '').trim();
@@ -184,6 +198,7 @@ module.exports = {
   isCityPartnerSlot,
   isCountyPartnerSlot,
   isRegionPartnerSlot,
+  sponsorPlacementEnded,
   isEmailSponsorBlock,
   isPublishableSponsorBlock,
   normalizeSponsorBlock,

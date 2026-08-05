@@ -62,6 +62,12 @@ function carouselIdPrefix(slot) {
 function normalizeCarouselAd(raw, index, slot) {
   const prefix = carouselIdPrefix(slot);
   const id = String(raw?.id || `${prefix}_${index + 1}`).trim();
+  const endsRaw = raw?.ends_at || raw?.endsAt || raw?.placement_ends_at || '';
+  let endsAt = null;
+  if (endsRaw) {
+    const d = new Date(endsRaw);
+    if (!Number.isNaN(d.getTime())) endsAt = d.toISOString();
+  }
   return {
     id,
     slot_index: Number.isFinite(Number(raw?.slot_index)) ? Number(raw.slot_index) : index,
@@ -71,6 +77,7 @@ function normalizeCarouselAd(raw, index, slot) {
     cta_label: String(raw?.cta_label || raw?.ctaLabel || 'Enquire now').trim(),
     cta_color: sanitizeCtaColor(raw?.cta_color || raw?.ctaColor) || '',
     active: raw?.active !== false,
+    ends_at: endsAt,
   };
 }
 
@@ -115,8 +122,12 @@ function hasValidCarouselCta(url) {
   return /^(https?:|mailto:)/i.test(String(url || '').trim());
 }
 
-function isPublishableCarouselAd(ad) {
+function isPublishableCarouselAd(ad, now = new Date()) {
   if (!ad || ad.active === false) return false;
+  if (ad.ends_at) {
+    const ends = new Date(ad.ends_at);
+    if (!Number.isNaN(ends.getTime()) && ends.getTime() <= now.getTime()) return false;
+  }
   return hasValidCarouselLogo(ad.logo_url) && hasValidCarouselCta(ad.cta_url);
 }
 
