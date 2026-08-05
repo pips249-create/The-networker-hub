@@ -54,7 +54,14 @@ module.exports = async function handler(req, res) {
           ''
       ).trim();
       if (!eventId) return json(res, 400, { ok: false, error: 'missing_event_id' });
-      const preview = await getConnectionsPreview(auth.session, eventId);
+      const listKind = String(
+        req.query?.listKind ||
+          req.query?.list_kind ||
+          url.searchParams.get('listKind') ||
+          url.searchParams.get('list_kind') ||
+          ''
+      ).trim();
+      const preview = await getConnectionsPreview(auth.session, eventId, listKind);
       return json(res, 200, { ok: true, ...preview });
     }
 
@@ -66,6 +73,9 @@ module.exports = async function handler(req, res) {
         eventId,
         organiserNote: body.organiserNote || body.organiser_note || '',
         subject: body.subject || '',
+        fromName: body.fromName || body.from_name || body.senderName || body.sender_name || '',
+        listKind: body.listKind || body.list_kind || '',
+        excludeEmails: body.excludeEmails || body.exclude_emails || body.omitEmails || [],
         force: body.force === true || body.resend === true,
       });
       return json(res, 200, result);

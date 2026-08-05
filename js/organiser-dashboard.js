@@ -277,6 +277,8 @@
       status: promotable ? 'published' : statusKey || 'draft',
       statusKey: summary.statusKey || 'draft',
       statusLabel: summary.statusLabel || 'Draft',
+      attendanceMode: summary.attendanceMode || 'tickets',
+      seriesGroupId: summary.seriesGroupId || null,
       ticketsSoldLabel: '…',
       revenueDisplay: '…',
       revenueNum: 0,
@@ -1608,7 +1610,7 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260728ux';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260805comm1';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260805comm4';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1711,23 +1713,26 @@
     if (tab === 'partner') return 'social-partner';
     if (tab === 'brand') return 'social-brand';
     if (tab === 'reach') return 'social-reach';
-    if (tab === 'communicate') return 'social-communicate';
     return 'social';
   }
 
-  function isAttendeeListEmailRoute(route) {
+  function isCommunicateRoute(route) {
     const r = String(route || '').toLowerCase();
     return (
+      r === 'communicate' ||
+      r === 'social-communicate' ||
       r === 'social-email' ||
       r === 'email' ||
       r === 'email-who-attended' ||
       r === 'attendee-email' ||
       r === 'connections-email' ||
       r === 'group-updates' ||
-      r === 'monthly-updates' ||
-      r === 'social-communicate' ||
-      r === 'communicate'
+      r === 'monthly-updates'
     );
+  }
+
+  function isAttendeeListEmailRoute(route) {
+    return isCommunicateRoute(route);
   }
 
   function isSocialRoute(route) {
@@ -1749,16 +1754,7 @@
       r === 'brand' ||
       r === 'brand-kit' ||
       r === 'social-reach' ||
-      r === 'reach' ||
-      r === 'social-communicate' ||
-      r === 'communicate' ||
-      r === 'social-email' ||
-      r === 'email' ||
-      r === 'email-who-attended' ||
-      r === 'attendee-email' ||
-      r === 'connections-email' ||
-      r === 'group-updates' ||
-      r === 'monthly-updates'
+      r === 'reach'
     );
   }
 
@@ -1785,19 +1781,6 @@
     ) {
       return 'reach';
     }
-    if (
-      r === 'social-communicate' ||
-      r === 'communicate' ||
-      r === 'social-email' ||
-      r === 'email' ||
-      r === 'email-who-attended' ||
-      r === 'attendee-email' ||
-      r === 'connections-email' ||
-      r === 'group-updates' ||
-      r === 'monthly-updates'
-    ) {
-      return 'communicate';
-    }
     if (r === 'social-linkedin') return 'linkedin';
     return '';
   }
@@ -1811,11 +1794,9 @@
         stored === 'linkedin' ||
         stored === 'partner' ||
         stored === 'brand' ||
-        stored === 'reach' ||
-        stored === 'communicate' ||
-        stored === 'email'
+        stored === 'reach'
       ) {
-        return stored === 'email' ? 'communicate' : stored;
+        return stored;
       }
     } catch {
       /* ignore */
@@ -1857,7 +1838,6 @@
       // Tip points people toward LinkedIn — hide when they are already there or on a focused tool.
       hint.hidden =
         tab === 'linkedin' ||
-        tab === 'communicate' ||
         tab === 'spotlight' ||
         tab === 'ranking' ||
         tab === 'partner' ||
@@ -1875,9 +1855,6 @@
     if (tab === 'linkedin') {
       ensureLinkedInPostBuilder({ force: true });
       renderBrandKitNudge();
-    }
-    if (tab === 'communicate') {
-      ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
     }
     if (tab === 'ranking') {
       renderOrganiserRankingShare();
@@ -1911,18 +1888,6 @@
     if (hash.includes('partner') || hash.includes('website-badge')) return 'partner';
     if (hash.includes('brand') || hash.includes('colour') || hash.includes('color')) return 'brand';
     if (hash.includes('reach') || hash === 'visibility' || hash === 'grow-visibility') return 'reach';
-    if (
-      hash.includes('communicate') ||
-      hash.includes('email') ||
-      hash === 'group-updates' ||
-      hash === 'monthly-updates' ||
-      hash === 'social-email' ||
-      hash === 'email-who-attended' ||
-      hash === 'attendee-email' ||
-      hash === 'connections-email'
-    ) {
-      return 'communicate';
-    }
     if (hash.includes('linkedin') || hash === 'social' || hash === 'promote') return 'linkedin';
     return '';
   }
@@ -2018,17 +1983,14 @@
   }
 
   function setAttendeeEmailPanelVisible(show) {
-    // Composer now lives on Promote → Communicate; keep helper for older call sites.
-    if (show) {
-      setRoute('social-communicate');
-    }
+    if (show) setRoute('communicate');
   }
 
   function openAttendeeEmailForEvent(eventId) {
     if (eventId && eventId !== 'all') {
       filters.attendeesEvent = eventId;
     }
-    setRoute('social-communicate');
+    setRoute('communicate');
     ensureEventsLoaded()
       .catch(function () {
         return false;
@@ -3686,6 +3648,42 @@
       });
     }
 
+    const groupsWithFreeUsed = new Set();
+    (state.events || []).forEach(function (ev) {
+      if (!ev || !ev.connectionsEmailSentAt) return;
+      const gid = String(ev.organiserGroupId || ev.organiserId || ev.organiser_id || '');
+      if (gid) groupsWithFreeUsed.add(gid);
+    });
+    const roundUpReady = (state.events || []).filter(function (ev) {
+      if (!ev || !ev.id) return false;
+      const gid = String(ev.organiserGroupId || ev.organiserId || ev.organiser_id || '');
+      if (gid && groupsWithFreeUsed.has(gid)) return false;
+      const startMs = new Date(ev.date || ev.startsAt || ev.starts_at || 0).getTime();
+      if (!Number.isFinite(startMs) || startMs > Date.now()) return false;
+      return eventEffectiveTicketsSold(ev) >= 2;
+    });
+    if (roundUpReady.length) {
+      const first = roundUpReady[0];
+      notices.push({
+        id: 'attendee-roundup',
+        type: 'action',
+        title:
+          roundUpReady.length === 1
+            ? 'Ready to send who attended?'
+            : roundUpReady.length + ' events ready for an Attendee round-up',
+        text:
+          roundUpReady.length === 1
+            ? '“' +
+              esc(first.title || 'Your event') +
+              '” has finished and has guests who can reconnect. You still have your free Attendee round-up for this organiser page.'
+            : 'Past events still have no Attendee round-up. You get one free send per organiser page — open Communicate when you’re ready.',
+        actions:
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="communicate" data-send-attendee-email="' +
+          esc(first.id) +
+          '">Open Communicate</button>',
+      });
+    }
+
     return notices;
   }
 
@@ -3719,6 +3717,9 @@
     const panel = document.getElementById('org-notifications-panel');
     const navBtn = document.getElementById('org-notifications-nav');
     if (!panel) return;
+    refreshPendingApplicationsSummary().finally(function () {
+      renderOrganiserNotices();
+    });
     renderOrganiserNotices();
     panel.hidden = false;
     panel.setAttribute('aria-hidden', 'false');
@@ -3848,7 +3849,12 @@
     root.querySelectorAll('[data-org-route]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const route = btn.getAttribute('data-org-route');
+        const emailEvent = btn.getAttribute('data-send-attendee-email');
         closeNotificationsPanel();
+        if (emailEvent) {
+          openAttendeeEmailForEvent(emailEvent);
+          return;
+        }
         if (route === 'events-attendees') {
           if (btn.getAttribute('data-attendees-archive') === '1') {
             filters.attendeesView = 'archive';
@@ -4599,6 +4605,30 @@
     );
   }
 
+  function eventIsCategoryExclusivity(ev) {
+    if (!ev) return false;
+    const mode = String(ev.attendanceMode || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+    if (mode === 'category_exclusivity' || mode === 'osop') return true;
+    if (ev.seriesEvents && ev.seriesEvents.length) {
+      if (ev.seriesEvents.some((child) => eventIsCategoryExclusivity(child))) return true;
+    }
+    const ids = [ev.id]
+      .concat(ev.seriesEventIds || [])
+      .filter(Boolean);
+    return ids.some((id) => Boolean(eventApplicationTicket(id)));
+  }
+
+  function eventIsPublishedListing(ev) {
+    if (!ev) return false;
+    const status = String(ev.status || '').toLowerCase();
+    const key = String(ev.statusKey || '').toLowerCase();
+    if (status === 'published' || status === 'live') return true;
+    return key === 'live' || key === 'upcoming' || key === 'published' || key === 'archived';
+  }
+
   function eventActionMenuHtmlWithItem(ev) {
     const id = ev.id;
     const title = ev.title;
@@ -4615,14 +4645,13 @@
       : '';
     const deleteItem = isSeriesParent ? '' : eventDeleteActionHtml(ev);
     const alumniItem =
-      ev.alumniFastPassEnabled && String(ev.status || '').toLowerCase() === 'published'
+      ev.alumniFastPassEnabled && eventIsPublishedListing(ev)
         ? '<button type="button" class="org-action-item" data-send-alumni-invites="' +
           esc(id) +
           '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Invite previous attendees</strong><span>Email past attendees a locked ticket link</span></span></button>'
         : '';
     const ceMemberItem =
-      (ev.attendanceMode === 'category_exclusivity' || ev.attendanceMode === 'osop') &&
-      String(ev.status || '').toLowerCase() === 'published'
+      eventIsCategoryExclusivity(ev) && eventIsPublishedListing(ev)
         ? '<button type="button" class="org-action-item" data-send-ce-member-invites="' +
           esc(id) +
           '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Invite members</strong><span>Email your Membership list — they book without applying</span></span></button>'
@@ -4646,6 +4675,7 @@
       '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
       esc(id) +
       '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
+      ceMemberItem +
       connectionsItem +
       '<button type="button" class="org-action-item" data-manage-tickets="' +
       esc(id) +
@@ -4658,7 +4688,6 @@
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
       alumniItem +
-      ceMemberItem +
       cancelItem +
       deleteItem +
       eventUnpublishActionHtml(ev) +
@@ -4851,6 +4880,9 @@
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
+    if (isCommunicateRoute(hash)) {
+      return { page: 'communicate', sub: null, openAttendeeEmail: true };
+    }
     if (hash === 'academy' || hash.startsWith('academy-') || hash === 'training-overview') {
       return { page: 'dashboard', sub: null };
     }
@@ -4867,7 +4899,6 @@
       return {
         page: socialTab === 'spotlight' ? 'social-spotlight' : 'social',
         sub: null,
-        openAttendeeEmail: socialTab === 'communicate',
       };
     }
     return { page: hash, sub: null };
@@ -5188,7 +5219,35 @@
       eventTitle: row.eventTitle,
       eventId: row.eventId,
       applicationStatus: 'Pending',
+      screeningIndustry: row.screeningIndustry || '',
+      screeningJobTitle: row.screeningJobTitle || '',
     }));
+  }
+
+  let pendingApplicationsRefreshPromise = null;
+
+  async function refreshPendingApplicationsSummary() {
+    if (state.attendeesLoaded) {
+      updatePendingApplicationsUi();
+      return true;
+    }
+    if (pendingApplicationsRefreshPromise) return pendingApplicationsRefreshPromise;
+    pendingApplicationsRefreshPromise = (async function () {
+      try {
+        const { ok, data } = await api('/api/organiser/attendees?view=pending-summary');
+        if (!ok || !data) return false;
+        const pending = data.pendingApplications || {};
+        state.pendingApplicationsCount = Number(pending.count) || 0;
+        state.pendingApplicationsPreview = pending.preview || [];
+        updatePendingApplicationsUi();
+        return true;
+      } catch {
+        return false;
+      } finally {
+        pendingApplicationsRefreshPromise = null;
+      }
+    })();
+    return pendingApplicationsRefreshPromise;
   }
 
   function updatePendingApplicationsUi() {
@@ -5203,12 +5262,83 @@
       tabBadge.hidden = count < 1;
       tabBadge.textContent = count > 1 ? String(count) : 'New';
     }
+    renderPendingApplicationsBanner();
     renderOrganiserNotices();
     renderHubPortalMeta();
   }
 
   function updatePendingApplicationsNavBadge() {
     updatePendingApplicationsUi();
+  }
+
+  function renderPendingApplicationsBanner() {
+    const banner = document.getElementById('attendees-pending-banner');
+    if (!banner) return;
+    if (filters.attendeesView === 'archive') {
+      banner.hidden = true;
+      return;
+    }
+    const pending = pendingApplicationsList().filter((a) => {
+      if (filters.attendeesEvent === 'all') return true;
+      return a.eventId === filters.attendeesEvent;
+    });
+    if (!pending.length) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    const cards = pending
+      .slice(0, 8)
+      .map((a) => {
+        const industry = String(a.screeningIndustry || '').trim();
+        const jobTitle = String(a.screeningJobTitle || '').trim();
+        const answers =
+          industry || jobTitle
+            ? '<div class="org-pending-app-card-answers">' +
+              (industry
+                ? '<span><strong>Industry</strong>' + esc(industry) + '</span>'
+                : '') +
+              (jobTitle
+                ? '<span><strong>Job title</strong>' + esc(jobTitle) + '</span>'
+                : '') +
+              '</div>'
+            : '';
+        const actions = state.attendeesLoaded
+          ? attendeeActionsHtml(a)
+          : '<button type="button" class="org-applications-banner-cta" data-org-route="events-attendees" data-attendees-pending="1">Open to approve or decline</button>';
+        return (
+          '<div class="org-pending-app-card" data-pending-app="' +
+          esc(a.id) +
+          '">' +
+          '<div class="org-pending-app-card-meta">' +
+          '<span class="org-pending-app-card-name">' +
+          esc(a.name || 'Applicant') +
+          '</span>' +
+          '<span class="org-pending-app-card-event">' +
+          esc(a.eventTitle || 'Event') +
+          '</span>' +
+          '</div>' +
+          answers +
+          actions +
+          '</div>'
+        );
+      })
+      .join('');
+    const more =
+      pending.length > 8
+        ? '<p>+' + String(pending.length - 8) + ' more applications waiting for a decision.</p>'
+        : '';
+    banner.innerHTML =
+      '<p><strong>' +
+      (pending.length === 1
+        ? '1 Category Exclusivity application needs your decision'
+        : pending.length + ' Category Exclusivity applications need your decision') +
+      '</strong> — approve or decline below. Approved guests then get a payment link.</p>' +
+      '<div class="org-pending-apps-list">' +
+      cards +
+      '</div>' +
+      more;
+    banner.hidden = false;
   }
 
   function attendeeVisitCount(a) {
@@ -5790,7 +5920,7 @@
         '"><span class="org-application-btn-icon" aria-hidden="true">✓</span>Approve</button>' +
         '<button type="button" class="org-application-deny-btn" data-show-deny-form="' +
         esc(a.id) +
-        '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Decline &amp; archive</button>' +
+        '"><span class="org-application-btn-icon" aria-hidden="true">✕</span>Decline</button>' +
         '</div>' +
         '<button type="button" class="org-application-resend-link" data-resend-application-alert="' +
         esc(a.id) +
@@ -6027,6 +6157,7 @@
     if (!body) return;
     renderAttendeesFilterNote();
     renderAttendeesArchiveNav();
+    renderPendingApplicationsBanner();
     renderSeatRefillBanner();
     const list = filteredAttendeesList();
     renderAttendeesSummary(list);
@@ -6081,6 +6212,7 @@
       ) {
         tr.className = 'org-attendee-row-archived';
       }
+      const isPendingApp = String(a.applicationStatus || '') === 'Pending';
       const registeredLabel =
         filters.attendeesView === 'archive' && a.applicationDecidedAt
           ? formatDateShort(a.applicationDecidedAt)
@@ -6107,9 +6239,18 @@
         '</td><td data-label="Registered">' +
         esc(registeredLabel) +
         '</td><td class="org-td-actions" data-label="Actions">' +
-        attendeeActionsHtml(a) +
+        (isPendingApp
+          ? '<span class="org-application-review-inline-hint">Use buttons below</span>'
+          : attendeeActionsHtml(a)) +
         '</td>';
       body.appendChild(tr);
+      if (isPendingApp) {
+        const reviewTr = document.createElement('tr');
+        reviewTr.className = 'org-attendee-row-pending-review';
+        reviewTr.innerHTML =
+          '<td colspan="11" data-label="Review">' + attendeeActionsHtml(a) + '</td>';
+        body.appendChild(reviewTr);
+      }
     });
   }
 
@@ -7641,6 +7782,9 @@
       m.style.bottom = '';
       m.style.visibility = '';
       m.style.display = '';
+      m.style.maxHeight = '';
+      m.style.overflowY = '';
+      m.style.webkitOverflowScrolling = '';
       if (m._actionWrap) {
         m._actionWrap.appendChild(m);
         m._actionWrap = null;
@@ -7666,33 +7810,38 @@
     toggle.setAttribute('aria-expanded', 'true');
     menu.style.visibility = 'hidden';
     menu.style.display = 'block';
+    menu.style.overflowY = 'auto';
+    menu.style.webkitOverflowScrolling = 'touch';
+
+    const pad = 12;
+    const maxH = Math.min(window.innerHeight - pad * 2, 420);
+    menu.style.maxHeight = maxH + 'px';
+
     const rect = toggle.getBoundingClientRect();
-    const menuW = menu.offsetWidth || 240;
-    const menuH = menu.offsetHeight || 200;
+    const menuW = Math.min(menu.offsetWidth || 260, window.innerWidth - pad * 2);
+    // Use capped height so positioning keeps the menu on-screen and scrollable.
+    const menuH = Math.min(menu.scrollHeight || 200, maxH);
+
     let top = rect.bottom + 6;
     let left = rect.right - menuW;
-    if (top + menuH > window.innerHeight - 12) {
-      top = Math.max(12, rect.top - menuH - 6);
+    if (top + menuH > window.innerHeight - pad) {
+      const above = rect.top - menuH - 6;
+      if (above >= pad) top = above;
+      else top = pad;
     }
-    if (left < 12) left = 12;
-    if (left + menuW > window.innerWidth - 12) {
-      left = window.innerWidth - menuW - 12;
+    if (left < pad) left = pad;
+    if (left + menuW > window.innerWidth - pad) {
+      left = window.innerWidth - menuW - pad;
     }
+    // Re-clamp height to whatever space remains below the chosen top.
+    const availBelow = window.innerHeight - top - pad;
+    menu.style.maxHeight = Math.max(160, Math.min(maxH, availBelow)) + 'px';
+
     menu.style.top = top + 'px';
     menu.style.left = left + 'px';
     menu.style.right = 'auto';
     menu.style.bottom = 'auto';
     menu.style.visibility = '';
-    requestAnimationFrame(function () {
-      if (!menu.classList.contains('is-open')) return;
-      const nextRect = toggle.getBoundingClientRect();
-      const nextH = menu.offsetHeight || menuH;
-      let nextTop = nextRect.bottom + 6;
-      if (nextTop + nextH > window.innerHeight - 12) {
-        nextTop = Math.max(12, nextRect.top - nextH - 6);
-      }
-      menu.style.top = nextTop + 'px';
-    });
   }
 
   function handleActionMenuChoice(e) {
@@ -8997,29 +9146,35 @@
     }
   }
 
+  function setMembershipsPageLoading(on, label) {
+    const loading = document.getElementById('member-lists-loading');
+    const workspace = document.getElementById('memberships-workspace');
+    const empty = document.getElementById('member-lists-empty');
+    if (loading) {
+      loading.hidden = !on;
+      loading.setAttribute('aria-busy', on ? 'true' : 'false');
+      const labelEl = loading.querySelector('span');
+      if (labelEl && label) labelEl.textContent = label;
+    }
+    if (on) {
+      if (empty) empty.hidden = true;
+      if (workspace) workspace.hidden = true;
+    }
+  }
+
   function renderMembershipsPage() {
     const workspace = document.getElementById('memberships-workspace');
     const empty = document.getElementById('member-lists-empty');
-    const loading = document.getElementById('member-lists-loading');
     if (!workspace) return;
 
     if (!bootstrapReady) {
-      if (loading) {
-        loading.hidden = false;
-        loading.setAttribute('aria-busy', 'true');
-      }
-      if (empty) empty.hidden = true;
-      workspace.hidden = true;
+      setMembershipsPageLoading(true, 'Loading membership…');
       return;
-    }
-
-    if (loading) {
-      loading.hidden = true;
-      loading.setAttribute('aria-busy', 'false');
     }
 
     const groups = memberListGroups();
     if (!groups.length) {
+      setMembershipsPageLoading(false);
       if (empty) empty.hidden = false;
       workspace.hidden = true;
       filters.membershipsGroup = '';
@@ -9027,7 +9182,18 @@
     }
 
     if (empty) empty.hidden = true;
-    workspace.hidden = false;
+
+    const groupId = filters.membershipsGroup;
+    const needsRosterLoad =
+      groupId &&
+      (membershipsRosterLoadedFor !== groupId || !membershipsRosterAppearsPainted());
+
+    if (needsRosterLoad) {
+      setMembershipsPageLoading(true, 'Loading membership…');
+    } else {
+      setMembershipsPageLoading(false);
+      workspace.hidden = false;
+    }
 
     fillMembershipsGroupFilter();
     updateMembershipNetworkSummary();
@@ -9042,24 +9208,39 @@
         membershipsRosterLoadedFor = '';
         updateMembershipPageCard(filters.membershipsGroup);
         syncMembershipGroupUrl();
+        setMembershipsPageLoading(true, 'Loading membership…');
         ensureMemberRosterAssets()
           .then(function () {
+            workspace.hidden = false;
+            setMembershipsPageLoading(false);
+            if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.setLoading === 'function') {
+              window.OrganiserMemberRoster.setLoading(true);
+            }
             if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
               return window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup);
             }
           })
+          .then(function () {
+            if (filters.membershipsGroup && membershipsRosterAppearsPainted()) {
+              membershipsRosterLoadedFor = filters.membershipsGroup;
+            }
+          })
           .catch(function (err) {
+            membershipsRosterLoadedFor = '';
+            setMembershipsPageLoading(false);
+            workspace.hidden = false;
             showOrganiserAlert(err.message || 'Could not load membership', true);
           });
       });
     }
 
-    const groupId = filters.membershipsGroup;
     ensureMemberRosterAssets()
       .then(function () {
         const roster = window.OrganiserMemberRoster;
         if (!roster) return;
         if (filters.membershipsGroup !== groupId) return;
+        workspace.hidden = false;
+        setMembershipsPageLoading(false);
         const selectedGroup = findGroupById(groupId);
         if (
           selectedGroup &&
@@ -9069,7 +9250,6 @@
           roster.setGroupRosterSummary(groupId, selectedGroup.rosterSummary);
         }
         if (typeof roster.bindControls === 'function') roster.bindControls();
-        if (typeof roster.clearStuckLoading === 'function') roster.clearStuckLoading();
         if (groupId && typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
 
         const shouldLoad =
@@ -9080,15 +9260,19 @@
             (typeof roster.getActiveGroupId === 'function' && roster.getActiveGroupId() !== groupId));
 
         if (shouldLoad) {
+          if (typeof roster.setLoading === 'function') roster.setLoading(true);
           return roster.loadForGroup(groupId).then(function () {
             if (groupId === filters.membershipsGroup && membershipsRosterAppearsPainted()) {
               membershipsRosterLoadedFor = groupId;
             }
           });
         }
+        if (typeof roster.clearStuckLoading === 'function') roster.clearStuckLoading();
       })
       .catch(function (err) {
         membershipsRosterLoadedFor = '';
+        setMembershipsPageLoading(false);
+        workspace.hidden = false;
         showOrganiserAlert(err.message || 'Could not load membership', true);
       });
   }
@@ -9124,14 +9308,14 @@
     }
     // Grow visibility + Top groups live under Promote now.
     if (page === 'visibility' || page === 'leaderboard' || page === 'social') return 'social';
+    if (page === 'communicate') return 'communicate';
     return page;
   }
 
   function syncSidebarNavHighlight(page, sub) {
     let activeRoute = sidebarRouteForPage(page, sub);
     if (page === 'social') {
-      const tab = socialTabFromHash() || storedSocialTab() || 'linkedin';
-      activeRoute = tab === 'communicate' ? 'social-communicate' : 'social';
+      activeRoute = 'social';
     }
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       const isActive = a.getAttribute('data-org-route') === activeRoute;
@@ -9342,7 +9526,7 @@
     options = options || {};
     if (isAttendeeListEmailRoute(route)) {
       options.openAttendeeEmail = true;
-      route = 'social-communicate';
+      route = 'communicate';
     }
     closeNotificationsPanel();
     if (bootstrapReady && !options.skipEventsGuard && needsOrganiserPageFirst() && isEventsRoute(route)) {
@@ -9409,15 +9593,18 @@
     const fromRoute = page === 'social' ? socialTabFromRoute(route) : '';
     const fromHash = page === 'social' ? socialTabFromHash() : '';
     const socialTabPreferred = fromRoute || fromHash || '';
+    if (page === 'communicate' || options.openAttendeeEmail) {
+      requestAnimationFrame(function () {
+        ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
+      });
+    }
     if (page === 'social') {
       // Sidebar "Promote" (#social / #promote) always opens LinkedIn — don't restore a stored tab.
       const barePromote =
         !fromRoute &&
         (route === 'social' || route === 'promote' || route === '') &&
         (!fromHash || fromHash === 'linkedin');
-      const tabToOpen = barePromote
-        ? 'linkedin'
-        : socialTabPreferred || (options.openAttendeeEmail ? 'communicate' : undefined);
+      const tabToOpen = barePromote ? 'linkedin' : socialTabPreferred || undefined;
       initSocialPageTabs(tabToOpen);
       if (barePromote || tabToOpen === 'linkedin') {
         try {
@@ -9427,7 +9614,7 @@
         }
       }
       // Canonicalise legacy deep links so guides and shares match the tab.
-      if (fromRoute === 'reach' || fromRoute === 'ranking' || fromRoute === 'communicate') {
+      if (fromRoute === 'reach' || fromRoute === 'ranking') {
         syncSocialHash(fromRoute);
       }
       renderOrganiserRankingShare();
@@ -9437,11 +9624,6 @@
       }
       if (tabToOpen === 'reach' || socialTabPreferred === 'reach') {
         ensurePromoteReachReady();
-      }
-      if (tabToOpen === 'communicate' || socialTabPreferred === 'communicate' || options.openAttendeeEmail) {
-        requestAnimationFrame(function () {
-          ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
-        });
       }
       requestAnimationFrame(function () {
         ensureLinkedInPostBuilder({ force: true });
@@ -13370,6 +13552,7 @@
       renderGroupClaimModal();
       renderOpportunityClaimModal();
       updateTeamNavBadge();
+      refreshPendingApplicationsSummary();
       if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
         window.HubOrganiserOnboarding.initAfterDashboardReady();
       }
@@ -13380,7 +13563,7 @@
       if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
         maybeRedirectToSingleMemberList();
       }
-      if (parseRoute().page === 'social' && parseRoute().openAttendeeEmail) {
+      if (parseRoute().page === 'communicate' || parseRoute().openAttendeeEmail) {
         ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
       }
       // Warm editor CSS after first paint so group/event drawers open without a flash.

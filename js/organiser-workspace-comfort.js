@@ -95,10 +95,19 @@
     social: {
       title: 'How to promote your group',
       steps: [
-        'Reach out with a free LinkedIn post, or open Communicate for Attendee round-up.',
+        'Reach out with a free LinkedIn post drafted for your next event.',
         'Set colours & type once — LinkedIn pictures and branded emails use them.',
-        'More email tools will sit under Communicate for an extra charge when you need them.',
+        'Email guests from Communicate under My events (Attendee round-up is free).',
         'Get found on the Hub with Feature event, Top groups, partner badge, or More reach.',
+      ],
+    },
+    communicate: {
+      title: 'How to email your guests',
+      steps: [
+        'Choose Who attended (after the event starts) or Who’s going (before it starts).',
+        'Pick the event, add who the email is from, and an optional note — your group logo is included automatically.',
+        'Preview the list, omit anyone who should not be included, then send. You get one free round-up per organiser page.',
+        'Monthly group updates and other email tools will unlock here as paid add-ons.',
       ],
     },
     'social-spotlight': {
@@ -172,6 +181,19 @@
       return 'visibility';
     }
     if (hash === 'social-spotlight' || hash === 'event-spotlight') return 'social-spotlight';
+    if (
+      hash === 'communicate' ||
+      hash === 'social-communicate' ||
+      hash === 'social-email' ||
+      hash === 'email' ||
+      hash === 'email-who-attended' ||
+      hash === 'attendee-email' ||
+      hash === 'connections-email' ||
+      hash === 'group-updates' ||
+      hash === 'monthly-updates'
+    ) {
+      return 'communicate';
+    }
     if (
       hash === 'business-overview' ||
       hash === 'business-listings' ||

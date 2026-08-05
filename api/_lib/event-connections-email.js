@@ -1,17 +1,19 @@
 /**
  * Event-level connections email — send each confirmed attendee a list of
- * who else attended the same event (name, company, job title, email).
+ * who else attended (or is going to) the same event (name, company, job title, email).
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { sendTemplatedEmail } = require('./send-template-email');
 const { publicSiteBase, unsubscribeUrl, logoNavUrl, logoFooterUrl } = require('./hub-email-urls');
 const { formatDateOnly } = require('./event-timezone');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
+const { organiserLogoUrlForEmail } = require('./organiser-member-roster');
 
 const SLUG = 'event_connections_list';
 const MAX_ATTENDEES = 200;
 const MAX_NOTE = 800;
 const MAX_SUBJECT = 90;
+const MAX_FROM = 80;
 
 function escapeHtml(value) {
   return String(value || '')
@@ -32,6 +34,38 @@ function normalizeEmail(value) {
   return String(value || '')
     .trim()
     .toLowerCase();
+}
+
+function normalizeListKind(value) {
+  return String(value || '').trim().toLowerCase() === 'going' ? 'going' : 'attended';
+}
+
+function eventHasStarted(event, nowMs) {
+  const startMs = event && event.starts_at ? new Date(event.starts_at).getTime() : NaN;
+  if (!Number.isFinite(startMs)) return false;
+  return startMs <= (nowMs != null ? nowMs : Date.now());
+}
+
+function assertListKindAllowed(event, listKind) {
+  const kind = normalizeListKind(listKind);
+  const started = eventHasStarted(event);
+  if (kind === 'attended' && !started) {
+    const err = new Error(
+      '“Who attended” can only be sent after the event has started. Use “Who’s going” to share confirmed bookings beforehand.'
+    );
+    err.status = 400;
+    err.code = 'event_not_started';
+    throw err;
+  }
+  if (kind === 'going' && started) {
+    const err = new Error(
+      '“Who’s going” is for upcoming events. After the event has started, send “Who attended” instead.'
+    );
+    err.status = 400;
+    err.code = 'event_already_started';
+    throw err;
+  }
+  return kind;
 }
 
 function isEligibleRegistration(row) {
@@ -85,7 +119,7 @@ async function assertEventOwned(sb, session, eventId) {
   let result = await sb
     .from('events')
     .select(
-      'id, title, starts_at, ends_at, organiser_id, connections_email_sent_at, connections_email_sent_count, organisers ( id, name, contact_email, email, slug )'
+      'id, title, starts_at, ends_at, organiser_id, connections_email_sent_at, connections_email_sent_count, organisers ( id, name, contact_email, email, slug, photo_url )'
     )
     .eq('id', eventId)
     .maybeSingle();
@@ -96,7 +130,16 @@ async function assertEventOwned(sb, session, eventId) {
     result = await sb
       .from('events')
       .select(
-        'id, title, starts_at, ends_at, organiser_id, organisers ( id, name, contact_email, email, slug )'
+        'id, title, starts_at, ends_at, organiser_id, organisers ( id, name, contact_email, email, slug, photo_url )'
+      )
+      .eq('id', eventId)
+      .maybeSingle();
+  }
+  if (result.error && /photo_url|column/.test(String(result.error.message || ''))) {
+    result = await sb
+      .from('events')
+      .select(
+        'id, title, starts_at, ends_at, organiser_id, connections_email_sent_at, connections_email_sent_count, organisers ( id, name, contact_email, email, slug )'
       )
       .eq('id', eventId)
       .maybeSingle();
@@ -208,7 +251,7 @@ function buildConnectionsListHtml(attendees, recipientEmail) {
   if (!rows) {
     return (
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">' +
-      'No other confirmed attendees to share for this event yet.' +
+      'No other confirmed guests to share for this event yet.' +
       '</p>'
     );
   }
@@ -220,27 +263,113 @@ function buildConnectionsListHtml(attendees, recipientEmail) {
   );
 }
 
-function buildOrganiserNoteHtml(note) {
+function buildOrganiserNoteHtml(note, { fromName, organiserName, logoUrl } = {}) {
   const text = clampText(note, MAX_NOTE);
-  if (!text) return '';
-  const body = escapeHtml(text).replace(/\n/g, '<br>');
+  const from = clampText(fromName, MAX_FROM) || clampText(organiserName, MAX_FROM);
+  if (!text && !from && !logoUrl) return '';
+
+  const logoHtml = logoUrl
+    ? '<img src="' +
+      escapeHtml(logoUrl) +
+      '" alt="' +
+      escapeHtml(organiserName || 'Organiser') +
+      '" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:cover;border:0;border-radius:50%;margin:0 0 12px;" />'
+    : '';
+  const fromHtml = from
+    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">From ' +
+      escapeHtml(from) +
+      '</p>'
+    : '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">A note from the organiser</p>';
+  const bodyHtml = text
+    ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">' +
+      escapeHtml(text).replace(/\n/g, '<br>') +
+      '</p>'
+    : from
+      ? '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Shared so you can keep networking with the people on this list.</p>'
+      : '';
+
   return (
     '<tr><td class="mobile-pad" style="padding:8px 40px 16px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;">' +
     '<tr><td style="padding:18px 20px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">A note from the organiser</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">' +
-    body +
-    '</p></td></tr></table></td></tr>'
+    logoHtml +
+    fromHtml +
+    bodyHtml +
+    '</td></tr></table></td></tr>'
   );
 }
 
-function defaultSubject(eventTitle) {
+function defaultSubject(eventTitle, listKind) {
   const title = String(eventTitle || 'your event').trim() || 'your event';
-  return clampText('Who attended — ' + title, MAX_SUBJECT);
+  const prefix = normalizeListKind(listKind) === 'going' ? 'Who’s going — ' : 'Who attended — ';
+  return clampText(prefix + title, MAX_SUBJECT);
 }
 
-async function getConnectionsPreview(session, eventId) {
+function normalizeExcludeEmails(input) {
+  const list = Array.isArray(input) ? input : [];
+  const out = new Set();
+  list.forEach((value) => {
+    const email = normalizeEmail(value);
+    if (email && email.includes('@')) out.add(email);
+  });
+  return out;
+}
+
+async function loadGroupFreeAllowance(sb, organiserId) {
+  if (!organiserId) {
+    return { freeAllowanceUsed: false, lastSentAt: null, lastSentCount: 0, lastSentEventId: null };
+  }
+  let result = await sb
+    .from('events')
+    .select('id, connections_email_sent_at, connections_email_sent_count')
+    .eq('organiser_id', organiserId)
+    .not('connections_email_sent_at', 'is', null)
+    .order('connections_email_sent_at', { ascending: false })
+    .limit(1);
+  if (result.error && /connections_email_sent|column/.test(String(result.error.message || ''))) {
+    return { freeAllowanceUsed: false, lastSentAt: null, lastSentCount: 0, lastSentEventId: null };
+  }
+  if (result.error) throw new Error(result.error.message);
+  const row = (result.data || [])[0];
+  if (!row) {
+    return { freeAllowanceUsed: false, lastSentAt: null, lastSentCount: 0, lastSentEventId: null };
+  }
+  return {
+    freeAllowanceUsed: true,
+    lastSentAt: row.connections_email_sent_at || null,
+    lastSentCount: Number(row.connections_email_sent_count) || 0,
+    lastSentEventId: row.id || null,
+  };
+}
+
+function copyForListKind(listKind, eventTitle) {
+  const kind = normalizeListKind(listKind);
+  const name = String(eventTitle || 'Event').trim() || 'Event';
+  if (kind === 'going') {
+    return {
+      kicker: 'Who’s going',
+      headline: 'Who’s going to ' + name,
+      lede:
+        'here are the confirmed guests for <strong style="color:#1c2040;">' +
+        escapeHtml(name) +
+        '</strong>{{event_date_clause}} — say hello before you meet.',
+      listLabel: 'confirmed guests',
+      footerReason: 'You received this because you are booked for',
+    };
+  }
+  return {
+    kicker: 'Attendee round-up',
+    headline: 'Who attended ' + name,
+    lede:
+      'here are the confirmed attendees from <strong style="color:#1c2040;">' +
+      escapeHtml(name) +
+      '</strong>{{event_date_clause}} — reach out while the conversations are fresh.',
+    listLabel: 'attendees',
+    footerReason: 'You received this because you attended',
+  };
+}
+
+async function getConnectionsPreview(session, eventId, listKindInput) {
   if (!isSupabaseConfigured()) {
     const err = new Error('Database not configured');
     err.status = 503;
@@ -248,14 +377,35 @@ async function getConnectionsPreview(session, eventId) {
   }
   const sb = getSupabaseAdmin();
   const event = await assertEventOwned(sb, session, eventId);
+  const started = eventHasStarted(event);
+  const preferredKind = normalizeListKind(listKindInput || (started ? 'attended' : 'going'));
+  let listKind = preferredKind;
+  let timingError = null;
+  try {
+    listKind = assertListKindAllowed(event, preferredKind);
+  } catch (e) {
+    // Preview auto-corrects to the valid mode; send still enforces strictly.
+    listKind = started ? 'attended' : 'going';
+    timingError = null;
+  }
   const attendees = await loadEligibleAttendees(sb, eventId);
   const organiser = event.organisers || {};
+  const site = publicSiteBase();
+  const organiserLogoUrl = organiserLogoUrlForEmail(organiser, site) || '';
+  const copy = copyForListKind(listKind, event.title);
+  const free = await loadGroupFreeAllowance(sb, event.organiser_id);
 
   return {
     eventId: event.id,
     eventTitle: String(event.title || 'Event').trim(),
     eventDate: event.starts_at ? formatDateOnly(event.starts_at) : '',
+    eventStarted: started,
+    listKind,
+    allowedListKinds: started ? ['attended'] : ['going'],
+    timingError,
+    organiserId: event.organiser_id || null,
     organiserName: String(organiser.name || 'Your organiser').trim(),
+    organiserLogoUrl,
     attendeeCount: attendees.length,
     attendees: attendees.map((a) => ({
       name: a.name,
@@ -264,15 +414,23 @@ async function getConnectionsPreview(session, eventId) {
       jobTitle: a.jobTitle,
       guestNames: a.guestNames,
     })),
-    lastSentAt: event.connections_email_sent_at || null,
-    lastSentCount: Number(event.connections_email_sent_count) || 0,
-    defaultSubject: defaultSubject(event.title),
+    lastSentAt: free.lastSentAt,
+    lastSentCount: free.lastSentCount,
+    lastSentEventId: free.lastSentEventId,
+    freeAllowanceUsed: free.freeAllowanceUsed,
+    freeAllowanceScope: 'group',
+    defaultSubject: defaultSubject(event.title, listKind),
+    copyKicker: copy.kicker,
+    copyHeadline: copy.headline,
     tooLarge: attendees.length >= MAX_ATTENDEES,
     maxAttendees: MAX_ATTENDEES,
   };
 }
 
-async function sendConnectionsEmail(session, { eventId, organiserNote, subject, force }) {
+async function sendConnectionsEmail(
+  session,
+  { eventId, organiserNote, subject, fromName, listKind: listKindInput, excludeEmails, force }
+) {
   if (!isSupabaseConfigured()) {
     const err = new Error('Database not configured');
     err.status = 503;
@@ -280,36 +438,48 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
   }
   const sb = getSupabaseAdmin();
   const event = await assertEventOwned(sb, session, eventId);
-  const attendees = await loadEligibleAttendees(sb, eventId);
+  const listKind = assertListKindAllowed(event, listKindInput);
+  const allAttendees = await loadEligibleAttendees(sb, eventId);
+  const excluded = normalizeExcludeEmails(excludeEmails);
+  const attendees = allAttendees.filter((a) => !excluded.has(a.email));
 
   if (attendees.length < 2) {
     const err = new Error(
-      'You need at least two confirmed attendees before you can email the attendee list.'
+      'You need at least two guests included in the round-up. Untick fewer people, or wait for more confirmed bookings.'
     );
     err.status = 400;
     err.code = 'not_enough_attendees';
     throw err;
   }
 
-  if (event.connections_email_sent_at && !force) {
+  const free = await loadGroupFreeAllowance(sb, event.organiser_id);
+  if (free.freeAllowanceUsed && !force) {
     const err = new Error(
-      'An attendee list email was already sent for this event. Confirm to send again.'
+      'Your free round-up for this organiser page was already used. Extra sends will be a paid add-on soon — confirm only if you need to send again now.'
     );
     err.status = 409;
     err.code = 'already_sent';
-    err.lastSentAt = event.connections_email_sent_at;
+    err.lastSentAt = free.lastSentAt;
     throw err;
   }
 
   const organiser = event.organisers || {};
   const organiserName = String(organiser.name || 'Your organiser').trim();
+  const senderName = clampText(fromName, MAX_FROM) || organiserName;
   const replyTo =
     String(organiser.contact_email || organiser.email || '')
       .trim() || undefined;
   const note = clampText(organiserNote, MAX_NOTE);
-  const emailSubject = clampText(subject, MAX_SUBJECT) || defaultSubject(event.title);
+  const emailSubject = clampText(subject, MAX_SUBJECT) || defaultSubject(event.title, listKind);
   const site = publicSiteBase();
   const eventDate = event.starts_at ? formatDateOnly(event.starts_at) : '';
+  const organiserLogoUrl = organiserLogoUrlForEmail(organiser, site) || '';
+  const copy = copyForListKind(listKind, event.title);
+  const noteHtml = buildOrganiserNoteHtml(note, {
+    fromName: senderName,
+    organiserName,
+    logoUrl: organiserLogoUrl,
+  });
 
   let sent = 0;
   let skipped = 0;
@@ -320,6 +490,20 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
   async function sendOne(recipient) {
     const listHtml = buildConnectionsListHtml(attendees, recipient.email);
     const otherCount = attendees.filter((a) => a.email !== recipient.email).length;
+    const firstName = recipient.name.split(/\s+/)[0] || recipient.name;
+    const dateClause = eventDate ? ' on ' + eventDate : '';
+    const ledeBody =
+      listKind === 'going'
+        ? 'here are the confirmed guests for <strong style="color:#1c2040;">' +
+          escapeHtml(String(event.title || 'Event').trim()) +
+          '</strong>' +
+          dateClause +
+          ' — say hello before you meet.'
+        : 'here are the confirmed attendees from <strong style="color:#1c2040;">' +
+          escapeHtml(String(event.title || 'Event').trim()) +
+          '</strong>' +
+          dateClause +
+          ' — reach out while the conversations are fresh.';
     try {
       await sendTemplatedEmail({
         slug: SLUG,
@@ -327,14 +511,21 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
         subject: emailSubject,
         replyTo,
         variables: {
-          user_name: recipient.name.split(/\s+/)[0] || recipient.name,
+          user_name: firstName,
           event_name: String(event.title || 'Event').trim(),
           event_date: eventDate,
-          event_date_clause: eventDate ? ' on ' + eventDate : '',
+          event_date_clause: dateClause,
           organiser_name: organiserName,
+          from_name: senderName,
+          list_kicker: copy.kicker,
+          list_headline: copy.headline,
+          list_lede: 'Hi ' + escapeHtml(firstName) + ', ' + ledeBody,
+          list_count_label: String(otherCount) + ' ' + copy.listLabel,
+          footer_reason: copy.footerReason,
           attendee_count: String(otherCount),
           connections_list_html: listHtml,
-          organiser_note_html: buildOrganiserNoteHtml(note),
+          organiser_note_html: noteHtml,
+          organiser_logo_url: organiserLogoUrl,
           site_url: site,
           logo_url: logoNavUrl(site),
           logo_footer_url: logoFooterUrl(site),
@@ -346,6 +537,7 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
         resendTags: [
           { name: 'email_type', value: SLUG },
           { name: 'event_id', value: String(event.id).slice(0, 36) },
+          { name: 'list_kind', value: listKind },
         ],
       });
       sent++;
@@ -375,25 +567,32 @@ async function sendConnectionsEmail(session, { eventId, organiserNote, subject, 
     throw new Error(updErr.message);
   }
 
+  const label = listKind === 'going' ? 'who’s going list' : 'attendee round-up';
+  const omitted = allAttendees.length - attendees.length;
   return {
     ok: true,
     eventId: event.id,
     eventTitle: String(event.title || 'Event').trim(),
+    listKind,
     recipientCount: attendees.length,
+    omittedCount: omitted,
     sent,
     skipped,
     failed,
     errors,
     message:
       sent > 0
-        ? 'Sent the attendee list to ' +
+        ? 'Sent the ' +
+          label +
+          ' to ' +
           sent +
-          ' attendee' +
+          ' guest' +
           (sent === 1 ? '' : 's') +
+          (omitted ? ' (' + omitted + ' omitted)' : '') +
           (skipped ? ' (' + skipped + ' opted out)' : '') +
           (failed ? '. ' + failed + ' failed.' : '.')
         : failed
-          ? 'Could not send the attendee list email.'
+          ? 'Could not send the email.'
           : 'No emails were sent — recipients may have email turned off.',
   };
 }
@@ -404,4 +603,5 @@ module.exports = {
   getConnectionsPreview,
   sendConnectionsEmail,
   defaultSubject,
+  normalizeListKind,
 };

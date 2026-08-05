@@ -227,6 +227,8 @@ function rowToEvent(row) {
     guestPassesDisabled: Boolean(row.guest_passes_disabled),
     featured: isEventCurrentlyFeatured(row),
     featuredUntil: row.featured_until || null,
+    connectionsEmailSentAt: row.connections_email_sent_at || null,
+    connectionsEmailSentCount: Number(row.connections_email_sent_count) || 0,
   };
 }
 
@@ -421,7 +423,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
   const sb = getSupabaseAdmin();
   let query = sb
     .from('events')
-    .select('id, title, organiser_id, starts_at, ends_at, status, approval_status')
+    .select('id, title, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id')
     .order('starts_at', {
       ascending: false,
     });
@@ -447,6 +449,9 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
       endDate: row.ends_at || null,
       statusKey: listingStatus.key,
       statusLabel: listingStatus.label,
+      attendanceMode: normalizeAttendanceMode(row.attendance_mode),
+      seriesGroupId: row.series_group_id || null,
+      status: row.status || null,
     };
   });
 }

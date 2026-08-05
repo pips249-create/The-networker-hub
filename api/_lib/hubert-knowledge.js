@@ -473,7 +473,7 @@ const FALLBACK_REPLIES = [
   {
     match: /category exclusivity|one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
     reply:
-      'Category Exclusivity is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It cannot be combined with open ticket types on the same event.',
+      'Category Exclusivity is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It cannot be combined with open public ticket types on the same event, but you can optionally add a Members only rate so people on your Membership list book without applying (or use Invite members after publish).',
   },
   {
     match: /change.*application question|custom.*application question|edit.*application question|different application question|application question.*change|can i change.*question/i,
@@ -581,9 +581,9 @@ const FALLBACK_REPLIES = [
       'Previous Attendees lets you invite past confirmed attendees to an exclusive returning ticket rate on a new event — ideal for annual conferences or repeat summits. Enable it on the event tickets step, set your previous attendee price, and send invites from the organiser dashboard. Only invited past attendees can book the returning ticket.',
   },
   {
-    match: /email who attended|attendee list email|who else (was|attended)|share attendee (emails|list)|email.*who attended|email attendee list/i,
+    match: /email who attended|attendee list email|who else (was|attended)|share attendee (emails|list)|email.*who attended|email attendee list|attendee round-?up|who.?s going|who is going/i,
     reply:
-      'After an event, open Communicate (sidebar or Promote → Communicate), pick the event, then send Attendee round-up. Confirmed attendees receive a list of who else was there — name, company, job title and email — so they can follow up. Pending applications and cancelled tickets are left out.',
+      'Open Communicate under My events in the organiser sidebar. Before the event starts you can send “Who’s going” (confirmed bookings). After it starts, send “Who attended”. Untick anyone you want to omit. Add who the email is from and an optional note — your group logo is included. One free send per organiser page; more email tools unlock as paid add-ons.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,

@@ -1,5 +1,5 @@
 /**
- * Organiser event connections email — pick an event, preview attendees, send list.
+ * Organiser event connections email — pick an event, preview guests, send list.
  */
 (function (global) {
   'use strict';
@@ -8,6 +8,7 @@
     groups: [],
     events: [],
     preview: null,
+    omittedEmails: {},
     sending: false,
     bound: false,
   };
@@ -15,16 +16,46 @@
   function els() {
     return {
       status: document.getElementById('oec-status'),
+      usage: document.getElementById('oec-usage'),
       group: document.getElementById('oec-group'),
       groupWrap: document.getElementById('oec-group-wrap'),
       event: document.getElementById('oec-event'),
       subject: document.getElementById('oec-subject'),
+      fromName: document.getElementById('oec-from-name'),
       note: document.getElementById('oec-note'),
+      omitWrap: document.getElementById('oec-omit-wrap'),
+      omitList: document.getElementById('oec-omit-list'),
       previewBtn: document.getElementById('oec-preview'),
       sendBtn: document.getElementById('oec-send'),
       previewBody: document.getElementById('oec-preview-body'),
       count: document.getElementById('oec-count'),
+      modeRadios: document.querySelectorAll('input[name="oec-list-kind"]'),
     };
+  }
+
+  function selectedListKind() {
+    var radios = els().modeRadios;
+    for (var i = 0; i < radios.length; i++) {
+      if (radios[i].checked) return String(radios[i].value || 'attended');
+    }
+    return 'attended';
+  }
+
+  function setListKind(kind) {
+    var value = kind === 'going' ? 'going' : 'attended';
+    var radios = els().modeRadios;
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].checked = String(radios[i].value) === value;
+      var option = radios[i].closest('.org-attendee-email-mode-option');
+      if (option) {
+        var allowed =
+          !state.preview ||
+          !state.preview.allowedListKinds ||
+          state.preview.allowedListKinds.indexOf(String(radios[i].value)) !== -1;
+        radios[i].disabled = !allowed;
+        option.classList.toggle('is-disabled', !allowed);
+      }
+    }
   }
 
   function setStatus(msg, kind) {
@@ -33,6 +64,28 @@
     el.textContent = msg || '';
     el.classList.toggle('is-error', kind === 'error');
     el.classList.toggle('is-ok', kind === 'ok');
+  }
+
+  function setUsage(preview) {
+    var el = els().usage;
+    if (!el) return;
+    if (!preview || !preview.freeAllowanceUsed) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    var when = '';
+    try {
+      when = preview.lastSentAt ? new Date(preview.lastSentAt).toLocaleString('en-GB') : '';
+    } catch (e) {
+      when = String(preview.lastSentAt || '');
+    }
+    el.hidden = false;
+    el.textContent =
+      'Free send used for this organiser page' +
+      (when ? ' · Last sent ' + when : '') +
+      (preview.lastSentCount ? ' to ' + preview.lastSentCount + ' people' : '') +
+      '. Extra sends will be a paid add-on soon.';
   }
 
   function api(path, opts) {
@@ -143,39 +196,126 @@
     }
   }
 
+  function defaultFromName(preview) {
+    var e = els();
+    if (!e.fromName || String(e.fromName.value || '').trim()) return;
+    if (preview && preview.organiserName) {
+      e.fromName.value = preview.organiserName;
+    }
+  }
+
+  function includedAttendees(preview) {
+    var list = (preview && preview.attendees) || [];
+    return list.filter(function (a) {
+      return !state.omittedEmails[String(a.email || '').toLowerCase()];
+    });
+  }
+
+  function excludedEmailList(preview) {
+    var list = (preview && preview.attendees) || [];
+    return list
+      .filter(function (a) {
+        return state.omittedEmails[String(a.email || '').toLowerCase()];
+      })
+      .map(function (a) {
+        return String(a.email || '').toLowerCase();
+      });
+  }
+
+  function renderOmitList(preview) {
+    var e = els();
+    if (!e.omitWrap || !e.omitList) return;
+    if (!preview || !(preview.attendees || []).length) {
+      e.omitWrap.hidden = true;
+      e.omitList.innerHTML = '';
+      return;
+    }
+    e.omitWrap.hidden = false;
+    e.omitList.innerHTML = (preview.attendees || [])
+      .map(function (a) {
+        var email = String(a.email || '').toLowerCase();
+        var checked = !state.omittedEmails[email];
+        var meta = [a.jobTitle, a.company].filter(Boolean).join(' · ');
+        return (
+          '<label class="org-attendee-email-omit-item">' +
+          '<input type="checkbox" data-oec-omit-email="' +
+          esc(email) +
+          '"' +
+          (checked ? ' checked' : '') +
+          ' />' +
+          '<span><strong>' +
+          esc(a.name) +
+          '</strong>' +
+          (meta ? '<em>' + esc(meta) + '</em>' : '') +
+          '<i>' +
+          esc(a.email) +
+          '</i></span></label>'
+        );
+      })
+      .join('');
+  }
+
+  function updateCountLabel(preview) {
+    var e = els();
+    if (!e.count || !preview) {
+      if (e.count) e.count.textContent = '';
+      return;
+    }
+    var included = includedAttendees(preview);
+    var omitted = (preview.attendees || []).length - included.length;
+    e.count.textContent =
+      included.length +
+      ' guest' +
+      (included.length === 1 ? '' : 's') +
+      ' included' +
+      (omitted ? ' · ' + omitted + ' omitted' : '') +
+      ' — each receives the list minus themselves';
+  }
+
   function renderPreview(preview) {
     var e = els();
     state.preview = preview || null;
-    if (e.count) {
-      e.count.textContent = preview
-        ? preview.attendeeCount +
-          ' confirmed attendee' +
-          (preview.attendeeCount === 1 ? '' : 's') +
-          ' will get this round-up'
-        : '';
-    }
+    setUsage(preview);
+    if (preview) setListKind(preview.listKind || selectedListKind());
+    renderOmitList(preview);
+    updateCountLabel(preview);
     if (!e.previewBody) return;
     if (!preview) {
       e.previewBody.innerHTML =
         '<p class="org-attendee-email-hint">Pick an event to preview the round-up your guests will receive.</p>';
       return;
     }
-    if (e.subject && !String(e.subject.value || '').trim()) {
-      e.subject.value = preview.defaultSubject || '';
+    if (e.subject) {
+      e.subject.value = preview.defaultSubject || e.subject.value || '';
+      e.subject.placeholder =
+        preview.listKind === 'going' ? 'Who’s going — your event title' : 'Who attended — your event title';
     }
+    defaultFromName(preview);
+    var fromText = e.fromName ? String(e.fromName.value || '').trim() : '';
     var noteText = e.note ? String(e.note.value || '').trim() : '';
-    var noteHtml = noteText
-      ? '<div class="org-attendee-email-mock-note"><strong>A note from you</strong><p>' +
-        esc(noteText) +
-        '</p></div>'
+    var logoHtml = preview.organiserLogoUrl
+      ? '<img class="org-attendee-email-mock-logo" src="' +
+        esc(preview.organiserLogoUrl) +
+        '" alt="' +
+        esc(preview.organiserName || 'Organiser logo') +
+        '" />'
       : '';
+    var noteHtml =
+      '<div class="org-attendee-email-mock-note">' +
+      logoHtml +
+      '<strong>From ' +
+      esc(fromText || preview.organiserName || 'your group') +
+      '</strong>' +
+      (noteText ? '<p>' + esc(noteText) + '</p>' : '<p>Shared so guests can keep networking.</p>') +
+      '</div>';
     var last = preview.lastSentAt
-      ? '<p class="org-attendee-email-mock-sent">Last sent ' +
+      ? '<p class="org-attendee-email-mock-sent">Free send used · Last sent ' +
         esc(new Date(preview.lastSentAt).toLocaleString('en-GB')) +
         (preview.lastSentCount ? ' · ' + preview.lastSentCount + ' people' : '') +
         '</p>'
       : '';
-    var rows = (preview.attendees || [])
+    var included = includedAttendees(preview);
+    var rows = included
       .map(function (a) {
         var meta = [a.jobTitle, a.company].filter(Boolean).join(' · ');
         return (
@@ -192,30 +332,58 @@
         );
       })
       .join('');
+    var title =
+      preview.copyHeadline ||
+      (preview.listKind === 'going' ? 'Who’s going ' : 'Who attended ') +
+        (preview.eventTitle || '');
     e.previewBody.innerHTML =
-      '<p class="org-attendee-email-mock-kicker">Attendee round-up</p>' +
-      '<h4 class="org-attendee-email-mock-title">Who attended ' +
-      esc(preview.eventTitle) +
+      '<p class="org-attendee-email-mock-kicker">' +
+      esc(preview.copyKicker || (preview.listKind === 'going' ? 'Who’s going' : 'Attendee round-up')) +
+      '</p>' +
+      '<h4 class="org-attendee-email-mock-title">' +
+      esc(title) +
       '</h4>' +
       '<p class="org-attendee-email-mock-lede">' +
       (preview.eventDate ? esc(preview.eventDate) + ' · ' : '') +
-      'Guests receive everyone else on this list, minus themselves.</p>' +
+      (preview.listKind === 'going'
+        ? 'Before the event — confirmed bookings only.'
+        : 'After the event has started — reconnect guests who came.') +
+      '</p>' +
       noteHtml +
       '<div class="org-attendee-email-mock-meta">' +
       '<span class="org-attendee-email-mock-count">' +
-      preview.attendeeCount +
-      ' attendee' +
-      (preview.attendeeCount === 1 ? '' : 's') +
+      included.length +
+      ' guest' +
+      (included.length === 1 ? '' : 's') +
       '</span>' +
       last +
       '</div>' +
       (rows
         ? '<ul class="oec-preview-list">' + rows + '</ul>'
-        : '<p class="org-attendee-email-hint">No confirmed attendees yet.</p>');
+        : '<p class="org-attendee-email-hint">No guests included yet.</p>');
   }
 
   function refreshNoteInPreview() {
     if (state.preview) renderPreview(state.preview);
+  }
+
+  function eventById(eventId) {
+    var id = String(eventId || '');
+    for (var i = 0; i < (state.events || []).length; i++) {
+      if (String(state.events[i].id) === id) return state.events[i];
+    }
+    return null;
+  }
+
+  function syncModeForSelectedEvent() {
+    var e = els();
+    var eventId = e.event ? String(e.event.value || '').trim() : '';
+    if (!eventId) return;
+    var ev = eventById(eventId);
+    if (!ev) return;
+    var startMs = new Date(ev.startsAt || ev.starts_at || ev.date || 0).getTime();
+    if (!Number.isFinite(startMs)) return;
+    setListKind(startMs > Date.now() ? 'going' : 'attended');
   }
 
   async function loadPreview() {
@@ -225,21 +393,44 @@
       setStatus('Choose an event first.', 'error');
       return null;
     }
-    setStatus('Loading attendees…');
-    var res = await api('/api/organiser/event-connections?eventId=' + encodeURIComponent(eventId));
+    syncModeForSelectedEvent();
+    var listKind = selectedListKind();
+    setStatus('Loading guests…');
+    var res = await api(
+      '/api/organiser/event-connections?eventId=' +
+        encodeURIComponent(eventId) +
+        '&listKind=' +
+        encodeURIComponent(listKind)
+    );
     if (!res.ok) {
-      setStatus(res.data.message || res.data.error || 'Could not load attendees.', 'error');
+      setStatus(res.data.message || res.data.error || 'Could not load guests.', 'error');
+      state.omittedEmails = {};
       renderPreview(null);
       return null;
     }
+    if (res.data.listKind && res.data.listKind !== listKind) {
+      setListKind(res.data.listKind);
+    }
+    // Keep omit choices only for emails still on this list.
+    var nextOmit = {};
+    (res.data.attendees || []).forEach(function (a) {
+      var email = String(a.email || '').toLowerCase();
+      if (email && state.omittedEmails[email]) nextOmit[email] = true;
+    });
+    state.omittedEmails = nextOmit;
     renderPreview(res.data);
-    setStatus(
-      res.data.attendeeCount +
-        ' confirmed attendee' +
-        (res.data.attendeeCount === 1 ? '' : 's') +
-        ' will receive the list (minus themselves).',
-      'ok'
-    );
+    if (res.data.timingError && res.data.timingError.message) {
+      setStatus(res.data.timingError.message, 'error');
+    } else {
+      var included = includedAttendees(res.data);
+      setStatus(
+        included.length +
+          ' guest' +
+          (included.length === 1 ? '' : 's') +
+          ' will receive the list (minus themselves). Untick anyone you want to omit.',
+        'ok'
+      );
+    }
     return res.data;
   }
 
@@ -251,21 +442,34 @@
       setStatus('Choose an event first.', 'error');
       return;
     }
+    var listKind = selectedListKind();
     var preview = state.preview;
-    if (!preview || preview.eventId !== eventId) {
+    if (!preview || preview.eventId !== eventId || preview.listKind !== listKind) {
       preview = await loadPreview();
       if (!preview) return;
     }
-    if (preview.attendeeCount < 2) {
-      setStatus('You need at least two confirmed attendees to share a list.', 'error');
+    if (preview.timingError && preview.timingError.message) {
+      setStatus(preview.timingError.message, 'error');
       return;
     }
-    var already = Boolean(preview.lastSentAt);
+    var included = includedAttendees(preview);
+    if (included.length < 2) {
+      setStatus('Include at least two guests in the round-up.', 'error');
+      return;
+    }
+    var already = Boolean(preview.freeAllowanceUsed);
+    var label = listKind === 'going' ? 'who’s going list' : 'attendee round-up';
+    var omitted = excludedEmailList(preview).length;
     var confirmMsg = already
-      ? 'An attendee round-up was already sent for this event. Send again to all confirmed attendees?'
-      : 'Send the attendee round-up to all ' +
-        preview.attendeeCount +
-        ' confirmed guests for this event?';
+      ? 'Your free round-up for this organiser page was already used. Extra sends will be a paid add-on soon. Send again now anyway?'
+      : 'Send the ' +
+        label +
+        ' to ' +
+        included.length +
+        ' guest' +
+        (included.length === 1 ? '' : 's') +
+        (omitted ? ' (' + omitted + ' omitted)' : '') +
+        '? This uses your one free send for this organiser page.';
     if (!global.confirm(confirmMsg)) return;
 
     state.sending = true;
@@ -276,14 +480,22 @@
         method: 'POST',
         body: {
           eventId: eventId,
+          listKind: listKind,
           subject: e.subject ? e.subject.value : '',
+          fromName: e.fromName ? e.fromName.value : '',
           organiserNote: e.note ? e.note.value : '',
+          excludeEmails: excludedEmailList(preview),
           force: Boolean(force || already),
         },
       });
       if (!res.ok) {
         if (res.status === 409 && res.data.error === 'already_sent') {
-          if (global.confirm((res.data.message || 'Already sent.') + ' Send again?')) {
+          if (
+            global.confirm(
+              (res.data.message || 'Free send already used for this organiser page.') +
+                ' Send again anyway?'
+            )
+          ) {
             state.sending = false;
             if (e.sendBtn) e.sendBtn.disabled = false;
             return send(true);
@@ -309,19 +521,47 @@
     if (e.group) {
       e.group.addEventListener('change', function () {
         fillEvents();
+        state.omittedEmails = {};
         renderPreview(null);
         setStatus('');
       });
     }
     if (e.event) {
       e.event.addEventListener('change', function () {
+        state.omittedEmails = {};
         renderPreview(null);
         setStatus('');
         if (e.event.value) loadPreview().catch(function () {});
       });
     }
+    if (e.modeRadios && e.modeRadios.length) {
+      Array.prototype.forEach.call(e.modeRadios, function (radio) {
+        radio.addEventListener('change', function () {
+          if (e.subject) e.subject.value = '';
+          if (e.event && e.event.value) {
+            loadPreview().catch(function () {});
+          } else {
+            renderPreview(null);
+          }
+        });
+      });
+    }
+    if (e.omitList) {
+      e.omitList.addEventListener('change', function (ev) {
+        var input = ev.target && ev.target.closest ? ev.target.closest('[data-oec-omit-email]') : null;
+        if (!input) return;
+        var email = String(input.getAttribute('data-oec-omit-email') || '').toLowerCase();
+        if (!email) return;
+        if (input.checked) delete state.omittedEmails[email];
+        else state.omittedEmails[email] = true;
+        if (state.preview) renderPreview(state.preview);
+      });
+    }
     if (e.note) {
       e.note.addEventListener('input', refreshNoteInPreview);
+    }
+    if (e.fromName) {
+      e.fromName.addEventListener('input', refreshNoteInPreview);
     }
     if (e.previewBtn) {
       e.previewBtn.addEventListener('click', function () {

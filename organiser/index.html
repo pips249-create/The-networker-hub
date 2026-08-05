@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260805comm1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260805comm4" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -74,7 +74,6 @@
               <span class="org-notifications-count" id="org-notifications-count" hidden aria-hidden="true">0</span>
             </button>
             <a href="#social" class="hub-side-nav-link" data-org-route="social">Promote</a>
-            <a href="#social-communicate" class="hub-side-nav-link" data-org-route="social-communicate">Communicate</a>
             <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
               Team &amp; invites
               <span class="org-nav-badge" id="org-team-nav-badge" hidden>New</span>
@@ -85,6 +84,9 @@
               My events
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>New</span>
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
+            </a>
+            <a href="#communicate" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="communicate">
+              Communicate
             </a>
             <a href="#groups" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="groups">Organiser pages</a>
             <a href="#memberships" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
@@ -185,9 +187,9 @@
               <p class="org-workspace-map" aria-label="Workspace areas">
                 <span class="org-workspace-map-label">Go to</span>
                 <a href="#events-list" data-org-route="events-list">My events</a>
+                <a href="#communicate" data-org-route="communicate">Communicate</a>
                 <a href="#events-revenue" data-org-route="events-revenue">Revenue</a>
                 <a href="#social" data-org-route="social">Promote</a>
-                <a href="#social-communicate" data-org-route="social-communicate">Communicate</a>
                 <a href="#team" data-org-route="team">Team</a>
               </p>
             </div>
@@ -701,9 +703,9 @@
 
           <div id="omr-alert" class="org-alert" hidden role="status"></div>
 
-          <div class="org-dash-loading org-dash-loading--membership" id="member-lists-loading" hidden role="status" aria-live="polite" aria-busy="false">
+          <div class="org-dash-loading org-dash-loading--membership org-dash-loading--membership-page" id="member-lists-loading" hidden role="status" aria-live="polite" aria-busy="false">
             <div class="org-dash-loading-spinner" aria-hidden="true"></div>
-            <span>Loading organiser pages…</span>
+            <span>Loading membership…</span>
           </div>
 
           <div class="org-empty-state" id="member-lists-empty" hidden role="status">
@@ -718,6 +720,10 @@
           </div>
 
           <div id="memberships-workspace" class="org-memberships-workspace" hidden>
+            <div class="omr-page-loading" id="omr-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
+              <div class="org-dash-loading-spinner omr-page-loading-spinner" aria-hidden="true"></div>
+              <p class="omr-page-loading-text">Loading membership…</p>
+            </div>
             <p class="org-memberships-network-summary" id="memberships-network-summary" hidden></p>
 
             <div class="omr-billing-panel" id="omr-billing-panel" hidden>
@@ -1210,7 +1216,7 @@
             <p class="org-page-kicker">Spread the word</p>
             <h1 class="org-page-title">Promote</h1>
             <p class="org-page-lead org-page-lead--social">
-              <strong>Reach out</strong> on LinkedIn, or email guests from Communicate.
+              <strong>Reach out</strong> with a free LinkedIn post in your brand colours.
               <strong>Get found on the Hub</strong> with featuring, Top groups, and badges.
             </p>
           </header>
@@ -1222,10 +1228,6 @@
                 <button type="button" role="tab" class="org-events-tab is-active" id="org-social-tab-linkedin" aria-selected="true" aria-controls="org-social-panel-linkedin" data-social-tab="linkedin">
                   <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-12h4v2"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                   <span class="org-events-tab-label">LinkedIn post <span class="org-events-tab-badge org-events-tab-badge--free">Free</span></span>
-                </button>
-                <button type="button" role="tab" class="org-events-tab" id="org-social-tab-communicate" aria-selected="false" aria-controls="org-social-panel-communicate" data-social-tab="communicate" tabindex="-1">
-                  <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
-                  <span class="org-events-tab-label">Communicate <span class="org-events-tab-badge org-events-tab-badge--free">Free</span></span>
                 </button>
                 <button type="button" role="tab" class="org-events-tab" id="org-social-tab-brand" aria-selected="false" aria-controls="org-social-panel-brand" data-social-tab="brand" tabindex="-1">
                   <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -1283,112 +1285,6 @@
               </p>
             </div>
             <div id="org-post-builder-root"></div>
-          </div>
-
-          <div
-            class="org-sub-page org-sub-page--social"
-            id="org-social-panel-communicate"
-            role="tabpanel"
-            aria-labelledby="org-social-tab-communicate"
-            data-social-panel="communicate"
-            hidden
-          >
-            <header class="org-social-panel-head org-social-panel-head--flush">
-              <h2 class="org-section-title" id="org-social-communicate-title">Communicate</h2>
-              <p class="org-section-sub org-social-tool-lede">
-                Email guests after your events. Start free with an Attendee round-up — more email tools will unlock here for an extra charge.
-              </p>
-            </header>
-
-            <section class="org-attendee-email-panel org-attendee-email-panel--embedded" id="org-attendee-email-panel" aria-labelledby="org-attendee-email-title">
-              <header class="org-attendee-email-panel-head">
-                <div>
-                  <p class="org-attendee-email-kicker">Free · After the event</p>
-                  <h3 class="org-section-title" id="org-attendee-email-title">Attendee round-up</h3>
-                  <p class="org-section-sub org-sub-lead org-sub-lead--flush">
-                    Email confirmed guests a branded list of who else attended — name, company, job title and email — so they can keep networking.
-                  </p>
-                </div>
-              </header>
-
-              <p class="org-attendee-email-status" id="oec-status" role="status"></p>
-
-              <div class="org-attendee-email-layout">
-                <form class="org-attendee-email-form" id="oec-form" autocomplete="off">
-                  <ol class="org-attendee-email-steps" aria-label="How to send">
-                    <li><span>1</span> Pick the event</li>
-                    <li><span>2</span> Add an optional note</li>
-                    <li><span>3</span> Preview &amp; send</li>
-                  </ol>
-
-                  <div class="org-attendee-email-row" id="oec-group-wrap" hidden>
-                    <label for="oec-group">Organiser page</label>
-                    <select id="oec-group" aria-label="Organiser page"></select>
-                  </div>
-
-                  <label class="org-attendee-email-field">
-                    <span>Event</span>
-                    <select id="oec-event" aria-label="Event for attendee round-up">
-                      <option value="">Choose an event…</option>
-                    </select>
-                    <p class="org-attendee-email-hint" id="oec-count"></p>
-                  </label>
-
-                  <label class="org-attendee-email-field">
-                    <span>Subject line</span>
-                    <input type="text" id="oec-subject" maxlength="90" placeholder="Who attended — your event title" />
-                  </label>
-
-                  <label class="org-attendee-email-field">
-                    <span>Optional note from you</span>
-                    <textarea id="oec-note" rows="3" maxlength="800" placeholder="Thanks for coming — here are the people who attended so you can keep networking."></textarea>
-                  </label>
-
-                  <p class="org-attendee-email-hint">
-                    Only confirmed bookings are included. Pending applications and cancelled tickets are left out.
-                    Each person receives the full list except their own details.
-                  </p>
-
-                  <div class="org-attendee-email-actions">
-                    <button type="button" class="org-btn org-btn-outline" id="oec-preview">Refresh preview</button>
-                    <button type="button" class="org-btn org-btn-gold" id="oec-send">Send attendee round-up</button>
-                  </div>
-                </form>
-
-                <aside class="org-attendee-email-side" aria-label="Email preview">
-                  <div class="org-attendee-email-mock" id="oec-preview-panel">
-                    <div class="org-attendee-email-mock-bar" aria-hidden="true">
-                      <span></span><span></span><span></span>
-                    </div>
-                    <div class="org-attendee-email-mock-body" id="oec-preview-body">
-                      <p class="org-attendee-email-hint">Pick an event to preview the round-up your guests will receive.</p>
-                    </div>
-                  </div>
-                </aside>
-              </div>
-            </section>
-
-            <div class="org-communicate-more">
-              <h3 class="org-section-title">More email tools</h3>
-              <p class="org-section-sub">Add branded campaigns and smarter follow-ups when you need them — priced per send or as a small monthly add-on.</p>
-              <div class="org-communicate-more-grid">
-                <article class="org-communicate-more-card">
-                  <p class="org-communicate-more-badge">Coming soon</p>
-                  <h4>Monthly group update</h4>
-                  <p>A branded round-up to past Hub bookers — stats, upcoming dates, and a note from you.</p>
-                </article>
-                <article class="org-communicate-more-card">
-                  <p class="org-communicate-more-badge">Coming soon</p>
-                  <h4>Smart audiences</h4>
-                  <p>Target people who came once, booked recently, or saved your page but never booked.</p>
-                </article>
-                <article class="org-communicate-more-card">
-                  <p class="org-communicate-more-badge">Coming soon</p>
-                  <h4>Engagement report</h4>
-                  <p>See opens, clicks, and bookings after each send so you know what brought people back.</p>
-                </article>
-              </div>
-            </div>
           </div>
 
           <div
@@ -1968,6 +1864,140 @@
           </div>
         </section>
 
+        <!-- Communicate: attendee emails under Events -->
+        <section class="org-page" id="org-page-communicate" data-org-page="communicate">
+          <header class="org-page-head">
+            <p class="org-page-kicker">My events</p>
+            <h1 class="org-page-title">Communicate</h1>
+            <p class="org-page-lead">
+              Email guests about your events. You get one free Attendee round-up per organiser page — more email tools unlock here as paid add-ons.
+            </p>
+          </header>
+
+          <section class="org-attendee-email-panel org-attendee-email-panel--embedded" id="org-attendee-email-panel" aria-labelledby="org-attendee-email-title">
+            <header class="org-attendee-email-panel-head">
+              <div>
+                <p class="org-attendee-email-kicker">Free · 1 send per organiser page</p>
+                <h2 class="org-section-title" id="org-attendee-email-title">Attendee round-up</h2>
+                <p class="org-section-sub org-sub-lead org-sub-lead--flush">
+                  Share a branded list of confirmed guests — name, company, job title and email — so people can keep networking.
+                  Before the event you can send <strong>Who’s going</strong>; after it starts, send <strong>Who attended</strong>.
+                </p>
+              </div>
+            </header>
+
+            <p class="org-attendee-email-status" id="oec-status" role="status"></p>
+            <p class="org-attendee-email-usage" id="oec-usage" hidden></p>
+
+            <div class="org-attendee-email-layout">
+              <form class="org-attendee-email-form" id="oec-form" autocomplete="off">
+                <fieldset class="org-attendee-email-mode">
+                  <legend>What are you sharing?</legend>
+                  <label class="org-attendee-email-mode-option">
+                    <input type="radio" name="oec-list-kind" value="attended" checked />
+                    <span>
+                      <strong>Who attended</strong>
+                      <em>After the event has started — reconnect guests who came</em>
+                    </span>
+                  </label>
+                  <label class="org-attendee-email-mode-option">
+                    <input type="radio" name="oec-list-kind" value="going" />
+                    <span>
+                      <strong>Who’s going</strong>
+                      <em>Before the event — share confirmed bookings so people can connect early</em>
+                    </span>
+                  </label>
+                </fieldset>
+
+                <ol class="org-attendee-email-steps" aria-label="How to send">
+                  <li><span>1</span> Pick the event (Who’s going before it starts, Who attended after)</li>
+                  <li><span>2</span> Untick anyone to omit, add who it’s from + optional note</li>
+                  <li><span>3</span> Preview &amp; send (1 free send per organiser page)</li>
+                </ol>
+
+                <div class="org-attendee-email-row" id="oec-group-wrap" hidden>
+                  <label for="oec-group">Organiser page</label>
+                  <select id="oec-group" aria-label="Organiser page"></select>
+                </div>
+
+                <label class="org-attendee-email-field">
+                  <span>Event</span>
+                  <select id="oec-event" aria-label="Event for attendee round-up">
+                    <option value="">Choose an event…</option>
+                  </select>
+                  <p class="org-attendee-email-hint" id="oec-count"></p>
+                </label>
+
+                <label class="org-attendee-email-field">
+                  <span>Subject line</span>
+                  <input type="text" id="oec-subject" maxlength="90" placeholder="Who attended — your event title" />
+                </label>
+
+                <label class="org-attendee-email-field">
+                  <span>From (name people will see)</span>
+                  <input type="text" id="oec-from-name" maxlength="80" placeholder="e.g. Sarah from City Connectors" />
+                  <p class="org-attendee-email-hint">Your group logo is included automatically from the organiser page.</p>
+                </label>
+
+                <label class="org-attendee-email-field">
+                  <span>Optional note</span>
+                  <textarea id="oec-note" rows="3" maxlength="800" placeholder="Thanks for coming — here are the people who attended so you can keep networking."></textarea>
+                </label>
+
+                <div class="org-attendee-email-omit" id="oec-omit-wrap" hidden>
+                  <p class="org-attendee-email-omit-title">Who to include</p>
+                  <p class="org-attendee-email-hint">Untick anyone who should be left out of the email and the shared list.</p>
+                  <div class="org-attendee-email-omit-list" id="oec-omit-list"></div>
+                </div>
+
+                <p class="org-attendee-email-hint">
+                  Only confirmed bookings are included. Pending applications and cancelled tickets are left out.
+                  Each person receives the list of included guests except their own details.
+                </p>
+
+                <div class="org-attendee-email-actions">
+                  <button type="button" class="org-btn org-btn-outline" id="oec-preview">Refresh preview</button>
+                  <button type="button" class="org-btn org-btn-gold" id="oec-send">Send attendee round-up</button>
+                </div>
+              </form>
+
+              <aside class="org-attendee-email-side" aria-label="Email preview">
+                <div class="org-attendee-email-mock" id="oec-preview-panel">
+                  <div class="org-attendee-email-mock-bar" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="org-attendee-email-mock-body" id="oec-preview-body">
+                    <p class="org-attendee-email-hint">Pick an event to preview the round-up your guests will receive.</p>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <div class="org-communicate-more">
+            <h3 class="org-section-title">More email tools</h3>
+            <p class="org-section-sub">Free: one Attendee round-up per organiser page. Paid add-ons unlock broader campaigns when you need them.</p>
+            <div class="org-communicate-more-grid">
+              <article class="org-communicate-more-card org-communicate-more-card--featured">
+                <p class="org-communicate-more-badge">Next paid add-on</p>
+                <h4>Monthly group update</h4>
+                <p class="org-communicate-more-price">Coming soon · per send or small monthly plan</p>
+                <p>A branded round-up to past Hub bookers — stats, upcoming dates, and a note from you. This is the first paid email tool we’ll ship here.</p>
+              </article>
+              <article class="org-communicate-more-card">
+                <p class="org-communicate-more-badge">Paid add-on · Soon</p>
+                <h4>Smart audiences</h4>
+                <p>Target people who came once, booked recently, or saved your page but never booked.</p>
+              </article>
+              <article class="org-communicate-more-card">
+                <p class="org-communicate-more-badge">Paid add-on · Soon</p>
+                <h4>Engagement report</h4>
+                <p>See opens, clicks, and bookings after each send so you know what brought people back.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
         <!-- My Events hub -->
         <section class="org-page" id="org-page-events" data-org-page="events">
           <header class="org-page-head org-page-head--split">
@@ -2160,7 +2190,7 @@
             <div class="org-toolbar org-toolbar--section">
               <p class="org-section-sub org-sub-lead org-sub-lead--flush">
                 Everyone registered or applied for your events — see who is new to your organiser page vs returning, filter by event, export a CSV, or print name badges for check-in.
-                After an event, send an <a class="org-inline-link" href="#social-communicate" data-org-route="social-communicate">Attendee round-up</a> from Communicate.
+                After an event, send an <a class="org-inline-link" href="#communicate" data-org-route="communicate">Attendee round-up</a> from Communicate.
               </p>
             </div>
 
@@ -2246,6 +2276,7 @@
                 Archived applications
               </button>
             </div>
+            <div class="org-applications-banner org-applications-banner--pending" id="attendees-pending-banner" hidden role="status"></div>
             <div class="org-applications-banner" id="attendees-seat-refill-banner" hidden role="status"></div>
             <div class="org-attendees-relationship-summary" id="attendees-relationship-summary" hidden></div>
             <p class="org-attendees-filter-note" id="attendees-filter-note" hidden>
@@ -3227,7 +3258,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260730tabs" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260805comm1" defer></script>
-    <script src="../js/organiser-workspace-comfort.js?v=20260805comm1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260805comm4" defer></script>
+    <script src="../js/organiser-workspace-comfort.js?v=20260805comm4" defer></script>
   </body>
 </html>
