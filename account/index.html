@@ -19,8 +19,8 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260805reviewname3" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260805bottom" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260805hubmobile1" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260805hubmobile1" />
 
   </head>
   <body class="attendee-dashboard-page hub-page-account hub-is-page-loading">
@@ -132,20 +132,22 @@
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope-wrap">
                   <p class="ad-saved-scope-kicker" id="ad-tickets-scope-kicker">Your bookings</p>
-                  <div class="ad-saved-scope" role="tablist" aria-labelledby="ad-tickets-scope-kicker">
+                  <div class="ad-saved-scope ad-saved-scope--segments" role="tablist" aria-labelledby="ad-tickets-scope-kicker">
                     <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-tickets-scope="upcoming">
-                      Upcoming
+                      <span class="ad-scope-label">Upcoming</span>
                       <span class="ad-saved-scope-count" id="ad-tickets-count-upcoming" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="past">
-                      Past events
+                      <span class="ad-scope-label ad-scope-label--full">Past events</span>
+                      <span class="ad-scope-label ad-scope-label--short">Past</span>
                       <span class="ad-saved-scope-count" id="ad-tickets-count-past" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="payments">
-                      Payments
+                      <span class="ad-scope-label">Payments</span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="cancellations">
-                      Cancellations
+                      <span class="ad-scope-label ad-scope-label--full">Cancellations</span>
+                      <span class="ad-scope-label ad-scope-label--short">Cancelled</span>
                       <span class="ad-saved-scope-count" id="ad-tickets-count-cancellations" hidden aria-hidden="true"></span>
                     </button>
                   </div>
@@ -285,21 +287,25 @@
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope-wrap">
                   <p class="ad-saved-scope-kicker" id="ad-saved-scope-kicker">Choose what to view</p>
-                  <div class="ad-saved-scope" role="tablist" aria-labelledby="ad-saved-scope-kicker">
+                  <div class="ad-saved-scope ad-saved-scope--segments" role="tablist" aria-labelledby="ad-saved-scope-kicker">
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">
-                      My memberships
+                      <span class="ad-scope-label ad-scope-label--full">My memberships</span>
+                      <span class="ad-scope-label ad-scope-label--short">Members</span>
                       <span class="ad-saved-scope-count" id="ad-saved-count-groups" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-saved-scope="events">
-                      Saved events
+                      <span class="ad-scope-label ad-scope-label--full">Saved events</span>
+                      <span class="ad-scope-label ad-scope-label--short">Events</span>
                       <span class="ad-saved-scope-count" id="ad-saved-count-events" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="organisers">
-                      Saved organisers
+                      <span class="ad-scope-label ad-scope-label--full">Saved organisers</span>
+                      <span class="ad-scope-label ad-scope-label--short">Organisers</span>
                       <span class="ad-saved-scope-count" id="ad-saved-count-organisers" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="reviews">
-                      Organiser reviews
+                      <span class="ad-scope-label ad-scope-label--full">Organiser reviews</span>
+                      <span class="ad-scope-label ad-scope-label--short">Reviews</span>
                       <span class="ad-saved-scope-count" id="ad-saved-count-reviews" hidden aria-hidden="true"></span>
                     </button>
                   </div>
@@ -385,13 +391,13 @@
                   <div class="ad-saved-pane-inner">
                     <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
                       <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Review lists</p>
-                      <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
+                      <div class="ad-saved-scope ad-saved-scope--pair ad-saved-scope--segments" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
                         <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
-                          To write
+                          <span class="ad-scope-label">To write</span>
                           <span class="ad-saved-scope-count" id="ad-reviews-count-pending" hidden aria-hidden="true"></span>
                         </button>
                         <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">
-                          Submitted
+                          <span class="ad-scope-label">Submitted</span>
                           <span class="ad-saved-scope-count" id="ad-reviews-count-done" hidden aria-hidden="true"></span>
                         </button>
                       </div>
@@ -431,17 +437,20 @@
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope-wrap">
                   <p class="ad-saved-scope-kicker" id="ad-opp-saved-scope-kicker">Business opportunities</p>
-                  <div class="ad-saved-scope" role="tablist" aria-labelledby="ad-opp-saved-scope-kicker">
+                  <div class="ad-saved-scope ad-saved-scope--segments" role="tablist" aria-labelledby="ad-opp-saved-scope-kicker">
                     <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-opp-saved-scope="enquiries">
-                      My enquiries
+                      <span class="ad-scope-label ad-scope-label--full">My enquiries</span>
+                      <span class="ad-scope-label ad-scope-label--short">Enquiries</span>
                       <span class="ad-saved-scope-count" id="ad-opp-saved-count-enquiries" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-opp-saved-scope="listings">
-                      Saved listings
+                      <span class="ad-scope-label ad-scope-label--full">Saved listings</span>
+                      <span class="ad-scope-label ad-scope-label--short">Saved</span>
                       <span class="ad-saved-scope-count" id="ad-opp-saved-count-listings" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-opp-saved-scope="alerts">
-                      Search alerts
+                      <span class="ad-scope-label ad-scope-label--full">Search alerts</span>
+                      <span class="ad-scope-label ad-scope-label--short">Alerts</span>
                       <span class="ad-saved-scope-count" id="ad-opp-saved-count-alerts" hidden aria-hidden="true"></span>
                     </button>
                   </div>
@@ -918,6 +927,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
     <script src="../js/hub-side-nav.js?v=20260805drag2"></script>
-    <script src="../js/attendee-dashboard.js?v=20260805reviewname2"></script>
+    <script src="../js/attendee-dashboard.js?v=20260805hubmobile1"></script>
   </body>
 </html>

@@ -994,6 +994,14 @@ button.ad-stat-link:focus-visible::after {
   color: var(--ad-teal-dark);
 }
 
+.ad-scope-label--short {
+  display: none;
+}
+
+.ad-td-meta-compact {
+  display: none;
+}
+
 .ad-saved-pane {
   padding: 0;
   background: var(--ad-white);

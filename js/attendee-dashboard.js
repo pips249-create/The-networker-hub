@@ -2615,22 +2615,37 @@
         tr.className = 'ad-row-application-approved';
       }
       if (fullColumns) {
+        const dateLabel = reg.isSeriesGroup
+          ? reg.seriesDateLabel || formatDateShort(reg.date)
+          : formatDateShort(reg.date);
+        const timeLabel = reg.isSeriesGroup ? 'All sessions' : formatTimeRange(reg.date, reg.endDate);
+        const metaBits = [dateLabel, timeLabel, reg.ticketLabel].filter(function (bit) {
+          return bit && String(bit).trim() && String(bit) !== '—';
+        });
         tr.innerHTML =
           '<td class="ad-td-thumb">' +
           thumbHtml(reg) +
           '</td><td class="ad-td-name" data-label="Event">' +
           eventTitleCell(reg) +
-          '</td><td data-label="Date">' +
-          esc(reg.isSeriesGroup ? reg.seriesDateLabel || formatDateShort(reg.date) : formatDateShort(reg.date)) +
-          '</td><td data-label="Time">' +
-          esc(reg.isSeriesGroup ? 'All sessions' : formatTimeRange(reg.date, reg.endDate)) +
-          '</td><td data-label="Tickets">' +
-          esc(reg.ticketLabel || '—') +
-          '</td><td data-label="Application">' +
+          '</td><td class="ad-td-meta-compact" data-label="">' +
+          '<p class="ad-meta-compact-line">' +
+          esc(metaBits.join(' · ')) +
+          '</p>' +
+          '<div class="ad-meta-compact-badges">' +
           applicationBadge(reg) +
-          '</td><td data-label="Payment">' +
           paymentBadge(reg.paymentStatus, reg) +
-          '</td><td data-label="Review">' +
+          reviewBadge(reg.reviewStatus, reg) +
+          '</div></td><td class="ad-td-meta-desk" data-label="Date">' +
+          esc(dateLabel) +
+          '</td><td class="ad-td-meta-desk" data-label="Time">' +
+          esc(timeLabel) +
+          '</td><td class="ad-td-meta-desk" data-label="Tickets">' +
+          esc(reg.ticketLabel || '—') +
+          '</td><td class="ad-td-meta-desk" data-label="Application">' +
+          applicationBadge(reg) +
+          '</td><td class="ad-td-meta-desk" data-label="Payment">' +
+          paymentBadge(reg.paymentStatus, reg) +
+          '</td><td class="ad-td-meta-desk" data-label="Review">' +
           reviewBadge(reg.reviewStatus, reg) +
           '</td><td class="ad-td-actions" data-label="Actions"><div class="ad-action-group ad-action-group--with-utilities">' +
           actionCell(reg, { showCancel: listKey === 'upcoming', showTicket: true }) +
