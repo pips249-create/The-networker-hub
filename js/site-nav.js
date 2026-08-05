@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260728lb';
+  var NAV_BUILD = '20260805email1';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -852,7 +852,8 @@
   function probeCatalogueAccess() {
     return fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
-        return res.status !== 403;
+        // Only treat a successful catalogue response as open (not 401/500/etc).
+        return res.status === 200;
       })
       .catch(function () {
         return false;

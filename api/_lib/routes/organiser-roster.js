@@ -13,8 +13,11 @@ const {
   enrichMembersWithBookings,
   queueUnclaimedMemberInvites,
   queueMembershipPayInvites,
+  ROSTER_CSV_MAX_CHARS,
+  ROSTER_CSV_MAX_ROWS,
 } = require('../organiser-member-roster');
 const { getSupabaseAdmin } = require('../supabase');
+const { rateLimit, clientIp } = require('../rate-limit');
 
 function parseBody(req) {
   let body = req.body;
@@ -136,10 +139,36 @@ module.exports = async function handler(req, res) {
       await assertGroupAccess(api, auth.session, groupId);
 
       if (body.csv || body.csvText || body.csv_text) {
-        const rows = parseRosterCsv(body.csv || body.csvText || body.csv_text);
+        const csvText = String(body.csv || body.csvText || body.csv_text || '');
+        const sessionKey = String(auth.session?.email || auth.session?.sub || 'anon')
+          .trim()
+          .toLowerCase();
+        const limited = rateLimit('roster_csv:' + clientIp(req) + ':' + sessionKey + ':' + groupId, {
+          max: 12,
+          windowMs: 15 * 60 * 1000,
+        });
+        if (!limited.allowed) {
+          res.setHeader('Retry-After', String(limited.retryAfterSec));
+          return json(res, 429, {
+            ok: false,
+            error: 'rate_limited',
+            message:
+              'Too many CSV imports. Please wait a few minutes before importing again.',
+            retryAfterSec: limited.retryAfterSec,
+            maxChars: ROSTER_CSV_MAX_CHARS,
+            maxRows: ROSTER_CSV_MAX_ROWS,
+          });
+        }
+
+        const rows = parseRosterCsv(csvText);
         const sendInvite = body.sendInvites === true || body.send_invites === true;
         const result = await importRosterCsv(groupId, rows, { sendInvite });
-        return json(res, 200, { ok: true, ...result });
+        return json(res, 200, {
+          ok: true,
+          ...result,
+          maxChars: ROSTER_CSV_MAX_CHARS,
+          maxRows: ROSTER_CSV_MAX_ROWS,
+        });
       }
 
       const action = String(body.action || '').trim().toLowerCase();
@@ -252,7 +281,7 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     return json(res, e.status || 500, {
       ok: false,
-      error: e.message || 'roster_failed',
+      error: e.code || e.message || 'roster_failed',
       message: e.message,
     });
   }

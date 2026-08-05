@@ -20,7 +20,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_rebrand_announcement: {
     file: 'organiser-rebrand-announcement.html',
     marker: 'hub-email-layout-v2-legacy',
-    subject: "We're upgrading The Networker — your group listing is ready",
+    subject: "We've been quietly rebuilding The Networker",
   },
   organiser_team_invite: {
     file: 'organiser-team-invite.html',

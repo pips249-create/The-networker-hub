@@ -503,7 +503,7 @@ const FALLBACK_REPLIES = [
   {
     match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)|import.*(spreadsheet|excel).*member/i,
     reply:
-      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. Invite emails are queued by default after import (untick to skip) — new accounts get a sign-up link; existing Hub accounts get a sign-in link. Sends gradually over about 2 hours.',
+      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. Max 5,000 rows / 512 KB per import. Invite emails are queued by default after import (untick to skip) — new accounts get a sign-up link; existing Hub accounts get a sign-in link. Sends gradually over about 2 hours.',
   },
   {
     match: /add.*(to|someone).*(member list|member roster|roster)|manage member (list|roster)|set up member (list|roster)|open member (list|roster)|where.*member (list|roster)/i,

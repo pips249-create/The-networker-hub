@@ -47,7 +47,54 @@
     }
   }
 
+  function initTeamOnlyForm() {
+    var form = document.getElementById('contact-team-only-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = String(document.getElementById('contact-team-only-name')?.value || '').trim();
+      var email = String(document.getElementById('contact-team-only-email')?.value || '').trim();
+      var message = String(document.getElementById('contact-team-only-message')?.value || '').trim();
+      if (!name || !email || !message) return;
+      var subject = encodeURIComponent('Contact from ' + name);
+      var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\n\n' + message);
+      window.location.href = 'mailto:hello@thenetworkerhub.com?subject=' + subject + '&body=' + body;
+    });
+  }
+
+  function setContactMode(catalogueOpen) {
+    var hubertPanel = document.getElementById('contact-hubert-panel');
+    var teamOnly = document.getElementById('contact-team-only');
+    if (catalogueOpen) {
+      if (hubertPanel) hubertPanel.hidden = false;
+      if (teamOnly) teamOnly.hidden = true;
+    } else {
+      if (hubertPanel) hubertPanel.hidden = true;
+      if (teamOnly) teamOnly.hidden = false;
+    }
+  }
+
   initTeamContactForm();
+  initTeamOnlyForm();
+
+  // Pre-launch / Email 1: keep Hubert off until the public catalogue is open.
+  setContactMode(window.HubCatalogueOpen === true);
+  window.addEventListener('hub-catalogue-access', function (ev) {
+    setContactMode(ev && ev.detail && ev.detail.open === true);
+  });
+  if (typeof window.HubCatalogueOpen !== 'boolean') {
+    fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
+      .then(function (res) {
+        return res.status === 200;
+      })
+      .catch(function () {
+        return false;
+      })
+      .then(function (open) {
+        window.HubCatalogueOpen = open;
+        setContactMode(open);
+      });
+  }
 
   if (!window.HubertChat) return;
   if (
@@ -57,6 +104,7 @@
   ) {
     return;
   }
+  if (window.HubCatalogueOpen !== true) return;
 
   var CONTACT_GREETING =
     'Good day! How can I help you today? I can instantly guide you through your tickets, help update your organiser tools, or find new opportunities.';

@@ -31,10 +31,72 @@ const {
 const ROSTER_STATUS_ACTIVE = 'active';
 const ROSTER_STATUS_REMOVED = 'removed';
 
+/** Plain-text CSV import limits (membership upload — not binary file storage). */
+const ROSTER_CSV_MAX_CHARS = 512 * 1024;
+const ROSTER_CSV_MAX_ROWS = 5000;
+const ROSTER_EMAIL_MAX_LEN = 254;
+const ROSTER_NAME_MAX_LEN = 200;
+
 function normalizeRosterEmail(raw) {
   return String(raw || '')
+    .replace(/\u0000/g, '')
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .slice(0, ROSTER_EMAIL_MAX_LEN);
+}
+
+function sanitizeRosterName(raw) {
+  let name = String(raw == null ? '' : raw)
+    .replace(/\u0000/g, '')
+    .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (name.length > ROSTER_NAME_MAX_LEN) name = name.slice(0, ROSTER_NAME_MAX_LEN).trim();
+  return name || null;
+}
+
+function isValidRosterEmail(email) {
+  const em = normalizeRosterEmail(email);
+  if (!em || em.length > ROSTER_EMAIL_MAX_LEN) return false;
+  if (em.includes(' ') || em.includes('\n') || em.includes('\r')) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+}
+
+function rosterCsvError(code, status = 400) {
+  const messages = {
+    csv_empty: 'Upload a CSV with at least one data row.',
+    csv_too_large:
+      'CSV is too large (max 512 KB). Split the file into smaller batches and try again.',
+    csv_too_many_rows:
+      'CSV has too many rows (max ' +
+      ROSTER_CSV_MAX_ROWS.toLocaleString('en-GB') +
+      '). Split the file and try again.',
+    csv_binary_rejected:
+      'That file does not look like plain CSV text. Export again as CSV from Excel or Google Sheets.',
+    csv_missing_email_column: 'CSV needs an email column.',
+  };
+  const err = new Error(messages[code] || code);
+  err.status = status;
+  err.code = code;
+  return err;
+}
+
+/** Reject oversized / binary-looking payloads before parsing rows. */
+function assertRosterCsvTextSafe(text) {
+  const s = String(text == null ? '' : text);
+  if (!s.trim()) throw rosterCsvError('csv_empty');
+  if (s.length > ROSTER_CSV_MAX_CHARS) throw rosterCsvError('csv_too_large', 413);
+  if (s.includes('\0')) throw rosterCsvError('csv_binary_rejected');
+
+  const sampleLen = Math.min(s.length, 8000);
+  let control = 0;
+  for (let i = 0; i < sampleLen; i++) {
+    const c = s.charCodeAt(i);
+    if (c < 32 && c !== 9 && c !== 10 && c !== 13) control += 1;
+  }
+  if (control > 40 || (sampleLen > 200 && control / sampleLen > 0.02)) {
+    throw rosterCsvError('csv_binary_rejected');
+  }
 }
 
 function parseExpiresAt(raw) {
@@ -829,14 +891,14 @@ async function upsertRosterMember(organiserId, payload, options) {
   const sb = getSupabaseAdmin();
   const orgId = String(organiserId || '').trim();
   const email = normalizeRosterEmail(payload.email);
-  const name = String(payload.name || '').trim() || null;
+  const name = sanitizeRosterName(payload.name);
   const expiresAt = parseExpiresAt(payload.expiresAt ?? payload.expires_at);
   const status = String(payload.status || ROSTER_STATUS_ACTIVE).trim();
   const sendInvite = opts.sendInvite !== false && payload.sendInvite !== false;
   const resendInvite = Boolean(opts.resendInvite || payload.resendInvite);
   const skipSideEffects = Boolean(opts.skipSideEffects);
 
-  if (!orgId || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!orgId || !isValidRosterEmail(email)) {
     const err = new Error('invalid_roster_member');
     err.status = 400;
     throw err;
@@ -962,21 +1024,24 @@ async function importRosterCsv(organiserId, rows, options) {
   let fail = 0;
   const errors = [];
   const savedMembers = [];
-  const normalized = [];
+  const byEmail = new Map();
 
   for (const row of rows || []) {
     const email = normalizeRosterEmail(row.email);
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidRosterEmail(email)) {
       fail += 1;
       if (errors.length < 20) errors.push({ email: row.email, message: 'invalid_email' });
       continue;
     }
-    normalized.push({
+    // Last row wins for duplicate emails in the same file.
+    byEmail.set(email, {
       email,
-      name: String(row.name || '').trim() || null,
+      name: sanitizeRosterName(row.name),
       expiresAt: parseExpiresAt(row.expiresAt ?? row.expires_at),
     });
   }
+
+  const normalized = Array.from(byEmail.values());
 
   for (const row of normalized) {
     try {
@@ -1026,17 +1091,22 @@ async function importRosterCsv(organiserId, rows, options) {
 }
 
 function parseRosterCsv(text) {
+  assertRosterCsvTextSafe(text);
   const lines = String(text || '')
+    .replace(/^\uFEFF/, '')
     .split(/\r?\n/)
     .filter((l) => l.trim());
-  if (!lines.length) return [];
+  if (!lines.length) throw rosterCsvError('csv_empty');
   const header = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/^"|"$/g, ''));
   const emailIdx = header.findIndex((h) => h === 'email' || h === 'e-mail');
   const nameIdx = header.findIndex((h) => h === 'name' || h === 'full name' || h === 'member name');
   const expiryIdx = header.findIndex((h) =>
     ['expires', 'expires_at', 'expiry', 'membership expiry', 'membership_expiry'].includes(h)
   );
-  if (emailIdx < 0) throw new Error('CSV needs an email column');
+  if (emailIdx < 0) throw rosterCsvError('csv_missing_email_column');
+
+  const dataLineCount = lines.length - 1;
+  if (dataLineCount > ROSTER_CSV_MAX_ROWS) throw rosterCsvError('csv_too_many_rows');
 
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
@@ -1049,6 +1119,7 @@ function parseRosterCsv(text) {
       expiresAt: expiryIdx >= 0 ? cols[expiryIdx] : null,
     });
   }
+  if (rows.length > ROSTER_CSV_MAX_ROWS) throw rosterCsvError('csv_too_many_rows');
   return rows;
 }
 
@@ -1203,6 +1274,24 @@ async function buildRosterReports(
 
   const targetEventId = String(eventId || '').trim();
   if (targetEventId) {
+    const { data: ownedEvent, error: ownedEventErr } = await sb
+      .from('events')
+      .select('id')
+      .eq('id', targetEventId)
+      .eq('organiser_id', orgId)
+      .maybeSingle();
+    if (ownedEventErr) throw new Error(ownedEventErr.message);
+    if (!ownedEvent) {
+      // Foreign event IDs must not mark every member as "not booked".
+      reports.bookedForEvent = {
+        eventId: targetEventId,
+        bookedCount: 0,
+        notBookedCount: 0,
+        booked: [],
+        notBooked: [],
+        error: 'event_not_owned',
+      };
+    } else {
     const { data: regs, error: regErr } = await sb
       .from('registrations')
       .select('id, attendee_id, attendees(email), application_status, payment_status, cancelled_at')
@@ -1265,6 +1354,7 @@ async function buildRosterReports(
       totalMemberBookings: newCount + returningCount,
       memberListOnly: true,
     };
+    }
   }
 
   let recentIds = (recentEventIds || []).filter(Boolean).slice(0, 12);
@@ -1862,6 +1952,20 @@ async function sendMemberRosterBookingReminders(organiserId, eventId) {
   const targetEventId = String(eventId || '').trim();
   if (!orgId || !targetEventId) return { sent: 0, skipped: 0, queued: 0, errors: [] };
 
+  const sb = getSupabaseAdmin();
+  const { data: eventRow, error: eventErr } = await sb
+    .from('events')
+    .select('id, organiser_id')
+    .eq('id', targetEventId)
+    .maybeSingle();
+  if (eventErr) throw new Error(eventErr.message);
+  if (!eventRow || String(eventRow.organiser_id || '') !== orgId) {
+    const err = new Error('event_not_owned');
+    err.status = 403;
+    err.code = 'event_not_owned';
+    throw err;
+  }
+
   const reports = await buildRosterReports(orgId, { eventId: targetEventId });
   const notBooked = reports.bookedForEvent?.notBooked || [];
   if (!notBooked.length) return { sent: 0, skipped: 0, queued: 0, errors: [] };
@@ -1929,7 +2033,14 @@ async function queueMembershipPayInvites(organiserId, options) {
 module.exports = {
   ROSTER_STATUS_ACTIVE,
   ROSTER_STATUS_REMOVED,
+  ROSTER_CSV_MAX_CHARS,
+  ROSTER_CSV_MAX_ROWS,
+  ROSTER_EMAIL_MAX_LEN,
+  ROSTER_NAME_MAX_LEN,
   normalizeRosterEmail,
+  sanitizeRosterName,
+  isValidRosterEmail,
+  assertRosterCsvTextSafe,
   rosterRowIsActive,
   getActiveRosterMembership,
   assertMembersOnlyBookingAllowed,

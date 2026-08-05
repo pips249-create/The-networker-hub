@@ -158,13 +158,23 @@ function testHelpers() {
   const {
     rosterRowIsActive,
     normalizeRosterEmail,
+    sanitizeRosterName,
+    isValidRosterEmail,
     parseRosterCsv,
+    assertRosterCsvTextSafe,
+    ROSTER_CSV_MAX_ROWS,
   } = require('../api/_lib/organiser-member-roster');
   const { isMembersOnlyTicket, normalizeTicketVisibility } = require('../api/_lib/ticket-visibility');
 
   try {
     if (normalizeRosterEmail('  USER@Example.COM ') !== 'user@example.com') {
       throw new Error('normalizeRosterEmail failed');
+    }
+    if (sanitizeRosterName('  Jane\u0000 Smith\t  ') !== 'Jane Smith') {
+      throw new Error('sanitizeRosterName failed');
+    }
+    if (isValidRosterEmail('not-an-email') || !isValidRosterEmail('ok@example.com')) {
+      throw new Error('isValidRosterEmail failed');
     }
     if (!rosterRowIsActive({ status: 'active', expires_at: null })) {
       throw new Error('active null expiry should pass');
@@ -185,7 +195,28 @@ function testHelpers() {
     if (!rows.length || rows[0].email !== 'smoke@example.com') {
       throw new Error('parseRosterCsv failed');
     }
-    ok('helpers', 'email normalize, expiry, visibility, CSV parse');
+    let rejectedBinary = false;
+    try {
+      assertRosterCsvTextSafe('email\n' + '\u0001'.repeat(80));
+    } catch (e) {
+      rejectedBinary = /plain CSV|binary|csv_binary/i.test(String(e.message || e.code || ''));
+    }
+    if (!rejectedBinary) throw new Error('assertRosterCsvTextSafe should reject binary-looking input');
+
+    let rejectedTooMany = false;
+    try {
+      const huge =
+        'email\n' +
+        Array.from({ length: ROSTER_CSV_MAX_ROWS + 2 }, function (_, i) {
+          return 'user' + i + '@example.com';
+        }).join('\n');
+      parseRosterCsv(huge);
+    } catch (e) {
+      rejectedTooMany = /too many rows|csv_too_many/i.test(String(e.message || e.code || ''));
+    }
+    if (!rejectedTooMany) throw new Error('parseRosterCsv should reject oversized row counts');
+
+    ok('helpers', 'email normalize, sanitise, expiry, visibility, CSV parse + limits');
   } catch (e) {
     fail('helpers', e.message);
   }

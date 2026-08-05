@@ -159,13 +159,38 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_cancelled',
 ]);
 
-function replacePlaceholders(text, variables) {
+const { escapeHtml } = require('./event-refund-policy');
+
+/** Pre-built HTML fragments — do not escape these placeholders. */
+const RAW_HTML_PLACEHOLDER_RE = /(_html|_row|_section|_block|_markup)$/i;
+const RAW_HTML_PLACEHOLDER_KEYS = new Set([
+  'sponsor_row',
+  'sponsor_section',
+  'mini_sponsors_row',
+  'changes_section',
+  'denial_reason_block',
+  'event_meta_rows',
+  'meeting_link_row',
+  'listing_badge',
+  'organiser_intro',
+  'connections_list_html',
+]);
+
+function isRawHtmlPlaceholderKey(key) {
+  const k = String(key || '');
+  return RAW_HTML_PLACEHOLDER_KEYS.has(k) || RAW_HTML_PLACEHOLDER_RE.test(k);
+}
+
+function replacePlaceholders(text, variables, options) {
   const vars = variables && typeof variables === 'object' ? variables : {};
+  const asHtml = !options || options.asHtml !== false;
   return String(text || '').replace(PLACEHOLDER_RE, function (match, key) {
     if (!Object.prototype.hasOwnProperty.call(vars, key)) return match;
     const val = vars[key];
     if (val == null) return '';
-    return String(val);
+    const raw = String(val);
+    if (!asHtml || isRawHtmlPlaceholderKey(key)) return raw;
+    return escapeHtml(raw);
   });
 }
 
@@ -427,7 +452,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     html = html.replace(supportRe, footerSupportEmail);
   }
 
-  const subject = replacePlaceholders(template.subject, merged).replace(
+  const subject = replacePlaceholders(template.subject, merged, { asHtml: false }).replace(
     /\{\{\s*support_email\s*\}\}/g,
     footerSupportEmail || ''
   );

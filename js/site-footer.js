@@ -4,7 +4,7 @@
  * When the public catalogue is gated, Explore links stay on the organiser funnel.
  */
 (function () {
-  var FOOTER_BUILD = '20260804email1';
+  var FOOTER_BUILD = '20260805email1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -164,7 +164,7 @@
   if (typeof window.HubCatalogueOpen !== 'boolean') {
     fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
-        return res.status !== 403;
+        return res.status === 200;
       })
       .catch(function () {
         return false;
@@ -191,18 +191,30 @@
   var pagePath = (window.location.pathname || '').toLowerCase();
   if (/\/contact(?:\.html)?\/?$/.test(pagePath)) return;
 
-  var hubertCss = document.createElement('link');
-  hubertCss.rel = 'stylesheet';
-  hubertCss.href = href('css/hubert-widget.css?v=' + FOOTER_BUILD);
-  document.head.appendChild(hubertCss);
+  function loadHubertWidget() {
+    if (document.querySelector('script[src*="hubert-widget"]')) return;
+    var hubertCss = document.createElement('link');
+    hubertCss.rel = 'stylesheet';
+    hubertCss.href = href('css/hubert-widget.css?v=' + FOOTER_BUILD);
+    document.head.appendChild(hubertCss);
 
-  var hubertChat = document.createElement('script');
-  hubertChat.src = href('js/hubert-chat.js?v=' + FOOTER_BUILD);
-  hubertChat.onload = function () {
-    var hubertWidget = document.createElement('script');
-    hubertWidget.src = href('js/hubert-widget.js?v=' + FOOTER_BUILD);
-    hubertWidget.setAttribute('data-root', root);
-    document.body.appendChild(hubertWidget);
-  };
-  document.body.appendChild(hubertChat);
+    var hubertChat = document.createElement('script');
+    hubertChat.src = href('js/hubert-chat.js?v=' + FOOTER_BUILD);
+    hubertChat.onload = function () {
+      var hubertWidget = document.createElement('script');
+      hubertWidget.src = href('js/hubert-widget.js?v=' + FOOTER_BUILD);
+      hubertWidget.setAttribute('data-root', root);
+      document.body.appendChild(hubertWidget);
+    };
+    document.body.appendChild(hubertChat);
+  }
+
+  // Keep Hubert off while the public catalogue is gated (Email 1 / pre-launch).
+  if (window.HubCatalogueOpen === true) {
+    loadHubertWidget();
+  } else {
+    window.addEventListener('hub-catalogue-access', function (ev) {
+      if (ev && ev.detail && ev.detail.open === true) loadHubertWidget();
+    });
+  }
 })();

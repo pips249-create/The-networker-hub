@@ -25,7 +25,7 @@
 <body>
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260804early" data-root="" data-page="contact"></script>
+<script src="js/site-nav.js?v=20260805email1" data-root="" data-page="contact"></script>
 
 <main class="content-page-main">
   <header class="content-hero">
@@ -75,9 +75,9 @@
         </li>
       </ul>
       <ul class="contact-trust" aria-label="How we support you">
-        <li class="contact-trust-item">
+        <li class="contact-trust-item" id="contact-trust-hubert">
           <strong>Platform help</strong>
-          <span>Hubert can answer most questions about events, tickets, and opportunities instantly.</span>
+          <span>Email Rosie and Catherine for help with events, tickets, and opportunities.</span>
         </li>
         <li class="contact-trust-item">
           <strong>Account &amp; billing</strong>
@@ -88,11 +88,11 @@
         For refunds or booking issues, include your event name and order reference so we can help faster.
       </p>
       <p>
-        <a class="btn btn-secondary" href="/faq">Read the FAQ</a>
+        <a class="btn btn-secondary" href="mailto:hello@thenetworkerhub.com">Email hello@thenetworkerhub.com</a>
       </p>
     </aside>
 
-    <section class="contact-chat" aria-labelledby="contact-chat-heading">
+    <section class="contact-chat" id="contact-hubert-panel" aria-labelledby="contact-chat-heading" hidden>
       <div class="contact-chat-head">
         <div class="contact-chat-brand">
           <img class="contact-chat-avatar" src="assets/hubert-icon.png" alt="" width="44" height="44" aria-hidden="true">
@@ -154,13 +154,41 @@
         </form>
       </div>
     </section>
+
+    <section class="contact-chat contact-chat--team-only" id="contact-team-only" aria-labelledby="contact-team-only-heading">
+      <div class="contact-chat-head">
+        <div class="contact-chat-brand">
+          <div>
+            <h2 id="contact-team-only-heading">Message Rosie &amp; Catherine</h2>
+            <p>Leave a note for the team — we&rsquo;ll pick it up by email during office hours.</p>
+          </div>
+        </div>
+      </div>
+      <form id="contact-team-only-form" class="contact-team-form" style="display:block;margin-top:1rem;">
+        <div class="contact-team-field">
+          <label for="contact-team-only-name">Your name</label>
+          <input type="text" id="contact-team-only-name" name="name" autocomplete="name" required maxlength="120" />
+        </div>
+        <div class="contact-team-field">
+          <label for="contact-team-only-email">Email address</label>
+          <input type="email" id="contact-team-only-email" name="email" autocomplete="email" required maxlength="254" />
+        </div>
+        <div class="contact-team-field">
+          <label for="contact-team-only-message">Your message</label>
+          <textarea id="contact-team-only-message" name="message" rows="5" required maxlength="4000" placeholder="Tell us about your organiser page, listing, or enquiry…"></textarea>
+        </div>
+        <div class="contact-team-form-actions">
+          <button type="submit" class="btn btn-primary">Send to the team</button>
+        </div>
+      </form>
+    </section>
   </div>
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260804early" data-root=""></script>
-<script src="js/hubert-chat.js?v=20260711"></script>
-<script src="js/contact-chat.js?v=20260711b"></script>
+<script src="js/site-footer.js?v=20260805email1" data-root="" data-hubert="off"></script>
+<script src="js/hubert-chat.js?v=20260805email1"></script>
+<script src="js/contact-chat.js?v=20260805email1"></script>
 
 </body>
 </html>

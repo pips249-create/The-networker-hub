@@ -4,6 +4,9 @@
   const isStandalonePage = Boolean(document.querySelector('.omr-page')) && !isDashboardEmbed;
   let organiserId = String(params.get('id') || params.get('organiserId') || '').trim();
   const PAGE_SIZE = 25;
+  const CSV_MAX_CHARS = 512 * 1024;
+  const CSV_MAX_ROWS = 5000;
+  const CSV_MAX_FILE_BYTES = CSV_MAX_CHARS;
   let members = [];
   let rosterTotal = 0;
   let rosterActiveTotal = 0;
@@ -1461,7 +1464,10 @@
   }
 
   function csvCell(v) {
-    return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    let s = String(v == null ? '' : v);
+    // Neutralise Excel / Sheets formula injection when organisers re-open exports.
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
   }
 
   function downloadCsvFile(filename, lines) {
@@ -2393,14 +2399,56 @@
     }
 
     function loadCsvText(text, sourceName) {
-      if (csvEl) csvEl.value = text;
+      const raw = String(text || '');
+      if (!raw.trim()) {
+        showAlert('That file was empty.', 'error');
+        return false;
+      }
+      if (raw.length > CSV_MAX_CHARS) {
+        showAlert(
+          'CSV is too large (max 512 KB). Split into smaller batches and try again.',
+          'error'
+        );
+        return false;
+      }
+      if (raw.includes('\0')) {
+        showAlert(
+          'That file does not look like plain CSV text. Export again as CSV from Excel or Google Sheets.',
+          'error'
+        );
+        return false;
+      }
+      const dataRows = raw
+        .replace(/^\uFEFF/, '')
+        .split(/\r?\n/)
+        .filter(function (l) {
+          return l.trim();
+        }).length - 1;
+      if (dataRows > CSV_MAX_ROWS) {
+        showAlert(
+          'CSV has too many rows (max ' +
+            CSV_MAX_ROWS.toLocaleString('en-GB') +
+            '). Split the file and try again.',
+          'error'
+        );
+        return false;
+      }
+      if (csvEl) csvEl.value = raw;
       setLoadedFileName(sourceName || '');
       const paste = document.querySelector('.omr-paste-details');
-      if (paste && text) paste.open = false;
+      if (paste && raw) paste.open = false;
+      return true;
     }
 
     function readMemberFile(file) {
       if (!file) return;
+      if (file.size > CSV_MAX_FILE_BYTES) {
+        showAlert(
+          'File is too large (max 512 KB). Export a smaller CSV or split the list.',
+          'error'
+        );
+        return;
+      }
       const name = String(file.name || '').toLowerCase();
       const okType =
         name.endsWith('.csv') ||
@@ -2422,8 +2470,9 @@
             })
             .join('\n');
         }
-        loadCsvText(text, file.name);
-        showAlert('File loaded. Click Import members to add them.', 'success');
+        if (loadCsvText(text, file.name)) {
+          showAlert('File loaded. Click Import to add them.', 'success');
+        }
       };
       reader.onerror = function () {
         showAlert('Could not read that file.', 'error');
@@ -2470,6 +2519,13 @@
       const csv = csvEl?.value || '';
       if (!csv.trim()) {
         showAlert('Upload a CSV spreadsheet or paste CSV text first.', 'error');
+        return;
+      }
+      if (csv.length > CSV_MAX_CHARS) {
+        showAlert(
+          'CSV is too large (max 512 KB). Split into smaller batches and try again.',
+          'error'
+        );
         return;
       }
       try {

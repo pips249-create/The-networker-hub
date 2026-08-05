@@ -273,6 +273,9 @@ async function processDueRosterEmails(sb, options) {
           .maybeSingle();
         if (eventRes.error) throw new Error(eventRes.error.message);
         if (!eventRes.data) throw new Error('event_not_found');
+        if (String(eventRes.data.organiser_id || '') !== String(row.organiser_id || '')) {
+          throw new Error('event_organiser_mismatch');
+        }
         outcome = await sendMemberRosterNewEventAlert(sb, {
           eventRow: eventRes.data,
           organiser: organiserRes.data,
@@ -288,6 +291,9 @@ async function processDueRosterEmails(sb, options) {
           .maybeSingle();
         if (eventRes.error) throw new Error(eventRes.error.message);
         if (!eventRes.data) throw new Error('event_not_found');
+        if (String(eventRes.data.organiser_id || '') !== String(row.organiser_id || '')) {
+          throw new Error('event_organiser_mismatch');
+        }
         outcome = await sendQueuedBookingReminder(sb, {
           eventRow: eventRes.data,
           organiser: organiserRes.data,

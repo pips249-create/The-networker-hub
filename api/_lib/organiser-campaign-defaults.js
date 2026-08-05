@@ -10,6 +10,8 @@ function campaignSiteVars(host) {
   return {
     site_url: site,
     legacy_site_url: LEGACY_SITE_URL,
+    legacy_logo_url: site + '/assets/logo-networker-legacy.png',
+    logo_footer_url: site + '/assets/logo-email-footer.png',
     for_organisers_url: site + '/for-organisers',
     company_name: 'The Networker Group Ltd',
     company_number: '15252227',

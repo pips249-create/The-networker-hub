@@ -59,6 +59,7 @@ Members see the group under **My Hub → My groups** once added. They book membe
 - Registration and login claim every active, unexpired membership row matching the account email.
 - Once booked, member tickets use the same confirmation, reminder, event update, cancellation, refund, online-link and post-event review lifecycle as standard confirmed tickets.
 - Hub-billed rows store `stripe_subscription_id` / `billing_interval`; cancelled subscriptions expire at period end.
+- **CSV import** (authenticated organiser only): plain-text JSON body — not stored as a file. Limits: **5,000 rows / 512 KB** per import; **12 imports / 15 minutes** per organiser+IP; rejects binary-looking payloads; sanitises names; validates emails; dedupes duplicate emails in the same file. Membership CSV exports prefix formula-like cells (`=`, `+`, `-`, `@`) to reduce Excel/Sheets injection risk.
 
 ## Smoke test
 

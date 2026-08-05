@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>co.uk upgrade banner — preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1c2040;
+      --ink-soft: #3d4466;
+      --sky: #2f7eb8;
+      --sky-deep: #1f5f8f;
+      --mist: #eef3f8;
+      --line: rgba(28, 32, 64, 0.12);
+      --paper: #f7f5f1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: #dfe6ef;
+      color: var(--ink);
+    }
+    .preview-note {
+      max-width: 920px;
+      margin: 28px auto 12px;
+      padding: 0 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+    .preview-note strong { color: var(--ink); }
+    .preview-frame {
+      max-width: 920px;
+      margin: 0 auto 40px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(28, 32, 64, 0.18);
+      background: #fff;
+    }
+    .fake-wp-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .fake-logo {
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: 1.15rem;
+      color: var(--ink);
+    }
+    .fake-links {
+      display: flex;
+      gap: 18px;
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+    }
+    .fake-hero {
+      padding: 48px 28px 64px;
+      background:
+        radial-gradient(ellipse 70% 80% at 85% 20%, rgba(47, 126, 184, 0.12), transparent 55%),
+        linear-gradient(180deg, var(--mist), var(--paper));
+    }
+    .fake-hero h1 {
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      margin: 0 0 10px;
+      font-weight: 400;
+    }
+    .fake-hero p {
+      margin: 0;
+      max-width: 36ch;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+
+    /* ===== PASTE INTO WORDPRESS FROM HERE ===== */
+    .tnh-upgrade-banner {
+      --tnh-ink: #1c2040;
+      --tnh-sky: #2f7eb8;
+      --tnh-sky-deep: #1f5f8f;
+      --tnh-cream: #f4f0ea;
+      position: relative;
+      z-index: 99999;
+      background: linear-gradient(105deg, #1c2040 0%, #243056 48%, #1a4a6e 100%);
+      color: #fff;
+      font-family: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+    }
+    .tnh-upgrade-banner[hidden] { display: none !important; }
+    .tnh-upgrade-banner__inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 11px 44px 11px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px 18px;
+      text-align: center;
+    }
+    .tnh-upgrade-banner__eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #b8d7ef;
+      white-space: nowrap;
+    }
+    .tnh-upgrade-banner__copy {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.35;
+      color: #f5f7fb;
+    }
+    .tnh-upgrade-banner__copy em {
+      font-style: normal;
+      font-weight: 700;
+      color: #fff;
+    }
+    .tnh-upgrade-banner__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--tnh-cream);
+      color: var(--tnh-ink) !important;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none !important;
+      white-space: nowrap;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .tnh-upgrade-banner__cta:hover,
+    .tnh-upgrade-banner__cta:focus {
+      background: #fff;
+      color: var(--tnh-ink) !important;
+      transform: translateY(-1px);
+    }
+    .tnh-upgrade-banner__cta span[aria-hidden] {
+      font-size: 1.05em;
+      line-height: 1;
+    }
+    .tnh-upgrade-banner__close {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .tnh-upgrade-banner__close:hover,
+    .tnh-upgrade-banner__close:focus {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+    @media (max-width: 640px) {
+      .tnh-upgrade-banner__inner {
+        padding: 12px 40px 12px 14px;
+        gap: 8px;
+      }
+      .tnh-upgrade-banner__copy {
+        font-size: 14px;
+      }
+      .tnh-upgrade-banner__eyebrow {
+        width: 100%;
+      }
+    }
+    /* ===== END PASTE (CSS) ===== */
+
+    .howto {
+      max-width: 920px;
+      margin: 0 auto 56px;
+      padding: 0 16px;
+    }
+    .howto h2 {
+      font-family: "DM Serif Display", Georgia, serif;
+      font-weight: 400;
+      font-size: 1.5rem;
+      margin: 28px 0 10px;
+    }
+    .howto ol, .howto ul { line-height: 1.55; color: var(--ink-soft); padding-left: 1.2rem; }
+    .howto code {
+      font-size: 0.86em;
+      background: #fff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+    .howto pre {
+      background: #1c2040;
+      color: #e8eef6;
+      padding: 16px;
+      border-radius: 12px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .alts {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .alt {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .alt strong { display: block; margin-bottom: 4px; color: var(--ink); }
+    .alt.recommended { border-color: rgba(47, 126, 184, 0.45); box-shadow: 0 0 0 3px rgba(47, 126, 184, 0.12); }
+  </style>
+</head>
+<body>
+  <p class="preview-note">
+    <strong>Recommended:</strong> a slim, dismissible top bar on WordPress — old site keeps working, soft invite to the hub.
+    CTA goes to <code>https://www.thenetworkerhub.com/for-organisers</code> (Email 1 destination).
+  </p>
+
+  <div class="preview-frame" aria-label="Banner preview on a mock WordPress page">
+    <!-- Live preview of the banner -->
+    <aside class="tnh-upgrade-banner" id="tnh-upgrade-banner" role="region" aria-label="Announcement">
+      <div class="tnh-upgrade-banner__inner">
+        <span class="tnh-upgrade-banner__eyebrow">Something new</span>
+        <p class="tnh-upgrade-banner__copy">
+          We&rsquo;ve been working on <em>The Networker Hub</em> — same team, new platform.
+        </p>
+        <a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/for-organisers" target="_blank" rel="noopener">
+          Check it out <span aria-hidden="true">→</span>
+        </a>
+      </div>
+      <button type="button" class="tnh-upgrade-banner__close" id="tnh-upgrade-banner-close" aria-label="Dismiss announcement">&times;</button>
+    </aside>
+
+    <div class="fake-wp-nav">
+      <div class="fake-logo">The Networker</div>
+      <div class="fake-links" aria-hidden="true">
+        <span>Events</span><span>Groups</span><span>About</span>
+      </div>
+    </div>
+    <div class="fake-hero">
+      <h1>Mock WordPress homepage</h1>
+      <p>This is just context so you can see how the banner sits above the old site. Your real pages stay fully usable underneath.</p>
+    </div>
+  </div>
+
+  <div class="howto">
+    <h2>Best approach</h2>
+    <div class="alts">
+      <div class="alt recommended">
+        <strong>1. Sitewide top banner (do this)</strong>
+        Soft “we’ve been building something new” + Check it out. Old WordPress stays live. Matches Email 1. No second Vercel project.
+      </div>
+      <div class="alt">
+        <strong>2. Full gateway page (later / optional)</strong>
+        Only if you want every visit forced through a splash. Too heavy while organisers still need the old site for listings.
+      </div>
+      <div class="alt">
+        <strong>3. Hard redirect (1 September)</strong>
+        After Email 2 + soft launch — not now.
+      </div>
+    </div>
+
+    <h2>How to put it on WordPress</h2>
+    <ol>
+      <li>Keep current hosting. Take a full backup (DB + media) first.</li>
+      <li>Install <strong>WPCode</strong> or <strong>Code Snippets</strong> (or edit the child theme <code>header.php</code>).</li>
+      <li>Add a snippet that runs on the <strong>frontend header</strong> (or “Site Header”).</li>
+      <li>Paste the HTML + CSS + small JS below.</li>
+      <li>Publish, hard-refresh co.uk, click through to the hub.</li>
+    </ol>
+
+    <h2>Copy-paste: HTML (header)</h2>
+    <pre id="snippet-html">&lt;aside class="tnh-upgrade-banner" id="tnh-upgrade-banner" role="region" aria-label="Announcement"&gt;
+  &lt;div class="tnh-upgrade-banner__inner"&gt;
+    &lt;span class="tnh-upgrade-banner__eyebrow"&gt;Something new&lt;/span&gt;
+    &lt;p class="tnh-upgrade-banner__copy"&gt;
+      We&rsquo;ve been working on &lt;em&gt;The Networker Hub&lt;/em&gt; — same team, new platform.
+    &lt;/p&gt;
+    &lt;a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/for-organisers" target="_blank" rel="noopener"&gt;
+      Check it out &lt;span aria-hidden="true"&gt;→&lt;/span&gt;
+    &lt;/a&gt;
+  &lt;/div&gt;
+  &lt;button type="button" class="tnh-upgrade-banner__close" id="tnh-upgrade-banner-close" aria-label="Dismiss announcement"&gt;&amp;times;&lt;/button&gt;
+&lt;/aside&gt;</pre>
+
+    <h2>Copy-paste: CSS</h2>
+    <p>Copy the CSS block marked in this file’s <code>&lt;style&gt;</code> under “PASTE INTO WORDPRESS”, or use the compact version in <code>marketing/co-uk-upgrade-banner-snippet.html</code>.</p>
+
+    <h2>Copy-paste: JS (dismiss for 14 days)</h2>
+    <pre>&lt;script&gt;
+(function () {
+  var KEY = "tnh_upgrade_banner_dismissed_v1";
+  var el = document.getElementById("tnh-upgrade-banner");
+  var btn = document.getElementById("tnh-upgrade-banner-close");
+  if (!el) return;
+  try {
+    if (localStorage.getItem(KEY) === "1") { el.hidden = true; return; }
+  } catch (e) {}
+  if (btn) btn.addEventListener("click", function () {
+    el.hidden = true;
+    try { localStorage.setItem(KEY, "1"); } catch (e) {}
+  });
+})();
+&lt;/script&gt;</pre>
+
+    <h2>Alt copy (if you want softer / louder)</h2>
+    <ul>
+      <li><strong>Softer:</strong> “A new home for UK networking is on the way. Preview The Networker Hub →”</li>
+      <li><strong>Louder:</strong> “Big upgrade coming 1 Sept. See what’s new for organisers →”</li>
+      <li><strong>Recommended (above):</strong> “We’ve been working on The Networker Hub — same team, new platform.”</li>
+    </ul>
+  </div>
+
+  <script>
+  (function () {
+    var KEY = "tnh_upgrade_banner_dismissed_preview";
+    var el = document.getElementById("tnh-upgrade-banner");
+    var btn = document.getElementById("tnh-upgrade-banner-close");
+    if (!el || !btn) return;
+    btn.addEventListener("click", function () {
+      el.hidden = true;
+      try { localStorage.setItem(KEY, "1"); } catch (e) {}
+    });
+  })();
+  </script>
+</body>
+</html>
