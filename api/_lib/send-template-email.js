@@ -611,7 +611,9 @@ function shouldSkipEmailAllowlist(slug) {
   if (
     slug === 'password_reset' ||
     slug === 'organiser_email_verify' ||
-    slug === 'account_welcome'
+    slug === 'account_welcome' ||
+    slug === 'organiser_launch_invite' ||
+    slug === 'organiser_claim_invite'
   ) {
     return true;
   }
