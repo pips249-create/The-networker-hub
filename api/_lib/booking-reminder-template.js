@@ -34,6 +34,10 @@ function isStaleBookingReminderTemplate(bodyHtml) {
   if (body.includes('hello@thenetworkerhub.com')) return true;
   if (body.includes('{{logo_url}}" alt="The Networker Hub" width="200"')) return true;
   if (body.includes('The Networker Hub</p>') && body.includes('background:#f5f0e8;padding:28px')) return true;
+  if (!body.includes('hub-email-layout-v3-purple')) return true;
+  if (body.includes('background:#4a4446')) return true;
+  if (!body.includes('{{logo_footer_url}}')) return true;
+  if (!body.includes('{{privacy_url}}')) return true;
   return false;
 }
 

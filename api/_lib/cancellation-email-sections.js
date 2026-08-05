@@ -141,9 +141,9 @@ function buildRefundIssuedRow(amountPaid) {
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #86efac;">' +
     '<tr><td style="padding:22px 24px;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">About your refund</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">Your refund has been issued</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.35;">Your refund has been issued</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
-    'A refund of <strong style="color:#4a4446;">' +
+    'A refund of <strong style="color:#452d5c;">' +
     escapeHtml(amount) +
     '</strong> is on its way to your original payment method. Allow 5–10 business days. You will receive a separate email once Stripe confirms it.</p>' +
     '</td></tr></table></td></tr>'
@@ -157,9 +157,9 @@ function buildRefundEligibleRow(amountPaid) {
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #86efac;">' +
     '<tr><td style="padding:22px 24px;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">About your refund</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">Your refund is being processed</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.35;">Your refund is being processed</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
-    'You paid <strong style="color:#4a4446;">' +
+    'You paid <strong style="color:#452d5c;">' +
     escapeHtml(amount) +
     '</strong>. We are arranging your refund to your original payment method. You will receive a separate confirmation once it has been processed.</p>' +
     '</td></tr></table></td></tr>'
@@ -177,7 +177,7 @@ function buildNoRefundRow(eventRow) {
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;">' +
     '<tr><td style="padding:22px 24px;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Refund policy</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#4a4446;margin:0 0 10px;line-height:1.35;">No refund due for this cancellation</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.35;">No refund due for this cancellation</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">' +
     formatMultilineHtml(policyText) +
     '</p>' +
