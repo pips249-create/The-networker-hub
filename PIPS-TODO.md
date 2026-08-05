@@ -405,12 +405,14 @@ This is different from the legacy flow where all money sat in the Hub Stripe acc
 
 ### Pass criteria
 
+- [x] **Code math** — `npm run check:connect-checkout` (booking fee = Hub `application_fee` only; organiser gets full ticket) — verified 5 Aug 2026
 - [ ] Payment appears on the **organiser’s** connected account (not only on platform)
 - [ ] Platform balance increased by **booking fee only**
 - [ ] `registrations` row has correct `amount_paid` / payment status
 - [ ] `hub_checkout` metadata = `connect_destination` on the PaymentIntent (Stripe Dashboard)
 
-**Guide:** `docs/STRIPE-CONNECT-ORGANISER-GUIDE.md` · **Refunds:** `docs/REFUNDS-AND-STRIPE-CONNECT.md`
+**Guide:** `docs/STRIPE-CONNECT-ORGANISER-GUIDE.md` · **Refunds:** `docs/REFUNDS-AND-STRIPE-CONNECT.md`  
+**Automated check:** `npm run check:connect-checkout`
 
 ---
 

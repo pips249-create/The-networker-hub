@@ -23,6 +23,7 @@
     "test-review-e2e": "node scripts/review-e2e-test.js",
     "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",
     "test-category-exclusivity-e2e": "node scripts/category-exclusivity-e2e-test.js",
+    "check:connect-checkout": "node scripts/smoke-test-connect-checkout.js",
     "check:organiser-journey": "node scripts/smoke-test-organiser-journey.js",
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",
