@@ -264,8 +264,19 @@ html:has(.for-organisers-page) {
 .fo-path-hint--cta {
   margin: 16px auto 0;
   text-align: center;
-  color: rgba(255, 255, 255, 0.82);
-  max-width: none;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 36em;
+}
+
+.fo-path-hint--cta a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fo-path-hint--cta a:hover {
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .fo-hero-badges {
