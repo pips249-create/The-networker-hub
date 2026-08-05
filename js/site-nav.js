@@ -95,12 +95,20 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260805email1';
+  var NAV_BUILD = '20260805email1d';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
+
+  /** Email 1 / pre-launch marketing + auth — always early-access nav chrome. */
+  function forceEarlyAccessChrome() {
+    var p = String(window.location.pathname || '').toLowerCase();
+    return /\/(for-organisers|about|contact|legal-policies|login|register|forgot-password)(?:\.html)?\/?$/.test(
+      p
+    );
+  }
 
   function loadComplianceAsset(path) {
     var full = root + path;
@@ -367,6 +375,7 @@
     }
     if (early) {
       html += link('/for-organisers', 'For organisers', 'for-organisers');
+      html += link('/about', 'About', 'about');
       html += link('/contact', 'Contact', 'contact');
     } else {
       html += link('/events/', 'Events', 'events');
@@ -387,14 +396,14 @@
     }
     if (!user && !early) {
       html += moreNavDropdownHtml({ earlyAccess: false });
-    } else if (!user && early) {
-      html += moreNavDropdownHtml({ earlyAccess: true });
     }
     if (showListEventCta(user) && catalogueOpen !== false) {
       html += listEventCta(user);
     }
     if (user) {
       html += myHubDropdownHtml(user);
+    } else if (early) {
+      html += link('/register', 'Sign up', 'auth', 'nav-signin');
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
     }
@@ -435,9 +444,8 @@
     }
     if (early) {
       html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
-      html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
-      html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/about', 'About', 'about', 'nav-mobile-item');
+      html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
     } else {
       html += link('/events/', 'Events', 'events', 'nav-mobile-item');
@@ -478,6 +486,8 @@
       }
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
+    } else if (early) {
+      html += link('/register', 'Sign up', 'auth', 'nav-mobile-item nav-mobile-signin');
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     }
@@ -850,6 +860,20 @@
   }
 
   function probeCatalogueAccess() {
+    if (forceEarlyAccessChrome()) {
+      var prevForced = catalogueOpen;
+      catalogueOpen = false;
+      window.HubCatalogueOpen = false;
+      try {
+        window.dispatchEvent(new CustomEvent('hub-catalogue-access', { detail: { open: false } }));
+      } catch (e) {
+        /* ignore */
+      }
+      if (prevForced !== false) {
+        renderNav(lastNavUser, lastNavPending && !lastNavUser);
+      }
+      return Promise.resolve(false);
+    }
     return fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
         // Only treat a successful catalogue response as open (not 401/500/etc).

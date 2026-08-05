@@ -1,10 +1,11 @@
 /**
  * Shared site footer — same block on every public page.
- * FOOTER_BUILD=20260804early
  * When the public catalogue is gated, Explore links stay on the organiser funnel.
+ * Early-access surfaces (Email 1) always keep the slim footer — even if a team
+ * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260805email1';
+  var FOOTER_BUILD = '20260805email1d';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -12,6 +13,19 @@
     if (!path) return root || '/';
     if (path.charAt(0) === '/' || /^(https?:|mailto:|tel:)/i.test(path)) return path;
     return root + path;
+  }
+
+  /** Email 1 / pre-launch marketing + auth pages — never show catalogue footer links. */
+  function forceEarlyAccessChrome() {
+    var p = String(window.location.pathname || '').toLowerCase();
+    return /\/(for-organisers|about|contact|legal-policies|login|register|forgot-password)(?:\.html)?\/?$/.test(
+      p
+    );
+  }
+
+  function effectiveCatalogueOpen(open) {
+    if (forceEarlyAccessChrome()) return false;
+    return open === true;
   }
 
   var mount = document.getElementById('hub-site-footer');
@@ -37,7 +51,10 @@
       '">For organisers</a>' +
       '<a href="' +
       href('/about') +
-      '">About us</a>'
+      '">About us</a>' +
+      '<a href="' +
+      href('/contact') +
+      '">Contact us</a>'
     );
   }
 
@@ -61,18 +78,62 @@
         '">Contact us</a>'
       );
     }
-    return (
-      '<a href="' +
-      href('/for-organisers') +
-      '">For Organisers</a>' +
-      '<a href="' +
-      href('/contact') +
-      '">Contact us</a>'
-    );
+    return '';
   }
 
   function renderFooter(catalogueOpen) {
     var homeHref = catalogueOpen ? href('/') : href('/for-organisers');
+    var helpBlock = '';
+    var companyBlock = '';
+    if (catalogueOpen) {
+      helpBlock =
+        '<div class="footer-col">' +
+        '<p class="footer-col-title">Help</p>' +
+        '<nav class="footer-col-links" aria-label="Help">' +
+        helpLinksHtml(true) +
+        '</nav>' +
+        '</div>';
+      companyBlock =
+        '<div class="footer-col">' +
+        '<p class="footer-col-title">Company</p>' +
+        '<nav class="footer-col-links" aria-label="Company">' +
+        '<a href="' +
+        href('/about') +
+        '">About us</a>' +
+        '<a href="' +
+        href('/advertising') +
+        '">Advertising &amp; sponsorship</a>' +
+        '</nav>' +
+        '</div>';
+    }
+    var legalLinks = catalogueOpen
+      ? '<a href="' +
+        href('/legal-policies') +
+        '" data-footer-policy="overview">Legal &amp; policies</a>' +
+        '<a href="' +
+        href('/legal-policies#privacy') +
+        '" data-footer-policy="privacy">Privacy policy</a>' +
+        '<a href="' +
+        href('/legal-policies#terms') +
+        '" data-footer-policy="terms">Terms &amp; conditions</a>' +
+        '<a href="' +
+        href('/legal-policies#hub-rules') +
+        '" data-footer-policy="hub-rules">Hub rules</a>' +
+        '<a href="' +
+        href('/legal-policies#refunds') +
+        '" data-footer-policy="refunds">Refunds &amp; cancellations</a>' +
+        '<a href="' +
+        href('/legal-policies#cookies') +
+        '" data-footer-policy="cookies">Cookie policy</a>' +
+        '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>'
+      : '<a href="' +
+        href('/legal-policies') +
+        '" data-footer-policy="overview">Legal &amp; policies</a>' +
+        '<a href="' +
+        href('/legal-policies#privacy') +
+        '" data-footer-policy="privacy">Privacy policy</a>' +
+        '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>';
+
     mount.innerHTML =
       '<footer class="site-footer">' +
       '<div class="footer-inner">' +
@@ -90,45 +151,12 @@
       exploreLinksHtml(catalogueOpen) +
       '</nav>' +
       '</div>' +
-      '<div class="footer-col">' +
-      '<p class="footer-col-title">Help</p>' +
-      '<nav class="footer-col-links" aria-label="Help">' +
-      helpLinksHtml(catalogueOpen) +
-      '</nav>' +
-      '</div>' +
-      '<div class="footer-col">' +
-      '<p class="footer-col-title">Company</p>' +
-      '<nav class="footer-col-links" aria-label="Company">' +
-      '<a href="' +
-      href('/about') +
-      '">About us</a>' +
-      (catalogueOpen
-        ? '<a href="' + href('/advertising') + '">Advertising &amp; sponsorship</a>'
-        : '') +
-      '</nav>' +
-      '</div>' +
+      helpBlock +
+      companyBlock +
       '<div class="footer-col">' +
       '<p class="footer-col-title">Legal</p>' +
       '<nav class="footer-col-links" aria-label="Legal">' +
-      '<a href="' +
-      href('/legal-policies') +
-      '" data-footer-policy="overview">Legal &amp; policies</a>' +
-      '<a href="' +
-      href('/legal-policies#privacy') +
-      '" data-footer-policy="privacy">Privacy policy</a>' +
-      '<a href="' +
-      href('/legal-policies#terms') +
-      '" data-footer-policy="terms">Terms &amp; conditions</a>' +
-      '<a href="' +
-      href('/legal-policies#hub-rules') +
-      '" data-footer-policy="hub-rules">Hub rules</a>' +
-      '<a href="' +
-      href('/legal-policies#refunds') +
-      '" data-footer-policy="refunds">Refunds &amp; cancellations</a>' +
-      '<a href="' +
-      href('/legal-policies#cookies') +
-      '" data-footer-policy="cookies">Cookie policy</a>' +
-      '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>' +
+      legalLinks +
       '</nav>' +
       '</div>' +
       '</div>' +
@@ -152,16 +180,20 @@
   }
 
   // Default to gated footer so Email 1 visitors never see catalogue links.
-  var catalogueOpen =
-    typeof window.HubCatalogueOpen === 'boolean' ? window.HubCatalogueOpen : false;
+  var catalogueOpen = effectiveCatalogueOpen(
+    typeof window.HubCatalogueOpen === 'boolean' ? window.HubCatalogueOpen : false
+  );
   renderFooter(catalogueOpen);
 
   window.addEventListener('hub-catalogue-access', function (ev) {
     var open = ev && ev.detail && ev.detail.open === true;
-    renderFooter(open);
+    renderFooter(effectiveCatalogueOpen(open));
   });
 
-  if (typeof window.HubCatalogueOpen !== 'boolean') {
+  if (forceEarlyAccessChrome()) {
+    // Stay slim on Email 1 pages even when preview cookie unlocks /api/events.
+    window.HubCatalogueOpen = false;
+  } else if (typeof window.HubCatalogueOpen !== 'boolean') {
     fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
         return res.status === 200;
@@ -171,7 +203,7 @@
       })
       .then(function (open) {
         window.HubCatalogueOpen = open;
-        renderFooter(open);
+        renderFooter(effectiveCatalogueOpen(open));
       });
   }
 

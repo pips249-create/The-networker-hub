@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contact us – The Networker Hub</title>
-<meta name="description" content="Get in touch with The Networker Hub — chat with Hubert, your business butler and concierge, or email the team.">
+<meta name="description" content="Get in touch with The Networker Hub — email Rosie and Catherine for help with events, tickets, and organiser listings.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/contact-page.css?v=20260711b">
-<link rel="stylesheet" href="css/hubert-widget.css?v=20260610b">
+<link rel="stylesheet" href="css/contact-page.css?v=20260805email1">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -25,7 +24,7 @@
 <body>
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260805email1" data-root="" data-page="contact"></script>
+<script src="js/site-nav.js?v=20260805email1d" data-root="" data-page="contact"></script>
 
 <main class="content-page-main">
   <header class="content-hero">
@@ -33,7 +32,7 @@
       <p class="section-kicker">Contact us</p>
       <h1>We&rsquo;re here to help</h1>
       <p class="content-hero-lede">
-        Hubert is your British English gentleman and concierge — ask him about events, opportunities, tickets, or organiser listings, or email the team directly.
+        Email Rosie and Catherine about events, tickets, organiser listings, or anything else on The Networker Hub.
       </p>
     </div>
   </header>
@@ -75,7 +74,7 @@
         </li>
       </ul>
       <ul class="contact-trust" aria-label="How we support you">
-        <li class="contact-trust-item" id="contact-trust-hubert">
+        <li class="contact-trust-item">
           <strong>Platform help</strong>
           <span>Email Rosie and Catherine for help with events, tickets, and opportunities.</span>
         </li>
@@ -91,69 +90,6 @@
         <a class="btn btn-secondary" href="mailto:hello@thenetworkerhub.com">Email hello@thenetworkerhub.com</a>
       </p>
     </aside>
-
-    <section class="contact-chat" id="contact-hubert-panel" aria-labelledby="contact-chat-heading" hidden>
-      <div class="contact-chat-head">
-        <div class="contact-chat-brand">
-          <img class="contact-chat-avatar" src="assets/hubert-icon.png" alt="" width="44" height="44" aria-hidden="true">
-          <div>
-            <h2 id="contact-chat-heading">Hubert</h2>
-            <p>Chat with Hubert for instant platform support. For urgent account issues, use our direct email link.</p>
-          </div>
-        </div>
-        <button type="button" class="contact-chat-reset" id="contact-chat-reset" hidden>New chat</button>
-      </div>
-
-      <div class="contact-chat-body">
-        <div class="contact-chat-messages" id="contact-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
-
-        <div class="contact-chat-suggestions" id="contact-chat-suggestions" aria-label="Suggested questions"></div>
-      </div>
-
-      <form class="contact-chat-form contact-chat-form--sticky" id="contact-chat-form">
-        <div class="contact-chat-form-bar">
-          <label class="visually-hidden" for="contact-chat-input">Your message</label>
-          <textarea
-            id="contact-chat-input"
-            rows="1"
-            placeholder="Ask Hubert anything…"
-            maxlength="2000"
-            required
-          ></textarea>
-          <button type="submit" class="contact-chat-send" id="contact-chat-send" aria-label="Send message">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </button>
-        </div>
-        <p class="contact-chat-escape">
-          <button type="button" class="contact-chat-escape-link" id="contact-show-team-form" aria-expanded="false" aria-controls="contact-team-form">
-            <span aria-hidden="true">✉️</span> Prefer a standard contact form? Click here to drop a message straight to our team.
-          </button>
-        </p>
-      </form>
-
-      <div class="contact-team-form" id="contact-team-form" hidden>
-        <h3 class="contact-team-form-title">Message Rosie &amp; Catherine</h3>
-        <p class="contact-team-form-lede">Leave a note for the team — we&rsquo;ll pick it up by email during office hours.</p>
-        <form id="contact-team-form-fields">
-          <div class="contact-team-field">
-            <label for="contact-team-name">Your name</label>
-            <input type="text" id="contact-team-name" name="name" autocomplete="name" required maxlength="120" />
-          </div>
-          <div class="contact-team-field">
-            <label for="contact-team-email">Email address</label>
-            <input type="email" id="contact-team-email" name="email" autocomplete="email" required maxlength="254" />
-          </div>
-          <div class="contact-team-field">
-            <label for="contact-team-message">Your message</label>
-            <textarea id="contact-team-message" name="message" rows="5" required maxlength="4000" placeholder="Tell us about your booking, organiser account, or enquiry…"></textarea>
-          </div>
-          <div class="contact-team-form-actions">
-            <button type="submit" class="btn btn-primary">Send to the team</button>
-            <button type="button" class="btn btn-secondary" id="contact-hide-team-form">Back to Hubert</button>
-          </div>
-        </form>
-      </div>
-    </section>
 
     <section class="contact-chat contact-chat--team-only" id="contact-team-only" aria-labelledby="contact-team-only-heading">
       <div class="contact-chat-head">
@@ -186,9 +122,8 @@
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260805email1" data-root="" data-hubert="off"></script>
-<script src="js/hubert-chat.js?v=20260805email1"></script>
-<script src="js/contact-chat.js?v=20260805email1"></script>
+<script src="js/site-footer.js?v=20260805email1d" data-root="" data-hubert="off"></script>
+<script src="js/contact-chat.js?v=20260805email1b"></script>
 
 </body>
 </html>

@@ -17,7 +17,7 @@ Organisers who knew **the-networker.co.uk** may treat a single “claim your pag
 
 ## Email 1 — Rebrand announcement
 
-**Subject:** `We've been quietly rebuilding The Networker`
+**Subject:** `The Networker's new chapter`
 
 **What it does:**
 

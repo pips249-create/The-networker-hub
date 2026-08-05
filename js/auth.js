@@ -522,7 +522,7 @@
     var calloutNote = document.getElementById('auth-intent-callout-note');
     if (calloutNote) {
       calloutNote.innerHTML =
-        'Email changed? <a href="/events/?mode=organisers">Find your group</a> and request access on its profile page.';
+        'Email changed? Email <a href="mailto:catherine@thenetworkerhub.com">catherine@thenetworkerhub.com</a> with your group name and we\u2019ll help.';
     }
 
     var audienceToggle = document.getElementById('auth-audience-toggle');

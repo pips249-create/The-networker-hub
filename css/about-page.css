@@ -255,6 +255,13 @@ html:has(.about-page) {
   color: var(--about-muted);
 }
 
+.about-pillar-note {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--about-muted);
+}
+
 /* Stats band */
 .about-stats-band {
   background:
@@ -792,7 +799,7 @@ html:has(.about-page) {
 }
 
 .about-person-copy h3 {
-  margin: 0 0 4px;
+  margin: 0 0 10px;
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.7rem;
   font-weight: 400;

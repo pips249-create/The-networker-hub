@@ -91,7 +91,9 @@ const INTERNAL_SALES_PREFIXES = [
  * Email 1: for-organisers + trust pages only (contact / legal / about).
  * Auth + /organiser stay open so Email 2 claim links work without another deploy.
  * Guides, FAQ, advertising, help, and the public catalogue stay gated.
- * Signed-in hub sessions still bypass the gate entirely (see maybeGateSiteAccess).
+ * Signed-in hub sessions do NOT unlock the public catalogue while the gate is on —
+ * they still use the early-access allowlist (auth, /organiser, for-organisers, trust pages)
+ * so Email 2 claim works without opening Events / Opportunities early.
  */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
@@ -594,11 +596,9 @@ async function maybeGateSiteAccess(request, url) {
     return { authorized: true };
   }
 
-  // Signed-in organisers/members must reach every page and API after claim/login —
-  // not only the early-access allowlist (public profiles, browse, account, etc.).
-  if (await hasValidSession(request)) {
-    return { authorized: true };
-  }
+  // While the public gate is on, a normal hub_session does not unlock browse.
+  // Early-access paths (including /organiser claim) already returned above via
+  // isGateBypassPath. Team preview still uses the site-access password cookie.
 
   if (pathname === '/robots.txt') {
     return new Response('User-agent: *\nDisallow: /\n', {
