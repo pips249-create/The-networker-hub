@@ -9582,24 +9582,10 @@
     }
 
     function applyPreviewLifecycleFormat() {
-      if (!SAMPLE_VARS.sponsor_row) {
-        SAMPLE_VARS.sponsor_row = buildEmailSponsorSectionHtml(
-          '',
-          SAMPLE_VARS.browse_events_url || previewOrigin + '/advertising',
-          'Sample sponsor'
-        );
-      }
-      SAMPLE_VARS.sponsor_section = SAMPLE_VARS.sponsor_row;
-      if (!SAMPLE_VARS.mini_sponsors_row) {
-        SAMPLE_VARS.mini_sponsors_row =
-          '<tr><td class="mobile-pad" style="padding:0 40px 20px;text-align:center;">' +
-          '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
-          '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
-          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#9a9092;text-transform:uppercase;letter-spacing:2px;margin:0;">Powered by</p>' +
-          '</td></tr><tr><td style="padding:0 12px 16px;text-align:center;">' +
-          '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;color:#9a7aa8;">Sample mini sponsors</span>' +
-          '</td></tr></table></td></tr>';
-      }
+      // Sponsors come from live CMS on the server — leave placeholders empty here.
+      SAMPLE_VARS.sponsor_row = '';
+      SAMPLE_VARS.sponsor_section = '';
+      SAMPLE_VARS.mini_sponsors_row = '';
     }
 
     function applyPreviewForSlug(slug) {
