@@ -743,6 +743,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   color: var(--text-muted);
   font-size: 11px;
 }
+.event-grid-rating .review-count--none {
+  color: var(--text-muted);
+  font-size: 11px;
+  opacity: 0.85;
+}
 .event-grid-rating .fav-btn {
   position: relative;
   z-index: 2;

@@ -741,7 +741,9 @@
   function gridCard(ev) {
     const fmtClass = formatTagClass(ev.format);
     const fmtLabel = formatTagLabel(ev.format);
-    const reviewCount = Number(ev.reviews) || 0;
+    const reviewCount = Number(ev.organiserReviews) || Number(ev.reviews) || 0;
+    const rating = Number(ev.organiserRating) || Number(ev.rating) || 0;
+    const hasRating = reviewCount > 0 && rating > 0;
     const meetingType = meetingTypeLabel(ev);
     const dateLine =
       ev.dateLine ||
@@ -790,9 +792,16 @@
             <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
           </div>
           <h3 class="event-grid-title">${escapeHtml(ev.title)}</h3>
-          <div class="event-grid-rating">
-            <span class="stars">${starsHtml(ev.rating)}</span>
-            <span class="review-count">(${reviewCount})</span>
+          <div class="event-grid-rating${hasRating ? '' : ' event-grid-rating--empty'}">
+            ${
+              hasRating
+                ? '<span class="stars">' +
+                  starsHtml(rating) +
+                  '</span><span class="review-count">(' +
+                  reviewCount +
+                  ')</span>'
+                : '<span class="review-count review-count--none">No reviews yet</span>'
+            }
             <button type="button" class="fav-btn" data-event-id="${escapeHtml(ev.id)}" data-organiser-id="${escapeHtml(ev.organiserId || '')}" aria-label="Save event" aria-pressed="false">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
             </button>

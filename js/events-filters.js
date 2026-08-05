@@ -876,10 +876,8 @@
   }
 
   function eventShowsFiveStars(ev) {
-    var reviews = Number(ev.reviews) || 0;
-    var rating = Number(ev.rating);
-    if (reviews <= 0 || Number.isNaN(rating)) return false;
-    return Math.round(rating) >= 5;
+    var rating = eventRatingSortKey(ev);
+    return rating != null && rating >= 4.5;
   }
 
   function eventMatchesFilters(ev) {
@@ -938,10 +936,19 @@
   }
 
   function eventRatingSortKey(ev) {
+    var orgReviews = Number(ev.organiserReviews) || 0;
+    var orgRating = Number(ev.organiserRating);
+    if (orgReviews > 0 && !Number.isNaN(orgRating) && orgRating > 0) return orgRating;
     var reviews = Number(ev.reviews) || 0;
     var rating = Number(ev.rating);
-    if (reviews <= 0 || Number.isNaN(rating)) return null;
+    if (reviews <= 0 || Number.isNaN(rating) || rating <= 0) return null;
     return rating;
+  }
+
+  function eventReviewCount(ev) {
+    var orgReviews = Number(ev.organiserReviews) || 0;
+    if (orgReviews > 0) return orgReviews;
+    return Number(ev.reviews) || 0;
   }
 
   function eventAddedSortKey(ev) {
@@ -961,7 +968,8 @@
         if (ra == null && rb == null) return 0;
         if (ra == null) return 1;
         if (rb == null) return -1;
-        return rb - ra;
+        if (rb !== ra) return rb - ra;
+        return eventReviewCount(b) - eventReviewCount(a);
       }
       if (sort === 'newest-added') {
         var ca = eventAddedSortKey(a);
@@ -986,9 +994,15 @@
         return da - db;
       }
       if (a.featured !== b.featured) return a.featured ? -1 : 1;
-      var ra = Number(a.rating) || 0;
-      var rb = Number(b.rating) || 0;
-      if (rb !== ra) return rb - ra;
+      var raRec = eventRatingSortKey(a);
+      var rbRec = eventRatingSortKey(b);
+      if (raRec == null && rbRec != null) return 1;
+      if (rbRec == null && raRec != null) return -1;
+      if (raRec != null && rbRec != null && rbRec !== raRec) return rbRec - raRec;
+      if (raRec != null && rbRec != null) {
+        var rcDiff = eventReviewCount(b) - eventReviewCount(a);
+        if (rcDiff) return rcDiff;
+      }
       var d1 = eventDateTs(a);
       var d2 = eventDateTs(b);
       if (d1 == null) d1 = Infinity;

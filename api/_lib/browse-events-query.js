@@ -27,7 +27,19 @@ const MAX_PINS = 800;
 const GEO_MATCH_CAP = 1500;
 const IN_CHUNK = 80;
 const PIN_SELECT =
-  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating';
+  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating, review_count, organiser_id';
+
+const SLIM_RATING_SELECT =
+  'id, organiser_id, latitude, longitude, format_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
+
+/** Sorts / filters that must use organiser profile ratings (not per-event averages). */
+function needsOrganiserRatingSort(params) {
+  return (
+    Boolean(params.fiveStarsOnly) ||
+    params.sort === 'best-rated' ||
+    params.sort === 'rating-desc'
+  );
+}
 
 function dedupeEventsById(events) {
   const seen = new Set();
@@ -255,17 +267,88 @@ function applyBrowseFilters(query, params) {
     next = next.lte('starts_at', params.dateTo);
   }
 
-  if (params.fiveStarsOnly) {
-    next = next.gte('review_count', 1).gte('average_rating', 4.5);
-  }
+  // fiveStarsOnly uses organiser ratings — applied in Node after attachOrganiserRatings.
 
   return next;
 }
 
+function rowReviewCount(row) {
+  const orgReviews = Number(row.organiser_review_count);
+  if (Number.isFinite(orgReviews) && orgReviews > 0) return orgReviews;
+  return Number(row.review_count) || 0;
+}
+
 function rowRatingSortKey(row) {
-  if (row.average_rating == null || row.average_rating === '') return null;
-  const rating = Number(row.average_rating);
-  return Number.isNaN(rating) ? null : rating;
+  const orgReviews = Number(row.organiser_review_count) || 0;
+  const orgRating =
+    row.organiser_average_rating != null && row.organiser_average_rating !== ''
+      ? Number(row.organiser_average_rating)
+      : NaN;
+  if (orgReviews > 0 && Number.isFinite(orgRating) && orgRating > 0) return orgRating;
+
+  const eventReviews = Number(row.review_count) || 0;
+  const eventRating =
+    row.average_rating != null && row.average_rating !== '' ? Number(row.average_rating) : NaN;
+  if (eventReviews > 0 && Number.isFinite(eventRating) && eventRating > 0) return eventRating;
+  return null;
+}
+
+function rowPassesFiveStars(row) {
+  const rating = rowRatingSortKey(row);
+  return rating != null && rating >= 4.5;
+}
+
+async function attachOrganiserRatings(sb, rows) {
+  const list = rows || [];
+  if (!list.length) return list;
+  const orgIds = [...new Set(list.map((row) => row.organiser_id).filter(Boolean))];
+  if (!orgIds.length) return list;
+
+  const byId = new Map();
+  for (let i = 0; i < orgIds.length; i += IN_CHUNK) {
+    const chunk = orgIds.slice(i, i + IN_CHUNK);
+    const { data, error } = await sb
+      .from('organisers')
+      .select('id, average_rating, review_count')
+      .in('id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((org) => {
+      byId.set(org.id, org);
+    });
+  }
+
+  return list.map((row) => {
+    const org = row.organiser_id ? byId.get(row.organiser_id) : null;
+    if (!org) return row;
+    return {
+      ...row,
+      organiser_average_rating: org.average_rating,
+      organiser_review_count: org.review_count,
+    };
+  });
+}
+
+async function fetchAllMatchingSlim(sb, params, select) {
+  const pageSize = 1000;
+  const rows = [];
+  let from = 0;
+  const cap = hasGeoRadius(params) ? GEO_MATCH_CAP : 5000;
+  while (from < cap) {
+    const to = Math.min(from + pageSize - 1, cap - 1);
+    let query = sb
+      .from(BROWSE_VIEW)
+      .select(select)
+      .order('starts_at', { ascending: true })
+      .range(from, to);
+    query = applyBrowseFilters(query, params);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
+  return rows;
 }
 
 function rowAddedSortKey(row) {
@@ -274,16 +357,23 @@ function rowAddedSortKey(row) {
   return Number.isNaN(ts) ? null : ts;
 }
 
+function compareRatingDesc(a, b) {
+  const rb = rowRatingSortKey(b);
+  const ra = rowRatingSortKey(a);
+  if (ra == null && rb == null) return 0;
+  if (ra == null) return 1;
+  if (rb == null) return -1;
+  if (rb !== ra) return rb - ra;
+  return rowReviewCount(b) - rowReviewCount(a);
+}
+
 function sortRows(rows, sort) {
   const list = rows.slice();
   list.sort((a, b) => {
     if (sort === 'best-rated' || sort === 'rating-desc') {
-      const rb = rowRatingSortKey(b);
-      const ra = rowRatingSortKey(a);
-      if (ra == null && rb == null) return 0;
-      if (ra == null) return 1;
-      if (rb == null) return -1;
-      return rb - ra;
+      const byRating = compareRatingDesc(a, b);
+      if (byRating !== 0) return byRating;
+      return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
     }
     if (sort === 'newest-added') {
       const cb = rowAddedSortKey(b);
@@ -305,9 +395,8 @@ function sortRows(rows, sort) {
     const af = isEventCurrentlyFeatured(a) ? 1 : 0;
     const bf = isEventCurrentlyFeatured(b) ? 1 : 0;
     if (bf !== af) return bf - af;
-    const ra = Number(a.average_rating) || 0;
-    const rb = Number(b.average_rating) || 0;
-    if (rb !== ra) return rb - ra;
+    const byRating = compareRatingDesc(a, b);
+    if (byRating !== 0) return byRating;
     return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
   });
   return list;
@@ -513,14 +602,17 @@ async function hydrateBrowseEvents(sb, rows) {
 
 async function fetchBrowsePageIds(sb, params) {
   const geo = hasGeoRadius(params);
+  const ratingSort = needsOrganiserRatingSort(params);
 
-  if (geo) {
-    const slim = await fetchMatchingRows(
-      sb,
-      params,
-      'id, latitude, longitude, format_tab, starts_at, min_ticket_price, average_rating, featured, featured_until, created_at'
-    );
-    const filtered = slim.filter((row) => rowPassesGeo(row, params));
+  if (geo || ratingSort) {
+    const slim = await fetchAllMatchingSlim(sb, params, SLIM_RATING_SELECT);
+    let filtered = geo ? slim.filter((row) => rowPassesGeo(row, params)) : slim;
+    if (ratingSort) {
+      filtered = await attachOrganiserRatings(sb, filtered);
+      if (params.fiveStarsOnly) {
+        filtered = filtered.filter(rowPassesFiveStars);
+      }
+    }
     const sorted = sortRows(filtered, params.sort);
     const total = sorted.length;
     const slice = sorted.slice(params.offset, params.offset + params.limit);
@@ -563,27 +655,31 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   if (params.mode === 'pins') {
     const pinParams = { ...params, limit: MAX_PINS, offset: 0 };
+    const ratingSort = needsOrganiserRatingSort(params);
+    let slim;
     if (hasGeoRadius(params)) {
-      const slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
+      slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
         limit: Math.min(GEO_MATCH_CAP, MAX_PINS * 2),
       });
-      const filtered = slim.filter((row) => rowPassesGeo(row, params));
-      const sorted = sortRows(filtered, params.sort);
-      return {
-        events: sorted.slice(0, MAX_PINS).map(rowToBrowsePin),
-        pagination: { total: Math.min(filtered.length, MAX_PINS), page: 1, limit: MAX_PINS, totalPages: 1 },
-        meta: null,
-        featured: [],
-      };
+      slim = slim.filter((row) => rowPassesGeo(row, params));
+    } else if (ratingSort) {
+      slim = await fetchAllMatchingSlim(sb, pinParams, PIN_SELECT);
+    } else {
+      slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
+        sort: params.sort,
+        limit: MAX_PINS,
+      });
     }
-
-    const slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
-      sort: params.sort,
-      limit: MAX_PINS,
-    });
+    if (ratingSort) {
+      slim = await attachOrganiserRatings(sb, slim);
+      if (params.fiveStarsOnly) {
+        slim = slim.filter(rowPassesFiveStars);
+      }
+    }
+    const sorted = sortRows(slim, params.sort).slice(0, MAX_PINS);
     return {
-      events: slim.map(rowToBrowsePin),
-      pagination: { total: slim.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+      events: sorted.map(rowToBrowsePin),
+      pagination: { total: sorted.length, page: 1, limit: MAX_PINS, totalPages: 1 },
       meta: null,
       featured: [],
     };
