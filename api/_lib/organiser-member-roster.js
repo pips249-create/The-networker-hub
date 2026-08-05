@@ -364,10 +364,10 @@ function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, var
     variant === 'existing'
       ? 'Hi ' +
         safeUser +
-        ', you&apos;ve been added to their membership on The Networker Hub. Sign in with this email address to book member-only ticket rates — no access codes needed.'
+        ', you&apos;ve been added to their membership on The Networker Hub. Sign in with this email address to see member rates and book as a member where that applies — no access codes needed.'
       : 'Hi ' +
         safeUser +
-        ', you&apos;ve been added to their membership on The Networker Hub. Create your free account with this email address to book member meetings and see member-only ticket rates.';
+        ', you&apos;ve been added to their membership on The Networker Hub. Create your free account with this email address to see member rates and book as a member where that applies.';
 
   if (variant === 'pay') {
     eyebrow = 'Membership payment';
@@ -375,7 +375,7 @@ function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, var
     bodyCopy =
       'Hi ' +
       safeUser +
-      ', you can pay monthly or annually through The Networker Hub. After you pay, your membership unlocks member-only ticket rates automatically.';
+      ', you can pay monthly or annually through The Networker Hub. After you pay, your membership unlocks member rates and member booking options automatically.';
   }
 
   return (

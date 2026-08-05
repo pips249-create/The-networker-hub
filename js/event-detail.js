@@ -2469,7 +2469,7 @@
       const banner = document.createElement('p');
       banner.className = 'ticket-load-hint ticket-load-hint--member';
       banner.textContent = eventHasMembersOnlyTickets(ev)
-        ? 'You\u2019re on this group\u2019s membership list — member-only tickets are included below.'
+        ? 'You\u2019re on this group\u2019s membership list — your member rates are included below.'
         : 'You\u2019re on this group\u2019s membership list — book with your member rate below.';
       tiersEl.appendChild(banner);
     } else if (
@@ -2484,10 +2484,10 @@
       hint.className = 'ticket-load-hint';
       const signedInEmail = String(guestVisitEligibility.viewerEmail || '').trim();
       hint.textContent = signedInEmail
-        ? 'Complimentary visits are for newcomers. Members-only tickets need the email on this group\u2019s membership list (you\u2019re signed in as ' +
+        ? 'Complimentary visits are for newcomers. Member tickets need the email on this group\u2019s membership list (you\u2019re signed in as ' +
           signedInEmail +
           ').'
-        : 'Complimentary visits are for newcomers. Sign in with the email on this group\u2019s membership list for members-only tickets.';
+        : 'Complimentary visits are for newcomers. Sign in with the email on this group\u2019s membership list for member tickets.';
       tiersEl.appendChild(hint);
     }
 

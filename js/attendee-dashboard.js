@@ -28,7 +28,7 @@
   const SAVED_SCOPE_HEAD = {
     groups: {
       title: 'My memberships',
-      sub: 'Groups that added you to their member list. Sign in with the same email to book member-only tickets.',
+      sub: 'Groups that added you to their member list. Sign in with the same email for member rates and booking options.',
     },
     events: {
       title: 'Saved events',

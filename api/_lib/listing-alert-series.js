@@ -161,8 +161,8 @@ function buildListingAlertSeriesCopy({
     }
 
     const followOn = isGuestProgramme
-      ? 'sign in with this email to see member tickets.'
-      : 'sign in with this email to book with your membership.';
+      ? 'sign in with this email to see your member tickets.'
+      : 'sign in with this email to view the event — public tickets stay on sale, and any member rates show when you are signed in.';
     if (isSeries) {
       return {
         event_date_count: String(count),
