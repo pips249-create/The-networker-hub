@@ -404,16 +404,22 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
 async function activateOpportunityListingPayment(opportunityId, months, sessionId) {
   const id = String(opportunityId || '').trim();
   const termMonths = normalizeListingMonths(months);
+  const sid = sessionId ? String(sessionId).trim() : '';
   if (!isUuid(id)) throw new Error('invalid_opportunity_id');
 
   const sb = getSupabaseAdmin();
   const { data: existing, error: loadErr } = await sb
     .from('business_opportunities')
-    .select('id, listing_expires_at, published_at, title, slug')
+    .select('*')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw new Error(loadErr.message);
   if (!existing) throw new Error('not_found');
+
+  // Stripe retries must not stack listing months for the same checkout session.
+  if (sid && String(existing.listing_stripe_session_id || '').trim() === sid) {
+    return rowToListing(existing);
+  }
 
   const now = new Date();
   let base = now;
@@ -437,7 +443,7 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
       listing_months: termMonths,
       listing_paid_at: now.toISOString(),
       listing_expires_at: expiresAt.toISOString(),
-      listing_stripe_session_id: sessionId ? String(sessionId).trim() : null,
+      listing_stripe_session_id: sid || null,
       listing_expiry_reminder_sent_at: null,
       package_tier: 'standard',
       updated_at: now.toISOString(),
@@ -614,14 +620,15 @@ async function updateOpportunity(id, payload) {
   return rowToListing(data);
 }
 
-async function activateOpportunityPremium(opportunityId) {
+async function activateOpportunityPremium(opportunityId, sessionId) {
   const id = String(opportunityId || '').trim();
+  const sid = sessionId ? String(sessionId).trim() : '';
   if (!isUuid(id)) throw new Error('invalid_opportunity_id');
   const sb = getSupabaseAdmin();
 
   const { data: existing, error: loadErr } = await sb
     .from('business_opportunities')
-    .select('id, featured_until, type, tags')
+    .select('*')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw new Error(loadErr.message);
@@ -630,6 +637,11 @@ async function activateOpportunityPremium(opportunityId) {
     const err = new Error('network_marketing_not_spotlight');
     err.code = 'network_marketing_not_spotlight';
     throw err;
+  }
+
+  // Stripe retries must not stack premium months for the same checkout session.
+  if (sid && String(existing.premium_stripe_session_id || '').trim() === sid) {
+    return rowToListing(existing);
   }
 
   const now = new Date();
@@ -646,6 +658,7 @@ async function activateOpportunityPremium(opportunityId) {
       package_tier: 'premium',
       featured_until: featuredUntil.toISOString(),
       featured_expiry_reminder_sent_at: null,
+      premium_stripe_session_id: sid || null,
       updated_at: now.toISOString(),
     })
     .eq('id', id)
@@ -811,7 +824,7 @@ async function handleOpportunityPremiumCheckout(session) {
     session.status === 'complete';
   if (!paid) return { skipped: true, reason: 'payment_not_complete' };
 
-  const opportunity = await activateOpportunityPremium(opportunityId);
+  const opportunity = await activateOpportunityPremium(opportunityId, session.id);
   return { ok: true, opportunityId, featured: opportunity.featured };
 }
 

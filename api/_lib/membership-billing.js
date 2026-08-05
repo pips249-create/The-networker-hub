@@ -798,6 +798,17 @@ async function handleMembershipInvoicePaid(invoice) {
   const result = await syncRosterFromSubscription(subscription, {
     expiresAt: invoicePeriodEnd,
   });
+
+  // Hub booking fee (4.5% + 20p) → Sales targets → Ticket sales (same as event tickets).
+  let revenueResult = null;
+  try {
+    const { recordMembershipBookingFeeFromInvoice } = require('./stripe-revenue');
+    revenueResult = await recordMembershipBookingFeeFromInvoice(invoice, subscription);
+  } catch (err) {
+    console.error('[membership] revenue target fee', err?.message || err);
+    revenueResult = { ok: false, error: err?.message || String(err) };
+  }
+
   const reason = String(invoice?.billing_reason || '');
   // Renewals only — first payment receipt is sent from checkout.session.completed
   // so members always get one even if this invoice event is skipped/raced.
@@ -810,7 +821,7 @@ async function handleMembershipInvoicePaid(invoice) {
       console.error('[membership] renewal receipt', err?.message || err);
     });
   }
-  return result;
+  return { ...result, revenueResult };
 }
 
 async function handleMembershipInvoicePaymentFailed(invoice) {

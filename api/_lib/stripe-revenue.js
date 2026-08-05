@@ -314,6 +314,96 @@ async function handleSponsorshipCheckoutCompleted(session) {
   });
 }
 
+/**
+ * Hub booking fee on organiser membership invoices → ticket_sales target.
+ * Idempotent on stripe_invoice_id (same unique index as sponsorship invoices).
+ */
+async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
+  if (!invoice || String(invoice.status || '').toLowerCase() !== 'paid') {
+    return { skipped: true, reason: 'not_paid' };
+  }
+
+  const invoiceId = String(invoice.id || '').trim();
+  if (!invoiceId) return { skipped: true, reason: 'missing_invoice_id' };
+
+  const meta = {
+    ...normalizeMeta(subscription?.metadata),
+    ...normalizeMeta(invoice?.subscription_details?.metadata),
+    ...normalizeMeta(invoice?.metadata),
+  };
+
+  const checkoutType = String(meta.checkout_type || '').trim().toLowerCase();
+  if (checkoutType !== 'organiser_membership') {
+    return { skipped: true, reason: 'not_membership' };
+  }
+
+  let feeGbp = 0;
+  const hubFeePence = Number(meta.hub_fee_pence);
+  if (Number.isFinite(hubFeePence) && hubFeePence > 0) {
+    feeGbp = round2(hubFeePence / 100);
+  } else {
+    const membershipPence = Number(meta.membership_amount_pence);
+    if (Number.isFinite(membershipPence) && membershipPence > 0) {
+      const { calculateMembershipFeePounds } = require('./membership-billing');
+      feeGbp = calculateMembershipFeePounds(membershipPence / 100);
+    } else {
+      const lines = Array.isArray(invoice?.lines?.data) ? invoice.lines.data : [];
+      for (const line of lines) {
+        const desc = String(line.description || '').toLowerCase();
+        if (!desc.includes('booking fee')) continue;
+        const amount = Number(line.amount);
+        if (Number.isFinite(amount) && amount > 0) {
+          feeGbp = round2(amount / 100);
+          break;
+        }
+      }
+    }
+  }
+
+  if (!(feeGbp > 0)) return { skipped: true, reason: 'zero_fee' };
+
+  const email = String(meta.attendee_email || meta.email || invoice.customer_email || '')
+    .trim()
+    .toLowerCase();
+  const interval = String(meta.billing_interval || '').trim().toLowerCase();
+  const intervalLabel = interval === 'year' ? 'annual' : interval === 'month' ? 'monthly' : '';
+  const sourceLabel = [
+    'Membership booking fee',
+    intervalLabel,
+    email,
+  ]
+    .filter(Boolean)
+    .join(' — ')
+    .slice(0, 240);
+
+  return recordStripeRevenueDeal({
+    category: 'ticket_sales',
+    amountGbp: feeGbp,
+    recordedAt: invoiceRecordedAt(invoice),
+    metadata: {
+      ...meta,
+      source_label: sourceLabel,
+      revenue_category: 'ticket_sales',
+    },
+    fallbacks: {
+      customerName: email,
+      description: 'Membership booking fee',
+      invoiceNumber: invoice.number || invoice.id,
+    },
+    notes: ['Membership booking fee', invoice.number || invoice.id].filter(Boolean).join(' · '),
+    sourceType: 'stripe_invoice',
+    stripeInvoiceId: invoiceId,
+    stripeCustomerId:
+      typeof invoice.customer === 'string'
+        ? invoice.customer
+        : invoice.customer?.id ||
+          (typeof subscription?.customer === 'string'
+            ? subscription.customer
+            : subscription?.customer?.id) ||
+          null,
+  });
+}
+
 module.exports = {
   VALID_CATEGORIES,
   PLACEMENT_CATEGORIES,
@@ -321,4 +411,6 @@ module.exports = {
   parseRevenueCategory,
   handleInvoicePaid,
   handleSponsorshipCheckoutCompleted,
+  recordMembershipBookingFeeFromInvoice,
+  recordStripeRevenueDeal,
 };

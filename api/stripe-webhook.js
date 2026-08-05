@@ -31,16 +31,18 @@ const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
 
 function verifyStripeSignature(rawBody, signatureHeader, secret, toleranceSec = STRIPE_WEBHOOK_TOLERANCE_SEC) {
   if (!signatureHeader || !secret) return false;
-  const parts = String(signatureHeader)
-    .split(',')
-    .reduce((acc, part) => {
-      const [k, v] = part.split('=');
-      if (k && v) acc[k.trim()] = v.trim();
-      return acc;
-    }, {});
-  const timestamp = parts.t;
-  const signature = parts.v1;
-  if (!timestamp || !signature) return false;
+  const parts = String(signatureHeader).split(',');
+  let timestamp = '';
+  const signatures = [];
+  for (const part of parts) {
+    const eq = part.indexOf('=');
+    if (eq < 0) continue;
+    const k = part.slice(0, eq).trim();
+    const v = part.slice(eq + 1).trim();
+    if (k === 't') timestamp = v;
+    if (k === 'v1' && v) signatures.push(v);
+  }
+  if (!timestamp || !signatures.length) return false;
 
   const ts = parseInt(timestamp, 10);
   if (!Number.isFinite(ts)) return false;
@@ -49,11 +51,18 @@ function verifyStripeSignature(rawBody, signatureHeader, secret, toleranceSec = 
 
   const payload = `${timestamp}.${rawBody}`;
   const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
-  } catch {
-    return false;
+  const expectedBuf = Buffer.from(expected, 'hex');
+  for (const signature of signatures) {
+    try {
+      const sigBuf = Buffer.from(signature, 'hex');
+      if (sigBuf.length === expectedBuf.length && crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+        return true;
+      }
+    } catch {
+      /* try next v1 */
+    }
   }
+  return false;
 }
 
 function readRawBody(req) {
@@ -94,8 +103,12 @@ async function handler(req, res) {
   }
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const skipVerify =
+    process.env.STRIPE_WEBHOOK_SKIP_VERIFY === '1' ||
+    process.env.STRIPE_WEBHOOK_SKIP_VERIFY === 'local-dev';
   if (!webhookSecret) {
-    if (process.env.VERCEL_ENV === 'production') {
+    // Fail closed on every deployed environment; local only with explicit skip flag.
+    if (process.env.VERCEL_ENV || process.env.NODE_ENV === 'production' || !skipVerify) {
       res.statusCode = 503;
       return res.end('webhook_secret_not_configured');
     }
@@ -115,6 +128,9 @@ async function handler(req, res) {
       res.statusCode = 400;
       return res.end('invalid_signature');
     }
+  } else if (!skipVerify) {
+    res.statusCode = 503;
+    return res.end('webhook_secret_not_configured');
   }
 
   const event = parseStripeEventBody(rawBody);

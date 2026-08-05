@@ -45,12 +45,27 @@ async function activateEventFeatured(eventId, planId, opts = {}) {
   const id = String(eventId || '').trim();
   const resolvedPlanId = normalizePlanId(planId);
   const plan = FEATURED_PLANS[resolvedPlanId];
+  const sessionId = opts.sessionId ? String(opts.sessionId).trim() : '';
   if (!isUuid(id)) throw new Error('invalid_event_id');
   if (!plan) throw new Error('invalid_plan');
 
   const sb = getSupabaseAdmin();
   const current = await getEventRow(id);
   if (!current) throw new Error('event_not_found');
+
+  // Stripe retries must not stack featured time for the same checkout session.
+  if (sessionId && String(current.featured_stripe_session_id || '').trim() === sessionId) {
+    return {
+      event: current,
+      featuredUntil: current.featured_until,
+      cappedByEvent: false,
+      amountGbp: current.featured_amount_gbp,
+      pricingMode: null,
+      plan: planId,
+      seriesEventIds: [id],
+      alreadyApplied: true,
+    };
+  }
 
   const peers = await fetchSeriesPeerRows(sb, current);
   const eventStartsAt = seriesFeaturedStartCap(peers) || current.starts_at;
@@ -74,6 +89,7 @@ async function activateEventFeatured(eventId, planId, opts = {}) {
     featured_plan: resolvedPlanId,
     featured_paid_at: paidAt,
     featured_amount_gbp: amountGbp,
+    featured_stripe_session_id: sessionId || null,
   };
 
   const targetIds = peers.filter((row) => isPublishedApprovedRow(row)).map((row) => row.id);
@@ -118,6 +134,7 @@ async function handleEventFeaturedCheckout(session) {
 
   const result = await activateEventFeatured(eventId, planId, {
     amountGbp: paidAmountGbpFromSession(session),
+    sessionId: session.id,
   });
   return {
     ok: true,
