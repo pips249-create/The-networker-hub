@@ -989,8 +989,7 @@
 
     const metaWrap = document.getElementById('ev-host-meta');
     const ratingMeta = document.getElementById('ev-host-rating-meta');
-    const reviewCount = Number(ev.reviews) || Number(ev.organiserReviews) || 0;
-    const rating = Number(ev.rating) || Number(ev.organiserRating) || 0;
+    const { reviews: reviewCount, rating } = hostReviewStats(ev);
     if (metaWrap && ratingMeta && reviewCount > 0 && rating > 0) {
       ratingMeta.innerHTML =
         '<span class="ev-host-stars" aria-hidden="true">' +
@@ -1006,6 +1005,23 @@
       ratingMeta.textContent = 'No reviews yet — be the first after you attend.';
       metaWrap.hidden = false;
     } else if (metaWrap) metaWrap.hidden = true;
+  }
+
+  function hostReviewStats(ev) {
+    const orgReviews = Number(ev && ev.organiserReviews) || 0;
+    const orgRating = Number(ev && ev.organiserRating) || 0;
+    const eventReviews = Number(ev && ev.reviews) || 0;
+    const eventRating = Number(ev && ev.rating) || 0;
+    if (orgReviews > 0 && orgRating > 0) {
+      return { rating: orgRating, reviews: orgReviews };
+    }
+    if (eventReviews > 0 && eventRating > 0) {
+      return { rating: eventRating, reviews: eventReviews };
+    }
+    return {
+      rating: orgRating || eventRating || 0,
+      reviews: orgReviews || eventReviews || 0,
+    };
   }
 
   function starsForRating(rating) {
@@ -1224,8 +1240,7 @@
     const wrap = document.getElementById('ev-rating-wrap');
     const stars = document.getElementById('ev-rating-stars');
     const cnt = document.getElementById('ev-rating-count');
-    const reviewCount = Number(ev.reviews) || 0;
-    const rating = Number(ev.rating) || 0;
+    const { reviews: reviewCount, rating } = hostReviewStats(ev);
 
     if (!wrap) return;
     if (!reviewCount || rating <= 0) {
@@ -1240,7 +1255,7 @@
     }
     wrap.setAttribute(
       'aria-label',
-      rating.toFixed(1) + ' out of 5 from ' + reviewCount + ' reviews'
+      'Host rating ' + rating.toFixed(1) + ' out of 5 from ' + reviewCount + ' reviews'
     );
   }
 
@@ -2641,8 +2656,7 @@
     const starsEl = document.getElementById('ev-reviews-score-stars');
     const countEl = document.getElementById('ev-reviews-score-count');
     const feed = document.getElementById('ev-reviews-feed');
-    const r = Number(ev.rating) || 0;
-    const c = Number(ev.reviews) || 0;
+    const { rating: r, reviews: c } = hostReviewStats(ev);
     const hasReviews = c > 0 && r > 0;
 
     if (section) section.hidden = !hasReviews;
@@ -2690,27 +2704,43 @@
     const header = document.createElement('div');
     header.className = 'review-card-header';
     const name = document.createElement('strong');
-    name.textContent = review.name;
+    name.textContent = review.name || review.authorName || 'Attendee';
     const date = document.createElement('span');
     date.className = 'review-card-date';
-    date.textContent = review.date;
+    date.textContent = review.date || '';
     header.appendChild(name);
     header.appendChild(date);
     const stars = document.createElement('div');
     stars.className = 'review-card-stars';
-    stars.setAttribute('aria-label', review.rating + ' out of 5 stars');
-    stars.textContent = starsFromAvg(review.rating);
+    const rating = Number(review.rating) || 0;
+    stars.setAttribute('aria-label', rating + ' out of 5 stars');
+    stars.textContent = starsFromAvg(rating);
     const body = document.createElement('p');
-    body.textContent = review.text;
+    const text = String(review.text || review.body || '').trim();
+    body.textContent = text;
     card.appendChild(header);
     card.appendChild(stars);
-    card.appendChild(body);
+    if (text) card.appendChild(body);
+    const reply = review.reply ? String(review.reply).trim() : '';
+    if (reply) {
+      const replyBlock = document.createElement('div');
+      replyBlock.className = 'review-organiser-reply';
+      const replyLabel = document.createElement('div');
+      replyLabel.className = 'review-organiser-reply-label';
+      replyLabel.textContent = 'Organiser reply';
+      const replyText = document.createElement('p');
+      replyText.className = 'review-organiser-reply-text';
+      replyText.textContent = reply;
+      replyBlock.appendChild(replyLabel);
+      replyBlock.appendChild(replyText);
+      card.appendChild(replyBlock);
+    }
     if (review.id && window.ReviewReport) {
       window.ReviewReport.addReportButton(card, {
         reviewId: review.id,
         organiserId: context && context.organiserId,
         eventId: context && context.eventId,
-        snippet: String(review.text || '').slice(0, 500),
+        snippet: text.slice(0, 500),
       });
     }
     feed.appendChild(card);
@@ -3088,17 +3118,28 @@
   async function prefillNudgeEmail() {
     const emailEl = document.getElementById('ticket-nudge-email');
     const nameEl = document.getElementById('ticket-nudge-name');
+    const emailField = emailEl && emailEl.closest('.form-field');
+    const nameField = nameEl && nameEl.closest('.form-field');
+    const nudgePanel = document.getElementById('ticket-sales-nudge');
     if (!emailEl) return;
     try {
-      const res = await fetch('/api/auth/session', { credentials: 'include' });
-      const data = await res.json();
-      if (data.ok && data.user) {
-        if (!emailEl.value && data.user.email) emailEl.value = data.user.email;
-        if (nameEl && !nameEl.value && data.user.name) nameEl.value = data.user.name;
+      const data = await fetchSessionData();
+      if (data && data.ok && data.user) {
+        if (data.user.email) emailEl.value = data.user.email;
+        if (nameEl && data.user.name) nameEl.value = data.user.name;
+        if (emailField) emailField.hidden = true;
+        if (nameField) nameField.hidden = true;
+        if (nudgePanel) nudgePanel.classList.add('is-logged-in');
+        const btn = document.getElementById('ticket-nudge-btn');
+        if (btn && !btn.dataset.sent) btn.textContent = 'Nudge organiser to add tickets';
+        return;
       }
     } catch {
       /* ignore */
     }
+    if (emailField) emailField.hidden = false;
+    if (nameField) nameField.hidden = false;
+    if (nudgePanel) nudgePanel.classList.remove('is-logged-in');
   }
 
   function bindTicketSalesNudgeUi(ev) {
@@ -3493,14 +3534,20 @@
         nudgePanel.hidden = false;
         const leadEl = nudgePanel.querySelector('.ticket-sales-nudge-lead');
         if (leadEl) {
-          leadEl.textContent = ev.hasTicketTiers
-            ? 'Unfortunately you can\u2019t buy tickets for this event until the organiser allows ticket sales.'
-            : 'Tickets for this event are not available yet \u2014 the organiser has not set them up.';
+          leadEl.textContent =
+            'Interested in attending? Nudge the host to release tickets for this event.';
         }
+        const subEl = nudgePanel.querySelector('.ticket-sales-nudge-sub');
+        if (subEl) {
+          subEl.hidden = true;
+        }
+        const btn = document.getElementById('ticket-nudge-btn');
+        if (btn && !btn.dataset.sent) btn.textContent = 'Nudge organiser to add tickets';
         bindTicketSalesNudgeUi(ev);
         prefillNudgeEmail();
       }
       applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
       return;
     }
 
@@ -3509,7 +3556,7 @@
       panel.classList.add('is-unavailable');
       buy.disabled = true;
       buy.classList.add('cta-btn-disabled');
-      buy.textContent = ev.isSalesClosed ? 'Registration Closed' : 'Sold Out';
+      buy.textContent = ev.isSoldOut ? 'Sold Out' : 'Registration Closed';
       if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
       document.querySelectorAll('#ticket-tiers .tier:not(.sold-out)').forEach((tier) => {
         tier.classList.add('tier-disabled');
@@ -3521,7 +3568,19 @@
       if (qtyDown) qtyDown.disabled = true;
       if (qtyUp) qtyUp.disabled = true;
       if (appForm) appForm.hidden = true;
+      const alertPanel = document.getElementById('ticket-sales-alert');
+      if (alertPanel && !ev.isEventPast) {
+        alertPanel.hidden = false;
+        const lead = document.getElementById('ticket-sales-alert-lead');
+        if (lead) {
+          lead.textContent = ev.isSoldOut
+            ? 'This event is sold out. Save it and we\u2019ll email you if more tickets open.'
+            : 'Registration is closed for now. Save this event and we\u2019ll email you if tickets open again.';
+        }
+        bindTicketSalesAlertUi(ev);
+      }
       applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
       return;
     }
 
@@ -3657,12 +3716,14 @@
     const priceNode = document.querySelector('.ticket-header .price');
     const priceText = priceNode ? priceNode.textContent.trim() : '';
 
+    /* Pending/scheduled must win over isSalesClosed — both flags are often true together. */
     let labelText = 'Get tickets';
     if (registrationIsConfirmedGoing(eventApplicationState)) labelText = "You're already going";
     else if (ev.isEventPast) labelText = 'Event ended';
+    else if (ev.isTicketSalesPending) labelText = 'Nudge organiser';
+    else if (ev.isTicketSalesScheduled) labelText = 'Tickets opening soon';
     else if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
-    else if (ev.isTicketSalesScheduled || ev.isTicketSalesPending) labelText = 'View tickets';
     else if (eventIsCategoryExclusivity(ev)) labelText = 'Apply for a seat';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
@@ -3673,10 +3734,21 @@
         priceText &&
         labelText !== 'Sold out' &&
         labelText !== 'Registration closed' &&
-        labelText !== 'View tickets';
+        labelText !== 'Nudge organiser' &&
+        labelText !== 'Tickets opening soon' &&
+        labelText !== 'Event ended' &&
+        labelText !== "You're already going";
       priceEl.textContent = showPrice ? priceText : '';
       priceEl.hidden = !showPrice;
     }
+
+    jump.dataset.jumpMode = ev.isTicketSalesPending
+      ? 'nudge'
+      : ev.isTicketSalesScheduled
+        ? 'scheduled'
+        : ev.isSoldOut || ev.isSalesClosed || ev.isEventPast
+          ? 'closed'
+          : 'buy';
 
     refreshTicketJumpVisibility();
   }

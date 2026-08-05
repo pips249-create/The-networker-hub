@@ -30,7 +30,7 @@ function normalizeAttendanceMode(mode) {
 }
 
 const BROWSE_ORGANISER_COLUMNS =
-  'id,name,photo_url,description,listing_status,stripe_account_id,stripe_charges_enabled,stripe_connect_details_submitted,slug';
+  'id,name,photo_url,description,listing_status,stripe_account_id,stripe_charges_enabled,stripe_connect_details_submitted,slug,average_rating,review_count';
 
 const BROWSE_TICKET_COLUMNS =
   'id,event_id,price,quantity,name,ticket_type,description,sale_ends_at,sale_starts_at,status,visibility';
@@ -387,6 +387,12 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   else if (isSoldOut) salesClosedReason = 'sold_out';
 
   const orgName = organiser ? String(organiser.name || '').trim() : '';
+  const orgRating =
+    organiser && organiser.average_rating != null ? Number(organiser.average_rating) || 0 : 0;
+  const orgReviews = organiser ? Number(organiser.review_count) || 0 : 0;
+  const eventRating = Number(row.average_rating) || 0;
+  const eventReviews = Number(row.review_count) || 0;
+  const preferOrganiserReviews = orgReviews > 0 && orgRating > 0;
 
   const highlights = Array.isArray(row.highlights)
     ? row.highlights.map((h) => String(h || '').trim()).filter(Boolean)
@@ -440,8 +446,11 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     photo: eventImageUrl(row),
     photoPosition: normalizeEventImagePosition(row.image_position),
     organiser: orgName,
-    rating: Number(row.average_rating) || 0,
-    reviews: Number(row.review_count) || 0,
+    // Reviews live on the organiser profile; prefer those for public trust signals.
+    organiserRating: orgRating,
+    organiserReviews: orgReviews,
+    rating: preferOrganiserReviews ? orgRating : eventRating,
+    reviews: preferOrganiserReviews ? orgReviews : eventReviews,
     createdAt: row.created_at || null,
     isApprovalRequired:
       normalizeAttendanceMode(row.attendance_mode) === 'category_exclusivity' ||
@@ -1249,6 +1258,16 @@ async function handle(req, res) {
         seriesSiblingRows
       );
       event.isSeries = seriesDates.length > 1;
+      if (organiser?.id) {
+        try {
+          const { fetchOrganiserReviews } = require('./supabase-organisers-browse');
+          event.reviewItems = await fetchOrganiserReviews(sb, organiser.id);
+        } catch {
+          event.reviewItems = [];
+        }
+      } else {
+        event.reviewItems = [];
+      }
       const related = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
       const publicRelated = related.filter(
         (ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev)
