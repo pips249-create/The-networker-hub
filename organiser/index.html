@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260805comm4" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260805load1" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
   </head>
   <body class="organiser-dashboard-page hub-is-page-loading">
@@ -151,6 +151,20 @@
         </aside>
 
         <div class="org-main" id="org-main" tabindex="-1">
+          <div
+            id="org-route-loading"
+            class="org-route-loading"
+            hidden
+            aria-hidden="true"
+            role="status"
+            aria-live="polite"
+            aria-busy="false"
+          >
+            <div class="org-route-loading-card">
+              <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
+              <p class="org-route-loading-title">Loading…</p>
+            </div>
+          </div>
           <div class="org-workspace-comfort">
             <button
               type="button"
@@ -3258,7 +3272,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260730tabs" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260805comm4" defer></script>
-    <script src="../js/organiser-workspace-comfort.js?v=20260805comm4" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260805load1" defer></script>
+    <script src="../js/organiser-workspace-comfort.js?v=20260805load1" defer></script>
   </body>
 </html>
