@@ -148,8 +148,8 @@ a:hover { color: var(--charcoal); }
 }
 .site-nav.is-scrolled {
   box-shadow: var(--shadow-soft);
-  background: rgba(245, 240, 232, 0.97);
-  backdrop-filter: blur(10px);
+  background: var(--brand-cream);
+  backdrop-filter: none;
 }
 .site-nav.on-dark,
 .site-nav.on-light {

@@ -283,7 +283,9 @@
 body.nav-menu-open .hubert-widget,
 body.events-filter-sheet-open .hubert-widget,
 body.org-more-sheet-open .hubert-widget,
-body.org-notifications-open .hubert-widget {
+body.org-notifications-open .hubert-widget,
+body.hub-cookie-modal-open .hubert-widget,
+body:has(#hub-cookie-banner:not([hidden])) .hubert-widget {
   visibility: hidden;
   pointer-events: none;
 }
@@ -296,7 +298,8 @@ body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
 
 @media (max-width: 900px) {
   body.events-page .hubert-widget:not(.hubert-widget--open) {
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
   }
 
   body.events-page .hubert-launcher-icon {

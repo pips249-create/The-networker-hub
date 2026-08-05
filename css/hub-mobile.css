@@ -541,11 +541,11 @@ body.nav-menu-open {
 /* ─── Events browse ─── */
 @media (max-width: 768px) {
   .events-page .events-hero {
-    padding: 20px 16px 28px;
+    padding: 12px 16px 16px;
   }
 
   .events-page .events-hero-copy h1 {
-    font-size: clamp(1.85rem, 8vw, 2.35rem);
+    font-size: clamp(1.7rem, 7.5vw, 2.15rem);
   }
 
   .events-page .events-hero-inner {
@@ -555,6 +555,15 @@ body.nav-menu-open {
   .events-page .events-hero-lede {
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 0;
+    font-size: 0.95rem;
+  }
+
+  /* Keep the first screen on utility: title → search (sponsor lives in feed below) */
+  .events-page .events-hero-proof,
+  .events-page .events-hero-organiser-cta,
+  .events-page .events-hero-sponsor-slot {
+    display: none;
   }
 
   .events-hero-browse-link {
@@ -595,6 +604,7 @@ body.nav-menu-open {
   .events-page .shell {
     padding-left: 16px;
     padding-right: 16px;
+    padding-top: 12px;
     padding-bottom: 96px;
     max-width: 100%;
     box-sizing: border-box;
@@ -602,26 +612,38 @@ body.nav-menu-open {
     flex-direction: column;
   }
 
-  .events-page #networking-location-directory {
-    order: 8;
-    margin-bottom: 12px;
-  }
-
+  /* Search-first: utility before discovery (spotlight / locations) */
   .events-page .events-filter-wrap {
-    order: 9;
+    order: 1;
   }
 
   .events-page .events-results-meta {
-    order: 10;
+    order: 2;
   }
 
   .events-page .events-map-wrap,
   .events-page .events-map-hint-bar {
-    order: 11;
+    order: 3;
   }
 
   .events-page .events-body {
-    order: 12;
+    order: 4;
+  }
+
+  .events-page .events-promo-section,
+  .events-page .organisers-promo-section {
+    order: 5;
+    margin-top: 20px;
+  }
+
+  .events-page #networking-location-directory {
+    order: 6;
+    margin-top: 8px;
+    margin-bottom: 12px;
+  }
+
+  .events-page #networking-region-intro {
+    order: 7;
   }
 
   .events-page .home-locations.networking-location-directory {
@@ -642,6 +664,60 @@ body.nav-menu-open {
   }
 
   .events-page .home-locations.networking-location-directory .home-locations-lede {
+    display: none;
+  }
+
+  /* Prefer horizontal city / county carousels over the 4-col grid */
+  .events-page .home-locations-scroller::after {
+    display: block;
+  }
+
+  .events-page .home-locations-track {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 2px;
+    padding: 4px 36px 12px 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .events-page .home-location-chip,
+  .events-page .home-location-chip--online {
+    flex: 0 0 auto;
+    width: 84px;
+    height: 84px;
+    max-width: none;
+    aspect-ratio: auto;
+    margin-right: 0;
+    gap: 5px;
+    padding: 10px 6px 8px;
+  }
+
+  .events-page .home-location-chip-name {
+    font-size: 11px;
+  }
+
+  .events-page .home-location-chip-name--stacked {
+    font-size: 10px;
+  }
+
+  .events-page .home-location-chip--county {
+    width: auto;
+    height: auto;
+    min-height: 40px;
+    border-radius: 999px;
+    flex-direction: row;
+    padding: 8px 14px;
+    aspect-ratio: auto;
+  }
+
+  .events-page .home-locations-track--counties {
+    padding-right: 24px;
+  }
+
+  .events-page .networking-county-directory-lede {
     display: none;
   }
 
@@ -758,11 +834,81 @@ body.nav-menu-open {
   }
 
   .events-page .events-results-meta {
-    padding-right: 52px;
+    padding-right: 0;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .events-page .events-results-count {
+    font-size: 13px;
+    line-height: 1.3;
   }
 
   .events-page .events-results-actions {
     flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .events-page .events-results-actions .browse-mode-toggle {
+    flex: 1 1 100%;
+    min-width: 0;
+    justify-content: stretch;
+  }
+
+  .events-page .events-results-actions .browse-mode-btn {
+    flex: 1 1 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .events-page .events-view-sort-group {
+    flex: 1 1 100%;
+    min-width: 0;
+    margin-left: 0;
+    gap: 8px;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .events-page .events-view-sort-group .events-view-toggle {
+    flex: 0 0 auto;
+  }
+
+  .events-page .events-view-sort-group .events-view-toggle-btn {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .events-page .events-view-sort-group .events-sort-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+
+  .events-page .events-sort-wrap label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .events-page .events-sort-wrap select {
+    width: 100%;
+    max-width: 160px;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 28px 8px 10px;
+    font-size: 13px;
   }
 
   .premium-card {
@@ -1022,6 +1168,38 @@ body.nav-menu-open {
     justify-content: flex-end;
   }
 
+  /* Events browse: mode on its own row; view + sort share the next */
+  .events-page .events-results-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .events-page .events-results-actions .browse-mode-toggle {
+    flex: 1 1 100%;
+  }
+
+  .events-page .events-view-sort-group {
+    width: 100%;
+    flex: 1 1 100%;
+    min-width: 0;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .events-page .events-view-sort-group .events-view-toggle {
+    flex: 0 0 auto;
+  }
+
+  .events-page .events-view-sort-group .events-view-toggle-btn {
+    flex: 0 0 auto;
+  }
+
+  .events-page .events-view-sort-group .events-sort-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   .events-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -1163,7 +1341,7 @@ body.nav-menu-open {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 60;
+    z-index: 1300;
     align-items: stretch;
     justify-content: space-around;
     gap: 0;
@@ -1194,7 +1372,7 @@ body.nav-menu-open {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 60;
+    z-index: 1300;
     align-items: stretch;
     justify-content: space-around;
     gap: 0;
@@ -1213,6 +1391,18 @@ body.nav-menu-open {
 
   .attendee-dashboard-page .ad-wrap {
     padding-bottom: 24px !important;
+  }
+
+  /* Keep Hubert clear of the bottom nav (nav stays above Hubert for taps) */
+  body.organiser-dashboard-page .hubert-widget:not(.hubert-widget--open),
+  body.attendee-dashboard-page .hubert-widget:not(.hubert-widget--open) {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body.organiser-dashboard-page .hubert-launcher-icon,
+  body.attendee-dashboard-page .hubert-launcher-icon {
+    width: 48px;
+    height: 48px;
   }
 
   .hub-side-nav.hub-side-nav--minimal {
@@ -1379,9 +1569,10 @@ body.nav-menu-open {
     box-sizing: border-box;
   }
 
-  /* Keep Events / Business section tabs clear of the bottom nav */
-  #org-page-events,
-  #org-page-business-overview {
+  /* Keep Events / Business section tabs clear of the bottom nav.
+     Only when .is-active — ID display rules must not override .org-page { display: none }. */
+  #org-page-events.is-active,
+  #org-page-business-overview.is-active {
     display: flex;
     flex-direction: column;
   }
