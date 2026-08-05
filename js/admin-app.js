@@ -213,7 +213,7 @@
     dashboard: {
       title: 'How to use Home',
       steps: [
-        'Glance at the numbers at the top — revenue, events, organisers, and member accounts.',
+        'Glance at the numbers at the top — Hub booking fees, events, organisers, and member accounts.',
         'Use Quick links if you already know where you want to go.',
         'If Things to do appears, start with Urgent items and click Go there on each row.',
         'Recent activity shows new sign-ups, events, and reviews.',
@@ -4567,9 +4567,9 @@
             'violet'
           ) +
           card(
-            'Paid ticket revenue',
-            fmtMoney(m.revenue || 0),
-            'Est. fees: ' + fmtMoney(m.fees || 0),
+            'Hub booking fees',
+            fmtMoney(m.fees || 0),
+            'Ticket volume ' + fmtMoney(m.revenue || 0) + ' (organiser revenue)',
             'emerald'
           );
       }
@@ -4612,7 +4612,7 @@
       card('Hub accounts', '…', 'Loading…', 'blue') +
       card('On events browse', '…', 'Loading…', 'brand') +
       card('On organiser browse', '…', 'Loading…', 'violet') +
-      card('Paid ticket revenue', '…', 'Loading…', 'emerald') +
+      card('Hub booking fees', '…', 'Loading…', 'emerald') +
       '</div></section>' +
       '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
       '<h3 class="font-bold text-brand-900 text-sm shrink-0">Recent genuine activity</h3>' +
@@ -4689,9 +4689,9 @@
     if (metricsEl) {
       metricsEl.innerHTML =
         card(
-          'Paid ticket revenue',
-          fmtMoney(m.revenue || 0),
-          'Est. booking fees: ' + fmtMoney(m.fees || 0) + ' · Hub revenue from paid registrations'
+          'Hub booking fees',
+          fmtMoney(m.fees || 0),
+          'Your cut from paid tickets · organiser ticket volume ' + fmtMoney(m.revenue || 0)
         ) +
         card(
           'On events browse',
@@ -5321,7 +5321,7 @@
       main.innerHTML =
         '<div class="space-y-5">' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
-        card('Paid ticket revenue', '…', 'Loading…') +
+        card('Hub booking fees', '…', 'Loading…') +
         card('On events browse', '…', 'Loading…') +
         card('On organiser browse', '…', 'Loading…') +
         card('Member accounts', '…', 'Loading…') +
@@ -5419,7 +5419,10 @@
       '<div><dt>Member accounts</dt><dd>' +
       esc(String(m.attendees || 0)) +
       '</dd></div>' +
-      '<div><dt>Paid ticket revenue</dt><dd>' +
+      '<div><dt>Hub booking fees</dt><dd>' +
+      esc(fmtMoney(m.fees || 0)) +
+      '</dd></div>' +
+      '<div><dt>Organiser ticket volume</dt><dd>' +
       esc(fmtMoney(m.revenue || 0)) +
       '</dd></div>' +
       '<div class="sm:col-span-2 text-sm text-slate-500 pt-1">Last updated ' +
