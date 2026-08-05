@@ -44,6 +44,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_new_registration',
   'organiser_new_application',
   'organiser_booking_cancelled',
+  'organiser_monthly_group_update',
   'event_removed_by_hub',
   'event_unpublished_by_hub',
   'organiser_listing_unpublished_by_hub',
@@ -108,6 +109,7 @@ const ORGANISER_MINI_SPONSOR_SLUGS = new Set([
   'organiser_featured_expiry_reminder',
   'organiser_ranking_badge',
   'organiser_low_upcoming_events',
+  'organiser_monthly_group_update',
 ]);
 
 const OPPORTUNITY_MINI_SPONSOR_SLUGS = new Set([
