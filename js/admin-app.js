@@ -688,7 +688,7 @@
       group: 'Email',
       label: 'Business opportunity emails — Mini Sponsors (3 slots)',
       preview: 'carousel',
-      help: 'Mini Sponsor logos shown on selected business opportunity emails.',
+      help: 'Mini Sponsor logos on selected business opportunity emails. If empty, emails reuse Business opportunity pages — Mini Sponsors.',
       tagline: '',
       ctaLabel: 'Visit website',
       ctaUrl: 'https://',
