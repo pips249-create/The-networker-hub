@@ -1426,7 +1426,7 @@ body.nav-menu-open {
   .attendee-dashboard-page #ad-shell,
   .attendee-dashboard-page .ad-dashboard-layout,
   .attendee-dashboard-page .ad-main {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   }
 
   .attendee-dashboard-page .ad-wrap {
@@ -1677,6 +1677,27 @@ body.nav-menu-open {
     border-radius: var(--od-radius, 12px) var(--od-radius, 12px) 0 0;
   }
 
+  .organiser-dashboard-page .org-filter-linked-note,
+  .organiser-dashboard-page .org-status-glossary {
+    display: none !important;
+  }
+
+  .organiser-dashboard-page .org-mobile-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 14px;
+  }
+
+  .organiser-dashboard-page .org-mobile-filters-toggle {
+    align-self: flex-start;
+    min-height: 40px;
+  }
+
+  .organiser-dashboard-page .org-filter-bar--collapsible[hidden] {
+    display: none !important;
+  }
+
   .organiser-dashboard-page .org-events-tab {
     flex: 0 0 auto;
     min-width: 88px;
@@ -1890,9 +1911,11 @@ body.nav-menu-open {
     overflow: hidden;
   }
 
-  .ad-stats {
-    grid-template-columns: 1fr !important;
-    gap: 10px;
+  .ad-stats,
+  .attendee-dashboard-page .ad-stats--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px;
+    margin-bottom: 16px;
   }
 
   .ad-stat-label-full {
@@ -1904,18 +1927,64 @@ body.nav-menu-open {
   }
 
   button.ad-stat-link {
-    min-height: 72px;
-    padding: 14px 16px;
+    min-height: 0;
+    padding: 10px 8px;
+    align-items: flex-start;
   }
 
   button.ad-stat-link::after {
-    opacity: 0.55;
-    transform: none;
+    display: none;
   }
 
   .ad-stat-value {
-    font-size: 26px;
-    margin-top: 6px;
+    font-size: 22px;
+    margin-top: 4px;
+  }
+
+  .ad-stat-meta {
+    font-size: 11px;
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .attendee-dashboard-page .ad-overview-next {
+    margin-bottom: 14px;
+  }
+
+  .attendee-dashboard-page .ad-overview-next .ad-section-title {
+    margin: 0 0 10px;
+    font-size: 16px;
+  }
+
+  .attendee-dashboard-page .ad-overview-next-card {
+    padding: 12px 14px;
+  }
+
+  .attendee-dashboard-page .ad-overview-review-nudge {
+    display: none !important;
+  }
+
+  .attendee-dashboard-page .ad-overview-membership-nudge-footnote,
+  .attendee-dashboard-page .ad-overview-membership-nudge-item .ad-btn {
+    display: none !important;
+  }
+
+  .attendee-dashboard-page .ad-overview-membership-nudge-list {
+    gap: 8px;
+  }
+
+  .attendee-dashboard-page .ad-overview-membership-nudge-item {
+    padding: 8px 0;
+  }
+
+  .attendee-dashboard-page .ad-welcome-sub {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   /* Tables → stacked cards (no sideways scroll) */
@@ -2146,7 +2215,11 @@ body.nav-menu-open {
   }
 
   .attendee-dashboard-page .ad-saved-scope-wrap {
-    padding: 12px 12px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 10px 12px 10px;
+    background: var(--ad-white, #fff);
   }
 
   .attendee-dashboard-page .ad-saved-scope--segments {
@@ -2194,7 +2267,14 @@ body.nav-menu-open {
   }
 
   .attendee-dashboard-page .ad-saved-pane-inner {
-    padding: 14px 12px 20px;
+    padding: 14px 12px 28px;
+  }
+
+  .attendee-dashboard-page .ad-membership-footnote {
+    margin: 12px 0 8px;
+    padding-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .attendee-dashboard-page .ad-saved-opp-toolbar {

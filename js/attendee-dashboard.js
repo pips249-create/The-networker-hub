@@ -1151,6 +1151,47 @@
     return route;
   }
 
+  function bottomNavRouteKey(route) {
+    if (route === 'tickets' || isTicketsScope(route)) return 'tickets';
+    if (route === 'saved' || route === 'memberships' || isReviewsRoute(route)) return 'saved';
+    if (route === 'saved-opportunities' || route === 'opportunity-enquiries') {
+      return 'saved-opportunities';
+    }
+    if (route === 'overview') return 'overview';
+    return '';
+  }
+
+  function syncBottomNavHighlight() {
+    const bottomKey = bottomNavRouteKey(currentRoute);
+    document.querySelectorAll('.ad-bottom-nav-link[data-ad-route]').forEach((a) => {
+      const navRoute = a.getAttribute('data-ad-route');
+      const active = Boolean(bottomKey) && navRoute === bottomKey;
+      a.classList.toggle('is-active', active);
+      if (active) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+
+  function syncSideNavHighlight() {
+    document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
+      const navRoute = a.getAttribute('data-ad-route');
+      let active = navRoute === currentRoute;
+      if (navRoute === 'tickets' && (currentRoute === 'tickets' || isTicketsScope(currentRoute))) {
+        active = true;
+      }
+      if (navRoute === 'saved' && currentRoute === 'saved') active = true;
+      if (
+        navRoute === 'saved-opportunities' &&
+        (currentRoute === 'saved-opportunities' || currentRoute === 'opportunity-enquiries')
+      ) {
+        active = true;
+      }
+      a.classList.toggle('is-active', active);
+      if (active) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+
   function invoiceDownloadHref(reg, format) {
     const base =
       '/api/auth/registration-invoice?registrationId=' + encodeURIComponent(reg.id || '');
@@ -2399,10 +2440,8 @@
     document.querySelectorAll('[data-ad-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-ad-page') === activePage);
     });
-    document.querySelectorAll('[data-ad-route]').forEach((a) => {
-      const navRoute = a.getAttribute('data-ad-route');
-      a.classList.toggle('is-active', navRoute === currentRoute);
-    });
+    syncSideNavHighlight();
+    syncBottomNavHighlight();
     if (currentRoute === 'saved' && savedScope === 'events') {
       maybeDefaultSavedScope();
     }
@@ -2545,7 +2584,10 @@
     set('ad-side-reviewed', doneReviewsList().length);
     set('ad-side-saved-opportunities', savedOpportunities.length + savedOpportunitySearches.length);
     set('ad-bottom-tickets', upcomingList().length);
-    set('ad-bottom-saved', pendingReviewsList().length);
+    set(
+      'ad-bottom-saved',
+      myGroups.length + savedEvents.length + savedOrganisers.length + pendingReviewsList().length
+    );
     set('ad-bottom-opportunities', oppTotal);
     setTabCount('ad-tickets-count-upcoming', upcomingList().length);
     setTabCount('ad-tickets-count-past', pastList().length);
@@ -2854,6 +2896,131 @@
     );
   }
 
+  function renderOverviewNextUp() {
+    const el = document.getElementById('ad-overview-next');
+    if (!el) return;
+
+    const items = [];
+    const nextTicket = upcomingList()
+      .slice()
+      .sort(function (a, b) {
+        const da = a.date ? new Date(a.date).getTime() : 0;
+        const db = b.date ? new Date(b.date).getTime() : 0;
+        return da - db;
+      })[0];
+    if (nextTicket) {
+      const metaBits = [
+        formatDateShort(nextTicket.date),
+        nextTicket.isSeriesGroup ? '' : formatTimeRange(nextTicket.date, nextTicket.endDate),
+      ].filter(function (bit) {
+        return bit && String(bit).trim() && String(bit) !== '—';
+      });
+      items.push({
+        key: 'ticket',
+        eyebrow: 'Next booking',
+        title: nextTicket.title || 'Event',
+        meta: metaBits.join(' · '),
+        cta: 'Open tickets',
+        route: 'tickets',
+      });
+    }
+
+    const pending = pendingReviewsList();
+    if (pending.length) {
+      items.push({
+        key: 'review',
+        eyebrow: pending.length === 1 ? 'Review to write' : pending.length + ' reviews to write',
+        title: pending[0].title || 'Past event',
+        meta: String(pending[0].organiserName || '').trim(),
+        cta: 'Leave review',
+        route: 'reviews-pending',
+      });
+    }
+
+    const waiting = (opportunityEnquiries || []).filter(function (enquiry) {
+      return String(enquiry.status || '').toLowerCase() === 'new';
+    });
+    if (waiting.length) {
+      items.push({
+        key: 'enquiry',
+        eyebrow:
+          waiting.length === 1
+            ? 'Enquiry awaiting reply'
+            : waiting.length + ' enquiries awaiting reply',
+        title: waiting[0].opportunityTitle || 'Business listing',
+        meta: '',
+        cta: 'View enquiries',
+        route: 'opportunity-enquiries',
+      });
+    }
+
+    const expiring = myGroups.filter(function (item) {
+      return item.expiringSoon && item.membershipActive;
+    });
+    if (expiring.length && items.length < 3) {
+      items.push({
+        key: 'membership',
+        eyebrow: 'Membership',
+        title: expiring[0].organiserName || 'Group',
+        meta: 'Expiring soon',
+        cta: 'View memberships',
+        route: 'memberships',
+      });
+    }
+
+    if (!items.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+
+    el.hidden = false;
+    el.innerHTML =
+      '<h2 class="ad-section-title">Next up</h2>' +
+      '<div class="ad-overview-next-list" role="list">' +
+      items
+        .map(function (item) {
+          return (
+            '<button type="button" class="ad-overview-next-card ad-overview-next-card--' +
+            esc(item.key) +
+            '" role="listitem" data-overview-next-route="' +
+            esc(item.route) +
+            '">' +
+            '<span class="ad-overview-next-eyebrow">' +
+            esc(item.eyebrow) +
+            '</span>' +
+            '<span class="ad-overview-next-title">' +
+            esc(item.title) +
+            '</span>' +
+            (item.meta
+              ? '<span class="ad-overview-next-meta">' + esc(item.meta) + '</span>'
+              : '') +
+            '<span class="ad-overview-next-cta">' +
+            esc(item.cta) +
+            ' →</span>' +
+            '</button>'
+          );
+        })
+        .join('') +
+      '</div>';
+
+    el.querySelectorAll('[data-overview-next-route]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const route = btn.getAttribute('data-overview-next-route') || 'overview';
+        if (route === 'tickets') {
+          setTicketsScope('upcoming');
+          setRoute('tickets');
+          return;
+        }
+        if (route === 'memberships') {
+          goToMemberships();
+          return;
+        }
+        setRoute(route);
+      });
+    });
+  }
+
   function renderOverviewMembershipNudge() {
     const el = document.getElementById('ad-overview-membership-nudge');
     if (!el) return;
@@ -2950,6 +3117,7 @@
   }
 
   function renderOverviewFeed() {
+    renderOverviewNextUp();
     renderOverviewMembershipNudge();
     renderOverviewReviewNudge();
 
@@ -3915,6 +4083,10 @@
   }
 
   function bindNav() {
+    const bottomNav = document.querySelector('.ad-bottom-nav');
+    if (bottomNav && bottomNav.parentElement !== document.body) {
+      document.body.appendChild(bottomNav);
+    }
     document.querySelectorAll('[data-ad-route]').forEach((a) => {
       if (a.dataset.boundAdRoute) return;
       a.dataset.boundAdRoute = '1';

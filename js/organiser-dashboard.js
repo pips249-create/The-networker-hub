@@ -9623,8 +9623,19 @@
 
     let bottomPrimary = 'more';
     if (page === 'dashboard' || activeRoute === 'dashboard') bottomPrimary = 'dashboard';
-    else if (page === 'events' || activeRoute === 'events-list') bottomPrimary = 'events-list';
-    else if (page === 'business-overview' || activeRoute === 'business-overview') {
+    else if (
+      page === 'events' ||
+      activeRoute === 'events-list' ||
+      String(activeRoute || '').indexOf('events-') === 0
+    ) {
+      bottomPrimary = 'events-list';
+    } else if (
+      page === 'business-overview' ||
+      page === 'business-list' ||
+      activeRoute === 'business-overview' ||
+      activeRoute === 'business-list' ||
+      String(activeRoute || '').indexOf('business-') === 0
+    ) {
       bottomPrimary = 'business-overview';
     }
 
@@ -14326,10 +14337,53 @@
     });
   }
 
+  function bindMobileFilterTogglesOnce() {
+    if (window.__hubOrgMobileFiltersBound) return;
+    window.__hubOrgMobileFiltersBound = true;
+
+    function wrapFilterBars() {
+      if (!window.matchMedia || !window.matchMedia('(max-width: 768px)').matches) return;
+      document.querySelectorAll('.org-sub-page .org-filter-bar').forEach(function (bar) {
+        if (bar.dataset.mobileFilterBound) return;
+        if (bar.closest('.org-mobile-filters')) {
+          bar.dataset.mobileFilterBound = '1';
+          return;
+        }
+        bar.dataset.mobileFilterBound = '1';
+        const wrap = document.createElement('div');
+        wrap.className = 'org-mobile-filters';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'org-btn org-btn-outline org-btn-sm org-mobile-filters-toggle';
+        btn.textContent = 'Filters';
+        btn.setAttribute('aria-expanded', 'false');
+        const parent = bar.parentNode;
+        if (!parent) return;
+        parent.insertBefore(wrap, bar);
+        wrap.appendChild(btn);
+        wrap.appendChild(bar);
+        bar.classList.add('org-filter-bar--collapsible');
+        bar.hidden = true;
+        btn.addEventListener('click', function () {
+          const open = bar.hidden;
+          bar.hidden = !open;
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          btn.textContent = open ? 'Hide filters' : 'Filters';
+        });
+      });
+    }
+
+    wrapFilterBars();
+    window.addEventListener('resize', function () {
+      wrapFilterBars();
+    });
+  }
+
   function bindUi() {
     bindNotificationsPanelOnce();
     bindOrgMoreSheetOnce();
     bindScopeButtonOnce();
+    bindMobileFilterTogglesOnce();
 
     if (!window.__hubPaymentSetupLinkedBound) {
       window.__hubPaymentSetupLinkedBound = true;
