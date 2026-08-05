@@ -2,7 +2,7 @@
  * Command Centre revenue targets — Jul 2026 → 1 Sep 2027.
  * Combines auto-tracked Stripe/registration revenue with manual sponsorship deals.
  */
-const { registrationBookingFee } = require('./booking-fees');
+const { registrationHubPlatformFee } = require('./booking-fees');
 const { calculateOpportunityListingTotals } = require('./opportunity-listing-pricing');
 const { FEATURED_PLANS } = require('./event-featured-plans');
 const { isTestRegistration, isTestFixtureText } = require('./test-fixture-filters');
@@ -27,7 +27,7 @@ const TARGET_CATEGORIES = [
   {
     id: 'ticket_sales',
     label: 'Ticket sales (booking fees)',
-    description: 'Hub booking fees on paid event tickets and organiser memberships',
+    description: 'Hub platform cut on paid event tickets and organiser memberships (Stripe excluded)',
     target: 2500,
   },
   {
@@ -165,11 +165,11 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
   (regsRes.data || []).forEach((reg) => {
     if (!inPeriod(reg.created_at, startMs, endMs)) return;
     if (isTestRegistration(reg)) return;
-    const fee = registrationBookingFee(reg);
+    const fee = registrationHubPlatformFee(reg);
     if (fee <= 0) return;
     addBreakdown(breakdown, 'ticket_sales', {
       type: 'auto',
-      source: 'Booking fee — ' + String(reg.events?.title || 'registration').trim(),
+      source: 'Hub platform fee — ' + String(reg.events?.title || 'registration').trim(),
       amount: fee,
       recordedAt: reg.created_at,
     });

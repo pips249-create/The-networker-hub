@@ -337,15 +337,18 @@ async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
     return { skipped: true, reason: 'not_membership' };
   }
 
+  // Record Hub platform cut only (3% of membership) — not the full booking fee that includes Stripe.
+  const { calculateHubPlatformFee } = require('./booking-fees');
   let feeGbp = 0;
-  const hubFeePence = Number(meta.hub_fee_pence);
-  if (Number.isFinite(hubFeePence) && hubFeePence > 0) {
-    feeGbp = round2(hubFeePence / 100);
+  const membershipPence = Number(meta.membership_amount_pence);
+  if (Number.isFinite(membershipPence) && membershipPence > 0) {
+    feeGbp = calculateHubPlatformFee(membershipPence / 100);
   } else {
-    const membershipPence = Number(meta.membership_amount_pence);
-    if (Number.isFinite(membershipPence) && membershipPence > 0) {
-      const { calculateMembershipFeePounds } = require('./membership-billing');
-      feeGbp = calculateMembershipFeePounds(membershipPence / 100);
+    // Fall back: reverse membership from full booking fee (m×4.5% + 20p), then take 3%.
+    let fullFeeGbp = 0;
+    const hubFeePence = Number(meta.hub_fee_pence);
+    if (Number.isFinite(hubFeePence) && hubFeePence > 0) {
+      fullFeeGbp = hubFeePence / 100;
     } else {
       const lines = Array.isArray(invoice?.lines?.data) ? invoice.lines.data : [];
       for (const line of lines) {
@@ -353,10 +356,14 @@ async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
         if (!desc.includes('booking fee')) continue;
         const amount = Number(line.amount);
         if (Number.isFinite(amount) && amount > 0) {
-          feeGbp = round2(amount / 100);
+          fullFeeGbp = amount / 100;
           break;
         }
       }
+    }
+    if (fullFeeGbp > 0) {
+      const inferredMembership = Math.max(0, (fullFeeGbp - 0.2) / 0.045);
+      feeGbp = calculateHubPlatformFee(inferredMembership);
     }
   }
 
@@ -368,7 +375,7 @@ async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
   const interval = String(meta.billing_interval || '').trim().toLowerCase();
   const intervalLabel = interval === 'year' ? 'annual' : interval === 'month' ? 'monthly' : '';
   const sourceLabel = [
-    'Membership booking fee',
+    'Membership platform fee',
     intervalLabel,
     email,
   ]
@@ -387,10 +394,12 @@ async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
     },
     fallbacks: {
       customerName: email,
-      description: 'Membership booking fee',
+      description: 'Membership platform fee',
       invoiceNumber: invoice.number || invoice.id,
     },
-    notes: ['Membership booking fee', invoice.number || invoice.id].filter(Boolean).join(' · '),
+    notes: ['Membership platform fee (Stripe excluded)', invoice.number || invoice.id]
+      .filter(Boolean)
+      .join(' · '),
     sourceType: 'stripe_invoice',
     stripeInvoiceId: invoiceId,
     stripeCustomerId:

@@ -4569,7 +4569,7 @@
           card(
             'Hub booking fees',
             fmtMoney(m.fees || 0),
-            'Ticket volume ' + fmtMoney(m.revenue || 0) + ' (organiser · E2E excluded)',
+            'After Stripe · ticket volume ' + fmtMoney(m.revenue || 0) + ' (organiser · E2E excluded)',
             'emerald'
           );
       }
@@ -4691,7 +4691,7 @@
         card(
           'Hub booking fees',
           fmtMoney(m.fees || 0),
-          'Your cut from paid tickets (E2E/test excluded) · organiser ticket volume ' +
+          'Your cut after Stripe (E2E/test excluded) · organiser ticket volume ' +
           fmtMoney(m.revenue || 0)
         ) +
         card(
@@ -6332,7 +6332,7 @@
           '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
         financialsMoney(summary.totalTicketRevenue) +
           '</p></div>' +
-          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Booking fees</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Hub fees (after Stripe)</p><p class="text-xl font-bold text-brand-900 mt-1">' +
         financialsMoney(summary.totalBookingFees) +
           '</p></div>' +
           '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +

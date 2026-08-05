@@ -2,9 +2,14 @@
  * Customer-facing booking fee: 4.5% + 20p per ticket.
  * This is the merged Hub fee (3% platform + ~1.5% Stripe + 20p per ticket on the ticket price).
  * Organisers receive the full ticket price; attendees pay the booking fee on top.
+ *
+ * Hub net revenue is the 3% platform portion only — Stripe processing (~1.5% + 20p)
+ * is absorbed from the booking fee and must not be counted as Hub income.
  */
 const BOOKING_FEE_RATE = 0.045;
 const BOOKING_FEE_PER_TICKET = 0.2;
+/** Hub platform cut of ticket/membership subtotal (excludes Stripe). */
+const PLATFORM_FEE_RATE = 0.03;
 
 const BOOKING_FEE_LABEL = 'Booking fee (4.5% + 20p per ticket)';
 const BOOKING_FEE_EXPLANATION =
@@ -69,16 +74,31 @@ function registrationBookingFee(registration) {
   return roundMoney(Math.max(0, paid - ticket));
 }
 
+/** Hub net income from a ticket/membership subtotal (3% — Stripe excluded). */
+function calculateHubPlatformFee(subtotalPounds) {
+  const sub = Number(subtotalPounds) || 0;
+  if (sub <= 0) return 0;
+  return roundMoney(sub * PLATFORM_FEE_RATE);
+}
+
+/** Hub net income from a paid registration (excludes Stripe portion of booking fee). */
+function registrationHubPlatformFee(registration) {
+  return calculateHubPlatformFee(registrationTicketRevenue(registration));
+}
+
 module.exports = {
   BOOKING_FEE_RATE,
   BOOKING_FEE_PER_TICKET,
+  PLATFORM_FEE_RATE,
   BOOKING_FEE_LABEL,
   BOOKING_FEE_EXPLANATION,
   BOOKING_FEE_NON_REFUNDABLE_NOTE,
   calculateBookingFee,
   calculateCheckoutTotals,
+  calculateHubPlatformFee,
   ticketSubtotalFromCheckoutTotal,
   bookingFeeFromCheckoutTotal,
   registrationTicketRevenue,
   registrationBookingFee,
+  registrationHubPlatformFee,
 };

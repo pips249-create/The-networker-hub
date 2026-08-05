@@ -4,7 +4,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const {
   registrationTicketRevenue,
-  registrationBookingFee,
+  registrationHubPlatformFee,
 } = require('./booking-fees');
 const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
 
@@ -283,7 +283,7 @@ async function fetchPaidRegistrationTotals(sb) {
     rows.forEach((r) => {
       if (isTestRegistration(r)) return;
       totalRevenue += registrationTicketRevenue(r);
-      hubBookingFees += registrationBookingFee(r);
+      hubBookingFees += registrationHubPlatformFee(r);
     });
     if (rows.length < pageSize) break;
     from += pageSize;
@@ -978,7 +978,7 @@ async function fetchFinancials(sb) {
   (paidRegsRes.data || []).forEach((r) => {
     if (isTestRegistration(r)) return;
     totalTicketRevenue += registrationTicketRevenue(r);
-    totalBookingFees += registrationBookingFee(r);
+    totalBookingFees += registrationHubPlatformFee(r);
     const orgId = r.organiser_id;
     if (!orgId) return;
     revenueByOrgId.set(orgId, (revenueByOrgId.get(orgId) || 0) + registrationTicketRevenue(r));

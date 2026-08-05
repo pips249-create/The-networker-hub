@@ -3,8 +3,7 @@
  */
 const { getStripeClient, isStripeCheckoutConfigured } = require('./stripe-checkout');
 const { getSupabaseAdmin } = require('./supabase');
-
-const PLATFORM_FEE_RATE = 0.03;
+const { PLATFORM_FEE_RATE } = require('./booking-fees');
 
 function isStripeRefundsConfigured() {
   return isStripeCheckoutConfigured();
