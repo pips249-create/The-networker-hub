@@ -79,37 +79,37 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   city_partner_payment_welcome: {
     file: 'city-partner-payment-welcome.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'City Partner confirmed — send your logo & link',
   },
   city_partner_slot_open: {
     file: 'city-partner-slot-open.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: '{{city_name}} City Partner — slot now available',
   },
   city_partner_opening_soon: {
     file: 'city-partner-opening-soon.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: '{{city_name}} City Partner — opens {{available_from}}',
   },
   payout_requested: {
     file: 'payout-requested.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Payout request received — {{event_name}}',
   },
   payout_approved: {
     file: 'payout-approved.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Payout approved — {{event_name}}',
   },
   payout_paid: {
     file: 'payout-paid.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Payout sent — {{event_name}}',
   },
   stripe_connect_nudge: {
     file: 'stripe-connect-nudge.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Add your bank details to receive payouts',
   },
   meeting_link_added: {
@@ -154,11 +154,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   event_saved_search_match: {
     file: 'event-saved-search-match.html',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'New event matching your saved search',
   },
   saved_event_tickets_open: {
     file: 'saved-event-tickets-open.html',
-    marker: 'hub-email-layout-v2-saved-event',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Tickets are on sale for {{event_name}}',
   },
   saved_opportunity_closing_soon: {
@@ -173,17 +174,17 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   guest_visit_followup: {
     file: 'guest-visit-followup.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your guest visit with {{organiser_name}}',
   },
   alumni_fast_pass_invite: {
     file: 'alumni-fast-pass-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your previous attendee rate for {{event_name}}',
   },
   ce_member_invite: {
     file: 'ce-member-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: "You're invited to book {{event_name}}",
   },
   member_roster_invite: {
@@ -208,7 +209,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   member_roster_payment_failed_organiser: {
     file: 'member-roster-payment-failed-organiser.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Membership payment failed — {{member_name}}',
   },
   member_roster_renewal_receipt: {
@@ -218,22 +219,22 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   event_almost_full: {
     file: 'event-almost-full.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Almost full — {{event_name}}',
   },
   attendee_reengagement: {
     file: 'attendee-reengagement.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Ready to network again?',
   },
   attendee_signup_events_nudge: {
     file: 'attendee-signup-events-nudge.html',
-    marker: 'hub-email-layout-v2-loc',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Events picked for you on The Networker Hub',
   },
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
-    marker: 'hub-email-layout-v2-hubert-icon',
+    marker: 'hub-email-layout-v3-purple',
     subject: "Hubert's event picks for {{month_label}}",
   },
   organiser_low_upcoming_events: {
@@ -243,12 +244,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   event_removed_by_hub: {
     file: 'event-removed-by-hub.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your event {{event_name}} has been removed from The Networker Hub',
   },
   event_unpublished_by_hub: {
     file: 'event-unpublished-by-hub.html',
-    marker: 'organiser-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Your event {{event_name}} has been unpublished on The Networker Hub',
   },
   organiser_listing_unpublished_by_hub: {
@@ -258,7 +259,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   listing_report_upheld_reporter: {
     file: 'listing-report-upheld-reporter.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'We reviewed your report — thank you',
   },
   organiser_hub_warning: {
@@ -288,7 +289,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   event_connections_list: {
     file: 'event-connections-list.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Who attended — {{event_name}}',
   },
   member_roster_booking_reminder: {

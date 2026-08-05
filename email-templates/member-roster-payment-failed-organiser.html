@@ -20,7 +20,7 @@
   </style>
 </head>
 <body style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
-<!-- organiser-email-layout-v2 -->
+<!-- hub-email-layout-v3-purple -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
   <tr>
     <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
@@ -32,6 +32,7 @@
             </a>
           </td>
         </tr>
+        {{sponsor_row}}
         <tr>
           <td style="background:#f5f0e8;padding:0;text-align:center;">
             <div style="line-height:0;font-size:0;margin-top:8px;">
@@ -57,21 +58,33 @@
           <td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
               <tr>
-                <td align="center" style="border-radius:999px;background:#1c2040;">
+                <td align="center" style="border-radius:999px;background:#452d5c;">
                   <a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;color:#ffffff;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">{{cta_label}} &rarr;</a>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
+        <!-- hub-email-layout-v3-purple -->
         <tr>
-          <td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;color:rgba(255,255,255,0.55);margin:0;">
-              <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
+          <td class="mobile-footer-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+            </a>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
+              Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
+              <a href="mailto:{{support_email}}" style="color:#d9c4e0;text-decoration:none;">{{support_email}}</a>
+            </p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+              <a href="{{privacy_url}}" style="color:#d9c4e0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
-              <a href="{{terms_url}}" style="color:#4aa8f0;text-decoration:none;">Terms</a>
+              <a href="{{terms_url}}" style="color:#d9c4e0;text-decoration:none;">Terms</a>
               &nbsp;&middot;&nbsp;
-              <a href="{{contact_url}}" style="color:#4aa8f0;text-decoration:none;">Contact</a>
+              <a href="{{refunds_url}}" style="color:#d9c4e0;text-decoration:none;">Refunds</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{contact_url}}" style="color:#d9c4e0;text-decoration:none;">Contact</a>
+            &nbsp;&middot;&nbsp;
+              <a href="{{unsubscribe_url}}" style="color:#ebe0f0;text-decoration:none;">Unsubscribe</a>
             </p>
           </td>
         </tr>
