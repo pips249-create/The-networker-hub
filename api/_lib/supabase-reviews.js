@@ -4,6 +4,17 @@ const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { isUuid } = require('./uuid');
 
 const MAX_ORGANISER_REPLY = 2000;
+const MAX_REVIEW_TEXT = 2000;
+
+function sanitizeReviewPlainText(raw, maxLen) {
+  let text = String(raw == null ? '' : raw)
+    .replace(/\u0000/g, '')
+    .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+  text = text.trim();
+  const limit = Number(maxLen) || MAX_REVIEW_TEXT;
+  if (text.length > limit) text = text.slice(0, limit).trim();
+  return text;
+}
 
 const ELIGIBLE_PAYMENT = new Set(['Paid', 'Free']);
 
@@ -46,8 +57,9 @@ async function submitReview(session, input) {
     throw new Error('invalid_rating');
   }
 
-  const reviewText = String(input.reviewText || input.review_text || '').trim();
-  if (reviewText.length > 2000) throw new Error('review_text_too_long');
+  const rawReview = String(input.reviewText || input.review_text || '');
+  if (rawReview.trim().length > MAX_REVIEW_TEXT) throw new Error('review_text_too_long');
+  const reviewText = sanitizeReviewPlainText(rawReview, MAX_REVIEW_TEXT);
 
   const sb = getSupabaseAdmin();
   const attendeeId = await resolveAttendeeId(sb, session);
@@ -137,13 +149,14 @@ async function replyToReviewAsOrganiser(session, reviewId, replyText) {
     throw err;
   }
 
-  const reply = String(replyText == null ? '' : replyText).trim();
-  if (reply.length > MAX_ORGANISER_REPLY) {
+  const rawReply = String(replyText == null ? '' : replyText);
+  if (rawReply.trim().length > MAX_ORGANISER_REPLY) {
     const err = new Error('reply_too_long');
     err.status = 400;
     err.code = 'reply_too_long';
     throw err;
   }
+  const reply = sanitizeReviewPlainText(rawReply, MAX_ORGANISER_REPLY);
 
   const access = await resolveOrganiserAccess(session);
   if (!access.role) {

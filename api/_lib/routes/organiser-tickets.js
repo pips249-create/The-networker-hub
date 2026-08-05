@@ -244,7 +244,7 @@ module.exports = async function handler(req, res) {
 
     try {
       const allowed = await ownedEventIds();
-      if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
+      if (!isPlatformAdmin(auth.session) && !allowed.allowed.has(eventId)) {
         return json(res, 403, { error: 'event_not_owned' });
       }
       const ticket = await createTicket({

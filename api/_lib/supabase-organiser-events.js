@@ -1842,12 +1842,15 @@ async function fetchSeriesPeerIds(sb, row) {
   if (row.duplicated_from_event_id) return [];
   if (!row.series_group_id) return [];
   const exclude = new Set([row.id]);
+  const organiserId = String(row.organiser_id || '').trim();
 
-  const { data, error } = await sb
+  let query = sb
     .from('events')
     .select('id')
     .eq('series_group_id', row.series_group_id)
     .in('status', ACTIVE_SERIES_STATUSES);
+  if (organiserId) query = query.eq('organiser_id', organiserId);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data || []).map((peer) => peer.id).filter((id) => id && !exclude.has(id));
 }
@@ -2024,7 +2027,28 @@ async function createTicketsForEvents({
     guest_passes_disabled: mode === 'guest_programme' ? guestPassesDisabledFlag : false,
   };
   if (alumniConfig?.sourceEventId) {
-    alumniEventUpdate.alumni_source_event_id = alumniConfig.sourceEventId;
+    const sourceId = String(alumniConfig.sourceEventId).trim();
+    const { data: sourceEv, error: sourceErr } = await sb
+      .from('events')
+      .select('id, organiser_id')
+      .eq('id', sourceId)
+      .maybeSingle();
+    if (sourceErr) throw new Error(sourceErr.message);
+    const { data: targetOrgs, error: targetErr } = await sb
+      .from('events')
+      .select('organiser_id')
+      .in('id', ids);
+    if (targetErr) throw new Error(targetErr.message);
+    const allowedOrgs = new Set(
+      (targetOrgs || []).map((row) => String(row.organiser_id || '').trim()).filter(Boolean)
+    );
+    if (!sourceEv || !allowedOrgs.has(String(sourceEv.organiser_id || '').trim())) {
+      const e = new Error('alumni_source_event_not_owned');
+      e.status = 403;
+      e.code = 'alumni_source_event_not_owned';
+      throw e;
+    }
+    alumniEventUpdate.alumni_source_event_id = sourceId;
   }
 
   await assertTicketsEditableForEvents(sb, ids);

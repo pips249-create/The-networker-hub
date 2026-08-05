@@ -77,9 +77,9 @@ async function loadScopedGroupIdsForMember(sb, memberId) {
 }
 
 /**
- * Accept pages already on this account, or workspace pages the owner can see
- * that are unlinked / still pending claim — then link them to the account so
- * scoped team access can resolve them later.
+ * Accept pages already linked to this account only.
+ * Never auto-claim unlinked organiser pages from client-supplied IDs —
+ * ownership claims must go through the dedicated claim flow.
  */
 async function validateAccountGroupIds(sb, accountId, groupIds) {
   const ids = [...new Set((groupIds || []).filter(Boolean))];
@@ -104,11 +104,10 @@ async function validateAccountGroupIds(sb, accountId, groupIds) {
     throw e;
   }
 
-  const toLink = [];
   for (const id of ids) {
     const row = byId.get(id);
     const linked = row.organiser_account_id;
-    if (linked && linked !== accountId) {
+    if (!linked || linked !== accountId) {
       const e = new Error('One or more groups are not on this account');
       e.status = 400;
       throw e;
@@ -118,16 +117,6 @@ async function validateAccountGroupIds(sb, accountId, groupIds) {
       e.status = 400;
       throw e;
     }
-    if (!linked) toLink.push(id);
-  }
-
-  if (toLink.length) {
-    const { error: linkErr } = await sb
-      .from('organisers')
-      .update({ organiser_account_id: accountId })
-      .in('id', toLink)
-      .is('organiser_account_id', null);
-    if (linkErr) throw new Error(linkErr.message);
   }
 
   return ids;
