@@ -86,11 +86,21 @@ module.exports = async function handler(req, res) {
       }
 
       const { parseAdminBool } = require('../admin-bool');
+      const { applyAdminFeaturedPatch } = require('../admin-featured-until');
+      const patch = {};
+      applyAdminFeaturedPatch(patch, {
+        featured: body.featured,
+        featured_until: body.featured_until,
+        featuredUntil: body.featuredUntil,
+      });
+      if (!Object.prototype.hasOwnProperty.call(patch, 'featured')) {
+        patch.featured = parseAdminBool(body.featured);
+      }
       const { data, error } = await sb
         .from('organisers')
-        .update({ featured: parseAdminBool(body.featured) })
+        .update(patch)
         .eq('id', targetOrganiserId)
-        .select('id, name, featured')
+        .select('id, name, featured, featured_until')
         .single();
       if (error) throw new Error(error.message);
 

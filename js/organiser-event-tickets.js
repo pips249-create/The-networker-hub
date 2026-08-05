@@ -1637,7 +1637,7 @@
       name,
       price: price === '' || price == null ? 0 : price,
       description:
-        'Members only — book without applying. Guests use Category Exclusivity application above.',
+        'Book without applying — for people on this group\u2019s membership list. Guests use Category Exclusivity application above.',
       status: 'Available',
       quantityAvailable: qty === '' || qty == null ? null : Number(qty),
       saleStart: ceTier?.saleStart || null,

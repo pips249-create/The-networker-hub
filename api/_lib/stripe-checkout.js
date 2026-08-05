@@ -218,10 +218,6 @@ async function retrieveCheckoutSession(sessionId, options = {}) {
 }
 
 const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');
-const {
-  calculateCityPartnerQuote,
-  listCityPartnerRegions,
-} = require('./networking-city-partners');
 
 /**
  * One-off featured event listing (£55/month).
@@ -323,14 +319,22 @@ async function createGroupUpdateCreditsCheckoutSession(opts) {
 }
 
 /**
- * City Partner subscription — auto-bundles every 3 cities at the pack rate.
+ * City Partner — monthly subscription or prepaid 1 / 3 / 6 months.
  */
 async function createCityPartnerCheckoutSession(opts) {
   const stripe = getStripeClient();
   const cities = Array.isArray(opts.cities) ? opts.cities : [];
   if (!cities.length) throw new Error('missing_cities');
 
-  const quote = calculateCityPartnerQuote(cities.length);
+  const {
+    normalizeCityPartnerTerm,
+    calculateCityPartnerQuote,
+    listCityPartnerRegions,
+  } = require('./networking-city-partners');
+
+  const term = normalizeCityPartnerTerm(opts.termMonths != null ? opts.termMonths : opts.term);
+  const quote = calculateCityPartnerQuote(cities.length, new Date(), term.termMonths || 'monthly');
+  const prepaid = quote.billingMode === 'prepaid';
   const cityNames = cities
     .map((slug) => {
       const match = listCityPartnerRegions().find((r) => r.slug === slug);
@@ -341,38 +345,68 @@ async function createCityPartnerCheckoutSession(opts) {
   const lineItems = [];
   const pricing = quote.pricing;
   const launchNote = quote.isLaunch ? ' Launch rate until 1 Dec 2026.' : '';
+  const termLabel = prepaid
+    ? quote.termMonths + ' month' + (quote.termMonths === 1 ? '' : 's') + ' prepaid'
+    : 'monthly';
 
   if (quote.bundles > 0) {
+    const unitAmount = prepaid
+      ? pricing.bundle3MonthlyPence * quote.termMonths
+      : pricing.bundle3MonthlyPence;
     lineItems.push({
       price_data: {
         currency: 'gbp',
         product_data: {
-          name: 'City Partner — 3-city pack',
+          name: prepaid
+            ? 'City Partner — 3-city pack (' + termLabel + ')'
+            : 'City Partner — 3-city pack',
           description:
             'Logo + CTA on three regional networking pages. Website only — not in hub emails.' +
             launchNote,
         },
-        unit_amount: pricing.bundle3MonthlyPence,
-        recurring: { interval: 'month' },
+        unit_amount: unitAmount,
+        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
       },
       quantity: quote.bundles,
     });
   }
 
   if (quote.singles > 0) {
+    const unitAmount = prepaid
+      ? pricing.singleMonthlyPence * quote.termMonths
+      : pricing.singleMonthlyPence;
     lineItems.push({
       price_data: {
         currency: 'gbp',
         product_data: {
-          name: 'City Partner — single city',
+          name: prepaid
+            ? 'City Partner — single city (' + termLabel + ')'
+            : 'City Partner — single city',
           description:
             'Logo + CTA on one regional networking page. Website only — not in hub emails.' +
             launchNote,
         },
-        unit_amount: pricing.singleMonthlyPence,
-        recurring: { interval: 'month' },
+        unit_amount: unitAmount,
+        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
       },
       quantity: quote.singles,
+    });
+  }
+
+  if (quote.vatPence > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'VAT (20%)',
+          description: prepaid
+            ? 'VAT on City Partner (' + termLabel + ')'
+            : 'VAT on City Partner (monthly)',
+        },
+        unit_amount: quote.vatPence,
+        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
+      },
+      quantity: 1,
     });
   }
 
@@ -384,18 +418,25 @@ async function createCityPartnerCheckoutSession(opts) {
     package_name: 'City Partner — ' + cityNames,
     city_partner_bundles: String(quote.bundles),
     city_partner_singles: String(quote.singles),
+    billing_mode: quote.billingMode,
+    term_months: prepaid ? String(quote.termMonths) : 'monthly',
   };
 
-  return stripe.checkout.sessions.create({
-    mode: 'subscription',
+  const sessionParams = {
+    mode: prepaid ? 'payment' : 'subscription',
     customer_email: opts.email,
-    client_reference_id: 'city-partner-' + cities.join('-').slice(0, 120),
+    client_reference_id: 'city-partner-' + cities.join('-').slice(0, 100),
     metadata,
-    subscription_data: { metadata },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: lineItems,
-  });
+  };
+
+  if (!prepaid) {
+    sessionParams.subscription_data = { metadata };
+  }
+
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 /**

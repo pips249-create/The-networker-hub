@@ -7,6 +7,9 @@ const { isPublishableSponsorBlock } = require('./cms-sponsor-fields');
 
 const CITY_PARTNER_SLOT_PREFIX = 'networking_city_partner_';
 const LAUNCH_END_ISO = '2026-12-01T00:00:00.000Z';
+const CITY_PARTNER_VAT_RATE = 0.2;
+/** Prepaid fixed terms offered alongside rolling monthly. */
+const CITY_PARTNER_PREPAID_TERMS = [1, 3, 6];
 
 const LAUNCH_PRICING = {
   singleMonthlyPence: 2900,
@@ -21,6 +24,36 @@ const REGULAR_PRICING = {
   singleLabel: '£79',
   bundle3Label: '£199',
 };
+
+/**
+ * @param {unknown} value — 'monthly' | 1 | 3 | 6 | '1' | …
+ * @returns {{ billingMode: 'monthly'|'prepaid', termMonths: number|null }}
+ */
+function normalizeCityPartnerTerm(value) {
+  const raw = String(value == null ? '' : value).trim().toLowerCase();
+  if (!raw || raw === 'monthly' || raw === 'month' || raw === 'rolling' || raw === '0') {
+    return { billingMode: 'monthly', termMonths: null };
+  }
+  const n = parseInt(raw, 10);
+  if (CITY_PARTNER_PREPAID_TERMS.includes(n)) {
+    return { billingMode: 'prepaid', termMonths: n };
+  }
+  return { billingMode: 'monthly', termMonths: null };
+}
+
+function addMonthsUtc(baseDate, months) {
+  const d = new Date(baseDate);
+  const m = Math.max(0, Math.floor(Number(months) || 0));
+  d.setUTCMonth(d.getUTCMonth() + m);
+  return d;
+}
+
+function isPrepaidCityPartnerHoldId(subscriptionId) {
+  return String(subscriptionId || '')
+    .trim()
+    .toLowerCase()
+    .startsWith('prepaid:');
+}
 
 function cityPartnerSlotKey(slug) {
   return CITY_PARTNER_SLOT_PREFIX + String(slug || '').trim().toLowerCase();
@@ -72,20 +105,32 @@ function activePricing(now = new Date()) {
 /**
  * Bundle automation: every 3 cities use one bundle price; remainder use single price.
  * e.g. 5 cities → 1× bundle + 2× single.
+ * @param {number} cityCount
+ * @param {Date} [now]
+ * @param {unknown} [term] — monthly | 1 | 3 | 6
  */
-function calculateCityPartnerQuote(cityCount, now = new Date()) {
+function calculateCityPartnerQuote(cityCount, now = new Date(), term = null) {
   const count = Math.max(0, Math.floor(Number(cityCount) || 0));
   const pricing = activePricing(now);
   const bundles = Math.floor(count / 3);
   const singles = count % 3;
   const monthlyPence =
     bundles * pricing.bundle3MonthlyPence + singles * pricing.singleMonthlyPence;
+  const { billingMode, termMonths } = normalizeCityPartnerTerm(term);
+  const billableMonths = billingMode === 'prepaid' ? termMonths : 1;
+  const subtotalExVatPence = monthlyPence * billableMonths;
+  const vatPence = Math.round(subtotalExVatPence * CITY_PARTNER_VAT_RATE);
   return {
     cityCount: count,
     bundles,
     singles,
+    billingMode,
+    termMonths,
     monthlyPence,
     monthlyGbp: monthlyPence / 100,
+    subtotalExVatPence,
+    vatPence,
+    totalPence: subtotalExVatPence + vatPence,
     pricing,
     isLaunch: isLaunchPricingActive(now),
     launchEnds: LAUNCH_END_ISO,
@@ -134,10 +179,14 @@ function hasActiveCityHold(row, now = new Date()) {
 }
 
 function cityPartnerStatus(row, now = new Date()) {
+  const availableFrom = parseAvailableFrom(row);
+  // Prepaid (and cancelled-sub) terms end at sponsor_available_from — stop showing live creative.
+  if (availableFrom && availableFrom.getTime() <= now.getTime()) {
+    return 'available';
+  }
   if (isPublishableSponsorBlock(row, row?.slot)) return 'live';
   if (!hasActiveCityHold(row, now)) return 'available';
 
-  const availableFrom = parseAvailableFrom(row);
   if (availableFrom && availableFrom.getTime() > now.getTime()) {
     return 'booked_until';
   }
@@ -183,7 +232,11 @@ async function getCityPartnerAvailability(sb) {
       bundle3Label: pricing.bundle3Label,
       regularSingleLabel: REGULAR_PRICING.singleLabel,
       regularBundle3Label: REGULAR_PRICING.bundle3Label,
+      vatRate: CITY_PARTNER_VAT_RATE,
+      prepaidTerms: CITY_PARTNER_PREPAID_TERMS.slice(),
       bundleNote: 'Every 3 cities automatically use the 3-city pack rate; any remainder is charged per city.',
+      termNote:
+        'Pay monthly and cancel any time, or prepay 1, 3 or 6 months at the same monthly rate.',
     },
     cities,
     availableCities: cities.filter((c) => c.available),
@@ -193,7 +246,7 @@ async function getCityPartnerAvailability(sb) {
   };
 }
 
-function validateCheckoutCities(slugs, availability) {
+function validateCheckoutCities(slugs, availability, term = null) {
   const normalized = normalizeCitySlugs(slugs);
   if (!normalized.length) {
     return { ok: false, error: 'no_cities_selected' };
@@ -216,7 +269,11 @@ function validateCheckoutCities(slugs, availability) {
     };
   }
 
-  return { ok: true, cities: normalized, quote: calculateCityPartnerQuote(normalized.length) };
+  return {
+    ok: true,
+    cities: normalized,
+    quote: calculateCityPartnerQuote(normalized.length, new Date(), term),
+  };
 }
 
 module.exports = {
@@ -224,6 +281,8 @@ module.exports = {
   LAUNCH_END_ISO,
   LAUNCH_PRICING,
   REGULAR_PRICING,
+  CITY_PARTNER_VAT_RATE,
+  CITY_PARTNER_PREPAID_TERMS,
   cityPartnerSlotKey,
   parseCityPartnerSlot,
   isCityPartnerSlot,
@@ -231,6 +290,9 @@ module.exports = {
   listCountyPartnerRegions,
   isLaunchPricingActive,
   activePricing,
+  normalizeCityPartnerTerm,
+  addMonthsUtc,
+  isPrepaidCityPartnerHoldId,
   calculateCityPartnerQuote,
   normalizeCitySlugs,
   getCityPartnerAvailability,

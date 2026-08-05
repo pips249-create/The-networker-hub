@@ -267,7 +267,7 @@ async function processDueRosterEmails(sb, options) {
         const eventRes = await sb
           .from('events')
           .select(
-            'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, series_group_id'
+            'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, series_group_id, attendance_mode'
           )
           .eq('id', row.event_id)
           .maybeSingle();

@@ -152,11 +152,12 @@ module.exports = async function handler(req, res) {
 
       const email = String(body.email || '').trim().toLowerCase();
       const cities = normalizeCitySlugs(body.cities);
+      const term = body.termMonths != null ? body.termMonths : body.term;
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ ok: false, error: 'invalid_email' });
       }
 
-      const validation = validateCheckoutCities(cities, availability);
+      const validation = validateCheckoutCities(cities, availability, term);
       if (!validation.ok) {
         return res.status(409).json({
           ok: false,
@@ -170,6 +171,7 @@ module.exports = async function handler(req, res) {
       const session = await createCityPartnerCheckoutSession({
         email,
         cities: validation.cities,
+        termMonths: term,
         successUrl:
           base +
           '/advertising?city-partner=success&session_id={CHECKOUT_SESSION_ID}',

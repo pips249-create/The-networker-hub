@@ -148,7 +148,21 @@ async function handleCityPartnerCheckoutCompleted(session) {
     return { skipped: true, reason: 'no_cities' };
   }
 
-  const subscriptionId = subscriptionIdFromSession(session);
+  const {
+    normalizeCityPartnerTerm,
+    addMonthsUtc,
+    isPrepaidCityPartnerHoldId,
+  } = require('./networking-city-partners');
+
+  const term = normalizeCityPartnerTerm(metadata.term_months || metadata.billing_mode);
+  const prepaid =
+    term.billingMode === 'prepaid' ||
+    String(metadata.billing_mode || '').toLowerCase() === 'prepaid';
+
+  let subscriptionId = subscriptionIdFromSession(session);
+  if (!subscriptionId && prepaid) {
+    subscriptionId = 'prepaid:' + String(session.id || '').trim();
+  }
   if (!subscriptionId) {
     return { skipped: true, reason: 'missing_subscription' };
   }
@@ -159,11 +173,17 @@ async function handleCityPartnerCheckoutCompleted(session) {
     .trim()
     .toLowerCase();
 
+  let availableFrom = null;
+  if (prepaid || isPrepaidCityPartnerHoldId(subscriptionId)) {
+    const months = term.termMonths || parseInt(String(metadata.term_months || '1'), 10) || 1;
+    availableFrom = addMonthsUtc(new Date(), months).toISOString();
+  }
+
   const sb = getSupabaseAdmin();
   const reserved = await reserveCityPartnerSlots(sb, cities, {
     subscriptionId,
     email: email || null,
-    availableFrom: null,
+    availableFrom,
   });
 
   let welcomeEmail = { skipped: true, reason: 'missing_email' };
@@ -176,7 +196,68 @@ async function handleCityPartnerCheckoutCompleted(session) {
     }
   }
 
-  return { ok: true, reserved, subscriptionId, cities, welcomeEmail };
+  return {
+    ok: true,
+    reserved,
+    subscriptionId,
+    cities,
+    welcomeEmail,
+    billingMode: prepaid ? 'prepaid' : 'monthly',
+    availableFrom,
+  };
+}
+
+/**
+ * Clear prepaid City Partner holds whose term has ended (sponsor_available_from ≤ now).
+ */
+async function expirePrepaidCityPartnerSlots(sb, now = new Date()) {
+  const { listCityPartnerRegions, cityPartnerSlotKey, isPrepaidCityPartnerHoldId, parseAvailableFrom } =
+    require('./networking-city-partners');
+  const slots = listCityPartnerRegions().map((r) => r.slot);
+  const { data: rows, error } = await sb
+    .from('cms_blocks')
+    .select('slot, sponsor_subscription_id, sponsor_available_from, active')
+    .in('slot', slots);
+  if (error) throw new Error(error.message);
+
+  const expired = [];
+  const nowMs = now.getTime();
+  const nowIso = now.toISOString();
+
+  for (const row of rows || []) {
+    const holdId = String(row.sponsor_subscription_id || '').trim();
+    if (!isPrepaidCityPartnerHoldId(holdId)) continue;
+    const availableFrom = parseAvailableFrom(row);
+    if (!availableFrom || availableFrom.getTime() > nowMs) continue;
+
+    const parsed = parseCityPartnerSlot(row.slot);
+    if (!parsed) continue;
+
+    const { error: updateError } = await sb
+      .from('cms_blocks')
+      .update({
+        sponsor_subscription_id: null,
+        sponsor_email: null,
+        sponsor_available_from: null,
+        active: false,
+        updated_at: nowIso,
+      })
+      .eq('slot', cityPartnerSlotKey(parsed.slug));
+    if (updateError) throw new Error(updateError.message);
+
+    try {
+      await notifyCityPartnerWaitlistForSlug(parsed.slug, {
+        sb,
+        availableFrom: nowIso,
+      });
+    } catch (_) {
+      /* Waitlist notify is best-effort after expiry cleanup */
+    }
+
+    expired.push(parsed.slug);
+  }
+
+  return { expired, count: expired.length };
 }
 
 async function handleCityPartnerSubscriptionUpdated(subscription) {
@@ -257,4 +338,5 @@ module.exports = {
   handleCityPartnerCheckoutCompleted,
   handleCityPartnerSubscriptionUpdated,
   handleCityPartnerSubscriptionDeleted,
+  expirePrepaidCityPartnerSlots,
 };

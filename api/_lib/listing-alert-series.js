@@ -3,7 +3,20 @@ const { eventPublicUrl } = require('./hub-email-urls');
 const { isEventPublishedForSale } = require('./ticket-sales');
 
 const LISTING_ALERT_EVENT_COLUMNS =
-  'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, created_at, series_group_id';
+  'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, created_at, series_group_id, attendance_mode';
+
+function listingAlertAttendanceMode(eventRows) {
+  const modes = (eventRows || []).map((row) =>
+    String(row?.attendance_mode || row?.attendanceMode || '')
+      .trim()
+      .toLowerCase()
+  );
+  if (modes.some((m) => m === 'category_exclusivity' || m === 'osop')) {
+    return 'category_exclusivity';
+  }
+  if (modes.some((m) => m === 'guest_programme')) return 'guest_programme';
+  return 'tickets';
+}
 
 function listingAlertSeriesKey(eventRow) {
   const seriesGroupId = String(eventRow?.series_group_id || eventRow?.seriesGroupId || '').trim();
@@ -85,27 +98,78 @@ function buildListingAlertSeriesCopy({
   organiserName,
   userName,
   eventName,
+  attendanceMode = '',
 }) {
   const count = Math.max(1, Number(dateCount) || 1);
   const isSeries = count > 1;
   const organiser = String(organiserName || 'Organiser').trim();
   const title = String(eventName || 'Event').trim();
   const name = String(userName || 'there').trim();
+  const mode = String(attendanceMode || '')
+    .trim()
+    .toLowerCase();
+  const isCategoryExclusivity = mode === 'category_exclusivity' || mode === 'osop';
+  const isGuestProgramme = mode === 'guest_programme';
 
   // Plain-text only — templates wrap organiser/event names in <strong>.
   // Never put HTML tags or &apos; entities in these strings (they get escaped).
   if (variant === 'member_roster') {
+    // CE is application-based for guests — not a members-only event.
+    if (isCategoryExclusivity) {
+      if (isSeries) {
+        return {
+          event_date_count: String(count),
+          listing_badge: 'Your membership',
+          listing_headline: organiser + ' has ' + count + ' new dates',
+          listing_follow_on:
+            "They've just published " +
+            count +
+            ' new dates for ' +
+            title +
+            ' — sign in with this email to book as a member (no application needed).',
+          listing_intro:
+            'Hi ' +
+            name +
+            ", you're in the membership for " +
+            organiser +
+            ". They've just published " +
+            count +
+            ' new dates for ' +
+            title +
+            ' — sign in with this email to book as a member (no application needed).',
+          listing_subject: organiser + ' — ' + count + ' new dates for ' + title,
+          event_date_prefix: 'Dates: ',
+          listing_cta_label: '',
+        };
+      }
+      return {
+        event_date_count: '1',
+        listing_badge: 'Your membership',
+        listing_headline: organiser + ' has a new event',
+        listing_follow_on:
+          "They've just published a Category Exclusivity event — sign in with this email to book as a member (no application needed).",
+        listing_intro:
+          'Hi ' +
+          name +
+          ", you're in the membership for " +
+          organiser +
+          ". They've just published a Category Exclusivity event — sign in with this email to book as a member (no application needed).",
+        listing_subject: organiser + ' has a new event',
+        event_date_prefix: '',
+        listing_cta_label: '',
+      };
+    }
+
+    const followOn = isGuestProgramme
+      ? 'sign in with this email to see member tickets.'
+      : 'sign in with this email to book with your membership.';
     if (isSeries) {
       return {
         event_date_count: String(count),
-        listing_badge: 'For members',
-        listing_headline: organiser + ' has ' + count + ' new member dates',
+        listing_badge: 'Your membership',
+        listing_headline: organiser + ' has ' + count + ' new dates',
         listing_follow_on:
-          "They've just published " +
-          count +
-          ' new dates for ' +
-          title +
-          ' — sign in with this email to see Members only tickets.',
+          "They've just published " + count + ' new dates for ' + title + ' — ' + followOn,
         listing_intro:
           'Hi ' +
           name +
@@ -115,25 +179,26 @@ function buildListingAlertSeriesCopy({
           count +
           ' new dates for ' +
           title +
-          ' — sign in with this email to see Members only tickets.',
-        listing_subject: organiser + ' — ' + count + ' new member dates for ' + title,
+          ' — ' +
+          followOn,
+        listing_subject: organiser + ' — ' + count + ' new dates for ' + title,
         event_date_prefix: 'Dates: ',
         listing_cta_label: '',
       };
     }
     return {
       event_date_count: '1',
-      listing_badge: 'For members',
+      listing_badge: 'Your membership',
       listing_headline: organiser + ' has a new event',
-      listing_follow_on:
-        "They've just published a new event — sign in with this email to see Members only tickets.",
+      listing_follow_on: "They've just published a new event — " + followOn,
       listing_intro:
         'Hi ' +
         name +
         ", you're in the membership for " +
         organiser +
-        ". They've just published a new event — sign in with this email to see Members only tickets.",
-      listing_subject: organiser + ' has a new event for members',
+        ". They've just published a new event — " +
+        followOn,
+      listing_subject: organiser + ' has a new event',
       event_date_prefix: '',
       listing_cta_label: '',
     };
@@ -180,6 +245,8 @@ function buildListingAlertEmailFields(eventRows, siteUrl, copyOptions = {}) {
   const copy = buildListingAlertSeriesCopy({
     dateCount: (eventRows || []).length,
     ...copyOptions,
+    attendanceMode:
+      copyOptions.attendanceMode || listingAlertAttendanceMode(eventRows),
     eventName: display.event_name,
   });
   return { ...display, ...copy };
@@ -241,6 +308,7 @@ module.exports = {
   pickListingAlertAnchorEvent,
   groupEventsForListingAlerts,
   buildListingAlertEventDisplay,
+  listingAlertAttendanceMode,
   buildListingAlertSeriesCopy,
   buildListingAlertEmailFields,
   eventPublishedAfterFavourite,

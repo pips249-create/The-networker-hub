@@ -672,13 +672,22 @@ module.exports = async function handler(req, res) {
       }
       patch.approval_status = approval || null;
     }
-    if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-      const { parseAdminBool } = require('../admin-bool');
-      patch.featured = parseAdminBool(body.featured);
-      // Admin grants stay until removed — clear paid expiry so premium spotlight
-      // treats a new tick as live. Untick also clears expiry + premium tier.
-      patch.featured_until = null;
-      if (!patch.featured) {
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'featured') ||
+      Object.prototype.hasOwnProperty.call(body, 'featured_until') ||
+      Object.prototype.hasOwnProperty.call(body, 'featuredUntil')
+    ) {
+      try {
+        const { applyAdminFeaturedPatch } = require('../admin-featured-until');
+        applyAdminFeaturedPatch(patch, body, { clearReminderKey: 'featured_expiry_reminder_sent_at' });
+      } catch (featErr) {
+        return json(res, featErr.status || 400, {
+          ok: false,
+          error: featErr.message || 'invalid_featured_until',
+          message: featErr.message || 'Invalid featured end date.',
+        });
+      }
+      if (Object.prototype.hasOwnProperty.call(patch, 'featured') && !patch.featured) {
         patch.package_tier = 'standard';
       }
     }

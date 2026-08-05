@@ -39,6 +39,47 @@ function parseDealBody(body) {
   };
 }
 
+function dealIdFromRequest(req, body) {
+  const fromBody = String((body && (body.id || body.dealId)) || '').trim();
+  if (fromBody) return fromBody;
+  const fromQuery = String(req.query?.id || req.query?.dealId || '').trim();
+  if (fromQuery) return fromQuery;
+  try {
+    const url = new URL(req.url || '', 'https://internal.local');
+    return String(url.searchParams.get('id') || url.searchParams.get('dealId') || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+async function deleteManualDeal(sb, id) {
+  const existing = await sb.from('hub_revenue_deals').select('source_type').eq('id', id).maybeSingle();
+  if (existing.error) {
+    const err = new Error(existing.error.message);
+    err.status = 500;
+    throw err;
+  }
+  if (!existing.data) {
+    const err = new Error('not_found');
+    err.status = 404;
+    err.message = 'Deal not found.';
+    throw err;
+  }
+  if (existing.data.source_type && existing.data.source_type !== 'manual') {
+    const err = new Error('stripe_deal_readonly');
+    err.status = 400;
+    err.message = 'Stripe-synced revenue cannot be deleted here — void or credit the invoice in Stripe.';
+    throw err;
+  }
+  const { error } = await sb.from('hub_revenue_deals').delete().eq('id', id);
+  if (error) {
+    const err = new Error(error.message);
+    err.status = 500;
+    throw err;
+  }
+  return { ok: true };
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -52,11 +93,28 @@ module.exports = async function handler(req, res) {
   }
 
   const sb = getSupabaseAdmin();
+  const body = req.body || {};
 
   if (req.method === 'POST') {
+    const action = String(body.action || '').trim().toLowerCase();
+    if (action === 'delete' || action === 'remove') {
+      try {
+        const id = dealIdFromRequest(req, body);
+        if (!id) return json(res, 400, { ok: false, error: 'missing_id', message: 'Missing deal id.' });
+        await deleteManualDeal(sb, id);
+        return json(res, 200, { ok: true });
+      } catch (e) {
+        return json(res, e.status || 400, {
+          ok: false,
+          error: e.message || 'delete_failed',
+          message: e.message || 'Could not remove deal.',
+        });
+      }
+    }
+
     try {
       const row = {
-        ...parseDealBody(req.body || {}),
+        ...parseDealBody(body),
         created_by: String(session.email || session.userId || '').trim(),
       };
       const { data, error } = await sb.from('hub_revenue_deals').insert(row).select('*').single();
@@ -68,20 +126,18 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    const id = String(req.query?.id || req.body?.id || '').trim();
-    if (!id) return json(res, 400, { ok: false, error: 'missing_id' });
-    const existing = await sb.from('hub_revenue_deals').select('source_type').eq('id', id).maybeSingle();
-    if (existing.error) return json(res, 500, { ok: false, error: existing.error.message });
-    if (existing.data && existing.data.source_type && existing.data.source_type !== 'manual') {
-      return json(res, 400, {
+    try {
+      const id = dealIdFromRequest(req, body);
+      if (!id) return json(res, 400, { ok: false, error: 'missing_id', message: 'Missing deal id.' });
+      await deleteManualDeal(sb, id);
+      return json(res, 200, { ok: true });
+    } catch (e) {
+      return json(res, e.status || 400, {
         ok: false,
-        error: 'stripe_deal_readonly',
-        message: 'Stripe-synced revenue cannot be deleted here — void or credit the invoice in Stripe.',
+        error: e.message || 'delete_failed',
+        message: e.message || 'Could not remove deal.',
       });
     }
-    const { error } = await sb.from('hub_revenue_deals').delete().eq('id', id);
-    if (error) return json(res, 500, { ok: false, error: error.message });
-    return json(res, 200, { ok: true });
   }
 
   return json(res, 405, { error: 'method_not_allowed' });

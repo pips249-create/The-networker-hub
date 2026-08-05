@@ -7,6 +7,7 @@ const { fetchPublishedEventRows, isPublicEvent, fetchAllPaged } = require('./sup
 const { getGroupRankingsForOrganiser } = require('./organiser-group-ranking');
 const { getOrganiserRankingHistory } = require('./organiser-ranking-snapshot');
 const { reviewerDisplayName } = require('./reviewer-display-name');
+const { isFeaturedUntilActive } = require('./admin-featured-until');
 
 /** Slim columns for directory counts / regional location matching — never select *. */
 const DIRECTORY_EVENT_SELECT =
@@ -128,7 +129,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
     eventCount: Number(eventCount) || 0,
     locations,
     guestVisitsAllowed: Math.min(3, Math.max(0, Number(row.complimentary_visits_allowed) || 0)),
-    featured: Boolean(row.featured),
+    featured: isFeaturedUntilActive(row),
     website: String(row.website || '').trim(),
     instagramUrl: String(row.instagram_url || '').trim(),
     facebookUrl: String(row.facebook_url || '').trim(),

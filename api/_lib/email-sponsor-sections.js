@@ -14,9 +14,6 @@ const {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
-  EVENT_EMAIL_MINI_SPONSORS_SLOT,
-  ORGANISER_EMAIL_MINI_SPONSORS_SLOT,
-  OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
   parseCarouselBody,
   publishableCarouselAds,
 } = require('./event-page-carousel');
@@ -280,22 +277,11 @@ async function fetchMiniSponsorAds(sb, slot, limit) {
 }
 
 /**
- * Prefer the dedicated email mini inventory; if empty/inactive, reuse the matching
- * detail-page mini sponsors so Command Centre only needs one set of logos.
+ * Page Partner mini sponsors — same CMS carousel as detail pages.
+ * Emails and pages share one inventory (no separate email carousel to manage).
  */
-async function fetchMiniSponsorAdsWithPageFallback(sb, emailSlot, pageSlot, limit) {
-  const fromEmail = await fetchMiniSponsorAds(sb, emailSlot, limit);
-  if (fromEmail.length) return fromEmail;
-  return fetchMiniSponsorAds(sb, pageSlot, limit);
-}
-
 async function fetchEventMiniSponsorAds(sb, limit) {
-  return fetchMiniSponsorAdsWithPageFallback(
-    sb,
-    EVENT_EMAIL_MINI_SPONSORS_SLOT,
-    EVENT_PAGE_CAROUSEL_SLOT,
-    limit
-  );
+  return fetchMiniSponsorAds(sb, EVENT_PAGE_CAROUSEL_SLOT, limit);
 }
 
 async function getEmailSponsorVars(slug) {
@@ -344,20 +330,10 @@ async function getEmailSponsorVars(slug) {
       const ads = await fetchEventMiniSponsorAds(sb, 3);
       miniRow = buildMiniSponsorsRow(ads);
     } else if (ORGANISER_MINI_SPONSOR_SLUGS.has(slug)) {
-      const ads = await fetchMiniSponsorAdsWithPageFallback(
-        sb,
-        ORGANISER_EMAIL_MINI_SPONSORS_SLOT,
-        ORGANISER_PAGE_CAROUSEL_SLOT,
-        3
-      );
+      const ads = await fetchMiniSponsorAds(sb, ORGANISER_PAGE_CAROUSEL_SLOT, 3);
       miniRow = buildMiniSponsorsRow(ads);
     } else if (OPPORTUNITY_MINI_SPONSOR_SLUGS.has(slug)) {
-      const ads = await fetchMiniSponsorAdsWithPageFallback(
-        sb,
-        OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT,
-        OPPORTUNITY_PAGE_CAROUSEL_SLOT,
-        3
-      );
+      const ads = await fetchMiniSponsorAds(sb, OPPORTUNITY_PAGE_CAROUSEL_SLOT, 3);
       miniRow = buildMiniSponsorsRow(ads);
     }
 

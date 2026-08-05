@@ -2,6 +2,8 @@ const { json } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { authorizeCron } = require('../cron-auth');
 const { runFeaturedListingMaintenance } = require('../event-featured');
+const { expireFeaturedOrganisers } = require('../admin-spotlight-data');
+const { expirePrepaidCityPartnerSlots } = require('../city-partner-subscriptions');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -16,8 +18,17 @@ module.exports = async function handler(req, res) {
 
   try {
     const sb = getSupabaseAdmin();
-    const result = await runFeaturedListingMaintenance(sb);
-    return json(res, 200, { ok: true, ...result });
+    const [result, organisersExpired, cityPartnersExpired] = await Promise.all([
+      runFeaturedListingMaintenance(sb),
+      expireFeaturedOrganisers(sb),
+      expirePrepaidCityPartnerSlots(sb),
+    ]);
+    return json(res, 200, {
+      ok: true,
+      ...result,
+      organisersExpired,
+      cityPartnersExpired,
+    });
   } catch (e) {
     return json(res, 500, {
       ok: false,

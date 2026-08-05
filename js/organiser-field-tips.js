@@ -81,6 +81,12 @@
         'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets above stay on sale for everyone else. It does not make the event members-only. For a meeting only members can book, use “This event is for my members only” instead.',
       hubertPrompt: 'What is the difference between a members-only rate and a members-only event?',
     },
+    'ce-member-price': {
+      title: 'Member price on Category Exclusivity',
+      body:
+        'Optional rate for people already on your membership list. They book without applying. Guests still apply for Category Exclusivity — this does not turn the event into a members-only listing.',
+      hubertPrompt: 'How does Member price work on a Category Exclusivity event?',
+    },
     'members-only-event-listing': {
       title: 'Members-only event',
       body:

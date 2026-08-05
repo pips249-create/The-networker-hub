@@ -116,6 +116,8 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     x_url: String(row.x_url || '').trim(),
     listing_status: row.listing_status || '',
     featured: Boolean(row.featured),
+    featured_until: row.featured_until || null,
+    featuredUntil: row.featured_until || null,
     city: String(row.city || '').trim(),
     slug: publicOrganiserSlug(row) || '',
     event_count: eventCount || 0,
@@ -310,9 +312,13 @@ function buildOrganiserPatch(body, photo_url) {
   if (Object.prototype.hasOwnProperty.call(body, 'x_url')) {
     patch.x_url = String(body.x_url || '').trim() || null;
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-    const { parseAdminBool } = require('../admin-bool');
-    patch.featured = parseAdminBool(body.featured);
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'featured') ||
+    Object.prototype.hasOwnProperty.call(body, 'featured_until') ||
+    Object.prototype.hasOwnProperty.call(body, 'featuredUntil')
+  ) {
+    const { applyAdminFeaturedPatch } = require('../admin-featured-until');
+    applyAdminFeaturedPatch(patch, body);
   }
   if (Object.prototype.hasOwnProperty.call(body, 'hide_from_browse')) {
     patch.listing_status = body.hide_from_browse ? 'unpublished' : 'published';
@@ -334,7 +340,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, featured, created_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, featured, featured_until, created_at',
       { count: 'exact' }
     )
     .order('featured', { ascending: false })
@@ -1164,7 +1170,16 @@ module.exports = async function handler(req, res) {
 
   try {
     const photo_url = await resolveOrganiserPhotoUrl(body, `organisers/${id}`);
-    const patch = buildOrganiserPatch(body, photo_url);
+    let patch;
+    try {
+      patch = buildOrganiserPatch(body, photo_url);
+    } catch (patchErr) {
+      return json(res, patchErr.status || 400, {
+        ok: false,
+        error: patchErr.message || 'invalid_patch',
+        message: patchErr.message || 'Invalid update.',
+      });
+    }
     if (!Object.keys(patch).length) {
       return json(res, 400, { error: 'no_fields' });
     }

@@ -12,7 +12,6 @@ const { ukOutcode } = require('../supabase-events');
 const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
-const { parseAdminBool } = require('../admin-bool');
 
 function parseBody(req) {
   let body = req.body;
@@ -399,12 +398,13 @@ async function buildEventPatchFromBody(body) {
     }
     patch.approval_status = approval || null;
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-    patch.featured = parseAdminBool(body.featured);
-    // Admin grants stay until removed — clear paid expiry so spotlight treats
-    // a new tick as live. Untick also clears expiry metadata.
-    patch.featured_until = null;
-    patch.featured_expiry_reminder_sent_at = null;
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'featured') ||
+    Object.prototype.hasOwnProperty.call(body, 'featured_until') ||
+    Object.prototype.hasOwnProperty.call(body, 'featuredUntil')
+  ) {
+    const { applyAdminFeaturedPatch } = require('../admin-featured-until');
+    applyAdminFeaturedPatch(patch, body, { clearReminderKey: 'featured_expiry_reminder_sent_at' });
   }
   if (Object.prototype.hasOwnProperty.call(body, 'vat_treatment')) {
     const vat = String(body.vat_treatment || '').trim();
