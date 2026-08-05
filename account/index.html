@@ -37,41 +37,31 @@
     <div id="ad-shell" hidden>
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
-          <div class="hub-side-nav-scroll">
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="My Hub">
-            <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">
-              <span class="ad-nav-text" data-short="Home">Overview</span>
-            </a>
+            <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
             <span class="hub-side-nav-divider">Event tickets</span>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
-              <span class="ad-nav-text" data-short="Tickets">Event tickets</span>
+              Event tickets
               <span class="ad-side-count" id="ad-side-tickets" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Saved</span>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">
-              <span class="ad-nav-text" data-short="Saved">Saved &amp; memberships</span>
+              Saved &amp; memberships
               <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
-              <span class="ad-nav-text" data-short="Enquiries">My enquiries</span>
-              <span class="ad-side-count" id="ad-side-enquiries" hidden></span>
-            </a>
             <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
-              <span class="ad-nav-text" data-short="Alerts">Saved &amp; alerts</span>
-              <span class="ad-side-count" id="ad-side-saved-opportunities" hidden></span>
+              Opportunities
+              <span class="ad-side-count" id="ad-side-opportunities" hidden></span>
             </a>
             <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
-            <a href="#visibility" class="hub-side-nav-link" data-ad-route="visibility">
-              <span class="ad-nav-text" data-short="Promote">Grow your visibility</span>
-            </a>
-            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner hub-side-nav-link--secondary">Advertising &amp; sponsorship</a>
+            <a href="#visibility" class="hub-side-nav-link" data-ad-route="visibility">Grow your visibility</a>
+            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner">Advertising &amp; sponsorship</a>
             <div class="hub-side-nav-util">
               <a href="../events/">Browse events</a>
               <a href="/account/settings">Settings</a>
             </div>
           </nav>
-          </div>
         </aside>
 
         <div class="ad-main" id="hub-main-content" tabindex="-1">
@@ -436,13 +426,17 @@
               </div>
             </section>
 
-            <!-- Saved opportunity listings -->
+            <!-- Business opportunities: enquiries, saved listings, alerts -->
             <section class="ad-page" id="ad-page-saved-opportunities" data-ad-page="saved-opportunities">
               <div class="ad-saved-panel">
-                <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
+                <div class="ad-saved-scope-wrap">
                   <p class="ad-saved-scope-kicker" id="ad-opp-saved-scope-kicker">Business opportunities</p>
-                  <div class="ad-saved-scope ad-saved-scope--pair" role="tablist" aria-labelledby="ad-opp-saved-scope-kicker">
-                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-opp-saved-scope="listings">
+                  <div class="ad-saved-scope" role="tablist" aria-labelledby="ad-opp-saved-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-opp-saved-scope="enquiries">
+                      My enquiries
+                      <span class="ad-saved-scope-count" id="ad-opp-saved-count-enquiries" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-opp-saved-scope="listings">
                       Saved listings
                       <span class="ad-saved-scope-count" id="ad-opp-saved-count-listings" hidden aria-hidden="true"></span>
                     </button>
@@ -453,7 +447,38 @@
                   </div>
                 </div>
 
-                <div class="ad-saved-pane is-active" data-opp-saved-pane="listings" role="tabpanel">
+                <div class="ad-saved-pane is-active" data-opp-saved-pane="enquiries" role="tabpanel">
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-table-scroll">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Sent</th>
+                              <th>Listing</th>
+                              <th>Your message</th>
+                              <th>Status</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-enquiries-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="ad-empty-state ad-empty-state--compact" id="ad-enquiries-empty" hidden role="status">
+                      <div class="ad-empty-state-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      </div>
+                      <h3 class="ad-empty-state-title">No enquiries yet</h3>
+                      <p class="ad-empty-state-text">When you enquire about a business opportunity, your messages appear here. Organisers reply by email.</p>
+                      <div class="ad-empty-state-actions">
+                        <a class="ad-btn ad-btn-primary" href="../opportunities/">Browse opportunities →</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane" data-opp-saved-pane="listings" role="tabpanel" hidden>
                   <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
                     <p class="ad-saved-sync-note" id="ad-saved-opportunities-sync" hidden role="status"></p>
                     <div class="ad-saved-opp-toolbar" id="ad-saved-opp-toolbar" hidden>
@@ -522,30 +547,6 @@
                   </div>
                 </div>
               </div>
-            </section>
-
-            <!-- Opportunity enquiries sent -->
-            <section class="ad-page" id="ad-page-opportunity-enquiries" data-ad-page="opportunity-enquiries">
-              <div class="ad-table-scroll">
-                <div class="ad-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Sent</th>
-                        <th>Listing</th>
-                        <th>Your message</th>
-                        <th>Status</th>
-                        <th class="ad-th-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="ad-enquiries-body"></tbody>
-                  </table>
-                </div>
-              </div>
-              <p class="ad-empty" id="ad-enquiries-empty" hidden>
-                You have not enquired about any listings yet.
-                <a href="../opportunities/">Browse opportunities →</a>
-              </p>
             </section>
 
             <!-- Grow your visibility -->
@@ -647,6 +648,36 @@
           </div>
         </div>
       </div>
+
+      <nav class="ad-bottom-nav" aria-label="My Hub sections">
+        <a href="#overview" class="ad-bottom-nav-link is-active" data-ad-route="overview">
+          <span class="ad-bottom-nav-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+          </span>
+          <span class="ad-bottom-nav-label">Home</span>
+        </a>
+        <a href="#upcoming" class="ad-bottom-nav-link" data-ad-route="tickets">
+          <span class="ad-bottom-nav-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M8 15h.01"/><path d="M12 15h4"/></svg>
+          </span>
+          <span class="ad-bottom-nav-label">Tickets</span>
+          <span class="ad-bottom-nav-count" id="ad-bottom-tickets" hidden></span>
+        </a>
+        <a href="#saved" class="ad-bottom-nav-link" data-ad-route="saved">
+          <span class="ad-bottom-nav-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          <span class="ad-bottom-nav-label">Saved</span>
+          <span class="ad-bottom-nav-count" id="ad-bottom-saved" hidden></span>
+        </a>
+        <a href="#saved-opportunities" class="ad-bottom-nav-link" data-ad-route="saved-opportunities">
+          <span class="ad-bottom-nav-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </span>
+          <span class="ad-bottom-nav-label">Opps</span>
+          <span class="ad-bottom-nav-count" id="ad-bottom-opportunities" hidden></span>
+        </a>
+      </nav>
     </div>
 
     <div class="ad-payment-modal" id="ad-payment-modal" hidden>

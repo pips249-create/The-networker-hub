@@ -474,9 +474,10 @@
     const organiserIds = [];
     const seen = {};
     (list || []).forEach(function (ev) {
-      if (!ev || String(ev.attendanceMode || '') !== 'guest_programme') return;
-      if (ev.guestPassesDisabled) return;
+      if (!ev || ev.guestPassesDisabled) return;
       if (!(Number(ev.complimentaryVisitsAllowed) > 0)) return;
+      const mode = String(ev.attendanceMode || '');
+      if (mode !== 'guest_programme' && !ev.guestVisitTier) return;
       const organiserId = String(ev.organiserId || '').trim();
       if (!organiserId || seen[organiserId]) return;
       if (guestVisitEligibilityByOrganiser[organiserId]) return;
@@ -604,8 +605,9 @@
     return html;
   }
 
-  function guestVisitTierCardHtml(t, eligibility, soldOut) {
+  function guestVisitTierCardHtml(t, eligibility, soldOut, opts) {
     const remaining = eligibility?.remaining || 0;
+    const isCategory = Boolean(opts && opts.isCategoryExclusivity);
     let html =
       '<div class="guest-visit-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
@@ -621,7 +623,11 @@
         ' remaining with this organiser.</p>';
     }
     html +=
-      '<p class="guest-visit-tier-meta">Paid tickets unlock after you use your complimentary visits.</p>' +
+      '<p class="guest-visit-tier-meta">' +
+      (isCategory
+        ? 'No application needed for a guest visit. Or apply below for a full Category Exclusivity place.'
+        : 'Paid tickets unlock after you use your complimentary visits.') +
+      '</p>' +
       '<div class="guest-visit-tier-price-row">' +
       '<span class="guest-visit-tier-price-label">Today</span>' +
       '<span class="guest-visit-tier-price">Free</span></div></div>';
@@ -2417,7 +2423,52 @@
       } else {
         tier.setAttribute('aria-disabled', 'true');
       }
-      tier.innerHTML = guestVisitTierCardHtml(t, guestVisitEligibility, soldOut);
+      tier.innerHTML = guestVisitTierCardHtml(t, guestVisitEligibility, soldOut, {
+        isCategoryExclusivity: isCategoryExclusivity,
+      });
+      tiersEl.appendChild(tier);
+    }
+
+    if (isCategoryExclusivity && tiers.length) {
+      const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
+      let soldOut = Boolean(t.soldOut) || panelClosed;
+      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+
+      const tier = document.createElement('div');
+      tier.className =
+        'tier tier-category-exclusivity' +
+        (soldOut ? ' sold-out tier-disabled' : '') +
+        (!firstSelectable && !soldOut ? ' selected' : '');
+      tier.id = 'ev-tier-category-exclusivity';
+      tier.setAttribute('data-ticket-id', t.id);
+      tier.setAttribute('data-price', String(priceNum));
+      tier.setAttribute('data-label', t.label || t.name || 'Application');
+      if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
+      const cap = t.quantityAvailable;
+      const sold = Math.max(0, Number(t.registrationsCount) || 0);
+      tier.setAttribute('data-qty-max', '1');
+      if (cap != null && Number.isFinite(Number(cap))) {
+        const left = Math.max(0, Number(cap) - sold);
+        if (left <= 0) {
+          soldOut = true;
+          tier.classList.add('sold-out', 'tier-disabled');
+        }
+      }
+
+      if (!soldOut) {
+        tier.setAttribute('role', 'button');
+        tier.setAttribute('tabindex', '0');
+        if (!firstSelectable) {
+          firstSelectable = tier;
+          tier.setAttribute('aria-pressed', 'true');
+        } else {
+          tier.setAttribute('aria-pressed', 'false');
+        }
+      } else {
+        tier.setAttribute('aria-disabled', 'true');
+      }
+
+      tier.innerHTML = categoryExclusivityTierCardHtml(t, soldOut);
       tiersEl.appendChild(tier);
     } else if (showAlumniTier) {
       const t = ev.alumniTier;
@@ -2445,38 +2496,6 @@
         tier.setAttribute('aria-disabled', 'true');
       }
       tier.innerHTML = alumniTierCardHtml(t, alumniEligibility, soldOut);
-      tiersEl.appendChild(tier);
-    } else if (isCategoryExclusivity && tiers.length) {
-      const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
-      let soldOut = Boolean(t.soldOut) || panelClosed;
-      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
-
-      const tier = document.createElement('div');
-      tier.className = 'tier tier-category-exclusivity' + (soldOut ? ' sold-out tier-disabled' : ' selected');
-      tier.id = 'ev-tier-category-exclusivity';
-      tier.setAttribute('data-ticket-id', t.id);
-      tier.setAttribute('data-price', String(priceNum));
-      tier.setAttribute('data-label', t.label || t.name || 'Application');
-      if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
-      const cap = t.quantityAvailable;
-      const sold = Math.max(0, Number(t.registrationsCount) || 0);
-      tier.setAttribute('data-qty-max', '1');
-      if (cap != null && Number.isFinite(Number(cap))) {
-        const left = Math.max(0, Number(cap) - sold);
-        if (left <= 0) {
-          soldOut = true;
-          tier.classList.add('sold-out', 'tier-disabled');
-        }
-      }
-
-      if (!soldOut) {
-        tier.setAttribute('aria-pressed', 'true');
-        firstSelectable = tier;
-      } else {
-        tier.setAttribute('aria-disabled', 'true');
-      }
-
-      tier.innerHTML = categoryExclusivityTierCardHtml(t, soldOut);
       tiersEl.appendChild(tier);
     } else if (!alumniOnlyView) {
     (showGuestTier ? [] : memberTiers).forEach((t, index) => {

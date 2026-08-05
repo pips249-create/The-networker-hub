@@ -278,7 +278,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(ticket type|guest visit|category exclusiv)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode/i,
     reply:
-      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on within Ticket types — tick Enable guest visit programme to offer complimentary trial visits alongside your paid tiers. Category Exclusivity replaces open booking: applicants share industry and job title, you approve or deny, then they pay via a link. Previous Attendees is a separate optional add-on for inviting past attendees to a returning rate.',
+      'There are two attendance modes: Ticket types (open booking) or Category Exclusivity (application-based). Guest visit programme is an optional add-on on both — on open booking it sits with your paid tiers; on Category Exclusivity it appears under Optional extras so newcomers can take a free visit without applying, while guests who want a full place still apply. Category Exclusivity: applicants share industry and job title, you approve or deny, then they pay via a link. Previous Attendees is a separate optional add-on for inviting past attendees to a returning rate.',
   },
   {
     match: /\bvat\b|value added tax/i,
@@ -655,7 +655,7 @@ const ORGANISER_PAGE_CONTEXT = {
   'event-location':
     'The user is on the event location step (venue address, postcode, or online join link). Help with in-person vs online setup, venue fields, and what appears on the public listing. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-tickets':
-    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox within Ticket types — not a separate mode. Previous Attendees is optional. Members only tickets use the Member list. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
+    'The user is on the ticket setup step. Two attendance modes: Ticket types (open booking) or Category Exclusivity. Guest visit programme is an optional checkbox on both modes (under Optional extras). On Category Exclusivity you can also set an optional Member price for people on your membership list. Previous Attendees is optional. Members only tickets use the Member list. Answer organiser ticketing questions. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'event-review':
     'The user is on the publish review step before their event goes live. Explain what happens on publish, approval timing, and what they can still edit. Do NOT list browse-page events unless they explicitly ask to find events to attend.',
   'member-roster':

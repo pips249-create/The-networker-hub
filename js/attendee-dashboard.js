@@ -15,7 +15,7 @@
   let currentRoute = 'overview';
   let savedScope = 'events';
   let ticketsScope = 'upcoming';
-  let opportunitySavedScope = 'listings';
+  let opportunitySavedScope = 'enquiries';
   let reviewsScope = 'pending';
   let openUtilityMenu = null;
   let shareModalOpen = false;
@@ -44,6 +44,10 @@
   };
 
   const OPPORTUNITY_SAVED_SCOPE_HEAD = {
+    enquiries: {
+      title: 'My opportunity enquiries',
+      sub: 'Messages you sent to business opportunity listings. Organisers reply by email.',
+    },
     listings: {
       title: 'Saved listings',
       sub: 'Business opportunities you bookmarked — compare listings or send an enquiry.',
@@ -76,8 +80,8 @@
       sub: 'Your group memberships, saved events, saved organisers, and organiser reviews from events you attended.',
     },
     'saved-opportunities': {
-      title: 'Saved listings',
-      sub: 'Business opportunities you bookmarked — compare listings or send an enquiry.',
+      title: 'Opportunities',
+      sub: 'Enquiries you sent, saved business listings, and search alerts for new matches.',
     },
     past: {
       title: 'Past events',
@@ -85,7 +89,7 @@
     },
     'opportunity-enquiries': {
       title: 'My opportunity enquiries',
-      sub: 'Messages you sent to business opportunity listings on the Hub. Organisers reply by email.',
+      sub: 'Messages you sent to business opportunity listings. Organisers reply by email.',
     },
     visibility: {
       title: 'Grow your visibility',
@@ -165,6 +169,9 @@
       return reviewsScope === 'done' ? '#reviews-done' : '#reviews-pending';
     }
     if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'alerts') return '#search-alerts';
+    if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'enquiries') {
+      return '#opportunity-enquiries';
+    }
     if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
     if (currentRoute === 'visibility') return '#visibility';
     return '#' + currentRoute;
@@ -1268,7 +1275,9 @@
   }
 
   function setOpportunitySavedScope(scope) {
-    opportunitySavedScope = scope || 'listings';
+    const next = scope || 'enquiries';
+    opportunitySavedScope =
+      next === 'alerts' || next === 'listings' || next === 'enquiries' ? next : 'enquiries';
     document.querySelectorAll('[data-opp-saved-scope]').forEach((btn) => {
       const active = btn.getAttribute('data-opp-saved-scope') === opportunitySavedScope;
       btn.classList.toggle('is-active', active);

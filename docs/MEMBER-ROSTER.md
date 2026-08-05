@@ -13,6 +13,7 @@ Organisers can still renew people off-platform and update expiry dates manually.
 - Ticket visibility: `public` or `members_only` (membership unlock; no access codes)
 - **Category Exclusivity member invite:** organisers can email the Membership list from a CE event (**Invite members**). Active members book without applying; guests still apply for a seat.
 - **Category Exclusivity + Member price:** optional Members only ticket on a CE event (different price from applications). Members signed in with their membership email see that ticket and book directly; guests still use Apply.
+- **Category Exclusivity + Guest visits:** optional Guest visit programme under Optional extras on a CE event. Newcomers can book a complimentary visit without applying; full places still go through Apply → approve → pay.
 - Signed-in membership check at event page + checkout
 - Auto-link membership row when member registers / signs in
 - Invite email on add: **new accounts** get a sign-up invite; **existing Hub members** get a welcome email with the group’s next meeting (no duplicate sign-up prompt)

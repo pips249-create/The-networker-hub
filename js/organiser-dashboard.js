@@ -15,6 +15,7 @@
   let attendeesLoadingPromise = null;
   let teamLoadingPromise = null;
   let eventsLoadingPromise = null;
+  let eventsLoadGen = 0;
   let reviewsLoadingPromise = null;
 
   const filters = {
@@ -5069,6 +5070,12 @@
     });
   }
 
+  function invalidateEventsLoad() {
+    eventsLoadGen += 1;
+    eventsLoadingPromise = null;
+    state.eventsLoading = false;
+  }
+
   function ensureEventsLoaded(options) {
     const opts = options || {};
     const force = Boolean(opts.force);
@@ -5082,9 +5089,11 @@
     }
     if (eventsLoadingPromise && !force) return eventsLoadingPromise;
 
+    const loadGen = ++eventsLoadGen;
     state.eventsLoading = true;
     eventsLoadingPromise = api(eventsBootstrapQuery('', wantFull))
       .then(({ ok, data }) => {
+        if (loadGen !== eventsLoadGen) return false;
         if (!ok) throw new Error(data.message || data.error || 'Could not load events');
         state.events = data.events || [];
         state.upcomingEvents = data.upcomingEvents || [];
@@ -5110,12 +5119,15 @@
         return true;
       })
       .catch((err) => {
+        if (loadGen !== eventsLoadGen) return false;
         showOrganiserAlert(err.message || 'Could not load events', true);
         return false;
       })
       .finally(() => {
-        state.eventsLoading = false;
-        eventsLoadingPromise = null;
+        if (loadGen === eventsLoadGen) {
+          state.eventsLoading = false;
+          eventsLoadingPromise = null;
+        }
       });
     return eventsLoadingPromise;
   }
@@ -7188,6 +7200,8 @@
     const titleEl = document.getElementById('modal-event-delete-name');
     const seriesEl = document.getElementById('modal-event-delete-series');
     const soldEl = document.getElementById('modal-event-delete-sold');
+    const confirmBtn = document.getElementById('btn-event-delete-confirm');
+    if (confirmBtn) confirmBtn.disabled = false;
     const ev = findEventById(eventId);
     const label = ev && ev.title ? ev.title : 'this event';
     const dateLabel = ev && ev.date ? formatDateShort(ev.date) : '';
@@ -7237,6 +7251,43 @@
     }
   }
 
+  function removeEventFromClientState(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return;
+    const keepEvent = function (ev) {
+      return ev && String(ev.id) !== id;
+    };
+    state.events = (state.events || []).filter(keepEvent);
+    state.upcomingEvents = (state.upcomingEvents || []).filter(keepEvent);
+    state.eventSummaries = (state.eventSummaries || []).filter(keepEvent);
+    state.tickets = (state.tickets || []).filter(function (t) {
+      return t && String(t.eventId) !== id;
+    });
+    if (state.eventsTotal > 0) state.eventsTotal -= 1;
+  }
+
+  async function refreshEventsWorkspaceAfterMutation(options) {
+    const opts = options || {};
+    closeAllActionMenus();
+    endOrgRouteLoading({ gen: orgRouteLoadGen, startedAt: 0 });
+    try {
+      await loadBootstrap({ silent: true });
+    } catch (err) {
+      showOrganiserAlert(
+        (err && err.message) || 'Could not refresh the workspace. Try reloading the page.',
+        true
+      );
+    }
+    pruneStaleEventFilters();
+    await ensureEventsLoaded({ force: true });
+    if (document.querySelector('[data-org-page="events"].is-active')) {
+      renderMyEventsHub();
+    } else {
+      renderAll();
+    }
+    setRoute(opts.route || 'events-list', { skipRouteLoading: true });
+  }
+
   async function submitDeleteEvent() {
     if (!pendingDeleteEventId) return;
     const eventId = pendingDeleteEventId;
@@ -7260,9 +7311,12 @@
     closeModals();
     closeEventEditorDrawer();
     clearEventScopedClientState(eventId);
-    await loadBootstrap({ silent: true });
-    pruneStaleEventFilters();
-    setRoute('events-list');
+    removeEventFromClientState(eventId);
+    if (document.querySelector('[data-org-page="events"].is-active')) {
+      renderMyEventsHub();
+    }
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
+    if (confirmBtn) confirmBtn.disabled = false;
     showOrganiserAlert(res.data.message || 'Event deleted.', false);
   }
 
@@ -9958,6 +10012,8 @@
     if (duplicateConfirmBtn) duplicateConfirmBtn.disabled = false;
     const groupDuplicateConfirmBtn = document.getElementById('btn-group-duplicate-confirm');
     if (groupDuplicateConfirmBtn) groupDuplicateConfirmBtn.disabled = false;
+    const deleteConfirmBtn = document.getElementById('btn-event-delete-confirm');
+    if (deleteConfirmBtn) deleteConfirmBtn.disabled = false;
     const cancelForm = document.getElementById('form-event-cancel');
     if (cancelForm) cancelForm.reset();
     const cancelConfirm = document.getElementById('btn-event-cancel-confirm');
@@ -10088,8 +10144,8 @@
     }
     closeModals();
     showOrganiserAlert(data.message || 'Event cancelled.', false);
-    await refresh();
-    setRoute('events-list');
+    clearEventScopedClientState(eventId);
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
   }
 
   function revenuePayoutMetrics() {
@@ -13777,6 +13833,7 @@
       state.eventsHasMore = state.eventSummaries.length > EVENTS_FETCH_SIZE;
     }
     state.eventsFullyLoaded = !state.eventsHasMore;
+    invalidateEventsLoad();
     state.eventsLoaded = false;
     state.eventsEnrichment = 'none';
     state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;

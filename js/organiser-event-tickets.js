@@ -3213,7 +3213,10 @@
       tickets: tiers,
       publish,
       attendanceMode,
-      guestPassesDisabled: collectGuestPassesDisabled(),
+      guestPassesDisabled:
+        attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()
+          ? collectGuestPassesDisabled()
+          : false,
       enableGuestVisits: ceGuestVisitsEnabled(),
       alumniFastPass: collectAlumniFastPass(),
       vatTreatment: hasPaidTickets ? collectVatTreatment() : '',
