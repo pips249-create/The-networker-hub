@@ -310,7 +310,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Stripe Connect Express onboarding + `STRIPE_CONNECT_ENABLED=true` on prod |
 | [ ] | **Connect destination charge test** (Tab 9) |
 | [x] | **Guest visit programme — end-to-end test** (complimentary visits → guest pass booking → exhausted → paid member ticket) — `node scripts/guest-visit-e2e-test.js` (4 Aug 2026) |
-| [ ] | **Category Exclusivity (seat approval) — end-to-end test** (apply → organiser approve/deny → payment link → booking) |
+| [x] | **Category Exclusivity (seat approval) — end-to-end test** (apply → organiser approve/deny → payment link → booking) — server apply-before-pay + `npm run test-category-exclusivity-e2e` passed 5 Aug 2026 |
 | [ ] | July beta: **200+ groups claimed** and **20+ with a published event** |
 | [ ] | Load test: browse + organiser pages with 1,000+ profiles + multi-k events (week 8) |
 
