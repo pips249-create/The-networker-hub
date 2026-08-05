@@ -3072,29 +3072,39 @@ html:has(.home-page) {
 }
 
 @media (max-width: 640px) {
-  /* Show all cities — horizontal swipe is easy to miss on phones */
+  /* Keep every city — two-row horizontal swipe instead of a tall 4-col grid */
   .home-locations-scroller::after {
-    display: none;
+    display: block;
+    width: 40px;
+    bottom: 10px;
+    background: linear-gradient(90deg, transparent, var(--home-bg, #f7f4ef));
   }
 
   .home-locations-track {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px 8px;
-    overflow: visible;
-    scroll-snap-type: none;
-    padding: 4px 2px 8px;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(2, auto);
+    grid-auto-columns: max-content;
+    gap: 10px 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 2px;
+    padding: 4px 40px 12px 2px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .home-location-chip,
   .home-location-chip--online {
-    width: 100%;
+    width: 76px;
+    height: 76px;
     max-width: none;
-    height: auto;
-    aspect-ratio: 1;
+    aspect-ratio: auto;
     margin-right: 0;
     gap: 4px;
     padding: 8px 4px 6px;
+    scroll-snap-align: start;
   }
 
   .home-location-chip--online::after {
@@ -3111,5 +3121,14 @@ html:has(.home-page) {
 
   .home-location-chip--compact-label .home-location-chip-name:not(.home-location-chip-name--stacked) {
     font-size: 9px;
+  }
+
+  .home-location-chip-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .home-locations-more {
+    margin-top: 8px;
   }
 }
