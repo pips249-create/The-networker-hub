@@ -23,6 +23,7 @@
     eventsType: 'all',
     eventsSearch: '',
     eventsHideArchived: true,
+    eventsHideUnpublished: false,
     eventsSortColumn: 'date',
     eventsSortDir: 'asc',
     groupsStatus: 'all',
@@ -5171,11 +5172,10 @@
   }
 
   function eventsVisibleCount() {
-    if (filters.eventsHideArchived === false) {
-      return state.eventsTotal || eventsSourceList().length;
-    }
     return eventsSourceList().filter(function (ev) {
-      return !eventRowIsArchived(ev);
+      if (filters.eventsHideArchived !== false && eventRowIsArchived(ev)) return false;
+      if (filters.eventsHideUnpublished && eventRowIsUnpublished(ev)) return false;
+      return true;
     }).length;
   }
 
@@ -6516,6 +6516,17 @@
     return eventOccurrenceHasEnded(ev);
   }
 
+  function eventRowIsUnpublished(ev) {
+    if (!ev) return false;
+    if (ev.isSeries && ev.seriesEvents && ev.seriesEvents.length) {
+      return ev.seriesEvents.every(function (child) {
+        return eventRowIsUnpublished(child);
+      });
+    }
+    const key = String(ev.statusKey || ev.status || ev.listingStatus || '').toLowerCase();
+    return key === 'unpublished';
+  }
+
   function attendeesEventPickerOptions() {
     const list = allEventOptions().filter(function (ev) {
       return (
@@ -6597,9 +6608,15 @@
     if (filters.eventsHideArchived) {
       list = list.filter((ev) => !eventRowIsArchived(ev));
     }
+    if (filters.eventsHideUnpublished) {
+      list = list.filter((ev) => !eventRowIsUnpublished(ev));
+    }
     list = groupEventsIntoSeries(list);
     if (filters.eventsHideArchived) {
       list = list.filter((ev) => !eventRowIsArchived(ev));
+    }
+    if (filters.eventsHideUnpublished) {
+      list = list.filter((ev) => !eventRowIsUnpublished(ev));
     }
     return list;
   }
@@ -10452,15 +10469,19 @@
     const statusEl = document.getElementById('filter-events-status');
     const searchEl = document.getElementById('filter-events-search');
     const hideArchivedEl = document.getElementById('filter-events-hide-archived');
+    const hideUnpublishedEl = document.getElementById('filter-events-hide-unpublished');
     const revStatusEl = document.getElementById('filter-revenue-status');
     const revSearchEl = document.getElementById('filter-revenue-search');
     const revHideArchivedEl = document.getElementById('filter-revenue-hide-archived');
+    const revHideUnpublishedEl = document.getElementById('filter-revenue-hide-unpublished');
     if (statusEl) statusEl.value = filters.eventsStatus;
     if (searchEl) searchEl.value = filters.eventsSearch;
     if (hideArchivedEl) hideArchivedEl.checked = filters.eventsHideArchived !== false;
+    if (hideUnpublishedEl) hideUnpublishedEl.checked = Boolean(filters.eventsHideUnpublished);
     if (revStatusEl) revStatusEl.value = filters.eventsStatus;
     if (revSearchEl) revSearchEl.value = filters.eventsSearch;
     if (revHideArchivedEl) revHideArchivedEl.checked = filters.eventsHideArchived !== false;
+    if (revHideUnpublishedEl) revHideUnpublishedEl.checked = Boolean(filters.eventsHideUnpublished);
     updateSharedEventFilterNotes();
   }
 
@@ -14410,6 +14431,20 @@
       });
     }
 
+    const hideUnpublishedEl = document.getElementById('filter-events-hide-unpublished');
+    if (hideUnpublishedEl) {
+      hideUnpublishedEl.checked = Boolean(filters.eventsHideUnpublished);
+      hideUnpublishedEl.addEventListener('change', () => {
+        filters.eventsHideUnpublished = hideUnpublishedEl.checked;
+        listPages.events = 1;
+        listPages.revenue = 1;
+        updateMyEventsTabCounts();
+        syncSharedEventFiltersUi();
+        renderEvents();
+        if (eventsSubRoute === 'events-revenue') renderRevenue();
+      });
+    }
+
     const revHideArchivedEl = document.getElementById('filter-revenue-hide-archived');
     if (revHideArchivedEl) {
       revHideArchivedEl.checked = filters.eventsHideArchived !== false;
@@ -14418,6 +14453,20 @@
         listPages.events = 1;
         listPages.revenue = 1;
         updateMyEventsTabCounts();
+        renderRevenue();
+        if (eventsSubRoute === 'events-list') renderEvents();
+      });
+    }
+
+    const revHideUnpublishedEl = document.getElementById('filter-revenue-hide-unpublished');
+    if (revHideUnpublishedEl) {
+      revHideUnpublishedEl.checked = Boolean(filters.eventsHideUnpublished);
+      revHideUnpublishedEl.addEventListener('change', () => {
+        filters.eventsHideUnpublished = revHideUnpublishedEl.checked;
+        listPages.events = 1;
+        listPages.revenue = 1;
+        updateMyEventsTabCounts();
+        syncSharedEventFiltersUi();
         renderRevenue();
         if (eventsSubRoute === 'events-list') renderEvents();
       });
