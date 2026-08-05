@@ -206,21 +206,18 @@ function testEngagementReportMath() {
 }
 
 function testUiWiring() {
-  console.log('\n5) Workspace UI wiring');
+  console.log('\n5) Workspace UI wiring (monthly composer retired)');
   const html = fs.readFileSync(path.join(__dirname, '../organiser/index.html'), 'utf8');
-  assert.ok(html.includes('id="ogu-audience-slice"'));
-  assert.ok(html.includes('value="favourites"'));
-  assert.ok(html.includes('id="ogu-reply-hint"'));
-  assert.ok(html.includes('id="ogu-history"'));
-  ok('composer has audience select + reply hint + history');
+  assert.ok(!html.includes('id="ogu-audience-slice"'), 'monthly audience UI should be gone');
+  assert.ok(html.includes('id="org-attendee-email-panel"'));
+  assert.ok(html.includes('id="oec-form"'));
+  assert.ok(html.includes('Attendee round-up'));
+  ok('attendee round-up composer is wired; monthly UI removed');
 
-  const js = fs.readFileSync(path.join(__dirname, '../js/organiser-group-updates.js'), 'utf8');
-  assert.ok(js.includes('action=report'));
-  assert.ok(js.includes('renderReport'));
-  assert.ok(js.includes('Booked after'));
-  assert.ok(js.includes('audienceSlice'));
-  assert.ok(js.includes('renderReplyHint'));
-  ok('JS loads report + reply hint + audience slice');
+  const js = fs.readFileSync(path.join(__dirname, '../js/organiser-event-connections.js'), 'utf8');
+  assert.ok(js.includes('HubOrganiserEventConnections'));
+  assert.ok(js.includes('/api/organiser/event-connections'));
+  ok('event-connections JS loads API + init export');
 
   const migration = fs.readFileSync(
     path.join(__dirname, '../supabase/migrations/219_group_update_engagement.sql'),
@@ -238,7 +235,7 @@ function testUiWiring() {
   assert.ok(route.includes("action === 'report'"));
   assert.ok(route.includes('estimateAudienceSlices'));
   assert.ok(route.includes('replyTo'));
-  ok('API bootstrap exposes replyTo + audience counts; report action wired');
+  ok('group-updates API route still present for dormant backend');
 }
 
 async function main() {

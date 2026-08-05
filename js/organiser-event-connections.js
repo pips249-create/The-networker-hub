@@ -150,27 +150,31 @@
       e.count.textContent = preview
         ? preview.attendeeCount +
           ' confirmed attendee' +
-          (preview.attendeeCount === 1 ? '' : 's')
+          (preview.attendeeCount === 1 ? '' : 's') +
+          ' will get this round-up'
         : '';
     }
     if (!e.previewBody) return;
     if (!preview) {
       e.previewBody.innerHTML =
-        '<p class="org-group-update-hint">Pick an event and preview to see who will be listed.</p>';
+        '<p class="org-attendee-email-hint">Pick an event to preview the round-up your guests will receive.</p>';
       return;
     }
     if (e.subject && !String(e.subject.value || '').trim()) {
       e.subject.value = preview.defaultSubject || '';
     }
-    var last =
-      preview.lastSentAt
-        ? '<p class="org-group-update-hint">Last sent ' +
-          esc(new Date(preview.lastSentAt).toLocaleString('en-GB')) +
-          (preview.lastSentCount
-            ? ' to ' + preview.lastSentCount + ' people'
-            : '') +
-          '.</p>'
-        : '';
+    var noteText = e.note ? String(e.note.value || '').trim() : '';
+    var noteHtml = noteText
+      ? '<div class="org-attendee-email-mock-note"><strong>A note from you</strong><p>' +
+        esc(noteText) +
+        '</p></div>'
+      : '';
+    var last = preview.lastSentAt
+      ? '<p class="org-attendee-email-mock-sent">Last sent ' +
+        esc(new Date(preview.lastSentAt).toLocaleString('en-GB')) +
+        (preview.lastSentCount ? ' · ' + preview.lastSentCount + ' people' : '') +
+        '</p>'
+      : '';
     var rows = (preview.attendees || [])
       .map(function (a) {
         var meta = [a.jobTitle, a.company].filter(Boolean).join(' · ');
@@ -189,14 +193,29 @@
       })
       .join('');
     e.previewBody.innerHTML =
-      '<p class="org-group-update-hint">' +
+      '<p class="org-attendee-email-mock-kicker">Attendee round-up</p>' +
+      '<h4 class="org-attendee-email-mock-title">Who attended ' +
       esc(preview.eventTitle) +
-      (preview.eventDate ? ' · ' + esc(preview.eventDate) : '') +
-      '</p>' +
+      '</h4>' +
+      '<p class="org-attendee-email-mock-lede">' +
+      (preview.eventDate ? esc(preview.eventDate) + ' · ' : '') +
+      'Guests receive everyone else on this list, minus themselves.</p>' +
+      noteHtml +
+      '<div class="org-attendee-email-mock-meta">' +
+      '<span class="org-attendee-email-mock-count">' +
+      preview.attendeeCount +
+      ' attendee' +
+      (preview.attendeeCount === 1 ? '' : 's') +
+      '</span>' +
       last +
+      '</div>' +
       (rows
         ? '<ul class="oec-preview-list">' + rows + '</ul>'
-        : '<p class="org-group-update-hint">No confirmed attendees yet.</p>');
+        : '<p class="org-attendee-email-hint">No confirmed attendees yet.</p>');
+  }
+
+  function refreshNoteInPreview() {
+    if (state.preview) renderPreview(state.preview);
   }
 
   async function loadPreview() {
@@ -243,10 +262,10 @@
     }
     var already = Boolean(preview.lastSentAt);
     var confirmMsg = already
-      ? 'An attendee list email was already sent for this event. Send again to all confirmed attendees?'
-      : 'Email the attendee list (names + emails) to all ' +
+      ? 'An attendee round-up was already sent for this event. Send again to all confirmed attendees?'
+      : 'Send the attendee round-up to all ' +
         preview.attendeeCount +
-        ' confirmed attendees for this event?';
+        ' confirmed guests for this event?';
     if (!global.confirm(confirmMsg)) return;
 
     state.sending = true;
@@ -300,6 +319,9 @@
         setStatus('');
         if (e.event.value) loadPreview().catch(function () {});
       });
+    }
+    if (e.note) {
+      e.note.addEventListener('input', refreshNoteInPreview);
     }
     if (e.previewBtn) {
       e.previewBtn.addEventListener('click', function () {

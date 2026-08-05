@@ -1608,7 +1608,7 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260728ux';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260730conn1';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260805roundup1';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -4590,7 +4590,7 @@
     const connectionsItem =
       '<button type="button" class="org-action-item" data-send-attendee-email="' +
       esc(id) +
-      '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Email who attended</strong><span>Send the attendee list to everyone who came</span></span></button>';
+      '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Attendee round-up</strong><span>Email who attended so guests can reconnect</span></span></button>';
     return (
       '<div class="org-action-wrap">' +
       '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +

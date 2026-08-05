@@ -48,20 +48,10 @@
       body:
         'When your group ranks on the Hub Top groups list, download a shareable badge for LinkedIn and your site. Opt into public rankings and Hub shout-outs from Promote.',
     },
-    'fo-monthly-email-updates': {
-      title: 'Monthly email updates to Hub attendees',
+    'fo-attendee-roundup': {
+      title: 'Attendee round-up emails',
       body:
-        'Send a branded Hub round-up to people who booked your events — personal greeting, month stats, upcoming dates, and a spotlight. One free send per organiser page each month; extra sends from £9 (hard cap 4/month). Replies go to your contact email.',
-    },
-    'fo-smart-audiences': {
-      title: 'Smart audiences (once, recent, favourites)',
-      body:
-        'Choose who gets the round-up: everyone who booked via the Hub, people who came once, recent bookers (last 30 days), or people who saved your page but have not booked yet.',
-    },
-    'fo-engagement-report': {
-      title: 'Post-send engagement report',
-      body:
-        'After a send, see opens, link clicks, and how many recipients booked one of your Hub events afterwards — so you know the update drove real return visits, not just inbox noise.',
+        'After an event, open Events → Attendees, pick the event, and send a branded list of who else attended — name, company, job title and email — so guests can follow up while conversations are fresh.',
     },
     'fo-event-pages': {
       title: 'Custom event pages & ticket types',

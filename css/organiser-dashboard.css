@@ -443,11 +443,14 @@
 }
 
 .org-attendee-email-panel {
-  margin: 0 0 20px;
-  padding: 20px 22px;
-  background: var(--od-surface-muted, #f8f6f2);
-  border: 1px solid var(--od-border, #e4ddd4);
-  border-radius: 16px;
+  margin: 0 0 22px;
+  padding: 0;
+  background:
+    linear-gradient(165deg, rgba(245, 240, 232, 0.95) 0%, rgba(255, 255, 255, 0.98) 48%, rgba(232, 244, 246, 0.55) 100%);
+  border: 1px solid rgba(13, 110, 122, 0.16);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(28, 32, 64, 0.06);
 }
 
 .org-attendee-email-panel-head {
@@ -455,11 +458,280 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin: 0;
+  padding: 22px 24px 8px;
+}
+
+.org-attendee-email-kicker {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0d6e7a;
 }
 
 .org-attendee-email-panel-head .org-section-title {
   margin: 0 0 6px;
+}
+
+.org-attendee-email-status {
+  margin: 0 24px 8px;
+  min-height: 1.25em;
+  font-size: 0.9rem;
+  color: var(--od-text-muted, #6b6567);
+}
+
+.org-attendee-email-status.is-error {
+  color: #b42318;
+}
+
+.org-attendee-email-status.is-ok {
+  color: #0d6e7a;
+}
+
+.org-attendee-email-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.95fr);
+  gap: 20px;
+  padding: 8px 24px 24px;
+  align-items: start;
+}
+
+.org-attendee-email-form,
+.org-attendee-email-side {
+  min-width: 0;
+}
+
+.org-attendee-email-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.org-attendee-email-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #635c5e;
+}
+
+.org-attendee-email-steps span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: #0d6e7a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.org-attendee-email-row,
+.org-attendee-email-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.org-attendee-email-row label,
+.org-attendee-email-field > span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.org-attendee-email-form input[type='text'],
+.org-attendee-email-form select,
+.org-attendee-email-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid rgba(28, 32, 64, 0.14);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  color: #1c2040;
+}
+
+.org-attendee-email-form textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.org-attendee-email-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--od-text-muted, #6b6567);
+}
+
+.org-attendee-email-field .org-attendee-email-hint {
+  margin-top: 2px;
+}
+
+.org-attendee-email-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.org-attendee-email-mock {
+  background: #e8ecf5;
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(28, 32, 64, 0.08);
+}
+
+.org-attendee-email-mock-bar {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px 6px;
+}
+
+.org-attendee-email-mock-bar span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(28, 32, 64, 0.18);
+}
+
+.org-attendee-email-mock-body {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 16px 16px;
+  box-shadow: 0 8px 24px rgba(28, 32, 64, 0.08);
+  max-height: 520px;
+  overflow: auto;
+}
+
+.org-attendee-email-mock-kicker {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0d6e7a;
+  text-align: center;
+}
+
+.org-attendee-email-mock-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #1c2040;
+  text-align: center;
+}
+
+.org-attendee-email-mock-lede {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #635c5e;
+  text-align: center;
+}
+
+.org-attendee-email-mock-note {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f5f0e8;
+}
+
+.org-attendee-email-mock-note strong {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0d6e7a;
+}
+
+.org-attendee-email-mock-note p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #635c5e;
+  white-space: pre-wrap;
+}
+
+.org-attendee-email-mock-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.org-attendee-email-mock-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(13, 110, 122, 0.1);
+  color: #0d6e7a;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.org-attendee-email-mock-sent {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8a8284;
+}
+
+.oec-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oec-preview-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 12px;
+  margin: 0 0 8px;
+  border-radius: 12px;
+  background: #f7f8fc;
+  border: 1px solid rgba(28, 32, 64, 0.06);
+}
+
+.oec-preview-row strong {
+  font-size: 0.95rem;
+  color: var(--od-ink, #1c2040);
+}
+
+.oec-preview-row span {
+  font-size: 0.82rem;
+  color: var(--od-text-muted, #6b6567);
+}
+
+.oec-preview-row a {
+  font-size: 0.82rem;
+  color: var(--od-accent, #0d6e7a);
+}
+
+@media (max-width: 900px) {
+  .org-attendee-email-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .org-attendee-email-mock-body {
+    max-height: 360px;
+  }
 }
 
 .org-social-email-panel .org-social-panel-head {
@@ -2071,35 +2343,6 @@
   font-size: 13px;
   color: var(--od-text-muted, #6b6567);
   margin: 0 0 10px;
-}
-
-.oec-preview-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.oec-preview-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--od-border, #ece7df);
-}
-
-.oec-preview-row strong {
-  font-size: 15px;
-  color: var(--od-ink, #1c2040);
-}
-
-.oec-preview-row span {
-  font-size: 13px;
-  color: var(--od-text-muted, #6b6567);
-}
-
-.oec-preview-row a {
-  font-size: 13px;
-  color: var(--od-accent, #0d6e7a);
 }
 
 .org-group-update-preview-subject {

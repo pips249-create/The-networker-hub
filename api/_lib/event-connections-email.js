@@ -182,7 +182,9 @@ function buildConnectionsListHtml(attendees, recipientEmail) {
             '</p>'
           : '';
       return (
-        '<tr><td style="padding:14px 0;border-bottom:1px solid #ece7df;">' +
+        '<tr><td style="padding:8px 0;">' +
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f8fc;border:1px solid #ece7df;border-radius:12px;">' +
+        '<tr><td style="padding:14px 16px;">' +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#1c2040;margin:0 0 2px;">' +
         escapeHtml(a.name) +
         '</p>' +
@@ -198,7 +200,7 @@ function buildConnectionsListHtml(attendees, recipientEmail) {
         escapeHtml(a.email) +
         '</a></p>' +
         guests +
-        '</td></tr>'
+        '</td></tr></table></td></tr>'
       );
     })
     .join('');

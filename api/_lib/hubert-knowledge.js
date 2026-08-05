@@ -583,12 +583,12 @@ const FALLBACK_REPLIES = [
   {
     match: /email who attended|attendee list email|who else (was|attended)|share attendee (emails|list)|email.*who attended|email attendee list/i,
     reply:
-      'After an event, open Events → Attendees, pick one event, then Email attendee list. Confirmed attendees receive a list of who else was there — name, company, job title and email — so they can follow up. Pending applications and cancelled tickets are left out.',
+      'After an event, open Events → Attendees, pick one event, then Attendee round-up. Confirmed attendees receive a list of who else was there — name, company, job title and email — so they can follow up. Pending applications and cancelled tickets are left out.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
     reply:
-      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. After the event, use Email attendee list (with one event selected) to share who attended with the other guests. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
+      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. After the event, use Attendee round-up (with one event selected) to share who attended with the other guests. The Hub tracks ticket registrations; there is no separate on-the-day check-in list.',
   },
   {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,
