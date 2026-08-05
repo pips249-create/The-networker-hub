@@ -3309,7 +3309,8 @@
       '<select name="bulk_vat_treatment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="">— Leave unchanged —</option>' +
       '<option value="included">VAT included</option>' +
-      '<option value="added">VAT added at checkout</option></select></div></div>' +
+      '<option value="added">VAT added at checkout</option>' +
+      '<option value="none">Not VAT registered</option></select></div></div>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply fixes to selected</button>' +
       '<span id="health-bulk-msg" class="text-xs"></span></div></form>' +
@@ -3634,6 +3635,9 @@
               '<option value="added"' +
               (vatVal === 'added' ? ' selected' : '') +
               '>VAT added at checkout</option>' +
+              '<option value="none"' +
+              (vatVal === 'none' ? ' selected' : '') +
+              '>Not VAT registered</option>' +
               '</select></div>';
           }
 

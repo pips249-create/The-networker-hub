@@ -3878,6 +3878,10 @@
     if (sheet && sheet.parentElement !== document.body) {
       document.body.appendChild(sheet);
     }
+    const bottomNav = document.querySelector('.org-bottom-nav');
+    if (bottomNav && bottomNav.parentElement !== document.body) {
+      document.body.appendChild(bottomNav);
+    }
     document.getElementById('org-bottom-more-btn')?.addEventListener('click', function () {
       if (moreSheetOpen) closeOrgMoreSheet();
       else openOrgMoreSheet();
@@ -3891,6 +3895,16 @@
     document.querySelectorAll('#org-more-sheet [data-org-route]').forEach(function (el) {
       el.addEventListener('click', function () {
         closeOrgMoreSheet();
+      });
+    });
+    document.querySelectorAll('.org-bottom-nav-link[data-org-route]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeOrgMoreSheet();
+        const route = el.getAttribute('data-org-route') || 'dashboard';
+        setRoute(route);
+        if (route === 'dashboard' || route === 'team' || route === 'groups') refresh();
       });
     });
   }
@@ -15119,6 +15133,7 @@
 
     document.querySelectorAll('[data-org-route]').forEach((el) => {
       if (el.hasAttribute('data-org-memberships-nav') || el.hasAttribute('data-org-member-lists-nav')) return;
+      if (el.classList.contains('org-bottom-nav-link')) return;
       if (el.tagName === 'A') {
         const href = el.getAttribute('href');
         if (href && !href.startsWith('#')) return;

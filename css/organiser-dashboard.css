@@ -10072,6 +10072,10 @@ body.org-event-drawer-open {
   line-height: 1.55;
 }
 
+.org-inline-banner[hidden] {
+  display: none !important;
+}
+
 .org-inline-banner p {
   margin: 0;
 }

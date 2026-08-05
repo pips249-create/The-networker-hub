@@ -189,7 +189,7 @@ module.exports = async function handler(req, res) {
         }
 
         const vatTreatment = String(body.vatTreatment || '').trim();
-        if (vatTreatment && !['included', 'added'].includes(vatTreatment)) {
+        if (vatTreatment && !['included', 'added', 'none'].includes(vatTreatment)) {
           return json(res, 400, { error: 'invalid_vat_treatment' });
         }
         if (publish && hasPaidTickets && !vatTreatment) {

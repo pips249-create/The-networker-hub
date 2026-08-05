@@ -1647,7 +1647,7 @@ async function publishOrganiserListingsForEventIds(sb, eventRows) {
 
 async function updateEventVatTreatment(eventIds, vatTreatment) {
   const value = String(vatTreatment || '').trim();
-  if (!value || !['included', 'added'].includes(value)) return;
+  if (!value || !['included', 'added', 'none'].includes(value)) return;
   const sb = getSupabaseAdmin();
   const ids = (eventIds || []).filter(Boolean);
   if (!ids.length) return;

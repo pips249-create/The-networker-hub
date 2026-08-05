@@ -559,9 +559,10 @@
   }
 
   function reviewVatLabel(vatTreatment) {
-    return String(vatTreatment || '').trim() === 'added'
-      ? 'added at checkout'
-      : 'included in ticket price';
+    const v = String(vatTreatment || '').trim();
+    if (v === 'added') return 'added at checkout';
+    if (v === 'none') return 'not VAT registered (no VAT charged)';
+    return 'included in ticket price';
   }
 
   function storedRefundMatchesCurrent(stored) {

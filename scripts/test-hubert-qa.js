@@ -63,7 +63,7 @@ const MEMBER_QUESTIONS = [
   { q: 'How do I get alerts when new opportunities match my search?', expect: /saved search|email alert/i },
   { q: 'How do I add more than one date to a recurring event series?', expect: /calendar|selected dates|series/i },
   { q: 'How do I set up early bird ticket pricing?', expect: /ticket tier|lower price|sales end date/i },
-  { q: 'Should VAT be included in my ticket price or added at checkout?', expect: /VAT included|added at checkout/i },
+  { q: 'Should VAT be included in my ticket price or added at checkout?', expect: /VAT included|added at checkout|Not VAT registered|no VAT/i },
   { q: 'Can I save tickets as draft before publishing my event?', expect: /Save as draft|publish/i },
   { q: 'How can I see who has attended my event?', expect: /Attendees|registered|\/organiser\//i },
   { q: 'What do I fill in after choosing the event format?', expect: /listing details|title|tickets/i },

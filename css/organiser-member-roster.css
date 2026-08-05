@@ -102,13 +102,7 @@
 .omr-billing-vat-options {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (max-width: 640px) {
-  .omr-billing-vat-options {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: 1fr;
 }
 
 .omr-billing-vat-card {

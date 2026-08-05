@@ -1006,16 +1006,19 @@
         : 'Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book? Turn on <strong>Member price</strong> below. For a meeting only members can book, skip this section and use <strong>This event is for my members only</strong> instead.';
     }
 
-    const guestOptOutHint = document.getElementById('ee-member-only-explainer');
-    if (guestOptOutHint) {
-      guestOptOutHint.textContent = isCategory
-        ? 'Hides guest passes on this date only. Applications and member booking stay available.'
-        : 'Hides guest passes on this date only. Paid member tickets stay on sale for anyone.';
+    // CE already controls who books via Apply + membership — "Member-only for this event"
+    // is an open-booking guest-programme opt-out and does not belong here.
+    if (guestPassesOptOut) {
+      guestPassesOptOut.hidden = !guestOn || isCategory;
+      if (isCategory) {
+        const optOut = document.getElementById('ee-guest-passes-disabled');
+        if (optOut) optOut.checked = false;
+      }
     }
 
     if (guestFields) guestFields.hidden = !guestOn;
-    if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
     syncAddonCard('ee-guest-addon', guestOn);
+    syncGuestProgrammeNote();
     if (panelTitle) {
       panelTitle.textContent =
         attendanceMode === 'guest_programme'
@@ -1058,8 +1061,22 @@
 
   function syncGuestProgrammeNote() {
     const note = document.getElementById('ee-guest-programme-note-text');
+    const summary = document.getElementById('ee-guest-programme-summary');
     if (!note) return;
+    const isCategory = attendanceMode === 'category_exclusivity';
     const scope = readGuestVisitsScope();
+    if (summary) {
+      summary.textContent = isCategory
+        ? 'Let newcomers take a free visit without applying — guests still apply for a full place'
+        : 'Let newcomers visit for free before they buy a member ticket';
+    }
+    if (isCategory) {
+      note.textContent =
+        scope === 'across_groups'
+          ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages — no Category Exclusivity application needed for a guest visit. People who want a full place still apply.'
+          : 'Newcomers get up to 3 complimentary visits on this organiser page — no Category Exclusivity application needed for a guest visit. People who want a full place still apply.';
+      return;
+    }
     if (scope === 'across_groups') {
       note.textContent =
         'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After that, they must buy a paid member ticket to keep attending any of your groups.';

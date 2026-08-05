@@ -1480,6 +1480,14 @@ body.ee-step2-modal-open {
   line-height: 1.3;
 }
 
+.ee-addon-toggle-copy strong .hub-field-tip-inline {
+  margin-left: 6px;
+}
+
+.ee-check .hub-field-tip-inline {
+  margin-left: 4px;
+}
+
 .ee-addon-summary {
   font-size: 11px;
   line-height: 1.35;

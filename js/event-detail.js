@@ -2318,7 +2318,11 @@
     if (!treatment) treatment = 'included';
 
     el.textContent =
-      treatment === 'added' ? 'VAT added at checkout' : 'Prices include VAT';
+      treatment === 'added'
+        ? 'VAT added at checkout'
+        : treatment === 'none'
+          ? 'No VAT charged'
+          : 'Prices include VAT';
     el.hidden = false;
   }
 

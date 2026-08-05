@@ -408,7 +408,7 @@ async function buildEventPatchFromBody(body) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'vat_treatment')) {
     const vat = String(body.vat_treatment || '').trim();
-    if (vat && !['included', 'added'].includes(vat)) {
+    if (vat && !['included', 'added', 'none'].includes(vat)) {
       const err = new Error('invalid_vat_treatment');
       err.status = 400;
       throw err;

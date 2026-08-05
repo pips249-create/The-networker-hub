@@ -2683,9 +2683,12 @@
       if (active) active.checked = plan ? plan.active !== false && plan.offered : true;
       const vatIncluded = document.getElementById('omr-billing-vat-included');
       const vatAdded = document.getElementById('omr-billing-vat-added');
-      const vat = plan && plan.vatTreatment === 'added' ? 'added' : 'included';
+      const vatNone = document.getElementById('omr-billing-vat-none');
+      const vatRaw = plan && plan.vatTreatment ? String(plan.vatTreatment) : 'included';
+      const vat = vatRaw === 'added' || vatRaw === 'none' ? vatRaw : 'included';
       if (vatIncluded) vatIncluded.checked = vat === 'included';
       if (vatAdded) vatAdded.checked = vat === 'added';
+      if (vatNone) vatNone.checked = vat === 'none';
       billingOffered = Boolean(plan && plan.offered);
       const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
       if (payInviteWrap) payInviteWrap.hidden = !billingOffered;
@@ -2776,7 +2779,7 @@
       organiserId: id,
       active: activeEl ? activeEl.checked : true,
       vatTreatment:
-        document.getElementById('omr-billing-vat-added')?.checked === true ? 'added' : 'included',
+        document.querySelector('input[name="omr-billing-vat"]:checked')?.value || 'included',
       monthlyAmountPounds: monthlyRaw === '' ? null : monthlyRaw,
       annualAmountPounds: annualRaw === '' ? null : annualRaw,
       clearMonthly: monthlyRaw === '',

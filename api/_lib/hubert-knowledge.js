@@ -283,7 +283,7 @@ const FALLBACK_REPLIES = [
   {
     match: /\bvat\b|value added tax/i,
     reply:
-      'Choose the VAT option that matches how you advertise the ticket price: VAT included means the displayed price is the attendee’s ticket price; VAT added at checkout means it is added on top. You must select one before publishing, and the organiser remains responsible for its own VAT position—check with your accountant if you are unsure.',
+      'Choose the VAT option that matches your position: VAT included means the displayed price is the attendee’s final ticket price including VAT; VAT added at checkout means it is added on top; Not VAT registered means no VAT is charged and the listed price is what attendees pay. You must select one before publishing paid tickets. The organiser remains responsible for its own VAT position—check with your accountant if you are unsure.',
   },
   {
     match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,

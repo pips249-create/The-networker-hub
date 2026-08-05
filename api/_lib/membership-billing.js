@@ -44,7 +44,9 @@ function normalizeVatTreatment(raw) {
   const v = String(raw || '')
     .trim()
     .toLowerCase();
-  return v === 'added' ? 'added' : 'included';
+  if (v === 'added') return 'added';
+  if (v === 'none' || v === 'not_registered' || v === 'not-registered') return 'none';
+  return 'included';
 }
 
 function calculateMembershipFeePounds(amountPounds) {
@@ -55,7 +57,7 @@ function calculateMembershipFeePounds(amountPounds) {
 
 /**
  * @param {number} amountPounds membership face price organiser set
- * @param {'included'|'added'} [vatTreatment]
+ * @param {'included'|'added'|'none'} [vatTreatment]
  */
 function calculateMembershipTotals(amountPounds, vatTreatment) {
   const amount = roundMoney(Number(amountPounds) || 0);

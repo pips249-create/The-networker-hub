@@ -420,7 +420,7 @@
     },
     {
       title: 'VAT on ticket prices',
-      body: 'If you sell paid tickets, choose exactly one option: VAT included in the price, or VAT added at checkout. Not required for free-only events.',
+      body: 'If you sell paid tickets, choose exactly one option: VAT included, VAT added at checkout, or Not VAT registered (no VAT charged). Not required for free-only events.',
       target: '#ee-vat-card',
     },
     {

@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260805ceguest" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260805cetips" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -256,12 +256,14 @@
             <strong>This event is for my members only</strong> instead.
           </p>
 
-          <div class="ee-addon-card" id="ee-guest-addon" data-hub-tip="guest-visit-programme">
+          <div class="ee-addon-card" id="ee-guest-addon">
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-guest-programme-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong>Guest visit programme</strong>
-                <span class="ee-addon-summary">Let newcomers visit for free before they buy a member ticket</span>
+                <strong data-hub-tip="guest-visit-programme">Guest visit programme</strong>
+                <span class="ee-addon-summary" id="ee-guest-programme-summary"
+                  >Let newcomers visit for free before they buy a member ticket</span
+                >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-guest-programme-fields" hidden>
@@ -299,10 +301,10 @@
                   “Across all pages” shares the free allowance across every group on your account.
                 </p>
               </fieldset>
-              <div id="ee-guest-passes-opt-out" data-hub-tip="member-only-event">
+              <div id="ee-guest-passes-opt-out">
                 <label class="ee-check">
                   <input type="checkbox" id="ee-guest-passes-disabled" aria-describedby="ee-member-only-explainer" />
-                  <span>Member-only for this event</span>
+                  <span data-hub-tip="member-only-event">Member-only for this event</span>
                 </label>
                 <p class="ee-hint" id="ee-member-only-explainer">
                   Hides guest passes on this date only. Paid member tickets stay on sale for anyone.
@@ -311,11 +313,11 @@
             </div>
           </div>
 
-          <div class="ee-addon-card" id="ee-private-ticket-addon" data-hub-tip="members-only-ticket">
+          <div class="ee-addon-card" id="ee-private-ticket-addon">
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong>Member price (public can still book)</strong>
+                <strong data-hub-tip="members-only-ticket">Member price (public can still book)</strong>
                 <span class="ee-addon-summary"
                   >Members on your list get a free or cheaper ticket when signed in. Non-members still buy the public ticket above.</span
                 >
@@ -334,11 +336,11 @@
             </div>
           </div>
 
-          <div class="ee-addon-card" id="ee-alumni-addon" data-hub-tip="alumni-fast-pass">
+          <div class="ee-addon-card" id="ee-alumni-addon">
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-alumni-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong>Previous Attendees</strong>
+                <strong data-hub-tip="alumni-fast-pass">Previous Attendees</strong>
                 <span class="ee-addon-summary">Invite past attendees to a returning rate with personal booking links</span>
               </span>
             </label>
@@ -397,6 +399,11 @@
               <input type="radio" name="vat-treatment" value="added" id="vat-treatment-added" />
               <strong>VAT added at checkout</strong>
               <span>Ticket price excludes VAT; VAT is calculated at checkout</span>
+            </div>
+            <div class="ee-vat-card" data-vat="none" role="radio" tabindex="0" aria-checked="false">
+              <input type="radio" name="vat-treatment" value="none" id="vat-treatment-none" />
+              <strong>Not VAT registered</strong>
+              <span>No VAT charged — the price shown is what attendees pay</span>
             </div>
           </div>
           </div>
@@ -489,6 +496,6 @@
     <script src="../js/organiser-field-tips.js?v=20260730memticket" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260805ceguest" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260805cetips" defer></script>
   </body>
 </html>
