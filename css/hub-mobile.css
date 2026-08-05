@@ -1439,10 +1439,16 @@ body.nav-menu-open {
     bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  /* Organiser More sits bottom-right — park Hubert on the left so they don't fight */
+  body.organiser-dashboard-page .hubert-widget:not(.hubert-widget--open) {
+    right: auto !important;
+    left: 12px !important;
+  }
+
   body.organiser-dashboard-page .hubert-launcher-icon,
   body.attendee-dashboard-page .hubert-launcher-icon {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
   }
 
   .hub-side-nav.hub-side-nav--minimal {
@@ -2174,8 +2180,12 @@ body.nav-menu-open {
 
   .attendee-dashboard-page .ad-action-links {
     justify-content: center;
-    gap: 8px 16px;
+    gap: 6px 10px;
     padding: 0;
+  }
+
+  .attendee-dashboard-page .ad-action-sep {
+    font-size: 13px;
   }
 
   .attendee-dashboard-page .ad-action-link {
@@ -2185,6 +2195,46 @@ body.nav-menu-open {
     font-size: 13px;
     min-height: 36px;
     text-align: center;
+  }
+
+  .attendee-dashboard-page #hub-main-content.is-route-loading,
+  .attendee-dashboard-page.ad-route-loading #hub-main-content {
+    position: relative;
+  }
+
+  .attendee-dashboard-page #hub-main-content.is-route-loading::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 8px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--ad-teal, #7a4f9a) 35%,
+      var(--ad-coral, #e8a87c) 65%,
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: ad-route-loading-slide 0.9s linear infinite;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  .attendee-dashboard-page #hub-main-content.is-route-loading .ad-page.is-active {
+    opacity: 0.55;
+    transition: opacity 0.15s ease;
+  }
+
+  @keyframes ad-route-loading-slide {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
   }
 
   .attendee-dashboard-page .ad-utility-wrap {

@@ -663,6 +663,13 @@ button.ad-stat-link:focus-visible::after {
   justify-content: flex-start;
 }
 
+.ad-action-sep {
+  color: var(--ad-text-soft);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
 .ad-action-link {
   font-family: inherit;
   font-size: 11px;

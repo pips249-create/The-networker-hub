@@ -1494,6 +1494,28 @@
   let highlightRegistrationId = '';
   let dashboardReady = false;
   let renderedRoutes = new Set();
+  let routeLoadGen = 0;
+
+  function beginAdRouteLoading() {
+    const gen = ++routeLoadGen;
+    const main = document.getElementById('hub-main-content');
+    if (main) {
+      main.classList.add('is-route-loading');
+      main.setAttribute('aria-busy', 'true');
+    }
+    document.body.classList.add('ad-route-loading');
+    return { gen: gen };
+  }
+
+  function endAdRouteLoading(token) {
+    if (token && token.gen !== routeLoadGen) return;
+    const main = document.getElementById('hub-main-content');
+    if (main) {
+      main.classList.remove('is-route-loading');
+      main.removeAttribute('aria-busy');
+    }
+    document.body.classList.remove('ad-route-loading');
+  }
 
   function setDashboardLoading(on) {
     const el = document.getElementById('ad-dash-loading');
@@ -2482,7 +2504,19 @@
       loadSavedOpportunities();
     }
     syncRouteHash();
-    if (dashboardReady) renderRouteTables(routeTablesKey(currentRoute));
+    if (dashboardReady) {
+      const key = routeTablesKey(currentRoute);
+      const needsPaint = !renderedRoutes.has(key);
+      const loadToken = needsPaint ? beginAdRouteLoading() : null;
+      renderRouteTables(key);
+      if (loadToken) {
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(function () {
+            endAdRouteLoading(loadToken);
+          });
+        });
+      }
+    }
   }
 
   function enquiryStatusLabel(status) {
@@ -3968,11 +4002,16 @@
     const key = route || 'overview';
     if (!force && renderedRoutes.has(key)) return;
 
+    const loadToken = force && !document.body.classList.contains('ad-route-loading')
+      ? beginAdRouteLoading()
+      : null;
+
     updateSideCounts();
 
     if (key === 'overview') {
       renderOverviewFeed();
       renderedRoutes.add(key);
+      if (loadToken) endAdRouteLoading(loadToken);
       return;
     }
 
@@ -4046,6 +4085,11 @@
     }
 
     renderedRoutes.add(key);
+    if (loadToken) {
+      window.requestAnimationFrame(function () {
+        endAdRouteLoading(loadToken);
+      });
+    }
   }
 
   function applyDashboardData(data) {
