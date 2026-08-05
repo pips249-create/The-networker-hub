@@ -1608,7 +1608,7 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260728ux';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260805roundup1';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260805comm1';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1711,6 +1711,7 @@
     if (tab === 'partner') return 'social-partner';
     if (tab === 'brand') return 'social-brand';
     if (tab === 'reach') return 'social-reach';
+    if (tab === 'communicate') return 'social-communicate';
     return 'social';
   }
 
@@ -1719,8 +1720,13 @@
     return (
       r === 'social-email' ||
       r === 'email' ||
+      r === 'email-who-attended' ||
+      r === 'attendee-email' ||
+      r === 'connections-email' ||
       r === 'group-updates' ||
-      r === 'monthly-updates'
+      r === 'monthly-updates' ||
+      r === 'social-communicate' ||
+      r === 'communicate'
     );
   }
 
@@ -1743,7 +1749,16 @@
       r === 'brand' ||
       r === 'brand-kit' ||
       r === 'social-reach' ||
-      r === 'reach'
+      r === 'reach' ||
+      r === 'social-communicate' ||
+      r === 'communicate' ||
+      r === 'social-email' ||
+      r === 'email' ||
+      r === 'email-who-attended' ||
+      r === 'attendee-email' ||
+      r === 'connections-email' ||
+      r === 'group-updates' ||
+      r === 'monthly-updates'
     );
   }
 
@@ -1770,6 +1785,19 @@
     ) {
       return 'reach';
     }
+    if (
+      r === 'social-communicate' ||
+      r === 'communicate' ||
+      r === 'social-email' ||
+      r === 'email' ||
+      r === 'email-who-attended' ||
+      r === 'attendee-email' ||
+      r === 'connections-email' ||
+      r === 'group-updates' ||
+      r === 'monthly-updates'
+    ) {
+      return 'communicate';
+    }
     if (r === 'social-linkedin') return 'linkedin';
     return '';
   }
@@ -1784,9 +1812,10 @@
         stored === 'partner' ||
         stored === 'brand' ||
         stored === 'reach' ||
+        stored === 'communicate' ||
         stored === 'email'
       ) {
-        return stored;
+        return stored === 'email' ? 'communicate' : stored;
       }
     } catch {
       /* ignore */
@@ -1825,8 +1854,14 @@
     });
 
     if (hint) {
-      // Tip points people toward LinkedIn — hide when they are already there.
-      hint.hidden = tab === 'linkedin' || tab === 'spotlight' || tab === 'ranking' || tab === 'partner' || tab === 'reach';
+      // Tip points people toward LinkedIn — hide when they are already there or on a focused tool.
+      hint.hidden =
+        tab === 'linkedin' ||
+        tab === 'communicate' ||
+        tab === 'spotlight' ||
+        tab === 'ranking' ||
+        tab === 'partner' ||
+        tab === 'reach';
     }
 
     var socialPage = document.getElementById('org-page-social');
@@ -1840,6 +1875,9 @@
     if (tab === 'linkedin') {
       ensureLinkedInPostBuilder({ force: true });
       renderBrandKitNudge();
+    }
+    if (tab === 'communicate') {
+      ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
     }
     if (tab === 'ranking') {
       renderOrganiserRankingShare();
@@ -1874,12 +1912,16 @@
     if (hash.includes('brand') || hash.includes('colour') || hash.includes('color')) return 'brand';
     if (hash.includes('reach') || hash === 'visibility' || hash === 'grow-visibility') return 'reach';
     if (
+      hash.includes('communicate') ||
       hash.includes('email') ||
       hash === 'group-updates' ||
       hash === 'monthly-updates' ||
-      hash === 'social-email'
+      hash === 'social-email' ||
+      hash === 'email-who-attended' ||
+      hash === 'attendee-email' ||
+      hash === 'connections-email'
     ) {
-      return '';
+      return 'communicate';
     }
     if (hash.includes('linkedin') || hash === 'social' || hash === 'promote') return 'linkedin';
     return '';
@@ -1976,24 +2018,22 @@
   }
 
   function setAttendeeEmailPanelVisible(show) {
-    const panel = document.getElementById('org-attendee-email-panel');
-    if (!panel) return;
-    panel.hidden = !show;
+    // Composer now lives on Promote → Communicate; keep helper for older call sites.
+    if (show) {
+      setRoute('social-communicate');
+    }
   }
 
   function openAttendeeEmailForEvent(eventId) {
     if (eventId && eventId !== 'all') {
       filters.attendeesEvent = eventId;
     }
-    setRoute('events-attendees');
-    setAttendeeEmailPanelVisible(true);
+    setRoute('social-communicate');
     ensureEventsLoaded()
       .catch(function () {
         return false;
       })
       .then(function () {
-        fillAttendeesEventFilter();
-        renderAttendees();
         const eid = eventId && eventId !== 'all' ? eventId : filters.attendeesEvent;
         ensureAttendeeEmailPanelReady(eid && eid !== 'all' ? eid : '');
         const panel = document.getElementById('org-attendee-email-panel');
@@ -4810,9 +4850,6 @@
     if (hash === 'events-overview') return { page: 'events', sub: 'events-list' };
     if (hash === 'tickets') return { page: 'events', sub: 'events-tickets' };
     if (hash.startsWith('events-')) return { page: 'events', sub: hash };
-    if (isAttendeeListEmailRoute(hash)) {
-      return { page: 'events', sub: 'events-attendees', openAttendeeEmail: true };
-    }
     if (hash === 'events') return { page: 'events', sub: 'events-list' };
     if (hash === 'academy' || hash.startsWith('academy-') || hash === 'training-overview') {
       return { page: 'dashboard', sub: null };
@@ -4830,6 +4867,7 @@
       return {
         page: socialTab === 'spotlight' ? 'social-spotlight' : 'social',
         sub: null,
+        openAttendeeEmail: socialTab === 'communicate',
       };
     }
     return { page: hash, sub: null };
@@ -4837,9 +4875,6 @@
 
   function setEventsSub(sub) {
     eventsSubRoute = sub || 'events-list';
-    if (eventsSubRoute !== 'events-attendees') {
-      setAttendeeEmailPanelVisible(false);
-    }
     document.querySelectorAll('[data-events-panel]').forEach((panel) => {
       const isActive = panel.getAttribute('data-events-panel') === eventsSubRoute;
       panel.classList.toggle('is-active', isActive);
@@ -9096,7 +9131,7 @@
     let activeRoute = sidebarRouteForPage(page, sub);
     if (page === 'social') {
       const tab = socialTabFromHash() || storedSocialTab() || 'linkedin';
-      activeRoute = 'social';
+      activeRoute = tab === 'communicate' ? 'social-communicate' : 'social';
     }
     document.querySelectorAll('.hub-side-nav-link[data-org-route]').forEach((a) => {
       const isActive = a.getAttribute('data-org-route') === activeRoute;
@@ -9307,7 +9342,7 @@
     options = options || {};
     if (isAttendeeListEmailRoute(route)) {
       options.openAttendeeEmail = true;
-      route = 'events-attendees';
+      route = 'social-communicate';
     }
     closeNotificationsPanel();
     if (bootstrapReady && !options.skipEventsGuard && needsOrganiserPageFirst() && isEventsRoute(route)) {
@@ -9364,12 +9399,6 @@
 
     if (page === 'events') {
       setEventsSub(sub || eventsSubRoute || 'events-list');
-      if (isAttendeeListEmailRoute(route) || options.openAttendeeEmail) {
-        requestAnimationFrame(function () {
-          setAttendeeEmailPanelVisible(true);
-          ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
-        });
-      }
     } else if (page === 'business-overview') {
       setBusinessSub(businessSub || businessSubRoute || 'business-listings');
     } else {
@@ -9386,7 +9415,9 @@
         !fromRoute &&
         (route === 'social' || route === 'promote' || route === '') &&
         (!fromHash || fromHash === 'linkedin');
-      const tabToOpen = barePromote ? 'linkedin' : socialTabPreferred || undefined;
+      const tabToOpen = barePromote
+        ? 'linkedin'
+        : socialTabPreferred || (options.openAttendeeEmail ? 'communicate' : undefined);
       initSocialPageTabs(tabToOpen);
       if (barePromote || tabToOpen === 'linkedin') {
         try {
@@ -9396,7 +9427,7 @@
         }
       }
       // Canonicalise legacy deep links so guides and shares match the tab.
-      if (fromRoute === 'reach' || fromRoute === 'ranking') {
+      if (fromRoute === 'reach' || fromRoute === 'ranking' || fromRoute === 'communicate') {
         syncSocialHash(fromRoute);
       }
       renderOrganiserRankingShare();
@@ -9406,6 +9437,11 @@
       }
       if (tabToOpen === 'reach' || socialTabPreferred === 'reach') {
         ensurePromoteReachReady();
+      }
+      if (tabToOpen === 'communicate' || socialTabPreferred === 'communicate' || options.openAttendeeEmail) {
+        requestAnimationFrame(function () {
+          ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
+        });
       }
       requestAnimationFrame(function () {
         ensureLinkedInPostBuilder({ force: true });
@@ -13344,12 +13380,7 @@
       if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
         maybeRedirectToSingleMemberList();
       }
-      if (
-        parseRoute().page === 'events' &&
-        parseRoute().sub === 'events-attendees' &&
-        parseRoute().openAttendeeEmail
-      ) {
-        setAttendeeEmailPanelVisible(true);
+      if (parseRoute().page === 'social' && parseRoute().openAttendeeEmail) {
         ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
       }
       // Warm editor CSS after first paint so group/event drawers open without a flash.
@@ -14060,16 +14091,10 @@
       btnEmailAttendeeList.addEventListener('click', function () {
         const eventId = String(filters.attendeesEvent || 'all');
         if (!eventId || eventId === 'all') {
-          showOrganiserAlert('Pick a single event first, then email the attendee list.', true);
+          showOrganiserAlert('Pick a single event first, then open Attendee round-up.', true);
           return;
         }
         openAttendeeEmailForEvent(eventId);
-      });
-    }
-    const btnCloseAttendeeEmail = document.getElementById('btn-close-attendee-email');
-    if (btnCloseAttendeeEmail) {
-      btnCloseAttendeeEmail.addEventListener('click', function () {
-        setAttendeeEmailPanelVisible(false);
       });
     }
     const btnDownloadBadges = document.getElementById('btn-download-name-badges');

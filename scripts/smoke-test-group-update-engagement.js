@@ -209,10 +209,12 @@ function testUiWiring() {
   console.log('\n5) Workspace UI wiring (monthly composer retired)');
   const html = fs.readFileSync(path.join(__dirname, '../organiser/index.html'), 'utf8');
   assert.ok(!html.includes('id="ogu-audience-slice"'), 'monthly audience UI should be gone');
+  assert.ok(html.includes('id="org-social-panel-communicate"'));
   assert.ok(html.includes('id="org-attendee-email-panel"'));
   assert.ok(html.includes('id="oec-form"'));
   assert.ok(html.includes('Attendee round-up'));
-  ok('attendee round-up composer is wired; monthly UI removed');
+  assert.ok(html.includes('More email tools'));
+  ok('Communicate tab hosts attendee round-up + paid upcoming tools');
 
   const js = fs.readFileSync(path.join(__dirname, '../js/organiser-event-connections.js'), 'utf8');
   assert.ok(js.includes('HubOrganiserEventConnections'));

@@ -51,7 +51,7 @@
     'fo-attendee-roundup': {
       title: 'Attendee round-up emails',
       body:
-        'After an event, open Events → Attendees, pick the event, and send a branded list of who else attended — name, company, job title and email — so guests can follow up while conversations are fresh.',
+        'After an event, open Communicate in your organiser workspace, pick the event, and send a branded list of who else attended — name, company, job title and email — so guests can follow up while conversations are fresh.',
     },
     'fo-event-pages': {
       title: 'Custom event pages & ticket types',

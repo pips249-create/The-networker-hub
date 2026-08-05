@@ -583,7 +583,7 @@ const FALLBACK_REPLIES = [
   {
     match: /email who attended|attendee list email|who else (was|attended)|share attendee (emails|list)|email.*who attended|email attendee list/i,
     reply:
-      'After an event, open Events → Attendees, pick one event, then Attendee round-up. Confirmed attendees receive a list of who else was there — name, company, job title and email — so they can follow up. Pending applications and cancelled tickets are left out.',
+      'After an event, open Communicate (sidebar or Promote → Communicate), pick the event, then send Attendee round-up. Confirmed attendees receive a list of who else was there — name, company, job title and email — so they can follow up. Pending applications and cancelled tickets are left out.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,

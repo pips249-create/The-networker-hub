@@ -734,6 +734,70 @@
   }
 }
 
+.org-attendee-email-panel--embedded {
+  margin: 0 0 28px;
+}
+
+.org-communicate-more {
+  margin: 8px 0 8px;
+  padding: 4px 2px 12px;
+}
+
+.org-communicate-more .org-section-title {
+  margin: 0 0 6px;
+}
+
+.org-communicate-more .org-section-sub {
+  margin: 0 0 16px;
+  max-width: 46rem;
+}
+
+.org-communicate-more-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.org-communicate-more-card {
+  margin: 0;
+  padding: 16px 16px 18px;
+  border-radius: 14px;
+  border: 1px dashed rgba(13, 110, 122, 0.28);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.org-communicate-more-badge {
+  display: inline-flex;
+  margin: 0 0 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(28, 32, 64, 0.06);
+  color: #635c5e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.org-communicate-more-card h4 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+  color: #1c2040;
+}
+
+.org-communicate-more-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #635c5e;
+}
+
+@media (max-width: 900px) {
+  .org-communicate-more-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .org-social-email-panel .org-social-panel-head {
   margin-bottom: 1rem;
 }
