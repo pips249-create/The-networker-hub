@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const LAYOUT_MARKER = 'application-email-layout-v3';
+const LAYOUT_MARKER = 'application-email-layout-v4-purple';
 
 function makeResolver(filename) {
   let cached = null;
@@ -12,7 +12,11 @@ function makeResolver(filename) {
   }
   return function resolve(dbBodyHtml) {
     const body = String(dbBodyHtml || '');
-    if (!body.includes(LAYOUT_MARKER) || !body.includes('{{logo_footer_url}}')) {
+    if (
+      !body.includes(LAYOUT_MARKER) ||
+      !body.includes('{{logo_footer_url}}') ||
+      body.includes('background:#1c2040')
+    ) {
       return { bodyHtml: getCanonical(), source: 'file' };
     }
     return { bodyHtml: body, source: 'database' };
