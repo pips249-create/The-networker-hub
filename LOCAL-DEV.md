@@ -54,7 +54,7 @@ Or `npm run check:local` (same script). You should see `Smoke passed` (warnings 
 
 | Avoid | Why |
 |-------|-----|
-| Multiple `npm start` tabs | Wrong port (3000 vs 3001), confusing errors |
+| Multiple `npm start` tabs | Port conflicts / confusing errors — use one server on :3000 |
 | Opening HTML from Finder | API calls fail (`file://`) |
 | `vercel env pull` without re-syncing | Can wipe Supabase keys from `.env.local` — run `npm run sync-env` after |
 | Placeholder keys in `.env` | "Invalid API key" errors |

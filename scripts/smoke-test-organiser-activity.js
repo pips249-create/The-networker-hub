@@ -13,7 +13,7 @@ const {
 } = require('../api/_lib/entity-activity-log');
 
 const root = path.join(__dirname, '..');
-const baseUrl = String(process.argv[2] || 'http://localhost:3001').replace(/\/$/, '');
+const baseUrl = String(process.argv[2] || 'http://localhost:3000').replace(/\/$/, '');
 
 let passed = 0;
 let failed = 0;
