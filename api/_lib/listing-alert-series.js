@@ -92,22 +92,30 @@ function buildListingAlertSeriesCopy({
   const title = String(eventName || 'Event').trim();
   const name = String(userName || 'there').trim();
 
+  // Plain-text only — templates wrap organiser/event names in <strong>.
+  // Never put HTML tags or &apos; entities in these strings (they get escaped).
   if (variant === 'member_roster') {
     if (isSeries) {
       return {
         event_date_count: String(count),
         listing_badge: 'For members',
         listing_headline: organiser + ' has ' + count + ' new member dates',
+        listing_follow_on:
+          "They've just published " +
+          count +
+          ' new dates for ' +
+          title +
+          ' — sign in with this email to see Members only tickets.',
         listing_intro:
           'Hi ' +
           name +
-          ', you&apos;re in the membership for <strong style="color:#1c2040;">' +
+          ", you're in the membership for " +
           organiser +
-          '</strong>. They&apos;ve just published <strong style="color:#1c2040;">' +
+          ". They've just published " +
           count +
-          ' new dates</strong> for <strong style="color:#1c2040;">' +
+          ' new dates for ' +
           title +
-          '</strong> — sign in with this email to see Members only tickets.',
+          ' — sign in with this email to see Members only tickets.',
         listing_subject: organiser + ' — ' + count + ' new member dates for ' + title,
         event_date_prefix: 'Dates: ',
         listing_cta_label: '',
@@ -117,12 +125,14 @@ function buildListingAlertSeriesCopy({
       event_date_count: '1',
       listing_badge: 'For members',
       listing_headline: organiser + ' has a new event',
+      listing_follow_on:
+        "They've just published a new event — sign in with this email to see Members only tickets.",
       listing_intro:
         'Hi ' +
         name +
-        ', you&apos;re in the membership for <strong style="color:#1c2040;">' +
+        ", you're in the membership for " +
         organiser +
-        '</strong>. They&apos;ve just published a new event — sign in with this email to see Members only tickets.',
+        ". They've just published a new event — sign in with this email to see Members only tickets.",
       listing_subject: organiser + ' has a new event for members',
       event_date_prefix: '',
       listing_cta_label: '',
@@ -134,16 +144,18 @@ function buildListingAlertSeriesCopy({
       event_date_count: String(count),
       listing_badge: 'New dates',
       listing_headline: organiser + ' has ' + count + ' new dates',
+      listing_follow_on:
+        'just published ' + count + ' new dates for ' + title + '.',
       listing_intro:
         'Hi ' +
         name +
-        ', <strong style="color:#1c2040;">' +
+        ', ' +
         organiser +
-        '</strong> just published <strong style="color:#1c2040;">' +
+        ' just published ' +
         count +
-        ' new dates</strong> for <strong style="color:#1c2040;">' +
+        ' new dates for ' +
         title +
-        '</strong>.',
+        '.',
       listing_subject: organiser + ' — ' + count + ' new dates for ' + title,
       event_date_prefix: 'Dates: ',
       listing_cta_label: 'View dates',
@@ -154,12 +166,9 @@ function buildListingAlertSeriesCopy({
     event_date_count: '1',
     listing_badge: 'New listing',
     listing_headline: organiser + ' has a new event',
+    listing_follow_on: 'just published a new listing you might like.',
     listing_intro:
-      'Hi ' +
-      name +
-      ', <strong style="color:#1c2040;">' +
-      organiser +
-      '</strong> just published a new listing you might like.',
+      'Hi ' + name + ', ' + organiser + ' just published a new listing you might like.',
     listing_subject: organiser + ' has a new event',
     event_date_prefix: '',
     listing_cta_label: 'View event',

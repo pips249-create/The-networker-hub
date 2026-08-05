@@ -92,6 +92,13 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'refund_processed',
   'account_welcome',
   'password_reset',
+  'member_roster_invite',
+  'member_roster_existing',
+  'member_roster_pay_invite',
+  'member_roster_payment_failed',
+  'member_roster_renewal_receipt',
+  'member_roster_new_event',
+  'member_roster_booking_reminder',
 ]);
 
 /** Selected organiser growth emails also show the organiser mini-sponsor trio. */
@@ -138,9 +145,16 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
+  'member_roster_invite',
+  'member_roster_existing',
+  'member_roster_pay_invite',
+  'member_roster_payment_failed',
+  'member_roster_renewal_receipt',
+  'member_roster_new_event',
+  'member_roster_booking_reminder',
 ]);
 
-/** Welcome / password reset: Events main under header; all three directory partners in footer. */
+/** Account emails: Events main under header; directory partners in the footer strip. */
 const HUB_PARTNER_SPONSOR_SLUGS = new Set(['account_welcome', 'password_reset']);
 
 const SPONSOR_PLACEHOLDER_KEYS = ['sponsor_row', 'sponsor_section', 'mini_sponsors_row'];

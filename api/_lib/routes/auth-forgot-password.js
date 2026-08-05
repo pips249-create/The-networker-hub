@@ -99,7 +99,7 @@ async function handleSupabaseForgot(email) {
       emailSent,
       accountFound: true,
       message: emailSent
-        ? 'Check your email for a reset link (valid 1 hour).'
+        ? 'Check your email for a reset link (valid 15 minutes).'
         : showLinkOnPage
           ? 'Email is not configured yet — use the reset link shown below.'
           : 'Password reset emails are turned off. Ask your admin to set a new password, or use account settings after signing in.',
@@ -167,7 +167,7 @@ module.exports = async function handler(req, res) {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     const resetTokenField = fieldNameOnRecord(
       user.fields,
@@ -219,7 +219,7 @@ module.exports = async function handler(req, res) {
       emailSent,
       accountFound: true,
       message: emailSent
-        ? 'Check your email for a reset link (valid 1 hour).'
+        ? 'Check your email for a reset link (valid 15 minutes).'
         : 'Email is not configured yet — use the reset link shown below.',
       ...(showLinkOnPage ? { resetUrl } : {}),
     });

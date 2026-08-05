@@ -9809,6 +9809,12 @@
         'Sends when a saved business opportunity is about 7 days from expiry.',
       opportunity_saved_search_match:
         'Sends when a new listing matches a member\u2019s saved opportunity search.',
+      post_event_review_request:
+        'Events directory sponsor. Cron: ~24 hours after the event ends (or starts_at if no end time), to paid/free attendees who have not reviewed yet. Skips denied/cancelled. Window: events ended in the last 14 days.',
+      post_event_review_reminder:
+        'Events directory sponsor. Cron: 5 days after the review request if they still have not left a review.',
+      password_reset:
+        'Account security email for attendees, organisers, and admins (not attendee-only). Events directory sponsor under the header. Reset link expires in 15 minutes.',
     };
 
     var ATTENDEE_EMAIL_SLUGS = [
@@ -9817,7 +9823,6 @@
       'account_welcome',
       'saved_event_tickets_open',
       'saved_organiser_new_listing',
-      'post_event_review_request',
       'online_join_reminder',
       'meeting_link_added',
       'category_exclusivity_payment_reminder',
@@ -9831,7 +9836,7 @@
       'attendee_signup_events_nudge',
       'attendee_hubert_event_concierge',
       'event_connections_list',
-      'password_reset',
+      'event_details_updated',
     ];
     var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite', 'organiser_launch_invite', 'organiser_rebrand_announcement'];
 
@@ -16081,8 +16086,9 @@
       if (eventToggle) {
         var eventId = eventToggle.getAttribute('data-event-id');
         if (!eventId) return;
+        var wantFeatured = !!eventToggle.checked;
         eventToggle.disabled = true;
-        adminPost('/api/admin/events', { id: eventId, featured: eventToggle.checked })
+        adminPost('/api/admin/events', { id: eventId, featured: wantFeatured })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var idx = featuredSpotlightEvents.findIndex(function (ev) {
@@ -16090,15 +16096,24 @@
             });
             if (idx >= 0 && data.event) {
               featuredSpotlightEvents[idx] = Object.assign({}, featuredSpotlightEvents[idx], data.event);
-            } else if (idx >= 0) {
-              featuredSpotlightEvents[idx].featured = eventToggle.checked;
-              if (!eventToggle.checked) featuredSpotlightEvents[idx].featured_until = null;
+            } else if (idx < 0 && data.event) {
+              featuredSpotlightEvents.push(data.event);
+              idx = featuredSpotlightEvents.length - 1;
             }
+            if (idx >= 0) {
+              // Trust the toggle — never let a stale API row snap the box back on.
+              featuredSpotlightEvents[idx].featured = wantFeatured;
+              if (!wantFeatured) {
+                featuredSpotlightEvents[idx].featured_until = null;
+                featuredSpotlightEvents[idx].featuredUntil = null;
+              }
+            }
+            featuredSpotlightLoadGen += 1;
             invalidateSpotlightSlotsCache();
             paintFeaturedSpotlightTable();
           })
           .catch(function (err) {
-            eventToggle.checked = !eventToggle.checked;
+            eventToggle.checked = !wantFeatured;
             window.alert(err.message || 'Could not update featured status.');
           })
           .finally(function () {
@@ -16110,8 +16125,9 @@
       if (orgToggle) {
         var organiserId = orgToggle.getAttribute('data-organiser-id');
         if (!organiserId) return;
+        var wantOrgFeatured = !!orgToggle.checked;
         orgToggle.disabled = true;
-        adminPost('/api/admin/organisers', { id: organiserId, featured: orgToggle.checked })
+        adminPost('/api/admin/organisers', { id: organiserId, featured: wantOrgFeatured })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var idx = featuredSpotlightOrganisers.findIndex(function (o) {
@@ -16123,14 +16139,18 @@
                 featuredSpotlightOrganisers[idx],
                 data.organiser
               );
-            } else if (idx >= 0) {
-              featuredSpotlightOrganisers[idx].featured = orgToggle.checked;
+            } else if (idx < 0 && data.organiser) {
+              featuredSpotlightOrganisers.push(data.organiser);
+              idx = featuredSpotlightOrganisers.length - 1;
+            }
+            if (idx >= 0) {
+              featuredSpotlightOrganisers[idx].featured = wantOrgFeatured;
             }
             invalidateSpotlightSlotsCache();
             paintSpotlightOrganisersTable();
           })
           .catch(function (err) {
-            orgToggle.checked = !orgToggle.checked;
+            orgToggle.checked = !wantOrgFeatured;
             window.alert(err.message || 'Could not update featured status.');
           })
           .finally(function () {
@@ -16142,8 +16162,9 @@
       if (oppToggle) {
         var oppId = oppToggle.getAttribute('data-opportunity-id');
         if (!oppId) return;
+        var wantOppFeatured = !!oppToggle.checked;
         oppToggle.disabled = true;
-        adminPost('/api/admin/opportunities', { id: oppId, featured: oppToggle.checked })
+        adminPost('/api/admin/opportunities', { id: oppId, featured: wantOppFeatured })
           .then(function (data) {
             if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
             var idx = featuredSpotlightOpportunities.findIndex(function (o) {
@@ -16155,15 +16176,22 @@
                 featuredSpotlightOpportunities[idx],
                 data.opportunity
               );
-            } else if (idx >= 0) {
-              featuredSpotlightOpportunities[idx].featured = oppToggle.checked;
-              if (!oppToggle.checked) featuredSpotlightOpportunities[idx].featured_until = null;
+            } else if (idx < 0 && data.opportunity) {
+              featuredSpotlightOpportunities.push(data.opportunity);
+              idx = featuredSpotlightOpportunities.length - 1;
+            }
+            if (idx >= 0) {
+              featuredSpotlightOpportunities[idx].featured = wantOppFeatured;
+              if (!wantOppFeatured) {
+                featuredSpotlightOpportunities[idx].featured_until = null;
+                featuredSpotlightOpportunities[idx].featuredUntil = null;
+              }
             }
             invalidateSpotlightSlotsCache();
             paintSpotlightOpportunitiesTable();
           })
           .catch(function (err) {
-            oppToggle.checked = !oppToggle.checked;
+            oppToggle.checked = !wantOppFeatured;
             window.alert(err.message || 'Could not update featured status.');
           })
           .finally(function () {
@@ -16182,17 +16210,38 @@
       tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr>';
     }
 
-    adminGet(
-      '/api/admin/events?approval_status=Approved&limit=100&sort=date&light=1'
-    )
-      .then(function (data) {
+    function mergeSpotlightRows(primary, secondary) {
+      var byId = new Map();
+      (primary || []).forEach(function (row) {
+        if (row && row.id != null) byId.set(String(row.id), row);
+      });
+      (secondary || []).forEach(function (row) {
+        if (!row || row.id == null) return;
+        var key = String(row.id);
+        if (!byId.has(key)) byId.set(key, row);
+      });
+      return Array.from(byId.values());
+    }
+
+    Promise.all([
+      adminGet('/api/admin/events?approval_status=Approved&featured=1&limit=100&sort=date&light=1'),
+      adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date&light=1&when=upcoming'),
+    ])
+      .then(function (results) {
         if (loadGen !== featuredSpotlightLoadGen) return;
         if (!document.getElementById('featured-tbody')) return;
-        if (!data || !data.ok) {
+        var featuredData = results[0];
+        var upcomingData = results[1];
+        var ok = (featuredData && featuredData.ok) || (upcomingData && upcomingData.ok);
+        if (!ok) {
           if (status) {
             status.textContent =
               'Could not load events.' +
-              (data && data.message ? ' ' + data.message : '');
+              (featuredData && featuredData.message
+                ? ' ' + featuredData.message
+                : upcomingData && upcomingData.message
+                  ? ' ' + upcomingData.message
+                  : '');
           }
           if (tbody) {
             tbody.innerHTML =
@@ -16200,7 +16249,10 @@
           }
           return;
         }
-        featuredSpotlightEvents = Array.isArray(data.events) ? data.events : [];
+        featuredSpotlightEvents = mergeSpotlightRows(
+          featuredData && featuredData.ok ? featuredData.events : [],
+          upcomingData && upcomingData.ok ? upcomingData.events : []
+        );
         try {
           paintFeaturedSpotlightTable();
         } catch (err) {
@@ -16320,15 +16372,29 @@
     bindSpotlightOrganiserFilters();
     bindSpotlightToggleHandlers();
 
-    adminGet('/api/admin/organisers?limit=100').then(function (data) {
+    Promise.all([
+      adminGet('/api/admin/organisers?featured=1&limit=100'),
+      adminGet('/api/admin/organisers?limit=100'),
+    ]).then(function (results) {
       var tbody = document.getElementById('spotlight-organisers-tbody');
       var status = document.getElementById('spotlight-organisers-status');
-      if (!data || !data.ok) {
+      var featuredData = results[0];
+      var allData = results[1];
+      if ((!featuredData || !featuredData.ok) && (!allData || !allData.ok)) {
         if (status) status.textContent = 'Could not load organisers.';
         if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
         return;
       }
-      featuredSpotlightOrganisers = data.organisers || [];
+      var byId = new Map();
+      ((featuredData && featuredData.ok && featuredData.organisers) || []).forEach(function (row) {
+        if (row && row.id != null) byId.set(String(row.id), row);
+      });
+      ((allData && allData.ok && allData.organisers) || []).forEach(function (row) {
+        if (!row || row.id == null) return;
+        var key = String(row.id);
+        if (!byId.has(key)) byId.set(key, row);
+      });
+      featuredSpotlightOrganisers = Array.from(byId.values());
       paintSpotlightOrganisersTable();
     });
   }
@@ -16365,15 +16431,29 @@
     bindSpotlightOpportunityFilters();
     bindSpotlightToggleHandlers();
 
-    adminGet('/api/admin/opportunities?approval_status=Approved&limit=100&sort=title').then(function (data) {
+    Promise.all([
+      adminGet('/api/admin/opportunities?approval_status=Approved&featured=1&limit=100&sort=title'),
+      adminGet('/api/admin/opportunities?approval_status=Approved&limit=100&sort=title'),
+    ]).then(function (results) {
       var tbody = document.getElementById('spotlight-opportunities-tbody');
       var status = document.getElementById('spotlight-opportunities-status');
-      if (!data || !data.ok) {
+      var featuredData = results[0];
+      var allData = results[1];
+      if ((!featuredData || !featuredData.ok) && (!allData || !allData.ok)) {
         if (status) status.textContent = 'Could not load opportunities.';
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
         return;
       }
-      featuredSpotlightOpportunities = data.opportunities || [];
+      var byId = new Map();
+      ((featuredData && featuredData.ok && featuredData.opportunities) || []).forEach(function (row) {
+        if (row && row.id != null) byId.set(String(row.id), row);
+      });
+      ((allData && allData.ok && allData.opportunities) || []).forEach(function (row) {
+        if (!row || row.id == null) return;
+        var key = String(row.id);
+        if (!byId.has(key)) byId.set(key, row);
+      });
+      featuredSpotlightOpportunities = Array.from(byId.values());
       paintSpotlightOpportunitiesTable();
     });
   }

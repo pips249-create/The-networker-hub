@@ -230,6 +230,8 @@ async function listOpportunitiesForAdmin(query) {
 
   let dbQuery = sb.from('business_opportunities').select('*', { count: 'exact' });
 
+  dbQuery = dbQuery.order('featured', { ascending: false });
+
   if (sort === 'title') {
     dbQuery = dbQuery.order('title', { ascending: true });
   } else if (sort === 'host') {
@@ -323,7 +325,8 @@ async function createAdminOpportunity(input) {
   const about = parseAbout(input.about != null ? input.about : input.about_text || input.aboutText);
   const meta = buildMetaFromAdminInput(input);
   const geo = deriveOpportunityGeo(input, meta);
-  const featured = Boolean(input.featured);
+  const { parseAdminBool } = require('../admin-bool');
+  const featured = parseAdminBool(input.featured);
   if (featured && isNetworkMarketingType(type)) {
     throw new Error('network_marketing_not_spotlight');
   }
@@ -670,10 +673,14 @@ module.exports = async function handler(req, res) {
       patch.approval_status = approval || null;
     }
     if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-      patch.featured = Boolean(body.featured);
+      const { parseAdminBool } = require('../admin-bool');
+      patch.featured = parseAdminBool(body.featured);
       // Admin grants stay until removed — clear paid expiry so premium spotlight
-      // treats the listing as live again (matches Command Centre copy).
+      // treats a new tick as live. Untick also clears expiry + premium tier.
       patch.featured_until = null;
+      if (!patch.featured) {
+        patch.package_tier = 'standard';
+      }
     }
 
     if (!Object.keys(patch).length) {

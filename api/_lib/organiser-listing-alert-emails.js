@@ -42,6 +42,7 @@ function buildSavedOrganiserNewListingVars({ attendee, organiser, eventRow, even
     listing_badge: fields.listing_badge,
     listing_headline: fields.listing_headline,
     listing_intro: fields.listing_intro,
+    listing_follow_on: fields.listing_follow_on,
     listing_subject: fields.listing_subject,
     event_date_prefix: fields.event_date_prefix,
     listing_cta_label: fields.listing_cta_label,

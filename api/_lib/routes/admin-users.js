@@ -85,9 +85,10 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: 'no_organiser_profile', message: 'This user has no organiser profile to feature.' });
       }
 
+      const { parseAdminBool } = require('../admin-bool');
       const { data, error } = await sb
         .from('organisers')
-        .update({ featured: Boolean(body.featured) })
+        .update({ featured: parseAdminBool(body.featured) })
         .eq('id', targetOrganiserId)
         .select('id, name, featured')
         .single();

@@ -60,7 +60,8 @@ function parseListQuery(query) {
         : visibilityRaw
       : '';
   const organiserId = String(query?.id || query?.organiser || '').trim();
-  return { offset, limit, q, incomplete, excludeHidden, visibility, organiserId };
+  const featuredOnly = query?.featured === '1' || query?.featured === 'true';
+  return { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly };
 }
 
 async function eventCountsForOrganisers(sb, organiserIds) {
@@ -310,7 +311,8 @@ function buildOrganiserPatch(body, photo_url) {
     patch.x_url = String(body.x_url || '').trim() || null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-    patch.featured = Boolean(body.featured);
+    const { parseAdminBool } = require('../admin-bool');
+    patch.featured = parseAdminBool(body.featured);
   }
   if (Object.prototype.hasOwnProperty.call(body, 'hide_from_browse')) {
     patch.listing_status = body.hide_from_browse ? 'unpublished' : 'published';
@@ -326,7 +328,8 @@ function buildOrganiserPatch(body, photo_url) {
 async function listOrganisersForAdmin(query) {
   const sb = getSupabaseAdmin();
   const { applyPublicOrganiserBrowseFilter } = require('../supabase-organisers-browse');
-  const { offset, limit, q, incomplete, excludeHidden, visibility, organiserId } = parseListQuery(query);
+  const { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly } =
+    parseListQuery(query);
 
   let dbQuery = sb
     .from('organisers')
@@ -334,10 +337,12 @@ async function listOrganisersForAdmin(query) {
       'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, featured, created_at',
       { count: 'exact' }
     )
+    .order('featured', { ascending: false })
     .order('name', { ascending: true });
 
   if (organiserId) dbQuery = dbQuery.eq('id', organiserId);
   else {
+    if (featuredOnly) dbQuery = dbQuery.eq('featured', true);
     if (q) {
       if (q.includes('@')) {
         const needle = q.toLowerCase();

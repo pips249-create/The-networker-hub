@@ -37,7 +37,7 @@
   </style>
 </head>
 <body style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
-<!-- hub-email-layout-v2 -->
+<!-- hub-email-layout-v3-purple -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
   <tr>
     <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
@@ -70,22 +70,27 @@
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Book your place — {{event_name}}</h1>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, you&apos;re in the membership for <strong style="color:#1c2040;">{{organiser_name}}</strong> but we don&apos;t have your booking for this meeting yet. Sign in with this email to book member tickets.</p>
           </td>
-        </tr><tr><td class="mobile-pad" style="padding:0 40px 20px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;"><tr><td style="padding:24px;"><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">{{event_date}}{{event_time}} &middot; {{event_location}}</p></td></tr></table></td></tr><tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
-        {{mini_sponsors_row}}
+        </tr><tr><td class="mobile-pad" style="padding:0 40px 20px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:16px;"><tr><td style="padding:24px;"><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">{{event_date}}{{event_time}} &middot; {{event_location}}</p></td></tr></table></td></tr><tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
+                {{mini_sponsors_row}}
         <tr>
-          <td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
+          <td class="mobile-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
               <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:rgba(255,255,255,0.55);margin:0 0 12px;">You received this because you&apos;re in {{organiser_name}}&apos;s membership on The Networker Hub.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
+              Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
+              <a href="mailto:{{support_email}}" style="color:#d9c4e0;text-decoration:none;">{{support_email}}</a>
+            </p>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
-              <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
+              <a href="{{privacy_url}}" style="color:#d9c4e0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
-              <a href="{{terms_url}}" style="color:#4aa8f0;text-decoration:none;">Terms</a>
+              <a href="{{terms_url}}" style="color:#d9c4e0;text-decoration:none;">Terms</a>
               &nbsp;&middot;&nbsp;
-              <a href="{{contact_url}}" style="color:#4aa8f0;text-decoration:none;">Contact</a>
+              <a href="{{refunds_url}}" style="color:#d9c4e0;text-decoration:none;">Refunds</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{contact_url}}" style="color:#d9c4e0;text-decoration:none;">Contact</a>
             &nbsp;&middot;&nbsp;
-              <a href="{{unsubscribe_url}}" style="color:#9a7aa8;text-decoration:none;">Unsubscribe</a>
+              <a href="{{unsubscribe_url}}" style="color:#ebe0f0;text-decoration:none;">Unsubscribe</a>
             </p>
           </td>
         </tr>

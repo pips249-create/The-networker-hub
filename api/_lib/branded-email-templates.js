@@ -114,7 +114,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   meeting_link_added: {
     file: 'meeting-link-added.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Join link for {{event_name}}',
   },
   event_details_updated: {
@@ -124,17 +124,17 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   online_join_reminder: {
     file: 'online-join-reminder.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Join online in 1 hour — {{event_name}}',
   },
   post_event_review_request: {
     file: 'post-event-review-request.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'How was {{event_name}}?',
   },
   post_event_review_reminder: {
     file: 'post-event-review-reminder.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Quick reminder — how was {{event_name}}?',
   },
   event_saved_search_match: {
@@ -172,22 +172,22 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   member_roster_invite: {
     file: 'member-roster-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: '{{organiser_name}} added you to their membership on The Networker Hub',
   },
   member_roster_existing: {
     file: 'member-roster-existing.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: '{{organiser_name}} added you to their membership',
   },
   member_roster_pay_invite: {
     file: 'member-roster-pay-invite.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Pay for your {{organiser_name}} membership',
   },
   member_roster_payment_failed: {
     file: 'member-roster-payment-failed.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Update your card for {{organiser_name}} membership',
   },
   member_roster_payment_failed_organiser: {
@@ -197,7 +197,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   member_roster_renewal_receipt: {
     file: 'member-roster-renewal-receipt.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Membership receipt — {{organiser_name}}',
   },
   category_exclusivity_payment_reminder: {
@@ -262,12 +262,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   saved_organiser_new_listing: {
     file: 'saved-organiser-new-listing.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple-listing-follow',
     subject: '{{listing_subject}}',
   },
   member_roster_new_event: {
     file: 'member-roster-new-event.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple-listing-follow',
     subject: '{{listing_subject}}',
   },
   organiser_monthly_group_update: {
@@ -282,12 +282,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   member_roster_booking_reminder: {
     file: 'member-roster-booking-reminder.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Reminder — book {{event_name}} with {{organiser_name}}',
   },
   password_reset: {
     file: 'password-reset.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Reset your Networker Hub password',
   },
   organiser_email_verify: {

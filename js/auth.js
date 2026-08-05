@@ -295,7 +295,7 @@
           if (link && dev) {
             dev.hidden = false;
             dev.innerHTML =
-              '<strong>Reset link</strong> (valid 1 hour):<br><a href="' +
+              '<strong>Reset link</strong> (valid 15 minutes):<br><a href="' +
               link +
               '">' +
               link +

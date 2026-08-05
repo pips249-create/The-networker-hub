@@ -231,9 +231,11 @@ async function syncSeriesFeaturedPeers(sb) {
     };
 
     const upcomingIds = upcomingBrowseRows(peers).map((peer) => peer.id);
+    // Only refresh paid metadata on peers that are already featured.
+    // Never re-feature an occurrence an admin (or expiry job) has cleared.
     const needSync = upcomingIds.filter((peerId) => {
       const peer = peers.find((item) => item.id === peerId);
-      return !peer?.featured || peer.featured_until !== anchor.featured_until;
+      return peer?.featured && peer.featured_until !== anchor.featured_until;
     });
 
     if (!needSync.length) continue;
@@ -244,6 +246,31 @@ async function syncSeriesFeaturedPeers(sb) {
   }
 
   return { synced };
+}
+
+/** Clear Premium Spotlight on an event and every peer in its series. */
+async function clearEventFeaturedPlacement(eventId) {
+  const id = String(eventId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_event_id');
+
+  const sb = getSupabaseAdmin();
+  const current = await getEventRow(id);
+  if (!current) throw new Error('event_not_found');
+
+  const peers = await fetchSeriesPeerRows(sb, current);
+  const targetIds = [...new Set((peers.length ? peers : [current]).map((row) => row.id).filter(Boolean))];
+  if (!targetIds.length) targetIds.push(id);
+
+  const patch = {
+    featured: false,
+    featured_until: null,
+    featured_expiry_reminder_sent_at: null,
+  };
+
+  const { data, error } = await sb.from('events').update(patch).in('id', targetIds).select('*');
+  if (error) throw new Error(error.message);
+  const anchor = (data || []).find((row) => row.id === id) || (data || [])[0] || { ...current, ...patch };
+  return { event: anchor, seriesEventIds: targetIds };
 }
 
 async function expireFeaturedEvents(sb) {
@@ -371,6 +398,7 @@ module.exports = {
   previewFeaturedPlacement,
   calculateFeaturedListingQuote,
   activateEventFeatured,
+  clearEventFeaturedPlacement,
   handleEventFeaturedCheckout,
   deactivateFeaturedForStartedEvents,
   syncSeriesFeaturedPeers,

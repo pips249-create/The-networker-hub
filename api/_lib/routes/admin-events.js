@@ -12,6 +12,7 @@ const { ukOutcode } = require('../supabase-events');
 const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
+const { parseAdminBool } = require('../admin-bool');
 
 function parseBody(req) {
   let body = req.body;
@@ -179,6 +180,11 @@ async function listEventsForAdmin(query) {
       : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked',
     { count: 'exact' }
   );
+
+  // Spotlight / light lists: featured rows first so admins can untick them.
+  if (light || featuredOnly) {
+    dbQuery = dbQuery.order('featured', { ascending: false });
+  }
 
   if (sort === 'title') {
     dbQuery = dbQuery.order('title', { ascending: true });
@@ -394,9 +400,9 @@ async function buildEventPatchFromBody(body) {
     patch.approval_status = approval || null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'featured')) {
-    patch.featured = Boolean(body.featured);
-    // Admin grants stay until removed — clear paid expiry metadata so the
-    // listing counts as live in the spotlight carousel again.
+    patch.featured = parseAdminBool(body.featured);
+    // Admin grants stay until removed — clear paid expiry so spotlight treats
+    // a new tick as live. Untick also clears expiry metadata.
     patch.featured_until = null;
     patch.featured_expiry_reminder_sent_at = null;
   }
@@ -561,7 +567,13 @@ async function adminDeleteEvent(sb, eventId, opts) {
 
 async function bulkUpdateEvents(ids, body) {
   const patch = await buildEventPatchFromBody(body);
-  if (!Object.keys(patch).length) {
+  const clearFeatured = Object.prototype.hasOwnProperty.call(patch, 'featured') && patch.featured === false;
+  if (clearFeatured) {
+    delete patch.featured;
+    delete patch.featured_until;
+    delete patch.featured_expiry_reminder_sent_at;
+  }
+  if (!Object.keys(patch).length && !clearFeatured) {
     const err = new Error('no_fields');
     err.status = 400;
     throw err;
@@ -578,8 +590,19 @@ async function bulkUpdateEvents(ids, body) {
 
   for (const id of ids) {
     try {
-      const event = await applyEventPatch(sb, id, { ...patch });
-      updated.push(event);
+      if (clearFeatured) {
+        const { clearEventFeaturedPlacement } = require('../event-featured');
+        await clearEventFeaturedPlacement(id);
+      }
+      if (Object.keys(patch).length) {
+        const event = await applyEventPatch(sb, id, { ...patch });
+        updated.push(event);
+      } else if (clearFeatured) {
+        const { data: row, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!row) throw new Error('not_found');
+        updated.push(mapEventRow(row, new Map(), null, null));
+      }
     } catch (e) {
       skipped.push({
         id,
@@ -959,6 +982,10 @@ module.exports = async function handler(req, res) {
       const sb = getSupabaseAdmin();
       const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
       const { applyOrganiserContactEmail } = require('./admin-organisers');
+      const featuredOnlyKeys = new Set(['featured', 'featured_until', 'featured_expiry_reminder_sent_at']);
+      const patchKeys = Object.keys(patch || {});
+      const onlyFeaturedToggle =
+        patchKeys.length > 0 && patchKeys.every((key) => featuredOnlyKeys.has(key));
       const organiserContactEmail = String(body.organiser_contact_email || body.contact_email || '').trim();
       let claimOrganiserId = String(body.organiser_id || patch.organiser_id || '').trim();
       if (organiserContactEmail) {
@@ -974,17 +1001,34 @@ module.exports = async function handler(req, res) {
           await applyOrganiserContactEmail(claimOrganiserId, organiserContactEmail);
         }
       }
-      if (claimOrganiserId) {
-        await ensureOrganiserClaimedForAdminEvent(claimOrganiserId);
-      } else {
-        const { data: existingRow } = await sb
-          .from('events')
-          .select('organiser_id')
-          .eq('id', id)
-          .maybeSingle();
-        if (existingRow?.organiser_id) {
-          await ensureOrganiserClaimedForAdminEvent(existingRow.organiser_id);
+      // Featured-only toggles should not block on claim/provision side effects.
+      if (!onlyFeaturedToggle) {
+        if (claimOrganiserId) {
+          await ensureOrganiserClaimedForAdminEvent(claimOrganiserId);
+        } else {
+          const { data: existingRow } = await sb
+            .from('events')
+            .select('organiser_id')
+            .eq('id', id)
+            .maybeSingle();
+          if (existingRow?.organiser_id) {
+            await ensureOrganiserClaimedForAdminEvent(existingRow.organiser_id);
+          }
         }
+      }
+      if (Object.prototype.hasOwnProperty.call(patch, 'featured') && patch.featured === false) {
+        const { clearEventFeaturedPlacement } = require('../event-featured');
+        try {
+          await clearEventFeaturedPlacement(id);
+        } catch (clearErr) {
+          if (clearErr.message === 'event_not_found') {
+            return json(res, 404, { error: 'not_found' });
+          }
+          throw clearErr;
+        }
+        delete patch.featured;
+        delete patch.featured_until;
+        delete patch.featured_expiry_reminder_sent_at;
       }
       if (Object.keys(patch).length) {
         await applyEventPatch(sb, id, patch);
