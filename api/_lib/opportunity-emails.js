@@ -35,27 +35,89 @@ function truncateText(text, max) {
   return s.slice(0, max - 1).trim() + '…';
 }
 
+function humanizeCategory(category) {
+  const raw = String(category || '').trim();
+  if (!raw || raw.toLowerCase() === 'general') return '';
+  return raw
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+function opportunityLocationLabel(opportunity) {
+  const input = opportunity && typeof opportunity === 'object' ? opportunity : {};
+  const meta = input.meta && typeof input.meta === 'object' ? input.meta : {};
+  return String(
+    input.location ||
+      input.territory ||
+      meta.location ||
+      meta.territory ||
+      input.outcode ||
+      ''
+  ).trim();
+}
+
+function detailRow(label, value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return (
+    '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
+    '<span style="color:rgba(255,255,255,0.55);">' +
+    escapeHtml(label) +
+    '</span><br>' +
+    '<span style="color:#ffffff;font-weight:600;">' +
+    escapeHtml(text) +
+    '</span></td></tr>'
+  );
+}
+
+/** Shared listing fields for opportunity transactional emails. */
+function buildOpportunityListingEmailVars(opportunity) {
+  const row = opportunity && typeof opportunity === 'object' ? opportunity : {};
+  const title = String(row.title || 'Your opportunity').trim();
+  const host = String(row.host || '').trim();
+  const category = humanizeCategory(row.category || row.type);
+  const location = opportunityLocationLabel(row);
+  const premiumUntil = row.featuredUntil ? formatEmailDate(row.featuredUntil) : '';
+  const listingUntil = row.listingExpiresAt ? formatEmailDate(row.listingExpiresAt) : '';
+
+  const detailRows =
+    detailRow('Company', host) +
+    detailRow('Category', category) +
+    detailRow('Location', location) +
+    detailRow('Premium until', premiumUntil) +
+    detailRow('Listing until', listingUntil);
+
+  return {
+    opportunity_title: title,
+    opportunity_host: host,
+    opportunity_category: category,
+    opportunity_location: location,
+    premium_until: premiumUntil,
+    listing_until: listingUntil,
+    opportunity_details_rows: detailRows,
+  };
+}
+
 async function sendOpportunityListingLiveEmail(opportunity) {
   const to = ownerEmailForOpportunity(opportunity);
   if (!to) return { skipped: true, reason: 'no_owner_email' };
 
   const siteUrl = siteBase();
+  const listing = buildOpportunityListingEmailVars(opportunity);
   await sendTemplatedEmail({
     slug: 'opportunity_listing_live',
     to,
     variables: {
       owner_name: ownerNameFromOpportunity(opportunity, to),
-      opportunity_title: String(opportunity.title || 'Your opportunity').trim(),
+      ...listing,
       opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
       dashboard_url: organiserBusinessDashboardUrl(siteUrl),
-      expiry_date: opportunity.listingExpiresAt
-        ? formatEmailDate(opportunity.listingExpiresAt)
-        : '',
-      expiry_note: opportunity.listingExpiresAt
-        ? 'Your listing is paid until ' + formatEmailDate(opportunity.listingExpiresAt) + '.'
+      expiry_date: listing.listing_until,
+      expiry_note: listing.listing_until
+        ? 'Your listing is paid until ' + listing.listing_until + '.'
         : 'Your listing is now visible in the business opportunities directory.',
     },
-    subject: 'Your opportunity is live — ' + String(opportunity.title || 'listing').trim(),
+    subject: 'Your opportunity is live — ' + listing.opportunity_title,
   });
   return { sent: true, to };
 }
@@ -65,16 +127,20 @@ async function sendOpportunityPremiumLiveEmail(opportunity) {
   if (!to) return { skipped: true, reason: 'no_owner_email' };
 
   const siteUrl = siteBase();
+  const listing = buildOpportunityListingEmailVars(opportunity);
   await sendTemplatedEmail({
     slug: 'opportunity_premium_live',
     to,
     variables: {
       owner_name: ownerNameFromOpportunity(opportunity, to),
-      opportunity_title: String(opportunity.title || 'Your opportunity').trim(),
+      ...listing,
       opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
       dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+      premium_note: listing.premium_until
+        ? 'Premium spotlight is active until ' + listing.premium_until + '.'
+        : 'Premium spotlight is now active on the business opportunities directory.',
     },
-    subject: 'Premium placement active — ' + String(opportunity.title || 'listing').trim(),
+    subject: 'Premium placement active — ' + listing.opportunity_title,
   });
   return { sent: true, to };
 }
@@ -155,6 +221,7 @@ module.exports = {
   formatEmailDate,
   ownerNameFromOpportunity,
   ownerEmailForOpportunity,
+  buildOpportunityListingEmailVars,
   sendOpportunityListingLiveEmail,
   sendOpportunityPremiumLiveEmail,
   sendOpportunityEnquiryEmails,

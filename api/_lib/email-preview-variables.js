@@ -373,11 +373,19 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.event_date = 'Tuesday 14 July 2026';
     vars.event_date_clause = ' on Tuesday 14 July 2026';
     vars.attendee_count = '3';
+    vars.from_name = 'Sarah from City Connectors';
+    vars.list_kicker = 'Attendee round-up';
+    vars.list_headline = 'Who attended Summer Networking Mixer';
+    vars.list_lede =
+      'Hi Alex, here are the confirmed attendees from <strong style="color:#1c2040;">Summer Networking Mixer</strong> on Tuesday 14 July 2026 — reach out while the conversations are fresh.';
+    vars.list_count_label = '3 attendees';
+    vars.footer_reason = 'You received this because you attended';
     vars.organiser_note_html =
       '<tr><td class="mobile-pad" style="padding:8px 40px 16px;">' +
       '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;">' +
       '<tr><td style="padding:18px 20px;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">A note from the organiser</p>' +
+      '<img src="https://placehold.co/112x112/png?text=CC" alt="City Connectors" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:cover;border:0;border-radius:50%;margin:0 0 12px;" />' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.4px;margin:0 0 8px;">From Sarah from City Connectors</p>' +
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Lovely to see you all — here are the people who came along so you can keep the conversations going.</p>' +
       '</td></tr></table></td></tr>';
     vars.connections_list_html =
@@ -422,6 +430,24 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.sponsor_section = vars.sponsor_row;
     if (!String(vars.mini_sponsors_row || '').trim()) {
       vars.mini_sponsors_row = sampleMiniSponsorsRow();
+    }
+    if (!String(vars.opportunity_details_rows || '').trim()) {
+      vars.opportunity_details_rows =
+        '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
+        '<span style="color:rgba(255,255,255,0.55);">Company</span><br>' +
+        '<span style="color:#ffffff;font-weight:600;">Northbridge Partners</span></td></tr>' +
+        '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
+        '<span style="color:rgba(255,255,255,0.55);">Category</span><br>' +
+        '<span style="color:#ffffff;font-weight:600;">Franchise</span></td></tr>' +
+        '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
+        '<span style="color:rgba(255,255,255,0.55);">Location</span><br>' +
+        '<span style="color:#ffffff;font-weight:600;">Manchester</span></td></tr>' +
+        '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
+        '<span style="color:rgba(255,255,255,0.55);">Premium until</span><br>' +
+        '<span style="color:#ffffff;font-weight:600;">Tuesday 12 August 2026</span></td></tr>';
+    }
+    if (!String(vars.premium_note || '').trim()) {
+      vars.premium_note = 'Premium spotlight is active until Tuesday 12 August 2026.';
     }
   } else if (slug && String(slug).startsWith('organiser_')) {
     if (!String(vars.sponsor_row || '').trim()) {

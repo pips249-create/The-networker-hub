@@ -322,8 +322,15 @@ async function getEmailSponsorVars(slug) {
       mainBlock = await resolveEventsMainSponsorBlock(sb);
     }
 
+    const sponsorOpts = { label };
+    // Opportunity (and organiser) directory logos are usually full-colour on white.
+    // A dark pad makes them look like a white sticker — keep those on the cream header.
+    if (OPPORTUNITY_EMAIL_SLUGS.has(slug) || ORGANISER_EMAIL_SLUGS.has(slug)) {
+      sponsorOpts.logoBandBg = '#ffffff';
+    }
+
     const sponsorRow = mainBlock
-      ? wrapSponsorRow(buildSponsorSection(mainBlock, { label }))
+      ? wrapSponsorRow(buildSponsorSection(mainBlock, sponsorOpts))
       : '';
 
     let miniRow = '';

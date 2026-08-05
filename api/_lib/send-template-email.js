@@ -172,6 +172,7 @@ const RAW_HTML_PLACEHOLDER_KEYS = new Set([
   'changes_section',
   'denial_reason_block',
   'event_meta_rows',
+  'opportunity_details_rows',
   'meeting_link_row',
   'listing_badge',
   'organiser_intro',
