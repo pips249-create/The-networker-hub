@@ -1675,6 +1675,10 @@
       opportunitySavedScope = 'listings';
       return 'saved-opportunities';
     }
+    if (hash === 'opportunity-enquiries' || hash === 'opportunities') {
+      opportunitySavedScope = 'enquiries';
+      return 'saved-opportunities';
+    }
     if (hash === 'reviews-done') {
       savedScope = 'reviews';
       reviewsScope = 'done';
@@ -2278,6 +2282,10 @@
       setTicketsScope(nextRoute);
       nextRoute = 'tickets';
     }
+    if (nextRoute === 'opportunity-enquiries') {
+      setOpportunitySavedScope('enquiries');
+      nextRoute = 'saved-opportunities';
+    }
     currentRoute = nextRoute;
     closeUtilityMenus();
     updateLayoutHeader(layoutRouteKey(currentRoute));
@@ -2285,7 +2293,7 @@
     document.querySelectorAll('[data-ad-page]').forEach((p) => {
       p.classList.toggle('is-active', p.getAttribute('data-ad-page') === activePage);
     });
-    document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
+    document.querySelectorAll('[data-ad-route]').forEach((a) => {
       const navRoute = a.getAttribute('data-ad-route');
       a.classList.toggle('is-active', navRoute === currentRoute);
     });
@@ -2338,9 +2346,13 @@
     body.innerHTML = '';
     if (!list.length) {
       if (empty) empty.hidden = false;
+      const scroll = body.closest('.ad-table-scroll');
+      if (scroll) scroll.hidden = true;
       return;
     }
     if (empty) empty.hidden = true;
+    const scroll = body.closest('.ad-table-scroll');
+    if (scroll) scroll.hidden = false;
 
     list.forEach((enquiry) => {
       const tr = document.createElement('tr');
@@ -2419,13 +2431,20 @@
       el.textContent = String(n);
     };
     set('ad-side-tickets', upcomingList().length);
+    const oppTotal =
+      (opportunityEnquiries || []).length + savedOpportunities.length + savedOpportunitySearches.length;
+    set('ad-side-opportunities', oppTotal);
     set('ad-side-enquiries', (opportunityEnquiries || []).length);
     set('ad-side-pending', pendingReviewsList().length);
     set('ad-side-reviewed', doneReviewsList().length);
     set('ad-side-saved-opportunities', savedOpportunities.length + savedOpportunitySearches.length);
+    set('ad-bottom-tickets', upcomingList().length);
+    set('ad-bottom-saved', pendingReviewsList().length);
+    set('ad-bottom-opportunities', oppTotal);
     setTabCount('ad-tickets-count-upcoming', upcomingList().length);
     setTabCount('ad-tickets-count-past', pastList().length);
     setTabCount('ad-tickets-count-cancellations', (cancelledBookings || []).length);
+    setTabCount('ad-opp-saved-count-enquiries', (opportunityEnquiries || []).length);
     setTabCount('ad-opp-saved-count-listings', savedOpportunities.length);
     setTabCount('ad-opp-saved-count-alerts', savedOpportunitySearches.length);
     setTabCount('ad-saved-count-groups', myGroups.length);
@@ -3697,6 +3716,11 @@
       renderCancellationsTable();
     } else if (key === 'saved-opportunities') {
       try {
+        renderOpportunityEnquiries();
+      } catch (err) {
+        /* non-fatal */
+      }
+      try {
         renderSavedOpportunitiesTable();
       } catch (err) {
         /* non-fatal */
@@ -3707,6 +3731,7 @@
         /* non-fatal */
       }
     } else if (key === 'opportunity-enquiries') {
+      setOpportunitySavedScope('enquiries');
       renderOpportunityEnquiries();
     }
 
@@ -3731,13 +3756,10 @@
     renderRouteTables('past', { force: true });
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
-    renderRouteTables('opportunity-enquiries', { force: true });
     if (savedEvents.length || myGroups.length || savedOrganisers.length || pendingReviewsList().length || doneReviewsList().length) {
       renderRouteTables('saved', { force: true });
     }
-    if (savedOpportunities.length || savedOpportunitySearches.length) {
-      renderRouteTables('saved-opportunities', { force: true });
-    }
+    renderRouteTables('saved-opportunities', { force: true });
     updateSideCounts();
   }
 
@@ -3774,7 +3796,9 @@
   }
 
   function bindNav() {
-    document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
+    document.querySelectorAll('[data-ad-route]').forEach((a) => {
+      if (a.dataset.boundAdRoute) return;
+      a.dataset.boundAdRoute = '1';
       a.addEventListener('click', (e) => {
         e.preventDefault();
         setRoute(a.getAttribute('data-ad-route') || 'overview');
@@ -3793,6 +3817,10 @@
           setSavedScope('reviews');
           setReviewsScope(pendingReviewsList().length > 0 ? 'pending' : 'done');
           route = 'saved';
+        }
+        if (route === 'opportunity-enquiries') {
+          setOpportunitySavedScope('enquiries');
+          route = 'saved-opportunities';
         }
         setRoute(route);
       });
