@@ -1905,6 +1905,7 @@
   let guestVisitEligibility = null;
   let alumniEligibility = null;
   let alumniInviteToken = '';
+  let ceMemberInviteToken = '';
   let rosterMemberTickets = [];
   let rosterMembership = null;
   let eventApplicationState = null;
@@ -2208,6 +2209,7 @@
     };
     if (isAlumni) {
       body.alumniInviteToken = alumniEligibility?.inviteToken || alumniInviteToken || '';
+      if (ceMemberInviteToken) body.ceMemberToken = ceMemberInviteToken;
     }
     if (!isGuestVisit && !isAlumni) {
       body.amountPaid = 0;
@@ -3522,9 +3524,20 @@
 
     if (eventIsCategoryExclusivity(ev)) {
       panel.classList.add('is-approval-mode');
-      buy.textContent = 'Apply for a Seat';
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
-      if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
+      const footText = document.getElementById('category-exclusivity-apply-foot-text');
+      if (isRosterMemberForEvent()) {
+        buy.textContent = 'Book as a member';
+        if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
+        if (footText) {
+          footText.textContent =
+            'You’re on this group’s membership list — book without applying. Guests still need host approval.';
+        }
+      } else {
+        buy.textContent = 'Apply for a Seat';
+        if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
+        if (footText) footText.textContent = 'Application reviewed by the organiser';
+      }
     } else if (
       eventAllowsGuestPasses(ev) &&
       guestVisitEligibility?.eligible &&
@@ -4342,7 +4355,10 @@
           await refreshEventApplicationUi(evNow);
           return;
         }
-        if (evNow?.isApprovalRequired || eventIsCategoryExclusivity(evNow)) {
+        if (
+          (evNow?.isApprovalRequired || eventIsCategoryExclusivity(evNow)) &&
+          !isRosterMemberForEvent()
+        ) {
           if (applicationBlocksReapply(eventApplicationState)) {
             await refreshEventApplicationUi(evNow);
             return;
@@ -4528,10 +4544,14 @@
       if (intent.action === 'apply') {
         await refreshEventApplicationUi(eventForResume);
         if (applicationBlocksReapply(eventApplicationState)) return;
-        showSeatApplication(true);
-        const industry = document.getElementById('apply-industry');
-        if (industry) industry.focus();
-        return;
+        if (isRosterMemberForEvent() && eventIsCategoryExclusivity(eventForResume)) {
+          // Fall through to normal checkout for members.
+        } else {
+          showSeatApplication(true);
+          const industry = document.getElementById('apply-industry');
+          if (industry) industry.focus();
+          return;
+        }
       }
 
       update();
@@ -4800,6 +4820,7 @@
           }
           setEventLoading(false);
           alumniInviteToken = String(params.get('alumni_token') || '').trim();
+          ceMemberInviteToken = String(params.get('ce_member_token') || '').trim();
           if (eventIsGuestProgramme(displayEv)) {
             await Promise.all([
               loadGuestVisitEligibility(displayEv),

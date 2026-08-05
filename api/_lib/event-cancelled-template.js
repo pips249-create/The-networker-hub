@@ -12,7 +12,10 @@ function getCanonicalEventCancelledHtml() {
 
 function isStaleEventCancelledTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
+  if (!body.includes('hub-email-layout-v3-purple')) return true;
   if (!body.includes('This event has been cancelled')) return true;
+  if (!body.includes('{{logo_footer_url}}')) return true;
+  if (body.includes('background:#4a4446')) return true;
   const sponsorAt = body.indexOf('{{sponsor_row}}');
   const heroAt = body.indexOf('This event has been cancelled');
   const waveAt = body.indexOf('viewBox="0 0 600 40"');

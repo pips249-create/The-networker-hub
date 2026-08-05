@@ -75,6 +75,8 @@ async function createPaidCheckoutSession(opts) {
       dietary_requirements: String(opts.dietaryRequirements || '').trim().slice(0, 500),
       accessibility_requirements: String(opts.accessibilityRequirements || '').trim().slice(0, 500),
       alumni_invite_token: String(opts.alumniInviteToken || '').trim().slice(0, 120),
+      ce_member_token: String(opts.ceMemberToken || '').trim().slice(0, 120),
+      ce_member_direct_book: opts.ceMemberDirectBook ? '1' : '',
       quantity: String(opts.qty || 1),
       bundle_event_ids: String(opts.bundleEventIds || '').slice(0, 500),
       bundle_ticket_ids: String(opts.bundleTicketIds || '').slice(0, 500),

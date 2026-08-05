@@ -91,10 +91,12 @@ function wrapSponsorRow(sponsorInner) {
 }
 
 function resolveSponsorSection(vars, dbSection) {
-  const input = vars && typeof vars === 'object' ? vars : {};
   const fromDb = String(dbSection || '').trim();
   if (fromDb) return fromDb;
-  return String(input.sponsor_row || input.sponsor_section || '').trim();
+  // Ignore preview "Sample sponsor" leftovers — live CMS is the only source of truth.
+  const fromVars = String((vars && (vars.sponsor_row || vars.sponsor_section)) || '').trim();
+  if (/Sample sponsor/i.test(fromVars)) return '';
+  return fromVars;
 }
 
 /**

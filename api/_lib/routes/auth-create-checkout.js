@@ -31,6 +31,12 @@ const {
   bundleMetadataFromItems,
 } = require('../series-bundle-checkout');
 const { requiresApprovedApplication } = require('../category-exclusivity');
+const {
+  assertCeMemberBookingAllowed,
+  markCeMemberInviteRedeemed,
+  assertCeMemberSeatAvailable,
+  loadCeApplicationTicket,
+} = require('../ce-member-invites');
 
 function parseBody(req) {
   let body = req.body;
@@ -235,19 +241,64 @@ module.exports = async function handler(req, res) {
     const isAlumni = Boolean(ticketRow && isAlumniTicket(ticketRow));
     const isMembersOnly = Boolean(ticketRow && isMembersOnlyTicket(ticketRow));
 
-    // Category Exclusivity: must pay via an approved application registration.
+    const alumniInviteToken = String(body.alumniInviteToken || body.alumni_invite_token || '').trim();
+    const ceMemberToken = String(body.ceMemberToken || body.ce_member_token || '').trim();
+    let ceMemberEligibility = null;
     if (requiresApprovedApplication(evRes.data, ticketRow) && !registrationId) {
+      try {
+        ceMemberEligibility = await assertCeMemberBookingAllowed(sb, {
+          event: evRes.data,
+          organiserId: evRes.data.organiser_id,
+          email: sessionEmail || checkoutEmail,
+          attendeeId: session?.sub || null,
+          userId: session?.sub || null,
+          token: ceMemberToken || null,
+        });
+        const seatTicket = ticketRow || (await loadCeApplicationTicket(sb, eventId));
+        await assertCeMemberSeatAvailable(sb, seatTicket);
+      } catch (ceErr) {
+        const soft =
+          ceErr.code === 'not_member' ||
+          ceErr.code === 'not_ce_event' ||
+          ceErr.message === 'not_member' ||
+          ceErr.message === 'not_ce_event';
+        if (!soft) {
+          return json(res, ceErr.status || 400, {
+            ok: false,
+            error: ceErr.code || ceErr.message || 'ce_member_not_eligible',
+            message:
+              ceErr.code === 'applications_full' || ceErr.message === 'applications_full'
+                ? 'This event has no places left.'
+                : ceErr.message || 'Could not book as a member for this event.',
+          });
+        }
+        ceMemberEligibility = null;
+      }
+    }
+
+    // Category Exclusivity: approved application OR active Membership list direct book.
+    if (requiresApprovedApplication(evRes.data, ticketRow) && !registrationId && !ceMemberEligibility) {
       return json(res, 400, {
         ok: false,
         error: 'application_required',
         message:
-          'This event uses Category Exclusivity. Apply first, wait for approval, then pay from My Hub.',
+          'This event uses Category Exclusivity. Apply first, wait for approval, then pay from My Hub — or book as a member if you are on the organiser’s membership list.',
       });
     }
 
-    const alumniInviteToken = String(body.alumniInviteToken || body.alumni_invite_token || '').trim();
     if (isAlumni) {
       requestedQty = 1;
+    }
+    if (ceMemberEligibility) {
+      requestedQty = 1;
+      if (!session || !sessionEmail) {
+        return json(res, 401, {
+          ok: false,
+          error: 'not_authenticated',
+          message:
+            'Sign in with the email on this group’s membership list to book without applying.',
+        });
+      }
     }
     if (isGuestVisit) {
       unitPrice = 0;
@@ -340,10 +391,17 @@ module.exports = async function handler(req, res) {
     }
 
     if (unitPrice <= 0) {
-      if (isGuestVisit || isAlumni || isMembersOnly || registrationId || seriesMultiDate) {
+      if (
+        isGuestVisit ||
+        isAlumni ||
+        isMembersOnly ||
+        registrationId ||
+        seriesMultiDate ||
+        ceMemberEligibility
+      ) {
         const qty = seriesMultiDate
           ? seriesMultiDate.checkoutQty || 1
-          : isGuestVisit || isAlumni
+          : isGuestVisit || isAlumni || ceMemberEligibility
             ? 1
             : requestedQty;
         const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
@@ -435,9 +493,27 @@ module.exports = async function handler(req, res) {
           accessibilityRequirements,
           amountPaid: 0,
           paymentStatus: 'Free',
-          registrationKind: isGuestVisit ? 'guest_visit' : isAlumni ? 'alumni' : undefined,
+          registrationKind: isGuestVisit
+            ? 'guest_visit'
+            : isAlumni
+              ? 'alumni'
+              : ceMemberEligibility
+                ? 'application'
+                : undefined,
           alumniInviteToken: isAlumni ? alumniInviteToken : undefined,
+          ceMemberToken: ceMemberEligibility ? ceMemberToken || ceMemberEligibility.inviteToken : undefined,
+          ceMemberDirectBook: Boolean(ceMemberEligibility),
         });
+        if (ceMemberEligibility?.invite?.id && result?.id) {
+          try {
+            await markCeMemberInviteRedeemed(sb, {
+              inviteId: ceMemberEligibility.invite.id,
+              registrationId: result.id,
+            });
+          } catch (_) {
+            /* non-fatal */
+          }
+        }
         return json(res, 200, {
           ok: true,
           completed: true,
@@ -586,6 +662,10 @@ module.exports = async function handler(req, res) {
       dietaryRequirements,
       accessibilityRequirements,
       alumniInviteToken: isAlumni ? alumniInviteToken : '',
+      ceMemberToken: ceMemberEligibility
+        ? ceMemberToken || ceMemberEligibility.inviteToken || ''
+        : '',
+      ceMemberDirectBook: Boolean(ceMemberEligibility),
       eventId,
       ticketId,
       registrationId,

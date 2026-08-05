@@ -27,8 +27,17 @@ function requiresApprovedApplication(event, ticket) {
   return isCategoryExclusivityEvent(event) || isApplicationBasedTicket(ticket);
 }
 
+/**
+ * Active Membership list members may book CE tickets without a prior application.
+ * Callers must still verify roster membership server-side before bypassing.
+ */
+function allowsMemberDirectBook(event, ticket) {
+  return isCategoryExclusivityEvent(event) || isApplicationBasedTicket(ticket);
+}
+
 module.exports = {
   isCategoryExclusivityEvent,
   isApplicationBasedTicket,
   requiresApprovedApplication,
+  allowsMemberDirectBook,
 };

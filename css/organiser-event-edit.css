@@ -2007,8 +2007,15 @@ fieldset.ee-field {
   color: #9a3412;
 }
 
-.organiser-published-page .ep-featured-upsell.is-slots-full .ep-featured-footer {
-  display: none;
+.organiser-published-page .ep-featured-upsell.is-slots-full .ep-featured-price-block,
+.organiser-published-page .ep-featured-upsell.is-slots-full #ep-featured-yes {
+  display: none !important;
+}
+
+.organiser-published-page .ep-featured-upsell.is-slots-full #ep-featured-dashboard:not([hidden]) {
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
 }
 
 .organiser-published-page .ep-featured-upsell.is-slots-full .oe-premium-features {

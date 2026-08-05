@@ -21,6 +21,11 @@ const {
 } = require('./organiser-member-roster');
 const { parseBundleMetadata, newBookingGroupId } = require('./series-bundle-checkout');
 const { requiresApprovedApplication } = require('./category-exclusivity');
+const {
+  assertCeMemberBookingAllowed,
+  markCeMemberInviteRedeemed,
+  assertCeMemberSeatAvailable,
+} = require('./ce-member-invites');
 
 /**
  * Insert a registration after successful checkout.
@@ -246,13 +251,42 @@ async function createRegistrationFromPayment(input) {
     }
   }
 
-  if (
+  const ceMemberToken = String(input.ceMemberToken || input.ce_member_token || '').trim();
+  const ceMemberDirectBook = Boolean(
+    input.ceMemberDirectBook || input.ce_member_direct_book
+  );
+  let ceMemberEligibility = null;
+  const needsApplication =
     requiresApprovedApplication({ attendance_mode: eventAttendanceMode }, ticketRow) ||
-    registrationKind === 'application'
-  ) {
-    const err = new Error('application_required');
-    err.status = 400;
-    throw err;
+    registrationKind === 'application';
+
+  if (needsApplication) {
+    try {
+      ceMemberEligibility = await assertCeMemberBookingAllowed(sb, {
+        event: { id: eventId, attendance_mode: eventAttendanceMode, organiser_id: organiserId },
+        organiserId,
+        email,
+        attendeeId,
+        userId: attendeeId,
+        token: ceMemberToken || null,
+      });
+      if (ticketRow) await assertCeMemberSeatAvailable(sb, ticketRow);
+      registrationKind = 'application';
+    } catch (ceErr) {
+      const soft =
+        ceErr.code === 'not_member' ||
+        ceErr.message === 'not_member' ||
+        ceErr.code === 'not_ce_event' ||
+        ceErr.message === 'not_ce_event' ||
+        ceErr.code === 'membership_inactive' ||
+        ceErr.message === 'membership_inactive';
+      if (soft) {
+        const err = new Error('application_required');
+        err.status = 400;
+        throw err;
+      }
+      throw ceErr;
+    }
   }
 
   const alumniInviteToken = String(input.alumniInviteToken || input.alumni_invite_token || '').trim();
@@ -351,6 +385,17 @@ async function createRegistrationFromPayment(input) {
       inviteId: alumniEligibility.invite.id,
       registrationId: ins.data.id,
     });
+  }
+
+  if (ceMemberEligibility?.invite?.id) {
+    try {
+      await markCeMemberInviteRedeemed(sb, {
+        inviteId: ceMemberEligibility.invite.id,
+        registrationId: ins.data.id,
+      });
+    } catch (_) {
+      /* non-fatal */
+    }
   }
 
   await lockEventOnFirstSale(sb, eventId);
@@ -626,6 +671,9 @@ async function handleCheckoutSessionCompleted(session) {
     stripeCheckoutSessionId: session.id,
     registrationId: metadata.registration_id || metadata.registrationId || null,
     alumniInviteToken: metadata.alumni_invite_token || metadata.alumniInviteToken || null,
+    ceMemberToken: metadata.ce_member_token || metadata.ceMemberToken || null,
+    ceMemberDirectBook:
+      metadata.ce_member_direct_book === '1' || metadata.ceMemberDirectBook === '1',
   });
 }
 

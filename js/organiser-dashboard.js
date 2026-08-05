@@ -4580,6 +4580,13 @@
           esc(id) +
           '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Invite previous attendees</strong><span>Email past attendees a locked ticket link</span></span></button>'
         : '';
+    const ceMemberItem =
+      (ev.attendanceMode === 'category_exclusivity' || ev.attendanceMode === 'osop') &&
+      String(ev.status || '').toLowerCase() === 'published'
+        ? '<button type="button" class="org-action-item" data-send-ce-member-invites="' +
+          esc(id) +
+          '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Invite members</strong><span>Email your Membership list — they book without applying</span></span></button>'
+        : '';
     const connectionsItem =
       '<button type="button" class="org-action-item" data-send-attendee-email="' +
       esc(id) +
@@ -4611,6 +4618,7 @@
       esc(id) +
       '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
       alumniItem +
+      ceMemberItem +
       cancelItem +
       deleteItem +
       eventUnpublishActionHtml(ev) +
@@ -7807,6 +7815,16 @@
       return true;
     }
 
+    const ceMemberInvitesBtn = e.target.closest('[data-send-ce-member-invites]');
+    if (ceMemberInvitesBtn && !ceMemberInvitesBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = ceMemberInvitesBtn.getAttribute('data-send-ce-member-invites');
+      if (eid) openCeMemberInvitesModal(eid);
+      return true;
+    }
+
     const connectionsEmailBtn = e.target.closest('[data-send-attendee-email]');
     if (connectionsEmailBtn && !connectionsEmailBtn.disabled) {
       e.preventDefault();
@@ -7860,6 +7878,7 @@
 
   let pendingPayoutEventId = null;
   let pendingAlumniInviteEventId = null;
+  let pendingCeMemberInviteEventId = null;
   let pendingCancelEventId = null;
   let pendingCancelRefundRequired = false;
 
@@ -8135,6 +8154,111 @@
     }
     closeModals();
     showOrganiserAlert(data.message || 'Previous attendee invites sent.', false);
+  }
+
+  function closeCeMemberInvitesModal() {
+    pendingCeMemberInviteEventId = null;
+    const modal = document.getElementById('modal-ce-member-invites');
+    if (modal) modal.hidden = true;
+    const errEl = document.getElementById('modal-ce-member-invites-error');
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
+    const sendBtn = document.getElementById('modal-ce-member-invites-send');
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send member invites';
+    }
+  }
+
+  async function openCeMemberInvitesModal(eventId) {
+    pendingCeMemberInviteEventId = eventId;
+    const modal = document.getElementById('modal-ce-member-invites');
+    const titleEl = document.getElementById('modal-ce-member-invites-event');
+    const statsEl = document.getElementById('modal-ce-member-invites-stats');
+    const errEl = document.getElementById('modal-ce-member-invites-error');
+    const sendBtn = document.getElementById('modal-ce-member-invites-send');
+    if (!modal) return;
+
+    const ev = findEventById(eventId);
+    if (titleEl) titleEl.textContent = ev ? ev.title : 'Event';
+    if (statsEl) {
+      statsEl.hidden = false;
+      statsEl.textContent = 'Loading membership list…';
+    }
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
+    if (sendBtn) sendBtn.disabled = true;
+    openModal('modal-ce-member-invites');
+
+    const { ok, data } = await api(
+      '/api/organiser/ce-member-invites?eventId=' + encodeURIComponent(eventId)
+    );
+    if (!ok) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = data.message || data.error || 'Could not load member invite preview';
+      }
+      if (statsEl) statsEl.hidden = true;
+      return;
+    }
+
+    const count = Number(data.activeMemberCount) || 0;
+    const price =
+      data.ticket && data.ticket.price != null ? Number(data.ticket.price) : null;
+    const priceLabel =
+      price != null && Number.isFinite(price)
+        ? price > 0
+          ? '£' + price.toFixed(2)
+          : 'Free'
+        : '';
+    const already = data.stats || {};
+    if (statsEl) {
+      statsEl.hidden = false;
+      statsEl.textContent =
+        count === 0
+          ? 'No active members on your Membership list yet. Add people under Memberships, then return here.'
+          : count +
+            ' active member' +
+            (count === 1 ? '' : 's') +
+            ' can be invited' +
+            (priceLabel ? ' · seat ' + priceLabel : '') +
+            (already.sent || already.redeemed
+              ? ' · already invited: ' +
+                ((already.sent || 0) + (already.redeemed || 0))
+              : '');
+    }
+    if (sendBtn) sendBtn.disabled = count === 0;
+  }
+
+  async function submitCeMemberInvites() {
+    if (!pendingCeMemberInviteEventId) return;
+    const errEl = document.getElementById('modal-ce-member-invites-error');
+    const sendBtn = document.getElementById('modal-ce-member-invites-send');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
+    }
+    const { ok, data } = await api('/api/organiser/ce-member-invites', {
+      method: 'POST',
+      body: JSON.stringify({ eventId: pendingCeMemberInviteEventId }),
+    });
+    if (!ok) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = data.message || data.error || 'Could not send member invites';
+      }
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send member invites';
+      }
+      return;
+    }
+    closeModals();
+    showOrganiserAlert(data.message || 'Member invites sent.', false);
   }
 
   async function submitPayoutRequest() {
@@ -14566,6 +14690,10 @@
       const alumniSendBtn = document.getElementById('modal-alumni-invites-send');
       if (alumniSendBtn) {
         alumniSendBtn.addEventListener('click', submitAlumniInvites);
+      }
+      const ceMemberSendBtn = document.getElementById('modal-ce-member-invites-send');
+      if (ceMemberSendBtn) {
+        ceMemberSendBtn.addEventListener('click', submitCeMemberInvites);
       }
 
       // Start bootstrap while binding the large DOM — overlaps network with CPU work.

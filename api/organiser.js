@@ -16,6 +16,7 @@ const routes = {
   'attendee-badges-pdf': require('./_lib/routes/organiser-attendee-badges-pdf'),
   'application-decisions': require('./_lib/routes/organiser-application-decisions'),
   'alumni-invites': require('./_lib/routes/organiser-alumni-invites'),
+  'ce-member-invites': require('./_lib/routes/organiser-ce-member-invites'),
   reviews: require('./_lib/routes/organiser-reviews'),
   team: require('./_lib/routes/organiser-team'),
   activity: require('./_lib/routes/organiser-activity'),

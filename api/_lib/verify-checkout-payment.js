@@ -65,6 +65,13 @@ function checkoutBookingFields(checkout, input) {
     alumniInviteToken:
       metadataText(input.alumniInviteToken || input.alumni_invite_token) ||
       metadataText(metadata.alumni_invite_token || metadata.alumniInviteToken),
+    ceMemberToken:
+      metadataText(input.ceMemberToken || input.ce_member_token) ||
+      metadataText(metadata.ce_member_token || metadata.ceMemberToken),
+    ceMemberDirectBook:
+      Boolean(input.ceMemberDirectBook || input.ce_member_direct_book) ||
+      metadata.ce_member_direct_book === '1' ||
+      metadata.ceMemberDirectBook === '1',
   };
 }
 

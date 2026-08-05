@@ -10209,9 +10209,7 @@
       if (!subjectEl || !bodyEl) return;
 
       applyPreviewForSlug(selectedSlug);
-      if (isBookingEmailSlug(selectedSlug)) {
-        updateSampleSponsorSection();
-      }
+      // Live CMS sponsors are resolved server-side — do not inject the form placeholder.
 
       var requestId = ++previewRequestId;
       var subjectLine = document.getElementById('email-preview-subject');
@@ -10576,9 +10574,7 @@
       }
       if (btn) btn.disabled = true;
       applyPreviewForSlug(selectedSlug);
-      if (isBookingEmailSlug(selectedSlug)) {
-        updateSampleSponsorSection();
-      }
+      // Live CMS sponsors are resolved server-side — do not inject the form placeholder.
       setEmailStatus('Sending test email to ' + to + '…');
       adminPost('/api/admin/emails', {
         action: 'test',

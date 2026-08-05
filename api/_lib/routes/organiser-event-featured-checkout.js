@@ -122,7 +122,7 @@ module.exports = async function handler(req, res) {
           message:
             'All ' +
             (slots.max || 12) +
-            ' featured spotlight places are currently taken. Your event stays live — try again when a slot opens, or choose a shorter plan later.',
+            ' featured spotlight places are currently taken. Your event stays live — you can upgrade from Promote in your dashboard when a slot opens.',
           featuredSlots: slots,
         });
       }

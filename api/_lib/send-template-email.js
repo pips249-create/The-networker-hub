@@ -143,6 +143,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_saved_search_match',
   'guest_visit_followup',
   'alumni_fast_pass_invite',
+  'ce_member_invite',
   'event_connections_list',
   'member_roster_invite',
   'member_roster_existing',
@@ -341,14 +342,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   merged.logo_url = logoNavUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
   merged.hubert_icon_url = hubertIconUrl(siteUrl);
-  // Live CMS sponsor resolution wins when configured; keep preview/sample rows when CMS is empty.
-  if (String(sponsorSection || '').trim()) {
-    merged.sponsor_row = sponsorSection;
-    merged.sponsor_section = sponsorSection;
-  }
-  if (String(dbMiniSponsorsRow || '').trim()) {
-    merged.mini_sponsors_row = dbMiniSponsorsRow;
-  }
+  // Always use live CMS sponsors — never keep Sample / preview form leftovers.
+  merged.sponsor_row = String(sponsorSection || '').trim();
+  merged.sponsor_section = merged.sponsor_row;
+  merged.mini_sponsors_row = String(dbMiniSponsorsRow || '').trim();
 
   let bodyHtml = template.body_html;
   bodyHtml = ensureUnsubscribePlaceholder(bodyHtml);

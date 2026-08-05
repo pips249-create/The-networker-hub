@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260727promo" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260805promo" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260728footer" />
   </head>
@@ -52,17 +52,22 @@
               <p class="ep-promote-card-kicker">Free — social media</p>
               <h2 class="ep-promote-card-heading" id="ep-share-heading">Share your event</h2>
               <p class="ee-hint ep-promote-card-lead" id="ep-share-hint">
-                Pick a post style, copy the text, download the image, and share on LinkedIn, Facebook, or Instagram.
+                Create LinkedIn posts, download images, and share from Promote in your organiser dashboard.
               </p>
 
               <div class="ep-share-primary-action">
-                <button type="button" class="ee-btn ee-btn-gold" id="ep-share-linkedin-primary">
-                  Copy post &amp; open LinkedIn
-                </button>
+                <a
+                  class="ee-btn ee-btn-gold"
+                  id="ep-share-promote"
+                  href="/organiser/#social"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open Promote tools
+                </a>
                 <p class="ep-linkedin-next" id="ep-linkedin-next">
-                  We copy the post and download your picture. On LinkedIn, click <strong>Start a post</strong>, paste
-                  (<kbd>Ctrl+V</kbd> or <kbd>⌘V</kbd>), then attach the image from your downloads. Other share buttons
-                  do the same for each network.
+                  Opens Promote in a new tab — pick a post style, copy the text, download your picture, and share on
+                  LinkedIn, Facebook, or Instagram.
                 </p>
               </div>
             </div>
@@ -119,7 +124,7 @@
                   </div>
                   <p class="ep-share-customise">
                     Want a different look?
-                    <a href="/organiser/#social" id="ep-share-customise">Open LinkedIn tools in Promote</a>
+                    <a href="/organiser/#social" id="ep-share-customise" target="_blank" rel="noopener noreferrer">Open LinkedIn tools in Promote</a>
                   </p>
                 </div>
               </details>
@@ -177,6 +182,16 @@
                 <button type="button" class="ee-btn ee-btn-gold" id="ep-featured-yes">
                   Yes — feature my event
                 </button>
+                <a
+                  class="ee-btn ee-btn-outline"
+                  id="ep-featured-dashboard"
+                  href="/organiser/#social-spotlight"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  hidden
+                >
+                  Open Promote in dashboard
+                </a>
               </div>
             </div>
           </section>
@@ -215,6 +230,6 @@
     <script src="../js/hub-comms-pack.js?v=20260727share" defer></script>
     <script src="../js/hub-going-share.js?v=20260727share" defer></script>
     <script src="../js/organiser-featured-duration.js?v=20260716feat" defer></script>
-    <script src="../js/organiser-event-published.js?v=20260729roi1" defer></script>
+    <script src="../js/organiser-event-published.js?v=20260805promo" defer></script>
   </body>
 </html>

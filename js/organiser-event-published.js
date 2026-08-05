@@ -132,7 +132,9 @@
   const shareQuickWhatsapp = document.getElementById('ep-share-whatsapp');
   const shareQuickEmail = document.getElementById('ep-share-email');
   const shareLinkedInPrimary = document.getElementById('ep-share-linkedin-primary');
+  const sharePromoteLink = document.getElementById('ep-share-promote');
   const shareCustomiseLink = document.getElementById('ep-share-customise');
+  const featuredDashboardLink = document.getElementById('ep-featured-dashboard');
 
   const META_PIN_SVG =
     '<svg class="premium-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
@@ -975,14 +977,19 @@
 
   shareLinkedInPrimary?.addEventListener('click', copyPostAndOpenLinkedIn);
 
-  shareCustomiseLink?.addEventListener('click', function () {
+  function rememberPromoteEvent() {
     if (!primaryId) return;
     try {
       sessionStorage.setItem('hub_promote_event_id', primaryId);
     } catch {
       /* ignore private mode */
     }
-  });
+  }
+
+  sharePromoteLink?.addEventListener('click', rememberPromoteEvent);
+  featuredDashboardLink?.addEventListener('click', rememberPromoteEvent);
+
+  shareCustomiseLink?.addEventListener('click', rememberPromoteEvent);
 
   function downloadShareImage() {
     if (!shareCardDataUrl || !window.HubOrganiserEventShare) return;
@@ -1063,12 +1070,16 @@
             ? data.message ||
               'This event has already started — featured placement only runs while it appears on the events browse page.'
           : data.error === 'featured_slots_full'
-            ? data.message ||
-              'All featured spotlight places are currently taken. Your event stays live — try again when a slot opens.'
+            ? 'All featured spotlight places are currently taken. Your event stays live — you can upgrade from Promote in your dashboard when a slot opens.'
             : data.message || data.error || 'Could not start checkout. Your event is still live.';
       if (featuredError) {
         featuredError.hidden = false;
         featuredError.textContent = msg;
+      }
+      if (data.error === 'featured_slots_full' && featuredUpsell) {
+        featuredUpsell.classList.add('is-slots-full');
+        if (featuredDashboardLink) featuredDashboardLink.hidden = false;
+        if (featuredYes) featuredYes.hidden = true;
       }
     } catch {
       if (featuredError) {
@@ -1110,12 +1121,16 @@
         if (featuredSlotStatus) {
           featuredSlotStatus.hidden = false;
           featuredSlotStatus.textContent =
-            'All ' + slots.max + ' featured spotlight places are taken at the moment. Your event stays live — check back soon.';
+            'All ' +
+            slots.max +
+            ' featured spotlight places are taken at the moment. Your event stays live — you can upgrade from Promote in your dashboard when a slot opens.';
         }
         if (featuredYes) {
           featuredYes.disabled = true;
+          featuredYes.hidden = true;
           featuredYes.textContent = 'Featured spotlight full';
         }
+        if (featuredDashboardLink) featuredDashboardLink.hidden = false;
       }
     } catch {
       /* non-fatal */

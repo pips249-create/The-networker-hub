@@ -363,6 +363,12 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.invite_url = vars.event_url + '&alumni_token=preview-token';
   }
 
+  if (slug === 'ce_member_invite') {
+    vars.ticket_price = '£25.00';
+    vars.invite_url = vars.event_url + '&ce_member_token=preview-token';
+    vars.cta_label = 'Book as a member';
+  }
+
   if (slug === 'event_connections_list') {
     vars.event_date = 'Tuesday 14 July 2026';
     vars.event_date_clause = ' on Tuesday 14 July 2026';
@@ -734,14 +740,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     OPPORTUNITY_MINI_SPONSOR_SLUGS.has(slug) ||
     HUB_PARTNER_SPONSOR_SLUGS.has(slug);
 
-  if (needsMainSponsor && !String(vars.sponsor_row || '').trim()) {
-    vars.sponsor_row = sampleSponsorRow(site);
-  }
+  // Leave sponsor placeholders empty here — admin preview / send load live CMS inventory.
   if (needsMainSponsor || needsMiniSponsor) {
     vars.sponsor_section = vars.sponsor_row || vars.sponsor_section || '';
-  }
-  if (needsMiniSponsor && !String(vars.mini_sponsors_row || '').trim()) {
-    vars.mini_sponsors_row = sampleMiniSponsorsRow();
   }
 
   return vars;

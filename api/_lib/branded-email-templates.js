@@ -119,7 +119,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   event_details_updated: {
     file: 'event-details-updated.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Update for {{event_name}}',
   },
   online_join_reminder: {
@@ -165,6 +165,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v2',
     subject: 'Your previous attendee rate for {{event_name}}',
   },
+  ce_member_invite: {
+    file: 'ce-member-invite.html',
+    marker: 'hub-email-layout-v2',
+    subject: "You're invited to book {{event_name}}",
+  },
   member_roster_invite: {
     file: 'member-roster-invite.html',
     marker: 'hub-email-layout-v2',
@@ -197,7 +202,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   category_exclusivity_payment_reminder: {
     file: 'category-exclusivity-payment-reminder.html',
-    marker: 'hub-email-layout-v2',
+    marker: 'hub-email-layout-v3-purple',
     subject: 'Complete your booking — {{event_name}}',
   },
   event_almost_full: {
