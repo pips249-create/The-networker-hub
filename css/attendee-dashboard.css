@@ -658,8 +658,9 @@ button.ad-stat-link:focus-visible::after {
 .ad-action-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 4px 14px;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .ad-action-link {

@@ -14,6 +14,7 @@
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   let savedScope = 'events';
+  let savedScopePinned = false;
   let ticketsScope = 'upcoming';
   let opportunitySavedScope = 'enquiries';
   let reviewsScope = 'pending';
@@ -684,6 +685,35 @@
     );
   }
 
+  function directionsHref(reg) {
+    if (!reg || reg.isOnline) return '';
+    const query = [reg.venueName, reg.address, reg.city, reg.postcode]
+      .map(function (part) {
+        return String(part || '').trim();
+      })
+      .filter(Boolean)
+      .join(', ');
+    if (!query) return '';
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(query);
+  }
+
+  function secondaryActionLinksHtml(reg) {
+    const directions = directionsHref(reg);
+    let html = '';
+    if (directions) {
+      html +=
+        '<a class="ad-btn ad-btn-ghost" href="' +
+        esc(directions) +
+        '" target="_blank" rel="noopener noreferrer">Get directions</a>';
+    }
+    html +=
+      '<div class="ad-action-links">' +
+      '<a class="ad-action-link" href="' +
+      esc(eventHref(reg)) +
+      '">View event</a></div>';
+    return html;
+  }
+
   function actionCell(reg, options) {
     const opts = options || {};
     const applicationStatus = String(reg.applicationStatus || 'Approved').trim();
@@ -704,9 +734,7 @@
         '">' +
         esc(bookingActionLabel(reg)) +
         '</button>' +
-        '<a class="ad-action-link" href="' +
-        esc(eventHref(reg)) +
-        '">View event</a>' +
+        secondaryActionLinksHtml(reg) +
         '</div>'
       );
     }
@@ -715,9 +743,7 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        '<a class="ad-action-link" href="' +
-        esc(eventHref(reg)) +
-        '">View event</a>' +
+        secondaryActionLinksHtml(reg) +
         '</div>'
       );
     }
@@ -752,9 +778,7 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        '<a class="ad-action-link" href="' +
-        esc(eventHref(reg)) +
-        '">View event</a>' +
+        secondaryActionLinksHtml(reg) +
         '</div>'
       );
     }
@@ -762,9 +786,7 @@
       return (
         '<div class="ad-action-group">' +
         ticketButtonHtml(reg) +
-        '<a class="ad-action-link" href="' +
-        esc(eventHref(reg)) +
-        '">View event</a>' +
+        secondaryActionLinksHtml(reg) +
         '</div>'
       );
     }
@@ -1182,11 +1204,14 @@
   }
 
   function maybeDefaultSavedScope() {
+    if (savedScopePinned) return;
     if (currentRoute !== 'saved' || savedScope !== 'events') return;
     const hasGroups = myGroups.length > 0;
     const hasEvents = savedEvents.length > 0;
     const hasOrganisers = savedOrganisers.length > 0;
-    if (hasGroups) {
+    /* Only auto-land on memberships/organisers when there are no saved events.
+       Having memberships must not block the Events tab. */
+    if (!hasEvents && hasGroups) {
       setSavedScope('groups');
     } else if (!hasEvents && hasOrganisers) {
       setSavedScope('organisers');
@@ -1267,6 +1292,7 @@
       btn.dataset.boundSavedScope = '1';
       btn.addEventListener('click', () => {
         const scope = btn.getAttribute('data-saved-scope') || 'events';
+        savedScopePinned = true;
         setSavedScope(scope);
         if (dashboardReady) renderRouteTables('saved', { force: true });
       });
@@ -2652,9 +2678,7 @@
           utilityDropdownHtml(reg, {
             showUtilities: listKey === 'upcoming',
             showCancel: listKey === 'upcoming',
-            hideCalendar: listKey === 'upcoming',
           }) +
-          (listKey === 'upcoming' ? calendarLinksInlineHtml(reg) : '') +
           '</div></td>';
       } else {
         tr.innerHTML =

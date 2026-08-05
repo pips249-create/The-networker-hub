@@ -126,6 +126,11 @@ function mapRegistrationRow(row, reviewByEventId, seriesPeersByEventId) {
     meetingType: booked.eventRow.meeting_type || (online ? 'Online' : 'In person'),
     bookedSnapshotAt: booked.snapshotCapturedAt,
     city: String(ev.city || booked.eventRow?.city || '').trim() || null,
+    address: String(ev.address || booked.eventRow?.address || '').trim() || null,
+    postcode: String(ev.postcode || booked.eventRow?.postcode || '').trim() || null,
+    venueName:
+      String(ev.venue || booked.eventRow?.venue || ev.venue_name || booked.eventRow?.venue_name || '').trim() ||
+      null,
     isCategoryExclusivity: deriveIsCategoryExclusivity(row),
     bookingGroupId: row.booking_group_id || null,
     registrationKind: String(row.registration_kind || 'standard').trim(),
@@ -219,6 +224,9 @@ async function listRegistrationsForAttendee(sb, attendeeId) {
         event_type,
         attendance_mode,
         city,
+        address,
+        postcode,
+        venue,
         recurrence_pattern,
         recurrence_end_date,
         organiser_id,
