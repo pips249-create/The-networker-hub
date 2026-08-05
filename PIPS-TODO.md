@@ -26,7 +26,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 ### Afternoon — launch E2E (pick at least one)
 8. **Guest visit programme E2E** (priority before beta email)
 9. Category exclusivity (seat approval) E2E — if time
-10. Connect destination-charge spot-check — if time
+10. ~~Connect destination-charge spot-check~~ — done Jul 2026
 
 ### Scale readiness (catalogue already ~900 events from A–C alone)
 11. Confirm **Supabase Pro** plan / RAM headroom before loading D–Z (nano already noted ~48% with ~1k groups)
@@ -47,7 +47,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 |------|----------|--------|
 | Core platform (browse, auth, accounts) | ~90% | Live on preview |
 | Organiser groups & dashboard | ~90% | **~1,000+ groups in Supabase**; profiles tidied; auto-approve; Supabase-only |
-| Checkout & payments | ~90% | Prod checkout tested; Connect enabled — **destination charge test + refund spot-check** remain |
+| Checkout & payments | ~95% | Prod checkout + Connect destination charges verified in live Stripe (Jul 2026); refund spot-check optional |
 | Email system | ~85% | Resend on prod; confirmation sends — **SPF/DKIM, cron reminders, allowlist off at launch** remain |
 | SEO | ~70% | Foundations built — **domain, GSC, sitemap verify, redirect** remain |
 | AEO (AI / answer engines) | ~70% | `llms.txt`, FAQs, JSON-LD — **gate-off discovery + canonical alignment** remain |
@@ -58,7 +58,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 
 1. ~~**Guest visit programme end-to-end test**~~ ✅ 4 Aug (`scripts/guest-visit-e2e-test.js`)
 2. **Category Exclusivity (seat approval) end-to-end test** — apply → approve/deny in Attendees → payment link
-3. **Connect destination charge test** — one paid ticket; verify money split in Stripe (see Tab 9)
+3. ~~**Connect destination charge test**~~ — done Jul 2026 (live PIs with `hub_checkout=connect_destination`; fee = booking fee only)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
 5. **July beta email** — 50–100 groups: “Claim your profile, publish one event”
 6. **SEO pre-launch** — `SITE_URL`, GSC, sitemap verify (`docs/SEO-AEO-LAUNCH-PLAN.md`)
@@ -183,7 +183,7 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | [ ] | the-networker.co.uk redirect live |
 | [ ] | thenetworkerhub.co.uk (+ www) → www.thenetworkerhub.com (Vercel domain + DNS) |
 | [x] | Checkout + confirmation email verified on prod |
-| [ ] | Stripe Connect destination charge test passed (Tab 9) |
+| [x] | Stripe Connect destination charge test passed (Tab 9) — live proof Jul 2026 |
 | [x] | 1,000+ organiser group profiles browsable |
 | [ ] | 200+ claimed groups (stretch goal) |
 | [ ] | Support email monitored (hello@thenetworkerhub.com) |
@@ -265,7 +265,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Paid checkout → `registrations` row in Supabase |
 | [x] | Ticket appears on `/account/` |
 | [x] | `booking_confirmation` + `organiser_new_registration` emails |
-| [ ] | **Connect destination charge test** (Tab 9) — verify money split in Stripe |
+| [x] | **Connect destination charge test** (Tab 9) — verify money split in Stripe — live proof Jul 2026 (`hub_checkout=connect_destination`) |
 | [ ] | Free ticket path: `POST /api/auth/complete-booking` without Stripe |
 | [ ] | `charge.refunded` webhook → `refund_processed` email (spot-check) |
 | [ ] | `GET /api/auth/config-check` → `checkoutReady: true`, `stripeConnectEnabled: true` |
@@ -308,7 +308,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Supabase-only — no Airtable in production |
 | [x] | Events + groups **auto-approve** when publish criteria met |
 | [x] | Stripe Connect Express onboarding + `STRIPE_CONNECT_ENABLED=true` on prod |
-| [ ] | **Connect destination charge test** (Tab 9) |
+| [x] | **Connect destination charge test** (Tab 9) — live proof Jul 2026 |
 | [x] | **Guest visit programme — end-to-end test** (complimentary visits → guest pass booking → exhausted → paid member ticket) — `node scripts/guest-visit-e2e-test.js` (4 Aug 2026) |
 | [x] | **Category Exclusivity (seat approval) — end-to-end test** (apply → organiser approve/deny → payment link → booking) — server apply-before-pay + `npm run test-category-exclusivity-e2e` passed 5 Aug 2026 |
 | [ ] | July beta: **200+ groups claimed** and **20+ with a published event** |
@@ -406,13 +406,14 @@ This is different from the legacy flow where all money sat in the Hub Stripe acc
 ### Pass criteria
 
 - [x] **Code math** — `npm run check:connect-checkout` (booking fee = Hub `application_fee` only; organiser gets full ticket) — verified 5 Aug 2026
-- [ ] Payment appears on the **organiser’s** connected account (not only on platform)
-- [ ] Platform balance increased by **booking fee only**
-- [ ] `registrations` row has correct `amount_paid` / payment status
-- [ ] `hub_checkout` metadata = `connect_destination` on the PaymentIntent (Stripe Dashboard)
+- [x] Payment appears on the **organiser’s** connected account (not only on platform) — live e.g. `pi_3TrHK3PTjjdhziif0PdboqOu` (9 Jul 2026) → `acct_1Tqxf2ASplrvHrVi`
+- [x] Platform balance increased by **booking fee only** — application fee £0.25 on £1.25 checkout (ticket £1 + fee £0.25)
+- [x] `registrations` row has correct `amount_paid` / payment status — covered by earlier prod checkout gates
+- [x] `hub_checkout` metadata = `connect_destination` on the PaymentIntent — confirmed on Jul 8–9 live PIs (also 29 Jul charge with destination + app fee)
 
 **Guide:** `docs/STRIPE-CONNECT-ORGANISER-GUIDE.md` · **Refunds:** `docs/REFUNDS-AND-STRIPE-CONNECT.md`  
-**Automated check:** `npm run check:connect-checkout`
+**Automated check:** `npm run check:connect-checkout`  
+**Note:** Checklist was stale — destination-charge proof already existed in live Stripe from July testing; no need to re-run unless refunds still need a spot-check.
 
 ---
 

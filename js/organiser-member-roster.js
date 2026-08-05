@@ -425,13 +425,25 @@
   }
 
   function setRosterLoading(on) {
+    const loading = Boolean(on);
     const hint = document.getElementById('omr-load-hint');
     const wrap = document.getElementById('omr-table-wrap');
+    const empty = document.getElementById('omr-empty');
+    const workspace = document.getElementById('memberships-workspace');
+    const pageLoading = document.getElementById('omr-page-loading');
+    const page = document.getElementById('org-page-memberships');
     if (hint) {
-      hint.hidden = !on;
-      hint.setAttribute('aria-busy', on ? 'true' : 'false');
+      hint.hidden = !loading;
+      hint.setAttribute('aria-busy', loading ? 'true' : 'false');
     }
-    if (wrap) wrap.classList.toggle('is-roster-loading', on);
+    if (wrap) wrap.classList.toggle('is-roster-loading', loading);
+    if (workspace) workspace.classList.toggle('is-membership-loading', loading);
+    if (page) page.classList.toggle('is-membership-loading', loading);
+    if (pageLoading) {
+      pageLoading.hidden = !loading;
+      pageLoading.setAttribute('aria-busy', loading ? 'true' : 'false');
+    }
+    if (loading && empty) empty.hidden = true;
   }
 
   function setReportsLoading(on) {
@@ -1716,26 +1728,30 @@
 
       if (!rows.length) {
         if (empty) {
-          empty.hidden = false;
-          const title = empty.querySelector('.org-empty-state-title');
-          const text = empty.querySelector('.org-empty-state-text');
-          const needsEvent =
-            (filters.status === 'booked' || filters.status === 'not_booked') &&
-            !selectedEventId();
-          if (needsEvent && title && text) {
-            title.textContent = 'Choose an event';
-            text.textContent =
-              'Use the Event box above to pick a date — then we can show who has booked.';
-          } else if (totalActive > 0 && title && text) {
-            title.textContent = 'No members match these filters';
-            text.textContent =
-              filters.status === 'hub_billed'
-                ? 'Nobody on this list is paying through the Hub yet. Use Invite to pay, or try Not paying through the Hub.'
-                : 'Try a different search or filter, or clear the event filter.';
-          } else if (title && text) {
-            title.textContent = 'No members yet';
-            text.textContent =
-              'Use + Add a member or Import spreadsheet, then add a Members only ticket on your event (Tickets step).';
+          if (isLoadInFlight()) {
+            empty.hidden = true;
+          } else {
+            empty.hidden = false;
+            const title = empty.querySelector('.org-empty-state-title');
+            const text = empty.querySelector('.org-empty-state-text');
+            const needsEvent =
+              (filters.status === 'booked' || filters.status === 'not_booked') &&
+              !selectedEventId();
+            if (needsEvent && title && text) {
+              title.textContent = 'Choose an event';
+              text.textContent =
+                'Use the Event box above to pick a date — then we can show who has booked.';
+            } else if (totalActive > 0 && title && text) {
+              title.textContent = 'No members match these filters';
+              text.textContent =
+                filters.status === 'hub_billed'
+                  ? 'Nobody on this list is paying through the Hub yet. Use Invite to pay, or try Not paying through the Hub.'
+                  : 'Try a different search or filter, or clear the event filter.';
+            } else if (title && text) {
+              title.textContent = 'No members yet';
+              text.textContent =
+                'Use + Add a member or Import spreadsheet, then add a Members only ticket on your event (Tickets step).';
+            }
           }
         }
         syncMembersEventFilter();
@@ -2107,10 +2123,12 @@
   async function refresh() {
     const groupId = getOrganiserId();
     if (!groupId) return;
+    const keepPageLoader = isLoadInFlight();
     page = 1;
     await fetchRosterPage(1, { showLoader: false });
     if (getOrganiserId() !== groupId) return;
-    setRosterLoading(false);
+    // Parent loadForGroup owns the page spinner until the full load finishes.
+    if (!keepPageLoader) setRosterLoading(false);
     await refreshGroupRosterSummary(groupId);
     if (getOrganiserId() !== groupId) return;
     renderRoster();
@@ -2763,22 +2781,23 @@
 
     if (activeLoadGroupId === id && activeLoadPromise) return activeLoadPromise;
 
-    if (activeLoadGroupId !== id) {
-      members = [];
-      rosterTotal = 0;
-      rosterActiveTotal = 0;
-      lastReports = null;
-      reportsLoadedKey = '';
-      reportsStale = false;
-      reportsSetupEditing = false;
-      groupRosterSummary = null;
-      page = 1;
-      setRegisterTab('members');
-      renderRoster();
-    }
-
     activeLoadGroupId = id;
     setRosterLoading(true);
+    members = [];
+    rosterTotal = 0;
+    rosterActiveTotal = 0;
+    lastReports = null;
+    reportsLoadedKey = '';
+    reportsStale = false;
+    reportsSetupEditing = false;
+    groupRosterSummary = null;
+    page = 1;
+    setRegisterTab('members');
+    const bodyEl = document.getElementById('omr-body');
+    const emptyEl = document.getElementById('omr-empty');
+    if (bodyEl) bodyEl.innerHTML = '';
+    if (emptyEl) emptyEl.hidden = true;
+
     activeLoadPromise = (async function () {
       page = 1;
 

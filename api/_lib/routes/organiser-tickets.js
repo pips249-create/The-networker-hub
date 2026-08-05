@@ -216,6 +216,9 @@ module.exports = async function handler(req, res) {
           guestPassesDisabled: Boolean(
             body.guestPassesDisabled ?? body.guest_passes_disabled ?? false
           ),
+          enableGuestVisits: Boolean(
+            body.enableGuestVisits ?? body.enable_guest_visits ?? false
+          ),
           attendeeExtras:
             body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
               ? body.attendeeExtras

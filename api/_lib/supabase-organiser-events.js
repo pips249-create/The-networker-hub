@@ -1956,6 +1956,7 @@ async function createTicketsForEvents({
   attendanceMode,
   alumniFastPass,
   guestPassesDisabled,
+  enableGuestVisits,
 }) {
   const sb = getSupabaseAdmin();
   const ids = await expandEventIdsToSeriesPeers(sb, eventIds);
@@ -1968,7 +1969,12 @@ async function createTicketsForEvents({
   const { guestVisitTierPayload } = require('./guest-visits');
   const { alumniTierPayload } = require('./alumni-invites');
 
-  if (mode === 'guest_programme') {
+  // Guest visits are the default attendance mode, or an optional add-on on Category Exclusivity.
+  const guestVisitsEnabled =
+    mode === 'guest_programme' ||
+    (mode === 'category_exclusivity' && Boolean(enableGuestVisits));
+
+  if (guestVisitsEnabled) {
     const { data: eventRows, error: eventRowsErr } = await sb
       .from('events')
       .select('organiser_id')
@@ -2029,7 +2035,7 @@ async function createTicketsForEvents({
 
   const alumniEventUpdate = {
     alumni_fast_pass_enabled: Boolean(alumniConfig),
-    guest_passes_disabled: mode === 'guest_programme' ? guestPassesDisabledFlag : false,
+    guest_passes_disabled: guestVisitsEnabled ? guestPassesDisabledFlag : false,
   };
   if (alumniConfig?.sourceEventId) {
     const sourceId = String(alumniConfig.sourceEventId).trim();

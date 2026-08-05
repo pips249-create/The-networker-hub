@@ -2107,27 +2107,27 @@
         tr.className = 'ad-row-application-approved';
       }
       tr.innerHTML =
-        '<td>' +
+        '<td class="ad-td-thumb">' +
         thumbHtml(reg) +
-        '</td><td class="ad-td-name">' +
+        '</td><td class="ad-td-name" data-label="Event">' +
         eventTitleCell(reg) +
-        '</td><td>' +
+        '</td><td data-label="Booked">' +
         esc(formatDateShort(reg.createdAt)) +
-        '</td><td>' +
+        '</td><td data-label="Reference">' +
         esc(reg.bookingReference || formatBookingReference(reg.id)) +
-        '</td><td>' +
+        '</td><td data-label="Tickets">' +
         esc(reg.ticketLabel || '—') +
-        '</td><td>' +
+        '</td><td data-label="Paid">' +
         esc(
           applicationStatus === 'Pending' || applicationStatus === 'Denied'
             ? '—'
             : formatAmountPaid(reg.amountPaid, reg.paymentStatus)
         ) +
-        '</td><td>' +
+        '</td><td data-label="Application">' +
         applicationBadge(reg) +
-        '</td><td>' +
+        '</td><td data-label="Payment">' +
         paymentBadge(reg.paymentStatus, reg) +
-        '</td><td class="ad-td-actions"><div class="ad-action-group">' +
+        '</td><td class="ad-td-actions" data-label="Actions"><div class="ad-action-group">' +
         '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
         '">Payment details</button>' +
@@ -2191,23 +2191,23 @@
       const tr = document.createElement('tr');
       tr.className = 'ad-row-cancelled';
       tr.innerHTML =
-        '<td>' +
+        '<td class="ad-td-thumb">' +
         thumbHtml(reg) +
-        '</td><td class="ad-td-name">' +
+        '</td><td class="ad-td-name" data-label="Event">' +
         eventTitleCell(reg) +
         '<div class="ad-cancel-refund-detail">' +
         esc(cancellationRefundDetail(reg)) +
-        '</div></td><td>' +
+        '</div></td><td data-label="Cancelled">' +
         esc(formatDateShort(reg.cancelledAt)) +
-        '</td><td>' +
+        '</td><td data-label="Reference">' +
         esc(reg.bookingReference || formatBookingReference(reg.id)) +
-        '</td><td>' +
+        '</td><td data-label="Tickets">' +
         esc(reg.ticketLabel || '—') +
-        '</td><td>' +
+        '</td><td data-label="Paid">' +
         esc(formatAmountPaid(reg.amountPaid, reg.paymentStatus)) +
-        '</td><td>' +
+        '</td><td data-label="Refund">' +
         refundStatusBadge(reg) +
-        '</td><td class="ad-td-actions"><div class="ad-action-group">' +
+        '</td><td class="ad-td-actions" data-label="Actions"><div class="ad-action-group">' +
         '<button type="button" class="ad-btn ad-btn-primary ad-view-payment" data-registration-id="' +
         esc(reg.id || '') +
         '">View details</button>' +
@@ -2338,15 +2338,15 @@
       const message = String(enquiry.message || '').trim();
       const preview = message.length > 120 ? message.slice(0, 117) + '…' : message;
       tr.innerHTML =
-        '<td>' +
+        '<td data-label="Sent">' +
         esc(formatDateShort(enquiry.createdAt)) +
-        '</td><td class="ad-td-name">' +
+        '</td><td class="ad-td-name" data-label="Listing">' +
         esc(enquiry.opportunityTitle || 'Listing') +
-        '</td><td class="ad-enquiry-message">' +
+        '</td><td class="ad-enquiry-message" data-label="Message">' +
         esc(preview || '—') +
-        '</td><td>' +
+        '</td><td data-label="Status">' +
         enquiryStatusBadge(enquiry.status) +
-        '</td><td><a class="ad-btn ad-btn-primary ad-btn-sm" href="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><a class="ad-btn ad-btn-primary ad-btn-sm" href="' +
         esc(opportunityListingHref(enquiry.opportunityId)) +
         '">View listing</a></td>';
       body.appendChild(tr);
@@ -2508,23 +2508,23 @@
       }
       if (fullColumns) {
         tr.innerHTML =
-          '<td>' +
+          '<td class="ad-td-thumb">' +
           thumbHtml(reg) +
-          '</td><td class="ad-td-name">' +
+          '</td><td class="ad-td-name" data-label="Event">' +
           eventTitleCell(reg) +
-          '</td><td>' +
+          '</td><td data-label="Date">' +
           esc(reg.isSeriesGroup ? reg.seriesDateLabel || formatDateShort(reg.date) : formatDateShort(reg.date)) +
-          '</td><td>' +
+          '</td><td data-label="Time">' +
           esc(reg.isSeriesGroup ? 'All sessions' : formatTimeRange(reg.date, reg.endDate)) +
-          '</td><td>' +
+          '</td><td data-label="Tickets">' +
           esc(reg.ticketLabel || '—') +
-          '</td><td>' +
+          '</td><td data-label="Application">' +
           applicationBadge(reg) +
-          '</td><td>' +
+          '</td><td data-label="Payment">' +
           paymentBadge(reg.paymentStatus, reg) +
-          '</td><td>' +
+          '</td><td data-label="Review">' +
           reviewBadge(reg.reviewStatus, reg) +
-          '</td><td class="ad-td-actions"><div class="ad-action-group ad-action-group--with-utilities">' +
+          '</td><td class="ad-td-actions" data-label="Actions"><div class="ad-action-group ad-action-group--with-utilities">' +
           actionCell(reg, { showCancel: listKey === 'upcoming', showTicket: true }) +
           utilityDropdownHtml(reg, {
             showUtilities: listKey === 'upcoming',
@@ -2535,15 +2535,15 @@
           '</div></td>';
       } else {
         tr.innerHTML =
-          '<td>' +
+          '<td class="ad-td-thumb">' +
           thumbHtml(reg) +
-          '</td><td class="ad-td-name">' +
+          '</td><td class="ad-td-name" data-label="Event">' +
           eventTitleCell(reg) +
-          '</td><td>' +
+          '</td><td data-label="Date">' +
           esc(formatDateShort(reg.date)) +
-          '</td><td>' +
+          '</td><td data-label="Status">' +
           reviewBadge(reg.reviewStatus, reg) +
-          '</td><td class="ad-td-actions">' +
+          '</td><td class="ad-td-actions" data-label="Actions">' +
           actionCell(reg) +
           '</td>';
       }
@@ -2846,17 +2846,17 @@
         imageUrl: item.photoUrl || item.photo_url || '',
       };
       tr.innerHTML =
-        '<td>' +
+        '<td class="ad-td-thumb">' +
         thumbHtml(favItem) +
-        '</td><td class="ad-td-name"><a href="' +
+        '</td><td class="ad-td-name" data-label="Event"><a href="' +
         esc(savedEventHref(item)) +
         '">' +
         esc(item.title || 'Event') +
-        '</a></td><td>' +
+        '</a></td><td data-label="Date">' +
         esc(formatDateShort(item.startsAt || item.starts_at)) +
-        '</td><td>' +
+        '</td><td data-label="Location">' +
         esc(item.city || '—') +
-        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-remove" data-event-id="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-btn ad-btn-ghost ad-saved-remove" data-event-id="' +
         esc(item.eventId || item.event_id || '') +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -3181,23 +3181,23 @@
         imageUrl: item.logoUrl || item.imageUrl || item.logo_url || item.image_url || '',
       };
       tr.innerHTML =
-        '<td><input type="checkbox" class="ad-compare-check" data-opportunity-id="' +
+        '<td class="ad-td-check" data-label="Compare"><input type="checkbox" class="ad-compare-check" data-opportunity-id="' +
         esc(oppId) +
         '" aria-label="Compare ' +
         esc(item.title || 'opportunity') +
         '"' +
         (checked ? ' checked' : '') +
-        ' /></td><td>' +
+        ' /></td><td class="ad-td-thumb">' +
         thumbHtml(favItem) +
-        '</td><td class="ad-td-name"><a href="' +
+        '</td><td class="ad-td-name" data-label="Opportunity"><a href="' +
         esc(savedOpportunityHref(item)) +
         '">' +
         esc(item.title || 'Opportunity') +
-        '</a></td><td>' +
+        '</a></td><td data-label="Listed by">' +
         esc(item.host || '—') +
-        '</td><td>' +
+        '</td><td data-label="Saved">' +
         esc(formatDateShort(item.createdAt || item.created_at)) +
-        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-opportunity-remove" data-opportunity-id="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-btn ad-btn-ghost ad-saved-opportunity-remove" data-opportunity-id="' +
         esc(oppId) +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -3432,17 +3432,17 @@
       };
       const rating = item.rating != null && Number(item.rating) > 0 ? Number(item.rating).toFixed(1) + '★' : '—';
       tr.innerHTML =
-        '<td>' +
+        '<td class="ad-td-thumb">' +
         thumbHtml(favItem) +
-        '</td><td class="ad-td-name"><a href="' +
+        '</td><td class="ad-td-name" data-label="Organiser"><a href="' +
         esc(savedOrganiserHref(item)) +
         '">' +
         esc(item.name || 'Organiser') +
-        '</a></td><td>' +
+        '</a></td><td data-label="Industry">' +
         esc(item.industry || '—') +
-        '</td><td>' +
+        '</td><td data-label="Rating">' +
         esc(rating) +
-        '</td><td><button type="button" class="ad-btn ad-btn-ghost ad-saved-organiser-remove" data-organiser-id="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-btn ad-btn-ghost ad-saved-organiser-remove" data-organiser-id="' +
         esc(item.organiserId || item.organiser_id || '') +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -3498,15 +3498,15 @@
         q && q.criteriaToUrl ? q.criteriaToUrl(criteria, '../opportunities/') : '../opportunities/';
       const lastAlert = item.lastNotifiedAt || item.last_notified_at;
       tr.innerHTML =
-        '<td class="ad-td-name"><a href="' +
+        '<td class="ad-td-name" data-label="Search filters"><a href="' +
         esc(href) +
         '">' +
         esc(label) +
-        '</a></td><td>' +
+        '</a></td><td data-label="Saved">' +
         esc(formatDateShort(item.createdAt || item.created_at)) +
-        '</td><td>' +
+        '</td><td data-label="Last alert">' +
         esc(lastAlert ? formatDateShort(lastAlert) : 'None yet') +
-        '</td><td class="ad-td-actions"><div class="ad-action-group ad-action-group--inline">' +
+        '</td><td class="ad-td-actions" data-label="Actions"><div class="ad-action-group ad-action-group--inline">' +
         '<a class="ad-btn ad-btn-ghost ad-btn-sm" href="' +
         esc(href) +
         '">View matches</a>' +

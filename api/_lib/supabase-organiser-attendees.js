@@ -350,6 +350,8 @@ async function summarizePendingApplicationsForEventIds(eventIds) {
       `
       id,
       event_id,
+      screening_answer_industry,
+      screening_answer_job_title,
       attendees ( name, email ),
       events ( title )
     `,
@@ -374,6 +376,8 @@ async function summarizePendingApplicationsForEventIds(eventIds) {
       eventId: row.event_id,
       eventTitle: String(event.title || 'Event').trim(),
       name,
+      screeningIndustry: String(row.screening_answer_industry || '').trim(),
+      screeningJobTitle: String(row.screening_answer_job_title || '').trim(),
     };
   });
 

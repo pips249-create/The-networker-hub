@@ -172,6 +172,9 @@
     if (privateTicketEnabled() && !collectMembersOnlyTicket()) {
       blockers.push('Add a name for your members-only ticket');
     }
+    if (attendanceMode === 'category_exclusivity' && ceMemberTicketEnabled() && !collectCeMemberTicket()) {
+      blockers.push('Add a name for your Category Exclusivity member ticket');
+    }
     if (membersOnlyEventEnabled()) {
       if (memberRosterLoadState === 'loading' || memberRosterLoadState === 'idle') {
         blockers.push('Checking your member list…');
@@ -924,7 +927,7 @@
 
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
     if (categoryPanel) categoryPanel.hidden = !isCategory;
-    if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
+    if (optionalExtras) optionalExtras.hidden = (!openBooking && !isCategory) || membersOnlyEventEnabled();
     if (paidWrap) paidWrap.hidden = false;
     if (attendeeExtras) attendeeExtras.hidden = false;
     if (actions) actions.hidden = false;
@@ -969,7 +972,7 @@
     const guestPassesOptOut = document.getElementById('ee-guest-passes-opt-out');
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const openBooking = isOpenBookingMode(attendanceMode);
-    const guestOn = attendanceMode === 'guest_programme';
+    const guestOn = guestProgrammeEnabled();
     const modalOpen = document.getElementById('ee-step2-modal') && !document.getElementById('ee-step2-modal').hidden;
 
     if (!step2Confirmed && !modalOpen) {
@@ -989,19 +992,37 @@
       if (actions) actions.hidden = true;
     } else {
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-      if (optionalExtras) optionalExtras.hidden = !openBooking || membersOnlyEventEnabled();
+      if (optionalExtras) optionalExtras.hidden = (!openBooking && !isCategory) || membersOnlyEventEnabled();
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
+    }
+
+    const privateAddon = document.getElementById('ee-private-ticket-addon');
+    if (privateAddon) privateAddon.hidden = isCategory || membersOnlyEventEnabled();
+
+    const optionalLead = document.querySelector('#ee-panel-optional-extras > .ee-hint');
+    if (optionalLead) {
+      optionalLead.innerHTML = isCategory
+        ? 'Optional add-ons for Category Exclusivity. Enable the <strong>Guest visit programme</strong> so newcomers can try a free visit without applying.'
+        : 'Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book? Turn on <strong>Member price</strong> below. For a meeting only members can book, skip this section and use <strong>This event is for my members only</strong> instead.';
+    }
+
+    const guestOptOutHint = document.getElementById('ee-member-only-explainer');
+    if (guestOptOutHint) {
+      guestOptOutHint.textContent = isCategory
+        ? 'Hides guest passes on this date only. Applications and member booking stay available.'
+        : 'Hides guest passes on this date only. Paid member tickets stay on sale for anyone.';
     }
 
     if (guestFields) guestFields.hidden = !guestOn;
     if (guestPassesOptOut) guestPassesOptOut.hidden = !guestOn;
     syncAddonCard('ee-guest-addon', guestOn);
     if (panelTitle) {
-      panelTitle.textContent = guestOn
-        ? 'Member ticket types'
-        : membersOnlyEventEnabled()
-          ? 'Member ticket'
-          : 'Public ticket types';
+      panelTitle.textContent =
+        attendanceMode === 'guest_programme'
+          ? 'Member ticket types'
+          : membersOnlyEventEnabled()
+            ? 'Member ticket'
+            : 'Public ticket types';
     }
     const panelLead = document.getElementById('ee-tickets-panel-lead');
     if (panelLead) {
@@ -1421,8 +1442,9 @@
     }
     if (publicWrap) publicWrap.hidden = on;
     if (membersWrap) membersWrap.hidden = !on;
-    if (privateAddon) privateAddon.hidden = on;
+    if (privateAddon) privateAddon.hidden = on || attendanceMode === 'category_exclusivity';
     if (optionalExtras && isOpenBookingMode(attendanceMode)) optionalExtras.hidden = on;
+    if (optionalExtras && attendanceMode === 'category_exclusivity') optionalExtras.hidden = on;
     const guestAddon = document.getElementById('ee-guest-addon');
     if (guestAddon) guestAddon.hidden = on;
     const alumniAddon = document.getElementById('ee-alumni-addon');
@@ -1566,6 +1588,117 @@
 
   function privateTicketEnabled() {
     return membersOnlyEventEnabled() || Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
+  }
+
+  function ceMemberTicketEnabled() {
+    return Boolean(document.getElementById('ee-ce-member-ticket-enabled')?.checked);
+  }
+
+  function ceGuestVisitsEnabled() {
+    return attendanceMode === 'category_exclusivity' && guestProgrammeEnabled();
+  }
+
+  function syncCeMemberTicketFields() {
+    const enabled = ceMemberTicketEnabled();
+    const body = document.getElementById('ee-ce-member-ticket-fields');
+    if (body) {
+      body.hidden = !enabled;
+      if (enabled) body.removeAttribute('hidden');
+      else body.setAttribute('hidden', '');
+    }
+    syncAddonCard('ee-ce-member-ticket-addon', enabled);
+  }
+
+  function collectCeMemberTicket(ceTier) {
+    if (!ceMemberTicketEnabled()) return null;
+    const name =
+      document.getElementById('ee-ce-member-ticket-name')?.value.trim() || 'Member ticket';
+    if (!name) return null;
+    const price = document.getElementById('ee-ce-member-ticket-price')?.value;
+    const qty = document.getElementById('ee-ce-member-ticket-qty')?.value;
+    return {
+      name,
+      price: price === '' || price == null ? 0 : price,
+      description:
+        'Members only — book without applying. Guests use Category Exclusivity application above.',
+      status: 'Available',
+      quantityAvailable: qty === '' || qty == null ? null : Number(qty),
+      saleStart: ceTier?.saleStart || null,
+      saleEnd: ceTier?.saleEnd || null,
+      saleEndOption: ceTier?.saleEndOption || 'at_start',
+      saleEndCustom: ceTier?.saleEndCustom || null,
+      categoryExclusivity: false,
+      ticketType: 'Standard',
+      displayOrder: 1,
+      visibility: 'members_only',
+    };
+  }
+
+  function prefillCeGuestVisits(eventRow, tickets) {
+    const hasGuestVisit = (tickets || []).some(isGuestVisitTicket);
+    const disabled = Boolean(eventRow?.guestPassesDisabled);
+    if (!hasGuestVisit && !disabled) {
+      setGuestProgrammeEnabled(false);
+      return;
+    }
+    setGuestProgrammeEnabled(true);
+    const optOut = document.getElementById('ee-guest-passes-disabled');
+    if (optOut) optOut.checked = disabled && !hasGuestVisit;
+  }
+
+  function prefillCeMemberTicket(tickets) {
+    const tier = (tickets || []).find(isMembersOnlyTicket);
+    const enabledEl = document.getElementById('ee-ce-member-ticket-enabled');
+    if (!tier) {
+      if (enabledEl) enabledEl.checked = false;
+      syncCeMemberTicketFields();
+      return;
+    }
+    if (enabledEl) enabledEl.checked = true;
+    const nameEl = document.getElementById('ee-ce-member-ticket-name');
+    if (nameEl) nameEl.value = tier.name || 'Member ticket';
+    const priceEl = document.getElementById('ee-ce-member-ticket-price');
+    if (priceEl) {
+      priceEl.value = tier.price === '' || tier.price == null ? '0' : String(tier.price);
+    }
+    const qtyEl = document.getElementById('ee-ce-member-ticket-qty');
+    if (qtyEl) {
+      qtyEl.value =
+        tier.quantityAvailable == null || tier.quantityAvailable === ''
+          ? ''
+          : String(tier.quantityAvailable);
+    }
+    syncCeMemberTicketFields();
+  }
+
+  function bindCeMemberTicketFields() {
+    const enabled = document.getElementById('ee-ce-member-ticket-enabled');
+    const onToggle = function () {
+      syncCeMemberTicketFields();
+      updatePublishButton();
+    };
+    if (enabled && !enabled.dataset.boundCeMemberTicket) {
+      enabled.dataset.boundCeMemberTicket = '1';
+      enabled.addEventListener('change', onToggle);
+    }
+    // Delegation fallback (covers late panel moves / stale single-element binds)
+    const form = document.getElementById('ee-tickets-form');
+    if (form && !form.dataset.boundCeMemberTicketDelegate) {
+      form.dataset.boundCeMemberTicketDelegate = '1';
+      form.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'ee-ce-member-ticket-enabled') onToggle();
+      });
+    }
+    ['ee-ce-member-ticket-name', 'ee-ce-member-ticket-price', 'ee-ce-member-ticket-qty'].forEach(
+      function (id) {
+        const el = document.getElementById(id);
+        if (!el || el.dataset.boundCeMemberTicketInput) return;
+        el.dataset.boundCeMemberTicketInput = '1';
+        el.addEventListener('input', updatePublishButton);
+        el.addEventListener('change', updatePublishButton);
+      }
+    );
+    syncCeMemberTicketFields();
   }
 
   /** True when public tiers look intentionally set up (not just the auto-seeded default row). */
@@ -1944,6 +2077,7 @@
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
         guestPassesDisabled: collectGuestPassesDisabled(),
+        enableGuestVisits: ceGuestVisitsEnabled(),
         membersOnlyEvent: membersOnlyEventEnabled(),
         tiers: collectActiveTiers(),
         vatTreatment: collectVatTreatment(),
@@ -1980,7 +2114,15 @@
     if (!draft || typeof draft !== 'object') return false;
     if (draft.attendanceMode === 'category_exclusivity') {
       setAttendanceMode('category_exclusivity');
-      if (Array.isArray(draft.tiers) && draft.tiers[0]) prefillCategoryExclusivityFromTicket(draft.tiers[0]);
+      if (Array.isArray(draft.tiers) && draft.tiers[0]) {
+        const ceTier = draft.tiers.find(isCategoryExclusivityTicket) || draft.tiers[0];
+        prefillCategoryExclusivityFromTicket(ceTier);
+        prefillCeMemberTicket(draft.tiers);
+      }
+      if (draft.enableGuestVisits) {
+        setGuestProgrammeEnabled(true);
+        setAttendanceMode('category_exclusivity');
+      }
     } else if (draft.attendanceMode === 'guest_programme') {
       setAttendanceMode('guest_programme');
       if (Array.isArray(draft.tiers) && draft.tiers.length) prefillTiers(draft.tiers);
@@ -2491,20 +2633,24 @@
     } else if (saleEnd) {
       description += ' Applications close: ' + formatCloseLabel(saleEnd) + '.';
     }
-    return [
-      {
-        name: 'Application to attend',
-        price: price === '' ? 0 : price,
-        description,
-        status: 'Available',
-        quantityAvailable: places === '' ? null : Number(places),
-        saleEnd,
-        saleEndOption: saleOption,
-        saleEndCustom: customDt,
-        categoryExclusivity: true,
-        ticketType: 'Application-based',
-      },
-    ];
+    const ceTier = {
+      name: 'Application to attend',
+      price: price === '' ? 0 : price,
+      description,
+      status: 'Available',
+      quantityAvailable: places === '' ? null : Number(places),
+      saleEnd,
+      saleEndOption: saleOption,
+      saleEndCustom: customDt,
+      categoryExclusivity: true,
+      ticketType: 'Application-based',
+      visibility: 'public',
+      displayOrder: 0,
+    };
+    const tiers = [ceTier];
+    const memberTier = collectCeMemberTicket(ceTier);
+    if (memberTier) tiers.push(memberTier);
+    return tiers;
   }
 
   function attendeeExtras() {
@@ -2674,6 +2820,9 @@
         prefillGuestPassesDisabled(loaded.event);
       } else if (categoryExclusivityTicket) {
         prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
+        prefillCeMemberTicket(loaded.tickets);
+        prefillCeGuestVisits(loaded.event, loaded.tickets);
+        setAttendanceMode('category_exclusivity');
       } else {
         if (ticketsAreMembersOnlyEvent(loaded.tickets)) {
           prefillMembersOnlyTicket(loaded.tickets);
@@ -2734,7 +2883,11 @@
       if (document.getElementById('ee-guest-programme-enabled')?.checked) {
         setMembersOnlyEventEnabled(false);
       }
-      if (attendanceMode === 'category_exclusivity') return;
+      if (attendanceMode === 'category_exclusivity') {
+        setAttendanceMode('category_exclusivity');
+        updatePublishButton();
+        return;
+      }
       setAttendanceMode(resolveOpenBookingMode());
       updatePublishButton();
     });
@@ -2761,6 +2914,7 @@
     bindRefundPolicy();
     bindAlumniFastPassFields();
     bindCategoryExclusivityCloseFields();
+    bindCeMemberTicketFields();
     document.getElementById('ee-ce-price')?.addEventListener('input', updatePublishButton);
     document.getElementById('ee-ce-price')?.addEventListener('change', updatePublishButton);
     if (!selectedRefundPolicy && !document.querySelector('input[name="refund-policy"]:checked')) {
@@ -2849,7 +3003,7 @@
       return;
     }
 
-    if (attendanceMode === 'guest_programme') {
+    if (attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
         showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
@@ -2957,7 +3111,7 @@
         updatePublishButton();
         return;
       }
-      if (attendanceMode === 'guest_programme') {
+      if (attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()) {
         const visits = readGuestVisitsAllowed();
         if (visits < 1) {
           showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
@@ -3025,7 +3179,7 @@
     if (btn) btn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
 
-    if (attendanceMode === 'guest_programme') {
+    if (attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
         showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
@@ -3060,6 +3214,7 @@
       publish,
       attendanceMode,
       guestPassesDisabled: collectGuestPassesDisabled(),
+      enableGuestVisits: ceGuestVisitsEnabled(),
       alumniFastPass: collectAlumniFastPass(),
       vatTreatment: hasPaidTickets ? collectVatTreatment() : '',
       attendeeExtras: attendeeExtras(),

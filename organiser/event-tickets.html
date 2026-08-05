@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260730stepfix" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260805cemember" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -104,7 +104,8 @@
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 data-hub-tip="category-exclusivity">Category Exclusivity</h2>
           <p class="ee-hint" style="margin-top:0">
-            Set the price, capacity, and application deadline. Attendees apply instead of buying straight away.
+            Set the price, capacity, and application deadline. Guests apply instead of buying straight away.
+            Members on your list can book without applying — optionally set a separate member price below.
           </p>
           <div class="ee-row-2">
             <div class="ee-field">
@@ -144,6 +145,47 @@
               <li>What industry are you in?</li>
               <li>What is your job title?</li>
             </ul>
+          </div>
+
+          <div class="ee-info-box" style="margin-top:16px">
+            <strong>Members</strong>
+            <p>
+              People on your Membership list can book without applying (signed in with their membership email).
+              After you publish, use <strong>Invite members</strong> on the event to email them a booking link.
+              Optionally add a separate member price below — useful if members pay a different rate from applicants.
+            </p>
+          </div>
+
+          <div class="ee-addon-card" id="ee-ce-member-ticket-addon" data-hub-tip="members-only-ticket" style="margin-top:14px">
+            <label class="ee-addon-toggle">
+              <input type="checkbox" id="ee-ce-member-ticket-enabled" />
+              <span class="ee-addon-toggle-copy">
+                <strong>Member price (optional)</strong>
+                <span class="ee-addon-summary"
+                  >Members on your list see this ticket when signed in and book without applying. Guests still apply for Category Exclusivity.</span
+                >
+              </span>
+            </label>
+            <div class="ee-addon-body" id="ee-ce-member-ticket-fields" hidden>
+              <div class="ee-row-2">
+                <div class="ee-field">
+                  <label for="ee-ce-member-ticket-name">Ticket name</label>
+                  <input type="text" id="ee-ce-member-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-ce-member-ticket-price">Price (&pound;)</label>
+                  <input type="number" id="ee-ce-member-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
+                  <p class="ee-hint">Enter 0 for free. Can differ from the application price above.</p>
+                </div>
+              </div>
+              <div class="ee-field ee-guest-visits-field">
+                <label for="ee-ce-member-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
+                <input type="number" id="ee-ce-member-ticket-qty" min="0" step="1" inputmode="numeric" placeholder="Unlimited" />
+              </div>
+              <p class="ee-hint" id="ee-ce-member-ticket-roster-hint" aria-live="polite">
+                Manage who can see this under Memberships on your organiser dashboard.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -447,6 +489,6 @@
     <script src="../js/organiser-field-tips.js?v=20260730memticket" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260730stepfix" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260805cemember" defer></script>
   </body>
 </html>

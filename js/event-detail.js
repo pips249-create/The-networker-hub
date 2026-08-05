@@ -320,7 +320,11 @@
   }
 
   function eventAllowsGuestPasses(ev) {
-    return eventIsGuestProgramme(ev) && !ev.guestPassesDisabled && Number(ev.complimentaryVisitsAllowed) > 0;
+    if (!ev || ev.guestPassesDisabled) return false;
+    if (!(Number(ev.complimentaryVisitsAllowed) > 0)) return false;
+    if (eventIsGuestProgramme(ev)) return true;
+    // Category Exclusivity (and any mode) can offer guest visits when a guest-visit tier exists
+    return Boolean(ev.guestVisitTier);
   }
 
   function hasAlumniInviteLink(ev) {

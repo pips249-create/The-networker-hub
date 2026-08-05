@@ -509,9 +509,71 @@
   padding: 14px 18px;
 }
 
+.org-dash-loading--membership-page {
+  margin: 48px auto;
+  min-height: 120px;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 280px;
+  background: transparent;
+  color: var(--od-text-mid, #4a5568);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.org-dash-loading--membership-page .org-dash-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+
+.org-memberships-workspace {
+  position: relative;
+}
+
+.omr-page-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 280px;
+  padding: 40px 20px;
+  border-radius: var(--od-radius, 12px);
+  background: rgba(248, 252, 253, 0.92);
+  backdrop-filter: blur(2px);
+}
+
+.omr-page-loading[hidden] {
+  display: none !important;
+}
+
+.omr-page-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.omr-page-loading-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--od-text-mid, #4a5568);
+}
+
+.org-memberships-workspace.is-membership-loading > :not(.omr-page-loading) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .omr-table-wrap.is-roster-loading {
   position: relative;
-  min-height: 120px;
+  min-height: 160px;
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .omr-add-section--compact {

@@ -1493,6 +1493,16 @@ body.ee-step2-modal-open {
   border-top: 1px solid var(--ee-border);
 }
 
+/* CE member price: show fields when ticked even if JS hasn't cleared [hidden] yet */
+#ee-ce-member-ticket-addon:has(#ee-ce-member-ticket-enabled:checked) {
+  border-color: var(--ee-purple);
+  background: #faf9fd;
+}
+
+#ee-ce-member-ticket-addon:has(#ee-ce-member-ticket-enabled:checked) #ee-ce-member-ticket-fields {
+  display: block !important;
+}
+
 .ee-addon-body .ee-info-box {
   margin-bottom: 12px;
 }

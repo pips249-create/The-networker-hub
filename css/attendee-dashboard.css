@@ -322,6 +322,14 @@ button.ad-stat-link:focus-visible::after {
   letter-spacing: 0.06em;
 }
 
+.ad-stat-label-short {
+  display: none;
+}
+
+.ad-nav-text[data-short]::before {
+  content: none;
+}
+
 .ad-stat-value {
   font-size: 30px;
   font-weight: 700;

@@ -17,11 +17,10 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260715nav" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260723partner" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260723ticketshub" />
-    <link rel="stylesheet" href="../css/location-profile-nudge.css?v=20260729loc" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260730tabs" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260805mobile" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260805drag" />
 
   </head>
   <body class="attendee-dashboard-page hub-page-account hub-is-page-loading">
@@ -38,35 +37,41 @@
     <div id="ad-shell" hidden>
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
+          <div class="hub-side-nav-scroll">
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="My Hub">
-            <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
+            <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">
+              <span class="ad-nav-text" data-short="Home">Overview</span>
+            </a>
             <span class="hub-side-nav-divider">Event tickets</span>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
-              Event tickets
+              <span class="ad-nav-text" data-short="Tickets">Event tickets</span>
               <span class="ad-side-count" id="ad-side-tickets" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Saved</span>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">
-              Saved &amp; memberships
+              <span class="ad-nav-text" data-short="Saved">Saved &amp; memberships</span>
               <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#opportunity-enquiries" class="hub-side-nav-link" data-ad-route="opportunity-enquiries">
-              My enquiries
+              <span class="ad-nav-text" data-short="Enquiries">My enquiries</span>
               <span class="ad-side-count" id="ad-side-enquiries" hidden></span>
             </a>
             <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
-              Saved &amp; alerts
+              <span class="ad-nav-text" data-short="Alerts">Saved &amp; alerts</span>
               <span class="ad-side-count" id="ad-side-saved-opportunities" hidden></span>
             </a>
-            <span class="hub-side-nav-divider">Partner with us</span>
-            <a href="#visibility" class="hub-side-nav-link" data-ad-route="visibility">Grow your visibility</a>
-            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner">Advertising &amp; sponsorship</a>
+            <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
+            <a href="#visibility" class="hub-side-nav-link" data-ad-route="visibility">
+              <span class="ad-nav-text" data-short="Promote">Grow your visibility</span>
+            </a>
+            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner hub-side-nav-link--secondary">Advertising &amp; sponsorship</a>
             <div class="hub-side-nav-util">
               <a href="../events/">Browse events</a>
               <a href="/account/settings">Settings</a>
             </div>
           </nav>
+          </div>
         </aside>
 
         <div class="ad-main" id="hub-main-content" tabindex="-1">
@@ -106,20 +111,19 @@
 
             <!-- Overview -->
             <section class="ad-page is-active" id="ad-page-overview" data-ad-page="overview">
-              <div id="hub-location-nudge-host" data-variant="account" data-settings-href="./settings/"></div>
               <div class="ad-stats" id="ad-stats">
                 <button type="button" class="ad-stat ad-stat--purple ad-stat-link" data-ad-stat-route="upcoming" aria-label="View upcoming events">
-                  <div class="ad-stat-label">Upcoming events</div>
+                  <div class="ad-stat-label"><span class="ad-stat-label-full">Upcoming events</span><span class="ad-stat-label-short">Upcoming</span></div>
                   <div class="ad-stat-value" id="ad-stat-upcoming" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-next">—</div>
                 </button>
                 <button type="button" class="ad-stat ad-stat--gold ad-stat-link" data-ad-stat-route="reviews" aria-label="View reviews">
-                  <div class="ad-stat-label">Organiser reviews</div>
+                  <div class="ad-stat-label"><span class="ad-stat-label-full">Organiser reviews</span><span class="ad-stat-label-short">Reviews</span></div>
                   <div class="ad-stat-value" id="ad-stat-reviews" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
                 </button>
                 <button type="button" class="ad-stat ad-stat--purple ad-stat-link" data-ad-stat-route="opportunity-enquiries" aria-label="View opportunity enquiries">
-                  <div class="ad-stat-label">Opportunity enquiries sent</div>
+                  <div class="ad-stat-label"><span class="ad-stat-label-full">Opportunity enquiries sent</span><span class="ad-stat-label-short">Enquiries</span></div>
                   <div class="ad-stat-value" id="ad-stat-enquiries" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-enquiries-hint">—</div>
                 </button>
@@ -861,8 +865,7 @@
     <script src="../js/opportunity-compare.js?v=20260728earn"></script>
     <script src="../js/hub-calendar-share.js?v=20260609a"></script>
     <script src="../js/hub-going-share.js?v=20260714share2"></script>
-    <script src="../js/hub-side-nav.js?v=20260730tabs"></script>
-    <script src="../js/attendee-dashboard.js?v=20260730events"></script>
-    <script src="../js/location-profile-nudge.js?v=20260729loc"></script>
+    <script src="../js/hub-side-nav.js?v=20260805drag2"></script>
+    <script src="../js/attendee-dashboard.js?v=20260805mobile"></script>
   </body>
 </html>
