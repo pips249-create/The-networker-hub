@@ -34,8 +34,12 @@ function isEmailSafeLogoUrl(url) {
 function sponsorEmailLogoBandColor(block, override) {
   const fromOptions = String(override || '').trim();
   if (/^#[0-9a-f]{3,6}$/i.test(fromOptions)) return fromOptions.toLowerCase();
+  // Explicit CMS "use dark logo band" → dark.
   if (sponsorLogoBandDark(block)) return EMAIL_SPONSOR_LOGO_BAND_DARK;
-  return EMAIL_SPONSOR_LOGO_BAND_FALLBACK;
+  // Command Centre leaves this unchecked for many heroes; the website still auto-darkens
+  // light logos on Events/Organisers/Opportunities browse. Emails cannot sample the image,
+  // so default to the same dark pad — otherwise white logos vanish on the cream header.
+  return EMAIL_SPONSOR_LOGO_BAND_DARK;
 }
 
 function buildSponsorLogoMarkup(logo, name, logoBandBg) {
@@ -74,7 +78,8 @@ function buildSponsorSection(block, options) {
   if (!hasSponsorLogo(block) || !isEmailSafeLogoUrl(rawLogo)) return '';
   const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL);
   if (!logo) return '';
-  const url = String(block.cta_url || '').trim();
+  const site = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const url = String(block.cta_url || '').trim() || site + '/advertising';
   const name = sponsorCompanyName(block) || 'Our sponsor';
   if (!url) return '';
   const safeUrl = url.replace(/"/g, '&quot;');

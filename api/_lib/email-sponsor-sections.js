@@ -8,7 +8,7 @@ const {
   EVENTS_SPONSOR_SLOT,
   isEmailSafeLogoUrl,
 } = require('./email-booking-defaults');
-const { isEmailSponsorBlock, hasSponsorLogo, sponsorLogoUrl } = require('./cms-sponsor-fields');
+const { hasSponsorLogo, sponsorLogoUrl } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
@@ -219,9 +219,11 @@ function buildMiniSponsorsRow(ads, options = {}) {
 }
 
 function isRenderableEmailSponsor(block) {
-  if (!isEmailSponsorBlock(block)) return false;
+  if (!block || block.active === false) return false;
   if (!hasSponsorLogo(block)) return false;
-  return isEmailSafeLogoUrl(sponsorLogoUrl(block));
+  if (!isEmailSafeLogoUrl(sponsorLogoUrl(block))) return false;
+  // Website link preferred; buildSponsorSection falls back to /advertising when missing.
+  return true;
 }
 
 async function resolveEventsMainSponsorBlock(sb) {

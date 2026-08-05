@@ -8196,7 +8196,7 @@
       '<input type="file" id="sponsor-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600"></div>' +
       '<label class="flex items-start gap-2 text-sm text-slate-700 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">' +
       '<input type="checkbox" id="sponsor-logo-band-dark" class="rounded border-slate-300 mt-0.5"> ' +
-      '<span><strong>Use dark logo band</strong><span class="block text-xs text-slate-500 mt-0.5">For logos with white or light text on a light background. Overrides automatic detection.</span></span></label>' +
+      '<span><strong>Use dark logo band</strong><span class="block text-xs text-slate-500 mt-0.5">For logos with white or light artwork. The website also auto-detects this; emails always use a dark pad so light logos stay visible.</span></span></label>' +
       '<div class="grid sm:grid-cols-2 gap-4" id="sponsor-cta-fields">' +
       '<div id="sponsor-cta-label-wrap"><label id="sponsor-cta-label-label" class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-cta-label">CTA button label <span class="text-brand-700">*</span></label>' +
       '<input type="text" id="sponsor-cta-label" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
