@@ -691,6 +691,10 @@
   list-style: none;
 }
 
+.auth-wizard-steps[hidden] {
+  display: none !important;
+}
+
 .auth-wizard-step {
   flex: 1;
   display: flex;
