@@ -64,7 +64,7 @@
         '">FAQ</a>' +
         '<a href="' +
         href('/for-attendees') +
-        '">For Attendees</a>' +
+        '">For Networkers</a>' +
         '<a href="' +
         href('/for-organisers') +
         '">For Organisers</a>' +

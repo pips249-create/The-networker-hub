@@ -473,7 +473,7 @@ function buildLlmsTxt(origin) {
     '- For Organisers: ' +
     base +
     '/for-organisers\n' +
-    '- For Attendees: ' +
+    '- For Networkers: ' +
     base +
     '/for-attendees\n' +
     '- Organiser guides: ' +

@@ -11,7 +11,7 @@ Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thene
 - Contact (Hubert assistant): http://localhost:3000/contact
 - About: http://localhost:3000/about
 - For Organisers: http://localhost:3000/for-organisers
-- For Attendees: http://localhost:3000/for-attendees
+- For Networkers: http://localhost:3000/for-attendees
 - Organiser guides: http://localhost:3000/guides
 - Advertising & sponsorship: http://localhost:3000/advertising
 - Legal: http://localhost:3000/legal-policies

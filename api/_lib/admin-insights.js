@@ -28,6 +28,53 @@ function paidAmount(reg) {
   return reg.payment_status === 'Paid' ? Number(reg.amount_paid) || 0 : 0;
 }
 
+function registrationTicketQty(reg) {
+  return Math.max(1, Number(reg?.quantity) || 1);
+}
+
+function isConfirmedSiteTicket(reg) {
+  if (!reg || reg.cancelled_at) return false;
+  const status = String(reg.payment_status || '').trim();
+  return status === 'Paid' || status === 'Free';
+}
+
+/** Tickets bought on the Hub in the period (quantity, not just booking rows). */
+function computeTicketVolume(regs) {
+  let bookings = 0;
+  let tickets = 0;
+  let paidTickets = 0;
+  let freeTickets = 0;
+  let paidBookings = 0;
+  let freeBookings = 0;
+  let paidSpend = 0;
+
+  (regs || []).forEach((reg) => {
+    if (!isConfirmedSiteTicket(reg)) return;
+    const qty = registrationTicketQty(reg);
+    const status = String(reg.payment_status || '').trim();
+    bookings += 1;
+    tickets += qty;
+    if (status === 'Paid') {
+      paidBookings += 1;
+      paidTickets += qty;
+      paidSpend = round2(paidSpend + paidAmount(reg));
+    } else {
+      freeBookings += 1;
+      freeTickets += qty;
+    }
+  });
+
+  return {
+    bookings,
+    tickets,
+    paidTickets,
+    freeTickets,
+    paidBookings,
+    freeBookings,
+    paidSpend,
+  };
+}
+
 function avgRating(sum, count) {
   if (!count) return null;
   return round2(sum / count);
@@ -97,7 +144,7 @@ async function fetchRegistrations(sb, since) {
   let query = sb
     .from('registrations')
     .select(
-      'id, created_at, payment_status, amount_paid, application_status, screening_answer_industry, screening_answer_job_title, attendee_id, event_id, organiser_id, attendees(name, email, location), events(id, title, city, event_type), organisers(id, name)'
+      'id, created_at, cancelled_at, payment_status, amount_paid, quantity, application_status, screening_answer_industry, screening_answer_job_title, attendee_id, event_id, organiser_id, attendees(name, email, location), events(id, title, city, event_type), organisers(id, name)'
     )
     .order('created_at', { ascending: false });
   if (since) query = query.gte('created_at', since);
@@ -518,6 +565,7 @@ async function getAdminInsights(periodRaw) {
     currency: 'GBP',
     updatedAt: new Date().toISOString(),
     revenueComparison,
+    ticketVolume: computeTicketVolume(periodRegs),
     promoteRoi,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
     userLocations: aggregateUserLocations(attendeeLocations),

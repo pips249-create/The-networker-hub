@@ -234,7 +234,7 @@
         'Use the Overview, Demand, and Insights tabs — each page loads only what you need.',
         'Overview links out to Vercel for visitor charts and shows live Hub counts.',
         'Demand shows searches, favourites, opportunity enquiries, and guest visits.',
-        'Insights ranks top groups, events, and growth quality. Change 7 / 30 / all days on Demand or Insights.',
+        'Insights opens with tickets bought on the Hub (paid vs free), then ranks top groups and events. Change 7 / 30 / all days on Demand or Insights.',
       ],
     },
     rankings: {
@@ -4061,6 +4061,7 @@
     var funnel = data.applicationFunnel || {};
     var promote = data.promoteRoi || {};
     var promoteTotals = promote.totals || {};
+    var tickets = data.ticketVolume || {};
     var periodLabel = analyticsPeriodLabel(data.period || analyticsState.period);
     var orgCount = (data.topOrganisers || []).length;
     var eventCount = (data.topEvents || []).length;
@@ -4069,11 +4070,47 @@
     return (
       '<div class="admin-insights space-y-4">' +
       '<nav class="admin-insights-jump" aria-label="Insights sections">' +
+      '<a href="#insights-tickets" class="admin-insights-jump-link">Tickets</a>' +
       '<a href="#insights-performers" class="admin-insights-jump-link">Performers</a>' +
       '<a href="#insights-growth" class="admin-insights-jump-link">Growth</a>' +
       '<a href="#insights-promote" class="admin-insights-jump-link">Promote ROI</a>' +
       '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
       '</nav>' +
+      '<section id="insights-tickets" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Tickets bought on the Hub</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Confirmed bookings in ' +
+      esc(periodLabel.toLowerCase()) +
+      ' — paid and free tickets (cancelled and pending applications excluded). Quantity counts multi-ticket checkouts.</p></div>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      card(
+        'Tickets bought',
+        String(tickets.tickets != null ? tickets.tickets : 0),
+        String(tickets.bookings || 0) +
+          ' booking' +
+          (tickets.bookings === 1 ? '' : 's') +
+          ' · ' +
+          esc(periodLabel),
+        'brand'
+      ) +
+      card(
+        'Paid tickets',
+        String(tickets.paidTickets != null ? tickets.paidTickets : 0),
+        String(tickets.paidBookings || 0) + ' paid booking' + (tickets.paidBookings === 1 ? '' : 's'),
+        'emerald'
+      ) +
+      card(
+        'Free tickets',
+        String(tickets.freeTickets != null ? tickets.freeTickets : 0),
+        String(tickets.freeBookings || 0) + ' free booking' + (tickets.freeBookings === 1 ? '' : 's'),
+        'blue'
+      ) +
+      card(
+        'Paid ticket spend',
+        fmtMoney(tickets.paidSpend || 0),
+        'Gross amount attendees paid in ' + esc(periodLabel.toLowerCase()),
+        'violet'
+      ) +
+      '</div></section>' +
       '<section id="insights-performers" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div class="flex flex-wrap items-end justify-between gap-2">' +
       '<div><h3 class="font-bold text-brand-900">Top performers</h3>' +
