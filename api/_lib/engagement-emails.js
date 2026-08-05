@@ -15,7 +15,6 @@ const {
 const {
   siteBase,
   browseEventsUrl,
-  opportunitiesBrowseUrl,
   organiserPublicUrl,
   organiserDashboardUrl,
 } = require('./hub-email-urls');
@@ -88,9 +87,6 @@ const GUEST_VISIT_FOLLOWUP_BATCH_LIMIT = 50;
 const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
-const SIGNUP_NUDGE_FOLLOWUP_DAYS = 10;
-/** Min days after Email 1 before Email 2 — stops catch-up from sending both in one cron. */
-const SIGNUP_NUDGE_FOLLOWUP_GAP_DAYS = 7;
 const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
 /** Skip Hubert if a signup nurture email landed this recently (avoids same-day doubles). */
 const HUBERT_AFTER_NURTURE_COOLDOWN_DAYS = 7;
@@ -144,31 +140,6 @@ function eventRecommendationSubtitle(ev) {
   );
 }
 
-function lightRecommendationCard(title, subtitle, url) {
-  return (
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f3ecfa;border:1px solid #e8dce8;border-radius:12px;margin:0 0 10px;">' +
-    '<tr><td style="padding:16px 18px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#452d5c;margin:0 0 6px;line-height:1.35;">' +
-    title +
-    '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:#635c5e;margin:0 0 12px;line-height:1.5;">' +
-    subtitle +
-    '</p>' +
-    '<a href="' +
-    url +
-    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#5b2f99;text-decoration:none;">View event &rarr;</a>' +
-    '</td></tr></table>'
-  );
-}
-
-function lightSectionHeading(text) {
-  return (
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
-    text +
-    '</p>'
-  );
-}
-
 async function buildSignupNudgeEventsHtml(sb, attendeeLocation) {
   const siteUrl = siteBase();
   const nearbyResult = await fetchNearbyEvents(sb, attendeeLocation, { limit: 5 });
@@ -198,49 +169,6 @@ async function buildSignupNudgeEventsHtml(sb, attendeeLocation) {
     for (const ev of popularResult.events) {
       popularParts.push(
         recommendationCard(
-          String(ev.title || 'Event').trim(),
-          eventRecommendationSubtitle(ev),
-          eventPublicUrl(ev, siteUrl)
-        )
-      );
-    }
-  }
-
-  return {
-    nearby_events_html: nearbyParts.join(''),
-    popular_events_html: popularParts.join(''),
-  };
-}
-
-async function buildSignupNudgeFollowupEventsHtml(sb, attendeeLocation) {
-  const siteUrl = siteBase();
-  const popularResult = await fetchPopularEvents(sb, { limit: 3 });
-  const popularIds = popularResult.events.map((ev) => ev.id);
-  const nearbyResult = await fetchNearbyEvents(sb, attendeeLocation, {
-    limit: 5,
-    excludeEventIds: popularIds,
-  });
-
-  const popularParts = [];
-  if (popularResult.events.length) {
-    popularParts.push(lightSectionHeading('Popular right now'));
-    for (const ev of popularResult.events) {
-      popularParts.push(
-        lightRecommendationCard(
-          String(ev.title || 'Event').trim(),
-          eventRecommendationSubtitle(ev),
-          eventPublicUrl(ev, siteUrl)
-        )
-      );
-    }
-  }
-
-  const nearbyParts = [];
-  if (nearbyResult.events.length) {
-    nearbyParts.push(lightSectionHeading(nearbySectionHeading(nearbyResult)));
-    for (const ev of nearbyResult.events) {
-      nearbyParts.push(
-        lightRecommendationCard(
           String(ev.title || 'Event').trim(),
           eventRecommendationSubtitle(ev),
           eventPublicUrl(ev, siteUrl)
@@ -501,89 +429,6 @@ async function sendDueSignupEventsNudgeEmails(sb) {
       await sb
         .from('attendees')
         .update({ signup_events_nudge_sent_at: new Date().toISOString() })
-        .eq('id', attendee.id);
-      result.sent += 1;
-    } catch (e) {
-      if (e.code === 'emails_disabled') result.skipped += 1;
-      else result.errors.push({ attendee_id: attendee.id, error: e.message || String(e) });
-    }
-  }
-
-  return result;
-}
-
-async function sendDueSignupEventsNudgeFollowupEmails(sb) {
-  const eligibleAfter = daysAgo(SIGNUP_NUDGE_FOLLOWUP_DAYS);
-  const eligibleBefore = daysAgo(SIGNUP_NUDGE_MAX_AGE_DAYS);
-  const nudgeSentBefore = daysAgo(SIGNUP_NUDGE_FOLLOWUP_GAP_DAYS);
-  const result = { sent: 0, skipped: 0, errors: [] };
-
-  const { data: registrations, error: regErr } = await sb
-    .from('registrations')
-    .select('attendee_id')
-    .in('payment_status', ['Paid', 'Free'])
-    .neq('application_status', 'Denied')
-    .is('cancelled_at', null)
-    .not('attendee_id', 'is', null);
-  if (regErr) throw new Error(regErr.message);
-
-  const bookedAttendeeIds = new Set(
-    (registrations || []).map((row) => String(row.attendee_id || '')).filter(Boolean)
-  );
-
-  const { data: attendees, error: attErr } = await sb
-    .from('attendees')
-    .select(
-      'id, email, name, location, created_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
-    )
-    .lte('created_at', eligibleAfter)
-    .gte('created_at', eligibleBefore)
-    .not('signup_events_nudge_sent_at', 'is', null)
-    .lte('signup_events_nudge_sent_at', nudgeSentBefore)
-    .is('signup_events_nudge_followup_sent_at', null);
-  if (attErr) throw new Error(attErr.message);
-
-  const siteUrl = siteBase();
-
-  for (const attendee of attendees || []) {
-    if (bookedAttendeeIds.has(String(attendee.id))) {
-      result.skipped += 1;
-      continue;
-    }
-
-    const email = String(attendee.email || '').trim().toLowerCase();
-    if (!email) {
-      result.skipped += 1;
-      continue;
-    }
-
-    try {
-      const eventSections = await buildSignupNudgeFollowupEventsHtml(sb, attendee.location);
-      if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
-        result.skipped += 1;
-        continue;
-      }
-
-      await sendTemplatedEmail({
-        slug: 'attendee_signup_events_nudge_followup',
-        to: email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee.name || '').trim() || 'there',
-          near_location_phrase: nearLocationPhrase(attendee.location),
-          nearby_events_html: eventSections.nearby_events_html,
-          popular_events_html: eventSections.popular_events_html,
-          browse_events_url: browseEventsUrl(siteUrl),
-          opportunities_url: opportunitiesBrowseUrl(siteUrl),
-          location_tip_html: locationTipHtml(siteUrl, attendee.location),
-          add_location_url: accountSettingsUrl(siteUrl),
-        },
-        subject: 'Still looking for your first event?',
-      });
-
-      await sb
-        .from('attendees')
-        .update({ signup_events_nudge_followup_sent_at: new Date().toISOString() })
         .eq('id', attendee.id);
       result.sent += 1;
     } catch (e) {
@@ -1413,7 +1258,6 @@ async function runEngagementEmailMaintenance(sb) {
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
-  const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const hubertConcierge = await sendDueHubertEventConciergeEmails(sb);
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
@@ -1424,7 +1268,6 @@ async function runEngagementEmailMaintenance(sb) {
     categoryExclusivityPayment,
     reengagement,
     signupEventsNudge,
-    signupEventsNudgeFollowup,
     hubertConcierge,
     lowEvents,
     stripeConnect,
@@ -1434,7 +1277,6 @@ async function runEngagementEmailMaintenance(sb) {
 module.exports = {
   sendDueAttendeeReengagementEmails,
   sendDueSignupEventsNudgeEmails,
-  sendDueSignupEventsNudgeFollowupEmails,
   sendDueHubertEventConciergeEmails,
   sendOrganiserLowUpcomingEventsNudges,
   sendDueGuestVisitFollowupEmails,
@@ -1445,5 +1287,4 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
-  buildSignupNudgeFollowupEventsHtml,
 };

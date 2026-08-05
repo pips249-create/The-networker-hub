@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-function makeResolver(filename, marker) {
+const LAYOUT_MARKER = 'application-email-layout-v3';
+
+function makeResolver(filename) {
   let cached = null;
   function getCanonical() {
     if (cached) return cached;
@@ -10,7 +12,7 @@ function makeResolver(filename, marker) {
   }
   return function resolve(dbBodyHtml) {
     const body = String(dbBodyHtml || '');
-    if (!body.includes('application-email-layout-v2')) {
+    if (!body.includes(LAYOUT_MARKER) || !body.includes('{{logo_footer_url}}')) {
       return { bodyHtml: getCanonical(), source: 'file' };
     }
     return { bodyHtml: body, source: 'database' };
@@ -18,9 +20,6 @@ function makeResolver(filename, marker) {
 }
 
 module.exports = {
-  resolveApplicationApprovedBody: makeResolver(
-    'application-approved.html',
-    'application-email-layout-v2'
-  ),
-  resolveApplicationDeniedBody: makeResolver('application-denied.html', 'application-email-layout-v2'),
+  resolveApplicationApprovedBody: makeResolver('application-approved.html'),
+  resolveApplicationDeniedBody: makeResolver('application-denied.html'),
 };

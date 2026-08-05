@@ -12,8 +12,11 @@ function getCanonicalApplicationReceivedHtml() {
 
 function isStaleApplicationReceivedTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
+  if (!body.includes('application-received-layout-v3')) return true;
   if (!body.includes('Your application has been received')) return true;
   if (!body.includes('{{price_if_approved}}')) return true;
+  if (!body.includes('{{logo_footer_url}}')) return true;
+  if (body.includes('Payouts are processed')) return true;
   if (body.includes('hello@thenetworkerhub.com')) return true;
   if (body.includes('Need help?') && !body.includes('{{support_email}}')) return true;
   return false;

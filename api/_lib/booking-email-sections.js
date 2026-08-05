@@ -207,6 +207,7 @@ const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section', 
 function enrichAccountWelcomeVars(vars, sponsorSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
   const site = siteBase(input.site_url);
+  const sponsorRow = String(sponsorSection || input.sponsor_row || input.sponsor_section || '').trim();
 
   return {
     ...input,
@@ -218,9 +219,9 @@ function enrichAccountWelcomeVars(vars, sponsorSection) {
     terms_url: String(input.terms_url || '').trim() || legalPolicyUrl(site, 'terms'),
     refunds_url: String(input.refunds_url || '').trim() || legalPolicyUrl(site, 'refunds'),
     support_email: String(input.support_email || '').trim() || supportEmail(),
-    sponsor_row: '',
-    sponsor_section: '',
-    mini_sponsors_row: '',
+    sponsor_row: sponsorRow,
+    sponsor_section: sponsorRow,
+    mini_sponsors_row: String(input.mini_sponsors_row || '').trim(),
   };
 }
 

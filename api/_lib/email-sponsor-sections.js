@@ -85,11 +85,12 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'event_connections_list',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
-  'attendee_signup_events_nudge_followup',
   'attendee_hubert_event_concierge',
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
+  'account_welcome',
+  'password_reset',
 ]);
 
 /** Selected organiser growth emails also show the organiser mini-sponsor trio. */
@@ -131,14 +132,13 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'event_connections_list',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
-  'attendee_signup_events_nudge_followup',
   'attendee_hubert_event_concierge',
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
 ]);
 
-/** General Hub account emails show all three directory partners in one compact row. */
+/** Welcome / password reset: Events main under header; all three directory partners in footer. */
 const HUB_PARTNER_SPONSOR_SLUGS = new Set(['account_welcome', 'password_reset']);
 
 const SPONSOR_PLACEHOLDER_KEYS = ['sponsor_row', 'sponsor_section', 'mini_sponsors_row'];
@@ -157,13 +157,13 @@ function buildMiniSponsorsRow(ads, options = {}) {
 
   const cells = list
     .map(function (ad) {
-      const rawLogo = String(ad.logo_url || '').trim();
+      const rawLogo = String(ad.logo_url || ad.image_url || '').trim();
       if (!rawLogo || /\.svg(?:[?#]|$)/i.test(rawLogo) || /^data:image\/svg/i.test(rawLogo)) {
         return '';
       }
       const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL).replace(/"/g, '&quot;');
       const url = String(ad.cta_url || '').replace(/"/g, '&quot;');
-      const name = String(ad.company_name || 'Sponsor').replace(/"/g, '&quot;');
+      const name = String(ad.company_name || ad.title || 'Sponsor').replace(/"/g, '&quot;');
       if (!logo || !url) return '';
       return (
         '<td class="mini-sponsor-cell" style="width:33.33%;padding:6px 8px;text-align:center;vertical-align:middle;">' +

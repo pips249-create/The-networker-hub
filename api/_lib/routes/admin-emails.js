@@ -125,6 +125,11 @@ module.exports = async function handler(req, res) {
       if (!slug) return json(res, 400, { ok: false, error: 'missing_slug' });
       try {
         const variables = mergeEmailPreviewVariables(slug, body.variables || {});
+        const sponsorVars = await getEmailSponsorVars(slug);
+        // Match live sends: CMS inventory only — never leave "Sample sponsor" placeholders.
+        variables.sponsor_row = String(sponsorVars.sponsor_row || '').trim();
+        variables.sponsor_section = variables.sponsor_row;
+        variables.mini_sponsors_row = String(sponsorVars.mini_sponsors_row || '').trim();
         const built = await buildEmailFromTemplate(slug, variables, {
           subject: body.subject,
           body_html: body.body_html,
@@ -206,11 +211,8 @@ module.exports = async function handler(req, res) {
         }
         const previewVars = mergeEmailPreviewVariables(slug, body.variables || {});
         const sponsorVars = await getEmailSponsorVars(slug);
-        if (String(sponsorVars.sponsor_row || '').trim()) {
-          previewVars.sponsor_row = sponsorVars.sponsor_row;
-          previewVars.sponsor_section = sponsorVars.sponsor_row;
-        }
-        // Always use live CMS minis (or empty) — never ship placehold.co sample logos.
+        previewVars.sponsor_row = String(sponsorVars.sponsor_row || '').trim();
+        previewVars.sponsor_section = previewVars.sponsor_row;
         previewVars.mini_sponsors_row = String(sponsorVars.mini_sponsors_row || '').trim();
         const result = await sendTemplatedEmail({
           slug,
