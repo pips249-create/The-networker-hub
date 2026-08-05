@@ -347,7 +347,7 @@
       steps: [
         'Overview shows progress bars and category cards against your goals.',
         'Chart compares forecast vs actual — switch category or monthly/cumulative.',
-        'Deals is for offline sponsorship entries not invoiced through Stripe.',
+        'Deals is for offline sponsorship entries not invoiced through Stripe — you can log and remove manual entries so totals stay accurate.',
       ],
     },
     spotlight: {
@@ -4569,7 +4569,7 @@
           card(
             'Hub booking fees',
             fmtMoney(m.fees || 0),
-            'Ticket volume ' + fmtMoney(m.revenue || 0) + ' (organiser revenue)',
+            'Ticket volume ' + fmtMoney(m.revenue || 0) + ' (organiser · E2E excluded)',
             'emerald'
           );
       }
@@ -4691,7 +4691,8 @@
         card(
           'Hub booking fees',
           fmtMoney(m.fees || 0),
-          'Your cut from paid tickets · organiser ticket volume ' + fmtMoney(m.revenue || 0)
+          'Your cut from paid tickets (E2E/test excluded) · organiser ticket volume ' +
+          fmtMoney(m.revenue || 0)
         ) +
         card(
           'On events browse',
@@ -4982,7 +4983,7 @@
     var dealsHtml =
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900">Log sponsorship &amp; advertising revenue</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Stripe invoices with the correct metadata are logged automatically when paid. Use the form below only for offline payments not invoiced through Stripe.</p>' +
+      '<p class="text-xs text-slate-500 mt-1">Stripe invoices with the correct metadata are logged automatically when paid. Membership booking fees (monthly/annual) count toward Ticket sales automatically. Use the form below only for offline payments not invoiced through Stripe — remove a manual entry anytime with <span class="font-semibold">Remove</span>.</p>' +
       dealsMissing +
       stripeHelp +
       '<div class="mt-4">' +

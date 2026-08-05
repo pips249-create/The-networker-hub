@@ -5,6 +5,7 @@
 const { registrationBookingFee } = require('./booking-fees');
 const { calculateOpportunityListingTotals } = require('./opportunity-listing-pricing');
 const { FEATURED_PLANS } = require('./event-featured-plans');
+const { isTestRegistration, isTestFixtureText } = require('./test-fixture-filters');
 
 const PERIOD_START = '2026-07-03T00:00:00.000Z';
 const PERIOD_END = '2027-09-01T00:00:00.000Z';
@@ -26,7 +27,7 @@ const TARGET_CATEGORIES = [
   {
     id: 'ticket_sales',
     label: 'Ticket sales (booking fees)',
-    description: 'Hub booking fees across paid registrations',
+    description: 'Hub booking fees on paid event tickets and organiser memberships',
     target: 2500,
   },
   {
@@ -139,7 +140,9 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
   const [regsRes, oppsRes, eventsRes] = await Promise.all([
     sb
       .from('registrations')
-      .select('id, created_at, payment_status, amount_paid, quantity, events(title)')
+      .select(
+        'id, created_at, payment_status, amount_paid, quantity, events(title), attendees(name, email), organisers(name)'
+      )
       .eq('payment_status', 'Paid')
       .gte('created_at', new Date(startMs).toISOString())
       .lt('created_at', new Date(endMs).toISOString()),
@@ -161,6 +164,7 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
 
   (regsRes.data || []).forEach((reg) => {
     if (!inPeriod(reg.created_at, startMs, endMs)) return;
+    if (isTestRegistration(reg)) return;
     const fee = registrationBookingFee(reg);
     if (fee <= 0) return;
     addBreakdown(breakdown, 'ticket_sales', {
@@ -172,6 +176,7 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
   });
 
   (oppsRes.data || []).forEach((row) => {
+    if (isTestFixtureText(row.title)) return;
     if (inPeriod(row.listing_paid_at, startMs, endMs)) {
       const months = row.listing_months || 3;
       const totals = calculateOpportunityListingTotals(months);
@@ -198,6 +203,7 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
   });
 
   (eventsRes.data || []).forEach((row) => {
+    if (isTestFixtureText(row.title)) return;
     if (!inPeriod(row.featured_paid_at, startMs, endMs)) return;
     let amount = Number(row.featured_amount_gbp) || 0;
     if (!amount && row.featured_plan && FEATURED_PLANS[row.featured_plan]) {
@@ -388,7 +394,7 @@ function buildAssessment(categories, period, totals) {
   }
 
   const notes = [
-    'Ticket sales (£2,500) is the most modest target — booking fees accrue automatically as paid events sell.',
+    'Ticket sales (£2,500) is the most modest target — booking fees accrue automatically from paid event tickets and Hub-billed memberships.',
     'Events (£42,500) and opportunities (£48,000) are the stretch goals — they rely on closing directory sponsors and premium packages consistently.',
     'Browse organisers (£10,000) is achievable with one hero sponsor plus mini-sponsor inventory over the period.',
     'Awards (£5,000) is marked TBC — log revenue manually when sponsorship is confirmed.',

@@ -3,24 +3,14 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { parseTypeCategory } = require('./event-types');
+const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
 }
 
 function isTestActivityText(text) {
-  const t = String(text || '').toLowerCase();
-  return (
-    /e2e review test/.test(t) ||
-    /review test attendee/.test(t) ||
-    /e2e review host/.test(t)
-  );
-}
-
-function isTestRegistration(reg) {
-  const who = reg.attendees?.name || reg.attendees?.email || '';
-  const eventTitle = reg.events?.title || '';
-  return isTestActivityText(who) || isTestActivityText(eventTitle);
+  return isTestFixtureText(text);
 }
 
 function parsePeriod(raw) {

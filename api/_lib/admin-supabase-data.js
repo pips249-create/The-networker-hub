@@ -6,6 +6,7 @@ const {
   registrationTicketRevenue,
   registrationBookingFee,
 } = require('./booking-fees');
+const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -262,12 +263,7 @@ function buildAlertsFromCounts(counts) {
 
 /** Exclude E2E seed scripts only — avoid filtering legitimate titles or names. */
 function isTestActivityText(text) {
-  const t = String(text || '').toLowerCase();
-  return (
-    /e2e review test/.test(t) ||
-    /review test attendee/.test(t) ||
-    /e2e review host/.test(t)
-  );
+  return isTestFixtureText(text);
 }
 
 async function fetchPaidRegistrationTotals(sb) {
@@ -279,12 +275,13 @@ async function fetchPaidRegistrationTotals(sb) {
   while (true) {
     const res = await sb
       .from('registrations')
-      .select('amount_paid, quantity')
+      .select('amount_paid, quantity, events(title), attendees(name, email), organisers(name)')
       .eq('payment_status', 'Paid')
       .range(from, from + pageSize - 1);
     if (res.error) throw new Error(res.error.message);
     const rows = res.data || [];
     rows.forEach((r) => {
+      if (isTestRegistration(r)) return;
       totalRevenue += registrationTicketRevenue(r);
       hubBookingFees += registrationBookingFee(r);
     });
@@ -938,12 +935,14 @@ async function fetchFinancials(sb) {
       .order('name'),
     sb
       .from('registrations')
-      .select('organiser_id, amount_paid, payment_status, quantity')
+      .select(
+        'organiser_id, amount_paid, payment_status, quantity, events(title), attendees(name, email), organisers(name)'
+      )
       .eq('payment_status', 'Paid'),
     sb
       .from('registrations')
       .select(
-        'created_at, payment_status, amount_paid, quantity, organiser_id, organisers(name), events(title)'
+        'created_at, payment_status, amount_paid, quantity, organiser_id, organisers(name), events(title), attendees(name, email)'
       )
       .order('created_at', { ascending: false })
       .limit(40),
@@ -977,6 +976,7 @@ async function fetchFinancials(sb) {
   let totalTicketRevenue = 0;
   let totalBookingFees = 0;
   (paidRegsRes.data || []).forEach((r) => {
+    if (isTestRegistration(r)) return;
     totalTicketRevenue += registrationTicketRevenue(r);
     totalBookingFees += registrationBookingFee(r);
     const orgId = r.organiser_id;
