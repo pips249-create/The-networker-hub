@@ -9095,14 +9095,27 @@
       var sel = document.getElementById('sponsor-clicks-company');
       if (!sel || sel.tagName !== 'SELECT') return;
       var current = selected != null ? String(selected) : sel.value || '';
+      if (/^barnsgate$/i.test(current.trim())) current = 'Barnsgate Solutions';
       var list = Array.isArray(brands) ? brands.slice() : [];
-      if (!list.some(function (b) { return /barnsgate/i.test(String(b || '')); })) {
-        list.unshift('Barnsgate Solutions');
-      }
-      var opts = ['<option value="">All sponsors</option>'];
+      var seen = {};
+      var deduped = [];
       list.forEach(function (name) {
         var n = String(name || '').trim();
         if (!n) return;
+        if (/barnsgate/i.test(n)) n = 'Barnsgate Solutions';
+        var key = n.toLowerCase();
+        if (seen[key]) return;
+        seen[key] = true;
+        deduped.push(n);
+      });
+      if (!deduped.some(function (b) { return /barnsgate/i.test(String(b || '')); })) {
+        deduped.unshift('Barnsgate Solutions');
+      }
+      deduped.sort(function (a, b) {
+        return a.localeCompare(b);
+      });
+      var opts = ['<option value="">All sponsors</option>'];
+      deduped.forEach(function (n) {
         opts.push(
           '<option value="' +
             attrEsc(n) +

@@ -559,14 +559,17 @@ async function listSponsorBrands() {
 
   const map = new Map();
   for (const row of data || []) {
-    const name = cleanText(row.company_name, MAX_COMPANY);
+    let name = cleanText(row.company_name, MAX_COMPANY);
     if (!name) continue;
+    // Prefer one canonical label when CMS rows use shortened variants.
+    if (isBarnsgateBrand(name)) name = 'Barnsgate Solutions';
     const key = name.toLowerCase();
     const existing = map.get(key);
     const score =
       (row.active === false ? 0 : 2) +
       (/sponsor|partner/i.test(String(row.slot || '')) ? 2 : 0) +
-      (row.logo_url || row.image_url ? 1 : 0);
+      (row.logo_url || row.image_url ? 1 : 0) +
+      (name === 'Barnsgate Solutions' ? 1 : 0);
     if (!existing || score > existing.score) {
       map.set(key, { company: name, score });
     }

@@ -323,8 +323,10 @@
 
   function setPdfButtonsBusy(busy) {
     document.querySelectorAll('#pitch-download-pdf, #pitch-download-pdf-cta').forEach(function (btn) {
+      if (busy && !btn.getAttribute('data-label')) {
+        btn.setAttribute('data-label', btn.textContent);
+      }
       btn.disabled = !!busy;
-      if (busy) btn.setAttribute('data-label', btn.textContent);
       btn.textContent = busy ? 'Preparing PDF…' : btn.getAttribute('data-label') || 'Download PDF';
     });
   }
@@ -336,6 +338,13 @@
       return;
     }
     setPdfButtonsBusy(true);
+    var hideNodes = Array.prototype.slice.call(
+      document.querySelectorAll('.no-print, .sponsor-pitch-nav')
+    );
+    hideNodes.forEach(function (el) {
+      el.setAttribute('data-pdf-was-hidden', el.style.display || '');
+      el.style.display = 'none';
+    });
     loadHtml2PdfLibrary()
       .then(function (html2pdf) {
         var opt = {
@@ -359,6 +368,10 @@
         window.print();
       })
       .finally(function () {
+        hideNodes.forEach(function (el) {
+          el.style.display = el.getAttribute('data-pdf-was-hidden') || '';
+          el.removeAttribute('data-pdf-was-hidden');
+        });
         setPdfButtonsBusy(false);
       });
   }
