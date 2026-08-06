@@ -292,8 +292,88 @@
       });
   }
 
+  function loadHtml2PdfLibrary() {
+    if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-hub-html2pdf]');
+      if (existing) {
+        existing.addEventListener('load', function () {
+          if (window.html2pdf) resolve(window.html2pdf);
+          else reject(new Error('html2pdf unavailable'));
+        });
+        existing.addEventListener('error', function () {
+          reject(new Error('html2pdf failed to load'));
+        });
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+      script.async = true;
+      script.setAttribute('data-hub-html2pdf', '1');
+      script.onload = function () {
+        if (window.html2pdf) resolve(window.html2pdf);
+        else reject(new Error('html2pdf unavailable'));
+      };
+      script.onerror = function () {
+        reject(new Error('html2pdf failed to load'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function setPdfButtonsBusy(busy) {
+    document.querySelectorAll('#pitch-download-pdf, #pitch-download-pdf-cta').forEach(function (btn) {
+      btn.disabled = !!busy;
+      if (busy) btn.setAttribute('data-label', btn.textContent);
+      btn.textContent = busy ? 'Preparing PDF…' : btn.getAttribute('data-label') || 'Download PDF';
+    });
+  }
+
+  function downloadPitchPdf() {
+    var shell = document.querySelector('.sponsor-pitch-shell');
+    if (!shell) {
+      window.print();
+      return;
+    }
+    setPdfButtonsBusy(true);
+    loadHtml2PdfLibrary()
+      .then(function (html2pdf) {
+        var opt = {
+          margin: [10, 10, 10, 10],
+          filename: 'Barnsgate-Networker-Hub-Events-Headline.pdf',
+          image: { type: 'jpeg', quality: 0.96 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#fffdf9',
+            logging: false,
+            windowWidth: Math.max(shell.scrollWidth, 980),
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.barns-ask', '.pitch-stat', '.barns-reach-card'] },
+        };
+        return html2pdf().set(opt).from(shell).save();
+      })
+      .catch(function () {
+        window.print();
+      })
+      .finally(function () {
+        setPdfButtonsBusy(false);
+      });
+  }
+
+  function bindPdfDownload() {
+    document.querySelectorAll('#pitch-download-pdf, #pitch-download-pdf-cta').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        downloadPitchPdf();
+      });
+    });
+  }
+
   bindSectionNav();
   bindPreviewTabs();
   bindScenarioTabs();
+  bindPdfDownload();
   loadLivePreview();
 })();

@@ -824,13 +824,45 @@
   font-size: 0.95rem;
 }
 
+.sponsor-pitch-banner-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.sponsor-pitch-pdf-btn {
+  appearance: none;
+  border: 1.5px solid rgba(125, 255, 212, 0.55);
+  background: transparent;
+  color: #7dffd4;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sponsor-pitch-pdf-btn:hover {
+  background: rgba(125, 255, 212, 0.12);
+}
+
+.sponsor-pitch-pdf-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .sponsor-pitch-cta-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.sponsor-pitch-cta a {
+.sponsor-pitch-cta a,
+.sponsor-pitch-cta button.secondary {
   display: inline-flex;
   align-items: center;
   padding: 12px 20px;
@@ -838,6 +870,8 @@
   font-weight: 700;
   text-decoration: none;
   font-size: 0.92rem;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .sponsor-pitch-cta a.primary {
@@ -845,10 +879,15 @@
   color: var(--pitch-ink);
 }
 
-.sponsor-pitch-cta a.secondary {
+.sponsor-pitch-cta a.secondary,
+.sponsor-pitch-cta button.secondary {
   background: transparent;
   border: 1.5px solid rgba(255, 255, 255, 0.45);
   color: #fff;
+}
+
+.sponsor-pitch-cta button.secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .sponsor-pitch-note {
@@ -875,11 +914,16 @@
 
 @media print {
   .sponsor-pitch-nav,
-  .sponsor-pitch-banner {
-    display: none;
+  .sponsor-pitch-banner,
+  .no-print {
+    display: none !important;
   }
 
   .sponsor-pitch-section {
     break-inside: avoid;
+  }
+
+  .sponsor-pitch-page {
+    background: #fff;
   }
 }
