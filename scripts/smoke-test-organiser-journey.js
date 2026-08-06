@@ -34,11 +34,16 @@ const ANON_PAGES = [
   { path: '/register', expect: /register|sign\s*up|create/i },
   { path: '/forgot-password', expect: /password|reset|forgot/i },
   { path: '/organiser/', expect: /organis|dashboard|sign\s*in|log\s*in/i },
+  { path: '/guides/claim-your-organiser-page', expect: /claim|organiser/i },
+  { path: '/guides/list-an-event', expect: /list|event|ticket/i },
+  { path: '/guides/list-a-business-opportunity', expect: /business|opportunit/i },
+  { path: '/help/pricing-fees', expect: /fee|pricing|booking/i },
+  { path: '/help/organiser-payouts', expect: /payout|stripe|connect/i },
 ];
 
 const ANON_APIS = [{ path: '/api/auth/session', expectOkJson: true }];
 
-/** Must stay gated for anonymous visitors (catalogue + deeper help). */
+/** Must stay gated for anonymous visitors (public catalogue + attendee marketing). */
 const MUST_STAY_GATED = [
   '/',
   '/events/',
@@ -47,10 +52,8 @@ const MUST_STAY_GATED = [
   '/opportunities/',
   '/for-attendees',
   '/guides',
-  '/guides/list-an-event',
   '/faq',
   '/advertising',
-  '/help/pricing-fees',
 ];
 
 const MUST_STAY_PRIVATE_APIS = [

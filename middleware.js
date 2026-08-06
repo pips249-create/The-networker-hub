@@ -91,11 +91,9 @@ const INTERNAL_SALES_PREFIXES = [
 
 /**
  * Organiser early-access paths — reachable while the public site gate is on.
- * Email 1: for-organisers + trust pages only (contact / legal / about).
- * Auth + /organiser stay open so Email 2 claim links work without another deploy.
- * Guides, FAQ, advertising, help, and the public catalogue stay gated for anonymous visitors.
- * Signed-in hub sessions unlock the full catalogue (events / organisers / opportunities)
- * so claimed organisers can preview live pages and list without the preview password.
+ * Email 1/2: claim, auth, organiser workspace, trust pages, and setup guides only.
+ * Public catalogue (Events / Organisers / Opportunities browse + booking) stays gated
+ * for everyone — including signed-in users — until SITE_ACCESS_PASSWORD is removed at launch.
  */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
@@ -110,6 +108,13 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/contact',
   '/contact.html',
   '/legal-policies',
+  '/guides/claim-your-organiser-page',
+  '/guides/list-an-event',
+  '/guides/list-a-business-opportunity',
+  '/guides/invite-your-team',
+  '/guides/export-attendees-and-visits',
+  '/help/pricing-fees',
+  '/help/organiser-payouts',
   '/api/auth',
   '/api/organiser',
   '/api/contact-chat',
@@ -598,11 +603,7 @@ async function maybeGateSiteAccess(request, url) {
     return { authorized: true };
   }
 
-  // Claimed organisers / members: full product after sign-in. Anonymous catalogue stays gated.
-  if (await hasValidSession(request)) {
-    return { authorized: true };
-  }
-
+  // While the public gate is on, a normal hub_session does not unlock browse.
   // Early-access paths (including /organiser claim) already returned above via
   // isGateBypassPath. Team preview still uses the site-access password cookie.
 
