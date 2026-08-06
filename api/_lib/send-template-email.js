@@ -694,11 +694,28 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
 
   const built = await buildEmailFromTemplate(slug, variables);
   const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+  const sponsorTags = [];
+  if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
+    sponsorTags.push({ name: 'has_sponsor', value: '1' });
+    const primary = built.sponsorTracked[0];
+    const company = String(
+      (primary && (primary.company || primary.companyName || primary.brand)) || ''
+    )
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+    if (company) sponsorTags.push({ name: 'sponsor_brand', value: company });
+  }
+  const mergedTags = []
+    .concat(Array.isArray(resendTags) ? resendTags : [])
+    .concat(sponsorTags);
   const result = await sendViaResend({
     to,
     subject: subject || built.subject,
     html: built.html,
-    tags: resendTags,
+    tags: mergedTags.length ? mergedTags : resendTags,
     replyTo,
     from,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
@@ -706,7 +723,11 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
   });
   if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
     try {
-      await recordSponsorEmailSends(built.sponsorTracked, built.template && built.template.slug ? built.template.slug : slug);
+      await recordSponsorEmailSends(
+        built.sponsorTracked,
+        built.template && built.template.slug ? built.template.slug : slug,
+        result && result.id
+      );
     } catch (_e) {
       /* reporting must not block email delivery */
     }

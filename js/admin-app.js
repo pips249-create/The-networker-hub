@@ -8494,16 +8494,21 @@
       );
     }
 
+    var valuePhrase = isEnterprise ? 'your £2,000/mo sponsorship value' : 'your sponsorship value';
     var strategicIntro =
       pageViews > 0 && clicks > 0
         ? 'Your campaign is delivering high conversion intent (' +
           ctr.label +
-          ' engagement rate). To maximise your sponsorship yield for the upcoming cycle:'
+          ' engagement rate). To maximise ' +
+          valuePhrase +
+          ' for the upcoming cycle:'
         : pageViews > 0
-          ? 'Directory audiences are reaching your hero placement. To strengthen engagement yield for the upcoming cycle:'
-          : 'Your placement is live on The Networker Hub. To build measurable yield for the upcoming cycle:';
-
-    var feePhrase = isEnterprise ? '£2,000/mo sponsorship value' : 'sponsorship value';
+          ? 'Directory audiences are reaching your hero placement. To strengthen yield on ' +
+            valuePhrase +
+            ' for the upcoming cycle:'
+          : 'Your placement is live on The Networker Hub. To build measurable yield on ' +
+            valuePhrase +
+            ' for the upcoming cycle:';
 
     return (
       '<div class="sponsor-pack-pdf" style="width:720px;padding:28px 28px 24px;background:#ffffff;color:#1e293b;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;box-sizing:border-box;">' +
@@ -8581,7 +8586,7 @@
       '<div style="border:1px solid #2d2636;border-radius:12px;padding:14px 16px;background:#2d2636;margin-bottom:14px;color:#fff;">' +
       '<div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.72);margin-bottom:8px;">Strategic Account Direction</div>' +
       '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.92);margin-bottom:10px;">' +
-      esc(strategicIntro.replace('sponsorship yield', feePhrase)) +
+      esc(strategicIntro) +
       '</div>' +
       '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.88);">' +
       '<div style="margin-bottom:6px;"><strong style="color:#fff;">Creative rotation:</strong> Refresh your hero banner graphic to drive fresh engagement next month.</div>' +
@@ -8720,7 +8725,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page client pack — choose a brand (Barnsgate pack) first.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page Monthly Partnership Executive Summary — choose a brand (Barnsgate pack) first.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 

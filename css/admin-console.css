@@ -1384,7 +1384,8 @@ a.admin-action-row:hover .admin-action-btn {
   margin-bottom: 0.3rem;
 }
 
-.sponsor-pack-filters input {
+.sponsor-pack-filters input,
+.sponsor-pack-filters select {
   width: 100%;
   border: 1px solid #e2e8f0;
   border-radius: 0.65rem;
@@ -1548,6 +1549,122 @@ a.admin-action-row:hover .admin-action-btn {
   margin: 0.35rem 0 0;
   font-size: 0.8125rem;
   color: #64748b;
+}
+
+.sponsor-pack-exec {
+  margin: 0;
+  padding: 0.95rem 1.5rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: #334155;
+  font-weight: 550;
+}
+
+.sponsor-pack-kpi-delta {
+  margin: 0.4rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #64748b;
+}
+
+.sponsor-pack-kpi-delta.is-up {
+  color: #15803d;
+}
+
+.sponsor-pack-kpi-delta.is-down {
+  color: #b45309;
+}
+
+.sponsor-pack-kpi--accent .sponsor-pack-kpi-delta {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.sponsor-pack-email-eng {
+  margin: 0 1.5rem 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #ebe4ef;
+  border-radius: 1rem;
+  background: #f8f5fa;
+}
+
+.sponsor-pack-email-eng h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #2d2636;
+}
+
+.sponsor-pack-email-eng-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 700px) {
+  .sponsor-pack-email-eng-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.sponsor-pack-email-eng-grid p {
+  margin: 0;
+}
+
+.sponsor-pack-email-eng-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7c7480;
+}
+
+.sponsor-pack-email-eng-value {
+  margin-top: 0.25rem !important;
+  font-size: 1.25rem;
+  font-weight: 750;
+  color: #2d2636;
+}
+
+.sponsor-pack-email-eng-note {
+  margin: 0.75rem 0 0 !important;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.sponsor-pack-contact {
+  margin: 0 1.5rem 1rem;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid #ebe4ef;
+  border-radius: 1rem;
+  background: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.sponsor-pack-contact-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #475569;
+}
+
+.sponsor-pack-contact-label strong {
+  color: #2d2636;
+}
+
+.sponsor-pack-contact a {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #4a2c5a;
+  text-decoration: none;
+}
+
+.sponsor-pack-contact a:hover {
+  text-decoration: underline;
 }
 
 .sponsor-pack-kpis {
