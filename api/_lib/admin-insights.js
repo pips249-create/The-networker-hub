@@ -565,6 +565,21 @@ async function getAdminInsights(periodRaw) {
     /* table may not exist yet */
   }
 
+  let pitchPages = {
+    configured: false,
+    totals: {},
+    views: 0,
+    pdfDownloads: 0,
+    uniquePages: 0,
+    pages: [],
+  };
+  try {
+    const { getPitchPageStats } = require('./pitch-page-log');
+    pitchPages = await getPitchPageStats(period);
+  } catch {
+    /* table may not exist yet */
+  }
+
   return {
     configured: true,
     provider: 'supabase',
@@ -574,6 +589,7 @@ async function getAdminInsights(periodRaw) {
     revenueComparison,
     ticketVolume: computeTicketVolume(periodRegs),
     promoteRoi,
+    pitchPages,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
     userLocations: aggregateUserLocations(attendeeLocations),
     growthPulse: {

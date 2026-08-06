@@ -88,6 +88,9 @@ const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
 const STRIPE_NUDGE_COOLDOWN_DAYS = 14;
 const SIGNUP_NUDGE_DELAY_DAYS = 3;
 const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
+/** Second nurture ~10 days after signup (after the day-3 nudge). */
+const SIGNUP_NUDGE_FOLLOWUP_DELAY_DAYS = 10;
+const SIGNUP_NUDGE_FOLLOWUP_MAX_AGE_DAYS = 60;
 /** Skip Hubert if a signup nurture email landed this recently (avoids same-day doubles). */
 const HUBERT_AFTER_NURTURE_COOLDOWN_DAYS = 7;
 const HUBERT_CONCIERGE_BATCH_LIMIT = 50;
@@ -440,6 +443,179 @@ async function sendDueSignupEventsNudgeEmails(sb) {
   return result;
 }
 
+/**
+ * Hub accounts with organiser workspace enabled, plus emails linked to an
+ * organiser profile — used to keep attendee nurture mail off organiser inboxes.
+ */
+async function loadOrganiserRecipientKeys(sb, attendees) {
+  const userIds = [
+    ...new Set(
+      (attendees || [])
+        .map((row) => String(row.supabase_user_id || '').trim())
+        .filter(Boolean)
+    ),
+  ];
+  const emails = [
+    ...new Set(
+      (attendees || [])
+        .map((row) => String(row.email || '').trim().toLowerCase())
+        .filter(Boolean)
+    ),
+  ];
+
+  const organiserUserIds = new Set();
+  const organiserEmails = new Set();
+
+  if (userIds.length) {
+    const { data: hubs, error: hubErr } = await sb
+      .from('hub_accounts')
+      .select('user_id')
+      .in('user_id', userIds)
+      .not('organiser_access_at', 'is', null);
+    if (hubErr) throw new Error(hubErr.message);
+    (hubs || []).forEach((row) => {
+      const uid = String(row.user_id || '').trim();
+      if (uid) organiserUserIds.add(uid);
+    });
+
+    const { data: linkedOrgs, error: orgErr } = await sb
+      .from('organisers')
+      .select('supabase_user_id')
+      .in('supabase_user_id', userIds);
+    if (orgErr) throw new Error(orgErr.message);
+    (linkedOrgs || []).forEach((row) => {
+      const uid = String(row.supabase_user_id || '').trim();
+      if (uid) organiserUserIds.add(uid);
+    });
+  }
+
+  if (emails.length) {
+    const { data: orgAccounts, error: accErr } = await sb
+      .from('organiser_accounts')
+      .select('email')
+      .in('email', emails);
+    if (accErr && !/organiser_accounts|column|relation/i.test(String(accErr.message || ''))) {
+      throw new Error(accErr.message);
+    }
+    (orgAccounts || []).forEach((row) => {
+      const em = String(row.email || '').trim().toLowerCase();
+      if (em) organiserEmails.add(em);
+    });
+  }
+
+  return { organiserUserIds, organiserEmails };
+}
+
+function isOrganiserAttendee(attendee, organiserKeys) {
+  const uid = String(attendee?.supabase_user_id || '').trim();
+  const email = String(attendee?.email || '').trim().toLowerCase();
+  if (uid && organiserKeys.organiserUserIds.has(uid)) return true;
+  if (email && organiserKeys.organiserEmails.has(email)) return true;
+  return false;
+}
+
+async function sendDueSignupEventsNudgeFollowupEmails(sb) {
+  const eligibleAfter = daysAgo(SIGNUP_NUDGE_FOLLOWUP_DELAY_DAYS);
+  const eligibleBefore = daysAgo(SIGNUP_NUDGE_FOLLOWUP_MAX_AGE_DAYS);
+  const result = { sent: 0, skipped: 0, errors: [] };
+
+  const { data: registrations, error: regErr } = await sb
+    .from('registrations')
+    .select('attendee_id')
+    .in('payment_status', ['Paid', 'Free'])
+    .neq('application_status', 'Denied')
+    .is('cancelled_at', null)
+    .not('attendee_id', 'is', null);
+  if (regErr) throw new Error(regErr.message);
+
+  const bookedAttendeeIds = new Set(
+    (registrations || []).map((row) => String(row.attendee_id || '')).filter(Boolean)
+  );
+
+  const { data: attendees, error: attErr } = await sb
+    .from('attendees')
+    .select(
+      'id, email, name, location, created_at, supabase_user_id, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+    )
+    .lte('created_at', eligibleAfter)
+    .gte('created_at', eligibleBefore)
+    .not('signup_events_nudge_sent_at', 'is', null)
+    .is('signup_events_nudge_followup_sent_at', null);
+  if (attErr) {
+    if (/signup_events_nudge_followup_sent_at|column/.test(String(attErr.message || ''))) {
+      return { sent: 0, skipped: 0, errors: [], unavailable: true };
+    }
+    throw new Error(attErr.message);
+  }
+
+  const candidates = (attendees || []).filter((attendee) => {
+    if (bookedAttendeeIds.has(String(attendee.id))) return false;
+    return Boolean(String(attendee.email || '').trim());
+  });
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, candidates);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
+  }
+
+  const siteUrl = siteBase();
+
+  for (const attendee of attendees || []) {
+    if (bookedAttendeeIds.has(String(attendee.id))) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const email = String(attendee.email || '').trim().toLowerCase();
+    if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
+      result.skipped += 1;
+      continue;
+    }
+
+    try {
+      const eventSections = await buildSignupNudgeEventsHtml(sb, attendee.location);
+      if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
+        result.skipped += 1;
+        continue;
+      }
+
+      await sendTemplatedEmail({
+        slug: 'attendee_signup_events_nudge_followup',
+        to: email,
+        variables: {
+          ...baseEmailVars(siteUrl),
+          user_name: String(attendee.name || '').trim() || 'there',
+          near_location_phrase: nearLocationPhrase(attendee.location),
+          nearby_events_html: eventSections.nearby_events_html,
+          popular_events_html: eventSections.popular_events_html,
+          browse_events_url: browseEventsUrl(siteUrl),
+          location_tip_html: locationTipHtml(siteUrl, attendee.location),
+          add_location_url: accountSettingsUrl(siteUrl),
+        },
+        subject: 'Still looking for your first event?',
+      });
+
+      await sb
+        .from('attendees')
+        .update({ signup_events_nudge_followup_sent_at: new Date().toISOString() })
+        .eq('id', attendee.id);
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else result.errors.push({ attendee_id: attendee.id, error: e.message || String(e) });
+    }
+  }
+
+  return result;
+}
+
 async function sendOrganiserLowUpcomingEventsNudges(sb) {
   const now = new Date().toISOString();
   const cooldownBefore = daysAgo(LOW_EVENTS_NUDGE_COOLDOWN_DAYS);
@@ -656,7 +832,7 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
     if (result.sent >= GUEST_VISIT_FOLLOWUP_BATCH_LIMIT) break;
 
     const eventRow = eventById[registration.event_id];
-    if (!eventRow || !eventRow.organiser_id) {
+    if (!eventRow) {
       result.skipped += 1;
       continue;
     }
@@ -807,7 +983,7 @@ async function sendDuePostEventReviewEmails(sb, options) {
     if (result.sent >= POST_EVENT_REVIEW_BATCH_LIMIT) break;
 
     const eventRow = eventById[registration.event_id];
-    if (!eventRow) {
+    if (!eventRow || !eventRow.organiser_id) {
       result.skipped += 1;
       continue;
     }
@@ -1260,6 +1436,7 @@ async function runEngagementEmailMaintenance(sb) {
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
+  const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const hubertConcierge = await sendDueHubertEventConciergeEmails(sb);
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
@@ -1270,6 +1447,7 @@ async function runEngagementEmailMaintenance(sb) {
     categoryExclusivityPayment,
     reengagement,
     signupEventsNudge,
+    signupEventsNudgeFollowup,
     hubertConcierge,
     lowEvents,
     stripeConnect,
@@ -1279,6 +1457,7 @@ async function runEngagementEmailMaintenance(sb) {
 module.exports = {
   sendDueAttendeeReengagementEmails,
   sendDueSignupEventsNudgeEmails,
+  sendDueSignupEventsNudgeFollowupEmails,
   sendDueHubertEventConciergeEmails,
   sendOrganiserLowUpcomingEventsNudges,
   sendDueGuestVisitFollowupEmails,

@@ -127,11 +127,11 @@
   if (partnerShell && window.CmsAdBlocks) {
     if (window.CmsAdBlocks.mountCityPartnerSlot) {
       window.CmsAdBlocks.mountCityPartnerSlot(partnerShell, partnerSlot);
-    } else if (
-      !partnerShell.querySelector('.networking-city-partner-ad') &&
-      window.CmsAdBlocks.renderCityPartnerPlaceholder
-    ) {
-      window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell, partnerSlot);
+    } else if (window.CmsAdBlocks.loadCmsAd && window.CmsAdBlocks.renderCityPartnerAd) {
+      // Always replace the static HTML placeholder — do not bail when one is already in the DOM.
+      if (window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+        window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell, partnerSlot);
+      }
       window.CmsAdBlocks.loadCmsAd(partnerSlot)
         .then(function (block) {
           if (block && window.CmsAdBlocks.renderCityPartnerAd(partnerShell, block, partnerSlot)) return;

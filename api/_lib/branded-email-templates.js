@@ -232,6 +232,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Events picked for you on The Networker Hub',
   },
+  attendee_signup_events_nudge_followup: {
+    file: 'attendee-signup-events-nudge-followup.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Still looking for your first event?',
+  },
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
     marker: 'hub-email-layout-v3-purple',

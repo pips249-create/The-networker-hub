@@ -454,6 +454,9 @@
         return html2pdf().set(opt).from(shell).outputPdf('blob').then(function (blob) {
           if (!blob) throw new Error('empty pdf');
           forceDownloadBlob(blob, PDF_FILENAME);
+          if (window.HubPitchAnalytics && typeof window.HubPitchAnalytics.record === 'function') {
+            window.HubPitchAnalytics.record('pdf_download');
+          }
         });
       })
       .catch(function (err) {

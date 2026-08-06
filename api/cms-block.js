@@ -73,7 +73,20 @@ module.exports = async function handler(req, res) {
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   // Keep short: Command Centre sponsor edits must appear on browse heroes quickly.
-  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
+  // City/county partner slots skip CDN cache entirely — one stale edge hit looks like "save did nothing".
+  const slotHint = String(req.query?.slot || '').trim();
+  const regionHint = String(req.query?.region || '').trim();
+  const isRegionPartnerRequest =
+    slotHint.indexOf('networking_city_partner_') === 0 ||
+    slotHint.indexOf('networking_county_partner_') === 0 ||
+    slotHint === 'networking_city_partner' ||
+    Boolean(regionHint);
+  res.setHeader(
+    'Cache-Control',
+    isRegionPartnerRequest
+      ? 'private, no-store'
+      : 'public, max-age=0, s-maxage=30, stale-while-revalidate=60'
+  );
 
   let slot = String(req.query?.slot || '').trim();
   const region = String(req.query?.region || '').trim().toLowerCase();

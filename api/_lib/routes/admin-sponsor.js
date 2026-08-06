@@ -112,6 +112,25 @@ module.exports = async function handler(req, res) {
     try {
       const sb = getSupabaseAdmin();
       const logo_url = await resolveLogoUrl(body);
+      const active = body.active !== false;
+      let sponsor_available_from;
+      if (body.sponsor_available_from !== undefined) {
+        sponsor_available_from = parseSlotAvailableFrom(body.sponsor_available_from);
+      }
+      // Active placements with a past end date never appear on the site — refuse so
+      // Command Centre saves cannot look "live" while city/hero pages stay unchanged.
+      if (
+        active &&
+        sponsor_available_from &&
+        new Date(sponsor_available_from).getTime() <= Date.now()
+      ) {
+        return json(res, 400, {
+          ok: false,
+          error: 'placement_ended',
+          message:
+            'Placement ends is in the past. Clear it or set a future date before publishing an active ad.',
+        });
+      }
       const savePayload = {
         slot,
         title,
@@ -121,7 +140,7 @@ module.exports = async function handler(req, res) {
         cta_color,
         logo_url,
         company_name,
-        active: body.active !== false,
+        active,
         include_in_emails: isRegionPartner ? false : body.include_in_emails !== false,
         logo_band_dark: body.logo_band_dark === true,
       };
@@ -132,7 +151,7 @@ module.exports = async function handler(req, res) {
             .toLowerCase() || null;
       }
       if (body.sponsor_available_from !== undefined) {
-        savePayload.sponsor_available_from = parseSlotAvailableFrom(body.sponsor_available_from);
+        savePayload.sponsor_available_from = sponsor_available_from;
       }
       const block = await saveSponsorBlock(sb, savePayload);
       return json(res, 200, { ok: true, block, slot, updatedAt: new Date().toISOString() });
