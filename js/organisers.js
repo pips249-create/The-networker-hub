@@ -345,15 +345,12 @@
 
     var featured = getSpotlightFeatured();
     if (!featured.length) {
-      track.innerHTML =
-        '<p class="spotlight-empty">No featured organisers yet — mark organiser pages as <strong>featured</strong> in Command Centre (up to ' +
-        SPOTLIGHT_MAX +
-        ').</p>';
+      track.innerHTML = '';
       track.classList.remove('spotlight-track--carousel');
       track.removeAttribute('data-loop-width');
       track.scrollLeft = 0;
       stopSpotlightAuto();
-      if (promo) promo.hidden = false;
+      if (promo) promo.hidden = true;
       return;
     }
 

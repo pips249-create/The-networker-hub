@@ -53,17 +53,6 @@
       .join('|');
   }
 
-  function hasAnyFeaturedEvents() {
-    if (window.hubBrowseFeatured && window.hubBrowseFeatured.length) return true;
-    if (typeof window.hubBrowseHasActiveFeatured === 'boolean') {
-      return window.hubBrowseHasActiveFeatured;
-    }
-    const source = window.hubAllEvents && window.hubAllEvents.length ? window.hubAllEvents : events;
-    return source.some(function (ev) {
-      return ev.featured;
-    });
-  }
-
   function getSpotlightPremium() {
     const source =
       window.hubBrowseFeatured && window.hubBrowseFeatured.length
@@ -137,65 +126,6 @@
     return (
       'Premium listings match your area and dates — they may include ' + parts.join(' and ') + '.'
     );
-  }
-
-  function spotlightEmptyTitle() {
-    const locationLabel =
-      window.hubSpotlightLocationLabel && window.hubSpotlightLocationLabel();
-    const searchInput = document.getElementById('search');
-    const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
-    if (locationLabel && searchQ) {
-      return (
-        'No premium events for “' +
-        escapeHtml(searchQ) +
-        '” in ' +
-        escapeHtml(locationLabel) +
-        ' right now'
-      );
-    }
-    if (locationLabel) {
-      return 'No premium events in ' + escapeHtml(locationLabel) + ' right now';
-    }
-    if (searchQ) {
-      return 'No premium events for “' + escapeHtml(searchQ) + '” right now';
-    }
-    return 'No premium events match your current filters';
-  }
-
-  function spotlightEmptyHtml() {
-    const hasLocation =
-      window.hubSpotlightHasLocationFilter && window.hubSpotlightHasLocationFilter();
-    const clearLocationBtn = hasLocation
-      ? '<button type="button" class="spotlight-empty-btn" data-spotlight-clear="location">Clear location</button>'
-      : '';
-    return (
-      '<div class="spotlight-empty-block" role="status">' +
-      '<p class="spotlight-empty-title">' +
-      spotlightEmptyTitle() +
-      '</p>' +
-      '<p class="spotlight-empty-text">Try widening your search area or clearing filters. Premium listings still follow your location and dates.</p>' +
-      '<div class="spotlight-empty-actions">' +
-      clearLocationBtn +
-      '<button type="button" class="spotlight-empty-btn spotlight-empty-btn--primary" data-spotlight-clear="all">Clear all filters</button>' +
-      '</div></div>'
-    );
-  }
-
-  function bindSpotlightEmptyActions(root) {
-    if (!root || root.dataset.spotlightEmptyBound === '1') return;
-    root.dataset.spotlightEmptyBound = '1';
-    root.addEventListener('click', function (e) {
-      const btn = e.target.closest('[data-spotlight-clear]');
-      if (!btn) return;
-      const action = btn.getAttribute('data-spotlight-clear');
-      if (action === 'location' && window.hubClearSpotlightLocationFilter) {
-        window.hubClearSpotlightLocationFilter();
-        return;
-      }
-      if (action === 'all' && window.hubResetFilters) {
-        window.hubResetFilters();
-      }
-    });
   }
 
   function renderSpotlightNote(hasPremium) {
@@ -1107,22 +1037,21 @@
     if (document.body.classList.contains('browse-mode-organisers')) return;
 
     const premium = getSpotlightPremium();
+    const promo =
+      document.querySelector('.events-promo-section') ||
+      (els.spotlightTrack && els.spotlightTrack.closest('.events-promo-section'));
     renderSpotlightNote(premium.length > 0);
 
     if (els.spotlightTrack) {
       if (!premium.length) {
-        if (hasAnyFeaturedEvents()) {
-          els.spotlightTrack.innerHTML = spotlightEmptyHtml();
-          bindSpotlightEmptyActions(els.spotlightTrack);
-        } else {
-          els.spotlightTrack.innerHTML = spotlightBoostPromoCard();
-          bindSpotlightBoostPromo();
-        }
+        stopSpotlightAuto();
+        els.spotlightTrack.innerHTML = '';
         els.spotlightTrack.classList.remove('spotlight-track--carousel');
         els.spotlightTrack.removeAttribute('data-loop-width');
         els.spotlightTrack.scrollLeft = 0;
-        stopSpotlightAuto();
+        if (promo) promo.hidden = true;
       } else {
+        if (promo) promo.hidden = false;
         const cardsHtml = buildSpotlightTrackHtml();
         const itemCount = getSpotlightTrackItemCount();
         els.spotlightTrack.classList.add('spotlight-track--carousel');
@@ -1134,6 +1063,8 @@
           startSpotlightAuto();
         });
       }
+    } else if (promo) {
+      promo.hidden = !premium.length;
     }
 
     if (els.featuredList) {

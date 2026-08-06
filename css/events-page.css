@@ -991,6 +991,10 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   padding-bottom: 4px;
 }
 
+.events-promo-section[hidden] {
+  display: none !important;
+}
+
 .premium-spotlight {
   background: var(--surface-card);
   border: 1px solid var(--border-soft);
