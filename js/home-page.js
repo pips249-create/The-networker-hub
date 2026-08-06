@@ -105,29 +105,62 @@
       logo: String(p.logo_url || '').trim(),
       url: String(p.cta_url || '').trim(),
       label: String(p.cta_label || '').trim() || 'Visit website',
+      logoBandDark: p.logo_band_dark === true || p.logoBandDark === true,
     };
   }
 
   function partnerItemHtml(p) {
+    var darkClass = p.logoBandDark ? ' home-partner-item--dark-logo' : '';
     var inner =
       '<img src="' +
       esc(p.logo) +
       '" alt="' +
       esc(p.name) +
-      '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.closest(\'.home-partner-item\').hidden=true" />';
+      '" loading="lazy" decoding="async" crossorigin="anonymous" class="home-partner-logo" onerror="this.closest(\'.home-partner-item\').hidden=true" />';
     var title = esc(p.name);
     if (/^(https?:|mailto:)/i.test(p.url)) {
       return (
-        '<a class="home-partner-item" href="' +
+        '<a class="home-partner-item' +
+        darkClass +
+        '" href="' +
         esc(p.url) +
         '" target="_blank" rel="noopener noreferrer" title="' +
         title +
-        '">' +
+        '"' +
+        (p.logoBandDark ? ' data-logo-band-dark="true"' : '') +
+        '>' +
         inner +
         '</a>'
       );
     }
-    return '<div class="home-partner-item" title="' + title + '">' + inner + '</div>';
+    return (
+      '<div class="home-partner-item' +
+      darkClass +
+      '" title="' +
+      title +
+      '"' +
+      (p.logoBandDark ? ' data-logo-band-dark="true"' : '') +
+      '>' +
+      inner +
+      '</div>'
+    );
+  }
+
+  function enhancePartnerLogoBands(track) {
+    if (!track || !window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) return;
+    track.querySelectorAll('.home-partner-item').forEach(function (item) {
+      var img = item.querySelector('.home-partner-logo');
+      if (!img) return;
+      var forceDark = item.getAttribute('data-logo-band-dark') === 'true';
+      function apply() {
+        window.CmsSponsorFields.applyLogoBand(item, img, true, { forceDark: forceDark });
+        if (item.classList.contains('sponsor-logo-band--dark') || forceDark) {
+          item.classList.add('home-partner-item--dark-logo');
+        }
+      }
+      if (img.complete && img.naturalWidth) apply();
+      else img.addEventListener('load', apply, { once: true });
+    });
   }
 
   function revealSection(section) {
@@ -284,6 +317,7 @@
     track.classList.toggle('home-partners-track--scroll', isScrollable);
     track.classList.toggle('home-partners-track--static', isStatic);
     track.innerHTML = useMarquee ? items + items : items;
+    enhancePartnerLogoBands(track);
 
     if (marquee) {
       marquee.classList.toggle('home-partners-marquee--scrollable', isScrollable);

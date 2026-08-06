@@ -8947,6 +8947,10 @@
         '<input type="checkbox" class="home-partner-active rounded border-slate-300"' +
         (p.active !== false ? ' checked' : '') +
         '> Active</label>' +
+        '<label class="flex items-center gap-2 text-xs text-slate-600" title="For white or light logos">' +
+        '<input type="checkbox" class="home-partner-logo-dark rounded border-slate-300"' +
+        (p.logo_band_dark === true ? ' checked' : '') +
+        '> Dark logo band</label>' +
         '<button type="button" class="home-partner-remove text-xs font-semibold text-red-700 hover:underline">Remove</button>' +
         '</div></div>' +
         '<div class="grid sm:grid-cols-2 gap-3">' +
@@ -8961,14 +8965,18 @@
         '<div><label class="block text-xs text-slate-500 mb-1">Or upload logo (max 2MB)</label>' +
         '<input type="file" class="home-partner-logo-file block w-full text-sm text-slate-600" accept="image/png,image/jpeg,image/webp,image/gif">' +
         (logo
-          ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
+          ? '<img src="' +
+            attrEsc(logo) +
+            '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 p-1' +
+            (p.logo_band_dark === true ? ' bg-slate-900' : ' bg-white') +
+            '" />'
           : '') +
         '</div>' +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Website link <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="home-partner-cta-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(p.cta_url || '') +
         '" placeholder="https://… or mailto:…"></div>' +
-        '<p class="text-xs text-slate-500">Live home page shows a clickable logo only — no separate CTA button. The company name is used for the logo title text.</p></div>'
+        '<p class="text-xs text-slate-500">Live home page shows a clickable logo only — no separate CTA button. Tick <strong>Dark logo band</strong> for white/light logos (e.g. Barnsgate).</p></div>'
       );
     }
 
@@ -8981,6 +8989,7 @@
         var logoUrlEl = row.querySelector('.home-partner-logo-url');
         var ctaUrlEl = row.querySelector('.home-partner-cta-url');
         var activeCheckbox = row.querySelector('.home-partner-active');
+        var darkCheckbox = row.querySelector('.home-partner-logo-dark');
         var existing = partnersState.find(function (p) {
           return p.id === id;
         });
@@ -8995,6 +9004,7 @@
           cta_label: companyName || 'Visit website',
           cta_url: ctaUrlEl ? ctaUrlEl.value.trim() : '',
           active: activeCheckbox ? activeCheckbox.checked : true,
+          logo_band_dark: darkCheckbox ? darkCheckbox.checked : false,
         });
       });
       return out;
@@ -9085,6 +9095,7 @@
           cta_label: 'Visit website',
           cta_url: '',
           active: true,
+          logo_band_dark: false,
         });
         renderPartnerList();
       });
@@ -9106,6 +9117,7 @@
             cta_label: p.cta_label,
             cta_url: p.cta_url,
             active: p.active,
+            logo_band_dark: p.logo_band_dark === true,
           };
           if (pending && pending.data) {
             item.logoBase64 = pending.data;

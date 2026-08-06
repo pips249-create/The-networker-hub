@@ -29,6 +29,7 @@ function normalizePartner(raw, index) {
     cta_url: String(raw?.cta_url || raw?.ctaUrl || '').trim(),
     cta_label: String(raw?.cta_label || raw?.ctaLabel || 'Visit website').trim(),
     active: raw?.active !== false,
+    logo_band_dark: raw?.logo_band_dark === true || raw?.logoBandDark === true,
   };
 }
 
