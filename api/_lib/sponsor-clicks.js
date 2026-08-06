@@ -165,8 +165,7 @@ function countBy(rows, keyFn, weightFn) {
     .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 }
 
-const BARNSGATE_PACK_LOGO =
-  'https://cdn.prod.website-files.com/66e99a1017187b724a2bc8b8/66e9a2aee48ebc4a38f6add4_BAR%200007%20Solutions%20logo%20various%20final-01.svg';
+const BARNSGATE_PACK_LOGO = '/assets/sponsors/barnsgate-logo.png';
 
 const SLOT_LOGO_PRIORITY = [
   'events_sponsor_hub',
