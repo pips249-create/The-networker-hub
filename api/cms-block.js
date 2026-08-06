@@ -72,7 +72,8 @@ module.exports = async function handler(req, res) {
   }
 
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600');
+  // Keep short: Command Centre sponsor edits must appear on browse heroes quickly.
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
 
   let slot = String(req.query?.slot || '').trim();
   const region = String(req.query?.region || '').trim().toLowerCase();

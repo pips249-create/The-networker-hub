@@ -90,7 +90,7 @@
   }
 
   function fetchCmsSlot(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot), { cache: 'no-store' })
       .then(function (r) {
         return r.json();
       })

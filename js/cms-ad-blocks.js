@@ -345,7 +345,7 @@
   }
 
   function loadCmsAd(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot), { cache: 'no-store' })
       .then(function (res) {
         return res.json();
       })
@@ -359,7 +359,7 @@
   }
 
   function loadCityPartnerSlot(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot), { cache: 'no-store' })
       .then(function (res) {
         return res.json();
       })
@@ -451,7 +451,7 @@
   }
 
   function loadCarouselAds(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot), { cache: 'no-store' })
       .then(function (res) {
         return res.json();
       })

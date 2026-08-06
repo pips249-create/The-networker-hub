@@ -352,7 +352,9 @@
     markSponsorLoading(els);
 
     try {
-      var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey));
+      var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey), {
+        cache: 'no-store',
+      });
       if (generation !== loadGeneration) return;
       var data = await res.json();
       if (generation !== loadGeneration) return;
