@@ -6567,25 +6567,25 @@
         actionHtml = '<span class="org-muted">Refund issued</span>';
       }
       tr.innerHTML =
-        '<td class="org-td-name">' +
+        '<td class="org-td-name" data-label="Name">' +
         esc(row.name) +
-        '</td><td>' +
+        '</td><td data-label="Email">' +
         esc(row.email || '—') +
-        '</td><td class="org-booking-ref">' +
+        '</td><td class="org-booking-ref" data-label="Booking ref">' +
         esc(bookingRef) +
-        '</td><td>' +
+        '</td><td data-label="Event">' +
         esc(eventLabelForRow(row)) +
-        '</td><td>' +
+        '</td><td data-label="Ticket">' +
         esc(row.ticketName) +
-        '</td><td>' +
+        '</td><td data-label="Paid">' +
         esc(row.amountDisplay || '—') +
-        '</td><td>' +
+        '</td><td data-label="Cancelled">' +
         esc(formatDateShort(row.cancelledAt)) +
-        '</td><td><span class="' +
+        '</td><td data-label="Refund"><span class="' +
         refundClass +
         '">' +
         esc(row.refundLabel || '—') +
-        '</span></td><td>' +
+        '</span></td><td class="org-td-actions" data-label="Action">' +
         actionHtml +
         '</td>';
       body.appendChild(tr);
@@ -10412,23 +10412,23 @@
     const revClass = revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
 
     tr.innerHTML =
-      '<td>' +
+      '<td class="org-td-thumb" data-label="">' +
       thumbHtml(ev) +
-      '</td><td class="org-td-name">' +
+      '</td><td class="org-td-name" data-label="Event">' +
       eventTitleCellHtml(ev) +
-      '</td><td>' +
+      '</td><td data-label="Date">' +
       esc(formatEventDateCell(ev)) +
-      '</td><td>' +
+      '</td><td data-label="Time">' +
       esc(formatTimeRange(ev.date, ev.endDate)) +
-      '</td><td>' +
+      '</td><td data-label="Tickets sold">' +
       esc(soldLabel || ev.ticketsSoldLabel || '0') +
       '</td><td class="' +
       revClass +
-      '">' +
+      '" data-label="Revenue">' +
       esc(ev.revenueDisplay || formatGbpAmount(revenueNum) || '£0') +
-      '</td><td>' +
+      '</td><td data-label="Status">' +
       statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
-      '</td><td class="org-td-actions">' +
+      '</td><td class="org-td-actions" data-label="Actions">' +
       eventActionMenuHtmlWithItem(ev) +
       '</td>';
     body.appendChild(tr);
@@ -10542,18 +10542,18 @@
     if (ev.needsRefundConfirmation) tr.classList.add('org-row-payout-held');
 
     tr.innerHTML =
-      '<td>' +
+      '<td class="org-td-thumb" data-label="">' +
       thumbHtml(ev) +
-      '</td><td class="org-td-name">' +
+      '</td><td class="org-td-name" data-label="Event">' +
       eventTitleCellHtml(ev) +
       (ev.needsRefundConfirmation
         ? '<p class="org-payout-held-note">Payout on hold — refunds processing</p>'
         : '') +
-      '</td><td>' +
+      '</td><td data-label="Tickets sold">' +
       esc(ev.ticketsSoldLabel || '0') +
-      '</td><td class="org-revenue">' +
+      '</td><td class="org-revenue" data-label="Revenue">' +
       eventRevenueCellHtml(ev) +
-      '</td><td class="org-payout-col">' +
+      '</td><td class="org-payout-col" data-label="Payout">' +
       payoutCellHtml(ev) +
       '</td>';
     body.appendChild(tr);
@@ -10729,21 +10729,21 @@
       const statusLabel = t.status || 'Available';
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td style="font-family:monospace;font-size:11px">' +
+        '<td data-label="Ticket ref" style="font-family:monospace;font-size:11px">' +
         esc(ref) +
-        '</td><td>' +
+        '</td><td data-label="Event">' +
         esc(ev ? ev.title : '—') +
-        '</td><td><span class="org-badge ' +
+        '</td><td data-label="Ticket type"><span class="org-badge ' +
         tierBadge +
         '">' +
         esc(t.name) +
-        '</span></td><td class="org-revenue">' +
+        '</span></td><td class="org-revenue" data-label="Price">' +
         (t.price === '' || t.price === '0' ? 'Free' : '£' + esc(t.price)) +
-        '</td><td>' +
+        '</td><td data-label="Sold">' +
         esc(String(t.ticketsSold != null ? t.ticketsSold : 0)) +
-        '</td><td>' +
+        '</td><td data-label="Qty available">' +
         esc(t.quantityAvailable != null ? String(t.quantityAvailable) : '—') +
-        '</td><td>' +
+        '</td><td data-label="Status">' +
         statusBadgeHtml(statusKey, statusLabel) +
         '</td>';
       body.appendChild(tr);

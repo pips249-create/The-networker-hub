@@ -2003,7 +2003,7 @@ body.nav-menu-open {
   }
 
   .org-table-scroll-x,
-  .organiser-dashboard-page .org-table-wrap {
+  .organiser-dashboard-page .org-table-wrap:not(.org-stack-wrap):not(.org-attendees-table-wrap) {
     display: block;
     width: 100%;
     max-width: 100%;
@@ -2014,8 +2014,157 @@ body.nav-menu-open {
   }
 
   .org-table-scroll-x table,
-  .organiser-dashboard-page .org-table-wrap table {
+  .organiser-dashboard-page .org-table-wrap:not(.org-stack-wrap):not(.org-attendees-table-wrap) > table:not(.org-stack-table) {
     min-width: 600px;
+  }
+
+  /* Stacked card tables — Events + Business tabs (no sideways scroll) */
+  .organiser-dashboard-page .org-stack-wrap,
+  .organiser-dashboard-page .org-opp-listings-wrap,
+  .organiser-dashboard-page .org-opp-enquiries-wrap,
+  .organiser-dashboard-page .org-attendees-table-wrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table,
+  .organiser-dashboard-page .org-opp-listings-table,
+  .organiser-dashboard-page .org-opp-enquiries-table,
+  .organiser-dashboard-page .org-attendees-table {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table thead,
+  .organiser-dashboard-page .org-opp-listings-table thead,
+  .organiser-dashboard-page .org-opp-enquiries-table thead,
+  .organiser-dashboard-page .org-attendees-table thead {
+    display: none !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table tbody,
+  .organiser-dashboard-page .org-opp-listings-table tbody,
+  .organiser-dashboard-page .org-opp-enquiries-table tbody,
+  .organiser-dashboard-page .org-attendees-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table tbody tr,
+  .organiser-dashboard-page .org-opp-listings-table tbody tr,
+  .organiser-dashboard-page .org-opp-enquiries-table tbody tr,
+  .organiser-dashboard-page .org-attendees-table tbody tr {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: var(--od-white, #fff);
+    border: 1px solid var(--od-border-soft, #cfe4ea);
+    border-radius: var(--od-radius, 12px);
+    padding: 12px 14px;
+    box-shadow: var(--od-shadow-sm, 0 2px 10px rgba(26, 46, 59, 0.06));
+  }
+
+  .organiser-dashboard-page .org-stack-table tbody td,
+  .organiser-dashboard-page .org-opp-listings-table tbody td,
+  .organiser-dashboard-page .org-opp-enquiries-table tbody td,
+  .organiser-dashboard-page .org-attendees-table tbody td {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 6px 0 !important;
+    border: none !important;
+    font-size: 13px;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table tbody td::before,
+  .organiser-dashboard-page .org-opp-listings-table tbody td::before,
+  .organiser-dashboard-page .org-opp-enquiries-table tbody td::before,
+  .organiser-dashboard-page .org-attendees-table tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 34%;
+    max-width: 34%;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--od-text-soft, #7a94a3);
+  }
+
+  .organiser-dashboard-page .org-stack-table tbody td[data-label='']::before,
+  .organiser-dashboard-page .org-stack-table tbody td.org-td-thumb::before {
+    display: none !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table tbody td.org-td-thumb {
+    justify-content: flex-start !important;
+    padding-bottom: 8px !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table .org-td-name,
+  .organiser-dashboard-page .org-opp-listings-table .org-td-name,
+  .organiser-dashboard-page .org-opp-enquiries-table .org-td-name,
+  .organiser-dashboard-page .org-attendees-table .org-td-name {
+    display: block !important;
+    font-weight: 600;
+    font-size: 15px;
+    padding-top: 0 !important;
+    margin-bottom: 4px;
+  }
+
+  .organiser-dashboard-page .org-stack-table .org-td-name::before,
+  .organiser-dashboard-page .org-opp-listings-table .org-td-name::before,
+  .organiser-dashboard-page .org-opp-enquiries-table .org-td-name::before,
+  .organiser-dashboard-page .org-attendees-table .org-td-name::before {
+    display: none !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table .org-td-actions,
+  .organiser-dashboard-page .org-opp-listings-table .org-td-actions,
+  .organiser-dashboard-page .org-opp-enquiries-table .org-td-actions,
+  .organiser-dashboard-page .org-attendees-table .org-td-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding-top: 8px !important;
+    margin-top: 4px;
+    border-top: 1px solid var(--od-border-soft, #cfe4ea) !important;
+    gap: 8px !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table .org-td-actions .org-btn,
+  .organiser-dashboard-page .org-opp-listings-table .org-td-actions .org-btn,
+  .organiser-dashboard-page .org-opp-enquiries-table .org-td-actions .org-btn,
+  .organiser-dashboard-page .org-attendees-table .org-td-actions .org-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  .organiser-dashboard-page .org-stack-table tr.org-series-detail-row td,
+  .organiser-dashboard-page .org-stack-table tr.org-series-detail-row td::before {
+    display: block !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table tr.org-series-detail-row td::before {
+    content: none !important;
+  }
+
+  .organiser-dashboard-page .org-stack-table .org-series-dates-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 8px;
   }
 
   .org-action-menu {
