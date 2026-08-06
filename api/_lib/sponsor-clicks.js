@@ -676,10 +676,10 @@ async function getSponsorClicksReport(query) {
       clicksConfigured: current.emailClicksAvailable === true,
       note:
         current.emailOpensAvailable && current.summary.emailOpens > 0
-          ? 'Opens from Resend webhook · clicks combine Hub email placements and Resend link clicks.'
+          ? 'Opens and link clicks from Resend · Hub email-placement clicks are included in Email CTR.'
           : current.emailOpensAvailable
-            ? 'Open tracking is live — no opens recorded in this range yet. Clicks include Hub email placements.'
-            : 'Email clicks include Hub-tracked email placements. Run migration 237 and point Resend webhooks at /api/resend-webhook for open rates.',
+            ? 'Resend open tracking is live. Numbers update as sponsored emails are opened and clicked.'
+            : 'Email clicks include Hub-tracked email placements. Open rates need the Resend webhook at /api/resend-webhook.',
     },
     tablesPartial: current.tablesPartial,
     total: clicks,

@@ -8713,7 +8713,7 @@
         eng.opensConfigured ? formatSponsorPackNumber(eng.opens || 0) : 'Pending',
         eng.opensConfigured
           ? momHint('Resend open events', deltas.emailOpensPct)
-          : 'Connect Resend webhook + migration 237'
+          : 'No open events in this range yet'
       ) +
       kpiCell('Open rate', openRateLabel, 'Opens ÷ emails with logo') +
       kpiCell(
@@ -9227,7 +9227,7 @@
         '<h3>How to read this pack</h3>' +
         '<ul>' +
         '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (e.g. /events/ for Events Headline).</li>' +
-        '<li><strong>Email opens &amp; CTR</strong> come from Resend when the webhook is connected; until then Hub email-placement clicks still appear in Email CTR.</li>' +
+        '<li><strong>Email opens &amp; CTR</strong> come from Resend (opens + link clicks). Hub email-placement clicks are also included in Email CTR.</li>' +
         '<li><strong>Leads &amp; form fills</strong> appear in their analytics / CRM via Hub UTM tags (<code>utm_source=thenetworkerhub</code>).</li>' +
         '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; attach their GA “thenetworkerhub” sessions as proof of pipeline.</li>' +
         '</ul></section>' +
