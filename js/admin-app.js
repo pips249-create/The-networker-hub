@@ -8931,14 +8931,61 @@
     );
   }
 
+  function resolveJsPdfConstructor() {
+    if (window.jspdf && typeof window.jspdf.jsPDF === 'function') return window.jspdf.jsPDF;
+    if (window.jspdf && typeof window.jspdf.default === 'function') return window.jspdf.default;
+    if (typeof window.jsPDF === 'function') return window.jsPDF;
+    return null;
+  }
+
   function loadJsPdfLibrary() {
-    return loadHtml2PdfLibrary().then(function () {
-      var JsPDF =
-        (window.jspdf && (window.jspdf.jsPDF || window.jspdf.default)) || window.jsPDF;
-      if (typeof JsPDF !== 'function') {
-        throw new Error('PDF engine failed to load. Check your connection and try again.');
-      }
-      return JsPDF;
+    var existing = resolveJsPdfConstructor();
+    if (existing) return Promise.resolve(existing);
+
+    function inject(src) {
+      return new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.setAttribute('data-hub-jspdf', '1');
+        script.onload = function () {
+          var JsPDF = resolveJsPdfConstructor();
+          if (JsPDF) resolve(JsPDF);
+          else reject(new Error('PDF engine loaded but jsPDF was not found.'));
+        };
+        script.onerror = function () {
+          reject(new Error('PDF engine failed to load from ' + src));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    // Prefer same-origin vendor copy (html2pdf bundle does not expose jsPDF on window)
+    var localSrc = '/js/vendor/jspdf.umd.min.js';
+    try {
+      localSrc = new URL('/js/vendor/jspdf.umd.min.js', window.location.origin).href;
+    } catch (_e) {
+      /* keep */
+    }
+
+    var pending = document.querySelector('script[data-hub-jspdf]');
+    if (pending) {
+      return new Promise(function (resolve, reject) {
+        pending.addEventListener('load', function () {
+          var JsPDF = resolveJsPdfConstructor();
+          if (JsPDF) resolve(JsPDF);
+          else reject(new Error('PDF engine failed to load. Check your connection and try again.'));
+        });
+        pending.addEventListener('error', function () {
+          reject(new Error('PDF engine failed to load. Check your connection and try again.'));
+        });
+      });
+    }
+
+    return inject(localSrc).catch(function () {
+      return inject('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }).catch(function () {
+      throw new Error('PDF engine failed to load. Check your connection and try again.');
     });
   }
 
