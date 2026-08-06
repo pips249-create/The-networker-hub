@@ -186,9 +186,9 @@
     }
     if (els.sponsorLogo) {
       if (hasLogo) {
-        if (!/^data:/i.test(url)) {
-          els.sponsorLogo.crossOrigin = 'anonymous';
-        }
+        // Never set crossOrigin on the visible logo — external hosts without CORS
+        // headers fail to render when anonymous mode is required.
+        els.sponsorLogo.removeAttribute('crossOrigin');
         els.sponsorLogo.src = url;
         els.sponsorLogo.hidden = false;
         if (window.CmsSponsorFields) {
@@ -198,6 +198,7 @@
         }
       } else {
         els.sponsorLogo.removeAttribute('src');
+        els.sponsorLogo.removeAttribute('crossOrigin');
         els.sponsorLogo.alt = '';
         els.sponsorLogo.hidden = true;
         if (window.CmsSponsorFields) {

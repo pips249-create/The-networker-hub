@@ -466,8 +466,17 @@
     }
 
     img.classList.add('sponsor-logo--full');
-    if (!/^data:/i.test(String(img.src || ''))) {
-      img.crossOrigin = 'anonymous';
+
+    function paintFromBand(band) {
+      if (logoBandForceDark(wrap, opts)) {
+        applyDarkLogoBand(wrap);
+        return;
+      }
+      if (!band && isHeroLogoWrap(wrap)) {
+        band = { color: LOGO_BAND_DARK, dark: true };
+      }
+      wrap.style.backgroundColor = (band && band.color) || LOGO_BAND_LIGHT;
+      wrap.classList.toggle('sponsor-logo-band--dark', !!(band && band.dark));
     }
 
     function paint() {
@@ -475,12 +484,25 @@
         applyDarkLogoBand(wrap);
         return;
       }
-      var band = sampleLogoBandColor(img);
-      if (!band && isHeroLogoWrap(wrap)) {
-        band = { color: LOGO_BAND_DARK, dark: true };
+
+      var src = String(img.currentSrc || img.src || '').trim();
+      // Data URLs can be sampled from the visible image. Remote logos are sampled via a
+      // CORS probe so we never set crossOrigin on the display <img> — hosts without ACAO
+      // would otherwise fail to render entirely.
+      if (!src || /^data:/i.test(src)) {
+        paintFromBand(sampleLogoBandColor(img));
+        return;
       }
-      wrap.style.backgroundColor = (band && band.color) || LOGO_BAND_LIGHT;
-      wrap.classList.toggle('sponsor-logo-band--dark', !!(band && band.dark));
+
+      var probe = new Image();
+      probe.crossOrigin = 'anonymous';
+      probe.onload = function () {
+        paintFromBand(sampleLogoBandColor(probe));
+      };
+      probe.onerror = function () {
+        paintFromBand(null);
+      };
+      probe.src = src;
     }
 
     if (img.complete && img.naturalWidth) paint();
