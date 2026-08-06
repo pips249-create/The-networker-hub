@@ -116,8 +116,8 @@
       subtitle: 'Your to-do list, key numbers, and recent activity',
     },
     analytics: {
-      title: 'Website visitors',
-      subtitle: 'Traffic overview, demand signals, and platform insights',
+      title: 'Analytics',
+      subtitle: 'Traffic overview, demand signals, tickets bought, and platform insights',
     },
     'event-health': {
       title: 'Event data issues',
@@ -229,7 +229,7 @@
       ],
     },
     analytics: {
-      title: 'How to view website visitors',
+      title: 'How to view analytics',
       steps: [
         'Use the Overview, Demand, and Insights tabs — each page loads only what you need.',
         'Overview links out to Vercel for visitor charts and shows live Hub counts.',
@@ -353,7 +353,8 @@
     spotlight: {
       title: 'How to feature events',
       steps: [
-        'Browse approved upcoming events.',
+        'Upcoming events load by default — switch filters if you need past dates.',
+        'Use Active in carousel to see only placements that can show on /events/ right now.',
         'Toggle Featured and set an end date (or leave with no end date).',
         'Paid placements and admin grants both show under Expires — change the date any time.',
       ],
@@ -517,7 +518,7 @@
     q: '',
     featured: '',
     eventType: '',
-    when: '',
+    when: 'upcoming',
   };
   var featuredSpotlightLoadGen = 0;
   var featuredSpotlightSearchTimer = null;
@@ -911,9 +912,9 @@
         return 'Searches, favourites, opportunity enquiries, and guest visits.';
       }
       if (hash.indexOf('insights') !== -1) {
-        return 'Top performers, growth, locations, and quality signals.';
+        return 'Tickets bought, top performers, growth, and quality signals.';
       }
-      return 'Visitor traffic, Hub activity, and a recent activity feed.';
+      return 'Visitor traffic, Hub activity, tickets, and demand signals.';
     }
     if (route === 'financials') {
       if (hash.indexOf('organisers') !== -1) {
@@ -5468,9 +5469,9 @@
         '<div class="admin-dash-section-body pt-0">' +
         '<div id="live-metrics" class="text-base text-slate-600 min-h-[10rem]">Loading…</div></div></div></section>' +
         '<a href="#analytics/demand" class="admin-quick-link group">' +
-        '<div><p class="admin-quick-link-title">Demand &amp; visitor insights</p>' +
-        '<p class="admin-quick-link-desc">See what people search for, what they save, and how the Hub is growing.</p></div>' +
-        '<span class="admin-action-btn">Open Demand</span></a></div>';
+        '<div><p class="admin-quick-link-title">Analytics — demand &amp; tickets</p>' +
+        '<p class="admin-quick-link-desc">Searches, saves, tickets bought, and Hub growth.</p></div>' +
+        '<span class="admin-action-btn">Open Analytics</span></a></div>';
     }
 
     var cached = adminMetricsCache || readCachedAdminMetrics();
@@ -8873,7 +8874,6 @@
   function downloadSponsorPackPdf(data, filename) {
     var brand = (data && data.brand) || {};
     var brandName = brand.company || 'Partner';
-    // Pack-sized PNGs (skip canvas resize — toDataURL can fail in some browsers)
     var hubUrl = '/assets/sponsors/hub-logo-pack.png';
     var brandUrl = '/assets/sponsors/barnsgate-logo.png';
     try {
@@ -8891,12 +8891,47 @@
       }
     }
 
-    var host = document.createElement('div');
-    host.setAttribute('aria-hidden', 'true');
-    // Stay in viewport (opacity 0). left:-9999 breaks html2canvas → toDataURL errors.
-    host.style.cssText =
-      'position:fixed;left:0;top:0;width:680px;opacity:0;pointer-events:none;z-index:-1;background:#faf6ee;overflow:visible;';
-    document.body.appendChild(host);
+    // Isolated iframe — admin sidebar/overflow must not clip the capture
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.setAttribute('title', 'Sponsor pack PDF render');
+    iframe.style.cssText =
+      'position:fixed;left:0;top:0;width:720px;height:1100px;border:0;opacity:0.01;pointer-events:none;z-index:2147483646;background:#faf6ee;';
+    document.body.appendChild(iframe);
+
+    var iframeDoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+    if (!iframeDoc) {
+      try {
+        iframe.remove();
+      } catch (_e0) {
+        /* ignore */
+      }
+      return Promise.reject(new Error('Could not open PDF render frame.'));
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(
+      '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap">' +
+        '<style>html,body{margin:0;padding:0;background:#faf6ee;}</style>' +
+        '</head><body></body></html>'
+    );
+    iframeDoc.close();
+
+    function waitForImages(root) {
+      var imgs = root.querySelectorAll('img');
+      var waits = [];
+      for (var i = 0; i < imgs.length; i++) {
+        if (imgs[i].complete && imgs[i].naturalWidth) continue;
+        waits.push(
+          new Promise(function (resolve) {
+            imgs[i].onload = resolve;
+            imgs[i].onerror = resolve;
+          })
+        );
+      }
+      return Promise.all(waits);
+    }
 
     return ensureSponsorPackFonts()
       .then(function () {
@@ -8916,7 +8951,6 @@
         ]);
       })
       .then(function (urls) {
-        // Non-Barnsgate / oversized remote logos: try a safe downscale, else use as-is
         var hubData = urls[0] || '';
         var brandData = urls[1] || '';
         var maybeResize =
@@ -8926,35 +8960,42 @@
               })
             : Promise.resolve(brandData);
         return maybeResize.then(function (resizedBrand) {
-          host.innerHTML = buildSponsorPackPdfDocument(data, {
+          iframeDoc.body.innerHTML = buildSponsorPackPdfDocument(data, {
             hub: hubData,
             brand: resizedBrand || '',
           });
-          var imgs = host.querySelectorAll('img');
-          var waits = [];
-          for (var i = 0; i < imgs.length; i++) {
-            if (imgs[i].complete) continue;
-            waits.push(
-              new Promise(function (resolve) {
-                imgs[i].onload = resolve;
-                imgs[i].onerror = resolve;
-              })
-            );
-          }
-          return Promise.all(waits).then(function () {
-            return loadHtml2PdfLibrary();
+          var node = iframeDoc.body.firstElementChild;
+          if (!node) throw new Error('PDF document failed to render.');
+          return waitForImages(node).then(function () {
+            // Give webfonts a beat inside the iframe
+            return new Promise(function (resolve) {
+              setTimeout(resolve, 250);
+            }).then(function () {
+              return loadHtml2PdfLibrary().then(function (html2pdf) {
+                return { html2pdf: html2pdf, node: node };
+              });
+            });
           });
         });
       })
-      .then(function (html2pdf) {
-        var node = host.firstElementChild;
-        if (!node) throw new Error('PDF document failed to render.');
-        if (typeof html2pdf !== 'function') {
+      .then(function (ctx) {
+        if (!ctx || typeof ctx.html2pdf !== 'function') {
           throw new Error('PDF library failed to load. Check your connection and try again.');
         }
-        return html2pdf()
+        var node = ctx.node;
+        // Measure actual content width so capture matches layout
+        var packW = Math.ceil(node.scrollWidth || node.offsetWidth || 680);
+        if (packW < 600) packW = 680;
+        if (packW > 720) packW = 680; // keep within our designed width
+        node.style.width = '680px';
+        node.style.maxWidth = '680px';
+        node.style.boxSizing = 'border-box';
+        node.style.margin = '0';
+
+        return ctx
+          .html2pdf()
           .set({
-            margin: [12, 12, 12, 12],
+            margin: [10, 10, 10, 10],
             filename: filename || 'sponsor-pack.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
@@ -8965,14 +9006,11 @@
               logging: false,
               scrollX: 0,
               scrollY: 0,
+              x: 0,
+              y: 0,
               windowWidth: 680,
               width: 680,
-              onclone: function (doc) {
-                var wrap = doc.querySelector('.sponsor-pack-pdf');
-                if (wrap && wrap.parentElement) {
-                  wrap.parentElement.style.opacity = '1';
-                }
-              },
+              foreignObjectRendering: false,
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all'] },
@@ -8982,7 +9020,7 @@
       })
       .finally(function () {
         try {
-          host.remove();
+          iframe.remove();
         } catch (_e) {
           /* ignore */
         }
@@ -17422,6 +17460,19 @@
     loadSpotlightSlotBanner();
   }
 
+  function isSpotlightEventActiveInCarousel(ev) {
+    if (!ev || !ev.featured) return false;
+    if (!ev.starts_at) return false;
+    var startMs = new Date(ev.starts_at).getTime();
+    if (isNaN(startMs) || startMs < Date.now()) return false;
+    var untilIso = ev.featured_until || ev.featuredUntil;
+    if (untilIso) {
+      var untilMs = new Date(untilIso).getTime();
+      if (!isNaN(untilMs) && untilMs <= Date.now()) return false;
+    }
+    return true;
+  }
+
   function filterFeaturedSpotlightEvents(events) {
     var q = String(featuredSpotlightState.q || '').trim().toLowerCase();
     var featured = featuredSpotlightState.featured;
@@ -17429,6 +17480,7 @@
     var when = featuredSpotlightState.when;
     var now = Date.now();
     return (events || []).filter(function (ev) {
+      if (featured === 'active' && !isSpotlightEventActiveInCarousel(ev)) return false;
       if (featured === 'yes' && !ev.featured) return false;
       if (featured === 'no' && ev.featured) return false;
       if (type && String(ev.event_type || '') !== type) return false;
@@ -17698,11 +17750,11 @@
         featuredSpotlightState.q = '';
         featuredSpotlightState.featured = '';
         featuredSpotlightState.eventType = '';
-        featuredSpotlightState.when = '';
+        featuredSpotlightState.when = 'upcoming';
         if (searchEl) searchEl.value = '';
         if (featuredEl) featuredEl.value = '';
         if (typeEl) typeEl.value = '';
-        if (whenEl) whenEl.value = '';
+        if (whenEl) whenEl.value = 'upcoming';
         paintFeaturedSpotlightTable();
       });
     }
@@ -18050,7 +18102,10 @@
       '<select id="featured-spotlight-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
       '<option value=""' +
       (featuredSpotlightState.featured === '' ? ' selected' : '') +
-      '>All spotlight</option>' +
+      '>All events</option>' +
+      '<option value="active"' +
+      (featuredSpotlightState.featured === 'active' ? ' selected' : '') +
+      '>Active in carousel</option>' +
       '<option value="yes"' +
       (featuredSpotlightState.featured === 'yes' ? ' selected' : '') +
       '>Featured only</option>' +
