@@ -4,7 +4,7 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 4 August 2026 (guest-visit E2E passed; beta email blocked by email allowlist)*
+*Last updated: 6 August 2026 (SEO canonical rebuild; gate robots/llms; launch segments; support drafts; Resend/Supabase Pro deferred ~1 week)*
 
 ---
 
@@ -52,19 +52,32 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 | SEO | ~70% | Foundations built — **domain, GSC, sitemap verify, redirect** remain |
 | AEO (AI / answer engines) | ~70% | `llms.txt`, FAQs, JSON-LD — **gate-off discovery + canonical alignment** remain |
 | Business ops | ~75% | Product + runbooks — **`npm run check:business-ops`** — ICO verify, DNS, DPAs, solicitor remain |
-| Redirect & launch comms | ~10% | Redirect map drafted (`docs/LEGACY-REDIRECT-MAP.md`); email waves not started |
+| Redirect & launch comms | ~35% | Redirect map + banner snippet + Hub list segments; Email 1 sent; Email 2 / hard 301s remain |
 
 ### Critical path (do these next)
 
 1. ~~**Guest visit programme end-to-end test**~~ ✅ 4 Aug (`scripts/guest-visit-e2e-test.js`)
-2. **Category Exclusivity (seat approval) end-to-end test** — apply → approve/deny in Attendees → payment link
+2. ~~**Category Exclusivity (seat approval) end-to-end test**~~ ✅ 5 Aug (`npm run test-category-exclusivity-e2e`)
 3. ~~**Connect destination charge test**~~ — done Jul 2026 (live PIs with `hub_checkout=connect_destination`; fee = booking fee only)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
-5. **July beta email** — 50–100 groups: “Claim your profile, publish one event”
-6. **SEO pre-launch** — `SITE_URL`, GSC, sitemap verify (`docs/SEO-AEO-LAUNCH-PLAN.md`)
-7. **August redirect** — the-networker.co.uk → hub
+5. **Email 2 claim wave** — Segment A ready (`docs/SEGMENT-A-EMAIL2.md`); send when ready (not waiting on Resend Pro if via Brevo)
+6. **SEO pre-launch** — confirm `SITE_URL` = `https://www.thenetworkerhub.com`; GSC verify + sitemap submit at gate-off (`docs/SEO-AEO-LAUNCH-PLAN.md`)
+7. **August redirect** — banner install now; hard 301s 1 Sep
+8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
 
 *Note: events are listed fresh on the hub — we are not migrating or copying events from the old WordPress site.*
+
+### Recently completed (early August 2026)
+
+- Guest visit + Category Exclusivity E2E
+- Email 1 organiser soft-trust send (Brevo Segment A ~1,100)
+- SEO rebuild: FAQ/guides/help canonicals → `www.thenetworkerhub.com` (were localhost)
+- Middleware: gated `robots.txt` Disallow + block `llms.txt` / `agents.txt` until public launch (matcher bug fixed)
+- Launch list Hub segments: **1,103 organisers · 207 accounts · 158 both · 46 attendees-only** (`npm run build:launch-segments`)
+- Support inbox pre-draft replies (`docs/SUPPORT-INBOX-RUNBOOK.md`)
+- co.uk upgrade banner ready + soft window **6 Aug – 1 Sep** (`marketing/CO-UK-UPGRADE-BANNER.md`)
+- `CRON_SECRET` confirmed present in Vercel Production
+- Refund-policy + Connect math + business-ops + DPA checks green
 
 ### Recently completed (July 2026)
 
@@ -146,8 +159,8 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [x] | 6 | “New registration” email to organiser when someone books (Resend on prod) |
 | [x] | 6 | Events + groups auto-approve; reviews/opportunities still moderated |
 | [x] | 6 | Stripe Connect enabled on prod (`STRIPE_CONNECT_ENABLED=true`) |
-| [ ] | 6–7 | Deploy SEO assets; confirm sitemap indexes all groups + published events |
-| [ ] | 7 | **Beta email** to 50–100 organisers — see `docs/BETA-EMAIL-JULY.md` |
+| [x] | 6–7 | Deploy SEO assets; confirm sitemap indexes all groups + published events — code + canonical rebuild 6 Aug; live sitemap still 403 while gated (expected) |
+| [~] | 7 | **Organiser Email 1** sent (Brevo Segment A ~1,100) — Email 2 claim wave still to send |
 | [ ] | 7–8 | Fix beta feedback; target **20 groups** with at least 1 published event |
 | [x] | 8 | Bound organiser directory + geo/pins paths (paginated slim queries; `?all=1` removed) — 29 Jul |
 | [ ] | 8 | Load test: browse + organiser pages with 1,000+ group profiles (+ ~9k-event catalogue projection) |
@@ -159,19 +172,20 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 
 | Service | When | Cost | Why |
 |---------|------|------|-----|
-| **Resend Pro** | **Before week 10 wider email** (mandatory before 3,500 launch send) | ~$20/mo | Free tier = **100 emails/day** + 3,000/mo — campaigns + crons + bookings exceed that in August/September |
-| **Supabase Pro** | **Before soft launch** (remove site gate) | ~$25/mo | No 7-day pause, daily backups, headroom (~1,000 groups already in DB; RAM ~48% on nano) |
+| **Resend Pro** | **Before week 10 wider email** (mandatory before 3,500 launch send) — *deferred ~1 week from 6 Aug* | ~$20/mo | Free tier = **100 emails/day** + 3,000/mo — campaigns + crons + bookings exceed that in August/September |
+| **Supabase Pro** | **Before soft launch** (remove site gate) — *deferred ~1 week from 6 Aug* | ~$25/mo | No 7-day pause, daily backups, headroom (~1,000 groups already in DB; RAM ~48% on nano) |
 | **Vercel Pro** | **Only if needed** (Q4 or after launch) | ~$20/mo | Daily crons are OK on Hobby; upgrade if cron timeouts, need Firewall, or more-than-daily jobs |
 
 Monitor Resend dashboard during July beta — if daily sends approach **80–90**, upgrade early.
 
 | Done | Week | Task |
 |:----:|------|------|
-| [ ] | 9 | **Resend Pro** + **Supabase Pro** upgraded (see table above) |
-| [ ] | 9 | Redirect plan: the-networker.co.uk → hub (home, browse, organiser slugs, event URLs) |
-| [ ] | 9 | “We've upgraded” banner on old site for 2–4 weeks before hard redirect |
-| [ ] | 10 | **Wider email** (500–1,000) — claim profile + help link; track claim rate (**requires Resend Pro**) |
-| [ ] | 10–11 | FAQ / support inbox ready (login, publish event, bookings, payouts) |
+| [ ] | 9 | **Resend Pro** + **Supabase Pro** upgraded (see table above) — deferred ~1 week |
+| [x] | 9 | Redirect plan: the-networker.co.uk → hub (home, browse, organiser slugs, event URLs) — `docs/LEGACY-REDIRECT-MAP.md` |
+| [~] | 9 | “We've upgraded” banner on old site for 2–4 weeks before hard redirect — snippet ready (`marketing/CO-UK-UPGRADE-BANNER.md`); **paste onto co.uk** |
+| [~] | 9 | Hub-side list segments built (`docs/LAUNCH-LIST-SEGMENTS.md`) — merge Brevo 3,500 export when available |
+| [ ] | 10 | **Wider email** (500–1,000) — claim profile + help link; track claim rate (**requires Resend Pro** if via Resend) |
+| [x] | 10–11 | FAQ / support inbox ready (login, publish event, bookings, payouts) — pre-drafts in `docs/SUPPORT-INBOX-RUNBOOK.md` |
 | [ ] | 11 | Performance pass — pagination, images, API caching under load |
 | [ ] | 11 | **Soft launch** — redirect + limited traffic |
 | [ ] | 12 | **Full launch email** to remainder of 3,500 list (**requires Resend Pro**) |
@@ -229,7 +243,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Command Centre → **Email templates** → Send test to yourself |
 | [x] | **Test checkout:** buy a ticket → confirmation email received |
 | [ ] | **SPF + DKIM + DMARC** on sending domain (not `onboarding@resend.dev`) |
-| [ ] | **`CRON_SECRET`** set in Vercel Production — booking reminders + saved-event nudges |
+| [x] | **`CRON_SECRET`** set in Vercel Production — booking reminders + saved-event nudges |
 | [ ] | Spot-check: `booking_cancelled`, `event_cancelled`, `refund_processed`, welcome email |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
 | [ ] | Launch invite template (organiser “claim your profile”) — add in admin or campaign tool |
@@ -350,6 +364,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [ ] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkerhub.com` (exact canonical) |
 | [ ] | Verify `/sitemap.xml` after deploy — counts match published events + organisers |
 | [x] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
+| [x] | Rebuild FAQ/guides/help canonicals to `https://www.thenetworkerhub.com` (6 Aug — were `localhost:3000`) |
 | [ ] | **Google Search Console** — verify `www.thenetworkerhub.com`; submit sitemap |
 | [ ] | **Google Business Profile** — Software/online, no Magpas pin (hide address / UK service area); hub URL; park if unverifiable |
 | [ ] | Launch week: remove `SITE_ACCESS_PASSWORD` → confirm `/robots.txt` Allow, `/llms.txt` 200 |
@@ -368,10 +383,11 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 |:----:|------|
 | [x] | Map old the-networker.co.uk URLs → new hub URLs (`docs/LEGACY-REDIRECT-MAP.md`) |
 | [ ] | DNS / hosting redirect for apex + www |
-| [ ] | Segment 3,500 list: organisers vs attendees vs both |
-| [ ] | July beta email (50–100 organisers) |
+| [~] | Segment 3,500 list: organisers vs attendees vs both — Hub segments built (`docs/LAUNCH-LIST-SEGMENTS.md`); merge Brevo export when ready |
+| [~] | July/August organiser Email 1 sent (Brevo); Email 2 claim wave pending |
 | [ ] | August wave email (500–1,000) |
 | [ ] | 1 September full list + redirect live |
+| [~] | co.uk upgrade banner — snippet ready; install on WordPress (`marketing/CO-UK-UPGRADE-BANNER.md`) |
 
 ---
 

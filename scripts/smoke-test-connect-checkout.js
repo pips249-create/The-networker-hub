@@ -115,7 +115,7 @@ function main() {
 
   console.log('\n✅ Connect checkout math smoke passed.');
   console.log(
-    'Still required for launch: one live Tab 9 purchase in Stripe Dashboard (PIPS-TODO).'
+    'Live Tab 9 destination-charge proof already verified (Jul 2026) — see PIPS-TODO Tab 9.'
   );
 }
 

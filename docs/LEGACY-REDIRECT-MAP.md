@@ -1,12 +1,12 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** draft (July 2026) · **Flip date:** public launch 1st September 2026  
+**Status:** ready for banner install (August 2026) · **Flip date:** public launch 1st September 2026  
 **Target host:** `https://www.thenetworkerhub.com`  
 **Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel)
 
 Use this when configuring DNS + hosting 301s on the old site. Hub-internal tidy redirects already live in `vercel.json` (`.html` → clean paths) — this file is only for **legacy domain → hub**.
 
-Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7
+Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7 · `marketing/CO-UK-UPGRADE-BANNER.md`
 
 ---
 
@@ -14,7 +14,7 @@ Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7
 
 | Phase | Behaviour |
 |-------|-----------|
-| **2–4 weeks before** | Optional “We’ve upgraded” banner on old site → hub; keep old URLs working |
+| **6 Aug – 1 Sep 2026** | “We’ve upgraded” banner on old site → `/for-organisers`; keep old URLs working |
 | **Launch (1st Sep)** | Remove hub `SITE_ACCESS_PASSWORD`; start 301s for high-traffic paths |
 | **Full launch (1 Sep)** | Apex + www hard 301 to hub; watch Search Console 404s for a week |
 
@@ -128,5 +128,5 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 1. Paste top landing pages from old Analytics / GSC into the path table  
 2. Confirm hosting where **the-networker.co.uk** DNS is managed  
 3. **thenetworkerhub.co.uk** — add apex + `www` in Vercel → Domains; point registrar DNS at Vercel (website only; MX optional)  
-4. Soft banner period dates  
+4. ~~Soft banner period dates~~ — **6 Aug – 1 Sep 2026**; paste snippet from `marketing/co-uk-upgrade-banner-snippet.html` (see `marketing/CO-UK-UPGRADE-BANNER.md`)  
 5. Flip 301s on launch day checklist in `PIPS-TODO.md`

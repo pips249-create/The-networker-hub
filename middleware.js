@@ -625,8 +625,11 @@ function passThroughIfGated(gated) {
 }
 
 export const config = {
+  // Include robots/llms/agents so the gate can Disallow crawlers and 403 discovery
+  // files until SITE_ACCESS_PASSWORD is removed. Static robots.txt says Allow — do not
+  // serve that while the preview gate is on.
   matcher: [
-    '/((?!api/stripe-webhook|_next/static|_next/image|favicon.ico|css/|js/|assets/|robots.txt|llms.txt|agents.txt).*)',
+    '/((?!api/stripe-webhook|_next/static|_next/image|favicon.ico|css/|js/|assets/).*)',
   ],
 };
 

@@ -5301,12 +5301,17 @@
 }
 
 .org-attendee-row-pending-review td {
-  padding-top: 0;
+  padding: 0 12px 14px;
   border-top: none;
 }
 
+.org-application-review-bar {
+  width: 100%;
+}
+
 .org-attendee-row-pending-review .org-application-review {
-  max-width: 420px;
+  max-width: none;
+  width: 100%;
 }
 
 .org-application-review-inline-hint {
@@ -6186,6 +6191,40 @@
   box-shadow: 0 2px 8px rgba(28, 32, 64, 0.04);
 }
 
+.org-application-review--pending .org-application-review-main {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .org-application-review--pending .org-application-review-main {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'copy buttons'
+      'resend resend';
+  }
+
+  .org-application-review--pending .org-application-review-copy {
+    grid-area: copy;
+  }
+
+  .org-application-review--pending .org-application-review-buttons {
+    grid-area: buttons;
+  }
+
+  .org-application-review--pending .org-application-resend-link {
+    grid-area: resend;
+    text-align: left;
+    width: auto;
+  }
+}
+
+.org-application-review-copy {
+  display: grid;
+  gap: 4px;
+}
+
 .org-application-review-label {
   margin: 0;
   font-size: 10px;
@@ -6197,13 +6236,15 @@
 
 .org-application-review-buttons {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
+  min-width: 220px;
 }
 
-@media (min-width: 900px) {
+@media (max-width: 899px) {
   .org-application-review-buttons {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    min-width: 0;
   }
 }
 

@@ -43,10 +43,15 @@ function applyUpcomingBrowseFilter(query, nowIso) {
 function stripBrowseListPayload(ev) {
   if (!ev) return ev;
   const desc = String(ev.description || '');
+  // Tickets are omitted on browse, but keep hasMembersOnlyTiers aligned with
+  // isMembersOnlyEvent so clients cannot treat "member price + empty tickets"
+  // as a members-only listing (Category Exclusivity with a member tier).
+  const membersOnlyListing = Boolean(ev.isMembersOnlyEvent);
   return {
     ...ev,
     description: desc.length > 400 ? desc.slice(0, 400) : desc,
     tickets: [],
+    hasMembersOnlyTiers: membersOnlyListing,
     organiserProfile: ev.organiserProfile ? String(ev.organiserProfile).slice(0, 200) : '',
     highlights: [],
     refundPolicy: null,

@@ -26,6 +26,10 @@ npm-debug.log*
 # Local scratch
 .tmp/
 
+# Generated launch list CSVs (may contain personal emails)
+data/launch-segment-*.csv
+data/brevo-full-list.csv
+
 # LinkedIn ad export tooling
 marketing/node_modules/
 marketing/package-lock.json
