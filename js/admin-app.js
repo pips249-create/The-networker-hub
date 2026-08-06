@@ -1330,17 +1330,61 @@
     return actionCount + healthCount;
   }
 
-  function updateHealthBadge(count) {
+  function listingFixSeverityCounts() {
+    var urgent = 0;
+    var polish = 0;
+    ((healthCache && healthCache.events) || []).forEach(function (ev) {
+      var issues = ev.issues || [];
+      var hasHigh = issues.some(function (issue) {
+        return issue && issue.severity === 'high';
+      });
+      if (hasHigh) urgent += 1;
+      else polish += 1;
+    });
+    var incomplete =
+      (adminMetricsCache &&
+        adminMetricsCache.actionCounts &&
+        Number(adminMetricsCache.actionCounts.incompleteOrganisers)) ||
+      0;
+    polish += incomplete;
+    return { urgent: urgent, polish: polish };
+  }
+
+  function updateHealthBadge() {
     var badge = document.getElementById('admin-health-badge');
     if (!badge) return;
-    var n = Number(count) || 0;
-    if (n > 0) {
-      badge.textContent = n > 99 ? '99+' : String(n);
+    var counts = listingFixSeverityCounts();
+    var urgent = counts.urgent;
+    var polish = counts.polish;
+    badge.classList.remove('admin-nav-badge--polish');
+    if (urgent > 0) {
+      badge.textContent = urgent > 99 ? '99+' : String(urgent);
       badge.classList.remove('hidden');
-      badge.setAttribute('aria-label', n + ' items need attention');
+      badge.setAttribute(
+        'aria-label',
+        urgent +
+          ' urgent listing issue' +
+          (urgent === 1 ? '' : 's') +
+          (polish ? ', ' + polish + ' also need polish' : '')
+      );
+      badge.title =
+        urgent +
+        ' urgent · ' +
+        polish +
+        ' need polish (incomplete groups / softer event data gaps)';
+    } else if (polish > 0) {
+      badge.textContent = polish > 99 ? '99+' : String(polish);
+      badge.classList.add('admin-nav-badge--polish');
+      badge.classList.remove('hidden');
+      badge.setAttribute(
+        'aria-label',
+        polish + ' listing' + (polish === 1 ? '' : 's') + ' need polish'
+      );
+      badge.title = polish + ' need polish — not urgent blockers';
     } else {
       badge.classList.add('hidden');
-      badge.setAttribute('aria-label', 'No open admin alerts');
+      badge.setAttribute('aria-label', 'No open listing fixes');
+      badge.title = '';
     }
   }
 
@@ -1398,18 +1442,27 @@
   function collectDashboardAlerts(data) {
     var alerts = data && data.alerts ? data.alerts.slice() : [];
     var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
+    var healthUrgent = listingFixSeverityCounts().urgent;
     if (healthCount > 0 && !alerts.some(function (a) {
       return a.id === 'event-health';
     })) {
       alerts.unshift({
         id: 'event-health',
-        severity: 'high',
+        severity: healthUrgent > 0 ? 'high' : 'low',
         title:
-          healthCount +
-          ' event' +
-          (healthCount === 1 ? '' : 's') +
-          ' missing important details',
-        detail: 'Add the date, organiser, VAT, or profile details.',
+          healthUrgent > 0
+            ? healthUrgent +
+              ' event' +
+              (healthUrgent === 1 ? '' : 's') +
+              ' with urgent data issues'
+            : healthCount +
+              ' event' +
+              (healthCount === 1 ? '' : 's') +
+              ' need polish',
+        detail:
+          healthUrgent > 0
+            ? 'Missing date or organiser — fix these first. Softer gaps are listed under Fix listings.'
+            : 'Add logos, VAT, format, or tidy past dates when you have time.',
         href: '#cleanup/issues',
         time: new Date().toISOString(),
       });
@@ -1560,7 +1613,7 @@
       }
     }
 
-    updateHealthBadge(sidebarNotificationTotal(data));
+    updateHealthBadge();
     syncScheduledRemindersSection();
     syncLiveHubTabBadges(data);
     syncNeedsAttentionStrip(data);
@@ -1568,7 +1621,7 @@
 
   function refreshEventHealthQuietly(force) {
     if (!force && !shouldRefreshHealth()) {
-      if (adminMetricsCache) updateHealthBadge(sidebarNotificationTotal(adminMetricsCache));
+      if (adminMetricsCache) updateHealthBadge();
       return Promise.resolve(healthCache);
     }
     return fetchEventHealth().then(function (data) {
@@ -1579,7 +1632,7 @@
       if (adminMetricsCache) {
         applyDashboardNotifications(adminMetricsCache);
       } else {
-        updateHealthBadge(sidebarNotificationTotal({ notificationCount: 0 }));
+        updateHealthBadge();
       }
       return data;
     });
@@ -2027,7 +2080,6 @@
 
   function needsAttentionChips(data) {
     var counts = (data && data.actionCounts) || {};
-    var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
     var chips = [];
     function push(n, label, href, tone) {
       var count = Number(n) || 0;
@@ -2047,9 +2099,11 @@
       'amber'
     );
     push(counts.openComplaints, 'Complaints', '#support/complaints', 'amber');
-    push(counts.incompleteOrganisers, 'Incomplete groups', '#cleanup/groups', 'slate');
+    push(counts.incompleteOrganisers, 'Incomplete groups (polish)', '#cleanup/groups', 'slate');
     push(counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'slate');
-    push(healthCount, 'Event data issues', '#cleanup/issues', 'slate');
+    var healthParts = listingFixSeverityCounts();
+    push(healthParts.urgent, 'Urgent event data', '#cleanup/issues', 'rose');
+    push(healthParts.polish - (Number(counts.incompleteOrganisers) || 0), 'Event polish', '#cleanup/issues', 'slate');
     return chips;
   }
 
@@ -3796,6 +3850,8 @@
 
   function analyticsPeriodLabel(period) {
     if (period === '7d') return 'Last 7 days';
+    if (period === 'ytd') return 'Year to date';
+    if (period === '12m') return 'Last 12 months';
     if (period === 'all') return 'All time';
     return 'Last 30 days';
   }
@@ -4508,7 +4564,9 @@
       '<div class="flex flex-wrap gap-2" id="analytics-period-controls">' +
         analyticsPeriodBtn('7d', '7 days') +
         analyticsPeriodBtn('30d', '30 days') +
-      analyticsPeriodBtn('all', 'All time') +
+        analyticsPeriodBtn('ytd', 'Year to date') +
+        analyticsPeriodBtn('12m', 'Last 12 months') +
+        analyticsPeriodBtn('all', 'All time') +
       '</div>'
     );
   }
@@ -5428,9 +5486,11 @@
         '<p>Jump straight to the pages you use most often.</p></div>' +
         '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
         '<a href="#cleanup/groups" class="admin-shortcut"><span class="admin-shortcut-label">Fix listings</span><span class="admin-shortcut-desc">Group pages and events</span></a>' +
+        '<a href="#spotlight/events" class="admin-shortcut"><span class="admin-shortcut-label">Premium Spotlight</span><span class="admin-shortcut-desc">Featured carousels</span></a>' +
+        '<a href="#revenue-targets" class="admin-shortcut"><span class="admin-shortcut-label">Sales targets</span><span class="admin-shortcut-desc">Forecast vs actual</span></a>' +
         '<a href="#financials/payouts" class="admin-shortcut"><span class="admin-shortcut-label">Payouts</span><span class="admin-shortcut-desc">Approve and mark paid</span></a>' +
         '<a href="#moderation/reports" class="admin-shortcut"><span class="admin-shortcut-label">Open reports</span><span class="admin-shortcut-desc">Listing and review reports</span></a>' +
-        '<a href="#analytics/demand" class="admin-shortcut"><span class="admin-shortcut-label">Demand signals</span><span class="admin-shortcut-desc">Searches, saves, enquiries</span></a>' +
+        '<a href="#analytics/insights" class="admin-shortcut"><span class="admin-shortcut-label">Analytics</span><span class="admin-shortcut-desc">Tickets, demand, growth</span></a>' +
         '</div></div></section>' +
         '<section class="admin-dash-section" id="dashboard-scheduled-reminders-section">' +
         '<div class="admin-dash-section-head"><h3>Scheduled reminders</h3>' +
@@ -17739,17 +17799,41 @@
     loadSpotlightSlotBanner();
   }
 
+  function isSpotlightFeaturedUntilExpired(row) {
+    var untilIso = row && (row.featured_until || row.featuredUntil);
+    if (!untilIso) return false;
+    var untilMs = new Date(untilIso).getTime();
+    return !isNaN(untilMs) && untilMs <= Date.now();
+  }
+
   function isSpotlightEventActiveInCarousel(ev) {
     if (!ev || !ev.featured) return false;
     if (!ev.starts_at) return false;
     var startMs = new Date(ev.starts_at).getTime();
     if (isNaN(startMs) || startMs < Date.now()) return false;
-    var untilIso = ev.featured_until || ev.featuredUntil;
-    if (untilIso) {
-      var untilMs = new Date(untilIso).getTime();
-      if (!isNaN(untilMs) && untilMs <= Date.now()) return false;
-    }
+    if (isSpotlightFeaturedUntilExpired(ev)) return false;
     return true;
+  }
+
+  function isStaleSpotlightEvent(ev) {
+    return !!(ev && ev.featured && !isSpotlightEventActiveInCarousel(ev));
+  }
+
+  function isStaleSpotlightOrganiser(row) {
+    return !!(row && row.featured && isSpotlightFeaturedUntilExpired(row));
+  }
+
+  function isStaleSpotlightOpportunity(row) {
+    return !!(row && row.featured && isSpotlightFeaturedUntilExpired(row));
+  }
+
+  function spotlightClearStaleBtnHtml(id) {
+    return (
+      '<button type="button" id="' +
+      attrEsc(id) +
+      '" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shrink-0">' +
+      'Clear past featured</button>'
+    );
   }
 
   function filterFeaturedSpotlightEvents(events) {
@@ -18129,6 +18213,129 @@
       return adminPost('/api/admin/opportunities', payload);
     }
 
+    function clearStaleSpotlightFeatured(kind) {
+      var list;
+      var isStale;
+      var paint;
+      var noun;
+      if (kind === 'event') {
+        list = featuredSpotlightEvents || [];
+        isStale = isStaleSpotlightEvent;
+        paint = paintFeaturedSpotlightTable;
+        noun = 'events';
+      } else if (kind === 'organiser') {
+        list = featuredSpotlightOrganisers || [];
+        isStale = isStaleSpotlightOrganiser;
+        paint = paintSpotlightOrganisersTable;
+        noun = 'organisers';
+      } else {
+        list = featuredSpotlightOpportunities || [];
+        isStale = isStaleSpotlightOpportunity;
+        paint = paintSpotlightOpportunitiesTable;
+        noun = 'opportunities';
+      }
+      var stale = list.filter(isStale);
+      if (!stale.length) {
+        window.alert(
+          kind === 'event'
+            ? 'No past or expired featured events to clear. Active carousel placements are left alone.'
+            : 'No expired featured ' + noun + ' to clear. Rows without an end date stay featured until you turn them off.'
+        );
+        return;
+      }
+      var ok = window.confirm(
+        'Remove featured from ' +
+          stale.length +
+          ' past/expired ' +
+          noun +
+          '? Active carousel placements stay featured.'
+      );
+      if (!ok) return;
+
+      var btnIds = {
+        event: 'spotlight-clear-stale-events',
+        organiser: 'spotlight-clear-stale-organisers',
+        opportunity: 'spotlight-clear-stale-opportunities',
+      };
+      var btn = document.getElementById(btnIds[kind]);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Clearing…';
+      }
+
+      var failed = 0;
+      var chain = Promise.resolve();
+      stale.forEach(function (row) {
+        chain = chain.then(function () {
+          return postFeaturedUpdate(kind, row.id, false, null)
+            .then(function (data) {
+              if (!data || !data.ok) {
+                failed += 1;
+                return;
+              }
+              if (kind === 'event') {
+                applyLocalFeatured(featuredSpotlightEvents, row.id, false, null, 'event', data.event);
+              } else if (kind === 'organiser') {
+                applyLocalFeatured(
+                  featuredSpotlightOrganisers,
+                  row.id,
+                  false,
+                  null,
+                  'organiser',
+                  data.organiser
+                );
+              } else {
+                applyLocalFeatured(
+                  featuredSpotlightOpportunities,
+                  row.id,
+                  false,
+                  null,
+                  'opportunity',
+                  data.opportunity
+                );
+              }
+            })
+            .catch(function () {
+              failed += 1;
+            });
+        });
+      });
+
+      return chain.then(function () {
+        paint();
+        invalidateSpotlightSlotsCache();
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Clear past featured';
+        }
+        if (failed) {
+          window.alert(
+            'Cleared ' +
+              (stale.length - failed) +
+              ' of ' +
+              stale.length +
+              '. ' +
+              failed +
+              ' failed — try again or clear those rows individually.'
+          );
+        }
+      });
+    }
+
+    document.body.addEventListener('click', function (e) {
+      if (e.target.closest('#spotlight-clear-stale-events')) {
+        clearStaleSpotlightFeatured('event');
+        return;
+      }
+      if (e.target.closest('#spotlight-clear-stale-organisers')) {
+        clearStaleSpotlightFeatured('organiser');
+        return;
+      }
+      if (e.target.closest('#spotlight-clear-stale-opportunities')) {
+        clearStaleSpotlightFeatured('opportunity');
+      }
+    });
+
     document.body.addEventListener('change', function (e) {
       var expiryInput = e.target.closest('.spotlight-expiry-input');
       if (expiryInput) {
@@ -18372,7 +18579,10 @@
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Set an end date when you feature something (or choose no end date). You can change the date anytime under Expires.</p>' +
-      '<p id="featured-status" class="text-sm text-slate-500">Loading approved events…</p>' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<p id="featured-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading approved events…</p>' +
+      spotlightClearStaleBtnHtml('spotlight-clear-stale-events') +
+      '</div>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="featured-spotlight-search" placeholder="Search event, organiser, or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
@@ -18425,7 +18635,10 @@
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured groups appear in the organiser spotlight carousel on the Events browse page. Set an end date when you feature them (or choose no end date).</p>' +
-      '<p id="spotlight-organisers-status" class="text-sm text-slate-500">Loading organisers…</p>' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<p id="spotlight-organisers-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading organisers…</p>' +
+      spotlightClearStaleBtnHtml('spotlight-clear-stale-organisers') +
+      '</div>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="spotlight-organisers-search" placeholder="Search name, city, or email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(spotlightOrganiserState.q) +
@@ -18484,7 +18697,10 @@
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Set an end date when you feature a listing (or choose no end date).</p>' +
-      '<p id="spotlight-opportunities-status" class="text-sm text-slate-500">Loading opportunities…</p>' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<p id="spotlight-opportunities-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading opportunities…</p>' +
+      spotlightClearStaleBtnHtml('spotlight-clear-stale-opportunities') +
+      '</div>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="spotlight-opportunities-search" placeholder="Search title, host, or owner email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(spotlightOpportunityState.q) +

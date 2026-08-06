@@ -148,6 +148,12 @@ body.hub-page-admin .site-nav {
   text-align: center;
 }
 
+.admin-nav-badge--polish {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+}
+
 .admin-nav-section + .admin-nav-section {
   margin-top: 0.125rem;
 }

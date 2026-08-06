@@ -15,11 +15,18 @@ function isTestActivityText(text) {
 
 function parsePeriod(raw) {
   const p = String(raw || '30d').trim().toLowerCase();
-  return p === '7d' || p === '30d' || p === 'all' ? p : '30d';
+  return p === '7d' || p === '30d' || p === 'ytd' || p === '12m' || p === 'all' ? p : '30d';
 }
 
 function sinceIso(period) {
   if (period === 'all') return null;
+  if (period === 'ytd') {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), 0, 1)).toISOString();
+  }
+  if (period === '12m') {
+    return new Date(Date.now() - 365 * 86400000).toISOString();
+  }
   const days = period === '7d' ? 7 : 30;
   return new Date(Date.now() - days * 86400000).toISOString();
 }
