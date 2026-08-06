@@ -234,7 +234,7 @@
         'Use the Overview, Demand, and Insights tabs — each page loads only what you need.',
         'Overview links out to Vercel for visitor charts and shows live Hub counts.',
         'Demand shows searches, favourites, opportunity enquiries, and guest visits.',
-        'Insights opens with tickets bought on the Hub (paid vs free), then ranks top groups and events. Change 7 / 30 / all days on Demand or Insights.',
+        'Insights opens with tickets bought on the Hub (paid vs free), then ranks top groups and events. Sales pitch opens (e.g. Barnsgate) are under Insights → Sales pitches. Change 7 / 30 / all days on Demand or Insights.',
       ],
     },
     rankings: {
@@ -4115,6 +4115,47 @@
     );
   }
 
+  function renderInsightsPitchPages(pages) {
+    if (!pages.length) {
+      return insightsEmptyRow(5, 'No pitch opens in this period yet.');
+    }
+    return pages
+      .map(function (row) {
+        var refs = (row.topReferrers || [])
+          .map(function (r) {
+            return r.host;
+          })
+          .filter(Boolean)
+          .slice(0, 2)
+          .join(', ');
+        return (
+          '<tr>' +
+          '<td class="px-2.5 py-2 text-left">' +
+          '<p class="font-medium text-brand-900">' +
+          esc(row.label || row.path) +
+          '</p>' +
+          '<a class="text-[11px] text-slate-500 hover:text-brand-700" href="' +
+          attrEsc(row.path) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          esc(row.path) +
+          '</a></td>' +
+          '<td class="px-2.5 py-2 text-right tabular-nums">' +
+          esc(String(row.views || 0)) +
+          '</td>' +
+          '<td class="px-2.5 py-2 text-right tabular-nums">' +
+          esc(String(row.pdfDownloads || 0)) +
+          '</td>' +
+          '<td class="px-2.5 py-2 text-right text-slate-600 whitespace-nowrap">' +
+          esc(row.lastOpenedAt ? fmtTime(row.lastOpenedAt) : '—') +
+          '</td>' +
+          '<td class="px-2.5 py-2 text-left text-xs text-slate-500">' +
+          esc(refs || '—') +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
   function renderInsightsPanel(data) {
     if (!data || data.error || data.configured === false) {
       return '<p class="text-sm text-red-700">Could not load platform insights. Check Supabase env vars on Vercel.</p>';
@@ -4126,6 +4167,7 @@
     var funnel = data.applicationFunnel || {};
     var promote = data.promoteRoi || {};
     var promoteTotals = promote.totals || {};
+    var pitch = data.pitchPages || {};
     var tickets = data.ticketVolume || {};
     var periodLabel = analyticsPeriodLabel(data.period || analyticsState.period);
     var orgCount = (data.topOrganisers || []).length;
@@ -4139,6 +4181,7 @@
       '<a href="#insights-performers" class="admin-insights-jump-link">Performers</a>' +
       '<a href="#insights-growth" class="admin-insights-jump-link">Growth</a>' +
       '<a href="#insights-promote" class="admin-insights-jump-link">Promote ROI</a>' +
+      '<a href="#insights-pitches" class="admin-insights-jump-link">Sales pitches</a>' +
       '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
       '</nav>' +
       '<section id="insights-tickets" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
@@ -4294,6 +4337,57 @@
               ? Math.round(((promote.landings || 0) / promote.toolUses) * 100) + '%'
               : '—',
             'Landings ÷ tool uses (rough conversion)'
+          ) +
+          '</div>') +
+      '</section>' +
+      '<section id="insights-pitches" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Sales pitch opens</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Confidential <code class="text-xs">/p-tnh-*</code> decks — first-party opens (no cookie consent needed). ' +
+      esc(periodLabel) +
+      '.</p></div>' +
+      (pitch.configured === false
+        ? '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">' +
+          esc(
+            pitch.message ||
+              'Apply migration 238_pitch_page_views.sql in Supabase to start collecting pitch opens.'
+          ) +
+          '</p>'
+        : '<div class="admin-metric-grid admin-metric-grid--4">' +
+          card(
+            'Page opens',
+            String(pitch.views || 0),
+            'Unique sessions per pitch URL (refresh in same tab not re-counted)'
+          ) +
+          card(
+            'PDF downloads',
+            String(pitch.pdfDownloads || 0),
+            'From sponsor pitch “Download PDF” buttons'
+          ) +
+          card(
+            'Decks touched',
+            String(pitch.uniquePages || 0),
+            'Distinct pitch URLs with activity'
+          ) +
+          card(
+            'Top deck',
+            pitch.pages && pitch.pages[0]
+              ? String(pitch.pages[0].label || pitch.pages[0].path)
+              : '—',
+            pitch.pages && pitch.pages[0]
+              ? String(pitch.pages[0].views || 0) + ' opens'
+              : 'No opens yet'
+          ) +
+          '</div>' +
+          '<div class="min-w-0 rounded-xl border border-slate-200 overflow-hidden">' +
+          '<div class="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-2">' +
+          '<h4 class="text-sm font-bold text-brand-900">By pitch</h4>' +
+          '<span class="text-[11px] text-slate-400">Most recent activity first in Last opened</span></div>' +
+          insightsTableScroll(
+            '<table class="w-full text-sm admin-insights-table"><thead class="text-[11px] uppercase tracking-wide text-slate-500">' +
+              '<tr><th class="px-2.5 py-2 text-left">Pitch</th><th class="px-2.5 py-2 text-right">Opens</th><th class="px-2.5 py-2 text-right">PDFs</th><th class="px-2.5 py-2 text-right">Last opened</th><th class="px-2.5 py-2 text-left">Referrers</th></tr></thead>' +
+              '<tbody>' +
+              renderInsightsPitchPages(pitch.pages || []) +
+              '</tbody></table>'
           ) +
           '</div>') +
       '</section>' +
@@ -7841,6 +7935,12 @@
     return d.toISOString();
   }
 
+  function isPlacementEndsInPast(value) {
+    var iso = datetimeLocalUtcToIso(value);
+    if (!iso) return false;
+    return new Date(iso).getTime() <= Date.now();
+  }
+
   function setPlacementEndsMonthsFromNow(inputEl, months) {
     if (!inputEl) return;
     var n = Math.floor(Number(months) || 0);
@@ -10316,7 +10416,7 @@
       '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="12">+12 months</button>' +
       '<button type="button" class="sponsor-placement-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="0">Clear</button>' +
       '</div>' +
-      '<p class="text-xs text-slate-500 mt-1">Leave blank for no automatic end. After this date the placement stops showing and the slot shows as available again. City Partner Stripe subscriptions update this automatically.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Leave blank for no automatic end. After this date the placement stops showing and the slot shows as available again. If this date is already in the past, clear it or pick a future date — otherwise Save will not publish live. City Partner Stripe subscriptions update this automatically.</p></div>' +
       '</div>' +
       '<label id="sponsor-include-emails-wrap" class="hidden items-start gap-2 text-sm text-slate-700 rounded-lg border border-violet-100 bg-violet-50 px-3 py-3">' +
       '<input type="checkbox" id="sponsor-include-emails" class="rounded border-slate-300 mt-0.5" checked> ' +
@@ -10691,6 +10791,13 @@
                   slotDefaults().label +
                   ' — check Ad active and publish to show on site (detail pages may show a fallback until then).'
               );
+            } else if (isPlacementEndsInPast(isoToDatetimeLocalUtc(data.block.sponsor_available_from))) {
+              setSponsorStatus(
+                'Loaded creative for ' +
+                  slotDefaults().label +
+                  ', but Placement ends is in the past — the live page will not show it until you clear or extend that date.',
+                'error'
+              );
             } else {
               setSponsorStatus('Loaded live creative for ' + slotDefaults().label + '.');
             }
@@ -10812,6 +10919,14 @@
         setSponsorStatus('Upload or paste a logo before publishing an active sidebar ad.', 'error');
         return;
       }
+      var slotOpensEl = document.getElementById('sponsor-slot-available-from');
+      if (creative.active && slotOpensEl && isPlacementEndsInPast(slotOpensEl.value)) {
+        setSponsorStatus(
+          'Placement ends is in the past — clear it or set a future date, then save again. Until then the live page will not show this ad.',
+          'error'
+        );
+        return;
+      }
       if (creative.active && logoOnlyPlacement) {
         if (!sponsorHasValidWebsiteUrl(creative.ctaUrl)) {
           setSponsorStatus(
@@ -10854,7 +10969,6 @@
         var slotEmailEl = document.getElementById('sponsor-slot-email');
         payload.sponsor_email = slotEmailEl ? slotEmailEl.value.trim() : '';
       }
-      var slotOpensEl = document.getElementById('sponsor-slot-available-from');
       if (slotOpensEl) {
         payload.sponsor_available_from = datetimeLocalUtcToIso(slotOpensEl.value);
       }
@@ -10880,11 +10994,15 @@
           var fileInput = document.getElementById('sponsor-logo-file');
           if (fileInput) fileInput.value = '';
           if (data.block) applySponsorBlockToForm(data.block);
+          var endsPast =
+            slotOpensEl && isPlacementEndsInPast(slotOpensEl.value);
           setSponsorStatus(
-            creative.active
-              ? 'Published — live for ' + slot.label + '.'
-              : 'Saved — this ad slot is hidden on site.',
-            'ok'
+            !creative.active
+              ? 'Saved — this ad slot is hidden on site.'
+              : endsPast
+                ? 'Saved, but Placement ends is in the past — the live page will not show this ad until you clear or extend that date.'
+                : 'Published — live for ' + slot.label + '.',
+            endsPast && creative.active ? 'error' : 'ok'
           );
           renderPreview();
         })
@@ -11757,7 +11875,10 @@
     }
 
     function applyPreviewAccountWelcomeFormat() {
-      SAMPLE_VARS.sponsor_row = SAMPLE_VARS.sponsor_row || '';
+      // Footer partners come from live CMS — no header banner on account emails.
+      SAMPLE_VARS.sponsor_row = '';
+      SAMPLE_VARS.sponsor_section = '';
+      SAMPLE_VARS.mini_sponsors_row = '';
     }
 
     function applyPreviewLifecycleFormat() {
@@ -11778,6 +11899,7 @@
         slug === 'post_event_review_request' ||
         slug === 'attendee_reengagement' ||
         slug === 'attendee_signup_events_nudge' ||
+        slug === 'attendee_signup_events_nudge_followup' ||
         slug === 'attendee_hubert_event_concierge' ||
         slug === 'meeting_link_added' ||
         slug === 'online_join_reminder' ||
@@ -11802,7 +11924,7 @@
         applyPreviewReminderFormat();
       } else if (slug === 'attendee_reengagement') {
         SAMPLE_VARS.recommendations_html = previewRecommendationsHtml();
-      } else if (slug === 'attendee_signup_events_nudge') {
+      } else if (slug === 'attendee_signup_events_nudge' || slug === 'attendee_signup_events_nudge_followup') {
         SAMPLE_VARS.near_location_phrase = 'near London';
         SAMPLE_VARS.nearby_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of London</p>' +
@@ -11980,6 +12102,8 @@
         'Sends after 30 days without a booking (60-day cooldown), marketing opt-in only.',
       attendee_signup_events_nudge:
         'One-off nurture 3 days after signup if no booking yet (marketing opt-in). Different from Hubert’s monthly digest.',
+      attendee_signup_events_nudge_followup:
+        'Day-10 follow-up if still no booking after the day-3 nudge. Marketing opt-in only; skips organisers. Events directory sponsor.',
       saved_event_tickets_open:
         'When tickets go on sale for an event you saved. Saving an event also follows the group — new listings from that group use a separate email.',
       saved_organiser_new_listing:
@@ -11993,7 +12117,7 @@
       post_event_review_reminder:
         'Events directory sponsor. Cron: 5 days after the review request if they still have not left a review.',
       password_reset:
-        'Account security email for attendees, organisers, and admins (not attendee-only). Events directory sponsor under the header. Reset link expires in 15 minutes.',
+        'Account security email for attendees, organisers, and admins (not attendee-only). Events, Organisers, and Business Opportunities main sponsors above the footer (no header banner). Reset link expires in 15 minutes.',
     };
 
     var ATTENDEE_EMAIL_SLUGS = [
@@ -12013,6 +12137,7 @@
       'refund_processed',
       'attendee_reengagement',
       'attendee_signup_events_nudge',
+      'attendee_signup_events_nudge_followup',
       'attendee_hubert_event_concierge',
       'event_connections_list',
       'event_details_updated',

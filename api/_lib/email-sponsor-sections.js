@@ -86,12 +86,11 @@ const EVENT_MAIN_SPONSOR_SLUGS = new Set([
   'event_connections_list',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
+  'attendee_signup_events_nudge_followup',
   'attendee_hubert_event_concierge',
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
-  'account_welcome',
-  'password_reset',
   'member_roster_invite',
   'member_roster_existing',
   'member_roster_pay_invite',
@@ -142,7 +141,7 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'event_connections_list',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
-  'attendee_hubert_event_concierge',
+  'attendee_signup_events_nudge_followup',
   'booking_cancelled',
   'event_cancelled',
   'refund_processed',
@@ -155,8 +154,13 @@ const EVENT_MINI_SPONSOR_SLUGS = new Set([
   'member_roster_booking_reminder',
 ]);
 
-/** Account emails: Events main under header; directory partners in the footer strip. */
-const HUB_PARTNER_SPONSOR_SLUGS = new Set(['account_welcome', 'password_reset']);
+/** Hub partner footer strip (Events + Organisers + Opportunities mains).
+ * Account welcome / password reset are footer-only; Hubert concierge also keeps Events main under the header. */
+const HUB_PARTNER_SPONSOR_SLUGS = new Set([
+  'account_welcome',
+  'password_reset',
+  'attendee_hubert_event_concierge',
+]);
 
 const SPONSOR_PLACEHOLDER_KEYS = ['sponsor_row', 'sponsor_section', 'mini_sponsors_row'];
 
@@ -167,27 +171,48 @@ function wrapSponsorRow(inner) {
   return '<tr><td>' + html + '</td></tr>';
 }
 
+function siteBaseForSponsors() {
+  return String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+}
+
+/** Normalize a CMS main-sponsor block (or carousel ad) for the footer logo strip. */
+function toMiniSponsorAd(block) {
+  if (!block) return null;
+  const rawLogo = sponsorLogoUrl(block) || String(block.logo_url || block.image_url || '').trim();
+  if (!rawLogo || !isEmailSafeLogoUrl(rawLogo)) return null;
+  const site = siteBaseForSponsors();
+  return {
+    logo_url: rawLogo,
+    cta_url: String(block.cta_url || '').trim() || site + '/advertising',
+    company_name:
+      sponsorCompanyName(block) ||
+      String(block.company_name || block.title || '').trim() ||
+      'Sponsor',
+  };
+}
+
 function buildMiniSponsorsRow(ads, options = {}) {
-  const list = (ads || []).filter(Boolean).slice(0, 3);
+  const list = (ads || []).map(toMiniSponsorAd).filter(Boolean).slice(0, 3);
   if (!list.length) return { html: '', tracked: [] };
   const label = String(options.label || 'Powered by');
+  const placement = String(options.placement || 'email_mini_sponsor').trim() || 'email_mini_sponsor';
+  const campaign = String(options.campaign || placement).trim() || placement;
   const tracked = [];
 
   const cells = list
     .map(function (ad) {
-      const rawLogo = String(ad.logo_url || ad.image_url || '').trim();
+      const rawLogo = String(ad.logo_url || '').trim();
       if (!rawLogo || /\.svg(?:[?#]|$)/i.test(rawLogo) || /^data:image\/svg/i.test(rawLogo)) {
         return '';
       }
       const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL).replace(/"/g, '&quot;');
-      const url = withSponsorUtm(String(ad.cta_url || '').trim(), 'email_mini_sponsor', {
-        campaign: 'email_mini_sponsor',
-      }).replace(/"/g, '&quot;');
-      const name = String(ad.company_name || ad.title || 'Sponsor').replace(/"/g, '&quot;');
+      const rawUrl = String(ad.cta_url || '').trim() || siteBaseForSponsors() + '/advertising';
+      const url = withSponsorUtm(rawUrl, placement, { campaign }).replace(/"/g, '&quot;');
+      const name = String(ad.company_name || 'Sponsor').replace(/"/g, '&quot;');
       if (!logo || !url) return '';
       tracked.push({
-        placement: 'email_mini_sponsor',
-        company: String(ad.company_name || ad.title || '').trim(),
+        placement,
+        company: String(ad.company_name || '').trim(),
       });
       return (
         '<td class="mini-sponsor-cell" style="width:33.33%;padding:6px 8px;text-align:center;vertical-align:middle;">' +
@@ -350,8 +375,13 @@ async function getEmailSponsorVars(slug) {
 
     let miniRow = '';
     if (HUB_PARTNER_SPONSOR_SLUGS.has(slug)) {
+      // Footer strip: Events + Organisers + Business Opportunities main directory sponsors.
       const partnerBlocks = await resolveHubPartnerBlocks(sb);
-      const mini = buildMiniSponsorsRow(partnerBlocks, { label: 'Powered by' });
+      const mini = buildMiniSponsorsRow(partnerBlocks, {
+        label: 'Powered by',
+        placement: 'hub_partner_email',
+        campaign: 'hub_partner_email',
+      });
       miniRow = mini.html;
       tracked.push.apply(tracked, mini.tracked);
     } else if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) {

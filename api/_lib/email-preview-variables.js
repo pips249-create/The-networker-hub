@@ -23,7 +23,6 @@ const {
 const { buildDenialEmailVars } = require('./registration-emails');
 const { buildMeetingLinkEmailSection } = require('./lifecycle-emails');
 const {
-  buildMiniSponsorsRow,
   EVENT_MAIN_SPONSOR_SLUGS,
   EVENT_MINI_SPONSOR_SLUGS,
   ORGANISER_EMAIL_SLUGS,
@@ -33,10 +32,6 @@ const {
   HUB_PARTNER_SPONSOR_SLUGS,
 } = require('./email-sponsor-sections');
 const { campaignSiteVars } = require('./organiser-campaign-defaults');
-const {
-  EMAIL_SPONSOR_LOGO_BAND_FALLBACK,
-  buildSponsorLogoMarkup,
-} = require('./email-booking-defaults');
 const { buildListingAlertSeriesCopy } = require('./listing-alert-series');
 
 function sampleRecommendationCard(title, subtitle, url) {
@@ -167,48 +162,6 @@ function basePreviewVars(siteUrl) {
   };
 }
 
-function sampleSponsorRow(site) {
-  const logoHtml = buildSponsorLogoMarkup(
-    '',
-    'Sample sponsor',
-    EMAIL_SPONSOR_LOGO_BAND_FALLBACK
-  );
-  return (
-    '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:#f5f0e8;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 8px;line-height:1;">Powered by</p>' +
-    '<a href="' +
-    site +
-    '/advertising" style="display:inline-block;text-decoration:none;line-height:0;">' +
-    logoHtml +
-    '</a></td></tr>'
-  );
-}
-
-function sampleOpportunitySponsorRow(site) {
-  return sampleSponsorRow(site);
-}
-
-function sampleMiniSponsorsRow() {
-  const mini = buildMiniSponsorsRow([
-    {
-      logo_url: 'https://placehold.co/80x40/png',
-      cta_url: 'https://example.com/a',
-      company_name: 'Sponsor A',
-    },
-    {
-      logo_url: 'https://placehold.co/80x40/png',
-      cta_url: 'https://example.com/b',
-      company_name: 'Sponsor B',
-    },
-    {
-      logo_url: 'https://placehold.co/80x40/png',
-      cta_url: 'https://example.com/c',
-      company_name: 'Sponsor C',
-    },
-  ]);
-  return mini && mini.html ? mini.html : '';
-}
-
 function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   const site = emailSiteBase(siteUrl);
   const vars = { ...basePreviewVars(siteUrl), ...(extraVars || {}) };
@@ -279,6 +232,26 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       vars.add_location_url +
       '" style="display:inline-block;padding:10px 18px;background:#5b2f99;border-radius:8px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;text-decoration:none;">Add location in Account settings &rarr;</a>' +
       '</td></tr></table>';
+  }
+
+  if (slug === 'attendee_signup_events_nudge_followup') {
+    vars.near_location_phrase = 'near London';
+    vars.nearby_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events near London</p>' +
+      sampleRecommendationCard(
+        'London Founders Breakfast',
+        'City Connectors · Tuesday 12 August 2026 · 8:00 AM · The Shard, London',
+        vars.event_url
+      );
+    vars.popular_events_html =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Popular right now</p>' +
+      sampleRecommendationCard(
+        'Tech Leaders Roundtable',
+        'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
+        vars.browse_events_url
+      );
+    vars.add_location_url = String(vars.site_url || '').replace(/\/$/, '') + '/account/settings/';
+    vars.location_tip_html = '';
   }
 
   if (slug === 'attendee_hubert_event_concierge') {
@@ -427,13 +400,6 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug && String(slug).startsWith('opportunity_')) {
-    if (!String(vars.sponsor_row || '').trim()) {
-      vars.sponsor_row = sampleOpportunitySponsorRow(site);
-    }
-    vars.sponsor_section = vars.sponsor_row;
-    if (!String(vars.mini_sponsors_row || '').trim()) {
-      vars.mini_sponsors_row = sampleMiniSponsorsRow();
-    }
     if (!String(vars.opportunity_details_rows || '').trim()) {
       vars.opportunity_details_rows =
         '<tr><td style="padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.5;">' +
@@ -451,47 +417,6 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     }
     if (!String(vars.premium_note || '').trim()) {
       vars.premium_note = 'Premium spotlight is active until Tuesday 12 August 2026.';
-    }
-  } else if (slug && String(slug).startsWith('organiser_')) {
-    if (!String(vars.sponsor_row || '').trim()) {
-      vars.sponsor_row = sampleSponsorRow(site);
-    }
-    vars.sponsor_section = vars.sponsor_row;
-    if (!String(vars.mini_sponsors_row || '').trim()) {
-      vars.mini_sponsors_row = sampleMiniSponsorsRow();
-    }
-  } else if (
-    slug === 'booking_confirmation' ||
-    slug === 'booking_reminder' ||
-    slug === 'online_join_reminder' ||
-    slug === 'account_welcome' ||
-    slug === 'attendee_reengagement' ||
-    slug === 'attendee_signup_events_nudge' ||
-    slug === 'attendee_hubert_event_concierge' ||
-    slug === 'application_received' ||
-    slug === 'application_approved' ||
-    slug === 'application_denied' ||
-    slug === 'post_event_review_request' ||
-    slug === 'guest_visit_followup' ||
-    slug === 'event_connections_list' ||
-    slug === 'saved_organiser_new_listing' ||
-    slug === 'member_roster_new_event' ||
-    slug === 'saved_event_tickets_open' ||
-    slug === 'event_saved_search_match' ||
-    slug === 'meeting_link_added' ||
-    slug === 'event_details_updated' ||
-    slug === 'post_event_review_reminder' ||
-    slug === 'category_exclusivity_payment_reminder' ||
-    slug === 'alumni_fast_pass_invite' ||
-    slug === 'ce_member_invite' ||
-    slug === 'event_almost_full'
-  ) {
-    if (!String(vars.sponsor_row || '').trim()) {
-      vars.sponsor_row = sampleSponsorRow(site);
-    }
-    vars.sponsor_section = vars.sponsor_row;
-    if (!String(vars.mini_sponsors_row || '').trim()) {
-      vars.mini_sponsors_row = sampleMiniSponsorsRow();
     }
   }
 
@@ -581,9 +506,6 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.monthly_note =
       vars.monthly_note ||
       'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
-    if (!String(vars.sponsor_row || '').trim()) {
-      vars.sponsor_row = sampleSponsorRow(site);
-    }
   }
 
   if (slug === 'event_details_updated') {
@@ -608,20 +530,11 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   if (slug === 'listing_report_upheld_reporter') {
     vars.reporter_name = vars.reporter_name || vars.user_name || 'Alex Morgan';
     vars.listing_title = vars.listing_title || vars.event_name || 'London Founders Breakfast';
-    if (!String(vars.sponsor_row || '').trim()) {
-      vars.sponsor_row = sampleSponsorRow(site);
-    }
   }
 
   if (slug === 'member_roster_booking_reminder') {
     vars.cta_url = vars.cta_url || vars.event_url;
     vars.cta_label = vars.cta_label || 'Book member tickets';
-    if (!String(vars.sponsor_row || '').trim()) {
-      vars.sponsor_row = sampleSponsorRow(site);
-    }
-    if (!String(vars.mini_sponsors_row || '').trim()) {
-      vars.mini_sponsors_row = sampleMiniSponsorsRow();
-    }
   }
 
   if (slug === 'opportunity_enquiry_received') {
