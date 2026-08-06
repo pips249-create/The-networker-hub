@@ -842,6 +842,9 @@ async function listRosterPage(organiserId, options = {}) {
     const today = new Date().toISOString().slice(0, 10);
     const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
     q = q.not('expires_at', 'is', null).gte('expires_at', today).lte('expires_at', in14);
+  } else if (filter === 'expired' || filter === 'lapsed') {
+    const today = new Date().toISOString().slice(0, 10);
+    q = q.not('expires_at', 'is', null).lt('expires_at', today);
   } else if (filter === 'past_due' || filter === 'payment_failed') {
     q = q.eq('subscription_status', 'past_due');
   } else if (filter === 'hub_billed' || filter === 'paying') {

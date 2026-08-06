@@ -1175,6 +1175,31 @@
   font-weight: 600;
 }
 
+.omr-badge-expired {
+  display: inline-block;
+  color: #9b1c1c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.omr-industry-empty {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a6b9a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.omr-industry-empty:hover {
+  color: var(--od-purple, #5c3d72);
+}
+
 .omr-billing-interval {
   color: #5a6478;
   font-size: 12px;

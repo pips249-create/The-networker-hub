@@ -79,10 +79,15 @@
   }
 
   function renderExpiresCell(m) {
+    const expired = Boolean(m.expiresAt && m.membershipActive === false);
     const dateHtml = m.expiresAt
-      ? m.expiringSoon
-        ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
-        : esc(m.expiresAt)
+      ? expired
+        ? '<span class="omr-badge-expired" title="Membership ended — they cannot book member rates until you renew the date">' +
+          esc(m.expiresAt) +
+          ' · Expired</span>'
+        : m.expiringSoon
+          ? '<span class="omr-badge-expiring">' + esc(m.expiresAt) + '</span>'
+          : esc(m.expiresAt)
       : '—';
     const interval = billingIntervalLabel(m);
     const intervalHtml = interval
@@ -229,6 +234,10 @@
           filters.status === 'booked'
             ? 'Showing members who booked this event.'
             : 'Showing members who have not booked this event.';
+      } else if (filters.status === 'expired' || filters.status === 'lapsed') {
+        hint.hidden = false;
+        hint.textContent =
+          'Showing members past their expiry date — they cannot book member rates until you renew the date.';
       } else {
         hint.hidden = true;
         hint.textContent = '';
@@ -1446,6 +1455,12 @@
       if (filters.status === 'claimed' && !isClaimed(m)) return false;
       if (filters.status === 'unclaimed' && isClaimed(m)) return false;
       if (filters.status === 'expiring' && !m.expiringSoon) return false;
+      if (
+        (filters.status === 'expired' || filters.status === 'lapsed') &&
+        !(m.expiresAt && m.membershipActive === false)
+      ) {
+        return false;
+      }
       if (filters.status === 'past_due' && !m.paymentFailed) return false;
       if (
         filters.status === 'hub_billed' &&
@@ -1788,7 +1803,13 @@
           '</td><td class="omr-industry-cell" data-label="Industry" data-id="' +
           esc(m.id) +
           '">' +
-          esc(m.industry || '—') +
+          (m.industry
+            ? esc(m.industry)
+            : '<button type="button" class="omr-industry-empty omr-action-edit-industry" data-id="' +
+              esc(m.id) +
+              '" data-email="' +
+              esc(m.email || '') +
+              '" data-industry="" title="Add industry for Category Exclusivity">Add industry</button>') +
           '</td><td class="omr-expires-cell" data-label="Expires" data-id="' +
           esc(m.id) +
           '">' +
