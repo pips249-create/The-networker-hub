@@ -2,7 +2,7 @@
 
 **Entity:** The Networker Group Ltd (Company No. 15252227)  
 **Owner:** Catherine Hancher (Director)  
-**Last updated:** 10 July 2026
+**Last updated:** 6 August 2026
 
 *Operational checklist. Confirm status with ICO — not legal advice.*
 
@@ -16,26 +16,30 @@ The Networker Hub processes personal data as a **data controller** (see `docs/Ro
 
 ---
 
-## 2. Transfer from the-networker.co.uk
+## 2. Live registration (verified)
 
-The fee may already be registered to The Networker Group Ltd from the legacy site. **Verify** the register entry covers Hub processing activities.
+| Field | Value |
+|-------|--------|
+| **Registration reference** | **ZB694959** |
+| **Date registered** | 30 May 2024 |
+| **Expires** | **29 May 2027** |
+| **Payment tier** | Tier 1 |
+| **Data controller** | The Networker Group Ltd |
+| **Other names** | The Networker |
+| **Address** | Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF |
 
-1. Search the [ICO register](https://ico.org.uk/ESDWebPages/Search) for **The Networker Group Ltd**.
-2. Confirm registered address matches: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon PE28 4YF.
-3. Confirm processing description includes: website, customer/client records, marketing (if applicable).
+Certificate PDF: `docs/certificates/ICO-ZB694959-Registration-Certificate.pdf`  
+Register: [ICO search](https://ico.org.uk/ESDWebPages/Search) → The Networker Group Ltd.
+
+Address matches Magpas HQ used on legal / GBP / company filings. Hub trading name “The Networker Hub” sits under the same controller.
 
 ---
 
-## 3. If not registered or needs update
+## 3. If registration lapses or needs update
 
-1. Pay/register at [ico.org.uk/for-organisations/data-protection-fee](https://ico.org.uk/for-organisations/data-protection-fee).
-2. Select appropriate tier (usually Tier 1 for small orgs — confirm on ICO site).
-3. Update processing description to include:
-   - Event ticketing and attendee management
-   - Organiser accounts and Stripe Connect payouts
-   - Business opportunity listings and enquiries
-   - Email marketing (opt-in only)
-4. Save ICO registration reference in company records.
+1. Renew / update at [ico.org.uk/for-organisations/data-protection-fee](https://ico.org.uk/for-organisations/data-protection-fee).
+2. Keep processing description covering: website, ticketing, organiser accounts, Stripe Connect, opportunity listings, opt-in marketing.
+3. File new certificate with company records; update this doc.
 
 ---
 
@@ -43,16 +47,17 @@ The fee may already be registered to The Networker Group Ltd from the legacy sit
 
 | Item | Owner | Status |
 |------|-------|--------|
-| ICO register searched for company name | Catherine | ☑ Verified Jul 2026 |
-| Registration current (not lapsed) | Catherine | ☑ Current for The Networker Group Ltd |
-| Processing description covers Hub activities | Catherine | ☑ |
-| Registration reference filed (internal records) | Catherine | ☑ |
+| ICO register searched for company name | Catherine | ☑ 6 Aug 2026 |
+| Registration current (not lapsed) | Catherine | ☑ ZB694959 · expires 29 May 2027 |
+| Tier / fee payer entry confirmed | Catherine | ☑ Tier 1 |
+| Address matches Magpas HQ | Catherine | ☑ |
+| Certificate PDF filed | Catherine | ☑ ZB694959 |
 | Privacy policy links to controller identity | Product | ☑ `legal-policies.html` |
 
 ---
 
 ## 5. Annual renewal
 
-ICO fee renews annually. Add calendar reminder 30 days before expiry.
+Add calendar reminder **30 days before 29 May 2027** (and each subsequent expiry).
 
 **Privacy enquiries:** hello@thenetworkerhub.com · Procedure: `docs/GDPR-SAR-PROCEDURE.md`

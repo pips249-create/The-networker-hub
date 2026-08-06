@@ -127,6 +127,6 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 
 1. Paste top landing pages from old Analytics / GSC into the path table  
 2. Confirm hosting where **the-networker.co.uk** DNS is managed  
-3. **thenetworkerhub.co.uk** — add apex + `www` in Vercel → Domains; point registrar DNS at Vercel (website only; MX optional)  
-4. ~~Soft banner period dates~~ — **6 Aug – 1 Sep 2026**; paste snippet from `marketing/co-uk-upgrade-banner-snippet.html` (see `marketing/CO-UK-UPGRADE-BANNER.md`)  
+3. **thenetworkerhub.co.uk** — `vercel.json` 301s ready; NS already `ns1`/`ns2.vercel-dns.com`. **Add apex + www in Vercel → Domains** for this project if not listed (checked 6 Aug: only `.com` on project). Website-only; MX optional / keep separate if used for mail.  
+4. Soft banner period — **6 Aug – 1 Sep 2026**; WordPress paste deferred ~1 week (`marketing/CO-UK-UPGRADE-BANNER.md`)  
 5. Flip 301s on launch day checklist in `PIPS-TODO.md`

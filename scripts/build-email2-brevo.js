@@ -22,6 +22,47 @@ dotenv.config({ path: path.join(root, '.env') });
 const { getSupabaseAdmin } = require('../api/_lib/supabase');
 const { resolveOrganiserClaimUrl } = require('../api/_lib/organiser-claim-url');
 const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
+const { buildSponsorSection, fetchSponsorBlockForSlot } = require('../api/_lib/email-booking-defaults');
+const { sponsorCompanyName } = require('../api/_lib/cms-sponsor-fields');
+
+/** Email 2 uses Barnsgate (Events headline), not the organisers-directory sponsor. */
+async function buildEmail2SponsorRow() {
+  const png = SITE + '/assets/sponsors/barnsgate-logo.png';
+  let block = null;
+  try {
+    const sb = getSupabaseAdmin();
+    block =
+      (await fetchSponsorBlockForSlot(sb, 'events_sponsor_hub')) ||
+      (await fetchSponsorBlockForSlot(sb, 'booking_email_sponsor'));
+  } catch (e) {
+    console.warn('Sponsor CMS fetch failed:', e.message || e);
+  }
+
+  const company = sponsorCompanyName(block) || 'Barnsgate Solutions';
+  const cta = String((block && block.cta_url) || 'https://www.barnsgatesolutions.com/').trim();
+  // CMS logo is often SVG (blocked in email clients) — always use the Hub PNG.
+  const emailBlock = {
+    ...(block || {}),
+    company_name: /barnsgate/i.test(company) ? company : 'Barnsgate Solutions',
+    logo_url: png,
+    image_url: png,
+    cta_url: cta || 'https://www.barnsgatesolutions.com/',
+    active: true,
+  };
+
+  const html = buildSponsorSection(emailBlock, {
+    label: 'Powered by',
+    placement: 'email2_launch',
+    campaign: 'email2_launch',
+    logoBandBg: '#1a1a2e',
+  });
+  if (!html) {
+    console.warn('Sponsor banner: Barnsgate markup empty');
+    return '';
+  }
+  console.log('Sponsor banner: Barnsgate Solutions');
+  return html;
+}
 
 const SITE = 'https://www.thenetworkerhub.com';
 const LEGACY = 'https://the-networker.co.uk';
@@ -77,7 +118,8 @@ async function fetchAllOrganisers(sb) {
   return all;
 }
 
-async function existingAccountEmails(sb) {
+/** Emails that have actually signed in (know their password). Silent imports do not count. */
+async function signedInAccountEmails(sb) {
   const emails = new Set();
   let page = 1;
   const perPage = 1000;
@@ -91,7 +133,7 @@ async function existingAccountEmails(sb) {
       const e = String(u.email || '')
         .trim()
         .toLowerCase();
-      if (e) emails.add(e);
+      if (e && u.last_sign_in_at) emails.add(e);
     });
     if (!list.users?.length || list.users.length < perPage) break;
     page += 1;
@@ -135,6 +177,8 @@ function fillTemplate(template, vars) {
     'utf8'
   );
 
+  const sponsorRow = await buildEmail2SponsorRow();
+
   const shared = {
     site_url: SITE,
     legacy_site_url: LEGACY,
@@ -150,7 +194,7 @@ function fillTemplate(template, vars) {
     refunds_url: SITE + '/legal-policies#refunds',
     contact_url: SITE + '/contact',
     unsubscribe_url: '{{ unsubscribe }}',
-    sponsor_row: '',
+    sponsor_row: sponsorRow,
   };
 
   const html = fillTemplate(template, {
@@ -177,7 +221,7 @@ function fillTemplate(template, vars) {
   // Build Segment A claim CSV
   const sb = getSupabaseAdmin();
   const organisers = await fetchAllOrganisers(sb);
-  const accountEmails = await existingAccountEmails(sb);
+  const accountEmails = await signedInAccountEmails(sb);
 
   const byEmail = new Map();
   for (const r of organisers) {
@@ -232,8 +276,8 @@ function fillTemplate(template, vars) {
   console.log('Recipients:', rows.length);
   console.log('With extra group pages:', rows.filter((r) => r.otherNote).length);
   if (accountEmails) {
-    console.log('Already have Hub accounts:', rows.filter((r) => r.hasAccount).length);
-    console.log('Need register link:', rows.filter((r) => !r.hasAccount).length);
+    console.log('Already signed in (login link):', rows.filter((r) => r.hasAccount).length);
+    console.log('Need register / set-password link:', rows.filter((r) => !r.hasAccount).length);
   }
 
   const hrefs = [

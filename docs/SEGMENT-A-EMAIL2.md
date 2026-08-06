@@ -2,7 +2,7 @@
 
 **When:** day after catalogue polish (Email 1 sent 5 Aug 2026 → target **Fri 7 Aug 2026**)  
 **Template:** `organiser_launch_invite`  
-**Subject (Brevo):** `Confirm {{ contact.ORGANISER_NAME }} on The Networker Hub`  
+**Subject (Brevo):** `Congratulations: {{ contact.ORGANISER_NAME }} is ready`  
 **Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkerhub.com`  
 **Paste HTML:** `data/email2-brevo-ready.html`  
 
@@ -19,8 +19,10 @@
 
 ### Claim links
 Each row gets a personal URL:
-- **No Hub account yet** → `/register?email=…&intent=organiser-claim&next=/organiser/?onboard=claim`
-- **Already has account** → `/login?email=…&intent=organiser-claim&next=/organiser/?onboard=claim`
+- **Never signed in** (including silent Auth imports) → `/register?…` so they can **set a password**
+- **Already signed in at least once** → `/login?…`
+
+Auth users created by import with a random password and **no sign-in** are treated as register, not login.
 
 Rebuild anytime:
 
@@ -32,7 +34,7 @@ node scripts/build-email2-brevo.js
 - [ ] Re-import `data/Segment-A-Email2-Brevo-import.csv` (update existing contacts)
 - [ ] Map attributes: `Organiser name` → `ORGANISER_NAME`, `OTHER_GROUPS_NOTE` → `OTHER_GROUPS_NOTE`, `CLAIM_URL` → `CLAIM_URL`
 - [ ] Paste HTML from `data/email2-brevo-ready.html`
-- [ ] Subject: `Confirm {{ contact.ORGANISER_NAME }} on The Networker Hub`
+- [ ] Subject: `Congratulations: {{ contact.ORGANISER_NAME }} is ready`
 - [ ] Reply-to: `catherine@thenetworkerhub.com`
 - [ ] From: Hub / co.uk sender you used for Email 1 (or agreed Hub address)
 
@@ -40,8 +42,11 @@ node scripts/build-email2-brevo.js
 Send a **test campaign** (or preview to contact) to Catherine + Rosie covering both path types.
 
 **Register path** (pick a row whose `CLAIM_URL` contains `/register?`)
-- [ ] Inbox: subject shows the **group name** (not “your organiser page”)
-- [ ] Body headline + “We’ve prepared **…” use the same group name
+- [ ] Inbox: subject shows the **group name** (e.g. “Come and explore … — free organiser workspace”)
+- [ ] Subhead under title: “Your free organiser workspace…”
+- [ ] Body mentions 17,000+ networkers / 27,000+ events; visibility angle (not “nothing is final”)
+- [ ] Password explained: create new vs sign in / Forgot password
+- [ ] Sponsor banner shows under the logo (organisers directory sponsor)
 - [ ] CTA opens **without** site-access password
 - [ ] Email field is prefilled; claim/create-account form is visible
 - [ ] “Prefer a walkthrough” mailto links open to Catherine / Rosie

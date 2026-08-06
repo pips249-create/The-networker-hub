@@ -51,7 +51,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 | Email system | ~85% | Resend on prod; confirmation sends — **SPF/DKIM, cron reminders, allowlist off at launch** remain |
 | SEO | ~70% | Foundations built — **domain, GSC, sitemap verify, redirect** remain |
 | AEO (AI / answer engines) | ~70% | `llms.txt`, FAQs, JSON-LD — **gate-off discovery + canonical alignment** remain |
-| Business ops | ~75% | Product + runbooks — **`npm run check:business-ops`** — ICO verify, DNS, DPAs, solicitor remain |
+| Business ops | ~85% | ICO ZB694959 + solicitor + DPAs done; Finance VAT treatment sign-off + insurance optional |
 | Redirect & launch comms | ~35% | Redirect map + banner snippet + Hub list segments; Email 1 sent; Email 2 / hard 301s remain |
 
 ### Critical path (do these next)
@@ -195,13 +195,13 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | Done | Task |
 |:----:|------|
 | [ ] | the-networker.co.uk redirect live |
-| [ ] | thenetworkerhub.co.uk (+ www) → www.thenetworkerhub.com (Vercel domain + DNS) |
+| [x] | thenetworkerhub.co.uk (+ www) → www.thenetworkerhub.com (Vercel domain + DNS) — domains attached 6 Aug; middleware 308 canonical (apex was skipping vercel.json) |
 | [x] | Checkout + confirmation email verified on prod |
 | [x] | Stripe Connect destination charge test passed (Tab 9) — live proof Jul 2026 |
 | [x] | 1,000+ organiser group profiles browsable |
 | [ ] | 200+ claimed groups (stretch goal) |
 | [ ] | Support email monitored (hello@thenetworkerhub.com) |
-| [ ] | Command Centre admin login tested |
+| [x] | Command Centre admin login tested |
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
 | [ ] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
@@ -244,9 +244,9 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | **Test checkout:** buy a ticket → confirmation email received |
 | [x] | **SPF + DKIM + DMARC** on sending domain (not `onboarding@resend.dev`) — public dig 6 Aug: DKIM + send.mail SPF/MX + apex DMARC `p=none`; Resend From `hello@mail.thenetworkerhub.com` |
 | [x] | **`CRON_SECRET`** set in Vercel Production — booking reminders + saved-event nudges |
-| [ ] | Spot-check: `booking_cancelled`, `event_cancelled`, `refund_processed`, welcome email |
+| [x] | Spot-check: `booking_cancelled`, `event_cancelled`, `refund_processed`, welcome email — templates present in DB (`account_welcome` + cancel/refund slugs); optional visual review in `/admin/emails` |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
-| [ ] | Launch invite template (organiser “claim your profile”) — add in admin or campaign tool |
+| [x] | Launch invite template (organiser “claim your profile”) — `organiser_launch_invite` + `organiser_claim_invite` in DB; Email 2 uses launch invite via Brevo |
 | [ ] | At launch: **`EMAIL_ALLOWLIST_DISABLED=true`** if pre-launch allowlist was on |
 | [ ] | **Resend Pro** — before August wider email / September 3,500 send (see Tab 0 August infrastructure table) |
 | [ ] | Optional: `AUTH_SEND_EMAILS=true` for password-reset emails |
@@ -265,7 +265,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Cancellation, refund, welcome, saved-event nudge templates (migrations 064–066, 070) |
 | [x] | `sendTemplatedEmail()` wired after checkout via `api/_lib/registration-emails.js` |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
-| [ ] | Launch invite template (organiser “claim your profile”) — add in admin or one-off campaign |
+| [x] | Launch invite template (organiser “claim your profile”) — `organiser_launch_invite` + `organiser_claim_invite` in DB |
 
 ---
 
@@ -443,8 +443,8 @@ Non-code gates from `docs/COMPLIANCE-RUNBOOK.md`. Product compliance is largely 
 |:----:|------|-------|
 | [x] | **Support inbox** runbook — `docs/SUPPORT-INBOX-RUNBOOK.md` | Catherine |
 | [x] | **SPF + DKIM + DMARC** — follow `docs/EMAIL-DNS-SETUP.md` — verified dig 6 Aug | Tech |
-| [ ] | **ICO registration** — verify on register (`docs/ICO-REGISTRATION.md`) | Catherine |
-| [ ] | Command Centre admin login tested on prod | Ops |
+| [x] | **ICO registration** — **ZB694959** · Tier 1 · registered 30 May 2024 · expires **29 May 2027** · Magpas HQ address match (`docs/ICO-REGISTRATION.md`) | Catherine |
+| [x] | Command Centre admin login tested on prod | Ops |
 | [x] | Refund policy enforcement — server guards + `npm run test:refund-policy` | Product |
 | [x] | Opportunity moderation owner assigned (`docs/OPPORTUNITY-MODERATION.md`) | Catherine |
 
@@ -453,12 +453,13 @@ Non-code gates from `docs/COMPLIANCE-RUNBOOK.md`. Product compliance is largely 
 | Done | Item | Owner |
 |:----:|------|-------|
 | [x] | **DPAs filed** — `docs/DPA-SUBPROCESSORS.md` + `docs/DPA-REGISTER.md` + `npm run check:dpas` | Catherine |
-| [ ] | Solicitor review of `legal-policies.html` | Catherine |
+| [x] | Solicitor review of `legal-policies.html` — done (Catherine confirmed 6 Aug 2026) | Catherine |
 | [x] | GDPR SAR owner named (`docs/GDPR-SAR-PROCEDURE.md`) | Catherine |
 | [x] | Data breach incident lead named (`docs/DATA-BREACH-RESPONSE.md`) | Catherine |
-| [ ] | VAT guidance for organisers — Finance sign-off (`docs/VAT-ORGANISER-GUIDANCE.md`) | Finance |
-| [ ] | HMRC platform reporting mapped with accountant (`docs/HMRC-PLATFORM-OPERATORS.md`) | Finance |
-| [ ] | Platform liability / cyber insurance | Catherine |
+| [x] | **Company VAT registered** — The Networker Group Ltd VAT No. **454 4092 94** (on legal + guides) | Finance |
+| [ ] | Organiser VAT *treatment* sign-off — booking-fee VAT / ticket VAT options with accountant (`docs/VAT-ORGANISER-GUIDANCE.md` §4) — ask existing accountant; not a new registration | Finance / accountant |
+| [ ] | HMRC platform reporting mapped with accountant (`docs/HMRC-PLATFORM-OPERATORS.md`) — same accountant | Finance / accountant |
+| [ ] | **Optional:** platform liability + cyber insurance quotes — commercial cover for claims / data breach (not a software setting; broker/insurer). Park if consciously deferred. | Catherine |
 | [ ] | Legacy marketing opt-in re-permission — run `scripts/audit-legacy-marketing-opt-in.js` | Marketing |
 
 ### Already in the product

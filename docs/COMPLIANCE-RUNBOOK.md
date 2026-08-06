@@ -40,8 +40,8 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 
 | Item | Action | Owner | Status |
 |------|--------|-------|--------|
-| ICO registration | Follow `docs/ICO-REGISTRATION.md` — The Networker Group Ltd | Catherine | ☑ Verified Jul 2026 |
-| Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☐ |
+| ICO registration | Follow `docs/ICO-REGISTRATION.md` — **ZB694959** · expires 29 May 2027 | Catherine | ☑ Verified 6 Aug 2026 |
+| Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☑ Done (confirmed 6 Aug 2026) |
 | DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☑ Filed 10 Jul 2026 |
 | RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Created |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
@@ -54,9 +54,10 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Item | Action | Owner | Status |
 |------|--------|-------|--------|
 | Support inbox | `docs/SUPPORT-INBOX-RUNBOOK.md` — monitor hello@ weekdays | Catherine | ☑ Runbook |
-| Email authentication | `docs/EMAIL-DNS-SETUP.md` — SPF, DKIM, DMARC on Resend domain | Tech | ☐ DNS live |
-| VAT & invoices | `docs/VAT-ORGANISER-GUIDANCE.md`; Finance sign-off | Finance | ☑ Guide — ☐ sign-off |
-| Insurance | Platform liability and cyber insurance | Catherine | ☐ |
+| Email authentication | `docs/EMAIL-DNS-SETUP.md` — SPF, DKIM, DMARC on Resend domain | Tech | ☑ Dig verified 6 Aug |
+| Company VAT | The Networker Group Ltd VAT No. 454 4092 94 | Finance | ☑ Registered |
+| Organiser VAT treatment | Accountant sign-off on booking-fee / ticket VAT options (`docs/VAT-ORGANISER-GUIDANCE.md` §4) | Finance | ☐ |
+| Insurance | Optional: platform liability + cyber (broker quotes) — park if deferred | Catherine | ☐ Optional |
 | Legacy marketing opt-in | Run `node scripts/audit-legacy-marketing-opt-in.js`; re-permission email | Marketing | ☐ Audit script ready |
 
 ### Product & trust

@@ -42,8 +42,11 @@ Organisers should:
 
 ## 4. Finance sign-off checklist
 
+**Company VAT:** The Networker Group Ltd is already VAT-registered (**454 4092 94**). This section is only about *how* fees and organiser ticket VAT options are treated — not obtaining a VAT number.
+
 | Item | Owner | Status |
 |------|-------|--------|
+| Company VAT number on legal / checkout copy | Finance | ☑ 454 4092 94 |
 | Booking fee VAT treatment confirmed with accountant | Finance | ☐ |
 | Opportunity listing fee VAT on Stripe checkout verified | Finance | ☐ |
 | Organiser ticket VAT options (included / added / not registered) reviewed | Finance | ☐ |

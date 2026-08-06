@@ -292,6 +292,9 @@
       });
   }
 
+  var PDF_FILENAME = 'Barnsgate-Networker-Hub-Events-Headline.pdf';
+  var LOCAL_BARNSGATE_LOGO = '/assets/sponsors/barnsgate-logo.png';
+
   function loadHtml2PdfLibrary() {
     if (window.html2pdf) return Promise.resolve(window.html2pdf);
     return new Promise(function (resolve, reject) {
@@ -306,18 +309,33 @@
         });
         return;
       }
-      var script = document.createElement('script');
-      script.src = 'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
-      script.async = true;
-      script.setAttribute('data-hub-html2pdf', '1');
-      script.onload = function () {
-        if (window.html2pdf) resolve(window.html2pdf);
-        else reject(new Error('html2pdf unavailable'));
-      };
-      script.onerror = function () {
-        reject(new Error('html2pdf failed to load'));
-      };
-      document.head.appendChild(script);
+      var sources = [
+        '/js/vendor/html2pdf.bundle.min.js',
+        'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js',
+      ];
+      function inject(srcIndex) {
+        if (srcIndex >= sources.length) {
+          reject(new Error('html2pdf failed to load'));
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = sources[srcIndex];
+        script.async = true;
+        script.setAttribute('data-hub-html2pdf', '1');
+        script.onload = function () {
+          if (window.html2pdf) resolve(window.html2pdf);
+          else {
+            script.remove();
+            inject(srcIndex + 1);
+          }
+        };
+        script.onerror = function () {
+          script.remove();
+          inject(srcIndex + 1);
+        };
+        document.head.appendChild(script);
+      }
+      inject(0);
     });
   }
 
@@ -329,6 +347,71 @@
       btn.disabled = !!busy;
       btn.textContent = busy ? 'Preparing PDF…' : btn.getAttribute('data-label') || 'Download PDF';
     });
+  }
+
+  /** Force a disk download — Acrobat/browser PDF viewers hang on blob: application/pdf URLs. */
+  function forceDownloadBlob(blob, filename) {
+    var forceBlob =
+      blob && blob.type === 'application/octet-stream'
+        ? blob
+        : new Blob([blob], { type: 'application/octet-stream' });
+    var url = URL.createObjectURL(forceBlob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename || PDF_FILENAME;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (_e) {
+        /* ignore */
+      }
+    }, 60000);
+  }
+
+  /** Swap remote CDN logos for same-origin assets so html2canvas does not hang on CORS. */
+  function prepareShellImagesForPdf(shell) {
+    var swaps = [];
+    Array.prototype.slice.call(shell.querySelectorAll('img')).forEach(function (img) {
+      var src = String(img.getAttribute('src') || img.currentSrc || '');
+      if (!src || /^data:|^blob:/i.test(src)) return;
+      var isRemote = /^https?:\/\//i.test(src) && src.indexOf(window.location.origin) !== 0;
+      var isBarnsgate =
+        /barnsgate/i.test(src) ||
+        /BAR%200007|BAR 0007|website-files\.com/i.test(src);
+      if (!isRemote && !isBarnsgate) return;
+      swaps.push({ img: img, src: img.getAttribute('src') || src });
+      if (isBarnsgate) img.setAttribute('src', LOCAL_BARNSGATE_LOGO);
+      else img.setAttribute('crossorigin', 'anonymous');
+    });
+    return function restore() {
+      swaps.forEach(function (entry) {
+        entry.img.setAttribute('src', entry.src);
+        entry.img.removeAttribute('crossorigin');
+      });
+    };
+  }
+
+  function waitForImages(shell, timeoutMs) {
+    var images = Array.prototype.slice.call(shell.querySelectorAll('img'));
+    if (!images.length) return Promise.resolve();
+    return Promise.all(
+      images.map(function (img) {
+        if (img.complete && img.naturalWidth) return Promise.resolve();
+        return new Promise(function (resolve) {
+          var done = function () {
+            resolve();
+          };
+          img.addEventListener('load', done, { once: true });
+          img.addEventListener('error', done, { once: true });
+          setTimeout(done, timeoutMs || 4000);
+        });
+      })
+    );
   }
 
   function downloadPitchPdf() {
@@ -345,11 +428,15 @@
       el.setAttribute('data-pdf-was-hidden', el.style.display || '');
       el.style.display = 'none';
     });
-    loadHtml2PdfLibrary()
+    var restoreImages = prepareShellImagesForPdf(shell);
+    waitForImages(shell, 4000)
+      .then(function () {
+        return loadHtml2PdfLibrary();
+      })
       .then(function (html2pdf) {
         var opt = {
           margin: [10, 10, 10, 10],
-          filename: 'Barnsgate-Networker-Hub-Events-Headline.pdf',
+          filename: PDF_FILENAME,
           image: { type: 'jpeg', quality: 0.96 },
           html2canvas: {
             scale: 2,
@@ -357,17 +444,27 @@
             allowTaint: false,
             backgroundColor: '#fffdf9',
             logging: false,
+            imageTimeout: 5000,
             windowWidth: Math.max(shell.scrollWidth, 980),
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'], avoid: ['.barns-ask', '.pitch-stat', '.barns-reach-card'] },
         };
-        return html2pdf().set(opt).from(shell).save();
+        // outputPdf('blob') + octet-stream download avoids Acrobat preview hang on blob PDFs
+        return html2pdf().set(opt).from(shell).outputPdf('blob').then(function (blob) {
+          if (!blob) throw new Error('empty pdf');
+          forceDownloadBlob(blob, PDF_FILENAME);
+        });
       })
-      .catch(function () {
+      .catch(function (err) {
+        console.error('[sponsor-pitch-pdf]', err);
+        window.alert(
+          'Could not download the PDF automatically. Your browser print dialog will open — choose “Save as PDF”.'
+        );
         window.print();
       })
       .finally(function () {
+        restoreImages();
         hideNodes.forEach(function (el) {
           el.style.display = el.getAttribute('data-pdf-was-hidden') || '';
           el.removeAttribute('data-pdf-was-hidden');

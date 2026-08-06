@@ -251,6 +251,7 @@ async function authUserRecordToAppUser(authUser, em) {
     role: hub?.role || USER_ROLES.CLIENT,
     name: hub?.display_name || attendee?.name || authUser.user_metadata?.full_name || '',
     passwordHash: 'supabase',
+    lastSignInAt: authUser.last_sign_in_at || null,
   };
 }
 
@@ -347,15 +348,20 @@ async function registerUser({ email, password, name, marketingOptIn }) {
   const em = email.trim().toLowerCase();
   const optedInToMarketing = Boolean(marketingOptIn);
 
-  const { id: userId, existed } = await createUserSilent({
+  // Silent imports create Auth users with unknown passwords and never sign in.
+  // Allow those people to set a password via /register (organiser claim wave).
+  // Anyone who has already signed in must use Sign in / Forgot password.
+  const existing = await findUserByEmail(em);
+  if (existing && existing.lastSignInAt) {
+    throw new Error('An account with this email already exists. Sign in instead.');
+  }
+
+  const { id: userId } = await createUserSilent({
     email: em,
     password,
     name,
     metadata: { full_name: name || '' },
   });
-  if (existed) {
-    throw new Error('An account with this email already exists. Sign in instead.');
-  }
 
   const accountPayload = {
     user_id: userId,
