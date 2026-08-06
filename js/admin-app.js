@@ -8423,6 +8423,10 @@
    */
   function buildSponsorPackPdfDocument(data, logos) {
     var summary = (data && data.summary) || {};
+    var previous = (data && data.previous) || null;
+    var deltas = (previous && previous.deltas) || {};
+    var eng = (data && data.emailEngagement) || {};
+    var contact = (data && data.contact) || {};
     var brand = (data && data.brand) || {};
     var brandName = brand.company || 'Partner';
     var fromLabel = String((data && data.from) || '').slice(0, 10);
@@ -8443,11 +8447,14 @@
     var brandLogo = (logos && logos.brand) || '';
     var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
     var isEnterprise = /barnsgate/i.test(brandName);
-    var amName = 'Catherine Hancher';
-    var amEmail = 'direct@thenetworkerhub.com';
-    if (data && data.contact && data.contact.name && !isEnterprise) {
-      amName = data.contact.name;
-      amEmail = data.contact.email || amEmail;
+    var amName = contact.name || 'Rosie McGilvray';
+    var amEmail = contact.email || 'rosie@thenetworkerhub.com';
+    var contactLabel = contact.label || 'Questions about this pack?';
+    var execLine = String((data && data.executiveSummary) || '').trim();
+
+    function momSuffix(pct) {
+      if (pct == null || pct === '') return '';
+      return ' · ' + formatSponsorPackMomDelta(pct).text;
     }
 
     var hubLogoHtml = hubLogo
@@ -8494,25 +8501,24 @@
       );
     }
 
-    var valuePhrase = isEnterprise ? 'your £2,000/mo sponsorship value' : 'your sponsorship value';
     var strategicIntro =
       pageViews > 0 && clicks > 0
         ? 'Your campaign is delivering high conversion intent (' +
           ctr.label +
-          ' engagement rate). To maximise ' +
-          valuePhrase +
+          ' engagement rate). To maximise your ' +
+          (isEnterprise ? '£2,000/mo sponsorship value' : 'sponsorship value') +
           ' for the upcoming cycle:'
         : pageViews > 0
-          ? 'Directory audiences are reaching your hero placement. To strengthen yield on ' +
-            valuePhrase +
-            ' for the upcoming cycle:'
-          : 'Your placement is live on The Networker Hub. To build measurable yield on ' +
-            valuePhrase +
-            ' for the upcoming cycle:';
+          ? 'Directory audiences are reaching your hero placement. To strengthen engagement yield for the upcoming cycle:'
+          : 'Your placement is live on The Networker Hub. To build measurable yield for the upcoming cycle:';
+
+    var openRateLabel =
+      eng.openRatePct != null ? String(eng.openRatePct) + '%' : eng.opensConfigured ? '—' : 'Pending';
+    var emailCtrLabel = eng.ctrPct != null ? String(eng.ctrPct) + '%' : '—';
 
     return (
       '<div class="sponsor-pack-pdf" style="width:720px;padding:28px 28px 24px;background:#ffffff;color:#1e293b;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;box-sizing:border-box;">' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:18px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;">' +
       '<tr>' +
       '<td style="vertical-align:middle;width:46%;">' +
       '<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
@@ -8543,58 +8549,77 @@
       '<div style="margin-top:4px;font-size:11px;color:#94a3b8;">Prepared ' +
       esc(prepared) +
       '</div></td></tr></table>' +
-      '<div style="margin-bottom:14px;padding:10px 14px;border-radius:10px;background:#f8f5fa;border:1px solid #efeaf2;font-size:11.5px;line-height:1.5;color:#475569;">' +
+      (execLine
+        ? '<div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid #ebe4ef;font-size:12.5px;line-height:1.45;color:#334155;font-weight:550;">' +
+          esc(execLine) +
+          '</div>'
+        : '') +
+      '<div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;background:#f8f5fa;border:1px solid #efeaf2;font-size:11.5px;line-height:1.5;color:#475569;">' +
       '<strong style="color:#2d2636;">Placement stewardship:</strong> Hero directory ownership above the fold · ' +
       '<strong style="color:#2d2636;">Audience access:</strong> UK business decision-makers on The Networker Hub · ' +
       'Hyper-targeted interactions — quality over raw volume.' +
       '</div>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:16px;"><tr>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
       kpiCell(
         'Directory reach',
         formatSponsorPackNumber(pageViews),
-        'Hero directory views while your placement was live',
+        'Hero directory views' + momSuffix(deltas.pageVisitsPct),
         false
       ) +
       kpiCell(
         'Brand email exposure',
         formatSponsorPackNumber(emails),
-        'Hub emails that included your creative',
+        'Emails with your creative' + momSuffix(deltas.emailSendsPct),
         false
       ) +
       kpiCell(
         'Site visits driven',
         formatSponsorPackNumber(clicks),
-        'Outbound clicks through to your website',
+        'Outbound website clicks' + momSuffix(deltas.clicksPct),
         false
       ) +
       kpiCell('Engagement rate', ctr.label, engagementHint, true) +
       '</tr></table>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;">' +
+      '<tr><td colspan="4" style="padding:0 4px 6px;font-size:11px;font-weight:700;color:#2d2636;letter-spacing:0.04em;text-transform:uppercase;">Email engagement</td></tr>' +
+      '<tr>' +
+      kpiCell('Emails sent', formatSponsorPackNumber(eng.sends || emails), 'With your logo', false) +
+      kpiCell(
+        'Opens',
+        eng.opensConfigured ? formatSponsorPackNumber(eng.opens || 0) : 'Pending',
+        eng.opensConfigured ? 'Resend tracked opens' : 'Webhook setup needed',
+        false
+      ) +
+      kpiCell('Open rate', openRateLabel, 'Opens ÷ emails with logo', false) +
+      kpiCell('Email CTR', emailCtrLabel, 'Email clicks ÷ emails sent', false) +
+      '</tr></table>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;">' +
       '<tr>' +
       '<td style="width:50%;padding-right:10px;vertical-align:top;">' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:140px;">' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:120px;">' +
       '<div style="font-size:12px;font-weight:700;color:#2d2636;margin-bottom:4px;">Clicks by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      buildSponsorPackPdfRows(data.byPlacement, 'placement', 5) +
+      buildSponsorPackPdfRows(data.byPlacement, 'placement', 4) +
       '</table></div></td>' +
       '<td style="width:50%;padding-left:10px;vertical-align:top;">' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:140px;">' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:120px;">' +
       '<div style="font-size:12px;font-weight:700;color:#2d2636;margin-bottom:4px;">Views by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      buildSponsorPackPdfRows((data.impressions || {}).byPlacement, 'placement', 5) +
+      buildSponsorPackPdfRows((data.impressions || {}).byPlacement, 'placement', 4) +
       '</table></div></td></tr></table>' +
-      '<div style="border:1px solid #2d2636;border-radius:12px;padding:14px 16px;background:#2d2636;margin-bottom:14px;color:#fff;">' +
+      '<div style="border:1px solid #2d2636;border-radius:12px;padding:14px 16px;background:#2d2636;margin-bottom:12px;color:#fff;">' +
       '<div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.72);margin-bottom:8px;">Strategic Account Direction</div>' +
       '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.92);margin-bottom:10px;">' +
       esc(strategicIntro) +
       '</div>' +
       '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.88);">' +
       '<div style="margin-bottom:6px;"><strong style="color:#fff;">Creative rotation:</strong> Refresh your hero banner graphic to drive fresh engagement next month.</div>' +
-      '<div style="margin-bottom:10px;"><strong style="color:#fff;">Featured content:</strong> Submit upcoming Q3/Q4 announcements for inclusion in partner spotlights.</div>' +
+      '<div style="margin-bottom:10px;"><strong style="color:#fff;">Featured content:</strong> Submit upcoming announcements for inclusion in partner spotlights.</div>' +
       '<div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:11.5px;">' +
-      '<strong style="color:#fff;">Dedicated Account Manager:</strong> ' +
+      esc(contactLabel) +
+      ' <strong style="color:#fff;">' +
       esc(amName) +
-      ' · <span style="color:#e9d5ff;">' +
+      '</strong> · <span style="color:#e9d5ff;">' +
       esc(amEmail) +
       '</span></div></div></div>' +
       '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid #efeaf2;">' +
@@ -8715,7 +8740,10 @@
       attrEsc(defaults.to) +
       '"></div>' +
       '<div><label for="sponsor-clicks-company">Brand</label>' +
-      '<input type="text" id="sponsor-clicks-company" placeholder="Barnsgate" autocomplete="off"></div>' +
+      '<select id="sponsor-clicks-company">' +
+      '<option value="">All sponsors</option>' +
+      '<option value="Barnsgate Solutions">Barnsgate Solutions</option>' +
+      '</select></div>' +
       '<div><label for="sponsor-clicks-placement">Placement</label>' +
       '<input type="text" id="sponsor-clicks-placement" placeholder="events_hero" autocomplete="off"></div>' +
       '<div class="sponsor-pack-filter-actions">' +
@@ -8820,6 +8848,51 @@
       );
     }
 
+    function populateBrandSelect(brands, selected) {
+      var sel = document.getElementById('sponsor-clicks-company');
+      if (!sel || sel.tagName !== 'SELECT') return;
+      var current = selected != null ? String(selected) : sel.value || '';
+      var list = Array.isArray(brands) ? brands.slice() : [];
+      if (!list.some(function (b) { return /barnsgate/i.test(String(b || '')); })) {
+        list.unshift('Barnsgate Solutions');
+      }
+      var opts = ['<option value="">All sponsors</option>'];
+      list.forEach(function (name) {
+        var n = String(name || '').trim();
+        if (!n) return;
+        opts.push(
+          '<option value="' +
+            attrEsc(n) +
+            '"' +
+            (current && (current === n || n.toLowerCase().indexOf(current.toLowerCase()) === 0)
+              ? ' selected'
+              : '') +
+            '>' +
+            esc(n) +
+            '</option>'
+        );
+      });
+      sel.innerHTML = opts.join('');
+      if (current) {
+        var matched = false;
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === current) {
+            sel.selectedIndex = i;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          for (var j = 0; j < sel.options.length; j++) {
+            if (sel.options[j].value.toLowerCase().indexOf(current.toLowerCase()) === 0) {
+              sel.selectedIndex = j;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     function renderReport(data) {
       lastReport = data;
       if (!bodyEl) return;
@@ -8828,7 +8901,13 @@
         return;
       }
 
+      populateBrandSelect(data.brands || [], (document.getElementById('sponsor-clicks-company') || {}).value || '');
+
       var summary = data.summary || {};
+      var previous = data.previous || null;
+      var deltas = (previous && previous.deltas) || {};
+      var eng = data.emailEngagement || {};
+      var contact = data.contact || {};
       var brand = data.brand || {};
       var brandName = brand.company || (document.getElementById('sponsor-clicks-company') || {}).value || 'All sponsors';
       var fromLabel = String(data.from || '').slice(0, 10);
@@ -8838,6 +8917,7 @@
       var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
       var ctrInfo = formatSponsorPackCtr(summary.clicks || 0, summary.pageVisits || 0);
       var ctrLabel = ctrInfo.label;
+      var execLine = String(data.executiveSummary || '').trim();
       var generated = new Date().toLocaleString('en-GB', {
         day: 'numeric',
         month: 'short',
@@ -8890,6 +8970,17 @@
         })
         .join('');
 
+      var openRateLabel =
+        eng.openRatePct != null
+          ? String(eng.openRatePct) + '%'
+          : eng.opensConfigured
+            ? '—'
+            : 'Pending';
+      var emailCtrLabel = eng.ctrPct != null ? String(eng.ctrPct) + '%' : '—';
+      var contactName = contact.name || 'Rosie McGilvray';
+      var contactEmail = contact.email || 'rosie@thenetworkerhub.com';
+      var contactLabel = contact.label || 'Questions about this pack?';
+
       bodyEl.innerHTML =
         '<article class="sponsor-pack">' +
         '<header class="sponsor-pack-header">' +
@@ -8906,19 +8997,26 @@
         ' · UTC · Prepared ' +
         esc(generated) +
         '</p></div></header>' +
+        (execLine ? '<p class="sponsor-pack-exec">' + esc(execLine) + '</p>' : '') +
         '<section class="sponsor-pack-kpis" aria-label="Headline metrics">' +
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Page views</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.pageVisits || 0)) +
-        '</p><p class="sponsor-pack-kpi-hint">Views of the sponsored directory (e.g. /events/)</p></div>' +
+        '</p><p class="sponsor-pack-kpi-hint">Views of the sponsored directory (e.g. /events/)</p>' +
+        sponsorPackMomDeltaHtml(deltas.pageVisitsPct) +
+        '</div>' +
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Emails with logo</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.emailSends || 0)) +
-        '</p><p class="sponsor-pack-kpi-hint">Hub emails that included their logo</p></div>' +
+        '</p><p class="sponsor-pack-kpi-hint">Hub emails that included their logo</p>' +
+        sponsorPackMomDeltaHtml(deltas.emailSendsPct) +
+        '</div>' +
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Outbound clicks</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.clicks || 0)) +
-        '</p><p class="sponsor-pack-kpi-hint">Clicks through to their website</p></div>' +
+        '</p><p class="sponsor-pack-kpi-hint">Clicks through to their website</p>' +
+        sponsorPackMomDeltaHtml(deltas.clicksPct) +
+        '</div>' +
         '<div class="sponsor-pack-kpi sponsor-pack-kpi--accent"><p class="sponsor-pack-kpi-label">Site CTR</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(ctrLabel) +
@@ -8926,6 +9024,24 @@
         esc(ctrInfo.hint) +
         '</p></div>' +
         '</section>' +
+        '<section class="sponsor-pack-email-eng" aria-label="Email engagement">' +
+        '<h3>Email engagement</h3>' +
+        '<div class="sponsor-pack-email-eng-grid">' +
+        '<div><p class="sponsor-pack-email-eng-label">Emails sent</p><p class="sponsor-pack-email-eng-value">' +
+        esc(formatSponsorPackNumber(eng.sends || summary.emailSends || 0)) +
+        '</p></div>' +
+        '<div><p class="sponsor-pack-email-eng-label">Opens</p><p class="sponsor-pack-email-eng-value">' +
+        esc(eng.opensConfigured ? formatSponsorPackNumber(eng.opens || 0) : 'Pending') +
+        '</p></div>' +
+        '<div><p class="sponsor-pack-email-eng-label">Open rate</p><p class="sponsor-pack-email-eng-value">' +
+        esc(openRateLabel) +
+        '</p></div>' +
+        '<div><p class="sponsor-pack-email-eng-label">Email CTR</p><p class="sponsor-pack-email-eng-value">' +
+        esc(emailCtrLabel) +
+        '</p></div></div>' +
+        '<p class="sponsor-pack-email-eng-note">' +
+        esc(eng.note || '') +
+        '</p></section>' +
         '<section class="sponsor-pack-grid">' +
         '<div class="sponsor-pack-card"><h3>Clicks by placement</h3>' +
         rankListHtml(data.byPlacement, 'placement', 'No clicks in this range.') +
@@ -8953,10 +9069,21 @@
         '<h3>How to read this pack</h3>' +
         '<ul>' +
         '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (e.g. /events/ for Events Headline).</li>' +
-        '<li><strong>Emails with logo</strong> count Hub sends that included their creative — not opens (opens stay with Resend / recipient clients).</li>' +
+        '<li><strong>Email opens &amp; CTR</strong> come from Resend when the webhook is connected; until then Hub email-placement clicks still appear in Email CTR.</li>' +
         '<li><strong>Leads &amp; form fills</strong> appear in their analytics / CRM via Hub UTM tags (<code>utm_source=thenetworkerhub</code>).</li>' +
         '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; attach their GA “thenetworkerhub” sessions as proof of pipeline.</li>' +
         '</ul></section>' +
+        '<section class="sponsor-pack-contact">' +
+        '<p class="sponsor-pack-contact-label">' +
+        esc(contactLabel) +
+        ' <strong>' +
+        esc(contactName) +
+        '</strong></p>' +
+        '<a href="mailto:' +
+        attrEsc(contactEmail) +
+        '">' +
+        esc(contactEmail) +
+        '</a></section>' +
         '<footer class="sponsor-pack-footer">' +
         '<span>Confidential · The Networker Hub × ' +
         esc(brandName) +
@@ -8971,7 +9098,7 @@
             setStatus(
               (data && data.message) ||
                 (data && data.error === 'sponsor_clicks_table_missing'
-                  ? 'Run migrations 234 + 235 in Supabase.'
+                  ? 'Run migrations 234 + 235 (+ 237 for email opens) in Supabase.'
                   : 'Could not load report.'),
               'error'
             );
@@ -9005,7 +9132,17 @@
     if (barnsgateBtn) {
       barnsgateBtn.addEventListener('click', function () {
         var company = document.getElementById('sponsor-clicks-company');
-        if (company) company.value = 'Barnsgate';
+        if (company) {
+          company.value = 'Barnsgate Solutions';
+          if (company.value !== 'Barnsgate Solutions') {
+            // ensure option exists
+            var opt = document.createElement('option');
+            opt.value = 'Barnsgate Solutions';
+            opt.textContent = 'Barnsgate Solutions';
+            company.appendChild(opt);
+            company.value = 'Barnsgate Solutions';
+          }
+        }
         load();
       });
     }
@@ -9068,6 +9205,14 @@
         rows.push(['email_sends_total', '', '', '', summary.emailSends || 0]);
         rows.push(['clicks_total', '', '', '', summary.clicks || 0]);
         rows.push(['ctr', '', '', '', summary.ctrPct == null ? '' : summary.ctrPct]);
+        rows.push(['email_opens_total', '', '', '', summary.emailOpens || 0]);
+        rows.push(['email_open_rate_pct', '', '', '', summary.emailOpenRatePct == null ? '' : summary.emailOpenRatePct]);
+        rows.push(['email_ctr_pct', '', '', '', summary.emailCtrPct == null ? '' : summary.emailCtrPct]);
+        if (lastReport.previous && lastReport.previous.deltas) {
+          var dlt = lastReport.previous.deltas;
+          rows.push(['mom_page_visits_pct', '', '', '', dlt.pageVisitsPct == null ? '' : dlt.pageVisitsPct]);
+          rows.push(['mom_clicks_pct', '', '', '', dlt.clicksPct == null ? '' : dlt.clicksPct]);
+        }
         (lastReport.byDay || []).forEach(function (r) {
           rows.push(['clicks_by_day', r.day || '', '', '', r.count || 0]);
         });
