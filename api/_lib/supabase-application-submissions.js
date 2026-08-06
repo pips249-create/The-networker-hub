@@ -82,6 +82,11 @@ async function createApplicationFromSubmission(input) {
     err.code = 'event_not_published';
     throw err;
   }
+  if (!String(eventRow.organiser_id || '').trim()) {
+    const err = new Error('missing_organiser');
+    err.code = 'missing_organiser';
+    throw err;
+  }
   if (!ticketIsApplication(ticketRow)) {
     const err = new Error('not_application_ticket');
     err.code = 'not_application_ticket';

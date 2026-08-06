@@ -433,10 +433,17 @@ async function assertCancelledStatusAllowed(sb, eventId) {
   }
 }
 
+function adminEventValidationError(code, message) {
+  const err = new Error(message);
+  err.status = 400;
+  err.code = code;
+  return err;
+}
+
 async function applyEventPatch(sb, id, patch) {
   const { data: current, error: currentErr } = await sb
     .from('events')
-    .select('starts_at, title, status, approval_status, published_at')
+    .select('starts_at, title, status, approval_status, published_at, organiser_id')
     .eq('id', id)
     .maybeSingle();
   if (currentErr) throw new Error(currentErr.message);
@@ -451,18 +458,44 @@ async function applyEventPatch(sb, id, patch) {
 
   if (!effectiveStartsAt) {
     if (patch.status === 'published' || patch.approval_status === 'Approved') {
-      const err = new Error('missing_date');
-      err.message = 'Events must have a date before they can be published or approved.';
-      err.status = 400;
-      throw err;
+      throw adminEventValidationError(
+        'missing_date',
+        'Events must have a date before they can be published or approved.'
+      );
     }
     patch.status = 'draft';
     patch.approval_status = 'Pending Review';
     patch.ticket_sales_enabled = false;
   }
 
+  const effectiveOrganiserId = Object.prototype.hasOwnProperty.call(patch, 'organiser_id')
+    ? patch.organiser_id
+    : current.organiser_id;
+  if (!effectiveOrganiserId) {
+    if (patch.status === 'published' || patch.approval_status === 'Approved') {
+      throw adminEventValidationError(
+        'missing_organiser',
+        'Events must have an organiser linked before they can be published or approved.'
+      );
+    }
+    const stayingPublished =
+      String((patch.status != null ? patch.status : current.status) || '').trim() === 'published';
+    if (stayingPublished) {
+      throw adminEventValidationError(
+        'missing_organiser',
+        'Unpublish the event before removing its organiser link.'
+      );
+    }
+  }
+
   const effectiveStatus = patch.status != null ? patch.status : current.status;
   if (String(effectiveStatus || '').trim() === 'published') {
+    if (!effectiveOrganiserId) {
+      throw adminEventValidationError(
+        'missing_organiser',
+        'Events must have an organiser linked before they can be published or approved.'
+      );
+    }
     patch.approval_status = 'Approved';
     if (!Object.prototype.hasOwnProperty.call(patch, 'ticket_sales_enabled')) {
       const { data: ticketRows, error: ticketErr } = await sb
@@ -1076,10 +1109,10 @@ module.exports = async function handler(req, res) {
       }
       return json(res, 200, { ok: true, event });
     } catch (e) {
-      if (e.message === 'missing_date') {
-        return json(res, 400, { error: 'missing_date', message: e.message });
+      if (e.code === 'missing_date' || e.code === 'missing_organiser' || e.status === 400) {
+        return json(res, 400, { error: e.code || e.message, message: e.message });
       }
-      if (e.message === 'not_found') return json(res, 404, { error: 'not_found' });
+      if (e.message === 'not_found' || e.status === 404) return json(res, 404, { error: 'not_found' });
       return json(res, 500, { ok: false, error: 'update_failed', message: e.message });
     }
   }

@@ -736,6 +736,17 @@ function assertEventHasDateForPublish(row) {
   }
 }
 
+function assertEventHasOrganiserForPublish(row) {
+  if (!row?.organiser_id) {
+    const e = new Error(
+      `Link an organiser before publishing${row?.title ? `: ${row.title}` : ''}.`
+    );
+    e.status = 400;
+    e.code = 'missing_organiser';
+    throw e;
+  }
+}
+
 async function buildEventRow(payload, eventId, mode) {
   const touchDate = mode !== 'update' || payloadTouchesDate(payload);
   const image_url = payload._deferImage ? undefined : await resolveEventPhotoUrl(payload, eventId);
@@ -1747,6 +1758,7 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
   const updated = [];
   for (const row of existing || []) {
     assertEventHasDateForPublish(row);
+    assertEventHasOrganiserForPublish(row);
     const slug = await ensureEventSlug(sb, {
       title: row.title,
       eventId: row.id,
@@ -2197,6 +2209,7 @@ async function republishEvent(eventId) {
   }
 
   assertEventHasDateForPublish(existing);
+  assertEventHasOrganiserForPublish(existing);
   await assertEventsHaveTicketsForPublish(sb, [id]);
 
   const { data: tickets, error: ticketErr } = await sb.from('tickets').select('*').eq('event_id', id);

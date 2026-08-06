@@ -34,6 +34,8 @@ function deriveReviewStatus(hasReview, row) {
   if (!eventHasEnded(ev)) return 'upcoming';
   if (hasReview) return 'reviewed';
   if (!isEligibleRegistration(row)) return 'ineligible';
+  // Reviews attach to an organiser profile — orphan events cannot be reviewed.
+  if (!ev.organiser_id) return 'ineligible';
   return 'pending';
 }
 

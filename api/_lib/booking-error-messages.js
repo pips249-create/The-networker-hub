@@ -8,6 +8,8 @@ const BOOKING_ERROR_MESSAGES = {
   ticket_not_found: 'That ticket type is no longer available.',
   ticket_event_mismatch: 'That ticket does not belong to this event.',
   event_not_found: 'This event could not be found.',
+  event_not_published: 'This event is not available for booking.',
+  missing_organiser: 'This event is not available for booking.',
   stripe_not_configured: 'Card checkout is not configured on this server.',
   guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
   guest_visits_exhausted:

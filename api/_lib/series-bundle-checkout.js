@@ -122,6 +122,9 @@ async function resolveSeriesPassItems(sb, { eventId, ticketId, email, userId }) 
   if (anchorEvRes.error) throw new Error(anchorEvRes.error.message);
   const anchorEvent = anchorEvRes.data;
   if (!anchorEvent) throw bundleError('event_not_found', 'Event not found.', 404);
+  if (!String(anchorEvent.organiser_id || '').trim()) {
+    throw bundleError('missing_organiser', 'This event is not available for booking.');
+  }
 
   const peers = await fetchSeriesPeerRows(sb, anchorEvent);
   if (peers.length <= 1) {
@@ -255,6 +258,9 @@ async function resolveSeriesBundleItems(sb, { eventId, ticketId, email, userId }
   if (anchorEvRes.error) throw new Error(anchorEvRes.error.message);
   const anchorEvent = anchorEvRes.data;
   if (!anchorEvent) throw bundleError('event_not_found', 'Event not found.', 404);
+  if (!String(anchorEvent.organiser_id || '').trim()) {
+    throw bundleError('missing_organiser', 'This event is not available for booking.');
+  }
 
   const peers = await fetchSeriesPeerRows(sb, anchorEvent);
   if (peers.length <= 1) {

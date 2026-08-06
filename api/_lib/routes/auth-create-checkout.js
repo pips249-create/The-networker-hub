@@ -153,6 +153,13 @@ module.exports = async function handler(req, res) {
     if (String(evRes.data.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'event_not_published' });
     }
+    if (!String(evRes.data.organiser_id || '').trim()) {
+      return json(res, 400, {
+        ok: false,
+        error: 'missing_organiser',
+        message: 'This event is not available for booking.',
+      });
+    }
     const { isEventPast } = require('../event-timezone');
     if (isEventPast(evRes.data)) {
       return json(res, 400, {

@@ -231,6 +231,12 @@ async function createRegistrationFromPayment(input) {
     eventAttendanceMode = evMetaRes.data.attendance_mode || 'tickets';
     if (!organiserId) organiserId = evMetaRes.data.organiser_id || null;
   }
+  if (!organiserId) {
+    const err = new Error('missing_organiser');
+    err.status = 400;
+    err.code = 'missing_organiser';
+    throw err;
+  }
   const guestPassesDisabled = Boolean(evMetaRes.data?.guest_passes_disabled);
 
   let ticketRow = null;

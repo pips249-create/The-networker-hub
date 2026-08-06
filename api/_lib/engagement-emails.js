@@ -656,7 +656,7 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
     if (result.sent >= GUEST_VISIT_FOLLOWUP_BATCH_LIMIT) break;
 
     const eventRow = eventById[registration.event_id];
-    if (!eventRow) {
+    if (!eventRow || !eventRow.organiser_id) {
       result.skipped += 1;
       continue;
     }
@@ -744,6 +744,7 @@ async function sendDuePostEventReviewEmails(sb, options) {
       .select(eventSelect)
       .lte('ends_at', reviewDueBefore)
       .gte('ends_at', reviewDueAfter)
+      .not('organiser_id', 'is', null)
       .neq('status', 'cancelled'),
     sb
       .from('events')
@@ -751,6 +752,7 @@ async function sendDuePostEventReviewEmails(sb, options) {
       .is('ends_at', null)
       .lte('starts_at', reviewDueBefore)
       .gte('starts_at', reviewDueAfter)
+      .not('organiser_id', 'is', null)
       .neq('status', 'cancelled'),
   ]);
   if (endedWithEndRes.error) throw new Error(endedWithEndRes.error.message);
