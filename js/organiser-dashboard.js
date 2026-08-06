@@ -12243,19 +12243,19 @@
       if (item.kind === 'profile') {
         introEl.textContent =
           (state.groups || []).length > 1
-            ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported).'
-            : 'Confirm your public profile before tickets go live. Set complimentary guest visits (0–3) if you offer trial nights.';
+            ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported). Public ticket buying opens 1 September.'
+            : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens 1 September — until then, get everything ready in the workspace.';
       } else if (item.isSeries) {
         introEl.textContent =
           'This is a recurring series (' +
           item.dateCount +
-          ' dates). You review shared details and tickets once — every date uses the same setup. Free tickets can go live without Stripe; paid tickets need Connect before card payments work.';
+          ' dates). You review shared details and tickets once — every date uses the same setup. Publish now so you are ready; attendees buy on the public site from 1 September. Paid tickets need Connect before card payments work.';
       } else if (eventsLeft > 1) {
         introEl.textContent =
-          'You have several seeded listings. Finish this one (details → tickets → review → publish), then we will take you to the next.';
+          'You have several seeded listings. Finish this one (details → tickets → review → publish), then we will take you to the next. Public sales open 1 September.';
       } else {
         introEl.textContent =
-          'Check the listing we prepared, set tickets, then review everything before publishing. Free RSVPs go live without Stripe; paid tickets need bank payouts connected first.';
+          'Check the listing we prepared, set tickets, then publish. Attendees cannot buy on the public site until 1 September — get set now. Paid tickets need bank payouts connected first.';
       }
     }
     if (labelEl) labelEl.textContent = item.title;
@@ -12381,8 +12381,8 @@
     if (kicker) {
       kicker.textContent =
         list.length > 1
-          ? 'Step 1 of 2 — profile 1 of ' + list.length
-          : 'Step 1 of 2 — confirm your group';
+          ? 'Exclusive invite — profile 1 of ' + list.length
+          : 'Exclusive organiser invite';
     }
     if (nameEl) nameEl.textContent = group.name || 'Organiser page';
     if (emailEl) {
@@ -12423,7 +12423,7 @@
     const introEl = document.getElementById('org-group-claim-intro');
     if (introEl) {
       introEl.textContent =
-        'We found an organiser page linked to your email. Confirm you manage this page — next we will walk you through your profile, any events we prepared, tickets, and a final review before you take bookings.';
+        'You have early access to the organiser workspace before we open to the public on 1 September. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until launch day.';
     }
   }
 

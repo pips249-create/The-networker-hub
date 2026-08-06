@@ -8491,8 +8491,8 @@
     var name = brandName || 'This partner';
     if (views > 0 && clicks > 0 && ctr && ctr.label && ctr.label !== '—') {
       return (
-        name +
-        '’s Events placement delivered a ' +
+        (/s$/i.test(name) ? name + "'" : name + '’s') +
+        ' Events placement delivered a ' +
         ctr.label +
         ' click-through rate — ' +
         formatSponsorPackNumber(clicks) +
@@ -8520,8 +8520,8 @@
     }
     if (emails > 0) {
       return (
-        name +
-        '’s logo appeared in ' +
+        ( /s$/i.test(name) ? name + "'" : name + '’s' ) +
+        ' logo appeared in ' +
         formatSponsorPackNumber(emails) +
         ' Hub email' +
         (emails === 1 ? '' : 's') +
@@ -8989,6 +8989,73 @@
     });
   }
 
+  function arrayBufferToBase64(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var chunk = 0x8000;
+    var binary = '';
+    for (var i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  function fetchFontAsBase64(url) {
+    return fetch(url, { cache: 'force-cache' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('font_fetch');
+        return res.arrayBuffer();
+      })
+      .then(arrayBufferToBase64);
+  }
+
+  function registerSponsorPackFonts(doc) {
+    var base = '/assets/fonts/';
+    try {
+      base = new URL('/assets/fonts/', window.location.origin).href;
+    } catch (_e) {
+      /* keep */
+    }
+    return Promise.all([
+      fetchFontAsBase64(base + 'DMSans-Regular.ttf').catch(function () {
+        return '';
+      }),
+      fetchFontAsBase64(base + 'DMSans-Bold.ttf').catch(function () {
+        return '';
+      }),
+      fetchFontAsBase64(base + 'DMSerifDisplay-Regular.ttf').catch(function () {
+        return '';
+      }),
+    ]).then(function (fonts) {
+      var regular = fonts[0];
+      var bold = fonts[1];
+      var serif = fonts[2];
+      var ok = false;
+      try {
+        if (regular) {
+          doc.addFileToVFS('DMSans-Regular.ttf', regular);
+          doc.addFont('DMSans-Regular.ttf', 'DMSans', 'normal');
+          ok = true;
+        }
+        if (bold) {
+          doc.addFileToVFS('DMSans-Bold.ttf', bold);
+          doc.addFont('DMSans-Bold.ttf', 'DMSans', 'bold');
+          ok = true;
+        }
+        if (serif) {
+          doc.addFileToVFS('DMSerifDisplay-Regular.ttf', serif);
+          doc.addFont('DMSerifDisplay-Regular.ttf', 'DMSerif', 'normal');
+        }
+      } catch (_err) {
+        ok = false;
+      }
+      return {
+        sans: ok ? 'DMSans' : 'helvetica',
+        serif: serif ? 'DMSerif' : 'helvetica',
+        hasCustom: ok,
+      };
+    });
+  }
+
   function sponsorPackPdfAddImage(doc, dataUrl, x, y, w, h) {
     if (!dataUrl) return false;
     var fmt = /image\/jpe?g/i.test(dataUrl) ? 'JPEG' : 'PNG';
@@ -8998,6 +9065,35 @@
     } catch (_e) {
       return false;
     }
+  }
+
+  /** Fit image into a box preserving aspect ratio. */
+  function sponsorPackPdfFitImage(doc, dataUrl, boxX, boxY, boxW, boxH, pad) {
+    pad = pad == null ? 2 : pad;
+    if (!dataUrl) return Promise.resolve(false);
+    var innerW = Math.max(1, boxW - pad * 2);
+    var innerH = Math.max(1, boxH - pad * 2);
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var iw = img.naturalWidth || 1;
+        var ih = img.naturalHeight || 1;
+        var ratio = iw / ih;
+        var drawW = innerW;
+        var drawH = drawW / ratio;
+        if (drawH > innerH) {
+          drawH = innerH;
+          drawW = drawH * ratio;
+        }
+        var dx = boxX + (boxW - drawW) / 2;
+        var dy = boxY + (boxH - drawH) / 2;
+        resolve(sponsorPackPdfAddImage(doc, dataUrl, dx, dy, drawW, drawH));
+      };
+      img.onerror = function () {
+        resolve(false);
+      };
+      img.src = dataUrl;
+    });
   }
 
   function sponsorPackPdfPlacementRows(list, labelKey, totalForPct) {
@@ -9022,13 +9118,19 @@
     });
   }
 
+  function sponsorPackWrap(doc, fontName, fontStyle, fontSize, text, maxWidth) {
+    doc.setFont(fontName, fontStyle);
+    doc.setFontSize(fontSize);
+    return doc.splitTextToSize(String(text || ''), Math.max(10, maxWidth));
+  }
+
   /**
    * Build the client PDF with jsPDF directly (no html2canvas — avoids admin chrome clipping).
    */
   function downloadSponsorPackPdf(data, filename) {
     var brand = (data && data.brand) || {};
     var brandName = brand.company || 'Partner';
-    var hubUrl = '/assets/sponsors/hub-logo-pack.png';
+    var hubUrl = '/assets/logo-nav-transparent.png';
     var brandUrl = '/assets/sponsors/barnsgate-logo.png';
     try {
       hubUrl = new URL(hubUrl, window.location.origin).href;
@@ -9112,304 +9214,322 @@
       var brandData = parts[1] || '';
       var JsPDF = parts[2];
       var doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-      var pageW = doc.internal.pageSize.getWidth();
-      var pageH = doc.internal.pageSize.getHeight();
-      var m = 12;
-      var contentW = pageW - m * 2;
-      var y = m;
+      return registerSponsorPackFonts(doc).then(function (fonts) {
+        var SANS = fonts.sans;
+        var SERIF = fonts.serif;
+        var pageW = doc.internal.pageSize.getWidth();
+        var pageH = doc.internal.pageSize.getHeight();
+        var m = 14;
+        var contentW = pageW - m * 2;
+        var y = m;
 
-      var CREAM = [250, 246, 238];
-      var CHAR = [74, 68, 70];
-      var MUTED = [99, 92, 94];
-      var LAV = [194, 153, 209];
-      var LAV_DK = [154, 122, 168];
-      var LAV_BG = [235, 224, 240];
-      var WHITE = [255, 255, 255];
-      var DARK = [45, 38, 54];
+        var CREAM = [250, 246, 238];
+        var CHAR = [74, 68, 70];
+        var MUTED = [99, 92, 94];
+        var LAV = [194, 153, 209];
+        var LAV_DK = [154, 122, 168];
+        var LAV_BG = [235, 224, 240];
+        var WHITE = [255, 255, 255];
+        var DARK = [45, 38, 54];
 
-      doc.setFillColor.apply(doc, CREAM);
-      doc.rect(0, 0, pageW, pageH, 'F');
+        doc.setFillColor.apply(doc, CREAM);
+        doc.rect(0, 0, pageW, pageH, 'F');
 
-      // Logos
-      var logoH = 12;
-      var hubBoxW = 42;
-      var brandBoxW = 50;
-      doc.setFillColor.apply(doc, WHITE);
-      doc.setDrawColor.apply(doc, LAV);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(m, y, hubBoxW, logoH + 4, 1, 1, 'FD');
-      if (!sponsorPackPdfAddImage(doc, hubData, m + 3, y + 2, 36, 9)) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor.apply(doc, CHAR);
-        doc.text('The Networker Hub', m + 3, y + 8);
-      }
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor.apply(doc, LAV_DK);
-      doc.text('×', m + hubBoxW + 3, y + 9);
-
-      var brandX = m + hubBoxW + 10;
-      doc.setFillColor.apply(doc, DARK);
-      doc.setDrawColor.apply(doc, DARK);
-      doc.roundedRect(brandX, y, brandBoxW, logoH + 4, 1, 1, 'FD');
-      if (!sponsorPackPdfAddImage(doc, brandData, brandX + 3, y + 2, 44, 11.5)) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor.apply(doc, CREAM);
-        doc.text(String(brandName).slice(0, 22), brandX + 3, y + 8);
-      }
-
-      doc.setDrawColor.apply(doc, LAV);
-      doc.setTextColor.apply(doc, LAV_DK);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      var confLabel = 'CONFIDENTIAL';
-      var confW = doc.getTextWidth(confLabel) + 6;
-      doc.roundedRect(pageW - m - confW, y + 3, confW, 7, 1, 1, 'S');
-      doc.text(confLabel, pageW - m - confW + 3, y + 7.5);
-
-      y += logoH + 10;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor.apply(doc, LAV_DK);
-      doc.text('PARTNERSHIP PERFORMANCE PACK', m, y);
-      y += 8;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(20);
-      doc.setTextColor.apply(doc, CHAR);
-      doc.text(brandName, m, y);
-      y += 7;
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor.apply(doc, MUTED);
-      var meta =
-        tierLabel +
-        (feeLabel ? ' · ' + feeLabel : '') +
-        ' · ' +
-        periodLabel +
-        ' · Prepared ' +
-        prepared;
-      var metaLines = doc.splitTextToSize(meta, contentW);
-      doc.text(metaLines, m, y);
-      y += metaLines.length * 4.2 + 4;
-
-      // Highlight
-      var hlLines = doc.splitTextToSize(highlight, contentW - 8);
-      var hlH = 8 + hlLines.length * 5 + 6;
-      doc.setFillColor.apply(doc, CHAR);
-      doc.roundedRect(m, y, contentW, hlH, 1.5, 1.5, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor.apply(doc, LAV);
-      doc.text('KEY HIGHLIGHT', m + 4, y + 5);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor.apply(doc, CREAM);
-      doc.text(hlLines, m + 4, y + 11);
-      y += hlH + 5;
-
-      // KPI 2×2
-      function drawKpi(x, yy, w, h, label, value, hint, accent) {
-        if (accent) {
-          doc.setFillColor.apply(doc, CHAR);
-          doc.setDrawColor.apply(doc, CHAR);
-        } else {
-          doc.setFillColor.apply(doc, WHITE);
-          doc.setDrawColor.apply(doc, LAV);
-        }
-        doc.setLineWidth(0.5);
-        doc.roundedRect(x, yy, w, h, 1.5, 1.5, 'FD');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.setTextColor.apply(doc, accent ? [200, 180, 210] : LAV_DK);
-        doc.text(String(label).toUpperCase(), x + 3.5, yy + 5);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.setTextColor.apply(doc, accent ? CREAM : CHAR);
-        doc.text(String(value), x + 3.5, yy + 14);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor.apply(doc, accent ? [210, 200, 205] : MUTED);
-        var hintLines = doc.splitTextToSize(String(hint || ''), w - 7);
-        doc.text(hintLines.slice(0, 3), x + 3.5, yy + 19);
-      }
-
-      var gap = 3;
-      var kpiW = (contentW - gap) / 2;
-      var kpiH = 28;
-      drawKpi(
-        m,
-        y,
-        kpiW,
-        kpiH,
-        'Directory reach',
-        formatSponsorPackNumber(pageViews),
-        momHint('Views of your sponsored pages', deltas.pageVisitsPct),
-        false
-      );
-      drawKpi(
-        m + kpiW + gap,
-        y,
-        kpiW,
-        kpiH,
-        'Site visits driven',
-        formatSponsorPackNumber(clicks),
-        momHint('Clicks through to your website', deltas.clicksPct),
-        false
-      );
-      y += kpiH + gap;
-      drawKpi(m, y, kpiW, kpiH, 'Click-through rate', siteCtrLabel, siteCtrHint, true);
-      drawKpi(
-        m + kpiW + gap,
-        y,
-        kpiW,
-        kpiH,
-        'Emails with logo',
-        formatSponsorPackNumber(emails),
-        momHint('Hub emails carrying your logo', deltas.emailSendsPct),
-        false
-      );
-      y += kpiH + 5;
-
-      // Email engagement
-      var emailH = 32;
-      doc.setFillColor.apply(doc, WHITE);
-      doc.setDrawColor.apply(doc, LAV);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(m, y, contentW, emailH, 1.5, 1.5, 'FD');
-      doc.setFillColor.apply(doc, LAV_BG);
-      doc.rect(m + 0.4, y + 0.4, contentW - 0.8, 9, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor.apply(doc, CHAR);
-      doc.text('EMAIL ENGAGEMENT', m + 4, y + 5.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor.apply(doc, MUTED);
-      doc.text('Opens and clicks from Hub emails that included your logo', m + 42, y + 5.5);
-
-      var emailMetrics = [
-        { label: 'OPENS', value: formatSponsorPackNumber(opens), hint: momHint('Email opens', deltas.emailOpensPct) },
-        { label: 'OPEN RATE', value: openRateLabel, hint: openRateHint },
-        { label: 'EMAIL CLICKS', value: formatSponsorPackNumber(eng.clicks || 0), hint: 'Clicks from email placements' },
-        { label: 'EMAIL CTR', value: emailCtrLabel, hint: emails < 1 ? 'No logo emails yet' : 'Clicks ÷ emails sent' },
-      ];
-      var colW = contentW / 4;
-      emailMetrics.forEach(function (em, i) {
-        var cx = m + i * colW;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6.5);
-        doc.setTextColor.apply(doc, LAV_DK);
-        doc.text(em.label, cx + colW / 2, y + 14, { align: 'center' });
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.setTextColor.apply(doc, CHAR);
-        doc.text(String(em.value), cx + colW / 2, y + 21, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.5);
-        doc.setTextColor.apply(doc, MUTED);
-        doc.text(String(em.hint || '').slice(0, 36), cx + colW / 2, y + 26, { align: 'center' });
-      });
-      y += emailH + 5;
-
-      // Placement panels
-      function drawRankPanel(x, yy, w, title, rows, emptyMsg) {
-        var h = 8 + Math.max(rows.length, 1) * 6 + 6;
+        // Matched logo tiles
+        var logoBoxH = 16;
+        var hubBoxW = 52;
+        var brandBoxW = 58;
         doc.setFillColor.apply(doc, WHITE);
-        doc.setDrawColor(232, 226, 236);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(x, yy, w, h, 1, 1, 'FD');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.setTextColor.apply(doc, CHAR);
-        doc.text(title, x + 3.5, yy + 6);
-        if (!rows.length) {
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8);
-          doc.setTextColor.apply(doc, MUTED);
-          doc.text(emptyMsg, x + 3.5, yy + 13);
-        } else {
-          rows.forEach(function (row, idx) {
-            var ry = yy + 12 + idx * 6;
-            doc.setFont('helvetica', 'normal');
+        doc.setDrawColor.apply(doc, LAV);
+        doc.setLineWidth(0.35);
+        doc.roundedRect(m, y, hubBoxW, logoBoxH, 1.2, 1.2, 'FD');
+
+        doc.setFont(SANS, 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor.apply(doc, LAV_DK);
+        doc.text('×', m + hubBoxW + 4, y + 10);
+
+        var brandX = m + hubBoxW + 12;
+        doc.setFillColor.apply(doc, DARK);
+        doc.setDrawColor.apply(doc, DARK);
+        doc.roundedRect(brandX, y, brandBoxW, logoBoxH, 1.2, 1.2, 'FD');
+
+        doc.setDrawColor.apply(doc, LAV);
+        doc.setTextColor.apply(doc, LAV_DK);
+        doc.setFont(SANS, 'bold');
+        doc.setFontSize(7);
+        var confLabel = 'CONFIDENTIAL';
+        var confW = doc.getTextWidth(confLabel) + 6;
+        doc.roundedRect(pageW - m - confW, y + 4, confW, 7, 1, 1, 'S');
+        doc.text(confLabel, pageW - m - confW + 3, y + 8.5);
+
+        return Promise.all([
+          sponsorPackPdfFitImage(doc, hubData, m, y, hubBoxW, logoBoxH, 2.5),
+          sponsorPackPdfFitImage(doc, brandData, brandX, y, brandBoxW, logoBoxH, 2.5),
+        ]).then(function (drawn) {
+          if (!drawn[0]) {
+            doc.setFont(SANS, 'bold');
             doc.setFontSize(8);
             doc.setTextColor.apply(doc, CHAR);
-            doc.text(String(row.label).slice(0, 28), x + 3.5, ry);
-            doc.setFont('helvetica', 'bold');
-            doc.text(row.value, x + w - 3.5, ry, { align: 'right' });
+            doc.text('The Networker Hub', m + 3, y + 9.5);
+          }
+          if (!drawn[1]) {
+            doc.setFont(SANS, 'bold');
+            doc.setFontSize(8);
+            doc.setTextColor.apply(doc, CREAM);
+            doc.text(String(brandName).slice(0, 22), brandX + 3, y + 9.5);
+          }
+
+          y += logoBoxH + 9;
+
+          doc.setFont(SANS, 'bold');
+          doc.setFontSize(8);
+          doc.setTextColor.apply(doc, LAV_DK);
+          doc.text('PARTNERSHIP PERFORMANCE PACK', m, y);
+          y += 9;
+
+          doc.setFont(SERIF, 'normal');
+          doc.setFontSize(22);
+          doc.setTextColor.apply(doc, CHAR);
+          doc.text(brandName, m, y);
+          y += 8;
+
+          var meta =
+            tierLabel +
+            (feeLabel ? ' · ' + feeLabel : '') +
+            ' · ' +
+            periodLabel +
+            ' · Prepared ' +
+            prepared;
+          var metaLines = sponsorPackWrap(doc, SANS, 'normal', 9, meta, contentW);
+          doc.setTextColor.apply(doc, MUTED);
+          doc.text(metaLines, m, y);
+          y += metaLines.length * 4.4 + 5;
+
+          // Highlight — wrap at draw size
+          var hlPad = 5;
+          var hlLines = sponsorPackWrap(doc, SANS, 'normal', 10.5, highlight, contentW - hlPad * 2);
+          var hlLineH = 5.2;
+          var hlH = 7 + hlLines.length * hlLineH + 6;
+          doc.setFillColor.apply(doc, CHAR);
+          doc.roundedRect(m, y, contentW, hlH, 1.5, 1.5, 'F');
+          doc.setFont(SANS, 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor.apply(doc, LAV);
+          doc.text('KEY HIGHLIGHT', m + hlPad, y + 5);
+          doc.setFont(SANS, 'normal');
+          doc.setFontSize(10.5);
+          doc.setTextColor.apply(doc, CREAM);
+          doc.text(hlLines, m + hlPad, y + 11);
+          y += hlH + 5;
+
+          function drawKpi(x, yy, w, h, label, value, hint, accent) {
+            if (accent) {
+              doc.setFillColor.apply(doc, CHAR);
+              doc.setDrawColor.apply(doc, CHAR);
+            } else {
+              doc.setFillColor.apply(doc, WHITE);
+              doc.setDrawColor.apply(doc, LAV);
+            }
+            doc.setLineWidth(0.5);
+            doc.roundedRect(x, yy, w, h, 1.5, 1.5, 'FD');
+            doc.setFont(SANS, 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor.apply(doc, accent ? [200, 180, 210] : LAV_DK);
+            doc.text(String(label).toUpperCase(), x + 3.5, yy + 5);
+            doc.setFont(SANS, 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor.apply(doc, accent ? CREAM : CHAR);
+            doc.text(String(value), x + 3.5, yy + 14);
+            var hintLines = sponsorPackWrap(doc, SANS, 'normal', 7.5, hint, w - 7);
+            doc.setTextColor.apply(doc, accent ? [210, 200, 205] : MUTED);
+            doc.text(hintLines.slice(0, 3), x + 3.5, yy + 19);
+          }
+
+          var gap = 3;
+          var kpiW = (contentW - gap) / 2;
+          var kpiH = 30;
+          drawKpi(
+            m,
+            y,
+            kpiW,
+            kpiH,
+            'Directory reach',
+            formatSponsorPackNumber(pageViews),
+            momHint('Views of your sponsored pages', deltas.pageVisitsPct),
+            false
+          );
+          drawKpi(
+            m + kpiW + gap,
+            y,
+            kpiW,
+            kpiH,
+            'Site visits driven',
+            formatSponsorPackNumber(clicks),
+            momHint('Clicks through to your website', deltas.clicksPct),
+            false
+          );
+          y += kpiH + gap;
+          drawKpi(m, y, kpiW, kpiH, 'Click-through rate', siteCtrLabel, siteCtrHint, true);
+          drawKpi(
+            m + kpiW + gap,
+            y,
+            kpiW,
+            kpiH,
+            'Emails with logo',
+            formatSponsorPackNumber(emails),
+            momHint('Hub emails carrying your logo', deltas.emailSendsPct),
+            false
+          );
+          y += kpiH + 5;
+
+          // Email engagement
+          var emailSub = 'Opens and clicks from Hub emails that included your logo';
+          var emailH = 34;
+          doc.setFillColor.apply(doc, WHITE);
+          doc.setDrawColor.apply(doc, LAV);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(m, y, contentW, emailH, 1.5, 1.5, 'FD');
+          doc.setFillColor.apply(doc, LAV_BG);
+          doc.rect(m + 0.4, y + 0.4, contentW - 0.8, 10, 'F');
+          doc.setFont(SANS, 'bold');
+          doc.setFontSize(8);
+          doc.setTextColor.apply(doc, CHAR);
+          doc.text('EMAIL ENGAGEMENT', m + 4, y + 6.5);
+          var subLines = sponsorPackWrap(doc, SANS, 'normal', 7, emailSub, contentW - 55);
+          doc.setTextColor.apply(doc, MUTED);
+          doc.text(subLines[0] || emailSub, m + 48, y + 6.5);
+
+          var emailMetrics = [
+            { label: 'OPENS', value: formatSponsorPackNumber(opens), hint: momHint('Email opens', deltas.emailOpensPct) },
+            { label: 'OPEN RATE', value: openRateLabel, hint: openRateHint },
+            {
+              label: 'EMAIL CLICKS',
+              value: formatSponsorPackNumber(eng.clicks || 0),
+              hint: 'Clicks from email placements',
+            },
+            {
+              label: 'EMAIL CTR',
+              value: emailCtrLabel,
+              hint: emails < 1 ? 'No logo emails yet' : 'Clicks ÷ emails sent',
+            },
+          ];
+          var colW = contentW / 4;
+          emailMetrics.forEach(function (em, i) {
+            var cx = m + i * colW;
+            doc.setFont(SANS, 'bold');
+            doc.setFontSize(6.5);
+            doc.setTextColor.apply(doc, LAV_DK);
+            doc.text(em.label, cx + colW / 2, y + 16, { align: 'center' });
+            doc.setFont(SANS, 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor.apply(doc, CHAR);
+            doc.text(String(em.value), cx + colW / 2, y + 23, { align: 'center' });
+            var hLines = sponsorPackWrap(doc, SANS, 'normal', 6.5, em.hint, colW - 4);
+            doc.setTextColor.apply(doc, MUTED);
+            doc.text(hLines[0] || '', cx + colW / 2, y + 28.5, { align: 'center' });
           });
-        }
-        return h;
-      }
+          y += emailH + 5;
 
-      var clickRows = sponsorPackPdfPlacementRows(data.byPlacement, 'placement', clicks);
-      var viewRows = sponsorPackPdfPlacementRows(
-        (data.impressions || {}).byPlacement,
-        'placement',
-        pageViews
-      );
-      var halfW = (contentW - gap) / 2;
-      var h1 = drawRankPanel(m, y, halfW, 'Clicks by placement', clickRows, 'No outbound clicks yet.');
-      var h2 = drawRankPanel(
-        m + halfW + gap,
-        y,
-        halfW,
-        'Views by placement',
-        viewRows,
-        'No directory views yet.'
-      );
-      y += Math.max(h1, h2) + 5;
+          function drawRankPanel(x, yy, w, title, rows, emptyMsg) {
+            var h = 8 + Math.max(rows.length, 1) * 6.2 + 6;
+            doc.setFillColor.apply(doc, WHITE);
+            doc.setDrawColor(232, 226, 236);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(x, yy, w, h, 1, 1, 'FD');
+            doc.setFont(SANS, 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor.apply(doc, CHAR);
+            doc.text(title, x + 3.5, yy + 6);
+            if (!rows.length) {
+              doc.setFont(SANS, 'normal');
+              doc.setFontSize(8);
+              doc.setTextColor.apply(doc, MUTED);
+              doc.text(emptyMsg, x + 3.5, yy + 13);
+            } else {
+              rows.forEach(function (row, idx) {
+                var ry = yy + 12.5 + idx * 6.2;
+                doc.setFont(SANS, 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor.apply(doc, CHAR);
+                var labelLines = sponsorPackWrap(doc, SANS, 'normal', 8, row.label, w - 28);
+                doc.text(labelLines[0] || row.label, x + 3.5, ry);
+                doc.setFont(SANS, 'bold');
+                doc.text(row.value, x + w - 3.5, ry, { align: 'right' });
+              });
+            }
+            return h;
+          }
 
-      // Leads + contact
-      var leadsText =
-        'When someone clicks your logo, we tag the visit so it appears in your Google Analytics / CRM as traffic from The Networker Hub.';
-      var leadsLines = doc.splitTextToSize(leadsText, contentW * 0.55 - 8);
-      var boxH = Math.max(22, 8 + leadsLines.length * 4.2 + 4);
-      var leadsW = contentW * 0.58;
-      var contactW = contentW - leadsW - gap;
+          var clickRows = sponsorPackPdfPlacementRows(data.byPlacement, 'placement', clicks);
+          var viewRows = sponsorPackPdfPlacementRows(
+            (data.impressions || {}).byPlacement,
+            'placement',
+            pageViews
+          );
+          var halfW = (contentW - gap) / 2;
+          var h1 = drawRankPanel(m, y, halfW, 'Clicks by placement', clickRows, 'No outbound clicks yet.');
+          var h2 = drawRankPanel(
+            m + halfW + gap,
+            y,
+            halfW,
+            'Views by placement',
+            viewRows,
+            'No directory views yet.'
+          );
+          y += Math.max(h1, h2) + 5;
 
-      doc.setFillColor.apply(doc, LAV_BG);
-      doc.roundedRect(m, y, leadsW, boxH, 1, 1, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor.apply(doc, LAV_DK);
-      doc.text('WHERE YOUR LEADS SHOW UP', m + 3.5, y + 5);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      doc.setTextColor.apply(doc, CHAR);
-      doc.text(leadsLines, m + 3.5, y + 11);
+          var leadsText =
+            'When someone clicks your logo, we tag the visit so it appears in your Google Analytics / CRM as traffic from The Networker Hub.';
+          var leadsW = contentW * 0.58;
+          var contactW = contentW - leadsW - gap;
+          var leadsLines = sponsorPackWrap(doc, SANS, 'normal', 8.5, leadsText, leadsW - 8);
+          var boxH = Math.max(24, 9 + leadsLines.length * 4.4 + 5);
 
-      doc.setFillColor.apply(doc, CHAR);
-      doc.roundedRect(m + leadsW + gap, y, contactW, boxH, 1, 1, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(200, 190, 200);
-      doc.text('QUESTIONS ABOUT THIS PACK?', m + leadsW + gap + 3.5, y + 5);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor.apply(doc, CREAM);
-      doc.text(amName, m + leadsW + gap + 3.5, y + 12);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      doc.setTextColor.apply(doc, LAV);
-      doc.text(amEmail, m + leadsW + gap + 3.5, y + 18);
+          doc.setFillColor.apply(doc, LAV_BG);
+          doc.roundedRect(m, y, leadsW, boxH, 1, 1, 'F');
+          doc.setFont(SANS, 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor.apply(doc, LAV_DK);
+          doc.text('WHERE YOUR LEADS SHOW UP', m + 3.5, y + 5.5);
+          doc.setFont(SANS, 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor.apply(doc, CHAR);
+          doc.text(leadsLines, m + 3.5, y + 11.5);
 
-      y = Math.max(y + boxH + 6, pageH - 14);
-      doc.setDrawColor.apply(doc, LAV);
-      doc.setLineWidth(0.2);
-      doc.line(m, y - 3, pageW - m, y - 3);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.setTextColor(122, 114, 116);
-      doc.text('CONFIDENTIAL · THE NETWORKER HUB × ' + String(brandName).toUpperCase(), m, y + 2);
-      doc.text('thenetworkerhub.com', pageW - m, y + 2, { align: 'right' });
+          doc.setFillColor.apply(doc, CHAR);
+          doc.roundedRect(m + leadsW + gap, y, contactW, boxH, 1, 1, 'F');
+          doc.setFont(SANS, 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor(200, 190, 200);
+          var qLines = sponsorPackWrap(doc, SANS, 'bold', 7, 'QUESTIONS ABOUT THIS PACK?', contactW - 7);
+          doc.text(qLines[0], m + leadsW + gap + 3.5, y + 5.5);
+          doc.setFont(SANS, 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor.apply(doc, CREAM);
+          doc.text(amName, m + leadsW + gap + 3.5, y + 13);
+          doc.setFont(SANS, 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor.apply(doc, LAV);
+          doc.text(amEmail, m + leadsW + gap + 3.5, y + 19);
 
-      doc.save(filename || 'sponsor-pack.pdf');
+          var footY = Math.min(Math.max(y + boxH + 8, pageH - 12), pageH - 8);
+          doc.setDrawColor.apply(doc, LAV);
+          doc.setLineWidth(0.2);
+          doc.line(m, footY - 4, pageW - m, footY - 4);
+          doc.setFont(SANS, 'normal');
+          doc.setFontSize(6.5);
+          doc.setTextColor(122, 114, 116);
+          doc.text(
+            'CONFIDENTIAL · THE NETWORKER HUB × ' + String(brandName).toUpperCase(),
+            m,
+            footY
+          );
+          doc.text('thenetworkerhub.com', pageW - m, footY, { align: 'right' });
+
+          doc.save(filename || 'sponsor-pack.pdf');
+        });
+      });
     });
   }
 

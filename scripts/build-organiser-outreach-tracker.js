@@ -306,9 +306,8 @@ function emptyManual() {
   });
 
   fs.mkdirSync(path.dirname(args.out), { recursive: true });
-  const bom = '\uFEFF';
+  // No UTF-8 BOM — Google Sheets paste/import treats BOM as junk in A1.
   const csv =
-    bom +
     HEADER.join(',') +
     '\n' +
     rows.map((r) => HEADER.map((h) => esc(r[h])).join(',')).join('\n') +

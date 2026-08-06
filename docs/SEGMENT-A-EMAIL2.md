@@ -2,9 +2,11 @@
 
 **When:** day after catalogue polish (Email 1 sent 5 Aug 2026 → target **Fri 7 Aug 2026**)  
 **Template:** `organiser_launch_invite`  
-**Subject:** Confirm your page & finish setup — The Networker Hub  
+**Subject:** Your exclusive Hub invite — confirm your page  
 **Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkerhub.com`  
 **Paste HTML:** `data/email2-brevo-ready.html`  
+
+**Positioning:** Early access for organisers only. Full workspace now (events, LinkedIn, emails, memberships, BOs). Public browse + ticket purchase stay closed until **1 September 2026**.  
 
 ### Files
 | File | Use |

@@ -2,22 +2,26 @@
 
 **Not in Command Centre.** Shared Google Sheet for the first month of claim outreach — who we emailed, called, and what’s still open.
 
-## Setup (once)
+## Live Sheet
 
-1. From the repo root (needs `local.env` Supabase keys):
+**[Organiser outreach — Aug 2026](https://docs.google.com/spreadsheets/d/1DjUCEl8HaDux-FqtpXDzhtPVuFYJv2VglZ1l0vBfzoc/edit)**
+
+Share with the team (editors). Source data: 1,110 public groups · ~356 with phone numbers · claim status from Hub.
+
+## First load (if the Sheet is empty)
+
+1. Open the Sheet link above in **Chrome**.
+2. Click cell **A1**.
+3. Press **Cmd+V** (full tracker is on your Mac clipboard), **or** File → Import → Upload → choose `Organiser-outreach-Aug-2026.csv` on your Desktop.
+4. If importing: location = **Replace current sheet**.
+
+## Refresh claim status later
 
 ```bash
 node scripts/build-organiser-outreach-tracker.js
 ```
 
-2. Open `ops/organiser-outreach-tracker.csv` in **Google Sheets** (File → Import), or upload to Airtable.
-3. Share the Sheet with whoever is calling / emailing.
-4. Optional Sheet views (Data → Filter views):
-   - **Call list** — `claim_status` = `awaiting_claim`, `phone` not blank, `outcome` blank
-   - **Claimed** — `claim_status` = `claimed`
-   - **My follow-ups** — `owner` = you, `next_action` not blank
-
-`claim_status` values: `awaiting_claim` (needs outreach), `claimed`, `disputed`.
+Re-import Hub columns carefully so you don’t wipe call/email notes.
 
 ## Columns
 
@@ -32,17 +36,13 @@ node scripts/build-organiser-outreach-tracker.js
 | `owner` | You | Who owns the follow-up |
 | `notes` | You | Free text |
 
-## Weekly refresh
+## Filter views to add
 
-Export the Sheet as CSV over `ops/organiser-outreach-tracker.csv` (or keep Notes only in Sheets and only use the script for a fresh Hub snapshot).
+- **Call list** — `claim_status` = `awaiting_claim`, `phone` not blank, `outcome` blank  
+- **Claimed** — `claim_status` = `claimed`  
+- **My follow-ups** — `owner` = you, `next_action` not blank  
 
-Then re-run:
-
-```bash
-node scripts/build-organiser-outreach-tracker.js
-```
-
-The script **keeps** your manual columns when it finds a matching `organiser_id`, and updates `claim_status` from the Hub. If Hub shows `claimed` and `outcome` is empty, it sets `outcome` to `claimed`.
+`claim_status` values: `awaiting_claim` (needs outreach), `claimed`, `disputed`.
 
 ## Outcome values (keep consistent)
 
