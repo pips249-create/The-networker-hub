@@ -71,6 +71,8 @@ const GATE_BYPASS_PREFIXES = [
 const INTERNAL_SALES_PREFIXES = [
   '/p-tnh-ev-hub-k7m2',
   '/p/tnh-ev-hub-k7m2',
+  '/p-tnh-barnsgate-ev-m4p8',
+  '/p/tnh-barnsgate-ev-m4p8',
   '/p-tnh-org-onboard-x4n7',
   '/p/tnh-org-onboard-x4n7',
   '/p-tnh-bmu-onboard-k7m2',
