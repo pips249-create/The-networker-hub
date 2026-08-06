@@ -1,14 +1,23 @@
 (function () {
   var DEMO_HUB_LOGO = '/assets/advertising-example-hub-logo.png';
 
-  var DEMO_SPONSOR = {
+  /* Live Events Headline creative (CMS) — keeps pitch previews accurate if /api/cms-block is gated. */
+  var LIVE_EVENTS_SPONSOR = {
     active: true,
-    logo_url: '/assets/advertising-example-everlasting-build.png',
-    company_name: 'Everlasting Build',
-    title: 'Renovations & construction you can trust',
-    cta_label: 'Find out more →',
-    cta_url: 'https://example.com',
+    logo_url:
+      'https://cdn.prod.website-files.com/66e99a1017187b724a2bc8b8/66e9a2aee48ebc4a38f6add4_BAR%200007%20Solutions%20logo%20various%20final-01.svg',
+    image_url:
+      'https://cdn.prod.website-files.com/66e99a1017187b724a2bc8b8/66e9a2aee48ebc4a38f6add4_BAR%200007%20Solutions%20logo%20various%20final-01.svg',
+    company_name: 'Barnsgate Solutions',
+    title: 'Trusted M&A advice for UK business owners',
+    subtitle: 'Barnsgate Solutions',
+    cta_label: 'Explore your options →',
+    cta_url: 'https://www.barnsgatesolutions.com/',
+    cta_color: '#49c5ee',
+    logo_band_dark: true,
   };
+
+  var DEMO_SPONSOR = LIVE_EVENTS_SPONSOR;
 
   function esc(s) {
     var d = document.createElement('div');
@@ -17,28 +26,53 @@
   }
 
   function previewBlock(raw) {
-    if (!raw || raw.active === false) return DEMO_SPONSOR;
+    if (!raw || raw.active === false) return LIVE_EVENTS_SPONSOR;
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(raw) : String(raw.logo_url || '').trim();
-    if (!logo) return DEMO_SPONSOR;
+    if (!logo) return LIVE_EVENTS_SPONSOR;
     return raw;
   }
 
   function logoFromBlock(block) {
-    if (!block || !window.CmsSponsorFields) return DEMO_SPONSOR.logo_url;
-    return window.CmsSponsorFields.logoUrl(block) || DEMO_SPONSOR.logo_url;
+    if (!block || !window.CmsSponsorFields) return LIVE_EVENTS_SPONSOR.logo_url;
+    return window.CmsSponsorFields.logoUrl(block) || LIVE_EVENTS_SPONSOR.logo_url;
   }
 
   function companyFromBlock(block) {
-    if (!block || !window.CmsSponsorFields) return DEMO_SPONSOR.company_name;
-    return window.CmsSponsorFields.companyName(block) || DEMO_SPONSOR.company_name;
+    if (!block || !window.CmsSponsorFields) return LIVE_EVENTS_SPONSOR.company_name;
+    return window.CmsSponsorFields.companyName(block) || LIVE_EVENTS_SPONSOR.company_name;
   }
 
   function ctaUrlFromBlock(block) {
-    if (!block) return DEMO_SPONSOR.cta_url;
+    if (!block) return LIVE_EVENTS_SPONSOR.cta_url;
     var url = String(block.cta_url || '').trim();
-    return /^(https?:|mailto:)/i.test(url) ? url : DEMO_SPONSOR.cta_url;
+    return /^(https?:|mailto:)/i.test(url) ? url : LIVE_EVENTS_SPONSOR.cta_url;
   }
 
+  /** Match live /events/ hero: logo-only Powered by slot (same markup as sponsor-hub.js). */
+  function renderLiveEventsHeroPreview(container, block) {
+    if (!container) return;
+    var safe = previewBlock(block);
+    var logo = logoFromBlock(safe);
+    var company = companyFromBlock(safe);
+    var url = ctaUrlFromBlock(safe);
+    container.innerHTML =
+      '<aside class="sponsor-hub sponsor-hub--in-hero sponsor-hub--active sponsor-hub--logo-only sponsor-hub--ready" data-slot="events_sponsor_hub">' +
+      '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Powered by</span></div>' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band has-logo sponsor-logo-band--dark" style="background-color:#1a1a2e;">' +
+      '<a class="sponsor-logo-link" href="' +
+      esc(url) +
+      '" target="_blank" rel="noopener noreferrer" aria-label="Visit ' +
+      esc(company) +
+      '">' +
+      '<img class="sponsor-logo sponsor-logo--full" alt="' +
+      esc(company) +
+      '" crossorigin="anonymous" src="' +
+      esc(logo) +
+      '">' +
+      '</a></div></aside>';
+  }
+
+  /** Full card used on the advertising rate card + email-adjacent creative. */
   function renderHeroPreview(container, block) {
     if (!container || !window.CmsAdBlocks) return;
     window.CmsAdBlocks.renderHeroSponsorAd(container, previewBlock(block));
@@ -159,28 +193,36 @@
     if (!wrap || !table) return;
 
     var scenarios = {
-      launch: {
-        label: 'Launch · months 1–3 post Sep 2026',
+      legacy: {
+        label: 'Old site · the-networker.co.uk (proven last year)',
         rows: [
-          ['Directory views', '2k – 5k / mo', 'Hero slot · every browse visit'],
-          ['Attendee emails', '800 – 2.5k / mo', 'Logo + link in header'],
-          ['Total impressions', '3k – 7.5k / mo', 'Site + email combined'],
+          ['Events listed', '27,000+', 'Networking events on the directory last year'],
+          ['Networkers', '17,000+', 'People who used the directory last year'],
+          ['Audience', 'UK-wide B2B', 'Founders, directors & organisers — same audience the Hub inherits'],
+        ],
+      },
+      launch: {
+        label: 'Expected · Hub launch (months 1–3 post Sep 2026)',
+        rows: [
+          ['Directory impressions', '2k – 5k / mo', 'Hero slot on every /events/ browse visit'],
+          ['Attendee emails', '800 – 2.5k / mo', 'Logo + link in booking lifecycle headers'],
+          ['Combined reach', '3k – 7.5k / mo', 'Site + email · planning estimate, not guaranteed'],
         ],
       },
       growth: {
-        label: 'Growth · months 4–12',
+        label: 'Expected · growth (months 4–12)',
         rows: [
-          ['Directory views', '8k – 18k / mo', 'Primary UK events browse page'],
+          ['Directory impressions', '8k – 18k / mo', 'Primary UK events browse page'],
           ['Attendee emails', '4k – 12k / mo', 'Full booking lifecycle'],
-          ['Total impressions', '12k – 30k / mo', 'Compounds with organiser base'],
+          ['Combined reach', '12k – 30k / mo', 'Matches public advertising guide ranges'],
         ],
       },
       scale: {
-        label: 'Scale · year 2+',
+        label: 'Expected · scale (year 2+)',
         rows: [
-          ['Directory views', '20k – 45k / mo', 'Directory + regional SEO pages'],
+          ['Directory impressions', '20k – 45k / mo', 'Directory + regional SEO pages'],
           ['Attendee emails', '12k – 35k / mo', 'Reminders, saved events, nudges'],
-          ['Total impressions', '32k – 80k / mo', 'Flagship Hub inventory'],
+          ['Combined reach', '32k – 80k / mo', 'Flagship Hub inventory'],
         ],
       },
     };
@@ -215,16 +257,26 @@
       });
     });
 
-    renderScenario('launch');
+    renderScenario(document.querySelector('#pitch-scenario-tabs [data-pitch-scenario].is-active')
+      ? document.querySelector('#pitch-scenario-tabs [data-pitch-scenario].is-active').getAttribute('data-pitch-scenario')
+      : 'legacy');
+  }
+
+  function applySponsorPreviews(block) {
+    var heroSlot = document.getElementById('pitch-live-hero');
+    var fullSlot = document.getElementById('pitch-live-hero-full');
+    var emailSlot = document.getElementById('pitch-live-email');
+    renderLiveEventsHeroPreview(heroSlot, block);
+    renderHeroPreview(fullSlot, block);
+    renderFullBookingEmail(emailSlot, block);
   }
 
   function loadLivePreview() {
     var heroSlot = document.getElementById('pitch-live-hero');
     var emailSlot = document.getElementById('pitch-live-email');
-    if (!heroSlot && !emailSlot) return;
+    if (!heroSlot && !emailSlot && !document.getElementById('pitch-live-hero-full')) return;
 
-    renderHeroPreview(heroSlot, DEMO_SPONSOR);
-    renderFullBookingEmail(emailSlot, DEMO_SPONSOR);
+    applySponsorPreviews(LIVE_EVENTS_SPONSOR);
 
     fetch('/api/cms-block?slot=events_sponsor_hub')
       .then(function (res) {
@@ -233,11 +285,10 @@
       .then(function (data) {
         var block = data && data.block ? data.block : null;
         if (!block) return;
-        renderHeroPreview(heroSlot, block);
-        renderFullBookingEmail(emailSlot, block);
+        applySponsorPreviews(block);
       })
       .catch(function () {
-        /* demo creative already shown */
+        /* live Barnsgate creative already shown */
       });
   }
 

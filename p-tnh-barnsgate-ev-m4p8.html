@@ -9,8 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260728footer">
+<link rel="stylesheet" href="/css/events-page.css?v=20260806barns">
 <link rel="stylesheet" href="/css/advertising-page.css?v=20260805terms2">
-<link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260806barns">
+<link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260806barns2">
 <link rel="stylesheet" href="/css/cms-carousel-ad.css?v=20260716pitch2">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -84,8 +85,99 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
+  .barns-reach-compare {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0 0 22px;
+  }
+  .barns-reach-card {
+    border: 1px solid var(--pitch-border);
+    border-radius: 16px;
+    background: #fff;
+    padding: 18px 16px;
+  }
+  .barns-reach-card h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    color: var(--pitch-ink);
+  }
+  .barns-reach-card .barns-reach-kicker {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pitch-teal);
+  }
+  .barns-reach-card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .barns-reach-card li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(13, 110, 122, 0.1);
+    font-size: 0.92rem;
+    color: var(--pitch-muted);
+  }
+  .barns-reach-card li strong {
+    color: var(--pitch-ink);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .barns-claim-callout {
+    margin: 18px 0 0;
+    padding: 18px 18px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(13, 110, 122, 0.28);
+    background: linear-gradient(180deg, #e8f6f8 0%, #fff 100%);
+  }
+  .barns-claim-callout h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: var(--pitch-ink);
+  }
+  .barns-claim-callout p {
+    margin: 0 0 10px;
+    color: var(--pitch-muted);
+    line-height: 1.55;
+  }
+  .barns-claim-callout p:last-child { margin-bottom: 0; }
+  .barns-preview-caption {
+    margin: 10px 0 0;
+    font-size: 0.86rem;
+    color: var(--pitch-muted);
+    text-align: center;
+  }
+  .pitch-preview-panel--split {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .barns-live-slot-wrap {
+    border: 1px solid var(--pitch-border);
+    border-radius: 16px;
+    background: #1c2040;
+    padding: 14px;
+  }
+  .barns-live-slot-wrap .barns-live-label {
+    margin: 0 0 10px;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
   @media (max-width: 800px) {
-    .barns-ask-grid { grid-template-columns: 1fr; }
+    .barns-ask-grid,
+    .barns-reach-compare,
+    .pitch-preview-panel--split { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -122,6 +214,7 @@
       <button type="button" data-pitch-section="previews">See it</button>
       <button type="button" data-pitch-section="package">Package</button>
       <button type="button" data-pitch-section="forecast">Reach</button>
+      <button type="button" data-pitch-section="claim">Claim wave</button>
       <button type="button" data-pitch-section="ask">The ask</button>
     </div>
   </nav>
@@ -161,11 +254,11 @@
     <div class="pitch-stat-grid">
       <article class="pitch-stat">
         <strong>Events hero</strong>
-        <span>Live on <a href="/events/" target="_blank" rel="noopener">/events/</a> — logo, tagline &amp; CTA</span>
+        <span>Live on <a href="/events/" target="_blank" rel="noopener">/events/</a> — Powered by logo (same Barnsgate creative)</span>
       </article>
       <article class="pitch-stat">
         <strong>Attendee emails</strong>
-        <span>Same creative in booking confirmations, reminders and lifecycle mail</span>
+        <span>Same logo in booking confirmations, reminders and lifecycle mail</span>
       </article>
       <article class="pitch-stat">
         <strong>Status today</strong>
@@ -186,9 +279,8 @@
     </div>
 
     <ul class="pitch-presenter-notes">
-      <li><strong>Say:</strong> &ldquo;First container on the Events directory — above search and listings.&rdquo;</li>
-      <li><strong>Say:</strong> &ldquo;Same logo in every attendee email, under the Hub header.&rdquo;</li>
-      <li><strong>Note:</strong> Live /events/ is logo-only; this preview shows the full card (tagline + CTA) as used in emails and the rate card.</li>
+      <li><strong>Say:</strong> &ldquo;This is Barnsgate&rsquo;s live creative — same logo and link as production.&rdquo;</li>
+      <li><strong>Say:</strong> &ldquo;Left: how it sits on /events/ today. Right: full Headline card with tagline + CTA (rate card &amp; emails).&rdquo;</li>
     </ul>
 
     <div class="pitch-preview-stage">
@@ -197,7 +289,7 @@
         <button type="button" role="tab" aria-selected="false" data-pitch-preview="email">Booking email</button>
       </div>
 
-      <div class="pitch-preview-panel" data-pitch-preview-panel="website" role="tabpanel">
+      <div class="pitch-preview-panel pitch-preview-panel--split" data-pitch-preview-panel="website" role="tabpanel">
         <div class="ad-mock-page ad-mock-page--events-dir">
           <div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/</em></div>
           <div class="ad-events-dir-scale">
@@ -225,6 +317,12 @@
               </div>
             </div>
           </div>
+          <p class="barns-preview-caption">Live /events/ placement — logo-only Powered by (production)</p>
+        </div>
+        <div class="barns-live-slot-wrap">
+          <p class="barns-live-label">Full Headline creative</p>
+          <div class="ad-live-preview ad-live-preview--hero" id="pitch-live-hero-full"></div>
+          <p class="barns-preview-caption" style="color:rgba(255,255,255,0.72)">Tagline + CTA — same assets as CMS / rate card</p>
         </div>
       </div>
 
@@ -234,6 +332,7 @@
             <div class="ad-email-preview-inner" id="pitch-live-email"></div>
           </div>
         </div>
+        <p class="barns-preview-caption">Attendee booking email header — Barnsgate under the Hub logo</p>
       </div>
     </div>
   </section>
@@ -287,9 +386,34 @@
   </section>
 
   <section class="sponsor-pitch-section" id="forecast">
-    <h2>Reach forecast</h2>
+    <h2>Reach — proven + expected</h2>
+    <div class="barns-reach-compare" aria-label="Old site vs Hub expected reach">
+      <article class="barns-reach-card">
+        <span class="barns-reach-kicker">Old site · proven</span>
+        <h3>the-networker.co.uk last year</h3>
+        <ul>
+          <li><span>Events listed</span><strong>27,000+</strong></li>
+          <li><span>Networkers</span><strong>17,000+</strong></li>
+          <li><span>Coverage</span><strong>UK-wide</strong></li>
+        </ul>
+      </article>
+      <article class="barns-reach-card">
+        <span class="barns-reach-kicker">Hub · expected</span>
+        <h3>Headline Sponsor guide ranges</h3>
+        <ul>
+          <li><span>Launch (mo 1–3)</span><strong>3k–7.5k / mo</strong></li>
+          <li><span>Growth (mo 4–12)</span><strong>12k–30k / mo</strong></li>
+          <li><span>Scale (year 2+)</span><strong>32k–80k / mo</strong></li>
+        </ul>
+      </article>
+    </div>
+    <p class="section-intro" style="text-align:center;max-width:42em;margin:0 auto 18px;color:var(--pitch-muted);line-height:1.6;">
+      Old-site figures are what the audience already did on The Networker.
+      Hub ranges are planning estimates for directory + attendee email combined — not guaranteed.
+    </p>
     <div class="sponsor-pitch-scenario-tabs" id="pitch-scenario-tabs">
-      <button type="button" class="is-active" data-pitch-scenario="launch">Launch</button>
+      <button type="button" class="is-active" data-pitch-scenario="legacy">Old site</button>
+      <button type="button" data-pitch-scenario="launch">Launch</button>
       <button type="button" data-pitch-scenario="growth">Growth</button>
       <button type="button" data-pitch-scenario="scale">Scale</button>
     </div>
@@ -302,7 +426,48 @@
         <tbody></tbody>
       </table>
     </div>
-    <p class="pitch-aside">Guide ranges — not guaranteed. Growth scenario matches the public advertising page.</p>
+    <p class="pitch-aside">Expected Hub ranges match the public advertising page. Old-site stats are the same proof points we use on for-networkers / for-organisers.</p>
+  </section>
+
+  <section class="sponsor-pitch-section" id="claim">
+    <h2>Next week — claim your page wave</h2>
+    <p class="section-intro" style="text-align:center;max-width:42em;margin:0 auto 18px;color:var(--pitch-muted);line-height:1.6;">
+      We are emailing organisers across the UK to claim their Networker Hub pages.
+      That is a high-attention inbox moment — and we want Barnsgate on every one.
+    </p>
+    <div class="pitch-stat-grid">
+      <article class="pitch-stat">
+        <strong>Who</strong>
+        <span>All organisers on the list — claim-your-page / Email 2 wave</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>When</strong>
+        <span>Next week — timed with the Hub upgrade push</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>What we want</strong>
+        <span>Barnsgate logo on every claim invite — Powered by in the email header</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>Why it matters</strong>
+        <span>Organisers are decision-makers too — exit planning and growth capital sit next to group growth</span>
+      </article>
+    </div>
+    <div class="barns-claim-callout">
+      <h3>Ask in the room</h3>
+      <p>
+        &ldquo;Next week we send claim-your-page emails to organisers nationwide.
+        We&rsquo;d love Barnsgate&rsquo;s logo on all of them — same brand they already see on Events.&rdquo;
+      </p>
+      <p>
+        Ideal asset: <strong>PNG logo</strong> (landscape, min ~400×120) for email longevity —
+        the SVG on site is fine for the web hero.
+      </p>
+    </div>
+    <ul class="pitch-presenter-notes">
+      <li><strong>Say:</strong> &ldquo;This is incremental reach on top of the Events Headline slot — organisers opening claim mail.&rdquo;</li>
+      <li><strong>If they ask about cost:</strong> position as included with a Headline close this week, or a light add-on if they only want the claim wave.</li>
+    </ul>
   </section>
 
   <section class="sponsor-pitch-section" id="ask">
@@ -358,8 +523,8 @@
 
 </div>
 
-<script src="/js/cms-sponsor-fields.js?v=20260806barns"></script>
-<script src="/js/cms-ad-blocks.js?v=20260806barns"></script>
-<script src="/js/sponsor-pitch.js?v=20260806barns"></script>
+<script src="/js/cms-sponsor-fields.js?v=20260806barns2"></script>
+<script src="/js/cms-ad-blocks.js?v=20260806barns2"></script>
+<script src="/js/sponsor-pitch.js?v=20260806barns2"></script>
 </body>
 </html>
