@@ -8250,6 +8250,133 @@
     initAdvertisingEnquiriesAdmin();
   }
 
+  function loadHtml2PdfLibrary() {
+    if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-hub-html2pdf]');
+      if (existing) {
+        existing.addEventListener('load', function () {
+          if (window.html2pdf) resolve(window.html2pdf);
+          else reject(new Error('PDF library failed to load.'));
+        });
+        existing.addEventListener('error', function () {
+          reject(new Error('PDF library failed to load.'));
+        });
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+      script.async = true;
+      script.setAttribute('data-hub-html2pdf', '1');
+      script.onload = function () {
+        if (window.html2pdf) resolve(window.html2pdf);
+        else reject(new Error('PDF library failed to load.'));
+      };
+      script.onerror = function () {
+        reject(new Error('PDF library failed to load.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        resolve(String(reader.result || ''));
+      };
+      reader.onerror = function () {
+        reject(new Error('read_failed'));
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function inlineSponsorPackImages(root) {
+    var imgs = root.querySelectorAll('img');
+    var tasks = [];
+    Array.prototype.forEach.call(imgs, function (img) {
+      var src = String(img.getAttribute('src') || '').trim();
+      if (!src || src.indexOf('data:') === 0) return;
+      var abs = src;
+      try {
+        abs = new URL(src, window.location.origin).href;
+      } catch (_e) {
+        /* keep */
+      }
+      tasks.push(
+        fetch(abs, { mode: 'cors', credentials: 'omit', cache: 'force-cache' })
+          .then(function (res) {
+            if (!res.ok) throw new Error('img_fetch');
+            return res.blob();
+          })
+          .then(function (blob) {
+            return blobToDataUrl(blob);
+          })
+          .then(function (dataUrl) {
+            if (dataUrl) img.setAttribute('src', dataUrl);
+          })
+          .catch(function () {
+            var tile = img.closest('.sponsor-pack-logo-tile');
+            var alt = img.getAttribute('alt') || 'Sponsor';
+            if (tile && img.classList.contains('sponsor-pack-logo--brand')) {
+              img.remove();
+              var fallback = document.createElement('span');
+              fallback.className = 'sponsor-pack-logo-fallback';
+              fallback.textContent = alt;
+              tile.appendChild(fallback);
+            }
+          })
+      );
+    });
+    return Promise.all(tasks);
+  }
+
+  function downloadSponsorPackPdf(packEl, filename, brandName) {
+    var clone = packEl.cloneNode(true);
+    clone.classList.add('sponsor-pack--pdf-export');
+    clone.style.width = '794px';
+    clone.style.maxWidth = '794px';
+    clone.style.margin = '0';
+    clone.style.boxShadow = 'none';
+    var host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.style.cssText =
+      'position:fixed;left:-10000px;top:0;width:794px;background:#fff;z-index:-1;pointer-events:none;';
+    host.appendChild(clone);
+    document.body.appendChild(host);
+
+    return inlineSponsorPackImages(clone)
+      .then(function () {
+        return loadHtml2PdfLibrary();
+      })
+      .then(function (html2pdf) {
+        var opt = {
+          margin: [10, 10, 12, 10],
+          filename: filename || 'sponsor-pack.pdf',
+          image: { type: 'jpeg', quality: 0.96 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: 794,
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] },
+        };
+        return html2pdf().set(opt).from(clone).save();
+      })
+      .finally(function () {
+        try {
+          host.remove();
+        } catch (_e) {
+          /* ignore */
+        }
+      });
+  }
+
   function monthDateInputsDefault() {
     var now = new Date();
     var y = now.getUTCFullYear();
@@ -8317,10 +8444,10 @@
       '<button type="submit" class="sponsor-pack-btn sponsor-pack-btn--primary">Apply</button>' +
       '<button type="button" id="sponsor-clicks-barnsgate" class="sponsor-pack-btn">Barnsgate pack</button>' +
       '<button type="button" id="sponsor-clicks-export" class="sponsor-pack-btn">Export CSV</button>' +
-      '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Print / PDF</button>' +
+      '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Print / PDF opens a clean A4 page — use Save as PDF in the print dialog.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Download PDF saves a shareable A4 file (e.g. for Barnsgate).</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -8606,7 +8733,7 @@
       printBtn.addEventListener('click', function () {
         var pack = document.querySelector('#sponsor-clicks-body .sponsor-pack');
         if (!pack) {
-          window.alert('Load a pack first, then Print / PDF.');
+          window.alert('Load a pack first, then Download PDF.');
           return;
         }
         var brand =
@@ -8615,42 +8742,34 @@
           'sponsor';
         var from = String((lastReport && lastReport.from) || '').slice(0, 10);
         var to = String((lastReport && lastReport.to) || '').slice(0, 10);
-        var title =
-          'Partnership pack — ' +
-          String(brand).trim() +
-          (from && to ? ' (' + from + ' to ' + to + ')' : '');
-        var html =
-          '<!DOCTYPE html><html lang="en-GB"><head><meta charset="UTF-8">' +
-          '<title>' +
-          esc(title) +
-          '</title>' +
-          '<link rel="stylesheet" href="/css/admin-console.css?v=20260806sponsorpdf">' +
-          '<style>' +
-          'html,body{margin:0;padding:0;background:#fff;}' +
-          'body{font-family:"DM Sans",system-ui,sans-serif;color:#1e293b;}' +
-          '.sponsor-pack-print-root{max-width:820px;margin:0 auto;padding:18px 20px 28px;}' +
-          '@page{size:A4;margin:12mm;}' +
-          '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
-          '.sponsor-pack-print-root{max-width:none;padding:0;}}' +
-          '</style></head><body>' +
-          '<div class="sponsor-pack-print-root">' +
-          pack.outerHTML +
-          '</div>' +
-          '<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250);};<\/script>' +
-          '</body></html>';
-        var win = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1200');
-        if (!win) {
-          window.alert('Allow pop-ups to open the PDF print view, or use your browser Print dialog.');
-          document.body.classList.add('sponsor-pack-printing');
-          window.print();
-          setTimeout(function () {
-            document.body.classList.remove('sponsor-pack-printing');
-          }, 800);
-          return;
-        }
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
+        var filename =
+          'sponsor-pack-' +
+          String(brand || 'sponsor')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 40) +
+          (from && to ? '-' + from + '-to-' + to : '') +
+          '.pdf';
+
+        printBtn.disabled = true;
+        var prevLabel = printBtn.textContent;
+        printBtn.textContent = 'Preparing PDF…';
+        setStatus('Preparing PDF download…');
+
+        downloadSponsorPackPdf(pack, filename, String(brand || '').trim())
+          .then(function () {
+            setStatus('PDF downloaded — ' + filename, 'ok');
+          })
+          .catch(function (err) {
+            console.error('[sponsor-pack-pdf]', err);
+            setStatus(err.message || 'Could not create PDF.', 'error');
+            window.alert(err.message || 'Could not create PDF. Try again in a moment.');
+          })
+          .finally(function () {
+            printBtn.disabled = false;
+            printBtn.textContent = prevLabel || 'Download PDF';
+          });
       });
     }
     if (exportBtn) {
