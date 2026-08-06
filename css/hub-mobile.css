@@ -2509,6 +2509,24 @@ body.nav-menu-open {
     box-sizing: border-box;
   }
 
+  .account-settings-page .as-signin {
+    max-width: none;
+    margin: 48px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+    padding: 0;
+    text-align: center;
+  }
+
+  .account-settings-page .as-signin p {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .account-settings-page .as-signin .as-btn {
+    width: 100%;
+    max-width: 320px;
+    min-height: 48px;
+  }
+
   .account-settings-page .as-title {
     font-size: 1.35rem;
     margin-bottom: 6px;
@@ -2518,10 +2536,6 @@ body.nav-menu-open {
     font-size: 13px;
     line-height: 1.45;
     margin-bottom: 16px;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
   .account-settings-page .as-card {
@@ -2651,16 +2665,34 @@ body.nav-menu-open {
     border-radius: 12px;
   }
 
-  .organiser-event-edit-page .ee-field input,
+  /* Beat .ee-field input:not([type=...]) specificity so iOS does not zoom on focus */
+  .organiser-event-edit-page .ee-field input:not([type='radio']):not([type='checkbox']),
   .organiser-event-edit-page .ee-field select,
   .organiser-event-edit-page .ee-field textarea,
-  .organiser-event-edit-page .ee-field .flatpickr-input {
-    font-size: 16px;
+  .organiser-event-edit-page .ee-field .flatpickr-input,
+  .organiser-event-edit-page .ee-quarter-time input {
+    font-size: 16px !important;
     min-height: 44px;
   }
 
   .organiser-event-edit-page .ee-field textarea {
     min-height: 110px;
+  }
+
+  .organiser-event-edit-page .ee-check {
+    align-items: flex-start;
+    min-height: 44px;
+    padding: 8px 0;
+  }
+
+  .organiser-event-edit-page .ee-format-card {
+    min-height: 72px;
+    padding: 18px 16px;
+  }
+
+  .organiser-event-edit-page .ee-wizard-link {
+    min-height: 44px;
+    min-width: 44px;
   }
 
   .organiser-event-edit-page .ee-attendance-options {
@@ -2670,6 +2702,11 @@ body.nav-menu-open {
 
   .organiser-event-edit-page .ee-attendance-card {
     min-height: 56px;
+  }
+
+  .organiser-event-edit-page .ee-actions-note {
+    font-size: 12px;
+    margin: 8px 0 0;
   }
 
   /* Sticky primary actions so Continue/Save stays reachable */
