@@ -8397,7 +8397,7 @@
 
   function resolveSponsorPackTierLabel(brandName) {
     if (/barnsgate/i.test(String(brandName || ''))) {
-      return 'Enterprise Directory Partner (£2,000/mo)';
+      return 'Events Headline Sponsor · £2,000/mo + VAT';
     }
     return 'Directory Partner';
   }
@@ -8405,21 +8405,18 @@
   function formatSponsorPackEngagementHint(clicks, pageViews) {
     var c = Number(clicks) || 0;
     var v = Number(pageViews) || 0;
-    if (v < 1) return 'Needs directory views to calculate engagement';
+    if (v < 1) return 'Needs directory views to calculate';
     if (c === 0) return formatSponsorPackNumber(v) + ' directory views · no click-throughs yet';
-    var viewers =
-      c === 1 && v === 1
-        ? '1 of 1 viewer clicked through'
-        : formatSponsorPackNumber(c) +
-          ' of ' +
-          formatSponsorPackNumber(v) +
-          ' viewers clicked through';
-    return viewers + ' to your site';
+    return (
+      formatSponsorPackNumber(c) +
+      ' of ' +
+      formatSponsorPackNumber(v) +
+      ' viewers clicked through'
+    );
   }
 
   /**
-   * Dedicated A4 one-pager for clients — executive partnership summary.
-   * Table layout so html2canvas does not mangle CSS grids.
+   * Dedicated A4 one-pager — simple nested tables only (html2canvas-safe).
    */
   function buildSponsorPackPdfDocument(data, logos) {
     var summary = (data && data.summary) || {};
@@ -8446,187 +8443,157 @@
     var hubLogo = (logos && logos.hub) || '';
     var brandLogo = (logos && logos.brand) || '';
     var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
-    var isEnterprise = /barnsgate/i.test(brandName);
     var amName = contact.name || 'Rosie McGilvray';
     var amEmail = contact.email || 'rosie@thenetworkerhub.com';
     var contactLabel = contact.label || 'Questions about this pack?';
     var execLine = String((data && data.executiveSummary) || '').trim();
 
-    function momSuffix(pct) {
+    function momText(pct) {
       if (pct == null || pct === '') return '';
-      return ' · ' + formatSponsorPackMomDelta(pct).text;
+      return formatSponsorPackMomDelta(pct).text;
     }
 
     var hubLogoHtml = hubLogo
       ? '<img src="' +
         attrEsc(hubLogo) +
-        '" alt="The Networker Hub" style="max-width:150px;max-height:42px;width:auto;height:auto;display:block;">'
-      : '<span style="font-size:13px;font-weight:700;color:#2d2636;">The Networker Hub</span>';
+        '" alt="The Networker Hub" width="140" height="40" style="max-width:140px;max-height:40px;width:auto;height:auto;display:inline-block;vertical-align:middle;">'
+      : '<span style="font-size:12px;font-weight:700;color:#2d2636;">The Networker Hub</span>';
 
     var brandLogoHtml = brandLogo
       ? '<img src="' +
         attrEsc(brandLogo) +
         '" alt="' +
         attrEsc(brandName) +
-        '" style="max-width:150px;max-height:42px;width:auto;height:auto;display:block;">'
-      : '<span style="font-size:13px;font-weight:700;color:' +
+        '" width="140" height="40" style="max-width:140px;max-height:40px;width:auto;height:auto;display:inline-block;vertical-align:middle;">'
+      : '<span style="font-size:12px;font-weight:700;color:' +
         (brandDark ? '#f8f5fa' : '#4a2c5a') +
         ';">' +
         esc(brandName) +
         '</span>';
 
-    function kpiCell(label, value, hint, dark) {
+    function kpiBox(label, value, hint, dark) {
       return (
-        '<td style="width:25%;padding:4px;vertical-align:top;">' +
-        '<div style="border:1px solid ' +
-        (dark ? '#2d2636' : '#ebe4ef') +
-        ';border-radius:12px;padding:14px 12px;background:' +
+        '<td width="50%" style="width:50%;padding:5px;vertical-align:top;">' +
+        '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border:1px solid ' +
+        (dark ? '#2d2636' : '#e8e2ec') +
+        ';background:' +
         (dark ? '#2d2636' : '#ffffff') +
-        ';min-height:108px;">' +
-        '<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:' +
+        ';"><tr><td style="padding:12px 12px 14px;">' +
+        '<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:' +
         (dark ? 'rgba(255,255,255,0.7)' : '#7c7480') +
         ';">' +
         esc(label) +
         '</div>' +
-        '<div style="margin-top:8px;font-size:28px;font-weight:750;line-height:1;color:' +
+        '<div style="margin-top:6px;font-size:26px;font-weight:700;line-height:1.1;color:' +
         (dark ? '#ffffff' : '#2d2636') +
         ';">' +
         esc(value) +
         '</div>' +
-        '<div style="margin-top:8px;font-size:11px;line-height:1.35;color:' +
-        (dark ? 'rgba(255,255,255,0.7)' : '#8a8284') +
+        '<div style="margin-top:6px;font-size:10px;line-height:1.35;color:' +
+        (dark ? 'rgba(255,255,255,0.75)' : '#64748b') +
         ';">' +
-        esc(hint) +
-        '</div></div></td>'
+        esc(hint || '') +
+        '</div></td></tr></table></td>'
       );
     }
 
-    var strategicIntro =
-      pageViews > 0 && clicks > 0
-        ? 'Your campaign is delivering high conversion intent (' +
-          ctr.label +
-          ' engagement rate). To maximise your ' +
-          (isEnterprise ? '£2,000/mo sponsorship value' : 'sponsorship value') +
-          ' for the upcoming cycle:'
-        : pageViews > 0
-          ? 'Directory audiences are reaching your hero placement. To strengthen engagement yield for the upcoming cycle:'
-          : 'Your placement is live on The Networker Hub. To build measurable yield for the upcoming cycle:';
-
     var openRateLabel =
-      eng.openRatePct != null ? String(eng.openRatePct) + '%' : eng.opensConfigured ? '—' : 'Pending';
-    var emailCtrLabel = eng.ctrPct != null ? String(eng.ctrPct) + '%' : '—';
+      eng.openRatePct != null ? String(eng.openRatePct) + '%' : eng.opensConfigured ? '0%' : 'Pending';
+    var emailCtrLabel = eng.ctrPct != null ? String(eng.ctrPct) + '%' : emails > 0 ? '0%' : '—';
+    var opensValue = eng.opensConfigured
+      ? formatSponsorPackNumber(eng.opens || 0)
+      : 'Pending';
 
     return (
-      '<div class="sponsor-pack-pdf" style="width:720px;padding:28px 28px 24px;background:#ffffff;color:#1e293b;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;box-sizing:border-box;">' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;">' +
+      '<div class="sponsor-pack-pdf" style="width:680px;max-width:680px;padding:24px 22px 20px;background:#ffffff;color:#1e293b;font-family:Helvetica,Arial,sans-serif;box-sizing:border-box;overflow:visible;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;">' +
       '<tr>' +
-      '<td style="vertical-align:middle;width:46%;">' +
-      '<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
-      '<td style="width:168px;height:64px;border:1px solid #e8e2ec;border-radius:12px;background:#fff;text-align:center;vertical-align:middle;padding:8px 12px;">' +
+      '<td width="52%" style="width:52%;vertical-align:middle;">' +
+      '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
+      '<td style="border:1px solid #e8e2ec;background:#fff;padding:8px 10px;text-align:center;vertical-align:middle;width:150px;height:52px;">' +
       hubLogoHtml +
       '</td>' +
-      '<td style="width:28px;text-align:center;color:#9a7aa8;font-size:18px;font-weight:700;">×</td>' +
-      '<td style="width:168px;height:64px;border:1px solid ' +
+      '<td style="width:22px;text-align:center;color:#9a7aa8;font-size:16px;font-weight:700;">×</td>' +
+      '<td style="border:1px solid ' +
       (brandDark ? '#1a1a2e' : '#e8e2ec') +
-      ';border-radius:12px;background:' +
+      ';background:' +
       (brandDark ? '#1a1a2e' : '#fff') +
-      ';text-align:center;vertical-align:middle;padding:8px 12px;">' +
+      ';padding:8px 10px;text-align:center;vertical-align:middle;width:150px;height:52px;">' +
       brandLogoHtml +
       '</td></tr></table></td>' +
-      '<td style="vertical-align:middle;padding-left:18px;">' +
-      '<div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9a7aa8;">Monthly Partnership Executive Summary</div>' +
-      '<div style="margin-top:4px;font-size:24px;font-weight:750;color:#2d2636;line-height:1.15;">' +
+      '<td width="48%" style="width:48%;vertical-align:middle;padding-left:14px;">' +
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#9a7aa8;">Partnership performance pack</div>' +
+      '<div style="margin-top:3px;font-size:22px;font-weight:700;color:#2d2636;line-height:1.15;">' +
       esc(brandName) +
       '</div>' +
-      '<div style="margin-top:8px;font-size:11.5px;line-height:1.45;color:#64748b;">' +
-      'Account: ' +
-      esc(brandName) +
-      ' · Tier: ' +
+      '<div style="margin-top:5px;font-size:11px;line-height:1.4;color:#64748b;">' +
       esc(tierLabel) +
-      ' · Period: ' +
+      '<br>' +
       esc(periodLabel) +
-      '</div>' +
-      '<div style="margin-top:4px;font-size:11px;color:#94a3b8;">Prepared ' +
+      ' · Prepared ' +
       esc(prepared) +
       '</div></td></tr></table>' +
       (execLine
-        ? '<div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid #ebe4ef;font-size:12.5px;line-height:1.45;color:#334155;font-weight:550;">' +
+        ? '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;"><tr><td style="padding:10px 12px;border:1px solid #ebe4ef;background:#faf8fb;font-size:12px;line-height:1.45;color:#334155;">' +
           esc(execLine) +
-          '</div>'
+          '</td></tr></table>'
         : '') +
-      '<div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;background:#f8f5fa;border:1px solid #efeaf2;font-size:11.5px;line-height:1.5;color:#475569;">' +
-      '<strong style="color:#2d2636;">Placement stewardship:</strong> Hero directory ownership above the fold · ' +
-      '<strong style="color:#2d2636;">Audience access:</strong> UK business decision-makers on The Networker Hub · ' +
-      'Hyper-targeted interactions — quality over raw volume.' +
-      '</div>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
-      kpiCell(
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:4px;"><tr>' +
+      kpiBox(
         'Directory reach',
         formatSponsorPackNumber(pageViews),
-        'Hero directory views' + momSuffix(deltas.pageVisitsPct),
-        false
+        ('Sponsored directory views' + (momText(deltas.pageVisitsPct) ? ' · ' + momText(deltas.pageVisitsPct) : '')).slice(0, 80)
       ) +
-      kpiCell(
-        'Brand email exposure',
+      kpiBox(
+        'Emails with logo',
         formatSponsorPackNumber(emails),
-        'Emails with your creative' + momSuffix(deltas.emailSendsPct),
-        false
+        ('Hub emails carrying your logo' + (momText(deltas.emailSendsPct) ? ' · ' + momText(deltas.emailSendsPct) : '')).slice(0, 80)
       ) +
-      kpiCell(
+      '</tr><tr>' +
+      kpiBox(
         'Site visits driven',
         formatSponsorPackNumber(clicks),
-        'Outbound website clicks' + momSuffix(deltas.clicksPct),
-        false
+        ('Outbound website clicks' + (momText(deltas.clicksPct) ? ' · ' + momText(deltas.clicksPct) : '')).slice(0, 80)
       ) +
-      kpiCell('Engagement rate', ctr.label, engagementHint, true) +
+      kpiBox('Engagement rate', ctr.label, engagementHint, true) +
       '</tr></table>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;">' +
-      '<tr><td colspan="4" style="padding:0 4px 6px;font-size:11px;font-weight:700;color:#2d2636;letter-spacing:0.04em;text-transform:uppercase;">Email engagement</td></tr>' +
-      '<tr>' +
-      kpiCell('Emails sent', formatSponsorPackNumber(eng.sends || emails), 'With your logo', false) +
-      kpiCell(
-        'Opens',
-        eng.opensConfigured ? formatSponsorPackNumber(eng.opens || 0) : 'Pending',
-        eng.opensConfigured ? 'Resend tracked opens' : 'Webhook setup needed',
-        false
-      ) +
-      kpiCell('Open rate', openRateLabel, 'Opens ÷ emails with logo', false) +
-      kpiCell('Email CTR', emailCtrLabel, 'Email clicks ÷ emails sent', false) +
+      '<div style="margin:10px 0 6px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#2d2636;">Email engagement</div>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;"><tr>' +
+      kpiBox('Opens', opensValue, eng.opensConfigured ? 'Resend tracked opens' : 'Awaiting Resend open data') +
+      kpiBox('Open rate', openRateLabel, 'Opens ÷ emails with logo') +
+      '</tr><tr>' +
+      kpiBox('Email clicks', formatSponsorPackNumber(eng.clicks || 0), 'Hub email placements + Resend clicks') +
+      kpiBox('Email CTR', emailCtrLabel, 'Email clicks ÷ emails sent') +
       '</tr></table>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;">' +
-      '<tr>' +
-      '<td style="width:50%;padding-right:10px;vertical-align:top;">' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:120px;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;"><tr>' +
+      '<td width="50%" style="width:50%;padding-right:6px;vertical-align:top;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border:1px solid #ebe4ef;"><tr><td style="padding:10px 12px;">' +
       '<div style="font-size:12px;font-weight:700;color:#2d2636;margin-bottom:4px;">Clicks by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
       buildSponsorPackPdfRows(data.byPlacement, 'placement', 4) +
-      '</table></div></td>' +
-      '<td style="width:50%;padding-left:10px;vertical-align:top;">' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:120px;">' +
+      '</table></td></tr></table></td>' +
+      '<td width="50%" style="width:50%;padding-left:6px;vertical-align:top;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border:1px solid #ebe4ef;"><tr><td style="padding:10px 12px;">' +
       '<div style="font-size:12px;font-weight:700;color:#2d2636;margin-bottom:4px;">Views by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
       buildSponsorPackPdfRows((data.impressions || {}).byPlacement, 'placement', 4) +
-      '</table></div></td></tr></table>' +
-      '<div style="border:1px solid #2d2636;border-radius:12px;padding:14px 16px;background:#2d2636;margin-bottom:12px;color:#fff;">' +
-      '<div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.72);margin-bottom:8px;">Strategic Account Direction</div>' +
-      '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.92);margin-bottom:10px;">' +
-      esc(strategicIntro) +
-      '</div>' +
-      '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.88);">' +
-      '<div style="margin-bottom:6px;"><strong style="color:#fff;">Creative rotation:</strong> Refresh your hero banner graphic to drive fresh engagement next month.</div>' +
-      '<div style="margin-bottom:10px;"><strong style="color:#fff;">Featured content:</strong> Submit upcoming announcements for inclusion in partner spotlights.</div>' +
-      '<div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:11.5px;">' +
+      '</table></td></tr></table></td></tr></table>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;"><tr><td style="padding:12px 14px;background:#2d2636;color:#fff;">' +
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.7);margin-bottom:6px;">Next step</div>' +
+      '<div style="font-size:12px;line-height:1.45;color:rgba(255,255,255,0.92);margin-bottom:8px;">Leads and form fills show in your analytics via <span style="font-family:Menlo,Consolas,monospace;font-size:10px;">utm_source=thenetworkerhub</span>.</div>' +
+      '<div style="font-size:12px;line-height:1.4;color:#fff;border-top:1px solid rgba(255,255,255,0.18);padding-top:8px;">' +
       esc(contactLabel) +
-      ' <strong style="color:#fff;">' +
+      ' <strong>' +
       esc(amName) +
-      '</strong> · <span style="color:#e9d5ff;">' +
+      '</strong> · ' +
       esc(amEmail) +
-      '</span></div></div></div>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid #efeaf2;">' +
-      '<tr><td style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#94a3b8;padding-top:12px;">Confidential · The Networker Hub × ' +
+      '</div></td></tr></table>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
+      '<td style="font-size:9px;letter-spacing:0.05em;text-transform:uppercase;color:#94a3b8;">Confidential · The Networker Hub × ' +
       esc(brandName) +
       '</td>' +
-      '<td style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#94a3b8;text-align:right;padding-top:12px;">thenetworkerhub.com</td></tr></table>' +
+      '<td style="font-size:9px;letter-spacing:0.05em;text-transform:uppercase;color:#94a3b8;text-align:right;">thenetworkerhub.com</td>' +
+      '</tr></table>' +
       '</div>'
     );
   }
@@ -8641,10 +8608,12 @@
         'https://cdn.prod.website-files.com/66e99a1017187b724a2bc8b8/66e9a2aee48ebc4a38f6add4_BAR%200007%20Solutions%20logo%20various%20final-01.svg';
     }
 
+    // html2canvas clips content when the source node is far off-screen (negative left).
+    // Keep it in the viewport at near-zero opacity instead.
     var host = document.createElement('div');
     host.setAttribute('aria-hidden', 'true');
     host.style.cssText =
-      'position:fixed;left:-10000px;top:0;width:720px;background:#fff;z-index:-1;pointer-events:none;';
+      'position:fixed;left:0;top:0;width:680px;background:#ffffff;opacity:0.01;z-index:2147483000;pointer-events:none;overflow:visible;';
     document.body.appendChild(host);
 
     return Promise.all([fetchImageAsDataUrl(hubUrl), fetchImageAsDataUrl(brandUrl)])
@@ -8654,8 +8623,9 @@
       })
       .then(function (html2pdf) {
         var node = host.firstElementChild;
+        if (!node) throw new Error('PDF document failed to render.');
         var opt = {
-          margin: [8, 8, 8, 8],
+          margin: [10, 10, 10, 10],
           filename: filename || 'sponsor-pack.pdf',
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: {
@@ -8664,7 +8634,12 @@
             allowTaint: false,
             backgroundColor: '#ffffff',
             logging: false,
-            windowWidth: 720,
+            scrollX: 0,
+            scrollY: 0,
+            x: 0,
+            y: 0,
+            windowWidth: 680,
+            width: 680,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['avoid-all'] },
