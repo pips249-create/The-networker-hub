@@ -10,17 +10,8 @@
       el.textContent = quote.displayPrice || '£55.00';
     });
     if (featuredPlanDuration) {
-      var planId = selectedPlanId();
-      var termLabel =
-        planId === '12months'
-          ? 'for 1 year'
-          : planId === '3months'
-            ? 'for 3 months'
-            : planId === '6months'
-              ? 'for 6 months'
-              : 'for 1 month';
       featuredPlanDuration.textContent =
-        quote.pricingMode === 'prorated' ? 'until your event' : termLabel;
+        quote.pricingMode === 'prorated' ? 'until your event' : 'one-time · up to 30 days';
     }
     if (featuredDurationNote && quote.pricingNote) {
       featuredDurationNote.textContent = quote.pricingNote;
@@ -1011,10 +1002,6 @@
   downloadImageBtn?.addEventListener('click', downloadShareImage);
 
   function selectedPlanId() {
-    const checked = document.querySelector('input[name="featured-plan"]:checked');
-    const hidden = document.querySelector('input[name="featured-plan"][type="hidden"]');
-    if (checked) return checked.value;
-    if (hidden) return hidden.value;
     return '1month';
   }
 
@@ -1033,7 +1020,7 @@
   }
   if (extendFeatured && featuredLede) {
     featuredLede.innerHTML =
-      'Your featured placement is ending soon. Extend to keep premium visibility — from <strong>£55 per month</strong>, adjusted when your event is sooner.';
+      'Your featured placement is ending soon. Extend with a one-time boost to keep premium visibility — from <strong>£55</strong>, adjusted when your event is sooner.';
   }
 
   if (featuredCancelled && featuredError) {
@@ -1110,12 +1097,6 @@
   }
 
   if (featuredYes) featuredYes.addEventListener('click', startFeaturedCheckout);
-
-  document.querySelectorAll('input[name="featured-plan"]').forEach(function (input) {
-    input.addEventListener('change', function () {
-      updateFeaturedDurationNote();
-    });
-  });
 
   async function loadFeaturedSlotStatus() {
     if (!featuredUpsell) return;

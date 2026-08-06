@@ -163,46 +163,44 @@ async function createOpportunityListingCheckoutSession(opts) {
 }
 
 /**
- * Monthly premium business opportunity listing (£55/month subscription).
+ * One-time premium business opportunity listing (£55 for up to 30 days).
  */
 async function createOpportunityPremiumCheckoutSession(opts) {
   const stripe = getStripeClient();
   const opportunityId = String(opts.opportunityId || '').trim();
   if (!opportunityId) throw new Error('missing_opportunity_id');
 
-  const priceId = getCatalogPriceId('opportunity_premium');
-  const lineItems = priceId
-    ? [{ price: priceId, quantity: 1 }]
-    : [
-        lineItemFromCatalog('opportunity_premium', {
-          currency: 'gbp',
-          product_data: {
-            name: 'Premium business opportunity listing',
-            description: 'Featured placement in the opportunities directory',
-          },
-          unit_amount: 5500,
-          recurring: { interval: 'month' },
-        }),
-      ];
+  const amountPence = 5500;
+  const title = String(opts.opportunityTitle || 'Business opportunity').trim();
 
   return stripe.checkout.sessions.create({
-    mode: 'subscription',
+    mode: 'payment',
     customer_email: opts.email,
     client_reference_id: 'opp-premium-' + opportunityId,
     metadata: {
       opportunity_id: opportunityId,
       checkout_type: 'opportunity_premium',
+      featured_amount_pence: String(amountPence),
       owner_email: String(opts.email || '').toLowerCase(),
-    },
-    subscription_data: {
-      metadata: {
-        opportunity_id: opportunityId,
-        checkout_type: 'opportunity_premium',
-      },
     },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
-    line_items: lineItems,
+    line_items: [
+      {
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: 'Premium business opportunity listing',
+            description:
+              'One-time Premium Spotlight for "' +
+              title +
+              '" — up to 30 days on the opportunities browse page',
+          },
+          unit_amount: amountPence,
+        },
+        quantity: 1,
+      },
+    ],
   });
 }
 
@@ -220,7 +218,7 @@ async function retrieveCheckoutSession(sessionId, options = {}) {
 const { FEATURED_PLANS, normalizePlanId } = require('./event-featured-plans');
 
 /**
- * One-off featured event listing (£55/month).
+ * One-off featured event listing (up to £55 one-time).
  */
 async function createEventFeaturedCheckoutSession(opts) {
   const stripe = getStripeClient();

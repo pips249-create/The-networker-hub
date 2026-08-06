@@ -639,7 +639,7 @@ async function activateOpportunityPremium(opportunityId, sessionId) {
     throw err;
   }
 
-  // Stripe retries must not stack premium months for the same checkout session.
+  // One-time boost: up to ~30 days from now (or extend from remaining featured_until).
   if (sid && String(existing.premium_stripe_session_id || '').trim() === sid) {
     return rowToListing(existing);
   }
@@ -649,7 +649,7 @@ async function activateOpportunityPremium(opportunityId, sessionId) {
   if (existing.featured_until && new Date(existing.featured_until) > base) {
     base = new Date(existing.featured_until);
   }
-  const featuredUntil = addMonths(base, 1);
+  const featuredUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const { data, error } = await sb
     .from('business_opportunities')

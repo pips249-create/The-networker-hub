@@ -76,11 +76,15 @@ const FEATURED_PLANS = {
   '1month': buildFeaturedPlan(1, '1 month'),
   '3months': buildFeaturedPlan(3, '3 months'),
   '6months': buildFeaturedPlan(6, '6 months'),
+  /** @deprecated Not offered in organiser checkout UI — kept for older sessions / admin */
   '12months': buildFeaturedPlan(12, '12 months'),
-  /** @deprecated Legacy plans — checkout UI offers 1 / 3 / 6 / 12 months; kept for older sessions */
+  /** @deprecated Legacy plans — checkout UI offers 1 / 3 / 6 months; kept for older sessions */
   '1week': { label: '1 week', days: 7, months: 0, amountPence: 2000, displayPrice: '£20.00', discountPercent: 0 },
   '2months': { label: '2 months', days: 60, months: 2, amountPence: 10000, displayPrice: '£100.00', discountPercent: 0 },
 };
+
+/** Plans organisers can pick in self-serve checkout — one-time boost only. */
+const OFFERABLE_FEATURED_PLAN_IDS = ['1month'];
 
 const PLAN_ALIASES = {
   '4weeks': '1month',
@@ -94,6 +98,25 @@ function normalizePlanId(planId) {
   if (!key) return '1month';
   const resolved = PLAN_ALIASES[key] || key;
   return FEATURED_PLANS[resolved] ? resolved : '1month';
+}
+
+function daysUntilEventStart(eventStartsAt, at) {
+  const now = at instanceof Date ? at.getTime() : Date.now();
+  if (!eventStartsAt) return null;
+  const startMs = new Date(eventStartsAt).getTime();
+  if (!Number.isFinite(startMs)) return null;
+  if (startMs <= now) return 0;
+  return Math.ceil((startMs - now) / 86400000);
+}
+
+/**
+ * Self-serve featured is always a one-time 1-month (or until-event) purchase.
+ * Multi-month / yearly requests are clamped so checkout cannot sell term packages.
+ */
+function resolveOfferablePlanId(planId, eventStartsAt) {
+  void planId;
+  void eventStartsAt;
+  return '1month';
 }
 
 function isEventCurrentlyFeatured(row) {
@@ -180,7 +203,7 @@ function calculateFeaturedListingQuote({
       pricingNote:
         fullPricePence > 0
           ? planMonths === 1
-            ? 'Full month — up to 30 days on the browse page.'
+            ? 'One-time — up to 30 days on the browse page (ends when your event starts if sooner).'
             : plan.label +
               ' — up to ' +
               plan.days +
@@ -189,7 +212,7 @@ function calculateFeaturedListingQuote({
           : 'Test checkout — no charge in this environment.',
       lineItemDescription:
         planMonths === 1
-          ? 'Premium spotlight — up to 1 month on the events browse page'
+          ? 'Premium spotlight — one-time boost (up to 30 days on the events browse page)'
           : 'Premium spotlight — ' +
             plan.label +
             ' on the events browse page' +
@@ -208,7 +231,7 @@ function calculateFeaturedListingQuote({
     visibleDays,
     minPricePence,
     pricingNote:
-      'Price covers ' +
+      'One-time price covers ' +
       visibleDays +
       ' day' +
       (visibleDays === 1 ? '' : 's') +
@@ -216,11 +239,11 @@ function calculateFeaturedListingQuote({
       formatGbp(minPricePence) +
       ').',
     lineItemDescription:
-      'Premium spotlight — ' +
+      'Premium spotlight — one-time boost (' +
       visibleDays +
       ' day' +
       (visibleDays === 1 ? '' : 's') +
-      ' until your event',
+      ' until your event)',
   };
 }
 
@@ -237,6 +260,8 @@ module.exports = {
   featuredMinPricePenceForSlots,
   formatGbp,
   normalizePlanId,
+  resolveOfferablePlanId,
+  OFFERABLE_FEATURED_PLAN_IDS,
   isEventCurrentlyFeatured,
   computeFeaturedUntil,
   previewFeaturedPlacement,

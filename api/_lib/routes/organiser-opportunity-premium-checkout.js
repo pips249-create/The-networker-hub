@@ -25,7 +25,7 @@ function isUuid(value) {
   );
 }
 
-/** Start Stripe Checkout for a £55/month premium opportunity listing. */
+/** Start Stripe Checkout for a one-time £55 premium opportunity listing (up to 30 days). */
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const { json, setCors, requireOrganiserSession, getOpportunityById, opportunityOwnedBySession, isPlatformAdmin } =
@@ -102,6 +102,7 @@ module.exports = async function handler(req, res) {
     const checkoutSession = await createOpportunityPremiumCheckoutSession({
       email: auth.session.email,
       opportunityId,
+      opportunityTitle: opportunity.title,
       successUrl:
         siteUrl +
         '/organiser/opportunity-premium-success?session_id={CHECKOUT_SESSION_ID}&id=' +

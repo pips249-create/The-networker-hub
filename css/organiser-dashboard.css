@@ -3217,6 +3217,11 @@
   box-shadow: 0 0 0 3px rgba(154, 122, 168, 0.16);
 }
 
+.org-featured-upgrade-plan[hidden],
+.org-featured-upgrade-plan-option[hidden] {
+  display: none !important;
+}
+
 .org-featured-upgrade-plan-save {
   font-weight: 700;
   color: #2f6b4f;

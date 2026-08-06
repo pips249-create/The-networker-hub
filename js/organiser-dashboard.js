@@ -1033,12 +1033,6 @@
 
   const FEATURED_LISTING_PRICE = '£55.00';
   const FEATURED_UPGRADE_QUEUE_KEY = 'hub_featured_upgrade_queue';
-  const FEATURED_PLAN_OPTIONS = [
-    { id: '1month', label: '1 month', price: FEATURED_LISTING_PRICE },
-    { id: '3months', label: '3 months', price: '£156.75', note: 'Save 5%' },
-    { id: '6months', label: '6 months', price: '£297.00', note: 'Save 10%' },
-    { id: '12months', label: 'Yearly', price: '£561.00', note: 'Save 15%' },
-  ];
   let featuredSpotlightSlots = null;
   let featuredQuoteCache = Object.create(null);
 
@@ -1061,27 +1055,26 @@
     return eventIsLiveForFeatured(ev) && eventIsUpcomingForFeatured(ev);
   }
 
-  function featuredUpgradeDurationNote(ev, planId) {
+  function featuredUpgradeDurationNote(ev) {
     if (!ev?.date) return '';
-    const cacheKey = String(ev.id || '') + ':' + String(planId || '1month');
+    const cacheKey = String(ev.id || '') + ':1month';
     const cached = featuredQuoteCache[cacheKey];
     if (cached && cached.pricingNote) return cached.pricingNote;
     if (!window.HubOrganiserFeaturedDuration) return '';
     return window.HubOrganiserFeaturedDuration.checkoutDurationNote({
-      planId: planId || '1month',
+      planId: '1month',
       eventStartIso: ev.date,
       currentUntil: ev.featuredUntil || null,
     });
   }
 
-  async function fetchFeaturedQuote(eventId, planId) {
-    const cacheKey = String(eventId || '') + ':' + String(planId || '1month');
+  async function fetchFeaturedQuote(eventId) {
+    const cacheKey = String(eventId || '') + ':1month';
     if (featuredQuoteCache[cacheKey]) return featuredQuoteCache[cacheKey];
     const res = await fetch(
       '/api/organiser/event-featured-quote?eventId=' +
         encodeURIComponent(eventId) +
-        '&planId=' +
-        encodeURIComponent(planId || '1month'),
+        '&planId=1month',
       { credentials: 'include', cache: 'no-store' }
     );
     const data = await res.json().catch(function () {
@@ -1124,9 +1117,8 @@
     return !ev.featured;
   }
 
-  function selectedFeaturedUpgradePlanId(root) {
-    const checked = root?.querySelector('input[name="org-featured-plan"]:checked');
-    return checked ? checked.value : '1month';
+  function selectedFeaturedUpgradePlanId() {
+    return '1month';
   }
 
   function updateFeaturedUpgradeHeaderSummary(eventCount) {
@@ -1185,7 +1177,7 @@
     const summary = root?.querySelector('#org-featured-upgrade-summary');
     const btn = root?.querySelector('#org-featured-upgrade-submit');
     const ids = selectedFeaturedUpgradeEventIds(root);
-    const planId = selectedFeaturedUpgradePlanId(root);
+    const planId = '1month';
     const newFeaturedCount = ids.filter(function (id) {
       const ev = (state.events || []).find(function (row) {
         return row.id === id;
@@ -1207,7 +1199,7 @@
       if (!ev) return;
       noteEl.hidden = true;
       noteEl.textContent = '';
-      fetchFeaturedQuote(ev.id, planId)
+      fetchFeaturedQuote(ev.id)
         .then(function (quote) {
           if (!quote || !quote.pricingNote) return;
           noteEl.textContent = quote.pricingNote;
@@ -1221,17 +1213,17 @@
     if (summary) {
       if (!ids.length) {
         summary.textContent =
-          'Tick one or more events above to continue. From ' +
+          'Tick one or more events above to continue. One-time from ' +
           FEATURED_LISTING_PRICE +
-          ' per month, per event.';
+          ' per event (adjusted if your event is sooner).';
       } else if (ids.length === 1) {
         summary.textContent = '1 event selected — loading price…';
-        fetchFeaturedQuote(ids[0], planId)
+        fetchFeaturedQuote(ids[0])
           .then(function (quote) {
             if (!summary) return;
             if (quote) {
               summary.textContent =
-                '1 event selected — ' + quote.displayPrice + '. ' + quote.pricingNote;
+                '1 event selected — ' + quote.displayPrice + ' one-time. ' + quote.pricingNote;
             } else {
               summary.textContent = '1 event selected — payment opens on the next screen.';
             }
@@ -1242,7 +1234,7 @@
       } else {
         summary.textContent =
           ids.length +
-          ' events selected — you pay separately for each one. Prices are adjusted if your event is sooner than one month away.';
+          ' events selected — you pay separately for each one. One-time price covers up to 30 days, or until the event if sooner.';
       }
     }
     if (btn) {
@@ -1296,10 +1288,7 @@
     root.addEventListener('change', function (e) {
       const target = e.target;
       if (!(target instanceof HTMLInputElement)) return;
-      if (
-        target.matches('.org-featured-upgrade-event-input') ||
-        target.matches('input[name="org-featured-plan"]')
-      ) {
+      if (target.matches('.org-featured-upgrade-event-input')) {
         updateFeaturedUpgradeSummary(root);
       }
     });
@@ -1362,7 +1351,7 @@
   async function startFeaturedUpgradeCheckout(root) {
     const errorEl = root?.querySelector('#org-featured-upgrade-error');
     const submit = root?.querySelector('#org-featured-upgrade-submit');
-    const planId = selectedFeaturedUpgradePlanId(root);
+    const planId = selectedFeaturedUpgradePlanId();
     const eventIds = selectedFeaturedUpgradeEventIds(root);
     if (!eventIds.length) return;
 
@@ -1471,21 +1460,6 @@
     }
 
     const liveEvents = liveEventsForFeaturedUpgrade();
-    const planOptionsHtml = FEATURED_PLAN_OPTIONS.map(function (plan, index) {
-      return (
-        '<label class="org-featured-upgrade-plan-option">' +
-        '<input type="radio" name="org-featured-plan" value="' +
-        esc(plan.id) +
-        '"' +
-        (index === 0 ? ' checked' : '') +
-        ' />' +
-        esc(plan.label) +
-        ' · ' +
-        esc(plan.price) +
-        (plan.note ? ' <span class="org-featured-upgrade-plan-save">' + esc(plan.note) + '</span>' : '') +
-        '</label>'
-      );
-    }).join('');
 
     if (!liveEvents.length) {
       updateFeaturedUpgradeHeaderSummary(0);
@@ -1503,7 +1477,7 @@
         const meta = eventFeaturedMeta(ev);
         const dateLabel = ev.date ? formatDateShort(ev.date) : 'Date TBC';
         const typeLabel = ev.type ? String(ev.type) : 'Event';
-        const durationNote = featuredUpgradeDurationNote(ev, selectedFeaturedUpgradePlanId(root));
+        const durationNote = featuredUpgradeDurationNote(ev);
         const searchText = [ev.title, typeLabel, dateLabel, meta.label].filter(Boolean).join(' ');
         return (
           '<label class="org-featured-upgrade-event' +
@@ -1541,11 +1515,6 @@
 
     root.innerHTML =
       featuredUpgradeSlotStatusHtml() +
-      '<div class="org-featured-upgrade-plan">' +
-      '<span class="org-featured-upgrade-plan-label">How long should it stay featured?</span>' +
-      '<div class="org-featured-upgrade-plan-options">' +
-      planOptionsHtml +
-      '</div></div>' +
       '<div class="org-featured-upgrade-events-head">' +
       '<p class="org-featured-upgrade-events-title">Tick the events you want more people to see <span class="org-featured-upgrade-events-count">(' +
       liveEvents.length +
@@ -1564,7 +1533,7 @@
       '<button type="button" class="org-btn org-btn-gold" id="org-featured-upgrade-submit" disabled>Continue to payment</button>' +
       '<p class="org-featured-upgrade-summary" id="org-featured-upgrade-summary">Tick one or more events above to continue.</p>' +
       '</div>' +
-      '<p class="org-featured-upgrade-policy">Featured placement runs until your event starts if that is sooner than one month. Your event stays visible when people filter by type or ticket price.</p>';
+      '<p class="org-featured-upgrade-policy">One-time Premium Spotlight — runs until your event starts, or up to 30 days, whichever is sooner. Not a subscription.</p>';
 
     bindFeaturedUpgradeUi(root);
     updateFeaturedUpgradeSummary(root);

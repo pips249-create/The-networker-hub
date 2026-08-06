@@ -3292,7 +3292,12 @@ body.ee-modal-open {
   display: grid;
   gap: 10px;
   margin: 0 0 18px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.organiser-published-page .ep-featured-plans[hidden],
+.organiser-published-page .ep-featured-plan[hidden] {
+  display: none !important;
 }
 
 @media (max-width: 520px) {

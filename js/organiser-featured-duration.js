@@ -34,6 +34,30 @@
     return PLAN_DAYS[normalizePlanId(planId)] || 30;
   }
 
+  var OFFERABLE_PLAN_IDS = ['1month'];
+
+  /** Whole days from now until the event start (ceil). */
+  function daysUntilEventStart(eventStartIso) {
+    if (!eventStartIso) return null;
+    var startMs = new Date(eventStartIso).getTime();
+    if (!Number.isFinite(startMs)) return null;
+    var now = Date.now();
+    if (startMs <= now) return 0;
+    return Math.ceil((startMs - now) / 86400000);
+  }
+
+  /**
+   * Self-serve featured is a single one-time purchase (no multi-month terms).
+   * Longer plan ids are kept only for legacy quote/checkout normalisation.
+   */
+  function planFitsEvent(planId, eventStartIso) {
+    return normalizePlanId(planId) === '1month';
+  }
+
+  function offerablePlanIds(eventStartIso) {
+    return OFFERABLE_PLAN_IDS.slice();
+  }
+
   function formatDate(iso) {
     if (!iso) return '';
     var d = new Date(iso);
@@ -91,19 +115,13 @@
     }
     var preview = previewPlacement(opts);
     if (!preview.cappedByEvent) {
-      return (
-        'Featured placement runs for up to ' +
-        preview.planLabel +
-        ' for people browsing your area and dates on the hub.'
-      );
+      return 'One-time Premium Spotlight — up to 30 days for people browsing your area and dates on the hub.';
     }
     var eventDate = formatDate(opts.eventStartIso || opts.date);
     return (
       'Your event is on ' +
       eventDate +
-      ' — featured placement runs until then, when it leaves the browse page (not the full ' +
-      preview.planLabel +
-      ').'
+      ' — one-time featured placement runs until then, when it leaves the browse page.'
     );
   }
 
@@ -118,9 +136,7 @@
       );
     }
     return (
-      'Premium spotlight placement is active for up to ' +
-      preview.planLabel +
-      '. Featured until ' +
+      'Premium spotlight placement is active for up to 30 days. Featured until ' +
       untilDate +
       '. Thank you!'
     );
@@ -131,5 +147,10 @@
     checkoutDurationNote: checkoutDurationNote,
     successStatusText: successStatusText,
     formatDate: formatDate,
+    planDays: planDays,
+    normalizePlanId: normalizePlanId,
+    daysUntilEventStart: daysUntilEventStart,
+    planFitsEvent: planFitsEvent,
+    offerablePlanIds: offerablePlanIds,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,5 +1,5 @@
 const { getSupabaseAdmin } = require('./supabase');
-const { calculateFeaturedListingQuote, normalizePlanId } = require('./event-featured-plans');
+const { calculateFeaturedListingQuote, resolveOfferablePlanId } = require('./event-featured-plans');
 const { getFeaturedSpotlightSlotStatus } = require('./event-featured-slots');
 const {
   fetchSeriesPeerRows,
@@ -9,18 +9,19 @@ const {
 
 async function buildFeaturedQuoteForEvent(eventId, planId) {
   const id = String(eventId || '').trim();
-  const resolvedPlanId = normalizePlanId(planId);
   const sb = getSupabaseAdmin();
   const { data: rawRow, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
   if (error) throw new Error(error.message);
   if (!rawRow) throw new Error('event_not_found');
 
   const peers = await fetchSeriesPeerRows(sb, rawRow);
+  const eventStartsAt = seriesFeaturedStartCap(peers) || rawRow.starts_at;
+  const resolvedPlanId = resolveOfferablePlanId(planId, eventStartsAt);
   const slots = await getFeaturedSpotlightSlotStatus(id);
   return calculateFeaturedListingQuote({
     currentUntil: seriesFeaturedUntil(peers) || rawRow.featured_until,
     planId: resolvedPlanId,
-    eventStartsAt: seriesFeaturedStartCap(peers) || rawRow.starts_at,
+    eventStartsAt,
     slotsAvailable: slots.available,
   });
 }

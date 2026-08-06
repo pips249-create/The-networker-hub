@@ -118,14 +118,14 @@ cms_slot = events_sponsor_hub
 |-----------|---------|-------------|
 | Main directory sponsor | Events | £2,000 / month |
 | Mini sponsor (max 3 slots) | Events | £600 / slot / month |
-| Premium Spotlight | Events (organiser self-serve) | £55 / month |
+| Premium Spotlight | Events (organiser self-serve) | £55 one-time (until event / up to 30 days) |
 | Main directory sponsor | Organisers browse | £1,000 / month |
 | Mini sponsor (max 3 slots) | Organisers browse | £300 / slot / month |
-| Premium Spotlight | Organisers (contact sales) | £27.50 / month |
+| Premium Spotlight | Organisers (contact sales) | £27.50 one-time (up to 30 days) |
 | Main directory sponsor | Business opportunities | £2,000 / month |
 | Mini sponsor (max 3 slots) | Opportunities | £600 / slot / month |
 | Directory listing | Opportunities (self-serve) | £25 / month + VAT |
-| Premium Spotlight | Opportunities (self-serve) | £55 / month |
+| Premium Spotlight | Opportunities (self-serve) | £55 one-time (up to 30 days) |
 
 Self-serve Stripe checkouts use catalog Price IDs when env vars are set (run `npm run sync-stripe`). Opportunity listing fees stay dynamic (`price_data`) because the term length varies.
 
@@ -139,9 +139,9 @@ Self-serve Stripe checkouts use catalog Price IDs when env vars are set (run `np
 | `STRIPE_ORGANISERS_MINI_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Organisers mini sponsor £300/mo |
 | `STRIPE_OPPORTUNITIES_MAIN_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Opportunities main sponsor £2,000/mo |
 | `STRIPE_OPPORTUNITIES_MINI_SPONSOR_PRICE_ID` / `_PAYMENT_LINK` | Opportunities mini sponsor £600/mo |
-| `STRIPE_EVENT_FEATURED_1MONTH_PRICE_ID` | Featured event £55 (organiser checkout) |
-| `STRIPE_OPPORTUNITY_PREMIUM_PRICE_ID` | Premium opportunity £55/mo |
-| `STRIPE_ORGANISER_FEATURED_PRICE_ID` / `_PAYMENT_LINK` | Featured organiser profile £27.50/mo |
+| `STRIPE_EVENT_FEATURED_1MONTH_PRICE_ID` | Featured event £55 one-time (organiser checkout) |
+| `STRIPE_OPPORTUNITY_PREMIUM_PRICE_ID` | Premium opportunity £55 one-time |
+| `STRIPE_ORGANISER_FEATURED_PRICE_ID` / `_PAYMENT_LINK` | Featured organiser profile £27.50 one-time |
 
 ## What happens when the invoice is paid
 
@@ -158,10 +158,10 @@ These are already tracked from other Stripe checkouts — **do not** add sponsor
 |------|-------------|
 | Ticket booking fees | `registrations` + booking fee calculation |
 | Opportunity listing fee | `business_opportunities.listing_paid_at` |
-| Opportunity premium subscription | Premium listing state |
+| Opportunity premium spotlight | Premium listing state (one-time, up to 30 days) |
 | Event featured spotlight | `events.featured_paid_at` |
 
-Subscription renewal invoices for organiser premium listings are **skipped** unless you add `revenue_category` (they are not sponsorship).
+Organiser featured boost is booked via enquiry / one-time payment link (not a recurring subscription).
 
 ## Checkout / Payment Links (alternative to invoices)
 

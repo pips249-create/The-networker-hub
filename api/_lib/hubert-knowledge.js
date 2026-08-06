@@ -135,7 +135,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55/mo; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium £55/mo; City Partner from £29/mo per city + VAT, £75 for 3 cities). Most sponsorship packages offer monthly billing or prepaid 1 / 3 / 6 / 12 months (save 5% / 10% / 15% on longer prepaid terms). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
+      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55 one-time; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT, £75 for 3 cities). Most sponsorship packages offer monthly billing or prepaid 1 / 3 / 6 / 12 months (save 5% / 10% / 15% on longer prepaid terms). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list). Featured placement may be available — ask rosie@thenetworkerhub.com.',
   },
   {
@@ -188,7 +188,7 @@ const FALLBACK_REPLIES = [
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure|city partner|city sponsor/i,
     reply:
-      'For paid advertising, see /advertising — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55/mo; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50/mo; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium £55/mo; City Partner from £29/mo per city + VAT (£75 for 3 cities). Most packages: monthly or prepaid 1 / 3 / 6 / 12 months (save up to 15% yearly). Email rosie@thenetworkerhub.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list. Policy: /legal-policies#advertising.',
+      'For paid advertising, see /advertising — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55 one-time; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT (£75 for 3 cities). Most packages: monthly or prepaid 1 / 3 / 6 / 12 months (save up to 15% yearly). Email rosie@thenetworkerhub.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list. Policy: /legal-policies#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,

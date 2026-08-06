@@ -5,12 +5,13 @@ const {
   createEventFeaturedCheckoutSession,
   siteBaseUrl,
 } = require('../stripe-checkout');
-const { normalizePlanId } = require('../event-featured-plans');
+const { normalizePlanId, resolveOfferablePlanId } = require('../event-featured-plans');
 const { buildFeaturedQuoteForEvent } = require('../event-featured-quote');
 const { assertFeaturedSpotlightSlotAvailable } = require('../event-featured-slots');
 const {
   fetchSeriesPeerRows,
   isSeriesLiveOnBrowse,
+  seriesFeaturedStartCap,
 } = require('../event-series-peers');
 
 function parseBody(req) {
@@ -31,7 +32,7 @@ function isUuid(value) {
   );
 }
 
-/** Start Stripe Checkout for a featured event listing (£55/month). */
+/** Start Stripe Checkout for a one-time featured event listing (up to £55). */
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const {
@@ -68,9 +69,9 @@ module.exports = async function handler(req, res) {
   try {
     const body = parseBody(req);
     const eventId = String(body.eventId || body.id || '').trim();
-    const planId = normalizePlanId(body.planId || body.plan || body.duration);
+    const requestedPlanId = normalizePlanId(body.planId || body.plan || body.duration);
     if (!isUuid(eventId)) return json(res, 400, { ok: false, error: 'invalid_event_id' });
-    if (!planId) return json(res, 400, { ok: false, error: 'invalid_plan' });
+    if (!requestedPlanId) return json(res, 400, { ok: false, error: 'invalid_plan' });
 
     const groups = await listGroupsForSession(auth.session);
     const events = await listEventsForSession(
@@ -110,6 +111,9 @@ module.exports = async function handler(req, res) {
           'This event has already started — featured placement only runs while it appears on the events browse page.',
       });
     }
+
+    const eventStartsAt = seriesFeaturedStartCap(peers) || (rawRow && rawRow.starts_at) || event.date || null;
+    const planId = resolveOfferablePlanId(requestedPlanId, eventStartsAt);
 
     try {
       await assertFeaturedSpotlightSlotAvailable(eventId);
