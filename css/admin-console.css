@@ -1442,6 +1442,12 @@ a.admin-action-row:hover .admin-action-btn {
   font-weight: 600;
 }
 
+.sponsor-pack-print-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
 .sponsor-pack {
   background:
     radial-gradient(1200px 280px at 10% -10%, rgba(154, 122, 168, 0.14), transparent 55%),
@@ -1469,24 +1475,30 @@ a.admin-action-row:hover .admin-action-btn {
 }
 
 .sponsor-pack-logo-tile {
-  width: 7.5rem;
-  height: 3.5rem;
+  width: 9.5rem;
+  height: 4.25rem;
   border-radius: 0.85rem;
   border: 1px solid #e8e2ec;
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 0.65rem;
+  padding: 0.55rem 0.75rem;
+  overflow: hidden;
 }
 
 .sponsor-pack-logo-tile.is-placeholder {
   background: #f8f5fa;
 }
 
+.sponsor-pack-logo-tile--dark {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+}
+
 .sponsor-pack-logo {
   max-width: 100%;
-  max-height: 2.4rem;
+  max-height: 3rem;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -1504,6 +1516,10 @@ a.admin-action-row:hover .admin-action-btn {
   color: #4a2c5a;
   text-align: center;
   line-height: 1.2;
+}
+
+.sponsor-pack-logo-tile--dark .sponsor-pack-logo-fallback {
+  color: #f8f5fa;
 }
 
 .sponsor-pack-header-copy {
@@ -1786,24 +1802,74 @@ a.admin-action-row:hover .admin-action-btn {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body.sponsor-pack-printing * {
+    visibility: hidden !important;
+  }
+
+  body.sponsor-pack-printing .sponsor-pack-sheet,
+  body.sponsor-pack-printing .sponsor-pack-sheet * {
+    visibility: visible !important;
+  }
+
   body.sponsor-pack-printing .admin-sidebar,
   body.sponsor-pack-printing .admin-hub-tabs,
   body.sponsor-pack-printing .no-print,
   body.sponsor-pack-printing #hub-site-nav,
-  body.sponsor-pack-printing .sponsor-pack-toolbar {
+  body.sponsor-pack-printing .sponsor-pack-toolbar,
+  body.sponsor-pack-printing .admin-topbar,
+  body.sponsor-pack-printing .admin-page-guide {
     display: none !important;
   }
 
+  body.sponsor-pack-printing,
+  body.sponsor-pack-printing .admin-shell,
   body.sponsor-pack-printing .admin-main,
   body.sponsor-pack-printing .admin-content,
+  body.sponsor-pack-printing .admin-hub-panel,
+  body.sponsor-pack-printing .sponsor-pack-admin,
   body.sponsor-pack-printing .sponsor-pack-sheet {
+    position: static !important;
+    inset: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #fff !important;
     padding: 0 !important;
     margin: 0 !important;
-    overflow: visible !important;
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+
+  body.sponsor-pack-printing .sponsor-pack-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
   }
 
   body.sponsor-pack-printing .sponsor-pack {
-    box-shadow: none;
-    border-color: #ddd;
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.sponsor-pack-printing .sponsor-pack-kpi--accent,
+  body.sponsor-pack-printing .sponsor-pack-logo-tile--dark,
+  body.sponsor-pack-printing .sponsor-pack-day-bar i {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.sponsor-pack-printing .sponsor-pack-notes,
+  body.sponsor-pack-printing .sponsor-pack-card--wide {
+    break-inside: avoid;
   }
 }

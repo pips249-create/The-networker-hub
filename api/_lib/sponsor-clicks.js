@@ -209,33 +209,80 @@ function countBy(rows, keyFn, weightFn) {
     .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 }
 
+const BARNSGATE_PACK_LOGO =
+  'https://cdn.prod.website-files.com/66e99a1017187b724a2bc8b8/66e9a2aee48ebc4a38f6add4_BAR%200007%20Solutions%20logo%20various%20final-01.svg';
+
+const SLOT_LOGO_PRIORITY = [
+  'events_sponsor_hub',
+  'sponsor_hub',
+  'booking_email_sponsor',
+  'organisers_sponsor_hub',
+  'opportunities_sponsor_hub',
+  'home_partners',
+];
+
 function companyIlike(filter) {
   return '%' + cleanText(filter, MAX_COMPANY).replace(/%/g, '') + '%';
+}
+
+function isBarnsgateBrand(name) {
+  return /barnsgate/i.test(String(name || ''));
+}
+
+function scoreLogoCandidate(row, companyFilter) {
+  const slot = String(row.slot || '').trim();
+  const activeBoost = row.active === false ? -50 : 20;
+  const slotIdx = SLOT_LOGO_PRIORITY.indexOf(slot);
+  const slotBoost = slotIdx >= 0 ? 40 - slotIdx : /sponsor|partner/i.test(slot) ? 10 : 0;
+  const name = String(row.company_name || '').trim().toLowerCase();
+  const filter = String(companyFilter || '').trim().toLowerCase();
+  const nameBoost = name === filter ? 15 : name.indexOf(filter) === 0 ? 8 : 0;
+  const hasLogo = String(row.logo_url || row.image_url || '').trim() ? 5 : -20;
+  return activeBoost + slotBoost + nameBoost + hasLogo;
 }
 
 async function lookupBrandLogo(sb, companyFilter) {
   if (!companyFilter) return null;
   const { data, error } = await sb
     .from('cms_blocks')
-    .select('company_name, logo_url, image_url, slot, active')
+    .select('company_name, logo_url, image_url, slot, active, logo_band_dark')
     .ilike('company_name', companyIlike(companyFilter))
     .order('updated_at', { ascending: false })
-    .limit(8);
+    .limit(12);
 
-  if (error || !data || !data.length) return null;
+  if (error || !data || !data.length) {
+    if (isBarnsgateBrand(companyFilter)) {
+      return {
+        company: 'Barnsgate Solutions',
+        logoUrl: BARNSGATE_PACK_LOGO,
+        slot: 'events_sponsor_hub',
+        logoBandDark: true,
+      };
+    }
+    return null;
+  }
 
-  const preferred =
-    data.find((r) => r.active !== false && /sponsor|partner/i.test(String(r.slot || ''))) ||
-    data.find((r) => r.active !== false) ||
-    data[0];
+  const ranked = data.slice().sort((a, b) => scoreLogoCandidate(b, companyFilter) - scoreLogoCandidate(a, companyFilter));
+  const preferred = ranked[0];
+  let logo = String(preferred.logo_url || preferred.image_url || '').trim();
+  let company = String(preferred.company_name || '').trim() || companyFilter;
+  let logoBandDark = preferred.logo_band_dark === true;
 
-  const logo = String(preferred.logo_url || preferred.image_url || '').trim();
-  const company = String(preferred.company_name || '').trim();
+  // Light/white SVG wordmarks vanish on a white pack tile — use dark band + known Barnsgate asset.
+  if (isBarnsgateBrand(company) || isBarnsgateBrand(companyFilter)) {
+    company = company || 'Barnsgate Solutions';
+    if (!logo || /\.svg(?:[?#]|$)/i.test(logo) || /website-files\.com/i.test(logo)) {
+      logo = BARNSGATE_PACK_LOGO;
+    }
+    logoBandDark = true;
+  }
+
   if (!company && !logo) return null;
   return {
-    company: company || companyFilter,
+    company,
     logoUrl: logo || null,
     slot: preferred.slot || null,
+    logoBandDark,
   };
 }
 
@@ -318,7 +365,7 @@ async function getSponsorClicksReport(query) {
     configured: true,
     from,
     to,
-    brand: brand || (companyFilter ? { company: companyFilter, logoUrl: null, slot: null } : null),
+    brand: brand || (companyFilter ? { company: companyFilter, logoUrl: null, slot: null, logoBandDark: false } : null),
     hubLogoUrl: '/assets/logo-nav.png',
     summary: {
       pageVisits,

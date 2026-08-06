@@ -8320,6 +8320,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Print / PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Print / PDF opens a clean A4 page — use Save as PDF in the print dialog.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -8429,6 +8430,7 @@
       var toLabel = String(data.to || '').slice(0, 10);
       var hubLogo = data.hubLogoUrl || '/assets/logo-nav.png';
       var brandLogo = brand.logoUrl || '';
+      var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
       var ctrLabel =
         summary.ctrPct == null ? '—' : String(summary.ctrPct) + '%';
       var generated = new Date().toLocaleString('en-GB', {
@@ -8449,14 +8451,15 @@
         '<span class="sponsor-pack-logo-x" aria-hidden="true">×</span>' +
         '<div class="sponsor-pack-logo-tile' +
         (brandLogo ? '' : ' is-placeholder') +
+        (brandDark ? ' sponsor-pack-logo-tile--dark' : '') +
         '">' +
         (brandLogo
           ? '<img src="' +
             attrEsc(brandLogo) +
             '" alt="' +
             attrEsc(brandName) +
-            '" class="sponsor-pack-logo sponsor-pack-logo--brand">'
-          : '<span class="sponsor-pack-logo-fallback">' + esc(String(brandName).slice(0, 18)) + '</span>') +
+            '" class="sponsor-pack-logo sponsor-pack-logo--brand" crossorigin="anonymous">'
+          : '<span class="sponsor-pack-logo-fallback">' + esc(String(brandName).slice(0, 22)) + '</span>') +
         '</div></div>';
 
       var recentRows = (data.recent || [])
@@ -8601,11 +8604,53 @@
     }
     if (printBtn) {
       printBtn.addEventListener('click', function () {
-        document.body.classList.add('sponsor-pack-printing');
-        window.print();
-        setTimeout(function () {
-          document.body.classList.remove('sponsor-pack-printing');
-        }, 500);
+        var pack = document.querySelector('#sponsor-clicks-body .sponsor-pack');
+        if (!pack) {
+          window.alert('Load a pack first, then Print / PDF.');
+          return;
+        }
+        var brand =
+          (lastReport && lastReport.brand && lastReport.brand.company) ||
+          (document.getElementById('sponsor-clicks-company') || {}).value ||
+          'sponsor';
+        var from = String((lastReport && lastReport.from) || '').slice(0, 10);
+        var to = String((lastReport && lastReport.to) || '').slice(0, 10);
+        var title =
+          'Partnership pack — ' +
+          String(brand).trim() +
+          (from && to ? ' (' + from + ' to ' + to + ')' : '');
+        var html =
+          '<!DOCTYPE html><html lang="en-GB"><head><meta charset="UTF-8">' +
+          '<title>' +
+          esc(title) +
+          '</title>' +
+          '<link rel="stylesheet" href="/css/admin-console.css?v=20260806sponsorpdf">' +
+          '<style>' +
+          'html,body{margin:0;padding:0;background:#fff;}' +
+          'body{font-family:"DM Sans",system-ui,sans-serif;color:#1e293b;}' +
+          '.sponsor-pack-print-root{max-width:820px;margin:0 auto;padding:18px 20px 28px;}' +
+          '@page{size:A4;margin:12mm;}' +
+          '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+          '.sponsor-pack-print-root{max-width:none;padding:0;}}' +
+          '</style></head><body>' +
+          '<div class="sponsor-pack-print-root">' +
+          pack.outerHTML +
+          '</div>' +
+          '<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250);};<\/script>' +
+          '</body></html>';
+        var win = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1200');
+        if (!win) {
+          window.alert('Allow pop-ups to open the PDF print view, or use your browser Print dialog.');
+          document.body.classList.add('sponsor-pack-printing');
+          window.print();
+          setTimeout(function () {
+            document.body.classList.remove('sponsor-pack-printing');
+          }, 800);
+          return;
+        }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
       });
     }
     if (exportBtn) {
