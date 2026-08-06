@@ -6129,11 +6129,14 @@
   function attendeeActionsHtml(a) {
     if (String(a.applicationStatus || '') === 'Pending') {
       return (
-        '<div class="org-application-review" data-review-id="' +
+        '<div class="org-application-review org-application-review--pending" data-review-id="' +
         esc(a.id) +
         '">' +
         '<div class="org-application-review-main">' +
+        '<div class="org-application-review-copy">' +
         '<p class="org-application-review-label">Review application</p>' +
+        '<p class="org-application-review-hint">Check industry and job title match your event rules, then approve or decline.</p>' +
+        '</div>' +
         '<div class="org-application-review-buttons">' +
         '<button type="button" class="org-application-approve-btn" data-approve-application="' +
         esc(a.id) +
@@ -6465,7 +6468,7 @@
         esc(registeredLabel) +
         '</td><td class="org-td-actions" data-label="Actions">' +
         (isPendingApp
-          ? '<span class="org-application-review-inline-hint">Use buttons below</span>'
+          ? '<span class="org-application-review-inline-hint">Approve or decline below</span>'
           : attendeeActionsHtml(a)) +
         '</td>';
       body.appendChild(tr);
@@ -6473,7 +6476,10 @@
         const reviewTr = document.createElement('tr');
         reviewTr.className = 'org-attendee-row-pending-review';
         reviewTr.innerHTML =
-          '<td colspan="11" data-label="Review">' + attendeeActionsHtml(a) + '</td>';
+          '<td colspan="11" data-label="Review">' +
+          '<div class="org-application-review-bar">' +
+          attendeeActionsHtml(a) +
+          '</div></td>';
         body.appendChild(reviewTr);
       }
     });
