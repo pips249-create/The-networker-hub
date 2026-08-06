@@ -660,7 +660,7 @@ async function getSponsorClicksReport(query) {
     to,
     brand: brand || (companyFilter ? { company: companyFilter, logoUrl: null, slot: null, logoBandDark: false } : null),
     brands,
-    hubLogoUrl: '/assets/logo-nav.png',
+    hubLogoUrl: '/assets/logo-nav-transparent.png',
     contact: {
       name: 'Rosie McGilvray',
       email: 'rosie@thenetworkerhub.com',
