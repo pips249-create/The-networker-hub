@@ -323,6 +323,8 @@
     if (window.CmsSponsorFields && window.CmsSponsorFields.trackSponsorImpression) {
       window.CmsSponsorFields.trackSponsorImpression(slotPlacement(els), company, {
         el: els.sponsorHub,
+        pageView: true,
+        path: window.location && window.location.pathname,
       });
     }
   }
@@ -406,6 +408,7 @@
     container.innerHTML = previewShellHtml();
     var els = previewElsFromContainer(container);
     if (!els || !els.sponsorHub) return;
+    els.sponsorHub.setAttribute('data-sponsor-preview', 'true');
     renderSponsorBlock(els, block);
     markSponsorReady(els);
   }
@@ -416,7 +419,13 @@
   function scheduleAutoLoad() {
     if (!document.getElementById('sponsor-hub')) return;
     // /events/ switches hero sponsor by browse mode — browse-mode.js loads the correct slot.
-    if (document.body.classList.contains('events-page')) return;
+    // Opportunities reuses the events-page CSS class but has no browse-mode loader.
+    if (
+      document.body.classList.contains('events-page') &&
+      !document.body.classList.contains('opportunities-page')
+    ) {
+      return;
+    }
     load();
   }
 

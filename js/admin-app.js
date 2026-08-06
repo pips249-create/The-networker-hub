@@ -8502,10 +8502,10 @@
         esc(generated) +
         '</p></div></header>' +
         '<section class="sponsor-pack-kpis" aria-label="Headline metrics">' +
-        '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Page visits</p>' +
+        '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Page views</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.pageVisits || 0)) +
-        '</p><p class="sponsor-pack-kpi-hint">Times their placement was seen on the Hub</p></div>' +
+        '</p><p class="sponsor-pack-kpi-hint">Views of the sponsored directory (e.g. /events/)</p></div>' +
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Emails with logo</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.emailSends || 0)) +
@@ -8517,14 +8517,14 @@
         '<div class="sponsor-pack-kpi sponsor-pack-kpi--accent"><p class="sponsor-pack-kpi-label">Site CTR</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(ctrLabel) +
-        '</p><p class="sponsor-pack-kpi-hint">Clicks ÷ page visits</p></div>' +
+        '</p><p class="sponsor-pack-kpi-hint">Clicks ÷ page views</p></div>' +
         '</section>' +
         '<section class="sponsor-pack-grid">' +
         '<div class="sponsor-pack-card"><h3>Clicks by placement</h3>' +
         rankListHtml(data.byPlacement, 'placement', 'No clicks in this range.') +
         '</div>' +
-        '<div class="sponsor-pack-card"><h3>Page visits by placement</h3>' +
-        rankListHtml((data.impressions || {}).byPlacement, 'placement', 'No page visits logged yet.') +
+        '<div class="sponsor-pack-card"><h3>Page views by placement</h3>' +
+        rankListHtml((data.impressions || {}).byPlacement, 'placement', 'No page views logged yet.') +
         '</div>' +
         '<div class="sponsor-pack-card"><h3>Emails by template</h3>' +
         rankListHtml((data.emails || {}).bySlug, 'slug', 'No logo emails counted yet.') +
@@ -8545,7 +8545,7 @@
         '<section class="sponsor-pack-notes">' +
         '<h3>How to read this pack</h3>' +
         '<ul>' +
-        '<li><strong>Page visits</strong> count when their live placement is visible (once per browser tab per day).</li>' +
+        '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (e.g. /events/ for Events Headline).</li>' +
         '<li><strong>Emails with logo</strong> count Hub sends that included their creative — not opens (opens stay with Resend / recipient clients).</li>' +
         '<li><strong>Leads &amp; form fills</strong> appear in their analytics / CRM via Hub UTM tags (<code>utm_source=thenetworkerhub</code>).</li>' +
         '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; attach their GA “thenetworkerhub” sessions as proof of pipeline.</li>' +
@@ -8576,7 +8576,7 @@
             formatSponsorPackNumber(s.clicks || 0) +
               ' clicks · ' +
               formatSponsorPackNumber(s.pageVisits || 0) +
-              ' visits · ' +
+              ' page views · ' +
               formatSponsorPackNumber(s.emailSends || 0) +
               ' emails',
             'ok'

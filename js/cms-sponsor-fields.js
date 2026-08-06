@@ -266,19 +266,10 @@
     );
   }
 
-  function postSponsorImpression(placement, company) {
+  function postSponsorImpression(placement, company, meta) {
     var place = String(placement || 'sponsor').slice(0, 64);
     var brand = String(company || '').slice(0, 64);
     if (!place) return;
-    try {
-      var key = impressionKey(place, brand);
-      if (window.sessionStorage) {
-        if (sessionStorage.getItem(key)) return;
-        sessionStorage.setItem(key, '1');
-      }
-    } catch (e) {
-      /* private mode */
-    }
     try {
       fetch('/api/sponsor-analytics', {
         method: 'POST',
@@ -288,7 +279,9 @@
           action: 'record_impression',
           placement: place,
           company: brand,
-          path: String((window.location && window.location.pathname) || '').slice(0, 200),
+          path: String(
+            (meta && meta.path) || (window.location && window.location.pathname) || ''
+          ).slice(0, 200),
         }),
         keepalive: true,
       }).catch(function () {});
@@ -297,9 +290,26 @@
     }
   }
 
+  function isDirectoryHeroPlacement(placement) {
+    var p = String(placement || '');
+    return (
+      p === 'events_hero' ||
+      p === 'organisers_hero' ||
+      p === 'opportunities_hero' ||
+      p === 'events_sponsor_hub' ||
+      p === 'organisers_sponsor_hub' ||
+      p === 'opportunities_sponsor_hub' ||
+      p === 'sponsor_hub'
+    );
+  }
+
+  function oncePerPageLoadKey(placement, company) {
+    return String(placement || '') + '|' + String(company || '');
+  }
+
   /**
-   * Count one page visit when the placement is actually visible.
-   * Once per browser tab per day per placement+brand.
+   * Directory heroes (e.g. /events/): count each page view while the sponsor is live.
+   * Other placements: count when visible, at most once per tab per day.
    */
   function trackSponsorImpression(placement, company, meta) {
     var place = String(placement || (meta && meta.placement) || 'sponsor').slice(0, 64);
@@ -307,12 +317,55 @@
     var el = meta && meta.el ? meta.el : null;
     if (!place) return;
 
+    if (meta && meta.preview === true) return;
+    if (
+      el &&
+      (el.closest('.ad-live-preview') ||
+        el.closest('[data-pitch-preview-panel]') ||
+        el.getAttribute('data-sponsor-preview') === 'true')
+    ) {
+      return;
+    }
+
     function fire() {
-      postSponsorImpression(place, brand);
+      postSponsorImpression(place, brand, meta);
+    }
+
+    // Events / organisers / opportunities directory: one count per page load.
+    if (isDirectoryHeroPlacement(place) || (meta && meta.pageView === true)) {
+      try {
+        window.__hubSponsorPageViews = window.__hubSponsorPageViews || {};
+        var navKey = oncePerPageLoadKey(place, brand);
+        if (window.__hubSponsorPageViews[navKey]) return;
+        window.__hubSponsorPageViews[navKey] = true;
+      } catch (e) {
+        /* ignore */
+      }
+      fire();
+      return;
+    }
+
+    // Secondary placements (home partners, carousels): visible + once per tab/day.
+    try {
+      var key = impressionKey(place, brand);
+      if (window.sessionStorage) {
+        if (sessionStorage.getItem(key)) return;
+      }
+    } catch (e2) {
+      /* private mode */
+    }
+
+    function fireSecondary() {
+      try {
+        if (window.sessionStorage) sessionStorage.setItem(impressionKey(place, brand), '1');
+      } catch (e3) {
+        /* ignore */
+      }
+      fire();
     }
 
     if (!el || typeof IntersectionObserver !== 'function') {
-      fire();
+      fireSecondary();
       return;
     }
     if (el.__hubSponsorImpBound) return;
@@ -322,7 +375,7 @@
         function (entries) {
           for (var i = 0; i < entries.length; i++) {
             if (entries[i].isIntersecting && entries[i].intersectionRatio >= 0.35) {
-              fire();
+              fireSecondary();
               obs.disconnect();
               break;
             }
@@ -331,8 +384,8 @@
         { threshold: [0.35] }
       );
       obs.observe(el);
-    } catch (e) {
-      fire();
+    } catch (e4) {
+      fireSecondary();
     }
   }
 
