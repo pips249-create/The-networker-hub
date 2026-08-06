@@ -1,6 +1,6 @@
 # Segment A — Email 2 (confirm organiser page)
 
-**When:** 3–5 days after Email 1 (sent 5 Aug 2026 → target **8–10 Aug 2026**)  
+**When:** day after catalogue polish (Email 1 sent 5 Aug 2026 → target **Fri 7 Aug 2026**)  
 **Template:** `organiser_launch_invite`  
 **Subject:** Confirm your page & finish setup — The Networker Hub  
 **Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkerhub.com`  
