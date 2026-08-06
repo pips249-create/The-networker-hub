@@ -120,7 +120,7 @@
       esc(p.logo) +
       '" alt="' +
       esc(p.name) +
-      '" loading="lazy" decoding="async" crossorigin="anonymous" class="home-partner-logo" onerror="this.closest(\'.home-partner-item\').hidden=true" />';
+      '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.closest(\'.home-partner-item\').hidden=true" />';
     var title = esc(p.name);
     if (/^(https?:|mailto:)/i.test(taggedUrl)) {
       return (
@@ -171,6 +171,7 @@
     track.querySelectorAll('.home-partner-item').forEach(function (item) {
       var img = item.querySelector('.home-partner-logo');
       if (!img) return;
+      img.removeAttribute('crossOrigin');
       var forceDark = item.getAttribute('data-logo-band-dark') === 'true';
       function apply() {
         window.CmsSponsorFields.applyLogoBand(item, img, true, { forceDark: forceDark });
@@ -178,6 +179,7 @@
           item.classList.add('home-partner-item--dark-logo');
         }
       }
+      if (forceDark) apply();
       if (img.complete && img.naturalWidth) apply();
       else img.addEventListener('load', apply, { once: true });
     });
