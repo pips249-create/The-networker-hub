@@ -109,9 +109,33 @@ function claimUrlFor(email, hasAccount) {
   return SITE + '/register?email=' + em + '&next=' + next + '&intent=' + intent;
 }
 
+function otherGroupsNote(extraGroups) {
+  if (!extraGroups.length) return '';
+  if (extraGroups.length === 1) return ', plus ' + extraGroups[0];
+  if (extraGroups.length === 2) return ', plus ' + extraGroups[0] + ' and ' + extraGroups[1];
+  return (
+    ', plus ' +
+    extraGroups.slice(0, -1).join(', ') +
+    ', and ' +
+    extraGroups[extraGroups.length - 1]
+  );
+}
+
+function fillTemplate(template, vars) {
+  let out = template;
+  for (const [k, v] of Object.entries(vars)) {
+    out = out.split('{{' + k + '}}').join(v);
+  }
+  return out;
+}
+
 (async () => {
-  const vars = {
-    organiser_name: 'there',
+  const template = fs.readFileSync(
+    path.join(root, 'email-templates/organiser-launch-invite.html'),
+    'utf8'
+  );
+
+  const shared = {
     site_url: SITE,
     legacy_site_url: LEGACY,
     logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260729a',
@@ -129,21 +153,18 @@ function claimUrlFor(email, hasAccount) {
     sponsor_row: '',
   };
 
-  let html = fs.readFileSync(
-    path.join(root, 'email-templates/organiser-launch-invite.html'),
-    'utf8'
-  );
-  for (const [k, v] of Object.entries(vars)) {
-    html = html.split('{{' + k + '}}').join(v);
-  }
+  const html = fillTemplate(template, {
+    ...shared,
+    group_name: '121 Business Links',
+    other_groups_note: '',
+  });
 
-  // Brevo merge tags for personalised send
-  const ready = html
-    .replace('Hi there,', 'Hi {{ contact.ORGANISER_NAME | default: "there" }},')
-    .replace(
-      vars.claim_url,
-      '{{ contact.CLAIM_URL | default: "' + vars.claim_url + '" }}'
-    );
+  const ready = fillTemplate(template, {
+    ...shared,
+    group_name: '{{ contact.ORGANISER_NAME | default: "your organiser page" }}',
+    other_groups_note: '{{ contact.OTHER_GROUPS_NOTE | default: "" }}',
+    claim_url: '{{ contact.CLAIM_URL | default: "' + shared.claim_url + '" }}',
+  });
 
   fs.writeFileSync(path.join(root, 'data/email2-brevo-ready.html'), ready);
   fs.writeFileSync(path.join(root, 'data/email2-brevo-preview.html'), html);
@@ -188,6 +209,7 @@ function claimUrlFor(email, hasAccount) {
     rows.push({
       email: r.email,
       name: groups[0] || r.email,
+      otherNote: otherGroupsNote(groups.slice(1)),
       claimUrl: url,
       hasAccount: accountEmails ? accountEmails.has(r.email) : null,
     });
@@ -197,12 +219,18 @@ function claimUrlFor(email, hasAccount) {
   const bom = '\uFEFF';
   const csv =
     bom +
-    'Email,Organiser name,CLAIM_URL\n' +
-    rows.map((r) => r.email + ',' + esc(r.name) + ',' + esc(r.claimUrl)).join('\n') +
+    'Email,Organiser name,OTHER_GROUPS_NOTE,CLAIM_URL\n' +
+    rows
+      .map(
+        (r) =>
+          r.email + ',' + esc(r.name) + ',' + esc(r.otherNote) + ',' + esc(r.claimUrl)
+      )
+      .join('\n') +
     '\n';
   fs.writeFileSync(path.join(root, 'data/Segment-A-Email2-Brevo-import.csv'), csv);
   console.log('Wrote data/Segment-A-Email2-Brevo-import.csv');
   console.log('Recipients:', rows.length);
+  console.log('With extra group pages:', rows.filter((r) => r.otherNote).length);
   if (accountEmails) {
     console.log('Already have Hub accounts:', rows.filter((r) => r.hasAccount).length);
     console.log('Need register link:', rows.filter((r) => !r.hasAccount).length);
