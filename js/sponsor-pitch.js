@@ -194,11 +194,11 @@
 
     var scenarios = {
       legacy: {
-        label: 'Old site · the-networker.co.uk (proven last year)',
+        label: 'Old site · the-networker.co.uk (Google Analytics, last calendar year)',
         rows: [
-          ['Events listed', '27,000+', 'Networking events on the directory last year'],
-          ['Networkers', '17,000+', 'People who used the directory last year'],
-          ['Audience', 'UK-wide B2B', 'Founders, directors & organisers — same audience the Hub inherits'],
+          ['Active users', '17,000+', 'GA4 active users who used the directory last year'],
+          ['Page views', '70,000+', 'Total page views across the old site (~5.8k / mo average)'],
+          ['Moving to the Hub', '1 Sep redirect', 'co.uk traffic lands on thenetworkerhub.com — Barnsgate already on /events/'],
         ],
       },
       launch: {
