@@ -8887,7 +8887,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page Monthly Partnership Executive Summary — choose a brand (Barnsgate pack) first.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a 2-page Hub-branded pack (cover + performance) — choose a brand first.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
