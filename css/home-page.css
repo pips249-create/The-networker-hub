@@ -1889,13 +1889,15 @@ html:has(.home-page) {
   box-shadow: var(--shadow-lift);
 }
 
-.home-partner-item--dark-logo {
+.home-partner-item--dark-logo,
+.home-partner-item.sponsor-logo-band--dark {
   background: #1a1a2e;
   border-color: rgba(26, 26, 46, 0.9);
   box-shadow: 0 8px 20px rgba(26, 26, 46, 0.18);
 }
 
-.home-partner-item--dark-logo:hover {
+.home-partner-item--dark-logo:hover,
+.home-partner-item.sponsor-logo-band--dark:hover {
   border-color: rgba(73, 197, 238, 0.45);
   filter: brightness(1.06);
 }

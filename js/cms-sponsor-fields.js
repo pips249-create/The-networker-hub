@@ -86,21 +86,27 @@
       var brightRatio = bright / total;
       var darkRatio = dark / total;
 
+      // Light artwork on a transparent/white file — prefer a dark surround.
       if (bgLum > 0.72 && brightRatio > 0.08 && darkRatio < 0.12) {
-        return { color: LOGO_BAND_DARK, dark: true };
+        return { color: LOGO_BAND_DARK, dark: true, darkSurface: false };
       }
 
-      if (!edgeN) return { color: LOGO_BAND_LIGHT, dark: false };
+      if (!edgeN) return { color: LOGO_BAND_LIGHT, dark: false, darkSurface: false };
+
+      // Logo file already has a dark (or brand-coloured) baked background.
+      var darkSurface = bgLum < 0.42;
       return {
-        color:
-          'rgb(' +
-          Math.round(bgR) +
-          ',' +
-          Math.round(bgG) +
-          ',' +
-          Math.round(bgB) +
-          ')',
-        dark: false,
+        color: darkSurface
+          ? LOGO_BAND_DARK
+          : 'rgb(' +
+            Math.round(bgR) +
+            ',' +
+            Math.round(bgG) +
+            ',' +
+            Math.round(bgB) +
+            ')',
+        dark: darkSurface,
+        darkSurface: darkSurface,
       };
     } catch (e) {
       return null;
@@ -470,6 +476,17 @@
     function paintFromBand(band) {
       if (logoBandForceDark(wrap, opts)) {
         applyDarkLogoBand(wrap);
+        return;
+      }
+      // Homepage partners strip: white or navy only — never paint brand edge colours
+      // (magenta/etc). Dark tile only when the logo file itself has a dark surface
+      // (e.g. Barnsgate), not when a light logo would merely prefer a dark surround.
+      if (opts && opts.uniformTiles) {
+        if (band && band.darkSurface) applyDarkLogoBand(wrap);
+        else {
+          wrap.style.backgroundColor = LOGO_BAND_LIGHT;
+          wrap.classList.remove('sponsor-logo-band--dark');
+        }
         return;
       }
       if (!band && isHeroLogoWrap(wrap)) {

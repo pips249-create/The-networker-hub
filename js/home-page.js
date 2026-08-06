@@ -36,14 +36,23 @@
     return '';
   }
 
+  function partnerNeedsDarkBand(name, flagged) {
+    if (flagged) return true;
+    // Light-on-dark wordmark with a baked navy plate (same rule as sponsor packs).
+    return /barnsgate/i.test(String(name || ''));
+  }
+
   function partnerFromSponsorBlock(block) {
+    var name = sponsorCompany(block) || 'Partner';
     return {
-      name: sponsorCompany(block) || 'Partner',
+      name: name,
       logo: sponsorLogo(block),
       url: sponsorCta(block),
       label: String((block && block.cta_label) || '').trim() || 'Visit website',
-      logoBandDark:
-        !!(block && (block.logo_band_dark === true || block.logoBandDark === true)),
+      logoBandDark: partnerNeedsDarkBand(
+        name,
+        !!(block && (block.logo_band_dark === true || block.logoBandDark === true))
+      ),
     };
   }
 
@@ -124,12 +133,16 @@
   }
 
   function partnerFromRow(p) {
+    var name = String(p.company_name || '').trim() || 'Partner';
     return {
-      name: String(p.company_name || '').trim() || 'Partner',
+      name: name,
       logo: String(p.logo_url || '').trim(),
       url: String(p.cta_url || '').trim(),
       label: String(p.cta_label || '').trim() || 'Visit website',
-      logoBandDark: p.logo_band_dark === true || p.logoBandDark === true,
+      logoBandDark: partnerNeedsDarkBand(
+        name,
+        p.logo_band_dark === true || p.logoBandDark === true
+      ),
     };
   }
 
@@ -191,16 +204,43 @@
         window.CmsSponsorFields.trackSponsorImpression('home_partners', company, { el: item });
       }
     });
-    // Keep partner tiles visually uniform: white by default, dark only when
-    // explicitly flagged in CMS. Do not sample logo edge colours into the tile
-    // (that produced mismatched magenta/navy/white cards in the strip).
+    // Uniform white/navy tiles only — never brand edge colours. Dark when CMS
+    // flags it, the name is Barnsgate, or the logo file itself has a dark plate.
+    if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) {
+      track.querySelectorAll('.home-partner-item').forEach(function (item) {
+        var forceDark = item.getAttribute('data-logo-band-dark') === 'true';
+        var name =
+          item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '';
+        item.classList.toggle(
+          'home-partner-item--dark-logo',
+          partnerNeedsDarkBand(name, forceDark)
+        );
+      });
+      return;
+    }
     track.querySelectorAll('.home-partner-item').forEach(function (item) {
       var img = item.querySelector('.home-partner-logo');
-      if (img) img.removeAttribute('crossOrigin');
-      item.style.backgroundColor = '';
-      item.classList.remove('sponsor-logo-band', 'sponsor-logo-band--dark');
-      var forceDark = item.getAttribute('data-logo-band-dark') === 'true';
-      item.classList.toggle('home-partner-item--dark-logo', forceDark);
+      if (!img) return;
+      img.removeAttribute('crossOrigin');
+      var name =
+        item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '';
+      var forceDark = partnerNeedsDarkBand(
+        name,
+        item.getAttribute('data-logo-band-dark') === 'true'
+      );
+      function apply() {
+        window.CmsSponsorFields.applyLogoBand(item, img, true, {
+          forceDark: forceDark,
+          uniformTiles: true,
+        });
+        item.classList.toggle(
+          'home-partner-item--dark-logo',
+          forceDark || item.classList.contains('sponsor-logo-band--dark')
+        );
+      }
+      if (forceDark) apply();
+      if (img.complete && img.naturalWidth) apply();
+      else img.addEventListener('load', apply, { once: true });
     });
   }
 
