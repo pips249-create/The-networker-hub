@@ -258,18 +258,72 @@
     showNearYouChip(slug);
   }
 
+  function loadProfileLocationQuietly() {
+    if (window.hubLoadProfileLocation) return window.hubLoadProfileLocation();
+    if (window.hubProfileLocation) return Promise.resolve(window.hubProfileLocation || '');
+    if (typeof window.hubFetchSession !== 'function') return Promise.resolve('');
+    return window
+      .hubFetchSession()
+      .then(function (session) {
+        if (!session || !session.ok) return '';
+        return fetch('/api/auth/profile', { credentials: 'include' })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            var loc = '';
+            if (data && data.ok && data.profile) {
+              loc = String(data.profile.location || '').trim();
+            }
+            window.hubProfileLocation = loc;
+            return loc;
+          });
+      })
+      .catch(function () {
+        return '';
+      });
+  }
+
+  /** Only read GPS when the browser already granted permission — never auto-prompt. */
+  function readGrantedGeolocation() {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      return Promise.resolve(null);
+    }
+    function getPosition() {
+      return new Promise(function (resolve) {
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            resolve([pos.coords.latitude, pos.coords.longitude]);
+          },
+          function () {
+            resolve(null);
+          },
+          { maximumAge: 600000, timeout: 8000, enableHighAccuracy: false }
+        );
+      });
+    }
+    if (!navigator.permissions || !navigator.permissions.query) {
+      return Promise.resolve(null);
+    }
+    return navigator.permissions
+      .query({ name: 'geolocation' })
+      .then(function (status) {
+        if (!status || status.state !== 'granted') return null;
+        return getPosition();
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
   function initNearYouChip() {
     if (window.hubRegionalLanding && window.hubRegionalLanding.slug) {
       hideNearYouChip();
       return;
     }
 
-    function fallbackProfile() {
-      var profilePromise = window.hubLoadProfileLocation
-        ? window.hubLoadProfileLocation()
-        : Promise.resolve(window.hubProfileLocation || '');
-
-      profilePromise.then(function (loc) {
+    function fromProfile() {
+      loadProfileLocationQuietly().then(function (loc) {
         var slug = slugFromText(loc);
         if (slug) applySlug(slug);
       });
@@ -278,7 +332,7 @@
     function fromCoords(lat, lng) {
       nearestSlugFromCoords(lat, lng).then(function (slug) {
         if (slug) applySlug(slug);
-        else fallbackProfile();
+        else fromProfile();
       });
     }
 
@@ -287,20 +341,18 @@
       return;
     }
 
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        function (pos) {
-          fromCoords(pos.coords.latitude, pos.coords.longitude);
-        },
-        function () {
-          fallbackProfile();
-        },
-        { maximumAge: 600000, timeout: 8000, enableHighAccuracy: false }
-      );
-      return;
-    }
-
-    fallbackProfile();
+    // Prefer account location over GPS. Never call getCurrentPosition while
+    // permission is "prompt" — that was firing a location popup on every visit/login.
+    loadProfileLocationQuietly().then(function (loc) {
+      var slug = slugFromText(loc);
+      if (slug) {
+        applySlug(slug);
+        return;
+      }
+      return readGrantedGeolocation().then(function (coords) {
+        if (coords && coords.length === 2) fromCoords(coords[0], coords[1]);
+      });
+    });
   }
 
   window.HUB_refreshNearYouChip = initNearYouChip;
