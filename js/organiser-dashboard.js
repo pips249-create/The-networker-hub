@@ -13436,20 +13436,20 @@
       const ageMs = enquiry.createdAt ? Date.now() - new Date(enquiry.createdAt).getTime() : 0;
       if (status === 'new' && ageMs > 86400000) tr.className = 'org-enquiry-row is-stale';
       tr.innerHTML =
-        '<td>' +
+        '<td data-label="Received">' +
         esc(formatDate(enquiry.createdAt)) +
         (age ? '<br><span class="org-payout-muted">' + esc(age) + '</span>' : '') +
-        '</td><td class="org-td-name">' +
+        '</td><td class="org-td-name" data-label="Listing">' +
         esc(enquiry.opportunityTitle || 'Business opportunity') +
-        '</td><td>' +
+        '</td><td data-label="From">' +
         esc(enquiry.enquirerName || '—') +
         '<br><span class="org-payout-muted">' +
         esc(enquiry.enquirerEmail || '') +
-        '</span></td><td class="org-enquiry-message">' +
+        '</span></td><td class="org-enquiry-message" data-label="Message">' +
         esc(enquiry.message || '') +
-        '</td><td>' +
+        '</td><td data-label="Status">' +
         statusBadgeHtml(statusKey, enquiryStatusLabel(status)) +
-        '</td><td class="org-td-actions org-td-actions--wrap">' +
+        '</td><td class="org-td-actions org-td-actions--wrap" data-label="Actions">' +
         '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-enquiry-reply-open="' +
         esc(enquiry.id) +
         '">Reply</button> ' +
@@ -13710,19 +13710,19 @@
       const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td class="org-td-name"><a class="org-td-name-click" href="' +
+        '<td class="org-td-name" data-label="Title"><a class="org-td-name-click" href="' +
         esc(editUrl) +
         '">' +
         esc(o.title || 'Untitled') +
-        '</a></td><td>' +
+        '</a></td><td data-label="Status">' +
         statusBadgeHtml(st.key, st.label) +
-        '</td><td>' +
+        '</td><td data-label="Premium">' +
         opportunityPremiumCellHtml(o) +
-        '</td><td>' +
+        '</td><td data-label="Views">' +
         (opportunityViewCount(o)
           ? esc(String(opportunityViewCount(o)))
           : '<span class="muted">0</span>') +
-        '</td><td>' +
+        '</td><td data-label="Enquiries">' +
         (enquiries.length
           ? '<button type="button" class="org-opp-enquiry-count-link" data-opp-enquiry-filter="' +
             esc(o.id) +
@@ -13730,15 +13730,15 @@
             esc(String(enquiries.length)) +
             '</button>'
           : '<span class="muted">0</span>') +
-        '</td><td>' +
+        '</td><td data-label="New">' +
         (newCount
           ? '<span class="org-opp-new-count">' + esc(String(newCount)) + '</span>'
           : '<span class="muted">0</span>') +
-        '</td><td>' +
+        '</td><td data-label="Saved">' +
         opportunitySaveCountHtml(o) +
-        '</td><td>' +
+        '</td><td data-label="Expires">' +
         opportunityExpiryCellHtml(o) +
-        '</td><td class="org-td-actions">' +
+        '</td><td class="org-td-actions" data-label="Actions">' +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(editUrl) +
         '">Edit</a> ' +
