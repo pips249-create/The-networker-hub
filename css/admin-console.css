@@ -1707,6 +1707,68 @@ a.admin-action-row:hover .admin-action-btn {
   color: #fff;
 }
 
+.sponsor-pack--organisers {
+  background:
+    radial-gradient(1200px 280px at 10% -10%, rgba(37, 99, 235, 0.12), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-color: #dbeafe;
+}
+
+.sponsor-pack--organisers .sponsor-pack-eyebrow,
+.sponsor-pack--organisers .sponsor-pack-logo-x {
+  color: #2563eb;
+}
+
+.sponsor-pack--organisers .sponsor-pack-kpi {
+  border-color: #bfdbfe;
+}
+
+.sponsor-pack--organisers .sponsor-pack-kpi--accent {
+  background: linear-gradient(160deg, #1d4ed8 0%, #0f172a 100%);
+}
+
+.sponsor-pack--organisers .sponsor-pack-email-eng {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.sponsor-pack--organisers .sponsor-pack-kpi-label {
+  color: #3b82f6;
+}
+
+.sponsor-pack--opportunities {
+  background:
+    radial-gradient(1200px 280px at 10% -10%, rgba(201, 150, 31, 0.14), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #fcfaf4 100%);
+  border-color: #f0e2b8;
+}
+
+.sponsor-pack--opportunities .sponsor-pack-eyebrow,
+.sponsor-pack--opportunities .sponsor-pack-logo-x {
+  color: #c9961f;
+}
+
+.sponsor-pack--opportunities .sponsor-pack-kpi {
+  border-color: #ead9a0;
+}
+
+.sponsor-pack--opportunities .sponsor-pack-kpi--accent {
+  background: linear-gradient(160deg, #0d1f3c 0%, #1a3358 100%);
+}
+
+.sponsor-pack--opportunities .sponsor-pack-email-eng {
+  background: #fcf1d4;
+  border-color: #ead9a0;
+}
+
+.sponsor-pack--opportunities .sponsor-pack-kpi-label {
+  color: #a17314;
+}
+
+.sponsor-pack--events .sponsor-pack-eyebrow {
+  color: #9a7aa8;
+}
+
 .sponsor-pack-kpi--accent .sponsor-pack-kpi-label,
 .sponsor-pack-kpi--accent .sponsor-pack-kpi-hint {
   color: rgba(255, 255, 255, 0.72);

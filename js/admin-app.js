@@ -382,7 +382,7 @@
         'Browse heroes (events / organisers / opportunities): logo + website link only. Set Placement ends for manual deal terms. Opportunity sidebar and city/county partners are also logo + link. Mini carousels need logo + link per slot (each can have its own end date).',
         'Page Partner mini sponsors: logo + click-through link per slot — same logos appear on detail pages and selected emails. Tick Active, set Placement ends if needed, then Save.',
         'Check Ad active (or Mini sponsors active), save, and confirm on the live page.',
-        'Use Report for monthly sponsor packs — filter by brand (e.g. Barnsgate) and date range, then export CSV.',
+        'Use Report for monthly sponsor packs — filter by brand and directory (Events / Organisers / Opportunities), then Download PDF.',
       ],
     },
     campaigns: {
@@ -8456,17 +8456,102 @@
     }
   }
 
-  function resolveSponsorPackTierLabel(brandName) {
-    if (/barnsgate/i.test(String(brandName || ''))) {
-      return 'Events Headline Sponsor';
+  var SPONSOR_PACK_THEMES = {
+    events: {
+      id: 'events',
+      label: 'Events',
+      tierLabel: 'Events Headline Sponsor',
+      feeLabel: '£2,000 / month + VAT',
+      directoryWord: 'Events',
+      pathHint: '/events/',
+      cream: [250, 246, 238],
+      char: [74, 68, 70],
+      muted: [99, 92, 94],
+      accent: [194, 153, 209],
+      accentDk: [122, 61, 138],
+      accentSoft: [235, 224, 240],
+      dark: [45, 38, 54],
+      css: 'sponsor-pack--events',
+    },
+    organisers: {
+      id: 'organisers',
+      label: 'Organisers',
+      tierLabel: 'Organisers Headline Sponsor',
+      feeLabel: '£1,000 / month + VAT',
+      directoryWord: 'Organisers',
+      pathHint: '/events/?tab=organisers',
+      cream: [248, 250, 252],
+      char: [30, 41, 59],
+      muted: [71, 85, 105],
+      accent: [96, 165, 250],
+      accentDk: [37, 99, 235],
+      accentSoft: [219, 234, 254],
+      dark: [15, 23, 42],
+      css: 'sponsor-pack--organisers',
+    },
+    opportunities: {
+      id: 'opportunities',
+      label: 'Opportunities',
+      tierLabel: 'Opportunities Headline Sponsor',
+      feeLabel: '£2,000 / month + VAT',
+      directoryWord: 'Opportunities',
+      pathHint: '/opportunities/',
+      cream: [252, 250, 244],
+      char: [13, 31, 60],
+      muted: [92, 107, 130],
+      accent: [212, 175, 55],
+      accentDk: [201, 150, 31],
+      accentSoft: [252, 241, 212],
+      dark: [13, 31, 60],
+      css: 'sponsor-pack--opportunities',
+    },
+  };
+
+  function directoryFromSponsorSlot(slotOrPlacement) {
+    var s = String(slotOrPlacement || '').toLowerCase();
+    if (!s) return '';
+    if (s.indexOf('organiser') !== -1) return 'organisers';
+    if (s.indexOf('opportunit') !== -1) return 'opportunities';
+    if (
+      s.indexOf('event') !== -1 ||
+      s === 'sponsor_hub' ||
+      s.indexOf('booking_email') !== -1 ||
+      s.indexOf('home_partner') !== -1
+    ) {
+      return 'events';
     }
+    return '';
+  }
+
+  function resolveSponsorPackTheme(data) {
+    var brand = (data && data.brand) || {};
+    var dir =
+      (data && data.directory) ||
+      brand.directory ||
+      directoryFromSponsorSlot(brand.slot) ||
+      '';
+    if (!dir) {
+      var top =
+        data &&
+        Array.isArray(data.byPlacement) &&
+        data.byPlacement[0] &&
+        (data.byPlacement[0].placement || data.byPlacement[0].key);
+      dir = directoryFromSponsorSlot(top);
+    }
+    if (!dir && /barnsgate/i.test(String(brand.company || ''))) dir = 'events';
+    if (!dir) dir = 'events';
+    return SPONSOR_PACK_THEMES[dir] || SPONSOR_PACK_THEMES.events;
+  }
+
+  function resolveSponsorPackTierLabel(brandName, theme) {
+    if (theme && theme.tierLabel) return theme.tierLabel;
+    if (/barnsgate/i.test(String(brandName || ''))) return 'Events Headline Sponsor';
     return 'Directory Partner';
   }
 
-  function resolveSponsorPackFeeLabel(brandName) {
-    if (/barnsgate/i.test(String(brandName || ''))) {
-      return '£2,000 / month + VAT';
-    }
+  function resolveSponsorPackFeeLabel(brandName, theme) {
+    if (theme && theme.feeLabel) return theme.feeLabel;
+    if (/barnsgate/i.test(String(brandName || ''))) return '£2,000 / month + VAT';
     return '';
   }
 
@@ -8483,16 +8568,19 @@
     );
   }
 
-  function buildSponsorPackHighlight(summary, brandName, ctr) {
+  function buildSponsorPackHighlight(summary, brandName, ctr, theme) {
     var views = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
     var emails = Number(summary.emailSends) || 0;
     var opens = Number(summary.emailOpens) || 0;
     var name = brandName || 'This partner';
+    var directoryWord = (theme && theme.directoryWord) || 'Events';
     if (views > 0 && clicks > 0 && ctr && ctr.label && ctr.label !== '—') {
       return (
         (/s$/i.test(name) ? name + "'" : name + '’s') +
-        ' Events placement delivered a ' +
+        ' ' +
+        directoryWord +
+        ' placement delivered a ' +
         ctr.label +
         ' click-through rate — ' +
         formatSponsorPackNumber(clicks) +
@@ -8621,8 +8709,9 @@
     var fromLabel = String((data && data.from) || '').slice(0, 10);
     var toLabel = String((data && data.to) || '').slice(0, 10);
     var periodLabel = formatSponsorPackPeriodLabel(fromLabel, toLabel);
-    var tierLabel = resolveSponsorPackTierLabel(brandName);
-    var feeLabel = resolveSponsorPackFeeLabel(brandName);
+    var theme = resolveSponsorPackTheme(data);
+    var tierLabel = resolveSponsorPackTierLabel(brandName, theme);
+    var feeLabel = resolveSponsorPackFeeLabel(brandName, theme);
     var pageViews = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
     var emails = Number(summary.emailSends) || 0;
@@ -8645,7 +8734,8 @@
         emailOpens: opens,
       },
       brandName,
-      ctr
+      ctr,
+      theme
     );
 
     function momHint(base, pct) {
@@ -9155,8 +9245,9 @@
     var fromLabel = String((data && data.from) || '').slice(0, 10);
     var toLabel = String((data && data.to) || '').slice(0, 10);
     var periodLabel = formatSponsorPackPeriodLabel(fromLabel, toLabel);
-    var tierLabel = resolveSponsorPackTierLabel(brandName);
-    var feeLabel = resolveSponsorPackFeeLabel(brandName);
+    var theme = resolveSponsorPackTheme(data);
+    var tierLabel = resolveSponsorPackTierLabel(brandName, theme);
+    var feeLabel = resolveSponsorPackFeeLabel(brandName, theme);
     var pageViews = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
     var emails = Number(summary.emailSends) || 0;
@@ -9177,7 +9268,8 @@
         emailOpens: opens,
       },
       brandName,
-      ctr
+      ctr,
+      theme
     );
 
     function momHint(base, pct) {
@@ -9223,14 +9315,14 @@
         var contentW = pageW - m * 2;
         var y = m;
 
-        var CREAM = [250, 246, 238];
-        var CHAR = [74, 68, 70];
-        var MUTED = [99, 92, 94];
-        var LAV = [194, 153, 209];
-        var LAV_DK = [154, 122, 168];
-        var LAV_BG = [235, 224, 240];
+        var CREAM = theme.cream;
+        var CHAR = theme.char;
+        var MUTED = theme.muted;
+        var LAV = theme.accent;
+        var LAV_DK = theme.accentDk;
+        var LAV_BG = theme.accentSoft;
         var WHITE = [255, 255, 255];
-        var DARK = [45, 38, 54];
+        var DARK = theme.dark;
 
         doc.setFillColor.apply(doc, CREAM);
         doc.rect(0, 0, pageW, pageH, 'F');
@@ -9597,8 +9689,13 @@
       '<option value="">All sponsors</option>' +
       '<option value="Barnsgate Solutions">Barnsgate Solutions</option>' +
       '</select></div>' +
-      '<div><label for="sponsor-clicks-placement">Placement</label>' +
-      '<input type="text" id="sponsor-clicks-placement" placeholder="events_hero" autocomplete="off"></div>' +
+      '<div><label for="sponsor-clicks-placement">Directory</label>' +
+      '<select id="sponsor-clicks-placement">' +
+      '<option value="">All placements</option>' +
+      '<option value="events_sponsor_hub">Events hero</option>' +
+      '<option value="organisers_sponsor_hub">Organisers hero</option>' +
+      '<option value="opportunities_sponsor_hub">Opportunities hero</option>' +
+      '</select></div>' +
       '<div class="sponsor-pack-filter-actions">' +
       '<button type="submit" class="sponsor-pack-btn sponsor-pack-btn--primary">Apply</button>' +
       '<button type="button" id="sponsor-clicks-barnsgate" class="sponsor-pack-btn">Barnsgate pack</button>' +
@@ -9606,7 +9703,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a 2-page Hub-branded pack (cover + performance) — choose a brand first.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page Hub pack themed for Events (lavender), Organisers (blue), or Opportunities (gold) — pick a brand, optionally a directory, then Apply.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -9846,17 +9943,27 @@
       var contactName = contact.name || 'Rosie McGilvray';
       var contactEmail = contact.email || 'rosie@thenetworkerhub.com';
       var contactLabel = contact.label || 'Questions about this pack?';
+      var theme = resolveSponsorPackTheme(data);
+      var tierLabel = resolveSponsorPackTierLabel(brandName, theme);
+      var feeLabel = resolveSponsorPackFeeLabel(brandName, theme);
 
       bodyEl.innerHTML =
-        '<article class="sponsor-pack">' +
+        '<article class="sponsor-pack ' +
+        attrEsc(theme.css) +
+        '">' +
         '<header class="sponsor-pack-header">' +
         logoPair +
         '<div class="sponsor-pack-header-copy">' +
-        '<p class="sponsor-pack-eyebrow">Partnership performance pack</p>' +
+        '<p class="sponsor-pack-eyebrow">Partnership performance pack · ' +
+        esc(theme.label) +
+        '</p>' +
         '<h2 class="sponsor-pack-title">' +
         esc(brandName) +
         '</h2>' +
         '<p class="sponsor-pack-period">' +
+        esc(tierLabel) +
+        (feeLabel ? ' · ' + esc(feeLabel) : '') +
+        '<br>' +
         esc(fromLabel) +
         ' → ' +
         esc(toLabel) +
@@ -9868,7 +9975,11 @@
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Page views</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.pageVisits || 0)) +
-        '</p><p class="sponsor-pack-kpi-hint">Views of the sponsored directory (e.g. /events/)</p>' +
+        '</p><p class="sponsor-pack-kpi-hint">Views of the sponsored ' +
+        esc(theme.directoryWord) +
+        ' directory (' +
+        esc(theme.pathHint) +
+        ')</p>' +
         sponsorPackMomDeltaHtml(deltas.pageVisitsPct) +
         '</div>' +
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Emails with logo</p>' +
@@ -9934,7 +10045,7 @@
         '<section class="sponsor-pack-notes">' +
         '<h3>How to read this pack</h3>' +
         '<ul>' +
-        '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (e.g. /events/ for Events Headline).</li>' +
+        '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (Events, Organisers, or Opportunities).</li>' +
         '<li><strong>Email opens &amp; CTR</strong> come from Resend (opens + link clicks). Hub email-placement clicks are also included in Email CTR.</li>' +
         '<li><strong>Leads &amp; form fills</strong> show up in <strong>their</strong> Google Analytics / CRM as traffic from The Networker Hub.</li>' +
         '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; ask them to filter sessions from The Networker Hub in GA as proof of pipeline.</li>' +
@@ -9998,6 +10109,7 @@
     if (barnsgateBtn) {
       barnsgateBtn.addEventListener('click', function () {
         var company = document.getElementById('sponsor-clicks-company');
+        var placement = document.getElementById('sponsor-clicks-placement');
         if (company) {
           company.value = 'Barnsgate Solutions';
           if (company.value !== 'Barnsgate Solutions') {
@@ -10009,6 +10121,7 @@
             company.value = 'Barnsgate Solutions';
           }
         }
+        if (placement) placement.value = 'events_sponsor_hub';
         load();
       });
     }
@@ -10029,8 +10142,11 @@
           (lastReport.brand && lastReport.brand.company) || companyFilter || 'sponsor';
         var from = String(lastReport.from || '').slice(0, 10);
         var to = String(lastReport.to || '').slice(0, 10);
+        var theme = resolveSponsorPackTheme(lastReport);
         var filename =
           'sponsor-pack-' +
+          String(theme.id || 'events') +
+          '-' +
           String(brand || 'sponsor')
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')

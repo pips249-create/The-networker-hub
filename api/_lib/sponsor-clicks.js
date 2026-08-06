@@ -184,6 +184,39 @@ function isBarnsgateBrand(name) {
   return /barnsgate/i.test(String(name || ''));
 }
 
+/** Which directory pack theme to use (events / organisers / opportunities). */
+function directoryFromSlot(slotOrPlacement) {
+  const s = String(slotOrPlacement || '').toLowerCase();
+  if (!s) return '';
+  if (s.indexOf('organiser') !== -1) return 'organisers';
+  if (s.indexOf('opportunit') !== -1) return 'opportunities';
+  if (
+    s.indexOf('event') !== -1 ||
+    s === 'sponsor_hub' ||
+    s.indexOf('booking_email') !== -1 ||
+    s.indexOf('home_partner') !== -1
+  ) {
+    return 'events';
+  }
+  return '';
+}
+
+function resolvePackDirectory({ brand, placementFilter, byPlacement }) {
+  const fromPlacement = directoryFromSlot(placementFilter);
+  if (fromPlacement) return fromPlacement;
+  if (brand && brand.directory) return brand.directory;
+  const fromSlot = directoryFromSlot(brand && brand.slot);
+  if (fromSlot) return fromSlot;
+  const top =
+    Array.isArray(byPlacement) && byPlacement[0]
+      ? byPlacement[0].placement || byPlacement[0].key
+      : '';
+  const fromTop = directoryFromSlot(top);
+  if (fromTop) return fromTop;
+  if (brand && isBarnsgateBrand(brand.company)) return 'events';
+  return 'events';
+}
+
 function scoreLogoCandidate(row, companyFilter) {
   const slot = String(row.slot || '').trim();
   const activeBoost = row.active === false ? -50 : 20;
@@ -211,6 +244,7 @@ async function lookupBrandLogo(sb, companyFilter) {
         company: 'Barnsgate Solutions',
         logoUrl: BARNSGATE_PACK_LOGO,
         slot: 'events_sponsor_hub',
+        directory: 'events',
         logoBandDark: true,
       };
     }
@@ -224,6 +258,7 @@ async function lookupBrandLogo(sb, companyFilter) {
   let logo = String(preferred.logo_url || preferred.image_url || '').trim();
   let company = String(preferred.company_name || '').trim() || companyFilter;
   let logoBandDark = preferred.logo_band_dark === true;
+  let slot = String(preferred.slot || '').trim() || null;
 
   if (isBarnsgateBrand(company) || isBarnsgateBrand(companyFilter)) {
     company = company || 'Barnsgate Solutions';
@@ -231,13 +266,15 @@ async function lookupBrandLogo(sb, companyFilter) {
       logo = BARNSGATE_PACK_LOGO;
     }
     logoBandDark = true;
+    slot = slot || 'events_sponsor_hub';
   }
 
   if (!company && !logo) return null;
   return {
     company,
     logoUrl: logo || null,
-    slot: preferred.slot || null,
+    slot,
+    directory: directoryFromSlot(slot) || 'events',
     logoBandDark,
   };
 }
@@ -652,12 +689,34 @@ async function getSponsorClicksReport(query) {
     (brand && brand.company) || companyFilter || 'All sponsors';
   const executiveSummary = buildExecutiveSummary(current.summary, previous, brandName);
 
+  const byPlacement = countBy(clickRows, (r) => r.placement).map((r) => ({
+    placement: r.key,
+    count: r.count,
+  }));
+  const directory = resolvePackDirectory({
+    brand,
+    placementFilter,
+    byPlacement,
+  });
+  const brandOut = brand
+    ? Object.assign({}, brand, { directory: brand.directory || directory })
+    : companyFilter
+      ? {
+          company: companyFilter,
+          logoUrl: null,
+          slot: null,
+          directory,
+          logoBandDark: false,
+        }
+      : null;
+
   return {
     ok: true,
     configured: true,
     from,
     to,
-    brand: brand || (companyFilter ? { company: companyFilter, logoUrl: null, slot: null, logoBandDark: false } : null),
+    directory,
+    brand: brandOut,
     brands,
     hubLogoUrl: '/assets/logo-nav-transparent.png',
     contact: {
@@ -686,10 +745,7 @@ async function getSponsorClicksReport(query) {
     tablesPartial: current.tablesPartial,
     total: clicks,
     truncated: clickRows.length >= REPORT_ROW_CAP,
-    byPlacement: countBy(clickRows, (r) => r.placement).map((r) => ({
-      placement: r.key,
-      count: r.count,
-    })),
+    byPlacement,
     byCompany: countBy(clickRows, (r) => r.company_name).map((r) => ({
       company: r.key,
       count: r.count,
