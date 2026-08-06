@@ -3,6 +3,7 @@
  */
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
+const { dedupeFeaturedRowsBySeries } = require('./event-series-peers');
 const {
   outcodeListForLocation,
   haversineMiles,
@@ -699,10 +700,13 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     // users refine the grid (Option B: relevant premium).
     let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
     fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
-    fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX);
+    // Over-fetch then series-dedupe so multi-date groups count as one slot (same as admin).
+    fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX * 4);
     const { data: featuredRows, error: fErr } = await fq;
     if (fErr) throw new Error(fErr.message);
-    const liveFeatured = (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row));
+    const liveFeatured = dedupeFeaturedRowsBySeries(
+      (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row))
+    ).slice(0, SPOTLIGHT_CAROUSEL_MAX);
     featured = dedupeEventsById(await hydrateBrowseEvents(sb, liveFeatured));
   }
 
