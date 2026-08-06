@@ -6146,6 +6146,17 @@
     return '<div class="org-application-answers">' + rows.join('') + '</div>';
   }
 
+  function attendeeEventPublicUrl(a) {
+    const eventId = String(a?.eventId || '').trim();
+    const fromState = (state.events || []).find(function (ev) {
+      return String(ev.id) === eventId;
+    });
+    const slug = String((fromState && fromState.slug) || a?.eventSlug || '').trim();
+    if (slug) return '/events/' + encodeURIComponent(slug);
+    if (eventId) return '/events/event?id=' + encodeURIComponent(eventId);
+    return '/events/';
+  }
+
   function attendeeActionsHtml(a) {
     if (String(a.applicationStatus || '') === 'Pending') {
       return (
@@ -6219,7 +6230,12 @@
         '</div>'
       );
     }
-    return '—';
+    const liveUrl = attendeeEventPublicUrl(a);
+    return (
+      '<a class="org-inline-link org-attendee-live-link" href="' +
+      esc(liveUrl) +
+      '" target="_blank" rel="noopener">View live</a>'
+    );
   }
 
   async function resendApprovalEmail(registrationId) {
