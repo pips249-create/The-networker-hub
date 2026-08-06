@@ -381,6 +381,7 @@
         'Browse heroes (events / organisers / opportunities): logo + website link only. Set Placement ends for manual deal terms. Opportunity sidebar and city/county partners are also logo + link. Mini carousels need logo + link per slot (each can have its own end date).',
         'Page Partner mini sponsors: logo + click-through link per slot — same logos appear on detail pages and selected emails. Tick Active, set Placement ends if needed, then Save.',
         'Check Ad active (or Mini sponsors active), save, and confirm on the live page.',
+        'Use Report for monthly sponsor packs — filter by brand (e.g. Barnsgate) and date range, then export CSV.',
       ],
     },
     campaigns: {
@@ -946,6 +947,9 @@
         return 'Home, city, and county partner placements.';
       }
       if (hash.indexOf('enquir') !== -1) return 'Advertising enquiries from the public form.';
+      if (hash.indexOf('clicks') !== -1 || hash.indexOf('report') !== -1) {
+        return 'Outbound sponsor clicks by brand and placement — for monthly packs.';
+      }
       return 'Choose an ad placement to edit creatives and booking windows.';
     }
     return null;
@@ -1018,6 +1022,10 @@
         title = 'Advertising enquiries';
         subtitle =
           'Sponsorship form submissions from /advertising. Rosie is emailed automatically; use this list for follow-up.';
+      } else if (fullHash === 'sponsorship/clicks-report' || fullHash === 'sponsorship/report') {
+        title = 'Sponsor click report';
+        subtitle =
+          'Outbound clicks from Hub placements (heroes, partners, mini sponsors). Filter by brand and month for sponsor packs.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
         title = 'Event & organiser pages — Sponsor carousel (3 ads)';
         subtitle =
@@ -7255,11 +7263,12 @@
 
   function renderSponsorshipHub(fullHash) {
     var hash = String(fullHash || 'sponsorship');
-    var topTabs = ['placements', 'partners', 'enquiries'];
+    var topTabs = ['placements', 'partners', 'enquiries', 'report'];
     var sponsorshipPaths = {
       pathFor: function (t) {
         if (t === 'enquiries') return 'sponsorship/advertising-enquiries';
         if (t === 'partners') return 'sponsorship/partners';
+        if (t === 'report') return 'sponsorship/clicks-report';
         return 'sponsorship/placements';
       },
     };
@@ -7279,6 +7288,9 @@
     } else if (hash.indexOf('advertising-enquiries') !== -1) {
       tab = 'enquiries';
       rememberHubTab('sponsorship', 'enquiries');
+    } else if (hash.indexOf('clicks-report') !== -1 || hash === 'sponsorship/report') {
+      tab = 'report';
+      rememberHubTab('sponsorship', 'report');
     } else {
       tab = 'placements';
       rememberHubTab('sponsorship', 'placements');
@@ -7289,12 +7301,18 @@
         { key: 'placements', label: 'Placements', href: '#sponsorship/placements' },
         { key: 'partners', label: 'Partners', href: '#sponsorship/partners' },
         { key: 'enquiries', label: 'Enquiries', href: '#sponsorship/advertising-enquiries' },
+        { key: 'report', label: 'Report', href: '#sponsorship/clicks-report' },
       ],
       tab
     );
 
     if (tab === 'enquiries') {
       withHubTabs(tabsHtml, renderAdvertisingEnquiriesPage);
+      return;
+    }
+
+    if (tab === 'report') {
+      withHubTabs(tabsHtml, renderSponsorClicksReportPage);
       return;
     }
 
@@ -7348,6 +7366,10 @@
     }
     if (hash === 'sponsorship/advertising-enquiries') {
       renderAdvertisingEnquiriesPage();
+      return;
+    }
+    if (hash === 'sponsorship/clicks-report' || hash === 'sponsorship/report') {
+      renderSponsorClicksReportPage();
       return;
     }
     if (hash === 'sponsorship/event-page-carousel') {
@@ -8226,6 +8248,287 @@
       '</section></div>';
 
     initAdvertisingEnquiriesAdmin();
+  }
+
+  function monthDateInputsDefault() {
+    var now = new Date();
+    var y = now.getUTCFullYear();
+    var m = now.getUTCMonth();
+    var from = new Date(Date.UTC(y, m, 1));
+    var to = new Date(Date.UTC(y, m + 1, 0));
+    function isoDay(d) {
+      return d.toISOString().slice(0, 10);
+    }
+    return { from: isoDay(from), to: isoDay(to) };
+  }
+
+  function renderSponsorClicksReportPage() {
+    var defaults = monthDateInputsDefault();
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Sponsor click report</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">First-party outbound clicks from Hub placements. Use for monthly sponsor packs (e.g. Barnsgate). Email clicks show in the sponsor&rsquo;s own analytics via UTM tags.</p></div>' +
+      '<button type="button" id="sponsor-clicks-export" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export CSV</button>' +
+      '</div>' +
+      '<form id="sponsor-clicks-filters" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-from">From</label>' +
+      '<input type="date" id="sponsor-clicks-from" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      attrEsc(defaults.from) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-to">To</label>' +
+      '<input type="date" id="sponsor-clicks-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      attrEsc(defaults.to) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-company">Brand contains</label>' +
+      '<input type="text" id="sponsor-clicks-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Barnsgate" autocomplete="off"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-placement">Placement</label>' +
+      '<input type="text" id="sponsor-clicks-placement" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="events_sponsor_hub" autocomplete="off"></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Apply</button>' +
+      '<button type="button" id="sponsor-clicks-barnsgate" class="rounded-lg border border-slate-200 text-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-50">Barnsgate pack</button>' +
+      '</div></form>' +
+      '<p id="sponsor-clicks-status" class="text-sm text-slate-500">Loading…</p>' +
+      '<div id="sponsor-clicks-body"></div>' +
+      '</section></div>';
+
+    initSponsorClicksReportAdmin();
+  }
+
+  function initSponsorClicksReportAdmin() {
+    var statusEl = document.getElementById('sponsor-clicks-status');
+    var bodyEl = document.getElementById('sponsor-clicks-body');
+    var form = document.getElementById('sponsor-clicks-filters');
+    var exportBtn = document.getElementById('sponsor-clicks-export');
+    var barnsgateBtn = document.getElementById('sponsor-clicks-barnsgate');
+    var lastReport = null;
+
+    function setStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function queryFromForm() {
+      var from = (document.getElementById('sponsor-clicks-from') || {}).value || '';
+      var to = (document.getElementById('sponsor-clicks-to') || {}).value || '';
+      var company = (document.getElementById('sponsor-clicks-company') || {}).value || '';
+      var placement = (document.getElementById('sponsor-clicks-placement') || {}).value || '';
+      var qs = [];
+      if (from) qs.push('from=' + encodeURIComponent(from));
+      if (to) qs.push('to=' + encodeURIComponent(to));
+      if (company.trim()) qs.push('company=' + encodeURIComponent(company.trim()));
+      if (placement.trim()) qs.push('placement=' + encodeURIComponent(placement.trim()));
+      return qs.length ? '?' + qs.join('&') : '';
+    }
+
+    function rankListHtml(rows, labelKey, emptyMsg) {
+      if (!rows || !rows.length) {
+        return '<p class="text-sm text-slate-400">' + esc(emptyMsg) + '</p>';
+      }
+      return (
+        '<ul class="text-sm space-y-1">' +
+        rows
+          .map(function (r) {
+            return (
+              '<li class="flex justify-between gap-2"><span class="truncate">' +
+              esc(String(r[labelKey] || '(blank)')) +
+              '</span><span class="text-slate-500 shrink-0">' +
+              esc(String(r.count || 0)) +
+              '</span></li>'
+            );
+          })
+          .join('') +
+        '</ul>'
+      );
+    }
+
+    function renderReport(data) {
+      lastReport = data;
+      if (!bodyEl) return;
+      if (!data || !data.ok) {
+        bodyEl.innerHTML = '';
+        return;
+      }
+      var fromLabel = String(data.from || '').slice(0, 10);
+      var toLabel = String(data.to || '').slice(0, 10);
+      var dayMax = 1;
+      (data.byDay || []).forEach(function (d) {
+        if ((d.count || 0) > dayMax) dayMax = d.count;
+      });
+      var dayBars =
+        (data.byDay || [])
+          .map(function (d) {
+            var pct = Math.max(4, Math.round(((d.count || 0) / dayMax) * 100));
+            return (
+              '<div class="flex items-center gap-2 text-xs">' +
+              '<span class="w-20 shrink-0 text-slate-500 font-mono">' +
+              esc(d.day) +
+              '</span>' +
+              '<div class="flex-1 h-2 rounded bg-slate-100 overflow-hidden"><div class="h-full bg-brand-600" style="width:' +
+              pct +
+              '%"></div></div>' +
+              '<span class="w-8 text-right text-slate-600">' +
+              esc(String(d.count || 0)) +
+              '</span></div>'
+            );
+          })
+          .join('') || '<p class="text-sm text-slate-400">No daily clicks in this range.</p>';
+
+      var recentRows = (data.recent || [])
+        .map(function (r) {
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="py-2 pr-3 text-xs text-slate-500 whitespace-nowrap">' +
+            esc(String(r.createdAt || '').replace('T', ' ').slice(0, 16)) +
+            '</td>' +
+            '<td class="py-2 pr-3 text-sm">' +
+            esc(r.company || '—') +
+            '</td>' +
+            '<td class="py-2 pr-3 text-xs font-mono text-slate-600">' +
+            esc(r.placement || '') +
+            '</td>' +
+            '<td class="py-2 pr-3 text-xs text-slate-500 truncate max-w-[10rem]" title="' +
+            attrEsc(r.path || '') +
+            '">' +
+            esc(r.path || '—') +
+            '</td>' +
+            '<td class="py-2 text-xs truncate max-w-[14rem]"><a class="text-brand-700 hover:underline" href="' +
+            attrEsc(r.url || '#') +
+            '" target="_blank" rel="noopener">' +
+            esc((r.url || '').slice(0, 48) || '—') +
+            '</a></td></tr>'
+          );
+        })
+        .join('');
+
+      bodyEl.innerHTML =
+        '<div class="admin-metric-grid admin-metric-grid--4">' +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total clicks</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(data.total || 0)) +
+        '</p><p class="text-xs text-slate-500 mt-1">' +
+        esc(fromLabel) +
+        ' → ' +
+        esc(toLabel) +
+        (data.truncated ? ' · truncated at 10k' : '') +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Brands</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String((data.byCompany || []).length)) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Placements</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String((data.byPlacement || []).length)) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Days with clicks</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String((data.byDay || []).length)) +
+        '</p></div></div>' +
+        '<div class="grid gap-5 md:grid-cols-2 mt-5">' +
+        '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">By brand</h4>' +
+        rankListHtml(data.byCompany, 'company', 'No brand clicks in this range.') +
+        '</div>' +
+        '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">By placement</h4>' +
+        rankListHtml(data.byPlacement, 'placement', 'No placement clicks in this range.') +
+        '</div></div>' +
+        '<div class="rounded-xl border border-slate-200 p-4 mt-5"><h4 class="text-sm font-bold text-brand-900 mb-3">By day</h4>' +
+        '<div class="space-y-1.5">' +
+        dayBars +
+        '</div></div>' +
+        '<div class="mt-5 overflow-x-auto"><h4 class="text-sm font-bold text-brand-900 mb-2">Recent clicks</h4>' +
+        (recentRows
+          ? '<table class="w-full text-left min-w-[40rem]"><thead><tr class="text-[10px] uppercase tracking-wider text-slate-400">' +
+            '<th class="pb-2 pr-3 font-semibold">When (UTC)</th><th class="pb-2 pr-3 font-semibold">Brand</th><th class="pb-2 pr-3 font-semibold">Placement</th><th class="pb-2 pr-3 font-semibold">Path</th><th class="pb-2 font-semibold">Destination</th></tr></thead><tbody>' +
+            recentRows +
+            '</tbody></table>'
+          : '<p class="text-sm text-slate-400">No clicks logged yet for this filter.</p>') +
+        '</div>';
+    }
+
+    function load() {
+      setStatus('Loading…');
+      adminGet('/api/admin/sponsor-clicks' + queryFromForm())
+        .then(function (data) {
+          if (!data || !data.ok) {
+            setStatus(
+              (data && data.message) ||
+                (data && data.error === 'sponsor_clicks_table_missing'
+                  ? 'Run migration 234_sponsor_clicks.sql in Supabase.'
+                  : 'Could not load report.'),
+              'error'
+            );
+            if (bodyEl) bodyEl.innerHTML = '';
+            return;
+          }
+          setStatus(
+            String(data.total || 0) +
+              ' click' +
+              (data.total === 1 ? '' : 's') +
+              ' in range.',
+            'ok'
+          );
+          renderReport(data);
+        })
+        .catch(function (err) {
+          setStatus(err.message || 'Could not load report.', 'error');
+          if (bodyEl) bodyEl.innerHTML = '';
+        });
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        load();
+      });
+    }
+    if (barnsgateBtn) {
+      barnsgateBtn.addEventListener('click', function () {
+        var company = document.getElementById('sponsor-clicks-company');
+        if (company) company.value = 'Barnsgate';
+        load();
+      });
+    }
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function () {
+        if (!lastReport || !lastReport.ok) {
+          window.alert('Load a report first.');
+          return;
+        }
+        var rows = [['day', 'company', 'placement', 'count_type', 'count']];
+        (lastReport.byDay || []).forEach(function (r) {
+          rows.push([r.day || '', '', '', 'day', r.count || 0]);
+        });
+        (lastReport.byCompany || []).forEach(function (r) {
+          rows.push(['', r.company || '', '', 'company', r.count || 0]);
+        });
+        (lastReport.byPlacement || []).forEach(function (r) {
+          rows.push(['', '', r.placement || '', 'placement', r.count || 0]);
+        });
+        (lastReport.recent || []).forEach(function (r) {
+          rows.push([
+            String(r.createdAt || '').slice(0, 10),
+            r.company || '',
+            r.placement || '',
+            'click',
+            1,
+          ]);
+        });
+        if (rows.length === 1) {
+          window.alert('No rows to export.');
+          return;
+        }
+        var from = String(lastReport.from || '').slice(0, 10);
+        var to = String(lastReport.to || '').slice(0, 10);
+        downloadAdminCsv('sponsor-clicks-' + from + '-to-' + to + '.csv', rows);
+      });
+    }
+
+    load();
   }
 
   function renderHomePartnersPage() {

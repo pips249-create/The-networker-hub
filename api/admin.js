@@ -17,6 +17,7 @@ const routes = {
   'event-carousel': require('./_lib/routes/admin-event-carousel'),
   'city-partner-waitlist': require('./_lib/routes/admin-city-partner-waitlist'),
   'advertising-enquiries': require('./_lib/routes/admin-advertising-enquiries'),
+  'sponsor-clicks': require('./_lib/routes/admin-sponsor-clicks'),
   emails: require('./_lib/routes/admin-emails'),
   'event-health': require('./_lib/routes/admin-event-health'),
   organisers: require('./_lib/routes/admin-organisers'),

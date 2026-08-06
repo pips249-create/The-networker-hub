@@ -216,16 +216,42 @@
     }
   }
 
-  function trackSponsorClick(placement, company) {
+  function trackSponsorClick(placement, company, meta) {
+    var place = String(placement || 'sponsor').slice(0, 64);
+    var brand = String(company || '').slice(0, 64);
+    var dest =
+      (meta && (meta.url || meta.href)) ||
+      '';
     try {
       if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
         window.HubAnalytics.track('sponsor_click', {
-          slot: String(placement || 'sponsor').slice(0, 64),
-          brand: String(company || '').slice(0, 64),
+          slot: place,
+          brand: brand,
         });
       }
     } catch (e) {
       /* optional */
+    }
+    try {
+      var payload = {
+        action: 'record_click',
+        placement: place,
+        company: brand,
+        url: String(dest || '').slice(0, 500),
+        path: String((meta && meta.path) || (window.location && window.location.pathname) || '').slice(
+          0,
+          200
+        ),
+      };
+      fetch('/api/sponsor-analytics', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (e2) {
+      /* optional first-party log */
     }
   }
 
@@ -249,7 +275,11 @@
       el.addEventListener('click', function () {
         trackSponsorClick(
           el.getAttribute('data-sponsor-placement') || placement,
-          el.getAttribute('data-sponsor-company') || company
+          el.getAttribute('data-sponsor-company') || company,
+          {
+            url: el.href || '',
+            path: window.location && window.location.pathname,
+          }
         );
       });
     }
