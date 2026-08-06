@@ -63,7 +63,12 @@
       return window.HubBookingFees.listingPriceLabel(ev, opts);
     }
     if (!ev || ev.priceKey === 'free') {
-      if (ev?.isMembersOnlyEvent || (ev?.hasMembersOnlyTiers && !(ev?.tickets || []).length)) {
+      const mode = String(ev?.attendanceMode || '').trim();
+      if (
+        ev?.isMembersOnlyEvent &&
+        mode !== 'category_exclusivity' &&
+        mode !== 'osop'
+      ) {
         return 'Members only';
       }
       return 'Free';

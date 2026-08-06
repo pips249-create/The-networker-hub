@@ -466,7 +466,9 @@
   var guestVisitLabelRefreshPromise = null;
 
   function priceBadgeLabel(ev) {
-    if (ev?.isMembersOnlyEvent || (ev?.hasMembersOnlyTiers && !(ev?.tickets || []).length)) {
+    const mode = String(ev?.attendanceMode || '').trim();
+    const isCe = mode === 'category_exclusivity' || mode === 'osop';
+    if (!isCe && ev?.isMembersOnlyEvent) {
       return 'Members only';
     }
     if (window.HubBookingFees) {

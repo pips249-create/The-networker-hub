@@ -72,9 +72,9 @@
   }
 
   function isMembersOnlyListing(ev) {
-    return Boolean(
-      ev?.isMembersOnlyEvent || (ev?.hasMembersOnlyTiers && !(ev?.tickets || []).length)
-    );
+    const mode = String(ev?.attendanceMode || '').trim();
+    if (mode === 'category_exclusivity' || mode === 'osop') return false;
+    return Boolean(ev?.isMembersOnlyEvent);
   }
 
   function listingPriceLabel(ev, options) {

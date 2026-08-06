@@ -764,7 +764,6 @@
       let extra = '';
       if (others.length) {
         extra = others
-          .slice(0, 2)
           .map(function (b) {
             const date = formatShortEventDate(b.startsAt);
             return (
@@ -772,13 +771,11 @@
               esc((b.title || 'Event') + (date ? ' · ' + date : '')) +
               '">' +
               esc(bookingChipTitle(b.title)) +
+              (date ? ' · ' + esc(date) : '') +
               '</span>'
             );
           })
           .join('');
-        if (others.length > 2) {
-          extra += '<span class="omr-booking-more">+' + (others.length - 2) + ' more</span>';
-        }
       }
       return (
         '<div class="omr-bookings-cell">' +
@@ -794,7 +791,6 @@
 
     const upcoming = bookings.upcoming || [];
     const chips = upcoming
-      .slice(0, 2)
       .map(function (b) {
         const date = formatShortEventDate(b.startsAt);
         return (
@@ -802,15 +798,14 @@
           esc((b.title || 'Event') + (date ? ' · ' + date : '')) +
           '">' +
           esc(bookingChipTitle(b.title)) +
+          (date ? ' · ' + esc(date) : '') +
           '</span>'
         );
       })
       .join('');
     const pastCount = (bookings.recent || []).length;
     let more = '';
-    if (upcoming.length > 2) {
-      more = '<span class="omr-booking-more">+' + (upcoming.length - 2) + ' upcoming</span>';
-    } else if (!upcoming.length && pastCount) {
+    if (!upcoming.length && pastCount) {
       more = '<span class="omr-booking-more">' + pastCount + ' past</span>';
     }
     const summary =
