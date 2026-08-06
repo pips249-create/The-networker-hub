@@ -1216,10 +1216,12 @@
       var regional = window.hubRegionalLanding;
 
       if (regional && regional.location) {
-        if (searchInput && urlQ) searchInput.value = urlQ;
+        if (searchInput) searchInput.value = urlQ || '';
         if (postcodeInput) postcodeInput.value = regional.location;
+        /* City landings are local in-person by default — including Online here
+           flooded Bristol (etc.) with every nationwide online event. */
         if (checkInPerson) checkInPerson.checked = true;
-        if (checkOnline) checkOnline.checked = true;
+        if (checkOnline) checkOnline.checked = false;
         if (toggleNearMe) toggleNearMe.checked = false;
         if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
         syncNearRadiusUi();
@@ -1316,8 +1318,14 @@
     if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
     if (activeTypeTabs && activeTypeTabs.length) return true;
     if (isNearMeActive()) return true;
-    if (checkInPerson && !checkInPerson.checked) return true;
-    if (checkOnline && !checkOnline.checked) return true;
+    if (regional && regional.location) {
+      // Defaults: in-person on, online off
+      if (checkOnline && checkOnline.checked) return true;
+      if (checkInPerson && !checkInPerson.checked) return true;
+    } else {
+      if (checkInPerson && !checkInPerson.checked) return true;
+      if (checkOnline && !checkOnline.checked) return true;
+    }
     if (sortSelect && sortSelect.value && sortSelect.value !== 'recommended') return true;
     if (regional && regional.location && postcodeInput) {
       var pc = String(postcodeInput.value || '').trim();
@@ -1354,7 +1362,7 @@
     dateToTs = null;
     syncBrowseDateParams();
     if (checkInPerson) checkInPerson.checked = true;
-    if (checkOnline) checkOnline.checked = true;
+    if (checkOnline) checkOnline.checked = !(regional && regional.location);
     if (checkFreeOnly) checkFreeOnly.checked = false;
     if (checkFiveStarsOnly) checkFiveStarsOnly.checked = false;
     if (priceMinInput) priceMinInput.value = '';
@@ -1571,12 +1579,22 @@
           );
         }
         if (isNearMeActive()) return true;
-        if (postcodeInput && String(postcodeInput.value || '').trim()) return true;
+        if (postcodeInput && String(postcodeInput.value || '').trim()) {
+          var regionalLoc = window.hubRegionalLanding && window.hubRegionalLanding.location;
+          if (!regionalLoc || String(postcodeInput.value || '').trim() !== String(regionalLoc).trim()) {
+            return true;
+          }
+        }
         if (dateFromTs || dateToTs) return true;
         if (checkFreeOnly && checkFreeOnly.checked) return true;
         if (checkFiveStarsOnly && checkFiveStarsOnly.checked) return true;
-        if (checkInPerson && !checkInPerson.checked) return true;
-        if (checkOnline && !checkOnline.checked) return true;
+        if (window.hubRegionalLanding && window.hubRegionalLanding.location) {
+          if (checkOnline && checkOnline.checked) return true;
+          if (checkInPerson && !checkInPerson.checked) return true;
+        } else {
+          if (checkInPerson && !checkInPerson.checked) return true;
+          if (checkOnline && !checkOnline.checked) return true;
+        }
         if (priceMinInput && String(priceMinInput.value || '').trim()) return true;
         if (priceMaxInput && String(priceMaxInput.value || '').trim()) return true;
         return false;

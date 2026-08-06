@@ -1677,10 +1677,14 @@ body.nav-menu-open {
     position: sticky;
     top: 64px;
     z-index: 25;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
     background: linear-gradient(135deg, var(--od-purple-deep, #1e3a4f) 0%, var(--od-purple, #0d6e7a) 52%, #1096a8 100%);
     margin: 0 -4px 12px;
-    padding: 8px 8px 0;
-    border-radius: var(--od-radius, 12px) var(--od-radius, 12px) 0 0;
+    padding: 8px;
+    border-radius: var(--od-radius, 12px);
   }
 
   .organiser-dashboard-page .org-filter-linked-note,
@@ -1705,16 +1709,38 @@ body.nav-menu-open {
   }
 
   .organiser-dashboard-page .org-events-tab {
-    flex: 0 0 auto;
-    min-width: 88px;
-    padding: 10px 12px 12px;
-    font-size: 12px;
-    gap: 4px;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 6px 10px;
+    font-size: 11px;
+    gap: 3px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    white-space: normal;
+    text-align: center;
+  }
+
+  .organiser-dashboard-page .org-events-tab.is-active::after {
+    left: 10px;
+    right: 10px;
+    bottom: 2px;
+    height: 2px;
   }
 
   .organiser-dashboard-page .org-events-tab-icon {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .organiser-dashboard-page .org-events-tab-label {
+    line-height: 1.15;
+  }
+
+  .organiser-dashboard-page .org-events-tab-count,
+  .organiser-dashboard-page .org-events-tab-badge {
+    font-size: 9px;
+    padding: 1px 5px;
   }
 
   .organiser-dashboard-page .org-events-subnav--business {
@@ -1728,7 +1754,7 @@ body.nav-menu-open {
   }
 
   .org-page--memberships .org-events-subnav--reports .org-events-tab {
-    min-width: 76px;
+    min-width: 0;
   }
 
   #org-page-business-overview .org-sub-page--business.is-active {
@@ -2952,11 +2978,24 @@ body.nav-menu-open {
   }
 
   .events-page .event-grid {
-    gap: 8px;
+    gap: 10px;
   }
 
   .events-page .event-grid-card {
     min-height: 0;
+    padding: 10px;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .events-page .event-grid-body {
+    padding: 2px 2px 2px 0;
+    justify-content: center;
+  }
+
+  .events-page .event-grid-title {
+    font-size: 0.98rem;
+    line-height: 1.25;
   }
 
   .events-page .events-map-wrap {
