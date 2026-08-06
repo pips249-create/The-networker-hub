@@ -92,8 +92,8 @@ const INTERNAL_SALES_PREFIXES = [
 /**
  * Organiser early-access paths — reachable while the public site gate is on.
  * Email 1/2: claim, auth, organiser workspace, trust pages, and setup guides only.
- * Public catalogue (Events / Organisers / Opportunities browse + booking) stays gated
- * for everyone — including signed-in users — until SITE_ACCESS_PASSWORD is removed at launch.
+ * Public catalogue stays gated for anonymous visitors until SITE_ACCESS_PASSWORD is
+ * removed at launch. Signed-in hub sessions unlock the full site (home + browse).
  */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
@@ -513,7 +513,8 @@ async function hasSiteAccess(request) {
   const cookies = parseCookies(request);
   const previewSecret = String(process.env.SITE_ACCESS_PASSWORD || '').trim();
 
-  // Preview cookie only — admin hub_session must not skip the shared password gate.
+  // Preview cookie unlocks browse for anyone who knows the shared password.
+  // Signed-in hub sessions unlock separately via hasValidSession in the gate.
   if (previewSecret) {
     const preview = await verifySignedToken(cookies[SITE_ACCESS_COOKIE], previewSecret);
     if (preview && preview.type === SITE_PREVIEW_TOKEN_TYPE) return true;
@@ -603,9 +604,14 @@ async function maybeGateSiteAccess(request, url) {
     return { authorized: true };
   }
 
-  // While the public gate is on, a normal hub_session does not unlock browse.
+  // Signed-in organisers / members / admins: full product after sign-in.
+  // Anonymous catalogue stays gated; team preview still uses the password cookie.
+  if (await hasValidSession(request)) {
+    return { authorized: true };
+  }
+
   // Early-access paths (including /organiser claim) already returned above via
-  // isGateBypassPath. Team preview still uses the site-access password cookie.
+  // isGateBypassPath.
 
   if (pathname === '/robots.txt') {
     return new Response('User-agent: *\nDisallow: /\n', {
@@ -640,6 +646,23 @@ export const config = {
 
 export default async function middleware(request) {
   const url = new URL(request.url);
+  const host = String(url.hostname || '')
+    .trim()
+    .toLowerCase();
+  // Canonicalise UK + apex hosts before the preview gate (vercel.json host redirects
+  // do not always win over middleware on apex).
+  if (
+    host === 'thenetworkerhub.co.uk' ||
+    host === 'www.thenetworkerhub.co.uk' ||
+    host === 'thenetworkerhub.com'
+  ) {
+    const dest = new URL(request.url);
+    dest.protocol = 'https:';
+    dest.hostname = 'www.thenetworkerhub.com';
+    dest.port = '';
+    return Response.redirect(dest.toString(), 308);
+  }
+
   const pathname = url.pathname.replace(/\/$/, '') || '/';
 
   const gateResult = await maybeGateSiteAccess(request, url);
