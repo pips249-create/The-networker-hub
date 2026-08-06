@@ -17888,29 +17888,101 @@
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  function formatLocalYmd(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
   function spotlightExpiryDateValue(untilIso) {
     if (!untilIso) return '';
     var d = new Date(untilIso);
     if (isNaN(d.getTime())) return '';
-    return d.toISOString().slice(0, 10);
+    return formatLocalYmd(d);
   }
 
   function defaultSpotlightUntilDate() {
-    var d = new Date();
-    d.setUTCDate(d.getUTCDate() + 30);
-    return d.toISOString().slice(0, 10);
+    return addMonthsToDateInput(1);
   }
 
   function addDaysToDateInput(days) {
     var d = new Date();
-    d.setUTCDate(d.getUTCDate() + days);
-    return d.toISOString().slice(0, 10);
+    d.setDate(d.getDate() + Number(days || 0));
+    return formatLocalYmd(d);
+  }
+
+  function addMonthsToDateInput(months) {
+    var d = new Date();
+    var day = d.getDate();
+    d.setMonth(d.getMonth() + Number(months || 0));
+    // Jan 31 + 1 month can overflow to March — clamp to last day of target month.
+    if (d.getDate() !== day) d.setDate(0);
+    return formatLocalYmd(d);
+  }
+
+  function applySpotlightUntilPreset(preset) {
+    var key = String(preset || '').trim().toLowerCase();
+    var noneEl = document.getElementById('admin-spotlight-until-none');
+    var dateEl = document.getElementById('admin-spotlight-until-date');
+    var errEl = document.getElementById('admin-spotlight-until-error');
+    var modal = document.getElementById('admin-spotlight-until-modal');
+    var nextVal = '';
+    if (key === '7' || key === 'week' || key === '1week') nextVal = addDaysToDateInput(7);
+    else if (key === '30' || key === 'month' || key === '1month') nextVal = addMonthsToDateInput(1);
+    else if (key === '90' || key === 'quarter' || key === '3months' || key === '3month')
+      nextVal = addMonthsToDateInput(3);
+    else return false;
+
+    if (noneEl) noneEl.checked = false;
+    if (dateEl) {
+      dateEl.disabled = false;
+      dateEl.min = formatLocalYmd(new Date());
+      // Some browsers ignore .value while disabled; set after enabling.
+      dateEl.value = nextVal;
+      try {
+        dateEl.dispatchEvent(new Event('input', { bubbles: true }));
+        dateEl.dispatchEvent(new Event('change', { bubbles: true }));
+      } catch (_e) {
+        /* ignore */
+      }
+      dateEl.classList.remove('ring-2', 'ring-brand-500');
+      // Force a reflow so the highlight always retriggers.
+      void dateEl.offsetWidth;
+      dateEl.classList.add('ring-2', 'ring-brand-500');
+      setTimeout(function () {
+        dateEl.classList.remove('ring-2', 'ring-brand-500');
+      }, 700);
+    }
+    if (errEl) {
+      errEl.textContent = '';
+      errEl.classList.add('hidden');
+    }
+    if (modal) {
+      modal.querySelectorAll('[data-spotlight-until-preset]').forEach(function (btn) {
+        var active =
+          String(btn.getAttribute('data-spotlight-until-preset') || '').toLowerCase() === key ||
+          (key === 'month' && btn.getAttribute('data-spotlight-until-preset') === '30') ||
+          (key === '1month' && btn.getAttribute('data-spotlight-until-preset') === '30') ||
+          (key === 'quarter' && btn.getAttribute('data-spotlight-until-preset') === '90') ||
+          (key === '3months' && btn.getAttribute('data-spotlight-until-preset') === '90') ||
+          (key === 'week' && btn.getAttribute('data-spotlight-until-preset') === '7');
+        btn.classList.toggle('bg-brand-50', active);
+        btn.classList.toggle('border-brand-500', active);
+        btn.classList.toggle('text-brand-900', active);
+      });
+    }
+    return true;
   }
 
   function ensureSpotlightUntilModal() {
-    if (document.getElementById('admin-spotlight-until-modal')) return;
+    var existing = document.getElementById('admin-spotlight-until-modal');
+    if (existing && existing.getAttribute('data-spotlight-modal-v') === '2') return;
+    if (existing) existing.remove();
+
     var modal = document.createElement('div');
     modal.id = 'admin-spotlight-until-modal';
+    modal.setAttribute('data-spotlight-modal-v', '2');
     modal.className = 'hidden fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
     modal.hidden = true;
     modal.setAttribute('aria-hidden', 'true');
@@ -17942,21 +18014,22 @@
       var dateEl = document.getElementById('admin-spotlight-until-date');
       if (!noneEl || !dateEl) return;
       dateEl.disabled = !!noneEl.checked;
-      if (noneEl.checked) dateEl.value = '';
+      if (noneEl.checked) {
+        dateEl.value = '';
+        modal.querySelectorAll('[data-spotlight-until-preset]').forEach(function (btn) {
+          btn.classList.remove('bg-brand-50', 'border-brand-500', 'text-brand-900');
+        });
+      }
     }
 
     document.getElementById('admin-spotlight-until-none').addEventListener('change', syncNoneState);
-    modal.querySelectorAll('[data-spotlight-until-preset]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var days = Number(btn.getAttribute('data-spotlight-until-preset') || 30);
-        var noneEl = document.getElementById('admin-spotlight-until-none');
-        var dateEl = document.getElementById('admin-spotlight-until-date');
-        if (noneEl) noneEl.checked = false;
-        if (dateEl) {
-          dateEl.disabled = false;
-          dateEl.value = addDaysToDateInput(days);
-        }
-      });
+    // Delegate clicks so presets always work (avoids stale per-button listeners).
+    modal.addEventListener('click', function (e) {
+      var presetBtn = e.target && e.target.closest ? e.target.closest('[data-spotlight-until-preset]') : null;
+      if (!presetBtn || !modal.contains(presetBtn)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      applySpotlightUntilPreset(presetBtn.getAttribute('data-spotlight-until-preset'));
     });
     document.getElementById('admin-spotlight-until-cancel').addEventListener('click', function () {
       setAdminOverlayOpen(modal, false);
@@ -18005,7 +18078,8 @@
     if (titleEl) titleEl.textContent = options.title || 'Feature until';
     if (subEl) {
       subEl.textContent =
-        options.subtitle || 'Choose when this Premium Spotlight placement ends.';
+        options.subtitle ||
+        'Choose when this Premium Spotlight placement ends. Tap 1 week / 1 month / 3 months, or pick a date.';
     }
     if (errEl) {
       errEl.textContent = '';
@@ -18015,9 +18089,16 @@
     var noExpiry = options.allowNoExpiry !== false && !initial && options.defaultNoExpiry;
     if (noneEl) noneEl.checked = !!noExpiry;
     if (dateEl) {
+      dateEl.min = formatLocalYmd(new Date());
       dateEl.value = noExpiry ? '' : initial || defaultSpotlightUntilDate();
       dateEl.disabled = !!noExpiry;
-      dateEl.min = new Date().toISOString().slice(0, 10);
+    }
+    // Mark 1 month as selected when using the default.
+    if (!noExpiry && !initial) applySpotlightUntilPreset('30');
+    else if (modal) {
+      modal.querySelectorAll('[data-spotlight-until-preset]').forEach(function (btn) {
+        btn.classList.remove('bg-brand-50', 'border-brand-500', 'text-brand-900');
+      });
     }
     setAdminOverlayOpen(modal, true);
     return new Promise(function (resolve, reject) {
