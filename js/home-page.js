@@ -42,6 +42,10 @@
     return /barnsgate/i.test(String(name || '')) || /barnsgate[-_]?logo/i.test(String(url || ''));
   }
 
+  function partnerNeedsDarkBand(_name, flagged) {
+    return !!flagged;
+  }
+
   function partnerLogoForStrip(url, name) {
     var u = String(url || '').trim();
     // Navy-plate Barnsgate assets look boxed on white tiles — use the light-bg mark.
@@ -452,7 +456,9 @@
 
         renderPartners(partners);
       }
-    );
+    ).catch(function () {
+      renderPartners([]);
+    });
   }
 
   function initHeroHubertForm() {
