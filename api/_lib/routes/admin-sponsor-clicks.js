@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
       return json(res, 503, {
         ok: false,
         error: 'sponsor_clicks_table_missing',
-        message: 'Run migration 234_sponsor_clicks.sql in Supabase.',
+        message: 'Run migrations 234_sponsor_clicks.sql and 235_sponsor_performance_pack.sql in Supabase.',
       });
     }
     return json(res, 500, {

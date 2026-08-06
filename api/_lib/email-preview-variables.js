@@ -189,7 +189,7 @@ function sampleOpportunitySponsorRow(site) {
 }
 
 function sampleMiniSponsorsRow() {
-  return buildMiniSponsorsRow([
+  const mini = buildMiniSponsorsRow([
     {
       logo_url: 'https://placehold.co/80x40/png',
       cta_url: 'https://example.com/a',
@@ -206,6 +206,7 @@ function sampleMiniSponsorsRow() {
       company_name: 'Sponsor C',
     },
   ]);
+  return mini && mini.html ? mini.html : '';
 }
 
 function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {

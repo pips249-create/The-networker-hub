@@ -155,6 +155,11 @@
         campaign: 'sponsor_sidebar',
       });
     }
+    if (window.CmsSponsorFields && window.CmsSponsorFields.trackSponsorImpression) {
+      window.CmsSponsorFields.trackSponsorImpression('sponsor_sidebar', company, {
+        el: container,
+      });
+    }
   }
 
   function isCompactRenderable(block) {
@@ -532,6 +537,11 @@
       company: company,
       campaign: 'page_partner_carousel',
     });
+    if (window.CmsSponsorFields.trackSponsorImpression) {
+      window.CmsSponsorFields.trackSponsorImpression('page_partner_carousel', company, {
+        el: el.closest('.cms-ad-logo-only, .cms-ad-carousel, .cms-ad-sidebar') || el,
+      });
+    }
   }
 
   function wireCarouselLogoBands(container) {

@@ -319,6 +319,12 @@
         });
       }
     }
+
+    if (window.CmsSponsorFields && window.CmsSponsorFields.trackSponsorImpression) {
+      window.CmsSponsorFields.trackSponsorImpression(slotPlacement(els), company, {
+        el: els.sponsorHub,
+      });
+    }
   }
 
   function renderSponsorBlock(els, block) {

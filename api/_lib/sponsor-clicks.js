@@ -1,5 +1,5 @@
 /**
- * Record + report first-party sponsor / partner outbound clicks.
+ * First-party sponsor performance metrics — clicks, page impressions, email logo sends.
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 
@@ -7,6 +7,7 @@ const MAX_PLACEMENT = 64;
 const MAX_COMPANY = 120;
 const MAX_URL = 500;
 const MAX_PATH = 200;
+const MAX_SLUG = 80;
 const REPORT_ROW_CAP = 10000;
 
 function cleanText(raw, max) {
@@ -49,9 +50,12 @@ function sanitizePath(raw) {
   }
 }
 
-/**
- * Shape a safe insert from a public POST body.
- */
+function utcDayString(d) {
+  const dt = d instanceof Date ? d : new Date();
+  if (Number.isNaN(dt.getTime())) return new Date().toISOString().slice(0, 10);
+  return dt.toISOString().slice(0, 10);
+}
+
 function sanitizeSponsorClickPayload(body) {
   const input = body && typeof body === 'object' ? body : {};
   const placement = normalizePlacement(input.placement || input.slot);
@@ -72,6 +76,16 @@ function sanitizeSponsorClickPayload(body) {
       path,
     },
   };
+}
+
+function sanitizeImpressionPayload(body) {
+  const input = body && typeof body === 'object' ? body : {};
+  const placement = normalizePlacement(input.placement || input.slot);
+  const companyName = cleanText(input.company || input.companyName || input.brand || '', MAX_COMPANY);
+  if (!placement) {
+    return { ok: false, error: 'no_signal', message: 'Missing placement.' };
+  }
+  return { ok: true, placement, companyName };
 }
 
 async function recordSponsorClick(body) {
@@ -95,6 +109,74 @@ async function recordSponsorClick(body) {
   return { ok: true };
 }
 
+async function recordSponsorImpression(body) {
+  if (!isSupabaseConfigured()) {
+    return { ok: true, configured: false, skipped: true };
+  }
+
+  const sanitized = sanitizeImpressionPayload(body);
+  if (!sanitized.ok) return sanitized;
+
+  const sb = getSupabaseAdmin();
+  const { error } = await sb.rpc('bump_sponsor_impression_daily', {
+    p_day: utcDayString(),
+    p_placement: sanitized.placement,
+    p_company_name: sanitized.companyName,
+  });
+
+  if (error) {
+    if (/bump_sponsor_impression|sponsor_impression/i.test(error.message || '')) {
+      return { ok: true, skipped: true, reason: 'table_missing' };
+    }
+    throw new Error(error.message);
+  }
+  return { ok: true };
+}
+
+/**
+ * @param {Array<{ placement?: string, company?: string, companyName?: string }>} deliveries
+ * @param {string} emailSlug
+ */
+async function recordSponsorEmailSends(deliveries, emailSlug) {
+  if (!isSupabaseConfigured()) {
+    return { ok: true, configured: false, skipped: true };
+  }
+
+  const list = Array.isArray(deliveries) ? deliveries : [];
+  if (!list.length) return { ok: true, skipped: true, reason: 'no_deliveries' };
+
+  const slug = cleanText(emailSlug, MAX_SLUG).toLowerCase().replace(/[^a-z0-9_-]+/g, '_') || '';
+  const sb = getSupabaseAdmin();
+  const day = utcDayString();
+  const seen = new Set();
+
+  for (const item of list) {
+    const placement = normalizePlacement(item && (item.placement || item.slot));
+    const company = cleanText(
+      (item && (item.company || item.companyName || item.brand)) || '',
+      MAX_COMPANY
+    );
+    const key = placement + '|' + company.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const { error } = await sb.rpc('bump_sponsor_email_send_daily', {
+      p_day: day,
+      p_placement: placement,
+      p_company_name: company,
+      p_email_slug: slug,
+    });
+    if (error) {
+      if (/bump_sponsor_email|sponsor_email_send/i.test(error.message || '')) {
+        return { ok: true, skipped: true, reason: 'table_missing' };
+      }
+      throw new Error(error.message);
+    }
+  }
+
+  return { ok: true, counted: seen.size };
+}
+
 function parseDateBound(raw, endOfDay) {
   const s = String(raw || '').trim();
   if (!s) return null;
@@ -115,15 +197,46 @@ function defaultMonthBounds() {
   return { from, to };
 }
 
-function countBy(rows, keyFn) {
+function countBy(rows, keyFn, weightFn) {
   const map = new Map();
   for (const row of rows) {
     const key = keyFn(row) || '(blank)';
-    map.set(key, (map.get(key) || 0) + 1);
+    const w = weightFn ? Number(weightFn(row)) || 0 : 1;
+    map.set(key, (map.get(key) || 0) + w);
   }
   return Array.from(map.entries())
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+}
+
+function companyIlike(filter) {
+  return '%' + cleanText(filter, MAX_COMPANY).replace(/%/g, '') + '%';
+}
+
+async function lookupBrandLogo(sb, companyFilter) {
+  if (!companyFilter) return null;
+  const { data, error } = await sb
+    .from('cms_blocks')
+    .select('company_name, logo_url, image_url, slot, active')
+    .ilike('company_name', companyIlike(companyFilter))
+    .order('updated_at', { ascending: false })
+    .limit(8);
+
+  if (error || !data || !data.length) return null;
+
+  const preferred =
+    data.find((r) => r.active !== false && /sponsor|partner/i.test(String(r.slot || ''))) ||
+    data.find((r) => r.active !== false) ||
+    data[0];
+
+  const logo = String(preferred.logo_url || preferred.image_url || '').trim();
+  const company = String(preferred.company_name || '').trim();
+  if (!company && !logo) return null;
+  return {
+    company: company || companyFilter,
+    logoUrl: logo || null,
+    slot: preferred.slot || null,
+  };
 }
 
 async function getSponsorClicksReport(query) {
@@ -137,9 +250,12 @@ async function getSponsorClicksReport(query) {
   const to = parseDateBound(q.to, true) || defaults.to;
   const companyFilter = cleanText(q.company || q.brand || '', MAX_COMPANY);
   const placementFilter = q.placement ? normalizePlacement(q.placement) : '';
+  const fromDay = from.slice(0, 10);
+  const toDay = to.slice(0, 10);
 
   const sb = getSupabaseAdmin();
-  let req = sb
+
+  let clicksReq = sb
     .from('sponsor_clicks')
     .select('id, created_at, placement, company_name, destination_url, path')
     .gte('created_at', from)
@@ -147,47 +263,120 @@ async function getSponsorClicksReport(query) {
     .order('created_at', { ascending: false })
     .limit(REPORT_ROW_CAP);
 
-  if (companyFilter) {
-    req = req.ilike('company_name', '%' + companyFilter.replace(/%/g, '') + '%');
-  }
-  if (placementFilter) {
-    req = req.eq('placement', placementFilter);
-  }
+  if (companyFilter) clicksReq = clicksReq.ilike('company_name', companyIlike(companyFilter));
+  if (placementFilter) clicksReq = clicksReq.eq('placement', placementFilter);
 
-  const { data, error } = await req;
-  if (error) {
-    if (/sponsor_clicks/i.test(error.message || '')) {
+  let impressionsReq = sb
+    .from('sponsor_impression_daily')
+    .select('day, placement, company_name, impressions')
+    .gte('day', fromDay)
+    .lte('day', toDay)
+    .limit(REPORT_ROW_CAP);
+
+  if (companyFilter) impressionsReq = impressionsReq.ilike('company_name', companyIlike(companyFilter));
+  if (placementFilter) impressionsReq = impressionsReq.eq('placement', placementFilter);
+
+  let emailsReq = sb
+    .from('sponsor_email_send_daily')
+    .select('day, placement, company_name, email_slug, send_count')
+    .gte('day', fromDay)
+    .lte('day', toDay)
+    .limit(REPORT_ROW_CAP);
+
+  if (companyFilter) emailsReq = emailsReq.ilike('company_name', companyIlike(companyFilter));
+  if (placementFilter) emailsReq = emailsReq.eq('placement', placementFilter);
+
+  const [clicksRes, impressionsRes, emailsRes, brand] = await Promise.all([
+    clicksReq,
+    impressionsReq,
+    emailsReq,
+    lookupBrandLogo(sb, companyFilter),
+  ]);
+
+  if (clicksRes.error) {
+    if (/sponsor_clicks/i.test(clicksRes.error.message || '')) {
       const err = new Error('sponsor_clicks_table_missing');
       err.code = 'sponsor_clicks_table_missing';
       throw err;
     }
-    throw new Error(error.message);
+    throw new Error(clicksRes.error.message);
   }
 
-  const rows = data || [];
-  const byPlacement = countBy(rows, (r) => r.placement).map((r) => ({
-    placement: r.key,
-    count: r.count,
-  }));
-  const byCompany = countBy(rows, (r) => r.company_name).map((r) => ({
-    company: r.key,
-    count: r.count,
-  }));
-  const byDay = countBy(rows, (r) => String(r.created_at || '').slice(0, 10))
-    .map((r) => ({ day: r.key, count: r.count }))
-    .sort((a, b) => a.day.localeCompare(b.day));
+  const clickRows = clicksRes.data || [];
+  const impressionRows = impressionsRes.error ? [] : impressionsRes.data || [];
+  const emailRows = emailsRes.error ? [] : emailsRes.data || [];
+  const tablesPartial =
+    Boolean(impressionsRes.error) || Boolean(emailsRes.error);
+
+  const pageVisits = impressionRows.reduce((n, r) => n + (Number(r.impressions) || 0), 0);
+  const emailSends = emailRows.reduce((n, r) => n + (Number(r.send_count) || 0), 0);
+  const clicks = clickRows.length;
+  const ctr = pageVisits > 0 ? clicks / pageVisits : null;
 
   return {
     ok: true,
     configured: true,
     from,
     to,
-    total: rows.length,
-    truncated: rows.length >= REPORT_ROW_CAP,
-    byPlacement,
-    byCompany,
-    byDay,
-    recent: rows.slice(0, 75).map((r) => ({
+    brand: brand || (companyFilter ? { company: companyFilter, logoUrl: null, slot: null } : null),
+    hubLogoUrl: '/assets/logo-nav.png',
+    summary: {
+      pageVisits,
+      emailSends,
+      clicks,
+      ctr,
+      ctrPct: ctr == null ? null : Math.round(ctr * 10000) / 100,
+    },
+    tablesPartial,
+    total: clicks,
+    truncated: clickRows.length >= REPORT_ROW_CAP,
+    byPlacement: countBy(clickRows, (r) => r.placement).map((r) => ({
+      placement: r.key,
+      count: r.count,
+    })),
+    byCompany: countBy(clickRows, (r) => r.company_name).map((r) => ({
+      company: r.key,
+      count: r.count,
+    })),
+    byDay: countBy(clickRows, (r) => String(r.created_at || '').slice(0, 10))
+      .map((r) => ({ day: r.key, count: r.count }))
+      .sort((a, b) => a.day.localeCompare(b.day)),
+    impressions: {
+      total: pageVisits,
+      byPlacement: countBy(
+        impressionRows,
+        (r) => r.placement,
+        (r) => r.impressions
+      ).map((r) => ({ placement: r.key, count: r.count })),
+      byDay: countBy(
+        impressionRows,
+        (r) => String(r.day || '').slice(0, 10),
+        (r) => r.impressions
+      )
+        .map((r) => ({ day: r.key, count: r.count }))
+        .sort((a, b) => a.day.localeCompare(b.day)),
+    },
+    emails: {
+      total: emailSends,
+      byPlacement: countBy(
+        emailRows,
+        (r) => r.placement,
+        (r) => r.send_count
+      ).map((r) => ({ placement: r.key, count: r.count })),
+      bySlug: countBy(
+        emailRows,
+        (r) => r.email_slug,
+        (r) => r.send_count
+      ).map((r) => ({ slug: r.key, count: r.count })),
+      byDay: countBy(
+        emailRows,
+        (r) => String(r.day || '').slice(0, 10),
+        (r) => r.send_count
+      )
+        .map((r) => ({ day: r.key, count: r.count }))
+        .sort((a, b) => a.day.localeCompare(b.day)),
+    },
+    recent: clickRows.slice(0, 75).map((r) => ({
       id: r.id,
       createdAt: r.created_at,
       placement: r.placement,
@@ -200,6 +389,8 @@ async function getSponsorClicksReport(query) {
 
 module.exports = {
   recordSponsorClick,
+  recordSponsorImpression,
+  recordSponsorEmailSends,
   getSponsorClicksReport,
   sanitizeSponsorClickPayload,
   defaultMonthBounds,

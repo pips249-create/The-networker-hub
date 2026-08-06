@@ -8262,37 +8262,66 @@
     return { from: isoDay(from), to: isoDay(to) };
   }
 
+  function formatSponsorPackNumber(n) {
+    var num = Number(n) || 0;
+    try {
+      return num.toLocaleString('en-GB');
+    } catch (_e) {
+      return String(num);
+    }
+  }
+
+  function formatSponsorPlacementLabel(raw) {
+    var s = String(raw || '').trim();
+    if (!s || s === '(blank)') return 'Unlabelled';
+    var map = {
+      events_hero: 'Events hero',
+      organisers_hero: 'Organisers hero',
+      opportunities_hero: 'Opportunities hero',
+      events_sponsor_hub: 'Events hero',
+      organisers_sponsor_hub: 'Organisers hero',
+      opportunities_sponsor_hub: 'Opportunities hero',
+      home_partners: 'Home partners',
+      events_email: 'Events emails',
+      organisers_email: 'Organisers emails',
+      opportunities_email: 'Opportunities emails',
+      email_sponsor: 'Email sponsor',
+      email_mini_sponsor: 'Email mini sponsors',
+      page_partner_carousel: 'Page partner carousel',
+      sponsor_sidebar: 'Sidebar sponsor',
+    };
+    if (map[s]) return map[s];
+    return s.replace(/_/g, ' ');
+  }
+
   function renderSponsorClicksReportPage() {
     var defaults = monthDateInputsDefault();
     main.innerHTML =
-      '<div class="space-y-6">' +
+      '<div class="space-y-4 sponsor-pack-admin">' +
       sponsorshipBackLinkHtml() +
-      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
-      '<div class="flex flex-wrap items-start justify-between gap-3">' +
-      '<div><h3 class="font-bold text-brand-900">Sponsor click report</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">First-party outbound clicks from Hub placements. Use for monthly sponsor packs (e.g. Barnsgate). Email clicks show in the sponsor&rsquo;s own analytics via UTM tags.</p></div>' +
-      '<button type="button" id="sponsor-clicks-export" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export CSV</button>' +
-      '</div>' +
-      '<form id="sponsor-clicks-filters" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-from">From</label>' +
-      '<input type="date" id="sponsor-clicks-from" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      '<section class="sponsor-pack-toolbar no-print">' +
+      '<form id="sponsor-clicks-filters" class="sponsor-pack-filters">' +
+      '<div><label for="sponsor-clicks-from">From</label>' +
+      '<input type="date" id="sponsor-clicks-from" value="' +
       attrEsc(defaults.from) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-to">To</label>' +
-      '<input type="date" id="sponsor-clicks-to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+      '<div><label for="sponsor-clicks-to">To</label>' +
+      '<input type="date" id="sponsor-clicks-to" value="' +
       attrEsc(defaults.to) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-company">Brand contains</label>' +
-      '<input type="text" id="sponsor-clicks-company" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Barnsgate" autocomplete="off"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-600 mb-1" for="sponsor-clicks-placement">Placement</label>' +
-      '<input type="text" id="sponsor-clicks-placement" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="events_sponsor_hub" autocomplete="off"></div>' +
-      '<div class="flex flex-wrap gap-2">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Apply</button>' +
-      '<button type="button" id="sponsor-clicks-barnsgate" class="rounded-lg border border-slate-200 text-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-50">Barnsgate pack</button>' +
+      '<div><label for="sponsor-clicks-company">Brand</label>' +
+      '<input type="text" id="sponsor-clicks-company" placeholder="Barnsgate" autocomplete="off"></div>' +
+      '<div><label for="sponsor-clicks-placement">Placement</label>' +
+      '<input type="text" id="sponsor-clicks-placement" placeholder="events_hero" autocomplete="off"></div>' +
+      '<div class="sponsor-pack-filter-actions">' +
+      '<button type="submit" class="sponsor-pack-btn sponsor-pack-btn--primary">Apply</button>' +
+      '<button type="button" id="sponsor-clicks-barnsgate" class="sponsor-pack-btn">Barnsgate pack</button>' +
+      '<button type="button" id="sponsor-clicks-export" class="sponsor-pack-btn">Export CSV</button>' +
+      '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Print / PDF</button>' +
       '</div></form>' +
-      '<p id="sponsor-clicks-status" class="text-sm text-slate-500">Loading…</p>' +
-      '<div id="sponsor-clicks-body"></div>' +
-      '</section></div>';
+      '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
+      '</section>' +
+      '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
     initSponsorClicksReportAdmin();
   }
@@ -8302,6 +8331,7 @@
     var bodyEl = document.getElementById('sponsor-clicks-body');
     var form = document.getElementById('sponsor-clicks-filters');
     var exportBtn = document.getElementById('sponsor-clicks-export');
+    var printBtn = document.getElementById('sponsor-clicks-print');
     var barnsgateBtn = document.getElementById('sponsor-clicks-barnsgate');
     var lastReport = null;
 
@@ -8309,12 +8339,8 @@
       if (!statusEl) return;
       statusEl.textContent = text;
       statusEl.className =
-        'text-sm ' +
-        (tone === 'error'
-          ? 'text-red-700 font-semibold'
-          : tone === 'ok'
-            ? 'text-emerald-700 font-semibold'
-            : 'text-slate-500');
+        'sponsor-pack-status' +
+        (tone === 'error' ? ' is-error' : tone === 'ok' ? ' is-ok' : '');
     }
 
     function queryFromForm() {
@@ -8332,22 +8358,59 @@
 
     function rankListHtml(rows, labelKey, emptyMsg) {
       if (!rows || !rows.length) {
-        return '<p class="text-sm text-slate-400">' + esc(emptyMsg) + '</p>';
+        return '<p class="sponsor-pack-empty">' + emptyMsg + '</p>';
       }
       return (
-        '<ul class="text-sm space-y-1">' +
+        '<ul class="sponsor-pack-rank">' +
         rows
+          .slice(0, 8)
           .map(function (r) {
+            var label =
+              labelKey === 'placement'
+                ? formatSponsorPlacementLabel(r[labelKey])
+                : labelKey === 'slug'
+                  ? String(r[labelKey] || '').replace(/_/g, ' ')
+                  : String(r[labelKey] || '(blank)');
             return (
-              '<li class="flex justify-between gap-2"><span class="truncate">' +
-              esc(String(r[labelKey] || '(blank)')) +
-              '</span><span class="text-slate-500 shrink-0">' +
-              esc(String(r.count || 0)) +
+              '<li><span class="sponsor-pack-rank-label">' +
+              esc(label) +
+              '</span><span class="sponsor-pack-rank-count">' +
+              esc(formatSponsorPackNumber(r.count || 0)) +
               '</span></li>'
             );
           })
           .join('') +
         '</ul>'
+      );
+    }
+
+    function sparklineHtml(days) {
+      var list = days || [];
+      if (!list.length) return '<p class="sponsor-pack-empty">No daily activity in this range yet.</p>';
+      var max = 1;
+      list.forEach(function (d) {
+        if ((d.count || 0) > max) max = d.count;
+      });
+      return (
+        '<div class="sponsor-pack-days">' +
+        list
+          .map(function (d) {
+            var pct = Math.max(6, Math.round(((d.count || 0) / max) * 100));
+            return (
+              '<div class="sponsor-pack-day">' +
+              '<span class="sponsor-pack-day-label">' +
+              esc(String(d.day || '').slice(5)) +
+              '</span>' +
+              '<span class="sponsor-pack-day-bar"><i style="width:' +
+              pct +
+              '%"></i></span>' +
+              '<span class="sponsor-pack-day-count">' +
+              esc(formatSponsorPackNumber(d.count || 0)) +
+              '</span></div>'
+            );
+          })
+          .join('') +
+        '</div>'
       );
     }
 
@@ -8358,118 +8421,161 @@
         bodyEl.innerHTML = '';
         return;
       }
+
+      var summary = data.summary || {};
+      var brand = data.brand || {};
+      var brandName = brand.company || (document.getElementById('sponsor-clicks-company') || {}).value || 'All sponsors';
       var fromLabel = String(data.from || '').slice(0, 10);
       var toLabel = String(data.to || '').slice(0, 10);
-      var dayMax = 1;
-      (data.byDay || []).forEach(function (d) {
-        if ((d.count || 0) > dayMax) dayMax = d.count;
+      var hubLogo = data.hubLogoUrl || '/assets/logo-nav.png';
+      var brandLogo = brand.logoUrl || '';
+      var ctrLabel =
+        summary.ctrPct == null ? '—' : String(summary.ctrPct) + '%';
+      var generated = new Date().toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       });
-      var dayBars =
-        (data.byDay || [])
-          .map(function (d) {
-            var pct = Math.max(4, Math.round(((d.count || 0) / dayMax) * 100));
-            return (
-              '<div class="flex items-center gap-2 text-xs">' +
-              '<span class="w-20 shrink-0 text-slate-500 font-mono">' +
-              esc(d.day) +
-              '</span>' +
-              '<div class="flex-1 h-2 rounded bg-slate-100 overflow-hidden"><div class="h-full bg-brand-600" style="width:' +
-              pct +
-              '%"></div></div>' +
-              '<span class="w-8 text-right text-slate-600">' +
-              esc(String(d.count || 0)) +
-              '</span></div>'
-            );
-          })
-          .join('') || '<p class="text-sm text-slate-400">No daily clicks in this range.</p>';
+
+      var logoPair =
+        '<div class="sponsor-pack-logos">' +
+        '<div class="sponsor-pack-logo-tile">' +
+        '<img src="' +
+        attrEsc(hubLogo) +
+        '" alt="The Networker Hub" class="sponsor-pack-logo sponsor-pack-logo--hub">' +
+        '</div>' +
+        '<span class="sponsor-pack-logo-x" aria-hidden="true">×</span>' +
+        '<div class="sponsor-pack-logo-tile' +
+        (brandLogo ? '' : ' is-placeholder') +
+        '">' +
+        (brandLogo
+          ? '<img src="' +
+            attrEsc(brandLogo) +
+            '" alt="' +
+            attrEsc(brandName) +
+            '" class="sponsor-pack-logo sponsor-pack-logo--brand">'
+          : '<span class="sponsor-pack-logo-fallback">' + esc(String(brandName).slice(0, 18)) + '</span>') +
+        '</div></div>';
 
       var recentRows = (data.recent || [])
+        .slice(0, 12)
         .map(function (r) {
           return (
-            '<tr class="border-t border-slate-100">' +
-            '<td class="py-2 pr-3 text-xs text-slate-500 whitespace-nowrap">' +
+            '<tr>' +
+            '<td>' +
             esc(String(r.createdAt || '').replace('T', ' ').slice(0, 16)) +
             '</td>' +
-            '<td class="py-2 pr-3 text-sm">' +
-            esc(r.company || '—') +
+            '<td>' +
+            esc(formatSponsorPlacementLabel(r.placement)) +
             '</td>' +
-            '<td class="py-2 pr-3 text-xs font-mono text-slate-600">' +
-            esc(r.placement || '') +
-            '</td>' +
-            '<td class="py-2 pr-3 text-xs text-slate-500 truncate max-w-[10rem]" title="' +
-            attrEsc(r.path || '') +
-            '">' +
+            '<td class="sponsor-pack-mono">' +
             esc(r.path || '—') +
             '</td>' +
-            '<td class="py-2 text-xs truncate max-w-[14rem]"><a class="text-brand-700 hover:underline" href="' +
+            '<td><a href="' +
             attrEsc(r.url || '#') +
             '" target="_blank" rel="noopener">' +
-            esc((r.url || '').slice(0, 48) || '—') +
+            esc((r.url || '').replace(/^https?:\/\//i, '').slice(0, 42) || '—') +
             '</a></td></tr>'
           );
         })
         .join('');
 
       bodyEl.innerHTML =
-        '<div class="admin-metric-grid admin-metric-grid--4">' +
-        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total clicks</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
-        esc(String(data.total || 0)) +
-        '</p><p class="text-xs text-slate-500 mt-1">' +
+        '<article class="sponsor-pack">' +
+        '<header class="sponsor-pack-header">' +
+        logoPair +
+        '<div class="sponsor-pack-header-copy">' +
+        '<p class="sponsor-pack-eyebrow">Partnership performance pack</p>' +
+        '<h2 class="sponsor-pack-title">' +
+        esc(brandName) +
+        '</h2>' +
+        '<p class="sponsor-pack-period">' +
         esc(fromLabel) +
         ' → ' +
         esc(toLabel) +
-        (data.truncated ? ' · truncated at 10k' : '') +
-        '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Brands</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
-        esc(String((data.byCompany || []).length)) +
-        '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Placements</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
-        esc(String((data.byPlacement || []).length)) +
-        '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Days with clicks</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
-        esc(String((data.byDay || []).length)) +
-        '</p></div></div>' +
-        '<div class="grid gap-5 md:grid-cols-2 mt-5">' +
-        '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">By brand</h4>' +
-        rankListHtml(data.byCompany, 'company', 'No brand clicks in this range.') +
+        ' · UTC · Prepared ' +
+        esc(generated) +
+        '</p></div></header>' +
+        '<section class="sponsor-pack-kpis" aria-label="Headline metrics">' +
+        '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Page visits</p>' +
+        '<p class="sponsor-pack-kpi-value">' +
+        esc(formatSponsorPackNumber(summary.pageVisits || 0)) +
+        '</p><p class="sponsor-pack-kpi-hint">Times their placement was seen on the Hub</p></div>' +
+        '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Emails with logo</p>' +
+        '<p class="sponsor-pack-kpi-value">' +
+        esc(formatSponsorPackNumber(summary.emailSends || 0)) +
+        '</p><p class="sponsor-pack-kpi-hint">Hub emails that included their logo</p></div>' +
+        '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Outbound clicks</p>' +
+        '<p class="sponsor-pack-kpi-value">' +
+        esc(formatSponsorPackNumber(summary.clicks || 0)) +
+        '</p><p class="sponsor-pack-kpi-hint">Clicks through to their website</p></div>' +
+        '<div class="sponsor-pack-kpi sponsor-pack-kpi--accent"><p class="sponsor-pack-kpi-label">Site CTR</p>' +
+        '<p class="sponsor-pack-kpi-value">' +
+        esc(ctrLabel) +
+        '</p><p class="sponsor-pack-kpi-hint">Clicks ÷ page visits</p></div>' +
+        '</section>' +
+        '<section class="sponsor-pack-grid">' +
+        '<div class="sponsor-pack-card"><h3>Clicks by placement</h3>' +
+        rankListHtml(data.byPlacement, 'placement', 'No clicks in this range.') +
         '</div>' +
-        '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-3">By placement</h4>' +
-        rankListHtml(data.byPlacement, 'placement', 'No placement clicks in this range.') +
-        '</div></div>' +
-        '<div class="rounded-xl border border-slate-200 p-4 mt-5"><h4 class="text-sm font-bold text-brand-900 mb-3">By day</h4>' +
-        '<div class="space-y-1.5">' +
-        dayBars +
-        '</div></div>' +
-        '<div class="mt-5 overflow-x-auto"><h4 class="text-sm font-bold text-brand-900 mb-2">Recent clicks</h4>' +
+        '<div class="sponsor-pack-card"><h3>Page visits by placement</h3>' +
+        rankListHtml((data.impressions || {}).byPlacement, 'placement', 'No page visits logged yet.') +
+        '</div>' +
+        '<div class="sponsor-pack-card"><h3>Emails by template</h3>' +
+        rankListHtml((data.emails || {}).bySlug, 'slug', 'No logo emails counted yet.') +
+        '</div>' +
+        '<div class="sponsor-pack-card"><h3>Daily clicks</h3>' +
+        sparklineHtml(data.byDay) +
+        '</div></section>' +
+        '<section class="sponsor-pack-card sponsor-pack-card--wide">' +
+        '<div class="sponsor-pack-card-head"><h3>Recent outbound clicks</h3>' +
+        '<p>Latest Hub clicks with UTM-tagged destinations</p></div>' +
         (recentRows
-          ? '<table class="w-full text-left min-w-[40rem]"><thead><tr class="text-[10px] uppercase tracking-wider text-slate-400">' +
-            '<th class="pb-2 pr-3 font-semibold">When (UTC)</th><th class="pb-2 pr-3 font-semibold">Brand</th><th class="pb-2 pr-3 font-semibold">Placement</th><th class="pb-2 pr-3 font-semibold">Path</th><th class="pb-2 font-semibold">Destination</th></tr></thead><tbody>' +
+          ? '<div class="sponsor-pack-table-wrap"><table class="sponsor-pack-table"><thead><tr>' +
+            '<th>When (UTC)</th><th>Placement</th><th>Path</th><th>Destination</th></tr></thead><tbody>' +
             recentRows +
-            '</tbody></table>'
-          : '<p class="text-sm text-slate-400">No clicks logged yet for this filter.</p>') +
-        '</div>';
+            '</tbody></table></div>'
+          : '<p class="sponsor-pack-empty">No clicks yet for this filter.</p>') +
+        '</section>' +
+        '<section class="sponsor-pack-notes">' +
+        '<h3>How to read this pack</h3>' +
+        '<ul>' +
+        '<li><strong>Page visits</strong> count when their live placement is visible (once per browser tab per day).</li>' +
+        '<li><strong>Emails with logo</strong> count Hub sends that included their creative — not opens (opens stay with Resend / recipient clients).</li>' +
+        '<li><strong>Leads &amp; form fills</strong> appear in their analytics / CRM via Hub UTM tags (<code>utm_source=thenetworkerhub</code>).</li>' +
+        '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; attach their GA “thenetworkerhub” sessions as proof of pipeline.</li>' +
+        '</ul></section>' +
+        '<footer class="sponsor-pack-footer">' +
+        '<span>Confidential · The Networker Hub × ' +
+        esc(brandName) +
+        '</span><span>thenetworkerhub.com</span></footer></article>';
     }
 
     function load() {
-      setStatus('Loading…');
+      setStatus('Loading pack…');
       adminGet('/api/admin/sponsor-clicks' + queryFromForm())
         .then(function (data) {
           if (!data || !data.ok) {
             setStatus(
               (data && data.message) ||
                 (data && data.error === 'sponsor_clicks_table_missing'
-                  ? 'Run migration 234_sponsor_clicks.sql in Supabase.'
+                  ? 'Run migrations 234 + 235 in Supabase.'
                   : 'Could not load report.'),
               'error'
             );
             if (bodyEl) bodyEl.innerHTML = '';
             return;
           }
+          var s = data.summary || {};
           setStatus(
-            String(data.total || 0) +
-              ' click' +
-              (data.total === 1 ? '' : 's') +
-              ' in range.',
+            formatSponsorPackNumber(s.clicks || 0) +
+              ' clicks · ' +
+              formatSponsorPackNumber(s.pageVisits || 0) +
+              ' visits · ' +
+              formatSponsorPackNumber(s.emailSends || 0) +
+              ' emails',
             'ok'
           );
           renderReport(data);
@@ -8493,38 +8599,51 @@
         load();
       });
     }
+    if (printBtn) {
+      printBtn.addEventListener('click', function () {
+        document.body.classList.add('sponsor-pack-printing');
+        window.print();
+        setTimeout(function () {
+          document.body.classList.remove('sponsor-pack-printing');
+        }, 500);
+      });
+    }
     if (exportBtn) {
       exportBtn.addEventListener('click', function () {
         if (!lastReport || !lastReport.ok) {
           window.alert('Load a report first.');
           return;
         }
-        var rows = [['day', 'company', 'placement', 'count_type', 'count']];
+        var rows = [['metric', 'day', 'company', 'placement_or_slug', 'count']];
+        var summary = lastReport.summary || {};
+        rows.push(['page_visits_total', '', '', '', summary.pageVisits || 0]);
+        rows.push(['email_sends_total', '', '', '', summary.emailSends || 0]);
+        rows.push(['clicks_total', '', '', '', summary.clicks || 0]);
+        rows.push(['ctr', '', '', '', summary.ctrPct == null ? '' : summary.ctrPct]);
         (lastReport.byDay || []).forEach(function (r) {
-          rows.push([r.day || '', '', '', 'day', r.count || 0]);
+          rows.push(['clicks_by_day', r.day || '', '', '', r.count || 0]);
         });
-        (lastReport.byCompany || []).forEach(function (r) {
-          rows.push(['', r.company || '', '', 'company', r.count || 0]);
+        ((lastReport.impressions || {}).byDay || []).forEach(function (r) {
+          rows.push(['visits_by_day', r.day || '', '', '', r.count || 0]);
+        });
+        ((lastReport.emails || {}).bySlug || []).forEach(function (r) {
+          rows.push(['emails_by_slug', '', '', r.slug || '', r.count || 0]);
         });
         (lastReport.byPlacement || []).forEach(function (r) {
-          rows.push(['', '', r.placement || '', 'placement', r.count || 0]);
+          rows.push(['clicks_by_placement', '', '', r.placement || '', r.count || 0]);
         });
         (lastReport.recent || []).forEach(function (r) {
           rows.push([
+            'click',
             String(r.createdAt || '').slice(0, 10),
             r.company || '',
             r.placement || '',
-            'click',
             1,
           ]);
         });
-        if (rows.length === 1) {
-          window.alert('No rows to export.');
-          return;
-        }
         var from = String(lastReport.from || '').slice(0, 10);
         var to = String(lastReport.to || '').slice(0, 10);
-        downloadAdminCsv('sponsor-clicks-' + from + '-to-' + to + '.csv', rows);
+        downloadAdminCsv('sponsor-pack-' + from + '-to-' + to + '.csv', rows);
       });
     }
 

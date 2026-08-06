@@ -156,11 +156,16 @@
     if (!track) return;
     track.querySelectorAll('.home-partner-item[data-sponsor-placement]').forEach(function (item) {
       if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyCtaLink) return;
+      var company =
+        item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '';
       window.CmsSponsorFields.applyCtaLink(item, item.getAttribute('href') || '', {
         placement: item.getAttribute('data-sponsor-placement') || 'home_partners',
-        company: item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '',
+        company: company,
         campaign: 'home_partners',
       });
+      if (window.CmsSponsorFields.trackSponsorImpression) {
+        window.CmsSponsorFields.trackSponsorImpression('home_partners', company, { el: item });
+      }
     });
     if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) return;
     track.querySelectorAll('.home-partner-item').forEach(function (item) {

@@ -1,11 +1,11 @@
 /**
- * Public first-party sponsor / partner click beacon.
+ * Public first-party sponsor / partner analytics beacon (clicks + impressions).
  * No cookies / no identity — aggregate monthly pack reporting only.
  */
 const { json, setCors } = require('./_lib/auth');
 const { enforceRateLimit } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
-const { recordSponsorClick } = require('./_lib/sponsor-clicks');
+const { recordSponsorClick, recordSponsorImpression } = require('./_lib/sponsor-clicks');
 
 function parseBody(req) {
   let body = req.body;
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' });
 
   const limited = enforceRateLimit(req, res, 'sponsor_click_log', {
-    max: 60,
+    max: 80,
     windowMs: 300_000,
   });
   if (!limited.allowed) {
@@ -47,16 +47,26 @@ module.exports = async function handler(req, res) {
   try {
     const body = parseBody(req);
     const action = String(body.action || 'record_click').trim().toLowerCase();
-    if (action !== 'record_click') {
-      return json(res, 400, { ok: false, error: 'unknown_action' });
+
+    if (action === 'record_impression') {
+      const result = await recordSponsorImpression(body);
+      if (!result.ok) {
+        const status = result.error === 'no_signal' ? 200 : 400;
+        return json(res, status, result);
+      }
+      return json(res, 200, { ok: true });
     }
 
-    const result = await recordSponsorClick(body);
-    if (!result.ok) {
-      const status = result.error === 'no_signal' ? 200 : 400;
-      return json(res, status, result);
+    if (action === 'record_click') {
+      const result = await recordSponsorClick(body);
+      if (!result.ok) {
+        const status = result.error === 'no_signal' ? 200 : 400;
+        return json(res, status, result);
+      }
+      return json(res, 200, { ok: true });
     }
-    return json(res, 200, { ok: true });
+
+    return json(res, 400, { ok: false, error: 'unknown_action' });
   } catch (e) {
     if (e.code === 'sponsor_clicks_table_missing') {
       return json(res, 200, {
@@ -68,7 +78,7 @@ module.exports = async function handler(req, res) {
     return json(res, 500, {
       ok: false,
       error: e.code || 'sponsor_analytics_failed',
-      message: e.message || 'Could not record sponsor click.',
+      message: e.message || 'Could not record sponsor analytics.',
     });
   }
 };

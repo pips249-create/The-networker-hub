@@ -63,6 +63,7 @@ const {
   insertSponsorPlaceholderBeforeFooter,
   stripUnresolvedSponsorPlaceholders,
 } = require('./email-sponsor-sections');
+const { recordSponsorEmailSends } = require('./sponsor-clicks');
 const { emailGreetingName } = require('./email-display-name');
 const {
   enrichOrganiserHubWarningVars,
@@ -280,6 +281,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   // Never let booking-layout defaults reintroduce sponsors onto emails that opted out.
   const sponsorSection = String(sponsorVars.sponsor_row || '').trim();
   const dbMiniSponsorsRow = String(sponsorVars.mini_sponsors_row || '').trim();
+  const sponsorTracked = Array.isArray(sponsorVars.tracked) ? sponsorVars.tracked : [];
   delete bookingDefaults.sponsor_section;
   delete bookingDefaults.sponsor_row;
   delete bookingDefaults.mini_sponsors_row;
@@ -481,6 +483,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     subject,
     html,
     templateSource,
+    sponsorTracked,
   };
 }
 
@@ -701,6 +704,13 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     skipAllowlist: shouldSkipEmailAllowlist(slug),
     listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
   });
+  if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
+    try {
+      await recordSponsorEmailSends(built.sponsorTracked, built.template && built.template.slug ? built.template.slug : slug);
+    } catch (_e) {
+      /* reporting must not block email delivery */
+    }
+  }
   return {
     ...result,
     subject: subject || built.subject,

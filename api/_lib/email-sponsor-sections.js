@@ -8,7 +8,7 @@ const {
   EVENTS_SPONSOR_SLOT,
   isEmailSafeLogoUrl,
 } = require('./email-booking-defaults');
-const { hasSponsorLogo, sponsorLogoUrl } = require('./cms-sponsor-fields');
+const { hasSponsorLogo, sponsorLogoUrl, sponsorCompanyName } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 const { withSponsorUtm } = require('./sponsor-utm');
 const {
@@ -169,8 +169,9 @@ function wrapSponsorRow(inner) {
 
 function buildMiniSponsorsRow(ads, options = {}) {
   const list = (ads || []).filter(Boolean).slice(0, 3);
-  if (!list.length) return '';
+  if (!list.length) return { html: '', tracked: [] };
   const label = String(options.label || 'Powered by');
+  const tracked = [];
 
   const cells = list
     .map(function (ad) {
@@ -184,6 +185,10 @@ function buildMiniSponsorsRow(ads, options = {}) {
       }).replace(/"/g, '&quot;');
       const name = String(ad.company_name || ad.title || 'Sponsor').replace(/"/g, '&quot;');
       if (!logo || !url) return '';
+      tracked.push({
+        placement: 'email_mini_sponsor',
+        company: String(ad.company_name || ad.title || '').trim(),
+      });
       return (
         '<td class="mini-sponsor-cell" style="width:33.33%;padding:6px 8px;text-align:center;vertical-align:middle;">' +
         '<a href="' +
@@ -200,25 +205,27 @@ function buildMiniSponsorsRow(ads, options = {}) {
     .filter(Boolean)
     .join('');
 
-  if (!cells) return '';
+  if (!cells) return { html: '', tracked: [] };
 
   const cellCount = (cells.match(/mini-sponsor-cell/g) || []).length;
   const widthPct = cellCount === 1 ? '100%' : cellCount === 2 ? '50%' : '33.33%';
   const sizedCells = cells.replace(/width:33\.33%;/g, 'width:' + widthPct + ';');
 
-  return (
-    '<tr><td class="mobile-pad" style="padding:8px 40px 24px;text-align:center;background:#ffffff;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #e6e0e2;">' +
-    '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0;">' +
-    label +
-    '</p>' +
-    '</td></tr>' +
-    '<tr><td style="padding:0 12px 16px;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
-    sizedCells +
-    '</tr></table></td></tr></table></td></tr>'
-  );
+  return {
+    html:
+      '<tr><td class="mobile-pad" style="padding:8px 40px 24px;text-align:center;background:#ffffff;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:14px;border:1px solid #e6e0e2;">' +
+      '<tr><td style="padding:14px 16px 10px;text-align:center;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#7a7274;text-transform:uppercase;letter-spacing:1px;margin:0;">' +
+      label +
+      '</p>' +
+      '</td></tr>' +
+      '<tr><td style="padding:0 12px 16px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
+      sizedCells +
+      '</tr></table></td></tr></table></td></tr>',
+    tracked,
+  };
 }
 
 function isRenderableEmailSponsor(block) {
@@ -288,7 +295,7 @@ async function fetchEventMiniSponsorAds(sb, limit) {
 }
 
 async function getEmailSponsorVars(slug) {
-  const empty = { sponsor_row: '', sponsor_section: '', mini_sponsors_row: '' };
+  const empty = { sponsor_row: '', sponsor_section: '', mini_sponsors_row: '', tracked: [] };
   if (
     !slug ||
     (!EVENT_MAIN_SPONSOR_SLUGS.has(slug) &&
@@ -305,6 +312,7 @@ async function getEmailSponsorVars(slug) {
     const sb = getSupabaseAdmin();
     let mainBlock = null;
     const label = 'Powered by';
+    const tracked = [];
 
     if (OPPORTUNITY_EMAIL_SLUGS.has(slug)) {
       mainBlock = await resolveOpportunitySponsorBlock(sb);
@@ -333,26 +341,41 @@ async function getEmailSponsorVars(slug) {
     const sponsorRow = mainBlock
       ? wrapSponsorRow(buildSponsorSection(mainBlock, sponsorOpts))
       : '';
+    if (sponsorRow && mainBlock) {
+      tracked.push({
+        placement: sponsorOpts.placement,
+        company: sponsorCompanyName(mainBlock) || '',
+      });
+    }
 
     let miniRow = '';
     if (HUB_PARTNER_SPONSOR_SLUGS.has(slug)) {
       const partnerBlocks = await resolveHubPartnerBlocks(sb);
-      miniRow = buildMiniSponsorsRow(partnerBlocks, { label: 'Powered by' });
+      const mini = buildMiniSponsorsRow(partnerBlocks, { label: 'Powered by' });
+      miniRow = mini.html;
+      tracked.push.apply(tracked, mini.tracked);
     } else if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchEventMiniSponsorAds(sb, 3);
-      miniRow = buildMiniSponsorsRow(ads);
+      const mini = buildMiniSponsorsRow(ads);
+      miniRow = mini.html;
+      tracked.push.apply(tracked, mini.tracked);
     } else if (ORGANISER_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchMiniSponsorAds(sb, ORGANISER_PAGE_CAROUSEL_SLOT, 3);
-      miniRow = buildMiniSponsorsRow(ads);
+      const mini = buildMiniSponsorsRow(ads);
+      miniRow = mini.html;
+      tracked.push.apply(tracked, mini.tracked);
     } else if (OPPORTUNITY_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchMiniSponsorAds(sb, OPPORTUNITY_PAGE_CAROUSEL_SLOT, 3);
-      miniRow = buildMiniSponsorsRow(ads);
+      const mini = buildMiniSponsorsRow(ads);
+      miniRow = mini.html;
+      tracked.push.apply(tracked, mini.tracked);
     }
 
     return {
       sponsor_row: sponsorRow,
       sponsor_section: sponsorRow,
       mini_sponsors_row: miniRow,
+      tracked,
     };
   } catch {
     return empty;

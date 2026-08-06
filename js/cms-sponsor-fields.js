@@ -255,6 +255,87 @@
     }
   }
 
+  function impressionKey(placement, company) {
+    return (
+      'hub_sp_imp_' +
+      String(placement || '').slice(0, 40) +
+      '_' +
+      String(company || '').slice(0, 40) +
+      '_' +
+      new Date().toISOString().slice(0, 10)
+    );
+  }
+
+  function postSponsorImpression(placement, company) {
+    var place = String(placement || 'sponsor').slice(0, 64);
+    var brand = String(company || '').slice(0, 64);
+    if (!place) return;
+    try {
+      var key = impressionKey(place, brand);
+      if (window.sessionStorage) {
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+      }
+    } catch (e) {
+      /* private mode */
+    }
+    try {
+      fetch('/api/sponsor-analytics', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'record_impression',
+          placement: place,
+          company: brand,
+          path: String((window.location && window.location.pathname) || '').slice(0, 200),
+        }),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (e2) {
+      /* optional */
+    }
+  }
+
+  /**
+   * Count one page visit when the placement is actually visible.
+   * Once per browser tab per day per placement+brand.
+   */
+  function trackSponsorImpression(placement, company, meta) {
+    var place = String(placement || (meta && meta.placement) || 'sponsor').slice(0, 64);
+    var brand = String(company || (meta && meta.company) || '').slice(0, 64);
+    var el = meta && meta.el ? meta.el : null;
+    if (!place) return;
+
+    function fire() {
+      postSponsorImpression(place, brand);
+    }
+
+    if (!el || typeof IntersectionObserver !== 'function') {
+      fire();
+      return;
+    }
+    if (el.__hubSponsorImpBound) return;
+    el.__hubSponsorImpBound = true;
+    try {
+      var obs = new IntersectionObserver(
+        function (entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting && entries[i].intersectionRatio >= 0.35) {
+              fire();
+              obs.disconnect();
+              break;
+            }
+          }
+        },
+        { threshold: [0.35] }
+      );
+      obs.observe(el);
+    } catch (e) {
+      fire();
+    }
+  }
+
   function applyCtaLink(el, url, opts) {
     if (!el) return;
     var placement = opts && opts.placement ? opts.placement : el.getAttribute('data-sponsor-placement') || '';
@@ -383,5 +464,6 @@
     applyLogoBand: applyLogoBand,
     withSponsorUtm: withSponsorUtm,
     trackSponsorClick: trackSponsorClick,
+    trackSponsorImpression: trackSponsorImpression,
   };
 })();
