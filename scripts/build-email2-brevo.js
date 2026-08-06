@@ -55,6 +55,7 @@ async function buildEmail2SponsorRow() {
     placement: 'email2_launch',
     campaign: 'email2_launch',
     logoBandBg: '#1a1a2e',
+    siteUrl: SITE,
   });
   if (!html) {
     console.warn('Sponsor banner: Barnsgate markup empty');
