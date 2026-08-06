@@ -66,7 +66,7 @@
       '">' +
       '<img class="sponsor-logo sponsor-logo--full" alt="' +
       esc(company) +
-      '" crossorigin="anonymous" src="' +
+      '" src="' +
       esc(logo) +
       '">' +
       '</a></div></aside>';

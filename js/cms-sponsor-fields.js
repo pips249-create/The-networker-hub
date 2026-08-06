@@ -505,8 +505,17 @@
       probe.src = src;
     }
 
-    if (img.complete && img.naturalWidth) paint();
-    else {
+    if (img.complete && img.naturalWidth) {
+      paint();
+    } else if (img.complete) {
+      // Broken/empty image (often CORS) — events already fired, so fall back now.
+      if (logoBandForceDark(wrap, opts) || isHeroLogoWrap(wrap)) {
+        applyDarkLogoBand(wrap);
+      } else {
+        wrap.style.backgroundColor = LOGO_BAND_LIGHT;
+        wrap.classList.remove('sponsor-logo-band--dark');
+      }
+    } else {
       img.addEventListener('load', paint, { once: true });
       img.addEventListener(
         'error',

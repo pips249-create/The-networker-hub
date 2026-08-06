@@ -7135,7 +7135,7 @@
         '>' +
         '<img src="' +
         esc(logoUrl) +
-        '" alt="" class="sponsor-preview-logo-img" crossorigin="anonymous" ' +
+        '" alt="" class="sponsor-preview-logo-img" ' +
         'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)">' +
         '</div>'
       );
@@ -8741,7 +8741,7 @@
             attrEsc(brandLogo) +
             '" alt="' +
             attrEsc(brandName) +
-            '" class="sponsor-pack-logo sponsor-pack-logo--brand" crossorigin="anonymous">'
+            '" class="sponsor-pack-logo sponsor-pack-logo--brand">'
           : '<span class="sponsor-pack-logo-fallback">' + esc(String(brandName).slice(0, 22)) + '</span>') +
         '</div></div>';
 
