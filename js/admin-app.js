@@ -16308,12 +16308,32 @@
     'Other',
   ];
 
+  /**
+   * Show/hide full-screen admin overlays that use Tailwind `flex`.
+   * The HTML `hidden` attribute alone loses to `.flex{display:flex}` in
+   * admin-tailwind.css (same specificity, later rule wins) — so Save/Cancel
+   * looked broken: the Feature until popup stayed on screen.
+   */
+  function setAdminOverlayOpen(el, open) {
+    if (!el) return;
+    if (open) {
+      el.hidden = false;
+      el.classList.remove('hidden');
+      el.setAttribute('aria-hidden', 'false');
+    } else {
+      el.hidden = true;
+      el.classList.add('hidden');
+      el.setAttribute('aria-hidden', 'true');
+    }
+  }
+
   function ensureAdminForceRemoveModal() {
     if (document.getElementById('admin-force-remove-modal')) return;
     var modal = document.createElement('div');
     modal.id = 'admin-force-remove-modal';
+    modal.className = 'hidden fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
     modal.hidden = true;
-    modal.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
+    modal.setAttribute('aria-hidden', 'true');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'admin-force-remove-title');
@@ -16339,7 +16359,7 @@
     document.body.appendChild(modal);
 
     document.getElementById('admin-force-remove-cancel').addEventListener('click', function () {
-      modal.hidden = true;
+      setAdminOverlayOpen(modal, false);
       if (modal._reject) modal._reject(new Error('cancelled'));
     });
     document.getElementById('admin-force-remove-confirm').addEventListener('click', function () {
@@ -16355,7 +16375,7 @@
         return;
       }
       if (errEl) errEl.classList.add('hidden');
-      modal.hidden = true;
+      setAdminOverlayOpen(modal, false);
       if (modal._resolve) {
         modal._resolve({
           reason: reason,
@@ -16423,7 +16443,7 @@
     if (reasonEl) reasonEl.value = '';
     if (detailsEl) detailsEl.value = '';
     if (errEl) errEl.classList.add('hidden');
-    modal.hidden = false;
+    setAdminOverlayOpen(modal, true);
     return new Promise(function (resolve, reject) {
       modal._resolve = resolve;
       modal._reject = reject;
@@ -16434,8 +16454,9 @@
     if (document.getElementById('admin-unpublish-modal')) return;
     var modal = document.createElement('div');
     modal.id = 'admin-unpublish-modal';
+    modal.className = 'hidden fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
     modal.hidden = true;
-    modal.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
+    modal.setAttribute('aria-hidden', 'true');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'admin-unpublish-title');
@@ -16462,7 +16483,7 @@
     document.body.appendChild(modal);
 
     document.getElementById('admin-unpublish-cancel').addEventListener('click', function () {
-      modal.hidden = true;
+      setAdminOverlayOpen(modal, false);
       if (modal._reject) modal._reject(new Error('cancelled'));
     });
     document.getElementById('admin-unpublish-confirm').addEventListener('click', function () {
@@ -16479,7 +16500,7 @@
         return;
       }
       if (errEl) errEl.classList.add('hidden');
-      modal.hidden = true;
+      setAdminOverlayOpen(modal, false);
       if (modal._resolve) {
         modal._resolve({
           reason: reason,
@@ -16510,7 +16531,7 @@
     if (detailsEl) detailsEl.value = '';
     if (notifyEl) notifyEl.checked = true;
     if (errEl) errEl.classList.add('hidden');
-    modal.hidden = false;
+    setAdminOverlayOpen(modal, true);
     return new Promise(function (resolve, reject) {
       modal._resolve = resolve;
       modal._reject = reject;
@@ -17890,8 +17911,9 @@
     if (document.getElementById('admin-spotlight-until-modal')) return;
     var modal = document.createElement('div');
     modal.id = 'admin-spotlight-until-modal';
+    modal.className = 'hidden fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
     modal.hidden = true;
-    modal.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
+    modal.setAttribute('aria-hidden', 'true');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'admin-spotlight-until-title');
@@ -17937,7 +17959,7 @@
       });
     });
     document.getElementById('admin-spotlight-until-cancel').addEventListener('click', function () {
-      modal.hidden = true;
+      setAdminOverlayOpen(modal, false);
       if (modal._reject) modal._reject(new Error('cancelled'));
     });
     document.getElementById('admin-spotlight-until-confirm').addEventListener('click', function () {
@@ -17964,7 +17986,7 @@
         }
       }
       if (errEl) errEl.classList.add('hidden');
-      modal.hidden = true;
+      setAdminOverlayOpen(modal, false);
       if (modal._resolve) {
         modal._resolve({ featured_until: noExpiry ? null : dateVal });
       }
@@ -17997,7 +18019,7 @@
       dateEl.disabled = !!noExpiry;
       dateEl.min = new Date().toISOString().slice(0, 10);
     }
-    modal.hidden = false;
+    setAdminOverlayOpen(modal, true);
     return new Promise(function (resolve, reject) {
       modal._resolve = resolve;
       modal._reject = reject;

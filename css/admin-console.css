@@ -13,6 +13,16 @@
   display: none;
 }
 
+/* Flex overlays: keep [hidden]/.hidden winning over Tailwind .flex */
+#admin-spotlight-until-modal.hidden,
+#admin-force-remove-modal.hidden,
+#admin-unpublish-modal.hidden,
+#admin-spotlight-until-modal[hidden],
+#admin-force-remove-modal[hidden],
+#admin-unpublish-modal[hidden] {
+  display: none !important;
+}
+
 /* Auth overlay — does not replace the shell (avoids CLS on boot) */
 .admin-gate {
   position: fixed;
