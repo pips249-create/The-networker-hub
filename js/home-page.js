@@ -38,31 +38,29 @@
     return '';
   }
 
-  function partnerNeedsDarkBand(name, flagged) {
-    return !!flagged;
+  function isBarnsgatePartner(name, url) {
+    return /barnsgate/i.test(String(name || '')) || /barnsgate[-_]?logo/i.test(String(url || ''));
   }
 
   function partnerLogoForStrip(url, name) {
     var u = String(url || '').trim();
-    var n = String(name || '');
     // Navy-plate Barnsgate assets look boxed on white tiles — use the light-bg mark.
-    if (/barnsgate/i.test(n) || /barnsgate[-_]?logo/i.test(u)) {
-      return BARNSGATE_LIGHT_LOGO;
-    }
+    if (isBarnsgatePartner(name, u)) return BARNSGATE_LIGHT_LOGO;
     return u;
   }
 
   function partnerFromSponsorBlock(block) {
     var name = sponsorCompany(block) || 'Partner';
+    var logo = partnerLogoForStrip(sponsorLogo(block), name);
+    var flaggedDark = !!(block && (block.logo_band_dark === true || block.logoBandDark === true));
+    // Light-bg strip logo must never sit on a CMS dark band (unreadable).
+    if (logo === BARNSGATE_LIGHT_LOGO) flaggedDark = false;
     return {
       name: name,
-      logo: partnerLogoForStrip(sponsorLogo(block), name),
+      logo: logo,
       url: sponsorCta(block),
       label: String((block && block.cta_label) || '').trim() || 'Visit website',
-      logoBandDark: partnerNeedsDarkBand(
-        name,
-        !!(block && (block.logo_band_dark === true || block.logoBandDark === true))
-      ),
+      logoBandDark: partnerNeedsDarkBand(name, flaggedDark),
     };
   }
 
@@ -144,15 +142,15 @@
 
   function partnerFromRow(p) {
     var name = String(p.company_name || '').trim() || 'Partner';
+    var logo = partnerLogoForStrip(String(p.logo_url || '').trim(), name);
+    var flaggedDark = p.logo_band_dark === true || p.logoBandDark === true;
+    if (logo === BARNSGATE_LIGHT_LOGO) flaggedDark = false;
     return {
       name: name,
-      logo: partnerLogoForStrip(String(p.logo_url || '').trim(), name),
+      logo: logo,
       url: String(p.cta_url || '').trim(),
       label: String(p.cta_label || '').trim() || 'Visit website',
-      logoBandDark: partnerNeedsDarkBand(
-        name,
-        p.logo_band_dark === true || p.logoBandDark === true
-      ),
+      logoBandDark: partnerNeedsDarkBand(name, flaggedDark),
     };
   }
 
@@ -214,17 +212,16 @@
         window.CmsSponsorFields.trackSponsorImpression('home_partners', company, { el: item });
       }
     });
-    // Uniform white/navy tiles only — never brand edge colours. Dark when CMS
-    // flags it, the name is Barnsgate, or the logo file itself has a dark plate.
+    // Uniform white/navy tiles only — never brand edge colours. Skip dark band
+    // for the Barnsgate light-bg strip mark (CMS may still flag logo_band_dark).
     if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) {
       track.querySelectorAll('.home-partner-item').forEach(function (item) {
-        var forceDark = item.getAttribute('data-logo-band-dark') === 'true';
-        var name =
-          item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '';
-        item.classList.toggle(
-          'home-partner-item--dark-logo',
-          partnerNeedsDarkBand(name, forceDark)
-        );
+        var img = item.querySelector('.home-partner-logo');
+        var src = img ? img.getAttribute('src') || '' : '';
+        var forceDark =
+          item.getAttribute('data-logo-band-dark') === 'true' &&
+          src.indexOf('barnsgate-logo-on-light') === -1;
+        item.classList.toggle('home-partner-item--dark-logo', forceDark);
       });
       return;
     }
@@ -232,13 +229,20 @@
       var img = item.querySelector('.home-partner-logo');
       if (!img) return;
       img.removeAttribute('crossOrigin');
-      var name =
-        item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '';
-      var forceDark = partnerNeedsDarkBand(
-        name,
-        item.getAttribute('data-logo-band-dark') === 'true'
-      );
+      var src = img.getAttribute('src') || '';
+      var lightBarnsgate = src.indexOf('barnsgate-logo-on-light') !== -1;
+      var forceDark =
+        !lightBarnsgate && item.getAttribute('data-logo-band-dark') === 'true';
       function apply() {
+        if (lightBarnsgate) {
+          item.style.backgroundColor = '';
+          item.classList.remove(
+            'sponsor-logo-band',
+            'sponsor-logo-band--dark',
+            'home-partner-item--dark-logo'
+          );
+          return;
+        }
         window.CmsSponsorFields.applyLogoBand(item, img, true, {
           forceDark: forceDark,
           uniformTiles: true,
@@ -248,7 +252,7 @@
           forceDark || item.classList.contains('sponsor-logo-band--dark')
         );
       }
-      if (forceDark) apply();
+      if (forceDark || lightBarnsgate) apply();
       if (img.complete && img.naturalWidth) apply();
       else img.addEventListener('load', apply, { once: true });
     });
