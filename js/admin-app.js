@@ -8292,81 +8292,237 @@
     });
   }
 
-  function inlineSponsorPackImages(root) {
-    var imgs = root.querySelectorAll('img');
-    var tasks = [];
-    Array.prototype.forEach.call(imgs, function (img) {
-      var src = String(img.getAttribute('src') || '').trim();
-      if (!src || src.indexOf('data:') === 0) return;
-      var abs = src;
-      try {
-        abs = new URL(src, window.location.origin).href;
-      } catch (_e) {
-        /* keep */
-      }
-      tasks.push(
-        fetch(abs, { mode: 'cors', credentials: 'omit', cache: 'force-cache' })
-          .then(function (res) {
-            if (!res.ok) throw new Error('img_fetch');
-            return res.blob();
-          })
-          .then(function (blob) {
-            return blobToDataUrl(blob);
-          })
-          .then(function (dataUrl) {
-            if (dataUrl) img.setAttribute('src', dataUrl);
-          })
-          .catch(function () {
-            var tile = img.closest('.sponsor-pack-logo-tile');
-            var alt = img.getAttribute('alt') || 'Sponsor';
-            if (tile && img.classList.contains('sponsor-pack-logo--brand')) {
-              img.remove();
-              var fallback = document.createElement('span');
-              fallback.className = 'sponsor-pack-logo-fallback';
-              fallback.textContent = alt;
-              tile.appendChild(fallback);
-            }
-          })
-      );
-    });
-    return Promise.all(tasks);
+  function fetchImageAsDataUrl(url) {
+    var abs = String(url || '').trim();
+    if (!abs) return Promise.resolve('');
+    if (abs.indexOf('data:') === 0) return Promise.resolve(abs);
+    try {
+      abs = new URL(abs, window.location.origin).href;
+    } catch (_e) {
+      /* keep */
+    }
+    return fetch(abs, { mode: 'cors', credentials: 'omit', cache: 'force-cache' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('img_fetch');
+        return res.blob();
+      })
+      .then(blobToDataUrl)
+      .catch(function () {
+        return '';
+      });
   }
 
-  function downloadSponsorPackPdf(packEl, filename, brandName) {
-    var clone = packEl.cloneNode(true);
-    clone.classList.add('sponsor-pack--pdf-export');
-    clone.style.width = '794px';
-    clone.style.maxWidth = '794px';
-    clone.style.margin = '0';
-    clone.style.boxShadow = 'none';
+  function formatSponsorPackCtr(clicks, pageViews) {
+    var c = Number(clicks) || 0;
+    var v = Number(pageViews) || 0;
+    if (v < 1) return { label: '—', hint: 'Needs page views to calculate' };
+    var pct = Math.round((c / v) * 1000) / 10;
+    return {
+      label: String(pct) + '%',
+      hint: formatSponsorPackNumber(c) + ' clicks ÷ ' + formatSponsorPackNumber(v) + ' views',
+    };
+  }
+
+  function buildSponsorPackPdfRows(list, labelKey, limit) {
+    var rows = Array.isArray(list) ? list.slice(0, limit || 6) : [];
+    if (!rows.length) {
+      return (
+        '<tr><td colspan="2" style="padding:10px 0;color:#94a3b8;font-size:12px;">No data in this period yet.</td></tr>'
+      );
+    }
+    return rows
+      .map(function (r) {
+        var label =
+          labelKey === 'placement'
+            ? formatSponsorPlacementLabel(r.placement || r.key)
+            : labelKey === 'slug'
+              ? String(r.slug || r.key || '').replace(/_/g, ' ')
+              : String(r[labelKey] || r.key || '');
+        return (
+          '<tr>' +
+          '<td style="padding:8px 0;border-bottom:1px solid #efeaf2;font-size:12.5px;color:#334155;">' +
+          esc(label) +
+          '</td>' +
+          '<td style="padding:8px 0;border-bottom:1px solid #efeaf2;font-size:12.5px;color:#0f172a;font-weight:700;text-align:right;width:72px;">' +
+          esc(formatSponsorPackNumber(r.count || 0)) +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  /**
+   * Dedicated A4 one-pager for clients — simpler layout than the on-screen pack
+   * so html2canvas does not mangle CSS grids.
+   */
+  function buildSponsorPackPdfDocument(data, logos) {
+    var summary = (data && data.summary) || {};
+    var brand = (data && data.brand) || {};
+    var brandName = brand.company || 'Partner';
+    var fromLabel = String((data && data.from) || '').slice(0, 10);
+    var toLabel = String((data && data.to) || '').slice(0, 10);
+    var pageViews = Number(summary.pageVisits) || 0;
+    var clicks = Number(summary.clicks) || 0;
+    var emails = Number(summary.emailSends) || 0;
+    var ctr = formatSponsorPackCtr(clicks, pageViews);
+    var prepared = new Date().toLocaleString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    var hubLogo = (logos && logos.hub) || '';
+    var brandLogo = (logos && logos.brand) || '';
+    var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
+
+    var hubLogoHtml = hubLogo
+      ? '<img src="' +
+        attrEsc(hubLogo) +
+        '" alt="The Networker Hub" style="max-width:150px;max-height:42px;width:auto;height:auto;display:block;">'
+      : '<span style="font-size:13px;font-weight:700;color:#2d2636;">The Networker Hub</span>';
+
+    var brandLogoHtml = brandLogo
+      ? '<img src="' +
+        attrEsc(brandLogo) +
+        '" alt="' +
+        attrEsc(brandName) +
+        '" style="max-width:150px;max-height:42px;width:auto;height:auto;display:block;">'
+      : '<span style="font-size:13px;font-weight:700;color:' +
+        (brandDark ? '#f8f5fa' : '#4a2c5a') +
+        ';">' +
+        esc(brandName) +
+        '</span>';
+
+    function kpiCell(label, value, hint, dark) {
+      return (
+        '<td style="width:25%;padding:4px;vertical-align:top;">' +
+        '<div style="border:1px solid ' +
+        (dark ? '#2d2636' : '#ebe4ef') +
+        ';border-radius:12px;padding:14px 12px;background:' +
+        (dark ? '#2d2636' : '#ffffff') +
+        ';min-height:108px;">' +
+        '<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:' +
+        (dark ? 'rgba(255,255,255,0.7)' : '#7c7480') +
+        ';">' +
+        esc(label) +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:28px;font-weight:750;line-height:1;color:' +
+        (dark ? '#ffffff' : '#2d2636') +
+        ';">' +
+        esc(value) +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:11px;line-height:1.35;color:' +
+        (dark ? 'rgba(255,255,255,0.7)' : '#8a8284') +
+        ';">' +
+        esc(hint) +
+        '</div></div></td>'
+      );
+    }
+
+    return (
+      '<div class="sponsor-pack-pdf" style="width:720px;padding:28px 28px 24px;background:#ffffff;color:#1e293b;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;box-sizing:border-box;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:22px;">' +
+      '<tr>' +
+      '<td style="vertical-align:middle;width:46%;">' +
+      '<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
+      '<td style="width:168px;height:64px;border:1px solid #e8e2ec;border-radius:12px;background:#fff;text-align:center;vertical-align:middle;padding:8px 12px;">' +
+      hubLogoHtml +
+      '</td>' +
+      '<td style="width:28px;text-align:center;color:#9a7aa8;font-size:18px;font-weight:700;">×</td>' +
+      '<td style="width:168px;height:64px;border:1px solid ' +
+      (brandDark ? '#1a1a2e' : '#e8e2ec') +
+      ';border-radius:12px;background:' +
+      (brandDark ? '#1a1a2e' : '#fff') +
+      ';text-align:center;vertical-align:middle;padding:8px 12px;">' +
+      brandLogoHtml +
+      '</td></tr></table></td>' +
+      '<td style="vertical-align:middle;padding-left:18px;">' +
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9a7aa8;">Partnership performance pack</div>' +
+      '<div style="margin-top:4px;font-size:26px;font-weight:750;color:#2d2636;line-height:1.15;">' +
+      esc(brandName) +
+      '</div>' +
+      '<div style="margin-top:6px;font-size:12px;color:#64748b;">' +
+      esc(fromLabel) +
+      ' → ' +
+      esc(toLabel) +
+      ' · Prepared ' +
+      esc(prepared) +
+      '</div></td></tr></table>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:20px;"><tr>' +
+      kpiCell('Page views', formatSponsorPackNumber(pageViews), 'Sponsored directory visits (e.g. /events/)', false) +
+      kpiCell('Emails with logo', formatSponsorPackNumber(emails), 'Hub emails that included your logo', false) +
+      kpiCell('Outbound clicks', formatSponsorPackNumber(clicks), 'Clicks through to your website', false) +
+      kpiCell('Site CTR', ctr.label, ctr.hint, true) +
+      '</tr></table>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:18px;">' +
+      '<tr>' +
+      '<td style="width:50%;padding-right:10px;vertical-align:top;">' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:14px 16px;min-height:160px;">' +
+      '<div style="font-size:13px;font-weight:700;color:#2d2636;margin-bottom:6px;">Clicks by placement</div>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
+      buildSponsorPackPdfRows(data.byPlacement, 'placement', 6) +
+      '</table></div></td>' +
+      '<td style="width:50%;padding-left:10px;vertical-align:top;">' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:14px 16px;min-height:160px;">' +
+      '<div style="font-size:13px;font-weight:700;color:#2d2636;margin-bottom:6px;">Page views by placement</div>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
+      buildSponsorPackPdfRows((data.impressions || {}).byPlacement, 'placement', 6) +
+      '</table></div></td></tr></table>' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:14px 16px;background:#f8f5fa;margin-bottom:18px;">' +
+      '<div style="font-size:13px;font-weight:700;color:#2d2636;margin-bottom:8px;">How to read this pack</div>' +
+      '<div style="font-size:11.5px;line-height:1.55;color:#475569;">' +
+      '<strong>Page views</strong> are visits to the sponsored Hub directory while your placement is live. ' +
+      '<strong>Emails with logo</strong> count Hub sends that included your creative (not opens). ' +
+      '<strong>Leads &amp; form fills</strong> appear in your analytics / CRM via UTM tags ' +
+      '(<span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;">utm_source=thenetworkerhub</span>).' +
+      '</div></div>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid #efeaf2;padding-top:12px;">' +
+      '<tr><td style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#94a3b8;padding-top:12px;">Confidential · The Networker Hub × ' +
+      esc(brandName) +
+      '</td>' +
+      '<td style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#94a3b8;text-align:right;padding-top:12px;">thenetworkerhub.com</td></tr></table>' +
+      '</div>'
+    );
+  }
+
+  function downloadSponsorPackPdf(data, filename) {
+    var brand = (data && data.brand) || {};
+    var brandName = brand.company || 'Partner';
+    var hubUrl = (data && data.hubLogoUrl) || '/assets/logo-nav.png';
+    var brandUrl = brand.logoUrl || '';
+    if (/barnsgate/i.test(brandName) && (!brandUrl || /\.svg(?:[?#]|$)/i.test(brandUrl))) {
+      brandUrl =
+        'https://cdn.prod.website-files.com/66e99a1017187b724a2bc8b8/66e9a2aee48ebc4a38f6add4_BAR%200007%20Solutions%20logo%20various%20final-01.svg';
+    }
+
     var host = document.createElement('div');
     host.setAttribute('aria-hidden', 'true');
     host.style.cssText =
-      'position:fixed;left:-10000px;top:0;width:794px;background:#fff;z-index:-1;pointer-events:none;';
-    host.appendChild(clone);
+      'position:fixed;left:-10000px;top:0;width:720px;background:#fff;z-index:-1;pointer-events:none;';
     document.body.appendChild(host);
 
-    return inlineSponsorPackImages(clone)
-      .then(function () {
+    return Promise.all([fetchImageAsDataUrl(hubUrl), fetchImageAsDataUrl(brandUrl)])
+      .then(function (urls) {
+        host.innerHTML = buildSponsorPackPdfDocument(data, { hub: urls[0], brand: urls[1] });
         return loadHtml2PdfLibrary();
       })
       .then(function (html2pdf) {
+        var node = host.firstElementChild;
         var opt = {
-          margin: [10, 10, 12, 10],
+          margin: [8, 8, 8, 8],
           filename: filename || 'sponsor-pack.pdf',
-          image: { type: 'jpeg', quality: 0.96 },
+          image: { type: 'jpeg', quality: 0.98 },
           html2canvas: {
             scale: 2,
             useCORS: true,
             allowTaint: false,
             backgroundColor: '#ffffff',
             logging: false,
-            windowWidth: 794,
+            windowWidth: 720,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
+          pagebreak: { mode: ['avoid-all'] },
         };
-        return html2pdf().set(opt).from(clone).save();
+        return html2pdf().set(opt).from(node).save();
       })
       .finally(function () {
         try {
@@ -8447,7 +8603,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Download PDF saves a shareable A4 file (e.g. for Barnsgate).</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page client pack — choose a brand (Barnsgate pack) first.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -8558,8 +8714,8 @@
       var hubLogo = data.hubLogoUrl || '/assets/logo-nav.png';
       var brandLogo = brand.logoUrl || '';
       var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
-      var ctrLabel =
-        summary.ctrPct == null ? '—' : String(summary.ctrPct) + '%';
+      var ctrInfo = formatSponsorPackCtr(summary.clicks || 0, summary.pageVisits || 0);
+      var ctrLabel = ctrInfo.label;
       var generated = new Date().toLocaleString('en-GB', {
         day: 'numeric',
         month: 'short',
@@ -8644,7 +8800,9 @@
         '<div class="sponsor-pack-kpi sponsor-pack-kpi--accent"><p class="sponsor-pack-kpi-label">Site CTR</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(ctrLabel) +
-        '</p><p class="sponsor-pack-kpi-hint">Clicks ÷ page views</p></div>' +
+        '</p><p class="sponsor-pack-kpi-hint">' +
+        esc(ctrInfo.hint) +
+        '</p></div>' +
         '</section>' +
         '<section class="sponsor-pack-grid">' +
         '<div class="sponsor-pack-card"><h3>Clicks by placement</h3>' +
@@ -8731,17 +8889,21 @@
     }
     if (printBtn) {
       printBtn.addEventListener('click', function () {
-        var pack = document.querySelector('#sponsor-clicks-body .sponsor-pack');
-        if (!pack) {
+        if (!lastReport || !lastReport.ok) {
           window.alert('Load a pack first, then Download PDF.');
           return;
         }
+        var companyFilter = ((document.getElementById('sponsor-clicks-company') || {}).value || '').trim();
+        if (!companyFilter) {
+          window.alert(
+            'Enter a brand (e.g. Barnsgate) and click Apply before downloading the client PDF.'
+          );
+          return;
+        }
         var brand =
-          (lastReport && lastReport.brand && lastReport.brand.company) ||
-          (document.getElementById('sponsor-clicks-company') || {}).value ||
-          'sponsor';
-        var from = String((lastReport && lastReport.from) || '').slice(0, 10);
-        var to = String((lastReport && lastReport.to) || '').slice(0, 10);
+          (lastReport.brand && lastReport.brand.company) || companyFilter || 'sponsor';
+        var from = String(lastReport.from || '').slice(0, 10);
+        var to = String(lastReport.to || '').slice(0, 10);
         var filename =
           'sponsor-pack-' +
           String(brand || 'sponsor')
@@ -8755,9 +8917,9 @@
         printBtn.disabled = true;
         var prevLabel = printBtn.textContent;
         printBtn.textContent = 'Preparing PDF…';
-        setStatus('Preparing PDF download…');
+        setStatus('Preparing client PDF…');
 
-        downloadSponsorPackPdf(pack, filename, String(brand || '').trim())
+        downloadSponsorPackPdf(lastReport, filename)
           .then(function () {
             setStatus('PDF downloaded — ' + filename, 'ok');
           })
