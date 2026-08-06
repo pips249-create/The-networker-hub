@@ -2473,24 +2473,107 @@ body.nav-menu-open {
   }
 }
 
-/* ─── Account settings ─── */
-@media (max-width: 480px) {
-  .account-settings-page .as-wrap {
-    padding: 16px 16px 32px;
-    box-sizing: border-box;
+/* ─── Payment setup ─── */
+@media (max-width: 768px) {
+  .payment-setup-page .payment-setup-main {
+    padding: 16px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+    align-items: flex-start;
   }
 
-  .as-card {
-    padding: 20px 16px;
+  .payment-setup-page .payment-setup-shell {
+    max-width: 100%;
   }
 
-  .as-actions .as-btn {
-    width: 100%;
+  .payment-setup-page .payment-setup-copy h1 {
+    font-size: 1.45rem;
+    line-height: 1.25;
+  }
+
+  .payment-setup-page .payment-setup-hint {
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 18px;
+  }
+
+  .payment-setup-page .auth-form-foot .auth-secondary-link {
+    display: inline-flex;
     min-height: 44px;
+    align-items: center;
   }
 }
 
-/* ─── Organiser edit pages ─── */
+/* ─── Account settings ─── */
+@media (max-width: 768px) {
+  .account-settings-page .as-wrap {
+    padding: 16px 16px calc(40px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .account-settings-page .as-title {
+    font-size: 1.35rem;
+    margin-bottom: 6px;
+  }
+
+  .account-settings-page .as-lead {
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .account-settings-page .as-card {
+    padding: 18px 14px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+  }
+
+  .account-settings-page .as-card h2 {
+    font-size: 1.05rem;
+  }
+
+  .account-settings-page .as-card-sub {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .account-settings-page .as-field input,
+  .account-settings-page .as-field select,
+  .account-settings-page .as-field textarea {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 11px 12px;
+  }
+
+  .account-settings-page .as-choice {
+    min-height: 48px;
+    padding: 12px 12px;
+    align-items: flex-start;
+  }
+
+  .account-settings-page .as-actions .as-btn,
+  .account-settings-page .as-signin .as-btn {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+  }
+
+  /* Clear sticky save bar + Hubert */
+  body.account-settings-page.is-profile-dirty .hubert-widget:not(.hubert-widget--open) {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    right: auto !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+  }
+
+  body.account-settings-page.is-profile-dirty .hubert-launcher-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ─── Organiser edit / create flows ─── */
 @media (max-width: 768px) {
   body.organiser-event-edit-page {
     height: auto !important;
@@ -2502,8 +2585,131 @@ body.nav-menu-open {
   .organiser-event-edit-page .ee-wrap {
     width: 100%;
     max-width: 100%;
-    padding: 16px 16px 40px !important;
+    padding: 12px 14px calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box;
+  }
+
+  .organiser-event-edit-page .ee-top-bar,
+  .organiser-event-edit-page .ee-back-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 8px;
+  }
+
+  .organiser-event-edit-page .ee-hubert-help-btn {
+    margin-left: auto;
+    min-height: 40px;
+  }
+
+  .organiser-event-edit-page .ee-title {
+    font-size: 1.35rem;
+    margin-bottom: 6px;
+  }
+
+  .organiser-event-edit-page .ee-lead {
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .organiser-event-edit-page #ee-wizard-mount {
+    position: sticky;
+    top: 64px;
+    z-index: 40;
+    margin: 0 -14px 12px;
+    padding: 8px 14px;
+    background: var(--ee-bg, #f7f4f8);
+    box-shadow: 0 8px 16px -14px rgba(45, 27, 61, 0.35);
+  }
+
+  .organiser-event-edit-page .ee-wizard-steps {
+    gap: 6px;
+  }
+
+  .organiser-event-edit-page .ee-event-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .organiser-event-edit-page .ee-stat {
+    padding: 10px 8px;
+  }
+
+  .organiser-event-edit-page .ee-stat-value {
+    font-size: 1.05rem;
+  }
+
+  .organiser-event-edit-page .ee-card {
+    padding: 16px 14px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+  }
+
+  .organiser-event-edit-page .ee-field input,
+  .organiser-event-edit-page .ee-field select,
+  .organiser-event-edit-page .ee-field textarea,
+  .organiser-event-edit-page .ee-field .flatpickr-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .organiser-event-edit-page .ee-field textarea {
+    min-height: 110px;
+  }
+
+  .organiser-event-edit-page .ee-attendance-options {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .organiser-event-edit-page .ee-attendance-card {
+    min-height: 56px;
+  }
+
+  /* Sticky primary actions so Continue/Save stays reachable */
+  .organiser-event-edit-page .ee-card-actions,
+  .organiser-event-edit-page .ee-actions-sticky,
+  .organiser-event-edit-page #ee-tickets-actions,
+  .organiser-event-edit-page .ee-publish-review-actions,
+  .organiser-event-edit-page .ge-actions-stack {
+    position: sticky;
+    bottom: 0;
+    z-index: 45;
+    margin-left: -14px;
+    margin-right: -14px;
+    margin-bottom: -12px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(247, 244, 248, 0.96);
+    border-top: 1px solid var(--ee-border, #e5d8ea);
+    box-shadow: 0 -8px 24px rgba(45, 27, 61, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .organiser-event-edit-page #ee-tickets-actions[hidden] {
+    display: none !important;
+  }
+
+  .organiser-event-edit-page .ee-card-actions .ee-actions--split {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .organiser-event-edit-page .ee-card-actions .ee-autodraft-inline {
+    order: 2;
+    margin: 0;
+    text-align: center;
+  }
+
+  .organiser-event-edit-page .ee-card-actions .ee-btn {
+    order: 1;
   }
 
   .ee-actions,
@@ -2521,13 +2727,31 @@ body.nav-menu-open {
     width: 100%;
     max-width: 100%;
     justify-content: center;
-    min-height: 44px;
+    min-height: 48px;
     box-sizing: border-box;
   }
 
   .ee-field-row,
-  .org-row-2 {
+  .org-row-2,
+  .organiser-event-edit-page .ee-row-2 {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Hubert clear of sticky action bar */
+  body.organiser-event-edit-page .hubert-widget:not(.hubert-widget--open) {
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+    right: auto !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+  }
+
+  body.organiser-event-edit-page .hubert-launcher-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  body.organiser-event-edit-page.hub-hubert-help-open .hubert-widget:not(.hubert-widget--open),
+  body.organiser-event-edit-page.hub-flow-tour-active .hubert-widget:not(.hubert-widget--open) {
+    display: none;
   }
 }
 
