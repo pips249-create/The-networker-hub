@@ -8425,10 +8425,11 @@
   function buildSponsorPackHighlight(summary, brandName, ctr) {
     var views = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
+    var emails = Number(summary.emailSends) || 0;
+    var opens = Number(summary.emailOpens) || 0;
     var name = brandName || 'This partner';
     if (views > 0 && clicks > 0 && ctr && ctr.label && ctr.label !== '—') {
       return (
-        'During this period, ' +
         name +
         '’s Events placement delivered a ' +
         ctr.label +
@@ -8436,7 +8437,14 @@
         formatSponsorPackNumber(clicks) +
         ' of ' +
         formatSponsorPackNumber(views) +
-        ' directory viewers went through to your site. That is strong intent from UK business decision-makers on The Networker Hub.'
+        ' directory viewers went through to your site.' +
+        (emails > 0
+          ? ' Your logo also appeared in ' +
+            formatSponsorPackNumber(emails) +
+            ' Hub email' +
+            (emails === 1 ? '' : 's') +
+            (opens > 0 ? ', with ' + formatSponsorPackNumber(opens) + ' open' + (opens === 1 ? '' : 's') + ' tracked.' : '.')
+          : '')
       );
     }
     if (views > 0) {
@@ -8444,12 +8452,24 @@
         name +
         ' reached ' +
         formatSponsorPackNumber(views) +
-        ' sponsored directory viewers this period. Click-through is still building — a creative refresh usually lifts engagement for the next cycle.'
+        ' sponsored directory viewer' +
+        (views === 1 ? '' : 's') +
+        ' this period. Click-through is still building — a creative refresh usually lifts the next cycle.'
+      );
+    }
+    if (emails > 0) {
+      return (
+        name +
+        '’s logo appeared in ' +
+        formatSponsorPackNumber(emails) +
+        ' Hub email' +
+        (emails === 1 ? '' : 's') +
+        ' this period. Directory traffic will show here as the Events hero gathers views.'
       );
     }
     return (
       name +
-      '’s placement is live on The Networker Hub. This pack will fill with directory reach, email exposure, and click-through as traffic accumulates.'
+      '’s placement is live. This pack will fill with directory reach, email opens, and click-through as the month progresses.'
     );
   }
 
@@ -8473,6 +8493,8 @@
     var pageViews = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
     var emails = Number(summary.emailSends) || 0;
+    var opens = Number(eng.opens != null ? eng.opens : summary.emailOpens) || 0;
+    var emailClicks = Number(eng.clicks != null ? eng.clicks : summary.emailClicks) || 0;
     var ctr = formatSponsorPackCtr(clicks, pageViews);
     var prepared = new Date().toLocaleString('en-GB', {
       day: 'numeric',
@@ -8484,7 +8506,16 @@
     var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
     var amName = contact.name || 'Rosie McGilvray';
     var amEmail = contact.email || 'rosie@thenetworkerhub.com';
-    var highlight = buildSponsorPackHighlight(summary, brandName, ctr);
+    var highlight = buildSponsorPackHighlight(
+      {
+        pageVisits: pageViews,
+        clicks: clicks,
+        emailSends: emails,
+        emailOpens: opens,
+      },
+      brandName,
+      ctr
+    );
     var topPlacement =
       data.byPlacement && data.byPlacement[0]
         ? formatSponsorPlacementLabel(data.byPlacement[0].placement)
@@ -8492,12 +8523,24 @@
     var topShare =
       data.byPlacement && data.byPlacement[0] && clicks > 0
         ? Math.round((Number(data.byPlacement[0].count || 0) / clicks) * 100) + '% of clicks'
-        : 'No clicks yet';
+        : 'Awaiting first clicks';
 
     function momHint(base, pct) {
       if (pct == null || pct === '') return base;
       return base + ' · ' + formatSponsorPackMomDelta(pct).text;
     }
+
+    var openRateLabel =
+      emails < 1 ? '—' : eng.openRatePct != null ? String(eng.openRatePct) + '%' : '0%';
+    var openRateHint =
+      emails < 1 ? 'No logo emails this period' : opens < 1 ? 'No opens yet this period' : 'Opens ÷ emails with logo';
+    var emailCtrLabel =
+      emails < 1 ? '—' : eng.ctrPct != null ? String(eng.ctrPct) + '%' : '0%';
+    var emailCtrHint =
+      emails < 1 ? 'No logo emails this period' : 'Email clicks ÷ emails sent';
+    var siteCtrLabel = pageViews < 1 ? '—' : ctr.label;
+    var siteCtrHint =
+      pageViews < 1 ? 'Tracking is live — awaiting directory views' : formatSponsorPackEngagementHint(clicks, pageViews);
 
     var hubLogoHtml = hubLogo
       ? '<img src="' +
@@ -8519,7 +8562,7 @@
 
     function metaCell(label, value) {
       return (
-        '<td width="50%" style="width:50%;padding:10px 12px;vertical-align:top;border:1px solid rgba(194,153,209,0.28);background:#ffffff;">' +
+        '<td width="50%" style="width:50%;padding:12px 14px;vertical-align:top;border:1px solid rgba(194,153,209,0.28);background:#ffffff;">' +
         '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;">' +
         esc(label) +
         '</div>' +
@@ -8529,25 +8572,30 @@
       );
     }
 
-    function kpiCell(label, value, hint, accent) {
+    function kpiCell(label, value, hint, accent, widthPct) {
+      var w = widthPct || 25;
       return (
-        '<td width="25%" style="width:25%;padding:4px;vertical-align:top;">' +
+        '<td width="' +
+        w +
+        '%" style="width:' +
+        w +
+        '%;padding:4px;vertical-align:top;">' +
         '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border:1px solid ' +
         (accent ? '#9a7aa8' : 'rgba(194,153,209,0.28)') +
         ';background:' +
         (accent ? '#4a4446' : '#ffffff') +
-        ';"><tr><td style="padding:12px 10px 14px;">' +
+        ';"><tr><td style="padding:11px 10px 12px;">' +
         '<div style="font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:' +
         (accent ? 'rgba(250,246,238,0.72)' : '#9a7aa8') +
         ';">' +
         esc(label) +
         '</div>' +
-        '<div style="margin-top:8px;font-size:24px;font-weight:700;line-height:1;color:' +
+        '<div style="margin-top:7px;font-size:22px;font-weight:700;line-height:1;color:' +
         (accent ? '#faf6ee' : '#4a4446') +
         ';">' +
         esc(value) +
         '</div>' +
-        '<div style="margin-top:8px;font-size:10px;line-height:1.35;color:' +
+        '<div style="margin-top:7px;font-size:10px;line-height:1.35;color:' +
         (accent ? 'rgba(250,246,238,0.75)' : '#635c5e') +
         ';">' +
         esc(hint || '') +
@@ -8555,11 +8603,28 @@
       );
     }
 
-    function rankRows(list, labelKey, totalForPct) {
-      var rows = Array.isArray(list) ? list.slice(0, 5) : [];
+    function compactMetric(label, value, hint) {
+      return (
+        '<td width="25%" style="width:25%;padding:8px 10px;vertical-align:top;border-right:1px solid #ebe0f0;">' +
+        '<div style="font-size:8px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#9a7aa8;">' +
+        esc(label) +
+        '</div>' +
+        '<div style="margin-top:5px;font-size:18px;font-weight:700;color:#4a4446;">' +
+        esc(value) +
+        '</div>' +
+        '<div style="margin-top:4px;font-size:9px;line-height:1.3;color:#7a7274;">' +
+        esc(hint || '') +
+        '</div></td>'
+      );
+    }
+
+    function rankRows(list, labelKey, totalForPct, emptyMsg) {
+      var rows = Array.isArray(list) ? list.slice(0, 3) : [];
       if (!rows.length) {
         return (
-          '<tr><td colspan="2" style="padding:8px 0;font-size:11px;color:#7a7274;">No data in this period yet.</td></tr>'
+          '<tr><td colspan="2" style="padding:8px 0;font-size:11px;line-height:1.4;color:#7a7274;">' +
+          esc(emptyMsg || 'Tracking is live — nothing to show in this window yet.') +
+          '</td></tr>'
         );
       }
       var total = Number(totalForPct) || 0;
@@ -8569,7 +8634,7 @@
         });
       }
       return rows
-        .map(function (r) {
+        .map(function (r, idx) {
           var label =
             labelKey === 'placement'
               ? formatSponsorPlacementLabel(r.placement || r.key)
@@ -8578,12 +8643,17 @@
                 : String(r[labelKey] || r.key || '');
           var count = Number(r.count) || 0;
           var pct = total > 0 ? Math.round((count / total) * 1000) / 10 : null;
+          var border = idx === rows.length - 1 ? 'none' : '1px solid #ebe0f0';
           return (
             '<tr>' +
-            '<td style="padding:7px 0;border-bottom:1px solid #ebe0f0;font-size:12px;color:#4a4446;">' +
+            '<td style="padding:6px 0;border-bottom:' +
+            border +
+            ';font-size:12px;color:#4a4446;">' +
             esc(label) +
             '</td>' +
-            '<td style="padding:7px 0;border-bottom:1px solid #ebe0f0;font-size:12px;font-weight:700;color:#4a4446;text-align:right;white-space:nowrap;">' +
+            '<td style="padding:6px 0;border-bottom:' +
+            border +
+            ';font-size:12px;font-weight:700;color:#4a4446;text-align:right;white-space:nowrap;">' +
             esc(formatSponsorPackNumber(count) + (pct != null ? ' (' + pct + '%)' : '')) +
             '</td></tr>'
           );
@@ -8591,14 +8661,7 @@
         .join('');
     }
 
-    var openRateLabel =
-      eng.openRatePct != null ? String(eng.openRatePct) + '%' : eng.opensConfigured ? '0%' : 'Pending';
-    var emailCtrLabel = eng.ctrPct != null ? String(eng.ctrPct) + '%' : emails > 0 ? '0%' : '—';
-    var trackingWindow =
-      fromLabel && toLabel
-        ? fromLabel.split('-').reverse().join(' ') + ' – ' + toLabel.split('-').reverse().join(' ')
-        : periodLabel;
-    // Prefer readable en-GB dates
+    var trackingWindow = periodLabel;
     try {
       if (fromLabel && toLabel) {
         trackingWindow =
@@ -8621,13 +8684,13 @@
     }
 
     var pageStyle =
-      'width:680px;max-width:680px;min-height:920px;padding:36px 34px 28px;box-sizing:border-box;background:#faf6ee;color:#4a4446;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;';
+      'width:680px;max-width:680px;min-height:940px;padding:34px 32px 26px;box-sizing:border-box;background:#faf6ee;color:#4a4446;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;';
 
     var cover =
       '<div class="sponsor-pack-pdf-page" style="' +
       pageStyle +
       'page-break-after:always;">' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:28px;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:26px;">' +
       '<tr>' +
       '<td style="vertical-align:middle;">' +
       '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
@@ -8645,31 +8708,52 @@
       '<td style="text-align:right;vertical-align:middle;">' +
       '<div style="display:inline-block;padding:6px 12px;border:1px solid rgba(194,153,209,0.45);border-radius:999px;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#9a7aa8;background:#ffffff;">Confidential</div>' +
       '</td></tr></table>' +
-      '<div style="font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#9a7aa8;margin-bottom:14px;">Executive performance review</div>' +
-      '<div style="font-family:Georgia,\'DM Serif Display\',serif;font-size:36px;line-height:1.12;color:#4a4446;margin-bottom:12px;max-width:14ch;">Partnership<br>Performance Pack</div>' +
-      '<div style="font-size:14px;line-height:1.55;color:#635c5e;max-width:34em;margin-bottom:28px;">Monthly traffic, email engagement, placement metrics, and conversion attribution for ' +
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#9a7aa8;margin-bottom:12px;">Monthly partnership report</div>' +
+      '<div style="font-family:Georgia,\'DM Serif Display\',serif;font-size:34px;line-height:1.12;color:#4a4446;margin-bottom:10px;max-width:15ch;">Partnership<br>Performance Pack</div>' +
+      '<div style="font-size:14px;line-height:1.55;color:#635c5e;max-width:34em;margin-bottom:22px;">A clear view of directory reach, email engagement, and outbound click-through for ' +
       esc(brandName) +
       ' on The Networker Hub.</div>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 0;margin-bottom:18px;"><tr>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:18px;"><tr>' +
       metaCell('Sponsorship tier', feeLabel ? tierLabel + ' · ' + feeLabel : tierLabel) +
       metaCell('Reporting period', periodLabel) +
       '</tr><tr>' +
       metaCell('Prepared by', amName) +
       metaCell('Prepared for', brandName) +
       '</tr></table>' +
-      '<div style="margin-top:auto;padding-top:180px;">' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid rgba(194,153,209,0.35);"><tr>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:18px;"><tr><td style="padding:16px 18px;background:#ffffff;border:1px solid rgba(194,153,209,0.28);">' +
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;margin-bottom:10px;">Inside this pack</div>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
+      '<td width="50%" style="width:50%;padding:0 12px 8px 0;font-size:12px;line-height:1.45;color:#4a4446;vertical-align:top;">Site reach &amp; click-through on your Events placement</td>' +
+      '<td width="50%" style="width:50%;padding:0 0 8px 12px;font-size:12px;line-height:1.45;color:#4a4446;vertical-align:top;">Email opens &amp; CTR from Resend-tracked Hub emails</td>' +
+      '</tr><tr>' +
+      '<td style="padding:0 12px 0 0;font-size:12px;line-height:1.45;color:#4a4446;vertical-align:top;">Placement breakdown and month-on-month movement</td>' +
+      '<td style="padding:0 0 0 12px;font-size:12px;line-height:1.45;color:#4a4446;vertical-align:top;">Suggested next steps and your Hub contact</td>' +
+      '</tr></table></td></tr></table>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:40px;"><tr><td style="padding:14px 16px;background:#ebe0f0;">' +
+      '<div style="font-size:12px;line-height:1.5;color:#4a4446;">Leads and form fills appear in <strong>your</strong> analytics / CRM via Hub UTM tags (<span style="font-family:Menlo,Consolas,monospace;font-size:10px;">utm_source=thenetworkerhub</span>).</div>' +
+      '</td></tr></table>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid rgba(194,153,209,0.35);margin-top:28px;"><tr>' +
       '<td style="padding-top:14px;font-size:10px;color:#7a7274;">The Networker Hub · Partnership reporting</td>' +
       '<td style="padding-top:14px;font-size:10px;color:#7a7274;text-align:right;">thenetworkerhub.com</td>' +
-      '</tr></table></div></div>';
+      '</tr></table></div>';
+
+    var emailTemplates = (data.emails && data.emails.bySlug) || [];
+    var emailTemplateBlock =
+      emailTemplates.length > 0
+        ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #ebe0f0;">' +
+          '<div style="font-size:10px;font-weight:700;color:#4a4446;margin-bottom:4px;">Emails by template</div>' +
+          '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
+          rankRows(emailTemplates, 'slug', emails, 'No logo emails in this window yet.') +
+          '</table></div>'
+        : '';
 
     var performance =
       '<div class="sponsor-pack-pdf-page" style="' +
       pageStyle +
       '">' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:16px;"><tr>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;"><tr>' +
       '<td style="vertical-align:bottom;">' +
-      '<div style="font-family:Georgia,\'DM Serif Display\',serif;font-size:24px;color:#4a4446;line-height:1.2;">Performance overview</div>' +
+      '<div style="font-family:Georgia,\'DM Serif Display\',serif;font-size:22px;color:#4a4446;line-height:1.2;">Performance overview</div>' +
       '<div style="margin-top:4px;font-size:12px;color:#635c5e;">' +
       esc(brandName) +
       ' · ' +
@@ -8679,91 +8763,92 @@
       '<div style="display:inline-block;padding:6px 10px;background:#ebe0f0;color:#4a4446;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">' +
       esc(tierLabel) +
       '</div></td></tr></table>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;"><tr><td style="padding:14px 16px;background:#ffffff;border:1px solid rgba(194,153,209,0.28);">' +
-      '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;margin-bottom:8px;">Key performance highlight</div>' +
-      '<div style="font-size:13px;line-height:1.55;color:#4a4446;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr><td style="padding:13px 15px;background:#ffffff;border:1px solid rgba(194,153,209,0.28);">' +
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;margin-bottom:7px;">Key highlight</div>' +
+      '<div style="font-size:13px;line-height:1.5;color:#4a4446;">' +
       esc(highlight) +
       '</div></td></tr></table>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
       kpiCell(
-        'Site visits driven',
-        formatSponsorPackNumber(clicks),
-        momHint('Outbound clicks to your site', deltas.clicksPct)
-      ) +
-      kpiCell('Click-through rate', ctr.label, formatSponsorPackEngagementHint(clicks, pageViews), true) +
-      kpiCell(
         'Directory reach',
         formatSponsorPackNumber(pageViews),
-        momHint('Sponsored directory views', deltas.pageVisitsPct)
+        momHint(pageViews < 1 ? 'Awaiting directory views' : 'Sponsored directory views', deltas.pageVisitsPct)
       ) +
+      kpiCell(
+        'Site visits driven',
+        formatSponsorPackNumber(clicks),
+        momHint(clicks < 1 ? 'Awaiting first outbound clicks' : 'Outbound clicks to your site', deltas.clicksPct)
+      ) +
+      kpiCell('Click-through rate', siteCtrLabel, siteCtrHint, true) +
       kpiCell('Top placement', topPlacement, topShare) +
       '</tr></table>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:8px;"><tr><td style="padding:0 0 6px;">' +
-      '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9a7aa8;">Email engagement · Resend</div>' +
-      '<div style="margin-top:3px;font-size:11px;line-height:1.4;color:#635c5e;">Hub emails that included your logo · opens and link clicks from Resend delivery tracking</div>' +
-      '</td></tr></table>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:6px;"><tr>' +
-      kpiCell(
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr><td style="padding:0;background:#ffffff;border:1px solid rgba(194,153,209,0.28);">' +
+      '<div style="padding:12px 14px 8px;">' +
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;">Email engagement · Resend</div>' +
+      '<div style="margin-top:3px;font-size:11px;color:#635c5e;">Hub emails that included your logo</div></div>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid #ebe0f0;"><tr>' +
+      compactMetric(
         'Emails with logo',
         formatSponsorPackNumber(emails),
-        momHint('Sends carrying your creative', deltas.emailSendsPct)
+        momHint(emails < 1 ? 'No logo emails yet' : 'Sends with your creative', deltas.emailSendsPct)
       ) +
-      kpiCell(
+      compactMetric(
         'Opens',
-        eng.opensConfigured ? formatSponsorPackNumber(eng.opens || 0) : 'Pending',
-        eng.opensConfigured
-          ? momHint('Resend open events', deltas.emailOpensPct)
-          : 'No open events in this range yet'
+        formatSponsorPackNumber(opens),
+        momHint(opens < 1 ? 'No opens yet this period' : 'Resend open events', deltas.emailOpensPct)
       ) +
-      kpiCell('Open rate', openRateLabel, 'Opens ÷ emails with logo') +
-      kpiCell(
-        'Email clicks',
-        formatSponsorPackNumber(eng.clicks || 0),
-        'Resend link clicks + Hub email placements'
+      compactMetric('Open rate', openRateLabel, openRateHint) +
+      compactMetric('Email CTR', emailCtrLabel, emailCtrHint).replace(
+        'border-right:1px solid #ebe0f0;',
+        'border-right:none;'
       ) +
       '</tr></table>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
-      kpiCell('Email CTR', emailCtrLabel, 'Email clicks ÷ emails sent', true) +
-      '<td width="75%" style="width:75%;padding:4px;vertical-align:top;" colspan="3">' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);height:100%;"><tr><td style="padding:12px 14px;">' +
-      '<div style="font-size:11px;font-weight:700;color:#4a4446;margin-bottom:4px;">Emails by template</div>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      rankRows((data.emails || {}).bySlug, 'slug', emails) +
-      '</table>' +
-      '<div style="margin-top:8px;font-size:10px;line-height:1.4;color:#7a7274;">' +
+      '<div style="padding:8px 14px 12px;">' +
+      '<div style="font-size:10px;line-height:1.4;color:#7a7274;">' +
       esc(
         eng.note ||
-          'Open rates come from Resend. Site leads still appear in your analytics via utm_source=thenetworkerhub.'
+          'Opens and link clicks from Resend. Site leads appear in your analytics via utm_source=thenetworkerhub.'
       ) +
-      '</div></td></tr></table></td></tr></table>' +
+      '</div>' +
+      emailTemplateBlock +
+      '</div></td></tr></table>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
       '<td width="50%" style="width:50%;padding-right:6px;vertical-align:top;">' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);"><tr><td style="padding:12px 14px;">' +
-      '<div style="font-size:12px;font-weight:700;color:#4a4446;margin-bottom:6px;">Clicks by placement</div>' +
+      '<div style="font-size:12px;font-weight:700;color:#4a4446;margin-bottom:4px;">Clicks by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      rankRows(data.byPlacement, 'placement', clicks) +
+      rankRows(
+        data.byPlacement,
+        'placement',
+        clicks,
+        'Tracking is live — no outbound clicks in this window yet.'
+      ) +
       '</table></td></tr></table></td>' +
       '<td width="50%" style="width:50%;padding-left:6px;vertical-align:top;">' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);"><tr><td style="padding:12px 14px;">' +
-      '<div style="font-size:12px;font-weight:700;color:#4a4446;margin-bottom:6px;">Views by placement</div>' +
+      '<div style="font-size:12px;font-weight:700;color:#4a4446;margin-bottom:4px;">Views by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      rankRows((data.impressions || {}).byPlacement, 'placement', pageViews) +
+      rankRows(
+        (data.impressions || {}).byPlacement,
+        'placement',
+        pageViews,
+        'Tracking is live — no directory views in this window yet.'
+      ) +
       '</table></td></tr></table></td></tr></table>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
-      '<td width="62%" style="width:62%;padding-right:6px;vertical-align:top;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;"><tr>' +
+      '<td width="58%" style="width:58%;padding-right:6px;vertical-align:top;">' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);"><tr><td style="padding:12px 14px;">' +
       '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;margin-bottom:8px;">Suggested next steps</div>' +
-      '<div style="font-size:12px;line-height:1.5;color:#4a4446;margin-bottom:6px;"><strong>Creative refresh</strong> — update the Events hero graphic ahead of the next busy networking month.</div>' +
-      '<div style="font-size:12px;line-height:1.5;color:#4a4446;margin-bottom:6px;"><strong>Email presence</strong> — keep your logo in attendee emails; Resend opens and email CTR are reported above.</div>' +
-      '<div style="font-size:12px;line-height:1.5;color:#4a4446;">Leads show in your analytics via <span style="font-family:Menlo,Consolas,monospace;font-size:10px;">utm_source=thenetworkerhub</span>.</div>' +
+      '<div style="font-size:12px;line-height:1.45;color:#4a4446;margin-bottom:5px;"><strong>Creative</strong> — refresh the Events hero graphic for the next busy networking month.</div>' +
+      '<div style="font-size:12px;line-height:1.45;color:#4a4446;"><strong>Inbox</strong> — keep your logo in attendee emails; opens and email CTR are tracked above.</div>' +
       '</td></tr></table></td>' +
-      '<td width="38%" style="width:38%;padding-left:6px;vertical-align:top;">' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#4a4446;"><tr><td style="padding:14px 14px;">' +
+      '<td width="42%" style="width:42%;padding-left:6px;vertical-align:top;">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#4a4446;"><tr><td style="padding:14px;">' +
       '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(250,246,238,0.7);margin-bottom:8px;">Your Hub contact</div>' +
-      '<div style="font-size:15px;font-weight:700;color:#faf6ee;margin-bottom:4px;">' +
+      '<div style="font-size:15px;font-weight:700;color:#faf6ee;margin-bottom:3px;">' +
       esc(amName) +
       '</div>' +
-      '<div style="font-size:11px;color:rgba(250,246,238,0.8);margin-bottom:10px;">Questions about this pack?</div>' +
+      '<div style="font-size:11px;color:rgba(250,246,238,0.8);margin-bottom:8px;">Questions about this pack?</div>' +
       '<div style="font-size:12px;color:#c299d1;">' +
       esc(amEmail) +
       '</div></td></tr></table></td></tr></table>' +
