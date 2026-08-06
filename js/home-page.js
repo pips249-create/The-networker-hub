@@ -191,21 +191,16 @@
         window.CmsSponsorFields.trackSponsorImpression('home_partners', company, { el: item });
       }
     });
-    if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) return;
+    // Keep partner tiles visually uniform: white by default, dark only when
+    // explicitly flagged in CMS. Do not sample logo edge colours into the tile
+    // (that produced mismatched magenta/navy/white cards in the strip).
     track.querySelectorAll('.home-partner-item').forEach(function (item) {
       var img = item.querySelector('.home-partner-logo');
-      if (!img) return;
-      img.removeAttribute('crossOrigin');
+      if (img) img.removeAttribute('crossOrigin');
+      item.style.backgroundColor = '';
+      item.classList.remove('sponsor-logo-band', 'sponsor-logo-band--dark');
       var forceDark = item.getAttribute('data-logo-band-dark') === 'true';
-      function apply() {
-        window.CmsSponsorFields.applyLogoBand(item, img, true, { forceDark: forceDark });
-        if (item.classList.contains('sponsor-logo-band--dark') || forceDark) {
-          item.classList.add('home-partner-item--dark-logo');
-        }
-      }
-      if (forceDark) apply();
-      if (img.complete && img.naturalWidth) apply();
-      else img.addEventListener('load', apply, { once: true });
+      item.classList.toggle('home-partner-item--dark-logo', forceDark);
     });
   }
 
