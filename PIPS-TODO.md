@@ -60,7 +60,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 2. ~~**Category Exclusivity (seat approval) end-to-end test**~~ ✅ 5 Aug (`npm run test-category-exclusivity-e2e`)
 3. ~~**Connect destination charge test**~~ — done Jul 2026 (live PIs with `hub_checkout=connect_destination`; fee = booking fee only)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
-5. **Email 2 claim wave** — Segment A ready (`docs/SEGMENT-A-EMAIL2.md`); send when ready (not waiting on Resend Pro if via Brevo)
+5. **Email 2 claim wave** — Segment A ready (`docs/SEGMENT-A-EMAIL2.md`); **send Fri 7 Aug** (deferred one day to finish events / organisers / business opportunities polish)
 6. **SEO pre-launch** — confirm `SITE_URL` = `https://www.thenetworkerhub.com`; GSC verify + sitemap submit at gate-off (`docs/SEO-AEO-LAUNCH-PLAN.md`)
 7. **August redirect** — banner install now; hard 301s 1 Sep
 8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
@@ -384,7 +384,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [x] | Map old the-networker.co.uk URLs → new hub URLs (`docs/LEGACY-REDIRECT-MAP.md`) |
 | [ ] | DNS / hosting redirect for apex + www |
 | [~] | Segment 3,500 list: organisers vs attendees vs both — Hub segments built (`docs/LAUNCH-LIST-SEGMENTS.md`); merge Brevo export when ready |
-| [~] | July/August organiser Email 1 sent (Brevo); Email 2 claim wave pending |
+| [~] | July/August organiser Email 1 sent (Brevo); Email 2 claim wave **Fri 7 Aug** (after catalogue polish) |
 | [ ] | August wave email (500–1,000) |
 | [ ] | 1 September full list + redirect live |
 | [~] | co.uk upgrade banner — snippet ready; install on WordPress (`marketing/CO-UK-UPGRADE-BANNER.md`) |
