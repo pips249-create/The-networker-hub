@@ -8647,7 +8647,7 @@
       '</td></tr></table>' +
       '<div style="font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#9a7aa8;margin-bottom:14px;">Executive performance review</div>' +
       '<div style="font-family:Georgia,\'DM Serif Display\',serif;font-size:36px;line-height:1.12;color:#4a4446;margin-bottom:12px;max-width:14ch;">Partnership<br>Performance Pack</div>' +
-      '<div style="font-size:14px;line-height:1.55;color:#635c5e;max-width:34em;margin-bottom:28px;">Monthly traffic, placement metrics, and conversion attribution for ' +
+      '<div style="font-size:14px;line-height:1.55;color:#635c5e;max-width:34em;margin-bottom:28px;">Monthly traffic, email engagement, placement metrics, and conversion attribution for ' +
       esc(brandName) +
       ' on The Networker Hub.</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 0;margin-bottom:18px;"><tr>' +
@@ -8698,20 +8698,44 @@
       ) +
       kpiCell('Top placement', topPlacement, topShare) +
       '</tr></table>' +
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:8px;"><tr><td style="padding:0 0 6px;">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9a7aa8;">Email engagement · Resend</div>' +
+      '<div style="margin-top:3px;font-size:11px;line-height:1.4;color:#635c5e;">Hub emails that included your logo · opens and link clicks from Resend delivery tracking</div>' +
+      '</td></tr></table>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:6px;"><tr>' +
       kpiCell(
         'Emails with logo',
         formatSponsorPackNumber(emails),
-        momHint('Hub emails carrying your logo', deltas.emailSendsPct)
+        momHint('Sends carrying your creative', deltas.emailSendsPct)
       ) +
       kpiCell(
-        'Email opens',
+        'Opens',
         eng.opensConfigured ? formatSponsorPackNumber(eng.opens || 0) : 'Pending',
-        eng.opensConfigured ? 'Resend tracked opens' : 'Opens unlock with Resend webhook'
+        eng.opensConfigured
+          ? momHint('Resend open events', deltas.emailOpensPct)
+          : 'Connect Resend webhook + migration 237'
       ) +
       kpiCell('Open rate', openRateLabel, 'Opens ÷ emails with logo') +
-      kpiCell('Email CTR', emailCtrLabel, 'Email clicks ÷ emails sent') +
+      kpiCell(
+        'Email clicks',
+        formatSponsorPackNumber(eng.clicks || 0),
+        'Resend link clicks + Hub email placements'
+      ) +
       '</tr></table>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
+      kpiCell('Email CTR', emailCtrLabel, 'Email clicks ÷ emails sent', true) +
+      '<td width="75%" style="width:75%;padding:4px;vertical-align:top;" colspan="3">' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);height:100%;"><tr><td style="padding:12px 14px;">' +
+      '<div style="font-size:11px;font-weight:700;color:#4a4446;margin-bottom:4px;">Emails by template</div>' +
+      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
+      rankRows((data.emails || {}).bySlug, 'slug', emails) +
+      '</table>' +
+      '<div style="margin-top:8px;font-size:10px;line-height:1.4;color:#7a7274;">' +
+      esc(
+        eng.note ||
+          'Open rates come from Resend. Site leads still appear in your analytics via utm_source=thenetworkerhub.'
+      ) +
+      '</div></td></tr></table></td></tr></table>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
       '<td width="50%" style="width:50%;padding-right:6px;vertical-align:top;">' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);"><tr><td style="padding:12px 14px;">' +
@@ -8730,7 +8754,7 @@
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#ffffff;border:1px solid rgba(194,153,209,0.28);"><tr><td style="padding:12px 14px;">' +
       '<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;margin-bottom:8px;">Suggested next steps</div>' +
       '<div style="font-size:12px;line-height:1.5;color:#4a4446;margin-bottom:6px;"><strong>Creative refresh</strong> — update the Events hero graphic ahead of the next busy networking month.</div>' +
-      '<div style="font-size:12px;line-height:1.5;color:#4a4446;margin-bottom:6px;"><strong>Email presence</strong> — keep your logo in attendee emails; open rates appear here once Resend tracking is live.</div>' +
+      '<div style="font-size:12px;line-height:1.5;color:#4a4446;margin-bottom:6px;"><strong>Email presence</strong> — keep your logo in attendee emails; Resend opens and email CTR are reported above.</div>' +
       '<div style="font-size:12px;line-height:1.5;color:#4a4446;">Leads show in your analytics via <span style="font-family:Menlo,Consolas,monospace;font-size:10px;">utm_source=thenetworkerhub</span>.</div>' +
       '</td></tr></table></td>' +
       '<td width="38%" style="width:38%;padding-left:6px;vertical-align:top;">' +
