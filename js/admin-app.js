@@ -8724,25 +8724,25 @@
     }
 
     return (
-      '<div class="sponsor-pack-pdf" style="width:680px;padding:24px 24px 18px;background:#faf6ee;color:#4a4446;font-family:' +
+      '<div class="sponsor-pack-pdf" style="width:680px;max-width:680px;padding:22px 22px 16px;background:#faf6ee;color:#4a4446;font-family:' +
       fontSans +
       ';box-sizing:border-box;overflow:hidden;">' +
-      // Logos on their own row (never squeeze beside the title — html2canvas clips otherwise)
-      '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;table-layout:fixed;"><tr>' +
-      '<td style="vertical-align:middle;width:158px;">' +
-      '<div style="border:1px solid rgba(194,153,209,0.35);background:#fff;padding:8px 10px;box-sizing:border-box;overflow:hidden;">' +
+      '<div style="margin-bottom:12px;">' +
+      '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
+      '<td style="vertical-align:middle;padding:0;">' +
+      '<div style="border:1px solid rgba(194,153,209,0.35);background:#fff;padding:8px 10px;box-sizing:border-box;">' +
       hubLogoHtml +
       '</div></td>' +
-      '<td style="width:28px;text-align:center;vertical-align:middle;color:#9a7aa8;font-size:15px;font-weight:700;">×</td>' +
-      '<td style="vertical-align:middle;width:188px;">' +
-      '<div style="border:1px solid #2d2636;background:#2d2636;padding:8px 10px;box-sizing:border-box;overflow:hidden;">' +
+      '<td style="width:22px;text-align:center;vertical-align:middle;color:#9a7aa8;font-size:14px;font-weight:700;padding:0 6px;">×</td>' +
+      '<td style="vertical-align:middle;padding:0;">' +
+      '<div style="border:1px solid #2d2636;background:#2d2636;padding:8px 10px;box-sizing:border-box;">' +
       brandLogoHtml +
       '</div></td>' +
-      '<td style="vertical-align:middle;text-align:right;padding-left:12px;">' +
-      '<div style="display:inline-block;font-family:' +
+      '<td style="vertical-align:middle;padding:0 0 0 14px;">' +
+      '<div style="font-family:' +
       fontSans +
-      ';font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#9a7aa8;border:1px solid #c299d1;padding:4px 8px;">Confidential</div>' +
-      '</td></tr></table>' +
+      ';font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#9a7aa8;border:1px solid #c299d1;padding:4px 8px;white-space:nowrap;">Confidential</div>' +
+      '</td></tr></table></div>' +
       '<div style="font-family:' +
       fontSans +
       ';font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9a7aa8;margin-bottom:4px;">Partnership performance pack</div>' +
