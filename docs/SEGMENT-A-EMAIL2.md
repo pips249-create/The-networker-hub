@@ -28,12 +28,39 @@ Rebuild anytime:
 node scripts/build-email2-brevo.js
 ```
 
+### Brevo setup
+- [ ] Re-import `data/Segment-A-Email2-Brevo-import.csv` (update existing contacts)
+- [ ] Map attributes: `Organiser name` → `ORGANISER_NAME`, `OTHER_GROUPS_NOTE` → `OTHER_GROUPS_NOTE`, `CLAIM_URL` → `CLAIM_URL`
+- [ ] Paste HTML from `data/email2-brevo-ready.html`
+- [ ] Subject: `Confirm {{ contact.ORGANISER_NAME }} on The Networker Hub`
+- [ ] Reply-to: `catherine@thenetworkerhub.com`
+- [ ] From: Hub / co.uk sender you used for Email 1 (or agreed Hub address)
+
+### Test-send checklist (tick before Fri blast)
+Send a **test campaign** (or preview to contact) to Catherine + Rosie covering both path types.
+
+**Register path** (pick a row whose `CLAIM_URL` contains `/register?`)
+- [ ] Inbox: subject shows the **group name** (not “your organiser page”)
+- [ ] Body headline + “We’ve prepared **…” use the same group name
+- [ ] CTA opens **without** site-access password
+- [ ] Email field is prefilled; claim/create-account form is visible
+- [ ] “Prefer a walkthrough” mailto links open to Catherine / Rosie
+
+**Login path** (pick a row whose `CLAIM_URL` contains `/login?`)
+- [ ] Same personalisation checks as above
+- [ ] Lands on sign-in (not register); email prefilled
+- [ ] After sign-in, `/organiser/?onboard=claim` is reachable without site password
+
+**Smoke (optional, 2 minutes)**
+- [ ] `/for-organisers` still opens without password
+- [ ] Footer Privacy / Terms / Refunds / Contact open
+- [ ] One multi-group contact (WIBN or BMUK) shows the “plus …” note if you include them in the test list
+
 ### Pre-send checklist
 - [ ] Soft register shows full form for `?intent=organiser-claim`
 - [ ] Claim CTA opens without site password
-- [ ] Brevo attributes mapped: `ORGANISER_NAME`, `OTHER_GROUPS_NOTE`, `CLAIM_URL`
-- [ ] Subject uses `{{ contact.ORGANISER_NAME }}`
-- [ ] Test to yourselves (register + login paths; check group name in body)
-- [ ] Reply-to Catherine
+- [ ] Brevo attributes mapped (see above)
+- [ ] Test sends passed
+- [ ] Catalogue / Events / Organisers / BO polish you’re waiting on is done enough to send
 
 Email 1 tracking: `docs/SEGMENT-A-EMAIL1.md`
