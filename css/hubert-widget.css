@@ -290,10 +290,18 @@ body:has(#hub-cookie-banner:not([hidden])) .hubert-widget {
   pointer-events: none;
 }
 
-/* Lift above sticky detail-page CTAs (tickets / enquire) */
+/* Lift above sticky detail-page CTAs (tickets / enquire); park left so the bar stays full-width */
 body.ev-ticket-jump-active .hubert-widget:not(.hubert-widget--open),
 body.opp-enquire-jump-active .hubert-widget:not(.hubert-widget--open) {
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  right: auto;
+  left: max(12px, env(safe-area-inset-left));
+}
+
+body.ev-ticket-jump-active .hubert-launcher-icon,
+body.opp-enquire-jump-active .hubert-launcher-icon {
+  width: 44px;
+  height: 44px;
 }
 
 @media (max-width: 900px) {

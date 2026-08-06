@@ -2534,18 +2534,173 @@ body.nav-menu-open {
 /* ─── Event detail ─── */
 @media (max-width: 768px) {
   .event-detail-page .container {
-    padding-left: 16px;
-    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 16px 16px calc(88px + env(safe-area-inset-bottom, 0px));
     max-width: 100%;
     box-sizing: border-box;
   }
 
+  /* Pull tickets up under the title so booking is reachable without a long scroll */
+  .event-detail-page .main-col {
+    display: contents;
+  }
+
+  .event-detail-page #event-detail-load-overlay {
+    order: 0;
+  }
+
   .event-detail-page .hero {
-    margin-bottom: 20px;
+    order: 1;
+    margin-bottom: 0;
+  }
+
+  .event-detail-page .title-block {
+    order: 2;
+  }
+
+  .event-detail-page .quick-actions {
+    order: 3;
+  }
+
+  .event-detail-page .side-col {
+    order: 4;
+    max-width: none;
+    margin: 0;
+    width: 100%;
+  }
+
+  .event-detail-page #ev-about-section {
+    order: 5;
+  }
+
+  .event-detail-page #ev-host-section {
+    order: 6;
+  }
+
+  .event-detail-page #ev-location-section {
+    order: 7;
+  }
+
+  .event-detail-page #ev-reviews-section {
+    order: 8;
+  }
+
+  .event-detail-page #ev-related-section {
+    order: 9;
+  }
+
+  .event-detail-page .event-listing-report-footer {
+    order: 10;
   }
 
   .event-detail-page .content-section {
-    margin-bottom: 28px;
+    margin-bottom: 0;
+  }
+
+  .event-detail-page .event-page-sidebar-ad {
+    display: none !important;
+  }
+
+  .event-detail-page .location-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .event-detail-page .ticket-panel .cta-btn,
+  .event-detail-page .ticket-panel #buy-btn {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .event-detail-page .qty-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Full-width ticket jump — Hubert moves left while this bar is up */
+  .event-detail-page .ev-ticket-jump.is-visible {
+    z-index: 1250;
+  }
+
+  .event-detail-page .ev-ticket-jump-btn {
+    padding: 12px 18px;
+  }
+}
+
+/* ─── Booking success ─── */
+@media (max-width: 768px) {
+  .booking-success-page .bs-main {
+    padding: 24px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .booking-success-page .bs-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .booking-success-page .bs-actions .bs-action-primary {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .booking-success-page .bs-actions-secondary {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .booking-success-page .bs-action-link {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .booking-success-page .bs-tool-btn {
+    min-height: 44px;
+  }
+}
+
+/* ─── Events browse polish ─── */
+@media (max-width: 768px) {
+  .events-page .events-filter-wrap {
+    position: sticky;
+    top: 64px;
+    z-index: 40;
+    background: var(--cream, #faf7f2);
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    box-shadow: 0 8px 16px -12px rgba(45, 38, 54, 0.35);
+  }
+
+  .events-page .events-results-meta {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .events-page .event-grid {
+    gap: 8px;
+  }
+
+  .events-page .event-grid-card {
+    min-height: 0;
+  }
+
+  .events-page .events-map-wrap {
+    border-radius: 12px;
+    overflow: hidden;
   }
 }
 
