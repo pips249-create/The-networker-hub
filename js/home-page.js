@@ -8,6 +8,8 @@
     'organisers_sponsor_hub',
     'opportunities_sponsor_hub',
   ];
+  /** Dark-on-transparent Barnsgate mark for white partner tiles (CMS often stores the navy-plate PNG). */
+  var BARNSGATE_LIGHT_LOGO = '/assets/sponsors/barnsgate-logo-on-light.svg?v=20260806light';
   var activePartnersScroller = null;
 
   function esc(s) {
@@ -37,16 +39,24 @@
   }
 
   function partnerNeedsDarkBand(name, flagged) {
-    if (flagged) return true;
-    // Light-on-dark wordmark with a baked navy plate (same rule as sponsor packs).
-    return /barnsgate/i.test(String(name || ''));
+    return !!flagged;
+  }
+
+  function partnerLogoForStrip(url, name) {
+    var u = String(url || '').trim();
+    var n = String(name || '');
+    // Navy-plate Barnsgate assets look boxed on white tiles — use the light-bg mark.
+    if (/barnsgate/i.test(n) || /barnsgate[-_]?logo/i.test(u)) {
+      return BARNSGATE_LIGHT_LOGO;
+    }
+    return u;
   }
 
   function partnerFromSponsorBlock(block) {
     var name = sponsorCompany(block) || 'Partner';
     return {
       name: name,
-      logo: sponsorLogo(block),
+      logo: partnerLogoForStrip(sponsorLogo(block), name),
       url: sponsorCta(block),
       label: String((block && block.cta_label) || '').trim() || 'Visit website',
       logoBandDark: partnerNeedsDarkBand(
@@ -136,7 +146,7 @@
     var name = String(p.company_name || '').trim() || 'Partner';
     return {
       name: name,
-      logo: String(p.logo_url || '').trim(),
+      logo: partnerLogoForStrip(String(p.logo_url || '').trim(), name),
       url: String(p.cta_url || '').trim(),
       label: String(p.cta_label || '').trim() || 'Visit website',
       logoBandDark: partnerNeedsDarkBand(
