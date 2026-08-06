@@ -30,6 +30,13 @@ npm-debug.log*
 data/launch-segment-*.csv
 data/brevo-full-list.csv
 
+# Ops outreach tracker (call notes / PII — regenerate via script)
+ops/organiser-outreach-tracker.csv
+ops/organiser-outreach-tracker.tsv
+ops/organiser-outreach-values.json
+ops/call-list-awaiting-claim.csv
+ops/chunks/
+
 # LinkedIn ad export tooling
 marketing/node_modules/
 marketing/package-lock.json

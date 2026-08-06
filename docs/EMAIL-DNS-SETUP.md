@@ -108,7 +108,8 @@ Register for monitoring when volume grows:
 | Message headers show `spf=pass` `dkim=pass` `dmarc=pass` | ☐ |
 | Test to Gmail + Outlook lands in **Inbox** (not Other/Junk) | ☐ |
 | `RESEND_FROM` uses the verified domain (not `onboarding@resend.dev`) | ☐ |
-| `GET /api/auth/config-check` shows `emailSendingConfigured: true` | ☐ |
+| `GET /api/auth/config-check` shows `emailSendingConfigured: true` | ☐ Open as admin / with `CONFIG_CHECK_SECRET` |
+| Free ticket smoke | ☑ `npm run check:free-ticket` (6 Aug) |
 
 ---
 

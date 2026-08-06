@@ -24,6 +24,7 @@
     "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",
     "test-category-exclusivity-e2e": "node scripts/category-exclusivity-e2e-test.js",
     "check:connect-checkout": "node scripts/smoke-test-connect-checkout.js",
+    "check:free-ticket": "node scripts/smoke-test-free-ticket.js",
     "check:organiser-journey": "node scripts/smoke-test-organiser-journey.js",
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",

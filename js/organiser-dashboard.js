@@ -459,7 +459,7 @@
 
   function partnerBadgeEmbedHtml(profileUrl, groupName) {
     const origin = location.origin || 'https://www.thenetworkerhub.com';
-    const badgeSrc = origin + '/assets/partner-badge.svg?v=20260729logo';
+    const badgeSrc = origin + '/assets/partner-badge.svg?v=20260806logo';
     const alt = (groupName || 'Our group') + ' on The Networker Hub';
     return (
       '<a href="' +
@@ -489,7 +489,7 @@
       '<p class="org-partner-badge-meta">Hub partner badge · links to your public profile</p></div>' +
       '<div class="hub-partner-badge-preview">' +
       '<img src="' +
-      esc(origin + '/assets/partner-badge.svg?v=20260729logo') +
+      esc(origin + '/assets/partner-badge.svg?v=20260806logo') +
       '" alt="" width="220" height="88" /></div></div>' +
       '<label for="partner-badge-code-' +
       esc(g.id) +

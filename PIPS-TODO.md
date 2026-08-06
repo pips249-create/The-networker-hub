@@ -61,7 +61,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 3. ~~**Connect destination charge test**~~ — done Jul 2026 (live PIs with `hub_checkout=connect_destination`; fee = booking fee only)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
 5. **Email 2 claim wave** — Segment A ready (`docs/SEGMENT-A-EMAIL2.md`); **send Fri 7 Aug** (deferred one day to finish events / organisers / business opportunities polish)
-6. **SEO pre-launch** — confirm `SITE_URL` = `https://www.thenetworkerhub.com`; GSC verify + sitemap submit at gate-off (`docs/SEO-AEO-LAUNCH-PLAN.md`)
+6. **SEO pre-launch** — `SITE_URL` + GSC domain property done; GBP verification in progress; **submit sitemap + request indexing at gate-off** (`docs/SEO-AEO-LAUNCH-PLAN.md`)
 7. **August redirect** — banner install now; hard 301s 1 Sep
 8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
 
@@ -242,7 +242,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Redeploy so env vars apply |
 | [x] | Command Centre → **Email templates** → Send test to yourself |
 | [x] | **Test checkout:** buy a ticket → confirmation email received |
-| [ ] | **SPF + DKIM + DMARC** on sending domain (not `onboarding@resend.dev`) |
+| [x] | **SPF + DKIM + DMARC** on sending domain (not `onboarding@resend.dev`) — public dig 6 Aug: DKIM + send.mail SPF/MX + apex DMARC `p=none`; Resend From `hello@mail.thenetworkerhub.com` |
 | [x] | **`CRON_SECRET`** set in Vercel Production — booking reminders + saved-event nudges |
 | [ ] | Spot-check: `booking_cancelled`, `event_cancelled`, `refund_processed`, welcome email |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
@@ -280,10 +280,10 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Ticket appears on `/account/` |
 | [x] | `booking_confirmation` + `organiser_new_registration` emails |
 | [x] | **Connect destination charge test** (Tab 9) — verify money split in Stripe — live proof Jul 2026 (`hub_checkout=connect_destination`) |
-| [ ] | Free ticket path: `POST /api/auth/complete-booking` without Stripe |
-| [ ] | `charge.refunded` webhook → `refund_processed` email (spot-check) |
-| [ ] | `GET /api/auth/config-check` → `checkoutReady: true`, `stripeConnectEnabled: true` |
-| [ ] | Switch to **`sk_live_…`** before taking real public money (if still on test) |
+| [x] | Free ticket path: `POST /api/auth/complete-booking` without Stripe — `npm run check:free-ticket` passed 6 Aug (optional UI: Get free ticket on a £0 event) |
+| [~] | `charge.refunded` webhook → `refund_processed` email — code wired (`api/_lib/stripe-refund-webhook.js`); optional Dashboard refund spot-check |
+| [ ] | `GET /api/auth/config-check` → `checkoutReady: true`, `stripeConnectEnabled: true` — open as admin in Command Centre (or set `CONFIG_CHECK_SECRET`) |
+| [x] | Switch to **`sk_live_…`** before taking real public money — live key in use |
 | [ ] | Organiser Revenue tab shows sales after Connect checkout |
 
 **API routes:** `/api/stripe-webhook`, `/api/auth/create-checkout`, `/api/auth/complete-booking`
@@ -361,12 +361,12 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [x] | Server-side meta injection (`middleware.js`) for `/events/:slug` and `/organisers/:slug` |
 | [x] | Canonical + Open Graph on home, events browse, about, contact, FAQ, opportunities, training, legal |
 | [x] | JSON-LD in `<head>` on static pages; BreadcrumbList on event/organiser pages |
-| [ ] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkerhub.com` (exact canonical) |
+| [x] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkerhub.com` (exact canonical) — confirmed 6 Aug |
 | [ ] | Verify `/sitemap.xml` after deploy — counts match published events + organisers |
 | [x] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
 | [x] | Rebuild FAQ/guides/help canonicals to `https://www.thenetworkerhub.com` (6 Aug — were `localhost:3000`) |
-| [ ] | **Google Search Console** — verify `www.thenetworkerhub.com`; submit sitemap |
-| [ ] | **Google Business Profile** — Software/online, no Magpas pin (hide address / UK service area); hub URL; park if unverifiable |
+| [x] | **Google Search Console** — domain property `thenetworkerhub.com` verified (6 Aug); **submit sitemap at gate-off** when `/sitemap.xml` is public |
+| [~] | **Google Business Profile** — Software company, UK service area, hub URL; verification processing (submitted 6 Aug; may take up to 5 days). No Magpas pin. |
 | [ ] | Launch week: remove `SITE_ACCESS_PASSWORD` → confirm `/robots.txt` Allow, `/llms.txt` 200 |
 | [x] | `the-networker.co.uk` 301 redirect map ready (Tab 7) — draft `docs/LEGACY-REDIRECT-MAP.md` |
 | [ ] | City/region landing pages (post-launch — not a 100% blocker) |
@@ -442,7 +442,7 @@ Non-code gates from `docs/COMPLIANCE-RUNBOOK.md`. Product compliance is largely 
 | Done | Item | Owner |
 |:----:|------|-------|
 | [x] | **Support inbox** runbook — `docs/SUPPORT-INBOX-RUNBOOK.md` | Catherine |
-| [ ] | **SPF + DKIM + DMARC** — follow `docs/EMAIL-DNS-SETUP.md` | Tech |
+| [x] | **SPF + DKIM + DMARC** — follow `docs/EMAIL-DNS-SETUP.md` — verified dig 6 Aug | Tech |
 | [ ] | **ICO registration** — verify on register (`docs/ICO-REGISTRATION.md`) | Catherine |
 | [ ] | Command Centre admin login tested on prod | Ops |
 | [x] | Refund policy enforcement — server guards + `npm run test:refund-policy` | Product |
