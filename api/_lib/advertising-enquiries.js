@@ -125,22 +125,43 @@ async function submitAdvertisingEnquiry(body) {
   }
 
   const sb = getSupabaseAdmin();
-  const messageWithTerm = input.duration
-    ? 'Preferred term: ' + input.duration + (input.message ? '\n\n' + input.message : '')
-    : input.message;
-  const { data, error } = await sb
+  const insertPayload = {
+    company_name: input.companyName,
+    contact_name: input.contactName,
+    email: input.email,
+    section: input.section,
+    package_name: input.packageName,
+    preferred_term: input.duration,
+    budget: input.budget,
+    message: input.message,
+  };
+  let { data, error } = await sb
     .from('advertising_enquiries')
-    .insert({
-      company_name: input.companyName,
-      contact_name: input.contactName,
-      email: input.email,
-      section: input.section,
-      package_name: input.packageName,
-      budget: input.budget,
-      message: messageWithTerm,
-    })
+    .insert(insertPayload)
     .select('id, created_at')
     .single();
+
+  // Older DBs without preferred_term: fall back to prefixing the message.
+  if (error && /preferred_term/i.test(error.message || '')) {
+    const messageWithTerm = input.duration
+      ? 'Preferred term: ' + input.duration + (input.message ? '\n\n' + input.message : '')
+      : input.message;
+    const legacy = await sb
+      .from('advertising_enquiries')
+      .insert({
+        company_name: input.companyName,
+        contact_name: input.contactName,
+        email: input.email,
+        section: input.section,
+        package_name: input.packageName,
+        budget: input.budget,
+        message: messageWithTerm,
+      })
+      .select('id, created_at')
+      .single();
+    data = legacy.data;
+    error = legacy.error;
+  }
 
   if (error) {
     if (/advertising_enquiries/i.test(error.message || '')) {

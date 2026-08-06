@@ -209,9 +209,11 @@
       periodLabel +
       ' + VAT</span></p>' +
       (discountPct
-        ? '<p class="city-partner-quote-save">Save ' +
+        ? '<p class="city-partner-quote-save">Save <strong>' +
+          formatGbp(discountNet) +
+          '</strong> (' +
           discountPct +
-          '% vs monthly · was ' +
+          '%) · was ' +
           formatGbp(listNet) +
           ' + VAT</p>'
         : '') +

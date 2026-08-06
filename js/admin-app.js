@@ -8161,6 +8161,9 @@
             esc(row.packageName || '—') +
             '</span></td>' +
             '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
+            esc(row.preferredTerm || '—') +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
             esc(row.budget || '—') +
             '</td>' +
             '<td class="px-3 py-2 text-sm text-slate-600 max-w-xs">' +
@@ -8173,7 +8176,7 @@
       bodyEl.innerHTML =
         '<table class="min-w-full text-left">' +
         '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
-        '<tr><th class="px-3 py-2">Submitted</th><th class="px-3 py-2">Company</th><th class="px-3 py-2">Email</th><th class="px-3 py-2">Section / package</th><th class="px-3 py-2">Budget</th><th class="px-3 py-2">Message</th></tr>' +
+        '<tr><th class="px-3 py-2">Submitted</th><th class="px-3 py-2">Company</th><th class="px-3 py-2">Email</th><th class="px-3 py-2">Section / package</th><th class="px-3 py-2">Preferred term</th><th class="px-3 py-2">Budget</th><th class="px-3 py-2">Message</th></tr>' +
         '</thead><tbody>' +
         rows +
         '</tbody></table>';

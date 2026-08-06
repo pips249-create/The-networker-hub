@@ -4,6 +4,20 @@
 const { requireAdmin, json, setCors, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 
+function preferredTermFromRow(row) {
+  const direct = String(row.preferred_term || '').trim();
+  if (direct) return direct;
+  const message = String(row.message || '');
+  const match = message.match(/^Preferred term:\s*([^\n]+)/i);
+  return match ? String(match[1] || '').trim() : null;
+}
+
+function messageWithoutPreferredTermPrefix(message) {
+  const raw = String(message || '');
+  if (!/^Preferred term:\s*/i.test(raw)) return raw.trim() || null;
+  return raw.replace(/^Preferred term:\s*[^\n]+\n*/i, '').trim() || null;
+}
+
 function mapRow(row) {
   return {
     id: row.id,
@@ -12,8 +26,9 @@ function mapRow(row) {
     email: row.email,
     section: row.section,
     packageName: row.package_name,
+    preferredTerm: preferredTermFromRow(row),
     budget: row.budget || null,
-    message: row.message || null,
+    message: messageWithoutPreferredTermPrefix(row.message),
     source: row.source || 'advertising_page',
     createdAt: row.created_at,
   };
@@ -22,13 +37,23 @@ function mapRow(row) {
 async function listAdvertisingEnquiries(limit) {
   const sb = getSupabaseAdmin();
   const max = Math.min(Math.max(Number(limit) || 100, 1), 500);
-  const res = await sb
+  let res = await sb
     .from('advertising_enquiries')
     .select(
-      'id, company_name, contact_name, email, section, package_name, budget, message, source, created_at'
+      'id, company_name, contact_name, email, section, package_name, preferred_term, budget, message, source, created_at'
     )
     .order('created_at', { ascending: false })
     .limit(max);
+
+  if (res.error && /preferred_term/i.test(res.error.message || '')) {
+    res = await sb
+      .from('advertising_enquiries')
+      .select(
+        'id, company_name, contact_name, email, section, package_name, budget, message, source, created_at'
+      )
+      .order('created_at', { ascending: false })
+      .limit(max);
+  }
 
   if (res.error) {
     if (/advertising_enquiries/i.test(res.error.message || '')) {
