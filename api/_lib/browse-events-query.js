@@ -479,6 +479,7 @@ function rowToBrowsePin(row) {
     price: priceLabel,
     isMembersOnlyEvent: membersOnlyEvent,
     hasMembersOnlyTiers: membersOnlyEvent,
+    attendanceMode: String(row.attendance_mode || '').trim() || 'tickets',
     outcode: row.outcode,
     featured: isEventCurrentlyFeatured(row),
     eventType: typeRaw,
@@ -594,9 +595,35 @@ async function attachImagePositions(sb, rows) {
   }));
 }
 
+/**
+ * Category Exclusivity / guest programme need attendance_mode on browse cards.
+ * Older browse_events_index definitions omit the column; hydrate from events.
+ */
+async function attachAttendanceModes(sb, rows) {
+  const list = rows || [];
+  if (!list.length) return list;
+  if (Object.prototype.hasOwnProperty.call(list[0], 'attendance_mode')) return list;
+
+  const ids = list.map((row) => row.id).filter(Boolean);
+  const modes = new Map();
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    const chunk = ids.slice(i, i + IN_CHUNK);
+    const { data, error } = await sb.from('events').select('id, attendance_mode').in('id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      modes.set(row.id, row.attendance_mode || 'tickets');
+    });
+  }
+  return list.map((row) => ({
+    ...row,
+    attendance_mode: modes.has(row.id) ? modes.get(row.id) : row.attendance_mode || 'tickets',
+  }));
+}
+
 async function hydrateBrowseEvents(sb, rows) {
   const withPositions = await attachImagePositions(sb, rows);
-  const published = withPositions.map((row) => ({ ...row, next_date: row.starts_at }));
+  const withModes = await attachAttendanceModes(sb, withPositions);
+  const published = withModes.map((row) => ({ ...row, next_date: row.starts_at }));
   const mapped = await eventsFromPublishedRows(sb, published, null, { browseList: true });
   return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
@@ -678,9 +705,10 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
       }
     }
     const sorted = sortRows(slim, params.sort).slice(0, MAX_PINS);
+    const withModes = await attachAttendanceModes(sb, sorted);
     return {
-      events: sorted.map(rowToBrowsePin),
-      pagination: { total: sorted.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+      events: withModes.map(rowToBrowsePin),
+      pagination: { total: withModes.length, page: 1, limit: MAX_PINS, totalPages: 1 },
       meta: null,
       featured: [],
     };
