@@ -189,15 +189,69 @@
     return lum > 0.62 ? '#2d2636' : '#ffffff';
   }
 
-  function applyCtaLink(el, url) {
+  function withSponsorUtm(rawUrl, placement, opts) {
+    var url = String(rawUrl || '').trim();
+    if (!/^https?:\/\//i.test(url)) return url;
+    try {
+      var parsed = new URL(url, window.location.origin);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return url;
+      var place = String(placement || (opts && opts.placement) || 'sponsor')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 64) || 'sponsor';
+      var source = String((opts && opts.source) || 'thenetworkerhub').trim().slice(0, 64) || 'thenetworkerhub';
+      var medium = String((opts && opts.medium) || 'sponsor').trim().slice(0, 64) || 'sponsor';
+      var campaign = String((opts && opts.campaign) || place).trim().slice(0, 64) || place;
+      if (!parsed.searchParams.has('utm_source')) parsed.searchParams.set('utm_source', source);
+      if (!parsed.searchParams.has('utm_medium')) parsed.searchParams.set('utm_medium', medium);
+      if (!parsed.searchParams.has('utm_campaign')) parsed.searchParams.set('utm_campaign', campaign);
+      if (!parsed.searchParams.has('utm_content') && place) {
+        parsed.searchParams.set('utm_content', place);
+      }
+      return parsed.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
+  function trackSponsorClick(placement, company) {
+    try {
+      if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+        window.HubAnalytics.track('sponsor_click', {
+          slot: String(placement || 'sponsor').slice(0, 64),
+          brand: String(company || '').slice(0, 64),
+        });
+      }
+    } catch (e) {
+      /* optional */
+    }
+  }
+
+  function applyCtaLink(el, url, opts) {
     if (!el) return;
-    var u = String(url || '').trim();
+    var placement = opts && opts.placement ? opts.placement : el.getAttribute('data-sponsor-placement') || '';
+    var company = opts && opts.company ? opts.company : el.getAttribute('data-sponsor-company') || '';
+    var u = withSponsorUtm(String(url || '').trim() || el.getAttribute('href') || '', placement, opts);
+    if (u) el.href = u;
+    if (placement) el.setAttribute('data-sponsor-placement', placement);
+    if (company) el.setAttribute('data-sponsor-company', company);
     if (/^https?:\/\//i.test(u)) {
       el.target = '_blank';
       el.rel = 'noopener noreferrer';
     } else {
       el.removeAttribute('target');
       el.removeAttribute('rel');
+    }
+    if (!el.__hubSponsorClickBound) {
+      el.__hubSponsorClickBound = true;
+      el.addEventListener('click', function () {
+        trackSponsorClick(
+          el.getAttribute('data-sponsor-placement') || placement,
+          el.getAttribute('data-sponsor-company') || company
+        );
+      });
     }
   }
 
@@ -297,5 +351,7 @@
     applyCtaColor: applyCtaColor,
     applyCtaLink: applyCtaLink,
     applyLogoBand: applyLogoBand,
+    withSponsorUtm: withSponsorUtm,
+    trackSponsorClick: trackSponsorClick,
   };
 })();

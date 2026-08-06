@@ -149,7 +149,11 @@
     var cta = container.querySelector('.sponsor-cta');
     if (cta && window.CmsSponsorFields) {
       window.CmsSponsorFields.applyCtaColor(cta, window.CmsSponsorFields.ctaColor(block));
-      window.CmsSponsorFields.applyCtaLink(cta, ctaUrl);
+      window.CmsSponsorFields.applyCtaLink(cta, ctaUrl, {
+        placement: 'sponsor_sidebar',
+        company: company,
+        campaign: 'sponsor_sidebar',
+      });
     }
   }
 
@@ -195,7 +199,11 @@
       '</aside>';
     var logoLink = container.querySelector('.cms-ad-compact-logo-link');
     if (logoLink && window.CmsSponsorFields) {
-      window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl);
+      window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl, {
+        placement: slot || 'page_partner',
+        company: company,
+        campaign: slot || 'page_partner',
+      });
     }
     return true;
   }
@@ -322,7 +330,11 @@
 
     var logoLink = container.querySelector('.networking-city-partner-logo-link');
     if (window.CmsSponsorFields && logoLink) {
-      window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl);
+      window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl, {
+        placement: 'city_partner',
+        company: company,
+        campaign: 'city_partner',
+      });
     }
     return true;
   }
@@ -513,7 +525,13 @@
 
   function applyLogoLink(el, linkUrl) {
     if (!el || !window.CmsSponsorFields) return;
-    window.CmsSponsorFields.applyCtaLink(el, normalizeCta(linkUrl));
+    var company = el.getAttribute('aria-label') || '';
+    if (/^Visit /i.test(company)) company = company.replace(/^Visit\s+/i, '');
+    window.CmsSponsorFields.applyCtaLink(el, normalizeCta(linkUrl), {
+      placement: 'page_partner_carousel',
+      company: company,
+      campaign: 'page_partner_carousel',
+    });
   }
 
   function wireCarouselLogoBands(container) {

@@ -22,6 +22,17 @@
     return SPONSOR_SLOT_AD_PATHS[key] || '/advertising';
   }
 
+  function slotPlacement(els) {
+    var slot = '';
+    if (els && els.sponsorHub) {
+      slot = String(els.sponsorHub.getAttribute('data-slot') || '').trim();
+    }
+    if (slot === 'organisers_sponsor_hub') return 'organisers_hero';
+    if (slot === 'opportunities_sponsor_hub') return 'opportunities_hero';
+    if (slot === 'events_sponsor_hub' || slot === 'sponsor_hub') return 'events_hero';
+    return slot || 'events_hero';
+  }
+
   var SPONSOR_HERO_MAX_BULLETS = 0;
 
   function escapeHtml(s) {
@@ -145,7 +156,11 @@
       var label = opts.company ? 'Visit ' + opts.company : opts.ctaLabel || 'Visit sponsor';
       els.sponsorLogoLink.setAttribute('aria-label', label);
       if (window.CmsSponsorFields) {
-        window.CmsSponsorFields.applyCtaLink(els.sponsorLogoLink, opts.ctaUrl);
+        window.CmsSponsorFields.applyCtaLink(els.sponsorLogoLink, opts.ctaUrl, {
+          placement: opts.placement || 'events_hero',
+          company: opts.company || '',
+          campaign: opts.campaign || opts.placement || 'events_hero',
+        });
       }
     }
     if (els.sponsorLogo) {
@@ -254,6 +269,8 @@
       ctaUrl: ctaUrl,
       company: company,
       ctaLabel: ctaLabel,
+      placement: slotPlacement(els),
+      campaign: slotPlacement(els),
     });
 
     if (els.sponsorCompany) {
@@ -295,7 +312,11 @@
           els.sponsorCta,
           window.CmsSponsorFields.ctaColor(block)
         );
-        window.CmsSponsorFields.applyCtaLink(els.sponsorCta, ctaUrl);
+        window.CmsSponsorFields.applyCtaLink(els.sponsorCta, ctaUrl, {
+          placement: slotPlacement(els),
+          company: company,
+          campaign: slotPlacement(els),
+        });
       }
     }
   }

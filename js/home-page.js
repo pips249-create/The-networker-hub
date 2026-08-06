@@ -111,6 +111,10 @@
 
   function partnerItemHtml(p) {
     var darkClass = p.logoBandDark ? ' home-partner-item--dark-logo' : '';
+    var taggedUrl =
+      window.CmsSponsorFields && window.CmsSponsorFields.withSponsorUtm
+        ? window.CmsSponsorFields.withSponsorUtm(p.url, 'home_partners', { campaign: 'home_partners' })
+        : p.url;
     var inner =
       '<img src="' +
       esc(p.logo) +
@@ -118,13 +122,15 @@
       esc(p.name) +
       '" loading="lazy" decoding="async" crossorigin="anonymous" class="home-partner-logo" onerror="this.closest(\'.home-partner-item\').hidden=true" />';
     var title = esc(p.name);
-    if (/^(https?:|mailto:)/i.test(p.url)) {
+    if (/^(https?:|mailto:)/i.test(taggedUrl)) {
       return (
         '<a class="home-partner-item' +
         darkClass +
         '" href="' +
-        esc(p.url) +
+        esc(taggedUrl) +
         '" target="_blank" rel="noopener noreferrer" title="' +
+        title +
+        '" data-sponsor-placement="home_partners" data-sponsor-company="' +
         title +
         '"' +
         (p.logoBandDark ? ' data-logo-band-dark="true"' : '') +
@@ -147,7 +153,16 @@
   }
 
   function enhancePartnerLogoBands(track) {
-    if (!track || !window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) return;
+    if (!track) return;
+    track.querySelectorAll('.home-partner-item[data-sponsor-placement]').forEach(function (item) {
+      if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyCtaLink) return;
+      window.CmsSponsorFields.applyCtaLink(item, item.getAttribute('href') || '', {
+        placement: item.getAttribute('data-sponsor-placement') || 'home_partners',
+        company: item.getAttribute('data-sponsor-company') || item.getAttribute('title') || '',
+        campaign: 'home_partners',
+      });
+    });
+    if (!window.CmsSponsorFields || !window.CmsSponsorFields.applyLogoBand) return;
     track.querySelectorAll('.home-partner-item').forEach(function (item) {
       var img = item.querySelector('.home-partner-logo');
       if (!img) return;

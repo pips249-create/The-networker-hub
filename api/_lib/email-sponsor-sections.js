@@ -10,6 +10,7 @@ const {
 } = require('./email-booking-defaults');
 const { hasSponsorLogo, sponsorLogoUrl } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
+const { withSponsorUtm } = require('./sponsor-utm');
 const {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
@@ -178,7 +179,9 @@ function buildMiniSponsorsRow(ads, options = {}) {
         return '';
       }
       const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL).replace(/"/g, '&quot;');
-      const url = String(ad.cta_url || '').replace(/"/g, '&quot;');
+      const url = withSponsorUtm(String(ad.cta_url || '').trim(), 'email_mini_sponsor', {
+        campaign: 'email_mini_sponsor',
+      }).replace(/"/g, '&quot;');
       const name = String(ad.company_name || ad.title || 'Sponsor').replace(/"/g, '&quot;');
       if (!logo || !url) return '';
       return (
@@ -311,11 +314,20 @@ async function getEmailSponsorVars(slug) {
       mainBlock = await resolveEventsMainSponsorBlock(sb);
     }
 
-    const sponsorOpts = { label };
+    const sponsorOpts = { label, placement: 'email_sponsor', campaign: 'email_sponsor' };
     // Opportunity (and organiser) directory logos are usually full-colour on white.
     // A dark pad makes them look like a white sticker — keep those on the cream header.
-    if (OPPORTUNITY_EMAIL_SLUGS.has(slug) || ORGANISER_EMAIL_SLUGS.has(slug)) {
+    if (OPPORTUNITY_EMAIL_SLUGS.has(slug)) {
       sponsorOpts.logoBandBg = '#ffffff';
+      sponsorOpts.placement = 'opportunities_email';
+      sponsorOpts.campaign = 'opportunities_email';
+    } else if (ORGANISER_EMAIL_SLUGS.has(slug)) {
+      sponsorOpts.logoBandBg = '#ffffff';
+      sponsorOpts.placement = 'organisers_email';
+      sponsorOpts.campaign = 'organisers_email';
+    } else if (EVENT_MAIN_SPONSOR_SLUGS.has(slug)) {
+      sponsorOpts.placement = 'events_email';
+      sponsorOpts.campaign = 'events_email';
     }
 
     const sponsorRow = mainBlock
