@@ -2,11 +2,11 @@
  * Home page — scroll reveals and home page partners strip.
  */
 (function () {
-  var SPONSOR_FALLBACK_SLOTS = [
+  /** Live Powered by heroes — always shown in the home partners strip when published. */
+  var LIVE_HERO_SLOTS = [
     'events_sponsor_hub',
     'organisers_sponsor_hub',
     'opportunities_sponsor_hub',
-    'sponsor_hub',
   ];
   var activePartnersScroller = null;
 
@@ -34,6 +34,30 @@
     var url = String((block && block.cta_url) || '').trim();
     if (/^(https?:|mailto:)/i.test(url)) return url;
     return '';
+  }
+
+  function partnerFromSponsorBlock(block) {
+    return {
+      name: sponsorCompany(block) || 'Partner',
+      logo: sponsorLogo(block),
+      url: sponsorCta(block),
+      label: String((block && block.cta_label) || '').trim() || 'Visit website',
+      logoBandDark:
+        !!(block && (block.logo_band_dark === true || block.logoBandDark === true)),
+    };
+  }
+
+  function addUniquePartner(list, seen, row) {
+    if (!row || !row.logo) return;
+    var logoKey = String(row.logo).trim().toLowerCase();
+    var nameKey = String(row.name || '')
+      .trim()
+      .toLowerCase();
+    if (!logoKey || seen.has('logo:' + logoKey)) return;
+    if (nameKey && seen.has('name:' + nameKey)) return;
+    seen.add('logo:' + logoKey);
+    if (nameKey) seen.add('name:' + nameKey);
+    list.push(row);
   }
 
   function initHeroEntrance() {
@@ -357,40 +381,29 @@
     var section = document.getElementById('home-partners');
     revealSection(section);
 
-    fetchCmsSlot('home_partners').then(function (data) {
-      var partners = [];
-      var seen = new Set();
+    Promise.all([fetchCmsSlot('home_partners'), Promise.all(LIVE_HERO_SLOTS.map(fetchCmsSlot))]).then(
+      function (results) {
+        var homeData = results[0];
+        var slotResults = results[1] || [];
+        var partners = [];
+        var seen = new Set();
 
-      if (data && data.ok && data.active !== false && Array.isArray(data.partners)) {
-        data.partners.forEach(function (p) {
-          var row = partnerFromRow(p);
-          if (!row.logo || seen.has(row.logo)) return;
-          seen.add(row.logo);
-          partners.push(row);
-        });
-      }
-
-      if (partners.length) {
-        renderPartners(partners);
-        return;
-      }
-
-      return Promise.all(SPONSOR_FALLBACK_SLOTS.map(fetchCmsSlot)).then(function (results) {
-        results.forEach(function (slotData) {
+        // Live Powered by heroes first (Events / Organisers / Opportunities).
+        slotResults.forEach(function (slotData) {
           if (!slotData || !slotData.ok || !slotData.block) return;
-          var row = {
-            name: sponsorCompany(slotData.block) || 'Partner',
-            logo: sponsorLogo(slotData.block),
-            url: sponsorCta(slotData.block),
-            label: String(slotData.block.cta_label || '').trim() || 'Visit website',
-          };
-          if (!row.logo || seen.has(row.logo)) return;
-          seen.add(row.logo);
-          partners.push(row);
+          addUniquePartner(partners, seen, partnerFromSponsorBlock(slotData.block));
         });
+
+        // Then any extras managed under Home partners in Command Centre.
+        if (homeData && homeData.ok && homeData.active !== false && Array.isArray(homeData.partners)) {
+          homeData.partners.forEach(function (p) {
+            addUniquePartner(partners, seen, partnerFromRow(p));
+          });
+        }
+
         renderPartners(partners);
-      });
-    });
+      }
+    );
   }
 
   function initHeroHubertForm() {

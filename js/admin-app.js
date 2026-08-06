@@ -7333,7 +7333,7 @@
         main.innerHTML =
           '<div class="space-y-4">' +
           '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">' +
-          '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Homepage partner logos and links</p></a>' +
+          '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Extra logos — live Powered by heroes are included automatically</p></a>' +
           '<a href="#sponsorship/city-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">City partners</p><p class="text-xs text-slate-500 mt-1">City exclusivity waitlist and slots</p></a>' +
           '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">County partners</p><p class="text-xs text-slate-500 mt-1">Eight launch counties — enquiry + manual logo</p></a>' +
           '</div></div>';
@@ -7538,8 +7538,8 @@
       '<span class="admin-ad-picker-status" id="home-partners-picker-status">…</span>' +
       '</div>' +
       '<p class="admin-ad-picker-label">Home page — Partners &amp; sponsors</p>' +
-      '<p class="admin-ad-picker-help">Multiple company logos with links — shown in the partners section on the home page.</p>' +
-      '<span class="admin-ad-picker-action">Edit partners →</span>' +
+      '<p class="admin-ad-picker-help">Extra logos for the home strip. Live Powered by heroes are included automatically.</p>' +
+      '<span class="admin-ad-picker-action">Edit extras →</span>' +
       '</a></div></section></div>';
 
     var statusEl = document.getElementById('sponsor-picker-status');
@@ -8323,6 +8323,29 @@
     };
   }
 
+  function formatSponsorPackMomDelta(pct) {
+    if (pct == null || pct === '' || Number.isNaN(Number(pct))) {
+      return { text: 'vs prior period: —', tone: '' };
+    }
+    var n = Number(pct);
+    var sign = n > 0 ? '+' : '';
+    return {
+      text: 'vs prior: ' + sign + n + '%',
+      tone: n > 0 ? 'is-up' : n < 0 ? 'is-down' : '',
+    };
+  }
+
+  function sponsorPackMomDeltaHtml(pct) {
+    var d = formatSponsorPackMomDelta(pct);
+    return (
+      '<p class="sponsor-pack-kpi-delta' +
+      (d.tone ? ' ' + d.tone : '') +
+      '">' +
+      esc(d.text) +
+      '</p>'
+    );
+  }
+
   function buildSponsorPackPdfRows(list, labelKey, limit) {
     var rows = Array.isArray(list) ? list.slice(0, limit || 6) : [];
     if (!rows.length) {
@@ -8351,9 +8374,52 @@
       .join('');
   }
 
+  function formatSponsorPackPeriodLabel(fromIso, toIso) {
+    var from = String(fromIso || '').slice(0, 10);
+    var to = String(toIso || '').slice(0, 10);
+    if (!from) return 'This period';
+    try {
+      var d = new Date(from + 'T12:00:00Z');
+      var monthYear = d.toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      if (to && to.slice(0, 7) !== from.slice(0, 7)) {
+        var d2 = new Date(to + 'T12:00:00Z');
+        return (
+          monthYear +
+          ' – ' +
+          d2.toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+        );
+      }
+      return monthYear;
+    } catch (_e) {
+      return from + (to ? ' → ' + to : '');
+    }
+  }
+
+  function resolveSponsorPackTierLabel(brandName) {
+    if (/barnsgate/i.test(String(brandName || ''))) {
+      return 'Enterprise Directory Partner (£2,000/mo)';
+    }
+    return 'Directory Partner';
+  }
+
+  function formatSponsorPackEngagementHint(clicks, pageViews) {
+    var c = Number(clicks) || 0;
+    var v = Number(pageViews) || 0;
+    if (v < 1) return 'Needs directory views to calculate engagement';
+    if (c === 0) return formatSponsorPackNumber(v) + ' directory views · no click-throughs yet';
+    var viewers =
+      c === 1 && v === 1
+        ? '1 of 1 viewer clicked through'
+        : formatSponsorPackNumber(c) +
+          ' of ' +
+          formatSponsorPackNumber(v) +
+          ' viewers clicked through';
+    return viewers + ' to your site';
+  }
+
   /**
-   * Dedicated A4 one-pager for clients — simpler layout than the on-screen pack
-   * so html2canvas does not mangle CSS grids.
+   * Dedicated A4 one-pager for clients — executive partnership summary.
+   * Table layout so html2canvas does not mangle CSS grids.
    */
   function buildSponsorPackPdfDocument(data, logos) {
     var summary = (data && data.summary) || {};
@@ -8361,10 +8427,13 @@
     var brandName = brand.company || 'Partner';
     var fromLabel = String((data && data.from) || '').slice(0, 10);
     var toLabel = String((data && data.to) || '').slice(0, 10);
+    var periodLabel = formatSponsorPackPeriodLabel(fromLabel, toLabel);
+    var tierLabel = resolveSponsorPackTierLabel(brandName);
     var pageViews = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
     var emails = Number(summary.emailSends) || 0;
     var ctr = formatSponsorPackCtr(clicks, pageViews);
+    var engagementHint = formatSponsorPackEngagementHint(clicks, pageViews);
     var prepared = new Date().toLocaleString('en-GB', {
       day: 'numeric',
       month: 'short',
@@ -8373,6 +8442,13 @@
     var hubLogo = (logos && logos.hub) || '';
     var brandLogo = (logos && logos.brand) || '';
     var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
+    var isEnterprise = /barnsgate/i.test(brandName);
+    var amName = 'Catherine Hancher';
+    var amEmail = 'direct@thenetworkerhub.com';
+    if (data && data.contact && data.contact.name && !isEnterprise) {
+      amName = data.contact.name;
+      amEmail = data.contact.email || amEmail;
+    }
 
     var hubLogoHtml = hubLogo
       ? '<img src="' +
@@ -8418,9 +8494,20 @@
       );
     }
 
+    var strategicIntro =
+      pageViews > 0 && clicks > 0
+        ? 'Your campaign is delivering high conversion intent (' +
+          ctr.label +
+          ' engagement rate). To maximise your sponsorship yield for the upcoming cycle:'
+        : pageViews > 0
+          ? 'Directory audiences are reaching your hero placement. To strengthen engagement yield for the upcoming cycle:'
+          : 'Your placement is live on The Networker Hub. To build measurable yield for the upcoming cycle:';
+
+    var feePhrase = isEnterprise ? '£2,000/mo sponsorship value' : 'sponsorship value';
+
     return (
       '<div class="sponsor-pack-pdf" style="width:720px;padding:28px 28px 24px;background:#ffffff;color:#1e293b;font-family:\'DM Sans\',Helvetica,Arial,sans-serif;box-sizing:border-box;">' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:22px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:18px;">' +
       '<tr>' +
       '<td style="vertical-align:middle;width:46%;">' +
       '<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
@@ -8436,46 +8523,76 @@
       brandLogoHtml +
       '</td></tr></table></td>' +
       '<td style="vertical-align:middle;padding-left:18px;">' +
-      '<div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9a7aa8;">Partnership performance pack</div>' +
-      '<div style="margin-top:4px;font-size:26px;font-weight:750;color:#2d2636;line-height:1.15;">' +
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#9a7aa8;">Monthly Partnership Executive Summary</div>' +
+      '<div style="margin-top:4px;font-size:24px;font-weight:750;color:#2d2636;line-height:1.15;">' +
       esc(brandName) +
       '</div>' +
-      '<div style="margin-top:6px;font-size:12px;color:#64748b;">' +
-      esc(fromLabel) +
-      ' → ' +
-      esc(toLabel) +
-      ' · Prepared ' +
+      '<div style="margin-top:8px;font-size:11.5px;line-height:1.45;color:#64748b;">' +
+      'Account: ' +
+      esc(brandName) +
+      ' · Tier: ' +
+      esc(tierLabel) +
+      ' · Period: ' +
+      esc(periodLabel) +
+      '</div>' +
+      '<div style="margin-top:4px;font-size:11px;color:#94a3b8;">Prepared ' +
       esc(prepared) +
       '</div></td></tr></table>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:20px;"><tr>' +
-      kpiCell('Page views', formatSponsorPackNumber(pageViews), 'Sponsored directory visits (e.g. /events/)', false) +
-      kpiCell('Emails with logo', formatSponsorPackNumber(emails), 'Hub emails that included your logo', false) +
-      kpiCell('Outbound clicks', formatSponsorPackNumber(clicks), 'Clicks through to your website', false) +
-      kpiCell('Site CTR', ctr.label, ctr.hint, true) +
+      '<div style="margin-bottom:14px;padding:10px 14px;border-radius:10px;background:#f8f5fa;border:1px solid #efeaf2;font-size:11.5px;line-height:1.5;color:#475569;">' +
+      '<strong style="color:#2d2636;">Placement stewardship:</strong> Hero directory ownership above the fold · ' +
+      '<strong style="color:#2d2636;">Audience access:</strong> UK business decision-makers on The Networker Hub · ' +
+      'Hyper-targeted interactions — quality over raw volume.' +
+      '</div>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:16px;"><tr>' +
+      kpiCell(
+        'Directory reach',
+        formatSponsorPackNumber(pageViews),
+        'Hero directory views while your placement was live',
+        false
+      ) +
+      kpiCell(
+        'Brand email exposure',
+        formatSponsorPackNumber(emails),
+        'Hub emails that included your creative',
+        false
+      ) +
+      kpiCell(
+        'Site visits driven',
+        formatSponsorPackNumber(clicks),
+        'Outbound clicks through to your website',
+        false
+      ) +
+      kpiCell('Engagement rate', ctr.label, engagementHint, true) +
       '</tr></table>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:18px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:14px;">' +
       '<tr>' +
       '<td style="width:50%;padding-right:10px;vertical-align:top;">' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:14px 16px;min-height:160px;">' +
-      '<div style="font-size:13px;font-weight:700;color:#2d2636;margin-bottom:6px;">Clicks by placement</div>' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:140px;">' +
+      '<div style="font-size:12px;font-weight:700;color:#2d2636;margin-bottom:4px;">Clicks by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      buildSponsorPackPdfRows(data.byPlacement, 'placement', 6) +
+      buildSponsorPackPdfRows(data.byPlacement, 'placement', 5) +
       '</table></div></td>' +
       '<td style="width:50%;padding-left:10px;vertical-align:top;">' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:14px 16px;min-height:160px;">' +
-      '<div style="font-size:13px;font-weight:700;color:#2d2636;margin-bottom:6px;">Page views by placement</div>' +
+      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:12px 14px;min-height:140px;">' +
+      '<div style="font-size:12px;font-weight:700;color:#2d2636;margin-bottom:4px;">Views by placement</div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">' +
-      buildSponsorPackPdfRows((data.impressions || {}).byPlacement, 'placement', 6) +
+      buildSponsorPackPdfRows((data.impressions || {}).byPlacement, 'placement', 5) +
       '</table></div></td></tr></table>' +
-      '<div style="border:1px solid #ebe4ef;border-radius:12px;padding:14px 16px;background:#f8f5fa;margin-bottom:18px;">' +
-      '<div style="font-size:13px;font-weight:700;color:#2d2636;margin-bottom:8px;">How to read this pack</div>' +
-      '<div style="font-size:11.5px;line-height:1.55;color:#475569;">' +
-      '<strong>Page views</strong> are visits to the sponsored Hub directory while your placement is live. ' +
-      '<strong>Emails with logo</strong> count Hub sends that included your creative (not opens). ' +
-      '<strong>Leads &amp; form fills</strong> appear in your analytics / CRM via UTM tags ' +
-      '(<span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;">utm_source=thenetworkerhub</span>).' +
-      '</div></div>' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid #efeaf2;padding-top:12px;">' +
+      '<div style="border:1px solid #2d2636;border-radius:12px;padding:14px 16px;background:#2d2636;margin-bottom:14px;color:#fff;">' +
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.72);margin-bottom:8px;">Strategic Account Direction</div>' +
+      '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.92);margin-bottom:10px;">' +
+      esc(strategicIntro.replace('sponsorship yield', feePhrase)) +
+      '</div>' +
+      '<div style="font-size:12px;line-height:1.55;color:rgba(255,255,255,0.88);">' +
+      '<div style="margin-bottom:6px;"><strong style="color:#fff;">Creative rotation:</strong> Refresh your hero banner graphic to drive fresh engagement next month.</div>' +
+      '<div style="margin-bottom:10px;"><strong style="color:#fff;">Featured content:</strong> Submit upcoming Q3/Q4 announcements for inclusion in partner spotlights.</div>' +
+      '<div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:11.5px;">' +
+      '<strong style="color:#fff;">Dedicated Account Manager:</strong> ' +
+      esc(amName) +
+      ' · <span style="color:#e9d5ff;">' +
+      esc(amEmail) +
+      '</span></div></div></div>' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid #efeaf2;">' +
       '<tr><td style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#94a3b8;padding-top:12px;">Confidential · The Networker Hub × ' +
       esc(brandName) +
       '</td>' +
@@ -8983,10 +9100,10 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Logo strip on the home page. For each company: name, logo, and website link (logo is clickable — no CTA button on the live page).</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Live <strong>Powered by</strong> heroes (Events, Organisers, Opportunities) always appear in this strip automatically. Add any <strong>extra</strong> logos here — duplicates of the live heroes are skipped.</p></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
       '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
-      'Show on home page</label></div>' +
+      'Show extras on home page</label></div>' +
       '<div id="home-partners-list" class="space-y-4 min-w-0"></div>' +
       '<div class="flex flex-wrap gap-3">' +
       '<button type="button" id="home-partners-add" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">+ Add company</button>' +
