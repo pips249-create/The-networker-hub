@@ -3100,7 +3100,8 @@ body.nav-menu-open {
     box-sizing: border-box;
   }
 
-  /* Pull tickets up under the title so booking is reachable without a long scroll */
+  /* Hero → title → about → tickets — description before the tall checkout panel.
+     Sticky jump bar still reaches booking without a long scroll. */
   .event-detail-page .main-col {
     display: contents;
   }
@@ -3122,15 +3123,15 @@ body.nav-menu-open {
     order: 3;
   }
 
-  .event-detail-page .side-col {
+  .event-detail-page #ev-about-section {
     order: 4;
+  }
+
+  .event-detail-page .side-col {
+    order: 5;
     max-width: none;
     margin: 0;
     width: 100%;
-  }
-
-  .event-detail-page #ev-about-section {
-    order: 5;
   }
 
   .event-detail-page #ev-host-section {
@@ -3169,15 +3170,105 @@ body.nav-menu-open {
     font-weight: 700;
   }
 
+  /* Compact ticket checkout — less vertical chrome on phones */
+  .event-detail-page .ticket-panel {
+    padding: 14px 14px 12px;
+    gap: 0;
+  }
+
+  .event-detail-page .ticket-header {
+    margin-bottom: 4px;
+  }
+
+  .event-detail-page .ticket-header .price {
+    font-size: 22px;
+  }
+
+  .event-detail-page .ticket-urgency {
+    margin-bottom: 10px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .event-detail-page .ev-series-dates {
+    padding-bottom: 10px;
+    margin-bottom: 4px;
+  }
+
+  .event-detail-page .ev-series-dates-title {
+    margin: 0 0 6px;
+    font-size: 13px;
+  }
+
+  .event-detail-page .ev-series-collapsed {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .event-detail-page .ticket-tiers {
+    margin-bottom: 10px;
+  }
+
+  .event-detail-page .tier {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+
+  .event-detail-page .ticket-load-hint {
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0 0 8px;
+  }
+
+  .event-detail-page .ticket-load-hint--member {
+    text-align: left;
+  }
+
+  .event-detail-page .qty-row {
+    margin: 8px 0 4px;
+    padding: 0;
+  }
+
+  .event-detail-page .qty-avail-hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+  }
+
+  .event-detail-page .summary {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .event-detail-page .summary-row {
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .event-detail-page .refund-badge {
+    margin: 8px 0 0;
+  }
+
+  .event-detail-page .ticket-refund-details {
+    margin-top: 4px;
+  }
+
   .event-detail-page .ticket-panel .cta-btn,
   .event-detail-page .ticket-panel #buy-btn {
     min-height: 48px;
     font-size: 16px;
+    margin-top: 10px;
   }
 
   .event-detail-page .qty-btn {
     min-width: 44px;
     min-height: 44px;
+  }
+
+  .event-detail-page .ticket-foot {
+    margin-top: 8px;
+    padding-top: 8px;
   }
 
   /* Full-width ticket jump — Hubert moves left while this bar is up */

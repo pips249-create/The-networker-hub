@@ -1330,7 +1330,7 @@ a:hover {
   .ticket-panel {
     display: flex;
     flex-direction: column;
-    padding: 18px 16px;
+    padding: 14px 14px 12px;
   }
 
   /* Refund summary sits near the price, not buried under checkout controls */
