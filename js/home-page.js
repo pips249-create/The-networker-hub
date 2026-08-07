@@ -495,16 +495,6 @@
     });
   }
 
-  function teardownFoundingScroller() {
-    if (!activeFoundingScroller) return;
-    var state = activeFoundingScroller;
-    if (state.rafId) cancelAnimationFrame(state.rafId);
-    state.listeners.forEach(function (listener) {
-      listener.target.removeEventListener(listener.type, listener.fn, listener.opts);
-    });
-    activeFoundingScroller = null;
-  }
-
   function foundingItemHtml(org) {
     var name = String(org.name || 'Organiser').trim() || 'Organiser';
     var href = String(org.href || '').trim();
@@ -556,8 +546,6 @@
     var track = document.getElementById('home-founding-logos');
     var marquee = document.getElementById('home-founding-marquee');
     if (!section || !track) return;
-
-    teardownFoundingScroller();
 
     if (!list.length) {
       section.hidden = true;

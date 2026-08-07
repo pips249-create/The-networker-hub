@@ -5,7 +5,7 @@
 | Perk | Who gets it | Where it shows |
 |------|-------------|----------------|
 | **Founding Organiser · 2026 badge** | Everyone who claims before 1 Sept | Public organiser profile |
-| **Homepage showcase** | **First 50** claims only | Home strip through **30 Nov 2026** — Hub page + website link |
+| **Homepage showcase** | **First 50** claims only | Logo marquee under the hero through **30 Nov 2026** — each tile links to the Hub organiser page |
 | **Group social post** | Founding cohort (homepage 50 featured first) | One (or a few) LinkedIn / social posts: “these groups have listed and are now part of the organiser leaderboard” — **not** individual personal shout-outs |
 | **Preview gateway strip** | All founding claimants | `/site-access` — “Organisers who have agreed to list” (loads without preview password) |
 
