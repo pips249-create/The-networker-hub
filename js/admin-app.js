@@ -781,7 +781,23 @@
 
   function fmtTime(iso) {
     try {
-      return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      if (window.HubEventTimezone && typeof window.HubEventTimezone.formatTime === 'function') {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        var datePart = d.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          timeZone: 'Europe/London',
+        });
+        return datePart + ', ' + window.HubEventTimezone.formatTime(iso);
+      }
+      return new Date(iso).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/London',
+      });
     } catch {
       return iso;
     }
@@ -2207,6 +2223,12 @@
   function toDatetimeLocalValue(iso) {
     if (!iso) return '';
     try {
+      var tz = window.HubEventTimezone;
+      if (tz && typeof tz.londonDateKeyFromIso === 'function' && typeof tz.londonTimeFromIso === 'function') {
+        var key = tz.londonDateKeyFromIso(iso);
+        var time = tz.londonTimeFromIso(iso);
+        if (key && time) return key + 'T' + time;
+      }
       var d = new Date(iso);
       if (isNaN(d.getTime())) return '';
       var pad = function (n) {
@@ -2915,7 +2937,16 @@
     var hasEventPatch = false;
     if (formField(form, 'starts_at')) {
       var starts = formFieldVal(form, 'starts_at');
-      eventPayload.starts_at = starts ? new Date(starts).toISOString() : null;
+      if (!starts) {
+        eventPayload.starts_at = null;
+      } else if (
+        window.HubEventTimezone &&
+        typeof window.HubEventTimezone.parseEventDateInputToUtcIso === 'function'
+      ) {
+        eventPayload.starts_at = window.HubEventTimezone.parseEventDateInputToUtcIso(starts);
+      } else {
+        eventPayload.starts_at = new Date(starts).toISOString();
+      }
       hasEventPatch = true;
     }
     if (formField(form, 'organiser_id')) {
@@ -9762,6 +9793,8 @@
       opportunities_email: 'Opportunities emails',
       email_sponsor: 'Email sponsor',
       email_mini_sponsor: 'Email mini sponsors',
+      email2_launch: 'Email 2 launch',
+      booking_email_sponsor: 'Booking email sponsor',
       page_partner_carousel: 'Page partner carousel',
       sponsor_sidebar: 'Sidebar sponsor',
     };
@@ -13301,6 +13334,14 @@
   function combineEventCreateDateTime(dateKey, timeValue) {
     if (!dateKey) return '';
     var time = String(timeValue || '10:00').trim() || '10:00';
+    var parts = time.split(':');
+    var hh = Number(parts[0] || 0);
+    var mm = Number(parts[1] || 0);
+    var ymd = String(dateKey).split('-').map(Number);
+    var tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonWallToUtcIso === 'function' && ymd.length === 3) {
+      return tz.londonWallToUtcIso(ymd[0], ymd[1], ymd[2], hh || 0, mm || 0);
+    }
     if (time.length === 5) time += ':00';
     return dateKey + 'T' + time;
   }
@@ -17044,7 +17085,7 @@
       '<div id="event-create-organiser-results" class="hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
       '</div></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Dates (optional)</label>' +
-      '<p class="text-xs text-slate-500 mb-2">Add one or more dates. The same start and end time applies to each date. Multiple dates create a linked series.</p>' +
+      '<p class="text-xs text-slate-500 mb-2">Add one or more dates. The same UK start and end time applies to each date (Europe/London — stays the same when clocks change). Multiple dates create a linked series.</p>' +
       '<div class="grid sm:grid-cols-2 gap-3 mb-3">' +
       '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">Start time</label>' +
       '<input type="time" name="start_time" value="10:00" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +

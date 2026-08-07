@@ -59,6 +59,8 @@ const GATE_BYPASS_PREFIXES = [
   '/api/resend-webhook',
   '/api/cron/',
   '/api/track',
+  '/api/sponsor-out',
+  '/api/sponsor-analytics',
   '/api/site-access',
   '/api/auth/site-access',
   '/site-access',
@@ -103,6 +105,8 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/welcome',
   '/organiser',
   '/for-organisers',
+  '/for-attendees',
+  '/for-networkers',
   '/about',
   '/about.html',
   '/contact',
@@ -640,7 +644,7 @@ export const config = {
   // files until SITE_ACCESS_PASSWORD is removed. Static robots.txt says Allow — do not
   // serve that while the preview gate is on.
   matcher: [
-    '/((?!api/stripe-webhook|api/resend-webhook|_next/static|_next/image|favicon.ico|css/|js/|assets/).*)',
+    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|_next/static|_next/image|favicon.ico|css/|js/|assets/).*)',
   ],
 };
 

@@ -8,35 +8,72 @@
   }
 
   function parseEventStartEnd(ev) {
-    let start = null;
-    if (ev && ev.dateRaw) {
-      const iso = String(ev.dateRaw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    var start = null;
+    var end = null;
+    var startRaw =
+      (ev && (ev.starts_at || ev.dateRaw || ev.date || ev.nextDate || ev.next_date)) || null;
+    var endRaw = (ev && (ev.ends_at || ev.endDateRaw || ev.endDate)) || null;
+
+    if (startRaw) {
+      start = new Date(startRaw);
+      if (Number.isNaN(start.getTime())) start = null;
+    }
+
+    // Legacy: dateRaw may be date-only; combine with London wall time from ev.time.
+    if (!start && ev && ev.dateRaw) {
+      var iso = String(ev.dateRaw).match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (iso) {
-        let h = 12;
-        let m = 0;
-        const tm = String(ev.time || '').match(/(\d{1,2}):(\d{2})/);
+        var h = 12;
+        var m = 0;
+        var tm = String(ev.time || '').match(/(\d{1,2}):(\d{2})/);
         if (tm) {
           h = parseInt(tm[1], 10);
           m = parseInt(tm[2], 10);
         }
-        start = new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10), h, m, 0);
+        var tz = global.HubEventTimezone;
+        if (tz && typeof tz.londonWallToUtcIso === 'function') {
+          start = new Date(
+            tz.londonWallToUtcIso(
+              parseInt(iso[1], 10),
+              parseInt(iso[2], 10),
+              parseInt(iso[3], 10),
+              h,
+              m
+            )
+          );
+        } else {
+          start = new Date(
+            parseInt(iso[1], 10),
+            parseInt(iso[2], 10) - 1,
+            parseInt(iso[3], 10),
+            h,
+            m,
+            0
+          );
+        }
       }
     }
-    if ((!start || Number.isNaN(start.getTime())) && ev && ev.starts_at) {
-      start = new Date(ev.starts_at);
-    }
+
     if (!start || Number.isNaN(start.getTime())) {
       start = new Date();
-      start.setHours(12, 0, 0, 0);
+      start.setUTCHours(12, 0, 0, 0);
     }
-    let end = null;
-    if (ev && ev.ends_at) {
-      end = new Date(ev.ends_at);
+
+    if (endRaw) {
+      end = new Date(endRaw);
+      if (Number.isNaN(end.getTime())) end = null;
     }
-    if (!end || Number.isNaN(end.getTime())) {
+    if (!end) {
+      var tzEnd = global.HubEventTimezone;
+      if (tzEnd && typeof tzEnd.eventEndMs === 'function') {
+        var endMs = tzEnd.eventEndMs(ev || {});
+        if (endMs != null) end = new Date(endMs);
+      }
+    }
+    if (!end || Number.isNaN(end.getTime()) || end.getTime() <= start.getTime()) {
       end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     }
-    return { start, end };
+    return { start: start, end: end };
   }
 
   function formatGCal(dt) {

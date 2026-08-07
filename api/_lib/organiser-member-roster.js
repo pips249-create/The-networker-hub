@@ -136,6 +136,20 @@ function rosterRowIsActive(row, now = new Date()) {
   return !Number.isNaN(exp.getTime()) && exp.getTime() >= now.getTime();
 }
 
+/** Live Hub-billed subscriptions still count as members when expires_at lags Stripe. */
+function rosterRowHasLiveHubSubscription(row) {
+  if (!row || !row.stripe_subscription_id) return false;
+  const subStatus = String(row.subscription_status || '')
+    .trim()
+    .toLowerCase();
+  return !subStatus || subStatus === 'active' || subStatus === 'trialing' || subStatus === 'past_due';
+}
+
+function rosterRowCountsAsMember(row, now = new Date()) {
+  if (rosterRowIsActive(row, now)) return true;
+  return rosterRowHasLiveHubSubscription(row);
+}
+
 function daysUntilExpiry(expiresAt, now = new Date()) {
   if (!expiresAt) return null;
   const exp = new Date(String(expiresAt) + 'T23:59:59');
@@ -189,6 +203,8 @@ async function findActiveRosterRow(sb, { organiserId, email, attendeeId, userId 
     email: em,
   });
 
+  let candidate = null;
+
   if (em) {
     const byEmail = await sb
       .from('organiser_member_roster')
@@ -198,7 +214,8 @@ async function findActiveRosterRow(sb, { organiserId, email, attendeeId, userId 
       .ilike('email', em)
       .maybeSingle();
     if (byEmail.error) throw new Error(byEmail.error.message);
-    if (byEmail.data && rosterRowIsActive(byEmail.data)) return byEmail.data;
+    if (byEmail.data && rosterRowCountsAsMember(byEmail.data)) return byEmail.data;
+    if (byEmail.data) candidate = byEmail.data;
   }
 
   if (resolvedAttendeeId) {
@@ -210,7 +227,23 @@ async function findActiveRosterRow(sb, { organiserId, email, attendeeId, userId 
       .eq('attendee_id', resolvedAttendeeId)
       .maybeSingle();
     if (byAttendee.error) throw new Error(byAttendee.error.message);
-    if (byAttendee.data && rosterRowIsActive(byAttendee.data)) return byAttendee.data;
+    if (byAttendee.data && rosterRowCountsAsMember(byAttendee.data)) return byAttendee.data;
+    if (!candidate && byAttendee.data) candidate = byAttendee.data;
+  }
+
+  // Hub-billed rows can look expired until Stripe expiry is healed (same as My Hub).
+  if (candidate && candidate.stripe_subscription_id) {
+    try {
+      const { repairMembershipRosterExpiry } = require('./membership-billing');
+      const repaired = await repairMembershipRosterExpiry(candidate, { force: true });
+      if (repaired?.row && rosterRowCountsAsMember(repaired.row)) return repaired.row;
+    } catch (err) {
+      console.error(
+        '[member-roster] eligibility expiry heal failed',
+        candidate.id,
+        err?.message || err
+      );
+    }
   }
 
   return null;

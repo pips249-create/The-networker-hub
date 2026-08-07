@@ -148,12 +148,12 @@ function payloadTouchesDate(payload) {
   return false;
 }
 
+const { parseEventDateInputToUtcIso } = require('./event-timezone');
+
 function parseDateIso(dateStr, endStr) {
-  const start = dateStr ? new Date(dateStr) : null;
-  const end = endStr ? new Date(endStr) : null;
   return {
-    starts_at: start && !Number.isNaN(start.getTime()) ? start.toISOString() : null,
-    ends_at: end && !Number.isNaN(end.getTime()) ? end.toISOString() : null,
+    starts_at: dateStr ? parseEventDateInputToUtcIso(dateStr) : null,
+    ends_at: endStr ? parseEventDateInputToUtcIso(endStr) : null,
   };
 }
 

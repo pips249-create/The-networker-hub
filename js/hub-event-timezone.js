@@ -53,6 +53,29 @@
     return new Date(ms).toISOString();
   }
 
+  /**
+   * Parse an event date/time input to UTC ISO.
+   * Timezone-less values are UK wall clock so series dates keep the same local time across BST/GMT.
+   */
+  function parseEventDateInputToUtcIso(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return null;
+    var wall = s.match(
+      /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?(?:\.\d+)?$/
+    );
+    if (wall) {
+      var year = Number(wall[1]);
+      var month = Number(wall[2]);
+      var day = Number(wall[3]);
+      var hour = wall[4] != null ? Number(wall[4]) : 0;
+      var minute = wall[5] != null ? Number(wall[5]) : 0;
+      return londonWallToUtcIso(year, month, day, hour, minute);
+    }
+    var d = new Date(s);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
+
   function formatTime(iso) {
     if (!iso) return '';
     var d = new Date(iso);
@@ -68,6 +91,39 @@
     var end = formatTime(endsAt);
     if (!end) return start;
     return start + ' \u2013 ' + end;
+  }
+
+  var DATE_FMT = {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: EVENT_TZ,
+  };
+
+  function formatDateOnly(startsAt) {
+    if (!startsAt) return '';
+    var d = new Date(startsAt);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', DATE_FMT);
+  }
+
+  function formatEventDateTime(startsAt) {
+    var starts = startsAt ? new Date(startsAt) : null;
+    if (!starts || Number.isNaN(starts.getTime())) {
+      return { event_date: 'Date TBC', event_time: '' };
+    }
+    return {
+      event_date: formatDateOnly(startsAt),
+      event_time: formatTime(startsAt),
+    };
+  }
+
+  function formatDateTimeLong(iso) {
+    var parts = formatEventDateTime(iso);
+    if (parts.event_date === 'Date TBC') return '\u2014';
+    if (!parts.event_time) return parts.event_date;
+    return parts.event_date + ' at ' + parts.event_time;
   }
 
   function londonTimeFromIso(iso) {
@@ -168,8 +224,12 @@
   global.HubEventTimezone = {
     EVENT_TZ: EVENT_TZ,
     londonWallToUtcIso: londonWallToUtcIso,
+    parseEventDateInputToUtcIso: parseEventDateInputToUtcIso,
     formatTime: formatTime,
     formatTimeRange: formatTimeRange,
+    formatDateOnly: formatDateOnly,
+    formatEventDateTime: formatEventDateTime,
+    formatDateTimeLong: formatDateTimeLong,
     londonTimeFromIso: londonTimeFromIso,
     londonDateKeyFromIso: londonDateKeyFromIso,
     londonDatePartsFromIso: londonDatePartsFromIso,

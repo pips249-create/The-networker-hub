@@ -8,7 +8,7 @@ const {
   hasSponsorLogo,
 } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
-const { withSponsorUtm } = require('./sponsor-utm');
+const { withSponsorClickThrough } = require('./sponsor-utm');
 
 const BOOKING_EMAIL_SPONSOR_SLOT = 'booking_email_sponsor';
 const EVENTS_SPONSOR_SLOT = 'events_sponsor_hub';
@@ -79,13 +79,19 @@ function buildSponsorSection(block, options) {
   if (!hasSponsorLogo(block) || !isEmailSafeLogoUrl(rawLogo)) return '';
   const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL);
   if (!logo) return '';
-  const site = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const site = String(options?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(
+    /\/$/,
+    ''
+  );
   const placement = String(options?.placement || options?.slot || 'email_sponsor').trim() || 'email_sponsor';
   const rawUrl = String(block.cta_url || '').trim() || site + '/advertising';
-  const url = withSponsorUtm(rawUrl, placement, {
-    campaign: String(options?.campaign || placement).trim() || placement,
-  });
   const name = sponsorCompanyName(block) || 'Our sponsor';
+  // Route via Hub click-through so Brevo / email logo taps appear in sponsor packs.
+  const url = withSponsorClickThrough(rawUrl, placement, {
+    campaign: String(options?.campaign || placement).trim() || placement,
+    company: name,
+    siteUrl: site,
+  });
   if (!url) return '';
   const safeUrl = url.replace(/"/g, '&quot;');
   const bandBg = sponsorEmailLogoBandColor(block, options?.logoBandBg);

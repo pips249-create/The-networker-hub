@@ -291,7 +291,25 @@
     return '£' + v.toFixed(2).replace(/\.00$/, '');
   }
 
-  function renderMembershipJoin(org) {
+  async function isActiveRosterMember(organiserId) {
+    var orgId = String(organiserId || '').trim();
+    if (!orgId) return false;
+    try {
+      var res = await fetch(
+        '/api/auth/roster-eligibility?organiserId=' + encodeURIComponent(orgId),
+        { credentials: 'include', cache: 'no-store' }
+      );
+      if (res.status === 401) return false;
+      var data = await res.json().catch(function () {
+        return {};
+      });
+      return Boolean(data.ok && data.isMember);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function renderMembershipJoin(org) {
     var section = document.getElementById('org-membership-join');
     var plansEl = document.getElementById('org-membership-plans');
     var statusEl = document.getElementById('org-membership-join-status');
@@ -304,11 +322,22 @@
       return;
     }
 
-    section.hidden = false;
+    // Keep hidden until we know the viewer is not already a member (avoids flash).
+    section.hidden = true;
+    plansEl.innerHTML = '';
     if (statusEl) {
       statusEl.hidden = true;
       statusEl.textContent = '';
     }
+
+    if (await isActiveRosterMember(org.id)) {
+      return;
+    }
+
+    // Profile may have changed while the eligibility check ran.
+    if (currentOrganiser && currentOrganiser.id !== org.id) return;
+
+    section.hidden = false;
 
     var options = [];
     if (plan.monthly) {

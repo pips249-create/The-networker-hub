@@ -21,6 +21,7 @@ const { computeEventTicketStats } = require('./organiser-registration-stats');
 const { sendEventAlmostFullEmail, buildMeetingLinkEmailSection } = require('./lifecycle-emails');
 const { attendeeInitial } = require('./organiser-email-sections');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
+const { formatEventDateTime } = require('./event-timezone');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -69,18 +70,7 @@ function buildAttendeeEmailVars({
     ticketRow: ticketRow || { name: ticketName },
   });
   const ev = booked.eventRow || eventRow || {};
-  const startsAt = ev.starts_at ? new Date(ev.starts_at) : null;
-  const eventDate = startsAt
-    ? startsAt.toLocaleDateString('en-GB', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : 'Date TBC';
-  const eventTime = startsAt
-    ? startsAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-    : '';
+  const { event_date: eventDate, event_time: eventTime } = formatEventDateTime(ev.starts_at);
   const eventLocation =
     String(ev.location_label || ev.venue || ev.city || '').trim() ||
     'See event page';

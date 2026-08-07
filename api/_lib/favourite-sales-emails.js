@@ -18,18 +18,7 @@ const {
 } = require('./ticket-sales');
 const { resolvePhotoUrl } = require('./supabase-organisers-browse');
 
-const { formatDateOnly, formatTime } = require('./event-timezone');
-
-function formatEventDateTime(startsAt) {
-  const starts = startsAt ? new Date(startsAt) : null;
-  if (!starts || Number.isNaN(starts.getTime())) {
-    return { event_date: 'Date TBC', event_time: '' };
-  }
-  return {
-    event_date: formatDateOnly(startsAt),
-    event_time: formatTime(startsAt),
-  };
-}
+const { formatEventDateTime } = require('./event-timezone');
 
 function escapeEmailHtml(value) {
   return String(value || '')

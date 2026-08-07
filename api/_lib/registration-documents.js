@@ -2,6 +2,7 @@ const { getSupabaseAdmin } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
 const { resolveBookedListing } = require('./booking-snapshot');
 const { formatBookingReference, formatBookedAt, formatTicketQuantity } = require('./booking-payment-summary');
+const { formatDateTimeLong } = require('./event-timezone');
 const { escapeHtml } = require('./event-refund-policy');
 const { getOrganiserConnectForEvent } = require('./stripe-connect');
 const { getStripeClient, isStripeCheckoutConfigured, retrieveCheckoutSession } = require('./stripe-checkout');
@@ -62,16 +63,7 @@ function requestError(message, status) {
 }
 
 function formatDateTime(iso) {
-  const d = iso ? new Date(iso) : null;
-  if (!d || Number.isNaN(d.getTime())) return '—';
-  const date = d.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  return date + ' at ' + time;
+  return formatDateTimeLong(iso);
 }
 
 function formatAmount(amount, paymentStatus) {

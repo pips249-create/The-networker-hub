@@ -1,18 +1,41 @@
 <!--
   WordPress paste snippet — The Networker co.uk upgrade banner
-  CTA: https://www.thenetworkerhub.com/for-organisers
-  Install: WPCode / Code Snippets → Header (frontend) → paste all three parts
+  Product-voice strip (rotating "Find your next…") — not a video ad.
+  CTA → /about (open while Hub gate is on)
+  Install: WPCode / Code Snippets → Header (frontend) → paste all parts
 -->
+
+<!-- 0) Fonts (skip if already loaded sitewide) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 
 <!-- 1) HTML -->
 <aside class="tnh-upgrade-banner" id="tnh-upgrade-banner" role="region" aria-label="Announcement">
+  <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--1" aria-hidden="true"></span>
+  <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--2" aria-hidden="true"></span>
   <div class="tnh-upgrade-banner__inner">
-    <span class="tnh-upgrade-banner__eyebrow">Something new</span>
-    <p class="tnh-upgrade-banner__copy">
-      We&rsquo;ve been working on <em>The Networker Hub</em> — same team, new platform.
-    </p>
-    <a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/for-organisers" target="_blank" rel="noopener">
-      Check it out <span aria-hidden="true">→</span>
+    <a class="tnh-upgrade-banner__brand" href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">
+      <img
+        class="tnh-upgrade-banner__logo"
+        src="https://www.thenetworkerhub.com/assets/logo-nav-transparent.png?v=20260729a"
+        alt="The Networker Hub"
+        width="110"
+        height="51"
+        decoding="async"
+      >
+    </a>
+    <div class="tnh-upgrade-banner__text">
+      <p class="tnh-upgrade-banner__headline">
+        Find your next
+        <span class="tnh-upgrade-banner__word" id="tnh-upgrade-banner-word">event</span>
+      </p>
+      <p class="tnh-upgrade-banner__sub">
+        Same team &middot; new platform &middot; soft launch <strong>1 September</strong>
+      </p>
+    </div>
+    <a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">
+      Peek at the Hub <span aria-hidden="true">&rarr;</span>
     </a>
   </div>
   <button type="button" class="tnh-upgrade-banner__close" id="tnh-upgrade-banner-close" aria-label="Dismiss announcement">&times;</button>
@@ -22,104 +45,169 @@
 <style>
 .tnh-upgrade-banner {
   --tnh-ink: #1c2040;
-  --tnh-cream: #f4f0ea;
+  --tnh-lavender: #9a7aa8;
+  --tnh-lilac: #c299d1;
+  --tnh-cream: #f5f0e8;
+  --tnh-gold: #b8956a;
+  --tnh-gold-hover: #a68258;
   position: relative;
   z-index: 99999;
-  background: linear-gradient(105deg, #1c2040 0%, #243056 48%, #1a4a6e 100%);
-  color: #fff;
+  overflow: hidden;
+  background: linear-gradient(118deg, #fffdf9 0%, var(--tnh-cream) 38%, #f3eaf7 78%, #e8f4f6 100%);
+  border-bottom: 1px solid #d9c4e0;
+  color: var(--tnh-ink);
   font-family: "DM Sans", "Helvetica Neue", Arial, sans-serif;
 }
 .tnh-upgrade-banner[hidden] { display: none !important; }
+.tnh-upgrade-banner__glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(2px);
+}
+.tnh-upgrade-banner__glow--1 {
+  width: 220px;
+  height: 220px;
+  top: -120px;
+  left: 8%;
+  background: radial-gradient(circle, rgba(177, 137, 184, 0.35) 0%, transparent 70%);
+}
+.tnh-upgrade-banner__glow--2 {
+  width: 260px;
+  height: 260px;
+  top: -140px;
+  right: 6%;
+  background: radial-gradient(circle, rgba(184, 149, 106, 0.28) 0%, transparent 68%);
+}
 .tnh-upgrade-banner__inner {
+  position: relative;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 11px 44px 11px 18px;
+  padding: 12px 52px 12px 18px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 10px 18px;
-  text-align: center;
+  gap: 10px 20px;
 }
-.tnh-upgrade-banner__eyebrow {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #b8d7ef;
-  white-space: nowrap;
+.tnh-upgrade-banner__brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  text-decoration: none;
 }
-.tnh-upgrade-banner__copy {
+.tnh-upgrade-banner__logo {
+  width: 110px;
+  height: auto;
+  display: block;
+}
+.tnh-upgrade-banner__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.tnh-upgrade-banner__headline {
   margin: 0;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.35;
-  color: #f5f7fb;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--tnh-ink);
+  letter-spacing: -0.01em;
 }
-.tnh-upgrade-banner__copy em {
-  font-style: normal;
+.tnh-upgrade-banner__word {
+  display: inline-block;
+  min-width: 7.2ch;
+  color: var(--tnh-lilac);
+  font-style: italic;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.tnh-upgrade-banner__word.is-fading {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.tnh-upgrade-banner__sub {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #6a6466;
+}
+.tnh-upgrade-banner__sub strong {
+  color: var(--tnh-ink);
   font-weight: 700;
-  color: #fff;
 }
 .tnh-upgrade-banner__cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 8px;
+  padding: 10px 18px;
   border-radius: 999px;
-  background: var(--tnh-cream);
+  background: var(--tnh-gold);
   color: var(--tnh-ink) !important;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none !important;
   white-space: nowrap;
-  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 6px 18px rgba(184, 149, 106, 0.35);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 .tnh-upgrade-banner__cta:hover,
 .tnh-upgrade-banner__cta:focus {
-  background: #fff;
+  background: var(--tnh-gold-hover);
   color: var(--tnh-ink) !important;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(184, 149, 106, 0.42);
 }
 .tnh-upgrade-banner__close {
   position: absolute;
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.55);
+  color: #8a8486;
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
 }
 .tnh-upgrade-banner__close:hover,
 .tnh-upgrade-banner__close:focus {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  color: var(--tnh-ink);
+  background: #fff;
 }
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .tnh-upgrade-banner__inner {
-    padding: 12px 40px 12px 14px;
-    gap: 8px;
+    padding: 14px 42px 14px 14px;
+    flex-direction: column;
+    text-align: center;
   }
-  .tnh-upgrade-banner__copy { font-size: 14px; }
-  .tnh-upgrade-banner__eyebrow { width: 100%; }
+  .tnh-upgrade-banner__text { align-items: center; }
+  .tnh-upgrade-banner__logo { width: 96px; }
+  .tnh-upgrade-banner__word { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tnh-upgrade-banner__word,
+  .tnh-upgrade-banner__cta { transition: none; }
 }
 </style>
 
-<!-- 3) JS — remember dismiss for 14 days -->
+<!-- 3) JS — rotate words + dismiss 14 days -->
 <script>
 (function () {
-  var KEY = "tnh_upgrade_banner_dismissed_v1";
+  var KEY = "tnh_upgrade_banner_dismissed_v4";
   var DAYS = 14;
+  var WORDS = ["event", "opportunity", "group", "attendee", "connection"];
   var el = document.getElementById("tnh-upgrade-banner");
   var btn = document.getElementById("tnh-upgrade-banner-close");
+  var word = document.getElementById("tnh-upgrade-banner-word");
   if (!el) return;
+
   try {
     var raw = localStorage.getItem(KEY);
     if (raw) {
@@ -130,6 +218,7 @@
       }
     }
   } catch (e) {}
+
   if (btn) {
     btn.addEventListener("click", function () {
       el.hidden = true;
@@ -138,5 +227,26 @@
       } catch (e) {}
     });
   }
+
+  if (!word || !WORDS.length) return;
+  var reduce = false;
+  try {
+    reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch (e) {}
+  if (reduce) {
+    word.textContent = WORDS.join(", ");
+    word.classList.remove("is-fading");
+    return;
+  }
+  var i = 0;
+  word.textContent = WORDS[0];
+  window.setInterval(function () {
+    i = (i + 1) % WORDS.length;
+    word.classList.add("is-fading");
+    window.setTimeout(function () {
+      word.textContent = WORDS[i];
+      word.classList.remove("is-fading");
+    }, 180);
+  }, 2600);
 })();
 </script>

@@ -215,9 +215,9 @@
           <h2 data-hub-tip="event-dates">Dates</h2>
           <p class="ee-hint ee-dates-guidance" data-hub-tip="event-series-planning">
             <strong>Click every date this event runs</strong> — one click per meeting day. Recurring weekly
-            meetings: select each week on the calendar (same time and venue apply to all). Multi-day
-            conference? Select every day you meet, or sell on the first day only and say in the description
-            that the ticket covers every day.
+            meetings: select each week on the calendar (same UK time and venue apply to all, including when
+            the clocks change). Multi-day conference? Select every day you meet, or sell on the first day
+            only and say in the description that the ticket covers every day.
           </p>
           <div class="ee-calendar" id="ee-calendar">
             <div class="ee-cal-header">
@@ -240,6 +240,9 @@
               <select id="ee-end-time" required></select>
             </div>
           </div>
+          <p class="ee-hint ee-uk-time-note" data-hub-tip="event-times">
+            Times are UK local (Europe/London) and stay the same on every selected date — including when the clocks change.
+          </p>
           <div class="ee-selected-dates">
             <strong><span id="ee-date-count">0</span> date(s) selected</strong>
             <ul id="ee-date-list"></ul>
@@ -269,11 +272,11 @@
     <script src="../js/fact-loader.js?v=20260723" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260716spin" defer></script>
     <script src="../js/meeting-types.js?v=20260715mc" defer></script>
-    <script src="../js/hub-event-timezone.js?v=20260727" defer></script>
+    <script src="../js/hub-event-timezone.js?v=20260806dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260716endfix" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260611" defer></script>
     <script src="../js/postcode-outcode.js?v=20260716loc" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260716tips" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260806dst" defer></script>
     <script src="../js/hub-field-tip.js?v=20260716tips" defer></script>
     <script src="../js/organiser-event-edit.js?v=20260727loc1" defer></script>
   </body>

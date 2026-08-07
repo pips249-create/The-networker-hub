@@ -194,6 +194,7 @@ function directoryFromSlot(slotOrPlacement) {
     s.indexOf('event') !== -1 ||
     s === 'sponsor_hub' ||
     s.indexOf('booking_email') !== -1 ||
+    s.indexOf('email2') !== -1 ||
     s.indexOf('home_partner') !== -1
   ) {
     return 'events';
