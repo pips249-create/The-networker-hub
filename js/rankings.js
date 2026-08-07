@@ -481,7 +481,7 @@
       if (shell) shell.classList.toggle('rankings-board-shell--light', light);
       if (page) page.classList.toggle('rankings-board--light', light);
       btn.setAttribute('aria-pressed', light ? 'true' : 'false');
-      btn.textContent = light ? 'Dusk board' : 'Light board';
+      btn.textContent = light ? 'Dark view' : 'Light view';
       try {
         localStorage.setItem(key, light ? 'light' : 'dusk');
       } catch (e) {

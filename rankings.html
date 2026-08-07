@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css?v=20260711e">
 <link rel="stylesheet" href="css/hub-ranking-badge.css?v=20260728lb2">
-<link rel="stylesheet" href="css/rankings-page.css?v=20260728ux">
+<link rel="stylesheet" href="css/rankings-page.css?v=20260807clear">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -34,29 +34,60 @@
 </div>
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260807nav2" data-root="" data-page="rankings"></script>
+<script src="js/site-nav.js?v=20260807topg" data-root="" data-page="rankings"></script>
 
 <main class="rankings-main rankings-root">
   <header class="rankings-hero">
     <div class="rankings-hero-inner">
-      <p class="rankings-kicker"><span class="rankings-kicker-star" aria-hidden="true">★</span> Attendee recognition</p>
+      <p class="rankings-kicker"><span class="rankings-kicker-star" aria-hidden="true">★</span> Chosen by attendees</p>
       <h1>This month&rsquo;s <span class="rankings-accent">top groups</span></h1>
       <p class="rankings-hero-lede">
-        Ranked by average attendee rating, then by review rate — so smaller groups can compete with larger ones.
+        A monthly leaderboard of networking groups on the Hub. Tap a group to open their profile and see upcoming events.
       </p>
       <p id="rankings-period" class="rankings-hero-meta" hidden></p>
       <p id="rankings-preview-note" class="rankings-preview-note" hidden>
         Preview of how the leaderboard will look once groups earn badges
       </p>
       <div class="rankings-hero-actions">
-        <a class="rankings-btn rankings-btn--primary" href="/organiser/#leaderboard">Open Top groups in workspace</a>
-        <a class="rankings-btn rankings-btn--ghost" href="/events/?mode=organisers">Browse organisers</a>
+        <a class="rankings-btn rankings-btn--primary" href="#rankings-board">See the list</a>
+        <a class="rankings-btn rankings-btn--ghost" href="/events/?mode=organisers">Browse all organisers</a>
       </div>
+      <p class="rankings-hero-aside">
+        Run a group?
+        <a href="/organiser/#leaderboard">Open Top groups in your workspace</a>
+        to check your place and share a badge.
+      </p>
     </div>
   </header>
 
-  <section class="rankings-board" aria-labelledby="rankings-board-heading">
-    <h2 id="rankings-board-heading" class="visually-hidden">Leaderboard</h2>
+  <section class="rankings-howto" aria-labelledby="rankings-howto-heading">
+    <div class="rankings-howto-inner">
+      <h2 id="rankings-howto-heading" class="rankings-howto-title">How the ranking works</h2>
+      <ol class="rankings-howto-steps">
+        <li>
+          <strong>Highest average rating wins</strong>
+          <span>Groups are ordered by attendee star ratings first.</span>
+        </li>
+        <li>
+          <strong>Review rate breaks ties</strong>
+          <span>Reviews ÷ past-event ticket buyers — so smaller groups can still climb.</span>
+        </li>
+        <li>
+          <strong>Badges refresh monthly</strong>
+          <span>Top 10, Top 25 and Top 50 awards update from the latest snapshot.</span>
+        </li>
+      </ol>
+      <p class="rankings-howto-note">
+        To appear, a group needs a published Hub profile and at least 3 reviews.
+      </p>
+    </div>
+  </section>
+
+  <section class="rankings-board" id="rankings-board" aria-labelledby="rankings-board-heading">
+    <div class="rankings-board-intro">
+      <h2 id="rankings-board-heading" class="rankings-board-title">This month&rsquo;s leaderboard</h2>
+      <p class="rankings-board-lede">Use the filters to show only Top 10, Top 25 or Top 50 badge holders.</p>
+    </div>
     <div id="rankings-your-place" class="rankings-your-place" hidden></div>
     <div class="rankings-board-shell">
       <div class="rankings-board-tools">
@@ -71,21 +102,17 @@
           <select id="rankings-city-filter" class="rankings-city-filter" hidden>
             <option value="all">All cities</option>
           </select>
-          <button type="button" class="rankings-theme-toggle" id="rankings-theme-toggle" aria-pressed="false">Light board</button>
+          <button type="button" class="rankings-theme-toggle" id="rankings-theme-toggle" aria-pressed="false">Light view</button>
         </div>
       </div>
       <p id="rankings-status" class="rankings-status">Loading this month&rsquo;s rankings&hellip;</p>
       <ol id="rankings-list" class="rankings-list" hidden></ol>
     </div>
-    <p class="rankings-footnote">
-      Groups need at least 3 reviews and a published profile. Badges refresh monthly from the latest snapshot.
-      Review rate is reviews divided by past-event ticket buyers.
-    </p>
   </section>
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260804early" data-root=""></script>
-<script src="js/rankings.js?v=20260728ux" defer></script>
+<script src="js/site-footer.js?v=20260807topg" data-root=""></script>
+<script src="js/rankings.js?v=20260807clear" defer></script>
 </body>
 </html>

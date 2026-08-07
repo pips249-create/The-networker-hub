@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260805email1f';
+  var NAV_BUILD = '20260807topg';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -313,6 +313,7 @@
   function isMoreNavActive() {
     return (
       isLinkActive('organisers') ||
+      isLinkActive('rankings') ||
       isLinkActive('faq') ||
       isLinkActive('contact')
     );
@@ -321,6 +322,7 @@
   function moreNavDropdownHtml(opts) {
     var early = opts && opts.earlyAccess;
     var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
+    var rankingsActive = isLinkActive('rankings') ? ' aria-current="page"' : '';
     var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
     var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
     var guidesActive = isLinkActive('guides') ? ' aria-current="page"' : '';
@@ -339,7 +341,12 @@
         href('/events/?mode=organisers') +
         '"' +
         organiserActive +
-        '>Organisers</a>';
+        '>Organisers</a>' +
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/rankings') +
+        '"' +
+        rankingsActive +
+        '>Top groups</a>';
     }
     if (!early) {
       items +=
@@ -453,6 +460,7 @@
       html += link('/events/', 'Events', 'events', 'nav-mobile-item');
       html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
       html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+      html += link('/rankings', 'Top groups', 'rankings', 'nav-mobile-item');
       html += buildMobileDrawerCities();
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
