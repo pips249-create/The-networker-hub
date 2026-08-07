@@ -2561,6 +2561,40 @@ html:has(.home-page) {
   color: #fff;
 }
 
+.home-about-teaser {
+  position: relative;
+  z-index: 1;
+  padding: 0 clamp(20px, 4vw, 36px) 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.home-about-teaser-copy {
+  margin: 0;
+  padding-top: 22px;
+  max-width: 42em;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.home-about-teaser-copy strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.home-about-teaser-link {
+  display: inline;
+  margin-left: 0.35em;
+  font-weight: 600;
+  color: var(--gold-light);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-about-teaser-link:hover {
+  text-decoration: underline;
+}
+
 .home-faq {
   position: relative;
   z-index: 1;

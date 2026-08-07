@@ -62,7 +62,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
 5. **Email 2 claim wave** — Soft path A + Founding Organiser perks (`docs/SEGMENT-A-EMAIL2.md`, `docs/FOUNDING-ORGANISER.md`); **run migration 241 → deploy → Brevo**
 6. **SEO pre-launch** — `SITE_URL` + GSC domain property done; GBP verification in progress; **submit sitemap + request indexing at gate-off** (`docs/SEO-AEO-LAUNCH-PLAN.md`)
-7. **August redirect** — banner install now; hard 301s 1 Sep
+7. **August redirect** — banner install now; hard 301s deferred ~3 months for SEO (~Nov 2026)
 8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
 
 *Note: events are listed fresh on the hub — we are not migrating or copying events from the old WordPress site.*
@@ -75,7 +75,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 - Middleware: gated `robots.txt` Disallow + block `llms.txt` / `agents.txt` until public launch (matcher bug fixed)
 - Launch list Hub segments: **1,103 organisers · 207 accounts · 158 both · 46 attendees-only** (`npm run build:launch-segments`)
 - Support inbox pre-draft replies (`docs/SUPPORT-INBOX-RUNBOOK.md`)
-- co.uk upgrade banner ready + soft window **6 Aug – 1 Sep** (`marketing/CO-UK-UPGRADE-BANNER.md`)
+- co.uk upgrade banner ready; dual-site SEO hold ~3 months (`marketing/CO-UK-UPGRADE-BANNER.md`)
 - `CRON_SECRET` confirmed present in Vercel Production
 - Refund-policy + Connect math + business-ops + DPA checks green
 
@@ -182,7 +182,7 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 |:----:|------|------|
 | [ ] | 9 | **Resend Pro** + **Supabase Pro** upgraded (see table above) — deferred ~1 week |
 | [x] | 9 | Redirect plan: the-networker.co.uk → hub (home, browse, organiser slugs, event URLs) — `docs/LEGACY-REDIRECT-MAP.md` |
-| [~] | 9 | “We've upgraded” banner on old site for 2–4 weeks before hard redirect — snippet ready (`marketing/CO-UK-UPGRADE-BANNER.md`); **paste onto co.uk** |
+| [~] | 9 | Soft Hub banner on co.uk during ~3-month SEO hold — snippet + dev brief ready (`marketing/CO-UK-BANNER-INSTALL-FOR-DEVS.md`); **paste onto co.uk** |
 | [~] | 9 | Hub-side list segments built (`docs/LAUNCH-LIST-SEGMENTS.md`) — merge Brevo 3,500 export when available |
 | [ ] | 10 | **Wider email** (500–1,000) — claim profile + help link; track claim rate (**requires Resend Pro** if via Resend) |
 | [x] | 10–11 | FAQ / support inbox ready (login, publish event, bookings, payouts) — pre-drafts in `docs/SUPPORT-INBOX-RUNBOOK.md` |
@@ -387,7 +387,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [~] | July/August organiser Email 1 sent (Brevo); Email 2 claim wave **Fri 7 Aug** (Hub gates green — send in Brevo) |
 | [ ] | August wave email (500–1,000) |
 | [ ] | 1 September full list + redirect live |
-| [~] | co.uk upgrade banner — snippet ready; install on WordPress (`marketing/CO-UK-UPGRADE-BANNER.md`) |
+| [~] | co.uk upgrade banner — snippet + install brief ready; old developers paste on WordPress (`marketing/CO-UK-BANNER-INSTALL-FOR-DEVS.md`) |
 
 ---
 

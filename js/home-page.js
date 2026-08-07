@@ -495,10 +495,104 @@
     });
   }
 
+  function teardownFoundingScroller() {
+    if (!activeFoundingScroller) return;
+    var state = activeFoundingScroller;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.listeners.forEach(function (listener) {
+      listener.target.removeEventListener(listener.type, listener.fn, listener.opts);
+    });
+    activeFoundingScroller = null;
+  }
+
+  function foundingItemHtml(org) {
+    var name = String(org.name || 'Organiser').trim() || 'Organiser';
+    var href = String(org.href || '').trim();
+    var photo = String(org.photoUrl || '').trim();
+    var initial = name.charAt(0).toUpperCase();
+    var inner;
+    if (photo) {
+      inner =
+        '<img src="' +
+        esc(photo) +
+        '" alt="' +
+        esc(name) +
+        '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'home-founding-item--fallback\')}" />' +
+        '<span class="home-founding-initial" hidden aria-hidden="true">' +
+        esc(initial) +
+        '</span>';
+    } else {
+      inner =
+        '<span class="home-founding-initial" aria-hidden="true">' + esc(initial) + '</span>';
+    }
+    var fallbackClass = photo ? '' : ' home-founding-item--fallback';
+    var title = esc(name);
+    if (href) {
+      return (
+        '<a class="home-partner-item home-founding-item' +
+        fallbackClass +
+        '" href="' +
+        esc(href) +
+        '" title="' +
+        title +
+        '">' +
+        inner +
+        '</a>'
+      );
+    }
+    return (
+      '<div class="home-partner-item home-founding-item' +
+      fallbackClass +
+      '" title="' +
+      title +
+      '">' +
+      inner +
+      '</div>'
+    );
+  }
+
+  function renderFoundingOrganisers(list) {
+    var section = document.getElementById('home-founding');
+    var track = document.getElementById('home-founding-logos');
+    var marquee = document.getElementById('home-founding-marquee');
+    if (!section || !track) return;
+
+    teardownFoundingScroller();
+
+    if (!list.length) {
+      section.hidden = true;
+      track.setAttribute('aria-busy', 'false');
+      if (marquee) marquee.classList.remove('home-partners-marquee--scrollable');
+      return;
+    }
+
+    revealSection(section);
+    track.classList.remove('home-partners-track--loading');
+    track.setAttribute('aria-busy', 'false');
+
+    var items = list.map(foundingItemHtml).join('');
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var useMarquee = list.length > 1 && !prefersReducedMotion;
+    var isStatic = list.length <= 1;
+    var isScrollable = !useMarquee && list.length > 1;
+
+    track.classList.toggle('home-partners-track--marquee', useMarquee);
+    track.classList.toggle('home-partners-track--scroll', isScrollable);
+    track.classList.toggle('home-partners-track--static', isStatic);
+    track.innerHTML = useMarquee ? items + items : items;
+
+    if (marquee) {
+      marquee.classList.toggle('home-partners-marquee--scrollable', isScrollable);
+      marquee.scrollLeft = 0;
+      if (isScrollable) marquee.setAttribute('tabindex', '0');
+      else marquee.setAttribute('tabindex', '-1');
+    }
+  }
+
   function loadFoundingOrganisers() {
     var section = document.getElementById('home-founding');
-    var grid = document.getElementById('home-founding-grid');
-    if (!section || !grid) return;
+    var track = document.getElementById('home-founding-logos');
+    if (!section || !track) return;
 
     fetch('/api/founding-organisers', { cache: 'no-store' })
       .then(function (r) {
@@ -506,61 +600,11 @@
       })
       .then(function (data) {
         var list = data && data.ok && Array.isArray(data.organisers) ? data.organisers : [];
-        if (!list.length) {
-          section.hidden = true;
-          return;
-        }
-        section.hidden = false;
-        grid.innerHTML = list
-          .map(function (org) {
-            var name = String(org.name || 'Organiser');
-            var initial = name.charAt(0).toUpperCase();
-            var photo = org.photoUrl
-              ? '<img class="home-founding-logo" src="' +
-                escapeHtml(org.photoUrl) +
-                '" alt="" loading="lazy" width="48" height="48">'
-              : '<span class="home-founding-logo home-founding-logo-fallback" aria-hidden="true">' +
-                escapeHtml(initial) +
-                '</span>';
-            var industry = org.industry
-              ? '<p class="home-founding-meta">' + escapeHtml(org.industry) + '</p>'
-              : '';
-            var website = org.website
-              ? '<a href="' +
-                escapeHtml(org.website) +
-                '" target="_blank" rel="noopener noreferrer">Website</a>'
-              : '';
-            var hub = org.href
-              ? '<a href="' + escapeHtml(org.href) + '">Hub page</a>'
-              : '';
-            return (
-              '<article class="home-founding-card">' +
-              '<div class="home-founding-card-top">' +
-              photo +
-              '<div><p class="home-founding-name">' +
-              escapeHtml(name) +
-              '</p>' +
-              industry +
-              '</div></div>' +
-              '<div class="home-founding-links">' +
-              hub +
-              website +
-              '</div></article>'
-            );
-          })
-          .join('');
+        renderFoundingOrganisers(list);
       })
       .catch(function () {
-        section.hidden = true;
+        renderFoundingOrganisers([]);
       });
-  }
-
-  function escapeHtml(str) {
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 
   initHeroEntrance();

@@ -1,8 +1,8 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** ready for banner install (August 2026) · **Flip date:** public launch 1st September 2026  
+**Status:** banner install now (August 2026) · Hub soft launch **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
 **Target host:** `https://www.thenetworkerhub.com`  
-**Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel)
+**Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel); **website stays live** during the SEO hold
 
 Use this when configuring DNS + hosting 301s on the old site. Hub-internal tidy redirects already live in `vercel.json` (`.html` → clean paths) — this file is only for **legacy domain → hub**.
 
@@ -14,9 +14,9 @@ Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7 · `marketing/CO-
 
 | Phase | Behaviour |
 |-------|-----------|
-| **6 Aug – 1 Sep 2026** | “We’ve upgraded” banner on old site → `/for-organisers`; keep old URLs working |
-| **Launch (1st Sep)** | Remove hub `SITE_ACCESS_PASSWORD`; start 301s for high-traffic paths |
-| **Full launch (1 Sep)** | Apex + www hard 301 to hub; watch Search Console 404s for a week |
+| **Now – ~Nov 2026** | Soft banner on co.uk → Hub `/about`; **old URLs keep working** (SEO hold with ex-developers) |
+| **Hub soft launch (1 Sep)** | Remove hub `SITE_ACCESS_PASSWORD`; co.uk still live with banner — **no hard 301s yet** |
+| **Hard flip (~Nov 2026)** | Apex + www 301 to hub; disable banner snippet; watch Search Console 404s for a week |
 
 Prefer **301** once the hub path is confirmed. Use **302** only while still testing redirects.
 
@@ -128,5 +128,5 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 1. Paste top landing pages from old Analytics / GSC into the path table  
 2. Confirm hosting where **the-networker.co.uk** DNS is managed  
 3. **thenetworkerhub.co.uk** — `vercel.json` 301s ready; NS already `ns1`/`ns2.vercel-dns.com`. **Add apex + www in Vercel → Domains** for this project if not listed (checked 6 Aug: only `.com` on project). Website-only; MX optional / keep separate if used for mail.  
-4. Soft banner period — **6 Aug – 1 Sep 2026**; WordPress paste deferred ~1 week (`marketing/CO-UK-UPGRADE-BANNER.md`)  
-5. Flip 301s on launch day checklist in `PIPS-TODO.md`
+4. Soft banner — **install now**; keep while co.uk runs for SEO (~3 months). Handoff: `marketing/CO-UK-BANNER-INSTALL-FOR-DEVS.md`  
+5. Flip 301s after SEO hold (~Nov 2026) — checklist in `PIPS-TODO.md` (not on 1 Sep)
