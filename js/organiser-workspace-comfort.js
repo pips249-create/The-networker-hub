@@ -106,8 +106,8 @@
       steps: [
         'Pick an event first — the page suggests Who’s going or Who attended from the event date.',
         'Add who the email is from and an optional note — your group logo is included automatically.',
-        'Preview the list, omit anyone who should not be included, then send. Track opens and clicks after you send.',
-        'Scroll down for Monthly group update — personalised round-ups with audiences and engagement reports.',
+        'Preview the list, omit anyone who should not be included, then send. Use Round-up tracking for opens and clicks.',
+        'Jump to Monthly group update for personalised round-ups with audiences and engagement reports.',
       ],
     },
     'social-spotlight': {

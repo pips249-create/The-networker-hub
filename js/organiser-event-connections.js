@@ -11,6 +11,7 @@
     omittedEmails: {},
     sending: false,
     bound: false,
+    engagementPollTimer: null,
   };
 
   function els() {
@@ -23,6 +24,7 @@
       details: document.getElementById('oec-details'),
       engagement: document.getElementById('oec-engagement'),
       engagementStats: document.getElementById('oec-engagement-stats'),
+      engagementRefresh: document.getElementById('oec-engagement-refresh'),
       subject: document.getElementById('oec-subject'),
       fromName: document.getElementById('oec-from-name'),
       note: document.getElementById('oec-note'),
@@ -364,9 +366,11 @@
     if (!eng || !eng.hasSend) {
       e.engagement.hidden = true;
       e.engagementStats.innerHTML = '';
+      if (e.engagementRefresh) e.engagementRefresh.hidden = true;
       return;
     }
     e.engagement.hidden = false;
+    if (e.engagementRefresh) e.engagementRefresh.hidden = false;
     var when = '';
     try {
       when = eng.sentAt ? new Date(eng.sentAt).toLocaleString('en-GB') : '';
@@ -388,6 +392,27 @@
       '<span>' +
       esc(eng.clickRate) +
       '%</span></dd></div>';
+  }
+
+  function scheduleEngagementPoll() {
+    if (state.engagementPollTimer) {
+      clearTimeout(state.engagementPollTimer);
+      state.engagementPollTimer = null;
+    }
+    var tries = 0;
+    function tick() {
+      tries += 1;
+      var e = els();
+      if (!e.event || !e.event.value) return;
+      loadPreview()
+        .catch(function () {})
+        .finally(function () {
+          if (tries < 4) {
+            state.engagementPollTimer = setTimeout(tick, 20000);
+          }
+        });
+    }
+    state.engagementPollTimer = setTimeout(tick, 15000);
   }
 
   function renderPreview(preview) {
@@ -638,6 +663,11 @@
         sentEv.connections_email_sent_count = included.length;
       }
       await loadPreview();
+      scheduleEngagementPoll();
+      var engEl = els().engagement;
+      if (engEl && engEl.scrollIntoView) {
+        engEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     } finally {
       state.sending = false;
       syncFormReadyState();
@@ -707,6 +737,17 @@
         });
       });
     }
+    if (e.engagementRefresh) {
+      e.engagementRefresh.addEventListener('click', function () {
+        loadPreview()
+          .then(function () {
+            setStatus('Tracking stats refreshed.', 'ok');
+          })
+          .catch(function (err) {
+            setStatus(err.message || 'Could not refresh stats.', 'error');
+          });
+      });
+    }
     if (e.sendBtn) {
       e.sendBtn.addEventListener('click', function () {
         send(false).catch(function (err) {
@@ -714,6 +755,14 @@
         });
       });
     }
+
+    document.querySelectorAll('[data-comm-tool]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        document.querySelectorAll('[data-comm-tool]').forEach(function (el) {
+          el.classList.toggle('is-active', el === link);
+        });
+      });
+    });
   }
 
   function init(opts) {

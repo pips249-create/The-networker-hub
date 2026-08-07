@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260807rank" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260807promote2" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260807comm5" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260807nav2" />
@@ -1882,8 +1882,12 @@
             <p class="org-page-kicker">My events</p>
             <h1 class="org-page-title">Communicate</h1>
             <p class="org-page-lead">
-              Email guests about your events. One free Attendee round-up per organiser page — more tools unlock here as paid add-ons.
+              Two email tools in one place: share a guest list after (or before) an event, and send a branded monthly update to past Hub bookers — with open and click tracking on both.
             </p>
+            <nav class="org-communicate-tools" aria-label="Communicate tools">
+              <a class="org-communicate-tool is-active" href="#org-attendee-email-panel" data-comm-tool="roundup">Attendee round-up</a>
+              <a class="org-communicate-tool" href="#org-group-update-panel" data-comm-tool="monthly">Monthly group update</a>
+            </nav>
           </header>
 
           <section class="org-attendee-email-panel org-attendee-email-panel--embedded" id="org-attendee-email-panel" aria-labelledby="org-attendee-email-title">
@@ -1967,14 +1971,6 @@
                     <button type="button" class="org-btn org-btn-outline" id="oec-preview">Refresh preview</button>
                     <button type="button" class="org-btn org-btn-gold" id="oec-send">Send attendee round-up</button>
                   </div>
-
-                  <div class="org-attendee-email-engagement" id="oec-engagement" hidden>
-                    <h3 class="org-section-title">Round-up tracking</h3>
-                    <p class="org-attendee-email-hint">
-                      Opens update as guests read the email. Use this to see who engaged — same habit as monthly updates.
-                    </p>
-                    <dl class="ogu-report-stats" id="oec-engagement-stats"></dl>
-                  </div>
                 </div>
               </form>
 
@@ -1988,6 +1984,21 @@
                   </div>
                 </div>
               </aside>
+            </div>
+
+            <div class="org-attendee-email-engagement" id="oec-engagement" hidden>
+              <div class="org-attendee-email-engagement-head">
+                <div>
+                  <h3 class="org-section-title">Round-up tracking</h3>
+                  <p class="org-attendee-email-hint">
+                    Opens and clicks update as guests read the email — refresh to pull the latest numbers.
+                  </p>
+                </div>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" id="oec-engagement-refresh" hidden>
+                  Refresh stats
+                </button>
+              </div>
+              <dl class="ogu-report-stats" id="oec-engagement-stats"></dl>
             </div>
           </section>
 
@@ -3440,7 +3451,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260807promote2" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260807comm5" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260805industry" defer></script>
   </body>
 </html>

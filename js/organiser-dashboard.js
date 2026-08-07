@@ -1596,8 +1596,8 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260807comm3';
-  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260807comm3';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260807comm5';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260807comm5';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();

@@ -219,6 +219,8 @@ function testUiWiring() {
   assert.ok(html.includes('oec-from-name'));
   assert.ok(html.includes('Attendee round-up'));
   assert.ok(html.includes('id="oec-engagement"'));
+  assert.ok(html.includes('id="oec-engagement-refresh"'));
+  assert.ok(html.includes('data-comm-tool'));
   assert.ok(html.includes('Monthly group update'));
   ok('Communicate page hosts attendee round-up + monthly group update');
 
@@ -226,6 +228,7 @@ function testUiWiring() {
   assert.ok(js.includes('HubOrganiserEventConnections'));
   assert.ok(js.includes('/api/organiser/event-connections'));
   assert.ok(js.includes('renderEngagement'));
+  assert.ok(js.includes('scheduleEngagementPoll'));
   ok('event-connections JS loads API + engagement');
 
   const dash = fs.readFileSync(path.join(__dirname, '../js/organiser-dashboard.js'), 'utf8');
