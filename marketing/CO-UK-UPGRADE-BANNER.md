@@ -2,8 +2,8 @@
 
 **Dual-site SEO hold:** co.uk stays live **~3 months** (through **~November 2026**)  
 **Soft banner:** install **now** — keep until hard 301s  
-**Banner CTA (one):** Peek at the Hub → `/about` (early-access section)  
-**Landing URL:** `https://www.thenetworkerhub.com/about?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`  
+**Banner CTA (one):** Sneak Peek → `/peek` (closed mini-site: about-us · for-organisers · for-networkers)  
+**Landing URL:** `https://www.thenetworkerhub.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`  
 **Hard redirect:** deferred until SEO hold ends — see `docs/LEGACY-REDIRECT-MAP.md`
 
 UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`
@@ -14,10 +14,11 @@ Product voice: rotating **Find your next…**, launch line (**Hub opens 1 Septem
 
 ## Visitor path
 
-1. co.uk banner → **Peek at the Hub**
-2. Lands on Hub **About** (no catalogue unlock)
-3. From About they can open **For organisers**, **For networkers**, **Contact**, or **sign up for launch updates**
-4. Public events / opportunities stay gated until 1 September
+1. co.uk banner → **Sneak Peek**
+2. Lands on Hub **`/peek`** (closed mini-site — no catalogue unlock, no sign-in)
+3. From there: **`/peek/about-us`**, **`/peek/for-organisers`**, **`/peek/for-networkers`**, or launch updates
+4. Old `/about` and `/for-networkers` URLs redirect into `/peek` while the gate is on
+5. Public events / opportunities stay gated until 1 September
 
 ---
 
@@ -55,7 +56,7 @@ Do **not** change the banner to `position: fixed` — that is what would clash w
 
 ## Install on the-networker.co.uk
 
-1. Confirm Hub About loads without the password gate.
+1. Confirm Hub `/peek` loads without the password gate.
 2. WPCode / Code Snippets → Header → paste `co-uk-upgrade-banner-snippet.html` (see `CO-UK-BANNER-INSTALL-FOR-DEVS.md`).
 3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v7`).
 

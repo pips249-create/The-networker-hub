@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260807updates';
+  var FOOTER_BUILD = '20260807peek1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -15,9 +15,16 @@
     return root + path;
   }
 
+  /** Soft-launch /peek mini-site — closed footer bubble. */
+  function isPeekPath() {
+    var p = String(window.location.pathname || '').toLowerCase();
+    return p === '/peek' || p.indexOf('/peek/') === 0;
+  }
+
   /** Email 1 / pre-launch marketing pages — never show catalogue footer links. */
   function forceEarlyAccessChrome() {
     var p = String(window.location.pathname || '').toLowerCase();
+    if (isPeekPath()) return true;
     return /\/(for-organisers|for-networkers|for-attendees|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
   }
 
@@ -30,6 +37,22 @@
   if (!mount) return;
 
   function exploreLinksHtml(catalogueOpen) {
+    if (isPeekPath()) {
+      return (
+        '<a href="' +
+        href('/peek/for-organisers') +
+        '">For organisers</a>' +
+        '<a href="' +
+        href('/peek/for-networkers') +
+        '">For networkers</a>' +
+        '<a href="' +
+        href('/peek/about-us') +
+        '">About us</a>' +
+        '<a href="' +
+        href('/peek/about-us#updates') +
+        '">Get updates</a>'
+      );
+    }
     if (catalogueOpen) {
       return (
         '<a href="' +
@@ -51,17 +74,8 @@
       href('/for-organisers') +
       '">For organisers</a>' +
       '<a href="' +
-      href('/for-networkers') +
-      '">For networkers</a>' +
-      '<a href="' +
-      href('/about') +
-      '">About us</a>' +
-      '<a href="' +
       href('/contact') +
-      '">Contact us</a>' +
-      '<a href="' +
-      href('/about#updates') +
-      '">Get updates</a>'
+      '">Contact us</a>'
     );
   }
 
@@ -89,7 +103,11 @@
   }
 
   function renderFooter(catalogueOpen) {
-    var homeHref = catalogueOpen ? href('/') : href('/about');
+    var homeHref = isPeekPath()
+      ? href('/peek')
+      : catalogueOpen
+        ? href('/')
+        : href('/for-organisers');
     var helpBlock = '';
     var companyBlock = '';
     if (catalogueOpen) {

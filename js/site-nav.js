@@ -102,12 +102,52 @@
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
 
+  /** Soft-launch /peek mini-site — closed nav bubble (no catalogue, no sign-in unlock). */
+  function isPeekPath() {
+    var p = String(window.location.pathname || '').toLowerCase();
+    return p === '/peek' || p.indexOf('/peek/') === 0;
+  }
+
   /** Email 1 / pre-launch marketing + auth — always early-access nav chrome. */
   function forceEarlyAccessChrome() {
     var p = String(window.location.pathname || '').toLowerCase();
+    if (isPeekPath()) return true;
     // Marketing / trust pages only — login & register must follow real catalogue state
     // so the full signup form returns when the gate is off / claim links arrive.
     return /\/(for-organisers|for-networkers|for-attendees|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
+  }
+
+  function peekNavLinks(pending) {
+    var html = '';
+    html += link('/peek/for-organisers', 'For organisers', 'peek-for-organisers');
+    html += link('/peek/for-networkers', 'For networkers', 'peek-for-networkers');
+    html += link('/peek/about-us', 'About us', 'peek-about-us');
+    if (pending) {
+      html +=
+        '<span class="nav-auth-pending" aria-hidden="true">' +
+        '<span class="nav-auth-pending-pill nav-auth-pending-pill--short"></span>' +
+        '<span class="nav-auth-pending-pill"></span>' +
+        '</span>';
+      return html;
+    }
+    html += link('/peek/about-us#updates', 'Get updates', 'peek-updates', 'nav-signin');
+    return html;
+  }
+
+  function peekMobileLinks(pending) {
+    var html = '';
+    html += link('/peek/for-organisers', 'For organisers', 'peek-for-organisers', 'nav-mobile-item');
+    html += link('/peek/for-networkers', 'For networkers', 'peek-for-networkers', 'nav-mobile-item');
+    html += link('/peek/about-us', 'About us', 'peek-about-us', 'nav-mobile-item');
+    if (!pending) {
+      html += link(
+        '/peek/about-us#updates',
+        'Get updates',
+        'peek-updates',
+        'nav-mobile-item nav-mobile-signin'
+      );
+    }
+    return html;
   }
 
   function loadComplianceAsset(path) {
@@ -166,6 +206,24 @@
   }
 
   function isLinkActive(key) {
+    if (key === 'peek-hub') {
+      return page === 'peek-hub' || /\/peek\/?$/.test(String(window.location.pathname || ''));
+    }
+    if (key === 'peek-about-us') {
+      return page === 'peek-about-us' || /\/peek\/about-us/.test(String(window.location.pathname || ''));
+    }
+    if (key === 'peek-for-organisers') {
+      return (
+        page === 'peek-for-organisers' ||
+        /\/peek\/for-organisers/.test(String(window.location.pathname || ''))
+      );
+    }
+    if (key === 'peek-for-networkers') {
+      return (
+        page === 'peek-for-networkers' ||
+        /\/peek\/for-networkers/.test(String(window.location.pathname || ''))
+      );
+    }
     if (key === 'events') {
       if (page !== 'events') return false;
       try {
@@ -340,13 +398,7 @@
       items +=
         '<a role="menuitem" class="nav-dropdown-item" href="' +
         href('/for-organisers') +
-        '">For organisers</a>' +
-        '<a role="menuitem" class="nav-dropdown-item" href="' +
-        href('/for-networkers') +
-        '">For networkers</a>' +
-        '<a role="menuitem" class="nav-dropdown-item" href="' +
-        href('/about') +
-        '">About</a>';
+        '">For organisers</a>';
     } else {
       items +=
         '<a role="menuitem" class="nav-dropdown-item" href="' +
@@ -387,6 +439,9 @@
   }
 
   function buildNavLinks(user, pending) {
+    if (isPeekPath()) {
+      return peekNavLinks(pending && !user);
+    }
     var early = catalogueOpen === false;
     var html = '';
     if (user && !early) {
@@ -394,8 +449,6 @@
     }
     if (early) {
       html += link('/for-organisers', 'For organisers', 'for-organisers');
-      html += link('/for-networkers', 'For networkers', 'for-networkers');
-      html += link('/about', 'About', 'about');
       html += link('/contact', 'Contact', 'contact');
     } else {
       html += link('/events/', 'Events', 'events');
@@ -423,7 +476,7 @@
     if (user) {
       html += myHubDropdownHtml(user);
     } else if (early) {
-      html += link('/about#updates', 'Get updates', 'about-updates', 'nav-signin');
+      html += link('/login', 'Sign in', 'auth', 'nav-signin');
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
     }
@@ -457,6 +510,11 @@
   }
 
   function buildMobileDrawerLinks(user, pending) {
+    if (isPeekPath()) {
+      var peekHtml = '<p class="nav-mobile-section-label">Sneak peek</p>';
+      peekHtml += peekMobileLinks(pending && !user);
+      return peekHtml;
+    }
     var early = catalogueOpen === false;
     var html = '';
     if (user && !early) {
@@ -465,8 +523,6 @@
     if (early) {
       html += '<p class="nav-mobile-section-label">Explore</p>';
       html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
-      html += link('/for-networkers', 'For networkers', 'for-networkers', 'nav-mobile-item');
-      html += link('/about', 'About', 'about', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
     } else {
@@ -506,7 +562,7 @@
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
     } else if (early) {
-      html += link('/about#updates', 'Get updates', 'about-updates', 'nav-mobile-item nav-mobile-signin');
+      html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     }
@@ -792,7 +848,7 @@
     lastNavUser = user || null;
     lastNavPending = Boolean(pending);
     var early = catalogueOpen === false;
-    var homeHref = early ? href('/about') : href('/');
+    var homeHref = isPeekPath() ? href('/peek') : early ? href('/for-organisers') : href('/');
     var pendingClass = pending ? ' is-session-pending' : '';
     mount.innerHTML =
       '<a class="skip-to-content" href="#hub-main-content">Skip to main content</a>' +

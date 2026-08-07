@@ -246,6 +246,10 @@
 
   /** Email 2 soft path: see /for-organisers first, then confirm with a password. */
   function initClaimInviteFromEmail() {
+    // Soft-launch /peek mini-site must not open register/login unlock paths.
+    var path = String(window.location.pathname || '').toLowerCase();
+    if (path === '/peek' || path.indexOf('/peek/') === 0) return;
+
     var params = new URLSearchParams(window.location.search || '');
     var intent = String(params.get('intent') || '').toLowerCase();
     var next = params.get('next') || '';

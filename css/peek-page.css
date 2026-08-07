@@ -1,0 +1,19 @@
+/**
+ * Soft-launch peek mini-site (/peek/*) — hub landing tweaks.
+ */
+.peek-hub-page .peek-hub-hero {
+  min-height: min(88vh, 820px);
+}
+
+.peek-hub-page .peek-hub-inner {
+  align-items: center;
+}
+
+.peek-hub-page .about-hero-lede {
+  max-width: 34rem;
+}
+
+.peek-page .site-nav .nav-signin,
+.peek-page .nav-mobile-signin {
+  /* Peek chrome uses Get updates, not Sign in */
+}

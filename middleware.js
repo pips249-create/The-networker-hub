@@ -66,6 +66,8 @@ const GATE_BYPASS_PREFIXES = [
   '/api/founding-organisers',
   '/site-access',
   '/site-access.html',
+  // Soft-launch mini-site for co.uk banner (closed bubble — not the full Hub)
+  '/peek',
   '/css/',
   '/js/',
   '/assets/',
@@ -95,6 +97,8 @@ const INTERNAL_SALES_PREFIXES = [
 /**
  * Organiser early-access paths — reachable while the public site gate is on.
  * Email 1/2: claim, auth, organiser workspace, trust pages, and setup guides only.
+ * Soft-launch marketing for the co.uk banner lives under /peek (GATE_BYPASS), not here.
+ * /about and /for-networkers redirect anonymous visitors into /peek while gated.
  * Public catalogue stays gated for anonymous visitors until SITE_ACCESS_PASSWORD is
  * removed at launch. Signed-in hub sessions unlock the full site (home + browse).
  */
@@ -107,12 +111,6 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/organiser',
   '/for-organisers',
   '/for-organisers.html',
-  '/for-attendees',
-  '/for-attendees.html',
-  '/for-networkers',
-  '/for-networkers.html',
-  '/about',
-  '/about.html',
   '/contact',
   '/contact.html',
   '/legal-policies',
@@ -127,6 +125,21 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/api/organiser',
   '/api/contact-chat',
 ];
+
+/** Old soft-launch URLs → closed /peek mini-site (banner + accidental deep links). */
+function softLaunchPeekRedirectPath(pathname) {
+  const path = String(pathname || '').replace(/\/$/, '') || '/';
+  if (path === '/about' || path === '/about.html') return '/peek/about-us';
+  if (
+    path === '/for-networkers' ||
+    path === '/for-networkers.html' ||
+    path === '/for-attendees' ||
+    path === '/for-attendees.html'
+  ) {
+    return '/peek/for-networkers';
+  }
+  return null;
+}
 
 function escapeHtml(text) {
   return String(text || '')
@@ -579,6 +592,15 @@ async function maybeGateSiteAccess(request, url) {
   const search = url.search || '';
 
   if (isGateBypassPath(pathname)) return null;
+
+  // Anonymous visitors: send legacy soft-launch URLs into the closed /peek bubble
+  // (preview cookie / signed-in sessions still reach the real pages below).
+  const peekDest = softLaunchPeekRedirectPath(pathname);
+  if (peekDest && !(await hasSiteAccess(request)) && !(await hasValidSession(request))) {
+    const dest = new URL(peekDest, url.origin);
+    dest.search = search || '';
+    return Response.redirect(dest.toString(), 302);
+  }
 
   // Public opportunities API: reachable by preview-cookie holders and signed-in
   // organisers/members only — never anonymously while the gate is on. This keeps the

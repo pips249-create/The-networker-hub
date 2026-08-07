@@ -28,7 +28,10 @@ const base = (process.argv[2] || process.env.SITE_URL || 'https://www.thenetwork
 const ANON_PAGES = [
   { path: '/for-organisers', expect: /organis|what.?s included|contact|september/i },
   { path: '/contact', expect: /contact|hubert|hello/i },
-  { path: '/about', expect: /about|networker/i },
+  { path: '/peek', expect: /sneak peek|networker/i },
+  { path: '/peek/about-us', expect: /about|networker|september/i },
+  { path: '/peek/for-organisers', expect: /organis|september/i },
+  { path: '/peek/for-networkers', expect: /networker|september|hub/i },
   { path: '/legal-policies', expect: /privacy|terms|legal/i },
   { path: '/login', expect: /log\s*in|sign\s*in|password/i },
   { path: '/register', expect: /register|sign\s*up|create/i },
@@ -50,10 +53,16 @@ const MUST_STAY_GATED = [
   '/events/?mode=organisers',
   '/organisers/circle-networks',
   '/opportunities/',
-  '/for-attendees',
   '/guides',
   '/faq',
   '/advertising',
+];
+
+/** Legacy soft-launch URLs should land in the closed /peek mini-site. */
+const PEEK_REDIRECTS = [
+  { path: '/about', expect: '/peek/about-us' },
+  { path: '/for-networkers', expect: '/peek/for-networkers' },
+  { path: '/for-attendees', expect: '/peek/for-networkers' },
 ];
 
 const MUST_STAY_PRIVATE_APIS = [
@@ -194,6 +203,20 @@ async function extractForOrganisersLinks() {
   return [...hrefs];
 }
 
+async function checkPeekRedirect(item) {
+  const res = await fetchUrl(item.path);
+  if (res.status < 300 || res.status >= 400) {
+    printResult(false, item.path, 'expected redirect to ' + item.expect + ', got HTTP ' + res.status);
+    return;
+  }
+  const dest = locationPath(res);
+  if (dest === item.expect || dest.startsWith(item.expect + '?')) {
+    printResult(true, item.path, '→ ' + dest);
+    return;
+  }
+  printResult(false, item.path, 'expected ' + item.expect + ', got ' + dest);
+}
+
 async function main() {
   console.log('Organiser journey smoke (anonymous / no preview password)');
   console.log('Base: ' + base + '\n');
@@ -216,7 +239,12 @@ async function main() {
     await checkPrivateApi(api);
   }
 
-  console.log('\n4. Every internal link on /for-organisers must be early-access');
+  console.log('\n4. Legacy soft-launch URLs redirect into /peek');
+  for (const item of PEEK_REDIRECTS) {
+    await checkPeekRedirect(item);
+  }
+
+  console.log('\n5. Every internal link on /for-organisers must be early-access');
   const links = await extractForOrganisersLinks();
   if (!links.length) {
     // Email 1 soft-trust page is intentionally link-light (nav injected by JS; CTAs are mailto/#).

@@ -21,7 +21,7 @@ File: `marketing/co-uk-upgrade-banner-snippet.html` — paste the **entire** fil
 ### Sneak Peek CTA (already in the snippet)
 
 ```
-https://www.thenetworkerhub.com/about?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
+https://www.thenetworkerhub.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
 ```
 
 ---
@@ -32,7 +32,7 @@ Three columns (unequal widths):
 
 1. **We’re upgrading** · Launching **1st September**
 2. **Find your next** *[rotating word]*
-3. **Sneak Peek →** (opens Hub About)
+3. **Sneak Peek →** (opens Hub `/peek` mini-site)
 
 No Hub logo — co.uk purple header keeps the brand.
 
@@ -43,7 +43,7 @@ No Hub logo — co.uk purple header keeps the brand.
 | Item | Spec |
 |------|------|
 | Placement | **In document flow** above the purple nav — `position: relative` only |
-| CTA | **Sneak Peek** → Hub `/about` (+ UTMs above) |
+| CTA | **Sneak Peek** → Hub `/peek` (+ UTMs above) |
 | Dismiss | × hides for **7 days** (`localStorage` key `tnh_upgrade_banner_dismissed_v12`) |
 | Motion | Rotating word after “Find your next…” every 3.2s |
 
@@ -55,7 +55,7 @@ No Hub logo — co.uk purple header keeps the brand.
 
 1. Home (hero video) — banner above purple bar; video still plays full-bleed.
 2. Mobile — stacks cleanly (status → headline → button).
-3. **Sneak Peek** — opens Hub About in a new tab with UTM params.
+3. **Sneak Peek** — opens Hub `/peek` in a new tab with UTM params.
 4. Dismiss × — banner hidden for 7 days on that browser.
 5. Word rotates: event → opportunity → group → attendee → connection.
 
