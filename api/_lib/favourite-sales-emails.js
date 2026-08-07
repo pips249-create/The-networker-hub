@@ -167,15 +167,35 @@ async function sendDueFavouriteSalesEmails(sb) {
     });
 
     try {
-      await sendTemplatedEmail({
-        slug: 'saved_event_tickets_open',
-        to: attendeeEmail,
-        variables: vars,
+      const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'event_favourites',
+        id: favourite.id,
+        column: 'reminded_at',
+        claimedAt,
+        previousValue: null,
       });
-      await sb
-        .from('event_favourites')
-        .update({ reminded_at: new Date().toISOString() })
-        .eq('id', favourite.id);
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendTemplatedEmail({
+          slug: 'saved_event_tickets_open',
+          to: attendeeEmail,
+          variables: vars,
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'event_favourites',
+          id: favourite.id,
+          column: 'reminded_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       result.errors.push({

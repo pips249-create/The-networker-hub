@@ -62,11 +62,12 @@
             </table>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Guest visit</p>
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Hope to see you again</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, we hope you enjoyed your guest visit to <strong style="color:#1c2040;">{{event_name}}</strong> with <strong style="color:#1c2040;">{{organiser_name}}</strong>. If you liked the group, the easiest next step is to book a member ticket for an upcoming date — your organiser page and events are on The Networker Hub.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, we hope you enjoyed your guest visit to <strong style="color:#1c2040;">{{event_name}}</strong> with <strong style="color:#1c2040;">{{organiser_name}}</strong>. {{followup_next_step}}</p>
           </td>
         </tr>
         <tr><td class="mobile-pad" style="padding:0 40px 20px;">{{next_event_section}}</td></tr>
-        <tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
+        <tr><td class="mobile-pad email-cta" style="padding:0 40px 12px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
+        <tr><td class="mobile-pad" style="padding:0 40px 28px;">{{membership_cta_section}}</td></tr>
         {{mini_sponsors_row}}
                 <!-- hub-email-layout-v3-purple -->
 <tr>

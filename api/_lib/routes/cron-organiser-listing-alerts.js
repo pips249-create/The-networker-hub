@@ -6,6 +6,10 @@ const {
   sendDueMemberRosterListingAlertEmails,
 } = require('../organiser-listing-alert-emails');
 
+/**
+ * Daily catch-up (08:30 UTC). Only sends when there are new un-alerted listings —
+ * not a daily newsletter. Saved-organiser alerts go out as one roundup per group.
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return json(res, 405, { error: 'method_not_allowed' });

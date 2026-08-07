@@ -63,14 +63,12 @@
         </tr>
 <tr>
           <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
-              <tr><td style="width:52px;height:52px;background:#d4f0f3;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#0d6e7a;line-height:52px;">&#9733;</td></tr>
-            </table>
+            <div style="margin:0 auto 16px;">{{organiser_avatar_html}}</div>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0d6e7a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">{{listing_badge}}</p>
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.15;">{{listing_headline}}</h1>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, you&rsquo;re in the membership for <strong style="color:#452d5c;">{{organiser_name}}</strong>. {{listing_follow_on}}</p>
           </td>
-        </tr><tr><td class="mobile-pad" style="padding:0 40px 20px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:16px;"><tr><td style="padding:24px;"><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">{{event_date_prefix}}{{event_date}}{{event_time}} &middot; {{event_location}}</p></td></tr></table></td></tr><tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
+        </tr><tr><td class="mobile-pad" style="padding:0 40px 20px;">{{events_detail_html}}</td></tr><tr><td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{cta_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{cta_label}} &rarr;</a></td></tr>
                 {{mini_sponsors_row}}
         <tr>
           <td class="mobile-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">

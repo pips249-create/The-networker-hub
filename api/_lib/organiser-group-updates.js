@@ -1162,13 +1162,25 @@ async function processDueGroupUpdateEmails(sb, { batchSize } = {}) {
   if (error) throw new Error(error.message);
   if (!due || !due.length) return { processed: 0, sent: 0, failed: 0 };
 
+  const { claimQueueRow } = require('./email-send-claim');
   let sent = 0;
   let failed = 0;
   const updateCache = new Map();
   const groupCache = new Map();
 
-  for (const row of due) {
+  for (const candidate of due) {
+    let claimedAt = null;
+    let row = null;
     try {
+      claimedAt = new Date().toISOString();
+      row = await claimQueueRow(sb, {
+        table: 'organiser_group_update_queue',
+        id: candidate.id,
+        claimedAt,
+        select: '*',
+      });
+      if (!row) continue;
+
       let update = updateCache.get(row.update_id);
       if (!update) {
         update = await getUpdate(row.update_id);
@@ -1177,8 +1189,13 @@ async function processDueGroupUpdateEmails(sb, { batchSize } = {}) {
       if (!update || update.status === 'cancelled') {
         await sb
           .from('organiser_group_update_queue')
-          .update({ failed_at: nowIso, last_error: 'update_cancelled' })
-          .eq('id', row.id);
+          .update({
+            sent_at: null,
+            failed_at: claimedAt,
+            last_error: 'update_cancelled',
+          })
+          .eq('id', row.id)
+          .eq('sent_at', claimedAt);
         failed++;
         continue;
       }
@@ -1192,8 +1209,13 @@ async function processDueGroupUpdateEmails(sb, { batchSize } = {}) {
       if (!group) {
         await sb
           .from('organiser_group_update_queue')
-          .update({ failed_at: nowIso, last_error: 'organiser_missing' })
-          .eq('id', row.id);
+          .update({
+            sent_at: null,
+            failed_at: claimedAt,
+            last_error: 'organiser_missing',
+          })
+          .eq('id', row.id)
+          .eq('sent_at', claimedAt);
         failed++;
         continue;
       }
@@ -1236,26 +1258,27 @@ async function processDueGroupUpdateEmails(sb, { batchSize } = {}) {
         ],
       });
 
-      const sentPatch = {
-        sent_at: new Date().toISOString(),
-        last_error: null,
-      };
+      const sentPatch = { last_error: null };
       if (sendResult && sendResult.id) sentPatch.resend_email_id = String(sendResult.id);
-      await sb.from('organiser_group_update_queue').update(sentPatch).eq('id', row.id);
+      await sb
+        .from('organiser_group_update_queue')
+        .update(sentPatch)
+        .eq('id', row.id)
+        .eq('sent_at', claimedAt);
       sent++;
     } catch (e) {
       const code = e && e.code;
       const msg = String((e && e.message) || 'send_failed').slice(0, 240);
-      if (code === 'emails_disabled') {
+      if (row?.id && claimedAt) {
         await sb
           .from('organiser_group_update_queue')
-          .update({ failed_at: new Date().toISOString(), last_error: 'emails_disabled' })
-          .eq('id', row.id);
-      } else {
-        await sb
-          .from('organiser_group_update_queue')
-          .update({ failed_at: new Date().toISOString(), last_error: msg })
-          .eq('id', row.id);
+          .update({
+            sent_at: null,
+            failed_at: new Date().toISOString(),
+            last_error: code === 'emails_disabled' ? 'emails_disabled' : msg,
+          })
+          .eq('id', row.id)
+          .eq('sent_at', claimedAt);
       }
       failed++;
     }

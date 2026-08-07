@@ -20,6 +20,7 @@ const {
   seriesFeaturedUntil,
   seriesSpotlightBucketKey,
 } = require('./event-series-peers');
+const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
 
 const REMINDER_DAYS = 2;
 const REMINDER_WINDOW_HOURS = 12;
@@ -353,22 +354,39 @@ async function sendFeaturedExpiryReminders(sb) {
       '&extend=featured';
 
     try {
-      await sendTemplatedEmail({
-        slug: 'organiser_featured_expiry_reminder',
-        to: organiserEmail,
-        variables: {
-          organiser_name: organiserName || 'there',
-          event_name: String(event.title || 'your event').trim(),
-          expiry_date: formatExpiryDate(event.featured_until),
-          extend_url: extendUrl,
-        },
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(client, {
+        table: 'events',
+        id: event.id,
+        column: 'featured_expiry_reminder_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      const { error: markError } = await client
-        .from('events')
-        .update({ featured_expiry_reminder_sent_at: new Date().toISOString() })
-        .eq('id', event.id);
-      if (markError) throw new Error(markError.message);
+      try {
+        await sendTemplatedEmail({
+          slug: 'organiser_featured_expiry_reminder',
+          to: organiserEmail,
+          variables: {
+            organiser_name: organiserName || 'there',
+            event_name: String(event.title || 'your event').trim(),
+            expiry_date: formatExpiryDate(event.featured_until),
+            extend_url: extendUrl,
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(client, {
+          table: 'events',
+          id: event.id,
+          column: 'featured_expiry_reminder_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') {

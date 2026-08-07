@@ -192,6 +192,21 @@ async function sendQueuedBookingReminder(sb, { eventRow, organiser, member }) {
   return 'sent';
 }
 
+async function claimDueRosterEmailRow(sb, rowId, claimedAt) {
+  const id = String(rowId || '').trim();
+  if (!id) return null;
+  const { data, error } = await sb
+    .from('organiser_roster_email_queue')
+    .update({ sent_at: claimedAt })
+    .eq('id', id)
+    .is('sent_at', null)
+    .is('failed_at', null)
+    .select('id, kind, organiser_id, roster_member_id, event_id')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data || null;
+}
+
 async function processDueRosterEmails(sb, options) {
   const batchSize = Math.min(Math.max(Number(options?.batchSize) || 40, 1), 80);
   const now = new Date().toISOString();
@@ -209,15 +224,23 @@ async function processDueRosterEmails(sb, options) {
   if (!(due || []).length) return result;
 
   const {
-    normalizeRosterEmail,
     rosterRowToClient,
     sendMemberRosterInviteEmail,
     sendMemberRosterPayInviteEmail,
     sendMemberRosterNewEventAlert,
   } = rosterHelpers();
 
-  for (const row of due) {
+  for (const candidate of due) {
+    let claimedAt = null;
+    let row = null;
     try {
+      claimedAt = new Date().toISOString();
+      row = await claimDueRosterEmailRow(sb, candidate.id, claimedAt);
+      if (!row) {
+        result.skipped += 1;
+        continue;
+      }
+
       const memberRes = await sb
         .from('organiser_member_roster')
         .select('*')
@@ -229,8 +252,9 @@ async function processDueRosterEmails(sb, options) {
       if (!memberRow || memberRow.status !== 'active') {
         await sb
           .from('organiser_roster_email_queue')
-          .update({ sent_at: now, last_error: 'member_inactive' })
-          .eq('id', row.id);
+          .update({ last_error: 'member_inactive' })
+          .eq('id', row.id)
+          .eq('sent_at', claimedAt);
         result.skipped += 1;
         continue;
       }
@@ -303,30 +327,39 @@ async function processDueRosterEmails(sb, options) {
 
       await sb
         .from('organiser_roster_email_queue')
-        .update({ sent_at: new Date().toISOString(), last_error: outcome === 'skipped' ? 'skipped' : null })
-        .eq('id', row.id);
+        .update({ last_error: outcome === 'skipped' ? 'skipped' : null })
+        .eq('id', row.id)
+        .eq('sent_at', claimedAt);
 
       if (outcome === 'sent') result.sent += 1;
       else result.skipped += 1;
     } catch (e) {
-      if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+      if (row?.id && claimedAt) {
+        if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
+          await sb
+            .from('organiser_roster_email_queue')
+            .update({ last_error: 'emails_disabled' })
+            .eq('id', row.id)
+            .eq('sent_at', claimedAt);
+          result.skipped += 1;
+          continue;
+        }
         await sb
           .from('organiser_roster_email_queue')
-          .update({ sent_at: new Date().toISOString(), last_error: 'emails_disabled' })
-          .eq('id', row.id);
+          .update({
+            sent_at: null,
+            failed_at: new Date().toISOString(),
+            last_error: String(e.message || e).slice(0, 500),
+          })
+          .eq('id', row.id)
+          .eq('sent_at', claimedAt);
+      } else if (e.code === 'emails_disabled' || /emails_disabled/i.test(String(e.message || ''))) {
         result.skipped += 1;
         continue;
       }
-      await sb
-        .from('organiser_roster_email_queue')
-        .update({
-          failed_at: new Date().toISOString(),
-          last_error: String(e.message || e).slice(0, 500),
-        })
-        .eq('id', row.id);
       result.failed += 1;
       if (result.errors.length < 20) {
-        result.errors.push({ queueId: row.id, message: e.message || String(e) });
+        result.errors.push({ queueId: candidate.id, message: e.message || String(e) });
       }
     }
   }

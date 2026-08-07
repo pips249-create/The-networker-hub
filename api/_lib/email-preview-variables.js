@@ -290,6 +290,34 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         eventName: vars.event_name,
       })
     );
+    const {
+      buildOrganiserAvatarMarkup,
+      organiserLogoUrlForEmail,
+    } = require('./organiser-member-roster');
+    const { buildEventsDetailHtml } = require('./listing-alert-series');
+    const rosterSite = siteBase(siteUrl);
+    const previewOrganiser = {
+      id: '00000000-0000-4000-8000-000000000020',
+      name: vars.organiser_name,
+      slug: 'city-connectors',
+      photo_url: 'https://placehold.co/144x144/png?text=CC',
+    };
+    vars.organiser_logo_url = organiserLogoUrlForEmail(previewOrganiser, rosterSite);
+    vars.organiser_avatar_html = buildOrganiserAvatarMarkup(previewOrganiser, rosterSite);
+    vars.events_detail_html = buildEventsDetailHtml(
+      [
+        {
+          id: '1',
+          title: vars.event_name || 'EC Testing',
+          starts_at: '2026-09-07T08:00:00Z',
+          location_label: 'Online',
+          slug: 'ec-testing',
+        },
+      ],
+      rosterSite
+    );
+    vars.cta_url = vars.event_url;
+    vars.listing_cta_label = vars.listing_cta_label || 'View event';
   }
 
   if (slug === 'member_roster_new_event') {
@@ -307,6 +335,32 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         attendanceMode: vars.attendance_mode || 'tickets',
       })
     );
+    const {
+      buildOrganiserAvatarMarkup,
+      organiserLogoUrlForEmail,
+    } = require('./organiser-member-roster');
+    const { buildEventsDetailHtml } = require('./listing-alert-series');
+    const rosterSite = siteBase(siteUrl);
+    const previewOrganiser = {
+      id: '00000000-0000-4000-8000-000000000020',
+      name: vars.organiser_name,
+      slug: 'city-connectors',
+      photo_url: 'https://placehold.co/144x144/png?text=CC',
+    };
+    vars.organiser_logo_url = organiserLogoUrlForEmail(previewOrganiser, rosterSite);
+    vars.organiser_avatar_html = buildOrganiserAvatarMarkup(previewOrganiser, rosterSite);
+    vars.events_detail_html = buildEventsDetailHtml(
+      [
+        {
+          id: '1',
+          title: vars.event_name || 'EC Testing',
+          starts_at: '2026-09-07T08:00:00Z',
+          location_label: 'Online',
+          slug: 'ec-testing',
+        },
+      ],
+      rosterSite
+    );
   }
 
   if (slug === 'guest_visit_followup') {
@@ -315,6 +369,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.next_event_time = '8:00 AM';
     vars.next_event_location = 'The Shard, London SE1';
     vars.next_event_url = vars.event_url;
+    vars.followup_next_step =
+      'If you liked the group, book their next meeting first. Membership (monthly or annual through the Hub) can wait until you are ready to join properly.';
     vars.next_event_section =
       '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">' +
       '<tr><td style="padding:24px;text-align:center;">' +
@@ -331,6 +387,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       '</p></td></tr></table>';
     vars.cta_url = vars.next_event_url;
     vars.cta_label = 'Book the next event';
+    vars.membership_cta_section =
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#635c5e;margin:16px 0 0;text-align:center;">' +
+      'When you are ready to join ' +
+      (vars.organiser_name || 'this group') +
+      ' as a member, you can also ' +
+      '<a href="' +
+      (vars.organiser_url || vars.site_url + '/organisers/') +
+      '#org-membership-join" style="color:#1c2040;font-weight:700;text-decoration:underline;">view membership options</a>' +
+      ' on their organiser page.</p>';
   }
 
   if (slug === 'alumni_fast_pass_invite') {

@@ -25,6 +25,7 @@ const {
   nearbyLocationLabel,
 } = require('./nearby-events');
 const { escapeHtml } = require('./event-refund-policy');
+const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
 
 function accountSettingsUrl(siteUrl) {
   return String(siteUrl || siteBase()).replace(/\/$/, '') + '/account/settings/';
@@ -340,22 +341,48 @@ async function sendDueAttendeeReengagementEmails(sb) {
 
     try {
       const recommendationsHtml = await buildRecommendationsHtml(sb, attendee.location);
-      await sendTemplatedEmail({
-        slug: 'attendee_reengagement',
-        to: email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee.name || '').trim() || 'there',
-          recommendations_html: recommendationsHtml,
-          browse_events_url: browseEventsUrl(siteUrl),
-        },
-        subject: 'Ready to network again?',
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'attendees',
+        id: attendee.id,
+        column: 'reengagement_email_sent_at',
+        claimedAt,
+        previousValue: sentAt || null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('attendees')
-        .update({ reengagement_email_sent_at: new Date().toISOString() })
-        .eq('id', attendee.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'attendee_reengagement',
+          to: email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee.name || '').trim() || 'there',
+            recommendations_html: recommendationsHtml,
+            browse_events_url: browseEventsUrl(siteUrl),
+          },
+          subject: 'Ready to network again?',
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'attendees',
+          id: attendee.id,
+          column: 'reengagement_email_sent_at',
+          claimedAt,
+        });
+        // Restore prior timestamp if we overwrote a cooldown-eligible value.
+        if (sentAt) {
+          await sb
+            .from('attendees')
+            .update({ reengagement_email_sent_at: sentAt })
+            .eq('id', attendee.id)
+            .is('reengagement_email_sent_at', null);
+        }
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -413,26 +440,44 @@ async function sendDueSignupEventsNudgeEmails(sb) {
         continue;
       }
 
-      await sendTemplatedEmail({
-        slug: 'attendee_signup_events_nudge',
-        to: email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee.name || '').trim() || 'there',
-          near_location_phrase: nearLocationPhrase(attendee.location),
-          nearby_events_html: eventSections.nearby_events_html,
-          popular_events_html: eventSections.popular_events_html,
-          browse_events_url: browseEventsUrl(siteUrl),
-          location_tip_html: locationTipHtml(siteUrl, attendee.location),
-          add_location_url: accountSettingsUrl(siteUrl),
-        },
-        subject: 'Events picked for you on The Networker Hub',
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'attendees',
+        id: attendee.id,
+        column: 'signup_events_nudge_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('attendees')
-        .update({ signup_events_nudge_sent_at: new Date().toISOString() })
-        .eq('id', attendee.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'attendee_signup_events_nudge',
+          to: email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee.name || '').trim() || 'there',
+            near_location_phrase: nearLocationPhrase(attendee.location),
+            nearby_events_html: eventSections.nearby_events_html,
+            popular_events_html: eventSections.popular_events_html,
+            browse_events_url: browseEventsUrl(siteUrl),
+            location_tip_html: locationTipHtml(siteUrl, attendee.location),
+            add_location_url: accountSettingsUrl(siteUrl),
+          },
+          subject: 'Events picked for you on The Networker Hub',
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'attendees',
+          id: attendee.id,
+          column: 'signup_events_nudge_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -586,26 +631,44 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
         continue;
       }
 
-      await sendTemplatedEmail({
-        slug: 'attendee_signup_events_nudge_followup',
-        to: email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee.name || '').trim() || 'there',
-          near_location_phrase: nearLocationPhrase(attendee.location),
-          nearby_events_html: eventSections.nearby_events_html,
-          popular_events_html: eventSections.popular_events_html,
-          browse_events_url: browseEventsUrl(siteUrl),
-          location_tip_html: locationTipHtml(siteUrl, attendee.location),
-          add_location_url: accountSettingsUrl(siteUrl),
-        },
-        subject: 'Still looking for your first event?',
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'attendees',
+        id: attendee.id,
+        column: 'signup_events_nudge_followup_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('attendees')
-        .update({ signup_events_nudge_followup_sent_at: new Date().toISOString() })
-        .eq('id', attendee.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'attendee_signup_events_nudge_followup',
+          to: email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee.name || '').trim() || 'there',
+            near_location_phrase: nearLocationPhrase(attendee.location),
+            nearby_events_html: eventSections.nearby_events_html,
+            popular_events_html: eventSections.popular_events_html,
+            browse_events_url: browseEventsUrl(siteUrl),
+            location_tip_html: locationTipHtml(siteUrl, attendee.location),
+            add_location_url: accountSettingsUrl(siteUrl),
+          },
+          subject: 'Still looking for your first event?',
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'attendees',
+          id: attendee.id,
+          column: 'signup_events_nudge_followup_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -670,22 +733,47 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
     }
 
     try {
-      await sendTemplatedEmail({
-        slug: 'organiser_low_upcoming_events',
-        to: contact.email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          organiser_name: contact.name || 'there',
-          upcoming_count: String(upcomingCount),
-          create_event_url: siteUrl + '/organiser/event-format',
-          dashboard_url: organiserDashboardUrl(siteUrl),
-        },
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'organisers',
+        id: organiser.id,
+        column: 'low_upcoming_events_nudge_sent_at',
+        claimedAt,
+        previousValue: sentAt || null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('organisers')
-        .update({ low_upcoming_events_nudge_sent_at: new Date().toISOString() })
-        .eq('id', organiser.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'organiser_low_upcoming_events',
+          to: contact.email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            organiser_name: contact.name || 'there',
+            upcoming_count: String(upcomingCount),
+            create_event_url: siteUrl + '/organiser/event-format',
+            dashboard_url: organiserDashboardUrl(siteUrl),
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'organisers',
+          id: organiser.id,
+          column: 'low_upcoming_events_nudge_sent_at',
+          claimedAt,
+        });
+        if (sentAt) {
+          await sb
+            .from('organisers')
+            .update({ low_upcoming_events_nudge_sent_at: sentAt })
+            .eq('id', organiser.id)
+            .is('low_upcoming_events_nudge_sent_at', null);
+        }
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -727,6 +815,87 @@ function buildGuestVisitNextEventSection(nextEvent) {
     eventLocationLabel(nextEvent) +
     '</p></td></tr></table>'
   );
+}
+
+function buildGuestVisitMembershipCtaSection(membershipJoinUrl, organiserName) {
+  const url = String(membershipJoinUrl || '').trim();
+  if (!url) return '';
+  const name = String(organiserName || 'this group').trim();
+  return (
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#635c5e;margin:16px 0 0;text-align:center;">' +
+    'When you are ready to join ' +
+    escapeHtml(name) +
+    ' as a member, you can also ' +
+    '<a href="' +
+    escapeHtml(url) +
+    '" style="color:#1c2040;font-weight:700;text-decoration:underline;">view membership options</a>' +
+    ' on their organiser page.</p>'
+  );
+}
+
+async function fetchMembershipOfferByOrganiser(sb, organiserIds) {
+  const ids = [...new Set((organiserIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const map = new Map(ids.map((id) => [id, false]));
+  if (!ids.length) return map;
+
+  const { data, error } = await sb
+    .from('organiser_membership_plans')
+    .select('organiser_id, active, monthly_amount_pence, annual_amount_pence')
+    .in('organiser_id', ids);
+  if (error) throw new Error(error.message);
+
+  for (const row of data || []) {
+    const organiserId = String(row.organiser_id || '').trim();
+    if (!organiserId) continue;
+    const active = row.active !== false;
+    const offered =
+      active &&
+      ((row.monthly_amount_pence != null && Number(row.monthly_amount_pence) > 0) ||
+        (row.annual_amount_pence != null && Number(row.annual_amount_pence) > 0));
+    map.set(organiserId, offered);
+  }
+  return map;
+}
+
+async function fetchActiveRosterEmailKeys(sb, organiserIds) {
+  const ids = [...new Set((organiserIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const keys = new Set();
+  if (!ids.length) return keys;
+
+  const { data, error } = await sb
+    .from('organiser_member_roster')
+    .select('organiser_id, email, status, expires_at')
+    .in('organiser_id', ids)
+    .eq('status', 'active');
+  if (error) {
+    if (/column|status|expires_at/i.test(String(error.message || ''))) {
+      const fallback = await sb
+        .from('organiser_member_roster')
+        .select('organiser_id, email')
+        .in('organiser_id', ids);
+      if (fallback.error) throw new Error(fallback.error.message);
+      for (const row of fallback.data || []) {
+        const organiserId = String(row.organiser_id || '').trim();
+        const email = String(row.email || '').trim().toLowerCase();
+        if (organiserId && email) keys.add(organiserId + '\0' + email);
+      }
+      return keys;
+    }
+    throw new Error(error.message);
+  }
+
+  const now = Date.now();
+  for (const row of data || []) {
+    const organiserId = String(row.organiser_id || '').trim();
+    const email = String(row.email || '').trim().toLowerCase();
+    if (!organiserId || !email) continue;
+    if (row.expires_at) {
+      const exp = new Date(row.expires_at).getTime();
+      if (Number.isFinite(exp) && exp < now) continue;
+    }
+    keys.add(organiserId + '\0' + email);
+  }
+  return keys;
 }
 
 async function fetchNextOrganiserEvents(sb, organiserIds) {
@@ -803,6 +972,8 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
   if (!registrations?.length) return result;
 
   const nextEventByOrganiser = await fetchNextOrganiserEvents(sb, organiserIds);
+  const membershipOfferByOrganiser = await fetchMembershipOfferByOrganiser(sb, organiserIds);
+  const activeRosterKeys = await fetchActiveRosterEmailKeys(sb, organiserIds);
 
   const { data: organisers, error: orgErr } = await sb
     .from('organisers')
@@ -844,13 +1015,40 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
       continue;
     }
 
+    const organiserId = String(eventRow.organiser_id || '').trim();
+    if (organiserId && activeRosterKeys.has(organiserId + '\0' + attendeeEmail)) {
+      // Already a member — mark sent so we do not keep retrying a guest CTA.
+      if (!dryRun) {
+        await sb
+          .from('registrations')
+          .update({ guest_visit_followup_sent_at: new Date().toISOString() })
+          .eq('id', registration.id);
+      }
+      result.skipped += 1;
+      continue;
+    }
+
     const organiser = organiserById[eventRow.organiser_id] || null;
     const organiserName = String(organiser?.name || 'the organiser').trim();
     const organiserUrl = organiserPublicUrl(organiser, siteUrl);
+    const membershipJoinUrl = organiserUrl + '#org-membership-join';
+    const membershipOffered = Boolean(membershipOfferByOrganiser.get(organiserId));
     const nextEvent =
       nextEventByOrganiser.get(String(eventRow.organiser_id || '').trim()) || null;
     const nextEventUrl = nextEvent ? eventPublicUrl(nextEvent, siteUrl) : organiserUrl;
-    const ctaLabel = nextEvent ? 'Book the next event' : 'View ' + organiserName;
+
+    let ctaUrl = nextEventUrl;
+    let ctaLabel = nextEvent ? 'Book the next event' : 'View ' + organiserName;
+    // Near-term conversion is the next booking. Hub membership dues are a slower path (~months).
+    let followupNextStep =
+      'If you liked the group, the easiest next step is to book a member ticket for an upcoming date — your organiser page and events are on The Networker Hub.';
+    let membershipCtaSection = '';
+
+    if (membershipOffered) {
+      followupNextStep =
+        'If you liked the group, book their next meeting first. Membership (monthly or annual through the Hub) can wait until you are ready to join properly.';
+      membershipCtaSection = buildGuestVisitMembershipCtaSection(membershipJoinUrl, organiserName);
+    }
 
     try {
       if (dryRun) {
@@ -860,6 +1058,9 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
           event_id: eventRow.id,
           event_title: eventRow.title,
           next_event_url: nextEventUrl,
+          membership_offered: membershipOffered,
+          cta_url: ctaUrl,
+          cta_label: ctaLabel,
         });
         result.sent += 1;
         continue;
@@ -867,31 +1068,51 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
 
       const nextEventDateTime = nextEvent ? formatEventDateTime(nextEvent.starts_at) : null;
 
-      await sendTemplatedEmail({
-        slug: 'guest_visit_followup',
-        to: attendeeEmail,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee?.name || '').trim() || 'there',
-          event_name: String(eventRow.title || 'your event').trim(),
-          organiser_name: organiserName,
-          organiser_url: organiserUrl,
-          next_event_name: nextEvent ? String(nextEvent.title || '').trim() : '',
-          next_event_date: nextEventDateTime?.event_date || '',
-          next_event_time: nextEventDateTime?.event_time || '',
-          next_event_location: nextEvent ? eventLocationLabel(nextEvent) : '',
-          next_event_url: nextEventUrl,
-          next_event_section: buildGuestVisitNextEventSection(nextEvent),
-          cta_url: nextEventUrl,
-          cta_label: ctaLabel,
-        },
-        skipEmailCheck: true,
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'registrations',
+        id: registration.id,
+        column: 'guest_visit_followup_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('registrations')
-        .update({ guest_visit_followup_sent_at: new Date().toISOString() })
-        .eq('id', registration.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'guest_visit_followup',
+          to: attendeeEmail,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee?.name || '').trim() || 'there',
+            event_name: String(eventRow.title || 'your event').trim(),
+            organiser_name: organiserName,
+            organiser_url: organiserUrl,
+            followup_next_step: followupNextStep,
+            next_event_name: nextEvent ? String(nextEvent.title || '').trim() : '',
+            next_event_date: nextEventDateTime?.event_date || '',
+            next_event_time: nextEventDateTime?.event_time || '',
+            next_event_location: nextEvent ? eventLocationLabel(nextEvent) : '',
+            next_event_url: nextEventUrl,
+            next_event_section: buildGuestVisitNextEventSection(nextEvent),
+            membership_cta_section: membershipCtaSection,
+            cta_url: ctaUrl,
+            cta_label: ctaLabel,
+          },
+          skipEmailCheck: true,
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'registrations',
+          id: registration.id,
+          column: 'guest_visit_followup_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -1017,22 +1238,40 @@ async function sendDuePostEventReviewEmails(sb, options) {
         continue;
       }
 
-      await sendTemplatedEmail({
-        slug: 'post_event_review_request',
-        to: attendeeEmail,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee?.name || '').trim() || 'there',
-          event_name: String(eventRow.title || 'your event').trim(),
-          review_url: reviewUrl,
-        },
-        skipEmailCheck: true,
-      });
-
-      await sb
+      // Claim before send so overlapping cron workers cannot double-send.
+      const claimedAt = new Date().toISOString();
+      const { data: claimed, error: claimErr } = await sb
         .from('registrations')
-        .update({ post_event_review_sent_at: new Date().toISOString() })
-        .eq('id', registration.id);
+        .update({ post_event_review_sent_at: claimedAt })
+        .eq('id', registration.id)
+        .is('post_event_review_sent_at', null)
+        .select('id');
+      if (claimErr) throw new Error(claimErr.message);
+      if (!claimed?.length) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendTemplatedEmail({
+          slug: 'post_event_review_request',
+          to: attendeeEmail,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee?.name || '').trim() || 'there',
+            event_name: String(eventRow.title || 'your event').trim(),
+            review_url: reviewUrl,
+          },
+          skipEmailCheck: true,
+        });
+      } catch (sendErr) {
+        await sb
+          .from('registrations')
+          .update({ post_event_review_sent_at: null })
+          .eq('id', registration.id)
+          .eq('post_event_review_sent_at', claimedAt);
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -1126,21 +1365,40 @@ async function sendDuePostEventReviewReminderEmails(sb) {
 
     try {
       const reviewUrl = reviewUrlForEvent(eventRow, siteUrl);
-      await sendTemplatedEmail({
-        slug: 'post_event_review_reminder',
-        to: attendeeEmail,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee?.name || '').trim() || 'there',
-          event_name: String(eventRow.title || 'your event').trim(),
-          review_url: reviewUrl,
-        },
-        skipEmailCheck: true,
-      });
-      await sb
+      // Claim before send so overlapping cron workers cannot double-send.
+      const claimedAt = new Date().toISOString();
+      const { data: claimed, error: claimErr } = await sb
         .from('registrations')
-        .update({ post_event_review_reminder_sent_at: new Date().toISOString() })
-        .eq('id', registration.id);
+        .update({ post_event_review_reminder_sent_at: claimedAt })
+        .eq('id', registration.id)
+        .is('post_event_review_reminder_sent_at', null)
+        .select('id');
+      if (claimErr) throw new Error(claimErr.message);
+      if (!claimed?.length) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendTemplatedEmail({
+          slug: 'post_event_review_reminder',
+          to: attendeeEmail,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee?.name || '').trim() || 'there',
+            event_name: String(eventRow.title || 'your event').trim(),
+            review_url: reviewUrl,
+          },
+          skipEmailCheck: true,
+        });
+      } catch (sendErr) {
+        await sb
+          .from('registrations')
+          .update({ post_event_review_reminder_sent_at: null })
+          .eq('id', registration.id)
+          .eq('post_event_review_reminder_sent_at', claimedAt);
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -1205,21 +1463,39 @@ async function sendDueCategoryExclusivityPaymentReminders(sb) {
     }
 
     try {
-      await sendTemplatedEmail({
-        slug: 'category_exclusivity_payment_reminder',
-        to: attendeeEmail,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee?.name || '').trim() || 'there',
-          event_name: String(eventRow.title || 'your event').trim(),
-          hub_payment_url: hubPaymentUrl(siteUrl, registration.id),
-        },
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'registrations',
+        id: registration.id,
+        column: 'category_exclusivity_payment_reminder_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('registrations')
-        .update({ category_exclusivity_payment_reminder_sent_at: new Date().toISOString() })
-        .eq('id', registration.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'category_exclusivity_payment_reminder',
+          to: attendeeEmail,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee?.name || '').trim() || 'there',
+            event_name: String(eventRow.title || 'your event').trim(),
+            hub_payment_url: hubPaymentUrl(siteUrl, registration.id),
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'registrations',
+          id: registration.id,
+          column: 'category_exclusivity_payment_reminder_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -1297,21 +1573,46 @@ async function sendDueStripeConnectNudges(sb) {
     }
 
     try {
-      await sendTemplatedEmail({
-        slug: 'stripe_connect_nudge',
-        to: contact.email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          organiser_name: contact.name || 'there',
-          connect_url: organiserDashboardUrl(siteUrl, { panel: 'revenue' }),
-          dashboard_url: organiserDashboardUrl(siteUrl),
-        },
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'organisers',
+        id: organiser.id,
+        column: 'stripe_connect_nudge_sent_at',
+        claimedAt,
+        previousValue: sentAt || null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('organisers')
-        .update({ stripe_connect_nudge_sent_at: new Date().toISOString() })
-        .eq('id', organiser.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'stripe_connect_nudge',
+          to: contact.email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            organiser_name: contact.name || 'there',
+            connect_url: organiserDashboardUrl(siteUrl, { panel: 'revenue' }),
+            dashboard_url: organiserDashboardUrl(siteUrl),
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'organisers',
+          id: organiser.id,
+          column: 'stripe_connect_nudge_sent_at',
+          claimedAt,
+        });
+        if (sentAt) {
+          await sb
+            .from('organisers')
+            .update({ stripe_connect_nudge_sent_at: sentAt })
+            .eq('id', organiser.id)
+            .is('stripe_connect_nudge_sent_at', null);
+        }
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -1398,27 +1699,52 @@ async function sendDueHubertEventConciergeEmails(sb) {
         continue;
       }
 
-      await sendTemplatedEmail({
-        slug: 'attendee_hubert_event_concierge',
-        to: email,
-        variables: {
-          ...baseEmailVars(siteUrl),
-          user_name: String(attendee.name || '').trim() || 'there',
-          month_label: monthLabel,
-          near_location_phrase: nearLocationPhrase(attendee.location),
-          nearby_events_html: eventSections.nearby_events_html,
-          popular_events_html: eventSections.popular_events_html,
-          browse_events_url: browseEventsUrl(siteUrl),
-          account_settings_url: accountSettingsUrl(siteUrl),
-          location_footer_html: hubertLocationFooterHtml(siteUrl, attendee.location),
-        },
-        subject: "Hubert's event picks for " + monthLabel,
+      const claimedAt = now.toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'attendees',
+        id: attendee.id,
+        column: 'hubert_event_concierge_sent_at',
+        claimedAt,
+        previousValue: attendee.hubert_event_concierge_sent_at || null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      await sb
-        .from('attendees')
-        .update({ hubert_event_concierge_sent_at: now.toISOString() })
-        .eq('id', attendee.id);
+      try {
+        await sendTemplatedEmail({
+          slug: 'attendee_hubert_event_concierge',
+          to: email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee.name || '').trim() || 'there',
+            month_label: monthLabel,
+            near_location_phrase: nearLocationPhrase(attendee.location),
+            nearby_events_html: eventSections.nearby_events_html,
+            popular_events_html: eventSections.popular_events_html,
+            browse_events_url: browseEventsUrl(siteUrl),
+            account_settings_url: accountSettingsUrl(siteUrl),
+            location_footer_html: hubertLocationFooterHtml(siteUrl, attendee.location),
+          },
+          subject: "Hubert's event picks for " + monthLabel,
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'attendees',
+          id: attendee.id,
+          column: 'hubert_event_concierge_sent_at',
+          claimedAt,
+        });
+        if (attendee.hubert_event_concierge_sent_at) {
+          await sb
+            .from('attendees')
+            .update({ hubert_event_concierge_sent_at: attendee.hubert_event_concierge_sent_at })
+            .eq('id', attendee.id)
+            .is('hubert_event_concierge_sent_at', null);
+        }
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -1430,8 +1756,8 @@ async function sendDueHubertEventConciergeEmails(sb) {
 }
 
 async function runEngagementEmailMaintenance(sb) {
-  const postReview = await sendDuePostEventReviewEmails(sb);
-  const postReviewReminder = await sendDuePostEventReviewReminderEmails(sb);
+  // Post-event reviews are owned solely by /api/cron/post-event-reviews (10:05)
+  // so they are not double-run by this 10:00 engagement job.
   const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
@@ -1441,8 +1767,6 @@ async function runEngagementEmailMaintenance(sb) {
   const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
   return {
-    postReview,
-    postReviewReminder,
     guestVisitFollowup,
     categoryExclusivityPayment,
     reengagement,

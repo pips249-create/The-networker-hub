@@ -120,15 +120,35 @@ async function sendDueBookingReminders(sb) {
     });
 
     try {
-      await sendTemplatedEmail({
-        slug: 'booking_reminder',
-        to: attendeeEmail,
-        variables: vars,
+      const claimedAt = new Date().toISOString();
+      const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'registrations',
+        id: registration.id,
+        column: 'reminder_email_sent_at',
+        claimedAt,
+        previousValue: null,
       });
-      await sb
-        .from('registrations')
-        .update({ reminder_email_sent_at: new Date().toISOString() })
-        .eq('id', registration.id);
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendTemplatedEmail({
+          slug: 'booking_reminder',
+          to: attendeeEmail,
+          variables: vars,
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'registrations',
+          id: registration.id,
+          column: 'reminder_email_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       result.errors.push({

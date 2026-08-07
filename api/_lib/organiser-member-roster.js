@@ -1711,12 +1711,35 @@ function isMissingRelationError(err) {
 /**
  * Members already notified for this event via listing-alerts table and/or
  * roster email queue (covers environments where migration 169 is not applied).
+ * Treats duplicate roster rows that share an email as one inbox.
  */
-async function loadAlreadyNotifiedRosterMemberIds(sb, eventId, memberIds) {
+async function loadAlreadyNotifiedRosterMemberIds(sb, eventId, members) {
   const already = new Set();
-  const ids = (memberIds || []).map((id) => String(id || '').trim()).filter(Boolean);
+  const list = (members || []).filter((m) => m && m.id);
+  const ids = list.map((m) => String(m.id).trim()).filter(Boolean);
   const evId = String(eventId || '').trim();
   if (!evId || !ids.length) return already;
+
+  const emailByMemberId = new Map();
+  const memberIdsByEmail = new Map();
+  for (const member of list) {
+    const id = String(member.id || '').trim();
+    const email = normalizeRosterEmail(member.email);
+    if (!id) continue;
+    emailByMemberId.set(id, email);
+    if (!email) continue;
+    if (!memberIdsByEmail.has(email)) memberIdsByEmail.set(email, []);
+    memberIdsByEmail.get(email).push(id);
+  }
+
+  function markEmailNotified(memberId) {
+    const id = String(memberId || '').trim();
+    if (!id) return;
+    already.add(id);
+    const email = emailByMemberId.get(id);
+    if (!email) return;
+    for (const siblingId of memberIdsByEmail.get(email) || []) already.add(siblingId);
+  }
 
   const alertedRes = await sb
     .from('organiser_roster_listing_alerts')
@@ -1729,20 +1752,63 @@ async function loadAlreadyNotifiedRosterMemberIds(sb, eventId, memberIds) {
       '[member-roster] organiser_roster_listing_alerts missing — run migration 169; falling back to queue dedupe'
     );
   } else {
-    (alertedRes.data || []).forEach((r) => already.add(String(r.roster_member_id)));
+    (alertedRes.data || []).forEach((r) => markEmailNotified(r.roster_member_id));
   }
 
+  // Any queue row (pending or sent) means this inbox is already covered for the event.
   const queueRes = await sb
     .from('organiser_roster_email_queue')
     .select('roster_member_id')
     .eq('kind', 'new_event')
     .eq('event_id', evId)
     .in('roster_member_id', ids)
-    .not('sent_at', 'is', null);
+    .is('failed_at', null);
   if (queueRes.error) throw new Error(queueRes.error.message);
-  (queueRes.data || []).forEach((r) => already.add(String(r.roster_member_id)));
+  (queueRes.data || []).forEach((r) => markEmailNotified(r.roster_member_id));
 
   return already;
+}
+
+/**
+ * Claim dedupe rows before sending so overlapping workers cannot double-email.
+ * Returns the event ids successfully claimed (empty => skip send).
+ */
+async function claimRosterListingAlertEvents(sb, memberId, eventRows) {
+  const rosterMemberId = String(memberId || '').trim();
+  const rows = (eventRows || []).filter((row) => row?.id);
+  if (!rosterMemberId || !rows.length) return [];
+
+  const claimed = [];
+  for (const row of rows) {
+    const eventId = String(row.id).trim();
+    if (!eventId) continue;
+    const insertRes = await sb
+      .from('organiser_roster_listing_alerts')
+      .insert({ roster_member_id: rosterMemberId, event_id: eventId })
+      .select('event_id')
+      .maybeSingle();
+    if (insertRes.error) {
+      if (/duplicate key|unique constraint|23505/i.test(insertRes.error.message || '')) continue;
+      if (isMissingRelationError(insertRes.error)) {
+        // Table missing: cannot claim; caller falls back to send-without-claim.
+        return null;
+      }
+      throw new Error(insertRes.error.message);
+    }
+    if (insertRes.data?.event_id) claimed.push(eventId);
+  }
+  return claimed;
+}
+
+async function releaseRosterListingAlertEvents(sb, memberId, eventIds) {
+  const rosterMemberId = String(memberId || '').trim();
+  const ids = [...new Set((eventIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!rosterMemberId || !ids.length) return;
+  await sb
+    .from('organiser_roster_listing_alerts')
+    .delete()
+    .eq('roster_member_id', rosterMemberId)
+    .in('event_id', ids);
 }
 
 /**
@@ -1759,38 +1825,107 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
   const email = normalizeRosterEmail(member.email);
   if (!email || !member.membershipActive) return 'skipped';
 
+  // Same inbox may appear under multiple roster rows — if any sibling was already
+  // alerted for this event (or series peers), do not send again.
+  try {
+    const siblingsRes = await sb
+      .from('organiser_member_roster')
+      .select('id')
+      .eq('organiser_id', organiserId)
+      .eq('email', email);
+    if (!siblingsRes.error) {
+      const siblingIds = (siblingsRes.data || [])
+        .map((row) => String(row.id || '').trim())
+        .filter(Boolean);
+      if (siblingIds.length) {
+        const siblingAlerts = await sb
+          .from('organiser_roster_listing_alerts')
+          .select('roster_member_id, event_id')
+          .eq('event_id', eventId)
+          .in('roster_member_id', siblingIds)
+          .limit(1);
+        if (!siblingAlerts.error && siblingAlerts.data?.length) {
+          if (alreadyAlerted) alreadyAlerted.add(memberId);
+          return 'skipped';
+        }
+      }
+    }
+  } catch {
+    /* non-fatal — fall through to normal claim path */
+  }
+
   const seriesPeers = await loadListingAlertSeriesPeers(sb, eventRow);
+  let recentOrganiserEvents = [];
+  try {
+    const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const { isEventPublishedForSale } = require('./ticket-sales');
+    const recentRes = await sb
+      .from('events')
+      .select(LISTING_ALERT_EVENT_COLUMNS)
+      .eq('organiser_id', organiserId)
+      .eq('status', 'published')
+      .eq('approval_status', 'Approved')
+      .gte('published_at', since);
+    if (recentRes.error) throw new Error(recentRes.error.message);
+    recentOrganiserEvents = (recentRes.data || []).filter((row) => isEventPublishedForSale(row));
+  } catch {
+    recentOrganiserEvents = [];
+  }
+
+  const candidateById = new Map();
+  for (const row of [...(seriesPeers || []), ...recentOrganiserEvents]) {
+    if (row?.id) candidateById.set(String(row.id), row);
+  }
+  if (eventRow?.id) candidateById.set(String(eventRow.id), eventRow);
+  const candidateEvents = [...candidateById.values()];
+
   let unalertedEvents;
   try {
     unalertedEvents = await loadUnalertedEventsForRecipient(sb, {
-      eventRows: seriesPeers,
+      eventRows: candidateEvents,
       alertTable: 'organiser_roster_listing_alerts',
       recipientColumn: 'roster_member_id',
       recipientId: memberId,
     });
   } catch (err) {
     if (!isMissingRelationError(err)) throw err;
-    unalertedEvents = seriesPeers || [];
+    unalertedEvents = candidateEvents || [];
   }
   if (!unalertedEvents.length) return 'skipped';
+  // Keep sends tied to the queued/published event when this is the only new one.
   if (!unalertedEvents.some((row) => String(row.id) === eventId)) return 'skipped';
 
+  // Claim before send so overlapping publish/cron drains cannot double-send.
+  let claimedEventIds = [];
+  const claimed = await claimRosterListingAlertEvents(sb, memberId, unalertedEvents);
+  if (claimed === null) {
+    claimedEventIds = [];
+  } else {
+    claimedEventIds = claimed;
+    if (!claimedEventIds.length) return 'skipped';
+    unalertedEvents = unalertedEvents.filter((row) => claimedEventIds.includes(String(row.id)));
+    if (!unalertedEvents.length) return 'skipped';
+  }
+
   const site = emailSiteBase();
+  const organiserUrl = organiserPublicUrl(organiser, site);
   const fields = buildListingAlertEmailFields(unalertedEvents, site, {
     variant: 'member_roster',
     organiserName: organiser.name,
     userName: emailGreetingName(member.name, email),
+    organiserUrl,
   });
-  const organiserUrl = organiserPublicUrl(organiser, site);
   const organiserName = String(organiser.name || 'your networking group').trim();
+  const organiserAvatarHtml = buildOrganiserAvatarMarkup(organiser, site);
   const hasAccount = Boolean(member.attendeeId || member.claimedAt);
+  const destinationUrl = fields.is_roundup ? organiserUrl : fields.event_url;
   const ctaUrl = hasAccount
-    ? loginUrlWithNext(site, email, fields.event_url)
+    ? loginUrlWithNext(site, email, destinationUrl)
     : site +
       '/register?email=' +
       encodeURIComponent(email) +
       '&next=' +
-      encodeURIComponent(fields.event_url);
+      encodeURIComponent(destinationUrl);
   const attendanceMode = String(
     fields.attendanceMode ||
       unalertedEvents[0]?.attendance_mode ||
@@ -1802,60 +1937,80 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
   const isCategoryExclusivity =
     attendanceMode === 'category_exclusivity' || attendanceMode === 'osop';
   const ctaLabel = hasAccount
-    ? isCategoryExclusivity
-      ? 'View event'
-      : attendanceMode === 'guest_programme'
-        ? 'View member tickets'
-        : 'View event'
-    : 'Create account & view event';
+    ? fields.is_roundup
+      ? fields.listing_cta_label || 'View events'
+      : isCategoryExclusivity
+        ? 'View event'
+        : attendanceMode === 'guest_programme'
+          ? 'View member tickets'
+          : 'View event'
+    : fields.is_roundup
+      ? 'Create account & view events'
+      : 'Create account & view event';
 
-  await sendTemplatedEmail({
-    slug: 'member_roster_new_event',
-    to: email,
-    variables: {
-      user_name: emailGreetingName(member.name, email),
-      user_email: email,
-      organiser_name: organiserName,
-      organiser_url: organiserUrl,
-      event_name: fields.event_name,
-      event_date: fields.event_date || '',
-      event_time: fields.event_time,
-      event_location: fields.event_location,
-      event_url: fields.event_url,
-      event_date_count: fields.event_date_count,
-      listing_badge: fields.listing_badge,
-      listing_headline: fields.listing_headline,
-      listing_intro: fields.listing_intro,
-      listing_follow_on: fields.listing_follow_on,
-      listing_subject: fields.listing_subject,
-      event_date_prefix: fields.event_date_prefix,
-      listing_cta_label: fields.listing_cta_label,
-      cta_url: ctaUrl,
-      cta_label: ctaLabel,
-      hub_account_url: hubAccountUrl(site),
-      browse_events_url: browseEventsUrl(site),
-      contact_url: contactUrl(site),
-      privacy_url: legalPolicyUrl(site, 'privacy'),
-      terms_url: legalPolicyUrl(site, 'terms'),
-      site_url: site,
-      logo_url: logoNavUrl(site),
-      logo_footer_url: logoFooterUrl(site),
-    },
-  });
+  try {
+      await sendTemplatedEmail({
+      slug: 'member_roster_new_event',
+      to: email,
+      variables: {
+        user_name: emailGreetingName(member.name, email),
+        user_email: email,
+        organiser_name: organiserName,
+        organiser_url: organiserUrl,
+        organiser_logo_url: organiserLogoUrlForEmail(organiser, site),
+        organiser_avatar_html: organiserAvatarHtml,
+        event_name: fields.event_name,
+        event_date: fields.event_date || '',
+        event_time: fields.event_time,
+        event_location: fields.event_location,
+        event_url: fields.event_url,
+        event_date_count: fields.event_date_count,
+        listing_badge: fields.listing_badge,
+        listing_headline: fields.listing_headline,
+        listing_intro: fields.listing_intro,
+        listing_follow_on: fields.listing_follow_on,
+        listing_subject: fields.listing_subject,
+        event_date_prefix: fields.event_date_prefix,
+        listing_cta_label: fields.listing_cta_label,
+        events_detail_html: fields.events_detail_html || '',
+        cta_url: ctaUrl,
+        cta_label: ctaLabel,
+        hub_account_url: hubAccountUrl(site),
+        browse_events_url: browseEventsUrl(site),
+        contact_url: contactUrl(site),
+        privacy_url: legalPolicyUrl(site, 'privacy'),
+        terms_url: legalPolicyUrl(site, 'terms'),
+        site_url: site,
+        logo_url: logoNavUrl(site),
+        logo_footer_url: logoFooterUrl(site),
+      },
+    });
+  } catch (sendErr) {
+    if (claimedEventIds.length) {
+      try {
+        await releaseRosterListingAlertEvents(sb, memberId, claimedEventIds);
+      } catch {
+        /* best-effort release */
+      }
+    }
+    throw sendErr;
+  }
 
-  const insertRes = await sb.from('organiser_roster_listing_alerts').insert(
-    unalertedEvents.map((row) => ({
-      roster_member_id: memberId,
-      event_id: row.id,
-    }))
-  );
-  if (insertRes.error) {
-    if (!isMissingRelationError(insertRes.error)) throw new Error(insertRes.error.message);
-    console.error(
-      '[member-roster] could not record listing alert — run migration 169',
-      eventId,
-      memberId
+  if (claimed === null) {
+    const insertRes = await sb.from('organiser_roster_listing_alerts').insert(
+      unalertedEvents.map((row) => ({
+        roster_member_id: memberId,
+        event_id: row.id,
+      }))
     );
+    if (insertRes.error) {
+      if (!isMissingRelationError(insertRes.error)) throw new Error(insertRes.error.message);
+      console.error(
+        '[member-roster] could not record listing alert — run migration 169',
+        eventId,
+        memberId
+      );
+    }
   }
   if (alreadyAlerted) alreadyAlerted.add(memberId);
 
@@ -1896,7 +2051,7 @@ async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
   const sb = getSupabaseAdmin();
   const { data: organiser, error: orgErr } = await sb
     .from('organisers')
-    .select('id, name, slug')
+    .select('id, name, slug, photo_url')
     .eq('id', orgId)
     .maybeSingle();
   if (orgErr) throw new Error(orgErr.message);
@@ -1959,7 +2114,7 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
   const sb = getSupabaseAdmin();
   const { data: organiser, error: orgErr } = await sb
     .from('organisers')
-    .select('id, name, slug')
+    .select('id, name, slug, photo_url')
     .eq('id', organiserId)
     .maybeSingle();
   if (orgErr) throw new Error(orgErr.message);
@@ -1969,9 +2124,18 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
   const activeMembers = (members || []).filter((m) => m.membershipActive && m.email);
   if (!activeMembers.length) return result;
 
-  const memberIds = activeMembers.map((m) => m.id);
-  const already = await loadAlreadyNotifiedRosterMemberIds(sb, eventId, memberIds);
-  const toQueue = activeMembers.filter((m) => !already.has(m.id));
+  // One inbox = one email, even if the same address appears on the list more than once.
+  const uniqueByEmail = [];
+  const seenEmails = new Set();
+  for (const member of activeMembers) {
+    const email = normalizeRosterEmail(member.email);
+    if (!email || seenEmails.has(email)) continue;
+    seenEmails.add(email);
+    uniqueByEmail.push(member);
+  }
+
+  const already = await loadAlreadyNotifiedRosterMemberIds(sb, eventId, uniqueByEmail);
+  const toQueue = uniqueByEmail.filter((m) => !already.has(m.id));
   result.skipped = activeMembers.length - toQueue.length;
 
   if (!toQueue.length) return result;
@@ -2154,6 +2318,7 @@ module.exports = {
   sendMemberRosterPayInviteEmail,
   sendMemberRosterNewEventAlert,
   buildOrganiserInviteIntroSection,
+  buildOrganiserAvatarMarkup,
   buildRosterUpcomingEventSection,
   organiserLogoUrlForEmail,
   rosterRowToClient,

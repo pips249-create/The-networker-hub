@@ -13,6 +13,7 @@ const {
   opportunityPublicUrl,
   organiserBusinessDashboardUrl,
 } = require('./hub-email-urls');
+const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
 
 const LISTING_REMINDER_DAYS = 7;
 const PREMIUM_REMINDER_DAYS = 2;
@@ -63,24 +64,41 @@ async function sendListingExpiryReminders(sb) {
       '#business-overview';
 
     try {
-      await sendTemplatedEmail({
-        slug: 'opportunity_listing_expiry_reminder',
-        to,
-        variables: {
-          owner_name: ownerNameFromOpportunity(row, to),
-          opportunity_title: String(row.title || 'Your opportunity').trim(),
-          expiry_date: formatEmailDate(row.listing_expires_at),
-          renew_url: renewUrl,
-          opportunity_url: opportunityPublicUrl(row, siteUrl),
-          dashboard_url: organiserBusinessDashboardUrl(siteUrl),
-        },
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(client, {
+        table: 'business_opportunities',
+        id: row.id,
+        column: 'listing_expiry_reminder_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      const { error: markErr } = await client
-        .from('business_opportunities')
-        .update({ listing_expiry_reminder_sent_at: new Date().toISOString() })
-        .eq('id', row.id);
-      if (markErr) throw new Error(markErr.message);
+      try {
+        await sendTemplatedEmail({
+          slug: 'opportunity_listing_expiry_reminder',
+          to,
+          variables: {
+            owner_name: ownerNameFromOpportunity(row, to),
+            opportunity_title: String(row.title || 'Your opportunity').trim(),
+            expiry_date: formatEmailDate(row.listing_expires_at),
+            renew_url: renewUrl,
+            opportunity_url: opportunityPublicUrl(row, siteUrl),
+            dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(client, {
+          table: 'business_opportunities',
+          id: row.id,
+          column: 'listing_expiry_reminder_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -122,24 +140,41 @@ async function sendPremiumExpiryReminders(sb) {
       encodeURIComponent(row.id);
 
     try {
-      await sendTemplatedEmail({
-        slug: 'opportunity_premium_expiry_reminder',
-        to,
-        variables: {
-          owner_name: ownerNameFromOpportunity(row, to),
-          opportunity_title: String(row.title || 'Your opportunity').trim(),
-          expiry_date: formatEmailDate(row.featured_until),
-          renew_url: renewUrl,
-          opportunity_url: opportunityPublicUrl(row, siteUrl),
-          dashboard_url: organiserBusinessDashboardUrl(siteUrl),
-        },
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(client, {
+        table: 'business_opportunities',
+        id: row.id,
+        column: 'featured_expiry_reminder_sent_at',
+        claimedAt,
+        previousValue: null,
       });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
 
-      const { error: markErr } = await client
-        .from('business_opportunities')
-        .update({ featured_expiry_reminder_sent_at: new Date().toISOString() })
-        .eq('id', row.id);
-      if (markErr) throw new Error(markErr.message);
+      try {
+        await sendTemplatedEmail({
+          slug: 'opportunity_premium_expiry_reminder',
+          to,
+          variables: {
+            owner_name: ownerNameFromOpportunity(row, to),
+            opportunity_title: String(row.title || 'Your opportunity').trim(),
+            expiry_date: formatEmailDate(row.featured_until),
+            renew_url: renewUrl,
+            opportunity_url: opportunityPublicUrl(row, siteUrl),
+            dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(client, {
+          table: 'business_opportunities',
+          id: row.id,
+          column: 'featured_expiry_reminder_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -177,11 +212,30 @@ async function expireOpportunityPremium(sb) {
     result.expired += 1;
 
     try {
-      await sendOpportunityPremiumExpiredEmail(row);
-      await client
-        .from('business_opportunities')
-        .update({ premium_expired_email_sent_at: new Date().toISOString() })
-        .eq('id', row.id);
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(client, {
+        table: 'business_opportunities',
+        id: row.id,
+        column: 'premium_expired_email_sent_at',
+        claimedAt,
+        previousValue: null,
+      });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendOpportunityPremiumExpiredEmail(row);
+      } catch (sendErr) {
+        await releaseRowTimestamp(client, {
+          table: 'business_opportunities',
+          id: row.id,
+          column: 'premium_expired_email_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.emailsSent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -219,11 +273,30 @@ async function expireOpportunityListings(sb) {
     result.expired += 1;
 
     try {
-      await sendOpportunityListingExpiredEmail(row);
-      await client
-        .from('business_opportunities')
-        .update({ listing_expired_email_sent_at: new Date().toISOString() })
-        .eq('id', row.id);
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(client, {
+        table: 'business_opportunities',
+        id: row.id,
+        column: 'listing_expired_email_sent_at',
+        claimedAt,
+        previousValue: null,
+      });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendOpportunityListingExpiredEmail(row);
+      } catch (sendErr) {
+        await releaseRowTimestamp(client, {
+          table: 'business_opportunities',
+          id: row.id,
+          column: 'listing_expired_email_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.emailsSent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;

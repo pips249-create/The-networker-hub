@@ -240,16 +240,167 @@ function buildListingAlertSeriesCopy({
   };
 }
 
-function buildListingAlertEmailFields(eventRows, siteUrl, copyOptions = {}) {
+function escapeListingAlertHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatListingNameList(names) {
+  const parts = (names || []).map((name) => String(name || '').trim()).filter(Boolean);
+  if (!parts.length) return 'new events';
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return parts[0] + ' & ' + parts[1];
+  return parts.slice(0, -1).join(', ') + ' & ' + parts[parts.length - 1];
+}
+
+function buildSingleListingDetailHtml(eventRows, siteUrl) {
   const display = buildListingAlertEventDisplay(eventRows, siteUrl);
-  const copy = buildListingAlertSeriesCopy({
-    dateCount: (eventRows || []).length,
-    ...copyOptions,
+  const dateLine =
+    (display.is_series_listing ? 'Dates: ' : '') +
+    escapeListingAlertHtml(display.event_date) +
+    escapeListingAlertHtml(display.event_time) +
+    ' &middot; ' +
+    escapeListingAlertHtml(display.event_location);
+  return (
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:16px;margin:0 0 12px;">' +
+    '<tr><td style="padding:24px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">' +
+    escapeListingAlertHtml(display.event_name) +
+    '</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">' +
+    dateLine +
+    '</p></td></tr></table>'
+  );
+}
+
+function buildEventsDetailHtml(eventRows, siteUrl) {
+  const groups = groupEventsForListingAlerts(eventRows);
+  if (!groups.length) return '';
+  return groups.map((group) => buildSingleListingDetailHtml(group.events, siteUrl)).join('');
+}
+
+function buildListingAlertRoundupCopy({
+  variant = 'saved_organiser',
+  organiserName,
+  userName,
+  listingNames,
+  attendanceMode = '',
+}) {
+  const organiser = String(organiserName || 'Organiser').trim();
+  const name = String(userName || 'there').trim();
+  const names = (listingNames || []).map((n) => String(n || '').trim()).filter(Boolean);
+  const count = Math.max(1, names.length);
+  const list = formatListingNameList(names);
+  const mode = String(attendanceMode || '')
+    .trim()
+    .toLowerCase();
+  const isCategoryExclusivity = mode === 'category_exclusivity' || mode === 'osop';
+  const isGuestProgramme = mode === 'guest_programme';
+
+  if (variant === 'member_roster') {
+    const followOn = isCategoryExclusivity
+      ? 'sign in with this email to book as a member (no application needed).'
+      : isGuestProgramme
+        ? 'sign in with this email to see your member tickets.'
+        : 'sign in with this email to view them — public tickets stay on sale, and any member rates show when you are signed in.';
+    return {
+      event_date_count: String(count),
+      listing_badge: 'Your membership',
+      listing_headline:
+        count === 1 ? organiser + ' has a new event' : organiser + ' has ' + count + ' new events',
+      listing_follow_on:
+        count === 1
+          ? "They've just published " + list + ' — ' + followOn
+          : "They've just added these events — " + list + ' — ' + followOn,
+      listing_intro:
+        'Hi ' +
+        name +
+        ", you're in the membership for " +
+        organiser +
+        '. ' +
+        (count === 1
+          ? "They've just published " + list + ' — ' + followOn
+          : "They've just added these events — " + list + ' — ' + followOn),
+      listing_subject:
+        count === 1 ? organiser + ' has a new event' : organiser + ' has ' + count + ' new events',
+      event_date_prefix: '',
+      listing_cta_label: count === 1 ? 'View event' : 'View events',
+    };
+  }
+
+  return {
+    event_date_count: String(count),
+    listing_badge: count === 1 ? 'New listing' : 'New listings',
+    listing_headline:
+      count === 1 ? organiser + ' has a new event' : organiser + ' has ' + count + ' new events',
+    listing_follow_on:
+      count === 1
+        ? 'just published a new listing you might like.'
+        : 'just added these events — ' + list + '.',
+    listing_intro:
+      count === 1
+        ? 'Hi ' + name + ', ' + organiser + ' just published a new listing you might like.'
+        : 'Hi ' + name + ', ' + organiser + ' just added these events — ' + list + '.',
+    listing_subject:
+      count === 1 ? organiser + ' has a new event' : organiser + ' has ' + count + ' new events',
+    event_date_prefix: '',
+    listing_cta_label: count === 1 ? 'View event' : 'View events',
+  };
+}
+
+function buildListingAlertEmailFields(eventRows, siteUrl, copyOptions = {}) {
+  const groups = groupEventsForListingAlerts(eventRows);
+  const allRows = sortEventsByStartsAt(eventRows || []);
+  const eventsDetailHtml = buildEventsDetailHtml(allRows, siteUrl);
+
+  // One series / one listing — keep the existing single-card copy.
+  if (groups.length <= 1) {
+    const display = buildListingAlertEventDisplay(allRows, siteUrl);
+    const copy = buildListingAlertSeriesCopy({
+      dateCount: allRows.length,
+      ...copyOptions,
+      attendanceMode:
+        copyOptions.attendanceMode || listingAlertAttendanceMode(allRows),
+      eventName: display.event_name,
+    });
+    return {
+      ...display,
+      ...copy,
+      events_detail_html: eventsDetailHtml,
+      is_roundup: false,
+    };
+  }
+
+  // Several distinct listings — one roundup email (X, Y & Z).
+  const listingNames = groups.map((group) =>
+    String(pickListingAlertAnchorEvent(group.events)?.title || 'Event').trim()
+  );
+  const anchor = pickListingAlertAnchorEvent(allRows) || {};
+  const organiserUrlFallback = copyOptions.organiserUrl || '';
+  const copy = buildListingAlertRoundupCopy({
+    variant: copyOptions.variant || 'saved_organiser',
+    organiserName: copyOptions.organiserName,
+    userName: copyOptions.userName,
+    listingNames,
     attendanceMode:
-      copyOptions.attendanceMode || listingAlertAttendanceMode(eventRows),
-    eventName: display.event_name,
+      copyOptions.attendanceMode || listingAlertAttendanceMode(allRows),
   });
-  return { ...display, ...copy };
+
+  return {
+    event_name: formatListingNameList(listingNames),
+    event_date: '',
+    event_time: '',
+    event_location: '',
+    event_url: organiserUrlFallback || eventPublicUrl(anchor, siteUrl),
+    anchorEvent: anchor,
+    eventIds: allRows.map((row) => row.id).filter(Boolean),
+    is_series_listing: false,
+    is_roundup: true,
+    events_detail_html: eventsDetailHtml,
+    ...copy,
+  };
 }
 
 function eventPublishedAfterFavourite(eventRow, favouriteCreatedAt) {
@@ -305,11 +456,14 @@ module.exports = {
   sortEventsByStartsAt,
   formatListingAlertDateList,
   formatListingAlertTimeSuffix,
+  formatListingNameList,
   pickListingAlertAnchorEvent,
   groupEventsForListingAlerts,
   buildListingAlertEventDisplay,
+  buildEventsDetailHtml,
   listingAlertAttendanceMode,
   buildListingAlertSeriesCopy,
+  buildListingAlertRoundupCopy,
   buildListingAlertEmailFields,
   eventPublishedAfterFavourite,
   loadListingAlertSeriesPeers,

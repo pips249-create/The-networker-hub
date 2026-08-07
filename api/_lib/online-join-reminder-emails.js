@@ -150,16 +150,36 @@ async function sendDueOnlineJoinReminders(sb) {
     };
 
     try {
-      await sendTemplatedEmail({
-        slug: 'online_join_reminder',
-        to: attendeeEmail,
-        variables: emailVars,
-        subject: 'Join online in 1 hour — ' + String(eventRow.title || 'your event').trim(),
+      const claimedAt = new Date().toISOString();
+      const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'registrations',
+        id: registration.id,
+        column: 'online_join_reminder_sent_at',
+        claimedAt,
+        previousValue: null,
       });
-      await sb
-        .from('registrations')
-        .update({ online_join_reminder_sent_at: new Date().toISOString() })
-        .eq('id', registration.id);
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendTemplatedEmail({
+          slug: 'online_join_reminder',
+          to: attendeeEmail,
+          variables: emailVars,
+          subject: 'Join online in 1 hour — ' + String(eventRow.title || 'your event').trim(),
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'registrations',
+          id: registration.id,
+          column: 'online_join_reminder_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
