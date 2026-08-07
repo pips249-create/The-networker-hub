@@ -1766,6 +1766,27 @@ html:has(.site-access-page) {
   box-shadow: 0 4px 14px rgba(45, 38, 54, 0.04);
 }
 
+.site-access-founding-card--dark-logo {
+  background: #1a1a2e;
+  border-color: rgba(26, 26, 46, 0.9);
+}
+
+.site-access-founding-card--dark-logo .site-access-founding-name {
+  color: #fff8ef;
+}
+
+.site-access-founding-card--dark-logo .site-access-founding-meta {
+  color: rgba(255, 248, 239, 0.72);
+}
+
+.site-access-founding-card--dark-logo .site-access-founding-logo {
+  background: transparent;
+}
+
+.site-access-founding-card--dark-logo .site-access-founding-web {
+  color: #49c5ee;
+}
+
 .site-access-founding-logo {
   width: 44px;
   height: 44px;

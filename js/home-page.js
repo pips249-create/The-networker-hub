@@ -497,9 +497,11 @@
 
   function foundingItemHtml(org) {
     var name = String(org.name || 'Organiser').trim() || 'Organiser';
-    var href = String(org.href || '').trim();
+    var href = String(org.href || org.website || '').trim();
     var photo = String(org.photoUrl || '').trim();
     var initial = name.charAt(0).toUpperCase();
+    var external = /^https?:\/\//i.test(href);
+    var darkClass = org.logoBandDark ? ' home-partner-item--dark-logo' : '';
     var inner;
     if (photo) {
       inner =
@@ -507,7 +509,7 @@
         esc(photo) +
         '" alt="' +
         esc(name) +
-        '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'home-founding-item--fallback\')}" />' +
+        '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'home-founding-item--fallback\');this.parentElement.classList.remove(\'home-partner-item--dark-logo\')}" />' +
         '<span class="home-founding-initial" hidden aria-hidden="true">' +
         esc(initial) +
         '</span>';
@@ -520,10 +522,13 @@
     if (href) {
       return (
         '<a class="home-partner-item home-founding-item' +
+        darkClass +
         fallbackClass +
         '" href="' +
         esc(href) +
-        '" title="' +
+        '"' +
+        (external ? ' target="_blank" rel="noopener noreferrer"' : '') +
+        ' title="' +
         title +
         '">' +
         inner +
@@ -532,6 +537,7 @@
     }
     return (
       '<div class="home-partner-item home-founding-item' +
+      darkClass +
       fallbackClass +
       '" title="' +
       title +

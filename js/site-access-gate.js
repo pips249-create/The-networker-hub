@@ -338,6 +338,7 @@
           .map(function (org) {
             var name = String(org.name || 'Organiser');
             var initial = name.charAt(0).toUpperCase();
+            var darkClass = org.logoBandDark ? ' site-access-founding-card--dark-logo' : '';
             var photo = org.photoUrl
               ? '<img class="site-access-founding-logo" src="' +
                 esc(org.photoUrl) +
@@ -354,7 +355,9 @@
                 '" target="_blank" rel="noopener noreferrer">Website</a>'
               : '';
             return (
-              '<article class="site-access-founding-card">' +
+              '<article class="site-access-founding-card' +
+              darkClass +
+              '">' +
               photo +
               '<div class="site-access-founding-copy">' +
               '<p class="site-access-founding-name">' +

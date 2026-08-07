@@ -1144,10 +1144,21 @@ html:has(.about-page) {
   scroll-snap-align: start;
 }
 
+.about-founding-item--dark-logo {
+  background: #1a1a2e;
+  border-color: rgba(26, 26, 46, 0.9);
+  box-shadow: 0 8px 20px rgba(26, 26, 46, 0.18);
+}
+
 .about-founding-item:hover {
   border-color: rgba(184, 149, 106, 0.4);
   transform: translateY(-3px);
   box-shadow: 0 12px 28px rgba(74, 68, 70, 0.12);
+}
+
+.about-founding-item--dark-logo:hover {
+  border-color: rgba(73, 197, 238, 0.45);
+  filter: brightness(1.06);
 }
 
 .about-founding-item--fallback {

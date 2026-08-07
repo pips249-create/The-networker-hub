@@ -37,15 +37,19 @@ function safeWebsite(url) {
 function mapRow(row, { includeHubHref }) {
   const slug = publicOrganiserSlug(row) || '';
   const industries = Array.isArray(row.industries) ? row.industries.filter(Boolean) : [];
+  const website = safeWebsite(row.website);
+  const hubHref = includeHubHref && slug ? '/organisers/' + encodeURIComponent(slug) : '';
   return {
     id: row.id,
     name: String(row.name || '').trim() || 'Organiser',
     slug,
-    href: includeHubHref && slug ? '/organisers/' + encodeURIComponent(slug) : '',
+    href: hubHref || website,
     photoUrl: resolvePhotoUrl(row.photo_url),
-    website: safeWebsite(row.website),
+    website,
     industry: industries[0] || '',
     foundingOrganiser: true,
+    logoBandDark: Boolean(row.logo_band_dark || row.logoBandDark),
+    softLaunch: Boolean(row.soft_launch || row.softLaunch),
   };
 }
 

@@ -97,7 +97,7 @@
   position: relative !important;
   max-width: 1120px !important;
   margin: 0 auto !important;
-  padding: 22px 58px 22px 24px !important;
+  padding: 26px 58px 26px 24px !important;
   display: grid !important;
   grid-template-columns: minmax(150px, 0.85fr) minmax(240px, 1.7fr) auto !important;
   align-items: center !important;
@@ -167,7 +167,7 @@
   font-style: italic !important;
   font-weight: 400 !important;
   text-align: left !important;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.12s ease, transform 0.12s ease;
 }
 #tnh-upgrade-banner .tnh-upgrade-banner__word.is-fading {
   opacity: 0;
@@ -250,7 +250,7 @@
     grid-template-areas:
       "status cta"
       "hero hero";
-    padding: 18px 48px 18px 18px !important;
+    padding: 22px 48px 22px 18px !important;
     gap: 10px 16px !important;
   }
   #tnh-upgrade-banner .tnh-upgrade-banner__col--status { grid-area: status; }
@@ -333,7 +333,7 @@
     window.setTimeout(function () {
       word.textContent = WORDS[i];
       word.classList.remove("is-fading");
-    }, 180);
-  }, 3200);
+    }, 120);
+  }, 2000);
 })();
 </script>

@@ -63,6 +63,7 @@
     var photo = String(org.photoUrl || '').trim();
     var initial = name.charAt(0).toUpperCase();
     var external = /^https?:\/\//i.test(href);
+    var darkClass = org.logoBandDark ? ' about-founding-item--dark-logo' : '';
     var inner;
     if (photo) {
       inner =
@@ -70,7 +71,7 @@
         esc(photo) +
         '" alt="' +
         esc(name) +
-        '" loading="lazy" decoding="async" class="about-founding-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'about-founding-item--fallback\')}" />' +
+        '" loading="lazy" decoding="async" class="about-founding-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'about-founding-item--fallback\');this.parentElement.classList.remove(\'about-founding-item--dark-logo\')}" />' +
         '<span class="about-founding-initial" hidden aria-hidden="true">' +
         esc(initial) +
         '</span>';
@@ -83,6 +84,7 @@
     if (href) {
       return (
         '<a class="about-founding-item' +
+        darkClass +
         fallbackClass +
         '" href="' +
         esc(href) +
@@ -97,6 +99,7 @@
     }
     return (
       '<div class="about-founding-item' +
+      darkClass +
       fallbackClass +
       '" title="' +
       title +

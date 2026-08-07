@@ -7,6 +7,47 @@ const FOUNDING_CLAIM_DEADLINE = new Date('2026-09-01T00:00:00+01:00');
 const FOUNDING_HOMEPAGE_UNTIL = new Date('2026-11-30T23:59:59+00:00');
 const FOUNDING_HOMEPAGE_CAP = 50;
 
+/**
+ * Soft-launch showcase tiles until the real organiser claims (and gets a homepage slot).
+ * Deduped by name / BMUK aliases when merging with DB rows.
+ */
+const SOFT_LAUNCH_FOUNDING_SHOWCASE = [
+  {
+    id: 'soft-launch-bmuk',
+    name: 'Business Matching UK',
+    slug: '',
+    photo_url: '/assets/marketing/bmu-logo.png',
+    website: 'https://business-matching.co.uk/',
+    industries: [],
+    founding_organiser_at: '2026-01-01T00:00:00.000Z',
+    founding_homepage_until: FOUNDING_HOMEPAGE_UNTIL.toISOString(),
+    ownership_claimed_at: '2026-01-01T00:00:00.000Z',
+    logo_band_dark: true,
+    soft_launch: true,
+  },
+];
+
+function isBmukName(name) {
+  return /bmuk|\bbmu\b|business\s*matching/i.test(String(name || ''));
+}
+
+function mergeSoftLaunchFoundingShowcase(rows) {
+  const list = Array.isArray(rows) ? rows.slice() : [];
+  const hasBmuk = list.some((row) => isBmukName(row && row.name));
+  SOFT_LAUNCH_FOUNDING_SHOWCASE.forEach((seed) => {
+    if (isBmukName(seed.name) && hasBmuk) return;
+    const already = list.some(
+      (row) =>
+        String((row && row.name) || '')
+          .trim()
+          .toLowerCase() === String(seed.name || '').trim().toLowerCase()
+    );
+    if (already) return;
+    list.unshift(seed);
+  });
+  return list;
+}
+
 function isFoundingClaimWindow(now = new Date()) {
   return now.getTime() < FOUNDING_CLAIM_DEADLINE.getTime();
 }
@@ -62,7 +103,7 @@ async function listFoundingHomepageOrganisers(sb, now = new Date()) {
     .order('ownership_claimed_at', { ascending: true })
     .limit(FOUNDING_HOMEPAGE_CAP);
   if (error) throw new Error(error.message);
-  return data || [];
+  return mergeSoftLaunchFoundingShowcase(data || []);
 }
 
 /** All founding claimants — for the public preview gateway social-proof strip. */
@@ -77,17 +118,19 @@ async function listFoundingOrganisersForGateway(sb, limit = 48) {
     .order('founding_organiser_at', { ascending: true })
     .limit(Math.min(100, Math.max(1, Number(limit) || 48)));
   if (error) throw new Error(error.message);
-  return data || [];
+  return mergeSoftLaunchFoundingShowcase(data || []);
 }
 
 module.exports = {
   FOUNDING_CLAIM_DEADLINE,
   FOUNDING_HOMEPAGE_UNTIL,
   FOUNDING_HOMEPAGE_CAP,
+  SOFT_LAUNCH_FOUNDING_SHOWCASE,
   isFoundingClaimWindow,
   isFoundingHomepageActive,
   isFoundingOrganiser,
   foundingFieldsForClaim,
   listFoundingHomepageOrganisers,
   listFoundingOrganisersForGateway,
+  mergeSoftLaunchFoundingShowcase,
 };
