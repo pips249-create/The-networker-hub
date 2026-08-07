@@ -57,10 +57,6 @@
       title: 'Saved',
       text: 'Saved Events, Organisers, Business Opportunities, and search alerts — get emailed when tickets open or new listings match.'
     },
-    reviews: {
-      title: 'Reviews',
-      text: 'Leave feedback after Events you attended and read Organiser replies in your dashboard.'
-    },
     enquiries: {
       title: 'My enquiries',
       text: 'Track enquiries you sent to franchise, side hustle, and partnership listings on Business Opportunities.'
