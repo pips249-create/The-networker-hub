@@ -1,13 +1,17 @@
 /**
- * Lightweight networker recognition for leaving a review after each event.
- * One review per event already; this celebrates cumulative reviews (not unique groups).
+ * Quiet networker recognition for reviewing after events.
+ * Milestone: Top contributor at 5+ event reviews (one review per event).
  */
 
+const TOP_CONTRIBUTOR_MIN = 5;
+
 const REVIEWER_TIERS = [
-  { min: 1, id: 'reviewer', label: 'Reviewer', shortLabel: 'Reviewer' },
-  { min: 5, id: 'trusted', label: 'Trusted Reviewer', shortLabel: 'Trusted' },
-  { min: 10, id: 'super', label: 'Super Reviewer', shortLabel: 'Super' },
-  { min: 25, id: 'champion', label: 'Champion Reviewer', shortLabel: 'Champion' },
+  {
+    min: TOP_CONTRIBUTOR_MIN,
+    id: 'top_contributor',
+    label: 'Top contributor',
+    shortLabel: 'Top contributor',
+  },
 ];
 
 function tierForCount(count) {
@@ -43,9 +47,7 @@ function buildReviewerReward(count, options) {
   const tier = tierForCount(n);
   const nextTier = nextTierForCount(n);
   const previousTier = tierForCount(previous);
-  const justUnlocked = Boolean(
-    n > 0 && tier && (!previousTier || previousTier.id !== tier.id)
-  );
+  const justUnlocked = Boolean(n > 0 && tier && (!previousTier || previousTier.id !== tier.id));
 
   return {
     count: n,
@@ -71,15 +73,10 @@ function reviewerRewardToastMessage(reward) {
     return 'Thanks — your review helps this group on the Hub.';
   }
   if (r.justUnlocked && r.tier) {
-    if (r.count === 1) {
-      return 'First review in — you\'re a Reviewer. Leave one after each event you attend.';
-    }
     return (
-      'Badge unlocked: ' +
-      r.tier.label +
-      ' (' +
+      'Thanks — you\'re a Top contributor (' +
       r.count +
-      ' event reviews). Keep reviewing after each event.'
+      ' event reviews). Keep leaving one after each event.'
     );
   }
   if (r.nextTier && r.nextTier.remaining) {
@@ -91,17 +88,13 @@ function reviewerRewardToastMessage(reward) {
       (r.count === 1 ? '' : 's') +
       '. ' +
       need +
-      ' more to unlock ' +
-      r.nextTier.label +
-      '.'
+      ' more to become a Top contributor.'
     );
   }
   return (
     'Thanks — ' +
     r.count +
-    ' event reviews. You\'re a ' +
-    (r.tier && r.tier.label ? r.tier.label : 'Champion Reviewer') +
-    '.'
+    ' event reviews. You\'re a Top contributor.'
   );
 }
 
@@ -109,22 +102,24 @@ function reviewerRewardStatMeta(reward, pendingCount) {
   const pending = Math.max(0, Number(pendingCount) || 0);
   const r = reward && typeof reward === 'object' ? reward : null;
   const parts = [];
-  if (r && r.tier && r.tier.shortLabel) {
-    parts.push(r.tier.shortLabel);
-  } else if (pending) {
-    parts.push('Review after each event');
-  }
   if (pending) {
     parts.push('⭐ ' + pending + ' pending');
+    return parts.join(' · ');
+  }
+  if (r && r.tier && r.tier.shortLabel) {
+    parts.push(r.tier.shortLabel);
   } else if (r && r.nextTier && r.nextTier.remaining) {
-    parts.push(r.nextTier.remaining + ' to ' + r.nextTier.shortLabel);
-  } else if (r && r.count && !pending) {
-    parts.push('Every event counts');
+    parts.push(r.nextTier.remaining + ' to Top contributor');
+  } else if (r && r.count) {
+    parts.push(r.count + ' submitted');
+  } else {
+    parts.push('Review after each event');
   }
   return parts.length ? parts.join(' · ') : '—';
 }
 
 module.exports = {
+  TOP_CONTRIBUTOR_MIN,
   REVIEWER_TIERS,
   buildReviewerReward,
   reviewerRewardToastMessage,

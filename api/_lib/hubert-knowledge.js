@@ -623,7 +623,7 @@ const FALLBACK_REPLIES = [
   {
     match: /review|rating/i,
     reply:
-      'Members can leave a review after each event they attend — every review counts toward a Reviewer badge in My Hub and helps groups climb the monthly rankings. Sign in, visit My Hub or the group page, and follow the review option. Organisers can reply from their dashboard under Reviews — replies appear on the public group profile.',
+      'Members can leave a review after each event they attend. After five event reviews they\'re recognised as a Top contributor in My Hub — that helps groups climb the monthly rankings. Sign in, visit My Hub or the group page, and follow the review option. Organisers can reply from their dashboard under Reviews — replies appear on the public group profile.',
   },
   {
     match: /organiser profile|networking group profile|\/organisers\//i,

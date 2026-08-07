@@ -2595,22 +2595,13 @@
   function reviewerRewardStatMeta(reward, pendingCount) {
     const pending = Math.max(0, Number(pendingCount) || 0);
     const r = reward && typeof reward === 'object' ? reward : null;
-    const parts = [];
-    if (pending) {
-      parts.push('Tap to leave feedback');
-      return parts.join(' · ');
-    }
-    if (r && r.tier && r.tier.shortLabel) {
-      parts.push(r.tier.shortLabel);
-    }
+    if (pending) return '⭐ ' + pending + ' pending';
+    if (r && r.tier && r.tier.shortLabel) return r.tier.shortLabel;
     if (r && r.nextTier && r.nextTier.remaining) {
-      parts.push(r.nextTier.remaining + ' to ' + r.nextTier.shortLabel);
-    } else if (r && r.count) {
-      parts.push('Every event counts');
-    } else {
-      parts.push('Review after each event');
+      return r.nextTier.remaining + ' to Top contributor';
     }
-    return parts.length ? parts.join(' · ') : '—';
+    if (r && r.count) return r.count + ' submitted';
+    return 'Review after each event';
   }
 
   function renderOverviewReviewerReward(stats) {
@@ -2625,29 +2616,26 @@
       return;
     }
     el.hidden = false;
-    const tierLabel =
-      reward && reward.tier && reward.tier.label
-        ? reward.tier.label
-        : pending
-          ? 'Start your Reviewer badge'
-          : 'Reviewer';
-    const nextLine =
-      reward && reward.nextTier && reward.nextTier.remaining
+    const isTop = Boolean(reward && reward.tier);
+    const title = isTop
+      ? 'Top contributor'
+      : count
+        ? count + ' event review' + (count === 1 ? '' : 's')
+        : 'Your reviews';
+    const nextLine = isTop
+      ? 'Thanks for reviewing after events — it helps groups you support on the Hub.'
+      : reward && reward.nextTier && reward.nextTier.remaining
         ? reward.nextTier.remaining +
           ' more review' +
           (reward.nextTier.remaining === 1 ? '' : 's') +
-          ' unlocks ' +
-          reward.nextTier.label +
-          '.'
-        : count
-          ? 'You\'re a ' + tierLabel + ' — keep reviewing after each event.'
-          : 'Leave a review after each event you attend — every one counts.';
+          ' to become a Top contributor.'
+        : 'Leave a review after each event you attend — every one counts.';
     el.innerHTML =
       '<div class="ad-overview-reviewer-reward-card">' +
-      '<p class="ad-overview-reviewer-reward-kicker">Networker recognition</p>' +
+      '<p class="ad-overview-reviewer-reward-kicker">Reviews</p>' +
       '<h2 class="ad-section-title">' +
-      esc(tierLabel) +
-      (count ? ' · ' + esc(String(count)) + ' event review' + (count === 1 ? '' : 's') : '') +
+      esc(title) +
+      (isTop && count ? ' · ' + esc(String(count)) + ' event reviews' : '') +
       '</h2>' +
       '<p class="ad-overview-reviewer-reward-copy">' +
       esc(nextLine) +
@@ -2656,7 +2644,7 @@
           pending +
           ' review' +
           (pending === 1 ? '' : 's') +
-          ' waiting — every one helps the groups you support.'
+          ' waiting.'
         : '') +
       '</p>' +
       (pending
