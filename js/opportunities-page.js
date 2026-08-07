@@ -327,6 +327,7 @@
   var rangeTimer = null;
   var spotlightFeaturedOrder = null;
   var spotlightTimer = null;
+  var spotlightRenderKey = '';
   var spotlightAnimating = false;
   var spotlightCarouselBound = false;
   var pendingResultsScroll = false;
@@ -684,11 +685,25 @@
       els.spotlightTrack.classList.remove('spotlight-track--carousel');
       els.spotlightTrack.removeAttribute('data-loop-width');
       els.spotlightTrack.scrollLeft = 0;
+      spotlightRenderKey = '';
       if (promo) promo.hidden = true;
       return;
     }
 
     var cardsHtml = featured.map(premiumSpotlightCard).join('');
+    var renderKey =
+      featured.length +
+      ':' +
+      featured
+        .map(function (item) {
+          return item.id || '';
+        })
+        .join(',');
+    if (renderKey === spotlightRenderKey && els.spotlightTrack.children.length) {
+      if (promo) promo.hidden = false;
+      return;
+    }
+    spotlightRenderKey = renderKey;
     els.spotlightTrack.classList.add('spotlight-track--carousel');
     if (promo) promo.hidden = false;
     bindSpotlightCarousel();
@@ -1884,6 +1899,16 @@
     }
   }
 
+  function setOppListingsLoading(on) {
+    if (!els.mount) return;
+    els.mount.classList.toggle('is-updating', !!on);
+    els.mount.setAttribute('aria-busy', on ? 'true' : 'false');
+    if (els.sort) els.sort.setAttribute('aria-busy', on ? 'true' : 'false');
+    document.body.classList.toggle('browse-results-loading', !!on);
+    var results = document.getElementById('results');
+    if (results) results.classList.toggle('is-updating', !!on);
+  }
+
   function applyFilters() {
     readFiltersFromControls();
     syncCategorySelect();
@@ -1894,10 +1919,20 @@
     syncClearFiltersVisibility();
     resetListingPagination();
     writeFiltersToUrl();
-    renderListings();
-    renderSpotlight();
-    if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
-    logOpportunityBrowseSearch();
+    setOppListingsLoading(true);
+    /* Double rAF so the spinner paints before a heavy re-render. */
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        try {
+          renderListings();
+          renderSpotlight();
+          if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
+          logOpportunityBrowseSearch();
+        } finally {
+          setOppListingsLoading(false);
+        }
+      });
+    });
   }
 
   function logOpportunityBrowseSearch() {

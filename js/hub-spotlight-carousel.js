@@ -46,36 +46,37 @@
   function applyLoopLayout(track, section, itemCount, cardSelector, cardsHtml) {
     if (!track) return { overflow: false, looping: false };
 
-    /* Render once so overflow is measured against real card widths, not stale/empty track content. */
-    if (track.innerHTML !== cardsHtml) {
-      track.innerHTML = cardsHtml;
-    }
-
-    var overflow = cardsOverflowViewport(track, itemCount, cardSelector);
     /* Infinite HTML doubling causes flicker on phones — use simple snap scroll instead */
     var preferSimpleScroll =
       typeof window !== 'undefined' &&
       window.matchMedia &&
       window.matchMedia('(hover: none), (max-width: 768px)').matches;
     var looping = itemCount > 1 && !preferSimpleScroll;
-
-    track.dataset.spotlightLoop = looping ? '1' : '0';
-    track.dataset.spotlightOverflow = overflow ? '1' : '0';
-
     var desiredHtml = looping ? cardsHtml + cardsHtml : cardsHtml;
-    if (track.innerHTML !== desiredHtml) {
+    var htmlChanged = track.innerHTML !== desiredHtml;
+
+    /* Single paint — avoid writing once then rewriting (that flickers the carousel). */
+    if (htmlChanged) {
       track.innerHTML = desiredHtml;
     }
+
+    track.dataset.spotlightLoop = looping ? '1' : '0';
+
+    var overflow = cardsOverflowViewport(track, itemCount, cardSelector);
+    track.dataset.spotlightOverflow = overflow ? '1' : '0';
+
     if (!looping) {
       unbindLoopScrollSync(track);
-      track.scrollLeft = 0;
+      if (htmlChanged) track.scrollLeft = 0;
       track.removeAttribute('data-loop-width');
     } else {
       bindLoopScrollSync(track, itemCount, cardSelector);
       updateLoopScrollBinding(track, itemCount, cardSelector);
       var loopWidth = measureLoopWidth(track, itemCount, cardSelector);
       if (loopWidth > 0) track.dataset.loopWidth = String(loopWidth);
-      syncLoopScroll(track, loopWidth, itemCount, cardSelector);
+      if (htmlChanged) {
+        syncLoopScroll(track, loopWidth, itemCount, cardSelector);
+      }
     }
 
     setNavArrowsVisible(section, overflow && itemCount > 1);

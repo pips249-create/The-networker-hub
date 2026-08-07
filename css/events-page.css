@@ -526,6 +526,69 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   margin: 0 0 10px;
   color: var(--charcoal);
 }
+
+/* Sort / filter refresh feedback */
+.events-results-meta.is-updating {
+  position: relative;
+}
+
+.browse-results-loading .events-sort-wrap {
+  position: relative;
+  padding-right: 22px;
+}
+
+.browse-results-loading .events-sort-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: calc(50% - 7px);
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(28, 32, 64, 0.18);
+  border-top-color: var(--lavender-deep, #6b3479);
+  border-radius: 50%;
+  animation: browse-sort-spin 0.7s linear infinite;
+}
+
+#event-listings.is-updating,
+#opp-listings-mount.is-updating {
+  position: relative;
+  min-height: 160px;
+  pointer-events: none;
+}
+
+#event-listings.is-updating::before,
+#opp-listings-mount.is-updating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: rgba(250, 248, 245, 0.55);
+  border-radius: 12px;
+}
+
+#event-listings.is-updating::after,
+#opp-listings-mount.is-updating::after {
+  content: '';
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  z-index: 4;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  border: 3px solid rgba(28, 32, 64, 0.15);
+  border-top-color: var(--lavender-deep, #6b3479);
+  border-radius: 50%;
+  animation: browse-sort-spin 0.7s linear infinite;
+}
+
+@keyframes browse-sort-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Card grid listings */
 .event-grid {
   display: grid;
@@ -1068,6 +1131,8 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   flex: none;
   min-height: 200px;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 .spotlight-track {
   display: flex;
@@ -1077,8 +1142,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   padding-bottom: 4px;
   scrollbar-width: thin;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 200px;
   align-items: stretch;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
 }
@@ -1109,8 +1177,9 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 @media (min-width: 900px) {
   .spotlight-track .premium-card {
     flex: 0 0 calc((100% - 28px) / 3);
-    max-width: 320px;
+    max-width: none;
     width: calc((100% - 28px) / 3);
+    box-sizing: border-box;
   }
 }
 .spotlight-empty {
@@ -1183,18 +1252,22 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 
 .premium-card {
-  flex: 0 0 min(260px, 78vw);
+  /* Use track width, not viewport — 78vw overflowed the padded container */
+  flex: 0 0 min(260px, calc(100% - 4px));
+  width: min(260px, calc(100% - 4px));
+  max-width: 100%;
+  min-width: 0;
   min-height: 200px;
   border-radius: 14px;
   overflow: hidden;
   position: relative;
   color: #fff;
+  box-sizing: border-box;
 }
 
 @media (min-width: 900px) {
   .premium-card {
-    flex: none;
-    width: 100%;
+    /* Desktop sizing comes from .spotlight-track .premium-card */
     min-width: 0;
   }
 }
