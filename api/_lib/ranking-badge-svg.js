@@ -1,7 +1,7 @@
 /**
  * Dynamic ranking badge SVG for website embeds.
- * Award-style plaque — designed to look good on organiser websites.
- * GET /api/ranking-badge?tier=top10&period=July%202026&name=Harbour%20City%20Connectors
+ * Light certificate style — meant to look at home on organiser websites.
+ * GET /api/ranking-badge?organiserId=<uuid>&period=August%202026
  */
 function escapeXml(value) {
   return String(value == null ? '' : value)
@@ -26,50 +26,62 @@ function normalizeTier(raw) {
 function tierTheme(tier) {
   if (tier === 'top10') {
     return {
-      label: 'TOP 10',
+      label: 'Top 10',
       shortLabel: 'Top 10',
-      metal: '#e8c56a',
-      metalDeep: '#9a7420',
-      metalSoft: '#f7e7b0',
-      panel: '#14182c',
-      panelEdge: '#2a3150',
-      ink: '#f8f4e8',
-      muted: 'rgba(248,244,232,0.72)',
-      ribbon: '#c9a84c',
+      sealNum: '10',
+      metal: '#c9a227',
+      metalDeep: '#9a7018',
+      metalSoft: '#f3e2a3',
+      metalMid: '#e0c35a',
+      title: '#8f6a10',
+      wash: '#fffbf3',
+      washEdge: '#f5ecd4',
+      ink: '#1c2040',
+      muted: '#5c6478',
+      rule: 'rgba(201, 162, 39, 0.4)',
     };
   }
   if (tier === 'top25') {
     return {
-      label: 'TOP 25',
+      label: 'Top 25',
       shortLabel: 'Top 25',
-      metal: '#8eb6e0',
-      metalDeep: '#3d6fa0',
-      metalSoft: '#d4e6f7',
-      panel: '#121c2c',
-      panelEdge: '#243550',
-      ink: '#f2f7fc',
-      muted: 'rgba(242,247,252,0.72)',
-      ribbon: '#5b8fc4',
+      sealNum: '25',
+      metal: '#5b8fc4',
+      metalDeep: '#2f5f8f',
+      metalSoft: '#d7e7f7',
+      metalMid: '#8eb6e0',
+      title: '#2f5f8f',
+      wash: '#f7fafd',
+      washEdge: '#e2eef8',
+      ink: '#1c2040',
+      muted: '#5c6478',
+      rule: 'rgba(91, 143, 196, 0.4)',
     };
   }
   return {
-    label: 'TOP 50',
+    label: 'Top 50',
     shortLabel: 'Top 50',
-    metal: '#9fc49a',
-    metalDeep: '#4a7048',
-    metalSoft: '#d8ead4',
-    panel: '#121f1a',
-    panelEdge: '#264034',
-    ink: '#f2f8f1',
-    muted: 'rgba(242,248,241,0.72)',
-    ribbon: '#6a9a66',
+    sealNum: '50',
+    metal: '#6a9a66',
+    metalDeep: '#3d6a3a',
+    metalSoft: '#dcead8',
+    metalMid: '#9fc49a',
+    title: '#3d6a3a',
+    wash: '#f7fbf6',
+    washEdge: '#e2eee0',
+    ink: '#1c2040',
+    muted: '#5c6478',
+    rule: 'rgba(106, 154, 102, 0.4)',
   };
 }
 
-const BADGE_WIDTH = 380;
-const BADGE_HEIGHT = 128;
-/** Approx chars that fit in the copy column at 12px bold. */
-const NAME_LINE_CHARS = 32;
+const BADGE_WIDTH = 400;
+const BADGE_HEIGHT = 136;
+const SHADOW_PAD = 10;
+const LAYOUT_WIDTH = BADGE_WIDTH + SHADOW_PAD * 2;
+const LAYOUT_HEIGHT = BADGE_HEIGHT + SHADOW_PAD * 2;
+/** Approx chars that fit in the copy column at ~12.5px. */
+const NAME_LINE_CHARS = 34;
 
 function cleanGroupName(raw) {
   return String(raw || '')
@@ -142,63 +154,66 @@ function buildRankingBadgeSvg(options) {
       .toLowerCase();
 
   const twoLineName = nameLines.length > 1;
-  const nameSize = twoLineName || displayName.length > 26 ? 11.5 : 13;
-  const nameLineGap = 14;
-  // Vertical rhythm: kicker → tier → name (1–2 lines) → verify footer
-  const kickerY = 28;
-  const tierY = twoLineName ? 52 : 54;
-  const nameStartY = twoLineName ? 72 : 76;
-  const footerY = twoLineName ? 112 : 108;
+  const nameSize = twoLineName || displayName.length > 28 ? 13 : 15;
+  const nameLineGap = 17;
+  const nameStartY = twoLineName ? 72 : 74;
+  const periodY = twoLineName ? 112 : 100;
 
   const nameTexts = nameLines
     .map(function (line, idx) {
       return (
-        `<text x="112" y="${nameStartY + idx * nameLineGap}" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="${nameSize}" font-weight="700">${escapeXml(line)}</text>`
+        `<text x="118" y="${nameStartY + idx * nameLineGap}" fill="${theme.ink}" font-family="Georgia, 'Times New Roman', Times, serif" font-size="${nameSize}" font-weight="700">${escapeXml(line)}</text>`
       );
     })
     .join('');
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" viewBox="0 0 ${BADGE_WIDTH} ${BADGE_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${LAYOUT_WIDTH}" height="${LAYOUT_HEIGHT}" viewBox="0 0 ${LAYOUT_WIDTH} ${LAYOUT_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
     `<title>${escapeXml(title)}</title>` +
     `<defs>` +
-    `<linearGradient id="bg-${uid}" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0%" stop-color="${theme.panel}"/>` +
-    `<stop offset="55%" stop-color="#0c1020"/>` +
-    `<stop offset="100%" stop-color="${theme.panelEdge}"/>` +
+    `<filter id="shadow-${uid}" x="-20%" y="-20%" width="140%" height="140%">` +
+    `<feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#1c2040" flood-opacity="0.14"/>` +
+    `</filter>` +
+    `<linearGradient id="card-${uid}" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0%" stop-color="#ffffff"/>` +
+    `<stop offset="55%" stop-color="${theme.wash}"/>` +
+    `<stop offset="100%" stop-color="${theme.washEdge}"/>` +
     `</linearGradient>` +
     `<linearGradient id="metal-${uid}" x1="0" y1="0" x2="0" y2="1">` +
     `<stop offset="0%" stop-color="${theme.metalSoft}"/>` +
-    `<stop offset="45%" stop-color="${theme.metal}"/>` +
+    `<stop offset="42%" stop-color="${theme.metalMid}"/>` +
     `<stop offset="100%" stop-color="${theme.metalDeep}"/>` +
     `</linearGradient>` +
-    `<linearGradient id="sheen-${uid}" x1="0" y1="0" x2="1" y2="0">` +
-    `<stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>` +
-    `<stop offset="45%" stop-color="#ffffff" stop-opacity="0.14"/>` +
+    `<linearGradient id="seal-${uid}" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0%" stop-color="#1c2040"/>` +
+    `<stop offset="100%" stop-color="#2a3358"/>` +
+    `</linearGradient>` +
+    `<linearGradient id="shine-${uid}" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>` +
     `<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>` +
     `</linearGradient>` +
     `</defs>` +
-    // Outer plaque
-    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="18" fill="url(#bg-${uid})"/>` +
-    `<rect x="2.5" y="2.5" width="${BADGE_WIDTH - 5}" height="${BADGE_HEIGHT - 5}" rx="16" fill="none" stroke="url(#metal-${uid})" stroke-width="2.5"/>` +
-    `<rect x="8" y="8" width="${BADGE_WIDTH - 16}" height="${BADGE_HEIGHT - 16}" rx="13" fill="none" stroke="${theme.metal}" stroke-opacity="0.28" stroke-width="1"/>` +
-    // Left seal / medal
-    `<circle cx="58" cy="64" r="34" fill="url(#metal-${uid})"/>` +
-    `<circle cx="58" cy="64" r="28" fill="${theme.panel}" stroke="${theme.metalSoft}" stroke-width="1.5"/>` +
-    `<circle cx="58" cy="64" r="22" fill="none" stroke="${theme.metal}" stroke-opacity="0.55" stroke-width="1"/>` +
-    `<text x="58" y="58" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">★</text>` +
-    `<text x="58" y="78" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="800" letter-spacing="0.04em">${escapeXml(theme.label.replace('TOP ', ''))}</text>` +
-    // Copy block
-    `<text x="112" y="${kickerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
-    `<text x="112" y="${tierY}" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="700">${escapeXml(theme.label)}</text>` +
+    `<g transform="translate(${SHADOW_PAD},${SHADOW_PAD})" filter="url(#shadow-${uid})">` +
+    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="20" fill="url(#card-${uid})"/>` +
+    `<rect x="0.75" y="0.75" width="${BADGE_WIDTH - 1.5}" height="${BADGE_HEIGHT - 1.5}" rx="19.25" fill="none" stroke="${theme.metal}" stroke-opacity="0.45" stroke-width="1.5"/>` +
+    `<path d="M20 18 H28 Q34 18 34 24 V${BADGE_HEIGHT - 24} Q34 ${BADGE_HEIGHT - 18} 28 ${BADGE_HEIGHT - 18} H20 Q14 ${BADGE_HEIGHT - 18} 14 ${BADGE_HEIGHT - 24} V24 Q14 18 20 18 Z" fill="url(#metal-${uid})"/>` +
+    `<circle cx="72" cy="68" r="36" fill="url(#metal-${uid})"/>` +
+    `<circle cx="72" cy="68" r="30" fill="url(#seal-${uid})"/>` +
+    `<circle cx="72" cy="68" r="30" fill="url(#shine-${uid})"/>` +
+    `<circle cx="72" cy="68" r="24.5" fill="none" stroke="${theme.metalSoft}" stroke-opacity="0.55" stroke-width="1"/>` +
+    `<text x="72" y="60" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', Times, serif" font-size="13">★</text>` +
+    `<text x="72" y="82" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="0.02em">${escapeXml(theme.sealNum)}</text>` +
+    `<text x="118" y="34" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.14em">THE NETWORKER HUB</text>` +
+    `<text x="118" y="56" fill="${theme.title}" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="700">${escapeXml(theme.label)}</text>` +
+    `<line x1="118" y1="62" x2="248" y2="62" stroke="${theme.rule}" stroke-width="1"/>` +
     nameTexts +
-    `<text x="112" y="${footerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)} · Verified on thenetworkhub.com</text>` +
-    // Soft sheen
-    `<rect x="10" y="10" width="${BADGE_WIDTH - 20}" height="42" rx="12" fill="url(#sheen-${uid})"/>` +
+    `<rect x="118" y="${periodY - 12}" width="118" height="22" rx="11" fill="#ffffff" stroke="${theme.rule}" stroke-width="1"/>` +
+    `<text x="177" y="${periodY + 3}" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)}</text>` +
+    `<text x="${BADGE_WIDTH - 20}" y="${BADGE_HEIGHT - 18}" text-anchor="end" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="600">Verified · thenetworkerhub.com</text>` +
+    `</g>` +
     `</svg>`
   );
 }
-
 
 /** Shown when an embed is missing verification or the group did not earn that month. */
 function buildUnearnedRankingBadgeSvg(options) {
@@ -209,10 +224,10 @@ function buildUnearnedRankingBadgeSvg(options) {
   const reason = String(opts.reason || 'unverified').trim().toLowerCase();
   const headline =
     reason === 'expired' || reason === 'outdated'
-      ? 'AWARD PERIOD ENDED'
+      ? 'Award period ended'
       : reason === 'missing_organiser'
-        ? 'UNVERIFIED BADGE'
-        : 'NOT A VERIFIED AWARD';
+        ? 'Unverified badge'
+        : 'Not a verified award';
   const detail = period
     ? `${period} · Check current rankings`
     : 'See verified awards on The Networker Hub';
@@ -220,21 +235,25 @@ function buildUnearnedRankingBadgeSvg(options) {
   const uid = 'unearned-' + String(period || reason).replace(/[^a-z0-9]+/gi, '').slice(0, 12);
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" viewBox="0 0 ${BADGE_WIDTH} ${BADGE_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${LAYOUT_WIDTH}" height="${LAYOUT_HEIGHT}" viewBox="0 0 ${LAYOUT_WIDTH} ${LAYOUT_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
     `<title>${escapeXml(title)}</title>` +
     `<defs>` +
-    `<linearGradient id="bg-${uid}" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0%" stop-color="#2a2f3a"/>` +
-    `<stop offset="100%" stop-color="#151820"/>` +
-    `</linearGradient>` +
+    `<filter id="shadow-${uid}" x="-20%" y="-20%" width="140%" height="140%">` +
+    `<feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#1c2040" flood-opacity="0.1"/>` +
+    `</filter>` +
     `</defs>` +
-    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="18" fill="url(#bg-${uid})"/>` +
-    `<rect x="2.5" y="2.5" width="${BADGE_WIDTH - 5}" height="${BADGE_HEIGHT - 5}" rx="16" fill="none" stroke="#6b7280" stroke-width="2"/>` +
-    `<circle cx="58" cy="64" r="28" fill="#3a404c" stroke="#9ca3af" stroke-width="1.5"/>` +
-    `<text x="58" y="70" text-anchor="middle" fill="#d1d5db" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">—</text>` +
-    `<text x="112" y="42" fill="rgba(229,231,235,0.7)" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
-    `<text x="112" y="72" fill="#e5e7eb" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">${escapeXml(headline)}</text>` +
-    `<text x="112" y="96" fill="rgba(209,213,219,0.85)" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(detail)}</text>` +
+    `<g transform="translate(${SHADOW_PAD},${SHADOW_PAD})" filter="url(#shadow-${uid})">` +
+    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="20" fill="#f4f5f7"/>` +
+    `<rect x="0.75" y="0.75" width="${BADGE_WIDTH - 1.5}" height="${BADGE_HEIGHT - 1.5}" rx="19.25" fill="none" stroke="#c5cad3" stroke-width="1.5"/>` +
+    `<path d="M20 18 H28 Q34 18 34 24 V${BADGE_HEIGHT - 24} Q34 ${BADGE_HEIGHT - 18} 28 ${BADGE_HEIGHT - 18} H20 Q14 ${BADGE_HEIGHT - 18} 14 ${BADGE_HEIGHT - 24} V24 Q14 18 20 18 Z" fill="#c5cad3"/>` +
+    `<circle cx="72" cy="68" r="32" fill="#dfe3ea"/>` +
+    `<circle cx="72" cy="68" r="26" fill="#eef0f4"/>` +
+    `<text x="72" y="74" text-anchor="middle" fill="#8b93a7" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">—</text>` +
+    `<text x="118" y="40" fill="#8b93a7" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.14em">THE NETWORKER HUB</text>` +
+    `<text x="118" y="70" fill="#3a4254" font-family="Georgia, 'Times New Roman', Times, serif" font-size="20" font-weight="700">${escapeXml(headline)}</text>` +
+    `<text x="118" y="96" fill="#6b7385" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(detail)}</text>` +
+    `<text x="${BADGE_WIDTH - 20}" y="${BADGE_HEIGHT - 18}" text-anchor="end" fill="#8b93a7" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="600">thenetworkerhub.com/rankings</text>` +
+    `</g>` +
     `</svg>`
   );
 }
@@ -254,8 +273,8 @@ function rankingBadgeImageUrl(origin, tier, periodLabel, extras) {
   if (name) params.set('name', name.slice(0, 80));
   if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
   if (opts.demo) params.set('demo', '1');
-  // Bust caches when verification / plaque design changes
-  params.set('v', '5');
+  // Bust caches when certificate design changes
+  params.set('v', '6');
   return base + '/api/ranking-badge?' + params.toString();
 }
 
@@ -286,9 +305,9 @@ function rankingBadgeEmbedHtml(options) {
     '" alt="' +
     alt.replace(/"/g, '&quot;') +
     '" width="' +
-    BADGE_WIDTH +
+    LAYOUT_WIDTH +
     '" height="' +
-    BADGE_HEIGHT +
+    LAYOUT_HEIGHT +
     '" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
     '</a>' +
     '<br />' +
@@ -308,6 +327,8 @@ module.exports = {
   truncateGroupName,
   BADGE_WIDTH,
   BADGE_HEIGHT,
+  LAYOUT_WIDTH,
+  LAYOUT_HEIGHT,
   buildRankingBadgeSvg,
   buildUnearnedRankingBadgeSvg,
   rankingBadgeImageUrl,
