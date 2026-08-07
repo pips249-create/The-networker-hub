@@ -28,7 +28,7 @@
     <div class="tnh-upgrade-banner__text">
       <p class="tnh-upgrade-banner__headline">
         Find your next
-        <span class="tnh-upgrade-banner__word" id="tnh-upgrade-banner-word">event</span>
+        <span class="tnh-upgrade-banner__word" id="tnh-upgrade-banner-word" aria-live="polite">event</span>
       </p>
       <p class="tnh-upgrade-banner__sub">
         Same team &middot; new platform &middot; soft launch <strong>1 September</strong>
@@ -50,8 +50,12 @@
   --tnh-cream: #f5f0e8;
   --tnh-gold: #b8956a;
   --tnh-gold-hover: #a68258;
+  /* In-flow only — never fixed/sticky, so Elementor hero videos are pushed down, not covered */
   position: relative;
-  z-index: 99999;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 100000;
   overflow: hidden;
   background: linear-gradient(118deg, #fffdf9 0%, var(--tnh-cream) 38%, #f3eaf7 78%, #e8f4f6 100%);
   border-bottom: 1px solid #d9c4e0;
@@ -247,6 +251,6 @@
       word.textContent = WORDS[i];
       word.classList.remove("is-fading");
     }, 180);
-  }, 2600);
+  }, 3200);
 })();
 </script>
