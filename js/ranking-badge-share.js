@@ -43,7 +43,7 @@
     var name = String(opts.name || opts.groupName || '').trim();
     if (name) q.set('name', name.slice(0, 80));
     if (opts.organiserId) q.set('organiserId', String(opts.organiserId).trim());
-    q.set('v', '6');
+    q.set('v', '7');
     return origin() + '/api/ranking-badge?' + q.toString();
   }
 
@@ -74,7 +74,7 @@
       img +
       '" alt="' +
       alt.replace(/"/g, '&quot;') +
-      '" width="420" height="156" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
+      '" width="420" height="152" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
       '</a><br />' +
       '<a href="' +
       rankingsUrl +
@@ -147,7 +147,7 @@
         esc(imgUrl) +
         '" alt="' +
         esc(badgeLabel) +
-        '" width="420" height="156" />';
+        '" width="420" height="152" />';
     }
     if (meta) {
       meta.textContent =

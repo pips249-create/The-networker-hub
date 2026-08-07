@@ -1,6 +1,6 @@
 /**
  * Dynamic ranking badge SVG for website embeds.
- * Light certificate style — meant to look at home on organiser websites.
+ * Dark award plaque with tier-tinted interiors — readable on light and dark sites.
  * GET /api/ranking-badge?organiserId=<uuid>&period=August%202026
  */
 function escapeXml(value) {
@@ -26,61 +26,66 @@ function normalizeTier(raw) {
 function tierTheme(tier) {
   if (tier === 'top10') {
     return {
-      label: 'Top 10',
+      label: 'TOP 10',
       shortLabel: 'Top 10',
       sealNum: '10',
-      metal: '#c9a227',
-      metalDeep: '#9a7018',
-      metalSoft: '#f3e2a3',
-      metalMid: '#e0c35a',
-      title: '#8f6a10',
-      wash: '#fffbf3',
-      washEdge: '#f5ecd4',
-      ink: '#1c2040',
-      muted: '#5c6478',
-      rule: 'rgba(201, 162, 39, 0.4)',
+      metal: '#e8c56a',
+      metalDeep: '#9a7420',
+      metalSoft: '#f7e7b0',
+      metalMid: '#d4b24a',
+      // Warm gold wash across the whole card — not only the ring
+      panel: '#1a1620',
+      panelMid: '#2a2218',
+      panelEdge: '#4a3418',
+      glow: 'rgba(232, 197, 106, 0.38)',
+      ink: '#f8f4e8',
+      muted: 'rgba(248, 244, 232, 0.72)',
+      name: '#ffffff',
     };
   }
   if (tier === 'top25') {
     return {
-      label: 'Top 25',
+      label: 'TOP 25',
       shortLabel: 'Top 25',
       sealNum: '25',
-      metal: '#5b8fc4',
-      metalDeep: '#2f5f8f',
-      metalSoft: '#d7e7f7',
-      metalMid: '#8eb6e0',
-      title: '#2f5f8f',
-      wash: '#f7fafd',
-      washEdge: '#e2eef8',
-      ink: '#1c2040',
-      muted: '#5c6478',
-      rule: 'rgba(91, 143, 196, 0.4)',
+      metal: '#8eb6e0',
+      metalDeep: '#3d6fa0',
+      metalSoft: '#d4e6f7',
+      metalMid: '#6a9cc9',
+      panel: '#101820',
+      panelMid: '#183048',
+      panelEdge: '#244868',
+      glow: 'rgba(110, 168, 230, 0.36)',
+      ink: '#f2f7fc',
+      muted: 'rgba(242, 247, 252, 0.72)',
+      name: '#ffffff',
     };
   }
   return {
-    label: 'Top 50',
+    label: 'TOP 50',
     shortLabel: 'Top 50',
     sealNum: '50',
-    metal: '#6a9a66',
-    metalDeep: '#3d6a3a',
-    metalSoft: '#dcead8',
-    metalMid: '#9fc49a',
-    title: '#3d6a3a',
-    wash: '#f7fbf6',
-    washEdge: '#e2eee0',
-    ink: '#1c2040',
-    muted: '#5c6478',
-    rule: 'rgba(106, 154, 102, 0.4)',
+    metal: '#9fc49a',
+    metalDeep: '#4a7048',
+    metalSoft: '#d8ead4',
+    metalMid: '#7aaa74',
+    panel: '#101816',
+    panelMid: '#183828',
+    panelEdge: '#245040',
+    glow: 'rgba(120, 190, 150, 0.34)',
+    ink: '#f2f8f1',
+    muted: 'rgba(242, 248, 241, 0.72)',
+    name: '#ffffff',
   };
 }
 
 const BADGE_WIDTH = 400;
-const BADGE_HEIGHT = 136;
+const BADGE_HEIGHT = 132;
 const SHADOW_PAD = 10;
 const LAYOUT_WIDTH = BADGE_WIDTH + SHADOW_PAD * 2;
 const LAYOUT_HEIGHT = BADGE_HEIGHT + SHADOW_PAD * 2;
-/** Approx chars that fit in the copy column at ~12.5px. */
+/** Copy column starts after a smaller seal. */
+const TEXT_X = 100;
 const NAME_LINE_CHARS = 34;
 
 function cleanGroupName(raw) {
@@ -133,6 +138,13 @@ function truncateGroupName(raw, maxChars) {
   return lines[0] || 'Your networking group';
 }
 
+function nameFontSize(lines, displayName) {
+  if (lines.length > 1) return 14.5;
+  if (displayName.length > 28) return 15;
+  if (displayName.length > 20) return 16;
+  return 17.5;
+}
+
 function buildRankingBadgeSvg(options) {
   const opts = options && typeof options === 'object' ? options : {};
   const tier = normalizeTier(opts.tier);
@@ -154,62 +166,76 @@ function buildRankingBadgeSvg(options) {
       .toLowerCase();
 
   const twoLineName = nameLines.length > 1;
-  const nameSize = twoLineName || displayName.length > 28 ? 13 : 15;
+  const nameSize = nameFontSize(nameLines, displayName);
   const nameLineGap = 17;
-  const nameStartY = twoLineName ? 72 : 74;
-  const periodY = twoLineName ? 112 : 100;
+  // Hierarchy: brand → tier → group name (hero) → period/verify
+  const kickerY = 30;
+  const tierY = 52;
+  const nameStartY = twoLineName ? 74 : 76;
+  const footerY = twoLineName ? 114 : 108;
 
   const nameTexts = nameLines
     .map(function (line, idx) {
       return (
-        `<text x="118" y="${nameStartY + idx * nameLineGap}" fill="${theme.ink}" font-family="Georgia, 'Times New Roman', Times, serif" font-size="${nameSize}" font-weight="700">${escapeXml(line)}</text>`
+        `<text x="${TEXT_X}" y="${nameStartY + idx * nameLineGap}" fill="${theme.name}" font-family="Arial, Helvetica, sans-serif" font-size="${nameSize}" font-weight="800">${escapeXml(line)}</text>`
       );
     })
     .join('');
+
+  // Seal ~15% smaller than the previous 34px-radius medal so copy can breathe
+  const sealCx = 54;
+  const sealCy = 66;
+  const sealR = 28;
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${LAYOUT_WIDTH}" height="${LAYOUT_HEIGHT}" viewBox="0 0 ${LAYOUT_WIDTH} ${LAYOUT_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
     `<title>${escapeXml(title)}</title>` +
     `<defs>` +
-    `<filter id="shadow-${uid}" x="-20%" y="-20%" width="140%" height="140%">` +
-    `<feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#1c2040" flood-opacity="0.14"/>` +
+    `<filter id="shadow-${uid}" x="-25%" y="-25%" width="150%" height="150%">` +
+    `<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0a0c14" flood-opacity="0.45"/>` +
     `</filter>` +
-    `<linearGradient id="card-${uid}" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0%" stop-color="#ffffff"/>` +
-    `<stop offset="55%" stop-color="${theme.wash}"/>` +
-    `<stop offset="100%" stop-color="${theme.washEdge}"/>` +
+    `<radialGradient id="glow-${uid}" cx="18%" cy="42%" r="88%">` +
+    `<stop offset="0%" stop-color="${theme.glow}"/>` +
+    `<stop offset="42%" stop-color="${theme.panelMid}"/>` +
+    `<stop offset="100%" stop-color="${theme.panel}"/>` +
+    `</radialGradient>` +
+    `<linearGradient id="edge-${uid}" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0%" stop-color="${theme.panelEdge}"/>` +
+    `<stop offset="100%" stop-color="${theme.panel}"/>` +
     `</linearGradient>` +
     `<linearGradient id="metal-${uid}" x1="0" y1="0" x2="0" y2="1">` +
     `<stop offset="0%" stop-color="${theme.metalSoft}"/>` +
-    `<stop offset="42%" stop-color="${theme.metalMid}"/>` +
+    `<stop offset="45%" stop-color="${theme.metalMid}"/>` +
     `<stop offset="100%" stop-color="${theme.metalDeep}"/>` +
     `</linearGradient>` +
-    `<linearGradient id="seal-${uid}" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0%" stop-color="#1c2040"/>` +
-    `<stop offset="100%" stop-color="#2a3358"/>` +
-    `</linearGradient>` +
-    `<linearGradient id="shine-${uid}" x1="0" y1="0" x2="0" y2="1">` +
-    `<stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>` +
+    `<linearGradient id="sheen-${uid}" x1="0" y1="0" x2="1" y2="0">` +
+    `<stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>` +
+    `<stop offset="40%" stop-color="#ffffff" stop-opacity="0.1"/>` +
     `<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>` +
     `</linearGradient>` +
     `</defs>` +
     `<g transform="translate(${SHADOW_PAD},${SHADOW_PAD})" filter="url(#shadow-${uid})">` +
-    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="20" fill="url(#card-${uid})"/>` +
-    `<rect x="0.75" y="0.75" width="${BADGE_WIDTH - 1.5}" height="${BADGE_HEIGHT - 1.5}" rx="19.25" fill="none" stroke="${theme.metal}" stroke-opacity="0.45" stroke-width="1.5"/>` +
-    `<path d="M20 18 H28 Q34 18 34 24 V${BADGE_HEIGHT - 24} Q34 ${BADGE_HEIGHT - 18} 28 ${BADGE_HEIGHT - 18} H20 Q14 ${BADGE_HEIGHT - 18} 14 ${BADGE_HEIGHT - 24} V24 Q14 18 20 18 Z" fill="url(#metal-${uid})"/>` +
-    `<circle cx="72" cy="68" r="36" fill="url(#metal-${uid})"/>` +
-    `<circle cx="72" cy="68" r="30" fill="url(#seal-${uid})"/>` +
-    `<circle cx="72" cy="68" r="30" fill="url(#shine-${uid})"/>` +
-    `<circle cx="72" cy="68" r="24.5" fill="none" stroke="${theme.metalSoft}" stroke-opacity="0.55" stroke-width="1"/>` +
-    `<text x="72" y="60" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', Times, serif" font-size="13">★</text>` +
-    `<text x="72" y="82" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="0.02em">${escapeXml(theme.sealNum)}</text>` +
-    `<text x="118" y="34" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.14em">THE NETWORKER HUB</text>` +
-    `<text x="118" y="56" fill="${theme.title}" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="700">${escapeXml(theme.label)}</text>` +
-    `<line x1="118" y1="62" x2="248" y2="62" stroke="${theme.rule}" stroke-width="1"/>` +
+    // Light outer stroke so the card lifts off dark website backgrounds
+    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="18" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.25"/>` +
+    `<rect x="1.25" y="1.25" width="${BADGE_WIDTH - 2.5}" height="${BADGE_HEIGHT - 2.5}" rx="16.75" fill="url(#glow-${uid})"/>` +
+    `<rect x="1.25" y="1.25" width="${BADGE_WIDTH - 2.5}" height="${BADGE_HEIGHT - 2.5}" rx="16.75" fill="url(#edge-${uid})" fill-opacity="0.35"/>` +
+    // Metal frame
+    `<rect x="3.5" y="3.5" width="${BADGE_WIDTH - 7}" height="${BADGE_HEIGHT - 7}" rx="15" fill="none" stroke="url(#metal-${uid})" stroke-width="2.25"/>` +
+    `<rect x="8" y="8" width="${BADGE_WIDTH - 16}" height="${BADGE_HEIGHT - 16}" rx="12" fill="none" stroke="${theme.metal}" stroke-opacity="0.22" stroke-width="1"/>` +
+    // Seal (smaller)
+    `<circle cx="${sealCx}" cy="${sealCy}" r="${sealR}" fill="url(#metal-${uid})"/>` +
+    `<circle cx="${sealCx}" cy="${sealCy}" r="${sealR - 5.5}" fill="${theme.panelMid}"/>` +
+    `<circle cx="${sealCx}" cy="${sealCy}" r="${sealR - 5.5}" fill="url(#sheen-${uid})"/>` +
+    `<circle cx="${sealCx}" cy="${sealCy}" r="${sealR - 10}" fill="none" stroke="${theme.metalSoft}" stroke-opacity="0.45" stroke-width="1"/>` +
+    `<text x="${sealCx}" y="${sealCy - 4}" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="13">★</text>` +
+    `<text x="${sealCx}" y="${sealCy + 14}" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="800" letter-spacing="0.02em">${escapeXml(theme.sealNum)}</text>` +
+    // Copy — group name is the prize recipient, so it leads visually after the tier
+    `<text x="${TEXT_X}" y="${kickerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
+    `<text x="${TEXT_X}" y="${tierY}" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">${escapeXml(theme.label)}</text>` +
     nameTexts +
-    `<rect x="118" y="${periodY - 12}" width="118" height="22" rx="11" fill="#ffffff" stroke="${theme.rule}" stroke-width="1"/>` +
-    `<text x="177" y="${periodY + 3}" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)}</text>` +
-    `<text x="${BADGE_WIDTH - 20}" y="${BADGE_HEIGHT - 18}" text-anchor="end" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="600">Verified · thenetworkerhub.com</text>` +
+    `<text x="${TEXT_X}" y="${footerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)} · Verified on thenetworkerhub.com</text>` +
+    // Soft top sheen
+    `<rect x="10" y="10" width="${BADGE_WIDTH - 20}" height="36" rx="10" fill="url(#sheen-${uid})"/>` +
     `</g>` +
     `</svg>`
   );
@@ -224,10 +250,10 @@ function buildUnearnedRankingBadgeSvg(options) {
   const reason = String(opts.reason || 'unverified').trim().toLowerCase();
   const headline =
     reason === 'expired' || reason === 'outdated'
-      ? 'Award period ended'
+      ? 'AWARD PERIOD ENDED'
       : reason === 'missing_organiser'
-        ? 'Unverified badge'
-        : 'Not a verified award';
+        ? 'UNVERIFIED BADGE'
+        : 'NOT A VERIFIED AWARD';
   const detail = period
     ? `${period} · Check current rankings`
     : 'See verified awards on The Networker Hub';
@@ -238,21 +264,23 @@ function buildUnearnedRankingBadgeSvg(options) {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${LAYOUT_WIDTH}" height="${LAYOUT_HEIGHT}" viewBox="0 0 ${LAYOUT_WIDTH} ${LAYOUT_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
     `<title>${escapeXml(title)}</title>` +
     `<defs>` +
-    `<filter id="shadow-${uid}" x="-20%" y="-20%" width="140%" height="140%">` +
-    `<feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#1c2040" flood-opacity="0.1"/>` +
+    `<filter id="shadow-${uid}" x="-25%" y="-25%" width="150%" height="150%">` +
+    `<feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0a0c14" flood-opacity="0.4"/>` +
     `</filter>` +
+    `<linearGradient id="bg-${uid}" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0%" stop-color="#2a2f3a"/>` +
+    `<stop offset="100%" stop-color="#151820"/>` +
+    `</linearGradient>` +
     `</defs>` +
     `<g transform="translate(${SHADOW_PAD},${SHADOW_PAD})" filter="url(#shadow-${uid})">` +
-    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="20" fill="#f4f5f7"/>` +
-    `<rect x="0.75" y="0.75" width="${BADGE_WIDTH - 1.5}" height="${BADGE_HEIGHT - 1.5}" rx="19.25" fill="none" stroke="#c5cad3" stroke-width="1.5"/>` +
-    `<path d="M20 18 H28 Q34 18 34 24 V${BADGE_HEIGHT - 24} Q34 ${BADGE_HEIGHT - 18} 28 ${BADGE_HEIGHT - 18} H20 Q14 ${BADGE_HEIGHT - 18} 14 ${BADGE_HEIGHT - 24} V24 Q14 18 20 18 Z" fill="#c5cad3"/>` +
-    `<circle cx="72" cy="68" r="32" fill="#dfe3ea"/>` +
-    `<circle cx="72" cy="68" r="26" fill="#eef0f4"/>` +
-    `<text x="72" y="74" text-anchor="middle" fill="#8b93a7" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">—</text>` +
-    `<text x="118" y="40" fill="#8b93a7" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.14em">THE NETWORKER HUB</text>` +
-    `<text x="118" y="70" fill="#3a4254" font-family="Georgia, 'Times New Roman', Times, serif" font-size="20" font-weight="700">${escapeXml(headline)}</text>` +
-    `<text x="118" y="96" fill="#6b7385" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(detail)}</text>` +
-    `<text x="${BADGE_WIDTH - 20}" y="${BADGE_HEIGHT - 18}" text-anchor="end" fill="#8b93a7" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="600">thenetworkerhub.com/rankings</text>` +
+    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="18" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.25"/>` +
+    `<rect x="1.25" y="1.25" width="${BADGE_WIDTH - 2.5}" height="${BADGE_HEIGHT - 2.5}" rx="16.75" fill="url(#bg-${uid})"/>` +
+    `<rect x="3.5" y="3.5" width="${BADGE_WIDTH - 7}" height="${BADGE_HEIGHT - 7}" rx="15" fill="none" stroke="#6b7280" stroke-width="2"/>` +
+    `<circle cx="54" cy="66" r="24" fill="#3a404c" stroke="#9ca3af" stroke-width="1.5"/>` +
+    `<text x="54" y="72" text-anchor="middle" fill="#d1d5db" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">—</text>` +
+    `<text x="${TEXT_X}" y="40" fill="rgba(229,231,235,0.7)" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
+    `<text x="${TEXT_X}" y="70" fill="#e5e7eb" font-family="Georgia, 'Times New Roman', serif" font-size="17" font-weight="700">${escapeXml(headline)}</text>` +
+    `<text x="${TEXT_X}" y="96" fill="rgba(209,213,219,0.85)" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(detail)}</text>` +
     `</g>` +
     `</svg>`
   );
@@ -273,8 +301,7 @@ function rankingBadgeImageUrl(origin, tier, periodLabel, extras) {
   if (name) params.set('name', name.slice(0, 80));
   if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
   if (opts.demo) params.set('demo', '1');
-  // Bust caches when certificate design changes
-  params.set('v', '6');
+  params.set('v', '7');
   return base + '/api/ranking-badge?' + params.toString();
 }
 
