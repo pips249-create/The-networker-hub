@@ -406,6 +406,10 @@
     return (
       '<article class="organiser-grid-card" data-id="' +
       escapeHtml(org.id) +
+      '" data-href="' +
+      escapeHtml(href) +
+      '" tabindex="0" role="link" aria-label="View ' +
+      escapeHtml(org.name || 'organiser') +
       '">' +
       '<div class="organiser-card-header">' +
       '<span class="organiser-card-industry">' +
@@ -617,6 +621,12 @@
   function initPagination() {
     if (!els.listings || els.listings.dataset.orgPaginationBound) return;
     els.listings.dataset.orgPaginationBound = '1';
+
+    function openOrganiserCard(card) {
+      var href = card && card.getAttribute('data-href');
+      if (href) location.href = href;
+    }
+
     els.listings.addEventListener('click', function (e) {
       var fav = e.target.closest('.fav-btn[data-organiser-id]');
       if (fav) {
@@ -634,13 +644,31 @@
       }
 
       var btn = e.target.closest('.page-btn');
-      if (!btn || btn.disabled) return;
-      var filtered = getFilteredList();
-      var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-      var p = parseInt(btn.getAttribute('data-page'), 10);
-      if (!p || p === currentPage || p < 1 || p > totalPages) return;
-      currentPage = p;
-      renderGridPage(filtered);
+      if (btn) {
+        if (btn.disabled) return;
+        var filtered = getFilteredList();
+        var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        var p = parseInt(btn.getAttribute('data-page'), 10);
+        if (!p || p === currentPage || p < 1 || p > totalPages) return;
+        currentPage = p;
+        renderGridPage(filtered);
+        return;
+      }
+
+      // More info already has its own href — let the browser handle it.
+      if (e.target.closest('a, button, input, label')) return;
+
+      var card = e.target.closest('.organiser-grid-card[data-href]');
+      if (card) openOrganiserCard(card);
+    });
+
+    els.listings.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.target.closest('a, button, input, label')) return;
+      var card = e.target.closest('.organiser-grid-card[data-href]');
+      if (!card || e.target !== card) return;
+      e.preventDefault();
+      openOrganiserCard(card);
     });
   }
 
