@@ -875,11 +875,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 
   /* Fixed square thumb — larger crop reads better on phone list rows */
   .event-grid-media {
-    flex: 0 0 120px;
-    width: 120px;
-    height: 120px;
-    min-height: 120px;
-    max-height: 120px;
+    flex: 0 0 140px;
+    width: 140px;
+    height: 140px;
+    min-height: 140px;
+    max-height: 140px;
     aspect-ratio: 1;
     align-self: stretch;
     border-radius: 12px;

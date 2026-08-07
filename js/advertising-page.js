@@ -193,8 +193,8 @@
   };
 
   var STICKY_CTA_BY_SECTION = {
-    events: { href: '#city-partner-package', text: 'City Sponsor · from £29/mo · flexible terms' },
-    organisers: { href: '#ad-pkg-organisers-main', text: 'Headline · from £1,000/mo · flexible terms' },
+    events: { href: '#city-partner-package', text: 'City Sponsor · from £29/mo' },
+    organisers: { href: '#ad-pkg-organisers-main', text: 'Headline · from £1,000/mo' },
     opportunities: { href: '#ad-pkg-opportunities-listing', text: 'List from £25/mo + VAT' },
   };
 

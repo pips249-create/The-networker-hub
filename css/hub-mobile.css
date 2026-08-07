@@ -3276,6 +3276,10 @@ body.nav-menu-open {
 
   .event-detail-page .ticket-load-hint--member {
     text-align: left;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .event-detail-page .qty-row {
@@ -3298,12 +3302,30 @@ body.nav-menu-open {
     font-size: 13px;
   }
 
+  .event-detail-page .summary-fee-note {
+    margin: 4px 0 0;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--ink-muted, #625f73);
+  }
+
   .event-detail-page .refund-badge {
     margin: 8px 0 0;
+    padding: 6px 8px;
+    font-size: 12px;
   }
 
   .event-detail-page .ticket-refund-details {
     margin-top: 4px;
+  }
+
+  .event-detail-page .ticket-refund-details:not([open]) summary {
+    padding: 6px 0;
+  }
+
+  /* Sticky jump already covers booking — drop redundant secure footer chrome */
+  .event-detail-page #ticket-secure-foot {
+    display: none;
   }
 
   .event-detail-page .ticket-panel .cta-btn,

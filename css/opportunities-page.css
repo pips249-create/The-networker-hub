@@ -4257,7 +4257,7 @@
   .opp-browse-page .opp-opps-grid .opp-card,
   .opp-browse-page .opp-opps-grid.list-view .opp-card {
     display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-columns: 112px minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
       "media head"
@@ -4294,9 +4294,9 @@
   .opp-browse-page .opp-card-media,
   .opp-browse-page .opp-opps-grid.list-view .opp-card-media {
     grid-area: media;
-    width: 88px;
+    width: 112px;
     height: auto;
-    min-height: 88px;
+    min-height: 112px;
     align-self: stretch;
     border-right: none;
     border-bottom: none;
@@ -4304,7 +4304,7 @@
   }
 
   .opp-browse-page .opp-card-media-img {
-    min-height: 88px;
+    min-height: 112px;
     height: 100%;
   }
 

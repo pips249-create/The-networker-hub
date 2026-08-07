@@ -443,23 +443,20 @@
       html += link('/', 'Home', 'home', 'nav-mobile-item');
     }
     if (early) {
+      html += '<p class="nav-mobile-section-label">Explore</p>';
       html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
       html += link('/about', 'About', 'about', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
     } else {
+      html += '<p class="nav-mobile-section-label">Browse</p>';
       html += link('/events/', 'Events', 'events', 'nav-mobile-item');
       html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
+      html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
       html += buildMobileDrawerCities();
-      if (user) {
-        html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
-        html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
-      } else {
-        html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
-        html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
-        html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
-        html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
-      }
+      html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
+      html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+      html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
     }
     if (pending && !user) {
       html +=
