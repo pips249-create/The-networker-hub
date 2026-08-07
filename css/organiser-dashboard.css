@@ -296,101 +296,68 @@
 
 .org-promote-groups {
   display: grid;
-  gap: 1rem;
-  margin: 0;
+  gap: 0.85rem 1.15rem;
+  margin: 0 0 0.25rem;
 }
 
 @media (min-width: 900px) {
-  /* Reach-out discovery: put both tool rails on one row so Promote feels less stacked. */
-  #org-page-social.org-promote--reach .org-promote-groups {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
-    gap: 1rem 1.25rem;
+  .org-promote-groups {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
     align-items: stretch;
   }
 
-  #org-page-social.org-promote--reach .org-promote-group,
-  #org-page-social.org-promote--reach .org-promote-group--hub-top {
+  .org-promote-group,
+  .org-promote-group--hub {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    margin: 0;
   }
 
-  #org-page-social.org-promote--reach .org-events-subnav--promote,
-  #org-page-social.org-promote--reach .org-events-subnav--promote-hub {
+  .org-promote-groups .org-events-subnav--promote {
     flex: 1;
-    margin-bottom: 0;
-  }
-
-  /* Content card sits under both rails instead of pretending to attach to one tab bar. */
-  #org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) {
-    border-radius: var(--od-radius);
-  }
-
-  #org-page-social.org-promote--reach .org-sub-page--social.is-active {
-    border-top: 1px solid var(--od-border);
-    border-radius: var(--od-radius);
-    margin-top: 1rem;
-  }
-
-  #org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) .org-events-tab.is-active {
-    border-radius: 10px;
   }
 }
 
 .org-promote-group--hub {
-  margin: 1.5rem 0 0;
-}
-
-/* One hub tab row at a time: top copy for Reach-out discovery, adjacent copy when a Hub tool is open */
-#org-page-social.org-promote--hub .org-promote-group--hub-top {
-  display: none;
-}
-
-#org-page-social.org-promote--reach .org-promote-group--hub {
-  display: none;
+  margin: 0;
 }
 
 .org-promote-group-label {
-  margin: 0 0 0.45rem;
-  font-size: 0.78rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #635c5e;
+  color: #6b6567;
 }
 
-.org-events-subnav--promote,
-.org-events-subnav--promote-hub {
-  border-radius: var(--od-radius);
+/* Quieter Promote rails — same family, less “dashboard chrome” */
+#org-page-social .org-events-subnav--promote {
+  padding: 8px;
   margin-bottom: 0;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(20, 24, 44, 0.12);
+  background: linear-gradient(145deg, #1f3f4a 0%, #16363f 55%, #1a2c34 100%);
 }
 
-#org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) {
-  border-radius: var(--od-radius) var(--od-radius) 0 0;
+#org-page-social .org-events-subnav--promote-hub {
+  background: linear-gradient(145deg, #243447 0%, #1a2838 55%, #162030 100%);
 }
 
-#org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) .org-events-tab.is-active {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  box-shadow: none;
+#org-page-social .org-events-subnav--promote .org-events-tab {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
-#org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) .org-events-tab.is-active::after {
+#org-page-social .org-events-subnav--promote .org-events-tab.is-active {
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(8, 20, 28, 0.16);
+}
+
+#org-page-social .org-events-subnav--promote .org-events-tab.is-active::after {
   display: none;
-}
-
-#org-page-social.org-promote--hub .org-promote-group--hub .org-events-subnav--promote-hub {
-  border-radius: var(--od-radius) var(--od-radius) 0 0;
-}
-
-#org-page-social.org-promote--hub .org-promote-group--hub + .org-sub-page--social.is-active {
-  border-top: none;
-  border-radius: 0 0 var(--od-radius) var(--od-radius);
-  margin-top: 0;
-}
-
-.org-events-subnav--promote-hub {
-  background: linear-gradient(135deg, #1a3a5c 0%, #0d1f3c 55%, #2c2826 100%);
 }
 
 .org-brand-type-options {
@@ -1870,20 +1837,18 @@
   line-height: 1.55;
 }
 
+/* Promote content card — standalone under the tool rails */
 #org-page-social .org-sub-page--social.is-active {
-  border: 1px solid var(--od-border);
-  border-top: none;
-  border-radius: 0 0 var(--od-radius) var(--od-radius);
-  background: var(--od-white);
+  border: 1px solid rgba(28, 32, 64, 0.1);
+  border-radius: 16px;
+  background: #fff;
   padding: 18px 20px 20px;
-  margin: 0 0 20px;
-  box-shadow: var(--od-shadow-md);
+  margin: 1rem 0 20px;
+  box-shadow: 0 8px 24px rgba(20, 24, 44, 0.06);
 }
 
 #org-page-social .org-social-tab-hint:not([hidden]) + .org-sub-page--social.is-active {
-  border-top: 1px solid var(--od-border);
-  border-radius: var(--od-radius);
-  margin-top: 12px;
+  margin-top: 0.85rem;
 }
 
 #org-page-social .org-social-tab-hint {
@@ -3127,11 +3092,21 @@
 }
 
 #org-promote-leaderboard-fold {
-  margin-top: 8px;
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(28, 32, 64, 0.08);
 }
 
 #org-promote-leaderboard-fold .org-ranking-prefs {
-  margin-top: 0;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f7f5f1;
+  border: 1px solid rgba(28, 32, 64, 0.08);
+}
+
+#org-promote-leaderboard-fold .org-leaderboard-howto {
+  margin-bottom: 14px;
 }
 
 .org-featured-upgrade {

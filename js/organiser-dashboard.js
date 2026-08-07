@@ -1846,9 +1846,8 @@
 
     var socialPage = document.getElementById('org-page-social');
     if (socialPage) {
-      var hubTab = tab === 'spotlight' || tab === 'ranking' || tab === 'partner' || tab === 'reach';
-      socialPage.classList.toggle('org-promote--hub', hubTab);
-      socialPage.classList.toggle('org-promote--reach', !hubTab);
+      // Rails stay visible together; mode classes are no longer required for layout.
+      socialPage.classList.remove('org-promote--hub', 'org-promote--reach');
     }
 
     if (tab === 'spotlight') ensureFeaturedUpgradePanelReady();
