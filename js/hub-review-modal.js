@@ -315,7 +315,9 @@
             return;
           }
           close();
-          if (typeof onSubmittedCb === 'function') onSubmittedCb(data.review);
+          if (typeof onSubmittedCb === 'function') {
+            onSubmittedCb(data.review, data.reviewerReward || (data.review && data.review.reviewerReward) || null);
+          }
         } catch (submitErr) {
           if (err) {
             err.textContent =

@@ -33,7 +33,11 @@ module.exports = async function handler(req, res) {
   try {
     const body = parseBody(req);
     const review = await submitReview(session, body);
-    return json(res, 200, { ok: true, review });
+    return json(res, 200, {
+      ok: true,
+      review,
+      reviewerReward: review.reviewerReward || null,
+    });
   } catch (e) {
     const msg = e.message || String(e);
     const clientErrors = new Set([

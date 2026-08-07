@@ -7,6 +7,7 @@ const {
   escapeFormulaValue,
   findUserByEmail,
 } = require('./auth');
+const { buildReviewerReward } = require('./reviewer-reward');
 
 const REGISTRATION_FIELDS = {
   email: ['Email', 'Attendee Email', 'User Email', 'Buyer Email'],
@@ -192,6 +193,7 @@ function buildStats(registrations) {
     reviewsLeft,
     reviewsPending,
     nextEventDate: next ? next.date : '',
+    reviewerReward: buildReviewerReward(reviewsLeft),
   };
 }
 

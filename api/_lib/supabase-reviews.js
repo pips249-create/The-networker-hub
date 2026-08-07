@@ -2,6 +2,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { resolveAttendeeId } = require('./supabase-favourites');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { reviewerDisplayName, reviewerInitials } = require('./reviewer-display-name');
+const { buildReviewerReward, reviewerRewardToastMessage } = require('./reviewer-reward');
 const { isUuid } = require('./uuid');
 
 const MAX_ORGANISER_REPLY = 2000;
@@ -110,6 +111,22 @@ async function submitReview(session, input) {
 
   if (ins.error) throw new Error(ins.error.message);
 
+  let reviewCount = 1;
+  try {
+    const { count, error: countErr } = await sb
+      .from('reviews')
+      .select('id', { count: 'exact', head: true })
+      .eq('attendee_id', attendeeId);
+    if (!countErr && count != null) reviewCount = Number(count) || 1;
+  } catch {
+    reviewCount = 1;
+  }
+
+  const reviewerReward = buildReviewerReward(reviewCount, {
+    previousCount: Math.max(0, reviewCount - 1),
+  });
+  reviewerReward.toastMessage = reviewerRewardToastMessage(reviewerReward);
+
   return {
     id: ins.data.id,
     eventId,
@@ -118,6 +135,7 @@ async function submitReview(session, input) {
     rating: ins.data.rating,
     reviewText: ins.data.review_text,
     createdAt: ins.data.created_at,
+    reviewerReward,
   };
 }
 

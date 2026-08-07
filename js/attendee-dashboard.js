@@ -1756,6 +1756,15 @@
             return;
           }
           closeReviewModal();
+          const reward =
+            (data && data.reviewerReward) ||
+            (data && data.review && data.review.reviewerReward) ||
+            null;
+          if (reward && reward.toastMessage) {
+            showAdToast(reward.toastMessage);
+          } else {
+            showAdToast('Thanks — your review helps this group on the Hub.');
+          }
           await reloadDashboard();
         } catch (submitErr) {
           if (err) {
@@ -2576,6 +2585,70 @@
     });
   }
 
+  function reviewerRewardStatMeta(reward, pendingCount) {
+    const pending = Math.max(0, Number(pendingCount) || 0);
+    const r = reward && typeof reward === 'object' ? reward : null;
+    const parts = [];
+    if (r && r.tier && r.tier.shortLabel) {
+      parts.push(r.tier.shortLabel);
+    } else if (pending) {
+      parts.push('Review after each event');
+    }
+    if (pending) {
+      parts.push('⭐ ' + pending + ' pending');
+    } else if (r && r.nextTier && r.nextTier.remaining) {
+      parts.push(r.nextTier.remaining + ' to ' + r.nextTier.shortLabel);
+    } else if (r && r.count && !pending) {
+      parts.push('Every event counts');
+    }
+    return parts.length ? parts.join(' · ') : '—';
+  }
+
+  function renderOverviewReviewerReward(stats) {
+    const el = document.getElementById('ad-overview-reviewer-reward');
+    if (!el) return;
+    const reward = (stats && stats.reviewerReward) || null;
+    const count = reward && reward.count ? Number(reward.count) : Number(stats && stats.reviewsLeft) || 0;
+    const pending = Number(stats && stats.reviewsPending) || 0;
+    if (!count && !pending) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.hidden = false;
+    const tierLabel =
+      reward && reward.tier && reward.tier.label
+        ? reward.tier.label
+        : pending
+          ? 'Start your Reviewer badge'
+          : 'Reviewer';
+    const nextLine =
+      reward && reward.nextTier && reward.nextTier.remaining
+        ? reward.nextTier.remaining +
+          ' more review' +
+          (reward.nextTier.remaining === 1 ? '' : 's') +
+          ' unlocks ' +
+          reward.nextTier.label +
+          '.'
+        : count
+          ? 'You\'re a ' + tierLabel + ' — keep reviewing after each event.'
+          : 'Leave a review after each event you attend — every one counts.';
+    el.innerHTML =
+      '<div class="ad-overview-reviewer-reward-card">' +
+      '<p class="ad-overview-reviewer-reward-kicker">Networker recognition</p>' +
+      '<h2 class="ad-section-title">' +
+      esc(tierLabel) +
+      (count ? ' · ' + esc(String(count)) + ' event review' + (count === 1 ? '' : 's') : '') +
+      '</h2>' +
+      '<p class="ad-overview-reviewer-reward-copy">' +
+      esc(nextLine) +
+      (pending
+        ? ' You have ' + pending + ' pending — reviewing helps the groups you support climb the rankings.'
+        : '') +
+      '</p>' +
+      '</div>';
+  }
+
   function renderStats(stats) {
     const upcoming = document.getElementById('ad-stat-upcoming');
     const next = document.getElementById('ad-stat-next');
@@ -2591,9 +2664,9 @@
     }
     if (reviews) reviews.textContent = String(stats.reviewsLeft || 0);
     if (pending) {
-      const n = stats.reviewsPending || 0;
-      pending.textContent = n ? '⭐ ' + n + ' pending' : '—';
+      pending.textContent = reviewerRewardStatMeta(stats.reviewerReward, stats.reviewsPending);
     }
+    renderOverviewReviewerReward(stats);
     const enquiryCount = (opportunityEnquiries || []).length;
     if (enquiries) enquiries.textContent = String(enquiryCount);
     if (enquiriesHint) {
@@ -3159,6 +3232,7 @@
     el.hidden = false;
     el.innerHTML =
       '<h2 class="ad-section-title ad-section-title--spaced">Reviews to write</h2>' +
+      '<p class="ad-overview-review-nudge-lead">Review after each event — every review counts toward your Reviewer badge and helps groups you support.</p>' +
       '<div class="ad-review-nudges" role="list">' +
       pending
         .slice(0, 3)

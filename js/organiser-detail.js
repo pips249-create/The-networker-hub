@@ -554,8 +554,12 @@
 
     if (window.HubReviewModal) {
       window.HubReviewModal.init({
-        onSubmitted: function () {
-          showReviewStatus('Thank you — your review has been submitted.', 'success');
+        onSubmitted: function (review, reward) {
+          var msg =
+            (reward && reward.toastMessage) ||
+            (review && review.reviewerReward && review.reviewerReward.toastMessage) ||
+            'Thank you — your review has been submitted.';
+          showReviewStatus(msg, 'success');
           load();
         },
       });
