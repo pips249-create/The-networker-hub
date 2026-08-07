@@ -423,6 +423,46 @@ html:has(.site-access-page) {
   overflow: hidden;
 }
 
+.site-access-about {
+  padding: 8px 20px 36px;
+}
+
+.site-access-about-inner {
+  max-width: 42em;
+  margin: 0 auto;
+  padding: 22px 24px;
+  text-align: center;
+  border-radius: 14px;
+  border: 1px solid rgba(69, 45, 92, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.site-access-about-copy {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #635c5e;
+}
+
+.site-access-about-copy strong {
+  color: var(--charcoal);
+  font-weight: 600;
+}
+
+.site-access-about-link {
+  display: inline;
+  margin-left: 0.35em;
+  font-weight: 600;
+  color: #452d5c;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-access-about-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .site-access-footer {
   padding: 28px 20px 32px;
   text-align: center;
