@@ -41,3 +41,4 @@ ops/chunks/
 marketing/node_modules/
 marketing/package-lock.json
 marketing/exports/*.webm
+tmp-badges/
