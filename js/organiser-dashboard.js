@@ -9803,7 +9803,7 @@
     const board = document.getElementById('org-page-leaderboard');
     if (ranking && board && !ranking.dataset.folded) {
       const mount = document.createElement('div');
-      mount.className = 'org-promote-leaderboard-fold';
+      mount.className = 'org-promote-leaderboard-fold org-page--leaderboard';
       mount.id = 'org-promote-leaderboard-fold';
       while (board.firstChild) {
         mount.appendChild(board.firstChild);

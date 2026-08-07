@@ -300,6 +300,43 @@
   margin: 0;
 }
 
+@media (min-width: 900px) {
+  /* Reach-out discovery: put both tool rails on one row so Promote feels less stacked. */
+  #org-page-social.org-promote--reach .org-promote-groups {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
+    gap: 1rem 1.25rem;
+    align-items: stretch;
+  }
+
+  #org-page-social.org-promote--reach .org-promote-group,
+  #org-page-social.org-promote--reach .org-promote-group--hub-top {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  #org-page-social.org-promote--reach .org-events-subnav--promote,
+  #org-page-social.org-promote--reach .org-events-subnav--promote-hub {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  /* Content card sits under both rails instead of pretending to attach to one tab bar. */
+  #org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) {
+    border-radius: var(--od-radius);
+  }
+
+  #org-page-social.org-promote--reach .org-sub-page--social.is-active {
+    border-top: 1px solid var(--od-border);
+    border-radius: var(--od-radius);
+    margin-top: 1rem;
+  }
+
+  #org-page-social.org-promote--reach .org-events-subnav--promote:not(.org-events-subnav--promote-hub) .org-events-tab.is-active {
+    border-radius: 10px;
+  }
+}
+
 .org-promote-group--hub {
   margin: 1.5rem 0 0;
 }
@@ -1751,10 +1788,15 @@
 
 .org-ranking-tier-example-img {
   display: block;
-  width: min(100%, 340px);
+  width: 100%;
+  max-width: 340px;
   height: auto;
   border-radius: 14px;
   box-shadow: 0 8px 24px rgba(20, 24, 44, 0.18);
+}
+
+.org-ranking-tier-examples .org-ranking-tier-example-img {
+  max-width: none;
 }
 
 .org-ranking-tier-examples .org-ranking-tier-example {
@@ -3036,7 +3078,24 @@
 }
 
 .org-ranking-panel--social {
-  margin-bottom: 1.25rem;
+  margin: 0 0 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+
+/* Folded board inherits organiser leaderboard styles; hide the duplicate page title. */
+#org-promote-leaderboard-fold > .org-page-head {
+  display: none;
+}
+
+#org-promote-leaderboard-fold {
+  margin-top: 8px;
+}
+
+#org-promote-leaderboard-fold .org-ranking-prefs {
+  margin-top: 0;
 }
 
 .org-featured-upgrade {
@@ -4043,13 +4102,13 @@
 }
 
 .org-ranking-tier-guide {
-  width: fit-content;
-  max-width: min(100%, 380px);
-  margin: 0;
-  padding: 14px 16px 12px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 16px;
+  padding: 14px 16px 14px;
   border-radius: var(--od-radius);
-  background: linear-gradient(135deg, #fdf8ec 0%, #f4f9fb 100%);
-  border: 1px solid rgba(201, 168, 76, 0.28);
+  background: #f7f5f1;
+  border: 1px solid rgba(28, 32, 64, 0.1);
   box-sizing: border-box;
   font-size: 13px;
   color: var(--od-text-mid);
@@ -4059,14 +4118,34 @@
   cursor: pointer;
   font-weight: 600;
   color: var(--od-purple-dark);
-  margin-bottom: 10px;
+  margin-bottom: 0;
+  list-style: none;
+}
+
+.org-ranking-tier-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.org-ranking-tier-guide summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.4em;
+  transition: transform 0.15s ease;
+}
+
+.org-ranking-tier-guide[open] summary {
+  margin-bottom: 12px;
+}
+
+.org-ranking-tier-guide[open] summary::before {
+  transform: rotate(90deg);
 }
 
 .org-ranking-tier-examples {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 0 4px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
 }
 
 /* Share shell stays full-bleed for ranked cards; demos live in the compact guide above. */
@@ -4077,17 +4156,23 @@
 }
 
 .org-ranking-tier-example {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  display: grid;
+  gap: 6px;
+  align-items: start;
+  min-width: 0;
 }
 
 .org-ranking-tier-example-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--od-text-soft);
-  min-width: 4.5rem;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .org-ranking-tier-examples {
+    grid-template-columns: 1fr;
+  }
 }
 
 .org-ranking-inline {
@@ -11048,7 +11133,8 @@ body.org-event-drawer-open {
   display: none !important;
 }
 
-.org-page--leaderboard {
+.org-page--leaderboard,
+#org-promote-leaderboard-fold {
   --lb-ink: #ece8e0;
   --lb-muted: rgba(236, 232, 224, 0.62);
   --lb-board: #3a4254;
@@ -11066,7 +11152,7 @@ body.org-event-drawer-open {
   max-width: 36rem;
 }
 
-#org-page-leaderboard #org-leaderboard-root.org-leaderboard {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) #org-leaderboard-root.org-leaderboard {
   margin-top: 4px;
   padding: 12px;
   background: var(--lb-board);
@@ -11075,12 +11161,12 @@ body.org-event-drawer-open {
   box-shadow: none;
 }
 
-#org-page-leaderboard .org-leaderboard-toolbar-label {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-toolbar-label {
   color: var(--od-text-mid);
   font-weight: 600;
 }
 
-#org-page-leaderboard .org-leaderboard-filter {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-filter {
   background: var(--od-white);
   border: 1.5px solid var(--od-border-soft);
   color: var(--od-text-dark);
@@ -11089,20 +11175,20 @@ body.org-event-drawer-open {
   font-weight: 600;
 }
 
-#org-page-leaderboard .org-leaderboard-filter:hover {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-filter:hover {
   border-color: #0d6e7a;
   color: var(--od-text-dark);
   background: rgba(13, 110, 122, 0.06);
 }
 
-#org-page-leaderboard .org-leaderboard-filter.is-active {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-filter.is-active {
   background: #0d6e7a;
   border-color: #0d6e7a;
   color: #fff;
   box-shadow: 0 4px 12px rgba(13, 110, 122, 0.22);
 }
 
-#org-page-leaderboard .rankings-theme-toggle {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-theme-toggle {
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -11114,20 +11200,20 @@ body.org-event-drawer-open {
   cursor: pointer;
 }
 
-#org-page-leaderboard .rankings-theme-toggle:hover {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-theme-toggle:hover {
   color: var(--od-text-dark);
   border-color: var(--od-border);
 }
 
-#org-page-leaderboard .org-leaderboard-status {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-status {
   color: var(--lb-muted);
   padding: 16px 8px;
   background: transparent;
   border: none;
 }
 
-#org-page-leaderboard .org-leaderboard-list,
-#org-page-leaderboard .rankings-list.org-leaderboard-list {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-list,
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-list.org-leaderboard-list {
   gap: 4px;
   padding: 0;
   background: transparent;
@@ -11136,10 +11222,10 @@ body.org-event-drawer-open {
   outline: none;
 }
 
-#org-page-leaderboard .org-leaderboard-row,
-#org-page-leaderboard .rankings-row,
-#org-page-leaderboard a.rankings-row,
-#org-page-leaderboard div.rankings-row {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-row,
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-row,
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) a.rankings-row,
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) div.rankings-row {
   background: var(--lb-row) !important;
   border: 1px solid var(--lb-row-border) !important;
   border-radius: 10px !important;
@@ -11153,47 +11239,47 @@ body.org-event-drawer-open {
   animation: none !important;
 }
 
-#org-page-leaderboard .rankings-row::before,
-#org-page-leaderboard .rankings-row--top10::after {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-row::before,
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-row--top10::after {
   display: none !important;
 }
 
-#org-page-leaderboard .rankings-row--top10 {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-row--top10 {
   border-color: rgba(196, 168, 110, 0.28) !important;
   background: rgba(196, 168, 110, 0.1) !important;
 }
 
-#org-page-leaderboard a.rankings-row:hover {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) a.rankings-row:hover {
   border-color: rgba(196, 168, 110, 0.4) !important;
   background: rgba(255, 255, 255, 0.11) !important;
   box-shadow: none !important;
   transform: none !important;
 }
 
-#org-page-leaderboard .rankings-place {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-place {
   font-size: 0.95rem !important;
   font-weight: 700;
   color: rgba(236, 232, 224, 0.72) !important;
   text-shadow: none !important;
 }
 
-#org-page-leaderboard .rankings-row--top10 .rankings-place {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-row--top10 .rankings-place {
   color: var(--lb-gold) !important;
   text-shadow: none !important;
 }
 
-#org-page-leaderboard .rankings-org {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-org {
   gap: 8px !important;
 }
 
-#org-page-leaderboard .rankings-org-name {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-org-name {
   font-size: 13px !important;
   font-weight: 600;
   color: #ece8e0 !important;
   margin: 0 0 1px !important;
 }
 
-#org-page-leaderboard .rankings-avatar {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-avatar {
   width: 28px !important;
   height: 28px !important;
   border-radius: 50% !important;
@@ -11202,14 +11288,14 @@ body.org-event-drawer-open {
   background: #d7e4ea !important;
 }
 
-#org-page-leaderboard .rankings-avatar--placeholder {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-avatar--placeholder {
   font-size: 10px !important;
   font-weight: 800;
   color: #1c2040 !important;
   background: #d7e4ea !important;
 }
 
-#org-page-leaderboard .org-leaderboard-metrics-line {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-metrics-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -11221,39 +11307,39 @@ body.org-event-drawer-open {
   line-height: 1.35;
 }
 
-#org-page-leaderboard .org-leaderboard-metrics-line > span[aria-hidden='true'] {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-metrics-line > span[aria-hidden='true'] {
   color: rgba(236, 232, 224, 0.32);
   font-weight: 700;
   user-select: none;
 }
 
-#org-page-leaderboard .rankings-side .hub-ranking-badge {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-side .hub-ranking-badge {
   font-size: 9px;
   padding: 3px 8px;
   font-weight: 600;
   box-shadow: none;
 }
 
-#org-page-leaderboard .hub-ranking-badge--top10 {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .hub-ranking-badge--top10 {
   color: #5c4a22;
   background: linear-gradient(135deg, #efe2bc 0%, #dfc88a 100%);
   border-color: rgba(156, 122, 48, 0.35);
 }
 
-#org-page-leaderboard .hub-ranking-badge--top25 {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .hub-ranking-badge--top25 {
   color: #2f4660;
   background: linear-gradient(135deg, #dde8f4 0%, #b9cce2 100%);
   border-color: rgba(70, 110, 150, 0.3);
 }
 
-#org-page-leaderboard .hub-ranking-badge--top50 {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .hub-ranking-badge--top50 {
   color: #355038;
   background: linear-gradient(135deg, #dde9d9 0%, #b8d0b4 100%);
   border-color: rgba(80, 120, 78, 0.3);
 }
 
-#org-page-leaderboard.is-preview #org-leaderboard-root,
-#org-page-leaderboard .org-leaderboard.is-preview {
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold).is-preview #org-leaderboard-root,
+:is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard.is-preview {
   outline: 1px dashed rgba(196, 168, 110, 0.4);
   outline-offset: 2px;
 }
@@ -11271,14 +11357,14 @@ body.org-event-drawer-open {
     font-size: 13px;
   }
 
-  #org-page-leaderboard .rankings-row,
-  #org-page-leaderboard .org-leaderboard-row {
+  :is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-row,
+  :is(#org-page-leaderboard, #org-promote-leaderboard-fold) .org-leaderboard-row {
     grid-template-columns: 32px minmax(0, 1fr) !important;
     gap: 6px !important;
     padding: 6px 8px !important;
   }
 
-  #org-page-leaderboard .rankings-side {
+  :is(#org-page-leaderboard, #org-promote-leaderboard-fold) .rankings-side {
     grid-column: 2;
     align-items: flex-start;
   }
