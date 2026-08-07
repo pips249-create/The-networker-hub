@@ -25,7 +25,7 @@
   </head>
   <body class="attendee-dashboard-page hub-page-account hub-is-page-loading">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260807topg" data-root="../" data-page="account"></script>
+    <script src="../js/site-nav.js?v=20260807navn" data-root="../" data-page="account"></script>
 
     <div id="ad-signin" class="ad-signin" hidden>
       <p>Sign in to see event tickets you have bought, reviews to leave, and business opportunity enquiries you have sent.</p>
@@ -43,6 +43,11 @@
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
               Event tickets
               <span class="ad-side-count" id="ad-side-tickets" hidden></span>
+            </a>
+            <span class="hub-side-nav-divider">Reviews</span>
+            <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">
+              Reviews to write
+              <span class="ad-side-count" id="ad-side-reviews" hidden></span>
             </a>
             <span class="hub-side-nav-divider">Saved</span>
             <a href="#saved" class="hub-side-nav-link" data-ad-route="saved">
@@ -108,8 +113,8 @@
                   <div class="ad-stat-value" id="ad-stat-upcoming" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-next">—</div>
                 </button>
-                <button type="button" class="ad-stat ad-stat--gold ad-stat-link" data-ad-stat-route="reviews" aria-label="View reviews">
-                  <div class="ad-stat-label"><span class="ad-stat-label-full">Organiser reviews</span><span class="ad-stat-label-short">Reviews</span></div>
+                <button type="button" class="ad-stat ad-stat--gold ad-stat-link" data-ad-stat-route="reviews" aria-label="View reviews to write">
+                  <div class="ad-stat-label"><span class="ad-stat-label-full">Reviews to write</span><span class="ad-stat-label-short">Reviews</span></div>
                   <div class="ad-stat-value" id="ad-stat-reviews" aria-live="polite">—</div>
                   <div class="ad-stat-meta" id="ad-stat-reviews-pending">—</div>
                 </button>
@@ -120,9 +125,9 @@
                 </button>
               </div>
               <div class="ad-refund-alert" id="ad-refund-alert-overview" hidden role="status"></div>
+              <div class="ad-overview-review-nudge" id="ad-overview-review-nudge" hidden></div>
               <div class="ad-overview-reviewer-reward" id="ad-overview-reviewer-reward" hidden></div>
               <div class="ad-overview-membership-nudge" id="ad-overview-membership-nudge" hidden></div>
-              <div class="ad-overview-review-nudge" id="ad-overview-review-nudge" hidden></div>
               <div class="ad-overview-feed" id="ad-overview-feed" hidden>
                 <h2 class="ad-section-title ad-section-title--spaced">Saved events happening soon</h2>
                 <div class="ad-feed-scroll" id="ad-overview-feed-scroll" role="list"></div>
@@ -290,6 +295,11 @@
                 <div class="ad-saved-scope-wrap">
                   <p class="ad-saved-scope-kicker" id="ad-saved-scope-kicker">Choose what to view</p>
                   <div class="ad-saved-scope ad-saved-scope--segments" role="tablist" aria-labelledby="ad-saved-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="reviews">
+                      <span class="ad-scope-label ad-scope-label--full">Reviews to write</span>
+                      <span class="ad-scope-label ad-scope-label--short">Reviews</span>
+                      <span class="ad-saved-scope-count" id="ad-saved-count-reviews" hidden aria-hidden="true"></span>
+                    </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">
                       <span class="ad-scope-label ad-scope-label--full">My memberships</span>
                       <span class="ad-scope-label ad-scope-label--short">Members</span>
@@ -304,11 +314,6 @@
                       <span class="ad-scope-label ad-scope-label--full">Saved organisers</span>
                       <span class="ad-scope-label ad-scope-label--short">Organisers</span>
                       <span class="ad-saved-scope-count" id="ad-saved-count-organisers" hidden aria-hidden="true"></span>
-                    </button>
-                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="reviews">
-                      <span class="ad-scope-label ad-scope-label--full">Organiser reviews</span>
-                      <span class="ad-scope-label ad-scope-label--short">Reviews</span>
-                      <span class="ad-saved-scope-count" id="ad-saved-count-reviews" hidden aria-hidden="true"></span>
                     </button>
                   </div>
                 </div>

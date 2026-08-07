@@ -2302,7 +2302,17 @@ body.nav-menu-open {
   }
 
   .attendee-dashboard-page .ad-overview-review-nudge {
-    display: none !important;
+    margin-top: 16px;
+  }
+
+  .attendee-dashboard-page .ad-overview-review-nudge .ad-section-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+  }
+
+  .attendee-dashboard-page .ad-overview-review-nudge-lead {
+    font-size: 13px;
+    margin: 0 0 12px;
   }
 
   .attendee-dashboard-page .ad-overview-membership-nudge-footnote,

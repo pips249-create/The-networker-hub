@@ -97,16 +97,16 @@
       sub: 'Pin your own listings higher, or sponsor the hub as a brand to reach audiences across events, organisers, and business opportunities.',
     },
     'reviews-pending': {
-      title: 'Organiser reviews',
-      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
+      title: 'Reviews to write',
+      sub: 'Leave feedback for networking groups after events you attended. Reviews show on their public profile and they can reply here.',
     },
     'reviews-done': {
-      title: 'Organiser reviews',
-      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
+      title: 'Your reviews',
+      sub: 'Feedback you have already submitted. Organiser replies appear here when they respond.',
     },
     reviews: {
-      title: 'Organiser reviews',
-      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
+      title: 'Reviews to write',
+      sub: 'Leave feedback for networking groups after events you attended. Reviews show on their public profile and they can reply here.',
     },
   };
 
@@ -1248,7 +1248,14 @@
 
   function maybeDefaultSavedScope() {
     if (savedScopePinned) return;
-    if (currentRoute !== 'saved' || savedScope !== 'events') return;
+    if (currentRoute !== 'saved') return;
+    const pending = pendingReviewsList().length;
+    if (pending > 0 && (savedScope === 'events' || savedScope === 'reviews')) {
+      setSavedScope('reviews');
+      setReviewsScope('pending');
+      return;
+    }
+    if (savedScope !== 'events') return;
     const hasGroups = myGroups.length > 0;
     const hasEvents = savedEvents.length > 0;
     const hasOrganisers = savedOrganisers.length > 0;
@@ -2589,17 +2596,19 @@
     const pending = Math.max(0, Number(pendingCount) || 0);
     const r = reward && typeof reward === 'object' ? reward : null;
     const parts = [];
+    if (pending) {
+      parts.push('Tap to leave feedback');
+      return parts.join(' · ');
+    }
     if (r && r.tier && r.tier.shortLabel) {
       parts.push(r.tier.shortLabel);
-    } else if (pending) {
-      parts.push('Review after each event');
     }
-    if (pending) {
-      parts.push('⭐ ' + pending + ' pending');
-    } else if (r && r.nextTier && r.nextTier.remaining) {
+    if (r && r.nextTier && r.nextTier.remaining) {
       parts.push(r.nextTier.remaining + ' to ' + r.nextTier.shortLabel);
-    } else if (r && r.count && !pending) {
+    } else if (r && r.count) {
       parts.push('Every event counts');
+    } else {
+      parts.push('Review after each event');
     }
     return parts.length ? parts.join(' · ') : '—';
   }
@@ -2643,10 +2652,25 @@
       '<p class="ad-overview-reviewer-reward-copy">' +
       esc(nextLine) +
       (pending
-        ? ' You have ' + pending + ' pending — reviewing helps the groups you support climb the rankings.'
+        ? ' You have ' +
+          pending +
+          ' review' +
+          (pending === 1 ? '' : 's') +
+          ' waiting — every one helps the groups you support.'
         : '') +
       '</p>' +
+      (pending
+        ? '<button type="button" class="ad-btn ad-btn-gold ad-overview-reviewer-reward-cta" data-ad-open-reviews>Leave a review</button>'
+        : '') +
       '</div>';
+    const cta = el.querySelector('[data-ad-open-reviews]');
+    if (cta) {
+      cta.addEventListener('click', () => {
+        setSavedScope('reviews');
+        setReviewsScope('pending');
+        setRoute('reviews-pending');
+      });
+    }
   }
 
   function renderStats(stats) {
@@ -2656,15 +2680,23 @@
     const pending = document.getElementById('ad-stat-reviews-pending');
     const enquiries = document.getElementById('ad-stat-enquiries');
     const enquiriesHint = document.getElementById('ad-stat-enquiries-hint');
+    const pendingCount = Number(stats.reviewsPending) || 0;
     if (upcoming) upcoming.textContent = String(stats.upcomingCount || 0);
     if (next) {
       next.textContent = stats.nextEventDate
         ? 'Next: ' + formatDateShort(stats.nextEventDate)
         : '—';
     }
-    if (reviews) reviews.textContent = String(stats.reviewsLeft || 0);
+    if (reviews) {
+      reviews.textContent = String(pendingCount > 0 ? pendingCount : stats.reviewsLeft || 0);
+    }
     if (pending) {
-      pending.textContent = reviewerRewardStatMeta(stats.reviewerReward, stats.reviewsPending);
+      pending.textContent =
+        pendingCount > 0
+          ? reviewerRewardStatMeta(stats.reviewerReward, pendingCount)
+          : stats.reviewsLeft
+            ? String(stats.reviewsLeft) + ' submitted · ' + reviewerRewardStatMeta(stats.reviewerReward, 0)
+            : reviewerRewardStatMeta(stats.reviewerReward, 0);
     }
     renderOverviewReviewerReward(stats);
     const enquiryCount = (opportunityEnquiries || []).length;
@@ -2710,7 +2742,11 @@
       (opportunityEnquiries || []).length + savedOpportunities.length + savedOpportunitySearches.length;
     set('ad-side-opportunities', oppTotal);
     set('ad-side-enquiries', (opportunityEnquiries || []).length);
-    set('ad-side-pending', pendingReviewsList().length);
+    set('ad-side-reviews', pendingReviewsList().length);
+    set(
+      'ad-side-pending',
+      myGroups.length + savedEvents.length + savedOrganisers.length
+    );
     set('ad-side-reviewed', doneReviewsList().length);
     set('ad-side-saved-opportunities', savedOpportunities.length + savedOpportunitySearches.length);
     set('ad-bottom-tickets', upcomingList().length);
@@ -2907,19 +2943,22 @@
     return (
       '<article class="ad-review-nudge" role="listitem">' +
       organiserLogoHtml(reg, 'ad-review-nudge-logo') +
-      '<button type="button" class="ad-review-nudge-cta ad-leave-review" data-event-id="' +
+      '<div class="ad-review-nudge-body">' +
+      '<p class="ad-review-nudge-title">' +
+      esc(reg.title || 'Event') +
+      '</p>' +
+      '<p class="ad-review-nudge-meta">' +
+      esc(orgName) +
+      (reg.date ? ' · ' + esc(formatDateShort(reg.date)) : '') +
+      '</p>' +
+      '<button type="button" class="ad-btn ad-btn-gold ad-leave-review" data-event-id="' +
       esc(reg.eventId || '') +
       '" data-event-title="' +
       esc(reg.title || 'Event') +
       '" data-organiser-name="' +
       esc(reg.organiserName || '') +
-      '">' +
-      'Help <strong>' +
-      esc(orgName) +
-      '</strong> earn recognition on the Hub — share your feedback about <em>' +
-      esc(reg.title || 'your event') +
-      '</em>.' +
-      '</button></article>'
+      '">Leave a review</button>' +
+      '</div></article>'
     );
   }
 
@@ -2951,22 +2990,21 @@
       article.innerHTML =
         organiserLogoHtml(reg, 'ad-review-card-logo-img') +
         '<div class="ad-review-card-body">' +
-        '<button type="button" class="ad-review-card-cta ad-leave-review" data-event-id="' +
+        '<p class="ad-review-card-title">' +
+        esc(reg.title || 'Event') +
+        '</p>' +
+        '<p class="ad-review-card-meta">' +
+        esc(orgName) +
+        ' · ' +
+        esc(formatDateShort(reg.date)) +
+        '</p>' +
+        '<button type="button" class="ad-btn ad-btn-gold ad-leave-review" data-event-id="' +
         esc(reg.eventId || '') +
         '" data-event-title="' +
         esc(reg.title || 'Event') +
         '" data-organiser-name="' +
         esc(reg.organiserName || '') +
-        '">' +
-        'Help <strong>' +
-        esc(orgName) +
-        '</strong> earn recognition on the Hub — share your feedback!' +
-        '</button>' +
-        '<p class="ad-review-card-meta">' +
-        esc(reg.title || 'Event') +
-        ' · ' +
-        esc(formatDateShort(reg.date)) +
-        '</p>' +
+        '">Leave a review</button>' +
         '</div>';
       container.appendChild(article);
     });
@@ -3232,7 +3270,7 @@
     el.hidden = false;
     el.innerHTML =
       '<h2 class="ad-section-title ad-section-title--spaced">Reviews to write</h2>' +
-      '<p class="ad-overview-review-nudge-lead">Review after each event — every review counts toward your Reviewer badge and helps groups you support.</p>' +
+      '<p class="ad-overview-review-nudge-lead">Share quick feedback after events you attended — it only takes a minute and helps groups you support.</p>' +
       '<div class="ad-review-nudges" role="list">' +
       pending
         .slice(0, 3)
