@@ -8,12 +8,40 @@ const { publicSiteBase, unsubscribeUrl, logoNavUrl, logoFooterUrl } = require('.
 const { formatDateOnly } = require('./event-timezone');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { organiserLogoUrlForEmail } = require('./organiser-member-roster');
+const crypto = require('crypto');
 
 const SLUG = 'event_connections_list';
 const MAX_ATTENDEES = 200;
 const MAX_NOTE = 800;
 const MAX_SUBJECT = 90;
 const MAX_FROM = 80;
+
+function trackBaseUrl() {
+  return publicSiteBase() + '/api/track';
+}
+
+function wrapTrackedUrl(url, trackToken) {
+  const target = String(url || '').trim();
+  if (!trackToken || !target) return target;
+  if (!/^(https?:|mailto:)/i.test(target)) return target;
+  return (
+    trackBaseUrl() +
+    '?kind=click&t=' +
+    encodeURIComponent(trackToken) +
+    '&u=' +
+    encodeURIComponent(target)
+  );
+}
+
+function trackingPixelHtml(trackToken) {
+  if (!trackToken) return '';
+  const src = trackBaseUrl() + '?kind=open&t=' + encodeURIComponent(trackToken);
+  return (
+    '<img src="' +
+    escapeHtml(src) +
+    '" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />'
+  );
+}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -213,7 +241,7 @@ async function loadEligibleAttendees(sb, eventId) {
     .slice(0, MAX_ATTENDEES);
 }
 
-function buildConnectionsListHtml(attendees, recipientEmail) {
+function buildConnectionsListHtml(attendees, recipientEmail, trackToken) {
   const rows = attendees
     .filter((a) => a.email !== recipientEmail)
     .map((a) => {
@@ -224,6 +252,7 @@ function buildConnectionsListHtml(attendees, recipientEmail) {
             escapeHtml(a.guestNames.join(', ')) +
             '</p>'
           : '';
+      const mailHref = wrapTrackedUrl('mailto:' + a.email, trackToken);
       return (
         '<tr><td style="padding:8px 0;">' +
         '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f8fc;border:1px solid #ece7df;border-radius:12px;">' +
@@ -237,8 +266,8 @@ function buildConnectionsListHtml(attendees, recipientEmail) {
             '</p>'
           : '') +
         '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;margin:0;">' +
-        '<a href="mailto:' +
-        escapeHtml(a.email) +
+        '<a href="' +
+        escapeHtml(mailHref) +
         '" style="color:#0d6e7a;text-decoration:underline;">' +
         escapeHtml(a.email) +
         '</a></p>' +
@@ -394,6 +423,7 @@ async function getConnectionsPreview(session, eventId, listKindInput) {
   const organiserLogoUrl = organiserLogoUrlForEmail(organiser, site) || '';
   const copy = copyForListKind(listKind, event.title);
   const free = await loadGroupFreeAllowance(sb, event.organiser_id);
+  const engagement = await loadEngagementForEvent(sb, event.id);
 
   return {
     eventId: event.id,
@@ -424,6 +454,7 @@ async function getConnectionsPreview(session, eventId, listKindInput) {
     copyHeadline: copy.headline,
     tooLarge: attendees.length >= MAX_ATTENDEES,
     maxAttendees: MAX_ATTENDEES,
+    engagement,
   };
 }
 
@@ -486,9 +517,31 @@ async function sendConnectionsEmail(
   let failed = 0;
   const errors = [];
   const CONCURRENCY = 5;
+  let sendId = null;
+  const recipientRows = [];
+
+  try {
+    const { data: sendRow, error: sendErr } = await sb
+      .from('event_connections_sends')
+      .insert({
+        event_id: event.id,
+        organiser_id: event.organiser_id,
+        list_kind: listKind,
+        subject: emailSubject,
+        sent_count: 0,
+        failed_count: 0,
+        skipped_count: 0,
+      })
+      .select('id')
+      .single();
+    if (!sendErr && sendRow && sendRow.id) sendId = sendRow.id;
+  } catch (e) {
+    sendId = null;
+  }
 
   async function sendOne(recipient) {
-    const listHtml = buildConnectionsListHtml(attendees, recipient.email);
+    const trackToken = crypto.randomUUID();
+    const listHtml = buildConnectionsListHtml(attendees, recipient.email, trackToken);
     const otherCount = attendees.filter((a) => a.email !== recipient.email).length;
     const firstName = recipient.name.split(/\s+/)[0] || recipient.name;
     const dateClause = eventDate ? ' on ' + eventDate : '';
@@ -523,9 +576,10 @@ async function sendConnectionsEmail(
           list_count_label: String(otherCount) + ' ' + copy.listLabel,
           footer_reason: copy.footerReason,
           attendee_count: String(otherCount),
-          connections_list_html: listHtml,
+          connections_list_html: listHtml + trackingPixelHtml(trackToken),
           organiser_note_html: noteHtml,
           organiser_logo_url: organiserLogoUrl,
+          tracking_pixel_html: trackingPixelHtml(trackToken),
           site_url: site,
           logo_url: logoNavUrl(site),
           logo_footer_url: logoFooterUrl(site),
@@ -541,6 +595,16 @@ async function sendConnectionsEmail(
         ],
       });
       sent++;
+      if (sendId) {
+        recipientRows.push({
+          send_id: sendId,
+          event_id: event.id,
+          organiser_id: event.organiser_id,
+          email: recipient.email,
+          tracking_token: trackToken,
+          sent_at: new Date().toISOString(),
+        });
+      }
     } catch (e) {
       if (e && e.code === 'emails_disabled') {
         skipped++;
@@ -556,6 +620,21 @@ async function sendConnectionsEmail(
   for (let i = 0; i < attendees.length; i += CONCURRENCY) {
     const batch = attendees.slice(i, i + CONCURRENCY);
     await Promise.all(batch.map((recipient) => sendOne(recipient)));
+  }
+
+  if (sendId && recipientRows.length) {
+    const { error: recErr } = await sb.from('event_connections_recipients').insert(recipientRows);
+    if (recErr && !/event_connections_recipients|schema cache|does not exist/i.test(String(recErr.message || ''))) {
+      /* non-fatal — email already sent */
+    }
+    await sb
+      .from('event_connections_sends')
+      .update({
+        sent_count: sent,
+        failed_count: failed,
+        skipped_count: skipped,
+      })
+      .eq('id', sendId);
   }
 
   const patch = {
@@ -574,6 +653,7 @@ async function sendConnectionsEmail(
     eventId: event.id,
     eventTitle: String(event.title || 'Event').trim(),
     listKind,
+    sendId,
     recipientCount: attendees.length,
     omittedCount: omitted,
     sent,
@@ -597,11 +677,75 @@ async function sendConnectionsEmail(
   };
 }
 
+async function loadEngagementForEvent(sb, eventId) {
+  const empty = {
+    hasSend: false,
+    sent: 0,
+    opened: 0,
+    openRate: 0,
+    clicked: 0,
+    clickRate: 0,
+    sentAt: null,
+    listKind: null,
+  };
+  if (!eventId) return empty;
+  const { data: latest, error: latestErr } = await sb
+    .from('event_connections_sends')
+    .select('id, list_kind, created_at')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latestErr && /event_connections_sends|schema cache|does not exist/i.test(String(latestErr.message || ''))) {
+    return empty;
+  }
+  if (latestErr || !latest) return empty;
+
+  const { data: rows, error } = await sb
+    .from('event_connections_recipients')
+    .select('sent_at, opened_at, clicked_at')
+    .eq('send_id', latest.id);
+  if (error) return empty;
+
+  const delivered = (rows || []).filter((r) => r.sent_at);
+  const opened = delivered.filter((r) => r.opened_at).length;
+  const clicked = delivered.filter((r) => r.clicked_at).length;
+  const sentCount = delivered.length;
+  return {
+    hasSend: true,
+    sendId: latest.id,
+    listKind: latest.list_kind || null,
+    sentAt: latest.created_at || null,
+    sent: sentCount,
+    opened,
+    openRate: sentCount ? Math.round((opened / sentCount) * 1000) / 10 : 0,
+    clicked,
+    clickRate: sentCount ? Math.round((clicked / sentCount) * 1000) / 10 : 0,
+  };
+}
+
+async function getConnectionsEngagement(session, eventId) {
+  if (!isSupabaseConfigured()) {
+    const err = new Error('Database not configured');
+    err.status = 503;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const event = await assertEventOwned(sb, session, eventId);
+  const engagement = await loadEngagementForEvent(sb, event.id);
+  return {
+    ...engagement,
+    eventId: event.id,
+    eventTitle: String(event.title || 'Event').trim(),
+  };
+}
+
 module.exports = {
   SLUG,
   MAX_ATTENDEES,
   getConnectionsPreview,
   sendConnectionsEmail,
+  getConnectionsEngagement,
   defaultSubject,
   normalizeListKind,
 };

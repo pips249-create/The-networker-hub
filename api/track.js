@@ -1,7 +1,9 @@
 /**
- * Public open/click tracking for monthly group-update emails.
+ * Public open/click tracking for Hub emails.
  * GET /api/track?kind=open&t=TOKEN
  * GET /api/track?kind=click&t=TOKEN&u=ENCODED_URL
+ *
+ * Looks up tokens on monthly group-update queue first, then attendee round-up recipients.
  */
 const { getSupabaseAdmin, useSupabase } = require('./_lib/supabase');
 const { enforceRateLimit } = require('./_lib/rate-limit');
@@ -22,62 +24,89 @@ function safeRedirectUrl(raw) {
   try {
     const decoded = decodeURIComponent(value);
     const parsed = new URL(decoded);
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+    if (
+      parsed.protocol !== 'https:' &&
+      parsed.protocol !== 'http:' &&
+      parsed.protocol !== 'mailto:'
+    ) {
+      return '';
+    }
     return parsed.toString();
   } catch {
     return '';
   }
 }
 
-async function recordOpen(sb, token) {
+async function recordOpenOnTable(sb, table, token) {
   const { data: row } = await sb
-    .from('organiser_group_update_queue')
+    .from(table)
     .select('id, open_count, opened_at')
     .eq('tracking_token', token)
     .maybeSingle();
-  if (!row) return;
+  if (!row) return false;
   const patch = {
     open_count: Math.max(0, Number(row.open_count) || 0) + 1,
   };
   if (!row.opened_at) patch.opened_at = new Date().toISOString();
-  await sb.from('organiser_group_update_queue').update(patch).eq('id', row.id);
+  await sb.from(table).update(patch).eq('id', row.id);
+  return true;
+}
+
+async function recordOpen(sb, token) {
+  if (await recordOpenOnTable(sb, 'organiser_group_update_queue', token)) return;
+  await recordOpenOnTable(sb, 'event_connections_recipients', token);
 }
 
 async function recordClick(sb, token, targetUrl) {
-  const { data: row } = await sb
+  const { data: oguRow } = await sb
     .from('organiser_group_update_queue')
     .select('id, update_id, click_count, clicked_at')
     .eq('tracking_token', token)
     .maybeSingle();
-  if (!row) return;
-  const patch = {
-    click_count: Math.max(0, Number(row.click_count) || 0) + 1,
-  };
-  if (!row.clicked_at) patch.clicked_at = new Date().toISOString();
-  await sb.from('organiser_group_update_queue').update(patch).eq('id', row.id);
+  if (oguRow) {
+    const patch = {
+      click_count: Math.max(0, Number(oguRow.click_count) || 0) + 1,
+    };
+    if (!oguRow.clicked_at) patch.clicked_at = new Date().toISOString();
+    await sb.from('organiser_group_update_queue').update(patch).eq('id', oguRow.id);
 
-  if (!row.update_id || !targetUrl) return;
-  const { data: existing } = await sb
-    .from('organiser_group_update_link_clicks')
-    .select('id, click_count')
-    .eq('update_id', row.update_id)
-    .eq('url', targetUrl)
-    .maybeSingle();
-  if (existing) {
-    await sb
-      .from('organiser_group_update_link_clicks')
-      .update({
-        click_count: Math.max(0, Number(existing.click_count) || 0) + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', existing.id);
-  } else {
-    await sb.from('organiser_group_update_link_clicks').insert({
-      update_id: row.update_id,
-      url: targetUrl.slice(0, 2000),
-      click_count: 1,
-    });
+    if (oguRow.update_id && targetUrl && !/^mailto:/i.test(targetUrl)) {
+      const { data: existing } = await sb
+        .from('organiser_group_update_link_clicks')
+        .select('id, click_count')
+        .eq('update_id', oguRow.update_id)
+        .eq('url', targetUrl)
+        .maybeSingle();
+      if (existing) {
+        await sb
+          .from('organiser_group_update_link_clicks')
+          .update({
+            click_count: Math.max(0, Number(existing.click_count) || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id);
+      } else {
+        await sb.from('organiser_group_update_link_clicks').insert({
+          update_id: oguRow.update_id,
+          url: targetUrl.slice(0, 2000),
+          click_count: 1,
+        });
+      }
+    }
+    return;
   }
+
+  const { data: connRow } = await sb
+    .from('event_connections_recipients')
+    .select('id, click_count, clicked_at')
+    .eq('tracking_token', token)
+    .maybeSingle();
+  if (!connRow) return;
+  const patch = {
+    click_count: Math.max(0, Number(connRow.click_count) || 0) + 1,
+  };
+  if (!connRow.clicked_at) patch.clicked_at = new Date().toISOString();
+  await sb.from('event_connections_recipients').update(patch).eq('id', connRow.id);
 }
 
 module.exports = async function handler(req, res) {
@@ -133,7 +162,6 @@ module.exports = async function handler(req, res) {
     return res.end();
   }
 
-  // 1×1 transparent GIF
   res.statusCode = 200;
   res.setHeader('Content-Type', 'image/gif');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');

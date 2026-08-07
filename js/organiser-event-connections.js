@@ -20,6 +20,9 @@
       group: document.getElementById('oec-group'),
       groupWrap: document.getElementById('oec-group-wrap'),
       event: document.getElementById('oec-event'),
+      details: document.getElementById('oec-details'),
+      engagement: document.getElementById('oec-engagement'),
+      engagementStats: document.getElementById('oec-engagement-stats'),
       subject: document.getElementById('oec-subject'),
       fromName: document.getElementById('oec-from-name'),
       note: document.getElementById('oec-note'),
@@ -66,26 +69,94 @@
     el.classList.toggle('is-ok', kind === 'ok');
   }
 
+  function selectedGroupId() {
+    var e = els();
+    if (e.group && String(e.group.value || '').trim()) return String(e.group.value).trim();
+    var groups = state.groups || [];
+    if (groups.length === 1 && groups[0] && groups[0].id) return String(groups[0].id);
+    return '';
+  }
+
+  function selectedGroupName() {
+    var id = selectedGroupId();
+    var groups = state.groups || [];
+    for (var i = 0; i < groups.length; i++) {
+      if (String(groups[i].id) === id) return String(groups[i].name || 'this organiser page').trim();
+    }
+    return 'this organiser page';
+  }
+
+  function allowanceFromEvents(groupId) {
+    var list = state.events || [];
+    var latest = null;
+    list.forEach(function (ev) {
+      var evGroup = String(
+        ev.organiserGroupId || ev.organiserId || ev.organiser_id || ev.groupId || ''
+      );
+      if (groupId && evGroup && evGroup !== groupId) return;
+      var at = ev.connectionsEmailSentAt || ev.connections_email_sent_at || null;
+      if (!at) return;
+      var ms = new Date(at).getTime();
+      if (!Number.isFinite(ms)) return;
+      if (!latest || ms > latest.ms) {
+        latest = {
+          ms: ms,
+          lastSentAt: at,
+          lastSentCount: Number(ev.connectionsEmailSentCount || ev.connections_email_sent_count) || 0,
+          lastSentEventId: ev.id || null,
+        };
+      }
+    });
+    if (!latest) {
+      return { freeAllowanceUsed: false, lastSentAt: null, lastSentCount: 0, lastSentEventId: null };
+    }
+    return {
+      freeAllowanceUsed: true,
+      lastSentAt: latest.lastSentAt,
+      lastSentCount: latest.lastSentCount,
+      lastSentEventId: latest.lastSentEventId,
+    };
+  }
+
   function setUsage(preview) {
     var el = els().usage;
     if (!el) return;
-    if (!preview || !preview.freeAllowanceUsed) {
-      el.hidden = true;
-      el.textContent = '';
+    var free =
+      preview && (preview.freeAllowanceUsed || preview.lastSentAt)
+        ? {
+            freeAllowanceUsed: Boolean(preview.freeAllowanceUsed),
+            lastSentAt: preview.lastSentAt || null,
+            lastSentCount: Number(preview.lastSentCount) || 0,
+          }
+        : allowanceFromEvents(selectedGroupId());
+    var pageName = selectedGroupName();
+    el.hidden = false;
+    el.classList.toggle('is-used', Boolean(free.freeAllowanceUsed));
+    if (!free.freeAllowanceUsed) {
+      el.textContent =
+        'Free send still available for ' + pageName + ' — one Attendee round-up included.';
       return;
     }
     var when = '';
     try {
-      when = preview.lastSentAt ? new Date(preview.lastSentAt).toLocaleString('en-GB') : '';
+      when = free.lastSentAt ? new Date(free.lastSentAt).toLocaleString('en-GB') : '';
     } catch (e) {
-      when = String(preview.lastSentAt || '');
+      when = String(free.lastSentAt || '');
     }
-    el.hidden = false;
     el.textContent =
-      'Free send used for this organiser page' +
+      'Free send used for ' +
+      pageName +
       (when ? ' · Last sent ' + when : '') +
-      (preview.lastSentCount ? ' to ' + preview.lastSentCount + ' people' : '') +
+      (free.lastSentCount ? ' to ' + free.lastSentCount + ' people' : '') +
       '. Extra sends will be a paid add-on soon.';
+  }
+
+  function syncFormReadyState() {
+    var e = els();
+    var hasEvent = Boolean(e.event && String(e.event.value || '').trim());
+    if (e.details) e.details.classList.toggle('is-waiting', !hasEvent);
+    if (e.previewBtn) e.previewBtn.disabled = !hasEvent;
+    if (e.sendBtn && !state.sending) e.sendBtn.disabled = !hasEvent;
   }
 
   function api(path, opts) {
@@ -115,8 +186,10 @@
   function eventLabel(ev) {
     var title = String(ev.title || 'Event').trim();
     var when = '';
+    var startMs = NaN;
     if (ev.startsAt || ev.starts_at || ev.date) {
       try {
+        startMs = new Date(ev.startsAt || ev.starts_at || ev.date).getTime();
         when = new Date(ev.startsAt || ev.starts_at || ev.date).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
@@ -126,7 +199,15 @@
         when = '';
       }
     }
-    return when ? title + ' · ' + when : title;
+    var timing = '';
+    if (Number.isFinite(startMs)) {
+      timing = startMs > Date.now() ? 'Upcoming' : 'Past';
+    }
+    var parts = [];
+    if (timing) parts.push(timing);
+    parts.push(title);
+    if (when) parts.push(when);
+    return parts.join(' · ');
   }
 
   function eventsForSelectedGroup() {
@@ -194,6 +275,10 @@
     if (current && list.some(function (ev) { return ev.id === current; })) {
       e.event.value = current;
     }
+    syncFormReadyState();
+    setUsage(state.preview && String(state.preview.eventId || '') === String(e.event.value || '')
+      ? state.preview
+      : null);
   }
 
   function defaultFromName(preview) {
@@ -272,10 +357,45 @@
       ' — each receives the list minus themselves';
   }
 
+  function renderEngagement(preview) {
+    var e = els();
+    if (!e.engagement || !e.engagementStats) return;
+    var eng = preview && preview.engagement;
+    if (!eng || !eng.hasSend) {
+      e.engagement.hidden = true;
+      e.engagementStats.innerHTML = '';
+      return;
+    }
+    e.engagement.hidden = false;
+    var when = '';
+    try {
+      when = eng.sentAt ? new Date(eng.sentAt).toLocaleString('en-GB') : '';
+    } catch (err) {
+      when = String(eng.sentAt || '');
+    }
+    e.engagementStats.innerHTML =
+      '<div><dt>Sent</dt><dd>' +
+      esc(eng.sent) +
+      (when ? '<span>' + esc(when) + '</span>' : '') +
+      '</dd></div>' +
+      '<div><dt>Opened</dt><dd>' +
+      esc(eng.opened) +
+      '<span>' +
+      esc(eng.openRate) +
+      '%</span></dd></div>' +
+      '<div><dt>Clicked</dt><dd>' +
+      esc(eng.clicked) +
+      '<span>' +
+      esc(eng.clickRate) +
+      '%</span></dd></div>';
+  }
+
   function renderPreview(preview) {
     var e = els();
     state.preview = preview || null;
     setUsage(preview);
+    syncFormReadyState();
+    renderEngagement(preview);
     if (preview) setListKind(preview.listKind || selectedListKind());
     renderOmitList(preview);
     updateCountLabel(preview);
@@ -390,7 +510,9 @@
     var e = els();
     var eventId = e.event ? String(e.event.value || '').trim() : '';
     if (!eventId) {
-      setStatus('Choose an event first.', 'error');
+      setStatus('Pick an event to continue.');
+      renderPreview(null);
+      syncFormReadyState();
       return null;
     }
     syncModeForSelectedEvent();
@@ -439,7 +561,8 @@
     if (state.sending) return;
     var eventId = e.event ? String(e.event.value || '').trim() : '';
     if (!eventId) {
-      setStatus('Choose an event first.', 'error');
+      setStatus('Pick an event to continue.');
+      syncFormReadyState();
       return;
     }
     var listKind = selectedListKind();
@@ -507,10 +630,17 @@
         return;
       }
       setStatus(res.data.message || 'Sent.', 'ok');
+      var sentEv = eventById(eventId);
+      if (sentEv) {
+        sentEv.connectionsEmailSentAt = new Date().toISOString();
+        sentEv.connections_email_sent_at = sentEv.connectionsEmailSentAt;
+        sentEv.connectionsEmailSentCount = included.length;
+        sentEv.connections_email_sent_count = included.length;
+      }
       await loadPreview();
     } finally {
       state.sending = false;
-      if (e.sendBtn) e.sendBtn.disabled = false;
+      syncFormReadyState();
     }
   }
 
@@ -523,7 +653,9 @@
         fillEvents();
         state.omittedEmails = {};
         renderPreview(null);
-        setStatus('');
+        setStatus('Pick an event to continue.');
+        setUsage(null);
+        syncFormReadyState();
       });
     }
     if (e.event) {
@@ -531,7 +663,12 @@
         state.omittedEmails = {};
         renderPreview(null);
         setStatus('');
+        syncFormReadyState();
         if (e.event.value) loadPreview().catch(function () {});
+        else {
+          setStatus('Pick an event to continue.');
+          setUsage(null);
+        }
       });
     }
     if (e.modeRadios && e.modeRadios.length) {
@@ -586,12 +723,17 @@
     bind();
     fillGroups();
     fillEvents();
+    setUsage(null);
+    syncFormReadyState();
     if (opts.eventId) {
       var e = els();
       if (e.event) {
         e.event.value = opts.eventId;
+        syncFormReadyState();
         loadPreview().catch(function () {});
       }
+    } else {
+      setStatus('Pick an event to continue.');
     }
   }
 

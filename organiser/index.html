@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260807rank" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260807promote1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260807comm4" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260807nav2" />
@@ -1905,7 +1905,7 @@
             <p class="org-page-kicker">My events</p>
             <h1 class="org-page-title">Communicate</h1>
             <p class="org-page-lead">
-              Email guests about your events. You get one free Attendee round-up per organiser page — more email tools unlock here as paid add-ons.
+              Email guests about your events. One free Attendee round-up per organiser page — more tools unlock here as paid add-ons.
             </p>
           </header>
 
@@ -1915,8 +1915,8 @@
                 <p class="org-attendee-email-kicker">Free · 1 send per organiser page</p>
                 <h2 class="org-section-title" id="org-attendee-email-title">Attendee round-up</h2>
                 <p class="org-section-sub org-sub-lead org-sub-lead--flush">
-                  Share a branded list of confirmed guests — name, company, job title and email — so people can keep networking.
-                  Before the event you can send <strong>Who’s going</strong>; after it starts, send <strong>Who attended</strong>.
+                  Share a branded guest list — name, company, job title and email — so people can keep networking.
+                  Pick an event, then send <strong>Who’s going</strong> (before it starts) or <strong>Who attended</strong> (after).
                 </p>
               </div>
             </header>
@@ -1926,30 +1926,6 @@
 
             <div class="org-attendee-email-layout">
               <form class="org-attendee-email-form" id="oec-form" autocomplete="off">
-                <fieldset class="org-attendee-email-mode">
-                  <legend>What are you sharing?</legend>
-                  <label class="org-attendee-email-mode-option">
-                    <input type="radio" name="oec-list-kind" value="attended" checked />
-                    <span>
-                      <strong>Who attended</strong>
-                      <em>After the event has started — reconnect guests who came</em>
-                    </span>
-                  </label>
-                  <label class="org-attendee-email-mode-option">
-                    <input type="radio" name="oec-list-kind" value="going" />
-                    <span>
-                      <strong>Who’s going</strong>
-                      <em>Before the event — share confirmed bookings so people can connect early</em>
-                    </span>
-                  </label>
-                </fieldset>
-
-                <ol class="org-attendee-email-steps" aria-label="How to send">
-                  <li><span>1</span> Pick the event (Who’s going before it starts, Who attended after)</li>
-                  <li><span>2</span> Untick anyone to omit, add who it’s from + optional note</li>
-                  <li><span>3</span> Preview &amp; send (1 free send per organiser page)</li>
-                </ol>
-
                 <div class="org-attendee-email-row" id="oec-group-wrap" hidden>
                   <label for="oec-group">Organiser page</label>
                   <select id="oec-group" aria-label="Organiser page"></select>
@@ -1963,36 +1939,65 @@
                   <p class="org-attendee-email-hint" id="oec-count"></p>
                 </label>
 
-                <label class="org-attendee-email-field">
-                  <span>Subject line</span>
-                  <input type="text" id="oec-subject" maxlength="90" placeholder="Who attended — your event title" />
-                </label>
+                <fieldset class="org-attendee-email-mode">
+                  <legend>What are you sharing?</legend>
+                  <label class="org-attendee-email-mode-option">
+                    <input type="radio" name="oec-list-kind" value="going" />
+                    <span>
+                      <strong>Who’s going</strong>
+                      <em>Before the event — share confirmed bookings so people can connect early</em>
+                    </span>
+                  </label>
+                  <label class="org-attendee-email-mode-option">
+                    <input type="radio" name="oec-list-kind" value="attended" checked />
+                    <span>
+                      <strong>Who attended</strong>
+                      <em>After the event has started — reconnect guests who came</em>
+                    </span>
+                  </label>
+                </fieldset>
 
-                <label class="org-attendee-email-field">
-                  <span>From (name people will see)</span>
-                  <input type="text" id="oec-from-name" maxlength="80" placeholder="e.g. Sarah from City Connectors" />
-                  <p class="org-attendee-email-hint">Your group logo is included automatically from the organiser page.</p>
-                </label>
+                <div class="org-attendee-email-details" id="oec-details">
+                  <label class="org-attendee-email-field">
+                    <span>Subject line</span>
+                    <input type="text" id="oec-subject" maxlength="90" placeholder="Who attended — your event title" />
+                  </label>
 
-                <label class="org-attendee-email-field">
-                  <span>Optional note</span>
-                  <textarea id="oec-note" rows="3" maxlength="800" placeholder="Thanks for coming — here are the people who attended so you can keep networking."></textarea>
-                </label>
+                  <label class="org-attendee-email-field">
+                    <span>From (name people will see)</span>
+                    <input type="text" id="oec-from-name" maxlength="80" placeholder="e.g. Sarah from City Connectors" />
+                    <p class="org-attendee-email-hint">Your group logo is included automatically from the organiser page.</p>
+                  </label>
 
-                <div class="org-attendee-email-omit" id="oec-omit-wrap" hidden>
-                  <p class="org-attendee-email-omit-title">Who to include</p>
-                  <p class="org-attendee-email-hint">Untick anyone who should be left out of the email and the shared list.</p>
-                  <div class="org-attendee-email-omit-list" id="oec-omit-list"></div>
-                </div>
+                  <label class="org-attendee-email-field">
+                    <span>Optional note</span>
+                    <textarea id="oec-note" rows="3" maxlength="800" placeholder="Thanks for coming — here are the people who attended so you can keep networking."></textarea>
+                  </label>
 
-                <p class="org-attendee-email-hint">
-                  Only confirmed bookings are included. Pending applications and cancelled tickets are left out.
-                  Each person receives the list of included guests except their own details.
-                </p>
+                  <div class="org-attendee-email-omit" id="oec-omit-wrap" hidden>
+                    <p class="org-attendee-email-omit-title">Who to include</p>
+                    <p class="org-attendee-email-hint">Untick anyone who should be left out of the email and the shared list.</p>
+                    <div class="org-attendee-email-omit-list" id="oec-omit-list"></div>
+                  </div>
 
-                <div class="org-attendee-email-actions">
-                  <button type="button" class="org-btn org-btn-outline" id="oec-preview">Refresh preview</button>
-                  <button type="button" class="org-btn org-btn-gold" id="oec-send">Send attendee round-up</button>
+                  <p class="org-attendee-email-hint">
+                    Only confirmed bookings are included. Pending applications and cancelled tickets are left out.
+                    Each person receives the list of included guests except their own details.
+                    Recipients will see each other’s name, company, job title and email.
+                  </p>
+
+                  <div class="org-attendee-email-actions">
+                    <button type="button" class="org-btn org-btn-outline" id="oec-preview">Refresh preview</button>
+                    <button type="button" class="org-btn org-btn-gold" id="oec-send">Send attendee round-up</button>
+                  </div>
+
+                  <div class="org-attendee-email-engagement" id="oec-engagement" hidden>
+                    <h3 class="org-section-title">Round-up tracking</h3>
+                    <p class="org-attendee-email-hint">
+                      Opens update as guests read the email. Use this to see who engaged — same habit as monthly updates.
+                    </p>
+                    <dl class="ogu-report-stats" id="oec-engagement-stats"></dl>
+                  </div>
                 </div>
               </form>
 
@@ -2009,28 +2014,126 @@
             </div>
           </section>
 
-          <div class="org-communicate-more">
-            <h3 class="org-section-title">More email tools</h3>
-            <p class="org-section-sub">Free: one Attendee round-up per organiser page. Paid add-ons unlock broader campaigns when you need them.</p>
-            <div class="org-communicate-more-grid">
-              <article class="org-communicate-more-card org-communicate-more-card--featured">
-                <p class="org-communicate-more-badge">Next paid add-on</p>
-                <h4>Monthly group update</h4>
-                <p class="org-communicate-more-price">Coming soon · per send or small monthly plan</p>
-                <p>A branded round-up to past Hub bookers — stats, upcoming dates, and a note from you. This is the first paid email tool we’ll ship here.</p>
-              </article>
-              <article class="org-communicate-more-card">
-                <p class="org-communicate-more-badge">Paid add-on · Soon</p>
-                <h4>Smart audiences</h4>
-                <p>Target people who came once, booked recently, or saved your page but never booked.</p>
-              </article>
-              <article class="org-communicate-more-card">
-                <p class="org-communicate-more-badge">Paid add-on · Soon</p>
-                <h4>Engagement report</h4>
-                <p>See opens, clicks, and bookings after each send so you know what brought people back.</p>
-              </article>
+          <section class="org-group-update-panel org-group-update-panel--embedded" id="org-group-update-panel" aria-labelledby="org-social-email-title">
+            <header class="org-attendee-email-panel-head">
+              <div>
+                <p class="org-attendee-email-kicker">1 free send / organiser page / month</p>
+                <h2 class="org-section-title" id="org-social-email-title">Monthly group update</h2>
+                <p class="org-section-sub org-sub-lead org-sub-lead--flush">
+                  A branded round-up to past Hub bookers — your words, Hub stats and event cards, smart audiences,
+                  and a post-send report (opens, clicks, bookings). Extra sends from £9 (hard cap 4/month).
+                </p>
+              </div>
+            </header>
+
+            <aside class="org-group-update-allowance" id="ogu-allowance" role="status"></aside>
+            <p class="org-group-update-status" id="ogu-status" role="status"></p>
+
+            <div class="org-group-update-layout">
+              <form class="org-group-update-form" id="ogu-form" autocomplete="off">
+                <div class="org-group-update-row" id="ogu-group-wrap">
+                  <label for="ogu-group">Organiser page</label>
+                  <select id="ogu-group" aria-label="Organiser page for monthly update"></select>
+                </div>
+
+                <label class="org-group-update-field">
+                  <span>Who should get this?</span>
+                  <select id="ogu-audience-slice" aria-label="Audience for monthly update">
+                    <option value="all">Everyone who booked via the Hub</option>
+                    <option value="once">Came once — invite them back</option>
+                    <option value="recent">Booked in the last 30 days</option>
+                    <option value="favourites">Saved your page — never booked</option>
+                  </select>
+                  <p class="org-group-update-hint" id="ogu-audience-hint"></p>
+                </label>
+
+                <p class="org-group-update-hint" id="ogu-reply-hint" role="status"></p>
+
+                <label class="org-group-update-field">
+                  <span>Subject line</span>
+                  <input type="text" id="ogu-subject" maxlength="90" placeholder="Your group — March 2026 update" />
+                </label>
+
+                <fieldset class="org-group-update-fieldset">
+                  <legend>Core (recommended)</legend>
+                  <label class="org-group-update-check">
+                    <input type="checkbox" id="ogu-include-greeting" checked />
+                    <span>Personalised “Hi {first name}” greeting</span>
+                  </label>
+                  <label class="org-group-update-check">
+                    <input type="checkbox" id="ogu-include-stats" checked />
+                    <span>Auto month-on-the-Hub stats (events hosted, guests, rating)</span>
+                  </label>
+                  <p class="org-group-update-hint" id="ogu-stats-hint" hidden></p>
+                  <label class="org-group-update-field">
+                    <span>Organiser note <em>always on</em></span>
+                    <textarea id="ogu-note" rows="4" maxlength="1200" placeholder="A short hello from you — what you’re proud of this month, and what’s next."></textarea>
+                  </label>
+                  <label class="org-group-update-field">
+                    <span>Month in brief <em>optional</em></span>
+                    <textarea id="ogu-recap" rows="3" maxlength="800" placeholder="2–3 lines on recent meetups or highlights for anyone who missed them."></textarea>
+                  </label>
+                  <label class="org-group-update-check">
+                    <input type="checkbox" id="ogu-include-events" checked />
+                    <span>Upcoming Hub events with images + Book buttons</span>
+                  </label>
+                  <div class="org-group-update-events" id="ogu-events"></div>
+                </fieldset>
+
+                <fieldset class="org-group-update-fieldset">
+                  <legend>Optional add-ons <span>(pick what you need)</span></legend>
+                  <label class="org-group-update-field">
+                    <span>Member spotlight — name</span>
+                    <input type="text" id="ogu-spotlight-name" maxlength="80" placeholder="Alex Morgan" />
+                  </label>
+                  <label class="org-group-update-field">
+                    <span>Company</span>
+                    <input type="text" id="ogu-spotlight-company" maxlength="80" placeholder="Acme Coaching" />
+                  </label>
+                  <label class="org-group-update-field">
+                    <span>Spotlight blurb</span>
+                    <textarea id="ogu-spotlight-text" rows="3" maxlength="600" placeholder="Mini intro, expertise, ideal referral…"></textarea>
+                  </label>
+                  <label class="org-group-update-field">
+                    <span>Spotlight LinkedIn URL</span>
+                    <input type="url" id="ogu-spotlight-linkedin" maxlength="200" placeholder="https://www.linkedin.com/in/…" />
+                  </label>
+                  <label class="org-group-update-field">
+                    <span>Member ask</span>
+                    <textarea id="ogu-ask" rows="2" maxlength="400" placeholder="e.g. Looking for intros to HR directors in Manchester…"></textarea>
+                  </label>
+                  <label class="org-group-update-field">
+                    <span>Get involved / volunteer CTA</span>
+                    <textarea id="ogu-volunteer" rows="2" maxlength="300" placeholder="Want to host a table or suggest a speaker? Reply to this email."></textarea>
+                  </label>
+                  <label class="org-group-update-check">
+                    <input type="checkbox" id="ogu-include-socials" checked />
+                    <span>Include social links from Colours &amp; logo</span>
+                  </label>
+                </fieldset>
+
+                <div class="org-group-update-actions">
+                  <button type="button" class="org-btn org-btn-outline" id="ogu-save">Save draft</button>
+                  <button type="button" class="org-btn org-btn-outline" id="ogu-preview">Preview</button>
+                  <button type="button" class="org-btn org-btn-gold" id="ogu-send">Send this month’s update</button>
+                </div>
+              </form>
+
+              <aside class="org-group-update-side">
+                <div class="org-group-update-preview" id="ogu-preview-panel">
+                  <h2 class="org-section-title">Preview</h2>
+                  <p class="org-group-update-hint">Save or preview to see how modules stack.</p>
+                  <div id="ogu-preview-body"></div>
+                </div>
+                <div class="org-group-update-history">
+                  <h2 class="org-section-title">Drafts &amp; recent sends</h2>
+                  <p class="org-group-update-hint">Saved drafts reopen here. Sent updates show opens, clicks and bookings.</p>
+                  <div id="ogu-history"></div>
+                  <div class="org-group-update-report" id="ogu-report" hidden></div>
+                </div>
+              </aside>
             </div>
-          </div>
+          </section>
         </section>
 
         <!-- My Events hub -->
@@ -3360,7 +3463,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260807promote1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260807comm4" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260805industry" defer></script>
   </body>
 </html>

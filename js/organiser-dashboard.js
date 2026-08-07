@@ -1596,7 +1596,8 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260805comm4';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260807comm3';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260807comm3';
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1687,6 +1688,11 @@
   function ensureEventConnectionsAssets() {
     if (window.HubOrganiserEventConnections) return Promise.resolve();
     return loadScriptOnce(EVENT_CONNECTIONS_JS);
+  }
+
+  function ensureGroupUpdatesAssets() {
+    if (window.HubOrganiserGroupUpdates) return Promise.resolve();
+    return loadScriptOnce(GROUP_UPDATES_JS);
   }
 
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
@@ -1981,6 +1987,15 @@
             events: events,
             eventId: preferredEventId || filters.attendeesEvent || '',
           });
+        }
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
+    ensureGroupUpdatesAssets()
+      .then(function () {
+        if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
+          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
         }
       })
       .catch(function () {

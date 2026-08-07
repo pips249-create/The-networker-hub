@@ -206,9 +206,11 @@ function testEngagementReportMath() {
 }
 
 function testUiWiring() {
-  console.log('\n5) Workspace UI wiring (monthly composer retired)');
+  console.log('\n5) Workspace UI wiring (Communicate hosts round-up + monthly update)');
   const html = fs.readFileSync(path.join(__dirname, '../organiser/index.html'), 'utf8');
-  assert.ok(!html.includes('id="ogu-audience-slice"'), 'monthly audience UI should be gone');
+  assert.ok(html.includes('id="ogu-audience-slice"'), 'monthly audience UI should be on Communicate');
+  assert.ok(html.includes('id="ogu-form"'));
+  assert.ok(html.includes('id="ogu-report"'));
   assert.ok(html.includes('id="org-page-communicate"'));
   assert.ok(html.includes('data-org-route="communicate"'));
   assert.ok(html.includes('id="org-attendee-email-panel"'));
@@ -216,13 +218,20 @@ function testUiWiring() {
   assert.ok(html.includes('oec-list-kind'));
   assert.ok(html.includes('oec-from-name'));
   assert.ok(html.includes('Attendee round-up'));
-  assert.ok(html.includes('More email tools'));
-  ok('Communicate page hosts attendee round-up + paid upcoming tools');
+  assert.ok(html.includes('id="oec-engagement"'));
+  assert.ok(html.includes('Monthly group update'));
+  ok('Communicate page hosts attendee round-up + monthly group update');
 
   const js = fs.readFileSync(path.join(__dirname, '../js/organiser-event-connections.js'), 'utf8');
   assert.ok(js.includes('HubOrganiserEventConnections'));
   assert.ok(js.includes('/api/organiser/event-connections'));
-  ok('event-connections JS loads API + init export');
+  assert.ok(js.includes('renderEngagement'));
+  ok('event-connections JS loads API + engagement');
+
+  const dash = fs.readFileSync(path.join(__dirname, '../js/organiser-dashboard.js'), 'utf8');
+  assert.ok(dash.includes('GROUP_UPDATES_JS'));
+  assert.ok(dash.includes('ensureGroupUpdatesAssets'));
+  ok('dashboard loads monthly group updates on Communicate');
 
   const migration = fs.readFileSync(
     path.join(__dirname, '../supabase/migrations/219_group_update_engagement.sql'),
@@ -233,6 +242,14 @@ function testUiWiring() {
   assert.ok(migration.includes('opened_at'));
   ok('migration 219 has tracking columns + link_clicks table');
 
+  const connMigration = fs.readFileSync(
+    path.join(__dirname, '../supabase/migrations/228_event_connections_engagement.sql'),
+    'utf8'
+  );
+  assert.ok(connMigration.includes('event_connections_recipients'));
+  assert.ok(connMigration.includes('tracking_token'));
+  ok('migration 228 has attendee round-up tracking tables');
+
   const route = fs.readFileSync(
     path.join(__dirname, '../api/_lib/routes/organiser-group-updates.js'),
     'utf8'
@@ -240,7 +257,7 @@ function testUiWiring() {
   assert.ok(route.includes("action === 'report'"));
   assert.ok(route.includes('estimateAudienceSlices'));
   assert.ok(route.includes('replyTo'));
-  ok('group-updates API route still present for dormant backend');
+  ok('group-updates API route present');
 }
 
 async function main() {

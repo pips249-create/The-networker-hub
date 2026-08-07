@@ -104,10 +104,10 @@
     communicate: {
       title: 'How to email your guests',
       steps: [
-        'Choose Who attended (after the event starts) or Who’s going (before it starts).',
-        'Pick the event, add who the email is from, and an optional note — your group logo is included automatically.',
-        'Preview the list, omit anyone who should not be included, then send. You get one free round-up per organiser page.',
-        'Monthly group updates and other email tools will unlock here as paid add-ons.',
+        'Pick an event first — the page suggests Who’s going or Who attended from the event date.',
+        'Add who the email is from and an optional note — your group logo is included automatically.',
+        'Preview the list, omit anyone who should not be included, then send. Track opens and clicks after you send.',
+        'Scroll down for Monthly group update — personalised round-ups with audiences and engagement reports.',
       ],
     },
     'social-spotlight': {
