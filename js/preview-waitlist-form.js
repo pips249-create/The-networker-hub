@@ -39,6 +39,18 @@
     var honeypot = form.querySelector('[data-preview-waitlist-honeypot]');
     var btn = form.querySelector('[type="submit"]');
     var source = form.getAttribute('data-source') || 'about';
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var campaign = String(params.get('utm_campaign') || '').trim().toLowerCase();
+      var content = String(params.get('utm_content') || '').trim().toLowerCase();
+      if (campaign) {
+        source = (source + '_' + campaign.replace(/[^a-z0-9_-]/g, '').slice(0, 24)).slice(0, 40);
+      } else if (content) {
+        source = (source + '_' + content.replace(/[^a-z0-9_-]/g, '').slice(0, 24)).slice(0, 40);
+      }
+    } catch (err) {
+      /* keep default source */
+    }
 
     function unlock() {
       if (btn) btn.disabled = false;
