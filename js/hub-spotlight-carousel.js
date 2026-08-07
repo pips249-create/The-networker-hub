@@ -43,21 +43,64 @@
     });
   }
 
+  function preferSimpleScroll() {
+    return (
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(hover: none), (max-width: 768px)').matches
+    );
+  }
+
+  function contentKeyFor(cardsHtml, itemCount, looping) {
+    return String(itemCount || 0) + ':' + (looping ? '1' : '0') + ':' + String(cardsHtml || '').length;
+  }
+
+  /**
+   * Update overflow / nav / loop metrics without rewriting card HTML.
+   * Used on resize so mobile address-bar chrome does not flicker the carousel.
+   */
+  function remeasureLayout(track, section, itemCount, cardSelector) {
+    if (!track || !itemCount) return { overflow: false, looping: false };
+
+    var looping = isLooping(track) && !preferSimpleScroll() && itemCount > 1;
+    if (preferSimpleScroll() && isLooping(track)) {
+      /* Viewport crossed into mobile — drop loop clones if present by caller rebuild. */
+      looping = false;
+    }
+
+    track.dataset.spotlightLoop = looping ? '1' : '0';
+
+    var overflow = cardsOverflowViewport(track, itemCount, cardSelector);
+    track.dataset.spotlightOverflow = overflow ? '1' : '0';
+
+    if (!looping) {
+      unbindLoopScrollSync(track);
+      track.removeAttribute('data-loop-width');
+    } else {
+      bindLoopScrollSync(track, itemCount, cardSelector);
+      updateLoopScrollBinding(track, itemCount, cardSelector);
+      var loopWidth = measureLoopWidth(track, itemCount, cardSelector);
+      if (loopWidth > 0) track.dataset.loopWidth = String(loopWidth);
+    }
+
+    setNavArrowsVisible(section, overflow && itemCount > 1);
+    return { overflow: overflow, looping: looping };
+  }
+
   function applyLoopLayout(track, section, itemCount, cardSelector, cardsHtml) {
     if (!track) return { overflow: false, looping: false };
 
     /* Infinite HTML doubling causes flicker on phones — use simple snap scroll instead */
-    var preferSimpleScroll =
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(hover: none), (max-width: 768px)').matches;
-    var looping = itemCount > 1 && !preferSimpleScroll;
-    var desiredHtml = looping ? cardsHtml + cardsHtml : cardsHtml;
-    var htmlChanged = track.innerHTML !== desiredHtml;
+    var looping = itemCount > 1 && !preferSimpleScroll();
+    var desiredHtml = looping ? cardsHtml + cardsHtml : cardsHtml || '';
+    var nextKey = contentKeyFor(desiredHtml, itemCount, looping);
+    var htmlChanged = track.dataset.spotlightContentKey !== nextKey;
 
-    /* Single paint — avoid writing once then rewriting (that flickers the carousel). */
+    /* Never compare track.innerHTML to a source string — browsers normalise markup
+       and that false mismatch rewrites the track (double paint / flicker). */
     if (htmlChanged) {
       track.innerHTML = desiredHtml;
+      track.dataset.spotlightContentKey = nextKey;
     }
 
     track.dataset.spotlightLoop = looping ? '1' : '0';
@@ -81,7 +124,7 @@
 
     setNavArrowsVisible(section, overflow && itemCount > 1);
 
-    return { overflow: overflow, looping: looping };
+    return { overflow: overflow, looping: looping, htmlChanged: htmlChanged };
   }
 
   function measureLoopWidth(track, itemCount, cardSelector) {
@@ -161,8 +204,20 @@
     return true;
   }
 
+  function clearTrack(track) {
+    if (!track) return;
+    track.innerHTML = '';
+    track.removeAttribute('data-spotlight-content-key');
+    track.removeAttribute('data-loop-width');
+    track.dataset.spotlightLoop = '0';
+    track.dataset.spotlightOverflow = '0';
+    unbindLoopScrollSync(track);
+  }
+
   global.HubSpotlightCarousel = {
     applyLoopLayout: applyLoopLayout,
+    remeasureLayout: remeasureLayout,
+    clearTrack: clearTrack,
     advanceLoop: advanceLoop,
     canAutoAdvance: canAutoAdvance,
     cardsOverflowViewport: cardsOverflowViewport,

@@ -506,7 +506,22 @@
 
   function refreshSpotlightLayout() {
     var featured = getSpotlightVisible();
-    if (!els.spotlightTrack || !featured.length) return;
+    var track = els.spotlightTrack;
+    if (!track || !featured.length) return;
+    var sc = window.HubSpotlightCarousel;
+    var section = els.spotlightSection || track.closest('.premium-spotlight');
+    /* Mobile chrome resize must not rewrite the track — that flickers premium cards. */
+    if (track.children.length && sc && typeof sc.remeasureLayout === 'function') {
+      var wasLooping = sc.isLooping(track);
+      var prefersSimple = window.matchMedia('(hover: none), (max-width: 768px)').matches;
+      if (wasLooping && prefersSimple) {
+        layoutSpotlightTrack(featured.map(premiumSpotlightCard).join(''), featured.length);
+      } else {
+        sc.remeasureLayout(track, section, featured.length, '.opp-premium-card');
+      }
+      syncSpotlightLoopScroll();
+      return;
+    }
     layoutSpotlightTrack(featured.map(premiumSpotlightCard).join(''), featured.length);
     syncSpotlightLoopScroll();
     startSpotlightAuto();
@@ -681,9 +696,14 @@
 
     if (!featured.length) {
       stopSpotlightAuto();
-      els.spotlightTrack.innerHTML = '';
+      if (window.HubSpotlightCarousel && window.HubSpotlightCarousel.clearTrack) {
+        window.HubSpotlightCarousel.clearTrack(els.spotlightTrack);
+      } else {
+        els.spotlightTrack.innerHTML = '';
+        els.spotlightTrack.removeAttribute('data-loop-width');
+        els.spotlightTrack.removeAttribute('data-spotlight-content-key');
+      }
       els.spotlightTrack.classList.remove('spotlight-track--carousel');
-      els.spotlightTrack.removeAttribute('data-loop-width');
       els.spotlightTrack.scrollLeft = 0;
       spotlightRenderKey = '';
       if (promo) promo.hidden = true;
@@ -707,11 +727,10 @@
     els.spotlightTrack.classList.add('spotlight-track--carousel');
     if (promo) promo.hidden = false;
     bindSpotlightCarousel();
-    requestAnimationFrame(function () {
-      layoutSpotlightTrack(cardsHtml, featured.length);
-      syncSpotlightLoopScroll();
-      startSpotlightAuto();
-    });
+    /* Paint once — skip rAF second layout that caused mobile flicker. */
+    layoutSpotlightTrack(cardsHtml, featured.length);
+    syncSpotlightLoopScroll();
+    startSpotlightAuto();
   }
 
   function syncClearFiltersVisibility() {

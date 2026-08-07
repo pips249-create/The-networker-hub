@@ -26,10 +26,14 @@
   .organiser-event-edit-page .ee-photo-frame img,
   .ee-photo-frame img,
   .event-grid-img,
+  .event-grid-media img,
   .premium-card-img,
+  .related-img img,
   .hero img {
+    width: 100%;
     height: 100%;
     max-width: none;
+    object-fit: cover;
   }
 
   /* iOS Safari zooms focused inputs when font-size is below 16px */
@@ -942,8 +946,8 @@ body.nav-menu-open {
     font-size: 13px;
   }
 
+  /* Keep track-relative card width from events-page.css — 78vw fought that and flickered */
   .premium-card {
-    flex: 0 0 min(78vw, 280px);
     min-height: 210px;
     scroll-snap-align: start;
   }
@@ -3125,6 +3129,7 @@ body.nav-menu-open {
   .event-detail-page .container {
     display: flex;
     flex-direction: column;
+    align-items: stretch; /* override grid align-items:start or hero collapses to ~half width */
     gap: 18px;
     padding: 16px 16px calc(88px + env(safe-area-inset-bottom, 0px));
     max-width: 100%;
@@ -3143,6 +3148,8 @@ body.nav-menu-open {
 
   .event-detail-page .hero {
     order: 1;
+    width: 100%;
+    max-width: 100%;
     margin-bottom: 0;
   }
 
@@ -3179,6 +3186,8 @@ body.nav-menu-open {
 
   .event-detail-page #ev-related-section {
     order: 9;
+    /* Clear sticky ticket jump so related cards stay tappable */
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   .event-detail-page .event-listing-report-footer {
@@ -3327,10 +3336,12 @@ body.nav-menu-open {
   /* Full-width ticket jump — Hubert moves left while this bar is up */
   .event-detail-page .ev-ticket-jump.is-visible {
     z-index: 1250;
+    pointer-events: none;
   }
 
   .event-detail-page .ev-ticket-jump-btn {
     padding: 12px 18px;
+    pointer-events: auto;
   }
 }
 
@@ -3400,7 +3411,30 @@ body.nav-menu-open {
     min-height: 0;
     padding: 10px;
     gap: 12px;
-    align-items: stretch;
+    /* center — stretch + align-self:stretch on media was crushing 140px thumbs */
+    align-items: center;
+  }
+
+  /* Lock listing thumbs at ~140px (beats earlier page CSS / img height:auto conflicts) */
+  .events-page .event-grid-media {
+    flex: 0 0 140px !important;
+    width: 140px !important;
+    height: 140px !important;
+    min-width: 140px !important;
+    min-height: 140px !important;
+    max-width: 140px !important;
+    max-height: 140px !important;
+    aspect-ratio: 1 / 1;
+    align-self: center;
+  }
+
+  .events-page .event-grid-media .event-grid-img,
+  .events-page .event-grid-img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    min-height: 0;
+    object-fit: cover;
   }
 
   .events-page .event-grid-body {

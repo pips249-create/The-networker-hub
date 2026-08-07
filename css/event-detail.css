@@ -885,6 +885,38 @@ a:hover {
   margin: 0;
 }
 
+.related-empty-lead {
+  margin: 0 0 10px;
+}
+
+.related-empty-cta {
+  margin: 0;
+}
+
+.related-empty-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--lavender-deep, #5b2f99);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.related-empty-org-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+  color: var(--lavender-deep, #5b2f99);
+  text-decoration: none;
+}
+
+.related-empty-org-link:hover {
+  text-decoration: underline;
+}
+
 #ev-related-section.is-empty-related .related-grid {
   display: none;
 }
@@ -2974,6 +3006,8 @@ a:hover {
     bottom: 0;
     z-index: 95;
     padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+    /* Gradient is decorative — don't steal taps from "More from…" cards beneath */
+    pointer-events: none;
     background: linear-gradient(
       180deg,
       rgba(250, 247, 242, 0) 0%,
@@ -2992,6 +3026,7 @@ a:hover {
     width: 100%;
     min-height: 48px;
     padding: 12px 18px;
+    pointer-events: auto;
     border: none;
     border-radius: 12px;
     background: var(--purple-700, #5b2f99);

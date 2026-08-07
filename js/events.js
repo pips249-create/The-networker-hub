@@ -198,7 +198,22 @@
 
   function refreshSpotlightLayout() {
     const itemCount = getSpotlightTrackItemCount();
-    if (!els.spotlightTrack || !itemCount) return;
+    const track = els.spotlightTrack;
+    if (!track || !itemCount) return;
+    const sc = window.HubSpotlightCarousel;
+    const section = track.closest('.premium-spotlight');
+    /* Mobile URL-bar show/hide fires resize — never rewrite card HTML, only remeasure. */
+    if (track.children.length && sc && typeof sc.remeasureLayout === 'function') {
+      const wasLooping = sc.isLooping(track);
+      const prefersSimple = window.matchMedia('(hover: none), (max-width: 768px)').matches;
+      if (wasLooping && prefersSimple) {
+        layoutSpotlightTrack(buildSpotlightTrackHtml(), itemCount);
+      } else {
+        sc.remeasureLayout(track, section, itemCount, '.premium-card');
+      }
+      syncSpotlightLoopScroll();
+      return;
+    }
     layoutSpotlightTrack(buildSpotlightTrackHtml(), itemCount);
     syncSpotlightLoopScroll();
     startSpotlightAuto();
@@ -1047,9 +1062,14 @@
     if (els.spotlightTrack) {
       if (!premium.length) {
         stopSpotlightAuto();
-        els.spotlightTrack.innerHTML = '';
+        if (window.HubSpotlightCarousel && window.HubSpotlightCarousel.clearTrack) {
+          window.HubSpotlightCarousel.clearTrack(els.spotlightTrack);
+        } else {
+          els.spotlightTrack.innerHTML = '';
+          els.spotlightTrack.removeAttribute('data-loop-width');
+          els.spotlightTrack.removeAttribute('data-spotlight-content-key');
+        }
         els.spotlightTrack.classList.remove('spotlight-track--carousel');
-        els.spotlightTrack.removeAttribute('data-loop-width');
         els.spotlightTrack.scrollLeft = 0;
         spotlightRenderKey = '';
         if (promo) promo.hidden = true;
@@ -1067,12 +1087,11 @@
         spotlightRenderKey = renderKey;
         els.spotlightTrack.classList.add('spotlight-track--carousel');
         bindSpotlightCarousel();
-        requestAnimationFrame(function () {
-          layoutSpotlightTrack(cardsHtml, itemCount);
-          if (shouldAppendSpotlightBoostPromo()) bindSpotlightBoostPromo();
-          syncSpotlightLoopScroll();
-          startSpotlightAuto();
-        });
+        /* Paint once — no deferred second layout that rewrites the track. */
+        layoutSpotlightTrack(cardsHtml, itemCount);
+        if (shouldAppendSpotlightBoostPromo()) bindSpotlightBoostPromo();
+        syncSpotlightLoopScroll();
+        startSpotlightAuto();
       }
     } else if (promo) {
       promo.hidden = !premium.length;

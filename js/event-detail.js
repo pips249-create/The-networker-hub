@@ -284,14 +284,16 @@
     const stored = ev && ev.slug ? String(ev.slug).trim() : '';
     const uuidLike =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored);
+    /* Only trust a real stored slug — inventing from title breaks navigation when
+       the DB slug has a uniqueness suffix (e.g. breakfast-club-2). */
     if (stored && !uuidLike) return stored;
-    return slugifyTitle(ev && ev.title) || stored || '';
+    return '';
   }
 
   function canonicalEventPath(ev) {
     const slug = publicSlug(ev);
     if (slug) return '/events/' + encodeURIComponent(slug);
-    if (ev && ev.id) return '/events/event?id=' + encodeURIComponent(ev.id);
+    if (ev && ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
     return window.location.pathname;
   }
 
@@ -1180,9 +1182,14 @@
   }
 
   function eventDetailHref(ev) {
+    if (window.HubPublicUrls && typeof window.HubPublicUrls.eventDetailHref === 'function') {
+      return window.HubPublicUrls.eventDetailHref(ev);
+    }
     const slug = publicSlug(ev);
     if (slug) return '/events/' + encodeURIComponent(slug);
-    return '/events/event?id=' + encodeURIComponent(ev.id);
+    /* Use .html so /events/:slug rewrite does not treat "event" as a slug. */
+    if (ev && ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
+    return '/events/';
   }
 
   function renderRelated(related, options) {
@@ -1194,19 +1201,52 @@
     grid.innerHTML = '';
     const list = (related || []).filter((e) => e && e.id);
     const hasSeriesDates = Boolean(options && options.hasSeriesDates);
+    const sourceEv = (options && options.event) || currentEvent || {};
 
     if (!list.length) {
       if (empty) {
         empty.hidden = false;
-        empty.textContent = hasSeriesDates
-          ? 'Other dates for this event are in Choose a date above. No other events from this organiser yet.'
-          : 'No other upcoming events from this organiser yet.';
+        const orgHref = organiserProfileHref(sourceEv);
+        const orgName = String(sourceEv.organiser || '').trim();
+        const parts = [];
+        if (hasSeriesDates) {
+          parts.push(
+            '<p class="related-empty-lead">Other dates for this event are in <button type="button" class="related-empty-link" id="ev-related-jump-dates">Choose a date</button> above.</p>'
+          );
+        } else {
+          parts.push(
+            '<p class="related-empty-lead">No other upcoming events from this organiser yet.</p>'
+          );
+        }
+        if (orgHref) {
+          parts.push(
+            '<p class="related-empty-cta"><a class="related-empty-org-link" href="' +
+              escapeHtml(orgHref) +
+              '">View ' +
+              escapeHtml(orgName || 'organiser') +
+              ' page →</a></p>'
+          );
+        }
+        empty.innerHTML = parts.join('');
+        const jumpBtn = document.getElementById('ev-related-jump-dates');
+        if (jumpBtn) {
+          jumpBtn.addEventListener('click', function () {
+            const wrap = document.getElementById('ev-series-dates');
+            if (wrap) {
+              wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setSeriesDatePickerOpen(true);
+            }
+          });
+        }
       }
       if (section) section.classList.add('is-empty-related');
       return;
     }
 
-    if (empty) empty.hidden = true;
+    if (empty) {
+      empty.hidden = true;
+      empty.textContent = '';
+    }
     if (section) section.classList.remove('is-empty-related');
 
     list.forEach((ev) => {
@@ -5103,17 +5143,17 @@
       stub.organiser ? 'Upcoming from ' + stub.organiser : 'Upcoming events'
     );
     if (Array.isArray(data.related) && data.related.length) {
-      renderRelated(data.related);
+      renderRelated(data.related, { event: stub });
     } else if (stub.organiserId) {
       loadRelatedFallback({
         id: stub.id,
         organiserId: stub.organiserId,
         organiser: stub.organiser,
       }).then(function (related) {
-        renderRelated(related || []);
+        renderRelated(related || [], { event: stub });
       });
     } else {
-      renderRelated([]);
+      renderRelated([], { event: stub });
     }
   }
 
@@ -5192,6 +5232,7 @@
           const relatedFromApi = data.related || [];
           const relatedOpts = {
             hasSeriesDates: Array.isArray(data.seriesDates) && data.seriesDates.length > 1,
+            event: displayEv || ev,
           };
           if (relatedFromApi.length) {
             renderRelated(relatedFromApi, relatedOpts);
