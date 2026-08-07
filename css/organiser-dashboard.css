@@ -4043,6 +4043,14 @@
 }
 
 .org-ranking-tier-guide {
+  width: fit-content;
+  max-width: min(100%, 380px);
+  margin: 0;
+  padding: 14px 16px 12px;
+  border-radius: var(--od-radius);
+  background: linear-gradient(135deg, #fdf8ec 0%, #f4f9fb 100%);
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  box-sizing: border-box;
   font-size: 13px;
   color: var(--od-text-mid);
 }
@@ -4059,6 +4067,13 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 0 4px;
+}
+
+/* Share shell stays full-bleed for ranked cards; demos live in the compact guide above. */
+.org-ranking-panel--social .org-ranking-share {
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .org-ranking-tier-example {
