@@ -22,7 +22,7 @@ const SOFT_LAUNCH_FOUNDING_SHOWCASE = [
     founding_organiser_at: '2026-01-01T00:00:00.000Z',
     founding_homepage_until: FOUNDING_HOMEPAGE_UNTIL.toISOString(),
     ownership_claimed_at: '2026-01-01T00:00:00.000Z',
-    logo_band_dark: true,
+    logo_band_dark: false,
     soft_launch: true,
   },
 ];
