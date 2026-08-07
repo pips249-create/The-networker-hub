@@ -1,4 +1,5 @@
 const { escapeHtml } = require('./event-refund-policy');
+const { formatDateTimeLong } = require('./event-timezone');
 
 function formatBookingReference(registrationId) {
   const raw = String(registrationId || '')
@@ -10,16 +11,8 @@ function formatBookingReference(registrationId) {
 }
 
 function formatBookedAt(isoDate) {
-  const d = isoDate ? new Date(isoDate) : null;
-  if (!d || Number.isNaN(d.getTime())) return '';
-  const date = d.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  return date + ' at ' + time;
+  const formatted = formatDateTimeLong(isoDate);
+  return formatted === '—' ? '' : formatted;
 }
 
 function formatTicketQuantity(quantity, ticketName) {

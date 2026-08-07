@@ -34,6 +34,35 @@ function withSponsorUtm(rawUrl, placement, opts) {
   return parsed.toString();
 }
 
+/**
+ * Wrap a destination URL in the Hub click-through so email / Brevo logos
+ * land in Command Centre sponsor reports (sponsor_clicks).
+ */
+function withSponsorClickThrough(rawUrl, placement, opts) {
+  const dest = withSponsorUtm(rawUrl, placement, opts);
+  if (!/^https?:\/\//i.test(dest)) return dest;
+
+  const site = String(opts?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkerhub.com')
+    .trim()
+    .replace(/\/$/, '');
+  const place = String(placement || opts?.placement || 'email_sponsor')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 64) || 'email_sponsor';
+  const company = String(opts?.company || opts?.companyName || '')
+    .trim()
+    .slice(0, 120);
+
+  const out = new URL(site + '/api/sponsor-out');
+  out.searchParams.set('u', dest);
+  out.searchParams.set('p', place);
+  if (company) out.searchParams.set('c', company);
+  return out.toString();
+}
+
 module.exports = {
   withSponsorUtm,
+  withSponsorClickThrough,
 };

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>co.uk + Hub banner — presentation mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1c2040;
+      --muted: #5c5557;
+      --cream: #f5f0e8;
+      --line: rgba(28, 32, 64, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(194, 153, 209, 0.22), transparent 55%),
+        linear-gradient(180deg, #ebe4dc 0%, #d9d2c8 100%);
+    }
+
+    .deck {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+    .deck-kicker {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9a7aa8;
+    }
+    .deck-title {
+      margin: 0 0 8px;
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+    }
+    .deck-lede {
+      margin: 0 0 28px;
+      max-width: 42rem;
+      font-size: 1.02rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .browser {
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.7) inset,
+        0 24px 60px rgba(28, 32, 64, 0.22);
+      border: 1px solid rgba(28, 32, 64, 0.1);
+    }
+    .browser-chrome {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #f3efe8;
+      border-bottom: 1px solid var(--line);
+    }
+    .browser-dots {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .browser-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d4cdc3;
+    }
+    .browser-dots span:nth-child(1) { background: #e8a0a0; }
+    .browser-dots span:nth-child(2) { background: #e2c48a; }
+    .browser-dots span:nth-child(3) { background: #9bc49a; }
+    .browser-url {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .site-stage {
+      position: relative;
+      background: #6b4f8a;
+    }
+
+    /* ===== LIVE BANNER (matches WordPress snippet) ===== */
+    .tnh-upgrade-banner {
+      --tnh-ink: #1c2040;
+      --tnh-lilac: #c299d1;
+      --tnh-cream: #f5f0e8;
+      --tnh-gold: #b8956a;
+      --tnh-gold-hover: #a68258;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+      background: linear-gradient(118deg, #fffdf9 0%, var(--tnh-cream) 38%, #f3eaf7 78%, #e8f4f6 100%);
+      border-bottom: 1px solid #d9c4e0;
+      color: var(--tnh-ink);
+      font-family: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+    }
+    .tnh-upgrade-banner[hidden] { display: none !important; }
+    .tnh-upgrade-banner__glow {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+    .tnh-upgrade-banner__glow--1 {
+      width: 220px; height: 220px; top: -120px; left: 8%;
+      background: radial-gradient(circle, rgba(177, 137, 184, 0.35) 0%, transparent 70%);
+    }
+    .tnh-upgrade-banner__glow--2 {
+      width: 260px; height: 260px; top: -140px; right: 6%;
+      background: radial-gradient(circle, rgba(184, 149, 106, 0.28) 0%, transparent 68%);
+    }
+    .tnh-upgrade-banner__inner {
+      position: relative;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 12px 52px 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px 20px;
+    }
+    .tnh-upgrade-banner__brand {
+      display: inline-flex;
+      flex-shrink: 0;
+      line-height: 0;
+      text-decoration: none;
+    }
+    .tnh-upgrade-banner__logo {
+      width: 110px;
+      height: auto;
+      display: block;
+    }
+    .tnh-upgrade-banner__text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      min-width: 0;
+    }
+    .tnh-upgrade-banner__headline {
+      margin: 0;
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+      font-weight: 400;
+      line-height: 1.25;
+      color: var(--tnh-ink);
+      letter-spacing: -0.01em;
+    }
+    .tnh-upgrade-banner__word {
+      display: inline-flex;
+      align-items: baseline;
+      min-width: 7.5ch;
+      color: var(--tnh-lilac);
+      font-style: italic;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .tnh-upgrade-banner__word.is-fading {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    .tnh-upgrade-banner__sub {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #6a6466;
+    }
+    .tnh-upgrade-banner__sub strong {
+      color: var(--tnh-ink);
+      font-weight: 700;
+    }
+    .tnh-upgrade-banner__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--tnh-gold);
+      color: var(--tnh-ink) !important;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none !important;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(184, 149, 106, 0.35);
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tnh-upgrade-banner__cta:hover,
+    .tnh-upgrade-banner__cta:focus {
+      background: var(--tnh-gold-hover);
+      color: var(--tnh-ink) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(184, 149, 106, 0.42);
+    }
+    .tnh-upgrade-banner__close {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.55);
+      color: #8a8486;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .tnh-upgrade-banner__close:hover,
+    .tnh-upgrade-banner__close:focus {
+      color: var(--tnh-ink);
+      background: #fff;
+    }
+
+    .site-shot {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: top;
+    }
+
+    .callouts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+    }
+    .callout {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(28, 32, 64, 0.08);
+      backdrop-filter: blur(6px);
+    }
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.92rem;
+    }
+    .callout p {
+      margin: 0;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .deck-foot {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .deck-foot code {
+      font-size: 0.92em;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 720px) {
+      .callouts { grid-template-columns: 1fr; }
+      .tnh-upgrade-banner__inner {
+        padding: 14px 42px 14px 14px;
+        flex-direction: column;
+        text-align: center;
+      }
+      .tnh-upgrade-banner__text { align-items: center; }
+      .tnh-upgrade-banner__logo { width: 96px; }
+      .tnh-upgrade-banner__word { min-width: 0; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .deck { padding: 0; max-width: none; }
+      .browser { box-shadow: none; border: 1px solid #ccc; }
+      .callouts { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <p class="deck-kicker">Presentation mockup</p>
+    <h1 class="deck-title">the-networker.co.uk with Hub soft-launch banner</h1>
+    <p class="deck-lede">
+      Old WordPress site stays fully usable. A slim Hub strip sits above it —
+      same team, new platform, soft launch 1 September. CTA opens
+      <strong>thenetworkerhub.com/about</strong> (no password).
+    </p>
+
+    <div class="browser" aria-label="Mockup of the-networker.co.uk with Hub banner">
+      <div class="browser-chrome" aria-hidden="true">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">https://www.the-networker.co.uk/</div>
+      </div>
+
+      <div class="site-stage">
+        <aside class="tnh-upgrade-banner" id="tnh-upgrade-banner" role="region" aria-label="Announcement">
+          <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--1" aria-hidden="true"></span>
+          <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--2" aria-hidden="true"></span>
+          <div class="tnh-upgrade-banner__inner">
+            <a class="tnh-upgrade-banner__brand" href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">
+              <img
+                class="tnh-upgrade-banner__logo"
+                src="../assets/logo-nav-transparent.png?v=20260729a"
+                alt="The Networker Hub"
+                width="110"
+                height="51"
+                decoding="async"
+              >
+            </a>
+            <div class="tnh-upgrade-banner__text">
+              <p class="tnh-upgrade-banner__headline">
+                Find your next
+                <span class="tnh-upgrade-banner__word" id="tnh-upgrade-banner-word">event</span>
+              </p>
+              <p class="tnh-upgrade-banner__sub">
+                Same team &middot; new platform &middot; soft launch <strong>1 September</strong>
+              </p>
+            </div>
+            <a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">
+              Peek at the Hub <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+          <button type="button" class="tnh-upgrade-banner__close" id="tnh-upgrade-banner-close" aria-label="Dismiss announcement">&times;</button>
+        </aside>
+
+        <img
+          class="site-shot"
+          src="co-uk-homepage-screenshot.png"
+          alt="Current the-networker.co.uk homepage beneath the Hub upgrade banner"
+          width="1600"
+          height="900"
+          decoding="async"
+        >
+      </div>
+    </div>
+
+    <div class="callouts">
+      <div class="callout">
+        <strong>Not a hard redirect</strong>
+        <p>Visitors keep using Find a meeting / group / event on the old site until 1 September.</p>
+      </div>
+      <div class="callout">
+        <strong>Product voice, not an ad</strong>
+        <p>Rotating “Find your next…” matches Hub pages — one logo, dismissible for 14 days.</p>
+      </div>
+      <div class="callout">
+        <strong>Safe destination</strong>
+        <p>CTA → /about on the Hub (open today). Catalogue stays gated until soft launch.</p>
+      </div>
+    </div>
+
+    <p class="deck-foot">
+      Source: <code>marketing/co-uk-upgrade-banner-mockup.html</code> ·
+      Install snippet: <code>marketing/co-uk-upgrade-banner-snippet.html</code>
+    </p>
+  </div>
+
+  <script>
+  (function () {
+    var WORDS = ["event", "opportunity", "group", "attendee", "connection"];
+    var el = document.getElementById("tnh-upgrade-banner");
+    var btn = document.getElementById("tnh-upgrade-banner-close");
+    var word = document.getElementById("tnh-upgrade-banner-word");
+    if (btn && el) {
+      btn.addEventListener("click", function () { el.hidden = true; });
+    }
+    if (!word) return;
+    var reduce = false;
+    try {
+      reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (e) {}
+    if (reduce) {
+      word.textContent = WORDS.join(", ");
+      return;
+    }
+    var i = 0;
+    word.textContent = WORDS[0];
+    window.setInterval(function () {
+      i = (i + 1) % WORDS.length;
+      word.classList.add("is-fading");
+      window.setTimeout(function () {
+        word.textContent = WORDS[i];
+        word.classList.remove("is-fading");
+      }, 180);
+    }, 2600);
+  })();
+  </script>
+</body>
+</html>

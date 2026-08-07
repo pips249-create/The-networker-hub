@@ -31,7 +31,7 @@
     'event-dates': {
       title: 'Dates',
       body:
-        'Select one date for a single event, or click multiple days on the calendar to create a series — the same times apply to every date you pick. Series work best for recurring meetings on different weeks (same time and venue each session).',
+        'Select one date for a single event, or click multiple days on the calendar to create a series — the same UK start and end time apply to every date you pick (Europe/London), including dates either side of the clocks changing. Series work best for recurring meetings on different weeks (same time and venue each session).',
       hubertPrompt: 'How do I add multiple dates or create a recurring series?',
     },
     'event-series-planning': {
@@ -43,7 +43,7 @@
     'event-times': {
       title: 'Start and end time',
       body:
-        'Same start and end time for every selected date. End time must be after start time. Pick the hour, then minutes in 15-minute steps. Different times per day? Create separate listings instead.',
+        'Same UK start and end time for every selected date (Europe/London) — 10:15 stays 10:15 even after the clocks change. End time must be after start time. Pick the hour, then minutes in 15-minute steps. Different times per day? Create separate listings instead.',
       hubertPrompt: 'Can I set different times for different dates in a series?',
     },
     'event-venue': {

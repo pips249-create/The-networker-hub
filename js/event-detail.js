@@ -706,10 +706,24 @@
 
   function formatCategoryExclusivityCloseDate(iso) {
     if (!iso) return '';
+    if (window.HubEventTimezone && typeof window.HubEventTimezone.formatDateTimeLong === 'function') {
+      const formatted = window.HubEventTimezone.formatDateTimeLong(iso);
+      return formatted === '\u2014' ? '' : formatted;
+    }
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
-    const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const date = d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'Europe/London',
+    });
+    const time = d.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/London',
+    });
     return date + ' at ' + time;
   }
 
@@ -3310,6 +3324,10 @@
   function formatTicketSalesOpensClient(ev) {
     if (ev.ticketSalesOpensLabel) return ev.ticketSalesOpensLabel;
     if (!ev.ticketSalesOpensAt) return '';
+    if (window.HubEventTimezone && typeof window.HubEventTimezone.formatDateTimeLong === 'function') {
+      const formatted = window.HubEventTimezone.formatDateTimeLong(ev.ticketSalesOpensAt);
+      return formatted === '\u2014' ? '' : formatted;
+    }
     const d = new Date(ev.ticketSalesOpensAt);
     if (Number.isNaN(d.getTime())) return '';
     return (
@@ -3318,9 +3336,15 @@
         day: 'numeric',
         month: 'long',
         year: 'numeric',
+        timeZone: 'Europe/London',
       }) +
       ' at ' +
-      d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      d.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/London',
+      })
     );
   }
 
@@ -3924,8 +3948,17 @@
 
   function parseEventStartEnd(ev) {
     let start = null;
-    if (ev.dateRaw) {
-      const iso = String(ev.dateRaw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    let end = null;
+    const startRaw = (ev && (ev.starts_at || ev.dateRaw || ev.date || ev.nextDate || ev.next_date)) || null;
+    const endRaw = (ev && (ev.ends_at || ev.endDateRaw || ev.endDate)) || null;
+
+    if (startRaw) {
+      start = new Date(startRaw);
+      if (Number.isNaN(start.getTime())) start = null;
+    }
+
+    if (!start && ev && ev.dateRaw) {
+      const iso = String(ev.dateRaw).match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (iso) {
         let h = 12;
         let m = 0;
@@ -3934,14 +3967,46 @@
           h = parseInt(tm[1], 10);
           m = parseInt(tm[2], 10);
         }
-        start = new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10), h, m, 0);
+        const tz = window.HubEventTimezone;
+        if (tz && typeof tz.londonWallToUtcIso === 'function') {
+          start = new Date(
+            tz.londonWallToUtcIso(
+              parseInt(iso[1], 10),
+              parseInt(iso[2], 10),
+              parseInt(iso[3], 10),
+              h,
+              m
+            )
+          );
+        } else {
+          start = new Date(
+            parseInt(iso[1], 10),
+            parseInt(iso[2], 10) - 1,
+            parseInt(iso[3], 10),
+            h,
+            m,
+            0
+          );
+        }
       }
     }
+
     if (!start || Number.isNaN(start.getTime())) {
       start = new Date();
-      start.setHours(12, 0, 0, 0);
+      start.setUTCHours(12, 0, 0, 0);
     }
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+    if (endRaw) {
+      end = new Date(endRaw);
+      if (Number.isNaN(end.getTime())) end = null;
+    }
+    if (!end && window.HubEventTimezone && typeof window.HubEventTimezone.eventEndMs === 'function') {
+      const endMs = window.HubEventTimezone.eventEndMs(ev || {});
+      if (endMs != null) end = new Date(endMs);
+    }
+    if (!end || Number.isNaN(end.getTime()) || end.getTime() <= start.getTime()) {
+      end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    }
     return { start, end };
   }
 

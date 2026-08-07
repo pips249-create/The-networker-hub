@@ -350,21 +350,15 @@
   function computeSaleEndIso(option, customDatetime, eventDateIso) {
     const base = eventDateIso ? new Date(eventDateIso) : earliestEventDate();
     if (!base || Number.isNaN(base.getTime())) return null;
-    const d = new Date(base.getTime());
-    if (option === 'at_start') return d.toISOString();
-    if (option === '12_hours') {
-      d.setHours(d.getHours() - 12);
-      return d.toISOString();
-    }
-    if (option === '1_day') {
-      d.setDate(d.getDate() - 1);
-      return d.toISOString();
-    }
-    if (option === '1_week') {
-      d.setDate(d.getDate() - 7);
-      return d.toISOString();
-    }
+    if (option === 'at_start') return base.toISOString();
+    if (option === '12_hours') return new Date(base.getTime() - 12 * 60 * 60 * 1000).toISOString();
+    if (option === '1_day') return new Date(base.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    if (option === '1_week') return new Date(base.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     if (option === 'custom' && customDatetime) {
+      const tz = window.HubEventTimezone;
+      if (tz && typeof tz.parseEventDateInputToUtcIso === 'function') {
+        return tz.parseEventDateInputToUtcIso(customDatetime);
+      }
       const c = new Date(customDatetime);
       if (!Number.isNaN(c.getTime())) return c.toISOString();
     }

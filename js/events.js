@@ -20,6 +20,7 @@
   let currentPage = 1;
   let spotlightPremiumOrder = null;
   let spotlightFilterKey = '';
+  let spotlightRenderKey = '';
   let spotlightTimer = null;
   let spotlightAnimating = false;
   let spotlightCarouselBound = false;
@@ -40,6 +41,7 @@
   function resetSpotlightOrder() {
     spotlightPremiumOrder = null;
     spotlightFilterKey = '';
+    spotlightRenderKey = '';
   }
 
   window.hubResetSpotlightOrder = resetSpotlightOrder;
@@ -1049,11 +1051,20 @@
         els.spotlightTrack.classList.remove('spotlight-track--carousel');
         els.spotlightTrack.removeAttribute('data-loop-width');
         els.spotlightTrack.scrollLeft = 0;
+        spotlightRenderKey = '';
         if (promo) promo.hidden = true;
       } else {
         if (promo) promo.hidden = false;
         const cardsHtml = buildSpotlightTrackHtml();
         const itemCount = getSpotlightTrackItemCount();
+        const renderKey = itemCount + ':' + cardsHtml.length + ':' + premium.map(function (e) {
+          return e.id || e.slug || '';
+        }).join(',');
+        /* Skip rebuild when the featured set is unchanged (e.g. sort-only) — stops flicker. */
+        if (renderKey === spotlightRenderKey && els.spotlightTrack.children.length) {
+          return;
+        }
+        spotlightRenderKey = renderKey;
         els.spotlightTrack.classList.add('spotlight-track--carousel');
         bindSpotlightCarousel();
         requestAnimationFrame(function () {

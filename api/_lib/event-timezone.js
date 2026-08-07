@@ -60,6 +60,31 @@ function londonWallToUtcIso(year, month, day, hour, minute) {
   return new Date(ms).toISOString();
 }
 
+/**
+ * Parse an event date/time input to UTC ISO.
+ * Timezone-less `YYYY-MM-DDTHH:mm[:ss]` values are UK wall clock (Europe/London),
+ * so multi-date series keep the same local start time across BST/GMT.
+ * Strings that already include Z or an offset are kept as absolute instants.
+ */
+function parseEventDateInputToUtcIso(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const wall = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?(?:\.\d+)?$/
+  );
+  if (wall) {
+    const year = Number(wall[1]);
+    const month = Number(wall[2]);
+    const day = Number(wall[3]);
+    const hour = wall[4] != null ? Number(wall[4]) : 0;
+    const minute = wall[5] != null ? Number(wall[5]) : 0;
+    return londonWallToUtcIso(year, month, day, hour, minute);
+  }
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
 function formatTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -82,6 +107,26 @@ function formatDateOnly(startsAt) {
   const d = new Date(startsAt);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-GB', DATE_FMT);
+}
+
+/** Email/PDF helper: long UK date + HH:mm (or Date TBC). */
+function formatEventDateTime(startsAt) {
+  const starts = startsAt ? new Date(startsAt) : null;
+  if (!starts || Number.isNaN(starts.getTime())) {
+    return { event_date: 'Date TBC', event_time: '' };
+  }
+  return {
+    event_date: formatDateOnly(startsAt),
+    event_time: formatTime(startsAt),
+  };
+}
+
+/** "Monday, 3 November 2025 at 10:15" in Europe/London. */
+function formatDateTimeLong(iso) {
+  const { event_date, event_time } = formatEventDateTime(iso);
+  if (event_date === 'Date TBC') return '—';
+  if (!event_time) return event_date;
+  return event_date + ' at ' + event_time;
 }
 
 function londonTimeFromIso(iso) {
@@ -192,9 +237,12 @@ function isEventPast(source, at) {
 module.exports = {
   EVENT_TZ,
   londonWallToUtcIso,
+  parseEventDateInputToUtcIso,
   formatTime,
   formatTimeRange,
   formatDateOnly,
+  formatEventDateTime,
+  formatDateTimeLong,
   londonTimeFromIso,
   londonDateKeyFromIso,
   londonDatePartsFromIso,

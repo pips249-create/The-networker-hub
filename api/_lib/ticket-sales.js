@@ -54,24 +54,34 @@ function earliestTicketSaleStart(tickets, at) {
   return earliest;
 }
 
+const { EVENT_TZ, formatTime, londonDatePartsFromIso } = require('./event-timezone');
+
 function formatTicketSalesOpensLabel(isoOrDate, at) {
   const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
   if (!d || Number.isNaN(d.getTime())) return '';
   const now = at instanceof Date ? at : new Date();
+  const parts = londonDatePartsFromIso(d.toISOString());
+  const nowParts = londonDatePartsFromIso(now.toISOString());
+  const includeYear = parts && nowParts && parts.year !== nowParts.year;
   const datePart = d.toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+    year: includeYear ? 'numeric' : undefined,
+    timeZone: EVENT_TZ,
   });
-  const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const timePart = formatTime(d.toISOString());
   return datePart + ' at ' + timePart;
 }
 
 function formatTicketSalesOpensShort(isoOrDate) {
   const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
   if (!d || Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: EVENT_TZ,
+  });
 }
 
 function isEventPublishedForSale(eventRow) {
@@ -114,24 +124,14 @@ function resolveTicketSalesEnabled(eventRow, tickets, at) {
 function computeSaleEndIso(option, customDatetime, eventDateIso) {
   const base = eventDateIso ? new Date(eventDateIso) : null;
   if (!base || Number.isNaN(base.getTime())) return null;
-  const d = new Date(base.getTime());
   const opt = String(option || '').trim();
-  if (opt === 'at_start') return d.toISOString();
-  if (opt === '12_hours') {
-    d.setHours(d.getHours() - 12);
-    return d.toISOString();
-  }
-  if (opt === '1_day') {
-    d.setDate(d.getDate() - 1);
-    return d.toISOString();
-  }
-  if (opt === '1_week') {
-    d.setDate(d.getDate() - 7);
-    return d.toISOString();
-  }
+  if (opt === 'at_start') return base.toISOString();
+  if (opt === '12_hours') return new Date(base.getTime() - 12 * 60 * 60 * 1000).toISOString();
+  if (opt === '1_day') return new Date(base.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  if (opt === '1_week') return new Date(base.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   if (opt === 'custom' && customDatetime) {
-    const c = new Date(customDatetime);
-    if (!Number.isNaN(c.getTime())) return c.toISOString();
+    const { parseEventDateInputToUtcIso } = require('./event-timezone');
+    return parseEventDateInputToUtcIso(customDatetime);
   }
   return null;
 }

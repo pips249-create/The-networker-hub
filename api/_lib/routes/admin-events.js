@@ -12,6 +12,7 @@ const { ukOutcode } = require('../supabase-events');
 const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
+const { parseEventDateInputToUtcIso } = require('../event-timezone');
 
 function parseBody(req) {
   let body = req.body;
@@ -315,11 +316,11 @@ async function buildEventPatchFromBody(body) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'starts_at')) {
     const raw = body.starts_at;
-    patch.starts_at = raw ? new Date(raw).toISOString() : null;
+    patch.starts_at = raw ? parseEventDateInputToUtcIso(raw) : null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'ends_at')) {
     const raw = body.ends_at;
-    patch.ends_at = raw ? new Date(raw).toISOString() : null;
+    patch.ends_at = raw ? parseEventDateInputToUtcIso(raw) : null;
   }
   if (Object.prototype.hasOwnProperty.call(body, 'organiser_id')) {
     patch.organiser_id = body.organiser_id ? String(body.organiser_id).trim() : null;

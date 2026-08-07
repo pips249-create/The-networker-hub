@@ -59,7 +59,8 @@
     { "source": "/contact.html", "destination": "/contact", "permanent": true },
     { "source": "/guides.html", "destination": "/guides", "permanent": true },
     { "source": "/for-organisers.html", "destination": "/for-organisers", "permanent": true },
-    { "source": "/for-attendees.html", "destination": "/for-attendees", "permanent": true },
+    { "source": "/for-attendees", "destination": "/for-networkers", "permanent": true },
+    { "source": "/for-networkers.html", "destination": "/for-networkers", "permanent": true },
     { "source": "/testing-bo.html", "destination": "/testing-bo", "permanent": true },
     { "source": "/legal-policies.html", "destination": "/legal-policies", "permanent": true },
     { "source": "/login.html", "destination": "/login", "permanent": true },
@@ -201,6 +202,7 @@
     "api/promote-analytics.js": { "maxDuration": 10 },
     "api/pitch-analytics.js": { "maxDuration": 10 },
     "api/sponsor-analytics.js": { "maxDuration": 10 },
+    "api/sponsor-out.js": { "maxDuration": 10 },
     "api/stripe-webhook.js": { "maxDuration": 15 },
     "api/resend-webhook.js": { "maxDuration": 15 },
     "api/contact-chat.js": { "maxDuration": 30 }
@@ -238,7 +240,7 @@
       "destination": "/opportunities/opportunity.html?slug=:slug"
     },
     {
-      "source": "/for-attendees",
+      "source": "/for-networkers",
       "destination": "/for-attendees.html"
     },
     {

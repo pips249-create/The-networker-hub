@@ -2834,6 +2834,8 @@
   flex: none;
   min-height: 200px;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .opp-browse-page .opp-premium-spotlight .spotlight-track {
@@ -2843,8 +2845,11 @@
   scroll-behavior: smooth;
   padding-bottom: 4px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 200px;
   align-items: stretch;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
 }
@@ -2867,8 +2872,9 @@
 @media (min-width: 900px) {
   .opp-browse-page .opp-premium-spotlight .spotlight-track .premium-card {
     flex: 0 0 calc((100% - 28px) / 3);
-    max-width: 320px;
+    max-width: none;
     width: calc((100% - 28px) / 3);
+    box-sizing: border-box;
   }
 }
 
@@ -2928,12 +2934,16 @@
 }
 
 .opp-browse-page .opp-premium-card {
-  flex: 0 0 min(260px, 78vw);
+  flex: 0 0 min(260px, calc(100% - 4px));
+  width: min(260px, calc(100% - 4px));
+  max-width: 100%;
+  min-width: 0;
   min-height: 200px;
   border-radius: 14px;
   overflow: hidden;
   position: relative;
   color: #fff;
+  box-sizing: border-box;
 }
 
 .opp-browse-page .opp-premium-card .premium-card-link {

@@ -86,7 +86,7 @@ const KNOWLEDGE_SECTIONS = [
     body:
       'Creating a listing: /organiser/ → create event → choose group and format (in person or online) → event-edit.html for title, type, description, photo, venue or join link, and dates → event-tickets.html for tiers, VAT, refund policy, publish. ' +
       'EVENT TYPE (Meeting, Events, Conference, Exhibition, Awards, Webinar, Workshop, Seminar, Masterclass): this is a browse filter, not whether something counts as an event. Meeting covers breakfasts, netwalking, women-only sessions, and most regular networking. Events is for larger one-offs (lunch & learns and similar). Conference is for multi-day summits and delegate events. Exhibition and Awards are for trade shows and ceremonies. Webinar, Workshop, Seminar and Masterclass help people find online talks, hands-on training, expert-led seminars, and masterclasses. ' +
-      'MULTI-DATE SERIES: click multiple days on the calendar — the same start time, end time, and venue (or online link) apply to every date. Ideal for a recurring meeting on different weeks. To remove a date, click the highlighted day again on the calendar. ' +
+      'MULTI-DATE SERIES: click multiple days on the calendar — the same UK start time, end time, and venue (or online link) apply to every date (Europe/London). Ideal for a recurring meeting on different weeks. The clock time stays the same when British Summer Time starts or ends — for example 10:15 on every date. To remove a date, click the highlighted day again on the calendar. ' +
       'SAME TITLE, DIFFERENT TIME OR LOCATION: create separate listings — one per session — from My Events. You can reuse the same title; each listing gets its own dates, times, and venue. ' +
       'COVER PHOTO: upload, drag-and-drop, paste (Ctrl+V), or paste a URL. Files over 2MB are compressed automatically; if that fails, resize the file or use a hosted URL. For a sharp browse listing, use a landscape photo at least 1200×750px. After upload, drag the preview to recentre how the image is cropped on listing cards (Reset position clears the crop). Use Remove to clear a photo and upload again.',
   },
@@ -468,7 +468,7 @@ const FALLBACK_REPLIES = [
   {
     match: /same (name|title).*(different|another).*(time|location|venue|place)|different (time|location|venue).*(same name|same title)|several (session|event).*same name|multiple (event|session|listing).*(different time|different location|different venue)/i,
     reply:
-      'A multi-date series on one listing shares the same start time, end time, and venue (or online link) for every date — use that for a recurring meeting on different weeks. If your sessions have different start times or locations, create separate listings from My Events (Create event). You can reuse the same title on each; set the dates, times, and venue for that session individually.',
+      'A multi-date series on one listing shares the same UK start time, end time, and venue (or online link) for every date — use that for a recurring meeting on different weeks. The clock time stays the same when BST starts or ends. If your sessions have different start times or locations, create separate listings from My Events (Create event). You can reuse the same title on each; set the dates, times, and venue for that session individually.',
   },
   {
     match: /category exclusivity|one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
@@ -543,7 +543,17 @@ const FALLBACK_REPLIES = [
   {
     match: /add.*(more than one|multiple).*(date|day)|multiple dates|recurring (event|meeting|series)|event series|repeat.*date/i,
     reply:
-      'Use the calendar on the listing details step and click every date you want to include. All selected dates form one series and share the same start time, end time, venue or online link, and ticket tiers. This suits recurring meetings on different weeks. If any session has a different time or location, create it as a separate listing instead.',
+      'Use the calendar on the listing details step and click every date you want to include. All selected dates form one series and share the same UK start time, end time, venue or online link, and ticket tiers (Europe/London — the same clock time on every date, including when the clocks change). This suits recurring meetings on different weeks. If any session has a different time or location, create it as a separate listing instead.',
+  },
+  {
+    match: /(start )?times? (change|changed|wrong|shift|shifted|jump|jumped)|hour (out|off|wrong)|clocks? (change|go back|go forward)|daylight saving|british summer|why.*(different|wrong).*time.*(date|series|recurring)|recurring.*time.*(wrong|change|hour)/i,
+    reply:
+      'Event times are always UK local time (Europe/London). On a multi-date series, the start and end time you set applies as the same clock time on every date — for example 10:15 stays 10:15 before and after the clocks change. If an older series shows a one-hour difference across autumn or spring, open the listing in Edit event, confirm the start time, and save again so every date is rewritten correctly. Need a different time on one day? Create that session as its own listing.',
+  },
+  {
+    match: /can i set different times|different (start )?times?.*(date|day|session)|same time every (date|day)/i,
+    reply:
+      'A multi-date series uses one UK start and end time for every selected date. You cannot set a different time per day on the same listing. If one session needs a different time, create it as a separate listing from My Events (you can reuse the same title).',
   },
   {
     match: /conference.*(pass|ticket|multi.?day|3 day|three day)|multi.?day conference|one ticket.*all (day|date)|full conference|delegate pass/i,

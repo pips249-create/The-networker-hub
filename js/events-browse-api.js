@@ -288,6 +288,23 @@
     }
   }
 
+  function setBrowseResultsLoading(on) {
+    var listings = el('event-listings');
+    var results = el('events-results');
+    var sortSelect = el('sort');
+    document.body.classList.toggle('browse-results-loading', !!on);
+    if (listings) {
+      listings.classList.toggle('is-updating', !!on);
+      listings.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+    if (results) {
+      results.classList.toggle('is-updating', !!on);
+    }
+    if (sortSelect) {
+      sortSelect.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+  }
+
   function hubBrowseFetch(page, options) {
     options = options || {};
     var token = ++fetchToken;
@@ -303,6 +320,8 @@
         window.hubRefreshMap([]);
       }
     }
+
+    setBrowseResultsLoading(true);
 
     return fetch(url, { credentials: 'same-origin', cache: 'no-store' })
       .then(function (res) {
@@ -348,10 +367,14 @@
       .catch(function (err) {
         if (token === fetchToken) onBrowseFetchError(err);
         throw err;
+      })
+      .finally(function () {
+        if (token === fetchToken) setBrowseResultsLoading(false);
       });
   }
 
   function hubBrowseFetchDebounced(page) {
+    setBrowseResultsLoading(true);
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function () {
       debounceTimer = null;

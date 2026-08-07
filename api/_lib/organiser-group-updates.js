@@ -12,6 +12,7 @@ const { publicSiteBase, unsubscribeUrl, logoNavUrl } = require('./hub-email-urls
 const { eventImageUrl } = require('./event-image');
 const { organiserLogoUrlForEmail } = require('./organiser-member-roster');
 const { normalizeHexColor } = require('./website-meta');
+const { EVENT_TZ } = require('./event-timezone');
 
 const SLUG = 'organiser_monthly_group_update';
 const FREE_PER_MONTH = 1;
@@ -560,6 +561,8 @@ function buildEventsHtml(events, siteUrl, brand, trackToken) {
             month: 'short',
             hour: '2-digit',
             minute: '2-digit',
+            hour12: false,
+            timeZone: EVENT_TZ,
           })
         : '';
       const url = wrapTrackedUrl(eventPublicUrl(ev, siteUrl), trackToken);

@@ -2,22 +2,7 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 const { organiserDashboardUrl } = require('./hub-email-urls');
 const { enrichEventRemovedByHubVars } = require('./event-removed-by-hub-sections');
-
-function formatEventDateTime(startsAt) {
-  const d = startsAt ? new Date(startsAt) : null;
-  if (!d || Number.isNaN(d.getTime())) {
-    return { event_date: 'Date TBC', event_time: '' };
-  }
-  return {
-    event_date: d.toLocaleDateString('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
-    event_time: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-  };
-}
+const { formatEventDateTime } = require('./event-timezone');
 
 async function sendOrganiserEventRemovedEmail(sb, options = {}) {
   const eventId = String(options.eventId || '').trim();
