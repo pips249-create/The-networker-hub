@@ -22,15 +22,10 @@ const { rankingBadgeImageUrl } = require('./ranking-badge-svg');
 
 function buildRankingBadgeImageUrl(origin, opts) {
   const o = opts || {};
-  const url = rankingBadgeImageUrl(origin, o.tier, o.period);
-  if (!o.organiserId) return url;
-  try {
-    const u = new URL(url);
-    u.searchParams.set('organiserId', String(o.organiserId));
-    return u.toString();
-  } catch {
-    return url;
-  }
+  return rankingBadgeImageUrl(origin, o.tier, o.period, {
+    name: o.name || o.groupName || o.organiserName,
+    organiserId: o.organiserId,
+  });
 }
 
 function trimText(text, max) {
@@ -641,6 +636,7 @@ async function buildRankingBadgeMeta(lookup, origin) {
     tier: entry.tier,
     period: entry.periodLabel,
     organiserId: org.id,
+    name,
   });
   const meta = {
     ok: true,
