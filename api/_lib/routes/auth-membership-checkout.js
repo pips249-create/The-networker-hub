@@ -102,6 +102,28 @@ module.exports = async function handler(req, res) {
       return json(res, 404, { ok: false, error: 'organiser_not_found' });
     }
 
+    // Block a second Hub-billed subscription while one is already live.
+    const {
+      getActiveRosterMembership,
+      rosterRowHasLiveHubSubscription,
+    } = require('../organiser-member-roster');
+    const existingMembership = await getActiveRosterMembership(sb, {
+      organiserId,
+      email: checkoutEmail,
+      userId: session?.sub || null,
+    });
+    if (
+      existingMembership.active &&
+      rosterRowHasLiveHubSubscription(existingMembership.row)
+    ) {
+      return json(res, 409, {
+        ok: false,
+        error: 'already_member',
+        message:
+          'You already have an active membership with this group. Manage billing from My Hub → Memberships.',
+      });
+    }
+
     const plan = await getMembershipPlanForOrganiser(organiserId);
     const amountPence = amountPenceForInterval(plan, interval);
     if (!amountPence) {

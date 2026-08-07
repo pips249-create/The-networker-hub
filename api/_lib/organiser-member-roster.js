@@ -2134,6 +2134,8 @@ module.exports = {
   isValidRosterEmail,
   assertRosterCsvTextSafe,
   rosterRowIsActive,
+  rosterRowHasLiveHubSubscription,
+  rosterRowCountsAsMember,
   getActiveRosterMembership,
   assertMembersOnlyBookingAllowed,
   claimRosterEntriesForAttendee,

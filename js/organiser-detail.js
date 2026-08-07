@@ -291,40 +291,90 @@
     return '£' + v.toFixed(2).replace(/\.00$/, '');
   }
 
-  async function shouldHideMembershipJoin(organiserId) {
+  async function loadMembershipJoinState(organiserId) {
     var orgId = String(organiserId || '').trim();
-    if (!orgId) return false;
+    if (!orgId) return { joinState: 'join' };
     try {
-      var sessionRes = await fetch('/api/auth/session', {
-        credentials: 'include',
-        cache: 'no-store',
-      });
-      var sessionData = await sessionRes.json().catch(function () {
-        return {};
-      });
-      var role = sessionData && sessionData.user ? String(sessionData.user.role || '') : '';
-      // Hub admins should never see Join CTAs on organiser profiles.
-      if (role === 'admin') return true;
-
       var res = await fetch(
         '/api/auth/roster-eligibility?organiserId=' + encodeURIComponent(orgId),
         { credentials: 'include', cache: 'no-store' }
       );
-      if (res.status === 401) return false;
+      if (res.status === 401) return { joinState: 'join', signedOut: true };
       var data = await res.json().catch(function () {
         return {};
       });
-      // Hide Join for roster members and for people who manage this organiser page.
-      return Boolean(data.ok && (data.isMember || data.managesOrganiser));
+      if (!data.ok) return { joinState: 'join' };
+      return {
+        joinState: data.joinState || (data.managesOrganiser ? 'manager' : data.isMember ? 'member' : 'join'),
+        isMember: Boolean(data.isMember),
+        managesOrganiser: Boolean(data.managesOrganiser),
+        billedThroughHub: Boolean(data.billedThroughHub),
+        isAdmin: Boolean(data.isAdmin),
+      };
     } catch (e) {
-      return false;
+      return { joinState: 'join' };
     }
+  }
+
+  function membershipManageHref(org) {
+    var id = String((org && org.id) || '').trim();
+    if (!id) return '/organiser/#memberships';
+    return (
+      '/organiser/?membershipGroup=' + encodeURIComponent(id) + '#memberships'
+    );
+  }
+
+  function renderMembershipStatusCard(org, state) {
+    var plansEl = document.getElementById('org-membership-plans');
+    var leadEl = document.getElementById('org-membership-join-lead');
+    var heading = document.querySelector('#org-membership-join h2');
+    if (!plansEl) return;
+
+    if (state.joinState === 'manager') {
+      if (heading) heading.textContent = 'Membership for this group';
+      if (leadEl) {
+        leadEl.textContent =
+          'You manage this group. Set monthly or annual membership prices, and invite members to pay, from your organiser workspace.';
+      }
+      plansEl.innerHTML =
+        '<div class="org-membership-plan-card org-membership-plan-card--status">' +
+        '<div class="org-membership-plan-copy">' +
+        '<strong>You manage this group</strong>' +
+        '<p>Update membership pricing and billing invites in Memberships.</p>' +
+        '</div>' +
+        '<a class="org-profile-btn org-profile-btn--primary" href="' +
+        escapeHtml(membershipManageHref(org)) +
+        '">Manage membership pricing</a>' +
+        '</div>';
+      return;
+    }
+
+    if (heading) heading.textContent = 'Your membership';
+    if (leadEl) {
+      leadEl.textContent = state.billedThroughHub
+        ? 'You are an active member of this group. Manage your card or cancel from My Hub.'
+        : 'You are on this group’s member list. Member rates unlock automatically when you book while signed in.';
+    }
+    plansEl.innerHTML =
+      '<div class="org-membership-plan-card org-membership-plan-card--status">' +
+      '<div class="org-membership-plan-copy">' +
+      '<strong>You’re a member</strong>' +
+      '<p>' +
+      (state.billedThroughHub
+        ? 'Hub billing is active for this group.'
+        : 'Your membership is active on this organiser’s member list.') +
+      '</p>' +
+      '</div>' +
+      '<a class="org-profile-btn org-profile-btn--primary" href="/account/#memberships">Manage in My Hub</a>' +
+      '</div>';
   }
 
   async function renderMembershipJoin(org) {
     var section = document.getElementById('org-membership-join');
     var plansEl = document.getElementById('org-membership-plans');
     var statusEl = document.getElementById('org-membership-join-status');
+    var leadEl = document.getElementById('org-membership-join-lead');
+    var heading = document.querySelector('#org-membership-join h2');
     if (!section || !plansEl) return;
 
     var plan = org.membershipPlan;
@@ -334,7 +384,7 @@
       return;
     }
 
-    // Keep hidden until we know the viewer should not see Join (avoids flash).
+    // Keep hidden until eligibility returns (avoids Join flash for members/managers).
     section.hidden = true;
     plansEl.innerHTML = '';
     if (statusEl) {
@@ -342,12 +392,22 @@
       statusEl.textContent = '';
     }
 
-    if (await shouldHideMembershipJoin(org.id)) {
-      return;
-    }
+    var state = await loadMembershipJoinState(org.id);
 
     // Profile may have changed while the eligibility check ran.
     if (currentOrganiser && currentOrganiser.id !== org.id) return;
+
+    if (state.joinState === 'manager' || state.joinState === 'member') {
+      section.hidden = false;
+      renderMembershipStatusCard(org, state);
+      return;
+    }
+
+    if (heading) heading.textContent = 'Join this group';
+    if (leadEl) {
+      leadEl.textContent =
+        'Pay monthly or annually through The Networker Hub. The group receives 100% of the membership price (and their VAT if they add it). A booking fee (4.5% + 20p) is added at checkout.';
+    }
 
     section.hidden = false;
 

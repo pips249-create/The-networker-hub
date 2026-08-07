@@ -1,16 +1,16 @@
-const { setCors, json, sessionFromRequest } = require('../auth');
+const { setCors, json, sessionFromRequest, isAdminRole } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { isUuid } = require('../uuid');
 const {
   getActiveRosterMembership,
   loadMemberTicketsForEvent,
+  rosterRowHasLiveHubSubscription,
 } = require('../organiser-member-roster');
 
 async function sessionManagesOrganiser(session, organiserId) {
   const orgId = String(organiserId || '').trim();
   if (!session?.email || !orgId || !isUuid(orgId)) return false;
 
-  const { isAdminRole } = require('../auth');
   // Hub admins oversee organiser pages — never pitch Join to them.
   if (isAdminRole(session.role)) return true;
 
@@ -54,7 +54,7 @@ async function sessionManagesOrganiser(session, organiserId) {
 /**
  * GET ?eventId= or ?organiserId= or ?organiserIds=a,b
  * Returns roster membership for signed-in attendee and member-only tickets for an event.
- * Also reports whether the signed-in user manages the organiser page (owner/editor).
+ * Also reports whether the signed-in user manages the organiser page (owner/editor/admin).
  */
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -80,6 +80,7 @@ module.exports = async function handler(req, res) {
   const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
   const organiserIdsRaw = String(req.query?.organiserIds || req.query?.organiser_ids || '').trim();
   const organiserIdSingle = String(req.query?.organiserId || req.query?.organiser_id || '').trim();
+  const isAdmin = isAdminRole(session.role);
 
   const organiserIds = [];
   if (organiserIdSingle && isUuid(organiserIdSingle)) organiserIds.push(organiserIdSingle);
@@ -92,6 +93,7 @@ module.exports = async function handler(req, res) {
     const sb = getSupabaseAdmin();
     let targetOrganiserId = organiserIds[0] || null;
     let memberTickets = [];
+    let membershipRow = null;
 
     if (eventId && isUuid(eventId)) {
       const evRes = await sb
@@ -117,7 +119,11 @@ module.exports = async function handler(req, res) {
       membershipByOrganiser[orgId] = {
         active: membership.active,
         expiresAt: membership.row?.expires_at || null,
+        billedThroughHub: rosterRowHasLiveHubSubscription(membership.row),
       };
+      if (targetOrganiserId && orgId === targetOrganiserId) {
+        membershipRow = membership.row || null;
+      }
     }
 
     if (eventId && isUuid(eventId) && targetOrganiserId) {
@@ -133,13 +139,18 @@ module.exports = async function handler(req, res) {
     const isMember = targetOrganiserId
       ? Boolean(membershipByOrganiser[targetOrganiserId]?.active)
       : false;
+    const billedThroughHub = rosterRowHasLiveHubSubscription(membershipRow);
+    const joinState = managesOrganiser ? 'manager' : isMember ? 'member' : 'join';
 
     return json(res, 200, {
       ok: true,
       email,
+      isAdmin,
       membershipByOrganiser,
       isMember,
       managesOrganiser,
+      billedThroughHub,
+      joinState,
       memberTickets,
     });
   } catch (e) {

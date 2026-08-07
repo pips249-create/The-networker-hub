@@ -1028,6 +1028,11 @@ body.hub-rm-modal-open {
   background: #faf8f5;
 }
 
+.org-membership-plan-card--status {
+  background: #f3f6fb;
+  border-color: rgba(69, 45, 92, 0.14);
+}
+
 .org-membership-plan-copy {
   display: grid;
   gap: 4px;
