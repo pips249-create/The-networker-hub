@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260807updates';
+  var NAV_BUILD = '20260807peek2';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -859,7 +859,7 @@
       homeHref +
       '" aria-label="The Networker Hub home">' +
       '<img src="' +
-      href('assets/logo-nav-transparent.png?v=20260729a') +
+      href('/assets/logo-nav-transparent.png?v=20260729a') +
       '" alt="The Networker Hub" width="550" height="255">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
