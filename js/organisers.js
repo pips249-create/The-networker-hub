@@ -76,8 +76,17 @@
 
   function listingCountLabel(n) {
     var count = Number(n) || 0;
-    if (count === 0) return 'No listings yet';
+    if (count === 0) return 'No upcoming listings';
     return count === 1 ? '1 listing' : count + ' listings';
+  }
+
+  /** Prefer a real industry; hide empty / generic “Networking” defaults. */
+  function organiserIndustryLabel(org) {
+    var raw = (org && org.industry) || (org && org.industries && org.industries[0]) || '';
+    var label = String(raw || '').trim();
+    if (!label) return '';
+    if (/^networking$/i.test(label)) return '';
+    return label;
   }
 
   /** Plain snippet for cards — strip markdown/HTML/breadcrumb junk from imported bios. */
@@ -109,7 +118,7 @@
     var snippet = cardDescriptionSnippet(org && org.description, maxLen);
     if (snippet) return snippet;
     if (Number(org && org.eventCount) > 0) return 'Networking group on The Networker Hub.';
-    return 'Profile coming soon.';
+    return 'No upcoming listings';
   }
 
   function shuffleList(list) {
@@ -333,9 +342,9 @@
   }
 
   function premiumSpotlightCard(org) {
-    var industry = org.industry || (org.industries && org.industries[0]) || 'Networking';
+    var industry = organiserIndustryLabel(org);
     var desc = organiserCardDescription(org, 72);
-    if (desc === 'Profile coming soon.') desc = '';
+    if (desc === 'No upcoming listings') desc = '';
 
     return (
       '<article class="premium-card org-premium-card" data-id="' +
@@ -355,18 +364,20 @@
       escapeHtml(listingCountLabel(org.eventCount)) +
       '</span></div>' +
       '<div class="premium-card-body">' +
-      '<span class="org-premium-industry">' +
-      escapeHtml(industry) +
-      '</span>' +
+      (industry
+        ? '<span class="org-premium-industry">' + escapeHtml(industry) + '</span>'
+        : '') +
       '<h3 class="premium-card-title">' +
       escapeHtml(org.name) +
       '</h3>' +
       '<div class="premium-card-meta">' +
-      '<p class="premium-meta-row">' +
-      META_PIN_SVG +
-      '<span>' +
-      escapeHtml(industry) +
-      '</span></p>' +
+      (industry
+        ? '<p class="premium-meta-row">' +
+          META_PIN_SVG +
+          '<span>' +
+          escapeHtml(industry) +
+          '</span></p>'
+        : '') +
       '<p class="premium-meta-row">' +
       META_STAR_SVG +
       '<span>' +
@@ -411,10 +422,15 @@
   }
 
   function gridCard(org) {
-    var industry = org.industry || (org.industries && org.industries[0]) || 'Networking';
+    var industry = organiserIndustryLabel(org);
     var desc = organiserCardDescription(org, 140);
     var reviewCount = Number(org.reviews) || 0;
     var href = organiserHref(org);
+    var listingLabel = listingCountLabel(org.eventCount);
+    // Avoid repeating “No upcoming listings” in both the count pill and the blurb.
+    if (!cardDescriptionSnippet(org && org.description, 140) && Number(org.eventCount) === 0) {
+      desc = 'Add events to appear in search and on this profile.';
+    }
 
     return (
       '<article class="organiser-grid-card" data-id="' +
@@ -425,11 +441,13 @@
       escapeHtml(org.name || 'organiser') +
       '">' +
       '<div class="organiser-card-header">' +
-      '<span class="organiser-card-industry">' +
-      escapeHtml(industry) +
-      '</span>' +
-      '<span class="organiser-card-count">' +
-      escapeHtml(listingCountLabel(org.eventCount)) +
+      (industry
+        ? '<span class="organiser-card-industry">' + escapeHtml(industry) + '</span>'
+        : '') +
+      '<span class="organiser-card-count' +
+      (industry ? '' : ' organiser-card-count--solo') +
+      '">' +
+      escapeHtml(listingLabel) +
       '</span>' +
       '<div class="organiser-card-logo-wrap">' +
       logoHtml(org) +
@@ -440,7 +458,7 @@
       escapeHtml(org.name) +
       '</h3>' +
       '<p class="organiser-card-listings">' +
-      escapeHtml(listingCountLabel(org.eventCount)) +
+      escapeHtml(listingLabel) +
       '</p>' +
       (org.ranking && org.ranking.label
         ? '<span class="organiser-card-ranking hub-ranking-badge hub-ranking-badge--' +

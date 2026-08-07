@@ -73,6 +73,14 @@
   border-radius: 999px;
   padding: 5px 10px;
   white-space: nowrap;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.organiser-card-count--solo {
+  left: 10px;
+  right: auto;
 }
 
 .organiser-card-logo-wrap {
