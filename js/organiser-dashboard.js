@@ -596,7 +596,8 @@
     const name = String(opts.name || opts.groupName || '').trim();
     if (name) params.set('name', name.slice(0, 80));
     if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
-    params.set('v', '4');
+    if (opts.demo) params.set('demo', '1');
+    params.set('v', '5');
     return origin.replace(/\/$/, '') + '/api/ranking-badge?' + params.toString();
   }
 
@@ -857,7 +858,7 @@
             esc(item.sample) +
             '</span>' +
             '<img class="org-ranking-tier-example-img" src="' +
-            esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group' })) +
+            esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group', demo: true })) +
             '" alt="' +
             esc(item.sample + ' award badge · ' + periodLabel) +
             '" width="380" height="128" loading="lazy" />' +
@@ -930,7 +931,7 @@
                 return (
                   '<div class="org-ranking-tier-example">' +
                   '<img class="org-ranking-tier-example-img" src="' +
-                  esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group' })) +
+                  esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group', demo: true })) +
                   '" alt="' +
                   esc(item.sample + ' award badge example') +
                   '" width="380" height="128" loading="lazy" />' +

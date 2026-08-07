@@ -43,7 +43,7 @@
     var name = String(opts.name || opts.groupName || '').trim();
     if (name) q.set('name', name.slice(0, 80));
     if (opts.organiserId) q.set('organiserId', String(opts.organiserId).trim());
-    q.set('v', '4');
+    q.set('v', '5');
     return origin() + '/api/ranking-badge?' + q.toString();
   }
 

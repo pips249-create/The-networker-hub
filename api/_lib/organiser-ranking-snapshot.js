@@ -834,6 +834,43 @@ async function getOrganiserRankingHistory(organiserId, options) {
     .slice(0, limit);
 }
 
+/**
+ * Resolve a verifiable website badge award for an organiser.
+ * - If period is set, only return an award earned for that exact month.
+ * - If period is omitted, return their latest earned award (period stamped on the plaque).
+ * Requested tier is ignored for entitlement — we always use the tier they earned.
+ */
+async function getOrganiserBadgeAward(organiserId, periodLabel) {
+  const id = String(organiserId || '').trim();
+  if (!id) return null;
+  const wantedPeriod = String(periodLabel || '')
+    .trim()
+    .toLowerCase();
+
+  const history = await getOrganiserRankingHistory(id, { limit: 36 });
+  if (!history.length) {
+    // Fall back to live index when snapshots are missing (dev / first month).
+    if (!wantedPeriod && isSupabaseConfigured()) {
+      try {
+        const live = await loadCurrentRankingsByOrganiserId([id]);
+        return live[id] || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  if (wantedPeriod) {
+    return (
+      history.find(
+        (row) => String(row.periodLabel || '').trim().toLowerCase() === wantedPeriod
+      ) || null
+    );
+  }
+  return history[0] || null;
+}
+
 module.exports = {
   MIN_REVIEWS_FOR_RANKING,
   currentPeriodKey,
@@ -845,6 +882,7 @@ module.exports = {
   loadCurrentRankingsByOrganiserId,
   getGroupRankingsForOrganiser,
   getOrganiserRankingHistory,
+  getOrganiserBadgeAward,
   getBadgeImpressionCounts,
   runMonthlyOrganiserRankingSnapshot,
   getRankingAdminReport,

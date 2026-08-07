@@ -199,17 +199,63 @@ function buildRankingBadgeSvg(options) {
   );
 }
 
+
+/** Shown when an embed is missing verification or the group did not earn that month. */
+function buildUnearnedRankingBadgeSvg(options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const period = String(opts.period || opts.periodLabel || '')
+    .trim()
+    .slice(0, 40);
+  const reason = String(opts.reason || 'unverified').trim().toLowerCase();
+  const headline =
+    reason === 'expired' || reason === 'outdated'
+      ? 'AWARD PERIOD ENDED'
+      : reason === 'missing_organiser'
+        ? 'UNVERIFIED BADGE'
+        : 'NOT A VERIFIED AWARD';
+  const detail = period
+    ? `${period} · Check current rankings`
+    : 'See verified awards on The Networker Hub';
+  const title = `${headline} — The Networker Hub`;
+  const uid = 'unearned-' + String(period || reason).replace(/[^a-z0-9]+/gi, '').slice(0, 12);
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" viewBox="0 0 ${BADGE_WIDTH} ${BADGE_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
+    `<title>${escapeXml(title)}</title>` +
+    `<defs>` +
+    `<linearGradient id="bg-${uid}" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0%" stop-color="#2a2f3a"/>` +
+    `<stop offset="100%" stop-color="#151820"/>` +
+    `</linearGradient>` +
+    `</defs>` +
+    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="18" fill="url(#bg-${uid})"/>` +
+    `<rect x="2.5" y="2.5" width="${BADGE_WIDTH - 5}" height="${BADGE_HEIGHT - 5}" rx="16" fill="none" stroke="#6b7280" stroke-width="2"/>` +
+    `<circle cx="58" cy="64" r="28" fill="#3a404c" stroke="#9ca3af" stroke-width="1.5"/>` +
+    `<text x="58" y="70" text-anchor="middle" fill="#d1d5db" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">—</text>` +
+    `<text x="112" y="42" fill="rgba(229,231,235,0.7)" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
+    `<text x="112" y="72" fill="#e5e7eb" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">${escapeXml(headline)}</text>` +
+    `<text x="112" y="96" fill="rgba(209,213,219,0.85)" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(detail)}</text>` +
+    `</svg>`
+  );
+}
+
 function rankingBadgeImageUrl(origin, tier, periodLabel, extras) {
   const base = String(origin || '').replace(/\/$/, '');
-  const opts = extras && typeof extras === 'object' ? extras : {};
+  const opts =
+    extras && typeof extras === 'object'
+      ? extras
+      : extras
+        ? { organiserId: extras }
+        : {};
   const params = new URLSearchParams();
   params.set('tier', normalizeTier(tier));
   if (periodLabel) params.set('period', String(periodLabel).trim());
   const name = String(opts.name || opts.groupName || opts.organiserName || '').trim();
   if (name) params.set('name', name.slice(0, 80));
   if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
-  // Bust caches when the plaque design changes
-  params.set('v', '4');
+  if (opts.demo) params.set('demo', '1');
+  // Bust caches when verification / plaque design changes
+  params.set('v', '5');
   return base + '/api/ranking-badge?' + params.toString();
 }
 
@@ -263,6 +309,7 @@ module.exports = {
   BADGE_WIDTH,
   BADGE_HEIGHT,
   buildRankingBadgeSvg,
+  buildUnearnedRankingBadgeSvg,
   rankingBadgeImageUrl,
   rankingBadgeEmbedHtml,
 };
