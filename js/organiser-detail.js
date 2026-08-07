@@ -295,6 +295,17 @@
     var orgId = String(organiserId || '').trim();
     if (!orgId) return false;
     try {
+      var sessionRes = await fetch('/api/auth/session', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      var sessionData = await sessionRes.json().catch(function () {
+        return {};
+      });
+      var role = sessionData && sessionData.user ? String(sessionData.user.role || '') : '';
+      // Hub admins should never see Join CTAs on organiser profiles.
+      if (role === 'admin') return true;
+
       var res = await fetch(
         '/api/auth/roster-eligibility?organiserId=' + encodeURIComponent(orgId),
         { credentials: 'include', cache: 'no-store' }

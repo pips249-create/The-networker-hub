@@ -9,11 +9,42 @@ const {
 async function sessionManagesOrganiser(session, organiserId) {
   const orgId = String(organiserId || '').trim();
   if (!session?.email || !orgId || !isUuid(orgId)) return false;
+
+  const { isAdminRole } = require('../auth');
+  // Hub admins oversee organiser pages — never pitch Join to them.
+  if (isAdminRole(session.role)) return true;
+
   try {
-    const { listGroupsForSession } = require('../supabase-organiser');
-    // Personal workspace only — do not use admin "all groups" view.
-    const groups = await listGroupsForSession(session, false);
-    return (groups || []).some((g) => String(g.id) === orgId);
+    const {
+      listAccessibleGroupsForSession,
+      groupVisibleInOrganiserWorkspace,
+    } = require('../supabase-organiser-access');
+    const { emailMatchesProfile } = require('../supabase-organiser-profile-email');
+
+    // Same access path as the organiser dashboard (account, team, email-matched claims).
+    const { groups, access } = await listAccessibleGroupsForSession(session, false);
+    if ((groups || []).some((g) => String(g.id) === orgId)) return true;
+    if ((access?.groupIds || []).map(String).includes(orgId)) return true;
+
+    // Direct owner / contact-email fallback when workspace lists omit a claimed page.
+    const sb = getSupabaseAdmin();
+    const { data: row, error } = await sb
+      .from('organisers')
+      .select(
+        'id, email, contact_email, supabase_user_id, ownership_claim_status, organiser_account_id'
+      )
+      .eq('id', orgId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) return false;
+
+    const uid = isUuid(session.sub) ? session.sub : null;
+    if (uid && String(row.supabase_user_id || '') === uid) return true;
+    if (emailMatchesProfile(session.email, row)) return true;
+    if (groupVisibleInOrganiserWorkspace(session, row) && emailMatchesProfile(session.email, row)) {
+      return true;
+    }
+    return false;
   } catch (err) {
     console.error('[roster-eligibility] managesOrganiser check failed', err?.message || err);
     return false;
