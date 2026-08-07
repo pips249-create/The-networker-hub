@@ -352,7 +352,8 @@ body.advertising-page {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 40;
+  /* Above cookie banner (200). Hubert parks left on this page so the bar stays clear. */
+  z-index: 1100;
   display: flex;
   gap: 8px;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
@@ -360,6 +361,12 @@ body.advertising-page {
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(8px);
   box-shadow: 0 -8px 24px rgba(45, 38, 54, 0.08);
+}
+
+/* Keep cookie consent tappable — hide sticky CTAs while the banner is up */
+body:has(#hub-cookie-banner:not([hidden])) .ad-sticky-cta {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .ad-sticky-cta-btn {

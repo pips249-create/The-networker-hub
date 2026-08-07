@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260806eventm1';
+  var FOOTER_BUILD = '20260807adcta1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 

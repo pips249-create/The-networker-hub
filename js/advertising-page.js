@@ -691,8 +691,15 @@
     var showBar = false;
     var hideForEnquiry = false;
 
+    function cookieBannerOpen() {
+      var banner = document.getElementById('hub-cookie-banner');
+      return !!(banner && !banner.hidden);
+    }
+
     function updateBar() {
-      bar.hidden = !showBar || hideForEnquiry;
+      var hide = !showBar || hideForEnquiry || cookieBannerOpen();
+      bar.hidden = hide;
+      document.body.classList.toggle('ad-sticky-cta-active', !hide);
     }
 
     if ('IntersectionObserver' in window) {
@@ -716,8 +723,19 @@
         enquiryObserver.observe(enquiry);
       }
     } else {
-      bar.hidden = false;
+      showBar = true;
+      updateBar();
     }
+
+    var cookieBanner = document.getElementById('hub-cookie-banner');
+    if (cookieBanner && typeof MutationObserver !== 'undefined') {
+      new MutationObserver(updateBar).observe(cookieBanner, {
+        attributes: true,
+        attributeFilter: ['hidden', 'class', 'style'],
+      });
+    }
+    document.addEventListener('hub:cookie-consent-changed', updateBar);
+    updateBar();
   }
 
   function buildMiniSponsorsRowHtml() {
@@ -846,12 +864,26 @@
       var panel = panelName
         ? document.querySelector('[data-ad-panel="' + panelName + '"]')
         : null;
-      if (panel && activatePackageInPanel(panel, id, { scroll: true })) {
-        return;
+      if (panel) {
+        activatePackageInPanel(panel, id, { scroll: true });
       }
       var el = document.getElementById(id);
       if (!el) return;
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.remove('ad-package--highlight');
+      void el.offsetWidth;
+      el.classList.add('ad-package--highlight');
+
+      if (id === 'city-partner-package') {
+        var checkout = document.getElementById('city-partner-checkout');
+        var availablePanel = document.getElementById('city-partner-available-panel');
+        if (availablePanel) availablePanel.open = true;
+        if (checkout) {
+          window.setTimeout(function () {
+            checkout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 280);
+        }
+      }
     }, panelName ? 80 : 0);
   }
 

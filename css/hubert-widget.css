@@ -345,9 +345,12 @@ body.opp-enquire-jump-active .hubert-launcher-icon {
     height: 56px;
   }
 
-  /* Sit above mobile sticky CTAs (e.g. advertising page) */
-  body.advertising-page .hubert-widget:not(.hubert-widget--open) {
+  /* Sit above mobile sticky CTAs — park left so City Sponsor / enquiry stay tappable */
+  body.advertising-page .hubert-widget:not(.hubert-widget--open),
+  body.ad-sticky-cta-active .hubert-widget:not(.hubert-widget--open) {
     bottom: max(76px, calc(16px + env(safe-area-inset-bottom)));
+    right: auto;
+    left: max(12px, env(safe-area-inset-left));
   }
 
   body.organiser-dashboard-page .hubert-launcher-icon,
