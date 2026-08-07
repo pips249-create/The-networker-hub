@@ -15,9 +15,12 @@
 
   function eventDetailHref(ev) {
     var slug = ev && ev.slug ? String(ev.slug).trim() : '';
-    if (slug) return '/events/' + encodeURIComponent(slug);
+    var uuidLike =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+    if (slug && !uuidLike) return '/events/' + encodeURIComponent(slug);
     var id = ev && ev.id ? String(ev.id).trim() : '';
-    if (id) return '/events/event?id=' + encodeURIComponent(id);
+    /* .html avoids /events/:slug rewrite swallowing path "event" and dropping ?id= */
+    if (id) return '/events/event.html?id=' + encodeURIComponent(id);
     return '/events/';
   }
 

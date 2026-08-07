@@ -873,15 +873,17 @@ body.browse-mode-organisers .events-organiser-footnote-link {
     box-shadow: 0 2px 12px rgba(45, 38, 54, 0.06);
   }
 
-  /* Fixed square thumb — larger crop reads better on phone list rows */
+  /* Fixed square thumb — do not stretch with card height (that crushes crops) */
   .event-grid-media {
     flex: 0 0 140px;
     width: 140px;
     height: 140px;
+    min-width: 140px;
     min-height: 140px;
+    max-width: 140px;
     max-height: 140px;
-    aspect-ratio: 1;
-    align-self: stretch;
+    aspect-ratio: 1 / 1;
+    align-self: center;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(45, 38, 54, 0.06);

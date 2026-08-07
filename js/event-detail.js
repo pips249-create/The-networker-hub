@@ -5299,9 +5299,9 @@
       populateFromEvent(ev);
       if (ev.organiser || ev.organiserId) {
         const related = await loadRelatedFallback(ev);
-        renderRelated(related);
+        renderRelated(related, { event: ev });
       } else {
-        renderRelated([]);
+        renderRelated([], { event: ev });
       }
       initTicketPanel(ev);
       initActions(ev);

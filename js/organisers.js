@@ -190,6 +190,19 @@
     var featured = getSpotlightFeatured();
     var track = getSpotlightTrack();
     if (!track || !featured.length) return;
+    var sc = window.HubSpotlightCarousel;
+    var section = track.closest('.premium-spotlight');
+    if (track.children.length && sc && typeof sc.remeasureLayout === 'function') {
+      var wasLooping = sc.isLooping(track);
+      var prefersSimple = window.matchMedia('(hover: none), (max-width: 768px)').matches;
+      if (wasLooping && prefersSimple) {
+        layoutSpotlightTrack(featured.map(premiumSpotlightCard).join(''), featured.length);
+      } else {
+        sc.remeasureLayout(track, section, featured.length, '.premium-card');
+      }
+      syncSpotlightLoopScroll();
+      return;
+    }
     layoutSpotlightTrack(featured.map(premiumSpotlightCard).join(''), featured.length);
     syncSpotlightLoopScroll();
     startSpotlightAuto();

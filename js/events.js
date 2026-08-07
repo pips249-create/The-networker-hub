@@ -631,13 +631,17 @@
     const uuidLike =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored);
     if (stored && !uuidLike) return stored;
-    return slugifyEventTitle(ev.title) || '';
+    return '';
   }
 
   function detailHref(ev) {
+    if (window.HubPublicUrls && typeof window.HubPublicUrls.eventDetailHref === 'function') {
+      return window.HubPublicUrls.eventDetailHref(ev);
+    }
     const slug = publicEventSlug(ev);
     if (slug) return '/events/' + encodeURIComponent(slug);
-    return '/events/event?id=' + encodeURIComponent(ev.id);
+    if (ev && ev.id) return '/events/event.html?id=' + encodeURIComponent(ev.id);
+    return '/events/';
   }
 
   const META_PIN_SVG =
