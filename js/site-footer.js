@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260807adcta1';
+  var FOOTER_BUILD = '20260807topg';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -38,6 +38,9 @@
         '<a href="' +
         href('/events/?mode=organisers') +
         '">Organisers</a>' +
+        '<a href="' +
+        href('/rankings') +
+        '">Top groups</a>' +
         '<a href="' +
         href('/opportunities/') +
         '">Opportunities</a>'
