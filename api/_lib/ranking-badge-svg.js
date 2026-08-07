@@ -1,7 +1,7 @@
 /**
  * Dynamic ranking badge SVG for website embeds.
  * Award-style plaque — designed to look good on organiser websites.
- * GET /api/ranking-badge?tier=top10&period=July%202026
+ * GET /api/ranking-badge?tier=top10&period=July%202026&name=Harbour%20City%20Connectors
  */
 function escapeXml(value) {
   return String(value == null ? '' : value)
@@ -66,6 +66,17 @@ function tierTheme(tier) {
   };
 }
 
+/** Fit group name into the plaque copy column (~220px at 12–13px). */
+function truncateGroupName(raw, maxChars) {
+  const name = String(raw || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const limit = maxChars || 28;
+  if (!name) return 'Your networking group';
+  if (name.length <= limit) return name;
+  return name.slice(0, Math.max(1, limit - 1)).trimEnd() + '…';
+}
+
 function buildRankingBadgeSvg(options) {
   const opts = options && typeof options === 'object' ? options : {};
   const tier = normalizeTier(opts.tier);
@@ -74,8 +85,16 @@ function buildRankingBadgeSvg(options) {
     .trim()
     .slice(0, 40);
   const periodLine = period || 'This month';
-  const title = `${theme.shortLabel} networking group on The Networker Hub · ${periodLine}`;
-  const uid = tier + '-' + String(periodLine).replace(/[^a-z0-9]+/gi, '').slice(0, 12);
+  const groupName = truncateGroupName(opts.name || opts.groupName || opts.organiserName, 28);
+  const title = `${groupName} — ${theme.shortLabel} on The Networker Hub · ${periodLine}`;
+  const uid =
+    tier +
+    '-' +
+    String(periodLine + groupName)
+      .replace(/[^a-z0-9]+/gi, '')
+      .slice(0, 16)
+      .toLowerCase();
+  const nameSize = groupName.length > 22 ? 11 : 13;
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="120" viewBox="0 0 340 120" role="img" aria-label="${escapeXml(title)}">` +
@@ -107,10 +126,10 @@ function buildRankingBadgeSvg(options) {
     `<circle cx="58" cy="60" r="22" fill="none" stroke="${theme.metal}" stroke-opacity="0.55" stroke-width="1"/>` +
     `<text x="58" y="54" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">★</text>` +
     `<text x="58" y="74" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="800" letter-spacing="0.04em">${escapeXml(theme.label.replace('TOP ', ''))}</text>` +
-    // Copy block
+    // Copy block — group name is stamped so a screenshot alone is weaker as a fake
     `<text x="108" y="36" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
     `<text x="108" y="62" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="700">${escapeXml(theme.label)}</text>` +
-    `<text x="108" y="84" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="0.04em">NETWORKING GROUP</text>` +
+    `<text x="108" y="84" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="${nameSize}" font-weight="700">${escapeXml(groupName)}</text>` +
     `<text x="108" y="102" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(periodLine)} · Attendee rated</text>` +
     // Soft sheen
     `<rect x="10" y="10" width="320" height="40" rx="12" fill="url(#sheen-${uid})"/>` +
@@ -118,13 +137,17 @@ function buildRankingBadgeSvg(options) {
   );
 }
 
-function rankingBadgeImageUrl(origin, tier, periodLabel) {
+function rankingBadgeImageUrl(origin, tier, periodLabel, extras) {
   const base = String(origin || '').replace(/\/$/, '');
+  const opts = extras && typeof extras === 'object' ? extras : {};
   const params = new URLSearchParams();
   params.set('tier', normalizeTier(tier));
   if (periodLabel) params.set('period', String(periodLabel).trim());
+  const name = String(opts.name || opts.groupName || opts.organiserName || '').trim();
+  if (name) params.set('name', name.slice(0, 80));
+  if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
   // Bust caches when the plaque design changes
-  params.set('v', '2');
+  params.set('v', '3');
   return base + '/api/ranking-badge?' + params.toString();
 }
 
@@ -133,12 +156,16 @@ function rankingBadgeEmbedHtml(options) {
   const origin = String(opts.origin || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
   const profileUrl = String(opts.profileUrl || origin + '/rankings').trim();
   const rankingsUrl = String(opts.rankingsUrl || origin + '/rankings').trim();
-  const groupName = String(opts.groupName || 'Our group').trim();
+  const groupName = String(opts.groupName || opts.name || 'Our group').trim();
+  const organiserId = opts.organiserId || opts.id || '';
   const tier = normalizeTier(opts.tier);
   const periodLabel = String(opts.periodLabel || opts.period || '').trim();
   const theme = tierTheme(tier);
   const alt = `${groupName} — ${theme.shortLabel} networking group on The Networker Hub${periodLabel ? ' · ' + periodLabel : ''}`;
-  const imgSrc = rankingBadgeImageUrl(origin, tier, periodLabel);
+  const imgSrc = rankingBadgeImageUrl(origin, tier, periodLabel, {
+    name: groupName,
+    organiserId,
+  });
 
   return (
     '<a href="' +
@@ -165,6 +192,7 @@ module.exports = {
   escapeXml,
   normalizeTier,
   tierTheme,
+  truncateGroupName,
   buildRankingBadgeSvg,
   rankingBadgeImageUrl,
   rankingBadgeEmbedHtml,

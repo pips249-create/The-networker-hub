@@ -44,7 +44,8 @@ module.exports = async function handler(req, res) {
   const tier = normalizeTier(query.tier || query.badge || 'top50');
   const period = String(query.period || query.periodLabel || query.p || '').trim();
   const format = String(query.format || 'svg').trim().toLowerCase();
-  const svg = buildRankingBadgeSvg({ tier, period });
+  const name = String(query.name || query.group || query.groupName || query.organiserName || '').trim();
+  const svg = buildRankingBadgeSvg({ tier, period, name });
 
   // Fire-and-forget analytics
   Promise.resolve(logImpression(req, query, tier, period, format)).catch(() => {});

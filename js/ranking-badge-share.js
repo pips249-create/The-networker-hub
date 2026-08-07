@@ -35,11 +35,15 @@
     return 'top50';
   }
 
-  function badgeImageUrl(tier, periodLabel) {
+  function badgeImageUrl(tier, periodLabel, extras) {
+    var opts = extras && typeof extras === 'object' ? extras : {};
     var q = new URLSearchParams();
     q.set('tier', normalizeTier(tier));
     if (periodLabel) q.set('period', String(periodLabel).trim());
-    q.set('v', '2');
+    var name = String(opts.name || opts.groupName || '').trim();
+    if (name) q.set('name', name.slice(0, 80));
+    if (opts.organiserId) q.set('organiserId', String(opts.organiserId).trim());
+    q.set('v', '3');
     return origin() + '/api/ranking-badge?' + q.toString();
   }
 
@@ -58,7 +62,7 @@
       ' — ' +
       String(entry.cardLabel || entry.displayLabel || 'Top ranking') +
       ' on The Networker Hub';
-    var img = badgeImageUrl(tier, period);
+    var img = badgeImageUrl(tier, period, { name: name, organiserId: org.id });
 
     return (
       '<a href="' +
@@ -133,7 +137,10 @@
         ? org.profilePath
         : origin() + (org.profilePath || '/rankings');
 
-    var imgUrl = badgeImageUrl(entry.tier, entry.periodLabel);
+    var imgUrl = badgeImageUrl(entry.tier, entry.periodLabel, {
+      name: name,
+      organiserId: org.id,
+    });
     if (preview) {
       preview.innerHTML =
         '<img src="' +

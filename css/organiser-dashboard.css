@@ -11061,28 +11061,47 @@ body.org-event-drawer-open {
 }
 
 #org-page-leaderboard .org-leaderboard-toolbar-label {
-  color: var(--lb-muted);
+  color: var(--od-text-mid);
+  font-weight: 600;
 }
 
 #org-page-leaderboard .org-leaderboard-filter {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: var(--lb-muted);
-  padding: 6px 12px;
-  font-size: 12px;
+  background: var(--od-white);
+  border: 1.5px solid var(--od-border-soft);
+  color: var(--od-text-dark);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 #org-page-leaderboard .org-leaderboard-filter:hover {
-  border-color: rgba(196, 168, 110, 0.5);
-  color: #f3efe6;
-  background: rgba(255, 255, 255, 0.11);
+  border-color: #0d6e7a;
+  color: var(--od-text-dark);
+  background: rgba(13, 110, 122, 0.06);
 }
 
 #org-page-leaderboard .org-leaderboard-filter.is-active {
-  background: rgba(196, 168, 110, 0.22);
-  border-color: rgba(196, 168, 110, 0.5);
-  color: #f3efe6;
-  box-shadow: none;
+  background: #0d6e7a;
+  border-color: #0d6e7a;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(13, 110, 122, 0.22);
+}
+
+#org-page-leaderboard .rankings-theme-toggle {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-text-mid);
+  background: var(--od-white);
+  border: 1.5px solid var(--od-border-soft);
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+#org-page-leaderboard .rankings-theme-toggle:hover {
+  color: var(--od-text-dark);
+  border-color: var(--od-border);
 }
 
 #org-page-leaderboard .org-leaderboard-status {
@@ -11182,7 +11201,7 @@ body.org-event-drawer-open {
   margin: 0;
   font-size: 11px;
   font-weight: 600;
-  color: var(--lb-muted);
+  color: rgba(236, 232, 224, 0.84);
   line-height: 1.3;
 }
 

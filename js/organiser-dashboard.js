@@ -586,13 +586,17 @@
     }
   }
 
-  function rankingBadgeImageUrl(tier, periodLabel) {
+  function rankingBadgeImageUrl(tier, periodLabel, extras) {
     const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const opts = extras && typeof extras === 'object' ? extras : {};
     const params = new URLSearchParams();
     const t = String(tier || 'top50').toLowerCase();
     params.set('tier', t === 'top10' || t === 'top25' || t === 'top50' ? t : 'top50');
     if (periodLabel) params.set('period', String(periodLabel).trim());
-    params.set('v', '2');
+    const name = String(opts.name || opts.groupName || '').trim();
+    if (name) params.set('name', name.slice(0, 80));
+    if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
+    params.set('v', '3');
     return origin.replace(/\/$/, '') + '/api/ranking-badge?' + params.toString();
   }
 
@@ -615,7 +619,10 @@
       ' — ' +
       (row.cardLabel || rankingBadgeText(row) || 'Top ranking') +
       ' on The Networker Hub';
-    const imgSrc = rankingBadgeImageUrl(tier, periodLabel);
+    const imgSrc = rankingBadgeImageUrl(tier, periodLabel, {
+      name: g.name,
+      organiserId: g.id,
+    });
     return (
       '<a href="' +
       profileUrl +
@@ -640,7 +647,10 @@
     const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
     const embed = rankingBadgeEmbedHtml(g, row);
     const badgeShareUrl = rankingBadgeShareUrl(g.id, g.slug);
-    const imgPreview = rankingBadgeImageUrl(row.tier, row.periodLabel);
+    const imgPreview = rankingBadgeImageUrl(row.tier, row.periodLabel, {
+      name: g.name,
+      organiserId: g.id,
+    });
     return (
       '<article class="org-ranking-share-card">' +
       '<div class="org-ranking-share-card-head">' +
@@ -847,7 +857,7 @@
             esc(item.sample) +
             '</span>' +
             '<img class="org-ranking-tier-example-img" src="' +
-            esc(rankingBadgeImageUrl(item.tier, periodLabel)) +
+            esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group' })) +
             '" alt="' +
             esc(item.sample + ' award badge · ' + periodLabel) +
             '" width="340" height="120" loading="lazy" />' +
@@ -920,7 +930,7 @@
                 return (
                   '<div class="org-ranking-tier-example">' +
                   '<img class="org-ranking-tier-example-img" src="' +
-                  esc(rankingBadgeImageUrl(item.tier, periodLabel)) +
+                  esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group' })) +
                   '" alt="' +
                   esc(item.sample + ' award badge example') +
                   '" width="340" height="120" loading="lazy" />' +
