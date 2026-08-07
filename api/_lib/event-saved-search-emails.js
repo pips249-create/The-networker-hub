@@ -1,5 +1,6 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const { siteBase, hubAccountUrl, legalPolicyUrl, contactUrl, eventPublicUrl, browseEventsUrl } = require('./hub-email-urls');
+const { haystackMatchesQuery } = require('./search-match');
 
 function matchesEventSearchCriteria(eventRow, criteria) {
   if (!eventRow || !criteria) return false;
@@ -11,7 +12,7 @@ function matchesEventSearchCriteria(eventRow, criteria) {
     const hay = [eventRow.title, eventRow.description, eventRow.city, eventRow.venue_name, eventRow.event_type]
       .join(' ')
       .toLowerCase();
-    if (!hay.includes(q)) return false;
+    if (!haystackMatchesQuery(hay, q)) return false;
   }
 
   const location = String(criteria.location || criteria.loc || '').trim().toLowerCase();
@@ -19,7 +20,7 @@ function matchesEventSearchCriteria(eventRow, criteria) {
     const locHay = [eventRow.city, eventRow.venue_name, eventRow.postcode, eventRow.region]
       .join(' ')
       .toLowerCase();
-    if (!locHay.includes(location)) return false;
+    if (!haystackMatchesQuery(locHay, location)) return false;
   }
 
   const typesRaw = criteria.types || criteria.type || '';

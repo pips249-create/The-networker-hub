@@ -392,7 +392,14 @@
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    return hay.indexOf(locationQ) !== -1;
+    if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+      return window.HubSearchMatch.haystackMatchesQuery(hay, locationQ);
+    }
+    var terms = locationQ.split(/\s+/).filter(Boolean);
+    for (var i = 0; i < terms.length; i++) {
+      if (hay.indexOf(terms[i]) === -1) return false;
+    }
+    return true;
   }
 
   function matchesInvestTier(item) {
@@ -422,7 +429,17 @@
     if (!matchesInvestTier(item)) return false;
     if (!matchesCommitments(item)) return false;
     if (!matchesLocation(item)) return false;
-    if (searchQ && item.searchText.indexOf(searchQ) === -1) return false;
+    if (searchQ) {
+      var searchHay = String(item.searchText || '').toLowerCase();
+      if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+        if (!window.HubSearchMatch.haystackMatchesQuery(searchHay, searchQ)) return false;
+      } else {
+        var terms = searchQ.split(/\s+/).filter(Boolean);
+        for (var ti = 0; ti < terms.length; ti++) {
+          if (searchHay.indexOf(terms[ti]) === -1) return false;
+        }
+      }
+    }
     if (minInvest !== null && (item.investAmount === null || item.investAmount < minInvest)) return false;
     if (maxInvest !== null && (item.investAmount === null || item.investAmount > maxInvest)) return false;
     return true;

@@ -7,6 +7,7 @@ const {
   opportunityPublicUrl,
   logoNavUrl,
 } = require('./hub-email-urls');
+const { haystackMatchesQuery } = require('./search-match');
 
 function hasTag(item, tag) {
   const tags = [...(item.filterTags || []), ...(item.tags || [])];
@@ -41,7 +42,7 @@ function matchesSearchCriteria(item, criteria) {
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    if (!locationHay.includes(locationQuery)) return false;
+    if (!haystackMatchesQuery(locationHay, locationQuery)) return false;
   }
 
   const commitment = String(criteria.commitment || '').trim();
@@ -65,7 +66,7 @@ function matchesSearchCriteria(item, criteria) {
     ]
       .join(' ')
       .toLowerCase();
-    if (!hay.includes(q)) return false;
+    if (!haystackMatchesQuery(hay, q)) return false;
   }
 
   if (criteria.minInvest != null && criteria.minInvest !== '') {

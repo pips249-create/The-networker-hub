@@ -189,7 +189,14 @@
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
-      if (locationHay.indexOf(locationQuery) === -1) return false;
+      if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+        if (!window.HubSearchMatch.haystackMatchesQuery(locationHay, locationQuery)) return false;
+      } else {
+        var locTerms = locationQuery.split(/\s+/).filter(Boolean);
+        for (var li = 0; li < locTerms.length; li++) {
+          if (locationHay.indexOf(locTerms[li]) === -1) return false;
+        }
+      }
     }
 
     var commitment = String(criteria.commitment || '').trim();
@@ -201,7 +208,17 @@
     var q = String(criteria.q || '')
       .trim()
       .toLowerCase();
-    if (q && String(item.searchText || '').indexOf(q) === -1) return false;
+    if (q) {
+      var searchHay = String(item.searchText || '').toLowerCase();
+      if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+        if (!window.HubSearchMatch.haystackMatchesQuery(searchHay, q)) return false;
+      } else {
+        var terms = q.split(/\s+/).filter(Boolean);
+        for (var ti = 0; ti < terms.length; ti++) {
+          if (searchHay.indexOf(terms[ti]) === -1) return false;
+        }
+      }
+    }
 
     if (criteria.minInvest != null && criteria.minInvest !== '') {
       var min = Number(criteria.minInvest);

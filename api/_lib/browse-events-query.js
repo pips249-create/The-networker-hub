@@ -5,6 +5,11 @@ const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
 const { dedupeFeaturedRowsBySeries } = require('./event-series-peers');
 const {
+  sanitizeSearchTerm,
+  tokenizeSearchQuery,
+  searchTermIlikePatterns,
+} = require('./search-match');
+const {
   outcodeListForLocation,
   haversineMiles,
   bboxForRadiusMiles,
@@ -55,14 +60,6 @@ function dedupeEventsById(events) {
 function applyUpcomingBrowseFilter(query, nowIso) {
   const now = nowIso || new Date().toISOString();
   return query.gt('starts_at', now);
-}
-
-function sanitizeSearchTerm(term) {
-  return String(term || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[%_,.()\\]/g, '')
-    .slice(0, 48);
 }
 
 function parseBrowseQuery(query) {
@@ -174,20 +171,33 @@ function applyFormatFilter(query, params) {
 }
 
 function applySearchFilter(query, params) {
-  const terms = params.q
-    .toLowerCase()
-    .split(/\s+/)
-    .map(sanitizeSearchTerm)
-    .filter(Boolean);
+  const terms = tokenizeSearchQuery(params.q);
   if (!terms.length) return query;
+
+  const fields = [
+    'title',
+    'description',
+    'city',
+    'venue',
+    'location_label',
+    'postcode',
+    'organiser_name',
+    'event_type',
+    'meeting_type',
+    'format_tab',
+  ];
 
   let next = query;
   terms.forEach((term) => {
-    const t = `%${term}%`;
+    const patterns = searchTermIlikePatterns(term);
     // highlights is text[] — ilike on it throws "operator does not exist: text[] ~~* unknown".
-    next = next.or(
-      `title.ilike.${t},description.ilike.${t},city.ilike.${t},venue.ilike.${t},location_label.ilike.${t},postcode.ilike.${t},organiser_name.ilike.${t},event_type.ilike.${t},meeting_type.ilike.${t},format_tab.ilike.${t}`
-    );
+    const orParts = [];
+    patterns.forEach((pattern) => {
+      fields.forEach((field) => {
+        orParts.push(`${field}.ilike.${pattern}`);
+      });
+    });
+    next = next.or(orParts.join(','));
   });
   return next;
 }
@@ -218,12 +228,22 @@ function applyOutcodeFilter(query, params) {
   if (!raw) return query;
   const region = cityRegionFromInput(raw);
   if (region) return query;
-  const norm = raw.trim().toLowerCase();
-  if (norm.length >= 3) {
-    const t = `%${sanitizeSearchTerm(norm)}%`;
-    return query.or(`city.ilike.${t},location_label.ilike.${t},venue.ilike.${t}`);
-  }
-  return query;
+  const terms = tokenizeSearchQuery(raw);
+  if (!terms.length) return query;
+
+  let next = query;
+  terms.forEach((term) => {
+    if (term.length < 3) return;
+    const patterns = searchTermIlikePatterns(term);
+    const orParts = [];
+    patterns.forEach((pattern) => {
+      orParts.push(`city.ilike.${pattern}`);
+      orParts.push(`location_label.ilike.${pattern}`);
+      orParts.push(`venue.ilike.${pattern}`);
+    });
+    next = next.or(orParts.join(','));
+  });
+  return next;
 }
 
 function applyGeoBboxFilter(query, params) {

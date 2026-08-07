@@ -859,7 +859,7 @@
             ? 'No upcoming events in this area yet'
             : 'No events match your filters';
       const emptyText = searchQ
-        ? 'Try different keywords or spellings, or browse <a href="/opportunities/?q=' +
+        ? 'Check the spelling or try a shorter word, or browse <a href="/opportunities/?q=' +
           encodeURIComponent(searchQ) +
           '">opportunities matching “' +
           escapeHtml(searchQ) +

@@ -519,11 +519,23 @@
     if (!els.listings) return;
 
     if (!rows.length) {
+      var searchEl = document.getElementById('search');
+      var searchQ = searchEl ? String(searchEl.value || '').trim() : '';
+      var emptyTitle = searchQ
+        ? 'No organisers found for “' + escapeHtml(searchQ) + '”'
+        : 'No organisers match your filters';
+      var emptyText = searchQ
+        ? 'Check the spelling, try a shorter word, or clear your filters.'
+        : 'Try clearing filters or searching for a different networking group.';
       els.listings.innerHTML =
         '<div class="empty-state is-visible" role="status">' +
         '<div class="empty-state-inner">' +
-        '<h3 class="empty-state-title">No organisers match your filters</h3>' +
-        '<p class="empty-state-text">Try clearing filters or searching for a different networking group.</p>' +
+        '<h3 class="empty-state-title">' +
+        emptyTitle +
+        '</h3>' +
+        '<p class="empty-state-text">' +
+        emptyText +
+        '</p>' +
         '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>' +
         '</div></div>';
       if (els.resultsCount) els.resultsCount.textContent = '0';

@@ -817,7 +817,14 @@
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    return hay.indexOf(locationQ) !== -1;
+    if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+      return window.HubSearchMatch.haystackMatchesQuery(hay, locationQ);
+    }
+    var terms = locationQ.split(/\s+/).filter(Boolean);
+    for (var i = 0; i < terms.length; i++) {
+      if (hay.indexOf(terms[i]) === -1) return false;
+    }
+    return true;
   }
 
   function matchesInvestTier(item) {
@@ -855,6 +862,20 @@
     return minInvest !== null || maxInvest !== null;
   }
 
+  function matchesSearchQuery(item) {
+    if (!searchQ) return true;
+    var hay = String(item && item.searchText ? item.searchText : '').toLowerCase();
+    if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+      return window.HubSearchMatch.haystackMatchesQuery(hay, searchQ);
+    }
+    var terms = searchQ.split(/\s+/).filter(Boolean);
+    if (!terms.length) return true;
+    for (var i = 0; i < terms.length; i++) {
+      if (hay.indexOf(terms[i]) === -1) return false;
+    }
+    return true;
+  }
+
   function matchesFilter(item) {
     if (activeCitySlug && !matchesCityRegion(item)) return false;
     if (
@@ -869,7 +890,7 @@
     if (!matchesInvestTier(item)) return false;
     if (!matchesCommitments(item)) return false;
     if (!matchesLocation(item)) return false;
-    if (searchQ && item.searchText.indexOf(searchQ) === -1) return false;
+    if (!matchesSearchQuery(item)) return false;
     if (minInvest !== null && (item.investAmount === null || item.investAmount < minInvest)) return false;
     if (maxInvest !== null && (item.investAmount === null || item.investAmount > maxInvest)) return false;
     return true;
@@ -1651,18 +1672,30 @@
     }
 
     var tips = [];
+    if (searchQ) tips.push('check the spelling or try a shorter word');
     if (locationQ || activeLocationTag) tips.push('widen or clear location');
     if (activeInvestTier && activeInvestTier !== 'all') tips.push('try All budgets');
     if (activeTypes.length) tips.push('browse all opportunity types');
     if (activeCategory) tips.push('clear the category');
     if (!tips.length) tips.push('clear your filters');
 
+    var emptyTitle = searchQ
+      ? 'No opportunities found for “' + escapeHtml(searchQ) + '”'
+      : 'No opportunities match these filters';
+    var emptyCopy = searchQ
+      ? 'Check the spelling, try a shorter word, or ' +
+        escapeHtml(tips.slice(1, 3).join(', or ') || 'clear your filters') +
+        '.'
+      : 'Try to ' + escapeHtml(tips.slice(0, 2).join(', or ')) + ' — or check back soon as new listings go live.';
+
     return (
       '<div class="events-empty opp-empty-state" role="status">' +
-      '<p class="opp-empty-title">No opportunities match these filters</p>' +
-      '<p class="opp-empty-copy">Try to ' +
-      escapeHtml(tips.slice(0, 2).join(', or ')) +
-      ' — or check back soon as new listings go live.</p>' +
+      '<p class="opp-empty-title">' +
+      emptyTitle +
+      '</p>' +
+      '<p class="opp-empty-copy">' +
+      emptyCopy +
+      '</p>' +
       '<div class="opp-empty-actions">' +
       '<button type="button" class="opp-empty-btn" id="opp-clear-filters">Clear filters</button>' +
       (locationQ || activeLocationTag

@@ -65,9 +65,13 @@
     q = q.trim().toLowerCase();
     if (q) {
       var hay = org.search || '';
-      var terms = q.split(/\s+/).filter(Boolean);
-      for (var i = 0; i < terms.length; i++) {
-        if (hay.indexOf(terms[i]) === -1) return false;
+      if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+        if (!window.HubSearchMatch.haystackMatchesQuery(hay, q)) return false;
+      } else {
+        var terms = q.split(/\s+/).filter(Boolean);
+        for (var i = 0; i < terms.length; i++) {
+          if (hay.indexOf(terms[i]) === -1) return false;
+        }
       }
     }
 
