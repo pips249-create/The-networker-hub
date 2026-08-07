@@ -6284,7 +6284,7 @@ body.advertising-page {
   }
 
   /* Previews must not blow past the viewport */
-  .ad-package-preview,
+  .ad-package-preview:not(.ad-package-preview--city-partner),
   .ad-example-stage,
   .ad-example-gallery,
   .ad-mock-page,
@@ -6296,9 +6296,30 @@ body.advertising-page {
     max-width: 100%;
   }
 
-  .ad-package-preview,
+  .ad-package-preview:not(.ad-package-preview--city-partner),
   .ad-example-stage {
     overflow-x: hidden;
+  }
+
+  /* City Sponsor checkout lives inside the preview column — keep it fully tappable */
+  .ad-package-preview--city-partner {
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .ad-package-preview--city-partner .ad-mock-page {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .city-partner-checkout,
+  .city-partner-city,
+  .city-partner-submit,
+  .city-partner-term-option,
+  .city-partner-city-picker-trigger {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
   }
 
   .ad-enquiry-quick-fields {
