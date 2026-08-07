@@ -80,6 +80,38 @@
     return count === 1 ? '1 listing' : count + ' listings';
   }
 
+  /** Plain snippet for cards — strip markdown/HTML/breadcrumb junk from imported bios. */
+  function cardDescriptionSnippet(raw, maxLen) {
+    var max = maxLen || 140;
+    var text = String(raw == null ? '' : raw);
+    text = text.replace(/<script[\s\S]*?<\/script>/gi, ' ');
+    text = text.replace(/<style[\s\S]*?<\/style>/gi, ' ');
+    text = text.replace(/<[^>]+>/g, ' ');
+    text = text.replace(/\[([^\]]+)\]\((?:https?:\/\/|mailto:)[^)]+\)/gi, '$1');
+    text = text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+    text = text.replace(/https?:\/\/\S+/gi, ' ');
+    text = text.replace(/^#{1,6}\s+/gm, '');
+    text = text.replace(/^\s*[-*+]\s+/gm, '');
+    text = text.replace(/[*_`~]+/g, '');
+    text = text.replace(/\s*[»›]{1,}\s*/g, ' · ');
+    text = text.replace(/\s*>{2,}\s*/g, ' · ');
+    text = text.replace(/(?:\s*·\s*){2,}/g, ' · ');
+    text = text.replace(/\s+/g, ' ').trim();
+    text = text.replace(/^(?:·\s*)+|(?:\s*·)+$/g, '').trim();
+    if (!text) return '';
+    if (text.length <= max) return text;
+    var cut = text.slice(0, max - 1);
+    var soft = cut.replace(/\s+\S*$/, '');
+    return (soft.length > Math.floor(max * 0.6) ? soft : cut).trim() + '…';
+  }
+
+  function organiserCardDescription(org, maxLen) {
+    var snippet = cardDescriptionSnippet(org && org.description, maxLen);
+    if (snippet) return snippet;
+    if (Number(org && org.eventCount) > 0) return 'Networking group on The Networker Hub.';
+    return 'Profile coming soon.';
+  }
+
   function shuffleList(list) {
     var copy = list.slice();
     for (var i = copy.length - 1; i > 0; i--) {
@@ -289,8 +321,8 @@
 
   function premiumSpotlightCard(org) {
     var industry = org.industry || (org.industries && org.industries[0]) || 'Networking';
-    var desc = String(org.description || '').trim();
-    if (desc.length > 72) desc = desc.slice(0, 69) + '…';
+    var desc = organiserCardDescription(org, 72);
+    if (desc === 'Profile coming soon.') desc = '';
 
     return (
       '<article class="premium-card org-premium-card" data-id="' +
@@ -367,9 +399,9 @@
 
   function gridCard(org) {
     var industry = org.industry || (org.industries && org.industries[0]) || 'Networking';
-    var desc = String(org.description || '').trim();
-    if (desc.length > 160) desc = desc.slice(0, 157) + '…';
+    var desc = organiserCardDescription(org, 140);
     var reviewCount = Number(org.reviews) || 0;
+    var href = organiserHref(org);
 
     return (
       '<article class="organiser-grid-card" data-id="' +
@@ -409,7 +441,7 @@
           '</span>'
         : '') +
       '<p class="organiser-card-desc">' +
-      escapeHtml(desc || (Number(org.eventCount) ? 'Networking group on The Networker Hub.' : 'Profile coming soon — no listings yet.')) +
+      escapeHtml(desc) +
       '</p>' +
       '<div class="organiser-card-rating">' +
       '<span class="stars">' +
@@ -425,7 +457,7 @@
       '</button></div>' +
       '<div class="organiser-card-footer">' +
       '<a class="organiser-card-cta" href="' +
-      escapeHtml(organiserHref(org)) +
+      escapeHtml(href) +
       '">More info</a></div></div></article>'
     );
   }
@@ -586,6 +618,21 @@
     if (!els.listings || els.listings.dataset.orgPaginationBound) return;
     els.listings.dataset.orgPaginationBound = '1';
     els.listings.addEventListener('click', function (e) {
+      var fav = e.target.closest('.fav-btn[data-organiser-id]');
+      if (fav) {
+        e.preventDefault();
+        e.stopPropagation();
+        var organiserId = fav.getAttribute('data-organiser-id');
+        if (window.HubOrganiserFavourites && organiserId) {
+          window.HubOrganiserFavourites.toggle(organiserId).then(function () {
+            window.HubOrganiserFavourites.refreshButtons(els.listings);
+          });
+        } else {
+          fav.classList.toggle('is-active');
+        }
+        return;
+      }
+
       var btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
       var filtered = getFilteredList();
