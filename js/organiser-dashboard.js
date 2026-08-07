@@ -597,7 +597,7 @@
     if (name) params.set('name', name.slice(0, 80));
     if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
     if (opts.demo) params.set('demo', '1');
-    params.set('v', '5');
+    params.set('v', '6');
     return origin.replace(/\/$/, '') + '/api/ranking-badge?' + params.toString();
   }
 
@@ -634,7 +634,7 @@
       imgSrc +
       '" alt="' +
       alt.replace(/"/g, '&quot;') +
-      '" width="380" height="128" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
+      '" width="420" height="156" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
       '</a><br />' +
       '<a href="' +
       rankingsUrl +
@@ -673,7 +673,7 @@
       '<p class="org-ranking-share-preview-label">Ranking award badge</p>' +
       '<div class="org-ranking-embed-preview"><img src="' +
       esc(imgPreview) +
-      '" alt="" width="380" height="128" /></div>' +
+      '" alt="" width="420" height="156" /></div>' +
       '<label class="org-partner-badge-meta" for="ranking-embed-' +
       esc(g.id) +
       '">Embed code — links to your profile + the leaderboard</label>' +
@@ -861,7 +861,7 @@
             esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group', demo: true })) +
             '" alt="' +
             esc(item.sample + ' award badge · ' + periodLabel) +
-            '" width="380" height="128" loading="lazy" />' +
+            '" width="420" height="156" loading="lazy" />' +
             '</div>'
           );
         })
@@ -934,7 +934,7 @@
                   esc(rankingBadgeImageUrl(item.tier, periodLabel, { name: 'Your networking group', demo: true })) +
                   '" alt="' +
                   esc(item.sample + ' award badge example') +
-                  '" width="380" height="128" loading="lazy" />' +
+                  '" width="420" height="156" loading="lazy" />' +
                   '</div>'
                 );
               })
