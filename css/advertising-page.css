@@ -369,6 +369,11 @@ body:has(#hub-cookie-banner:not([hidden])) .ad-sticky-cta {
   pointer-events: none;
 }
 
+body.nav-menu-open .ad-sticky-cta {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .ad-sticky-cta-btn {
   flex: 1 1 0;
   display: inline-flex;

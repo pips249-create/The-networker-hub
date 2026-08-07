@@ -796,7 +796,11 @@
       '</header>' +
       '<div class="nav-mobile-backdrop" id="nav-mobile-backdrop" hidden></div>' +
       '<aside class="nav-mobile-drawer" id="nav-mobile-drawer" aria-hidden="true" hidden>' +
-      '<div class="nav-mobile-drawer-head"><span>Menu</span>' +
+      '<div class="nav-mobile-drawer-head">' +
+      '<div class="nav-mobile-drawer-brand">' +
+      '<span class="nav-mobile-drawer-brand-name">The Networker Hub</span>' +
+      '<span class="nav-mobile-drawer-brand-sub">Browse &amp; account</span>' +
+      '</div>' +
       '<button type="button" class="nav-mobile-close" id="nav-mobile-close" aria-label="Close menu">×</button></div>' +
       '<nav class="nav-mobile-links" aria-label="Mobile menu">' +
       buildMobileDrawerLinks(user, pending) +

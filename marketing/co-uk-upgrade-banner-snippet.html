@@ -1,7 +1,7 @@
 <!--
   WordPress paste snippet — The Networker co.uk upgrade banner
-  Product-voice strip (rotating "Find your next…") — not a video ad.
-  CTA → /about (open while Hub gate is on)
+  One CTA → /about (audience choice lives on that page: organisers + networkers)
+  Deploy Hub /for-networkers.html fix BEFORE installing on co.uk.
   Install: WPCode / Code Snippets → Header (frontend) → paste all parts
 -->
 
@@ -15,7 +15,7 @@
   <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--1" aria-hidden="true"></span>
   <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--2" aria-hidden="true"></span>
   <div class="tnh-upgrade-banner__inner">
-    <a class="tnh-upgrade-banner__brand" href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">
+    <a class="tnh-upgrade-banner__brand" href="https://www.thenetworkerhub.com/about?utm_source=the-networker.co.uk&amp;utm_medium=banner&amp;utm_campaign=soft_launch_2026&amp;utm_content=logo" target="_blank" rel="noopener">
       <img
         class="tnh-upgrade-banner__logo"
         src="https://www.thenetworkerhub.com/assets/logo-nav-transparent.png?v=20260729a"
@@ -34,7 +34,7 @@
         Same team &middot; new platform &middot; soft launch <strong>1 September</strong>
       </p>
     </div>
-    <a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">
+    <a class="tnh-upgrade-banner__cta" href="https://www.thenetworkerhub.com/about?utm_source=the-networker.co.uk&amp;utm_medium=banner&amp;utm_campaign=soft_launch_2026&amp;utm_content=peek" target="_blank" rel="noopener">
       Peek at the Hub <span aria-hidden="true">&rarr;</span>
     </a>
   </div>
@@ -197,11 +197,11 @@
 }
 </style>
 
-<!-- 3) JS — rotate words + dismiss 14 days -->
+<!-- 3) JS — rotate words + dismiss 7 days -->
 <script>
 (function () {
-  var KEY = "tnh_upgrade_banner_dismissed_v4";
-  var DAYS = 14;
+  var KEY = "tnh_upgrade_banner_dismissed_v5";
+  var DAYS = 7;
   var WORDS = ["event", "opportunity", "group", "attendee", "connection"];
   var el = document.getElementById("tnh-upgrade-banner");
   var btn = document.getElementById("tnh-upgrade-banner-close");
