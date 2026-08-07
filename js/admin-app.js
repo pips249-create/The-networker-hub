@@ -207,6 +207,10 @@
       title: 'Social posts',
       subtitle: 'Draft captions from Hub listings — copy or open share links for LinkedIn, Facebook, and X',
     },
+    'social-founding': {
+      title: 'Founding organisers',
+      subtitle: 'Manage Founding Organiser · 2026 badges, homepage showcase slots, and the group LinkedIn caption',
+    },
   };
 
   var ADMIN_GUIDES = {
@@ -407,6 +411,14 @@
         'Pick an event, organiser, or opportunity as the source.',
         'Review the generated caption and edit if needed.',
         'Copy the text or open the share link for LinkedIn, Facebook, or X.',
+      ],
+    },
+    'social-founding': {
+      title: 'How to manage founding organisers',
+      steps: [
+        'Badges are awarded automatically when groups claim before 1 September.',
+        'Use this list to revoke a badge, add/remove a homepage slot (max 50), or copy the group LinkedIn caption.',
+        'Preview gateway and homepage strips update from these flags — no separate publish step.',
       ],
     },
   };
@@ -907,7 +919,9 @@
       return hash.indexOf('templates') !== -1 ? PAGE_META.emails.subtitle : PAGE_META.campaigns.subtitle;
     }
     if (route === 'social') {
-      return PAGE_META.social.subtitle;
+      return hash.indexOf('founding') !== -1
+        ? PAGE_META['social-founding'].subtitle
+        : PAGE_META.social.subtitle;
     }
     if (route === 'moderation' && hash.indexOf('import') !== -1) {
       return PAGE_META.import.subtitle;
@@ -1022,6 +1036,10 @@
     var meta = PAGE_META[navKey] || PAGE_META[route] || PAGE_META.dashboard;
     var title = meta.title;
     var subtitle = hubSubtitle(navKey, fullHash) || meta.subtitle;
+    if (route === 'social' && String(fullHash || '').indexOf('founding') !== -1) {
+      title = PAGE_META['social-founding'].title;
+      subtitle = PAGE_META['social-founding'].subtitle;
+    }
     if (route === 'sponsorship' && fullHash) {
       if (fullHash === 'sponsorship/home-partners') {
         title = 'Home page — Partners & sponsors';
@@ -1076,6 +1094,9 @@
     }
     if (route === 'email') {
       return hash.indexOf('templates') !== -1 ? 'emails' : 'campaigns';
+    }
+    if (route === 'social') {
+      return hash.indexOf('founding') !== -1 ? 'social-founding' : 'social';
     }
     if (route === 'moderation' && hash.indexOf('import') !== -1) return 'import';
     if (route === 'support') {
@@ -21293,9 +21314,248 @@
     else withHubTabs(tabsHtml, renderUsers);
   }
 
-  function renderSocialHub() {
-    renderSocialPosts();
+  function renderSocialHub(fullHash) {
+    var tab = resolveHubTab(fullHash, 'social', ['posts', 'founding'], 'posts', {
+      pathFor: function (t) {
+        return t === 'founding' ? 'social/founding' : 'social';
+      },
+    });
+    if (!tab) return;
+    var tabsHtml = adminHubTabsHtml(
+      [
+        { key: 'posts', label: 'Draft posts', href: '#social' },
+        { key: 'founding', label: 'Founding organisers', href: '#social/founding' },
+      ],
+      tab
+    );
+    if (tab === 'founding') withHubTabs(tabsHtml, renderFoundingOrganisers);
+    else withHubTabs(tabsHtml, renderSocialPosts);
   }
+
+  function foundingLinkedInCaption(organisers) {
+    var list = (organisers || []).slice();
+    var homepage = list.filter(function (o) {
+      return o.foundingHomepage;
+    });
+    var names = (homepage.length ? homepage : list)
+      .slice(0, 40)
+      .map(function (o) {
+        return o.name;
+      })
+      .filter(Boolean);
+    var more = Math.max(0, list.length - names.length);
+    var nameBlock = names.length
+      ? names.map(function (n) {
+          return '• ' + n;
+        }).join('\n')
+      : '• (confirmations will appear here as groups claim)';
+    if (more > 0) nameBlock += '\n• …and ' + more + ' more founding organisers';
+    return (
+      'Proud to welcome our Founding Organisers on The Networker Hub.\n\n' +
+      'These networking groups have already confirmed their pages ahead of our 1 September launch — and they\'re part of the Hub organiser leaderboard.\n\n' +
+      nameBlock +
+      '\n\nRunning a UK networking group? Confirm your page and join them:\n' +
+      'https://www.thenetworkerhub.com/for-organisers\n\n' +
+      '#TheNetworkerHub #UKNetworking #FoundingOrganisers'
+    );
+  }
+
+  function renderFoundingOrganisers() {
+    main.innerHTML =
+      '<div class="space-y-4" id="admin-founding-root">' +
+      '<p class="text-sm text-slate-600">Loading founding organisers…</p>' +
+      '</div>';
+
+    var root = document.getElementById('admin-founding-root');
+    var state = { q: '', organisers: [], stats: null };
+
+    function paint() {
+      if (!root) return;
+      var stats = state.stats || {};
+      var rows = state.organisers || [];
+      if (state.q) {
+        var q = state.q.toLowerCase();
+        rows = rows.filter(function (o) {
+          return [o.name, o.email, o.slug, o.website].join(' ').toLowerCase().indexOf(q) !== -1;
+        });
+      }
+
+      root.innerHTML =
+        '<div class="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950 space-y-1">' +
+        '<p><strong>Auto-award:</strong> claim before 1 Sept → founding badge. First 50 also get homepage showcase through November.</p>' +
+        '<p>Gateway strip + homepage update live from these flags. Social post = copy the group caption below (not individual posts).</p>' +
+        '</div>' +
+        '<div class="grid gap-3 sm:grid-cols-4">' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Founding badges</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(stats.foundingCount != null ? stats.foundingCount : '—')) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Homepage slots</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(stats.homepageUsed != null ? stats.homepageUsed : '—')) +
+        '<span class="text-base font-semibold text-slate-500"> / ' +
+        esc(String(stats.homepageCap || 50)) +
+        '</span></p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Claim window</p><p class="text-sm font-semibold mt-2 ' +
+        (stats.claimWindowOpen ? 'text-emerald-700' : 'text-amber-700') +
+        '">' +
+        (stats.claimWindowOpen ? 'Open until 1 Sept' : 'Closed') +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Homepage until</p><p class="text-sm font-semibold text-brand-900 mt-2">30 Nov 2026</p></div>' +
+        '</div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">' +
+        '<div class="flex flex-wrap items-end gap-3 justify-between">' +
+        '<div class="flex-1 min-w-[200px]"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-founding-q">Search</label>' +
+        '<input id="admin-founding-q" type="search" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Name, email, website…" value="' +
+        attrEsc(state.q) +
+        '"></div>' +
+        '<button type="button" id="admin-founding-refresh" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Refresh</button>' +
+        '</div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-founding-caption">Group LinkedIn caption</label>' +
+        '<textarea id="admin-founding-caption" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[160px]" readonly></textarea>' +
+        '<div class="mt-2 flex flex-wrap gap-2">' +
+        '<button type="button" id="admin-founding-copy" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy caption</button>' +
+        '<a class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener noreferrer">Open LinkedIn</a>' +
+        '<span id="admin-founding-copy-status" class="text-sm text-slate-500 self-center"></span>' +
+        '</div></div></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white overflow-hidden">' +
+        '<div class="overflow-x-auto"><table class="min-w-full text-sm">' +
+        '<thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr>' +
+        '<th class="px-4 py-3">Group</th><th class="px-4 py-3">Claimed</th><th class="px-4 py-3">Homepage</th><th class="px-4 py-3">Actions</th>' +
+        '</tr></thead><tbody id="admin-founding-tbody">' +
+        (rows.length
+          ? rows
+              .map(function (o) {
+                return (
+                  '<tr class="border-t border-slate-100 align-top" data-founding-id="' +
+                  attrEsc(o.id) +
+                  '">' +
+                  '<td class="px-4 py-3"><p class="font-semibold text-brand-900">' +
+                  esc(o.name) +
+                  '</p><p class="text-xs text-slate-500">' +
+                  esc(o.email || '—') +
+                  (o.website ? ' · <a class="text-brand-700 underline" href="' + attrEsc(o.website) + '" target="_blank" rel="noopener noreferrer">Website</a>' : '') +
+                  '</p></td>' +
+                  '<td class="px-4 py-3 text-xs text-slate-600">' +
+                  esc(o.foundingOrganiserAt ? String(o.foundingOrganiserAt).slice(0, 10) : '—') +
+                  '</td>' +
+                  '<td class="px-4 py-3">' +
+                  (o.foundingHomepage
+                    ? '<span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Showcase</span>'
+                    : '<span class="text-xs text-slate-400">—</span>') +
+                  '</td>' +
+                  '<td class="px-4 py-3"><div class="flex flex-wrap gap-2">' +
+                  (o.foundingHomepage
+                    ? '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-founding-action="homepage_off">Remove homepage</button>'
+                    : '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-founding-action="homepage_on">Add homepage</button>') +
+                  '<button type="button" class="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50" data-founding-action="revoke">Revoke badge</button>' +
+                  '</div></td></tr>'
+                );
+              })
+              .join('')
+          : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No founding organisers yet — they appear here as groups claim.</td></tr>') +
+        '</tbody></table></div></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">' +
+        '<h3 class="text-sm font-semibold text-brand-900">Manually award a badge</h3>' +
+        '<p class="text-xs text-slate-500">Paste an organiser UUID from Listing cleanup if you need to award outside the claim flow.</p>' +
+        '<div class="flex flex-wrap gap-2">' +
+        '<input id="admin-founding-award-id" class="flex-1 min-w-[240px] rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" placeholder="organiser UUID">' +
+        '<button type="button" id="admin-founding-award" class="rounded-lg bg-slate-800 text-white text-sm font-semibold px-3 py-2 hover:bg-slate-900">Award badge</button>' +
+        '<span id="admin-founding-award-status" class="text-sm text-slate-500 self-center"></span>' +
+        '</div></div>';
+
+      var caption = document.getElementById('admin-founding-caption');
+      if (caption) caption.value = foundingLinkedInCaption(state.organisers);
+
+      var qEl = document.getElementById('admin-founding-q');
+      if (qEl) {
+        qEl.addEventListener('input', function () {
+          state.q = qEl.value || '';
+          paint();
+          var again = document.getElementById('admin-founding-q');
+          if (again) {
+            again.focus();
+            var len = again.value.length;
+            again.setSelectionRange(len, len);
+          }
+        });
+      }
+      var refresh = document.getElementById('admin-founding-refresh');
+      if (refresh) refresh.addEventListener('click', load);
+      var copyBtn = document.getElementById('admin-founding-copy');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var text = (document.getElementById('admin-founding-caption') || {}).value || '';
+          var status = document.getElementById('admin-founding-copy-status');
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(
+              function () {
+                if (status) status.textContent = 'Copied.';
+              },
+              function () {
+                if (status) status.textContent = 'Copy failed — select the text manually.';
+              }
+            );
+          } else if (status) status.textContent = 'Copy not available — select the text manually.';
+        });
+      }
+      var awardBtn = document.getElementById('admin-founding-award');
+      if (awardBtn) {
+        awardBtn.addEventListener('click', function () {
+          var id = ((document.getElementById('admin-founding-award-id') || {}).value || '').trim();
+          var status = document.getElementById('admin-founding-award-status');
+          if (!id) {
+            if (status) status.textContent = 'Paste an organiser id.';
+            return;
+          }
+          runAction(id, 'award', status);
+        });
+      }
+      root.querySelectorAll('[data-founding-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var tr = btn.closest('[data-founding-id]');
+          var id = tr && tr.getAttribute('data-founding-id');
+          var action = btn.getAttribute('data-founding-action');
+          if (!id || !action) return;
+          if (action === 'revoke' && !window.confirm('Revoke founding badge (and homepage slot) for this group?')) return;
+          runAction(id, action);
+        });
+      });
+    }
+
+    function runAction(organiserId, action, statusEl) {
+      if (statusEl) statusEl.textContent = 'Saving…';
+      adminPost('/api/admin/founding', { action: action, organiserId: organiserId })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Update failed');
+          if (statusEl) statusEl.textContent = 'Saved.';
+          return load();
+        })
+        .catch(function (err) {
+          if (statusEl) statusEl.textContent = err.message || 'Update failed';
+          else window.alert(err.message || 'Update failed');
+        });
+    }
+
+    function load() {
+      return adminGet('/api/admin/founding')
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Load failed');
+          state.organisers = data.organisers || [];
+          state.stats = data.stats || null;
+          paint();
+        })
+        .catch(function (err) {
+          if (root) {
+            root.innerHTML =
+              '<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-red-900 text-sm">' +
+              esc(err.message || 'Could not load founding organisers. Apply migration 241 if columns are missing.') +
+              '</div>';
+          }
+        });
+    }
+
+    load();
+  }
+
 
   function renderEmailHub(fullHash) {
     var tab = resolveHubTab(fullHash, 'email', ['campaigns', 'templates'], 'campaigns');

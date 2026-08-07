@@ -17,5 +17,16 @@ Do **not** limit the badge to 50 — that creates #51 disappointment. Cap only t
 - API: `GET /api/founding-organisers`
 - Email 2 + `/for-organisers` claim invite copy mention both perks + group social
 
+### Command Centre
+**Email & social → Founding organisers** (`#social/founding`)
+
+- See who has the badge / homepage slot
+- Add or remove homepage showcase (max 50)
+- Revoke badge
+- Manually award by organiser UUID
+- **Copy group LinkedIn caption** (Founding organisers on the leaderboard)
+
+**Email & social → Social posts** (`#social`) is the general listing caption composer (events / opportunities / organisers) — separate from the founding group announcement.
+
 ### Ops (social)
-After a batch of claims lands (or weekly), post a **group** graphic/list: founding organisers who confirmed their Hub pages and are on the organiser leaderboard path. Prefer logos from the homepage 50. No promise of a personal post per group.
+After a batch of claims lands (or weekly), open Command Centre → Founding organisers → **Copy caption** → paste on LinkedIn. Prefer logos from the homepage 50 in any graphic you make. No promise of a personal post per group.
