@@ -194,8 +194,11 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 | Key | Value | Notes |
 |-----|--------|--------|
 | `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, the public only sees `/site-access` (waitlist + team unlock). Everyone else needs this shared password. |
+| `SITE_ACCESS_BANNER_TOKEN` | `co-uk-peek-2026` | Soft unlock for the co.uk “Peek at the Hub” banner. Must match `peek=` in `marketing/co-uk-upgrade-banner-snippet.html`. Not the team password. |
 
-**Cookie:** after a correct password, a signed `hub_site_preview` cookie unlocks the site for 7 days (signed with the preview password value).
+**Cookie:** after a correct password **or** banner peek token, a signed `hub_site_preview` cookie unlocks the site for 7 days (signed with the preview password value).
+
+**Banner Peek URL:** `/api/auth/site-access?peek=co-uk-peek-2026&next=/` → sets cookie → redirects into the Hub.
 
 **Still works without unlocking:** Stripe webhooks, Vercel crons (`CRON_SECRET`), and CSS/JS/assets for the gate page.
 

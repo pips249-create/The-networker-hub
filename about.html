@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css?v=20260711e">
-<link rel="stylesheet" href="css/about-page.css?v=20260804about3">
+<link rel="stylesheet" href="css/about-page.css?v=20260807updates">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -24,7 +24,7 @@
 <body class="about-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260807topg" data-root="" data-page="about"></script>
+<script src="js/site-nav.js?v=20260807updates" data-root="" data-page="about"></script>
 
 <main class="about-main">
 
@@ -244,8 +244,40 @@
       <div class="about-cta-actions">
         <a class="btn btn-primary" href="/for-organisers">For organisers</a>
         <a class="btn btn-secondary" href="/for-networkers">For networkers</a>
-        <a class="btn btn-secondary" href="mailto:hello@thenetworkerhub.com">Email us</a>
+        <a class="btn btn-secondary" href="/contact">Contact</a>
       </div>
+
+      <div class="about-updates" id="updates">
+        <h3 class="about-updates-title">Be the first to hear</h3>
+        <p class="about-updates-lede">
+          Sign up for launch updates — we&rsquo;ll email you when the Hub opens and share anything worth knowing before then.
+        </p>
+        <div id="about-waitlist-message" class="preview-waitlist-alert" role="alert" hidden data-preview-waitlist-message></div>
+        <form
+          id="about-waitlist-form"
+          class="about-updates-form"
+          data-preview-waitlist
+          data-source="about"
+          novalidate
+        >
+          <div class="about-updates-honeypot" aria-hidden="true">
+            <label for="about-waitlist-website">Website</label>
+            <input type="text" id="about-waitlist-website" name="website" tabindex="-1" autocomplete="off" data-preview-waitlist-honeypot>
+          </div>
+          <label class="about-updates-label" for="about-waitlist-email">Email address</label>
+          <input
+            class="about-updates-input"
+            type="email"
+            id="about-waitlist-email"
+            name="email"
+            autocomplete="email"
+            required
+            placeholder="you@company.com"
+          >
+          <button type="submit" class="btn btn-primary about-updates-submit">Sign up for updates</button>
+        </form>
+      </div>
+
       <p class="about-cta-legal">
         Operated by <strong>The Networker Group Ltd</strong>
       </p>
@@ -255,8 +287,9 @@
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260807topg" data-root="" data-hubert="off"></script>
-<script src="js/about-page.js?v=20260804about2" defer></script>
+<script src="js/site-footer.js?v=20260807updates" data-root="" data-hubert="off"></script>
+<script src="js/preview-waitlist-form.js?v=20260807updates" defer></script>
+<script src="js/about-page.js?v=20260807updates" defer></script>
 
 </body>
 </html>

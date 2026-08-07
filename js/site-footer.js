@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260807topg';
+  var FOOTER_BUILD = '20260807updates';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -18,7 +18,7 @@
   /** Email 1 / pre-launch marketing pages — never show catalogue footer links. */
   function forceEarlyAccessChrome() {
     var p = String(window.location.pathname || '').toLowerCase();
-    return /\/(for-organisers|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
+    return /\/(for-organisers|for-networkers|for-attendees|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
   }
 
   function effectiveCatalogueOpen(open) {
@@ -51,11 +51,17 @@
       href('/for-organisers') +
       '">For organisers</a>' +
       '<a href="' +
+      href('/for-networkers') +
+      '">For networkers</a>' +
+      '<a href="' +
       href('/about') +
       '">About us</a>' +
       '<a href="' +
       href('/contact') +
-      '">Contact us</a>'
+      '">Contact us</a>' +
+      '<a href="' +
+      href('/about#updates') +
+      '">Get updates</a>'
     );
   }
 
@@ -83,7 +89,7 @@
   }
 
   function renderFooter(catalogueOpen) {
-    var homeHref = catalogueOpen ? href('/') : href('/for-organisers');
+    var homeHref = catalogueOpen ? href('/') : href('/about');
     var helpBlock = '';
     var companyBlock = '';
     if (catalogueOpen) {

@@ -68,8 +68,13 @@
 
   // Visit /site-access?lock=1 to clear preview cookie and show the password form again
   var lockRequested = false;
+  var peekToken = '';
+  var peekError = false;
   try {
-    lockRequested = new URLSearchParams(window.location.search).get('lock') === '1';
+    var params = new URLSearchParams(window.location.search);
+    lockRequested = params.get('lock') === '1';
+    peekToken = String(params.get('peek') || '').trim();
+    peekError = params.get('peek_error') === '1';
   } catch (e) {
     lockRequested = false;
   }
@@ -84,6 +89,45 @@
         'success'
       );
     });
+  }
+
+  // co.uk banner soft unlock — /site-access?peek=TOKEN&next=/
+  if (peekToken && !lockRequested) {
+    var peekMsg = document.getElementById('site-access-message');
+    showAlert(peekMsg, 'Opening your Hub preview…', 'success');
+    postSiteAccess({ peek: peekToken, next: getNextParam() })
+      .then(function (result) {
+        if (!result.ok) {
+          showAlert(
+            peekMsg,
+            friendlyError(result) || 'Preview link expired. Join the list or enter the team password.',
+            'error'
+          );
+          try {
+            window.history.replaceState({}, '', window.location.pathname);
+          } catch (err) {}
+          return;
+        }
+        window.location.replace(result.data.redirect || getNextParam() || '/');
+      })
+      .catch(function () {
+        // Fall back to GET unlock (sets cookie + redirect)
+        window.location.replace(
+          '/api/auth/site-access?peek=' +
+            encodeURIComponent(peekToken) +
+            '&next=' +
+            encodeURIComponent(getNextParam() || '/')
+        );
+      });
+  } else if (peekError) {
+    showAlert(
+      document.getElementById('site-access-message'),
+      'That preview link did not work. Join the list below, or enter the team password if you have it.',
+      'error'
+    );
+    try {
+      window.history.replaceState({}, '', window.location.pathname);
+    } catch (err) {}
   }
 
   // Interactive organiser and attendee workspace mocks

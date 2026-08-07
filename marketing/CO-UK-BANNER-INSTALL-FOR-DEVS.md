@@ -10,10 +10,18 @@
 
 File: `marketing/co-uk-upgrade-banner-snippet.html` (entire file — fonts + HTML + CSS + JS).
 
+**If the banner is already live:** only change the **Peek at the Hub** button `href` to the About URL below (do not re-paste the whole banner unless you also need copy/CSS updates).
+
+### Peek CTA href (only change this)
+
+```
+https://www.thenetworkerhub.com/about?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
+```
+
 1. Open **WPCode** or **Code Snippets** (or equivalent header injection).
-2. Create a snippet that runs on the **frontend Header** (every public page).
-3. Paste the full snippet.
-4. Publish / activate.
+2. Find the Peek button (`class="tnh-upgrade-banner__cta"`).
+3. Replace its `href` with the URL above.
+4. Save / publish.
 
 ---
 
@@ -22,31 +30,18 @@ File: `marketing/co-uk-upgrade-banner-snippet.html` (entire file — fonts + HTM
 | Item | Spec |
 |------|------|
 | Placement | **In document flow** above the purple nav — `position: relative` only |
-| CTA | One button → `https://www.thenetworkerhub.com/about` (+ UTMs already in snippet) |
-| Dismiss | × button hides for **7 days** (`localStorage` key `tnh_upgrade_banner_dismissed_v6`) |
+| Logo | **None** — co.uk brand stays in the purple header; banner is text + Peek only |
+| CTA | **Peek at the Hub** → Hub `/about` (early-access marketing pages; catalogue stays gated) |
+| Dismiss | × button hides for **7 days** (`localStorage` key `tnh_upgrade_banner_dismissed_v7`) |
 | Motion | Rotating word after “Find your next…” every 3.2s |
 
 **Do not** switch the banner to `position: fixed` or `sticky` — that covers Elementor hero videos.
 
 ---
 
-## Spot-check after go-live
+## After install — quick check
 
-- [ ] Home — banner above purple bar; hero video still plays and is not covered
-- [ ] Mobile — stacked layout looks intentional
-- [ ] Dismiss works; refresh within 7 days stays hidden
-- [ ] CTA opens Hub About in a new tab
-- [ ] Logged-in WP admin — banner still readable under/near admin bar
-
----
-
-## When to remove
-
-Disable the snippet only when hard **301s** to `www.thenetworkerhub.com` go live (planned after the ~3-month SEO hold, ~November 2026). Keep MX / `@the-networker.co.uk` mailboxes unchanged.
-
----
-
-## Contact
-
-Hub side: Catherine / The Networker Hub team.  
-Preview mockup (optional): `marketing/co-uk-upgrade-banner-mockup.html`
+1. Home (hero video) — banner above purple bar; video still plays full-bleed.
+2. Mobile — stacked layout still readable.
+3. Click Peek — opens Hub About in a new tab with UTM params.
+4. Dismiss × — banner hidden for 7 days on that browser.

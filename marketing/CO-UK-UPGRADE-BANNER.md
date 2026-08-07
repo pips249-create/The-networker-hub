@@ -2,27 +2,22 @@
 
 **Dual-site SEO hold:** co.uk stays live **~3 months** (through **~November 2026**)  
 **Soft banner:** install **now** — keep until hard 301s  
-**Banner CTA (one):** `https://www.thenetworkerhub.com/about` → “Peek at the Hub”  
-**On About:** choose **For organisers** or **For networkers**  
+**Banner CTA (one):** Peek at the Hub → `/about` (early-access section)  
+**Landing URL:** `https://www.thenetworkerhub.com/about?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`  
 **Hard redirect:** deferred until SEO hold ends — see `docs/LEGACY-REDIRECT-MAP.md`
 
-UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026`
+UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`
 
-Product voice: rotating **Find your next…**, Hub logo, dismissible **7 days** (`tnh_upgrade_banner_dismissed_v6`).
-
-Hub destinations confirmed **200** (7 Aug 2026): `/about`, `/for-organisers`, `/for-networkers`.
-
-Do **not** link the banner straight to gated catalogue URLs (`/`, `/events/`) while the site password is on.
+Product voice: rotating **Find your next…**, launch line (**Hub opens 1 September**), dismissible **7 days** (`tnh_upgrade_banner_dismissed_v7`).
 
 ---
 
 ## Visitor path
 
-1. co.uk banner → **Peek at the Hub** (`/about`)
-2. On About → **For organisers** and/or **For networkers**
-3. Catalogue browse / tickets open on Hub soft launch (1 September) — co.uk itself stays up for SEO until hard flip
-
-Skip on the public banner: claim/register links (Email 2), `/contact` (use if support gets noisy).
+1. co.uk banner → **Peek at the Hub**
+2. Lands on Hub **About** (no catalogue unlock)
+3. From About they can open **For organisers**, **For networkers**, **Contact**, or **sign up for launch updates**
+4. Public events / opportunities stay gated until 1 September
 
 ---
 
@@ -60,9 +55,9 @@ Do **not** change the banner to `position: fixed` — that is what would clash w
 
 ## Install on the-networker.co.uk
 
-1. Confirm Hub `/about`, `/for-organisers`, and `/for-networkers` return **200** (already confirmed).
+1. Confirm Hub About loads without the password gate.
 2. WPCode / Code Snippets → Header → paste `co-uk-upgrade-banner-snippet.html` (see `CO-UK-BANNER-INSTALL-FOR-DEVS.md`).
-3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v6`).
+3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v7`).
 
 ---
 

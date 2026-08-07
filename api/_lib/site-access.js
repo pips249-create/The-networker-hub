@@ -18,6 +18,11 @@ function getSiteAccessPassword() {
   return String(process.env.SITE_ACCESS_PASSWORD || '').trim();
 }
 
+/** Public soft-preview token for co.uk banner (not the team password). */
+function getBannerPeekToken() {
+  return String(process.env.SITE_ACCESS_BANNER_TOKEN || '').trim();
+}
+
 function getPreviewCookieSecret() {
   return getSiteAccessPassword();
 }
@@ -74,6 +79,7 @@ function siteAccessStatus() {
   return {
     siteAccessRequired: required,
     hasSiteAccessPassword: hasPassword,
+    hasBannerPeekToken: Boolean(getBannerPeekToken()),
     hasSessionSecret: Boolean(process.env.SESSION_SECRET),
     siteAccessReady: !required || hasPassword,
   };
@@ -85,6 +91,7 @@ module.exports = {
   TOKEN_TYPE,
   isSiteAccessRequired,
   getSiteAccessPassword,
+  getBannerPeekToken,
   getPreviewCookieSecret,
   signSiteAccessToken,
   buildSiteAccessCookie,

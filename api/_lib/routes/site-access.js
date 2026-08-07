@@ -1,6 +1,7 @@
 const { json, setCors } = require('../auth');
 const {
   getSiteAccessPassword,
+  getBannerPeekToken,
   isSiteAccessRequired,
   setSiteAccessCookie,
   clearSiteAccessCookie,
@@ -22,6 +23,24 @@ function parseBody(req) {
   return body || {};
 }
 
+function safeNextPath(raw) {
+  let redirect = String(raw || '/').trim();
+  if (!redirect.startsWith('/') || redirect.startsWith('//')) {
+    redirect = '/';
+  }
+  return redirect;
+}
+
+function matchesUnlockSecret(password) {
+  const value = String(password || '').trim();
+  if (!value) return false;
+  const team = getSiteAccessPassword();
+  const banner = getBannerPeekToken();
+  if (team && timingSafeEqualString(value, team)) return true;
+  if (banner && timingSafeEqualString(value, banner)) return true;
+  return false;
+}
+
 async function handleWaitlistSignup(req, res, body) {
   const limited = enforceRateLimit(req, res, 'site_access_waitlist', { max: 6, windowMs: 300_000 });
   if (!limited.allowed) {
@@ -40,7 +59,14 @@ async function handleWaitlistSignup(req, res, body) {
   }
 
   try {
-    const result = await addPreviewWaitlistEmail(body.email, { source: 'site_access' });
+    const source = String(body.source || 'site_access')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '')
+      .slice(0, 40);
+    const result = await addPreviewWaitlistEmail(body.email, {
+      source: source || 'site_access',
+    });
     return json(res, 200, {
       ok: true,
       alreadyRegistered: result.alreadyRegistered,
@@ -80,7 +106,11 @@ async function handlePasswordUnlock(req, res, body) {
     }
 
     if (!isSiteAccessRequired()) {
-      return json(res, 200, { ok: true, message: 'Site access gate is not enabled.' });
+      return json(res, 200, {
+        ok: true,
+        message: 'Site access gate is not enabled.',
+        redirect: safeNextPath(body.next),
+      });
     }
 
     const expected = getSiteAccessPassword();
@@ -91,9 +121,9 @@ async function handlePasswordUnlock(req, res, body) {
       });
     }
 
-    const password = String(body.password || '').trim();
+    const password = String(body.password || body.peek || '').trim();
 
-    if (!password || !timingSafeEqualString(password, expected)) {
+    if (!matchesUnlockSecret(password)) {
       return json(res, 401, {
         error: 'invalid_password',
         message: 'Incorrect preview password. Check SITE_ACCESS_PASSWORD in Vercel matches exactly.',
@@ -107,14 +137,9 @@ async function handlePasswordUnlock(req, res, body) {
       });
     }
 
-    let redirect = String(body.next || '/').trim();
-    if (!redirect.startsWith('/') || redirect.startsWith('//')) {
-      redirect = '/';
-    }
-
     return json(res, 200, {
       ok: true,
-      redirect,
+      redirect: safeNextPath(body.next),
     });
   } catch (e) {
     return json(res, 500, {
@@ -122,6 +147,57 @@ async function handlePasswordUnlock(req, res, body) {
       message: e.message || 'Preview login failed.',
     });
   }
+}
+
+function handlePeekUnlockGet(req, res) {
+  const limited = enforceRateLimit(req, res, 'site_access_banner_peek', { max: 20, windowMs: 300_000 });
+  if (!limited.allowed) {
+    res.statusCode = 429;
+    res.setHeader('Location', '/site-access');
+    res.setHeader('Retry-After', String(limited.retryAfterSec || 60));
+    return res.end();
+  }
+
+  let url;
+  try {
+    url = new URL(req.url, 'https://internal.local');
+  } catch {
+    res.statusCode = 302;
+    res.setHeader('Location', '/site-access');
+    return res.end();
+  }
+
+  const peek = String(url.searchParams.get('peek') || '').trim();
+  const next = safeNextPath(url.searchParams.get('next') || '/');
+
+  if (!isSiteAccessRequired()) {
+    res.statusCode = 302;
+    res.setHeader('Location', next);
+    return res.end();
+  }
+
+  if (!getSiteAccessPassword()) {
+    res.statusCode = 302;
+    res.setHeader('Location', '/site-access');
+    return res.end();
+  }
+
+  if (!matchesUnlockSecret(peek)) {
+    res.statusCode = 302;
+    res.setHeader('Location', '/site-access?peek_error=1');
+    return res.end();
+  }
+
+  if (!setSiteAccessCookie(res)) {
+    res.statusCode = 302;
+    res.setHeader('Location', '/site-access?peek_error=1');
+    return res.end();
+  }
+
+  res.statusCode = 302;
+  res.setHeader('Location', next);
+  res.setHeader('Cache-Control', 'no-store');
+  return res.end();
 }
 
 module.exports = async function handler(req, res) {
@@ -133,6 +209,15 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     if (req.method === 'GET') {
+      let peek = '';
+      try {
+        peek = String(new URL(req.url, 'https://internal.local').searchParams.get('peek') || '').trim();
+      } catch {
+        peek = '';
+      }
+      if (peek) {
+        return handlePeekUnlockGet(req, res);
+      }
       return json(res, 200, siteAccessStatus());
     }
 
@@ -145,7 +230,7 @@ module.exports = async function handler(req, res) {
       return handleLockPreview(req, res);
     }
 
-    if (intent === 'waitlist' || (body.email && !body.password)) {
+    if (intent === 'waitlist' || (body.email && !body.password && !body.peek)) {
       return handleWaitlistSignup(req, res, body);
     }
 

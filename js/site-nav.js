@@ -95,7 +95,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260807topg';
+  var NAV_BUILD = '20260807updates';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -107,7 +107,7 @@
     var p = String(window.location.pathname || '').toLowerCase();
     // Marketing / trust pages only — login & register must follow real catalogue state
     // so the full signup form returns when the gate is off / claim links arrive.
-    return /\/(for-organisers|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
+    return /\/(for-organisers|for-networkers|for-attendees|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
   }
 
   function loadComplianceAsset(path) {
@@ -191,6 +191,15 @@
     }
     if (key === 'rankings') {
       return page === 'rankings' || window.location.pathname.indexOf('/rankings') === 0;
+    }
+    if (key === 'for-networkers') {
+      return (
+        page === 'for-networkers' ||
+        page === 'for-attendees' ||
+        /\/for-(networkers|attendees)(?:\.html)?\/?$/.test(
+          String(window.location.pathname || '').toLowerCase()
+        )
+      );
     }
     return page === key;
   }
@@ -333,6 +342,9 @@
         href('/for-organisers') +
         '">For organisers</a>' +
         '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/for-networkers') +
+        '">For networkers</a>' +
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
         href('/about') +
         '">About</a>';
     } else {
@@ -382,6 +394,7 @@
     }
     if (early) {
       html += link('/for-organisers', 'For organisers', 'for-organisers');
+      html += link('/for-networkers', 'For networkers', 'for-networkers');
       html += link('/about', 'About', 'about');
       html += link('/contact', 'Contact', 'contact');
     } else {
@@ -410,7 +423,7 @@
     if (user) {
       html += myHubDropdownHtml(user);
     } else if (early) {
-      html += link('/register', 'Sign up', 'auth', 'nav-signin');
+      html += link('/about#updates', 'Get updates', 'about-updates', 'nav-signin');
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
     }
@@ -452,6 +465,7 @@
     if (early) {
       html += '<p class="nav-mobile-section-label">Explore</p>';
       html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
+      html += link('/for-networkers', 'For networkers', 'for-networkers', 'nav-mobile-item');
       html += link('/about', 'About', 'about', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
@@ -492,7 +506,7 @@
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
     } else if (early) {
-      html += link('/register', 'Sign up', 'auth', 'nav-mobile-item nav-mobile-signin');
+      html += link('/about#updates', 'Get updates', 'about-updates', 'nav-mobile-item nav-mobile-signin');
     } else {
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     }
@@ -778,7 +792,7 @@
     lastNavUser = user || null;
     lastNavPending = Boolean(pending);
     var early = catalogueOpen === false;
-    var homeHref = early ? href('/for-organisers') : href('/');
+    var homeHref = early ? href('/about') : href('/');
     var pendingClass = pending ? ' is-session-pending' : '';
     mount.innerHTML =
       '<a class="skip-to-content" href="#hub-main-content">Skip to main content</a>' +
