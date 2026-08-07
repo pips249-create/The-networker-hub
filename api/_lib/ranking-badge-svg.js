@@ -66,15 +66,59 @@ function tierTheme(tier) {
   };
 }
 
-/** Fit group name into the plaque copy column (~220px at 12–13px). */
-function truncateGroupName(raw, maxChars) {
-  const name = String(raw || '')
+const BADGE_WIDTH = 380;
+const BADGE_HEIGHT = 128;
+/** Approx chars that fit in the copy column at 12px bold. */
+const NAME_LINE_CHARS = 32;
+
+function cleanGroupName(raw) {
+  return String(raw || '')
     .replace(/\s+/g, ' ')
     .trim();
-  const limit = maxChars || 28;
-  if (!name) return 'Your networking group';
-  if (name.length <= limit) return name;
-  return name.slice(0, Math.max(1, limit - 1)).trimEnd() + '…';
+}
+
+/**
+ * Wrap a group name onto up to two lines at word boundaries.
+ * Only truncates with an ellipsis if it still overflows two lines.
+ */
+function wrapGroupName(raw, maxCharsPerLine, maxLines) {
+  const name = cleanGroupName(raw) || 'Your networking group';
+  const perLine = maxCharsPerLine || NAME_LINE_CHARS;
+  const linesMax = maxLines || 2;
+  if (name.length <= perLine) return [name];
+
+  const words = name.split(' ');
+  const lines = [];
+  let current = '';
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const next = current ? current + ' ' + word : word;
+    if (next.length <= perLine) {
+      current = next;
+      continue;
+    }
+    if (current) lines.push(current);
+    current = word;
+    if (lines.length >= linesMax - 1) {
+      const rest = [word].concat(words.slice(i + 1)).join(' ');
+      if (rest.length <= perLine) {
+        lines.push(rest);
+        current = '';
+      } else {
+        lines.push(rest.slice(0, Math.max(1, perLine - 1)).trimEnd() + '…');
+        current = '';
+      }
+      break;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.slice(0, linesMax);
+}
+
+/** @deprecated Prefer wrapGroupName — kept for callers/tests. */
+function truncateGroupName(raw, maxChars) {
+  const lines = wrapGroupName(raw, maxChars || NAME_LINE_CHARS, 1);
+  return lines[0] || 'Your networking group';
 }
 
 function buildRankingBadgeSvg(options) {
@@ -85,19 +129,37 @@ function buildRankingBadgeSvg(options) {
     .trim()
     .slice(0, 40);
   const periodLine = period || 'This month';
-  const groupName = truncateGroupName(opts.name || opts.groupName || opts.organiserName, 28);
-  const title = `${groupName} — ${theme.shortLabel} on The Networker Hub · ${periodLine}`;
+  const fullName = cleanGroupName(opts.name || opts.groupName || opts.organiserName);
+  const nameLines = wrapGroupName(fullName, NAME_LINE_CHARS, 2);
+  const displayName = nameLines.join(' ');
+  const title = `${displayName} — ${theme.shortLabel} on The Networker Hub · ${periodLine}`;
   const uid =
     tier +
     '-' +
-    String(periodLine + groupName)
+    String(periodLine + displayName)
       .replace(/[^a-z0-9]+/gi, '')
       .slice(0, 16)
       .toLowerCase();
-  const nameSize = groupName.length > 22 ? 11 : 13;
+
+  const twoLineName = nameLines.length > 1;
+  const nameSize = twoLineName || displayName.length > 26 ? 11.5 : 13;
+  const nameLineGap = 14;
+  // Vertical rhythm: kicker → tier → name (1–2 lines) → verify footer
+  const kickerY = 28;
+  const tierY = twoLineName ? 52 : 54;
+  const nameStartY = twoLineName ? 72 : 76;
+  const footerY = twoLineName ? 112 : 108;
+
+  const nameTexts = nameLines
+    .map(function (line, idx) {
+      return (
+        `<text x="112" y="${nameStartY + idx * nameLineGap}" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="${nameSize}" font-weight="700">${escapeXml(line)}</text>`
+      );
+    })
+    .join('');
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="120" viewBox="0 0 340 120" role="img" aria-label="${escapeXml(title)}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" viewBox="0 0 ${BADGE_WIDTH} ${BADGE_HEIGHT}" role="img" aria-label="${escapeXml(title)}">` +
     `<title>${escapeXml(title)}</title>` +
     `<defs>` +
     `<linearGradient id="bg-${uid}" x1="0" y1="0" x2="1" y2="1">` +
@@ -117,22 +179,22 @@ function buildRankingBadgeSvg(options) {
     `</linearGradient>` +
     `</defs>` +
     // Outer plaque
-    `<rect width="340" height="120" rx="18" fill="url(#bg-${uid})"/>` +
-    `<rect x="2.5" y="2.5" width="335" height="115" rx="16" fill="none" stroke="url(#metal-${uid})" stroke-width="2.5"/>` +
-    `<rect x="8" y="8" width="324" height="104" rx="13" fill="none" stroke="${theme.metal}" stroke-opacity="0.28" stroke-width="1"/>` +
+    `<rect width="${BADGE_WIDTH}" height="${BADGE_HEIGHT}" rx="18" fill="url(#bg-${uid})"/>` +
+    `<rect x="2.5" y="2.5" width="${BADGE_WIDTH - 5}" height="${BADGE_HEIGHT - 5}" rx="16" fill="none" stroke="url(#metal-${uid})" stroke-width="2.5"/>` +
+    `<rect x="8" y="8" width="${BADGE_WIDTH - 16}" height="${BADGE_HEIGHT - 16}" rx="13" fill="none" stroke="${theme.metal}" stroke-opacity="0.28" stroke-width="1"/>` +
     // Left seal / medal
-    `<circle cx="58" cy="60" r="34" fill="url(#metal-${uid})"/>` +
-    `<circle cx="58" cy="60" r="28" fill="${theme.panel}" stroke="${theme.metalSoft}" stroke-width="1.5"/>` +
-    `<circle cx="58" cy="60" r="22" fill="none" stroke="${theme.metal}" stroke-opacity="0.55" stroke-width="1"/>` +
-    `<text x="58" y="54" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">★</text>` +
-    `<text x="58" y="74" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="800" letter-spacing="0.04em">${escapeXml(theme.label.replace('TOP ', ''))}</text>` +
-    // Copy block — group name is stamped so a screenshot alone is weaker as a fake
-    `<text x="108" y="36" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
-    `<text x="108" y="62" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="700">${escapeXml(theme.label)}</text>` +
-    `<text x="108" y="84" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="${nameSize}" font-weight="700">${escapeXml(groupName)}</text>` +
-    `<text x="108" y="102" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600">${escapeXml(periodLine)} · Attendee rated</text>` +
+    `<circle cx="58" cy="64" r="34" fill="url(#metal-${uid})"/>` +
+    `<circle cx="58" cy="64" r="28" fill="${theme.panel}" stroke="${theme.metalSoft}" stroke-width="1.5"/>` +
+    `<circle cx="58" cy="64" r="22" fill="none" stroke="${theme.metal}" stroke-opacity="0.55" stroke-width="1"/>` +
+    `<text x="58" y="58" text-anchor="middle" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">★</text>` +
+    `<text x="58" y="78" text-anchor="middle" fill="${theme.ink}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="800" letter-spacing="0.04em">${escapeXml(theme.label.replace('TOP ', ''))}</text>` +
+    // Copy block
+    `<text x="112" y="${kickerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
+    `<text x="112" y="${tierY}" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="700">${escapeXml(theme.label)}</text>` +
+    nameTexts +
+    `<text x="112" y="${footerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)} · Verified on thenetworkhub.com</text>` +
     // Soft sheen
-    `<rect x="10" y="10" width="320" height="40" rx="12" fill="url(#sheen-${uid})"/>` +
+    `<rect x="10" y="10" width="${BADGE_WIDTH - 20}" height="42" rx="12" fill="url(#sheen-${uid})"/>` +
     `</svg>`
   );
 }
@@ -147,7 +209,7 @@ function rankingBadgeImageUrl(origin, tier, periodLabel, extras) {
   if (name) params.set('name', name.slice(0, 80));
   if (opts.organiserId) params.set('organiserId', String(opts.organiserId).trim());
   // Bust caches when the plaque design changes
-  params.set('v', '3');
+  params.set('v', '4');
   return base + '/api/ranking-badge?' + params.toString();
 }
 
@@ -177,7 +239,11 @@ function rankingBadgeEmbedHtml(options) {
     imgSrc.replace(/"/g, '&quot;') +
     '" alt="' +
     alt.replace(/"/g, '&quot;') +
-    '" width="340" height="120" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
+    '" width="' +
+    BADGE_WIDTH +
+    '" height="' +
+    BADGE_HEIGHT +
+    '" style="border:0;display:inline-block;max-width:100%;height:auto;" />' +
     '</a>' +
     '<br />' +
     '<a href="' +
@@ -192,7 +258,10 @@ module.exports = {
   escapeXml,
   normalizeTier,
   tierTheme,
+  wrapGroupName,
   truncateGroupName,
+  BADGE_WIDTH,
+  BADGE_HEIGHT,
   buildRankingBadgeSvg,
   rankingBadgeImageUrl,
   rankingBadgeEmbedHtml,
