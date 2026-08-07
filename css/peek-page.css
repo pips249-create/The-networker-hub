@@ -1,6 +1,70 @@
 /**
  * Soft-launch peek mini-site (/peek/*) — hub landing tweaks.
  */
+
+/* Co.uk listing redirect notice — peek/for-organisers */
+.peek-redirect-banner {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 14px 20px;
+  background: linear-gradient(100deg, #1e3a4f 0%, #084a52 55%, #0d6e7a 100%);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.peek-redirect-banner-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: 6px;
+}
+
+.peek-redirect-banner-kicker {
+  margin: 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(253, 243, 223, 0.92);
+}
+
+.peek-redirect-banner-copy {
+  margin: 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.94);
+  max-width: 48rem;
+}
+
+.peek-redirect-banner-copy strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.peek-redirect-banner-copy a {
+  color: #fdf3df;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.peek-redirect-banner-copy a:hover {
+  color: #fff;
+}
+
+@media (min-width: 720px) {
+  .peek-redirect-banner {
+    padding: 16px 28px;
+  }
+
+  .peek-redirect-banner-inner {
+    gap: 4px;
+  }
+}
+
 .peek-hub-page .peek-hub-hero {
   min-height: min(88vh, 820px);
 }
