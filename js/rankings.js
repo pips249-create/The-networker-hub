@@ -192,9 +192,11 @@
         '<span>★ ' +
         esc(rating) +
         '</span>' +
+        '<span aria-hidden="true">·</span>' +
         '<span>' +
         esc(reviews) +
         ' reviews</span>' +
+        '<span aria-hidden="true">·</span>' +
         '<span>' +
         esc(rateLabel || '—') +
         ' review rate</span>' +
@@ -320,10 +322,15 @@
     if (!list) return;
 
     if (period) {
-      period.hidden = false;
-      period.textContent = 'Preview · July 2026 · sample groups';
+      period.hidden = true;
+      period.textContent = '';
     }
     setPreviewMode(true);
+    var note = qs('rankings-preview-note');
+    if (note) {
+      note.hidden = false;
+      note.textContent = 'Preview of leaderboard rankings based on July 2026 sample data.';
+    }
     list.innerHTML = PREVIEW_ENTRIES.map(function (entry) {
       return rowHtml(entry, { preview: true });
     }).join('');

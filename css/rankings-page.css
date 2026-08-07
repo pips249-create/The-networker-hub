@@ -533,6 +533,25 @@ a.rankings-row:hover {
   margin: 0;
 }
 
+.org-leaderboard-metrics-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  margin: 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(236, 232, 224, 0.72);
+  line-height: 1.35;
+}
+
+.org-leaderboard-metrics-line > span[aria-hidden='true'] {
+  color: rgba(236, 232, 224, 0.35);
+  font-weight: 700;
+  user-select: none;
+}
+
 .rankings-side .hub-ranking-badge {
   font-weight: 600;
   box-shadow: none;

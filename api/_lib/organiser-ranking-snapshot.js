@@ -2,7 +2,9 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { sendTemplatedEmail } = require('./send-template-email');
 
-const MIN_REVIEWS_FOR_RANKING = 3;
+const MIN_REVIEWS_FOR_RANKING = 8;
+/** Soft volume floor so tiny 8/8 samples cannot dominate established groups. */
+const MIN_ELIGIBLE_ATTENDEES_FOR_RANKING = 10;
 
 const TIER_ORDER = { top10: 1, top25: 2, top50: 3 };
 
@@ -67,7 +69,7 @@ function isEligibleRegistrationForRanking(reg) {
   return true;
 }
 
-/** Paid/free approved ticket quantity on past events — denominator for review rate. */
+/** Paid/free approved ticket purchases on past events — denominator for review rate. */
 async function loadEligibleAttendeeCountsByOrganiser(sb) {
   const counts = new Map();
   const pageSize = 1000;
@@ -160,9 +162,8 @@ async function computeLiveRankingIndex(sb) {
       const published = status === 'published';
       const verified = row.verification_status === 'Verified';
       if (!published && !verified) return false;
-      const reviews = Number(row.review_count) || 0;
       const rating = Number(row.average_rating);
-      return reviews >= MIN_REVIEWS_FOR_RANKING && Number.isFinite(rating) && rating > 0;
+      return Number.isFinite(rating) && rating > 0;
     })
     .map((row) => {
       const reviewCount = Number(row.review_count) || 0;
@@ -172,6 +173,13 @@ async function computeLiveRankingIndex(sb) {
         eligibleAttendees,
         reviewRate: reviewRate(reviewCount, eligibleAttendees),
       };
+    })
+    .filter((row) => {
+      const reviews = Number(row.review_count) || 0;
+      const eligible = Number(row.eligibleAttendees) || 0;
+      return (
+        reviews >= MIN_REVIEWS_FOR_RANKING && eligible >= MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
+      );
     })
     .sort((a, b) => {
       const ratingDiff = Number(b.average_rating) - Number(a.average_rating);
@@ -558,12 +566,13 @@ async function getRankingAdminReport(options) {
     recentEmails: recentEmails || [],
     snapshots: snapshots || [],
     minReviews: MIN_REVIEWS_FOR_RANKING,
+    minEligibleAttendees: MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
   };
 }
 
 async function getPublicRankingLeaderboard() {
   if (!isSupabaseConfigured()) {
-    return { configured: false, snapshot: null, entries: [], minReviews: MIN_REVIEWS_FOR_RANKING };
+    return { configured: false, snapshot: null, entries: [], minReviews: MIN_REVIEWS_FOR_RANKING, minEligibleAttendees: MIN_ELIGIBLE_ATTENDEES_FOR_RANKING };
   }
 
   const sb = getSupabaseAdmin();
@@ -646,6 +655,7 @@ async function getPublicRankingLeaderboard() {
         },
         entries: publicEntries,
         minReviews: MIN_REVIEWS_FOR_RANKING,
+        minEligibleAttendees: MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
       };
     } catch (error) {
       if (isMissingRankingTableError(error)) {
@@ -654,6 +664,7 @@ async function getPublicRankingLeaderboard() {
           snapshot: null,
           entries: [],
           minReviews: MIN_REVIEWS_FOR_RANKING,
+          minEligibleAttendees: MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
         };
       }
       throw error;
@@ -706,6 +717,7 @@ async function getPublicRankingLeaderboard() {
         snapshot: null,
         entries: [],
         minReviews: MIN_REVIEWS_FOR_RANKING,
+        minEligibleAttendees: MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
       };
     }
     throw new Error(entErr.message);
@@ -752,6 +764,7 @@ async function getPublicRankingLeaderboard() {
     },
     entries: publicEntries,
     minReviews: MIN_REVIEWS_FOR_RANKING,
+    minEligibleAttendees: MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
   };
 }
 
@@ -873,6 +886,7 @@ async function getOrganiserBadgeAward(organiserId, periodLabel) {
 
 module.exports = {
   MIN_REVIEWS_FOR_RANKING,
+  MIN_ELIGIBLE_ATTENDEES_FOR_RANKING,
   currentPeriodKey,
   currentPeriodLabel,
   publicBadgeLabel,

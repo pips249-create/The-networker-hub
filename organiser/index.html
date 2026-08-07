@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260805bottom2" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
-    <link rel="stylesheet" href="../css/rankings-page.css?v=20260728ux" />
+    <link rel="stylesheet" href="../css/rankings-page.css?v=20260807rank" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260807filt1" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
@@ -1620,7 +1620,7 @@
               </p>
               <p id="rankings-period" class="org-leaderboard-period" hidden></p>
               <p id="rankings-preview-note" class="org-leaderboard-preview-note" hidden>
-                Preview of how Top groups will look once groups earn badges
+                Preview of leaderboard rankings based on sample data
               </p>
             </div>
           </header>
@@ -1650,7 +1650,7 @@
                   <strong>Review rate breaks ties</strong>
                   <span>
                     If two groups have the same average rating, the higher
-                    <em>review rate</em> ranks above.
+                    <em>review rate</em> ranks above (reviews ÷ past-event ticket purchases).
                   </span>
                 </li>
               </ol>
@@ -1659,17 +1659,22 @@
                 <p class="org-leaderboard-formula-eq">
                   <span class="org-leaderboard-formula-part">Number of reviews</span>
                   <span class="org-leaderboard-formula-div" aria-hidden="true">÷</span>
-                  <span class="org-leaderboard-formula-part">Past-event ticket buyers</span>
+                  <span class="org-leaderboard-formula-part">Past-event ticket purchases</span>
                 </p>
                 <p class="org-leaderboard-formula-note">
-                  Ticket buyers = paid or free tickets on events that have already finished
-                  (approved bookings only; cancelled bookings do not count).
-                  A higher rate means a larger share of your past attendees left a review —
+                  Ticket purchases = paid or free tickets on events that have already finished
+                  (approved bookings only; cancelled bookings do not count). Repeat buyers count each
+                  purchase, so busy groups need reviews to keep pace.
+                  A higher rate means a larger share of past ticket purchases left a review —
                   so a smaller group with strong feedback can outrank a larger one with the same stars.
                 </p>
               </div>
               <ul class="org-leaderboard-rules">
-                <li>Groups need <strong>at least 3 reviews</strong> and a <strong>published organiser page</strong> to appear.</li>
+                <li>
+                  Groups need <strong>at least 8 reviews</strong>,
+                  <strong>10+ past-event ticket purchases</strong>, and a
+                  <strong>published organiser page</strong> to appear.
+                </li>
                 <li>Badges (Top 10 / 25 / 50) refresh <strong>monthly</strong> from the latest snapshot. Website embeds only show an award when that group earned it for the month stamped on the badge.</li>
               </ul>
             </div>

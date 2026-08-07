@@ -17376,8 +17376,10 @@
         '<div class="flex flex-wrap items-start justify-between gap-3 mb-4">' +
         '<div><h3 class="font-bold text-brand-900">Monthly snapshot</h3>' +
         '<p class="text-xs text-slate-500 mt-1">Groups need at least ' +
-        esc(String(data.minReviews || 3)) +
-        ' reviews and a published profile. Ranked by average rating, then review rate. Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
+        esc(String(data.minReviews || 8)) +
+        ' reviews, ' +
+        esc(String(data.minEligibleAttendees || 10)) +
+        '+ past-event ticket purchases, and a published profile. Ranked by average rating, then review rate. Cron runs on the 1st of each month at 10:00 UTC.</p></div>' +
         '<div class="flex flex-wrap gap-2">' +
         '<button type="button" id="rankings-run-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Run snapshot now</button>' +
         '<button type="button" id="rankings-run-no-email-btn" class="rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Snapshot only (no emails)</button>' +
