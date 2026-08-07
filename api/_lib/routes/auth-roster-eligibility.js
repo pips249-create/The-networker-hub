@@ -6,9 +6,24 @@ const {
   loadMemberTicketsForEvent,
 } = require('../organiser-member-roster');
 
+async function sessionManagesOrganiser(session, organiserId) {
+  const orgId = String(organiserId || '').trim();
+  if (!session?.email || !orgId || !isUuid(orgId)) return false;
+  try {
+    const { listGroupsForSession } = require('../supabase-organiser');
+    // Personal workspace only — do not use admin "all groups" view.
+    const groups = await listGroupsForSession(session, false);
+    return (groups || []).some((g) => String(g.id) === orgId);
+  } catch (err) {
+    console.error('[roster-eligibility] managesOrganiser check failed', err?.message || err);
+    return false;
+  }
+}
+
 /**
  * GET ?eventId= or ?organiserId= or ?organiserIds=a,b
  * Returns roster membership for signed-in attendee and member-only tickets for an event.
+ * Also reports whether the signed-in user manages the organiser page (owner/editor).
  */
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -81,13 +96,19 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    const managesOrganiser = targetOrganiserId
+      ? await sessionManagesOrganiser(session, targetOrganiserId)
+      : false;
+    const isMember = targetOrganiserId
+      ? Boolean(membershipByOrganiser[targetOrganiserId]?.active)
+      : false;
+
     return json(res, 200, {
       ok: true,
       email,
       membershipByOrganiser,
-      isMember: targetOrganiserId
-        ? Boolean(membershipByOrganiser[targetOrganiserId]?.active)
-        : false,
+      isMember,
+      managesOrganiser,
       memberTickets,
     });
   } catch (e) {
