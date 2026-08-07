@@ -12502,8 +12502,8 @@
         setRoute('dashboard', { skipEventsGuard: true });
         if (data.group.foundingOrganiser) {
           var foundingMsg = data.group.foundingHomepage
-            ? 'You're a Founding Organiser · 2026 — badge on your profile, plus a homepage showcase through November.'
-            : 'You're a Founding Organiser · 2026 — a founding badge now shows on your Hub profile.';
+            ? "You're a Founding Organiser · 2026 — badge on your profile, plus a homepage showcase through November."
+            : "You're a Founding Organiser · 2026 — a founding badge now shows on your Hub profile.";
           showOrganiserAlert(foundingMsg, false);
         }
         continueOnboardingAfterClaim();
