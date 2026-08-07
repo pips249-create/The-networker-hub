@@ -574,13 +574,17 @@
   /** Launch County Sponsor inventory — enquiry + manual logo placement. */
   var NETWORKING_COUNTY_PARTNER_SLUGS = [
     { slug: 'berkshire', name: 'Berkshire' },
+    { slug: 'buckinghamshire', name: 'Buckinghamshire' },
+    { slug: 'cambridgeshire', name: 'Cambridgeshire' },
     { slug: 'cheshire', name: 'Cheshire' },
     { slug: 'essex', name: 'Essex' },
     { slug: 'hampshire', name: 'Hampshire' },
     { slug: 'hertfordshire', name: 'Hertfordshire' },
     { slug: 'kent', name: 'Kent' },
     { slug: 'lancashire', name: 'Lancashire' },
+    { slug: 'oxfordshire', name: 'Oxfordshire' },
     { slug: 'surrey', name: 'Surrey' },
+    { slug: 'sussex', name: 'Sussex' },
   ];
 
   function isCityPartnerSlotKey(key) {
@@ -612,11 +616,11 @@
   }
 
   function cityPartnerPlacementPaths(slug) {
-    return '/networking/' + slug + ' and /opportunities/networking/' + slug;
+    return '/networking/' + slug;
   }
 
   function countyPartnerPlacementPaths(slug) {
-    return '/networking/' + slug + ' and /opportunities/networking/' + slug;
+    return '/networking/' + slug;
   }
 
   /** CMS ad placements — each maps to a cms_blocks.slot row. */
@@ -1048,11 +1052,11 @@
       } else if (fullHash === 'sponsorship/city-partners') {
         title = 'City Partner placements';
         subtitle =
-          'Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in hub emails.';
+          'Logo + link on /networking/:city — website only, not in hub emails. Business opportunities use County Sponsor instead.';
       } else if (fullHash === 'sponsorship/county-partners') {
         title = 'County Partner placements';
         subtitle =
-          'Logo + link on launch county pages — website only. Place manually from advertising enquiries.';
+          'Logo + link on /networking/:county — website only. Place manually from advertising enquiries.';
       } else if (fullHash === 'sponsorship/advertising-enquiries') {
         title = 'Advertising enquiries';
         subtitle =
@@ -7542,7 +7546,7 @@
           '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">' +
           '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Extra logos — live Powered by heroes are included automatically</p></a>' +
           '<a href="#sponsorship/city-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">City partners</p><p class="text-xs text-slate-500 mt-1">City exclusivity waitlist and slots</p></a>' +
-          '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">County partners</p><p class="text-xs text-slate-500 mt-1">Eight launch counties — enquiry + manual logo</p></a>' +
+          '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">County partners</p><p class="text-xs text-slate-500 mt-1">Twelve launch counties — enquiry + manual logo</p></a>' +
           '</div></div>';
       });
       return;
@@ -7721,7 +7725,7 @@
       '<span class="admin-ad-picker-status" id="city-partners-picker-status">…</span>' +
       '</div>' +
       '<p class="admin-ad-picker-label">City Partner placements</p>' +
-      '<p class="admin-ad-picker-help">Logo + link on /networking/:city and /opportunities/networking/:city — website only, not in emails.</p>' +
+      '<p class="admin-ad-picker-help">Logo + link on /networking/:city — website only, not in emails. Opportunities use County Sponsor.</p>' +
       '<span class="admin-ad-picker-action">Manage cities →</span>' +
       '</a></div></section>' +
       '<section class="admin-ad-picker-group">' +
@@ -7733,7 +7737,7 @@
       '<span class="admin-ad-picker-status" id="county-partners-picker-status">…</span>' +
       '</div>' +
       '<p class="admin-ad-picker-label">County Partner placements</p>' +
-      '<p class="admin-ad-picker-help">Eight launch counties — logo + link on county networking pages. Place from enquiries.</p>' +
+      '<p class="admin-ad-picker-help">Twelve launch counties — logo + link on county networking hubs. Place from enquiries.</p>' +
       '<span class="admin-ad-picker-action">Manage counties →</span>' +
       '</a></div></section>' +
       '<section class="admin-ad-picker-group">' +
@@ -8223,8 +8227,6 @@
         '</p>' +
         '<p class="admin-ad-picker-help">/networking/' +
         esc(region.slug) +
-        ' · /opportunities/networking/' +
-        esc(region.slug) +
         '</p>' +
         '<span class="admin-ad-picker-action">Edit placement →</span>' +
         '</a>'
@@ -8236,7 +8238,7 @@
       sponsorshipBackLinkHtml() +
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">City Partner placements</h3>' +
-      '<p class="text-sm text-slate-600">Logo + link on regional landing pages (/networking/:city and /opportunities/networking/:city). Website only — never included in hub emails. When a city is live, the organiser/provider CTA stays as a text link under the intro copy.</p>' +
+      '<p class="text-sm text-slate-600">Logo + link on Events regional landing pages (/networking/:city). Website only — never included in hub emails. Business opportunities use County Sponsor on county pages instead. When a city is live, the organiser CTA stays as a text link under the intro copy.</p>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3" id="city-partner-waitlist-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
@@ -8298,8 +8300,6 @@
         '</p>' +
         '<p class="admin-ad-picker-help">/networking/' +
         esc(region.slug) +
-        ' · /opportunities/networking/' +
-        esc(region.slug) +
         '</p>' +
         '<span class="admin-ad-picker-action">Edit placement →</span>' +
         '</a>'
@@ -8311,8 +8311,8 @@
       sponsorshipBackLinkHtml() +
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">County Partner placements</h3>' +
-      '<p class="text-sm text-slate-600">Logo + link on launch county pages (/networking/:county and /opportunities/networking/:county). Place manually after an advertising enquiry — Stripe self-serve can come later. Website only — never included in hub emails.</p>' +
-      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Surrey.</p>' +
+      '<p class="text-sm text-slate-600">Logo + link on launch county networking hubs (/networking/:county). Place manually after an advertising enquiry — Stripe self-serve can come later. Website only — never included in hub emails.</p>' +
+      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +

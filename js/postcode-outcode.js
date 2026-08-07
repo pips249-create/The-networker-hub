@@ -144,6 +144,30 @@
       'RG25', 'RG26', 'RG27', 'RG28', 'RG29', 'RG30', 'RG31', 'RG40', 'RG41', 'RG42',
       'SL0', 'SL1', 'SL2', 'SL3', 'SL4', 'SL5', 'SL6', 'SL7', 'SL8', 'SL9',
     ],
+    oxfordshire: [
+      'OX1', 'OX2', 'OX3', 'OX4', 'OX5', 'OX7', 'OX9', 'OX10', 'OX11', 'OX12', 'OX13',
+      'OX14', 'OX15', 'OX16', 'OX17', 'OX18', 'OX20', 'OX25', 'OX26', 'OX27', 'OX28',
+      'OX29', 'OX33', 'OX39', 'OX44', 'OX49',
+    ],
+    buckinghamshire: [
+      'HP6', 'HP7', 'HP8', 'HP9', 'HP10', 'HP11', 'HP12', 'HP13', 'HP14', 'HP15',
+      'HP16', 'HP17', 'HP18', 'HP19', 'HP20', 'HP21', 'HP22', 'HP23', 'HP27',
+      'MK1', 'MK2', 'MK3', 'MK4', 'MK5', 'MK6', 'MK7', 'MK8', 'MK9', 'MK10',
+      'MK11', 'MK12', 'MK13', 'MK14', 'MK15', 'MK16', 'MK17', 'MK18', 'MK19',
+    ],
+    cambridgeshire: [
+      'CB1', 'CB2', 'CB3', 'CB4', 'CB5', 'CB6', 'CB7', 'CB8', 'CB9', 'CB10', 'CB11',
+      'CB21', 'CB22', 'CB23', 'CB24', 'CB25',
+      'PE1', 'PE2', 'PE3', 'PE4', 'PE5', 'PE6', 'PE7', 'PE8',
+      'PE13', 'PE14', 'PE15', 'PE16', 'PE19', 'PE26', 'PE27', 'PE28', 'PE29',
+    ],
+    sussex: [
+      'BN1', 'BN2', 'BN3', 'BN5', 'BN6', 'BN7', 'BN8', 'BN9', 'BN10', 'BN11',
+      'BN12', 'BN13', 'BN14', 'BN15', 'BN16', 'BN17', 'BN18', 'BN20', 'BN21',
+      'BN22', 'BN23', 'BN24', 'BN25', 'BN26', 'BN27', 'BN41', 'BN42', 'BN43',
+      'BN44', 'BN45',
+      'PO18', 'PO19', 'PO20', 'PO21', 'PO22',
+    ],
   };
 
   var COUNTY_SLUGS = {
@@ -155,6 +179,10 @@
     essex: true,
     hertfordshire: true,
     berkshire: true,
+    oxfordshire: true,
+    buckinghamshire: true,
+    cambridgeshire: true,
+    sussex: true,
   };
 
   var sectorSetCache = {};
@@ -244,6 +272,15 @@
     herts: 'hertfordshire',
     berkshire: 'berkshire',
     berks: 'berkshire',
+    oxfordshire: 'oxfordshire',
+    oxon: 'oxfordshire',
+    buckinghamshire: 'buckinghamshire',
+    bucks: 'buckinghamshire',
+    cambridgeshire: 'cambridgeshire',
+    cambs: 'cambridgeshire',
+    sussex: 'sussex',
+    'east sussex': 'sussex',
+    'west sussex': 'sussex',
   };
 
   function normalizeLocationText(raw) {

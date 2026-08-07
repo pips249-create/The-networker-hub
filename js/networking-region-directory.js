@@ -36,6 +36,10 @@
     essex: { name: 'Essex', location: 'Essex', areaType: 'county' },
     hertfordshire: { name: 'Hertfordshire', location: 'Hertfordshire', areaType: 'county' },
     berkshire: { name: 'Berkshire', location: 'Berkshire', areaType: 'county' },
+    oxfordshire: { name: 'Oxfordshire', location: 'Oxfordshire', areaType: 'county' },
+    buckinghamshire: { name: 'Buckinghamshire', location: 'Buckinghamshire', areaType: 'county' },
+    cambridgeshire: { name: 'Cambridgeshire', location: 'Cambridgeshire', areaType: 'county' },
+    sussex: { name: 'Sussex', location: 'Sussex', areaType: 'county' },
   };
 
   var ALIASES = {
@@ -44,6 +48,11 @@
     lancs: 'lancashire',
     herts: 'hertfordshire',
     berks: 'berkshire',
+    oxon: 'oxfordshire',
+    bucks: 'buckinghamshire',
+    cambs: 'cambridgeshire',
+    'east sussex': 'sussex',
+    'west sussex': 'sussex',
   };
 
   function normalize(raw) {
