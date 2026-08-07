@@ -291,7 +291,7 @@
     return '£' + v.toFixed(2).replace(/\.00$/, '');
   }
 
-  async function isActiveRosterMember(organiserId) {
+  async function shouldHideMembershipJoin(organiserId) {
     var orgId = String(organiserId || '').trim();
     if (!orgId) return false;
     try {
@@ -303,7 +303,8 @@
       var data = await res.json().catch(function () {
         return {};
       });
-      return Boolean(data.ok && data.isMember);
+      // Hide Join for roster members and for people who manage this organiser page.
+      return Boolean(data.ok && (data.isMember || data.managesOrganiser));
     } catch (e) {
       return false;
     }
@@ -322,7 +323,7 @@
       return;
     }
 
-    // Keep hidden until we know the viewer is not already a member (avoids flash).
+    // Keep hidden until we know the viewer should not see Join (avoids flash).
     section.hidden = true;
     plansEl.innerHTML = '';
     if (statusEl) {
@@ -330,7 +331,7 @@
       statusEl.textContent = '';
     }
 
-    if (await isActiveRosterMember(org.id)) {
+    if (await shouldHideMembershipJoin(org.id)) {
       return;
     }
 
