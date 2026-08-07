@@ -639,6 +639,18 @@
     renderPhoto(org);
     document.getElementById('org-name').textContent = org.name || 'Organiser';
 
+    var foundingEl = document.getElementById('org-founding-badge');
+    if (foundingEl) {
+      if (org.foundingOrganiser) {
+        foundingEl.hidden = false;
+        foundingEl.textContent = org.foundingHomepage
+          ? 'Founding Organiser · 2026 · Homepage showcase'
+          : 'Founding Organiser · 2026';
+      } else {
+        foundingEl.hidden = true;
+      }
+    }
+
     var panel = document.getElementById('org-ranking-panel');
     var rankingEl = document.getElementById('org-ranking-badge');
     var metaEl = document.getElementById('org-ranking-meta');

@@ -66,7 +66,7 @@
         href('/faq') +
         '">FAQ</a>' +
         '<a href="' +
-        href('/for-attendees') +
+        href('/for-networkers') +
         '">For Networkers</a>' +
         '<a href="' +
         href('/for-organisers') +

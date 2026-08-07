@@ -60,7 +60,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 2. ~~**Category Exclusivity (seat approval) end-to-end test**~~ ✅ 5 Aug (`npm run test-category-exclusivity-e2e`)
 3. ~~**Connect destination charge test**~~ — done Jul 2026 (live PIs with `hub_checkout=connect_destination`; fee = booking fee only)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
-5. **Email 2 claim wave** — Segment A ready (`docs/SEGMENT-A-EMAIL2.md`); **send Fri 7 Aug** (deferred one day to finish events / organisers / business opportunities polish)
+5. **Email 2 claim wave** — Soft path A + Founding Organiser perks (`docs/SEGMENT-A-EMAIL2.md`, `docs/FOUNDING-ORGANISER.md`); **run migration 241 → deploy → Brevo**
 6. **SEO pre-launch** — `SITE_URL` + GSC domain property done; GBP verification in progress; **submit sitemap + request indexing at gate-off** (`docs/SEO-AEO-LAUNCH-PLAN.md`)
 7. **August redirect** — banner install now; hard 301s 1 Sep
 8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
@@ -160,7 +160,7 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 | [x] | 6 | Events + groups auto-approve; reviews/opportunities still moderated |
 | [x] | 6 | Stripe Connect enabled on prod (`STRIPE_CONNECT_ENABLED=true`) |
 | [x] | 6–7 | Deploy SEO assets; confirm sitemap indexes all groups + published events — code + canonical rebuild 6 Aug; live sitemap still 403 while gated (expected) |
-| [~] | 7 | **Organiser Email 1** sent (Brevo Segment A ~1,100) — Email 2 claim wave still to send |
+| [~] | 7 | **Organiser Email 1** sent (Brevo Segment A ~1,100) — Email 2 Hub-ready; Brevo send Fri 7 Aug |
 | [ ] | 7–8 | Fix beta feedback; target **20 groups** with at least 1 published event |
 | [x] | 8 | Bound organiser directory + geo/pins paths (paginated slim queries; `?all=1` removed) — 29 Jul |
 | [ ] | 8 | Load test: browse + organiser pages with 1,000+ group profiles (+ ~9k-event catalogue projection) |
@@ -384,7 +384,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [x] | Map old the-networker.co.uk URLs → new hub URLs (`docs/LEGACY-REDIRECT-MAP.md`) |
 | [ ] | DNS / hosting redirect for apex + www |
 | [~] | Segment 3,500 list: organisers vs attendees vs both — Hub segments built (`docs/LAUNCH-LIST-SEGMENTS.md`); merge Brevo export when ready |
-| [~] | July/August organiser Email 1 sent (Brevo); Email 2 claim wave **Fri 7 Aug** (after catalogue polish) |
+| [~] | July/August organiser Email 1 sent (Brevo); Email 2 claim wave **Fri 7 Aug** (Hub gates green — send in Brevo) |
 | [ ] | August wave email (500–1,000) |
 | [ ] | 1 September full list + redirect live |
 | [~] | co.uk upgrade banner — snippet ready; install on WordPress (`marketing/CO-UK-UPGRADE-BANNER.md`) |

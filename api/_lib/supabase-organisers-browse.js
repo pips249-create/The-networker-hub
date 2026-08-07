@@ -130,6 +130,10 @@ function rowToPublicOrganiser(row, eventCount, options) {
     locations,
     guestVisitsAllowed: Math.min(3, Math.max(0, Number(row.complimentary_visits_allowed) || 0)),
     featured: isFeaturedUntilActive(row),
+    foundingOrganiser: Boolean(row.founding_organiser_at),
+    foundingHomepage: Boolean(
+      row.founding_homepage_until && new Date(row.founding_homepage_until).getTime() > Date.now()
+    ),
     website: String(row.website || '').trim(),
     instagramUrl: String(row.instagram_url || '').trim(),
     facebookUrl: String(row.facebook_url || '').trim(),

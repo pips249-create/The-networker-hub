@@ -1685,3 +1685,105 @@ html:has(.site-access-page) {
     transform: none;
   }
 }
+
+/* Founding organisers — social proof on the gated preview gateway */
+.site-access-founding {
+  padding: 48px 0 28px;
+  background: linear-gradient(180deg, rgba(245, 240, 232, 0.95), #fff 80%);
+}
+
+.site-access-founding[hidden] {
+  display: none !important;
+}
+
+.site-access-founding-inner {
+  max-width: 1100px;
+}
+
+.site-access-founding-lede {
+  max-width: 40rem;
+  margin: 10px auto 0;
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  line-height: 1.55;
+}
+
+.site-access-founding-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.site-access-founding-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(69, 45, 92, 0.12);
+  box-shadow: 0 4px 14px rgba(45, 38, 54, 0.04);
+}
+
+.site-access-founding-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: #f5f0e8;
+  flex-shrink: 0;
+}
+
+.site-access-founding-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #452d5c;
+  font-size: 1rem;
+}
+
+.site-access-founding-name {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #1c2040;
+}
+
+.site-access-founding-meta {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.site-access-founding-web {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #452d5c;
+  text-decoration: none;
+}
+
+.site-access-founding-web:hover {
+  text-decoration: underline;
+}
+
+.site-access-founding-cta {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 0.92rem;
+  color: #635c5e;
+}
+
+.site-access-founding-cta a {
+  color: #452d5c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-access-founding-cta a:hover {
+  text-decoration: underline;
+}

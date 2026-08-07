@@ -70,6 +70,13 @@ window.HUB_SEO_STATIC = {
     "image": "/assets/logo.png",
     "ogType": "website"
   },
+  "for-networkers": {
+    "path": "/for-networkers",
+    "title": "Events, Organisers & Business Opportunities – For networkers – The Networker Hub",
+    "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free to join — My Hub, smart alerts, member rates, and booking reminders.",
+    "image": "/assets/logo.png",
+    "ogType": "website"
+  },
   "contact": {
     "path": "/contact",
     "title": "Contact us – The Networker Hub",

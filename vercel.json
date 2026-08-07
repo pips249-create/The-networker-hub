@@ -240,10 +240,6 @@
       "destination": "/opportunities/opportunity.html?slug=:slug"
     },
     {
-      "source": "/for-networkers",
-      "destination": "/for-attendees.html"
-    },
-    {
       "source": "/rankings",
       "destination": "/rankings.html"
     },

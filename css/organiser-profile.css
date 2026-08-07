@@ -102,6 +102,24 @@
   color: #1e3a5f;
 }
 
+.org-founding-badge {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #452d5c;
+  background: linear-gradient(135deg, rgba(196, 165, 116, 0.3), rgba(69, 45, 92, 0.08));
+  border: 1px solid rgba(196, 165, 116, 0.55);
+}
+
+.org-founding-badge[hidden] {
+  display: none !important;
+}
+
 .org-ranking-mark {
   display: flex;
   flex-direction: column;

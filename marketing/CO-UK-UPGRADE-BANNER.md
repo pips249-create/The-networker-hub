@@ -1,14 +1,27 @@
 # co.uk upgrade banner — install checklist
 
-**Soft banner window:** **6 August – 1 September 2026** (2–4 weeks before hard redirect)  
-**CTA (one):** `https://www.thenetworkerhub.com/about`  
+**Soft banner window:** **6 August – 1 September 2026**  
+**Banner CTA (one):** `https://www.thenetworkerhub.com/about` → “Peek at the Hub”  
+**On About:** choose **For organisers** or **For networkers**  
 **Hard redirect:** 1 September 2026 — see `docs/LEGACY-REDIRECT-MAP.md`
 
-One banner for organisers and networkers. Product voice: rotating **Find your next…** (same pattern as the Hub), one logo, CTA to `/about`. Avoid a video / logo-wall treatment — that reads as advertising on the old site.
+UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026`
 
-`/about` is early-access and open today (no site password).
+Product voice: rotating **Find your next…**, Hub logo, dismissible **7 days**.
 
-**Do not use `/for-networkers` on the banner until after deploy** of the Vercel rewrite fix — production currently 308s `/for-attendees` → `/for-networkers` then 404s. Local fix: serve `/for-networkers` via rewrite to `for-attendees.html` without also permanently redirecting that HTML file away.
+**Deploy first:** ship `for-networkers.html` (and About updates) so `/for-networkers` returns 200 before pasting the banner on co.uk.
+
+Do **not** link the banner straight to gated catalogue URLs (`/`, `/events/`) while the site password is on.
+
+---
+
+## Visitor path
+
+1. co.uk banner → **Peek at the Hub** (`/about`)
+2. On About → **For organisers** and/or **For networkers**
+3. Catalogue browse / tickets stay closed until 1 Sept (explained on those pages)
+
+Skip on the public banner: claim/register links (Email 2), `/contact` (use if support gets noisy).
 
 ---
 
@@ -16,26 +29,43 @@ One banner for organisers and networkers. Product voice: rotating **Find your ne
 
 | File | Use |
 |------|-----|
-| `co-uk-upgrade-banner-snippet.html` | Paste into WordPress (WPCode / Code Snippets → Header) |
-| `co-uk-upgrade-banner-preview.html` | Local visual check |
-| `co-uk-upgrade-banner-mockup.html` | **Present this** — live banner on real co.uk homepage screenshot |
+| `co-uk-upgrade-banner-snippet.html` | Paste into WordPress (Header) |
+| `co-uk-upgrade-banner-mockup.html` | Present — banner on real co.uk screenshot |
 | `co-uk-homepage-screenshot.png` | Screenshot used by the mockup |
+
+---
+
+## Video heroes on co.uk
+
+Banner is **in normal document flow** (`position: relative`), not fixed/sticky. It sits above the purple nav and **pushes** the hero video and later section videos down — it does not overlay them.
+
+Spot-check after install:
+1. Home (hero video) — banner above purple bar; video still plays full-bleed in its section.
+2. A page with “container 3” video — unaffected (further down the page).
+3. Mobile — stacked banner is taller; confirm the hero still feels intentional.
+4. Logged-in WP admin — banner `z-index` is above the admin bar edge cases.
+
+Do **not** change the banner to `position: fixed` — that is what would clash with video backgrounds.
+
+---
+
+## Nice-to-haves (optional, not required)
+
+- Deploy Hub `/for-networkers` + About audience links before go-live.
+- After ~1 week, check UTM traffic in analytics (`utm_campaign=soft_launch_2026`).
+- If the strip feels busy on video pages, dismiss + slower word rotate (3.2s) already keep it calm.
 
 ---
 
 ## Install on the-networker.co.uk
 
-1. WordPress → **WPCode** or **Code Snippets** → add snippet, location **Header (frontend)**.
-2. Paste **all three parts** from `co-uk-upgrade-banner-snippet.html` (HTML + CSS + JS).
-3. Publish / activate for the whole site.
-4. Spot-check home + one inner page on mobile and desktop.
-5. Confirm dismiss remembers for 14 days (`localStorage` key `tnh_upgrade_banner_dismissed_v3`).
-
-Do **not** point CTAs at gated catalogue URLs (`/events/`) while the hub preview password is still on.
+1. Confirm Hub `/about`, `/for-organisers`, and `/for-networkers` return **200**.
+2. WPCode / Code Snippets → Header → paste `co-uk-upgrade-banner-snippet.html`.
+3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v5`).
 
 ---
 
 ## After soft launch / hard flip
 
-- Remove or disable the snippet when 301 redirects are live (banner is redundant).
+- Disable the snippet when 301s go live.
 - Keep `@the-networker.co.uk` mailboxes; only the website redirects.

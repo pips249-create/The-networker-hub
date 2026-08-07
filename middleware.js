@@ -63,6 +63,7 @@ const GATE_BYPASS_PREFIXES = [
   '/api/sponsor-analytics',
   '/api/site-access',
   '/api/auth/site-access',
+  '/api/founding-organisers',
   '/site-access',
   '/site-access.html',
   '/css/',

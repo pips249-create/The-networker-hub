@@ -20,7 +20,7 @@ if (fs.existsSync(path.join(root, 'local.env'))) dotenv.config({ path: path.join
 dotenv.config({ path: path.join(root, '.env') });
 
 const { getSupabaseAdmin } = require('../api/_lib/supabase');
-const { resolveOrganiserClaimUrl } = require('../api/_lib/organiser-claim-url');
+const { resolveOrganiserClaimUrl, previewClaimUrl } = require('../api/_lib/organiser-claim-url');
 const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
 const { buildSponsorSection, fetchSponsorBlockForSlot } = require('../api/_lib/email-booking-defaults');
 const { sponsorCompanyName } = require('../api/_lib/cms-sponsor-fields');
@@ -143,13 +143,7 @@ async function signedInAccountEmails(sb) {
 }
 
 function claimUrlFor(email, hasAccount) {
-  const em = encodeURIComponent(email);
-  const next = encodeURIComponent('/organiser/?onboard=claim');
-  const intent = 'organiser-claim';
-  if (hasAccount) {
-    return SITE + '/login?email=' + em + '&next=' + next + '&intent=' + intent;
-  }
-  return SITE + '/register?email=' + em + '&next=' + next + '&intent=' + intent;
+  return previewClaimUrl(SITE, email, hasAccount ? 'login' : 'register');
 }
 
 function otherGroupsNote(extraGroups) {
@@ -186,7 +180,10 @@ function fillTemplate(template, vars) {
     logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260729a',
     logo_footer_url: SITE + '/assets/logo-email-footer.png',
     for_organisers_url: SITE + '/for-organisers',
-    claim_url: SITE + '/register?intent=organiser-claim&next=' + encodeURIComponent('/organiser/?onboard=claim'),
+    claim_url:
+      SITE +
+      '/for-organisers?intent=organiser-claim&auth=register&next=' +
+      encodeURIComponent('/organiser/?onboard=claim'),
     company_name: 'The Networker Group Ltd',
     company_number: '15252227',
     support_email: 'catherine@thenetworkerhub.com',

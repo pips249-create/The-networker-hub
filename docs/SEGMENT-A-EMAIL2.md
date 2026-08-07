@@ -1,71 +1,48 @@
 # Segment A — Email 2 (confirm organiser page)
 
-**When:** day after catalogue polish (Email 1 sent 5 Aug 2026 → target **Fri 7 Aug 2026**)  
+**When:** **Fri 7 Aug 2026** (Email 1 sent 5 Aug)  
+**Status:** **Soft path (A)** — CTA lands on `/for-organisers` first; password only when they choose Confirm  
 **Template:** `organiser_launch_invite`  
 **Subject (Brevo):** `Congratulations: {{ contact.ORGANISER_NAME }} is ready`  
 **Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkerhub.com`  
 **Paste HTML:** `data/email2-brevo-ready.html`  
 
-**Positioning:** Early access for organisers only. Full workspace now (events, LinkedIn, emails, memberships, BOs). Public browse + ticket purchase stay closed until **1 September 2026**.  
+**Positioning:** Early access for organisers only. Full workspace after they confirm. Public browse + ticket purchase stay closed until **1 September 2026**.  
 
-**Personalisation:** `ORGANISER_NAME` is the **group listing name** (not a person). Greeting stays “Hi there”. Multi-page contacts get `OTHER_GROUPS_NOTE` (e.g. `, plus Chapter B and Chapter C`).
+**Why confirm before 1 Sept:** Founding Organiser · 2026 badge for everyone who claims in time; **first 50** also get homepage showcase (+ website link) through November; **group social post** naming founding organisers now on the Hub organiser leaderboard (not personal one-to-ones). See `docs/FOUNDING-ORGANISER.md`.
+
+**Personalisation:** `ORGANISER_NAME` is the **group listing name** (not a person). Greeting stays “Hi there”. Multi-page contacts get `OTHER_GROUPS_NOTE`.
+
+### Claim flow (soft path A)
+1. Email CTA → personal `/for-organisers?email=…&intent=organiser-claim&auth=register|login&next=…` (no password yet)
+2. They read what’s included; banner + hero CTA: **Confirm your page**
+3. Register/set password (or sign in) → `/organiser/?onboard=claim` → claim prompt
+
+**Next (path B):** personalised preview of *their* group listing before password — not required for this send.
 
 ### Files
 | File | Use |
 |------|-----|
-| `data/email2-brevo-ready.html` | Brevo campaign HTML (merge tags for group name + claim URL) |
-| `data/email2-brevo-preview.html` | Browser preview (sample: 121 Business Links) |
-| `data/Segment-A-Email2-Brevo-import.csv` | Re-import: `Email`, `Organiser name`, `OTHER_GROUPS_NOTE`, `CLAIM_URL` |
+| `data/email2-brevo-ready.html` | Brevo campaign HTML |
+| `data/email2-brevo-preview.html` | Browser preview |
+| `data/Segment-A-Email2-Brevo-import.csv` | Re-import (~1,091 rows) — `CLAIM_URL` is now `/for-organisers?…` |
+| `data/Segment-A-Email2-TEST-Brevo-import.csv` | Catherine + Rosie test |
 
-### Claim links
-Each row gets a personal URL:
-- **Never signed in** (including silent Auth imports) → `/register?…` so they can **set a password**
-- **Already signed in at least once** → `/login?…`
-
-Auth users created by import with a random password and **no sign-in** are treated as register, not login.
-
-Rebuild anytime:
+Rebuild:
 
 ```bash
 node scripts/build-email2-brevo.js
 ```
 
-### Brevo setup
-- [ ] Re-import `data/Segment-A-Email2-Brevo-import.csv` (update existing contacts)
-- [ ] Map attributes: `Organiser name` → `ORGANISER_NAME`, `OTHER_GROUPS_NOTE` → `OTHER_GROUPS_NOTE`, `CLAIM_URL` → `CLAIM_URL`
-- [ ] Paste HTML from `data/email2-brevo-ready.html`
-- [ ] Subject: `Congratulations: {{ contact.ORGANISER_NAME }} is ready`
-- [ ] Reply-to: `catherine@thenetworkerhub.com`
-- [ ] From: Hub / co.uk sender you used for Email 1 (or agreed Hub address)
+**Deploy Hub before send** so `/for-organisers` claim banner + new claim URLs work on production.
 
-### Test-send checklist (tick before Fri blast)
-Send a **test campaign** (or preview to contact) to Catherine + Rosie covering both path types.
-
-**Register path** (pick a row whose `CLAIM_URL` contains `/register?`)
-- [ ] Inbox: subject shows the **group name** (e.g. “Come and explore … — free organiser workspace”)
-- [ ] Subhead under title: “Your free organiser workspace…”
-- [ ] Body mentions 17,000+ networkers / 27,000+ events; visibility angle (not “nothing is final”)
-- [ ] Password explained: create new vs sign in / Forgot password
-- [ ] Sponsor banner shows under the logo (organisers directory sponsor)
-- [ ] CTA opens **without** site-access password
-- [ ] Email field is prefilled; claim/create-account form is visible
-- [ ] “Prefer a walkthrough” mailto links open to Catherine / Rosie
-
-**Login path** (pick a row whose `CLAIM_URL` contains `/login?`)
-- [ ] Same personalisation checks as above
-- [ ] Lands on sign-in (not register); email prefilled
-- [ ] After sign-in, `/organiser/?onboard=claim` is reachable without site password
-
-**Smoke (optional, 2 minutes)**
-- [ ] `/for-organisers` still opens without password
-- [ ] Footer Privacy / Terms / Refunds / Contact open
-- [ ] One multi-group contact (WIBN or BMUK) shows the “plus …” note if you include them in the test list
-
-### Pre-send checklist
-- [ ] Soft register shows full form for `?intent=organiser-claim`
-- [ ] Claim CTA opens without site password
-- [ ] Brevo attributes mapped (see above)
-- [ ] Test sends passed
-- [ ] Catalogue / Events / Organisers / BO polish you’re waiting on is done enough to send
+### Brevo send
+1. [ ] Deploy Hub (for-organisers claim invite + claim URL change)
+2. [ ] Re-import `data/Segment-A-Email2-Brevo-import.csv` (update existing)
+3. [ ] Map `ORGANISER_NAME` / `OTHER_GROUPS_NOTE` / `CLAIM_URL`
+4. [ ] Paste `data/email2-brevo-ready.html`
+5. [ ] Subject / reply-to / from as Email 1
+6. [ ] Test send → CTA opens for-organisers (not register) → Confirm → password form
+7. [ ] Blast Segment A
 
 Email 1 tracking: `docs/SEGMENT-A-EMAIL1.md`

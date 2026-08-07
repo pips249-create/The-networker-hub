@@ -153,8 +153,10 @@ async function claimGroupForSession(session, groupId) {
   }
 
   const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
+  const { foundingFieldsForClaim } = require('./founding-organiser');
   const account = await getOrCreateOrganiserAccount(session);
-  const now = new Date().toISOString();
+  const claimedAt = new Date();
+  const now = claimedAt.toISOString();
   const patch = {
     supabase_user_id: uid,
     ownership_claim_status: 'claimed',
@@ -164,6 +166,10 @@ async function claimGroupForSession(session, groupId) {
   };
   if (account?.id && !organiser.organiser_account_id) {
     patch.organiser_account_id = account.id;
+  }
+  // Keep any existing founding flags if they re-claim after admin reset.
+  if (!organiser.founding_organiser_at) {
+    Object.assign(patch, await foundingFieldsForClaim(sb, claimedAt));
   }
 
   const { data, error } = await sb.from('organisers').update(patch).eq('id', organiser.id).select('*').single();

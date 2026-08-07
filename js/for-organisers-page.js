@@ -244,10 +244,59 @@
     );
   }
 
+  /** Email 2 soft path: see /for-organisers first, then confirm with a password. */
+  function initClaimInviteFromEmail() {
+    var params = new URLSearchParams(window.location.search || '');
+    var intent = String(params.get('intent') || '').toLowerCase();
+    var next = params.get('next') || '';
+    var isClaim =
+      intent === 'organiser-claim' || String(next).indexOf('onboard=claim') !== -1;
+    if (!isClaim) return;
+
+    var email = String(params.get('email') || '').trim();
+    var authMode = String(params.get('auth') || 'register').toLowerCase() === 'login' ? 'login' : 'register';
+    var safeNext = next && next.charAt(0) === '/' ? next : '/organiser/?onboard=claim';
+
+    var authHref =
+      (authMode === 'login' ? '/login' : '/register') +
+      '?intent=organiser-claim&next=' +
+      encodeURIComponent(safeNext) +
+      (email ? '&email=' + encodeURIComponent(email) : '');
+
+    var invite = document.getElementById('fo-claim-invite');
+    var confirm = document.getElementById('fo-claim-confirm');
+    var pathHint = document.getElementById('fo-path-hint');
+    var primary = document.getElementById('fo-hero-primary');
+    var secondary = document.getElementById('fo-hero-secondary');
+
+    if (invite) invite.hidden = false;
+    if (confirm) {
+      confirm.setAttribute('href', authHref);
+      confirm.textContent =
+        authMode === 'login' ? 'Sign in to confirm your page →' : 'Confirm your page →';
+    }
+    if (pathHint) pathHint.hidden = true;
+
+    if (primary) {
+      primary.setAttribute('href', authHref);
+      primary.textContent =
+        authMode === 'login' ? 'Sign in to confirm your page' : 'Confirm your page';
+    }
+    if (secondary) {
+      secondary.setAttribute('href', '#benefits');
+      secondary.textContent = 'Keep reading first';
+    }
+
+    try {
+      document.title = 'Your organiser page is ready – For organisers – The Networker Hub';
+    } catch (e) {}
+  }
+
   function init() {
     initReveal();
     initDashPreview();
     initHeroSlogan();
+    initClaimInviteFromEmail();
   }
 
   if (document.readyState === 'loading') {

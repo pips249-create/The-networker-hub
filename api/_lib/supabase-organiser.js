@@ -63,6 +63,12 @@ function rowToGroup(row) {
     stripeConnectOnboardedAt: row.stripe_connect_onboarded_at || null,
     ownershipClaimStatus: row.ownership_claim_status || null,
     ownershipClaimedAt: row.ownership_claimed_at || null,
+    foundingOrganiserAt: row.founding_organiser_at || null,
+    foundingOrganiser: Boolean(row.founding_organiser_at),
+    foundingHomepageUntil: row.founding_homepage_until || null,
+    foundingHomepage: Boolean(
+      row.founding_homepage_until && new Date(row.founding_homepage_until).getTime() > Date.now()
+    ),
     complimentaryVisitsAllowed: clampComplimentaryVisitsAllowed(row.complimentary_visits_allowed),
     complimentaryVisitsScope: normalizeComplimentaryVisitsScope(row.complimentary_visits_scope),
     rankingShoutoutOptIn: row.ranking_shoutout_opt_in !== false,

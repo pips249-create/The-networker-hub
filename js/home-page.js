@@ -495,8 +495,77 @@
     });
   }
 
+  function loadFoundingOrganisers() {
+    var section = document.getElementById('home-founding');
+    var grid = document.getElementById('home-founding-grid');
+    if (!section || !grid) return;
+
+    fetch('/api/founding-organisers', { cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        var list = data && data.ok && Array.isArray(data.organisers) ? data.organisers : [];
+        if (!list.length) {
+          section.hidden = true;
+          return;
+        }
+        section.hidden = false;
+        grid.innerHTML = list
+          .map(function (org) {
+            var name = String(org.name || 'Organiser');
+            var initial = name.charAt(0).toUpperCase();
+            var photo = org.photoUrl
+              ? '<img class="home-founding-logo" src="' +
+                escapeHtml(org.photoUrl) +
+                '" alt="" loading="lazy" width="48" height="48">'
+              : '<span class="home-founding-logo home-founding-logo-fallback" aria-hidden="true">' +
+                escapeHtml(initial) +
+                '</span>';
+            var industry = org.industry
+              ? '<p class="home-founding-meta">' + escapeHtml(org.industry) + '</p>'
+              : '';
+            var website = org.website
+              ? '<a href="' +
+                escapeHtml(org.website) +
+                '" target="_blank" rel="noopener noreferrer">Website</a>'
+              : '';
+            var hub = org.href
+              ? '<a href="' + escapeHtml(org.href) + '">Hub page</a>'
+              : '';
+            return (
+              '<article class="home-founding-card">' +
+              '<div class="home-founding-card-top">' +
+              photo +
+              '<div><p class="home-founding-name">' +
+              escapeHtml(name) +
+              '</p>' +
+              industry +
+              '</div></div>' +
+              '<div class="home-founding-links">' +
+              hub +
+              website +
+              '</div></article>'
+            );
+          })
+          .join('');
+      })
+      .catch(function () {
+        section.hidden = true;
+      });
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   initHeroEntrance();
   initReveal();
   loadPartners();
+  loadFoundingOrganisers();
   initHeroHubertForm();
 })();

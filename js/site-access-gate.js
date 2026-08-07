@@ -267,4 +267,66 @@
         unlockSubmit();
       });
   });
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function loadFoundingOrganisers() {
+    var section = document.getElementById('site-access-founding');
+    var grid = document.getElementById('site-access-founding-grid');
+    if (!section || !grid) return;
+
+    fetch('/api/founding-organisers?for=gateway', { cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        var list = data && data.ok && Array.isArray(data.organisers) ? data.organisers : [];
+        if (!list.length) {
+          section.hidden = true;
+          return;
+        }
+        section.hidden = false;
+        grid.innerHTML = list
+          .map(function (org) {
+            var name = String(org.name || 'Organiser');
+            var initial = name.charAt(0).toUpperCase();
+            var photo = org.photoUrl
+              ? '<img class="site-access-founding-logo" src="' +
+                esc(org.photoUrl) +
+                '" alt="" loading="lazy" width="44" height="44">'
+              : '<span class="site-access-founding-logo site-access-founding-logo-fallback" aria-hidden="true">' +
+                esc(initial) +
+                '</span>';
+            var industry = org.industry
+              ? '<p class="site-access-founding-meta">' + esc(org.industry) + '</p>'
+              : '';
+            var website = org.website
+              ? '<a class="site-access-founding-web" href="' +
+                esc(org.website) +
+                '" target="_blank" rel="noopener noreferrer">Website</a>'
+              : '';
+            return (
+              '<article class="site-access-founding-card">' +
+              photo +
+              '<div class="site-access-founding-copy">' +
+              '<p class="site-access-founding-name">' +
+              esc(name) +
+              '</p>' +
+              industry +
+              website +
+              '</div></article>'
+            );
+          })
+          .join('');
+      })
+      .catch(function () {
+        section.hidden = true;
+      });
+  }
+
+  loadFoundingOrganisers();
 })();
