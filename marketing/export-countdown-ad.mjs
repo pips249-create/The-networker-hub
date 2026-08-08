@@ -1,6 +1,6 @@
 /**
- * Export organiser LinkedIn ad as MP4.
- * Usage: node export-organiser-ad.mjs
+ * Export launch countdown LinkedIn/Facebook ad as MP4.
+ * Usage: node export-countdown-ad.mjs
  */
 import { chromium } from 'playwright';
 import { pathToFileURL } from 'url';
@@ -11,9 +11,9 @@ import { spawnSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const size = 1080;
-const htmlPath = path.join(__dirname, 'linkedin-ad-organisers.html');
+const htmlPath = path.join(__dirname, 'linkedin-ad-countdown.html');
 const outDir = path.join(__dirname, 'exports');
-const outName = 'organiser-why-switch.mp4';
+const outName = 'countdown-5-days-launch.mp4';
 const outPath = path.join(outDir, outName);
 
 fs.mkdirSync(outDir, { recursive: true });
@@ -48,7 +48,7 @@ await page.addStyleTag({
 await page.evaluate(() => document.fonts.ready);
 await page.waitForTimeout(500);
 
-const durationMs = await page.evaluate(() => window.__adDurationMs || 20000);
+const durationMs = await page.evaluate(() => window.__adDurationMs || 12000);
 await page.keyboard.press('Space');
 await page.waitForTimeout(durationMs + 1500);
 
@@ -89,7 +89,7 @@ if (!ffmpegBin) {
   process.exit(0);
 }
 
-const rawMp4 = path.join(outDir, 'organiser-raw.mp4');
+const rawMp4 = path.join(outDir, 'countdown-raw.mp4');
 let result = spawnSync(
   ffmpegBin,
   ['-y', '-i', webmFinal, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', rawMp4],
@@ -100,11 +100,10 @@ if (result.status !== 0) {
   process.exit(1);
 }
 
-// Trim blank lead-in from page load; keep full benefits + founding CTA
 result = spawnSync(
   ffmpegBin,
   [
-    '-y', '-ss', '1.2', '-i', rawMp4, '-t', '18',
+    '-y', '-ss', '1.0', '-i', rawMp4, '-t', '13',
     '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', outPath,
   ],
   { encoding: 'utf8' }
@@ -119,8 +118,13 @@ try { fs.unlinkSync(rawMp4); } catch (_) {}
 const downloads = path.join(
   process.env.HOME || '',
   'Downloads',
-  'Networker Hub - Why Switch Organiser Ad.mp4'
+  'Networker Hub - Countdown 5 Days.mp4'
 );
-fs.copyFileSync(outPath, downloads);
+try {
+  fs.copyFileSync(outPath, downloads);
+  console.log('Copied to:', downloads);
+} catch (e) {
+  console.warn('Could not copy to Downloads:', e.message);
+}
+
 console.log('Exported MP4:', outPath);
-console.log('Copied to:', downloads);

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebuilt · LinkedIn Ad (1080×1080)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --charcoal: #4a4446;
+    --lavender: #c299d1;
+    --lavender-deep: #9a7aa8;
+    --lavender-soft: #d9c4e0;
+    --cream: #faf6ee;
+    --gold: #b8956a;
+    --text-primary: var(--cream);
+    --text-kicker: var(--lavender-soft);
+    --text-accent: var(--lavender);
+    --text-muted: rgba(250, 246, 238, 0.72);
+    --text-url: var(--lavender-soft);
+    --cta-bg: var(--lavender);
+    --cta-text: #fff;
+    --page-bg: #1a1819;
+    --canvas-bg:
+      radial-gradient(ellipse 80% 60% at 20% 15%, rgba(194, 153, 209, 0.35), transparent 55%),
+      radial-gradient(ellipse 70% 55% at 85% 80%, rgba(184, 149, 106, 0.18), transparent 50%),
+      linear-gradient(165deg, #2a2430 0%, #1a1520 45%, #121018 100%);
+    --orb-1: rgba(194, 153, 209, 0.45);
+    --orb-2: rgba(154, 122, 168, 0.35);
+    --orb-3: rgba(184, 149, 106, 0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--page-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  #canvas {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    background: var(--canvas-bg);
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(48px);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .orb--1 {
+    width: 420px;
+    height: 420px;
+    background: var(--orb-1);
+    top: -80px;
+    left: -60px;
+    animation: drift-a 14s ease-in-out infinite;
+  }
+
+  .orb--2 {
+    width: 360px;
+    height: 360px;
+    background: var(--orb-2);
+    bottom: -40px;
+    right: -30px;
+    animation: drift-b 16s ease-in-out infinite;
+  }
+
+  .orb--3 {
+    width: 220px;
+    height: 220px;
+    background: var(--orb-3);
+    top: 42%;
+    right: 18%;
+    animation: drift-c 11s ease-in-out infinite;
+  }
+
+  @keyframes drift-a {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, 24px) scale(1.06); }
+  }
+
+  @keyframes drift-b {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-24px, -18px) scale(1.08); }
+  }
+
+  @keyframes drift-c {
+    0%, 100% { transform: translate(0, 0); opacity: 0.35; }
+    50% { transform: translate(-16px, 12px); opacity: 0.55; }
+  }
+
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 72px 80px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .scene.is-in {
+    animation: scene-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .scene.is-out {
+    animation: scene-out 0.4s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+  }
+
+  @keyframes scene-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes scene-out {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(-14px) scale(0.99); }
+  }
+
+  .headline {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 72px;
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    max-width: 900px;
+  }
+
+  .headline .accent { color: var(--text-accent); }
+
+  .pillars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  .pillar {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 36px;
+    color: var(--text-accent);
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .scene.is-in .pillar {
+    animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .scene.is-in .pillar:nth-child(1) { animation-delay: 0.12s; }
+  .scene.is-in .pillar:nth-child(2) { animation-delay: 0.22s; }
+  .scene.is-in .pillar:nth-child(3) { animation-delay: 0.32s; }
+
+  @keyframes fade-up {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Old → new brand transition */
+  .brand-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+  }
+
+  .brand-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-block .mark {
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+
+  .brand-block--legacy .mark {
+    width: 400px;
+    max-width: 72%;
+  }
+
+  .brand-block--hub .mark {
+    width: 460px;
+    max-width: 78%;
+  }
+
+  .brand-url {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-url);
+  }
+
+  .brand-block--legacy .brand-url {
+    color: var(--text-muted);
+  }
+
+  .arrow {
+    font-size: 36px;
+    color: var(--gold);
+    line-height: 1;
+    margin: 6px 0;
+  }
+
+  .scene.is-in .brand-block--legacy {
+    animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .scene.is-in .arrow {
+    animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.12s forwards;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .scene.is-in .brand-block--hub {
+    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.24s forwards;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .closing .logo {
+    width: 480px;
+    max-width: 68%;
+    height: auto;
+    margin-bottom: 14px;
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .closing.is-in .logo {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.06s forwards;
+  }
+
+  .closing .tagline {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 32px;
+    line-height: 1.35;
+    max-width: 720px;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .closing.is-in .tagline {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
+  }
+
+  .closing .url {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text-url);
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .closing.is-in .url {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+
+  .closing .email {
+    margin-top: 14px;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .closing.is-in .email {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+  }
+
+  .closing .cta-pill {
+    margin-top: 28px;
+    padding: 16px 36px;
+    border-radius: 999px;
+    background: var(--cta-bg);
+    color: var(--cta-text);
+    font-size: 22px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .closing.is-in .cta-pill {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.52s forwards;
+  }
+
+  .rec-hint {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.82);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    z-index: 99;
+    max-width: 92vw;
+    text-align: center;
+  }
+
+  .rec-hint kbd {
+    background: rgba(255,255,255,0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+
+  .rec-hint.is-hidden { display: none; }
+</style>
+</head>
+<body>
+  <div id="canvas" aria-label="Rebuild story LinkedIn ad">
+    <span class="orb orb--1" aria-hidden="true"></span>
+    <span class="orb orb--2" aria-hidden="true"></span>
+    <span class="orb orb--3" aria-hidden="true"></span>
+
+    <div class="scene" id="scene-1" hidden>
+      <h1 class="headline">Months of rebuilding.<br><span class="accent">Worth every second.</span></h1>
+    </div>
+
+    <div class="scene" id="scene-2" hidden>
+      <div class="brand-stack">
+        <div class="brand-block brand-block--legacy">
+          <img class="mark" src="../assets/logo-networker-legacy.png" width="560" height="160" alt="The Networker">
+          <p class="brand-url">the-networker.co.uk</p>
+        </div>
+        <p class="arrow" aria-hidden="true">↓</p>
+        <div class="brand-block brand-block--hub">
+          <img class="mark" src="../assets/logo-hub-dark.png" width="480" height="220" alt="The Networker Hub">
+          <p class="brand-url">thenetworkerhub.com</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene" id="scene-3" hidden>
+      <h1 class="headline">Built for UK<br><span class="accent">business growth</span></h1>
+      <div class="pillars">
+        <span class="pillar">Events</span>
+        <span class="pillar">Organisers</span>
+        <span class="pillar">Opportunities</span>
+      </div>
+    </div>
+
+    <div class="scene closing" id="scene-4" hidden>
+      <img class="logo" src="../assets/logo-hub-dark.png" width="480" height="480" alt="The Networker Hub">
+      <p class="tagline">Where useful business conversations begin.</p>
+      <p class="url">thenetworkerhub.com</p>
+      <p class="email">catherine@thenetworkerhub.com</p>
+      <div class="cta-pill">Launching 1st September</div>
+    </div>
+  </div>
+
+  <p class="rec-hint" id="rec-hint">
+    <strong>12s rebuild ad</strong><br>
+    Record the square at 100% zoom · <kbd>Space</kbd> restart · <kbd>R</kbd> hide
+  </p>
+
+<script>
+(function () {
+  var scenes = [
+    document.getElementById('scene-1'),
+    document.getElementById('scene-2'),
+    document.getElementById('scene-3'),
+    document.getElementById('scene-4')
+  ];
+  // Slightly longer on logo transition + closing email
+  var holdMs = [2100, 3200, 2600, 3600];
+  var timers = [];
+  var hintEl = document.getElementById('rec-hint');
+  var params = new URLSearchParams(window.location.search);
+  var isExport = params.get('export') === '1';
+
+  if (isExport) hintEl.classList.add('is-hidden');
+
+  function clearTimers() {
+    timers.forEach(clearTimeout);
+    timers = [];
+  }
+
+  function schedule(fn, ms) {
+    timers.push(setTimeout(fn, ms));
+  }
+
+  function reset() {
+    scenes.forEach(function (el) {
+      el.classList.remove('is-in', 'is-out');
+      el.hidden = true;
+    });
+  }
+
+  function play() {
+    clearTimers();
+    reset();
+
+    var t = 80;
+    scenes.forEach(function (el, i) {
+      schedule(function () {
+        if (i > 0) {
+          scenes[i - 1].classList.remove('is-in', 'is-out');
+          scenes[i - 1].hidden = true;
+        }
+        el.hidden = false;
+        el.classList.remove('is-out');
+        el.classList.add('is-in');
+      }, t);
+
+      t += holdMs[i];
+    });
+  }
+
+  // Export mode: start as soon as fonts are ready so the recording has no blank lead-in
+  if (isExport) {
+    document.fonts.ready.then(function () {
+      schedule(play, 120);
+    });
+  } else {
+    play();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      play();
+    }
+    if (e.key === 'r' || e.key === 'R') hintEl.classList.add('is-hidden');
+  });
+})();
+</script>
+</body>
+</html>

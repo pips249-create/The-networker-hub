@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countdown · 5 days · The Networker Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf6ee;
+    --lavender: #c299d1;
+    --lavender-deep: #9a7aa8;
+    --muted: rgba(250, 246, 238, 0.7);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #121018;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  #canvas {
+    width: 1080px; height: 1080px;
+    position: relative; overflow: hidden; flex-shrink: 0;
+    color: var(--cream);
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 15%, rgba(194, 153, 209, 0.32), transparent 55%),
+      radial-gradient(ellipse 70% 55% at 85% 80%, rgba(154, 122, 168, 0.22), transparent 50%),
+      linear-gradient(165deg, #2a2430 0%, #1a1520 45%, #121018 100%);
+  }
+
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(56px); opacity: 0.5; pointer-events: none;
+  }
+  .orb--1 { width: 520px; height: 520px; top: -120px; left: -80px; background: rgba(194,153,209,0.5); }
+  .orb--2 { width: 420px; height: 420px; bottom: -80px; right: -60px; background: rgba(154,122,168,0.4); }
+
+  .scene {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 72px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .scene.is-in {
+    z-index: 2;
+    opacity: 1;
+    visibility: visible;
+    animation: in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes in {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .kicker {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lavender);
+    margin-bottom: 28px;
+  }
+
+  .count {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 220px;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--cream);
+    margin-bottom: 12px;
+  }
+
+  .count-label {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 56px;
+    color: var(--lavender);
+    margin-bottom: 28px;
+  }
+
+  .sub {
+    font-size: 28px; font-weight: 500;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.35;
+  }
+
+  .logo {
+    width: auto; height: 190px; max-width: 78%;
+    object-fit: contain;
+    margin-bottom: 8px;
+  }
+
+  .close-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 52px;
+    line-height: 1.15;
+    margin: 16px 0 20px;
+  }
+
+  .close-date {
+    display: inline-flex;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: rgba(194, 153, 209, 0.2);
+    color: var(--lavender);
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .url {
+    font-size: 26px; font-weight: 600;
+    color: var(--lavender);
+    margin-bottom: 28px;
+  }
+
+  .cta {
+    display: inline-flex;
+    padding: 18px 36px;
+    border-radius: 999px;
+    background: var(--lavender);
+    color: #1a1520;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .progress {
+    position: absolute; left: 72px; right: 72px; bottom: 28px;
+    height: 3px; background: rgba(194,153,209,0.18);
+    border-radius: 99px; overflow: hidden; z-index: 5;
+  }
+  .progress-fill { height: 100%; width: 0%; background: var(--lavender); }
+
+  .rec-hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.8); color: #fff; font-size: 12px;
+    padding: 10px 14px; border-radius: 8px; z-index: 99;
+  }
+  .rec-hint.is-hidden { display: none; }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <span class="orb orb--1" aria-hidden="true"></span>
+    <span class="orb orb--2" aria-hidden="true"></span>
+
+    <!-- 0: Five days -->
+    <div class="scene" data-scene="0">
+      <p class="kicker">Countdown</p>
+      <p class="count">5</p>
+      <p class="count-label">days to go</p>
+      <p class="sub">The Networker Hub launches next week.</p>
+    </div>
+
+    <!-- 1: Sneak peek -->
+    <div class="scene" data-scene="1">
+      <p class="kicker">Still open</p>
+      <p class="count-label" style="font-size:64px;color:var(--cream);margin-bottom:20px;">Sneak peek</p>
+      <p class="sub">Have a look round before we open properly.</p>
+    </div>
+
+    <!-- 2: Close -->
+    <div class="scene" data-scene="2">
+      <img class="logo" src="../assets/logo-hub-dark.png" width="480" height="480" alt="The Networker Hub">
+      <p class="close-date">Launching 1st September</p>
+      <p class="close-title">Events, organisers &amp; opportunities<br>in one place</p>
+      <p class="url">thenetworkerhub.com/peek</p>
+      <div class="cta">See the sneak peek</div>
+    </div>
+
+    <div class="progress" aria-hidden="true"><div class="progress-fill" id="progress"></div></div>
+  </div>
+
+  <p class="rec-hint" id="rec-hint">Space restart · R hide · ~15s</p>
+
+<script>
+(function () {
+  var BEAT0 = 3200;
+  var BEAT1 = 3200;
+  var CLOSE = 5600;
+  var TOTAL = BEAT0 + BEAT1 + CLOSE;
+
+  var scenes = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+  var progress = document.getElementById('progress');
+  var timers = [];
+  var startAt = 0;
+  var raf = null;
+  var exportMode = new URLSearchParams(window.location.search).get('export') === '1';
+
+  function clearTimers() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    if (raf) cancelAnimationFrame(raf);
+  }
+  function schedule(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  function setScene(i) {
+    scenes.forEach(function (el, idx) {
+      el.classList.toggle('is-in', idx === i);
+    });
+  }
+
+  function tickProgress() {
+    var elapsed = Date.now() - startAt;
+    progress.style.width = Math.min(100, (elapsed / TOTAL) * 100) + '%';
+    if (elapsed < TOTAL) raf = requestAnimationFrame(tickProgress);
+  }
+
+  function play() {
+    clearTimers();
+    scenes.forEach(function (el) { el.classList.remove('is-in'); });
+    progress.style.width = '0%';
+    startAt = Date.now();
+    tickProgress();
+
+    var t = 0;
+    schedule(function () { setScene(0); }, t);
+    t += BEAT0;
+    schedule(function () { setScene(1); }, t);
+    t += BEAT1;
+    schedule(function () { setScene(2); }, t);
+
+    if (!exportMode) schedule(play, TOTAL + 600);
+  }
+
+  window.__adDurationMs = TOTAL;
+  if (!exportMode) play();
+
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space') { e.preventDefault(); play(); }
+    if (e.key === 'r' || e.key === 'R') {
+      document.getElementById('rec-hint').classList.add('is-hidden');
+    }
+  });
+})();
+</script>
+</body>
+</html>
