@@ -212,7 +212,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 
 **To open the site publicly:** remove `SITE_ACCESS_PASSWORD` from Vercel → **Redeploy**. No code change needed.
 
-**Preview waitlist:** run migration `109_preview_waitlist.sql` in Supabase. Emails from the launch page are stored in `preview_waitlist` (view in Supabase Table Editor).
+**Preview waitlist:** run migration `109_preview_waitlist.sql` in Supabase. Emails from the launch page are stored in `preview_waitlist`. View them in **Command Centre → Analytics → Waitlist**, or in the Supabase Table Editor.
 
 After deploy, check `/api/auth/config-check` — `siteAccess.siteAccessRequired` should be `true` while the gate is on.
 

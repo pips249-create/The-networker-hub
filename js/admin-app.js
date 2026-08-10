@@ -235,9 +235,10 @@
     analytics: {
       title: 'How to view analytics',
       steps: [
-        'Use the Overview, Demand, and Insights tabs — each page loads only what you need.',
+        'Use the Overview, Demand, Insights, and Waitlist tabs — each page loads only what you need.',
         'Overview links out to Vercel for visitor charts and shows live Hub counts.',
         'Demand shows searches, favourites, opportunity enquiries, and guest visits.',
+        'Waitlist shows launch / peek email sign-ups (site access, /peek/about-us, About) with source breakdown and CSV export.',
         'Insights opens with tickets bought on the Hub (paid vs free), then ranks top groups and events. Sales pitch opens (e.g. Barnsgate) are under Insights → Sales pitches. Change 7 / 30 / all days on Demand or Insights.',
       ],
     },
@@ -453,7 +454,7 @@
   var adminNotificationsTimer = null;
   var groupCleanupCache = null;
   var eventCleanupCache = null;
-  var analyticsState = { period: '30d', demandCache: null };
+  var analyticsState = { period: '30d', demandCache: null, waitlistCache: null };
   var financialsState = {
     organisersPage: 0,
     organisersQ: '',
@@ -947,6 +948,9 @@
       }
       if (hash.indexOf('insights') !== -1) {
         return 'Tickets bought, top performers, growth, and quality signals.';
+      }
+      if (hash.indexOf('waitlist') !== -1) {
+        return 'Launch and peek email sign-ups by source.';
       }
       return 'Visitor traffic, Hub activity, tickets, and demand signals.';
     }
@@ -4769,6 +4773,10 @@
         exportDemandSearchesCsv(analyticsState.demandCache);
         return;
       }
+      if (e.target.closest('#preview-waitlist-export-csv')) {
+        exportPreviewWaitlistCsv(analyticsState.waitlistCache);
+        return;
+      }
       var btn = e.target.closest('[data-analytics-period]');
       if (!btn) return;
       var period = btn.getAttribute('data-analytics-period');
@@ -4874,7 +4882,7 @@
       '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
       '<li class="text-sm text-slate-500">Loading…</li></ul>' +
       '</aside></div>' +
-      '<p class="text-sm text-slate-500">Need deeper signals? Open <a href="#analytics/demand" class="font-semibold text-brand-700 hover:underline">Demand</a> or <a href="#analytics/insights" class="font-semibold text-brand-700 hover:underline">Insights</a>.</p>' +
+      '<p class="text-sm text-slate-500">Need deeper signals? Open <a href="#analytics/demand" class="font-semibold text-brand-700 hover:underline">Demand</a>, <a href="#analytics/insights" class="font-semibold text-brand-700 hover:underline">Insights</a>, or <a href="#analytics/waitlist" class="font-semibold text-brand-700 hover:underline">Waitlist</a>.</p>' +
       '</div>';
     paintAnalyticsOverviewMetrics();
   }
@@ -4890,6 +4898,177 @@
     loadAnalyticsDemandPanel();
   }
 
+  function previewWaitlistSourceLabel(source) {
+    var s = String(source || '').trim().toLowerCase();
+    if (s === 'site_access') return 'Site access gate';
+    if (s === 'peek_about') return 'Peek · About us';
+    if (s === 'about') return 'About page';
+    if (s.indexOf('peek_about_') === 0) {
+      return 'Peek · About us · ' + s.slice('peek_about_'.length).replace(/_/g, ' ');
+    }
+    if (s.indexOf('about_') === 0) {
+      return 'About page · ' + s.slice('about_'.length).replace(/_/g, ' ');
+    }
+    if (s.indexOf('site_access_') === 0) {
+      return 'Site access · ' + s.slice('site_access_'.length).replace(/_/g, ' ');
+    }
+    return source || 'Unknown';
+  }
+
+  function exportPreviewWaitlistCsv(data) {
+    var rows = [['email', 'source', 'source_label', 'signed_up_at']];
+    ((data && data.entries) || []).forEach(function (row) {
+      rows.push([
+        row.email || '',
+        row.source || '',
+        previewWaitlistSourceLabel(row.source),
+        row.createdAt || '',
+      ]);
+    });
+    if (rows.length === 1) {
+      window.alert('No waitlist sign-ups to export yet.');
+      return;
+    }
+    downloadAdminCsv('preview-waitlist.csv', rows);
+  }
+
+  function renderPreviewWaitlistPanel(data) {
+    if (!data || data.error || data.ok === false) {
+      return (
+        '<p class="text-sm text-red-700">' +
+        esc((data && data.message) || (data && data.error) || 'Could not load waitlist.') +
+        '</p>'
+      );
+    }
+    var totals = data.totals || {};
+    var bySource = data.bySource || [];
+    var entries = data.entries || [];
+    var sourceCards =
+      bySource.length > 0
+        ? bySource
+            .map(function (row) {
+              return (
+                '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">' +
+                '<p class="text-xs text-slate-500">' +
+                esc(previewWaitlistSourceLabel(row.source)) +
+                '</p>' +
+                '<p class="text-lg font-bold text-brand-900">' +
+                esc(String(row.count || 0)) +
+                '</p>' +
+                '<p class="text-[11px] text-slate-400 mt-0.5">' +
+                esc(row.source || '') +
+                '</p></div>'
+              );
+            })
+            .join('')
+        : '<p class="text-sm text-slate-500 sm:col-span-2">No sign-ups yet — sources will appear here as people join.</p>';
+
+    var tableRows =
+      entries.length > 0
+        ? entries
+            .map(function (row) {
+              return (
+                '<tr class="border-t border-slate-100">' +
+                '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
+                esc(formatAdminDateTime(row.createdAt)) +
+                '</td>' +
+                '<td class="px-3 py-2 text-sm break-all"><a class="text-brand-700 hover:underline" href="mailto:' +
+                attrEsc(row.email || '') +
+                '">' +
+                esc(row.email || '—') +
+                '</a></td>' +
+                '<td class="px-3 py-2 text-sm">' +
+                esc(previewWaitlistSourceLabel(row.source)) +
+                '<br><span class="text-xs text-slate-400">' +
+                esc(row.source || '') +
+                '</span></td>' +
+                '<td class="px-3 py-2 text-sm text-right">' +
+                '<button type="button" class="rounded border border-slate-200 text-slate-600 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-preview-waitlist-remove="' +
+                attrEsc(row.id || '') +
+                '">Remove</button></td></tr>'
+              );
+            })
+            .join('')
+        : '<tr><td colspan="4" class="px-3 py-6 text-sm text-slate-500 text-center">No launch waitlist sign-ups yet.</td></tr>';
+
+    return (
+      '<div class="space-y-4">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Launch &amp; peek waitlist</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Emails from the site-access gate, /peek/about-us, and About “sign up for updates” forms.</p></div>' +
+      '<button type="button" id="preview-waitlist-export-csv" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export CSV</button></div>' +
+      '<div class="grid gap-3 sm:grid-cols-3">' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Total sign-ups</p><p class="text-lg font-bold text-brand-900">' +
+      esc(String(totals.total || 0)) +
+      '</p></div>' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Last 7 days</p><p class="text-lg font-bold text-brand-900">' +
+      esc(String(totals.last7Days || 0)) +
+      '</p></div>' +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><p class="text-xs text-slate-500">Last 30 days</p><p class="text-lg font-bold text-brand-900">' +
+      esc(String(totals.last30Days || 0)) +
+      '</p></div></div>' +
+      '<div><h4 class="text-sm font-bold text-brand-900 mb-2">By source</h4>' +
+      '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">' +
+      sourceCards +
+      '</div></div>' +
+      '<div class="overflow-x-auto rounded-xl border border-slate-200">' +
+      '<table class="min-w-full text-left">' +
+      '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
+      '<tr><th class="px-3 py-2">Signed up</th><th class="px-3 py-2">Email</th><th class="px-3 py-2">Source</th><th class="px-3 py-2 text-right"> </th></tr>' +
+      '</thead><tbody>' +
+      tableRows +
+      '</tbody></table></div></div>'
+    );
+  }
+
+  function loadAnalyticsWaitlistPanel() {
+    var panel = document.getElementById('analytics-waitlist');
+    if (!panel) return;
+    panel.innerHTML = '<p class="text-sm text-slate-500">Loading waitlist…</p>';
+    adminGet('/api/admin/preview-waitlist?limit=500')
+      .then(function (data) {
+        analyticsState.waitlistCache = data;
+        if (!panel.isConnected) return;
+        if (!data || data.error || data.ok === false) {
+          throw new Error((data && data.message) || (data && data.error) || 'waitlist_load_failed');
+        }
+        panel.innerHTML = renderPreviewWaitlistPanel(data);
+        panel.querySelectorAll('[data-preview-waitlist-remove]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-preview-waitlist-remove');
+            if (!id || !window.confirm('Remove this waitlist email?')) return;
+            btn.disabled = true;
+            adminPost('/api/admin/preview-waitlist', { action: 'remove', id: id })
+              .then(function (res) {
+                if (!res || res.error || res.ok === false) {
+                  throw new Error((res && res.message) || (res && res.error) || 'remove_failed');
+                }
+                loadAnalyticsWaitlistPanel();
+              })
+              .catch(function (err) {
+                btn.disabled = false;
+                window.alert((err && err.message) || 'Could not remove waitlist entry');
+              });
+          });
+        });
+      })
+      .catch(function (err) {
+        if (!panel.isConnected) return;
+        panel.innerHTML =
+          '<p class="text-sm text-red-700">' +
+          esc((err && err.message) || 'Could not load waitlist') +
+          '</p>';
+      });
+  }
+
+  function renderAnalyticsWaitlist() {
+    main.innerHTML =
+      '<div class="space-y-4 min-w-0">' +
+      '<p class="text-sm text-slate-500">Soft-launch email list from peek, About, and the site-access gate — tagged by source (including UTM campaign when present).</p>' +
+      '<div id="analytics-waitlist" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5"><p class="text-sm text-slate-500">Loading waitlist…</p></div></div>';
+    loadAnalyticsWaitlistPanel();
+  }
+
   function renderAnalyticsInsights() {
     main.innerHTML =
       '<div class="space-y-4 min-w-0">' +
@@ -4903,18 +5082,20 @@
 
   function renderAnalyticsHub(fullHash) {
     bindAnalyticsControls();
-    var tab = resolveHubTab(fullHash, 'analytics', ['overview', 'demand', 'insights'], 'overview');
+    var tab = resolveHubTab(fullHash, 'analytics', ['overview', 'demand', 'insights', 'waitlist'], 'overview');
     if (!tab) return;
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'overview', label: 'Overview', href: '#analytics/overview' },
         { key: 'demand', label: 'Demand', href: '#analytics/demand' },
         { key: 'insights', label: 'Insights', href: '#analytics/insights' },
+        { key: 'waitlist', label: 'Waitlist', href: '#analytics/waitlist' },
       ],
       tab
     );
     if (tab === 'demand') withHubTabs(tabsHtml, renderAnalyticsDemand);
     else if (tab === 'insights') withHubTabs(tabsHtml, renderAnalyticsInsights);
+    else if (tab === 'waitlist') withHubTabs(tabsHtml, renderAnalyticsWaitlist);
     else withHubTabs(tabsHtml, renderAnalyticsOverview);
   }
 
