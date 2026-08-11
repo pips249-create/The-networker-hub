@@ -4330,8 +4330,10 @@
       seriesCount: sorted.length,
       seriesEventIds: sorted.map((m) => m.id),
       seriesEvents: sorted,
-      date: sorted[0].date,
-      endDate: sorted[sorted.length - 1].date || primary.endDate,
+      // Date column uses the earliest occurrence; Time must use that occurrence's
+      // real end — never the last child's start (that made 10:00 – 10:00).
+      date: sorted[0].date || primary.date,
+      endDate: sorted[0].endDate || primary.endDate || '',
       ticketsSold,
       ticketsCapacity,
       ticketsSoldLabel: formatTicketsSoldLabel(ticketsSold, ticketsCapacity),
