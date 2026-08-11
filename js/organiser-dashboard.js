@@ -12559,14 +12559,35 @@
   function openLaunchSetupItem(item) {
     if (!item) return;
     hideLaunchSetupModal();
+    showOrganiserAlert(null);
     trackClaimFunnel(
       item.kind === 'profile' ? 'open_profile_review' : 'open_event_review',
       item.title || item.id || ''
     );
     if (item.kind === 'profile') {
-      openGroupEditorDrawer(item.id, {
-        onboardLaunch: true,
-        onboardReview: true,
+      closeEventEditorDrawer();
+      try {
+        setRoute('groups', { skipEventsGuard: true, skipRouteLoading: true });
+      } catch (e) {
+        /* ignore */
+      }
+      // Open after the route paint so the drawer is not swallowed by My Events re-renders.
+      requestAnimationFrame(function () {
+        openGroupEditorDrawer(item.id, {
+          onboardLaunch: true,
+          onboardReview: true,
+        });
+        setTimeout(function () {
+          const drawer = document.getElementById('org-group-drawer');
+          if (drawer && drawer.classList.contains('is-open')) return;
+          const url =
+            window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.profileEditUrl
+              ? window.HubOrganiserLaunchSetup.profileEditUrl(item.id)
+              : '/organiser/group-edit?id=' +
+                encodeURIComponent(item.id) +
+                '&onboard=launch';
+          location.href = url;
+        }, 400);
       });
       return;
     }
@@ -12627,6 +12648,12 @@
     opts = opts || {};
     const modal = document.getElementById('org-launch-complete');
     if (!modal || state.adminView) return false;
+
+    showOrganiserAlert(null);
+    // Resume the guided queue if they hit Later earlier in this session.
+    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.clearDismissed) {
+      window.HubOrganiserLaunchSetup.clearDismissed();
+    }
 
     hideLaunchSetupModal();
     hideReadyForEventModal();
@@ -12841,7 +12868,10 @@
     }
     if (titleEl) {
       if (item.kind === 'profile') {
-        titleEl.textContent = 'Review your organiser page';
+        titleEl.textContent =
+          (state.groups || []).length > 1
+            ? 'Review your other organiser page'
+            : 'Review your organiser page';
       } else {
         titleEl.textContent =
           eventsLeft > 1
@@ -13016,15 +13046,28 @@
       completeNext.addEventListener('click', function () {
         const action = completeNext.dataset.completeAction || '';
         hideLaunchCompleteModal();
+        showOrganiserAlert(null);
         if (action === 'claim') {
           renderGroupClaimModal();
           return;
         }
         if (action === 'launch' && window.HubOrganiserLaunchSetup) {
+          if (window.HubOrganiserLaunchSetup.clearDismissed) {
+            window.HubOrganiserLaunchSetup.clearDismissed();
+          }
+          // Profile and events: show the setup card first so the next step cannot
+          // silently vanish into My Events if the drawer fails to open.
+          if (showLaunchSetupPrompt()) return;
           const item = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
           if (item) {
-            if (item.kind === 'event' && showLaunchSetupPrompt()) return;
             openLaunchSetupItem(item);
+            return;
+          }
+          showOrganiserAlert('You’re all set on this page — continue from Overview anytime.', false);
+          try {
+            setRoute('dashboard', { skipEventsGuard: true, skipRouteLoading: true });
+          } catch (e) {
+            /* ignore */
           }
         }
       });
@@ -13219,7 +13262,9 @@
           onboardReview: true,
         });
 
-        loadBootstrap({ silent: true, skipClaimUi: true })
+        // Refresh workspace data without a full re-render while the profile drawer
+        // is open — renderAll was racing and dropping the second-group review.
+        loadBootstrap({ silent: true, skipClaimUi: true, skipRenderIfGroupDrawer: true })
           .then(function () {
             updateSetupResumeBanner();
             updateGettingStartedPanel();
@@ -14744,6 +14789,7 @@
   async function loadBootstrap(options) {
     const silent = Boolean(options && options.silent);
     const skipClaimUi = Boolean(options && options.skipClaimUi);
+    const skipRenderIfGroupDrawer = Boolean(options && options.skipRenderIfGroupDrawer);
     const prefetch = options && options.prefetch;
     if (!silent) setDashboardLoading(true);
     let postReady = null;
@@ -14839,9 +14885,13 @@
     applyPendingGroupSave();
     pruneStaleEventFilters();
     bootstrapReady = true;
-    renderAll();
-    if (!document.querySelector('[data-org-page="events"].is-active')) {
-      renderStripeConnectBanner();
+    const groupDrawerOpen =
+      skipRenderIfGroupDrawer && document.body.classList.contains('org-group-drawer-open');
+    if (!groupDrawerOpen) {
+      renderAll();
+      if (!document.querySelector('[data-org-page="events"].is-active')) {
+        renderStripeConnectBanner();
+      }
     }
     postReady = function () {
       syncPendingClaimFlag();
@@ -14858,9 +14908,11 @@
       }
       updateTeamNavBadge();
       refreshPendingApplicationsSummary();
-      enforceEventsOrganiserGate();
-      if (document.querySelector('[data-org-page="events"].is-active')) {
-        setEventsSub(eventsSubRoute);
+      if (!groupDrawerOpen) {
+        enforceEventsOrganiserGate();
+        if (document.querySelector('[data-org-page="events"].is-active')) {
+          setEventsSub(eventsSubRoute);
+        }
       }
       if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
         maybeRedirectToSingleMemberList();
