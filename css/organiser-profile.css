@@ -520,6 +520,12 @@
 .org-claim-invite-note a {
   color: #452d5c;
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.org-claim-invite-note a:hover {
+  color: #2d2636;
 }
 
 body.org-claim-invite-active .org-profile-breadcrumb,
