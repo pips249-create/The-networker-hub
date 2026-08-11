@@ -46,6 +46,7 @@ const ANON_PAGES = [
   { path: '/advertising', expect: /advertis|sponsor|partner/i },
   { path: '/help/pricing-fees', expect: /fee|pricing|booking/i },
   { path: '/help/organiser-payouts', expect: /payout|stripe|connect/i },
+  { path: '/add-your-event', expect: /event|list|send|details|intake/i },
 ];
 
 const ANON_APIS = [{ path: '/api/auth/session', expectOkJson: true }];
@@ -207,14 +208,30 @@ async function extractForOrganisersLinks() {
 }
 
 async function checkPeekRedirect(item) {
-  const res = await fetchUrl(item.path);
-  if (res.status < 300 || res.status >= 400) {
-    printResult(false, item.path, 'expected redirect to ' + item.expect + ', got HTTP ' + res.status);
-    return;
+  let path = item.path;
+  let dest = path;
+  let hops = 0;
+  let lastStatus = 0;
+  // Follow rename + soft-launch hops (e.g. /for-attendees → /for-networkers → /peek/…).
+  while (hops < 5) {
+    const res = await fetchUrl(path);
+    lastStatus = res.status;
+    if (res.status < 300 || res.status >= 400) break;
+    dest = locationPath(res);
+    if (!dest || dest === path) break;
+    hops += 1;
+    path = dest;
+    if (dest === item.expect || dest.startsWith(item.expect + '?')) {
+      printResult(true, item.path, '→ ' + dest + (hops > 1 ? ' (' + hops + ' hops)' : ''));
+      return;
+    }
   }
-  const dest = locationPath(res);
   if (dest === item.expect || dest.startsWith(item.expect + '?')) {
     printResult(true, item.path, '→ ' + dest);
+    return;
+  }
+  if (lastStatus < 300 || lastStatus >= 400) {
+    printResult(false, item.path, 'expected redirect to ' + item.expect + ', got HTTP ' + lastStatus);
     return;
   }
   printResult(false, item.path, 'expected ' + item.expect + ', got ' + dest);

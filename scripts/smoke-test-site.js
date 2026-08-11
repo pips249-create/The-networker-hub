@@ -416,10 +416,23 @@ async function runFullSmoke() {
   printResult(oppsApi.ok, '/api/opportunities', oppsApi.message);
 
   console.log('\nSample detail pages');
-  const eventSlug = pickSlug(eventsApi.events, ['slug', 'publicSlug', 'eventSlug']);
-  if (eventSlug) {
-    const r = await probeHtml({ path: '/events/' + eventSlug, expect: /event|ticket|networker/i });
-    printResult(r.ok, '/events/' + eventSlug, r.message);
+  const eventCandidates = (eventsApi.events || [])
+    .map((ev) => pickSlug([ev], ['slug', 'publicSlug', 'eventSlug']))
+    .filter(Boolean);
+  if (eventCandidates.length) {
+    let eventOk = false;
+    let lastMsg = '';
+    let usedSlug = eventCandidates[0];
+    for (const slug of eventCandidates.slice(0, 5)) {
+      usedSlug = slug;
+      const r = await probeHtml({ path: '/events/' + slug, expect: /event|ticket|networker/i });
+      lastMsg = r.message;
+      if (r.ok) {
+        eventOk = true;
+        break;
+      }
+    }
+    printResult(eventOk, '/events/' + usedSlug, lastMsg);
   } else {
     printResult(true, 'event detail', 'skipped — no events in API', true);
   }

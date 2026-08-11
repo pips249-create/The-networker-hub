@@ -112,6 +112,8 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/organisers',
   '/for-organisers',
   '/for-organisers.html',
+  '/add-your-event',
+  '/add-your-event.html',
   '/contact',
   '/contact.html',
   '/legal-policies',
@@ -128,6 +130,7 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/api/auth',
   '/api/organiser',
   '/api/contact-chat',
+  '/api/event-intake',
 ];
 
 /** Old soft-launch URLs → closed /peek mini-site (banner + accidental deep links). */

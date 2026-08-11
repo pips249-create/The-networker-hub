@@ -1019,16 +1019,21 @@ async function fetchPublishedEventBySlug(sb, slug) {
   let match = (slugCandidates || []).find((row) => slugMatchesPublicRow(row, s));
   if (match) return asPublishedEventRow(match);
 
-  // Title-derived slugs — scan id/slug/title only, then load the winning row.
-  const { data: slimRows, error: slimErr } = await sb
-    .from('published_events')
-    .select('id, slug, title')
-    .order('next_date', { ascending: false, nullsFirst: false })
-    .limit(2500);
-  if (slimErr) throw new Error(slimErr.message);
-  const slimHit = (slimRows || []).find((row) => slugMatchesPublicRow(row, s));
-  if (!slimHit) return null;
-  return fetchPublishedEventById(sb, slimHit.id);
+  // Title-derived slugs (events with null stored slug). PostgREST caps each
+  // response at ~1000 rows, so page with .range instead of a single .limit(2500).
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data: slimRows, error: slimErr } = await sb
+      .from('published_events')
+      .select('id, slug, title')
+      .order('next_date', { ascending: false, nullsFirst: false })
+      .range(from, from + pageSize - 1);
+    if (slimErr) throw new Error(slimErr.message);
+    if (!slimRows || !slimRows.length) return null;
+    const slimHit = slimRows.find((row) => slugMatchesPublicRow(row, s));
+    if (slimHit) return fetchPublishedEventById(sb, slimHit.id);
+    if (slimRows.length < pageSize) return null;
+  }
 }
 
 /**
@@ -1056,7 +1061,27 @@ async function fetchEventRowBySlugLoose(sb, slug) {
     .order('starts_at', { ascending: false, nullsFirst: false })
     .limit(40);
   if (error) throw new Error(error.message);
-  return (candidates || []).find((row) => slugMatchesPublicRow(row, s)) || null;
+  const slugHit = (candidates || []).find((row) => slugMatchesPublicRow(row, s));
+  if (slugHit) return slugHit;
+
+  // Title-derived public slugs when events.slug is null (same PostgREST page cap).
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data: slimRows, error: slimErr } = await sb
+      .from('events')
+      .select('id, slug, title')
+      .order('starts_at', { ascending: false, nullsFirst: false })
+      .range(from, from + pageSize - 1);
+    if (slimErr) throw new Error(slimErr.message);
+    if (!slimRows || !slimRows.length) return null;
+    const slimHit = slimRows.find((row) => slugMatchesPublicRow(row, s));
+    if (slimHit) {
+      const { data, error: loadErr } = await sb.from('events').select('*').eq('id', slimHit.id).maybeSingle();
+      if (loadErr) throw new Error(loadErr.message);
+      return data || null;
+    }
+    if (slimRows.length < pageSize) return null;
+  }
 }
 
 async function buildEventSoftLanding(sb, row, organiser) {
