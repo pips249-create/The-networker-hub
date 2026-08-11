@@ -262,9 +262,15 @@
             return;
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
-          setTimeout(function () {
+          // Claim path: go straight in (no artificial pause). Others keep a short beat.
+          var go = function () {
             window.location.href = result.data.redirect || next || '/welcome';
-          }, 600);
+          };
+          if (getIntentParam() === 'organiser-claim') {
+            go();
+          } else {
+            setTimeout(go, 400);
+          }
         })
         .catch(function () {
           showMessage(msg, 'Could not reach the server. Try again shortly.', 'error');
