@@ -244,6 +244,19 @@
     );
   }
 
+  /** Soft-launch claim CTA: show busy state while /register loads. */
+  function bindClaimCtaBusy(btn) {
+    if (!btn || btn.dataset.claimBusyBound === '1') return;
+    btn.dataset.claimBusyBound = '1';
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('is-busy')) return;
+      btn.classList.add('is-busy');
+      btn.setAttribute('aria-busy', 'true');
+      btn.setAttribute('aria-disabled', 'true');
+      btn.textContent = 'Opening sign-up…';
+    });
+  }
+
   /** Email 2 soft path: see /for-organisers first, then confirm with a password. */
   function initClaimInviteFromEmail() {
     // Soft-launch /peek mini-site must not open register/login unlock paths.
@@ -275,12 +288,14 @@
     if (confirm) {
       confirm.setAttribute('href', authHref);
       confirm.textContent = 'Create a free account to claim →';
+      bindClaimCtaBusy(confirm);
     }
     if (pathHint) pathHint.hidden = true;
 
     if (primary) {
       primary.setAttribute('href', authHref);
       primary.textContent = 'Create a free account to claim';
+      bindClaimCtaBusy(primary);
     }
     if (secondary) {
       secondary.setAttribute('href', '#benefits');

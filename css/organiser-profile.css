@@ -270,6 +270,30 @@
   background: #1d4ed8;
 }
 
+.org-profile-btn.is-busy,
+.org-profile-btn.is-busy:hover {
+  pointer-events: none;
+  opacity: 0.88;
+  cursor: wait;
+}
+
+.org-profile-btn.is-busy::after {
+  content: '';
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 2px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: org-claim-cta-spin 0.7s linear infinite;
+}
+
+@keyframes org-claim-cta-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .org-profile-social-links {
   display: flex;
   flex-wrap: wrap;

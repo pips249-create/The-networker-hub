@@ -85,6 +85,23 @@
   }
 
   /** Email 2 path B: claim invite banner + Claim / Edit → free account. */
+  function bindClaimCtaBusy(btn) {
+    if (!btn || btn.dataset.claimBusyBound === '1') return;
+    btn.dataset.claimBusyBound = '1';
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('is-busy')) return;
+      btn.classList.add('is-busy');
+      btn.setAttribute('aria-busy', 'true');
+      btn.setAttribute('aria-disabled', 'true');
+      var label = btn.querySelector('.org-claim-cta-label');
+      if (label) {
+        label.textContent = 'Opening sign-up\u2026';
+      } else {
+        btn.textContent = 'Opening sign-up\u2026';
+      }
+    });
+  }
+
   function initClaimInviteFromEmail(org, siblings) {
     var q = queryParams();
     if (!q.isClaim) return;
@@ -124,7 +141,13 @@
     }
     if (btn) {
       btn.setAttribute('href', authHref);
-      btn.textContent = 'Create a free account to claim \u2192';
+      var label = btn.querySelector('.org-claim-cta-label');
+      if (label) {
+        label.textContent = 'Create a free account to claim \u2192';
+      } else {
+        btn.textContent = 'Create a free account to claim \u2192';
+      }
+      bindClaimCtaBusy(btn);
     }
     // Keep request-access available when the email on file is wrong / outdated.
     if (claimSection) {
