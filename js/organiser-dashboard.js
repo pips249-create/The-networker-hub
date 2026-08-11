@@ -143,7 +143,7 @@
       if (titleEl) titleEl.textContent = 'Find your existing listing';
       if (descEl) {
         descEl.innerHTML =
-          'Your email did not match a listing on file. Open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet.';
+          'Your email did not match a listing on file. After you sign in, open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet. (Public browsing opens 1 September.)';
       }
       if (createBtn) createBtn.hidden = true;
       if (!findLink) {
@@ -163,7 +163,7 @@
     if (titleEl) titleEl.textContent = 'Create your organiser page';
     if (descEl) {
       descEl.innerHTML =
-        'Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first — if yours is already listed, open it and request access instead of creating a duplicate.';
+        'Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 1 September). If yours is already listed, open it and request access instead of creating a duplicate.';
     }
     if (createBtn) createBtn.hidden = false;
     if (findLink) findLink.hidden = true;
@@ -569,6 +569,7 @@
   }
 
   function copyOrganiserText(text, btn) {
+    const value = String(text || '');
     const done = function () {
       if (!btn) return;
       const prev = btn.textContent;
@@ -577,13 +578,37 @@
         btn.textContent = prev;
       }, 2000);
     };
+    const afterCopy = function () {
+      done();
+      if (window.HubCatalogueOpen !== true && publicListingLinkNeedsLaunchNote(value)) {
+        showOrganiserAlert(
+          'Link copied. Public event and opportunity pages open for everyone on 1 September — until then, cold traffic may see the waitlist page.',
+          false
+        );
+      }
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(function () {
-        window.prompt('Copy this text:', text);
+      navigator.clipboard.writeText(value).then(afterCopy).catch(function () {
+        window.prompt('Copy this text:', value);
+        afterCopy();
       });
     } else {
-      window.prompt('Copy this text:', text);
-      done();
+      window.prompt('Copy this text:', value);
+      afterCopy();
+    }
+  }
+
+  function publicListingLinkNeedsLaunchNote(url) {
+    if (!(Date.now() < Date.parse('2026-09-01T00:00:00+01:00'))) return false;
+    try {
+      const path = new URL(url, location.origin).pathname.replace(/\/$/, '') || '/';
+      if (path.indexOf('/organisers/') === 0) return false;
+      if (path.indexOf('/events/organiser') === 0) return false;
+      if (path.indexOf('/events/') === 0) return true;
+      if (path.indexOf('/opportunities/') === 0) return true;
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -4744,8 +4769,8 @@
         '<button type="button" class="org-action-item" data-edit-group="' +
         esc(id) +
         '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit profile</strong><span>Update organiser page details</span></span></button>' +
-        '<a class="org-action-item" href="../events/organiser?id=' +
-        esc(id) +
+        '<a class="org-action-item" href="' +
+        esc(groupPublicProfileUrl(id, item && item.slug)) +
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
         '<button type="button" class="org-action-item" data-org-goto-memberships="' +
         esc(id) +
@@ -9409,7 +9434,7 @@
     }
 
     if (viewEl) {
-      viewEl.href = '../events/organiser?id=' + encodeURIComponent(g.id);
+      viewEl.href = groupPublicProfileUrl(g.id, g.slug);
       viewEl.hidden = g.statusKey === 'draft';
     }
     if (editEl) {
@@ -12154,37 +12179,127 @@
   }
 
   function needsOrganiserProfileReview() {
+    if (!(state.groups || []).length) return false;
+    const launch = window.HubOrganiserLaunchSetup;
+    if (launch && launch.buildQueue) {
+      const built = launch.buildQueue(launchSetupInput());
+      if (
+        (built.queue || []).some(function (q) {
+          return q.kind === 'profile';
+        })
+      ) {
+        return true;
+      }
+    }
     const onboarding = window.HubOrganiserOnboarding;
     return Boolean(
-      state.groups.length > 0 &&
-        onboarding &&
-        onboarding.isProfileReviewDone &&
-        !onboarding.isProfileReviewDone() &&
-        !hasListedEvents()
+      onboarding && onboarding.isProfileReviewDone && !onboarding.isProfileReviewDone()
     );
   }
 
   function organiserProfileReviewUrl() {
-    const group = state.groups[0];
+    const groups = groupsForLaunchSetup();
+    const group = groups[0] || state.groups[0];
     if (!group || !group.id) return '/organiser/#groups';
+    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.profileEditUrl) {
+      return window.HubOrganiserLaunchSetup.profileEditUrl(group.id);
+    }
     return '/organiser/group-edit?id=' + encodeURIComponent(group.id) + '&onboard=review';
+  }
+
+  var CLAIM_REVIEW_ORDER_KEY = 'hub_claim_review_order_v1';
+
+  function rememberClaimedGroupOrder(groupId) {
+    const id = String(groupId || '').trim();
+    if (!id) return;
+    try {
+      const order = JSON.parse(sessionStorage.getItem(CLAIM_REVIEW_ORDER_KEY) || '[]');
+      if (order.indexOf(id) === -1) order.push(id);
+      sessionStorage.setItem(CLAIM_REVIEW_ORDER_KEY, JSON.stringify(order));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function groupsForLaunchSetup() {
+    const groups = (state.groups || []).slice();
+    let order = [];
+    try {
+      order = JSON.parse(sessionStorage.getItem(CLAIM_REVIEW_ORDER_KEY) || '[]');
+    } catch (e) {
+      order = [];
+    }
+    if (!order.length) return groups;
+    groups.sort(function (a, b) {
+      const ia = order.indexOf(String(a && a.id));
+      const ib = order.indexOf(String(b && b.id));
+      if (ia < 0 && ib < 0) return 0;
+      if (ia < 0) return 1;
+      if (ib < 0) return -1;
+      return ia - ib;
+    });
+    return groups;
   }
 
   function continueOnboardingAfterClaim() {
     if (state.adminView) return;
     if ((state.pendingClaimGroups || []).length > 0) return;
     if ((state.pendingClaimOpportunities || []).length > 0) return;
-    updateSetupResumeBanner();
-    if (showLaunchSetupPrompt()) return;
-    if (!needsOrganiserProfileReview()) {
-      showReadyForEventPrompt();
+
+    const groupIds = groupsForLaunchSetup()
+      .map(function (g) {
+        return g && g.id;
+      })
+      .filter(Boolean);
+
+    if (window.HubOrganiserOnboarding) {
+      if (window.HubOrganiserOnboarding.clearProfileReviewDone) {
+        window.HubOrganiserOnboarding.clearProfileReviewDone();
+      }
+      if (window.HubOrganiserOnboarding.clearReadyEventDismissed) {
+        window.HubOrganiserOnboarding.clearReadyEventDismissed();
+      }
+      if (window.HubOrganiserOnboarding.clearResumeDismissed) {
+        window.HubOrganiserOnboarding.clearResumeDismissed();
+      }
     }
+    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
+      window.HubOrganiserLaunchSetup.prepareClaimOnboarding(groupIds);
+    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.unlockProfilesForReview) {
+      window.HubOrganiserLaunchSetup.unlockProfilesForReview(groupIds);
+    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.clearDismissed) {
+      window.HubOrganiserLaunchSetup.clearDismissed();
+    }
+
+    updateSetupResumeBanner();
+
+    const launch = window.HubOrganiserLaunchSetup;
+    const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
+    if (item) {
+      openLaunchSetupItem(item);
+      return;
+    }
+    if (needsOrganiserProfileReview()) {
+      location.href = organiserProfileReviewUrl();
+      return;
+    }
+    showReadyForEventPrompt();
   }
 
   function launchSetupInput() {
-    const events = (state.events || []).concat(state.upcomingEvents || []);
+    const fromSource = eventsSourceList();
+    const extra = state.upcomingEvents || [];
+    const seen = {};
+    const events = [];
+    fromSource.concat(extra).forEach(function (ev) {
+      if (!ev) return;
+      const id = String(ev.id || '');
+      if (id && seen[id]) return;
+      if (id) seen[id] = true;
+      events.push(ev);
+    });
     return {
-      groups: state.groups || [],
+      groups: groupsForLaunchSetup(),
       events: events,
       tickets: state.tickets || [],
       groupEventsIntoSeries: groupEventsIntoSeries,
@@ -12503,6 +12618,10 @@
         state.groups = [data.group].concat(state.groups.filter((g) => g.id !== data.group.id));
       }
 
+      if (action === 'claim' && data.group && data.group.id) {
+        rememberClaimedGroupOrder(data.group.id);
+      }
+
       if (state.pendingClaimGroups.length) {
         renderGroupClaimModal();
         return;
@@ -12518,11 +12637,15 @@
         await loadBootstrap();
         updateSetupResumeBanner();
         updateGettingStartedPanel();
-        setRoute('dashboard', { skipEventsGuard: true });
         if (data.group.foundingOrganiser) {
           var foundingMsg = data.group.foundingHomepage
             ? "You're a Founding Organiser · 2026 — badge on your profile, plus a homepage showcase through November."
             : "You're a Founding Organiser · 2026 — a founding badge now shows on your Hub profile.";
+          try {
+            sessionStorage.setItem('hub_founding_toast', foundingMsg);
+          } catch (e) {
+            /* ignore */
+          }
           showOrganiserAlert(foundingMsg, false);
         }
         continueOnboardingAfterClaim();
@@ -15576,7 +15699,12 @@
         const bootParams = new URLSearchParams(window.location.search);
         if (bootParams.get('onboard') === 'launch' && window.HubOrganiserLaunchSetup) {
           window.HubOrganiserLaunchSetup.clearDismissed();
-          showLaunchSetupPrompt();
+          const nextLaunch = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
+          if (nextLaunch) {
+            openLaunchSetupItem(nextLaunch);
+          } else {
+            showReadyForEventPrompt();
+          }
           if (window.history.replaceState) {
             const url = new URL(window.location.href);
             url.searchParams.delete('onboard');

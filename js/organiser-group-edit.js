@@ -35,6 +35,17 @@
     alertEl.hidden = !msg;
   }
 
+  function consumeFoundingToast() {
+    try {
+      const msg = sessionStorage.getItem('hub_founding_toast');
+      if (!msg) return;
+      sessionStorage.removeItem('hub_founding_toast');
+      showAlert(msg);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function normalizeBrandHex(value, fallback) {
     var raw = String(value || '').trim();
     if (!raw && fallback) raw = String(fallback).trim();
@@ -843,6 +854,10 @@
         '/organiser/group-edit' + (editId ? '?id=' + encodeURIComponent(editId) : '');
       location.href = '../login?next=' + encodeURIComponent(nextPath);
       return;
+    }
+
+    if (onboardReview || (config && config.onboardLaunch)) {
+      consumeFoundingToast();
     }
 
     const emailEl = el('ge-page-email');

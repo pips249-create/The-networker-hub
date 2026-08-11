@@ -103,10 +103,10 @@
 
             <div class="hub-side-nav-bottom">
               <span class="hub-side-nav-divider">Help</span>
-              <a href="../guides" class="hub-side-nav-link hub-side-nav-link--nested">Organiser guides</a>
-              <a href="../faq" class="hub-side-nav-link hub-side-nav-link--nested">FAQ</a>
+              <a href="../guides/list-an-event" class="hub-side-nav-link hub-side-nav-link--nested">Organiser guides</a>
+              <a href="../contact" class="hub-side-nav-link hub-side-nav-link--nested">Help &amp; contact</a>
               <div class="hub-side-nav-util">
-                <a href="../events/">Browse events</a>
+                <a href="#events-list" data-org-route="events-list">My events</a>
               </div>
             </div>
           </nav>
@@ -296,7 +296,9 @@
                   Full tools now — public ticket buying opens 1 September.
                   <a href="../guides/list-a-conference-or-exhibition" class="org-getting-started-guides">Conferences guide</a>
                   ·
-                  <a href="../guides" class="org-getting-started-guides">All guides</a>
+                  <a href="../guides/list-an-event" class="org-getting-started-guides">List an event</a>
+                  ·
+                  <a href="../guides/claim-your-organiser-page" class="org-getting-started-guides">Claim guide</a>
                 </p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
@@ -304,7 +306,7 @@
             <ol class="org-getting-started-list">
               <li data-getting-step="group">
                 <strong>Create your organiser page</strong>
-                <span>Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first — if yours is already listed, open it and request access instead of creating a duplicate.</span>
+                <span>Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 1 September). If yours is already listed, open it and request access instead of creating a duplicate.</span>
                 <button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-getting-action="group">Add organiser page</button>
               </li>
               <li data-getting-step="membership">
@@ -429,7 +431,7 @@
 
             <div class="org-business-intro-actions">
               <a class="org-btn org-btn-gold" href="/organiser/opportunity-edit" id="org-opp-start-listing">Start your business opportunity →</a>
-              <a class="org-btn org-btn-outline" href="../opportunities/" target="_blank" rel="noopener">Preview the directory</a>
+              <a class="org-btn org-btn-outline" href="../guides/list-a-business-opportunity" target="_blank" rel="noopener">How listing works</a>
             </div>
             </div>
           </div>
@@ -445,7 +447,7 @@
               <p class="org-page-lead" id="org-business-sub">Listings you publish on the hub — edit, renew, or promote each one.</p>
             </div>
             <div class="org-page-head-actions org-business-head-actions">
-              <a class="org-btn org-btn-outline org-btn-sm" href="../opportunities/" target="_blank" rel="noopener">Browse directory</a>
+              <a class="org-btn org-btn-outline org-btn-sm" href="../guides/list-a-business-opportunity" target="_blank" rel="noopener">Listing guide</a>
               <button type="button" class="org-btn org-btn-gold" data-action="add-opportunity-listing">+ Add opportunity</button>
             </div>
           </header>
@@ -514,7 +516,7 @@
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
                 </div>
                 <h3 class="org-empty-state-title">No business opportunities yet</h3>
-                <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries. See the <button type="button" class="org-inline-link" data-business-tab-link="business-guide">how it works</button> tab or browse <a href="/opportunities/" target="_blank" rel="noopener">live listings</a> for inspiration.</p>
+                <p class="org-empty-state-text">Publish a business opportunity to start receiving member enquiries. See the <button type="button" class="org-inline-link" data-business-tab-link="business-guide">how it works</button> tab or read the <a href="/guides/list-a-business-opportunity" target="_blank" rel="noopener">listing guide</a>.</p>
                 <div class="org-empty-state-actions">
                   <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add business opportunity</button>
                 </div>
@@ -2665,8 +2667,8 @@
               <span class="org-nav-badge" id="org-more-team-badge" hidden>Invite</span>
             </a>
             <a href="#business-list" class="org-more-sheet-link" data-org-route="business-list">List a business opportunity</a>
-            <a href="../guides" class="org-more-sheet-link org-more-sheet-link--external">Organiser guides</a>
-            <a href="../faq" class="org-more-sheet-link org-more-sheet-link--external">FAQ</a>
+            <a href="../guides/list-an-event" class="org-more-sheet-link org-more-sheet-link--external">Organiser guides</a>
+            <a href="../contact" class="org-more-sheet-link org-more-sheet-link--external">Help &amp; contact</a>
           </div>
         </div>
       </div>
@@ -3047,7 +3049,7 @@
         <h2 id="modal-needs-organiser-page-title">Your organiser page comes first</h2>
         <p id="modal-needs-organiser-page-desc">
           Events sit under your public organiser page — the profile attendees see when they book.
-          If your group is already on the hub, search for it and request access instead of creating a duplicate.
+          If your group is already on the hub, search for it (signed in — public browsing opens 1 September) and request access instead of creating a duplicate.
         </p>
         <div class="org-modal-actions org-modal-actions--stack">
           <a
@@ -3475,8 +3477,8 @@
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" defer></script>
-    <script src="../js/organiser-onboarding.js?v=20260811tourgate" defer></script>
-    <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
+    <script src="../js/organiser-onboarding.js?v=20260811claimpolish" defer></script>
+    <script src="../js/organiser-launch-setup.js?v=20260811claimpolish" defer></script>
     <script src="../js/organiser-group-edit.js?v=20260811import" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260714link" defer></script>
     <script src="../js/review-report.js?v=20260708" defer></script>
@@ -3484,7 +3486,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260811claimmail" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260811claimpolish" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260805industry" defer></script>
   </body>
 </html>

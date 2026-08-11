@@ -54,6 +54,22 @@
     writeState(s);
   }
 
+  /** After claim: reopen profile + event review (ignore prior dismiss / done flags). */
+  function prepareClaimOnboarding(groupIds) {
+    var s = readState();
+    s.dismissed = false;
+    s.eventsDone = {};
+    (groupIds || []).forEach(function (id) {
+      if (id) delete s.profilesDone[String(id)];
+    });
+    writeState(s);
+  }
+
+  /** @deprecated prefer prepareClaimOnboarding */
+  function unlockProfilesForReview(groupIds) {
+    prepareClaimOnboarding(groupIds);
+  }
+
   function profileLooksThin(group) {
     if (!group) return true;
     var desc = String(group.description || group.about || '').trim();
@@ -155,14 +171,10 @@
       return eventFamilyNeedsSetup(fam, tickets, stored);
     });
 
-    // Profiles first, but only for pages that own unfinished seeded listings.
+    // Profiles first for every unfinished organiser page, then events.
     groups.forEach(function (g, idx) {
       if (!g || !g.id) return;
       if (stored.profilesDone[String(g.id)]) return;
-      var ownsPending = pendingFamilies.some(function (fam) {
-        return String(fam.organiserId) === String(g.id);
-      });
-      if (!ownsPending) return;
       queue.push({
         kind: 'profile',
         id: String(g.id),
@@ -228,6 +240,8 @@
     markEventFamilyDone: markEventFamilyDone,
     dismiss: dismiss,
     clearDismissed: clearDismissed,
+    prepareClaimOnboarding: prepareClaimOnboarding,
+    unlockProfilesForReview: unlockProfilesForReview,
     buildQueue: buildQueue,
     nextItem: nextItem,
     progressSummary: progressSummary,

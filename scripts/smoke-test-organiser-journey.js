@@ -39,7 +39,11 @@ const ANON_PAGES = [
   { path: '/organiser/', expect: /organis|dashboard|sign\s*in|log\s*in/i },
   { path: '/guides/claim-your-organiser-page', expect: /claim|organiser/i },
   { path: '/guides/list-an-event', expect: /list|event|ticket/i },
+  { path: '/guides/list-a-conference-or-exhibition', expect: /conference|exhibition|event/i },
   { path: '/guides/list-a-business-opportunity', expect: /business|opportunit/i },
+  { path: '/guides/invite-your-team', expect: /team|invite/i },
+  { path: '/account/', expect: /account|sign\s*in|log\s*in|my hub/i },
+  { path: '/advertising', expect: /advertis|sponsor|partner/i },
   { path: '/help/pricing-fees', expect: /fee|pricing|booking/i },
   { path: '/help/organiser-payouts', expect: /payout|stripe|connect/i },
 ];
@@ -51,11 +55,9 @@ const MUST_STAY_GATED = [
   '/',
   '/events/',
   '/events/?mode=organisers',
-  '/organisers/circle-networks',
   '/opportunities/',
   '/guides',
   '/faq',
-  '/advertising',
 ];
 
 /** Legacy soft-launch URLs should land in the closed /peek mini-site. */

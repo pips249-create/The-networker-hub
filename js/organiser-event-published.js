@@ -4,6 +4,16 @@
 (function () {
   const featuredPlanDuration = document.getElementById('ep-featured-plan-duration');
 
+  function beforePublicCatalogueLaunch() {
+    // Europe/London midnight 1 Sept 2026 — matches soft-launch copy elsewhere.
+    return Date.now() < Date.parse('2026-09-01T00:00:00+01:00');
+  }
+
+  (function syncSoftLaunchShareNote() {
+    const note = document.getElementById('ep-share-soft-launch');
+    if (note && !beforePublicCatalogueLaunch()) note.hidden = true;
+  })();
+
   function applyFeaturedQuote(quote) {
     if (!quote) return;
     document.querySelectorAll('.ep-featured-single-price .ep-featured-plan-price').forEach(function (el) {
@@ -913,14 +923,20 @@
 
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
-    const copied = await copyText(listingUrl, feedback, '', 'Link copied to clipboard');
+    const softNote =
+      'Link copied. Public browsing opens 1 September — until then, cold traffic may see the waitlist page.';
+    const okMsg = beforePublicCatalogueLaunch() ? softNote : 'Link copied to clipboard';
+    const copied = await copyText(listingUrl, feedback, '', okMsg);
     if (copied) markShareDone('copy_caption');
     if (!copied) {
       const input = document.getElementById('ep-share-url');
       if (input) {
         input.select();
         document.execCommand('copy');
-        if (feedback) feedback.hidden = false;
+        if (feedback) {
+          feedback.textContent = okMsg;
+          feedback.hidden = false;
+        }
       }
     }
   });

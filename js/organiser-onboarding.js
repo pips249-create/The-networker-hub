@@ -119,6 +119,30 @@
     }
   }
 
+  function clearProfileReviewDone() {
+    try {
+      localStorage.removeItem(PROFILE_REVIEW_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function clearReadyEventDismissed() {
+    try {
+      localStorage.removeItem(READY_EVENT_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function clearResumeDismissed() {
+    try {
+      localStorage.removeItem(RESUME_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function isReadyEventDismissed() {
     try {
       return localStorage.getItem(READY_EVENT_KEY) === '1';
@@ -358,6 +382,9 @@
     },
     isProfileReviewDone: isProfileReviewDone,
     markProfileReviewDone: markProfileReviewDone,
+    clearProfileReviewDone: clearProfileReviewDone,
+    clearReadyEventDismissed: clearReadyEventDismissed,
+    clearResumeDismissed: clearResumeDismissed,
     isReadyEventDismissed: isReadyEventDismissed,
     markReadyEventDismissed: markReadyEventDismissed,
     isResumeDismissed: isResumeDismissed,

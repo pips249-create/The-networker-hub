@@ -2259,6 +2259,13 @@ fieldset.ee-field {
   margin: 6px 0 0;
 }
 
+.ep-share-soft-launch {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ee-muted, #635c5e);
+  margin: 8px 0 0;
+}
+
 .ep-comms-preview {
   margin: 0;
   padding: 12px;
