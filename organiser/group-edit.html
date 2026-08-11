@@ -134,9 +134,9 @@
             <input type="email" id="ge-contact-email" required placeholder="hello@yourcompany.com" autocomplete="email" />
           </div>
           <div class="ee-field">
-            <label for="ge-complimentary-visits">Complimentary guest visits</label>
+            <label for="ge-complimentary-visits">Free guest visits <span class="ee-optional">(optional)</span></label>
             <p class="ee-hint" style="margin-top:0">
-              How many free trial visits a new attendee gets before they need a paid member ticket. Type a number from 0 to 3 (Hub maximum).
+              Let someone new come along free before they need a paid member ticket — useful for trial nights. Choose how many free visits they get (0–3).
             </p>
             <input
               type="number"
@@ -148,20 +148,32 @@
               inputmode="numeric"
               aria-describedby="ge-complimentary-visits-hint"
             />
-            <p class="ee-hint" id="ge-complimentary-visits-hint">Enter 0 to turn the guest visit programme off.</p>
+            <p class="ee-hint" id="ge-complimentary-visits-hint">
+              Enter <strong>0</strong> if you don’t offer free guest visits. The Hub maximum is 3.
+            </p>
           </div>
           <fieldset class="ee-field" id="ge-visits-scope-wrap">
-            <legend class="ee-label-block">Where do complimentary visits apply?</legend>
+            <legend class="ee-label-block">If you run more than one organiser page</legend>
             <label class="ee-check">
               <input type="radio" name="ge-visits-scope" value="per_group" checked />
-              <span>This organiser page only</span>
+              <span>
+                <strong>This page only</strong>
+                <span class="ee-hint" style="display:block;margin:4px 0 0;font-weight:400">
+                  Guests get this free allowance on this page. Your other pages can offer their own.
+                </span>
+              </span>
             </label>
             <label class="ee-check">
               <input type="radio" name="ge-visits-scope" value="across_groups" />
-              <span>Across all my organiser pages</span>
+              <span>
+                <strong>Shared across all my pages</strong>
+                <span class="ee-hint" style="display:block;margin:4px 0 0;font-weight:400">
+                  Once they’ve used their free visits on any page you run, they don’t get them again on another.
+                </span>
+              </span>
             </label>
             <p class="ee-hint" id="ge-visits-scope-hint">
-              Choose “across all pages” if someone should only get the free allowance once across every group you run.
+              Skip this if you only have one organiser page — “This page only” is fine.
             </p>
           </fieldset>
         </div>
@@ -190,6 +202,6 @@
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
-    <script src="../js/organiser-group-edit.js?v=20260811claimflow2" defer></script>
+    <script src="../js/organiser-group-edit.js?v=20260811guestcopy" defer></script>
   </body>
 </html>

@@ -9528,6 +9528,13 @@ body.org-group-drawer-open {
   color: var(--od-text-dark);
 }
 
+.org-group-drawer .ee-check strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--od-text-dark);
+}
+
 .org-group-drawer .ee-check:hover {
   border-color: #7aabb4;
 }

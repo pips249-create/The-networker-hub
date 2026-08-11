@@ -502,7 +502,7 @@
     if (titleEl) titleEl.textContent = 'Your organiser page';
     if (leadEl) {
       leadEl.textContent = launchSetup
-        ? 'Confirm logo, description, contact details, and complimentary guest visits — we could not import all of this for you.'
+        ? 'Confirm logo, description, and contact details. Free guest visits are optional — set them if you offer trial nights.'
         : 'Linked to your account — confirm the details below.';
     }
     if (saveChanges) {
@@ -530,7 +530,7 @@
     if (draftBtn) draftBtn.hidden = true;
     if (hint) {
       hint.textContent = launchSetup
-        ? 'Set complimentary visits (0–3) if you offer trial nights. When this page looks right, continue — next we show any events we have added for you.'
+        ? 'When this page looks right, continue — next we show any events we have added for you.'
         : 'Update anything that needs changing, then continue to set up your first event listing.';
     }
     if (g) showStatusBadge(g);
