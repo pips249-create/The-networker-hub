@@ -76,14 +76,19 @@
   }
 
   function withNextParam(baseUrl) {
-    var next = getNextParam();
-    var intent = getIntentParam();
+    var params = new URLSearchParams(window.location.search);
+    var next = params.get('next') || '';
+    var intent = params.get('intent') || '';
+    var email = params.get('email') || '';
     var url = baseUrl;
     if (next) {
       url += (url.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(next);
     }
     if (intent) {
       url += (url.indexOf('?') >= 0 ? '&' : '?') + 'intent=' + encodeURIComponent(intent);
+    }
+    if (email) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + 'email=' + encodeURIComponent(email);
     }
     return url;
   }
@@ -462,8 +467,8 @@
 
     var panelCta = document.getElementById('auth-panel-cta');
     if (panelCta) {
-      panelCta.textContent = 'Read the full claim guide \u2192';
-      panelCta.setAttribute('href', '/guides/claim-your-organiser-page');
+      panelCta.textContent = 'Create a free account first \u2192';
+      panelCta.setAttribute('href', withNextParam('/register'));
     }
 
     var createLead = document.getElementById('login-create-account-lead');

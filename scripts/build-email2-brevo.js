@@ -155,7 +155,8 @@ async function signedInAccountEmails(sb) {
 }
 
 function claimUrlFor(email, hasAccount, slug) {
-  return previewClaimUrl(SITE, email, hasAccount ? 'login' : 'register', slug);
+  // Email 2 always opens sign-up first; existing users use “Already have an account?” on register.
+  return previewClaimUrl(SITE, email, 'register', slug);
 }
 
 function otherGroupsNote(extraGroups) {

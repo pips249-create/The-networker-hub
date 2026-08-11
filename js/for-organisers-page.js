@@ -258,12 +258,10 @@
     if (!isClaim) return;
 
     var email = String(params.get('email') || '').trim();
-    var authMode = String(params.get('auth') || 'register').toLowerCase() === 'login' ? 'login' : 'register';
     var safeNext = next && next.charAt(0) === '/' ? next : '/organiser/?onboard=claim';
 
     var authHref =
-      (authMode === 'login' ? '/login' : '/register') +
-      '?intent=organiser-claim&next=' +
+      '/register?intent=organiser-claim&next=' +
       encodeURIComponent(safeNext) +
       (email ? '&email=' + encodeURIComponent(email) : '');
 
@@ -276,15 +274,13 @@
     if (invite) invite.hidden = false;
     if (confirm) {
       confirm.setAttribute('href', authHref);
-      confirm.textContent =
-        authMode === 'login' ? 'Sign in to confirm your page →' : 'Confirm your page →';
+      confirm.textContent = 'Create a free account to claim →';
     }
     if (pathHint) pathHint.hidden = true;
 
     if (primary) {
       primary.setAttribute('href', authHref);
-      primary.textContent =
-        authMode === 'login' ? 'Sign in to confirm your page' : 'Confirm your page';
+      primary.textContent = 'Create a free account to claim';
     }
     if (secondary) {
       secondary.setAttribute('href', '#benefits');

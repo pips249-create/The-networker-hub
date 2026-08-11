@@ -104,9 +104,9 @@
 
     var safeNext =
       q.next && q.next.charAt(0) === '/' ? q.next : '/organiser/?onboard=claim';
+    // Always start on sign-up — account holders use “Already have an account? Sign in”.
     var authHref =
-      (q.authMode === 'login' ? '/login' : '/register') +
-      '?intent=organiser-claim&next=' +
+      '/register?intent=organiser-claim&next=' +
       encodeURIComponent(safeNext) +
       (q.email ? '&email=' + encodeURIComponent(q.email) : '');
 
@@ -124,11 +124,23 @@
     }
     if (btn) {
       btn.setAttribute('href', authHref);
-      btn.textContent =
-        q.authMode === 'login' ? 'Sign in to claim / edit \u2192' : 'Claim / edit this page \u2192';
+      btn.textContent = 'Create a free account to claim \u2192';
     }
-    // Matched-email claim uses account flow — hide the mismatch "request access" form.
-    if (claimSection) claimSection.hidden = true;
+    // Keep request-access available when the email on file is wrong / outdated.
+    if (claimSection) {
+      claimSection.hidden = false;
+      var claimLede = claimSection.querySelector('.org-claim-lede');
+      if (claimLede) {
+        claimLede.textContent =
+          'Email on this listing out of date, or not yours? Request access below and we\u2019ll verify you, then send a claim link.';
+      }
+      var claimHeading = claimSection.querySelector('h2');
+      if (claimHeading) claimHeading.textContent = 'Different email on file?';
+      if (q.email) {
+        var emailInput = document.getElementById('org-claim-email');
+        if (emailInput && !emailInput.value) emailInput.placeholder = 'Your current email';
+      }
+    }
     if (reviewSection) reviewSection.hidden = true;
     if (regionCta) regionCta.hidden = true;
     if (saveBtn) saveBtn.hidden = true;
