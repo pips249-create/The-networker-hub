@@ -5070,12 +5070,22 @@
   }
 
   function redirectEventsToOrganiserSetup() {
-    setRoute('groups', { skipEventsGuard: true });
+    // Land on Overview so the checklist stays visible behind the explainer modal.
+    setRoute('dashboard', { skipEventsGuard: true });
     openNeedsOrganiserPageModal();
   }
 
+  function isOrganiserTourOpen() {
+    return Boolean(
+      document.body.classList.contains('org-onboard-active') ||
+        (window.HubOrganiserOnboarding &&
+          window.HubOrganiserOnboarding.isTourOpen &&
+          window.HubOrganiserOnboarding.isTourOpen())
+    );
+  }
+
   function enforceEventsOrganiserGate() {
-    if (!bootstrapReady || !needsOrganiserPageFirst()) return;
+    if (!bootstrapReady || !needsOrganiserPageFirst() || isOrganiserTourOpen()) return;
     const onEventsPage = Boolean(document.querySelector('[data-org-page="events"].is-active'));
     if (onEventsPage || isEventsRoute(eventsSubRoute)) {
       redirectEventsToOrganiserSetup();
@@ -9883,7 +9893,13 @@
     }
     closeNotificationsPanel();
     closeOrgMoreSheet();
-    if (bootstrapReady && !options.skipEventsGuard && needsOrganiserPageFirst() && isEventsRoute(route)) {
+    if (
+      bootstrapReady &&
+      !options.skipEventsGuard &&
+      !isOrganiserTourOpen() &&
+      needsOrganiserPageFirst() &&
+      isEventsRoute(route)
+    ) {
       redirectEventsToOrganiserSetup();
       return;
     }
@@ -14473,6 +14489,9 @@
     document.getElementById('btn-needs-organiser-page-create')?.addEventListener('click', () => {
       closeModals();
       openGroupEditorDrawer();
+    });
+    document.getElementById('btn-needs-organiser-page-search')?.addEventListener('click', () => {
+      closeModals();
     });
 
     function goToNewGroupEditor(e) {

@@ -39,7 +39,8 @@
       body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Cancellations, Reviews, and Revenue — to switch sections.',
       target: '#org-events-subnav',
       beforeShow: function () {
-        if (window.orgDashSetRoute) window.orgDashSetRoute('events-list');
+        // Skip the "create a group first" gate so the tour can show Events even with no page yet.
+        if (window.orgDashSetRoute) window.orgDashSetRoute('events-list', { skipEventsGuard: true });
       },
     },
     {
@@ -67,10 +68,14 @@
       body: 'Connect Stripe before publishing paid tickets. After an event ends and is archived, request your payout from the Revenue tab.',
       target: '#events-tab-revenue',
       beforeShow: function () {
-        if (window.orgDashSetRoute) window.orgDashSetRoute('events-revenue');
+        if (window.orgDashSetRoute) window.orgDashSetRoute('events-revenue', { skipEventsGuard: true });
       },
     },
   ];
+
+  function isTourOpen() {
+    return Boolean(tourEl && !tourEl.hidden && tourEl.classList.contains('is-open'));
+  }
 
   var tourAutoStarted = false;
   var gettingStartedBound = false;
@@ -346,6 +351,7 @@
     showTour: showTour,
     markTourDone: markTourDone,
     isTourDone: isTourDone,
+    isTourOpen: isTourOpen,
     shouldDeferGroupClaim: shouldDeferGroupClaim,
     setAfterTourStep: function (fn) {
       afterTourStep = fn;

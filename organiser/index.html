@@ -3039,19 +3039,28 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-needs-organiser-page-title"
+      aria-describedby="modal-needs-organiser-page-desc"
       hidden
     >
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel">
-        <h2 id="modal-needs-organiser-page-title">Add your organiser page first</h2>
-        <p>
-          Before you can list events, create your organiser page — the public profile attendees see when they book.
+        <h2 id="modal-needs-organiser-page-title">Your organiser page comes first</h2>
+        <p id="modal-needs-organiser-page-desc">
+          Events sit under your public organiser page — the profile attendees see when they book.
+          If your group is already on the hub, search for it and request access instead of creating a duplicate.
         </p>
-        <div class="org-modal-actions">
-          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Not now</button>
-          <button type="button" class="org-btn org-btn-gold" id="btn-needs-organiser-page-create">
-            Create organiser page
+        <div class="org-modal-actions org-modal-actions--stack">
+          <a
+            class="org-btn org-btn-gold"
+            id="btn-needs-organiser-page-search"
+            href="/events/#organisers"
+          >
+            Search existing groups
+          </a>
+          <button type="button" class="org-btn org-btn-outline" id="btn-needs-organiser-page-create">
+            Create a new page
           </button>
+          <button type="button" class="org-btn org-btn-outline" data-org-modal-close>Not now</button>
         </div>
       </div>
     </div>
@@ -3442,7 +3451,7 @@
     <script src="../js/hubert-widget.js?v=20260618" data-root="../" data-hubert="organiser-dashboard" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" defer></script>
-    <script src="../js/organiser-onboarding.js?v=20260723onboard" defer></script>
+    <script src="../js/organiser-onboarding.js?v=20260811tourgate" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260727launch" defer></script>
     <script src="../js/organiser-group-edit.js?v=20260729brand" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260714link" defer></script>
@@ -3451,7 +3460,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260807fix1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260811gate2" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260805industry" defer></script>
   </body>
 </html>
