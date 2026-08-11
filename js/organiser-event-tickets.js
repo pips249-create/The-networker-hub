@@ -538,7 +538,7 @@
     }
   }
 
-  async function hydrateSeriesEvents() {
+  async function hydrateSeriesEvents(hintEvent) {
     if (!eventIds.length) return;
     const existing = seriesMeta.events && seriesMeta.events.length ? seriesMeta.events : [];
     const byId = new Map(existing.map((ev) => [ev.id, ev]));
@@ -593,22 +593,56 @@
     });
 
     if (missingDates.length) {
-      const results = await Promise.all(
-        missingDates.map((id) => api('/api/organiser/events?id=' + encodeURIComponent(id)))
-      );
-      missingDates.forEach((id, i) => {
-        const res = results[i];
-        const ev = res.ok && res.data.event ? res.data.event : null;
-        if (!ev) return;
-        byId.set(id, {
-          id: ev.id || id,
-          title: ev.title,
-          date: ev.date,
-          endDate: ev.endDate || '',
-          imageUrl: ev.imageUrl,
-          imagePosition: ev.imagePosition || '',
-        });
+      // Prefer one series fetch over N per-date calls when peers share a series group.
+      const seed = byId.get(missingDates[0]) || {};
+      const seriesGroupId = String(
+        (hintEvent && hintEvent.seriesGroupId) ||
+          seed.seriesGroupId ||
+          (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].seriesGroupId) ||
+          ''
+      ).trim();
+      if (seriesGroupId && missingDates.length > 1) {
+        const res = await api(
+          '/api/organiser/events?seriesGroupId=' + encodeURIComponent(seriesGroupId)
+        );
+        if (res.ok && Array.isArray(res.data.events)) {
+          res.data.events.forEach((ev) => {
+            if (!ev || !ev.id || !byId.has(ev.id)) return;
+            const cur = byId.get(ev.id);
+            byId.set(ev.id, {
+              id: ev.id,
+              title: cur.title || ev.title,
+              date: cur.date || ev.date,
+              endDate: cur.endDate || ev.endDate || '',
+              imageUrl: cur.imageUrl || ev.imageUrl,
+              imagePosition: cur.imagePosition || ev.imagePosition || '',
+            });
+          });
+        }
+      }
+      const stillMissing = missingDates.filter((id) => {
+        const ev = byId.get(id);
+        return !ev || !ev.date;
       });
+      if (stillMissing.length) {
+        const results = await Promise.all(
+          stillMissing.map((id) => api('/api/organiser/events?id=' + encodeURIComponent(id)))
+        );
+        stillMissing.forEach((id, i) => {
+          const res = results[i];
+          if (!res || !res.ok || !res.data || !res.data.event) return;
+          const ev = res.data.event;
+          const cur = byId.get(id) || { id };
+          byId.set(id, {
+            id,
+            title: cur.title || ev.title,
+            date: cur.date || ev.date,
+            endDate: cur.endDate || ev.endDate || '',
+            imageUrl: cur.imageUrl || ev.imageUrl,
+            imagePosition: cur.imagePosition || ev.imagePosition || '',
+          });
+        });
+      }
     }
 
     seriesMeta.events = eventIds.map((id) => byId.get(id) || { id });
@@ -2740,7 +2774,7 @@
       }
 
       await expandSeriesEventIds(loaded.event);
-      await hydrateSeriesEvents();
+      await hydrateSeriesEvents(loaded.event);
 
       const secondary = [loadPaymentSetupState()];
       if (seriesMeta.organiserGroupId) {

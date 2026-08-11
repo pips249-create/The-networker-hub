@@ -8974,8 +8974,20 @@ body.org-group-claim-active {
 .org-launch-setup-event-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   margin-top: 10px;
+  max-height: min(42vh, 340px);
+  overflow-y: auto;
+  padding-right: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.org-launch-setup-event-list.is-many {
+  max-height: min(48vh, 380px);
+  border: 1px solid var(--od-border-soft, #e5e7eb);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .org-launch-setup-event-list[hidden] {
@@ -8989,14 +9001,14 @@ body.org-group-claim-active {
   gap: 12px;
   width: 100%;
   margin: 0;
-  padding: 10px 12px;
+  padding: 9px 11px;
   border: 1.5px solid var(--od-border);
   border-radius: 8px;
   background: #fff;
   color: var(--od-text-dark);
   font: inherit;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.35;
   text-align: left;
   cursor: pointer;
 }
@@ -9006,16 +9018,32 @@ body.org-group-claim-active {
   background: rgba(42, 122, 128, 0.06);
 }
 
+.org-launch-setup-event-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .org-launch-setup-event-btn strong {
   display: block;
   font-weight: 600;
 }
 
-.org-launch-setup-event-btn span {
+.org-launch-setup-event-meta {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--od-text-muted, #6b7280);
+}
+
+.org-launch-setup-event-go {
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 600;
   color: var(--od-purple);
+  white-space: nowrap;
+  padding-top: 1px;
 }
 
 .org-group-drawer-actions .org-btn-linkish {

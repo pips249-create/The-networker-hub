@@ -33,22 +33,13 @@
 
   function setPageLoading(on, message, progressStep) {
     const el = document.getElementById('ee-page-loading');
-    const embed = isEmbedDrawer();
-    const initialEmbedLoad = embed && /^loading event/i.test(String(message || ''));
-    if (initialEmbedLoad) {
-      notifyParentBusy(on, message, progressStep);
-      return;
-    }
-    if (!el) {
-      notifyParentBusy(on, message, progressStep);
-      return;
-    }
+    notifyParentBusy(on, message, progressStep);
+    if (!el) return;
     const label = el.querySelector('.ee-page-loading-label');
     if (label) label.textContent = message || 'Loading';
     el.hidden = !on;
     el.setAttribute('aria-busy', on ? 'true' : 'false');
     document.body.classList.toggle('ee-is-loading', !!on);
-    notifyParentBusy(on, message, progressStep);
   }
 
   function run(message, work, opts) {

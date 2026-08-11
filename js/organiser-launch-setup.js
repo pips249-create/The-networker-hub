@@ -136,13 +136,25 @@
       var key = seriesFamilyKey(row, list);
       var title = String(row.title || members[0] && members[0].title || 'Event').trim();
       var dateCount = members.length;
+      var primary = members[0] || row || null;
+      var place = '';
+      if (primary) {
+        place = String(
+          primary.city || primary.venue || primary.location || primary.town || ''
+        ).trim();
+      }
+      var dateRaw =
+        (primary && (primary.date || primary.startsAt || primary.starts_at || primary.eventDate)) ||
+        '';
       return {
         key: key,
         title: title,
         dateCount: dateCount,
         isSeries: dateCount > 1 || Boolean(row && row.isSeries),
         events: members,
-        primary: members[0],
+        primary: primary,
+        date: dateRaw,
+        place: place,
         organiserId: String(
           (row && (row.organiserId || row.organiser_id)) ||
             (members[0] && (members[0].organiserId || members[0].organiser_id)) ||
@@ -198,6 +210,8 @@
           title: fam.title,
           isSeries: fam.isSeries,
           dateCount: fam.dateCount,
+          date: fam.date || '',
+          place: fam.place || '',
           family: fam,
           indexHint: fam.isSeries ? 'Series (' + fam.dateCount + ' dates)' : 'Event',
         });
@@ -214,6 +228,8 @@
         title: fam.title,
         isSeries: fam.isSeries,
         dateCount: fam.dateCount,
+        date: fam.date || '',
+        place: fam.place || '',
         family: fam,
         indexHint: fam.isSeries ? 'Series (' + fam.dateCount + ' dates)' : 'Event',
       });

@@ -7165,9 +7165,8 @@
       setTimeout(function () {
         sendEmbedBootstrapToFrame(frame);
       }, 120);
-      setTimeout(function () {
-        setEventDrawerLoading(false);
-      }, 600);
+      // Keep the loading overlay until the iframe posts hub-event-drawer-ready
+      // (form data still loads after HTML onload — clearing early shows blank fields).
     };
     frame.src = frameUrl;
 
@@ -12854,27 +12853,51 @@
           return q.kind === 'event';
         });
         listEl.hidden = false;
+        listEl.classList.toggle('is-many', eventItems.length > 6);
         listEl.innerHTML = eventItems
           .map(function (ev, idx) {
-            const seriesBit =
-              ev.isSeries && ev.dateCount > 1 ? ' · ' + ev.dateCount + ' dates' : '';
+            const metaBits = [];
+            if (ev.date) {
+              try {
+                const d = formatDateShort(ev.date);
+                if (d && d !== '—') metaBits.push(d);
+              } catch (e) {
+                /* ignore */
+              }
+            }
+            if (ev.isSeries && ev.dateCount > 1) {
+              metaBits.push(ev.dateCount + ' dates');
+            }
+            if (ev.place) metaBits.push(String(ev.place));
+            const metaHtml = metaBits.length
+              ? '<em class="org-launch-setup-event-meta">' +
+                metaBits
+                  .map(function (bit) {
+                    return String(bit).replace(/</g, '&lt;');
+                  })
+                  .join(' · ') +
+                '</em>'
+              : '';
             return (
               '<button type="button" class="org-launch-setup-event-btn" data-launch-event-id="' +
               String(ev.id || '').replace(/"/g, '') +
               '">' +
+              '<span class="org-launch-setup-event-main">' +
               '<strong>' +
               (idx + 1) +
               '. ' +
               String(ev.title || 'Event').replace(/</g, '&lt;') +
-              seriesBit +
               '</strong>' +
-              '<span>Review →</span>' +
+              metaHtml +
+              '</span>' +
+              '<span class="org-launch-setup-event-go">Review →</span>' +
               '</button>'
             );
           })
           .join('');
       } else {
         listEl.hidden = true;
+        listEl.classList.remove('is-many');
         listEl.innerHTML = '';
       }
     }
@@ -12892,10 +12915,18 @@
     }
     if (queueEl) {
       if (item.kind === 'event') {
-        queueEl.textContent =
-          eventsLeft > 1
-            ? eventsLeft + ' events / series to review. Bank details can wait until you sell paid tickets.'
-            : '1 event to review. Bank details can wait until you sell paid tickets.';
+        if (eventsLeft > 6) {
+          queueEl.textContent =
+            eventsLeft +
+            ' events / series to review — scroll the list. Bank details can wait until you sell paid tickets.';
+        } else if (eventsLeft > 1) {
+          queueEl.textContent =
+            eventsLeft +
+            ' events / series to review. Bank details can wait until you sell paid tickets.';
+        } else {
+          queueEl.textContent =
+            '1 event to review. Bank details can wait until you sell paid tickets.';
+        }
       } else {
         const bits = [];
         if (profilesLeft) bits.push(profilesLeft + ' page' + (profilesLeft === 1 ? '' : 's'));
