@@ -1,0 +1,605 @@
+organiser_id,name,slug,previous_outcode,outcode,region_slug,region_label,source,confidence
+5fd0f393-387d-48db-ab48-8c449e50809e,121 Business Links,121-business-links,,NE66,newcastle,Newcastle,events,high
+b8b51943-d255-424a-a36d-c2d522d80e92,1884 Business Club (Cambridgeshire FA),1884-business-club-cambridgeshire-fa,,CB1,cambridgeshire,Cambridgeshire,place_name,medium
+9e6f4fa2-a434-4dc6-9ef8-4aa296ace742,4Networking,4networking,,IP8,,,events,high
+9fb1a074-095e-4e83-849d-a947206fc7fa,Aberdeen & Grampian Chamber of Commerce,chamber-of-trade-aberdeen,,AB12,edinburgh,Edinburgh,events,high
+e0dc8a98-cea1-4a69-bfce-58e696c50be6,ABW (Ayrshire Business Women),abw-ayrshire-business-women,,KA7,glasgow,Glasgow,events,high
+d7470a6f-834d-4ce1-8547-9bd84d2d5b99,ActionCOACH Wakefield,the-growthnetwork-with-actioncoach-wakefield-business-coaching,,WF1,leeds,Leeds,events,high
+e9f5da13-65e9-4458-a2a6-3f001b98db24,AFVBC (Armed Forces & Veterans Breakfast Clubs),afvbc-armed-forces-veterans-breakfast-clubs,,B76,birmingham,Birmingham,events,high
+741f9f72-af03-466c-bae1-0fea1552ffef,Alexander Accountancy's Property People,alexander-accountancy-s-property-people,,NG1,nottingham,Nottingham,place_in_description,low
+d06f6114-5d52-44cd-a1a2-4ae945b63667,Alfresco Adventures,alfresco-adventures,,EH1,edinburgh,Edinburgh,place_in_description,low
+5f4ee241-8a10-4f79-a6a5-71dc47e5f3d0,AREG (Aberdeen Renewable Energy Group),areg-aberdeen-renewable-energy-group,,IV3,edinburgh,Edinburgh,events,high
+7ed5e83d-f3cb-4b18-9475-898165d099de,Arena,arena,,L3,liverpool,Liverpool,events,high
+4b16c66e-d91c-4bba-aa64-3ffbfabe2a8f,ASB (Association of Scottish Business Women),asb-association-of-scottish-business-women,,PH1,,,events,high
+fc8d72ac-ac11-43b9-a5b6-6286d7e68474,Avery & Co,avery-co,,L1,liverpool,Liverpool,place_in_description,low
+8fac39cd-6c53-40de-8be3-a10b4cd81c83,Awakened Connections Network,awakened-connections-network,,B1,birmingham,Birmingham,place_in_description,low
+25702edd-8778-440c-8481-a7a89a90880b,B2B Growth Expo,,,B92,birmingham,Birmingham,events,high
+fec36afa-1d54-471f-b5c7-cba211f339c3,B2B Lunch Club,b2b-lunch-club,,NR3,,,events,high
+b1cc474a-a73c-4926-9b56-65238284fbac,B4,b4,,OX25,oxford,Oxford,events,high
+430ed8d8-63f4-4f2f-8047-89062c1bce5c,Barco business club,barco-business-club,,YO8,,,events,high
+98389ba0-023c-4b11-badf-a9fb24d57bcc,Barnsley & Rotherham - Chamber of Commerce,chamber-of-trade-barnsley-rotherham,,S75,sheffield,Sheffield,events,high
+47cf215b-2465-4e25-8340-fa1c56124883,Basingstoke Business Club,basingstoke-business-club,,RG24,berkshire,Berkshire,events,high
+a2d5a6e9-0d4c-4d4f-84b5-09e27829bd15,Bath Business Focus,bath-business-focus,,BS1,bristol,Bristol,place_name,medium
+56943168-0360-433a-ae78-2fc32afb4b4b,BAWE (British Association of Women Entrepreneurs in Scotland),bawe-british-association-of-women-entrepreneurs-in-scotland,,G1,glasgow,Glasgow,events,high
+50ee3079-8e92-464b-a420-972cbe126ec5,BBN (Bay Business Network),bbn-bay-business-network,,LA6,lancashire,Lancashire,events,high
+c164eb25-be38-4adb-aba5-f0ddc1ce7666,BBN Networking,bbn-networking,,DA1,south-london,South London,events,high
+19381d9c-a835-4f94-bab8-bdea9052fcf0,BECBC (Britain's Energy Coast Business Cluster),becbc-britain-s-energy-coast-business-cluster,,CA14,,,events,high
+2e6a69b0-23f7-489c-b989-427ecbdbc50e,Bedfordshire Chamber of Commerce,bedfordshire-chamber-of-commerce,,LU7,cambridgeshire,Cambridgeshire,events,high
+e4eb2887-0f1b-4dec-86c7-03d66b0b6887,Berkshire Growth Hub,berkshire-growth-hub,,RG1,berkshire,Berkshire,place_name,medium
+42c5174e-cc94-466a-b0a3-398060baec30,Berkshire Mummies,berkshire-mummies,,RG1,berkshire,Berkshire,place_name,medium
+ef6d6534-b622-46e6-8dde-101b85061a31,Better Business Network,better-business-network,,S7,sheffield,Sheffield,events,high
+c98e2e22-5c05-4a0b-9410-a5159f147b71,Better Networking Hubs,better-networking-hubs,,BB4,lancashire,Lancashire,events,high
+a540db71-ef99-460c-bf8a-e28daa55c68e,Big Business Breakfast Club - Various Venues,big-business-breakfast-club-various-venues,,BN1,sussex,Sussex,place_in_description,low
+2a870c87-73c1-4354-9380-a421638590b2,BiiG (Business in Ilminster Group),biig-business-in-ilminster-group,,TA19,bristol,Bristol,events,high
+6eb3116e-3566-4a20-a691-81e215e3239b,BITA - Birmingham,bita-birmingham,,B1,birmingham,Birmingham,place_name,medium
+4b51e5f5-41ad-40b1-9b8b-aa99e6b1333e,BITA - Kent,bita-kent,,ME17,kent,Kent,events,high
+ce779f08-e11b-4ee7-90fc-cf91bfc685c3,BITA - Liverpool,bita-liverpool,,L2,liverpool,Liverpool,events,high
+2f2d39cf-86df-43aa-899b-072378b70f5b,BITA - London,bita-london,,EC4V,central-london,Central London,events,high
+7b711163-a49f-488c-a5dd-159ce68b32b6,BITA - Manchester,bita-manchester,,M1,manchester,Manchester,events,high
+26343a70-8374-4f4f-9a11-a5a4df119dee,BITA - Northern Ireland,,,BT2,belfast,Belfast,events,high
+c9d8563b-acc5-4551-98b9-ff4e0abe769b,BITA - South West (Devon),bita-south-west-devon,,BS1,bristol,Bristol,place_name,medium
+50e41b7f-bb40-41f9-912f-b9d1540702c6,BITA - Surrey,bita-surrey,,GU1,surrey,Surrey,place_name,medium
+435b5731-6a7c-4452-a32d-4cfb10a4afd8,Black Solicitors Network,black-solicitors-network,,EC4V,central-london,Central London,events,high
+2ebcb3d0-d17c-40df-8b08-85a770398fe6,Blaze BNI (Hitchin),blaze-bni-hitchin,,SG16,hertfordshire,Hertfordshire,events,high
+385be265-1924-4be5-9b0a-07e6922ab76e,BMUK,bmuk,,M1,manchester,Manchester,place_in_description,low
+d9726826-78d3-4dd5-a501-bb25ad370c81,BNI - Abbey (BNI (Paisley),bni-abbey-bni-paisley,,PA2,,,events,high
+916057b6-3130-4f00-a2d7-7e41a3e9a76a,BNI - BNI Belfast Waterfront,bni-bni-belfast-waterfront,,BT1,belfast,Belfast,place_name,medium
+da9ed499-cb95-4ca3-8aa6-4e7fd4d7b05a,BNI - BNI Erimus (Belfast),bni-bni-erimus-belfast,,BT43L,belfast,Belfast,events,high
+0fb66af6-55fd-4647-be9f-9cf2176b2a47,BNI - Cardiff Central,bni-cardiff-central,,CF3,cardiff,Cardiff,place_name,medium
+9b0473e4-cec1-4276-b10c-fbe61989989c,BNI - Deeside - North Wales,bni-deeside-north-wales,,CF3,cardiff,Cardiff,place_name,medium
+74f08a8e-f222-46a8-b269-acfcea94ddd9,BNI - Eden Business Network - Lancashire North West,bni-eden-business-network-lancashire-north-west,,PR1,lancashire,Lancashire,place_name,medium
+24f5cd4c-0bfd-46e8-914a-865cf11b2aa9,BNI - Energy (Aberdeen),bni-energy-aberdeen,,EH1,edinburgh,Edinburgh,place_name,medium
+e7463240-eab0-47a3-b21d-72cfb56195c1,BNI - Enterprise BNI - Glasgow & South Lanarkshire,bni-enterprise-bni-glasgow-south-lanarkshire,,G1,glasgow,Glasgow,place_name,medium
+f973cbcc-1ae0-43ea-ad36-7103a6b3414d,BNI - Evolution Glasgow,bni-bni-glasgow,,G42,glasgow,Glasgow,events,high
+2bb41854-5137-4bb9-8c1f-b084b136dde1,BNI - Nova (Newport,bni-nova-newport,,CF3,cardiff,Cardiff,place_name,medium
+4e1f260f-bbc3-4046-9652-b65861519e06,BNI - Phoenix Basingstoke,bni-phoenix-basingstoke,,SO14,hampshire,Hampshire,place_name,medium
+581d136f-2635-4acb-b8f9-01876bd31556,BNI - Spectrum - North Wales,bni-spectrum-north-wales,,CF3,cardiff,Cardiff,place_name,medium
+9dacc539-4411-4046-8197-3bef0d038e65,BNI -1st Eastbourne BNI,bni-1st-eastbourne-bni,,BN1,sussex,Sussex,place_name,medium
+6a680b8f-c97b-4b30-a0f2-6e3f52e52189,BNI -Abundance BNI (Harrogate),bni-abundance-bni-harrogate,,LS1,leeds,Leeds,place_name,medium
+e6286d90-8d38-4c64-9e39-6b8b4ca239cb,BNI -Academy (Oxford),bni-academy-oxford,,OX1,oxford,Oxford,place_name,medium
+599db446-04ea-48fc-bd69-0f8172ce2168,BNI -Achievers BNI (Wolverhampton) - Black Country,bni-achievers-bni-wolverhampton-black-country,,B1,birmingham,Birmingham,place_name,medium
+e24a2875-d5a9-4098-8a69-b8c597e07913,BNI -Alban (St Albans),bni-alban-st-albans,,AL1,hertfordshire,Hertfordshire,place_name,medium
+805cacc7-0d6e-46aa-bd2e-f3a0bb21f8e7,BNI -Alliance BNI London NE,bni-alliance-bni-london-ne,,E1,london,London,place_name,medium
+6b6366b5-ce0b-4909-b440-d09b4af88ab8,BNI -Ambition Norwich,bni-ambition-norwich,,CB1,cambridge,Cambridge,place_name,medium
+d8c369cc-217b-40f8-b27c-da987fdcc15e,BNI -Ashford,bni-ashford,,CT1,kent,Kent,place_name,medium
+cf65b4e9-24bc-474a-ad62-61ed79bb4f47,BNI -Steel BNI (Middlesbrough),bni-steel-bni-middlesbrough,,NE1,newcastle,Newcastle,place_name,medium
+3e401dc1-1f84-4fa4-9731-4938fe5ed126,BNI -Synergy (Hertford),bni-synergy-hertford,,AL1,hertfordshire,Hertfordshire,place_name,medium
+56a4ccd8-eb65-4a55-82c4-5e354bd86d05,BNI -Synergy BNI Barnsley,bni-synergy-bni-barnsley,,S1,sheffield,Sheffield,place_name,medium
+28dfa25e-4624-4963-ba92-2d94d7a8af96,BNI A27 - Essex West,bni-bni-a27-essex-west,,CM0,essex,Essex,place_name,medium
+c17e5ee6-c6d3-45a5-9dd8-8cb0abfb575e,BNI Action - Essex East,bni-bni-action-essex-east,,CM0,essex,Essex,place_name,medium
+1ef0e433-c6bf-4730-9e79-ccdb329e16ad,BNI Alpha - Liverpool,bni-bni-alpha-liverpool,,L3,liverpool,Liverpool,events,high
+de2ca4f7-7fa0-4727-9150-0b218ccede16,BNI Apollo - London East,bni-bni-apollo-london-east,,E1,london,London,place_name,medium
+be0a2712-b282-4a01-a3ca-84c82e5d82f0,BNI Bradman (Bristol),bni-bni-bradman-bristol,,BS1,bristol,Bristol,place_name,medium
+91d40a4b-c054-46da-83d0-18dad5f7545f,BNI Central - Central London & The City,bni-bni-central-central-london-the-city,,E1,central-london,Central London,place_name,medium
+0822289a-049f-458b-b948-7774a642aa7d,BNI Concorde - Somerset,bni-bni-concorde-somerset,,BS1,bristol,Bristol,place_name,medium
+ec0cbfe5-3fe0-44bc-b19c-6304f589440a,BNI Conversion - Kent West,bni-bni-conversion-kent-west,,CT1,kent,Kent,place_name,medium
+4386c10e-81bb-4a4f-8c08-8a929108f8c4,BNI Devon,bni-devon,,BS1,bristol,Bristol,place_name,medium
+c178ed6f-ee2e-459a-836d-021967037b7c,BNI Dorset,bni-dorset,,BH1,bournemouth,Bournemouth,place_name,medium
+f2c67e6e-e99f-40f4-ad3a-a65e7e55f682,BNI Fusion Warrington,bni-fusion-warrington,,CH1,cheshire,Cheshire,place_name,medium
+3953c44e-c1d3-48e9-b996-86d6e898892d,BNI Granta - Cambridge,bni-bni-granta-cambridge,,CB1,cambridge,Cambridge,place_name,medium
+a937e41c-a09b-4e18-8103-515afd487936,BNI Legend - Suffolk,bni-bni-legend-suffolk,,CM0,essex,Essex,place_name,medium
+a4679da3-fd14-4127-bacc-cf7b1ae291be,BNI Leicestershire and Rutland,bni-leicestershire-and-rutland,,LE1,leicester,Leicester,place_name,medium
+7c3590fc-cb1d-4555-b58c-646af7c2bd8d,BNI Lima - Liverpool,bni-bni-lima-liverpool,,L1,liverpool,Liverpool,place_name,medium
+12340777-0ffa-447b-9485-cbffc90e5fd8,BNI Marina (Hull),bni-aspire-bni-hull,,HU1,leeds,Leeds,events,high
+a8fde5c1-8271-477e-94a1-4d2991d84e3b,BNI Parade (Bath),bni-bni-parade-bath,,BS1,bristol,Bristol,place_name,medium
+8d55b9c0-661c-4246-a2e8-fd02d916597d,BNI Prime Online - Hampshire South,bni-bni-prime-online-hampshire-south,,SO14,hampshire,Hampshire,place_name,medium
+fdc5fd4d-dddb-4f96-ad24-a678e591ced9,BNI Scotland South,bni-scotland-south,,EH1,edinburgh,Edinburgh,place_name,medium
+a6ad51a1-e974-4a1d-bb0b-557a060b0307,BNI South Wales,bni-south-wales,,CF3,cardiff,Cardiff,place_name,medium
+c7da69cc-7154-4933-bfb1-2ccd7b09b159,BNI South Wales,bni-south-wales-2,,CF3,cardiff,Cardiff,place_name,medium
+db9ab4b5-0e77-4e67-8321-56291926b2ea,BNI Thomas Telford (Newport),bni-thomas-telford-newport,,CF3,cardiff,Cardiff,place_name,medium
+5b2327f7-1910-46f1-b2e9-ef4462178e7d,BNNL (Business Networking North London),bnnl-business-networking-north-london,,N2,north-london,North London,place_name,medium
+9e007828-de80-4aca-b6cd-42b72ddb9ffa,BoB Connections,bob-connections,,CT7,kent,Kent,events,high
+985c30e1-5548-411f-b87c-978ff0ddffa7,BoB Networking,bob-networking,,HP22,buckinghamshire,Buckinghamshire,events,high
+124f284b-1a58-4ec8-b7e7-a9a0db32ce0b,Boom Business Club,boom-business-club,,WC2N,central-london,Central London,events,high
+bc4cdb1b-ea38-4d37-8c55-6b7190d5970c,BPA (Bournemouth Property Association),bpa-bournemouth-property-association,,BH2,bournemouth,Bournemouth,events,high
+b3651bcc-e30c-4388-b40c-ae392319a205,Britton & Time Solicitors,briton-solicitors,,BN1,brighton,Brighton,events,high
+74fe1beb-02a3-402f-80f9-2bbd6b7f79a2,Bromley Business Network Limited,bromley-business-network-limited,,BR2,south-london,South London,events,high
+6edba048-96ce-4f11-8f8d-f1a4ec057a3f,Bucks Fizz Networking,bucks-fizz-networking,,MK18,buckinghamshire,Buckinghamshire,events,high
+3a334e2d-bc5b-44c0-af54-ef863ef842a1,BUN (Birmingham's Unique Network),bun-birmingham-s-unique-network,,B1,birmingham,Birmingham,place_name,medium
+64e72b47-697d-4376-95ae-e16c2b388bf3,Business & IP Centre Norfolk,business-ip-centre-norfolk,,CB1,cambridge,Cambridge,place_name,medium
+7f174ff0-7472-42fa-8bd5-d5b008d9297f,Business Base,business-base,,SS6,essex,Essex,events,high
+f155e4c9-4ef5-4ef4-8417-eebc21f55675,Business Buzz - Bedfordshire,business-buzz-bedfordshire,,MK40,cambridgeshire,Cambridgeshire,events,high
+d71dd98e-4dc5-4703-824e-a9ae805c8af7,Business Buzz - Buckinghamshire,business-buzz-buckinghamshire,,HP6,buckinghamshire,Buckinghamshire,place_name,medium
+5e81b943-d9f3-44f3-b1e2-7223b4237492,Business Buzz - Cheltenham,business-buzz-cheltenham,,BS1,bristol,Bristol,place_name,medium
+c5868687-ed36-436d-900a-7910f48a7cf2,Business Buzz - Essex,business-buzz-essex,,CM0,essex,Essex,place_name,medium
+97a4cddd-649c-4659-9c71-aefaacfe33c2,Business Buzz - Leicestershire & Rutland,business-buzz-leicestershire-rutland,,LE1,leicester,Leicester,place_name,medium
+a8b73c9f-8a4d-4ad9-995e-62b184cd3dd9,Business Buzz - London,business-buzz-london,,E1,london,London,place_name,medium
+69697a62-32f9-495b-b450-7c05b5521bfd,Business Buzz - Northamptonshire,business-buzz-northamptonshire,,HP6,buckinghamshire,Buckinghamshire,place_name,medium
+5797fecc-6517-40e9-a9b8-f77c06255144,Business Buzz - Oxfordshire,business-buzz-oxfordshire,,OX1,oxfordshire,Oxfordshire,place_name,medium
+25c3ad43-d63b-4890-9f9a-296febc80071,Business Focus Networking - Burton,business-focus-networking-burton,,DE14,,,events,high
+8c5df762-fe25-47e3-ae87-c7704aa915c8,Business Gateway,business-gateway,,EH8,edinburgh,Edinburgh,events,high
+faaf38a1-b947-4f1a-8a1e-f4a38e3294d9,Business Growth Club,business-growth-club-2,,MK3,buckinghamshire,Buckinghamshire,events,high
+1dc38185-87f3-42a5-9eae-0d02c8123ee6,Business Junction,business-junction,,E1,london,London,place_in_description,low
+772f1300-4ef1-4f2e-89e8-92a2fda991da,Business Matching UK - Leeds,,,LS16,leeds,Leeds,events,high
+95054a2c-547a-4d13-aa6b-98cc70742427,Business Matching UK - London,bmuk-2,,SL3,berkshire,Berkshire,events,high
+280ea41f-85ac-432c-922f-28064c8de2d7,Business Matching UK - Manchester,,,M24,manchester,Manchester,events,high
+d57a21c0-da78-4e25-ae47-f0d3bc887472,Business Matching UK - NorthEast,,,NE9,newcastle,Newcastle,events,high
+6732cbb5-7bf8-484b-b013-04fbca8ab615,Business Redcar Cleveland,business-redcar-cleveland,,TS23,,,events,high
+fefe8ad4-4d9d-4717-aef8-885b36b54b1b,Business West,business-west,,GL2,,,events,high
+6e2a4b71-c150-4327-8706-d7b38c0921f9,Businesswomen UnLtd,businesswomen-unltd,,N21,north-london,North London,events,high
+fb6038b4-b48f-4e91-a867-4e01a587e037,Busy Networking,busy-networking,,MK44,,,events,high
+b8e061cf-b2c6-4aa4-92e3-f78149771945,Busy Women Networking,busy-women-networking,,MK45,,,events,high
+a2a4e282-bd50-40c0-8e3a-96adfd8f75e0,Buy Local Norfolk,buy-local-norfolk,,NR18,cambridge,Cambridge,events,high
+4cbebb4c-9ac2-4639-9579-163e490d4da5,Buzzard Networking,buzzard-networking,,LU7,,,events,high
+43a0b980-0e4d-483a-8759-cfeaab9e97c1,BWC (Business Women Connections),bwc-business-women-connections,,EH1,edinburgh,Edinburgh,place_in_description,low
+3ac660a2-fea1-4e14-9662-b221acc8f87c,BWC Aberdeen,bwc-aberdeen,,AB24,edinburgh,Edinburgh,events,high
+c5c8ecd0-2999-455f-96ec-026ab74c9eb8,BWC Edinburgh & Fife,bwc-edinburgh-fife,,EH1,edinburgh,Edinburgh,events,high
+a3340846-0f10-43b1-93b1-d8ed456db29a,BYP Network,byp-network,,W1H,central-london,Central London,events,high
+0d3f4496-9a90-4d2f-a149-d177e3c5c088,Cadre Rocket,cadre-rocket,,CB1,cambridge,Cambridge,place_in_description,low
+117b4d52-9fea-4d02-b4d6-a267b064be43,Calm Horizon Coaching,calm-horizon-coaching,,M2,manchester,Manchester,events,high
+1bf86fc0-e1ce-4d0f-840a-e4d0e6c030d8,Cambridge United Business Club (Football Club),cambridge-united-business-club-football-club,,CB1,cambridge,Cambridge,place_name,medium
+a5ac58f6-c231-4266-a67c-8e2fac05b0b8,Cambridge Wireless,cambridge-wireless,,CB1,cambridge,Cambridge,place_name,medium
+1546bc28-287b-449b-949e-b47aa2cad65f,Canary Wharf Female Entrepreneurs Network,canary-wharf-female-entrepreneurs-network,,E2,east-london,East London,place_name,medium
+087ecbd5-f305-4985-831d-636ec43d4812,Cardiff Business Club,cardiff-business-club,,CF3,cardiff,Cardiff,place_name,medium
+523bcc46-1f6d-44e4-aa88-d31cf941413b,Cardiff Start,cardiff-start,,CF3,cardiff,Cardiff,place_name,medium
+ed61c866-d5ec-4c43-a901-cbd42085e31f,Catena Network,catena-network,,DE1,,,events,high
+95f6521e-025b-45c6-a3fc-20281c85dc21,CBN (City Business Network),cbn-city-business-network,,EC3V,central-london,Central London,events,high
+65fb868c-a561-47da-b2d8-e8b1e3ad7953,Chamber of trade  - Ayrshire,chamber-of-trade-ayrshire,,KA1,glasgow,Glasgow,events,high
+7d47e20c-a926-495d-9775-3081e57fdba7,Chamber of trade  - Black Country,chamber-of-trade-black-country,,WV10,,,events,high
+22006e98-a138-4596-b183-6c6c34f53fb3,Chamber of trade  - Cambridgeshire,chamber-of-trade-cambridgeshire,,CB7,cambridge,Cambridge,events,high
+7cfe0abe-af0e-4d41-8d72-0e45058edd14,Chamber of trade  - Chambers Wales,chamber-of-trade-chambers-wales,,NP20,cardiff,Cardiff,events,high
+1cfd097a-407e-464a-8c06-95ee7a2e3c8e,Chamber of trade  - Cornwall,chamber-of-trade-cornwall,,TR4,bristol,Bristol,events,high
+6d05f2c5-d4e4-4cb8-bf73-c844e9478158,Chamber of trade  - Coventry & Warwickshire,chamber-of-trade-coventry-warwickshire,,CV5,birmingham,Birmingham,events,high
+f9f8773b-5b95-4383-8459-754504927396,Chamber of trade  - Cumbria,chamber-of-trade-cumbria,,CA2,lancashire,Lancashire,events,high
+d553a8a1-0025-4643-ad93-b2fb455b8890,Chamber of trade  - Devon,chamber-of-trade-devon,,PL2,bristol,Bristol,events,high
+b08c5735-f9f2-43c5-aa7c-d35f141cf14d,Chamber of trade  - Doncaster,chamber-of-trade-doncaster,,DN4,sheffield,Sheffield,events,high
+1dc4b957-e726-42cb-9627-04c6c57033b3,Chamber of trade  - Dorset,chamber-of-trade-dorset,,BH23,bournemouth,Bournemouth,events,high
+91b7be18-ca29-4b2c-a6f4-dcfc9e44b610,Chamber of trade  - Dundee & Angus,chamber-of-trade-dundee-angus,,DD1,edinburgh,Edinburgh,events,high
+069663ff-6b85-40a3-9d30-504cc31b84cb,Chamber of trade  - East Lancashire,chamber-of-trade-east-lancashire,,BB5,lancashire,Lancashire,events,high
+ae1b3bf3-2675-4a60-808f-7a54f1665f75,Chamber of trade  - East Midlands (Derbyshire,chamber-of-trade-east-midlands-derbyshire,,NG1,nottingham,Nottingham,place_name,medium
+dc07302a-77a4-48f4-88ea-ce1af2f78737,Chamber of trade  - Edinburgh,chamber-of-trade-edinburgh,,EH1,edinburgh,Edinburgh,place_name,medium
+7a5a4fd5-108e-4b40-bb18-427a8fa45907,Chamber of trade  - Essex,chamber-of-trade-essex,,CM0,essex,Essex,place_name,medium
+1bd96a30-60f5-41b8-a949-c2fa358ff8fb,Chamber of trade  - Fife,chamber-of-trade-fife,,EH1,edinburgh,Edinburgh,place_name,medium
+5b79f98e-3a41-44b8-b612-f84baa763d75,Chamber of trade  - Glasgow,chamber-of-trade-glasgow,,G1,glasgow,Glasgow,place_name,medium
+685536a8-616c-41ba-8de7-45a1d6f12f54,Chamber of trade  - Greater Birmingham,chamber-of-trade-greater-birmingham,,B1,birmingham,Birmingham,place_name,medium
+66e01f74-8041-4fa7-b33a-389b7637ffb0,Chamber of trade  - Greater Manchester,chamber-of-trade-greater-manchester,,M1,manchester,Manchester,place_name,medium
+0f9d36ab-6549-49b5-8bc3-f77d434d46f3,Chamber of trade  - Hampshire,chamber-of-trade-hampshire,,SO14,hampshire,Hampshire,place_name,medium
+d93cbbd1-f9e4-488e-97b5-a537dcf7e92f,Chamber of trade  - Herefordshire & Worcestershire,chamber-of-trade-herefordshire-worcestershire,,BS1,bristol,Bristol,place_name,medium
+63a08609-79ca-4164-993a-fcf13bdd9926,Chamber of trade  - Hertfordshire,chamber-of-trade-hertfordshire,,AL1,hertfordshire,Hertfordshire,place_name,medium
+04388150-c025-4ac3-bedb-f4be84d23e2b,Chamber of trade  - Hull & Humber,chamber-of-trade-hull-humber,,LS1,leeds,Leeds,place_name,medium
+ac774a1b-853d-442a-a173-faefd6df0390,Chamber of trade  - Inverness,chamber-of-trade-inverness,,EH1,edinburgh,Edinburgh,place_name,medium
+dbbb98f3-d3ec-4dcb-ae10-46a8f80502f6,Chamber of trade  - Kent Invicta,chamber-of-trade-kent-invicta,,CT1,kent,Kent,place_name,medium
+ffc40aee-5cc4-4a6c-8bc3-d9fb9387d02b,Chamber of trade  - Lincolnshire,chamber-of-trade-lincolnshire,,NG1,nottingham,Nottingham,place_name,medium
+3cd11361-66cc-49f5-8e51-99569feedb5b,Chamber of trade  - Liverpool,chamber-of-trade-liverpool,,L1,liverpool,Liverpool,place_name,medium
+a84c03a0-5160-4031-b0b4-dc6eac82745a,Chamber of trade  - London,chamber-of-trade-london,,E1,london,London,place_name,medium
+b4c4c483-c32b-4e2f-955e-7ff4a6bb5847,Chamber of trade  - Norfolk,chamber-of-trade-norfolk,,CB1,cambridge,Cambridge,place_name,medium
+9342493e-4411-4c57-bd12-cbe391953a20,Chamber of trade  - North & Western Lancashire,chamber-of-trade-north-western-lancashire,,PR1,lancashire,Lancashire,place_name,medium
+6810456b-76bb-4a24-9192-434b125014de,Chamber of trade  - Sheffield,chamber-of-trade-sheffield,,S1,sheffield,Sheffield,place_name,medium
+46d8e93e-5c07-477f-a787-46651c7cdc63,Chamber of trade  - Shropshire,chamber-of-trade-shropshire,,B1,birmingham,Birmingham,place_name,medium
+e7f39e09-244b-43b5-930d-c5d8c75f2fa6,Chamber of trade  - Somerset,chamber-of-trade-somerset,,BS1,bristol,Bristol,place_name,medium
+b9a135d6-327c-4e88-bdf7-68c01e246d94,Chamber of trade  - South Cheshire,chamber-of-trade-south-cheshire,,CH1,cheshire,Cheshire,place_name,medium
+3e01b5c1-3a50-4278-9495-251b81d71af6,Chamber of trade  - Staffordshire,chamber-of-trade-staffordshire,,B1,birmingham,Birmingham,place_name,medium
+46a96d0a-ebea-42f9-ab54-f77dccfcec8f,Chamber of trade  - Suffolk,chamber-of-trade-suffolk,,CM0,essex,Essex,place_name,medium
+307a8866-a2aa-4dad-879f-a2dc26eb2650,Chamber of trade  - Surrey,chamber-of-trade-surrey,,GU1,surrey,Surrey,place_name,medium
+291f978a-81bc-4813-acd4-c64702258bd3,Chamber of trade  - Sussex,chamber-of-trade-sussex,,BN1,sussex,Sussex,place_name,medium
+d78a04e0-7160-44e6-a6ba-d4f6cbb59c23,Chamber of trade  - Wirral,chamber-of-trade-wirral,,L1,liverpool,Liverpool,place_name,medium
+ff73de66-339c-4d28-bbeb-a3c73a2bf4ff,Chamber of trade  -West Cheshire & North Wales,chamber-of-trade-west-cheshire-north-wales,,CH1,chester,Chester,events,high
+f571c913-b016-421d-ae15-06766eafeb28,Chambers of Commerce - Greater Birmingham,chambers-of-commerce-greater-birmingham,,B1,birmingham,Birmingham,events,high
+aa60fa2a-5a70-4d25-af1f-bb1278e10aa1,Chartered Institute of Fundraising - East Midlands,chartered-institute-of-fundraising-east-midlands,,NG1,nottingham,Nottingham,place_name,medium
+ca0fef4c-0134-40a9-8bfa-8dbd2911f84a,Chartered Institute of Fundraising - North West,chartered-institute-of-fundraising-north-west,,M1,manchester,Manchester,place_in_description,low
+c9a4eafd-9b9c-443b-b98a-d3de600428cb,Chartered Institute of Fundraising - West Midlands,chartered-institute-of-fundraising-west-midlands,,B1,birmingham,Birmingham,place_name,medium
+3fcda476-c88b-4602-91e1-f42bc155cfc1,Chartered Institute of Public Relations - Greater London,chartered-institute-of-public-relations-greater-london,,E1,london,London,place_name,medium
+fc521f85-bfca-469a-83e8-a7e6520bf491,Chartered Institute of Public Relations - Midlands,chartered-institute-of-public-relations-midlands,,B1,birmingham,Birmingham,place_name,medium
+73e0cfde-0b2c-45e0-acf0-e1f2377bc6a8,Chartered Institute of Public Relations - Scotland,chartered-institute-of-public-relations-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+69ae5627-3a7f-4830-8590-b321df4da175,Chartered Institute of Public Relations - Wessex,chartered-institute-of-public-relations-wessex,,CM0,essex,Essex,place_name,medium
+4813b6ff-a134-474a-b199-b94044693107,CIPS (Chartered Institute of Procurement & Supply) - Bedfordshire & Hertfordshire,cips-chartered-institute-of-procurement-supply-bedfordshire-hertfordshire,,AL1,hertfordshire,Hertfordshire,place_name,medium
+6df4365e-c0df-4fff-ba16-75007e54a59a,CIPS (Chartered Institute of Procurement & Supply) - Birmingham & Coventry,cips-chartered-institute-of-procurement-supply-birmingham-coventry,,B1,birmingham,Birmingham,place_name,medium
+1b986b22-c533-4357-aafe-16746b7c2914,CIPS (Chartered Institute of Procurement & Supply) - Central London,cips-chartered-institute-of-procurement-supply-central-london,,E1,central-london,Central London,place_name,medium
+3ccd37d2-eb84-4166-b1b2-bd0710c4c6c3,CIPS (Chartered Institute of Procurement & Supply) - Derby & East Midlands,cips-chartered-institute-of-procurement-supply-derby-east-midlands,,NG1,nottingham,Nottingham,place_name,medium
+b061cef1-77c6-4fb6-8b71-fc690eb2c6ad,CIPS (Chartered Institute of Procurement & Supply) - Devon & Cornwall,cips-chartered-institute-of-procurement-supply-devon-cornwall,,BS1,bristol,Bristol,place_name,medium
+a98819f9-1f45-4594-b23c-586e47bebad8,CIPS (Chartered Institute of Procurement & Supply) - East of Scotland,cips-chartered-institute-of-procurement-supply-east-of-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+d25ff464-e0b9-461e-8633-1610645024cb,CIPS (Chartered Institute of Procurement & Supply) - Essex,cips-chartered-institute-of-procurement-supply-essex,,CM0,essex,Essex,place_name,medium
+feaac4af-8878-4589-9e05-9d88becc051f,CIPS (Chartered Institute of Procurement & Supply) - Gloucester,cips-chartered-institute-of-procurement-supply-gloucester,,BS1,bristol,Bristol,place_name,medium
+a38fa518-ce7f-4bc0-9b90-1d2f0230f9ec,CIPS (Chartered Institute of Procurement & Supply) - Herefordshire & Worcestershire,cips-chartered-institute-of-procurement-supply-herefordshire-worcestershire,,BS1,bristol,Bristol,place_name,medium
+882a8d78-094a-4c70-894b-415adcb34642,CIPS (Chartered Institute of Procurement & Supply) - Kent,cips-chartered-institute-of-procurement-supply-kent,,CT1,kent,Kent,place_name,medium
+60eebecd-a8ff-4444-b54a-df5c9b25c0d1,CIPS (Chartered Institute of Procurement & Supply) - Manchester,cips-chartered-institute-of-procurement-supply-manchester,,M1,manchester,Manchester,place_name,medium
+ef97d200-4266-489c-994b-ddb3afa596bb,CIPS (Chartered Institute of Procurement & Supply) - North Lancashire,cips-chartered-institute-of-procurement-supply-north-lancashire,,PR1,lancashire,Lancashire,place_name,medium
+0770c66b-4cc8-49cd-9949-111499484ac6,CIPS (Chartered Institute of Procurement & Supply) - North of Scotland,cips-chartered-institute-of-procurement-supply-north-of-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+12dc065d-1234-4fd0-9ef5-b68a47cd6494,CIPS (Chartered Institute of Procurement & Supply) - Peterborough & Cambridge,cips-chartered-institute-of-procurement-supply-peterborough-cambridge,,CB1,cambridge,Cambridge,place_name,medium
+74496a3b-e60a-47f5-afd9-7464fef89e48,CIPS (Chartered Institute of Procurement & Supply) - South London,cips-chartered-institute-of-procurement-supply-south-london,,SE2,south-london,South London,place_name,medium
+3cf96294-2fcc-4183-9962-a745afe23841,CIPS (Chartered Institute of Procurement & Supply) - South Wales,cips-chartered-institute-of-procurement-supply-south-wales,,CF3,cardiff,Cardiff,place_name,medium
+6b73fdd5-4b5d-4107-895d-8edc6e0a01b5,CIPS (Chartered Institute of Procurement & Supply) - South Yorkshire,cips-chartered-institute-of-procurement-supply-south-yorkshire,,S1,sheffield,Sheffield,place_name,medium
+e7610978-fc39-4d8e-87fd-d9120a5194b6,CIPS (Chartered Institute of Procurement & Supply) - Surrey & Sussex,cips-chartered-institute-of-procurement-supply-surrey-sussex,,GU1,surrey,Surrey,place_name,medium
+ca4411ce-ea3f-4bec-bba8-72f7466d7bb6,CIPS (Chartered Institute of Procurement & Supply) - West of Scotland,cips-chartered-institute-of-procurement-supply-west-of-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+6b66219b-f9d8-49b2-a34d-74883b27934b,CIPS (Chartered Institute of Procurement & Supply) - West Wales,cips-chartered-institute-of-procurement-supply-west-wales,,CF3,cardiff,Cardiff,place_name,medium
+611418b4-db4f-410e-95db-4aa6aae27560,CIPS (Chartered Institute of Procurement & Supply) -Cheshire & North Wales,cips-chartered-institute-of-procurement-supply-cheshire-north-wales,,CH1,cheshire,Cheshire,place_name,medium
+c2fc11dd-0618-493c-8972-05bac965d962,Circle Networks,circle-networks,,SK9,cheshire,Cheshire,events,high
+24d41e5f-1797-4dc0-adea-9a960e97d257,City Ladies Networking,city-ladies-networking,,NE8,newcastle,Newcastle,events,high
+18b5d029-cff7-4a0e-a021-11d54aebfdc6,City of Newport Business Club,city-of-newport-business-club,,CF3,cardiff,Cardiff,place_name,medium
+6b18628d-b6b0-4878-bec0-57da8678fa2b,City Professionals Networking (CPN),city-professionals-networking-cpn,,EC2N,central-london,Central London,events,high
+d31f8935-241e-473e-95ba-4ae253a4c617,Club Synergy,club-synergy,,G65,glasgow,Glasgow,events,high
+75d603fa-0eab-41a4-b739-a62601936910,Club Wednesday Sheffield Weds FC,club-wednesday-sheffield-weds-fc,,S1,sheffield,Sheffield,place_name,medium
+1524fb3c-8307-47e0-b2ee-2103650a418a,CoastalNet,coastalnet,,IP12,,,events,high
+bdb6e1fc-e56b-409b-8e72-db466616aa36,Coffee Work Sleep (CWS),coffee-work-sleep-cws,,PR1,lancashire,Lancashire,events,high
+90b74c40-c49c-47d4-a77c-e4db8c706c9f,Collaborate MK,collaborate-mk,,HP6,buckinghamshire,Buckinghamshire,place_in_description,low
+d9b18cf6-2278-4b12-9454-c40dbe9bd640,Colony Networking,colony-networking,,CH1,chester,Chester,events,high
+ad22fc3a-bbb0-437b-a82a-d7a91361f89b,Connect Surrey,connect-surrey,,KT11,surrey,Surrey,events,high
+530566ac-e4c5-44bb-a17d-b4639c34279e,Connect Yorkshire,connect-yorkshire,,LS1,leeds,Leeds,events,high
+02f6aab5-1b6d-48a1-9c13-d680f59d2b0e,Connects Network (Staffordshire),connects-network-staffordshire,,B1,birmingham,Birmingham,place_name,medium
+004fd0d7-b998-4de0-8c67-b78620cdccc6,Cornerstone,cornerstone,,HP6,buckinghamshire,Buckinghamshire,place_in_description,low
+48b62be6-a19f-470e-b8b4-6041ffd704d8,Cotswold Networking Bath,cotswold-networking-bath,,BS1,bristol,Bristol,place_name,medium
+ec32bb3e-1b3d-4d8d-9805-cc73639e9904,Creative Content Company,creative-content-company,,PE1,cambridgeshire,Cambridgeshire,events,high
+0af90e73-d489-4384-ba21-536c09a3d0f6,Cross Reference Networking,cross-reference-networking,,HP8,buckinghamshire,Buckinghamshire,events,high
+dabe87d4-b16f-42ca-a53f-4a8d33b95ae2,CRS Editorial Leeds Netwalk,crs-editorial-leeds-netwalk,,LS1,leeds,Leeds,place_name,medium
+610afd54-3a03-475c-9da1-5587dbc8755d,Cumbria Social Enterprise Partnership,cumbria-social-enterprise-partnership,,PR1,lancashire,Lancashire,place_name,medium
+66ba7b68-6e82-4eff-962f-b5737072ed60,Cynnal Cymru,cynnal-cymru,,CF3,cardiff,Cardiff,place_in_description,low
+63cafb8e-88bf-448f-b7ae-f18e4fe96185,Dales Business Women,dales-business-women,,DL8,,,events,high
+27e247db-dfc0-4dd4-a353-671a22efa88e,Devon Women in Business,devon-women-in-business,,TQ9,bristol,Bristol,events,high
+abcc2b54-543b-4f6a-84e8-4bf54b105d18,Director Golf,director-golf,,RH8,surrey,Surrey,events,high
+aa874acb-585c-4839-a972-cb6f739ea6ca,Down2Business Plymouth,down2business-plymouth,,BS1,bristol,Bristol,place_name,medium
+579edd85-81a0-49cf-be97-f45b3798dee3,Dragons of Newport,dragons-of-newport,,CF3,cardiff,Cardiff,place_name,medium
+8a012e59-cfdb-43f8-ab84-33879bf3fc89,Durham Business Group,durham-business-group,,NE1,newcastle,Newcastle,place_name,medium
+1ab89b27-ccc2-4a50-b968-ad3f0b7f2407,EAGB  (Executive Association of Great Britain),eagb-executive-association-of-great-britain,,E1,london,London,place_in_description,low
+1bbc2601-de94-4182-831d-6ec5acfb1dd2,East Meets West Club,east-meets-west-club,,E1,london,London,place_in_description,low
+115d6395-a804-46ad-b0ff-43a0ae28d783,East Yorkshire Business Expo,east-yorkshire-business-expo,,HU10,,,events,high
+dc3a7dd9-2fcb-467e-8595-ed0e5494ece8,Edinburgh Advice Network,edinburgh-advice-network,,EH1,edinburgh,Edinburgh,place_name,medium
+4f2568ef-bbbb-4106-905e-dcd50cdd2e56,Edinburgh Businesswoman’s Club,,,EH22A,edinburgh,Edinburgh,events,high
+583b4295-09ee-44e3-a399-24f6d53e07ca,Edinburgh Connections,edinburgh-connections,,EH1,edinburgh,Edinburgh,place_name,medium
+a8a3d9c4-177f-49c1-b22c-1ef60a9c7ddc,Edinburgh Rugby Business Club,edinburgh-rugby-business-club,,EH1,edinburgh,Edinburgh,place_name,medium
+b20f40f8-44c9-4a02-b7af-c4b8e8824e5b,Edward Harte Solicitors,edward-harte-solicitors,,BN1,brighton,Brighton,place_in_description,low
+b3f01587-1ee9-48ec-9c1c-739331836b7b,Elevating Business,elevating-business,,CM0,essex,Essex,place_in_description,low
+f0f19138-c233-4449-9354-6700ce239fe9,Elsby and Co,elsby-and-co,,HP6,buckinghamshire,Buckinghamshire,place_in_description,low
+81299cb7-4bba-44fd-a434-b70168f30999,ESG Network,esg-network,,E1,london,London,place_in_description,low
+ac5c87fb-30cc-4be7-b1f8-00954f6011b2,Essex Business Forum,essex-business-forum,,CM0,essex,Essex,place_name,medium
+48c828c6-074f-45f0-961a-c96649dc91c9,Essex Business Partnerships,essex-business-partnerships,,CM0,essex,Essex,place_name,medium
+ebe1d19b-fbcd-44e6-a016-9c3494542bee,Essex Cricket Business Club,essex-cricket-business-club,,CM0,essex,Essex,place_name,medium
+e38ede3f-a1be-4e48-89c4-31553580392b,Fab Networking,fab-networking,,SO14,hampshire,Hampshire,place_in_description,low
+f77e6ade-7c67-4b95-9133-159b29190786,Face2Face Maidenhead Business Networking,face2face-maidenhead-business-networking,,RG1,berkshire,Berkshire,place_name,medium
+40590948-9dd1-44e6-aeb5-c451d2aadbc4,Fig Norwich (Financial Industry Group),fig-norwich-financial-industry-group,,CB1,cambridge,Cambridge,place_name,medium
+eb23864b-e3d7-4eda-8fc9-faa22fd5aeb8,Firefly Hub,firefly-hub,,E1,london,London,place_in_description,low
+0d732062-007a-4477-b293-0d3f9e8752c2,Fore Business - Aberdeen,fore-business-aberdeen,,EH1,edinburgh,Edinburgh,place_name,medium
+5d8ec6dc-78b8-46ee-90eb-b6f7b909d52e,Fore Business - Aylesbury,fore-business-aylesbury,,HP6,buckinghamshire,Buckinghamshire,place_name,medium
+bd1f39ac-f11e-4436-9d1b-3285a861f065,Fore Business - Basingstoke & Newbury,fore-business-basingstoke-newbury,,SO14,hampshire,Hampshire,place_name,medium
+987754b6-40e3-44f5-8df9-950c4c4bdb40,Fore Business - Bath,fore-business-bath,,BS1,bristol,Bristol,place_name,medium
+194b1ca6-e713-4c68-8f41-7c4365e6ccaf,Fore Business - Bedford,fore-business-bedford,,CB1,cambridgeshire,Cambridgeshire,place_name,medium
+cf184956-94af-4749-8bc7-088c769e7bd4,Fore Business - Benfleet (South Essex),fore-business-benfleet-south-essex,,CM0,essex,Essex,place_name,medium
+a350c37b-dc57-431d-82aa-653314e1660d,Fore Business - Birmingham,fore-business-birmingham,,CV7,birmingham,Birmingham,events,high
+ec4d9673-d0b8-4093-8d71-4bc9173c489b,Fore Business - Bournemouth,fore-business-bournemouth,,BH11,bournemouth,Bournemouth,events,high
+11dc06b4-4707-49ef-80fd-6d06771cc502,Fore Business - Bradford,fore-business-bradford,,LS1,leeds,Leeds,place_name,medium
+d6bec7ca-41ce-47d9-8111-223fb77dc034,Fore Business - Brentwood,fore-business-brentwood,,CM0,essex,Essex,place_name,medium
+dab4fe06-e411-406c-af3a-f80ebafa7def,Fore Business - Bristol,fore-business-bristol,,BS1,bristol,Bristol,place_name,medium
+ea773135-d918-41fd-92b2-271ff50f7f29,Fore Business - Cambridge,fore-business-cambridge,,CB1,cambridge,Cambridge,place_name,medium
+54b98329-51c9-4f16-a52c-fd4da28af8e2,Fore Business - Canterbury,fore-business-canterbury,,CT1,kent,Kent,place_name,medium
+a518dcaf-ba3e-4768-8911-a9f183335c9f,Fore Business - Cardiff,fore-business-cardiff,,CF14,cardiff,Cardiff,events,high
+058ac496-d48a-471e-921f-58d167e2969b,Fore Business - Cheltenham,fore-business-cheltenham,,BS1,bristol,Bristol,place_name,medium
+140af514-5516-41a3-913e-96469f7ee775,Fore Business - Chester,fore-business-chester,,CW6,cheshire,Cheshire,events,high
+0df33d0b-2cf8-4af0-b479-a8a7c18b1a18,Fore Business - Cobham,fore-business-cobham,,B1,birmingham,Birmingham,place_name,medium
+eda8dd35-d5a1-4276-9514-e922383b77a4,Fore Business - Colchester,fore-business-colchester,,CH1,chester,Chester,place_name,medium
+626e6ca0-0593-4cb4-b640-9748600c689d,Fore Business - Crewe,fore-business-crewe,,CH1,cheshire,Cheshire,place_name,medium
+ea1e47f3-eabd-4698-92cb-0ac8c913f802,Fore Business - Croydon,fore-business-croydon,,SE2,south-london,South London,place_name,medium
+a12a7e84-ddfd-41f7-8921-993df22f9875,Fore Business - Derby,fore-business-derby,,NG1,nottingham,Nottingham,place_name,medium
+1cfa0c0a-ce02-4d9f-8244-772b1d825d34,Fore Business - Doncaster,fore-business-doncaster,,S1,sheffield,Sheffield,place_name,medium
+f5958498-36c7-454e-969e-a15e0617b801,Fore Business - Dundee,fore-business-dundee,,EH1,edinburgh,Edinburgh,place_name,medium
+5326536d-9402-4fc8-a198-dd18cce6d293,Fore Business - Edinburgh,fore-business-edinburgh,,EH1,edinburgh,Edinburgh,place_name,medium
+499b6fe0-8a55-41a5-9aa8-6ae54c0a579c,Fore Business - Guildford,fore-business-guildford,,GU1,surrey,Surrey,place_name,medium
+f1e7aeae-dcb2-481e-bb21-8c4546c0ef65,Fore Business - Harrogate,fore-business-harrogate,,LS1,leeds,Leeds,place_name,medium
+adf09048-0327-4ab3-8530-249681e487da,Fore Business - Horsham,fore-business-horsham,,BN1,sussex,Sussex,place_name,medium
+6b82e135-2e3e-4c63-a0c0-3e2a4f3e34f5,Fore Business - Huddersfield,fore-business-huddersfield,,LS1,leeds,Leeds,place_name,medium
+8395ebe6-7021-4571-a9ec-c21963497100,Fore Business - Hull,fore-business-hull,,LS1,leeds,Leeds,place_name,medium
+5416cc4a-3fed-4747-a5f7-36c9f656d46d,Fore Business - Ipswich,fore-business-ipswich,,CM0,essex,Essex,place_name,medium
+454cdb5e-b7fe-4aaf-a0eb-b56d59d82b3d,Fore Business - Leeds,fore-business-leeds,,LS1,leeds,Leeds,place_name,medium
+a525184e-1545-4485-bbd4-dfde5a9514e4,Fore Business - Leicester,fore-business-leicester,,LE1,leicester,Leicester,place_name,medium
+ec9bad26-f89f-43d5-8ea8-0db2ab682a7d,Fore Business - Liverpool,fore-business-liverpool,,L1,liverpool,Liverpool,place_name,medium
+071eb2b3-7d39-4b67-ae5c-cce05cbdc08e,Fore Business - Maidstone,fore-business-maidstone,,CT1,kent,Kent,place_name,medium
+079700c3-c195-404a-b491-bbcf61181a32,Fore Business - Manchester North,fore-business-manchester-north,,M1,manchester,Manchester,place_name,medium
+e476ffe9-fe63-4fae-9836-6acd43f91e24,Fore Business - Manchester South,fore-business-manchester-south,,M1,manchester,Manchester,place_name,medium
+fc6aca71-4b3e-4874-b031-9590f05a0dda,Fore Business - Marlow & Maidenhead,fore-business-marlow-maidenhead,,RG1,berkshire,Berkshire,place_name,medium
+86864a27-192a-4c1b-83dd-cece3d51a507,Fore Business - Newcastle,fore-business-newcastle,,NE3,newcastle,Newcastle,events,high
+28dbc0f3-6612-4957-ba58-abd5d9444712,Fore Business - Northampton,fore-business-northampton,,HP6,buckinghamshire,Buckinghamshire,place_name,medium
+b3f1fbf4-deea-489b-aa9a-7075072c7f82,Fore Business - Norwich,fore-business-norwich,,CB1,cambridge,Cambridge,place_name,medium
+230caf15-35d2-41ad-9e01-9d92552180ce,Fore Business - Nottingham,fore-business-nottingham,,NG1,nottingham,Nottingham,place_name,medium
+b5d2c74b-f94a-4739-a8ad-715fccccee76,Fore Business - Plymouth,fore-business-plymouth,,BS1,bristol,Bristol,place_name,medium
+ea6a2a7b-838f-4f89-9ce1-3e8bc772b67b,Fore Business - Preston,fore-business-preston,,PR1,lancashire,Lancashire,place_name,medium
+a69c96a1-3b4b-4373-ab65-1f0cc20739f3,Fore Business - Reading,fore-business-reading,,RG1,reading,Reading,place_name,medium
+8a7aae31-a21a-4ad4-9c75-58b43ce98828,Fore Business - Sheffield,fore-business-sheffield,,S1,sheffield,Sheffield,place_name,medium
+201dce66-ea08-404d-974a-0d5f8afc77bb,Fore Business - Southampton,fore-business-southampton,,SO14,hampshire,Hampshire,place_name,medium
+f18b73a0-225d-46b2-8c2f-50738e071f5a,Fore Business - Swindon,fore-business-swindon,,BS1,bristol,Bristol,place_name,medium
+d7542d4b-e382-4a12-9e3a-c820dbb95f51,Fore Business - Taunton,fore-business-taunton,,BS1,bristol,Bristol,place_name,medium
+1109d426-756a-4327-b0be-bf57ff48742a,Fore Business - Warrington,fore-business-warrington,,CH1,cheshire,Cheshire,place_name,medium
+98917aa3-c111-4d16-b1d7-a401b2943aff,Fore Business - Watford,fore-business-watford,,AL1,hertfordshire,Hertfordshire,place_name,medium
+0fcd8582-0709-44e5-b463-292fd3f73a52,Fore Business - Wirral,fore-business-wirral,,L1,liverpool,Liverpool,place_name,medium
+fd8f3320-1540-407a-989a-cc595f50271e,Fore Business - Wokingham,fore-business-wokingham,,RG1,berkshire,Berkshire,place_name,medium
+0e0c05cf-6326-4b31-907c-e3289d15cc7a,Fore Business - Wolverhampton,fore-business-wolverhampton,,B1,birmingham,Birmingham,place_name,medium
+a671f2a5-f446-469f-a606-ef2689c6740d,Fore Business -Belfast North,fore-business-belfast-north,,BT1,belfast,Belfast,place_name,medium
+491ba80c-f882-4080-bcb5-c6b4d44854a4,Foyle Women's Information Network,foyle-women-s-information-network,,E1,london,London,place_in_description,low
+87bc1736-f4b8-45a9-a7ba-804e12fbc292,FSA Herefordshire (Forest School Association),fsa-herefordshire-forest-school-association,,BS1,bristol,Bristol,place_name,medium
+f736a3ab-4534-4beb-a583-d4b1b13ef9ad,FSB (Federation of Small Businesses) - East Midlands,fsb-federation-of-small-businesses-east-midlands,,NG1,nottingham,Nottingham,place_name,medium
+0e57f4c3-2d9a-4fe6-add2-7e0f91a0040d,FSB (Federation of Small Businesses) - Greater London,fsb-federation-of-small-businesses-greater-london,,E1,london,London,place_name,medium
+3ac0176b-b903-46df-9801-26bd702fc78b,FSB (Federation of Small Businesses) - Scotland,fsb-federation-of-small-businesses-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+28c31e5d-8d74-42ff-bc36-eeaea0851144,FSB (Federation of Small Businesses) - Wales,fsb-federation-of-small-businesses-wales,,CF3,cardiff,Cardiff,place_name,medium
+311f4dd7-9429-4a24-90c1-32f732cf7a90,FSB London Bootcamp  Spring Into Success,fsb-london-bootcamp-spring-into-success,,E1,london,London,place_name,medium
+18c162b6-f87d-40f0-a285-95556944558a,FWB (Fife Women in Business),fwb-fife-women-in-business,,KY2,edinburgh,Edinburgh,events,high
+16d5089f-a670-469d-8044-ea87206a6837,G12 Business Club,g12-business-club,,BS1,bristol,Bristol,place_in_description,low
+42205460-059b-4c70-9f6b-e4bb0eb65e85,Gard & Co. Solicitors,gard-co-solicitors,,BS1,bristol,Bristol,place_in_description,low
+9235993f-1aa2-49f2-bffa-e716e90b4758,Gateshead Business Club,gateshead-business-club,,NE1,newcastle,Newcastle,place_name,medium
+799f735f-e4a8-422f-9599-edcacd628f30,Gatwick Diamond Business,gatwick-diamond-business,,BN1,sussex,Sussex,place_name,medium
+181efa46-918d-464f-bbae-f6c080e07125,Gay Professional Network (GPN),gay-professional-network-gpn,,E1,london,London,place_in_description,low
+a1926fa0-c1bf-4cc9-a619-0541199156ab,Glasgow Business Club,glasgow-business-club,,G41,glasgow,Glasgow,events,high
+373cdaaf-39a5-4800-b3a6-dbdcfa1b7681,Glasgow Girls Club,glasgow-girls-club,,G1,glasgow,Glasgow,place_name,medium
+9a0f47ca-ab6c-4562-aac3-fa55871fb42a,Global Scot,global-scot,,EH1,edinburgh,Edinburgh,place_in_description,low
+ee4b7825-4728-4f24-b18f-4c84ea259c30,GLOW (Greater Lincolnshire's Outstanding Women),glow-greater-lincolnshire-s-outstanding-women,,NG1,nottingham,Nottingham,place_name,medium
+ea73c0ad-7055-45be-b9c5-3be8d462aefb,GMECN,gmecn,,M1,manchester,Manchester,place_in_description,low
+96a01d90-905f-444f-8f3a-2154bd62cfd8,Good2Great,good2great,,B1,birmingham,Birmingham,place_in_description,low
+80d10f82-13b9-4f5d-8ad7-9a847d257f86,Grafters - Berkshire Royal,grafters-berkshire-royal,,RG1,berkshire,Berkshire,place_name,medium
+3ce70cf8-4771-44ba-9e46-9e3f7e06d488,Grafton Banks Finance,grafton-banks-finance,,E1,london,London,place_in_description,low
+ff63f205-fd98-425b-bcd6-ab5c8c7351b3,GWN (LGBTQ+ Women's Network),gwn-lgbtq-women-s-network,,E1,london,London,place_in_description,low
+4dbe484b-be78-40ba-be2d-98919fe82a6b,H&F (Hammersmith & Fulham),h-f-hammersmith-fulham,,E1,london,London,place_in_description,low
+f8f8e4e0-845b-4875-87fe-dda1a011a810,Halifax Opportunites Trust,halifax-opportunites-trust,,LS1,leeds,Leeds,place_name,medium
+b6fc8bfc-7c71-4b30-b006-f5598ad831ff,Hammersmith Networking,hammersmith-networking,,W2,west-london,West London,place_in_description,low
+79dc618f-d7a2-4515-af98-d21be58e7c60,Harrogate & District Community Action,,,HG4,leeds,Leeds,events,high
+8f3ef1f1-4058-495c-991d-ada374b970fd,Harrogate Business Group,harrogate-business-group,,LS1,leeds,Leeds,place_name,medium
+e1bb058f-a84c-4d29-b03c-fe1e5e42c125,Harrogate District Chamber of Commerce,harrogate-district-chamber-of-commerce,,LS1,leeds,Leeds,place_name,medium
+8b82b227-b0bd-452b-9a03-adad53542777,Hashtag Events Business Club,hashtag-events-business-club,,AB21,,,events,high
+fa1a38c2-baf2-4678-b2b7-0a6616dcc057,Herefordshire Green Network,herefordshire-green-network,,BS1,bristol,Bristol,place_name,medium
+9f19415d-4c49-4092-9651-4488d4afb12c,Herefordshire Health & Safety Group (HHSG),herefordshire-health-safety-group-hhsg,,BS1,bristol,Bristol,place_name,medium
+cb8f01d4-b6dc-4c68-8267-1ff8f7036b04,Herefordshire Means Business,herefordshire-means-business,,BS1,bristol,Bristol,place_name,medium
+6e3e85fa-d0cb-4c6f-9892-8b8f1a4865d4,HEY Growth Hub,hey-growth-hub,,LS1,leeds,Leeds,place_in_description,low
+8ee9e7ac-3d74-49b5-9daf-21e6b9a490ca,HEY Skills Network,hey-skills-network,,LS1,leeds,Leeds,place_in_description,low
+e80bbe08-beb2-4296-ae37-ea1d7599b705,High Billinghurst Farm,high-billinghurst-farm,,E1,london,London,place_in_description,low
+cf9bb974-fa2b-4d4c-a9d3-cc16dd969e34,Home Grown Club,home-grown-club,,E1,london,London,place_in_description,low
+428f5d0f-9dbe-478f-a573-ecd92e8cc539,Home House,home-house,,E1,london,London,place_in_description,low
+d31c8bee-dc37-4eb7-aaa2-ad97189a4002,HR Technologies UK,hr-technologies-uk,,E1,london,London,place_in_description,low
+c2d17a1b-3b56-46ee-8446-fc44bd657935,Hudsons Property,hudsons-property,,E1,central-london,Central London,place_in_description,low
+d43dc8b4-b1be-431c-909f-5cac2021d033,Hydrogen Scotland,,,G3,glasgow,Glasgow,events,high
+92737beb-d81d-4488-a242-913a1a236f4d,I Want 2 Network,i-want-2-network,,E1,london,London,place_in_description,low
+a69176df-93c0-4a2b-9bd5-e3602ee9330b,Invest Hull,invest-hull,,LS1,leeds,Leeds,place_name,medium
+3ff64d47-d554-4f92-a4cb-a7572a7432ad,Invest in North Lincolnshire,invest-in-north-lincolnshire,,NG1,nottingham,Nottingham,place_name,medium
+f62bdfae-8b74-4b3c-957b-aea6944c90aa,Island Networking – Sheffield & Rotherham,island-networking-sheffield-rotherham,,S1,sheffield,Sheffield,place_name,medium
+3e21aa6b-1315-450a-b69b-713fe519e748,ISSBA (Ipswich & Suffolk Small Business Association),issba-ipswich-suffolk-small-business-association,,CM0,essex,Essex,place_name,medium
+e04ba788-7c7b-49b7-a30d-f9f9ea8f6df2,ISTN (Ipswich & Suffolk Tech Network),istn-ipswich-suffolk-tech-network,,CM0,essex,Essex,place_name,medium
+2e1f7a64-0f98-453d-8a32-72ab92489d59,Iungoworks,,,CF10,cardiff,Cardiff,events,high
+40b51363-05be-46ad-9f62-3ebbc9cd4eec,JBN (Jewish Business Network),jbn-jewish-business-network,,CH1,chester,Chester,place_in_description,low
+009f3975-4850-43a3-8396-a2ccf7d67d67,K107 FM,k107-fm,,EH1,edinburgh,Edinburgh,place_in_description,low
+02d65670-3065-4963-a1c6-86b9dd04e269,Ladies Lunch Plymouth,ladies-lunch-plymouth,,BS1,bristol,Bristol,place_name,medium
+63889ae1-2170-40c8-a5a2-9c0e7cd54a09,Ladies Network,ladies-network,,CB1,cambridge,Cambridge,place_in_description,low
+d4dda67b-7650-4242-8606-c8d181baa290,Lanarkshire Business Group,lanarkshire-business-group,,G1,glasgow,Glasgow,place_name,medium
+e2b0372c-19af-4e47-bca2-1f885b905731,Leading Edge Business Networking,leading-edge-business-networking,,BH22,bournemouth,Bournemouth,postcode_in_text,high
+32868a7e-17b0-4cb9-9461-5798cfb5757e,Leeds Involving People,leeds-involving-people,,LS1,leeds,Leeds,place_name,medium
+855125ed-8f10-4038-843a-88fce7671b74,Leicester Hotshots,leicester-hotshots,,LE1,leicester,Leicester,place_name,medium
+f0d63df5-8664-4af0-a8fd-d8bae151e619,Leicester Tigers Business Club,leicester-tigers-business-club,,LE1,leicester,Leicester,place_name,medium
+6626e5ed-4f1a-4661-a82d-66ba239a234f,Leicestershire Business Voice,leicestershire-business-voice,,LE1,leicester,Leicester,place_name,medium
+614e953a-cb08-4e7b-8ed0-37e6f4b08484,Let's Do Business,let-s-do-business,,PR1,lancashire,Lancashire,place_in_description,low
+2d342aad-e4a5-4cad-9a72-a7f137671732,Levi Solicitors LLP,levi-solicitors-llp,,E1,london,London,place_in_description,low
+aedd44ea-67b0-46ee-b3a6-b9bb21fd01d3,LJLD (Leeds Junior Lawyers Division),ljld-leeds-junior-lawyers-division,,LS1,leeds,Leeds,place_name,medium
+59f9f218-217f-43f3-a653-9ec98fb9bd15,Llanidloes Networking,llanidloes-networking,,CF3,cardiff,Cardiff,place_in_description,low
+a2325ca2-3bfa-43ff-9c81-51af7cfb0399,Local Business Connections,local-business-connections,,LE1,leicester,Leicester,place_in_description,low
+4877a77f-fc08-4ef8-8692-f665f23e458f,London Business Network,london-business-network,,E1,london,London,place_name,medium
+7f8d21fa-831f-4be8-ab72-8a3a270bbe32,London Business Society,london-business-society,,E1,london,London,place_name,medium
+9a6a91c1-8246-4e1c-a9d8-f8982173820b,London Development Network (LDN),london-development-network-ldn,,E1,london,London,place_name,medium
+a88d9a44-d831-47e6-8d51-1f387ff8fbec,London HR Connection,london-hr-connection,,E1,london,London,place_name,medium
+e155d15b-7cf3-46a7-9c21-1be68b27a611,London International Stationery Show,london-international-stationery-show,,E1,london,London,place_name,medium
+df43ae06-c74f-4a8e-b645-4ced1a1cff64,London Networking Group,london-networking-group,,E1,london,London,place_name,medium
+32d22df0-4519-423e-9abf-04dc149a5bbf,London Referral Network,london-referral-network,,E1,london,London,place_name,medium
+6c72c071-de79-43b2-b1ab-ab88a757ff71,London Women's Forum,london-women-s-forum,,E1,london,London,place_name,medium
+1b05a9b8-cdf8-4704-9930-51d027b40e1b,LondonFintechs,londonfintechs,,E1,london,London,place_name,medium
+af128888-0ab6-4620-96e1-20e6cacedcbe,Love Business Networking (East Midlands),love-business-networking-east-midlands,,NG1,nottingham,Nottingham,place_name,medium
+9658196b-2822-45de-8b83-19bc75b22695,Lynea Architects,lynea-architects,,BS1,bristol,Bristol,place_in_description,low
+45c195ef-287c-40f3-b89f-892a5f0bfd47,M4 Business Network,m4-business-network,,CF3,cardiff,Cardiff,place_in_description,low
+60097ffd-e2ed-4d3b-9f2b-672ef0bb88f6,Marches Growth Hub,marches-growth-hub,,BS1,bristol,Bristol,place_in_description,low
+b38935fe-550d-4033-a88b-c9d697b3852f,MHN (Manchester Hospitality Network),mhn-manchester-hospitality-network,,M1,manchester,Manchester,place_name,medium
+5f5ff47f-b241-426d-bc7f-d2fe947089d9,Mid Devon Network,mid-devon-network,,BS1,bristol,Bristol,place_name,medium
+06c272b7-8e05-417f-9270-09898fb9c653,Midlands Business Network,midlands-business-network,,B1,birmingham,Birmingham,place_name,medium
+99be9b84-a617-4af4-81b6-92678de8eada,MLUXE,mluxe,,BH1,bournemouth,Bournemouth,place_in_description,low
+3c5b0355-33f3-4b98-ae18-00243d37766b,Momentous Relocation,momentous-relocation,,E1,london,London,place_in_description,low
+f65c42c5-889d-449a-84a7-69670eb30459,Moray Business Women,moray-business-women,,IV30,,,events,high
+56f0cc95-8050-4b02-a743-c161e85962af,Motion Graphics Design,motion-graphics-design,,E1,london,London,place_in_description,low
+10929af8-81c6-4a56-813d-25ad237fa157,Mums in Business,mums-in-business,,CT1,kent,Kent,place_in_description,low
+2f8a2d5c-b016-4a75-adea-1d6f24cb99af,MWMG (Mid Wales Manufacturing Group),mwmg-mid-wales-manufacturing-group,,CF3,cardiff,Cardiff,place_name,medium
+cc9862a0-0159-404d-8212-5f76ca9b1c81,My Legal Services,my-legal-services,,E1,london,London,place_in_description,low
+ac53ea98-36f2-4e1a-a0fd-c6fa71f1a97a,My London Solicitors,my-london-solicitors,,E1,london,London,place_name,medium
+2ee598f3-c1f5-4ee5-9cf1-e23aed148a05,N4B (Networking4breakfast),n4b-networking4breakfast,,E1,london,London,place_in_description,low
+17483360-4679-4be7-bb21-e8c681c5d391,Nash and Co Solicitors,nash-and-co-solicitors,,BS1,bristol,Bristol,place_in_description,low
+cf48e3d1-b9a1-4e89-9aac-201bb5f9714d,Network B2B,network-b2b-3,,NE30,newcastle,Newcastle,events,high
+0224c364-b4bb-4ed4-b2b3-ad9c799f4be8,Network Cornwall,network-cornwall,,BS1,bristol,Bristol,place_name,medium
+170677c9-9165-4bd0-8fbf-dd2d6c0174c8,Network In,network-in,,PR1,lancashire,Lancashire,place_in_description,low
+6cbe2e0b-b2b8-4d3e-9870-6ac6cfe9ed51,Network LE,network-le,,LE1,leicester,Leicester,place_in_description,low
+583b8992-0f80-4606-9e93-33f1bb2ee0d8,Network Plymouth,network-plymouth,,BS1,bristol,Bristol,place_name,medium
+4136a01d-1fb2-4eee-9bf9-fb93b7cab958,Network4Business,network4business,,AL1,hertfordshire,Hertfordshire,place_in_description,low
+16c4f640-2514-4766-8df2-4fece77a51e1,NetworkIN,networkin,,PR1,lancashire,Lancashire,place_in_description,low
+cee8d1a9-5caa-4d01-b5b5-ea2793450459,Networking 4 Essex Women (NEW),networking-4-essex-women-new,,CM0,essex,Essex,place_name,medium
+9787927b-b74f-4e87-bfbc-2c4efa9c87ae,Networking Business Breakfast (University of Hull),networking-business-breakfast-university-of-hull,,LS1,leeds,Leeds,place_name,medium
+604ba2ac-6a24-4379-8185-51a2c34d4bd9,Networking Essex,networking-essex,,CM0,essex,Essex,place_name,medium
+eb06ea83-5ff7-4ce6-9228-a99a053c1f21,Networking London,networking-london,,E1,london,London,place_name,medium
+612ac65e-769b-4afc-8e8f-372325cf47a4,networx4business,networx4business,,CH1,cheshire,Cheshire,place_in_description,low
+a763c9a2-efb5-4c27-8555-378fdae5ab10,Newbury Business Group,newbury-business-group,,RG14,berkshire,Berkshire,events,high
+b0666610-7e5d-4eb1-9bee-ac929817f81f,Newcastle United Business Club,newcastle-united-business-club,,NE1,newcastle,Newcastle,place_name,medium
+27985e37-5264-4d65-8284-9ec1ae3c9919,Nexus,nexus,,LS1,leeds,Leeds,place_in_description,low
+c56011b9-f0ec-43d4-9ccd-843f7f6eeee5,Niki Paterson Design,niki-paterson-design,,EH1,edinburgh,Edinburgh,place_in_description,low
+60c6869a-2905-4e4e-b814-ed2c3d4a7531,NNBN,nnbn,,HP6,buckinghamshire,Buckinghamshire,place_in_description,low
+6f38711e-af4f-401f-91d8-cdf157de8698,Norfolk Network,norfolk-network,,CB1,cambridge,Cambridge,place_name,medium
+df82e838-1436-4239-91c0-29a3fb0b2d6f,Norfolk Women's Marketing Network (NWM Network),norfolk-women-s-marketing-network-nwm-network,,CB1,cambridge,Cambridge,place_name,medium
+bcf94ef1-b5b1-405d-b27b-e38b3b9b2c6d,North & Western Lancashire Chamber of Commerce,north-western-lancashire-chamber-of-commerce,,PR1,lancashire,Lancashire,place_name,medium
+79352028-fab1-42a0-8afa-f87d755c46ed,North Wales Business Club,north-wales-business-club,,CF3,cardiff,Cardiff,place_name,medium
+243628af-e579-4698-8dd0-d785996e0cde,Norwich Business Women's Network (NBWN),norwich-business-women-s-network-nbwn,,CB1,cambridge,Cambridge,place_name,medium
+90110326-1022-4c24-a426-d3b9ce36759d,Norwich Kitty Business Networking Group,norwich-kitty-business-networking-group,,CB1,cambridge,Cambridge,place_name,medium
+015423a4-47db-44b6-8938-b8c5284829f0,Nottingham City Business Club,nottingham-city-business-club,,NG1,nottingham,Nottingham,place_name,medium
+924aed15-a77b-449f-b279-f8a3830e960c,Nottingham Partners,nottingham-partners,,NG1,nottingham,Nottingham,place_name,medium
+6cccec67-62a8-4155-a425-0309f11042e3,Nottinghamshire Business Support,nottinghamshire-business-support,,NG1,nottingham,Nottingham,place_name,medium
+88ce0386-0450-4866-a6b6-1249b9cb4b57,Nottinghamshire Women's Centre,nottinghamshire-women-s-centre,,NG1,nottingham,Nottingham,place_name,medium
+107ed43b-083e-4029-85f8-c14093b20026,NWS (North Wales Social),nws-north-wales-social,,CF3,cardiff,Cardiff,place_name,medium
+0250432a-200b-4de2-b01e-c6fa8c9239a9,Officers' Association Scotland,officers-association-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+ddb84f7f-6c37-4376-9d82-779c757cada4,Opendoorz,opendoorz,,HP6,buckinghamshire,Buckinghamshire,place_in_description,low
+78604b20-d4f6-484f-8de8-360e316929d7,OxfordSTEM.Network,oxfordstem-network,,OX1,oxford,Oxford,place_name,medium
+559426b5-7d92-4404-8358-3ff40e44af6f,PA Surveyors,pa-surveyors,,BN1,brighton,Brighton,place_in_description,low
+e3746649-8207-4d54-bf94-b3485315b158,Parallax Counselling,parallax-counselling,,L1,liverpool,Liverpool,place_in_description,low
+b7a1e158-521d-4c07-a773-c3b6e2971b98,Pathway2Grow (Coffee & Natter),pathway2grow-coffee-natter,,M1,manchester,Manchester,place_in_description,low
+83af6f10-946b-4a6d-b47c-0be954611a45,Pearl Accountants,pearl-accountants,,E1,london,London,place_in_description,low
+f8979a24-c677-489e-83d6-c438c7ff1b66,Personal Training Didsbury,personal-training-didsbury,,M1,manchester,Manchester,place_in_description,low
+26595f95-16cb-4f50-bcaa-edb7905d11af,Pip's Test,pip-s-test,,YO42,,,events,high
+5f4e6752-3d61-45a4-84b1-852f97a976c7,Plymouth Business Network,plymouth-business-network,,BS1,bristol,Bristol,place_name,medium
+ff736a89-fdd3-49bd-a006-d459b4fcbc1b,POP Connect,pop-connect,,AL1,hertfordshire,Hertfordshire,place_in_description,low
+8b5b2aad-86f8-41ef-b7df-93a57db37f21,PPN (Progressive Property Network),ppn-progressive-property-network,,WA4,cheshire,Cheshire,events,high
+38ef8f01-5249-49f4-97ef-42d794d15dc0,PPN (Progressive Property Network) - Blackfriars London,ppn-progressive-property-network-blackfriars-london,,EC4A,central-london,Central London,events,high
+58e44d2c-5443-4004-a417-4f6700710cfd,PPN (Progressive Property Network) - Bournemouth,ppn-progressive-property-network-bournemouth,,BH1,bournemouth,Bournemouth,events,high
+4d14b5ce-24f3-4da6-a981-fd083e1d6f05,PPN (Progressive Property Network) - Brentwood,ppn-progressive-property-network-brentwood,,RM3,essex,Essex,events,high
+8cd84b53-c110-4c59-bfd6-01571b965a95,PPN (Progressive Property Network) - Glasgow,ppn-progressive-property-network-glasgow,,G1,glasgow,Glasgow,place_name,medium
+61b058d1-8d7d-43f2-a329-f3e50fd8c779,PPN (Progressive Property Network) - Ipswich,ppn-progressive-property-network-ipswich,,CM0,essex,Essex,place_name,medium
+ff4f82ab-ae0f-4245-b9af-c202e9f3a031,PPN (Progressive Property Network) - Leeds,ppn-progressive-property-network-leeds,,LS1,leeds,Leeds,place_name,medium
+b4934c1f-c2eb-43cc-8751-0f9d4d97a8d7,PPN (Progressive Property Network) - Liverpool,ppn-progressive-property-network-liverpool,,L1,liverpool,Liverpool,place_name,medium
+ad561598-6bd3-40cc-864a-87e7d46ce579,PPN (Progressive Property Network) - Milton Keynes,ppn-progressive-property-network-milton-keynes,,HP6,buckinghamshire,Buckinghamshire,place_name,medium
+0d132b54-37d7-48d2-a30b-f5f013a2483e,PPN (Progressive Property Network) - Oxford,ppn-progressive-property-network-oxford,,OX1,oxford,Oxford,place_name,medium
+2e28291c-868d-4b65-93be-5a1c0025a4b5,PPN (Progressive Property Network) - Peterborough,ppn-progressive-property-network-peterborough,,CB1,cambridgeshire,Cambridgeshire,place_name,medium
+e4b0208e-021d-4b15-8bf4-70382f01e021,PPN (Progressive Property Network) - Preston & Fylde,ppn-progressive-property-network-preston-fylde,,PR1,lancashire,Lancashire,place_name,medium
+7dfee8b7-4884-4500-893b-7115bb1ca77b,PPN (Progressive Property Network) - Sheffield,ppn-progressive-property-network-sheffield,,S1,sheffield,Sheffield,place_name,medium
+55e8a130-73af-4ab4-b443-cca852af6dc0,PPN (Progressive Property Network) - South Manchester,ppn-progressive-property-network-south-manchester,,SK9,cheshire,Cheshire,events,high
+7cebc074-68b1-4bd9-8a00-32c9100b9612,PPN (Progressive Property Network) - Stratford London,ppn-progressive-property-network-stratford-london,,E1,london,London,place_name,medium
+2243f373-b14c-4d9c-8dbb-91afc9af4aa6,PPN (Progressive Property Network) - Worcester,ppn-progressive-property-network-worcester,,B1,birmingham,Birmingham,place_name,medium
+838cab26-0685-4946-87a4-b921de022f88,Premier GT Ltd,premier-gt-ltd,,BN1,sussex,Sussex,place_in_description,low
+5b41a20f-3e6f-4a2e-89f0-7c89da716318,Procon Nottinghamshire,procon-nottinghamshire,,NG1,nottingham,Nottingham,place_name,medium
+24b20e5c-b28b-48f8-ab0f-453e12eacfcc,Property & Poppadoms,,,L3,liverpool,Liverpool,events,high
+da2088be-02ce-4b29-bf05-c990bf45dca4,Property Foundations Group,property-foundations-group,,RG1,reading,Reading,place_in_description,low
+75f008f4-53de-4860-8179-c43f54ebd9d8,Radvan Joinery,radvan-joinery,,BH1,bournemouth,Bournemouth,place_in_description,low
+28c82f48-8528-4e95-9140-3b4b34dfb9ce,Rawlinson Pryde & Partners,rawlinson-pryde-partners,,CB1,cambridgeshire,Cambridgeshire,place_in_description,low
+d74c6da7-b9bb-41c0-9acd-930a023d9ad0,Reading Business Club,reading-business-club,,RG1,reading,Reading,place_name,medium
+c6af4a88-4683-4298-b29c-f6ad9dec8bc5,Real5 Networking - Bristol,real5-networking-bristol,,BS1,bristol,Bristol,place_name,medium
+50373a81-8f50-4e90-95a4-269f1fe96b92,Real5 Networking - Knutsford & Altrincham,real5-networking-knutsford-altrincham,,M1,manchester,Manchester,place_name,medium
+3b3af086-afb2-42de-ad3e-343c5da69593,Real5 Networking - Liverpool,real5-networking-liverpool,,L1,liverpool,Liverpool,place_name,medium
+3776c68c-8348-47b5-95ce-5d6aa8e14416,Real5 Networking - Liverpool South,real5-networking-liverpool-south,,L1,liverpool,Liverpool,place_name,medium
+d0ba10a1-0b87-4e04-8567-6de658082c1c,Real5 Networking - St Helens,real5-networking-st-helens,,L1,liverpool,Liverpool,place_name,medium
+02cec39f-3aa3-4b6a-b4c5-333397018d68,Real5 Networking - Warrington East,real5-networking-warrington-east,,CH1,cheshire,Cheshire,place_name,medium
+166762de-509c-408d-8b43-f807ec7473b7,Real5 Networking - Wigan,real5-networking-wigan,,PR1,lancashire,Lancashire,place_name,medium
+a737807a-520f-4609-bacf-b3fe9a95f744,Real5 Networking - Wilmslow & Alderley Edge,real5-networking-wilmslow-alderley-edge,,CH1,cheshire,Cheshire,place_name,medium
+6c8eae2a-59bc-49bb-9bed-f166a17d6939,Real5 Networking - Windsor & Maidenhead,real5-networking-windsor-maidenhead,,RG1,berkshire,Berkshire,place_name,medium
+93e21db1-eb69-437a-9b61-d5582e7bb9d5,Real5 Networking - Wirral,real5-networking-wirral,,L1,liverpool,Liverpool,place_name,medium
+c079f610-1643-4554-baa8-28bcdf67023c,Rebel Meetups (Oxford),rebel-meetups-oxford,,OX1,oxford,Oxford,place_name,medium
+7c4404f4-1e75-4daf-bc5e-ea2a40e8febe,Revitalise Networking Club,revitalise-networking-club,,EH1,edinburgh,Edinburgh,place_in_description,low
+6ce390a0-a5a2-4e5b-8930-3c819cc1bde7,Ride Executive Bristol,ride-executive-bristol,,BS1,bristol,Bristol,place_name,medium
+56b791ff-09e1-4969-a3dc-065192337c96,ROBIN (Responsible Oxfordshire Business Involvement Network),robin-responsible-oxfordshire-business-involvement-network,,OX1,oxfordshire,Oxfordshire,place_name,medium
+a95af26c-cd9d-42ac-9aa8-5fb1e2842212,Rothera Bray Solicitors,rothera-bray-solicitors,,NG1,nottingham,Nottingham,place_in_description,low
+4c9a7598-bd53-4c91-a801-819a413f117c,RSViP Network,rsvip-network,,NG1,nottingham,Nottingham,place_in_description,low
+fd00b3ee-ba56-4f52-843f-229317121190,SAM Networking Ltd,sam-networking-ltd,,LS1,leeds,Leeds,place_in_description,low
+cd10a0ba-94ea-4fce-9d9f-71a9fd354a96,Sarah Heffer Accountancy Ltd,sarah-heffer-accountancy-ltd,,CB1,cambridge,Cambridge,place_in_description,low
+2ddb7ed7-549d-4caf-89e5-102b527738bd,Saville & Co Scrivener Notaries,saville-co-scrivener-notaries,,E1,london,London,place_in_description,low
+41319237-2033-4c5a-983d-0a12221f5ed3,SBEN (Staffordshire Business & Environment Network),sben-staffordshire-business-environment-network,,B1,birmingham,Birmingham,place_name,medium
+b1c7f012-682f-482a-b5d9-d219c5592a57,Scottish National Network,scottish-national-network,,EH1,edinburgh,Edinburgh,place_in_description,low
+554d0e99-33f9-4ab5-b11e-2b97b8d87df7,ScreenPop,screenpop,,CH1,cheshire,Cheshire,place_in_description,low
+8e8d67ac-d8ce-4c4d-821a-e216f5b01fdb,Search Norwich,search-norwich,,CB1,cambridge,Cambridge,place_name,medium
+0d45a56b-507b-4f57-8933-a776227f46fd,SEO Expert Paul Hoda,seo-expert-paul-hoda,,E1,london,London,place_in_description,low
+4f19dfd9-3c52-4c93-bfaa-ba8c1e1bcc1f,Seths Estate Agents,seths-estate-agents,,LE1,leicester,Leicester,place_in_description,low
+4a1fcdf0-9080-448c-880d-e51c007918d7,Severn Business Network,severn-business-network,,B1,birmingham,Birmingham,place_in_description,low
+3d747ced-a5ea-4f74-b92a-d1d5eeb7cea8,Sharon Stone Notary Public,sharon-stone-notary-public,,W2,west-london,West London,place_in_description,low
+efe0bc0b-fe8d-4e32-a620-3d74b8362688,Sheffield Business Together,sheffield-business-together,,S1,sheffield,Sheffield,place_name,medium
+7dc555c7-5e58-4a26-9bc8-677e35971eba,Sheffield Social Enterprise Network,sheffield-social-enterprise-network,,S1,sheffield,Sheffield,place_name,medium
+f5b833b1-8847-4588-894f-dd4585780534,Shine Space,shine-space,,LS1,leeds,Leeds,place_in_description,low
+76bb7811-a989-4e1e-b2f0-08dd0dca8d92,Shropshire Charity Network,shropshire-charity-network,,B1,birmingham,Birmingham,place_name,medium
+88332649-293b-4c3e-982a-001881f9cfe9,Shutters By The Sea,shutters-by-the-sea,,BN1,brighton,Brighton,place_in_description,low
+0bc54691-299a-477c-b862-c29654c86a2a,Simons Rodkin Solicitors LLP,simons-rodkin-solicitors-llp,,E1,central-london,Central London,place_in_description,low
+efd7b336-093c-4106-a76d-3014f59a4d78,Sing 4 Business,sing-4-business,,B1,birmingham,Birmingham,place_in_description,low
+068863ba-2231-468a-afad-319fce5fff34,Sirius,sirius,,LS1,leeds,Leeds,place_in_description,low
+5e149203-cd8f-470d-acc9-d30db3ee908c,Smart Play Network,smart-play-network,,EH1,edinburgh,Edinburgh,place_in_description,low
+974e9b8f-644d-4418-a652-04d6353795dc,Society of Petroleum Engineers,,,AB15,,,events,high
+a61cf4f2-5f1c-4a6c-9612-34abafac59e0,Solsure,solsure,,NG1,nottingham,Nottingham,place_in_description,low
+d883a412-4205-480d-b6ed-ac2ec2124b7a,South Somerset Meetups,south-somerset-meetups,,BS1,bristol,Bristol,place_name,medium
+1544a612-4fb3-4960-bf06-e8f5737bc6de,South Yorkshire Chamber,south-yorkshire-chamber,,S1,sheffield,Sheffield,place_name,medium
+65b870d0-6273-4986-b323-7f7440aadca6,Southampton International Boat Show Exhibiting,southampton-international-boat-show-exhibiting,,SO14,hampshire,Hampshire,place_name,medium
+e7bc3261-8e8b-4306-a339-d4a6bc59b1da,Southdowns Psychotherapy,southdowns-psychotherapy,,BN1,sussex,Sussex,place_in_description,low
+0ce06dda-6455-4331-9c45-89c1345e2c1a,Southend Peers,southend-peers,,CM0,essex,Essex,place_name,medium
+1ef13674-0d4d-4662-9c65-ce91250fb9f6,Stockport Business Club,stockport-business-club,,M1,manchester,Manchester,place_name,medium
+49b80d7a-7917-436e-b00a-26041ee2739e,Strategic Alliance Network (Stockport),strategic-alliance-network-stockport,,M1,manchester,Manchester,place_name,medium
+e93ec276-a653-4f8a-b3e4-2df37297c1ab,Stravara Consulting,stravara-consulting,,B1,birmingham,Birmingham,place_in_description,low
+99fb60b0-4800-4554-a0cb-2632509f086b,SturdyBuild,sturdybuild,,CB1,cambridge,Cambridge,place_in_description,low
+74da43ab-250f-432a-b8ff-b98d3b34c3b6,Success Networking,success-networking,,NG1,nottingham,Nottingham,place_in_description,low
+66e07510-2820-4103-91c1-ca81b1f92023,Superwoman,superwoman,,CF3,cardiff,Cardiff,place_in_description,low
+ea0de897-8066-400f-aef9-30fa1f6226ed,Surveyor Sorted,surveyor-sorted,,E1,london,London,place_in_description,low
+250c4460-6e7c-4b71-9d24-799a8e87a3a7,Sussex Cricket The Boundary Club,sussex-cricket-the-boundary-club,,BN1,sussex,Sussex,place_name,medium
+b62857a5-25fe-499c-b9f7-e0bb1f885de2,Sussex Mortgages,sussex-mortgages,,BN1,sussex,Sussex,place_name,medium
+42cc358e-2192-44ad-b473-a28fb8e634a6,Swindon Buzz,swindon-buzz,,BS1,bristol,Bristol,place_name,medium
+f89919f7-0d5c-4e2d-8516-62d02500d39a,SWLBC (South Wales Ladies Business Club),swlbc-south-wales-ladies-business-club,,CF3,cardiff,Cardiff,place_name,medium
+68f47a02-2832-43dc-9652-ac03f5e50a16,TC (Trusted Contacts),tc-trusted-contacts,,GU1,surrey,Surrey,place_in_description,low
+2842ee2f-cb92-4693-b59f-f6ece49e526a,Team Kent Business Club,team-kent-business-club,,CT1,kent,Kent,place_name,medium
+675a44e1-0969-4be2-9574-13a13c91838a,Tedco,tedco,,NE1,newcastle,Newcastle,place_in_description,low
+07bea699-aea1-4a7f-a2fc-beb2c122b242,testing Single Dates,,,YO42,,,events,high
+bc7c2364-fc23-473e-a282-be884030f43f,The Association,the-association,,EH1,edinburgh,Edinburgh,place_in_description,low
+7fcaf45e-e2a4-4c4c-8a9d-ff95ab004080,The Athena Network Reading &amp; Henley Region,the-athena-network-reading-amp-henley-region,,RG1,reading,Reading,place_name,medium
+e4ef71e9-aeb6-4016-b860-767f1713e11d,The Athena Network Richmond,the-athena-network-richmond,,W2,west-london,West London,place_name,medium
+6fc8aaa6-b56b-45c6-8b93-059cd2600202,The Aylesbury Group (TAG),the-aylesbury-group-tag,,HP6,buckinghamshire,Buckinghamshire,place_name,medium
+471eb628-1ff4-4ffc-8f93-18e57054d2c1,The Blues Business Club,the-blues-business-club,,CM0,essex,Essex,place_in_description,low
+a039e545-70b5-45b6-af7e-2608f92b8897,The Business Colab,the-business-colab,,S1,sheffield,Sheffield,place_in_description,low
+4bb4d216-e620-4203-9668-8d7f5be6a159,The Business Growth Network,,,BA1,,,events,high
+397fdde2-5d1d-41fd-bcf0-206ba44428d5,The Business Network - Birmingham,the-business-network-birmingham,,B3,birmingham,Birmingham,events,high
+92e6a375-cce4-47e3-a1c0-3d1fe1ff2533,The Business Network - Chester,the-business-network-chester,,CH1,chester,Chester,place_name,medium
+2f18965e-531b-4dbe-91f5-15686d6be157,The Business Network - Liverpool,the-business-network-liverpool,,L1,liverpool,Liverpool,place_name,medium
+a2470f86-d96b-46de-9640-88b49e3ee170,The Business Network - South Humberside,the-business-network-south-humberside,,DN40,,,events,high
+53f1907e-6d00-4c63-ae9c-192ee63d610a,The Business Network Birmingham,the-business-network-birmingham-2,,B1,birmingham,Birmingham,place_name,medium
+fd0b1f14-bc66-43c5-aab9-e80ad54f38ae,The Business Network Central & East Lancashire,the-business-network-central-east-lancashire,,PR1,lancashire,Lancashire,place_name,medium
+01104836-fe23-4e66-809f-821a11c0fae4,The Business Network Ltd -,the-business-network-ltd,,LS1,leeds,Leeds,place_in_description,low
+075382d1-f07a-4cf8-a0f0-6ad161dc9df1,The Careers Edit,the-careers-edit,,E1,london,London,place_in_description,low
+4af28959-0f77-4f99-bd16-3418ad4bfa4c,The Cheshire Club,the-cheshire-club,,CH1,cheshire,Cheshire,place_name,medium
+91be38bb-343e-4260-897b-a72fc762cfcb,The Conduit,the-conduit,,E1,central-london,Central London,place_in_description,low
+43425d62-48d1-4353-b7ae-005fa4b1a661,The Confederation of British Industry  - London,the-confederation-of-british-industry-london,,E1,london,London,place_name,medium
+dab6a7ac-889a-4451-90c7-2914a033a2a8,The Confederation of British Industry  - Midlands - Birmingham,the-confederation-of-british-industry-midlands-birmingham,,B1,birmingham,Birmingham,place_name,medium
+6eefbfa3-f94a-4877-bd83-83b93cccb74b,The Confederation of British Industry  - Scotland,the-confederation-of-british-industry-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+0cd8b5e7-c1cf-4a2a-902b-661a57a176b0,The Confederation of British Industry  - Wales,the-confederation-of-british-industry-wales,,CF3,cardiff,Cardiff,place_name,medium
+01d600f4-3bba-46e5-912e-9be685cd92e7,The Curious Owl,the-curious-owl,,LS1,leeds,Leeds,place_in_description,low
+03e71993-d688-4abc-8aa4-3aaee1764160,The Doyle Club,the-doyle-club,,E1,london,London,place_in_description,low
+a12662f3-5e40-49b2-84d4-5cd390a23f35,The Farmer Network - Cumbria,the-farmer-network-cumbria,,PR1,lancashire,Lancashire,place_name,medium
+03316d0c-221f-4800-b2d7-910dad9726fa,The Farmer Network - Northumberland,the-farmer-network-northumberland,,PR1,lancashire,Lancashire,place_in_description,low
+8550d067-ca6e-4899-8d96-ee7b8bd3b273,The Giraffe Network,the-giraffe-network,,PR1,lancashire,Lancashire,place_in_description,low
+9240d6b3-08dc-423c-9770-92d741e643a5,The HR Network,the-hr-network,,EH1,edinburgh,Edinburgh,place_in_description,low
+9f602750-4611-4f1b-ad87-73607e29db68,The In-Field Business Club Somerset County CC,the-in-field-business-club-somerset-county-cc,,BS1,bristol,Bristol,place_name,medium
+e1895308-6c76-4222-8e0d-77c7901e11c4,The Institute of Directors - Aberdeen & Grampian,the-institute-of-directors-aberdeen-grampian,,EH1,edinburgh,Edinburgh,place_name,medium
+172c3446-2871-4f81-a450-cf0775b7f033,The Institute of Directors - Berkshire,the-institute-of-directors-berkshire,,RG1,berkshire,Berkshire,place_name,medium
+5449e681-08d5-4d9a-ad08-bfe80155339f,The Institute of Directors - Black Country & Staffordshire,the-institute-of-directors-black-country-staffordshire,,B1,birmingham,Birmingham,place_name,medium
+5976b034-c89a-45a6-8615-ad928a786224,The Institute of Directors - Cambridgeshire,the-institute-of-directors-cambridgeshire,,CB1,cambridgeshire,Cambridgeshire,place_name,medium
+42711908-949a-4f84-af67-64a6b90120c1,The Institute of Directors - Cheshire,the-institute-of-directors-cheshire,,CH1,cheshire,Cheshire,place_name,medium
+a93fbf03-4645-46c0-b0a1-66b885075c9f,The Institute of Directors - Derbyshire & Nottinghamshire,the-institute-of-directors-derbyshire-nottinghamshire,,NG1,nottingham,Nottingham,place_name,medium
+c20cbcbf-c02d-492d-a693-1af0d9e6406f,The Institute of Directors - Hampshire & Isle of Wight,the-institute-of-directors-hampshire-isle-of-wight,,SO14,hampshire,Hampshire,place_name,medium
+4a6a03b1-af53-489f-b84b-3fb8ceae11c2,The Institute of Directors - London,the-institute-of-directors-london,,E1,london,London,place_name,medium
+2a7c560b-8504-4ca8-ad5d-63dfa9465a85,The Institute of Directors - Mid Wales,the-institute-of-directors-mid-wales,,CF3,cardiff,Cardiff,place_name,medium
+0732b013-62e8-458f-927c-85f76027250f,The North Wales Business Network,,,LL32,cardiff,Cardiff,events,high
+3d11ed76-1622-4d4f-b5e0-92494dd95860,The Owners' Network (TON),the-owners-network-ton,,OX1,oxfordshire,Oxfordshire,place_in_description,low
+b36ca133-e8bc-43f1-9111-8225b5161054,The Party Pigs,the-party-pigs,,GU1,surrey,Surrey,place_in_description,low
+ef124e9f-caab-45ed-8f51-5e5d334d79db,The Recruitment Network,,,G1,glasgow,Glasgow,events,high
+54dcd4f4-a933-4243-b8c4-0265f4ac885f,The Worshipful Company of Constructors (WCC),the-worshipful-company-of-constructors-wcc,,E1,london,London,place_in_description,low
+0a7afa39-06d1-4d90-8349-cf446bfef2ad,Toast Networking,toast-networking,,CB1,cambridge,Cambridge,place_in_description,low
+11db9c98-2ffb-4b46-8308-11795e8088fe,Turf Supplies Essex,turf-supplies-essex,,CM0,essex,Essex,place_name,medium
+d97f0333-8f22-4e16-99c1-3b467f3b4a9e,Turner Scott Lettings,turner-scott-lettings,,PR1,lancashire,Lancashire,place_in_description,low
+7a9f03a3-da4b-4941-93f1-1f62b4d4dde8,Venters Property,venters-property,,EH1,edinburgh,Edinburgh,place_in_description,low
+c9c53d72-e63d-4c5f-a12c-d52e4eb874c8,VHS Fletchers Solicitors,vhs-fletchers-solicitors,,NG1,nottingham,Nottingham,place_in_description,low
+6b436f24-80d6-4a14-b66a-55fc251ad346,Wayman & Long Solicitors,wayman-long-solicitors,,CM0,essex,Essex,place_in_description,low
+bf816165-539b-4145-a7ee-94c89d51d725,We are In Business,we-are-in-business,,LS1,leeds,Leeds,place_in_description,low
+0841736d-8c7c-463b-b178-4e0aab807eb1,We Are Wakefield,we-are-wakefield,,LS1,leeds,Leeds,place_name,medium
+f73db87e-c6e9-490c-8c91-e01e1addb1ea,WEBX (Weymouth Business Exchange),webx-weymouth-business-exchange,,CH1,chester,Chester,place_in_description,low
+3aef5c9a-5274-4e39-abe8-09f8c4786c0b,Wednesday Club,wednesday-club,,B1,birmingham,Birmingham,place_in_description,low
+93406060-8aa9-4393-9205-92a547b6cf4d,WeDo Scotland,wedo-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+cc12b811-0da0-48be-afba-badf5151600d,Westminster Business Council,westminster-business-council,,E1,central-london,Central London,place_name,medium
+472a3bda-8ab3-4256-aab0-be42bf159b17,Westwing Solicitors,westwing-solicitors,,HP6,buckinghamshire,Buckinghamshire,place_in_description,low
+013dbadf-ee82-4790-8f70-ac09c2347f93,Wharf Notaries,wharf-notaries,,E1,london,London,place_in_description,low
+5e661990-6a82-43f5-a91a-174d1ac6f8a7,Willett & Co Solicitors,willett-co-solicitors,,M1,manchester,Manchester,place_in_description,low
+4639f032-6413-4d85-acd6-0cf10d580e8a,Willmore Phillips,willmore-phillips,,BN1,sussex,Sussex,place_in_description,low
+15d4836a-673c-485d-80dc-b9b3938986c6,Woking Asian Business Forum,woking-asian-business-forum,,GU1,surrey,Surrey,place_name,medium
+57d3a4c6-9b92-4e15-9db8-4e4cdbef958c,Women Ahead Dundee and Angus,women-ahead-dundee-and-angus,,DD1,edinburgh,Edinburgh,events,high
+d394190f-e378-4501-a425-9b94a6fe9f43,Women in Business Hull,women-in-business-hull,,HU10,leeds,Leeds,events,high
+ab388060-7937-4bb5-b3e6-e4e2519601a8,Women In Business Network - Altrincham,women-in-business-network-altrincham,,WA15,cheshire,Cheshire,events,high
+1c8d6b1d-6783-41ea-97d5-8b355e4a13c5,Women In Business Network - Ampthill & Flitwick Group,women-in-business-network-ampthill-flitwick-group,,MK45,,,events,high
+cde2058f-1dcd-4346-a969-a52546396df3,Women In Business Network - Bedford,,,MK40,cambridgeshire,Cambridgeshire,events,high
+c5dbc623-17cf-4bbc-b12a-efda10db4115,Women In Business Network - Billericay & Basildon,women-in-business-network-billericay-basildon,,SS14,essex,Essex,events,high
+495c1065-4dac-485a-b7fd-d25df7fb6d55,Women In Business Network - Bishop's Stortford,,,CM23,essex,Essex,events,high
+0b508d63-00a5-4036-9b5b-217b570fc010,Women In Business Network - Bishop's Stortford Brunch,,,CM22,essex,Essex,events,high
+a4795b21-d839-4f1a-9b98-43e3e25ae535,Women In Business Network - Bolton,women-in-business-network-bolton,,M1,manchester,Manchester,place_name,medium
+75003b3c-c398-442c-9ecc-98dc0e16be64,Women In Business Network - Bury St Edmunds,women-in-business-network-bury-st-edmunds,,M1,manchester,Manchester,place_name,medium
+d7cbfb61-d5f1-426f-a091-cdb38ca3628a,Women In Business Network - Caerphilly,women-in-business-network-caerphilly,,CF83,cardiff,Cardiff,events,high
+434e4e5d-140e-4006-b557-45b967274907,Women In Business Network - Cambridge North,women-in-business-network-cambridge-north,,CB1,cambridge,Cambridge,place_name,medium
+aba24a4d-06bd-4c38-a134-1ffada5533e8,Women In Business Network - Canterbury,women-in-business-network-canterbury,,CT1,kent,Kent,place_name,medium
+b13c6485-c655-4d0f-927b-f068b49314ed,Women In Business Network - Chester,women-in-business-network-chester,,CH1,chester,Chester,place_name,medium
+7e41597c-d6fd-40d5-a5cc-abc2c069995c,Women In Business Network - Hertford & Ware,women-in-business-network-hertford-ware,,SG12,hertfordshire,Hertfordshire,events,high
+0e62855f-5838-4f55-aed7-e0eb179786bb,Women In Business Network - London City,women-in-business-network-london-city,,E1,london,London,place_name,medium
+b72ffaf2-5f0b-4c9d-a026-6c6c25b34fea,Women In Business Network - Marlow,women-in-business-network-marlow,,SL7,berkshire,Berkshire,events,high
+63e983fc-d79d-433e-a632-ecf0b66af5db,Women In Business Network - St Albans & Hatfield Group,women-in-business-network-st-albans-amp-hatfield-group,,AL2,hertfordshire,Hertfordshire,events,high
+7ec61948-f836-4841-8e80-d2b2ee801312,Women in Healthcare UK,women-in-healthcare-uk,,E1,london,London,place_in_description,low
+1bd166fd-6446-4048-9fcf-ec245ca39e10,Women in Property - Central Scotland,women-in-property-central-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+a9c25879-d635-4ae7-9402-10886d20a11f,Women in Property - Devon & Cornwall,women-in-property-devon-cornwall,,BS1,bristol,Bristol,place_name,medium
+2c05ea73-4f56-4a00-a224-c5936d38581c,Women in Property - Lancashire & Cumbria,women-in-property-lancashire-cumbria,,PR1,lancashire,Lancashire,place_name,medium
+e9e6723c-b9d3-4d5b-8825-71febe76fe4f,Women in Property - Midlands,women-in-property-midlands,,B3,birmingham,Birmingham,events,high
+889b919d-c999-47ec-a464-066269583036,Women in Property - Northern Scotland,women-in-property-northern-scotland,,EH1,edinburgh,Edinburgh,place_name,medium
+47b3b2bc-4801-42a6-a170-7091bc07b207,Women in Property - South Wales,women-in-property-south-wales,,CF3,cardiff,Cardiff,place_name,medium
+11f195f9-f8bb-48b1-a84f-49ff16259f72,Women Who Business Networking,women-who-business-networking,,BS1,bristol,Bristol,place_in_description,low
+05d6eb39-88b2-4117-b634-b5362fa03852,Womenpreneur Collective,womenpreneur-collective,,BH1,bournemouth,Bournemouth,place_in_description,low
+77a43afb-3fda-4115-b2b6-95ddb33b1da6,Working Breakfast,working-breakfast,,LE1,leicester,Leicester,place_in_description,low
+d4624f24-8099-43cc-a253-0387cd3e9640,Worthing Theatres and Museum,worthing-theatres-and-museum,,BN1,sussex,Sussex,place_name,medium
+a54dbe6e-1cd8-4470-8ed2-10a0277704e2,Xpand Marketing,xpand-marketing,,LS1,leeds,Leeds,place_in_description,low
+c6f5abbb-a657-440a-b7c2-30cc3caed513,YNY Growth Hub,yny-growth-hub,,LS1,leeds,Leeds,place_in_description,low
+158eb5a8-e314-4fe6-ad00-408fd613bd7f,Yorkshire Enterprise Network,yorkshire-enterprise-network,,S1,sheffield,Sheffield,place_in_description,low
+2f242dcd-5062-40c3-93ba-c8ccedbd22eb,Yorkshire Enterprise Network (YEN),yorkshire-enterprise-network-yen,,S1,sheffield,Sheffield,place_in_description,low
+c5a94271-3edd-4854-b59e-5701b35e7072,Your Business Matters.co,your-business-matters-co,,NG1,nottingham,Nottingham,place_in_description,low
+ad2e9aea-7748-4c98-83d7-58c15036b5fd,Zoco Networking Group,zoco-networking-group,,RH4,surrey,Surrey,events,high

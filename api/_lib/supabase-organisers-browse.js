@@ -303,7 +303,14 @@ function eventsForOrganiser(organiserId, visibleEvents, orgById) {
     });
 }
 
-function locationsForOrganiser(organiserId, visibleEvents) {
+/** Fallback when a group has no event venues yet — use enriched organisers.outcode. */
+function locationFromOrganiserOutcode(org) {
+  const outcode = String((org && org.outcode) || '').trim();
+  if (!outcode) return null;
+  return { city: '', postcode: '', outcode, location: '', venue: '' };
+}
+
+function locationsForOrganiser(organiserId, visibleEvents, org) {
   const seen = new Set();
   const locations = [];
   for (const event of visibleEvents || []) {
@@ -319,6 +326,10 @@ function locationsForOrganiser(organiserId, visibleEvents) {
     seen.add(key);
     locations.push({ city, postcode, outcode, location, venue });
     if (locations.length >= MAX_LOCATIONS_PER_ORG) break;
+  }
+  if (!locations.length) {
+    const fallback = locationFromOrganiserOutcode(org);
+    if (fallback) locations.push(fallback);
   }
   return locations;
 }
@@ -409,9 +420,14 @@ async function listPublicOrganisers() {
 
   return organisers
     .map((org) => {
+      let locations = locationsByOrg.get(org.id) || [];
+      if (!locations.length) {
+        const fallback = locationFromOrganiserOutcode(org);
+        if (fallback) locations = [fallback];
+      }
       return rowToPublicOrganiser(org, counts.get(org.id) || 0, {
         ranking: rankings[org.id] || null,
-        locations: locationsByOrg.get(org.id) || [],
+        locations,
       });
     })
     .sort((a, b) => {
@@ -455,7 +471,7 @@ async function enrichPublicOrganiserDetail(sb, row) {
     ranking: rankings[row.id] || null,
     rankingHistory,
     membershipPlan,
-    locations: locationsForOrganiser(row.id, visibleEvents),
+    locations: locationsForOrganiser(row.id, visibleEvents, row),
   });
 }
 
