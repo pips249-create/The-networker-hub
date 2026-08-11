@@ -9193,7 +9193,7 @@ body.org-group-drawer-open {
 .org-group-drawer {
   position: fixed;
   inset: 0;
-  z-index: 10040;
+  z-index: 10070;
   pointer-events: none;
 }
 
