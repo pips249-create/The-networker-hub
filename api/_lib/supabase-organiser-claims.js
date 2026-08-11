@@ -142,14 +142,42 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
+function sessionAlreadyOwnsClaimedGroup(session, row) {
+  if (!row || row.ownership_claim_status !== 'claimed') return false;
+  const uid = isUuid(session?.sub) ? session.sub : '';
+  const em = String(session?.email || '')
+    .trim()
+    .toLowerCase();
+  if (uid && row.supabase_user_id === uid) return true;
+  return emailMatchesProfile(em, row);
+}
+
 async function claimGroupForSession(session, groupId) {
-  const organiser = await getPendingClaimGroupForSession(session, groupId);
   const sb = getSupabaseAdmin();
   const uid = isUuid(session.sub) ? session.sub : null;
   if (!uid) {
     const err = new Error('missing_user_id');
     err.status = 403;
     throw err;
+  }
+
+  let organiser;
+  try {
+    organiser = await getPendingClaimGroupForSession(session, groupId);
+  } catch (e) {
+    // Workspace load used to auto-claim email-matched pages before the invite
+    // modal finished — treat "already mine" as success so Yes continues setup.
+    if (e && e.message === 'claim_not_available') {
+      const id = String(groupId || '').trim();
+      const { data, error } = await sb.from('organisers').select('*').eq('id', id).maybeSingle();
+      if (error) throw new Error(error.message);
+      if (sessionAlreadyOwnsClaimedGroup(session, data)) {
+        const group = rowToGroup(data);
+        group.ownershipClaimStatus = 'claimed';
+        return group;
+      }
+    }
+    throw e;
   }
 
   const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
@@ -313,29 +341,13 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   return { claimed: true };
 }
 
-/** Claim email-matched profiles when an account holder opens the organiser workspace. */
-async function syncEmailMatchedOrganiserClaims(session) {
-  const em = String(session?.email || '').trim().toLowerCase();
-  if (!em) return { synced: 0 };
-
-  const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('organisers')
-    .select('id, ownership_claim_status')
-    .or(`email.eq.${em},contact_email.eq.${em}`);
-  if (error) throw new Error(error.message);
-
-  const toClaim = (data || []).filter(
-    (row) => row?.id && row.ownership_claim_status !== 'disputed' && row.ownership_claim_status !== 'claimed'
-  );
-  if (!toClaim.length) return { synced: 0 };
-
-  const results = await Promise.all(
-    toClaim.map((row) =>
-      ensureOrganiserClaimedForAdminEvent(row.id).catch(() => ({ claimed: false }))
-    )
-  );
-  return { synced: results.filter((r) => r && r.claimed).length };
+/**
+ * Link email-matched profiles into the workspace without flipping claim status.
+ * Auto-claiming here raced the "Is this your organiser page?" invite modal and
+ * made Yes fail with "not available to claim". Confirmation stays in claimGroupForSession.
+ */
+async function syncEmailMatchedOrganiserClaims() {
+  return { synced: 0 };
 }
 
 module.exports = {

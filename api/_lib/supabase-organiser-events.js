@@ -2535,13 +2535,9 @@ async function getLeanOrganiserWorkspace(req) {
   const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
   const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
   const accessStatusPromise = getOrganiserAccessStatus(session).catch(() => null);
-  const pendingClaimsPromise = adminView
-    ? Promise.resolve([])
-    : Promise.all([
-        listPendingClaimGroupsForSession(session).catch(() => []),
-        listPendingClaimOpportunitiesForSession(session).catch(() => []),
-      ]).then(([groups, opportunities]) => ({ groups, opportunities }));
 
+  // Scope first, then pending claims — never race a pre-scope pending list against
+  // workspace prep (that previously auto-claimed pages the invite modal still showed).
   const scope = await prepareOrganiserWorkspaceScope(session, adminView);
   let groups = scope.groups;
   const groupIds = scope.groupIds;
@@ -2555,7 +2551,15 @@ async function getLeanOrganiserWorkspace(req) {
   // Lean path must stay bounded: never scan all platform events for admin view.
   const [pendingClaims, eventSummaries, eventCountsByGroup, accessStatus, rosterSummaries, leanEventsTotal] =
     await Promise.all([
-      pendingClaimsPromise,
+      adminView
+        ? Promise.resolve({ groups: [], opportunities: [] })
+        : Promise.all([
+            listPendingClaimGroupsForSession(session).catch(() => []),
+            listPendingClaimOpportunitiesForSession(session).catch(() => []),
+          ]).then(([pendingGroups, opportunities]) => ({
+            groups: pendingGroups,
+            opportunities,
+          })),
       listEventSummariesForOrganiserGroups(groupIds, false, {
         limit: LEAN_EVENT_SUMMARY_LIMIT,
       }).catch(() => []),
@@ -2570,7 +2574,13 @@ async function getLeanOrganiserWorkspace(req) {
         ? countEventsForOrganiser(groupIds).catch(() => 0)
         : Promise.resolve(null),
     ]);
-  const pendingClaimGroups = pendingClaims.groups || [];
+  const claimedGroupIds = new Set(
+    (groups || [])
+      .filter((g) => String(g.ownershipClaimStatus || '').toLowerCase() === 'claimed')
+      .map((g) => g.id)
+      .filter(Boolean)
+  );
+  const pendingClaimGroups = (pendingClaims.groups || []).filter((g) => g && !claimedGroupIds.has(g.id));
   const pendingClaimOpportunities = pendingClaims.opportunities || [];
 
   const workspaceSummary = null;
@@ -2664,21 +2674,29 @@ async function getOrganiserWorkspace(req) {
     /* ignore */
   }
 
+  const { groups, groupIds, access: workspaceAccess, groupsError } =
+    await prepareOrganiserWorkspaceScope(session, adminView);
+
   let pendingClaimGroups = [];
   let pendingClaimOpportunities = [];
   if (!adminView) {
     try {
       const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
       const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
-      pendingClaimGroups = await listPendingClaimGroupsForSession(session);
+      const claimedGroupIds = new Set(
+        (groups || [])
+          .filter((g) => String(g.ownershipClaimStatus || '').toLowerCase() === 'claimed')
+          .map((g) => g.id)
+          .filter(Boolean)
+      );
+      pendingClaimGroups = (await listPendingClaimGroupsForSession(session)).filter(
+        (g) => g && !claimedGroupIds.has(g.id)
+      );
       pendingClaimOpportunities = await listPendingClaimOpportunitiesForSession(session);
     } catch {
       /* pending claims optional */
     }
   }
-
-  const { groups, groupIds, access: workspaceAccess, groupsError } =
-    await prepareOrganiserWorkspaceScope(session, adminView);
   const eventsOnly = String(req.query?.eventsOnly || '') === '1';
 
   if (eventsOnly) {
