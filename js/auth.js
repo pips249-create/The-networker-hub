@@ -317,18 +317,58 @@
     });
   }
 
+  function getAuthHashParams() {
+    var hash = String(window.location.hash || '').replace(/^#/, '');
+    if (!hash) return new URLSearchParams();
+    return new URLSearchParams(hash);
+  }
+
+  function getRecoveryAccessToken() {
+    var hashParams = getAuthHashParams();
+    var accessToken = hashParams.get('access_token') || '';
+    var type = String(hashParams.get('type') || '').toLowerCase();
+    if (accessToken && (type === 'recovery' || type === 'magiclink' || !type)) {
+      return accessToken;
+    }
+    return '';
+  }
+
   var resetForm = document.getElementById('reset-form');
   if (resetForm) {
+    (function initResetPage() {
+      var msg = document.getElementById('auth-message');
+      var hashParams = getAuthHashParams();
+      var errCode = hashParams.get('error_code') || hashParams.get('error') || '';
+      var errDesc = (hashParams.get('error_description') || '').replace(/\+/g, ' ');
+      if (errCode || errDesc) {
+        showMessage(
+          msg,
+          errDesc ||
+            'This reset link is invalid or has expired. Request a new one from Forgot password.',
+          'error'
+        );
+        return;
+      }
+      if (!getRecoveryAccessToken() && !new URLSearchParams(window.location.search).get('token')) {
+        showMessage(
+          msg,
+          'Missing reset token. Open the link from your email, or request a new one.',
+          'error'
+        );
+      }
+    })();
+
     resetForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var msg = document.getElementById('auth-message');
       var btn = document.getElementById('reset-submit');
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token');
+      var accessToken = getRecoveryAccessToken();
       var p1 = document.getElementById('password').value;
       var p2 = document.getElementById('password2').value;
 
-      if (!token) {
+      if (!accessToken && !token) {
         showMessage(msg, 'Missing reset token. Request a new link.', 'error');
         return;
       }
@@ -339,11 +379,15 @@
 
       btn.disabled = true;
 
+      var payload = { password: p1 };
+      if (accessToken) payload.accessToken = accessToken;
+      if (token) payload.token = token;
+
       fetch('/api/auth/reset-password', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token, password: p1 }),
+        body: JSON.stringify(payload),
       })
         .then(function (res) {
           return res.json().then(function (data) {
@@ -357,6 +401,9 @@
             return;
           }
           showMessage(msg, result.data.message || 'Password updated.', 'success');
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
           setTimeout(function () {
             window.location.href = '/login';
           }, 1500);
