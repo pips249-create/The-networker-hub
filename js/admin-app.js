@@ -125,7 +125,7 @@
     },
     cleanup: {
       title: 'Fix listings',
-      subtitle: 'Edit group pages, events, and business opportunities',
+      subtitle: 'Edit group pages, events, event requests, and business opportunities',
     },
     'group-cleanup': {
       title: 'Fix listings',
@@ -21449,11 +21449,188 @@
     document.body.addEventListener('click', handleOpportunityCleanupClick);
   }
 
+  function renderEventIntakeAdmin() {
+    main.innerHTML =
+      '<div class="space-y-4">' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Event requests</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing under Events, then mark done.</p></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="open">Open</button>' +
+      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="all">All</button>' +
+      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="done">Done</button>' +
+      '</div></div>' +
+      '<p id="event-intake-status" class="text-sm text-slate-500">Loading requests…</p>' +
+      '<div id="event-intake-body" class="overflow-x-auto"></div>' +
+      '</section></div>';
+
+    if (!main.dataset.eiFilter) main.dataset.eiFilter = 'open';
+    loadEventIntakeAdmin();
+  }
+
+  function loadEventIntakeAdmin() {
+    var statusEl = document.getElementById('event-intake-status');
+    var bodyEl = document.getElementById('event-intake-body');
+    if (!statusEl || !bodyEl) return;
+
+    var filter = main.dataset.eiFilter || 'open';
+
+    function setStatus(text, tone) {
+      statusEl.textContent = text || '';
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function locationLine(row) {
+      if (String(row.format || '') === 'Online') {
+        return row.meetingLink || 'Online';
+      }
+      return [row.venue, row.city, row.postcode].filter(Boolean).join(', ') || '—';
+    }
+
+    setStatus('Loading requests…');
+    adminGet('/api/admin/event-intake?limit=100&status=' + encodeURIComponent(filter))
+      .then(function (data) {
+        if (!data || data.error) {
+          throw new Error((data && data.message) || data.error || 'Could not load requests');
+        }
+        var rows = Array.isArray(data.submissions) ? data.submissions : [];
+        if (!rows.length) {
+          bodyEl.innerHTML =
+            '<p class="text-sm text-slate-500">No ' +
+            (filter === 'all' ? '' : filter + ' ') +
+            'requests yet.</p>';
+        } else {
+          bodyEl.innerHTML =
+            '<div class="space-y-3">' +
+            rows
+              .map(function (row) {
+                var times = [row.startTime, row.endTime].filter(Boolean).join(' – ');
+                var desc = String(row.description || '').trim();
+                var tickets = String(row.ticketDetails || '').trim();
+                var notes = String(row.notes || '').trim();
+                var actions =
+                  row.status === 'open'
+                    ? '<button type="button" class="admin-btn admin-btn-primary text-xs" data-ei-status="done" data-ei-id="' +
+                      attrEsc(row.id) +
+                      '">Mark done</button> ' +
+                      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-status="spam" data-ei-id="' +
+                      attrEsc(row.id) +
+                      '">Spam</button>'
+                    : '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-status="open" data-ei-id="' +
+                      attrEsc(row.id) +
+                      '">Reopen</button>';
+
+                return (
+                  '<article class="border border-slate-200 rounded-lg p-4 space-y-2">' +
+                  '<div class="flex flex-wrap items-start justify-between gap-2">' +
+                  '<div><p class="text-xs text-slate-500">' +
+                  esc(formatAdminDateTime(row.createdAt)) +
+                  ' · ' +
+                  esc(row.status || 'open') +
+                  '</p>' +
+                  '<h4 class="font-bold text-brand-900 mt-1">' +
+                  esc(row.eventTitle || 'Untitled') +
+                  '</h4>' +
+                  '<p class="text-sm text-slate-700">' +
+                  esc(row.groupName || '—') +
+                  ' · ' +
+                  esc(row.contactName || '—') +
+                  ' · <a class="text-brand-700 hover:underline" href="mailto:' +
+                  attrEsc(row.email || '') +
+                  '">' +
+                  esc(row.email || '—') +
+                  '</a></p></div>' +
+                  '<div class="flex flex-wrap gap-2">' +
+                  actions +
+                  '</div></div>' +
+                  '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Date(s)</dt><dd>' +
+                  esc(row.eventDates || '—') +
+                  (times ? ' · ' + esc(times) : '') +
+                  '</dd></div>' +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Format / location</dt><dd>' +
+                  esc(row.format || '—') +
+                  ' · ' +
+                  esc(locationLine(row)) +
+                  '</dd></div>' +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Pricing</dt><dd>' +
+                  esc(row.pricing || 'Free') +
+                  (tickets ? ' — ' + esc(tickets) : '') +
+                  '</dd></div>' +
+                  (row.photoUrl
+                    ? '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Photo</dt><dd><a class="text-brand-700 hover:underline break-all" href="' +
+                      attrEsc(row.photoUrl) +
+                      '" target="_blank" rel="noopener">' +
+                      esc(row.photoUrl) +
+                      '</a></dd></div>'
+                    : '') +
+                  '</dl>' +
+                  (desc
+                    ? '<p class="text-sm text-slate-600"><strong>Description:</strong> ' + esc(desc) + '</p>'
+                    : '') +
+                  (notes ? '<p class="text-sm text-slate-600"><strong>Notes:</strong> ' + esc(notes) + '</p>' : '') +
+                  '</article>'
+                );
+              })
+              .join('') +
+            '</div>';
+        }
+
+        var open = Number(data.openCount) || 0;
+        var total = Number(data.total) || 0;
+        setStatus(
+          filter === 'open'
+            ? open + ' open request' + (open === 1 ? '' : 's')
+            : total + ' shown · filter: ' + filter,
+          'ok'
+        );
+      })
+      .catch(function (err) {
+        bodyEl.innerHTML =
+          '<p class="text-sm text-red-700">' + esc((err && err.message) || 'Could not load requests') + '</p>';
+        setStatus((err && err.message) || 'Could not load requests', 'error');
+      });
+  }
+
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', function (e) {
+      if (!main || !document.getElementById('event-intake-body')) return;
+      var filterBtn = e.target.closest('[data-ei-filter]');
+      if (filterBtn && main.contains(filterBtn)) {
+        main.dataset.eiFilter = filterBtn.getAttribute('data-ei-filter') || 'open';
+        loadEventIntakeAdmin();
+        return;
+      }
+      var statusBtn = e.target.closest('[data-ei-status]');
+      if (!statusBtn || !main.contains(statusBtn)) return;
+      var id = statusBtn.getAttribute('data-ei-id');
+      var status = statusBtn.getAttribute('data-ei-status');
+      if (!id || !status) return;
+      statusBtn.disabled = true;
+      adminPatch('/api/admin/event-intake', { id: id, status: status })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+          loadEventIntakeAdmin();
+        })
+        .catch(function (err) {
+          statusBtn.disabled = false;
+          window.alert((err && err.message) || 'Could not update request.');
+        });
+    });
+  }
+
   function renderCleanupHub(fullHash) {
     var tab = resolveHubTab(
       fullHash,
       'cleanup',
-      ['groups', 'events', 'opportunities', 'issues'],
+      ['groups', 'events', 'requests', 'opportunities', 'issues'],
       'groups'
     );
     if (!tab) return;
@@ -21464,6 +21641,7 @@
       [
         { key: 'groups', label: 'Groups', href: '#cleanup/groups', badgeHtml: incompleteBadge, badgeKey: 'incompleteOrganisers' },
         { key: 'events', label: 'Events', href: '#cleanup/events' },
+        { key: 'requests', label: 'Event requests', href: '#cleanup/requests' },
         { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities', badgeHtml: oppBadge, badgeKey: 'pendingOpportunities' },
         { key: 'issues', label: 'Data issues', href: '#cleanup/issues' },
       ],
@@ -21471,6 +21649,7 @@
     );
 
     if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
+    else if (tab === 'requests') withHubTabs(tabsHtml, renderEventIntakeAdmin);
     else if (tab === 'opportunities')
       withHubTabs(tabsHtml, function () {
         renderOpportunityCleanup(fullHash);

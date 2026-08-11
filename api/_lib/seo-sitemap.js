@@ -25,6 +25,7 @@ const STATIC_PATHS = [
   '/about',
   '/rankings',
   '/for-organisers',
+  '/add-your-event',
   '/for-attendees',
   '/advertising',
   '/legal-policies',

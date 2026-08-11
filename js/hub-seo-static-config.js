@@ -63,6 +63,13 @@ window.HUB_SEO_STATIC = {
     "image": "/assets/logo.png",
     "ogType": "website"
   },
+  "add-your-event": {
+    "path": "/add-your-event",
+    "title": "Send us your event details – The Networker Hub",
+    "description": "Send your networking event details to The Networker Hub — Catherine and Jamie will list it for you.",
+    "image": "/assets/logo.png",
+    "ogType": "website"
+  },
   "for-attendees": {
     "path": "/for-attendees",
     "title": "Events, Organisers & Business Opportunities – For networkers – The Networker Hub",

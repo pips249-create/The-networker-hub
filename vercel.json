@@ -59,6 +59,7 @@
     { "source": "/contact.html", "destination": "/contact", "permanent": true },
     { "source": "/guides.html", "destination": "/guides", "permanent": true },
     { "source": "/for-organisers.html", "destination": "/for-organisers", "permanent": true },
+    { "source": "/add-your-event.html", "destination": "/add-your-event", "permanent": true },
     { "source": "/for-attendees", "destination": "/for-networkers", "permanent": true },
     { "source": "/for-networkers.html", "destination": "/for-networkers", "permanent": true },
     { "source": "/testing-bo.html", "destination": "/testing-bo", "permanent": true },
@@ -209,7 +210,9 @@
     "api/sponsor-out.js": { "maxDuration": 10 },
     "api/stripe-webhook.js": { "maxDuration": 15 },
     "api/resend-webhook.js": { "maxDuration": 15 },
-    "api/contact-chat.js": { "maxDuration": 30 }
+    "api/contact-chat.js": { "maxDuration": 30 },
+    "api/event-intake.js": { "maxDuration": 15 },
+    "api/advertising.js": { "maxDuration": 15 }
   },
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
@@ -262,6 +265,14 @@
     {
       "source": "/advertising",
       "destination": "/advertising.html"
+    },
+    {
+      "source": "/add-your-event",
+      "destination": "/add-your-event.html"
+    },
+    {
+      "source": "/for-organisers",
+      "destination": "/for-organisers.html"
     },
     {
       "source": "/p-tnh-embed-events-k1",

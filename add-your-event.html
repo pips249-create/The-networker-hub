@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Send us your event details – The Networker Hub</title>
+<meta name="description" content="Send your networking event details to The Networker Hub — Catherine and Jamie will list it for you.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hub.css?v=20260728footer">
+<link rel="stylesheet" href="css/content-page.css">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260811a">
+<link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
+<link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2">
+<link rel="stylesheet" href="css/hub-mobile.css?v=20260807nav2" />
+<script src="js/hub-seo-static-config.js?v=20260811a"></script>
+<script src="js/hub-seo-static.js?v=20260612" data-page="add-your-event"></script>
+<script src="js/hub-seo-data.js?v=20260612" defer></script>
+<script src="js/hub-seo-schema.js?v=20260612" defer></script>
+</head>
+<body class="event-intake-page">
+
+<div id="hub-site-nav"></div>
+<script src="js/site-nav.js?v=20260811perf1" data-root="" data-page="add-your-event"></script>
+
+<main class="content-page-main">
+  <header class="content-hero ei-hero">
+    <div class="content-hero-inner">
+      <p class="section-kicker">For organisers</p>
+      <h1>Send us your event details</h1>
+      <p class="content-hero-lede">
+        Fill this in once — Catherine or Jamie will list the event on The Networker Hub for you.
+        Usually live within one business day.
+      </p>
+    </div>
+  </header>
+
+  <div class="ei-layout">
+    <aside class="ei-aside">
+      <h2>What happens next</h2>
+      <ol class="ei-steps">
+        <li>You send the essentials below</li>
+        <li>We create the listing on your group page</li>
+        <li>We email you when it&rsquo;s live</li>
+      </ol>
+      <p class="ei-aside-note">
+        Prefer to manage events yourself later? You can claim your organiser page anytime from
+        <a href="/for-organisers">For organisers</a>.
+      </p>
+      <p class="ei-aside-note">
+        Questions?
+        <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>
+      </p>
+    </aside>
+
+    <section class="ei-form-panel" aria-labelledby="ei-form-heading">
+      <h2 id="ei-form-heading" class="visually-hidden">Event details form</h2>
+      <form class="ei-form" id="ei-form" novalidate>
+        <input type="text" name="website" class="ei-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <fieldset class="ei-fieldset">
+          <legend>About you</legend>
+          <div class="ei-grid">
+            <label class="ei-field">
+              <span>Your name</span>
+              <input type="text" name="name" autocomplete="name" required>
+            </label>
+            <label class="ei-field">
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" required>
+            </label>
+            <label class="ei-field ei-field--full">
+              <span>Group / organiser name</span>
+              <input type="text" name="group" autocomplete="organization" required placeholder="e.g. Liverpool Business Network">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="ei-fieldset">
+          <legend>The event</legend>
+          <div class="ei-grid">
+            <label class="ei-field ei-field--full">
+              <span>Event title</span>
+              <input type="text" name="title" required placeholder="e.g. Friday breakfast networking">
+            </label>
+            <label class="ei-field ei-field--full">
+              <span>Date(s)</span>
+              <input type="text" name="dates" required placeholder="e.g. Fri 12 Sep 2026 — or every Friday from Sept">
+            </label>
+            <label class="ei-field">
+              <span>Start time <span class="ei-optional">(optional)</span></span>
+              <input type="text" name="startTime" placeholder="e.g. 7:30am">
+            </label>
+            <label class="ei-field">
+              <span>End time <span class="ei-optional">(optional)</span></span>
+              <input type="text" name="endTime" placeholder="e.g. 9:00am">
+            </label>
+            <div class="ei-field ei-field--full">
+              <span class="ei-label-block">Format</span>
+              <div class="ei-choice" role="group" aria-label="Event format">
+                <label class="ei-choice-option">
+                  <input type="radio" name="format" value="In person" checked>
+                  <span>In person</span>
+                </label>
+                <label class="ei-choice-option">
+                  <input type="radio" name="format" value="Online">
+                  <span>Online</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="ei-grid ei-location" id="ei-location-inperson">
+            <label class="ei-field">
+              <span>Venue name</span>
+              <input type="text" name="venue" placeholder="e.g. The Exchange">
+            </label>
+            <label class="ei-field">
+              <span>Address</span>
+              <input type="text" name="address" autocomplete="street-address" placeholder="Street address">
+            </label>
+            <label class="ei-field">
+              <span>City / town</span>
+              <input type="text" name="city" autocomplete="address-level2" placeholder="e.g. Liverpool">
+            </label>
+            <label class="ei-field">
+              <span>Postcode</span>
+              <input type="text" name="postcode" autocomplete="postal-code" placeholder="e.g. L1 8JQ">
+            </label>
+          </div>
+
+          <div class="ei-grid ei-location" id="ei-location-online" hidden>
+            <label class="ei-field ei-field--full">
+              <span>Meeting / join link <span class="ei-optional">(optional)</span></span>
+              <input type="url" name="meetingLink" placeholder="https://zoom.us/j/… or Teams link">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="ei-fieldset">
+          <legend>Tickets</legend>
+          <div class="ei-field">
+            <span class="ei-label-block">Pricing</span>
+            <div class="ei-choice" role="group" aria-label="Pricing">
+              <label class="ei-choice-option">
+                <input type="radio" name="pricing" value="Free" checked>
+                <span>Free</span>
+              </label>
+              <label class="ei-choice-option">
+                <input type="radio" name="pricing" value="Paid">
+                <span>Paid / ticketed</span>
+              </label>
+            </div>
+          </div>
+          <label class="ei-field ei-field--full" id="ei-ticket-details-wrap" hidden>
+            <span>Ticket details</span>
+            <textarea name="ticketDetails" rows="3" placeholder="e.g. Member £15 / Guest £25 · max 40 places"></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset class="ei-fieldset">
+          <legend>Extras <span class="ei-optional">(optional)</span></legend>
+          <div class="ei-grid">
+            <label class="ei-field ei-field--full">
+              <span>Short description</span>
+              <textarea name="description" rows="4" maxlength="4000" placeholder="Who should come, what happens, and what people take away"></textarea>
+            </label>
+            <label class="ei-field ei-field--full">
+              <span>Photo URL</span>
+              <input type="url" name="photoUrl" placeholder="https://… (or email us the image)">
+            </label>
+            <label class="ei-field ei-field--full">
+              <span>Anything else we should know?</span>
+              <textarea name="notes" rows="2" placeholder="Series dates, draft vs publish, special ticket rules…"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary ei-submit" id="ei-submit">Send event details →</button>
+        <p class="ei-status" id="ei-status" role="status" hidden></p>
+        <p class="ei-note">We reply when the listing is live. No account needed to send this form.</p>
+      </form>
+    </section>
+  </div>
+</main>
+
+<div id="hub-site-footer"></div>
+<script src="js/site-footer.js?v=20260728footer" data-root=""></script>
+<script src="js/event-intake-page.js?v=20260811a"></script>
+</body>
+</html>
