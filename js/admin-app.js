@@ -417,7 +417,7 @@
     'social-founding': {
       title: 'How to manage founding organisers',
       steps: [
-        'Badges are awarded automatically when groups claim before 1 September.',
+        'Badges unlock when a group claims before 1 September and publishes their first event.',
         'Use this list to revoke a badge, add/remove a homepage slot (max 50), or copy the group LinkedIn caption.',
         'Preview gateway and homepage strips update from these flags — no separate publish step.',
       ],
@@ -21607,7 +21607,7 @@
 
       root.innerHTML =
         '<div class="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950 space-y-1">' +
-        '<p><strong>Auto-award:</strong> claim before 1 Sept → founding badge. First 50 also get homepage showcase through November.</p>' +
+        '<p><strong>Auto-award:</strong> claim before 1 Sept, then publish an event → founding badge. First 50 also get homepage showcase through November.</p>' +
         '<p>Gateway strip + homepage update live from these flags. Social post = copy the group caption below (not individual posts).</p>' +
         '<p><strong>Logo chase:</strong> filter to groups still missing a logo or website, then email them from the Actions column.</p>' +
         '</div>' +

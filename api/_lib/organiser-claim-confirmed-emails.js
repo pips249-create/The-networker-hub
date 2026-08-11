@@ -1,6 +1,8 @@
 /**
- * Post-claim confirmation — founding badge + logo/website CTA.
- * One email per claim batch (after the last pending page is confirmed/rejected).
+ * Post-claim confirmation — logo/website CTA.
+ * Founding perk row is included when the badge has already been unlocked (first published event).
+ * One email per claim batch (after the last pending page is confirmed/rejected),
+ * and again (force) when founding unlocks on publish.
  */
 const { sendTemplatedEmail } = require('./send-template-email');
 const { emailGreetingName } = require('./email-display-name');
@@ -73,11 +75,11 @@ function buildOrganiserClaimConfirmedVars({ group, groups, session, siteUrl }) {
     hero_title: founding ? "You're in — badge unlocked" : 'Your organiser page is confirmed',
     intro_line: founding
       ? multi
-        ? 'Thanks for confirming before launch. Your Founding Organiser · 2026 badge is on each confirmed Hub profile.'
-        : 'Thanks for confirming before launch. Your Founding Organiser · 2026 badge is on your Hub profile.'
+        ? 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is on each confirmed Hub profile.'
+        : 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is on your Hub profile.'
       : multi
-        ? 'Thanks for confirming. You can manage events, memberships, and your public pages from the organiser workspace.'
-        : 'Thanks for confirming. You can manage events, memberships, and your public page from the organiser workspace.',
+        ? 'Thanks for confirming. Finish each page, then publish an event — that unlocks your Founding Organiser · 2026 badge (for pages claimed before 1 September).'
+        : 'Thanks for confirming. Add your logo and publish an event to unlock your Founding Organiser · 2026 badge (if you claimed before 1 September).',
     founding_perk_row: founding ? foundingPerkRowHtml({ foundingHomepage }) : '',
     groups_list_row: groupsListRowHtml(allGroups),
     profile_url: organiserPublicUrl(primary, site),

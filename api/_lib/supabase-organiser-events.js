@@ -1795,6 +1795,45 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
 
   await publishOrganiserListingsForEventIds(sb, updated);
 
+  // Founding Organiser · 2026 — unlock after first published event (claim must be pre-deadline).
+  try {
+    const { maybeAwardFoundingAfterEventPublish } = require('./founding-organiser');
+    const { rowToGroup } = require('./supabase-organiser');
+    const awarded = await maybeAwardFoundingAfterEventPublish(
+      sb,
+      (updated || []).map((row) => row.organiser_id).filter(Boolean)
+    );
+    if (awarded.length) {
+      const { sendOrganiserClaimConfirmedEmail } = require('./organiser-claim-confirmed-emails');
+      // Best-effort notify — publish must not fail if mail fails.
+      Promise.resolve()
+        .then(async () => {
+          for (const row of awarded) {
+            const group = rowToGroup(row);
+            const email = String(row.email || row.contact_email || '')
+              .trim()
+              .toLowerCase();
+            if (!email) continue;
+            await sendOrganiserClaimConfirmedEmail({
+              group,
+              groups: [group],
+              session: { email, sub: row.supabase_user_id || '' },
+              force: true,
+            }).catch((err) => {
+              console.warn(
+                '[publish] founding unlocked email failed',
+                row.id,
+                err && err.message ? err.message : err
+              );
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  } catch (err) {
+    console.error('[publish] founding award failed', err?.message || err);
+  }
+
   // Notify member-list people for newly Approved published events (non-blocking).
   try {
     const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');

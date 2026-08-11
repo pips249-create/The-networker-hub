@@ -181,7 +181,6 @@ async function claimGroupForSession(session, groupId) {
   }
 
   const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
-  const { foundingFieldsForClaim } = require('./founding-organiser');
   const account = await getOrCreateOrganiserAccount(session);
   const claimedAt = new Date();
   const now = claimedAt.toISOString();
@@ -195,10 +194,8 @@ async function claimGroupForSession(session, groupId) {
   if (account?.id && !organiser.organiser_account_id) {
     patch.organiser_account_id = account.id;
   }
-  // Keep any existing founding flags if they re-claim after admin reset.
-  if (!organiser.founding_organiser_at) {
-    Object.assign(patch, await foundingFieldsForClaim(sb, claimedAt));
-  }
+  // Founding Organiser badge is awarded when they publish their first event
+  // (if this claim was before the soft-launch deadline) — not on claim alone.
 
   const { data, error } = await sb
     .from('organisers')

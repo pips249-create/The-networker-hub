@@ -12723,7 +12723,7 @@
     if (errEl) errEl.hidden = true;
     if (acceptBtn) {
       acceptBtn.disabled = false;
-      acceptBtn.textContent = groupClaimRejectMode ? 'Back' : 'Yes — continue setup';
+      acceptBtn.textContent = groupClaimRejectMode ? 'Back' : 'Yes — set up this page';
     }
     if (rejectBtn) {
       rejectBtn.disabled = false;
@@ -12785,6 +12785,28 @@
           'claim_accepted',
           data.group.slug || data.group.name || data.group.id
         );
+
+        // Set up THIS page next — do not claim every sibling before profile review.
+        hideGroupClaimModal();
+        await loadBootstrap();
+        updateSetupResumeBanner();
+        updateGettingStartedPanel();
+
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.clearProfileReviewDone) {
+          window.HubOrganiserOnboarding.clearProfileReviewDone();
+        }
+        if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
+          window.HubOrganiserLaunchSetup.prepareClaimOnboarding([data.group.id]);
+        }
+
+        const editUrl =
+          window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.profileEditUrl
+            ? window.HubOrganiserLaunchSetup.profileEditUrl(data.group.id)
+            : '/organiser/group-edit?id=' +
+              encodeURIComponent(data.group.id) +
+              '&onboard=launch';
+        location.href = editUrl;
+        return;
       }
 
       if (state.pendingClaimGroups.length) {
@@ -12798,29 +12820,13 @@
         return;
       }
 
-      if (action === 'claim' && data.group && data.group.id) {
+      if (action === 'reject') {
         await loadBootstrap();
-        updateSetupResumeBanner();
-        updateGettingStartedPanel();
-        if (data.group.foundingOrganiser) {
-          var foundingMsg = data.group.foundingHomepage
-            ? "You're a Founding Organiser · 2026 — badge on your profile, plus a homepage showcase through November."
-            : "You're a Founding Organiser · 2026 — a founding badge now shows on your Hub profile.";
-          try {
-            sessionStorage.setItem('hub_founding_toast', foundingMsg);
-          } catch (e) {
-            /* ignore */
-          }
-          showOrganiserAlert(foundingMsg, false);
-        }
-        continueOnboardingAfterClaim();
+        showOrganiserAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
         return;
       }
 
       await loadBootstrap();
-      if (action === 'reject') {
-        showOrganiserAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
-      }
     } catch (e) {
       if (errEl) {
         errEl.textContent = e.message || 'Something went wrong. Please try again.';
@@ -15864,11 +15870,17 @@
         const bootParams = new URLSearchParams(window.location.search);
         if (bootParams.get('onboard') === 'launch' && window.HubOrganiserLaunchSetup) {
           window.HubOrganiserLaunchSetup.clearDismissed();
-          const nextLaunch = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
-          if (nextLaunch) {
-            openLaunchSetupItem(nextLaunch);
+          if ((state.pendingClaimGroups || []).length > 0) {
+            renderGroupClaimModal();
+          } else if ((state.pendingClaimOpportunities || []).length > 0) {
+            renderOpportunityClaimModal();
           } else {
-            showReadyForEventPrompt();
+            const nextLaunch = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
+            if (nextLaunch) {
+              openLaunchSetupItem(nextLaunch);
+            } else {
+              showReadyForEventPrompt();
+            }
           }
           if (window.history.replaceState) {
             const url = new URL(window.location.href);

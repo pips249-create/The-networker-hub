@@ -1,7 +1,8 @@
 /**
- * Founding Organiser cohort — claim before soft launch.
- * Badge: everyone who claims before 1 Sept 2026.
- * Homepage strip: first 50 claims, visible until end of Nov 2026.
+ * Founding Organiser cohort — claim before soft launch, badge after first published event.
+ * Eligibility: ownership claimed before 1 Sept 2026.
+ * Award: first published event for that organiser page.
+ * Homepage strip: first 50 awards, visible until end of Nov 2026.
  */
 const FOUNDING_CLAIM_DEADLINE = new Date('2026-09-01T00:00:00+01:00');
 const FOUNDING_HOMEPAGE_UNTIL = new Date('2026-11-30T23:59:59+00:00');
@@ -65,6 +66,7 @@ function isFoundingOrganiser(row) {
 
 /**
  * Patch fields to set on claim when still inside the founding window.
+ * @deprecated Founding is awarded on first published event — prefer maybeAwardFoundingAfterEventPublish.
  * Homepage slot is assigned only while under the cap (best-effort; rare races OK).
  */
 async function foundingFieldsForClaim(sb, now = new Date()) {
@@ -88,6 +90,62 @@ async function foundingFieldsForClaim(sb, now = new Date()) {
   }
 
   return patch;
+}
+
+function claimedDuringFoundingWindow(row) {
+  if (!row || String(row.ownership_claim_status || '').toLowerCase() !== 'claimed') return false;
+  const claimedAt = row.ownership_claimed_at ? new Date(row.ownership_claimed_at) : null;
+  if (!claimedAt || !Number.isFinite(claimedAt.getTime())) return false;
+  return claimedAt.getTime() < FOUNDING_CLAIM_DEADLINE.getTime();
+}
+
+async function foundingHomepageSlotPatch(sb) {
+  try {
+    const { count, error } = await sb
+      .from('organisers')
+      .select('id', { count: 'exact', head: true })
+      .not('founding_homepage_until', 'is', null);
+    if (error) throw error;
+    if ((count || 0) < FOUNDING_HOMEPAGE_CAP) {
+      return { founding_homepage_until: FOUNDING_HOMEPAGE_UNTIL.toISOString() };
+    }
+  } catch (e) {
+    console.warn('founding homepage slot check failed:', e.message || e);
+  }
+  return {};
+}
+
+/**
+ * Award founding after the organiser publishes their first event.
+ * Claim must have happened before the soft-launch deadline; publish may be later.
+ * @returns {Promise<object[]>} updated organiser rows that newly received founding
+ */
+async function maybeAwardFoundingAfterEventPublish(sb, organiserIds, now = new Date()) {
+  const ids = [...new Set((organiserIds || []).filter(Boolean).map(String))];
+  if (!ids.length) return [];
+
+  const awarded = [];
+  for (const id of ids) {
+    const { data: row, error } = await sb.from('organisers').select('*').eq('id', id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row || row.founding_organiser_at) continue;
+    if (!claimedDuringFoundingWindow(row)) continue;
+
+    const patch = {
+      founding_organiser_at: now.toISOString(),
+      ...(await foundingHomepageSlotPatch(sb)),
+    };
+    const { data: updated, error: upErr } = await sb
+      .from('organisers')
+      .update(patch)
+      .eq('id', id)
+      .is('founding_organiser_at', null)
+      .select('*')
+      .maybeSingle();
+    if (upErr) throw new Error(upErr.message);
+    if (updated) awarded.push(updated);
+  }
+  return awarded;
 }
 
 async function listFoundingHomepageOrganisers(sb, now = new Date()) {
@@ -130,6 +188,8 @@ module.exports = {
   isFoundingHomepageActive,
   isFoundingOrganiser,
   foundingFieldsForClaim,
+  claimedDuringFoundingWindow,
+  maybeAwardFoundingAfterEventPublish,
   listFoundingHomepageOrganisers,
   listFoundingOrganisersForGateway,
   mergeSoftLaunchFoundingShowcase,

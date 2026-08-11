@@ -867,6 +867,7 @@
     }
 
     if (onboardReview || (config && config.onboardLaunch)) {
+      // Founding toast only appears after first published event (server sets sessionStorage).
       consumeFoundingToast();
     }
 
