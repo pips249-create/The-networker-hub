@@ -444,11 +444,13 @@
 
 .org-claim-invite {
   margin: 0 0 28px;
-  padding: 22px 24px 20px;
+  padding: 24px 26px 22px;
   border-radius: 18px;
-  background: linear-gradient(165deg, #f7f1e8 0%, #f3ebe0 55%, #efe6f4 100%);
-  border: 1px solid rgba(69, 45, 92, 0.12);
-  box-shadow: 0 10px 28px rgba(45, 38, 54, 0.06);
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(196, 165, 116, 0.22), transparent 55%),
+    linear-gradient(145deg, #f8f1e6 0%, #f4e8d8 48%, #f0e4ef 100%);
+  border: 1px solid rgba(138, 107, 61, 0.28);
+  box-shadow: 0 12px 32px rgba(45, 38, 54, 0.08);
 }
 
 .org-claim-invite-kicker {
@@ -463,7 +465,7 @@
 .org-claim-invite-title {
   margin: 0 0 8px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1.2;
   font-weight: 400;
   color: #2d2636;
@@ -496,8 +498,13 @@
   font-weight: 600;
 }
 
-body.org-claim-invite-active .org-profile-breadcrumb {
-  display: none;
+body.org-claim-invite-active .org-profile-breadcrumb,
+body.org-claim-invite-active #org-save-btn,
+body.org-claim-invite-active #org-share-btn,
+body.org-claim-invite-active #org-report-btn,
+body.org-claim-invite-active .org-profile-section--cta,
+body.org-claim-invite-active #org-region-cta {
+  display: none !important;
 }
 
 .org-siblings {
