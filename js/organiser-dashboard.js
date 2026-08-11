@@ -12692,6 +12692,32 @@
       dashBtn.textContent = nextBtn && !nextBtn.hidden ? 'Go to Overview' : 'Go to My events';
     }
 
+    const previewLink = document.getElementById('org-launch-complete-preview');
+    if (previewLink) {
+      const focus = readClaimFocus();
+      const focusId = String((focus && focus.id) || '').trim();
+      const focusSlug = String((focus && focus.slug) || '')
+        .trim()
+        .toLowerCase();
+      const ordered = groupsForLaunchSetup();
+      const g =
+        ordered.find(function (row) {
+          if (!row) return false;
+          if (focusId && String(row.id) === focusId) return true;
+          if (focusSlug && String(row.slug || '').toLowerCase() === focusSlug) return true;
+          return false;
+        }) ||
+        ordered[0] ||
+        null;
+      if (g && (g.slug || g.id)) {
+        previewLink.hidden = false;
+        previewLink.setAttribute('href', groupPublicProfileUrl(g.id, g.slug));
+        previewLink.textContent = 'View your public page';
+      } else {
+        previewLink.hidden = true;
+      }
+    }
+
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('org-group-claim-active');

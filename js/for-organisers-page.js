@@ -287,6 +287,25 @@
       secondary.textContent = 'Keep reading first';
     }
 
+    // Soft-launch claim CTA: don't sell paid Premium Spotlight — free list + founding badge only.
+    try {
+      document.body.classList.add('fo-claim-invite-active');
+      document.querySelectorAll('[data-fo-premium-benefit]').forEach(function (el) {
+        el.hidden = true;
+      });
+      document.querySelectorAll('[data-fo-premium-mock]').forEach(function (el) {
+        el.hidden = true;
+      });
+      document.querySelectorAll('.fo-benefit-browse-spotlight--claim').forEach(function (el) {
+        el.hidden = false;
+      });
+      var discoverLede = document.querySelector('[data-fo-discover-lede]');
+      if (discoverLede) {
+        discoverLede.textContent =
+          'The Networker Hub connects UK networkers to your events. List for free, then promote from your workspace with LinkedIn pictures and ranking badges — not another generic listing site.';
+      }
+    } catch (e) {}
+
     try {
       document.title = 'Your organiser page is ready – For organisers – The Networker Hub';
     } catch (e) {}

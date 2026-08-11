@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
-<link rel="stylesheet" href="css/for-organisers-page.css?v=20260807claima">
+<link rel="stylesheet" href="css/for-organisers-page.css?v=20260811claimnoprem">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -52,7 +52,7 @@
         <div id="fo-claim-invite" class="fo-claim-invite" hidden>
           <p class="fo-claim-invite-kicker">Your organiser page is ready</p>
           <p class="fo-claim-invite-text">
-            Have a look around this page first. When you&rsquo;re ready, confirm your listing with the email we have on file — about a minute to set a password. Claim before <strong>1&nbsp;September</strong>, then publish your first event to unlock your <strong>Founding Organiser · 2026</strong> badge. The first 50 also get a homepage showcase (with your website link) through November. We’ll also share a group social post naming founding organisers now on the Hub organiser leaderboard.
+            Have a look around this page first. When you&rsquo;re ready, confirm with the email we have on file — about a minute to set a password. Claim before <strong>1&nbsp;September</strong>, then publish your first event to unlock <strong>Founding Organiser · 2026</strong>. You can list autumn dates now; public browsing and ticket buying open on 1&nbsp;September. The first 50 founders also appear on our homepage through November.
           </p>
           <div class="fo-claim-invite-actions">
             <a class="btn btn-primary" id="fo-claim-confirm" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim">Confirm your page →</a>
@@ -146,7 +146,8 @@
                   </div>
                 </div>
                 <div class="fo-benefit-browse-body">
-                  <div class="fo-benefit-browse-spotlight">★ Premium Spotlight</div>
+                  <div class="fo-benefit-browse-spotlight" data-fo-premium-mock>★ Premium Spotlight</div>
+                  <div class="fo-benefit-browse-spotlight fo-benefit-browse-spotlight--claim" hidden>Your events · free to list</div>
                   <div class="fo-benefit-browse-card">
                     <span class="fo-benefit-browse-thumb"></span>
                     <span class="fo-benefit-browse-meta">
@@ -173,10 +174,10 @@
             </div>
           </div>
           <h3>Get discovered</h3>
-          <p class="fo-benefit-lede">The Networker Hub connects UK networkers to your events. Promote from your workspace with LinkedIn pictures, ranking badges, and featuring — not another generic listing site.</p>
+          <p class="fo-benefit-lede" data-fo-discover-lede>The Networker Hub connects UK networkers to your events. Promote from your workspace with LinkedIn pictures, ranking badges, and featuring — not another generic listing site.</p>
           <ul class="fo-benefit-list">
             <li data-hub-tip="fo-events-directory">Events directory &amp; organiser browse</li>
-            <li data-hub-tip="fo-premium-spotlight">Premium Spotlight featured listings</li>
+            <li data-hub-tip="fo-premium-spotlight" data-fo-premium-benefit>Premium Spotlight featured listings</li>
             <li data-hub-tip="fo-organiser-profiles">Organiser profile pages &amp; reviews</li>
             <li data-hub-tip="fo-opportunities-hub">Business opportunities hub</li>
             <li data-hub-tip="fo-saved-organiser-alerts">Saved organiser alerts for members</li>
@@ -566,7 +567,7 @@
 <script src="js/find-your-next-rotate.js?v=20260714"></script>
 <script src="js/for-organisers-feature-tips.js?v=20260729benefits"></script>
 <script src="js/hub-field-tip.js?v=20260721"></script>
-<script src="js/for-organisers-page.js?v=20260811claimb3"></script>
+<script src="js/for-organisers-page.js?v=20260811claimnoprem"></script>
 
 </body>
 </html>

@@ -9121,6 +9121,12 @@ body.org-group-claim-active {
   justify-content: flex-end;
 }
 
+.org-group-claim-actions a.org-btn {
+  text-decoration: none;
+  text-align: center;
+  box-sizing: border-box;
+}
+
 @media (max-width: 520px) {
   .org-group-claim-actions {
     flex-direction: column-reverse;

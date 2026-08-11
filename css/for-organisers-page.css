@@ -297,6 +297,14 @@ html:has(.for-organisers-page) {
   font-weight: 600;
 }
 
+body.fo-claim-invite-active .fo-benefit-browse-spotlight--claim {
+  background: linear-gradient(135deg, #452d5c, #1c2040);
+}
+
+body.fo-claim-invite-active [data-fo-premium-benefit] {
+  display: none;
+}
+
 .fo-hero-trust {
   margin: 18px 0 0;
   font-size: 0.84rem;
