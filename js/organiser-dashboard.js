@@ -12648,18 +12648,40 @@
 
     if (kicker) {
       kicker.textContent = nextClaim
-        ? 'Page ready · more groups to claim'
+        ? 'Event live · more groups to claim'
         : nextLaunch
-          ? 'Page ready · more setup left'
-          : 'Page ready';
+          ? opts.fromPublish
+            ? 'Event live · more setup left'
+            : 'Page ready · more setup left'
+          : opts.fromPublish
+            ? 'Event live'
+            : 'Page ready';
     }
     if (titleEl) {
-      titleEl.textContent = nextClaim
-        ? 'This organiser page is set'
-        : 'You’re set for this organiser page';
+      titleEl.textContent = opts.fromPublish
+        ? nextClaim
+          ? 'Your event is live on this page'
+          : 'Your event is live'
+        : nextClaim
+          ? 'This organiser page is set'
+          : 'You’re set for this organiser page';
     }
     if (introEl) {
-      if (nextClaim) {
+      if (opts.fromPublish && nextClaim) {
+        introEl.textContent =
+          'Nice work — this listing is published in the workspace. Next we’ll ask about your other organiser page' +
+          (pendingClaims === 1 ? '' : 's') +
+          '. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
+      } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'profile') {
+        introEl.textContent =
+          'Your listing is live. Next, review your other organiser page. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
+      } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'event') {
+        introEl.textContent =
+          'Your listing is live. You still have more events to review on this page — continue when you are ready.';
+      } else if (opts.fromPublish) {
+        introEl.textContent =
+          'Your listing is live in the workspace. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September). Bank details can wait — add them later when you sell paid tickets.';
+      } else if (nextClaim) {
         introEl.textContent =
           'Great — this page is ready. Next we’ll ask about your other organiser page' +
           (pendingClaims === 1 ? '' : 's') +
@@ -16144,27 +16166,28 @@
           } catch {
             /* ignore */
           }
+          // Mark complete on the parent too — don't rely only on the iframe script.
+          try {
+            const launchMark = window.HubOrganiserLaunchSetup;
+            if (launchMark && typeof launchMark.markEventFamilyDone === 'function') {
+              if (e.data.familyKey) launchMark.markEventFamilyDone(String(e.data.familyKey));
+              publishedEventIds.forEach(function (id) {
+                if (id) launchMark.markEventFamilyDone('ev:' + id);
+              });
+              if (publishedEventId) launchMark.markEventFamilyDone('ev:' + publishedEventId);
+            }
+          } catch {
+            /* ignore */
+          }
           loadBootstrap({ silent: true, skipClaimUi: true }).then(function () {
             renderAll();
-            const launch = window.HubOrganiserLaunchSetup;
-            const next =
-              launch && typeof launch.nextItem === 'function'
-                ? launch.nextItem(launchSetupInput())
-                : null;
-            if (next) {
-              if (next.kind === 'event') {
-                showOrganiserAlert('Event ready. Choose your next listing…', false);
-                if (showLaunchSetupPrompt()) return;
-              }
-              showOrganiserAlert('Event ready. Next setup step…', false);
-              openLaunchSetupItem(next);
-              return;
-            }
+            // Always celebrate publish first — do not auto-open the next profile
+            // review (that felt like being sent back to "your organiser page").
             if ((state.pendingClaimGroups || []).length > 0) {
-              showLaunchPageCompletePrompt({ nextClaim: true });
+              showLaunchPageCompletePrompt({ nextClaim: true, fromPublish: true });
               return;
             }
-            showLaunchPageCompletePrompt({});
+            showLaunchPageCompletePrompt({ fromPublish: true });
           });
           return;
         }

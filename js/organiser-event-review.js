@@ -800,6 +800,9 @@
           imageUrl: publishedImage,
           publishedUrl: publishedUrl,
           launchSetup: Boolean(seriesMeta && seriesMeta.launchSetup),
+          familyKey:
+            (seriesMeta && seriesMeta.familyKey) ||
+            (eventIds[0] ? 'ev:' + eventIds[0] : ''),
         },
         window.location.origin
       );

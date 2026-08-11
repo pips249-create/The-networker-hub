@@ -3453,6 +3453,13 @@
           imageUrl: publishedImage,
           publishedUrl: publishedUrl,
           launchSetup: Boolean(seriesMeta && seriesMeta.launchSetup),
+          familyKey:
+            (seriesMeta && seriesMeta.familyKey) ||
+            (seriesMeta && seriesMeta.seriesGroupId
+              ? 'sg:' + seriesMeta.seriesGroupId
+              : eventIds[0]
+                ? 'ev:' + eventIds[0]
+                : ''),
         },
         window.location.origin
       );
