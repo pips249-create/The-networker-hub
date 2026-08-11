@@ -336,6 +336,12 @@ async function getEmailSponsorVars(slug) {
   if (!isSupabaseConfigured()) return empty;
 
   try {
+    // Email 2 / claim campaigns always use My Medical Cover (not organisers-directory sponsor).
+    if (slug === 'organiser_launch_invite' || slug === 'organiser_claim_invite') {
+      const { buildEmail2SponsorVars } = require('./email2-sponsor');
+      return await buildEmail2SponsorVars({ wrapRow: true });
+    }
+
     const sb = getSupabaseAdmin();
     let mainBlock = null;
     const label = 'Powered by';

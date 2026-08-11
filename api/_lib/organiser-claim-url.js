@@ -59,6 +59,39 @@ function previewClaimUrl(base, em, authMode, slug) {
   );
 }
 
+/** Primary public organiser slug for a profile email (path B). */
+async function lookupPrimaryPublicSlugForEmail(email) {
+  const em = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (!em) return '';
+  try {
+    const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+    if (!isSupabaseConfigured()) return '';
+    const { isPublicOrganiser } = require('./supabase-organisers-browse');
+    const { publicOrganiserSlug } = require('./organiser-slug');
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb
+      .from('organisers')
+      .select('id, name, slug, listing_status, verification_status, email, contact_email')
+      .or(`email.eq.${em},contact_email.eq.${em}`)
+      .limit(40);
+    if (error) throw new Error(error.message);
+    const publicRows = (data || [])
+      .filter((row) => isPublicOrganiser(row))
+      .sort((a, b) =>
+        String(a.name || '').localeCompare(String(b.name || ''), 'en-GB', { sensitivity: 'base' })
+      );
+    for (const row of publicRows) {
+      const slug = publicOrganiserSlug(row);
+      if (slug) return slug;
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Register/login unless they have already signed in at least once.
  * Email must match the organiser group profile on file.
@@ -71,13 +104,17 @@ async function resolveOrganiserClaimUrl(email, host, slug) {
     .trim()
     .toLowerCase();
   const base = String(host || '').replace(/\/$/, '');
+  let resolvedSlug = String(slug || '').trim();
+  if (!resolvedSlug) {
+    resolvedSlug = await lookupPrimaryPublicSlugForEmail(em);
+  }
 
   const user = await sbAuth.findUserByEmail(em);
   if (!user || !user.lastSignInAt) {
-    return previewClaimUrl(base, em, 'register', slug);
+    return previewClaimUrl(base, em, 'register', resolvedSlug);
   }
 
-  return previewClaimUrl(base, em, 'login', slug);
+  return previewClaimUrl(base, em, 'login', resolvedSlug);
 }
 
 /** Direct auth URL after they have reviewed their listing (Claim / Edit CTA). */
@@ -103,4 +140,5 @@ module.exports = {
   previewClaimUrl,
   softPathClaimUrl,
   authClaimUrl,
+  lookupPrimaryPublicSlugForEmail,
 };

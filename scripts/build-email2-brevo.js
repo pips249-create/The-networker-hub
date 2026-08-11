@@ -22,53 +22,15 @@ dotenv.config({ path: path.join(root, '.env') });
 const { getSupabaseAdmin } = require('../api/_lib/supabase');
 const { resolveOrganiserClaimUrl, previewClaimUrl } = require('../api/_lib/organiser-claim-url');
 const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
-const { buildSponsorSection, fetchSponsorBlockForSlot } = require('../api/_lib/email-booking-defaults');
-const { sponsorCompanyName } = require('../api/_lib/cms-sponsor-fields');
 const { publicOrganiserSlug } = require('../api/_lib/organiser-slug');
+const { buildEmail2SponsorRowHtml } = require('../api/_lib/email2-sponsor');
+
+const SITE = 'https://www.thenetworkerhub.com';
+const LEGACY = 'https://the-networker.co.uk';
 
 /** Email 2 uses My Medical Cover — Barnsgate declined sponsorship. */
 async function buildEmail2SponsorRow() {
-  // Prefer Hub-hosted white PNG; fall back to MMC CDN so test sends work before deploy.
-  const hubPng = SITE + '/assets/sponsors/my-medical-cover-logo-white.png';
-  const cdnPng = 'https://my-mc.co.uk/wp-content/uploads/2021/05/logo_white.png';
-  let png = cdnPng;
-  try {
-    const hubOk = await check(hubPng);
-    if (hubOk.status === 200) png = hubPng;
-    else console.warn('Hub MMC logo not live yet (status ' + hubOk.status + ') — using my-mc.co.uk CDN');
-  } catch (_) {
-    /* use CDN */
-  }
-
-  let block = null;
-  try {
-    const sb = getSupabaseAdmin();
-    block =
-      (await fetchSponsorBlockForSlot(sb, 'opportunities_sponsor_hub')) ||
-      (await fetchSponsorBlockForSlot(sb, 'events_sponsor_hub')) ||
-      (await fetchSponsorBlockForSlot(sb, 'booking_email_sponsor'));
-  } catch (e) {
-    console.warn('Sponsor CMS fetch failed:', e.message || e);
-  }
-
-  const company = sponsorCompanyName(block) || 'My Medical Cover';
-  const cta = String((block && block.cta_url) || 'https://my-mc.co.uk/').trim();
-  const emailBlock = {
-    ...(block || {}),
-    company_name: /medical\s*cover/i.test(company) ? company : 'My Medical Cover',
-    logo_url: png,
-    image_url: png,
-    cta_url: cta || 'https://my-mc.co.uk/',
-    active: true,
-  };
-
-  const html = buildSponsorSection(emailBlock, {
-    label: 'Powered by',
-    placement: 'email2_launch',
-    campaign: 'email2_launch',
-    logoBandBg: '#1a1a2e',
-    siteUrl: SITE,
-  });
+  const html = await buildEmail2SponsorRowHtml(SITE);
   if (!html) {
     console.warn('Sponsor banner: My Medical Cover markup empty');
     return '';
@@ -76,9 +38,6 @@ async function buildEmail2SponsorRow() {
   console.log('Sponsor banner: My Medical Cover');
   return html;
 }
-
-const SITE = 'https://www.thenetworkerhub.com';
-const LEGACY = 'https://the-networker.co.uk';
 
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
