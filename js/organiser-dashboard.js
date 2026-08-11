@@ -3271,6 +3271,8 @@
     const launch = window.HubOrganiserLaunchSetup;
     const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
     if (item) {
+      // For seeded events, show the summary first — don't drop straight into the editor.
+      if (item.kind === 'event' && showLaunchSetupPrompt()) return;
       openLaunchSetupItem(item);
       return;
     }
@@ -12622,14 +12624,25 @@
     const queueEl = document.getElementById('org-launch-setup-queue');
 
     if (kicker) {
-      kicker.textContent =
-        built.queue.length === 1
-          ? 'Almost there — 1 step left'
-          : 'Finish setup · ' + built.queue.length + ' steps left';
+      if (item.kind === 'event') {
+        kicker.textContent =
+          eventsLeft > 1 ? 'Your events are ready to review' : 'Your event is ready to review';
+      } else {
+        kicker.textContent =
+          built.queue.length === 1
+            ? 'Almost there — 1 step left'
+            : 'Finish setup · ' + built.queue.length + ' steps left';
+      }
     }
     if (titleEl) {
-      titleEl.textContent =
-        item.kind === 'profile' ? 'Review your organiser page' : 'Review your event & tickets';
+      if (item.kind === 'profile') {
+        titleEl.textContent = 'Review your organiser page';
+      } else {
+        titleEl.textContent =
+          eventsLeft > 1
+            ? 'We’ve added these events for you'
+            : 'We’ve added an event for you';
+      }
     }
     if (introEl) {
       if (item.kind === 'profile') {
@@ -12637,36 +12650,63 @@
           (state.groups || []).length > 1
             ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported). Public ticket buying opens 1 September.'
             : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens 1 September — until then, get everything ready in the workspace.';
-      } else if (item.isSeries) {
-        introEl.textContent =
-          'This is a recurring series (' +
-          item.dateCount +
-          ' dates). You review shared details and tickets once — every date uses the same setup. Publish now so you are ready; attendees buy on the public site from 1 September. Paid tickets need Connect before card payments work.';
-      } else if (eventsLeft > 1) {
-        introEl.textContent =
-          'You have several seeded listings. Finish this one (details → tickets → review → publish), then we will take you to the next. Public sales open 1 September.';
       } else {
         introEl.textContent =
-          'Check the listing we prepared, set tickets, then publish. Attendees cannot buy on the public site until 1 September — get set now. Paid tickets need bank payouts connected first.';
+          'Review the information we prepared, add tickets, then publish. We’ll take you through each listing in turn. Public ticket buying opens 1 September.';
       }
     }
-    if (labelEl) labelEl.textContent = item.title;
+    if (labelEl) {
+      if (item.kind === 'event') {
+        const eventItems = built.queue.filter(function (q) {
+          return q.kind === 'event';
+        });
+        labelEl.textContent = eventItems
+          .map(function (ev, idx) {
+            const seriesBit =
+              ev.isSeries && ev.dateCount > 1 ? ' · ' + ev.dateCount + ' dates' : '';
+            return idx + 1 + '. ' + ev.title + seriesBit;
+          })
+          .join('\n');
+        labelEl.style.whiteSpace = 'pre-line';
+      } else {
+        labelEl.style.whiteSpace = '';
+        labelEl.textContent = item.title;
+      }
+    }
     if (metaEl) {
-      metaEl.textContent =
-        item.indexHint +
-        (item.kind === 'profile' && item.thin ? ' · needs photo or description' : '');
+      if (item.kind === 'event') {
+        metaEl.textContent =
+          eventsLeft > 1
+            ? 'Start with the first listing — details, tickets, then publish.'
+            : 'Next: check details, set tickets, then publish.';
+      } else {
+        metaEl.textContent =
+          item.indexHint +
+          (item.kind === 'profile' && item.thin ? ' · needs photo or description' : '');
+      }
     }
     if (queueEl) {
-      const bits = [];
-      if (profilesLeft) bits.push(profilesLeft + ' page' + (profilesLeft === 1 ? '' : 's'));
-      if (eventsLeft) bits.push(eventsLeft + ' event' + (eventsLeft === 1 ? '' : 's') + ' / series');
-      queueEl.textContent = bits.length ? 'Still to do: ' + bits.join(', ') + '.' : '';
+      if (item.kind === 'event') {
+        queueEl.textContent =
+          eventsLeft > 1
+            ? eventsLeft + ' events / series to review.'
+            : '1 event to review.';
+      } else {
+        const bits = [];
+        if (profilesLeft) bits.push(profilesLeft + ' page' + (profilesLeft === 1 ? '' : 's'));
+        if (eventsLeft) bits.push(eventsLeft + ' event' + (eventsLeft === 1 ? '' : 's') + ' / series');
+        queueEl.textContent = bits.length ? 'Still to do: ' + bits.join(', ') + '.' : '';
+      }
     }
 
     const goBtn = document.getElementById('org-launch-setup-go');
     if (goBtn) {
       goBtn.textContent =
-        item.kind === 'profile' ? 'Review profile →' : 'Open event setup →';
+        item.kind === 'profile'
+          ? 'Review profile →'
+          : eventsLeft > 1
+            ? 'Review first event →'
+            : 'Review event →';
     }
 
     modal.hidden = false;

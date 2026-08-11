@@ -9405,7 +9405,7 @@ body.org-group-drawer-open {
   margin-bottom: 6px;
 }
 
-.org-group-drawer .ee-field.org-group-drawer-field input:not([type='file']),
+.org-group-drawer .ee-field.org-group-drawer-field input:not([type='file']):not([type='radio']):not([type='checkbox']),
 .org-group-drawer .ee-field.org-group-drawer-field textarea,
 .org-group-drawer .org-group-drawer-url-input {
   width: 100%;
@@ -9422,7 +9422,7 @@ body.org-group-drawer-open {
   -webkit-appearance: none;
 }
 
-.org-group-drawer .ee-field.org-group-drawer-field input:not([type='file']):focus,
+.org-group-drawer .ee-field.org-group-drawer-field input:not([type='file']):not([type='radio']):not([type='checkbox']):focus,
 .org-group-drawer .ee-field.org-group-drawer-field textarea:focus,
 .org-group-drawer .org-group-drawer-url-input:focus {
   outline: none;
@@ -9433,6 +9433,65 @@ body.org-group-drawer-open {
 .org-group-drawer .ee-field.org-group-drawer-field textarea {
   min-height: 96px;
   resize: vertical;
+}
+
+.org-group-drawer .ee-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--od-border-soft, #e2e8f0);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--od-text-dark);
+}
+
+.org-group-drawer .ee-check:hover {
+  border-color: #7aabb4;
+}
+
+.org-group-drawer .ee-check:has(input:checked) {
+  border-color: var(--od-purple);
+  background: rgba(42, 122, 128, 0.06);
+  box-shadow: 0 0 0 1px rgba(42, 122, 128, 0.12);
+}
+
+.org-group-drawer .ee-check input[type='radio'],
+.org-group-drawer .ee-check input[type='checkbox'],
+.org-group-drawer .ge-visits-scope-option input {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  margin: 1px 0 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  appearance: auto !important;
+  -webkit-appearance: radio !important;
+  accent-color: var(--od-purple);
+  cursor: pointer;
+}
+
+.org-group-drawer .ge-visits-scope-option input[type='radio'] {
+  -webkit-appearance: radio !important;
+  appearance: auto !important;
+}
+
+.org-group-drawer #ge-visits-scope-wrap,
+.org-group-drawer .ge-visits-scope {
+  margin-top: 4px;
+}
+
+.org-group-drawer #ge-visits-scope-wrap > legend,
+.org-group-drawer .ge-visits-scope > legend {
+  margin-bottom: 10px;
 }
 
 .org-group-drawer-word-count {

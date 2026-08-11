@@ -511,7 +511,7 @@
     if (draftBtn) draftBtn.hidden = true;
     if (hint) {
       hint.textContent = launchSetup
-        ? 'Set complimentary visits (0–3) if you offer trial nights. Save when this page looks right — we will ask about any other groups next.'
+        ? 'Set complimentary visits (0–3) if you offer trial nights. Save when this page looks right — next we will show the events we have added for you.'
         : 'Update anything that needs changing, then continue to set up your first event listing.';
     }
     if (g) showStatusBadge(g);
