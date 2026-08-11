@@ -1,11 +1,12 @@
 # Segment A — Email 2 (confirm organiser page)
 
-**When:** **Fri 7 Aug 2026** (Email 1 sent 5 Aug)  
+**When:** **Tue 11 Aug 2026** (Email 1 sent 5 Aug; claim wave deferred from Fri 7 Aug)  
 **Status:** **Soft path (A)** — CTA lands on `/for-organisers` first; password only when they choose Confirm  
 **Template:** `organiser_launch_invite`  
 **Subject (Brevo):** `Congratulations: {{ contact.ORGANISER_NAME }} is ready`  
 **Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkerhub.com`  
 **Paste HTML:** `data/email2-brevo-ready.html`  
+**Sponsor:** My Medical Cover (Barnsgate declined)  
 
 **Positioning:** Early access for organisers only. Full workspace after they confirm. Public browse + ticket purchase stay closed until **1 September 2026**.  
 
