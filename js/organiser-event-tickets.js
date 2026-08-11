@@ -3418,6 +3418,7 @@
           title: publishedTitle,
           imageUrl: publishedImage,
           publishedUrl: publishedUrl,
+          launchSetup: Boolean(seriesMeta && seriesMeta.launchSetup),
         },
         window.location.origin
       );

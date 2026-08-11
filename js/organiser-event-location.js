@@ -551,7 +551,14 @@
 
   function goToTicketSetup(series) {
     try {
-      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(series));
+      const next = series && typeof series === 'object' ? Object.assign({}, series) : {};
+      const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
+      if (raw) {
+        const prev = JSON.parse(raw);
+        if (prev && prev.launchSetup) next.launchSetup = true;
+        if (prev && prev.familyKey && !next.familyKey) next.familyKey = prev.familyKey;
+      }
+      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
     }

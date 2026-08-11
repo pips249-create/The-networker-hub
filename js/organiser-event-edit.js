@@ -1874,9 +1874,23 @@
     applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
   }
 
+  function preserveSeriesLaunchFlags(series) {
+    if (!series || typeof series !== 'object') return series;
+    try {
+      const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
+      const prev = raw ? JSON.parse(raw) : null;
+      if (prev && prev.launchSetup) series.launchSetup = true;
+      if (prev && prev.familyKey && !series.familyKey) series.familyKey = prev.familyKey;
+    } catch {
+      /* ignore */
+    }
+    if (params.get('onboard') === 'launch') series.launchSetup = true;
+    return series;
+  }
+
   function goToLocationSetup(series) {
     try {
-      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(series));
+      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(preserveSeriesLaunchFlags(series)));
     } catch {
       /* ignore */
     }
@@ -1887,7 +1901,7 @@
 
   function goToTicketSetup(series) {
     try {
-      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(series));
+      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(preserveSeriesLaunchFlags(series)));
     } catch {
       /* ignore */
     }

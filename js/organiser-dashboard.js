@@ -6981,6 +6981,9 @@
       frameParams.set('format', (opts && opts.format) || 'in-person');
       if (opts && opts.groupId) frameParams.set('groupId', opts.groupId);
     }
+    if (opts && (opts.launchSetup || opts.onboardLaunch)) {
+      frameParams.set('onboard', 'launch');
+    }
     return '/organiser/event-edit?' + frameParams.toString();
   }
 
@@ -7338,6 +7341,7 @@
         else qs.set('format', 'in-person');
         if (drawerOpts.seriesEdit) qs.set('seriesEdit', '1');
         if (drawerOpts.seriesDate) qs.set('seriesDate', '1');
+        if (drawerOpts.launchSetup) qs.set('onboard', 'launch');
         location.href = '/organiser/event-edit?' + qs.toString();
       }
       return;
@@ -7356,7 +7360,9 @@
       openEventDrawerFrame(frameUrl, drawerTitle, null, { progressStep: 'details' });
       return;
     } else {
-      if (!drawerOpts.fromTickets && !drawerOpts.fromLocation) {
+      if (drawerOpts.launchSetup) {
+        eventDrawerCreateFlow = true;
+      } else if (!drawerOpts.fromTickets && !drawerOpts.fromLocation) {
         eventDrawerCreateFlow = false;
       }
       const ev =
@@ -7364,11 +7370,19 @@
           ? eventOrId
           : findEventById(editId);
       if (!ev || !ev.id) {
-        if ((drawerOpts.fromTickets || drawerOpts.fromLocation) && editId) {
-          frameUrl = eventEditorFrameUrl({ editId: editId });
+        if ((drawerOpts.fromTickets || drawerOpts.fromLocation || drawerOpts.launchSetup) && editId) {
+          const frameOpts = { editId: editId };
+          if (drawerOpts.seriesEdit) frameOpts.seriesEdit = true;
+          if (drawerOpts.launchSetup) frameOpts.launchSetup = true;
+          frameUrl = eventEditorFrameUrl(frameOpts);
           const drawerUi = eventDrawerCreateFlow ? { progressStep: 'details' } : null;
           setEventDrawerBackButton(false);
-          openEventDrawerFrame(frameUrl, 'Edit event', null, drawerUi);
+          openEventDrawerFrame(
+            frameUrl,
+            drawerOpts.launchSetup ? 'Review your event' : 'Edit event',
+            null,
+            drawerUi
+          );
           return;
         }
         showOrganiserAlert(
@@ -7379,18 +7393,22 @@
       }
       if (drawerOpts.seriesDate) {
         drawerTitle = 'Edit date in series';
+      } else if (drawerOpts.launchSetup) {
+        drawerTitle = ev.title ? 'Review: ' + ev.title : 'Review your event';
       } else {
         drawerTitle = ev.title ? 'Edit: ' + ev.title : 'Edit event';
       }
       const frameOpts = { editId: editId };
       if (drawerOpts.seriesEdit) frameOpts.seriesEdit = true;
       if (drawerOpts.seriesDate) frameOpts.seriesDate = true;
+      if (drawerOpts.launchSetup) frameOpts.launchSetup = true;
       if (!drawerOpts.seriesDate && ev.isSeries && ev.seriesCount > 1) {
         frameOpts.seriesEdit = true;
       }
       frameUrl = eventEditorFrameUrl(frameOpts);
       const drawerUi =
-        eventDrawerCreateFlow && (drawerOpts.fromTickets || drawerOpts.fromLocation)
+        eventDrawerCreateFlow &&
+        (drawerOpts.fromTickets || drawerOpts.fromLocation || drawerOpts.launchSetup)
           ? { progressStep: 'details' }
           : null;
       setEventDrawerBackButton(false);
@@ -12529,6 +12547,7 @@
       return;
     }
     if (item.kind === 'event' && item.family && item.family.primary) {
+      closeGroupEditorDrawer();
       const ids = (item.family.events || [])
         .map(function (e) {
           return e.id;
@@ -12550,12 +12569,10 @@
       } catch (e) {
         /* ignore */
       }
-      const primaryId = item.family.primary.id;
-      location.href =
-        '/organiser/event-edit?id=' +
-        encodeURIComponent(primaryId) +
-        '&onboard=launch' +
-        (ids.length > 1 ? '&seriesEdit=1' : '');
+      openEventEditorDrawer(item.family.primary, {
+        seriesEdit: ids.length > 1,
+        launchSetup: true,
+      });
     }
   }
 
@@ -15770,7 +15787,44 @@
           : [];
         const publishedEventId =
           e.data.eventId || publishedEventIds[0] || '';
+        let launchSetupDone = Boolean(e.data.launchSetup);
+        if (!launchSetupDone) {
+          try {
+            const rawSeries = sessionStorage.getItem('hub_event_series');
+            const seriesMeta = rawSeries ? JSON.parse(rawSeries) : null;
+            launchSetupDone = Boolean(seriesMeta && seriesMeta.launchSetup);
+          } catch {
+            launchSetupDone = false;
+          }
+        }
         closeEventEditorDrawer();
+        if (launchSetupDone) {
+          trackClaimFunnel(
+            'event_review_done',
+            e.data.title || publishedEventId || ''
+          );
+          try {
+            sessionStorage.removeItem('hub_event_series');
+          } catch {
+            /* ignore */
+          }
+          loadBootstrap({ silent: true, skipClaimUi: true }).then(function () {
+            renderAll();
+            const launch = window.HubOrganiserLaunchSetup;
+            const next =
+              launch && typeof launch.nextItem === 'function'
+                ? launch.nextItem(launchSetupInput())
+                : null;
+            if (next) {
+              showOrganiserAlert('Event ready. Next setup step…', false);
+              openLaunchSetupItem(next);
+              return;
+            }
+            showOrganiserAlert('Your event is live.', false);
+            showReadyForEventPrompt();
+          });
+          return;
+        }
         if (e.data.publishedUrl) {
           location.href = String(e.data.publishedUrl);
           return;
