@@ -5,6 +5,7 @@ const { sendAccountWelcomeEmail } = require('../account-emails');
 const { enforceRateLimit } = require('../rate-limit');
 const {
   isOrganiserAuthIntent,
+  isOrganiserClaimNext,
   maybeAutoEnableOrganiserAccess,
   redirectAfterOrganiserAuth,
 } = require('../organiser-auth-intent');
@@ -92,7 +93,14 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      await sendAccountWelcomeEmail({ email, name });
+      // Claim flow sends organiser_claim_confirmed right after Yes — skip generic welcome.
+      const claimSignup =
+        String(body.intent || '')
+          .trim()
+          .toLowerCase() === 'organiser-claim' || isOrganiserClaimNext(body.next);
+      if (!claimSignup) {
+        await sendAccountWelcomeEmail({ email, name });
+      }
     } catch {
       /* Registration succeeds even if welcome email fails */
     }

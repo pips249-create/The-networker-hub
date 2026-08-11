@@ -97,6 +97,9 @@ module.exports = async function handler(req, res) {
         });
       }
       const homepageUsed = organisers.filter((o) => o.foundingHomepage).length;
+      const missingLogo = organisers.filter((o) => !o.photoUrl).length;
+      const missingWebsite = organisers.filter((o) => !o.website).length;
+      const needsAssets = organisers.filter((o) => !o.photoUrl || !o.website).length;
       return json(res, 200, {
         ok: true,
         organisers,
@@ -107,6 +110,9 @@ module.exports = async function handler(req, res) {
           homepageUntil: FOUNDING_HOMEPAGE_UNTIL.toISOString(),
           claimDeadline: FOUNDING_CLAIM_DEADLINE.toISOString(),
           claimWindowOpen: isFoundingClaimWindow(),
+          missingLogo,
+          missingWebsite,
+          needsAssets,
         },
       });
     } catch (e) {

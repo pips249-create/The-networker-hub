@@ -21548,12 +21548,40 @@
       '</div>';
 
     var root = document.getElementById('admin-founding-root');
-    var state = { q: '', organisers: [], stats: null };
+    var state = { q: '', assetFilter: 'all', organisers: [], stats: null };
+
+    function needsLogo(o) {
+      return !(o && o.photoUrl);
+    }
+    function needsWebsite(o) {
+      return !(o && o.website);
+    }
+    function needsAssets(o) {
+      return needsLogo(o) || needsWebsite(o);
+    }
+
+    function chaseMailto(o) {
+      var email = String((o && o.email) || '').trim();
+      if (!email) return '';
+      var group = String((o && o.name) || 'your networking group').trim();
+      var subject = encodeURIComponent('Quick favours for ' + group + ' on The Networker Hub');
+      var body = encodeURIComponent(
+        'Hi there,\n\nThanks again for confirming ' +
+          group +
+          ' on The Networker Hub.\n\nCould you add your logo and website on your organiser page? It helps your Hub profile look sharp — and means we can feature you properly on the homepage / founding organisers social post.\n\nEdit here:\nhttps://www.thenetworkerhub.com/organiser/group-edit?id=' +
+          o.id +
+          '&onboard=review\n\nAny questions, just reply.\n\nCatherine'
+      );
+      return 'mailto:' + encodeURIComponent(email) + '?subject=' + subject + '&body=' + body;
+    }
 
     function paint() {
       if (!root) return;
       var stats = state.stats || {};
       var rows = state.organisers || [];
+      if (state.assetFilter === 'missing_logo') rows = rows.filter(needsLogo);
+      else if (state.assetFilter === 'missing_website') rows = rows.filter(needsWebsite);
+      else if (state.assetFilter === 'needs_assets') rows = rows.filter(needsAssets);
       if (state.q) {
         var q = state.q.toLowerCase();
         rows = rows.filter(function (o) {
@@ -21561,12 +21589,29 @@
         });
       }
 
+      function filterBtn(key, label, count) {
+        var active = state.assetFilter === key;
+        return (
+          '<button type="button" data-founding-filter="' +
+          attrEsc(key) +
+          '" class="rounded-lg px-3 py-1.5 text-xs font-semibold border ' +
+          (active
+            ? 'bg-brand-700 text-white border-brand-700'
+            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50') +
+          '">' +
+          esc(label) +
+          (count != null ? ' (' + esc(String(count)) + ')' : '') +
+          '</button>'
+        );
+      }
+
       root.innerHTML =
         '<div class="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950 space-y-1">' +
         '<p><strong>Auto-award:</strong> claim before 1 Sept → founding badge. First 50 also get homepage showcase through November.</p>' +
         '<p>Gateway strip + homepage update live from these flags. Social post = copy the group caption below (not individual posts).</p>' +
+        '<p><strong>Logo chase:</strong> filter to groups still missing a logo or website, then email them from the Actions column.</p>' +
         '</div>' +
-        '<div class="grid gap-3 sm:grid-cols-4">' +
+        '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">' +
         '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Founding badges</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
         esc(String(stats.foundingCount != null ? stats.foundingCount : '—')) +
         '</p></div>' +
@@ -21575,12 +21620,22 @@
         '<span class="text-base font-semibold text-slate-500"> / ' +
         esc(String(stats.homepageCap || 50)) +
         '</span></p></div>' +
+        '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4"><p class="text-xs font-semibold uppercase text-amber-800">Missing logo</p><p class="text-2xl font-bold text-amber-950 mt-1">' +
+        esc(String(stats.missingLogo != null ? stats.missingLogo : '—')) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4"><p class="text-xs font-semibold uppercase text-amber-800">Needs logo or website</p><p class="text-2xl font-bold text-amber-950 mt-1">' +
+        esc(String(stats.needsAssets != null ? stats.needsAssets : '—')) +
+        '</p></div>' +
+        '</div>' +
+        '<div class="grid gap-3 sm:grid-cols-2">' +
         '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Claim window</p><p class="text-sm font-semibold mt-2 ' +
         (stats.claimWindowOpen ? 'text-emerald-700' : 'text-amber-700') +
         '">' +
         (stats.claimWindowOpen ? 'Open until 1 Sept' : 'Closed') +
         '</p></div>' +
-        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Homepage until</p><p class="text-sm font-semibold text-brand-900 mt-2">30 Nov 2026</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Missing website</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(stats.missingWebsite != null ? stats.missingWebsite : '—')) +
+        '</p></div>' +
         '</div>' +
         '<div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">' +
         '<div class="flex flex-wrap items-end gap-3 justify-between">' +
@@ -21589,6 +21644,12 @@
         attrEsc(state.q) +
         '"></div>' +
         '<button type="button" id="admin-founding-refresh" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Refresh</button>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-2">' +
+        filterBtn('all', 'All', stats.foundingCount) +
+        filterBtn('needs_assets', 'Needs assets', stats.needsAssets) +
+        filterBtn('missing_logo', 'Missing logo', stats.missingLogo) +
+        filterBtn('missing_website', 'Missing website', stats.missingWebsite) +
         '</div>' +
         '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-founding-caption">Group LinkedIn caption</label>' +
         '<textarea id="admin-founding-caption" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[160px]" readonly></textarea>' +
@@ -21600,11 +21661,35 @@
         '<div class="rounded-xl border border-slate-200 bg-white overflow-hidden">' +
         '<div class="overflow-x-auto"><table class="min-w-full text-sm">' +
         '<thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr>' +
-        '<th class="px-4 py-3">Group</th><th class="px-4 py-3">Claimed</th><th class="px-4 py-3">Homepage</th><th class="px-4 py-3">Actions</th>' +
+        '<th class="px-4 py-3">Group</th><th class="px-4 py-3">Assets</th><th class="px-4 py-3">Claimed</th><th class="px-4 py-3">Homepage</th><th class="px-4 py-3">Actions</th>' +
         '</tr></thead><tbody id="admin-founding-tbody">' +
         (rows.length
           ? rows
               .map(function (o) {
+                var mailto = chaseMailto(o);
+                var assetBits = [];
+                if (needsLogo(o)) {
+                  assetBits.push(
+                    '<span class="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">No logo</span>'
+                  );
+                } else {
+                  assetBits.push(
+                    '<span class="inline-flex items-center gap-1.5 text-xs text-emerald-800"><img src="' +
+                      attrEsc(o.photoUrl) +
+                      '" alt="" class="h-6 w-6 rounded object-cover border border-slate-200">Logo</span>'
+                  );
+                }
+                if (needsWebsite(o)) {
+                  assetBits.push(
+                    '<span class="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">No website</span>'
+                  );
+                } else {
+                  assetBits.push(
+                    '<a class="text-xs font-semibold text-brand-700 underline" href="' +
+                      attrEsc(o.website) +
+                      '" target="_blank" rel="noopener noreferrer">Website</a>'
+                  );
+                }
                 return (
                   '<tr class="border-t border-slate-100 align-top" data-founding-id="' +
                   attrEsc(o.id) +
@@ -21613,8 +21698,10 @@
                   esc(o.name) +
                   '</p><p class="text-xs text-slate-500">' +
                   esc(o.email || '—') +
-                  (o.website ? ' · <a class="text-brand-700 underline" href="' + attrEsc(o.website) + '" target="_blank" rel="noopener noreferrer">Website</a>' : '') +
                   '</p></td>' +
+                  '<td class="px-4 py-3"><div class="flex flex-wrap gap-1.5">' +
+                  assetBits.join('') +
+                  '</div></td>' +
                   '<td class="px-4 py-3 text-xs text-slate-600">' +
                   esc(o.foundingOrganiserAt ? String(o.foundingOrganiserAt).slice(0, 10) : '—') +
                   '</td>' +
@@ -21624,6 +21711,11 @@
                     : '<span class="text-xs text-slate-400">—</span>') +
                   '</td>' +
                   '<td class="px-4 py-3"><div class="flex flex-wrap gap-2">' +
+                  (mailto
+                    ? '<a class="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-950 hover:bg-amber-100" href="' +
+                      attrEsc(mailto) +
+                      '">Email chase</a>'
+                    : '') +
                   (o.foundingHomepage
                     ? '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-founding-action="homepage_off">Remove homepage</button>'
                     : '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-founding-action="homepage_on">Add homepage</button>') +
@@ -21632,7 +21724,7 @@
                 );
               })
               .join('')
-          : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No founding organisers yet — they appear here as groups claim.</td></tr>') +
+          : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No founding organisers match this filter.</td></tr>') +
         '</tbody></table></div></div>' +
         '<div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">' +
         '<h3 class="text-sm font-semibold text-brand-900">Manually award a badge</h3>' +
@@ -21659,6 +21751,12 @@
           }
         });
       }
+      root.querySelectorAll('[data-founding-filter]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.assetFilter = btn.getAttribute('data-founding-filter') || 'all';
+          paint();
+        });
+      });
       var refresh = document.getElementById('admin-founding-refresh');
       if (refresh) refresh.addEventListener('click', load);
       var copyBtn = document.getElementById('admin-founding-copy');

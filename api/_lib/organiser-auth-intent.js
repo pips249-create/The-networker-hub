@@ -120,6 +120,7 @@ function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect 
 
 module.exports = {
   isOrganiserAuthIntent,
+  isOrganiserClaimNext,
   maybeAutoEnableOrganiserAccess,
   resolveOrganiserRedirect,
   redirectAfterOrganiserAuth,
