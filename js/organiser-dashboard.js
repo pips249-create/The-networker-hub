@@ -1617,7 +1617,7 @@
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260730pages2';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260806expired1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260806expired1';
-  const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260729brand';
+  const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
