@@ -156,6 +156,19 @@
     } catch (e) {}
 
     document.body.classList.add('org-claim-invite-active');
+
+    try {
+      sessionStorage.setItem(
+        'hub_claim_focus_v1',
+        JSON.stringify({
+          slug: String((org && org.slug) || q.slug || '').trim(),
+          id: String((org && org.id) || q.id || '').trim(),
+          name: String((org && org.name) || '').trim(),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   function renderSiblingGroups(siblings, q) {

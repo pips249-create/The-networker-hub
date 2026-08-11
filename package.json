@@ -26,6 +26,7 @@
     "check:connect-checkout": "node scripts/smoke-test-connect-checkout.js",
     "check:free-ticket": "node scripts/smoke-test-free-ticket.js",
     "check:organiser-journey": "node scripts/smoke-test-organiser-journey.js",
+    "reset:email2-claim-retest": "node scripts/reset-email2-claim-retest.js",
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",
     "check:dpas": "node scripts/check-dpa-register.js",

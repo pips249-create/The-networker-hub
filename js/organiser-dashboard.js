@@ -9197,12 +9197,21 @@
         compact: true,
         title: 'Add bank details before you sell paid tickets',
       });
-      payment.renderInto(document.getElementById('org-payment-setup-dashboard'), setupState, group, {
-        returnPath: '/organiser/#dashboard',
-        compact: true,
-        title: 'Add bank details to receive payouts',
-        lead: 'Connect Stripe so ticket revenue can reach you after each event.',
-      });
+      const dashPay = document.getElementById('org-payment-setup-dashboard');
+      if (
+        dashPay &&
+        ((state.pendingClaimGroups || []).length > 0 || isLaunchSetupInProgress())
+      ) {
+        dashPay.hidden = true;
+        dashPay.innerHTML = '';
+      } else {
+        payment.renderInto(dashPay, setupState, group, {
+          returnPath: '/organiser/#dashboard',
+          compact: true,
+          title: 'Add bank details to receive payouts',
+          lead: 'Connect Stripe so ticket revenue can reach you after each event.',
+        });
+      }
     }
 
     renderRevenueStripeBar();
@@ -12016,26 +12025,71 @@
     });
 
     updateSetupResumeBanner();
+    syncOverviewSetupQuietMode();
   }
 
   function updateSetupResumeBanner() {
     const banner = document.getElementById('org-setup-resume');
-    if (!banner || state.adminView) return;
+    if (!banner || state.adminView) {
+      syncOverviewSetupQuietMode();
+      return;
+    }
 
     const onboarding = window.HubOrganiserOnboarding;
     if (onboarding && onboarding.isResumeDismissed && onboarding.isResumeDismissed()) {
       banner.hidden = true;
+      syncOverviewSetupQuietMode();
       return;
     }
 
     if ((state.pendingClaimGroups || []).length > 0) {
       banner.hidden = true;
+      syncOverviewSetupQuietMode();
+      return;
+    }
+
+    if (isLaunchSetupInProgress()) {
+      const built = window.HubOrganiserLaunchSetup.buildQueue(launchSetupInput());
+      const profilesLeft = (built.queue || []).filter(function (q) {
+        return q.kind === 'profile';
+      }).length;
+      const eventsLeft = (built.queue || []).filter(function (q) {
+        return q.kind === 'event';
+      }).length;
+      const titleEl = document.getElementById('org-setup-resume-title');
+      const bodyEl = document.getElementById('org-setup-resume-body');
+      if (profilesLeft) {
+        if (titleEl) {
+          titleEl.textContent =
+            profilesLeft > 1
+              ? 'Review your organiser pages (' + profilesLeft + ' left)'
+              : 'Review your organiser page';
+        }
+        if (bodyEl) {
+          bodyEl.textContent =
+            'Confirm logo, description, and details for each page — then we will take you to your events.';
+        }
+      } else {
+        if (titleEl) {
+          titleEl.textContent =
+            eventsLeft > 1
+              ? 'Review your events & tickets (' + eventsLeft + ' left)'
+              : 'Review your event & tickets';
+        }
+        if (bodyEl) {
+          bodyEl.textContent =
+            'Check the listing we prepared, set tickets, and publish. Public ticket buying opens 1 September.';
+        }
+      }
+      banner.hidden = false;
+      syncOverviewSetupQuietMode();
       return;
     }
 
     const progress = gettingStartedProgress();
     if (progress.hasGroup && progress.hasEvent && progress.hasShared) {
       banner.hidden = true;
+      syncOverviewSetupQuietMode();
       return;
     }
 
@@ -12052,6 +12106,7 @@
 
     if (!checklistDismissed && !tourDone && !checklistVisible) {
       banner.hidden = true;
+      syncOverviewSetupQuietMode();
       return;
     }
 
@@ -12083,6 +12138,7 @@
     }
 
     banner.hidden = false;
+    syncOverviewSetupQuietMode();
   }
 
   function bindSetupResumeUi() {
@@ -12098,6 +12154,13 @@
     }
     if (goBtn) {
       goBtn.addEventListener('click', function () {
+        if (isLaunchSetupInProgress() && window.HubOrganiserLaunchSetup) {
+          const item = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
+          if (item) {
+            openLaunchSetupItem(item);
+            return;
+          }
+        }
         const progress = gettingStartedProgress();
         if (!progress.hasGroup) {
           window.location.href = '/organiser/group-edit';
@@ -12208,6 +12271,58 @@
   }
 
   var CLAIM_REVIEW_ORDER_KEY = 'hub_claim_review_order_v1';
+  var CLAIM_FOCUS_KEY = 'hub_claim_focus_v1';
+
+  function trackClaimFunnel(step, detail) {
+    try {
+      if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+        window.HubAnalytics.track('organiser_claim_funnel', {
+          step: String(step || '').slice(0, 40),
+          detail: String(detail || '').slice(0, 80),
+        });
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function readClaimFocus() {
+    try {
+      const raw = sessionStorage.getItem(CLAIM_FOCUS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function sortPendingClaimGroups(list) {
+    const rows = Array.isArray(list) ? list.slice() : [];
+    if (rows.length < 2) return rows;
+    const focus = readClaimFocus();
+    const focusSlug = String((focus && focus.slug) || '')
+      .trim()
+      .toLowerCase();
+    const focusId = String((focus && focus.id) || '').trim();
+    if (!focusSlug && !focusId) {
+      return rows.sort(function (a, b) {
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+    }
+    return rows.sort(function (a, b) {
+      const aHit =
+        (focusId && String(a.id) === focusId) ||
+        (focusSlug && String(a.slug || '').toLowerCase() === focusSlug);
+      const bHit =
+        (focusId && String(b.id) === focusId) ||
+        (focusSlug && String(b.slug || '').toLowerCase() === focusSlug);
+      if (aHit && !bHit) return -1;
+      if (!aHit && bHit) return 1;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }
 
   function rememberClaimedGroupOrder(groupId) {
     const id = String(groupId || '').trim();
@@ -12229,7 +12344,27 @@
     } catch (e) {
       order = [];
     }
-    if (!order.length) return groups;
+    if (!order.length) {
+      const focus = readClaimFocus();
+      const focusId = String((focus && focus.id) || '').trim();
+      const focusSlug = String((focus && focus.slug) || '')
+        .trim()
+        .toLowerCase();
+      if (focusId || focusSlug) {
+        groups.sort(function (a, b) {
+          const aHit =
+            (focusId && String(a.id) === focusId) ||
+            (focusSlug && String(a.slug || '').toLowerCase() === focusSlug);
+          const bHit =
+            (focusId && String(b.id) === focusId) ||
+            (focusSlug && String(b.slug || '').toLowerCase() === focusSlug);
+          if (aHit && !bHit) return -1;
+          if (!aHit && bHit) return 1;
+          return 0;
+        });
+      }
+      return groups;
+    }
     groups.sort(function (a, b) {
       const ia = order.indexOf(String(a && a.id));
       const ib = order.indexOf(String(b && b.id));
@@ -12239,6 +12374,28 @@
       return ia - ib;
     });
     return groups;
+  }
+
+  function isLaunchSetupInProgress() {
+    const launch = window.HubOrganiserLaunchSetup;
+    if (!launch || !launch.buildQueue) return false;
+    try {
+      const built = launch.buildQueue(launchSetupInput());
+      return Boolean(!built.stored.dismissed && (built.queue || []).length);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function syncOverviewSetupQuietMode() {
+    const quiet =
+      !state.adminView &&
+      ((state.pendingClaimGroups || []).length > 0 ||
+        (state.pendingClaimOpportunities || []).length > 0 ||
+        isLaunchSetupInProgress());
+    document.body.classList.toggle('org-claim-setup-active', quiet);
+    const portals = document.querySelector('.org-hub-portals');
+    if (portals) portals.hidden = quiet;
   }
 
   function continueOnboardingAfterClaim() {
@@ -12322,6 +12479,10 @@
   function openLaunchSetupItem(item) {
     if (!item) return;
     hideLaunchSetupModal();
+    trackClaimFunnel(
+      item.kind === 'profile' ? 'open_profile_review' : 'open_event_review',
+      item.title || item.id || ''
+    );
     if (item.kind === 'profile') {
       location.href = window.HubOrganiserLaunchSetup.profileEditUrl(item.id);
       return;
@@ -12620,6 +12781,10 @@
 
       if (action === 'claim' && data.group && data.group.id) {
         rememberClaimedGroupOrder(data.group.id);
+        trackClaimFunnel(
+          'claim_accepted',
+          data.group.slug || data.group.name || data.group.id
+        );
       }
 
       if (state.pendingClaimGroups.length) {
@@ -14158,7 +14323,7 @@
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
-    state.pendingClaimGroups = data.pendingClaimGroups || [];
+    state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
     state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];

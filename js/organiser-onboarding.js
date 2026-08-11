@@ -176,6 +176,14 @@
   }
 
   function shouldDeferGroupClaim() {
+    // Claim always wins over the workspace tour (Email 2 / pending invites).
+    try {
+      if (window.hubPendingGroupClaims) return false;
+    } catch (e) {
+      /* ignore */
+    }
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('onboard') === 'claim') return false;
     return shouldAutoStart() && !isTourDone();
   }
 
@@ -356,7 +364,9 @@
   function initAfterDashboardReady() {
     bindGettingStarted();
     var params = new URLSearchParams(window.location.search);
-    if (params.get('onboard') === 'claim' && window.orgDashOpenClaimModal) {
+    var claimOnboard = params.get('onboard') === 'claim';
+    var hasPendingClaims = Boolean(window.hubPendingGroupClaims);
+    if ((claimOnboard || hasPendingClaims) && window.orgDashOpenClaimModal) {
       markTourDone();
       window.orgDashOpenClaimModal();
       if (window.orgDashHandleClaimOnboardMismatch) {

@@ -788,6 +788,16 @@
       }
       if ((onboardReview || (config && config.onboardLaunch)) && saved && saved.id && window.HubOrganiserLaunchSetup) {
         window.HubOrganiserLaunchSetup.markProfileDone(saved.id);
+        try {
+          if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+            window.HubAnalytics.track('organiser_claim_funnel', {
+              step: 'profile_saved',
+              detail: String(saved.slug || saved.name || saved.id || '').slice(0, 80),
+            });
+          }
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       const hasWarnings = Boolean(logoWarning || logoResolutionWarning || saveWarnings.length);
