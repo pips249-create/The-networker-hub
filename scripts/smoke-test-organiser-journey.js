@@ -69,6 +69,7 @@ const PEEK_REDIRECTS = [
 
 const MUST_STAY_PRIVATE_APIS = [
   '/api/events?limit=1',
+  '/api/events?probe=1',
   '/api/organisers?limit=1',
   '/api/opportunities?limit=1',
 ];

@@ -697,6 +697,13 @@ button.ad-stat-link:focus-visible::after {
   color: #a82828;
 }
 
+.ad-action-link:disabled,
+.ad-action-link--danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 .ad-action-group--with-utilities {
   gap: 8px;
 }
@@ -1318,7 +1325,7 @@ body.ad-share-modal-open {
 .ad-payment-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1448,7 +1455,7 @@ tr.ad-row-highlight td {
 .ad-review-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1677,7 +1684,7 @@ tr.ad-row-highlight td {
 .ad-view-review-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1794,7 +1801,8 @@ tr.ad-row-highlight td {
 .ad-cancel-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  /* Above .ad-bottom-nav (1300) so the sheet covers the mobile tab bar */
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2010,7 +2018,8 @@ tr.ad-row-highlight td {
   position: fixed;
   left: 50%;
   bottom: 24px;
-  z-index: 1100;
+  /* Above .ad-bottom-nav (1300); mobile bottom offset is in hub-mobile.css */
+  z-index: 1400;
   transform: translateX(-50%) translateY(12px);
   max-width: min(92vw, 420px);
   padding: 14px 18px;
@@ -2068,6 +2077,19 @@ tr.ad-row-highlight td {
     justify-content: center;
   }
 
+  .ad-cancel-confirm {
+    gap: 12px;
+    margin: 0 0 16px;
+    font-size: 14px;
+  }
+
+  .ad-cancel-confirm input {
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    accent-color: var(--ad-teal-dark, #452d5c);
+  }
+
   .ad-toast {
     left: 16px;
     right: 16px;
@@ -2078,6 +2100,13 @@ tr.ad-row-highlight td {
 
   .ad-toast.is-visible {
     transform: translateY(0);
+  }
+}
+
+/* When the attendee bottom nav is visible, keep toasts clear of it */
+@media (max-width: 768px) {
+  .attendee-dashboard-page .ad-toast {
+    bottom: calc(76px + 12px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -2723,7 +2752,7 @@ body.ad-share-modal-open {
 .ad-share-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;

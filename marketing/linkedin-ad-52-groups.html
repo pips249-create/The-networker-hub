@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>52 groups · The Networker Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf6ee;
+    --char: #3a3436;
+    --lavender: #9a7aa8;
+    --muted: #6e6668;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #121018;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  #canvas {
+    width: 1080px; height: 1080px;
+    position: relative; overflow: hidden; flex-shrink: 0;
+    color: var(--char);
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 35%, rgba(194, 153, 209, 0.32), transparent 55%),
+      radial-gradient(ellipse 65% 50% at 80% 85%, rgba(154, 122, 168, 0.16), transparent 50%),
+      var(--cream);
+  }
+
+  .logo {
+    position: absolute;
+    top: 48px; left: 50%;
+    transform: translateX(-50%);
+    height: 88px; width: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .logo.is-in { opacity: 1; }
+
+  .stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 140px 64px 100px;
+  }
+
+  .count {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 320px;
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    color: var(--lavender);
+    min-height: 270px;
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .count.is-in { opacity: 1; transform: scale(1); }
+  .count.is-land {
+    animation: land 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes land {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .label {
+    margin-top: 8px;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 46px;
+    line-height: 1.2;
+    color: var(--char);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .label.is-in { opacity: 1; transform: none; }
+
+  .sub {
+    margin-top: 28px;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.4;
+    max-width: 780px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .sub.is-in { opacity: 1; transform: none; }
+
+  .url {
+    position: absolute;
+    left: 50%;
+    bottom: 52px;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .url.is-in { opacity: 1; }
+
+  .rec-hint {
+    position: fixed; bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    color: #888; font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <img class="logo" id="logo" src="../assets/logo-hub-dark.png" alt="The Networker Hub">
+    <div class="stage">
+      <div class="count" id="count">0</div>
+      <div class="label" id="label">networking groups<br>already on the Hub.</div>
+      <p class="sub" id="sub">And we’re still locking in a few more before we launch 1st September.</p>
+    </div>
+    <div class="url" id="url">thenetworkerhub.com/peek</div>
+  </div>
+  <p class="rec-hint">Space to play · export uses ?export=1</p>
+
+<script>
+  const TARGET = 52;
+  // Faster: ~2.2s roll, short hold — total ~6.5s
+  const DURATION_MS = 6500;
+  window.__adDurationMs = DURATION_MS;
+
+  const logo = document.getElementById('logo');
+  const countEl = document.getElementById('count');
+  const label = document.getElementById('label');
+  const sub = document.getElementById('sub');
+  const url = document.getElementById('url');
+
+  let playing = false;
+  let raf = 0;
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function valueAt(t) {
+    // Tiny beat on 0, then fast roll, land by ~40% of total
+    if (t < 0.04) return 0;
+    if (t > 0.38) return TARGET;
+    const u = (t - 0.04) / 0.34;
+    return Math.round(TARGET * easeOutCubic(u));
+  }
+
+  function reset() {
+    cancelAnimationFrame(raf);
+    playing = false;
+    countEl.textContent = '0';
+    countEl.classList.remove('is-in', 'is-land');
+    label.classList.remove('is-in');
+    sub.classList.remove('is-in');
+    url.classList.remove('is-in');
+    logo.classList.remove('is-in');
+  }
+
+  function play() {
+    if (playing) return;
+    reset();
+    playing = true;
+    const start = performance.now();
+    let landed = false;
+    let lastShown = -1;
+
+    logo.classList.add('is-in');
+    countEl.classList.add('is-in');
+
+    function frame(now) {
+      const t = Math.min(1, (now - start) / DURATION_MS);
+      const n = valueAt(t);
+      if (n !== lastShown) {
+        countEl.textContent = String(n);
+        lastShown = n;
+      }
+
+      if (!landed && n >= TARGET && t >= 0.35) {
+        landed = true;
+        countEl.classList.add('is-land');
+        label.classList.add('is-in');
+        setTimeout(() => sub.classList.add('is-in'), 120);
+        setTimeout(() => url.classList.add('is-in'), 260);
+      }
+
+      if (t < 1) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        playing = false;
+      }
+    }
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  window.__playAd = play;
+  window.__resetAd = reset;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      play();
+    }
+  });
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260807peek1';
+  var FOOTER_BUILD = '20260811intake1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -74,6 +74,9 @@
       href('/for-organisers') +
       '">For organisers</a>' +
       '<a href="' +
+      href('/add-your-event') +
+      '">Send us your event</a>' +
+      '<a href="' +
       href('/contact') +
       '">Contact us</a>'
     );
@@ -91,6 +94,9 @@
         '<a href="' +
         href('/for-organisers') +
         '">For Organisers</a>' +
+        '<a href="' +
+        href('/add-your-event') +
+        '">Send us your event</a>' +
         '<a href="' +
         href('/guides') +
         '">Organiser guides</a>' +
@@ -219,17 +225,23 @@
     // Stay slim on Email 1 pages even when preview cookie unlocks /api/events.
     window.HubCatalogueOpen = false;
   } else if (typeof window.HubCatalogueOpen !== 'boolean') {
-    fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
-      .then(function (res) {
-        return res.status === 200;
-      })
-      .catch(function () {
-        return false;
-      })
-      .then(function (open) {
-        window.HubCatalogueOpen = open;
-        renderFooter(effectiveCatalogueOpen(open));
-      });
+    var probe =
+      typeof window.hubProbeCatalogueAccess === 'function'
+        ? window.hubProbeCatalogueAccess()
+        : fetch('/api/events?probe=1', { credentials: 'include', cache: 'no-store' })
+            .then(function (res) {
+              return res.status === 200;
+            })
+            .catch(function () {
+              return false;
+            })
+            .then(function (open) {
+              window.HubCatalogueOpen = open;
+              return open;
+            });
+    probe.then(function (open) {
+      renderFooter(effectiveCatalogueOpen(open === true || window.HubCatalogueOpen === true));
+    });
   }
 
   if (!document.querySelector('script[src*="hub-seo-data"]')) {

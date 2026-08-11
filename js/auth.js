@@ -819,6 +819,9 @@
     if (early) early.hidden = true;
     if (full) full.hidden = false;
     if (steps) steps.hidden = false;
+    if (/nothing to set up today/i.test(document.title || '')) {
+      document.title = 'Create account – The Networker Hub';
+    }
   }
 
   function showRegisterEarlyAccess() {
@@ -828,6 +831,7 @@
     if (early) early.hidden = false;
     if (full) full.hidden = true;
     if (steps) steps.hidden = true;
+    document.title = 'Nothing to set up today – The Networker Hub';
   }
 
   /**
@@ -852,20 +856,22 @@
 
     // Soft panel by default during Email 1; open full form only if catalogue APIs are live.
     showRegisterEarlyAccess();
-    document.title = 'Nothing to set up today – The Networker Hub';
 
-    fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
-      .then(function (res) {
-        return res.status === 200;
-      })
-      .catch(function () {
-        return false;
-      })
-      .then(function (open) {
-        if (forceFull) return;
-        if (open) showRegisterFullForm();
-        else showRegisterEarlyAccess();
-      });
+    var probe =
+      typeof window.hubProbeCatalogueAccess === 'function'
+        ? window.hubProbeCatalogueAccess()
+        : fetch('/api/events?probe=1', { credentials: 'include', cache: 'no-store' })
+            .then(function (res) {
+              return res.status === 200;
+            })
+            .catch(function () {
+              return false;
+            });
+    probe.then(function (open) {
+      if (forceFull) return;
+      if (open) showRegisterFullForm();
+      else showRegisterEarlyAccess();
+    });
   }
 
   applyCheckoutContext();

@@ -596,29 +596,37 @@
     if (locationRadiusWrap) locationRadiusWrap.hidden = false;
   }
 
+  var profileLocationPromise = null;
+
   function loadProfileLocation() {
-    if (!window.hubFetchSession) return Promise.resolve('');
-    return window
-      .hubFetchSession()
-      .then(function (session) {
-        if (!session || !session.ok) return '';
-        return fetch('/api/auth/profile', { credentials: 'include' })
-          .then(function (res) {
-            return res.json();
-          })
-          .then(function (data) {
-            if (data.ok && data.profile) {
-              window.hubProfileLocation = String(data.profile.location || '').trim();
-            }
-            return window.hubProfileLocation || '';
-          })
-          .catch(function () {
-            return '';
-          });
+    if (window.hubProfileLocation) return Promise.resolve(window.hubProfileLocation || '');
+    if (profileLocationPromise) return profileLocationPromise;
+    var fetcher =
+      typeof window.hubFetchProfile === 'function'
+        ? window.hubFetchProfile()
+        : window.hubFetchSession
+          ? window
+              .hubFetchSession()
+              .then(function (session) {
+                if (!session || !session.ok) return { ok: false };
+                return fetch('/api/auth/profile', { credentials: 'include' }).then(function (res) {
+                  return res.json();
+                });
+              })
+          : null;
+    if (!fetcher) return Promise.resolve('');
+    profileLocationPromise = fetcher
+      .then(function (data) {
+        if (data && data.ok && data.profile) {
+          window.hubProfileLocation = String(data.profile.location || '').trim();
+        }
+        return window.hubProfileLocation || '';
       })
       .catch(function () {
+        profileLocationPromise = null;
         return '';
       });
+    return profileLocationPromise;
   }
 
   window.hubLoadProfileLocation = loadProfileLocation;

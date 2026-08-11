@@ -323,7 +323,8 @@
 
     setBrowseResultsLoading(true);
 
-    return fetch(url, { credentials: 'same-origin', cache: 'no-store' })
+    // Allow short HTTP cache (API sends max-age≈60) so identical filter reloads are cheap.
+    return fetch(url, { credentials: 'same-origin' })
       .then(function (res) {
         if (!res.ok) {
           return res

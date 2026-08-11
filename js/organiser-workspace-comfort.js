@@ -220,6 +220,67 @@
     toggle.textContent = show ? 'Hide guide' : 'How to use this page';
   }
 
+  function isHeadCopyEl(el) {
+    if (!el || !el.classList) return true;
+    return (
+      el.classList.contains('org-page-head-text') ||
+      el.classList.contains('org-page-kicker') ||
+      el.classList.contains('org-page-title') ||
+      el.classList.contains('org-page-lead') ||
+      el.classList.contains('org-section-sub') ||
+      el.classList.contains('org-team-editor-note') ||
+      el.classList.contains('org-leaderboard-period') ||
+      el.classList.contains('org-leaderboard-preview-note') ||
+      el.classList.contains('org-workspace-map')
+    );
+  }
+
+  function ensureHeadActions(head) {
+    var existing = head.querySelector(':scope > .org-page-head-actions');
+    if (existing) return existing;
+    var actions = document.createElement('div');
+    actions.className = 'org-page-head-actions';
+    var movers = [];
+    Array.prototype.forEach.call(head.children, function (child) {
+      if (isHeadCopyEl(child)) return;
+      movers.push(child);
+    });
+    movers.forEach(function (el) {
+      actions.appendChild(el);
+    });
+    head.appendChild(actions);
+    return actions;
+  }
+
+  function mountGuideChrome() {
+    var toggle = document.getElementById('org-guide-toggle');
+    var wrap = document.getElementById('org-page-guide-wrap');
+    var home = document.querySelector('.org-workspace-comfort');
+    var activePage = document.querySelector('.org-main .org-page.is-active');
+    var head = activePage && activePage.querySelector('.org-page-head');
+
+    if (!toggle) return;
+
+    if (!head) {
+      if (home && toggle.parentElement !== home) home.appendChild(toggle);
+      if (wrap && home && wrap.parentElement !== home.parentElement) {
+        home.parentElement.insertBefore(wrap, home.nextSibling);
+      }
+      return;
+    }
+
+    var actions = ensureHeadActions(head);
+    if (toggle.parentElement !== actions) {
+      var addWrap = actions.querySelector('.org-overview-add');
+      if (addWrap) actions.insertBefore(toggle, addWrap);
+      else actions.insertBefore(toggle, actions.firstChild);
+    }
+
+    if (wrap && wrap.parentElement !== head.parentElement) {
+      head.parentElement.insertBefore(wrap, head.nextSibling);
+    }
+  }
+
   function syncPageGuide() {
     var guideKey = guideKeyFromLocation();
     var guide = GUIDES[guideKey];
@@ -229,6 +290,7 @@
     if (!toggle || !titleEl || !stepsEl) return;
 
     setGuideOpen(false);
+    mountGuideChrome();
 
     if (!guide || !guide.steps || !guide.steps.length) {
       toggle.classList.add('hidden');

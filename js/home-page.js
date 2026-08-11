@@ -135,7 +135,7 @@
   }
 
   function fetchCmsSlot(slot) {
-    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot), { cache: 'no-store' })
+    return fetch('/api/cms-block?slot=' + encodeURIComponent(slot))
       .then(function (r) {
         return r.json();
       })
@@ -588,7 +588,7 @@
     var track = document.getElementById('home-founding-logos');
     if (!section || !track) return;
 
-    fetch('/api/founding-organisers', { cache: 'no-store' })
+    fetch('/api/founding-organisers')
       .then(function (r) {
         return r.json();
       })

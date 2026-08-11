@@ -1317,6 +1317,18 @@ async function handle(req, res) {
       });
     }
 
+    // Lightweight catalogue-open probe used by nav/footer/auth (middleware already gated).
+    // Avoids running the full browse query just to learn status === 200.
+    if (String(req.query?.probe || '').trim() === '1' || meta === 'open') {
+      res.setHeader('Cache-Control', 'private, max-age=30');
+      return res.status(200).json({
+        configured: true,
+        provider: 'supabase',
+        open: true,
+        ok: true,
+      });
+    }
+
     const { fetchBrowseEventsPage } = require('./browse-events-query');
     const payload = await fetchBrowseEventsPage(sb, req.query || {});
     return res.status(200).json({

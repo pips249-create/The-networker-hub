@@ -1047,6 +1047,12 @@
     const calendarItems = options.hideCalendar ? '' : calendarMenuItemsHtml(reg);
     const shareItem = shareMenuItemHtml(reg);
     const cancelItem = cancelMenuItemHtml(reg, options);
+    const pdfItem = canPdf
+      ? '<button type="button" class="ad-utility-item ad-download-ticket-pdf" role="menuitem" data-registration-id="' +
+        esc(reg.id || '') +
+        '">Download ticket (PDF)</button>'
+      : '';
+    if (!calendarItems && !shareItem && !pdfItem && !cancelItem) return '';
     return (
       '<div class="ad-utility-wrap">' +
       '<button type="button" class="ad-utility-btn" data-ad-utility-toggle aria-expanded="false" aria-haspopup="true">' +
@@ -1054,11 +1060,7 @@
       '<div class="ad-utility-menu" role="menu" hidden>' +
       calendarItems +
       shareItem +
-      '<button type="button" class="ad-utility-item ad-download-ticket-pdf" role="menuitem" data-registration-id="' +
-      esc(reg.id || '') +
-      '"' +
-      (canPdf ? '' : ' disabled') +
-      '>Download ticket (PDF)</button>' +
+      pdfItem +
       cancelItem +
       '</div></div>'
     );
@@ -1071,6 +1073,7 @@
       menu.style.top = '';
       menu.style.left = '';
       menu.style.right = '';
+      menu.style.bottom = '';
     });
     document.querySelectorAll('[data-ad-utility-toggle][aria-expanded="true"]').forEach((btn) => {
       btn.setAttribute('aria-expanded', 'false');
@@ -1080,12 +1083,42 @@
 
   function positionUtilityMenu(btn, menu) {
     const rect = btn.getBoundingClientRect();
+    const pad = 8;
+    const bottomReserve =
+      window.matchMedia('(max-width: 768px)').matches && document.querySelector('.ad-bottom-nav')
+        ? 88
+        : pad;
     menu.classList.add('is-floating');
     menu.hidden = false;
     menu.classList.add('is-open');
-    menu.style.top = Math.round(rect.bottom + 4) + 'px';
-    menu.style.left = 'auto';
-    menu.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.bottom = '';
+
+    // Measure after open so we can clamp to the viewport (left-aligned More
+    // buttons used to push a right-anchored menu off the left edge on mobile).
+    const menuRect = menu.getBoundingClientRect();
+    const menuWidth = Math.max(menuRect.width || 0, 196);
+    const menuHeight = Math.max(menuRect.height || 0, 48);
+    let left = rect.right - menuWidth;
+    const maxLeft = window.innerWidth - pad - menuWidth;
+    if (left > maxLeft) left = maxLeft;
+    if (left < pad) left = pad;
+
+    const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
+    const spaceAbove = rect.top - pad;
+    const openUp = spaceBelow < menuHeight + 4 && spaceAbove > spaceBelow;
+
+    if (openUp) {
+      menu.style.bottom = Math.round(window.innerHeight - rect.top + 4) + 'px';
+      menu.style.top = 'auto';
+    } else {
+      menu.style.top = Math.round(rect.bottom + 4) + 'px';
+      menu.style.bottom = 'auto';
+    }
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.right = 'auto';
   }
 
   function bindUtilityMenus(root) {
@@ -2717,7 +2750,7 @@
     const set = (id, n) => {
       const el = document.getElementById(id);
       if (!el) return;
-      if (!dashboardReady) {
+      if (!dashboardReady || !n) {
         el.hidden = true;
         el.textContent = '';
         return;
@@ -3328,7 +3361,7 @@
         esc(formatDateShort(item.startsAt || item.starts_at)) +
         '</td><td data-label="Location">' +
         esc(item.city || '—') +
-        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-btn ad-btn-ghost ad-saved-remove" data-event-id="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-action-link ad-action-link--danger ad-saved-remove" data-event-id="' +
         esc(item.eventId || item.event_id || '') +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -3338,6 +3371,7 @@
       btn.addEventListener('click', async () => {
         const eventId = btn.getAttribute('data-event-id');
         if (!eventId) return;
+        if (!window.confirm('Remove this event from your saved list?')) return;
         btn.disabled = true;
         try {
           if (window.HubFavourites) {
@@ -3669,7 +3703,7 @@
         esc(item.host || '—') +
         '</td><td data-label="Saved">' +
         esc(formatDateShort(item.createdAt || item.created_at)) +
-        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-btn ad-btn-ghost ad-saved-opportunity-remove" data-opportunity-id="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-action-link ad-action-link--danger ad-saved-opportunity-remove" data-opportunity-id="' +
         esc(oppId) +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -3693,6 +3727,7 @@
       btn.addEventListener('click', async () => {
         const opportunityId = btn.getAttribute('data-opportunity-id');
         if (!opportunityId) return;
+        if (!window.confirm('Remove this opportunity from your saved list?')) return;
         btn.disabled = true;
         try {
           if (window.HubOpportunitySaves) {
@@ -3914,7 +3949,7 @@
         esc(item.industry || '—') +
         '</td><td data-label="Rating">' +
         esc(rating) +
-        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-btn ad-btn-ghost ad-saved-organiser-remove" data-organiser-id="' +
+        '</td><td class="ad-td-actions" data-label="Actions"><button type="button" class="ad-action-link ad-action-link--danger ad-saved-organiser-remove" data-organiser-id="' +
         esc(item.organiserId || item.organiser_id || '') +
         '">Remove</button></td>';
       body.appendChild(tr);
@@ -3924,6 +3959,7 @@
       btn.addEventListener('click', async () => {
         const organiserId = btn.getAttribute('data-organiser-id');
         if (!organiserId) return;
+        if (!window.confirm('Remove this organiser from your saved list?')) return;
         btn.disabled = true;
         try {
           if (window.HubOrganiserFavourites) {
@@ -3982,7 +4018,7 @@
         '<a class="ad-btn ad-btn-ghost ad-btn-sm" href="' +
         esc(href) +
         '">View matches</a>' +
-        '<button type="button" class="ad-btn ad-btn-ghost ad-btn-sm ad-saved-search-remove" data-search-id="' +
+        '<button type="button" class="ad-action-link ad-action-link--danger ad-saved-search-remove" data-search-id="' +
         esc(item.id || '') +
         '">Remove</button></div></td>';
       body.appendChild(tr);
@@ -3992,6 +4028,7 @@
       btn.addEventListener('click', async () => {
         const searchId = btn.getAttribute('data-search-id');
         if (!searchId) return;
+        if (!window.confirm('Remove this saved search and stop its alerts?')) return;
         btn.disabled = true;
         try {
           await fetch('/api/auth/opportunity-saved-searches', {

@@ -2601,6 +2601,21 @@ body.nav-menu-open {
     font-size: 14px;
   }
 
+  /* Saved cards: Remove as text-link with a full-row tap target */
+  .attendee-dashboard-page .ad-td-actions .ad-saved-organiser-remove,
+  .attendee-dashboard-page .ad-td-actions .ad-saved-opportunity-remove,
+  .attendee-dashboard-page .ad-td-actions .ad-saved-search-remove,
+  .attendee-dashboard-page .ad-td-actions .ad-saved-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
   .attendee-dashboard-page .ad-saved-panel {
     margin-bottom: 16px;
     border-radius: 14px;

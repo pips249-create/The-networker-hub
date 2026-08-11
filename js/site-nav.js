@@ -17,6 +17,13 @@
     window.hubFetchSession = function () {
       return Promise.resolve({ ok: true });
     };
+    window.hubFetchProfile = function () {
+      return Promise.resolve({ ok: false, profile: null });
+    };
+    window.hubProbeCatalogueAccess = function () {
+      window.HubCatalogueOpen = true;
+      return Promise.resolve(true);
+    };
     return;
   }
   function bindSwitch(container, root) {
@@ -95,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260807peek2';
+  var NAV_BUILD = '20260811perf1';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -934,22 +941,36 @@
     renderNav(null, true);
   }
 
-  function probeCatalogueAccess() {
+  var catalogueProbePromise = null;
+  var profilePromise = null;
+
+  function applyCatalogueOpen(open) {
+    var prev = catalogueOpen;
+    catalogueOpen = open === true;
+    window.HubCatalogueOpen = catalogueOpen;
+    try {
+      window.dispatchEvent(new CustomEvent('hub-catalogue-access', { detail: { open: catalogueOpen } }));
+    } catch (e) {
+      /* ignore */
+    }
+    if (prev !== catalogueOpen) {
+      renderNav(lastNavUser, lastNavPending && !lastNavUser);
+    }
+    return catalogueOpen;
+  }
+
+  /**
+   * Shared catalogue-open probe (nav / footer / auth). Dedupes in-flight requests.
+   * Uses ?probe=1 so the API skips the browse query.
+   */
+  function probeCatalogueAccess(force) {
     if (forceEarlyAccessChrome()) {
-      var prevForced = catalogueOpen;
-      catalogueOpen = false;
-      window.HubCatalogueOpen = false;
-      try {
-        window.dispatchEvent(new CustomEvent('hub-catalogue-access', { detail: { open: false } }));
-      } catch (e) {
-        /* ignore */
-      }
-      if (prevForced !== false) {
-        renderNav(lastNavUser, lastNavPending && !lastNavUser);
-      }
+      catalogueProbePromise = null;
+      applyCatalogueOpen(false);
       return Promise.resolve(false);
     }
-    return fetch('/api/events?limit=1', { credentials: 'include', cache: 'no-store' })
+    if (!force && catalogueProbePromise) return catalogueProbePromise;
+    catalogueProbePromise = fetch('/api/events?probe=1', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
         // Only treat a successful catalogue response as open (not 401/500/etc).
         return res.status === 200;
@@ -958,21 +979,12 @@
         return false;
       })
       .then(function (open) {
-        var prev = catalogueOpen;
-        catalogueOpen = open;
-        window.HubCatalogueOpen = open;
-        try {
-          window.dispatchEvent(new CustomEvent('hub-catalogue-access', { detail: { open: open } }));
-        } catch (e) {
-          /* ignore */
-        }
-        if (prev !== open) {
-          renderNav(lastNavUser, lastNavPending && !lastNavUser);
-        }
-        return open;
+        return applyCatalogueOpen(open);
       });
+    return catalogueProbePromise;
   }
 
+  window.hubProbeCatalogueAccess = probeCatalogueAccess;
   probeCatalogueAccess();
 
   var sessionPromise = null;
@@ -990,11 +1002,35 @@
     return sessionPromise;
   };
 
+  window.hubFetchProfile = function (force) {
+    if (!force && profilePromise) return profilePromise;
+    profilePromise = window
+      .hubFetchSession()
+      .then(function (session) {
+        if (!session || !session.ok) return { ok: false, profile: null };
+        return fetch('/api/auth/profile', { credentials: 'include' })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            if (data && data.ok && data.profile) {
+              window.hubProfileLocation = String(data.profile.location || '').trim();
+            }
+            return data && typeof data === 'object' ? data : { ok: false, profile: null };
+          });
+      })
+      .catch(function () {
+        profilePromise = null;
+        return { ok: false, profile: null };
+      });
+    return profilePromise;
+  };
+
   window.hubFetchSession()
     .then(function (data) {
       applySessionData(data);
-      // Session unlocks the gate — re-check catalogue APIs after login.
-      probeCatalogueAccess();
+      // Session can unlock the gate — re-check only while still closed.
+      if (!catalogueOpen) probeCatalogueAccess(true);
     })
     .catch(function () {
       if (!cachedUser) {

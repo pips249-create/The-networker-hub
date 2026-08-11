@@ -270,6 +270,11 @@
   function loadProfileLocationQuietly() {
     if (window.hubLoadProfileLocation) return window.hubLoadProfileLocation();
     if (window.hubProfileLocation) return Promise.resolve(window.hubProfileLocation || '');
+    if (typeof window.hubFetchProfile === 'function') {
+      return window.hubFetchProfile().then(function (data) {
+        return (data && data.ok && data.profile && String(data.profile.location || '').trim()) || '';
+      });
+    }
     if (typeof window.hubFetchSession !== 'function') return Promise.resolve('');
     return window
       .hubFetchSession()
