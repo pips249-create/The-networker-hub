@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
   <link rel="stylesheet" href="../css/fact-loader.css?v=20260723">
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728mark">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260811claimb">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260811claimb2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f">
 </head>
 <body class="organiser-profile-page hub-is-page-loading">
@@ -47,7 +47,7 @@
 </div>
 
 <main class="org-profile-shell" id="org-profile-shell">
-  <div class="org-profile-breadcrumb">
+  <div class="org-profile-breadcrumb" id="org-breadcrumb">
     <a class="org-profile-back" id="org-back" href="/events/#organisers">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -57,17 +57,21 @@
   </div>
 
   <div id="org-claim-invite" class="org-claim-invite" hidden>
-    <p class="org-claim-invite-kicker">Your organiser page</p>
+    <p class="org-claim-invite-kicker" id="org-claim-invite-kicker">We&rsquo;ve set this up for you</p>
+    <p class="org-claim-invite-title" id="org-claim-invite-title">Your group page is ready</p>
     <p class="org-claim-invite-text" id="org-claim-invite-text">
-      This is the listing we have for your group. Check the details and upcoming events, then claim or edit it — creating an account is free.
+      Have a look at the details and any upcoming events below. When you&rsquo;re happy, claim the page so you can edit it — creating an account is free and takes about a minute.
     </p>
     <div class="org-claim-invite-actions">
       <a class="org-profile-btn org-profile-btn--primary" id="org-claim-edit-btn" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim">Claim / edit this page →</a>
       <a class="org-profile-btn" href="#org-upcoming">See upcoming events</a>
     </div>
     <p class="org-claim-invite-note">
-      Wrong email or need a hand? Email
-      <a href="mailto:catherine@thenetworkerhub.com">catherine@thenetworkerhub.com</a>.
+      Questions? Message
+      <a href="mailto:catherine@thenetworkerhub.com">Catherine</a>
+      or
+      <a href="mailto:rosie@thenetworkerhub.com">Rosie</a>
+      — we&rsquo;re happy to help.
     </p>
   </div>
 
@@ -273,6 +277,6 @@
 <script src="../js/postcode-outcode.js?v=20260727city"></script>
 <script src="../js/detail-region-cta.js?v=20260727city"></script>
 <script src="../js/plain-text-format.js?v=20260728paras1"></script>
-<script src="../js/organiser-detail.js?v=20260811claimb"></script>
+<script src="../js/organiser-detail.js?v=20260811claimb2"></script>
 </body>
 </html>

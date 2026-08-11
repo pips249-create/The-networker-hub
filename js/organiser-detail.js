@@ -90,9 +90,17 @@
     if (!q.isClaim) return;
 
     var invite = document.getElementById('org-claim-invite');
+    var kicker = document.getElementById('org-claim-invite-kicker');
+    var titleEl = document.getElementById('org-claim-invite-title');
     var textEl = document.getElementById('org-claim-invite-text');
     var btn = document.getElementById('org-claim-edit-btn');
     var claimSection = document.getElementById('org-claim-section');
+    var breadcrumb = document.getElementById('org-breadcrumb');
+    var reviewSection = document.querySelector('.org-profile-section--cta');
+    var regionCta = document.getElementById('org-region-cta');
+    var saveBtn = document.getElementById('org-save-btn');
+    var shareBtn = document.getElementById('org-share-btn');
+    var reportBtn = document.getElementById('org-report-btn');
 
     var safeNext =
       q.next && q.next.charAt(0) === '/' ? q.next : '/organiser/?onboard=claim';
@@ -102,20 +110,30 @@
       encodeURIComponent(safeNext) +
       (q.email ? '&email=' + encodeURIComponent(q.email) : '');
 
+    if (breadcrumb) breadcrumb.hidden = true;
     if (invite) invite.hidden = false;
-    if (textEl && org && org.name) {
-      textEl.innerHTML =
-        'This is the listing we have for <strong>' +
-        escapeHtml(org.name) +
-        '</strong>. Check the details and upcoming events, then claim or edit it — creating an account is free.';
+    if (kicker) kicker.textContent = 'We\u2019ve set this up for you';
+    if (titleEl && org && org.name) {
+      titleEl.textContent = org.name + ' is ready on The Networker Hub';
+    } else if (titleEl) {
+      titleEl.textContent = 'Your group page is ready';
+    }
+    if (textEl) {
+      textEl.textContent =
+        'Have a look at the details and any upcoming events below. When you\u2019re happy, claim the page so you can edit it \u2014 creating an account is free and takes about a minute.';
     }
     if (btn) {
       btn.setAttribute('href', authHref);
       btn.textContent =
-        q.authMode === 'login' ? 'Sign in to claim / edit →' : 'Claim / edit this page →';
+        q.authMode === 'login' ? 'Sign in to claim / edit \u2192' : 'Claim / edit this page \u2192';
     }
     // Matched-email claim uses account flow — hide the mismatch "request access" form.
     if (claimSection) claimSection.hidden = true;
+    if (reviewSection) reviewSection.hidden = true;
+    if (regionCta) regionCta.hidden = true;
+    if (saveBtn) saveBtn.hidden = true;
+    if (shareBtn) shareBtn.hidden = true;
+    if (reportBtn) reportBtn.hidden = true;
 
     renderSiblingGroups(siblings || [], q);
 

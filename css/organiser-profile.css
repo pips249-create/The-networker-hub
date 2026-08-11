@@ -443,46 +443,61 @@
 }
 
 .org-claim-invite {
-  margin: 0 0 24px;
-  padding: 20px 22px;
-  border-radius: 16px;
-  background: linear-gradient(165deg, #f3eef8 0%, #ebe4f4 100%);
-  border: 1px solid rgba(69, 45, 92, 0.14);
+  margin: 0 0 28px;
+  padding: 22px 24px 20px;
+  border-radius: 18px;
+  background: linear-gradient(165deg, #f7f1e8 0%, #f3ebe0 55%, #efe6f4 100%);
+  border: 1px solid rgba(69, 45, 92, 0.12);
+  box-shadow: 0 10px 28px rgba(45, 38, 54, 0.06);
 }
 
 .org-claim-invite-kicker {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #452d5c;
+  color: #8a6b3d;
+}
+
+.org-claim-invite-title {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 400;
+  color: #2d2636;
 }
 
 .org-claim-invite-text {
   margin: 0 0 16px;
   font-size: 15px;
-  line-height: 1.55;
-  color: #3d3640;
+  line-height: 1.6;
+  color: #4a4450;
+  max-width: 52ch;
 }
 
 .org-claim-invite-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .org-claim-invite-note {
   margin: 0;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: #6b6570;
 }
 
 .org-claim-invite-note a {
   color: #452d5c;
   font-weight: 600;
+}
+
+body.org-claim-invite-active .org-profile-breadcrumb {
+  display: none;
 }
 
 .org-siblings {
