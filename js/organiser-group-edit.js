@@ -758,7 +758,29 @@
     return payload;
   }
 
+  function setActionBusy(btn, busy, label) {
+    if (!btn) return;
+    if (busy) {
+      if (btn.dataset.idleLabel == null) {
+        btn.dataset.idleLabel = btn.textContent || '';
+      }
+      btn.disabled = true;
+      btn.classList.add('is-busy');
+      btn.setAttribute('aria-busy', 'true');
+      if (label) btn.textContent = label;
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('is-busy');
+      btn.removeAttribute('aria-busy');
+      if (btn.dataset.idleLabel != null) {
+        btn.textContent = btn.dataset.idleLabel;
+        delete btn.dataset.idleLabel;
+      }
+    }
+  }
+
   async function saveGroup(mode, triggerBtn) {
+    if (triggerBtn && (triggerBtn.disabled || triggerBtn.classList.contains('is-busy'))) return;
     showAlert('');
     const payload = await buildPayload();
     if (!payload) return;
@@ -774,15 +796,24 @@
     const draftBtn = el('ge-save-draft');
     const publishBtn = el('ge-publish');
     const continueBtn = el('ge-save-continue');
-    [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
+    const actionBtns = [saveChanges, draftBtn, publishBtn, continueBtn];
+    actionBtns.forEach((b) => {
       if (b) b.disabled = true;
     });
-    if (triggerBtn) triggerBtn.disabled = true;
 
     const onboardReview = Boolean(
       (config && config.onboardReview) || (config && config.onboardLaunch)
     );
+    const launchSetup = Boolean(config && config.onboardLaunch);
+    const busyLabel =
+      mode === 'continue'
+        ? onboardReview || launchSetup
+          ? 'Continuing…'
+          : 'Saving…'
+        : 'Saving…';
+    setActionBusy(triggerBtn, true, busyLabel);
 
+    let keepBusy = false;
     try {
       let res;
       if (editId) {
@@ -858,7 +889,6 @@
       }
 
       const delay = hasWarnings ? 2200 : isEmbedded() ? 900 : 700;
-      const launchSetup = Boolean(config && config.onboardLaunch);
 
       // Only the continue CTA advances setup. Plain "Save changes" stays on the form.
       const continueToEvent = mode === 'continue';
@@ -868,6 +898,8 @@
           config.onSaved(saved, mode);
         }
         if (continueToEvent) {
+          keepBusy = true;
+          setActionBusy(triggerBtn, true, 'Continuing…');
           setTimeout(function () {
             if (config.onContinue) config.onContinue(saved, mode);
             else {
@@ -887,14 +919,19 @@
 
       if (continueToEvent || onboardReview || launchSetup) stashGroupContinue(saved && saved.id);
       if (continueToEvent || onboardReview || launchSetup) {
+        keepBusy = true;
+        setActionBusy(triggerBtn, true, 'Continuing…');
         setTimeout(function () {
           location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
         }, delay);
       }
     } finally {
-      [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
-        if (b) b.disabled = false;
-      });
+      if (!keepBusy) {
+        actionBtns.forEach((b) => {
+          if (b) b.disabled = false;
+        });
+        setActionBusy(triggerBtn, false);
+      }
     }
   }
 
@@ -1018,7 +1055,7 @@
             '#ge-save-changes, #ge-save-continue, #ge-publish, #ge-save-draft, #ge-cancel'
           )
         : null;
-      if (!btn || btn.disabled) return;
+      if (!btn || btn.disabled || btn.classList.contains('is-busy')) return;
       const id = btn.id;
       if (id === 'ge-save-changes') {
         e.preventDefault();

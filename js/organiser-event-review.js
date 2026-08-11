@@ -26,6 +26,7 @@
   let loadedTickets = [];
   let organiserGroupName = '';
   let organiserComplimentaryVisits = 0;
+  let paymentSetupState = null;
 
   const FORMAT_LABELS = {
     'in-person': 'In person',
@@ -99,26 +100,49 @@
       const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if (hadUrlIds) {
-        const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
-          .map(function (id) {
-            return String(id).trim();
-          })
-          .filter(Boolean);
-        const sameIds =
-          storedIds.length === urlIds.length &&
-          urlIds.every(function (id) {
-            return storedIds.includes(id);
-          });
-        if (sameIds) {
-          seriesMeta = { ...seriesMeta, ...parsed };
-        }
-      } else {
+      const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
+        .map(function (id) {
+          return String(id).trim();
+        })
+        .filter(Boolean);
+      if (!hadUrlIds) {
         seriesMeta = { ...seriesMeta, ...parsed };
-        if (parsed.eventIds && parsed.eventIds.length) {
-          eventIds = parsed.eventIds;
-        }
+        if (storedIds.length) eventIds = storedIds;
+        return;
       }
+      const sameIds =
+        storedIds.length === urlIds.length &&
+        urlIds.every(function (id) {
+          return storedIds.includes(id);
+        });
+      const urlIsSubsetOfStored =
+        storedIds.length > urlIds.length &&
+        urlIds.every(function (id) {
+          return storedIds.includes(id);
+        });
+      if (sameIds || urlIsSubsetOfStored) {
+        seriesMeta = { ...seriesMeta, ...parsed };
+        if (urlIsSubsetOfStored) eventIds = storedIds.slice();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function persistSeriesMeta() {
+    try {
+      const next = {
+        ...seriesMeta,
+        eventIds: eventIds.slice(),
+        events:
+          seriesMeta.events && seriesMeta.events.length
+            ? seriesMeta.events
+            : eventIds.map(function (id) {
+                return { id: id };
+              }),
+      };
+      seriesMeta = next;
+      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
     }
@@ -221,6 +245,141 @@
     qs.set('ids', eventIds.join(','));
     if (isEmbedDrawer) qs.set('embed', '1');
     return '/organiser/event-tickets?' + qs.toString();
+  }
+
+  function paymentSetupReturnPath() {
+    const qs = new URLSearchParams();
+    if (eventIds.length) qs.set('ids', eventIds.join(','));
+    return '/organiser/event-review?' + qs.toString();
+  }
+
+  function paymentGroupForSeries() {
+    if (!paymentSetupState) return null;
+    return (
+      window.HubOrganiserPaymentSetup?.groupForEvent(
+        paymentSetupState,
+        seriesMeta.organiserGroupId || anchorEvent?.organiserGroupId
+      ) || paymentSetupState.primaryGroup
+    );
+  }
+
+  function needsBankDetailsForPublish() {
+    const tiers = displayTiers();
+    const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
+    const hasPaid = tiersHavePaidPrice(tiers, alumniFastPass);
+    if (!hasPaid) return false;
+    if (!paymentSetupState || !window.HubOrganiserPaymentSetup) return false;
+    return window.HubOrganiserPaymentSetup.groupNeedsSetup(
+      paymentSetupState,
+      paymentGroupForSeries()
+    );
+  }
+
+  async function loadPaymentSetupState(options) {
+    if (!window.HubOrganiserPaymentSetup) {
+      paymentSetupState = null;
+      return;
+    }
+    paymentSetupState = await window.HubOrganiserPaymentSetup.fetchState(options || {});
+  }
+
+  async function handleReviewPaymentLinked(status) {
+    await loadPaymentSetupState({ bypassCache: true });
+    if (status && status.ready === false) {
+      showAlert(
+        status.incompleteHint ||
+          'Bank details were linked, but Stripe still needs a few steps. Click Add bank details to finish.',
+        'warn'
+      );
+    } else {
+      showAlert('Bank details linked — you can publish paid tickets now.', 'ok');
+    }
+    refreshReviewPaymentSetup();
+    renderReviewNext();
+  }
+
+  function refreshReviewPaymentSetup() {
+    const mount = document.getElementById('ee-payment-setup-mount');
+    const payment = window.HubOrganiserPaymentSetup;
+    const confirmBtn = document.getElementById('ee-review-confirm');
+    const lede = document.querySelector('.ee-publish-review-lede');
+    if (!mount || !payment || !paymentSetupState) {
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.removeAttribute('aria-disabled');
+        confirmBtn.title = '';
+        confirmBtn.dataset.bankBlocked = '';
+      }
+      return;
+    }
+
+    const bankPending = needsBankDetailsForPublish();
+    if (!bankPending) {
+      mount.hidden = true;
+      mount.innerHTML = '';
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.removeAttribute('aria-disabled');
+        confirmBtn.title = '';
+        confirmBtn.textContent = 'Confirm & publish';
+        confirmBtn.dataset.bankBlocked = '';
+      }
+      if (lede) {
+        lede.textContent =
+          'Check everything looks right. Once you publish, your listing goes live automatically and ticket sales can start straight away.';
+      }
+      return;
+    }
+
+    payment.renderInto(mount, paymentSetupState, paymentGroupForSeries(), {
+      returnPath: paymentSetupReturnPath(),
+      buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
+      title: 'Add bank details before publishing paid tickets',
+      lead:
+        'This listing has paid tickets. Connect your UK bank account via Stripe, then return here to publish. Free events do not need bank details.',
+      singleGroupOnly: true,
+      onLinked: handleReviewPaymentLinked,
+    });
+    if (confirmBtn) {
+      // Keep clickable so it scrolls to the bank CTA instead of a dead control.
+      confirmBtn.disabled = false;
+      confirmBtn.removeAttribute('aria-disabled');
+      confirmBtn.title = 'Add bank details before publishing paid tickets';
+      confirmBtn.textContent = 'Add bank details to publish';
+      confirmBtn.dataset.bankBlocked = '1';
+    }
+    if (lede) {
+      lede.textContent =
+        'Paid tickets need bank details before publish. Use Add bank details below — Confirm & publish unlocks when Stripe setup is finished.';
+    }
+  }
+
+  async function handleStripeConnectReturn() {
+    const connectParam = new URLSearchParams(window.location.search).get('stripe_connect');
+    if (connectParam !== 'return' && connectParam !== 'refresh') return;
+    const group = paymentGroupForSeries();
+    let status = null;
+    if (group?.id) {
+      const { ok, data } = await api(
+        '/api/organiser/stripe-connect?groupId=' + encodeURIComponent(group.id)
+      );
+      status = ok ? data : null;
+      await loadPaymentSetupState({ bypassCache: true });
+    }
+    if (status && status.ready) {
+      showAlert('Bank details saved — you can publish paid tickets now.', 'ok');
+    } else {
+      showAlert(
+        (status && status.incompleteHint) ||
+          'Stripe setup is not finished yet. Click Add bank details again to complete identity and bank account.',
+        'warn'
+      );
+    }
+    if (window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('stripe_connect');
+      window.history.replaceState({}, '', url.pathname + '?' + url.searchParams.toString());
+    }
   }
 
   function reviewEditHref(path) {
@@ -502,22 +661,29 @@
   }
 
   function renderReviewNext() {
+    const nextEl = document.getElementById('ee-publish-review-next');
+    if (!nextEl) return;
+
+    if (needsBankDetailsForPublish()) {
+      nextEl.textContent =
+        'Confirm & publish is blocked until bank details are added. Use Add bank details above, finish Stripe in the new tab, then return here.';
+      return;
+    }
+
     const tiers = displayTiers();
     const scheduled = tiers.some(function (tier) {
       if (!tier.saleStart) return false;
       const start = new Date(tier.saleStart);
       return !Number.isNaN(start.getTime()) && start > Date.now();
     });
-    let text =
-      'Your listing goes live automatically on Browse events';
+    let text = 'Your listing goes live automatically on Browse events';
     if (scheduled) {
       text += ' and ticket sales open on the start dates you set';
     } else {
       text += ' and ticket sales go live straight away';
     }
     text += '. You can still edit most details from My Events before the first date.';
-    const nextEl = document.getElementById('ee-publish-review-next');
-    if (nextEl) nextEl.textContent = text;
+    nextEl.textContent = text;
   }
 
   function ticketDraftStorageKey() {
@@ -690,6 +856,7 @@
           endDate: ev.endDate || '',
           imageUrl: ev.imageUrl || '',
           imagePosition: ev.imagePosition || '',
+          seriesGroupId: ev.seriesGroupId || '',
         });
       });
     }
@@ -699,6 +866,47 @@
         return byId.get(id);
       })
       .filter(Boolean);
+    persistSeriesMeta();
+  }
+
+  async function expandSeriesEventIds(anchor) {
+    if (eventIds.length > 1) {
+      persistSeriesMeta();
+      return;
+    }
+    const seriesGroupId = String(
+      (anchor && anchor.seriesGroupId) ||
+        (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].seriesGroupId) ||
+        ''
+    ).trim();
+    if (!seriesGroupId) return;
+
+    const res = await api(
+      '/api/organiser/events?seriesGroupId=' + encodeURIComponent(seriesGroupId)
+    );
+    if (!(res.ok && Array.isArray(res.data.events) && res.data.events.length > 1)) {
+      persistSeriesMeta();
+      return;
+    }
+    const sorted = res.data.events.slice().sort(function (a, b) {
+      return new Date(a.date || 0) - new Date(b.date || 0);
+    });
+    eventIds = sorted.map(function (ev) {
+      return ev.id;
+    }).filter(Boolean);
+    seriesMeta.events = sorted.map(function (ev) {
+      return {
+        id: ev.id,
+        title: ev.title,
+        date: ev.date,
+        endDate: ev.endDate || '',
+        imageUrl: ev.imageUrl || seriesMeta.imageUrl || '',
+        imagePosition: ev.imagePosition || seriesMeta.imagePosition || '',
+        seriesGroupId: ev.seriesGroupId || seriesGroupId,
+      };
+    });
+    seriesMeta.eventIds = eventIds.slice();
+    persistSeriesMeta();
   }
 
   async function loadOrganiserGroup(groupId) {
@@ -738,8 +946,13 @@
       seriesMeta.imagePosition = anchorEvent.imagePosition;
     }
 
+    await expandSeriesEventIds(anchorEvent);
     await hydrateSeriesEvents();
-    await loadOrganiserGroup(seriesMeta.organiserGroupId || anchorEvent.organiserGroupId);
+    await Promise.all([
+      loadOrganiserGroup(seriesMeta.organiserGroupId || anchorEvent.organiserGroupId),
+      loadPaymentSetupState(),
+    ]);
+    await handleStripeConnectReturn();
     return true;
   }
 
@@ -817,7 +1030,15 @@
     const backBtn = document.getElementById('ee-review-back');
     if (confirmBtn) {
       confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Confirm & publish';
+      if (needsBankDetailsForPublish()) {
+        confirmBtn.textContent = 'Add bank details to publish';
+        confirmBtn.title = 'Add bank details before publishing paid tickets';
+        confirmBtn.dataset.bankBlocked = '1';
+      } else {
+        confirmBtn.textContent = 'Confirm & publish';
+        confirmBtn.title = '';
+        confirmBtn.dataset.bankBlocked = '';
+      }
     }
     if (backBtn) backBtn.removeAttribute('aria-disabled');
   }
@@ -837,6 +1058,29 @@
 
     if (!loadedTickets.length) {
       showAlert('No ticket types found — go back and set up tickets before publishing.', 'warn');
+      return;
+    }
+
+    if (needsBankDetailsForPublish()) {
+      showAlert(
+        'Add bank details before publishing paid tickets — use the Add bank details button above, finish Stripe, then try again.',
+        'warn'
+      );
+      refreshReviewPaymentSetup();
+      const setupBtn = document.querySelector(
+        '#ee-payment-setup-mount [data-payment-setup], #ee-payment-setup-mount [data-payment-link]'
+      );
+      if (setupBtn && typeof setupBtn.focus === 'function') {
+        try {
+          setupBtn.focus();
+        } catch {
+          /* ignore */
+        }
+      }
+      document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
       return;
     }
 
@@ -900,9 +1144,15 @@
         ) {
           showAlert(
             data.message ||
-              'Add bank details before publishing paid tickets — go back to ticket setup or open Revenue in your dashboard, then try again.',
+              'Add bank details before publishing paid tickets — use Add bank details above, then try again.',
             'warn'
           );
+          await loadPaymentSetupState({ bypassCache: true });
+          refreshReviewPaymentSetup();
+          document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
           return;
         }
         showAlert(data.message || data.error || 'Could not publish your event', 'warn');
@@ -935,6 +1185,7 @@
     removeStaleReviewRefundCheck();
     const body = document.getElementById('ee-publish-review-body');
     if (body) body.innerHTML = renderReviewBody();
+    refreshReviewPaymentSetup();
     renderReviewNext();
   }
 

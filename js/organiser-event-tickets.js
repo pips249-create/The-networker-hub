@@ -111,6 +111,74 @@
     }
   }
 
+  function confirmApplyTicketsToSeries() {
+    const modal = document.getElementById('ee-tickets-confirm-modal');
+    const body = document.getElementById('ee-tickets-confirm-body');
+    const hint = document.getElementById('ee-tickets-confirm-hint');
+    const okBtn = document.getElementById('ee-tickets-confirm-ok');
+    const title = document.getElementById('ee-tickets-confirm-title');
+    const n = eventIds.length;
+
+    if (!modal || !okBtn) {
+      const fallback =
+        n <= 1
+          ? 'Update ticket types for this event with what you have here?'
+          : 'Apply these tickets to all ' + n + ' dates in this series?';
+      return Promise.resolve(window.confirm(fallback));
+    }
+
+    if (title) {
+      title.textContent =
+        n <= 1 ? 'Update tickets for this event?' : 'Apply tickets to all dates in this series?';
+    }
+    if (body) {
+      body.textContent =
+        n <= 1
+          ? 'This replaces the ticket types on this listing with what you have set up here.'
+          : 'Apply these ticket types to all ' +
+            n +
+            ' dates in this series? Every date listed above gets the same tickets.';
+    }
+    if (hint) {
+      hint.textContent =
+        'Other listings on your organiser page are not changed — only this series.';
+    }
+    if (okBtn) {
+      okBtn.textContent = n <= 1 ? 'Update tickets' : 'Apply to all ' + n + ' dates';
+    }
+
+    return new Promise(function (resolve) {
+      let settled = false;
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        modal.hidden = true;
+        document.body.classList.remove('ee-modal-open');
+        document.removeEventListener('keydown', onKey);
+        resolve(Boolean(ok));
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') finish(false);
+      }
+      modal.querySelectorAll('[data-ee-confirm-cancel]').forEach(function (el) {
+        el.onclick = function () {
+          finish(false);
+        };
+      });
+      okBtn.onclick = function () {
+        finish(true);
+      };
+      document.addEventListener('keydown', onKey);
+      modal.hidden = false;
+      document.body.classList.add('ee-modal-open');
+      try {
+        okBtn.focus();
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+
   function needsBankDetailsSetup(tiers) {
     const list = tiers || collectActiveTiers();
     return (
@@ -406,22 +474,43 @@
       const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if (hadUrlIds) {
-        const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
-          .map((id) => String(id).trim())
-          .filter(Boolean);
-        const sameIds =
-          storedIds.length === urlIds.length &&
-          urlIds.every((id) => storedIds.includes(id));
-        if (sameIds) {
-          seriesMeta = { ...seriesMeta, ...parsed };
-        }
-      } else {
+      const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
+        .map((id) => String(id).trim())
+        .filter(Boolean);
+      if (!hadUrlIds) {
         seriesMeta = { ...seriesMeta, ...parsed };
-        if (parsed.eventIds && parsed.eventIds.length) {
-          eventIds = parsed.eventIds;
-        }
+        if (storedIds.length) eventIds = storedIds;
+        return;
       }
+      const sameIds =
+        storedIds.length === urlIds.length &&
+        urlIds.every((id) => storedIds.includes(id));
+      // Claim / drawer often opens with the primary id only while sessionStorage
+      // already has every date in the series — prefer the full stored list.
+      const urlIsSubsetOfStored =
+        storedIds.length > urlIds.length &&
+        urlIds.every((id) => storedIds.includes(id));
+      if (sameIds || urlIsSubsetOfStored) {
+        seriesMeta = { ...seriesMeta, ...parsed };
+        if (urlIsSubsetOfStored) eventIds = storedIds.slice();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function persistSeriesMeta() {
+    try {
+      const next = {
+        ...seriesMeta,
+        eventIds: eventIds.slice(),
+        events:
+          seriesMeta.events && seriesMeta.events.length
+            ? seriesMeta.events
+            : eventIds.map((id) => ({ id })),
+      };
+      seriesMeta = next;
+      sessionStorage.setItem(SERIES_STORAGE_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
     }
@@ -432,6 +521,7 @@
     const pills = document.getElementById('ee-series-pills');
     const lead = document.getElementById('ee-tickets-lead');
     const seriesCard = document.getElementById('ee-series-card');
+    const heading = document.getElementById('ee-series-heading');
     const n = eventIds.length;
     const heroImg =
       seriesMeta.imageUrl ||
@@ -471,18 +561,26 @@
         existing.style.objectPosition = heroPos;
       }
     }
-    if (countEl) {
-      countEl.textContent = n + ' event' + (n === 1 ? '' : 's');
+    if (heading) {
+      heading.textContent = n === 1 ? 'Date in this listing' : 'Dates in this series (' + n + ')';
     }
-    if (lead && seriesMeta.title) {
-      lead.textContent =
-        'Define tickets for “' +
-        seriesMeta.title +
-        '”. Each tier is copied to all ' +
-        n +
-        ' date' +
-        (n === 1 ? '' : 's') +
-        ' in this series.';
+    if (countEl) {
+      countEl.textContent = n + ' date' + (n === 1 ? '' : 's');
+    }
+    if (lead) {
+      if (seriesMeta.title) {
+        lead.textContent =
+          'Define tickets for “' +
+          seriesMeta.title +
+          '”. Each ticket type applies to ' +
+          (n === 1 ? 'this date' : 'all ' + n + ' dates in this series') +
+          '.';
+      } else if (n > 1) {
+        lead.textContent =
+          'Choose how people attend, add your ticket types once, and we apply them to all ' +
+          n +
+          ' dates in this series.';
+      }
     }
     if (!pills) return;
     const events =
@@ -519,10 +617,14 @@
       seriesMeta.imagePosition = seriesMeta.events[0].imagePosition;
     }
     seriesMeta.eventIds = eventIds.slice();
+    persistSeriesMeta();
   }
 
   async function expandSeriesEventIds(anchorEvent) {
-    if (eventIds.length > 1) return;
+    if (eventIds.length > 1) {
+      persistSeriesMeta();
+      return;
+    }
     const anchorId = eventIds[0];
     if (!anchorId) return;
 
@@ -535,6 +637,8 @@
     );
     if (res.ok && Array.isArray(res.data.events) && res.data.events.length > 1) {
       applyExpandedSeriesPeers(res.data.events);
+    } else {
+      persistSeriesMeta();
     }
   }
 
@@ -2255,9 +2359,9 @@
     payment.renderInto(mount, paymentSetupState, group, {
       returnPath: paymentSetupReturnPath(),
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
-      title: 'Bank details needed before paid tickets go on sale',
+      title: 'Add bank details before publishing paid tickets',
       lead:
-        'You can set prices and finish this listing now. Add your UK bank account via Stripe later — only required before paid tickets can be purchased. Free events do not need bank details.',
+        'You can set prices now, but Confirm & publish stays blocked until Stripe has your UK bank details. Free events do not need bank details.',
       singleGroupOnly: true,
       onLinked: handlePaymentSetupLinked,
     });
@@ -2375,7 +2479,7 @@
           }
           if (bankPending && !blockers.some((b) => /bank details/i.test(b))) {
             parts.push(
-              'Paid tickets will not go on sale until you add bank details — you can do that now or before you publish.'
+              'Add bank details before you publish paid tickets — use Add bank details above, then continue to review.'
             );
           }
           warn.textContent = parts.join(' ');
@@ -3060,9 +3164,13 @@
 
     if (needsBankDetailsSetup(tiers)) {
       showAlert(
-        'Bank details are not set up yet — your event will stay as a draft until you add them. You can do that on this page or from Revenue in your dashboard before you publish.',
+        'Add bank details before you can publish paid tickets. You can continue to review now, but Confirm & publish will stay blocked until Stripe setup is finished — use Add bank details on this page or on the next step.',
         'warn'
       );
+      document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
     }
 
     await saveTickets(false, { redirectToReview: true });
@@ -3199,15 +3307,7 @@
 
     // Confirm overwrite only when ticket setup changed since last save/load.
     if (existingTicketsLoaded && ticketsChangedFromSnapshot(tiers)) {
-      const scopeText =
-        eventIds.length === 1
-          ? 'this event only'
-          : 'the ' + eventIds.length + ' dates in this listing only';
-      const proceed = window.confirm(
-        'This will update the ticket types for ' +
-          scopeText +
-          ' with what you have here. Your other events are not affected. Continue?'
-      );
+      const proceed = await confirmApplyTicketsToSeries();
       if (!proceed) {
         showAlert(
           publish

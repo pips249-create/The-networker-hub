@@ -96,6 +96,42 @@
   let groupClaimRejectMode = false;
   let groupClaimSubmitInFlight = false;
   let opportunityClaimRejectMode = false;
+  var CLAIM_MODAL_POSTPONE_KEY = 'hub_claim_modal_postponed_v1';
+  var CLAIM_RESUME_BANNER_HIDDEN_KEY = 'hub_claim_resume_banner_hidden_v1';
+
+  function isClaimModalPostponed() {
+    try {
+      return sessionStorage.getItem(CLAIM_MODAL_POSTPONE_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markClaimModalPostponed() {
+    try {
+      sessionStorage.setItem(CLAIM_MODAL_POSTPONE_KEY, '1');
+      sessionStorage.removeItem(CLAIM_RESUME_BANNER_HIDDEN_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function clearClaimModalPostponed() {
+    try {
+      sessionStorage.removeItem(CLAIM_MODAL_POSTPONE_KEY);
+      sessionStorage.removeItem(CLAIM_RESUME_BANNER_HIDDEN_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function isClaimResumeBannerHidden() {
+    try {
+      return sessionStorage.getItem(CLAIM_RESUME_BANNER_HIDDEN_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
 
   function isClaimOnboardIntent() {
     try {
@@ -12117,13 +12153,38 @@
     }
 
     const onboarding = window.HubOrganiserOnboarding;
-    if (onboarding && onboarding.isResumeDismissed && onboarding.isResumeDismissed()) {
-      banner.hidden = true;
+
+    if ((state.pendingClaimGroups || []).length > 0) {
+      const dismissBtn = document.getElementById('org-setup-resume-dismiss');
+      if (isClaimModalPostponed() && !isClaimResumeBannerHidden()) {
+        const titleEl = document.getElementById('org-setup-resume-title');
+        const bodyEl = document.getElementById('org-setup-resume-body');
+        const goBtn = document.getElementById('org-setup-resume-go');
+        const pendingCount = state.pendingClaimGroups.length;
+        if (titleEl) {
+          titleEl.textContent =
+            pendingCount > 1
+              ? 'Confirm your organiser pages (' + pendingCount + ' waiting)'
+              : 'Confirm your organiser page';
+        }
+        if (bodyEl) {
+          bodyEl.textContent =
+            'You postponed the invite check — continue when you are ready to confirm or decline each page.';
+        }
+        if (goBtn) goBtn.textContent = 'Continue claim →';
+        if (dismissBtn) dismissBtn.hidden = false;
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
       syncOverviewSetupQuietMode();
       return;
     }
 
-    if ((state.pendingClaimGroups || []).length > 0) {
+    const dismissBtnDefault = document.getElementById('org-setup-resume-dismiss');
+    if (dismissBtnDefault) dismissBtnDefault.hidden = false;
+
+    if (onboarding && onboarding.isResumeDismissed && onboarding.isResumeDismissed()) {
       banner.hidden = true;
       syncOverviewSetupQuietMode();
       return;
@@ -12162,6 +12223,8 @@
             'Check the listing we prepared, set tickets, and publish. Public ticket buying opens 1 September.';
         }
       }
+      const goBtnLaunch = document.getElementById('org-setup-resume-go');
+      if (goBtnLaunch) goBtnLaunch.textContent = 'Continue setup →';
       banner.hidden = false;
       syncOverviewSetupQuietMode();
       return;
@@ -12218,6 +12281,8 @@
       }
     }
 
+    const goBtnSetup = document.getElementById('org-setup-resume-go');
+    if (goBtnSetup) goBtnSetup.textContent = 'Continue setup →';
     banner.hidden = false;
     syncOverviewSetupQuietMode();
   }
@@ -12227,6 +12292,15 @@
     const goBtn = document.getElementById('org-setup-resume-go');
     if (dismissBtn) {
       dismissBtn.addEventListener('click', function () {
+        if ((state.pendingClaimGroups || []).length > 0 && isClaimModalPostponed()) {
+          try {
+            sessionStorage.setItem(CLAIM_RESUME_BANNER_HIDDEN_KEY, '1');
+          } catch (e) {
+            /* ignore */
+          }
+          updateSetupResumeBanner();
+          return;
+        }
         if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markResumeDismissed) {
           window.HubOrganiserOnboarding.markResumeDismissed();
         }
@@ -12235,6 +12309,15 @@
     }
     if (goBtn) {
       goBtn.addEventListener('click', function () {
+        if ((state.pendingClaimGroups || []).length > 0) {
+          if (window.orgDashOpenClaimModal) {
+            window.orgDashOpenClaimModal({ force: true });
+          } else {
+            clearClaimModalPostponed();
+            renderGroupClaimModal({ force: true });
+          }
+          return;
+        }
         if (isLaunchSetupInProgress() && window.HubOrganiserLaunchSetup) {
           const item = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
           if (item) {
@@ -12264,9 +12347,11 @@
   }
 
   window.orgDashUpdateSetupResume = updateSetupResumeBanner;
-  window.orgDashOpenClaimModal = function () {
+  window.orgDashOpenClaimModal = function (opts) {
+    opts = opts || {};
+    if (opts.force) clearClaimModalPostponed();
     if ((state.pendingClaimGroups || []).length > 0) {
-      renderGroupClaimModal();
+      renderGroupClaimModal({ force: Boolean(opts.force) });
       return;
     }
     if ((state.pendingClaimOpportunities || []).length > 0) {
@@ -12303,6 +12388,20 @@
       document.body.classList.remove('org-group-claim-active');
     }
     groupClaimRejectMode = false;
+  }
+
+  function postponeGroupClaimModal() {
+    if (!(state.pendingClaimGroups || []).length) {
+      hideGroupClaimModal();
+      return;
+    }
+    markClaimModalPostponed();
+    groupClaimRejectMode = false;
+    hideGroupClaimModal();
+    trackClaimFunnel('claim_postponed', String((state.pendingClaimGroups || []).length));
+    updateSetupResumeBanner();
+    updateGettingStartedPanel();
+    syncOverviewSetupQuietMode();
   }
 
   function hideReadyForEventModal() {
@@ -12472,7 +12571,7 @@
   function syncOverviewSetupQuietMode() {
     const quiet =
       !state.adminView &&
-      ((state.pendingClaimGroups || []).length > 0 ||
+      (((state.pendingClaimGroups || []).length > 0 && !isClaimModalPostponed()) ||
         (state.pendingClaimOpportunities || []).length > 0 ||
         isLaunchSetupInProgress());
     document.body.classList.toggle('org-claim-setup-active', quiet);
@@ -13135,7 +13234,8 @@
     }
   }
 
-  function renderGroupClaimModal() {
+  function renderGroupClaimModal(opts) {
+    opts = opts || {};
     const modal = document.getElementById('org-group-claim');
     const list = state.pendingClaimGroups || [];
     syncPendingClaimFlag();
@@ -13143,8 +13243,18 @@
 
     if (!modal || !list.length || state.adminView || shouldDeferGroupClaimModal()) {
       if (modal) hideGroupClaimModal();
+      updateSetupResumeBanner();
       return;
     }
+
+    if (!opts.force && isClaimModalPostponed()) {
+      hideGroupClaimModal();
+      updateSetupResumeBanner();
+      syncOverviewSetupQuietMode();
+      return;
+    }
+
+    if (opts.force) clearClaimModalPostponed();
 
     const group = list[0];
     const kicker = document.getElementById('org-group-claim-kicker');
@@ -13182,15 +13292,31 @@
     }
     if (notesWrap) notesWrap.hidden = !groupClaimRejectMode;
     if (errEl) errEl.hidden = true;
+    // In decline-confirm mode the primary (right) control must confirm decline —
+    // previously gold "Back" sat on the right and habitually claimed via Yes next.
     if (acceptBtn) {
       acceptBtn.disabled = false;
-      acceptBtn.textContent = groupClaimRejectMode ? 'Back' : 'Yes — set up this page';
+      if (groupClaimRejectMode) {
+        acceptBtn.textContent = 'Confirm — not my group';
+        acceptBtn.classList.add('org-btn-danger');
+        acceptBtn.classList.remove('org-btn-gold', 'org-btn-outline');
+      } else {
+        acceptBtn.textContent = 'Yes — set up this page';
+        acceptBtn.classList.add('org-btn-gold');
+        acceptBtn.classList.remove('org-btn-danger', 'org-btn-outline');
+      }
     }
     if (rejectBtn) {
       rejectBtn.disabled = false;
-      rejectBtn.textContent = groupClaimRejectMode ? 'Confirm — not my group' : 'No, this isn\'t mine';
-      rejectBtn.classList.toggle('org-btn-danger', groupClaimRejectMode);
-      rejectBtn.classList.toggle('org-btn-outline', !groupClaimRejectMode);
+      if (groupClaimRejectMode) {
+        rejectBtn.textContent = 'Back';
+        rejectBtn.classList.add('org-btn-outline');
+        rejectBtn.classList.remove('org-btn-danger', 'org-btn-gold');
+      } else {
+        rejectBtn.textContent = "No, this isn't mine";
+        rejectBtn.classList.add('org-btn-outline');
+        rejectBtn.classList.remove('org-btn-danger', 'org-btn-gold');
+      }
     }
 
     hideReadyForEventModal();
@@ -13201,8 +13327,9 @@
 
     const introEl = document.getElementById('org-group-claim-intro');
     if (introEl) {
-      introEl.textContent =
-        'You have early access to the organiser workspace before we open to the public on 1 September. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until launch day.';
+      introEl.textContent = groupClaimRejectMode
+        ? 'This will remove the page below from your dashboard and notify the Hub team. Add an optional note if the email match looks wrong.'
+        : 'You have early access to the organiser workspace before we open to the public on 1 September. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until launch day.';
     }
   }
 
@@ -13216,14 +13343,16 @@
     const notesEl = document.getElementById('org-group-claim-notes');
     if (!group) return;
 
+    const normalisedAction = action === 'reject' ? 'reject' : 'claim';
+
     groupClaimSubmitInFlight = true;
     if (errEl) errEl.hidden = true;
     if (acceptBtn) acceptBtn.disabled = true;
     if (rejectBtn) rejectBtn.disabled = true;
 
     try {
-      const body = { groupId: group.id, action: action };
-      if (action === 'reject' && notesEl && notesEl.value.trim()) {
+      const body = { groupId: group.id, action: normalisedAction };
+      if (normalisedAction === 'reject' && notesEl && notesEl.value.trim()) {
         body.notes = notesEl.value.trim();
       }
       const { ok, data } = await api('/api/organiser/group-claims', {
@@ -13236,16 +13365,53 @@
       groupClaimRejectMode = false;
       if (notesEl) notesEl.value = '';
 
-      if (action === 'claim') {
+      // Decline must never open profile review/edit for this or another group.
+      if (normalisedAction === 'reject') {
+        trackClaimFunnel('claim_rejected', group.slug || group.name || group.id);
+        try {
+          closeGroupEditorDrawer();
+        } catch (e) {
+          /* ignore */
+        }
+        hideLaunchSetupModal();
+        hideLaunchCompleteModal();
+        hideReadyForEventModal();
+
+        if (state.pendingClaimGroups.length) {
+          // Next candidate: confirmation modal only — never the editor.
+          clearClaimModalPostponed();
+          renderGroupClaimModal({ force: true });
+          return;
+        }
+
+        hideGroupClaimModal();
+        if ((state.pendingClaimOpportunities || []).length) {
+          renderOpportunityClaimModal();
+          return;
+        }
+
+        await loadBootstrap({ silent: true, skipClaimUi: true });
+        updateSetupResumeBanner();
+        updateGettingStartedPanel();
+        syncOverviewSetupQuietMode();
+        showOrganiserAlert(
+          data.message || 'Profile removed from your dashboard. The Hub team has been notified.',
+          false
+        );
+        return;
+      }
+
+      if (data.group) {
         state.groups = [data.group].concat(state.groups.filter((g) => g.id !== data.group.id));
       }
 
-      if (action === 'claim' && data.group && data.group.id) {
+      if (data.group && data.group.id) {
         rememberClaimedGroupOrder(data.group.id);
         trackClaimFunnel(
           'claim_accepted',
           data.group.slug || data.group.name || data.group.id
         );
+        clearClaimModalPostponed();
 
         // Open THIS page in the half-page drawer. Do not reload claim modals first —
         // loadBootstrap used to race and steal the first click.
@@ -13279,19 +13445,13 @@
       }
 
       if (state.pendingClaimGroups.length) {
-        renderGroupClaimModal();
+        renderGroupClaimModal({ force: true });
         return;
       }
 
       hideGroupClaimModal();
       if ((state.pendingClaimOpportunities || []).length) {
         renderOpportunityClaimModal();
-        return;
-      }
-
-      if (action === 'reject') {
-        await loadBootstrap();
-        showOrganiserAlert(data.message || 'Profile removed from your dashboard. The Hub team has been notified.', false);
         return;
       }
 
@@ -13483,11 +13643,12 @@
   function bindGroupClaimUi() {
     const acceptBtn = document.getElementById('org-group-claim-accept');
     const rejectBtn = document.getElementById('org-group-claim-reject');
+    const closeBtn = document.getElementById('org-group-claim-close');
     if (acceptBtn) {
       acceptBtn.addEventListener('click', function () {
+        // Right/primary control: Yes (claim) or Confirm decline — never "Back".
         if (groupClaimRejectMode) {
-          groupClaimRejectMode = false;
-          renderGroupClaimModal();
+          submitGroupClaimAction('reject');
           return;
         }
         submitGroupClaimAction('claim');
@@ -13495,14 +13656,27 @@
     }
     if (rejectBtn) {
       rejectBtn.addEventListener('click', function () {
-        if (!groupClaimRejectMode) {
-          groupClaimRejectMode = true;
-          renderGroupClaimModal();
+        if (groupClaimRejectMode) {
+          groupClaimRejectMode = false;
+          renderGroupClaimModal({ force: true });
           return;
         }
-        submitGroupClaimAction('reject');
+        groupClaimRejectMode = true;
+        renderGroupClaimModal({ force: true });
       });
     }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        postponeGroupClaimModal();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      const modal = document.getElementById('org-group-claim');
+      if (!modal || modal.hidden) return;
+      e.preventDefault();
+      postponeGroupClaimModal();
+    });
 
     const oppAcceptBtn = document.getElementById('org-opportunity-claim-accept');
     const oppRejectBtn = document.getElementById('org-opportunity-claim-reject');

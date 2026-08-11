@@ -5229,6 +5229,31 @@
   transition: background 0.15s, border-color 0.15s;
 }
 
+.org-btn.is-busy,
+.org-btn.is-busy:hover {
+  pointer-events: none;
+  opacity: 0.88;
+  cursor: wait;
+}
+
+.org-btn.is-busy::after {
+  content: '';
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 2px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: org-btn-busy-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes org-btn-busy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .org-btn-primary {
   background: var(--od-purple);
   color: #fff;
@@ -8924,6 +8949,28 @@ body.org-group-claim-active {
   border-radius: var(--od-radius);
   background: #fff;
   box-shadow: 0 24px 64px rgba(13, 31, 60, 0.22);
+}
+
+.org-group-claim-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: var(--od-bg-soft, #f4f1ea);
+  color: var(--od-text-dark);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.org-group-claim-close:hover {
+  background: var(--od-border-soft, #e8e2d8);
 }
 
 .org-group-claim-kicker {

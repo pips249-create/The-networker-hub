@@ -1257,7 +1257,7 @@ a:hover {
   font-weight: 600;
 }
 
-.ev-cal-day.is-available:hover {
+.ev-cal-day.is-available:hover:not(.is-selected) {
   background: var(--purple-100);
   border-color: var(--border-strong);
 }
@@ -1266,9 +1266,11 @@ a:hover {
   opacity: 0.65;
 }
 
-.ev-cal-day.is-selected {
+.ev-cal-day.is-selected,
+.ev-cal-day.is-selected:hover {
   background: var(--purple-700);
   color: #fff;
+  -webkit-text-fill-color: #fff;
   border-color: var(--purple-700);
 }
 
