@@ -485,6 +485,34 @@ async function getPublicOrganiserBySlug(slug) {
   return enrichPublicOrganiserDetail(sb, row);
 }
 
+/**
+ * Other public organiser pages sharing the same contact email (Email 2 path B sidebar).
+ * Returns lightweight cards — not full event payloads.
+ */
+async function listPublicSiblingOrganisersByEmail(email, excludeId) {
+  const em = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (!em.includes('@') || !isSupabaseConfigured()) return [];
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id, name, slug, photo_url, listing_status, verification_status, contact_email, email')
+    .or('contact_email.eq.' + em + ',email.eq.' + em)
+    .order('name');
+  if (error) throw new Error(error.message);
+  const skip = String(excludeId || '').trim();
+  return (data || [])
+    .filter((row) => isPublicOrganiser(row) && String(row.id) !== skip)
+    .map((row) => ({
+      id: row.id,
+      name: String(row.name || '').trim(),
+      slug: publicOrganiserSlug(row) || '',
+      photoUrl: resolvePhotoUrl(row.photo_url),
+    }))
+    .filter((row) => row.name && row.slug);
+}
+
 async function getPublicOrganiserById(id) {
   const recordId = String(id || '').trim();
   if (!recordId) return null;
@@ -502,6 +530,7 @@ module.exports = {
   listPublicOrganisers,
   getPublicOrganiserBySlug,
   getPublicOrganiserById,
+  listPublicSiblingOrganisersByEmail,
   rowToPublicOrganiser,
   fetchOrganiserReviews,
   resolvePhotoUrl,

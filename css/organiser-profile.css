@@ -433,10 +433,102 @@
   position: sticky;
   top: 88px;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .organiser-page-sidebar-ad {
   min-width: 0;
+}
+
+.org-claim-invite {
+  margin: 0 0 24px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #f3eef8 0%, #ebe4f4 100%);
+  border: 1px solid rgba(69, 45, 92, 0.14);
+}
+
+.org-claim-invite-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #452d5c;
+}
+
+.org-claim-invite-text {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #3d3640;
+}
+
+.org-claim-invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.org-claim-invite-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b6570;
+}
+
+.org-claim-invite-note a {
+  color: #452d5c;
+  font-weight: 600;
+}
+
+.org-siblings {
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--border-soft, #e8e2ea);
+}
+
+.org-siblings-heading {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.org-siblings-lede {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b6570;
+}
+
+.org-siblings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.org-siblings-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f7f4f8;
+  color: #452d5c;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.org-siblings-link:hover {
+  background: #efe8f4;
 }
 
 .org-profile-section {

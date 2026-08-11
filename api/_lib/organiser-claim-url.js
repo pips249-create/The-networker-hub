@@ -1,9 +1,11 @@
 /**
  * Deep-links for organiser profile claim campaigns.
  *
- * Email 2 (soft path): land on /for-organisers first so people can see what the Hub
- * is before creating a password. The page turns intent=organiser-claim into a
- * “Confirm your page” CTA that goes to register or login.
+ * Email 2 path B: land on their public organiser page first so they can see the
+ * listing (and siblings / events) before creating a password. Claim / Edit then
+ * goes to register or login → /organiser/?onboard=claim.
+ *
+ * Soft path A (/for-organisers) remains as a fallback when no public slug exists.
  *
  * Auth users created by silent import (never signed in) still set a password via /register.
  */
@@ -15,14 +17,12 @@ function encodeNext(path) {
   return encodeURIComponent(String(path || CLAIM_NEXT));
 }
 
-/** Preview-first claim entry (Email 2 soft path). */
-function previewClaimUrl(base, em, authMode) {
+function claimQuery(em, authMode) {
   const next = encodeNext(CLAIM_NEXT);
   const intent = 'organiser-claim';
   const auth = authMode === 'login' ? 'login' : 'register';
   return (
-    base +
-    '/for-organisers?email=' +
+    'email=' +
     encodeURIComponent(em) +
     '&intent=' +
     intent +
@@ -33,12 +33,40 @@ function previewClaimUrl(base, em, authMode) {
   );
 }
 
+/** Soft path A — marketing page first (fallback when no public slug). */
+function softPathClaimUrl(base, em, authMode) {
+  return String(base || '').replace(/\/$/, '') + '/for-organisers?' + claimQuery(em, authMode);
+}
+
+/**
+ * Path B — public organiser listing first.
+ * @param {string} base
+ * @param {string} em
+ * @param {'login'|'register'} authMode
+ * @param {string} [slug] public organiser slug; falls back to soft path when missing
+ */
+function previewClaimUrl(base, em, authMode, slug) {
+  const s = String(slug || '')
+    .trim()
+    .replace(/^\/+|\/+$/g, '');
+  if (!s) return softPathClaimUrl(base, em, authMode);
+  return (
+    String(base || '').replace(/\/$/, '') +
+    '/organisers/' +
+    encodeURIComponent(s) +
+    '?' +
+    claimQuery(em, authMode)
+  );
+}
+
 /**
  * Register/login unless they have already signed in at least once.
  * Email must match the organiser group profile on file.
- * Returns the preview-first URL (for-organisers → set password / sign in).
+ * @param {string} email
+ * @param {string} host
+ * @param {string} [slug]
  */
-async function resolveOrganiserClaimUrl(email, host) {
+async function resolveOrganiserClaimUrl(email, host, slug) {
   const em = String(email || '')
     .trim()
     .toLowerCase();
@@ -46,13 +74,13 @@ async function resolveOrganiserClaimUrl(email, host) {
 
   const user = await sbAuth.findUserByEmail(em);
   if (!user || !user.lastSignInAt) {
-    return previewClaimUrl(base, em, 'register');
+    return previewClaimUrl(base, em, 'register', slug);
   }
 
-  return previewClaimUrl(base, em, 'login');
+  return previewClaimUrl(base, em, 'login', slug);
 }
 
-/** Direct auth URL after they have read /for-organisers (used by the page CTA). */
+/** Direct auth URL after they have reviewed their listing (Claim / Edit CTA). */
 function authClaimUrl(base, em, authMode) {
   const next = encodeNext(CLAIM_NEXT);
   const intent = 'organiser-claim';
@@ -73,5 +101,6 @@ module.exports = {
   CLAIM_NEXT,
   resolveOrganiserClaimUrl,
   previewClaimUrl,
+  softPathClaimUrl,
   authClaimUrl,
 };

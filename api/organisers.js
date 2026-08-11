@@ -13,6 +13,7 @@ const {
   listPublicOrganisers,
   getPublicOrganiserBySlug,
   getPublicOrganiserById,
+  listPublicSiblingOrganisersByEmail,
 } = require('./_lib/supabase-organisers-browse');
 
 module.exports = async function handler(req, res) {
@@ -100,6 +101,9 @@ module.exports = async function handler(req, res) {
   try {
     const slug = req.query?.slug;
     const id = req.query?.id;
+    const claimEmail = String(req.query?.claim_email || '')
+      .trim()
+      .toLowerCase();
 
     if (slug || id) {
       const organiser = slug
@@ -114,7 +118,32 @@ module.exports = async function handler(req, res) {
           organiser: null,
         });
       }
-      return res.status(200).json({ configured: true, provider: 'supabase', organiser });
+
+      let siblings = [];
+      if (claimEmail) {
+        const related = await listPublicSiblingOrganisersByEmail(claimEmail, '');
+        const matched = related.some((row) => String(row.id) === String(organiser.id));
+        if (matched) {
+          siblings = related.filter((row) => String(row.id) !== String(organiser.id));
+        }
+      }
+
+      return res.status(200).json({
+        configured: true,
+        provider: 'supabase',
+        organiser,
+        siblings,
+      });
+    }
+
+    if (claimEmail) {
+      const siblings = await listPublicSiblingOrganisersByEmail(claimEmail, '');
+      return res.status(200).json({
+        configured: true,
+        provider: 'supabase',
+        organisers: siblings,
+        siblings,
+      });
     }
 
     const organisers = await listPublicOrganisers();

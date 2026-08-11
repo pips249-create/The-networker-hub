@@ -485,7 +485,7 @@
     var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
     if (registerLede) {
       registerLede.textContent =
-        'Use the same email address your group listing is linked to on the Hub. After sign-up you will confirm your organiser page (about 2 minutes).';
+        'Creating an account is free. Use the same email address your group listing is linked to on the Hub — then confirm your organiser page (about a minute).';
     }
 
     var registerProof = document.getElementById('auth-platform-proof');

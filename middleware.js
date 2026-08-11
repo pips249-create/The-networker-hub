@@ -109,6 +109,7 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/reset-password',
   '/welcome',
   '/organiser',
+  '/organisers',
   '/for-organisers',
   '/for-organisers.html',
   '/contact',
@@ -606,6 +607,20 @@ async function maybeGateSiteAccess(request, url) {
   // organisers/members only — never anonymously while the gate is on. This keeps the
   // organiser premium-slots flow working without exposing the catalogue to the public.
   if (pathname === '/api/opportunities' || pathname.startsWith('/api/opportunities/')) {
+    if ((await hasSiteAccess(request)) || (await hasValidSession(request))) {
+      return { authorized: true };
+    }
+    return sitePrivateResponse();
+  }
+
+  // Email 2 path B: anonymous claim links may load one public organiser (+ siblings).
+  // Full catalogue list stays gated until preview cookie / signed-in session.
+  if (pathname === '/api/organisers' || pathname.startsWith('/api/organisers/')) {
+    const hasDetail =
+      url.searchParams.get('slug') ||
+      url.searchParams.get('id') ||
+      url.searchParams.get('claim_email');
+    if (hasDetail) return null;
     if ((await hasSiteAccess(request)) || (await hasValidSession(request))) {
       return { authorized: true };
     }

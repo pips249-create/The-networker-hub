@@ -24,6 +24,7 @@ const { resolveOrganiserClaimUrl, previewClaimUrl } = require('../api/_lib/organ
 const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
 const { buildSponsorSection, fetchSponsorBlockForSlot } = require('../api/_lib/email-booking-defaults');
 const { sponsorCompanyName } = require('../api/_lib/cms-sponsor-fields');
+const { publicOrganiserSlug } = require('../api/_lib/organiser-slug');
 
 /** Email 2 uses My Medical Cover — Barnsgate declined sponsorship. */
 async function buildEmail2SponsorRow() {
@@ -153,8 +154,8 @@ async function signedInAccountEmails(sb) {
   return emails;
 }
 
-function claimUrlFor(email, hasAccount) {
-  return previewClaimUrl(SITE, email, hasAccount ? 'login' : 'register');
+function claimUrlFor(email, hasAccount, slug) {
+  return previewClaimUrl(SITE, email, hasAccount ? 'login' : 'register', slug);
 }
 
 function otherGroupsNote(extraGroups) {
@@ -185,16 +186,18 @@ function fillTemplate(template, vars) {
 
   const sponsorRow = await buildEmail2SponsorRow();
 
+  const previewClaim =
+    SITE +
+    '/organisers/121-business-links?email=chris%40121businesslinks.co.uk&intent=organiser-claim&auth=register&next=' +
+    encodeURIComponent('/organiser/?onboard=claim');
+
   const shared = {
     site_url: SITE,
     legacy_site_url: LEGACY,
     logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260729a',
     logo_footer_url: SITE + '/assets/logo-email-footer.png',
     for_organisers_url: SITE + '/for-organisers',
-    claim_url:
-      SITE +
-      '/for-organisers?intent=organiser-claim&auth=register&next=' +
-      encodeURIComponent('/organiser/?onboard=claim'),
+    claim_url: previewClaim,
     company_name: 'The Networker Group Ltd',
     company_number: '15252227',
     support_email: 'catherine@thenetworkerhub.com',
@@ -216,7 +219,8 @@ function fillTemplate(template, vars) {
     ...shared,
     group_name: '{{ contact.ORGANISER_NAME | default: "your organiser page" }}',
     other_groups_note: '{{ contact.OTHER_GROUPS_NOTE | default: "" }}',
-    claim_url: '{{ contact.CLAIM_URL | default: "' + shared.claim_url + '" }}',
+    // Single quotes inside default so nested " in href="…" don't break Brevo / HTML parsing.
+    claim_url: "{{ contact.CLAIM_URL | default: '" + shared.claim_url + "' }}",
   });
 
   fs.writeFileSync(path.join(root, 'data/email2-brevo-ready.html'), ready);
@@ -242,29 +246,32 @@ function fillTemplate(template, vars) {
     if (isInternalTest(r.name, email)) continue;
     if (!isPublicOrganiser(r)) continue;
     const name = String(r.name || '').trim();
+    const slug = publicOrganiserSlug(r) || '';
     if (!byEmail.has(email)) {
       byEmail.set(email, { email, groups: [] });
     }
-    if (name) byEmail.get(email).groups.push(name);
+    if (name) byEmail.get(email).groups.push({ name, slug });
   }
 
   const rows = [];
   for (const r of byEmail.values()) {
-    const groups = [...new Set(r.groups)].sort((a, b) =>
-      a.localeCompare(b, 'en-GB', { sensitivity: 'base' })
-    );
+    const groups = [...r.groups]
+      .filter((g, i, arr) => arr.findIndex((x) => x.name === g.name) === i)
+      .sort((a, b) => a.name.localeCompare(b.name, 'en-GB', { sensitivity: 'base' }));
+    const primarySlug = (groups.find((g) => g.slug) || {}).slug || '';
     let url;
     if (accountEmails) {
-      url = claimUrlFor(r.email, accountEmails.has(r.email));
+      url = claimUrlFor(r.email, accountEmails.has(r.email), primarySlug);
     } else {
-      url = await resolveOrganiserClaimUrl(r.email, SITE);
+      url = await resolveOrganiserClaimUrl(r.email, SITE, primarySlug);
     }
     rows.push({
       email: r.email,
-      name: groups[0] || r.email,
-      otherNote: otherGroupsNote(groups.slice(1)),
+      name: (groups[0] && groups[0].name) || r.email,
+      otherNote: otherGroupsNote(groups.slice(1).map((g) => g.name)),
       claimUrl: url,
       hasAccount: accountEmails ? accountEmails.has(r.email) : null,
+      slug: primarySlug,
     });
   }
   rows.sort((a, b) => a.name.localeCompare(b.name, 'en-GB', { sensitivity: 'base' }));
@@ -284,6 +291,8 @@ function fillTemplate(template, vars) {
   console.log('Wrote data/Segment-A-Email2-Brevo-import.csv');
   console.log('Recipients:', rows.length);
   console.log('With extra group pages:', rows.filter((r) => r.otherNote).length);
+  console.log('Path B (organiser slug URL):', rows.filter((r) => r.slug).length);
+  console.log('Soft path A fallback (no slug):', rows.filter((r) => !r.slug).length);
   if (accountEmails) {
     console.log('Already signed in (login link):', rows.filter((r) => r.hasAccount).length);
     console.log('Need register / set-password link:', rows.filter((r) => !r.hasAccount).length);

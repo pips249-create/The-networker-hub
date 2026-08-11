@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
   <link rel="stylesheet" href="../css/fact-loader.css?v=20260723">
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728mark">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260807founding">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260811claimb">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260612f">
 </head>
 <body class="organiser-profile-page hub-is-page-loading">
@@ -54,6 +54,21 @@
       </svg>
       Back to organisers
     </a>
+  </div>
+
+  <div id="org-claim-invite" class="org-claim-invite" hidden>
+    <p class="org-claim-invite-kicker">Your organiser page</p>
+    <p class="org-claim-invite-text" id="org-claim-invite-text">
+      This is the listing we have for your group. Check the details and upcoming events, then claim or edit it — creating an account is free.
+    </p>
+    <div class="org-claim-invite-actions">
+      <a class="org-profile-btn org-profile-btn--primary" id="org-claim-edit-btn" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim">Claim / edit this page →</a>
+      <a class="org-profile-btn" href="#org-upcoming">See upcoming events</a>
+    </div>
+    <p class="org-claim-invite-note">
+      Wrong email or need a hand? Email
+      <a href="mailto:catherine@thenetworkerhub.com">catherine@thenetworkerhub.com</a>.
+    </p>
   </div>
 
   <p class="load-status" id="org-load-status" hidden>Loading…</p>
@@ -166,7 +181,12 @@
     </section>
       </div>
 
-      <aside class="org-profile-side" aria-label="Sponsored">
+      <aside class="org-profile-side" aria-label="More from this organiser">
+        <section class="org-siblings" id="org-siblings" hidden>
+          <h2 class="org-siblings-heading">Your other groups</h2>
+          <p class="org-siblings-lede">Also listed under the same email on The Networker Hub.</p>
+          <ul class="org-siblings-list" id="org-siblings-list"></ul>
+        </section>
         <div id="organiser-page-sidebar-ad" class="organiser-page-sidebar-ad" hidden></div>
       </aside>
     </div>
@@ -253,6 +273,6 @@
 <script src="../js/postcode-outcode.js?v=20260727city"></script>
 <script src="../js/detail-region-cta.js?v=20260727city"></script>
 <script src="../js/plain-text-format.js?v=20260728paras1"></script>
-<script src="../js/organiser-detail.js?v=20260807reviewer"></script>
+<script src="../js/organiser-detail.js?v=20260811claimb"></script>
 </body>
 </html>

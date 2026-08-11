@@ -70,10 +70,98 @@
       var pathMatch = location.pathname.match(/\/organisers\/([^/]+)\/?$/i);
       if (pathMatch) slug = decodeURIComponent(pathMatch[1]);
     }
+    var intent = String(params.get('intent') || '').toLowerCase();
+    var next = params.get('next') || '';
+    var isClaim =
+      intent === 'organiser-claim' || String(next).indexOf('onboard=claim') !== -1;
     return {
       slug: slug,
       id: id,
+      email: String(params.get('email') || '').trim(),
+      authMode: String(params.get('auth') || 'register').toLowerCase() === 'login' ? 'login' : 'register',
+      next: next,
+      isClaim: isClaim,
     };
+  }
+
+  /** Email 2 path B: claim invite banner + Claim / Edit → free account. */
+  function initClaimInviteFromEmail(org, siblings) {
+    var q = queryParams();
+    if (!q.isClaim) return;
+
+    var invite = document.getElementById('org-claim-invite');
+    var textEl = document.getElementById('org-claim-invite-text');
+    var btn = document.getElementById('org-claim-edit-btn');
+    var claimSection = document.getElementById('org-claim-section');
+
+    var safeNext =
+      q.next && q.next.charAt(0) === '/' ? q.next : '/organiser/?onboard=claim';
+    var authHref =
+      (q.authMode === 'login' ? '/login' : '/register') +
+      '?intent=organiser-claim&next=' +
+      encodeURIComponent(safeNext) +
+      (q.email ? '&email=' + encodeURIComponent(q.email) : '');
+
+    if (invite) invite.hidden = false;
+    if (textEl && org && org.name) {
+      textEl.innerHTML =
+        'This is the listing we have for <strong>' +
+        escapeHtml(org.name) +
+        '</strong>. Check the details and upcoming events, then claim or edit it — creating an account is free.';
+    }
+    if (btn) {
+      btn.setAttribute('href', authHref);
+      btn.textContent =
+        q.authMode === 'login' ? 'Sign in to claim / edit →' : 'Claim / edit this page →';
+    }
+    // Matched-email claim uses account flow — hide the mismatch "request access" form.
+    if (claimSection) claimSection.hidden = true;
+
+    renderSiblingGroups(siblings || [], q);
+
+    try {
+      document.title =
+        (org && org.name ? org.name + ' — ' : '') +
+        'Claim your organiser page – The Networker Hub';
+    } catch (e) {}
+
+    document.body.classList.add('org-claim-invite-active');
+  }
+
+  function renderSiblingGroups(siblings, q) {
+    var wrap = document.getElementById('org-siblings');
+    var list = document.getElementById('org-siblings-list');
+    if (!wrap || !list) return;
+    if (!siblings || !siblings.length) {
+      wrap.hidden = true;
+      list.innerHTML = '';
+      return;
+    }
+    wrap.hidden = false;
+    list.innerHTML = siblings
+      .map(function (sib) {
+        var href =
+          '/organisers/' +
+          encodeURIComponent(sib.slug) +
+          (q && q.isClaim
+            ? '?' +
+              'email=' +
+              encodeURIComponent(q.email || '') +
+              '&intent=organiser-claim&auth=' +
+              encodeURIComponent(q.authMode || 'register') +
+              '&next=' +
+              encodeURIComponent(q.next || '/organiser/?onboard=claim')
+            : '');
+        return (
+          '<li class="org-siblings-item">' +
+          '<a class="org-siblings-link" href="' +
+          escapeHtml(href) +
+          '">' +
+          escapeHtml(sib.name) +
+          '</a></li>'
+        );
+      })
+      .join('');
   }
 
   function eventHref(ev) {
@@ -977,6 +1065,9 @@
       setStatus('Missing organiser link.', true);
       return;
     }
+    if (q.isClaim && q.email) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + 'claim_email=' + encodeURIComponent(q.email);
+    }
 
     setLoading(true);
 
@@ -990,6 +1081,7 @@
           return;
         }
         renderOrganiser(data.organiser);
+        initClaimInviteFromEmail(data.organiser, data.siblings || []);
         loadOrganiserPageAd();
       } catch (e) {
         setStatus('Could not load organiser profile.', true);
