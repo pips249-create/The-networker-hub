@@ -3788,6 +3788,122 @@ a.ee-btn.ee-btn-primary {
   display: none !important;
 }
 
+.ge-website-import-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.ge-website-import-row input[type='url'] {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.ge-website-import-row .org-btn,
+.ge-website-import-row .ee-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.ge-import-status {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #5c5557;
+  min-height: 1.2em;
+}
+
+.ge-import-status.is-error {
+  color: #9b2c2c;
+}
+
+.ge-import-status.is-ok {
+  color: #0d6e7a;
+}
+
+.ge-import-review {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(13, 110, 122, 0.22);
+  border-radius: 8px;
+  background: rgba(13, 110, 122, 0.06);
+}
+
+.ge-import-review[hidden] {
+  display: none !important;
+}
+
+.ge-import-review-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d292b;
+}
+
+.ge-import-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  max-height: min(40vh, 260px);
+  overflow: auto;
+}
+
+.ge-import-review-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 10px;
+  align-items: start;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e8e2e4;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #2d292b;
+  cursor: pointer;
+}
+
+.ge-import-review-item strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.ge-import-review-item input {
+  margin-top: 3px;
+}
+
+.ge-import-review-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+
+.ge-import-review-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b6567;
+}
+
+.ge-import-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .ge-website-import-row .org-btn,
+  .ge-website-import-row .ee-btn {
+    width: 100%;
+  }
+}
+
 .ge-social-fields .ge-social-label {
   display: block;
   margin: 10px 0 4px;

@@ -10,6 +10,7 @@
   let currentGroup = null;
   let config = null;
   let bound = false;
+  let pendingImport = null;
 
   function getRoot() {
     return (config && config.root) || document;
@@ -86,6 +87,222 @@
         primary.focus({ preventScroll: true });
       } catch {
         primary.focus();
+      }
+    }
+  }
+
+  function fieldHasValue(value) {
+    return Boolean(String(value || '').trim());
+  }
+
+  function setImportStatus(msg, kind) {
+    var statusEl = el('ge-import-status');
+    if (!statusEl) return;
+    statusEl.textContent = msg || '';
+    statusEl.classList.toggle('is-error', kind === 'error');
+    statusEl.classList.toggle('is-ok', kind === 'ok');
+  }
+
+  function hideImportReview() {
+    pendingImport = null;
+    var review = el('ge-import-review');
+    var list = el('ge-import-review-list');
+    if (review) review.hidden = true;
+    if (list) list.innerHTML = '';
+  }
+
+  function currentImportFieldSnapshot() {
+    var g = currentGroup || {};
+    return {
+      description: g.description || (el('ge-description') && el('ge-description').value) || '',
+      logoUrl: g.imageUrl || (el('ge-logo-url') && el('ge-logo-url').value) || '',
+      website: g.website || (el('ge-website') && el('ge-website').value) || '',
+      // Colours: only "already set" when saved on the group — pickers always have a default.
+      brandPrimaryColor: g.brandPrimaryColor || '',
+      brandSecondaryColor: g.brandSecondaryColor || '',
+      brandAccentColor: g.brandAccentColor || '',
+      instagramUrl: g.instagramUrl || (el('ge-instagram') && el('ge-instagram').value) || '',
+      facebookUrl: g.facebookUrl || (el('ge-facebook') && el('ge-facebook').value) || '',
+      linkedinUrl: g.linkedinUrl || (el('ge-linkedin') && el('ge-linkedin').value) || '',
+      xUrl: g.xUrl || (el('ge-x') && el('ge-x').value) || '',
+    };
+  }
+
+  function showImportReview(importData, existing) {
+    var review = el('ge-import-review');
+    var list = el('ge-import-review-list');
+    if (!review || !list) return;
+
+    var items = [];
+    function pushItem(key, label, value, isColor) {
+      if (!fieldHasValue(value)) return;
+      var already = fieldHasValue(existing[key]);
+      items.push({
+        key: key,
+        label: label,
+        value: value,
+        isColor: Boolean(isColor),
+        already: already,
+        checked: !already,
+      });
+    }
+
+    pushItem('description', 'Description', importData.description);
+    pushItem('logoUrl', 'Logo', importData.logoUrl);
+    pushItem('brandPrimaryColor', 'Primary colour', importData.brandPrimaryColor, true);
+    pushItem('brandSecondaryColor', 'Secondary colour', importData.brandSecondaryColor, true);
+    pushItem('brandAccentColor', 'Accent colour', importData.brandAccentColor, true);
+    pushItem('instagramUrl', 'Instagram', importData.instagramUrl);
+    pushItem('facebookUrl', 'Facebook', importData.facebookUrl);
+    pushItem('linkedinUrl', 'LinkedIn', importData.linkedinUrl);
+    pushItem('xUrl', 'X (Twitter)', importData.xUrl);
+    pushItem('website', 'Website URL', importData.url || importData.website);
+
+    pendingImport = { data: importData, items: items };
+
+    if (!items.length) {
+      hideImportReview();
+      setImportStatus(
+        'We couldn’t find social links, colours, logo or description to import. Enter them by hand, or try another URL.',
+        'error'
+      );
+      return;
+    }
+
+    list.innerHTML = items
+      .map(function (item, idx) {
+        var preview = item.isColor
+          ? '<span class="ge-import-review-swatch" style="background:' +
+            escHtml(item.value) +
+            '"></span>' +
+            escHtml(item.value)
+          : escHtml(item.value);
+        return (
+          '<label class="ge-import-review-item">' +
+          '<input type="checkbox" data-ge-import-idx="' +
+          idx +
+          '"' +
+          (item.checked ? ' checked' : '') +
+          ' />' +
+          '<span>' +
+          '<strong>' +
+          escHtml(item.label) +
+          '</strong>' +
+          '<span>' +
+          preview +
+          '</span>' +
+          (item.already
+            ? '<span class="ge-import-review-note">Already set — tick to replace</span>'
+            : '') +
+          '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
+    review.hidden = false;
+    setImportStatus(
+      'Found ' +
+        items.length +
+        ' item' +
+        (items.length === 1 ? '' : 's') +
+        '. Tick what you want, then Apply to form.',
+      'ok'
+    );
+    requestAnimationFrame(function () {
+      var applyBtn = el('ge-import-apply');
+      if (applyBtn && applyBtn.scrollIntoView) {
+        applyBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else if (review.scrollIntoView) {
+        review.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
+  function applyLogoFromImport(url) {
+    if (!url) return;
+    logoFile = null;
+    var fileInput = el('ge-logo-file');
+    if (fileInput) fileInput.value = '';
+    if (el('ge-logo-url')) el('ge-logo-url').value = url;
+    var preview = el('ge-logo-preview');
+    var previewImg = el('ge-logo-preview-img');
+    var placeholder = el('ge-logo-placeholder');
+    var qualityHint = el('ge-logo-quality');
+    if (previewImg) previewImg.src = url;
+    if (preview) preview.hidden = false;
+    if (placeholder) placeholder.hidden = true;
+    if (window.hubCheckLogoUrlQuality) window.hubCheckLogoUrlQuality(url, qualityHint);
+  }
+
+  function applyImportSelection() {
+    var list = el('ge-import-review-list');
+    if (!pendingImport || !list) return;
+    var selected = {};
+    list.querySelectorAll('[data-ge-import-idx]').forEach(function (input) {
+      if (!input.checked) return;
+      var item = pendingImport.items[Number(input.getAttribute('data-ge-import-idx'))];
+      if (item) selected[item.key] = item.value;
+    });
+    if (!Object.keys(selected).length) {
+      setImportStatus('Tick at least one item to apply.', 'error');
+      return;
+    }
+
+    if (selected.website && el('ge-website')) el('ge-website').value = selected.website;
+    if (selected.description && el('ge-description')) {
+      el('ge-description').value = selected.description;
+      var counter = el('ge-word-count');
+      if (counter) counter.textContent = String(countWords(selected.description));
+    }
+    if (selected.logoUrl) applyLogoFromImport(selected.logoUrl);
+    if (selected.brandPrimaryColor) {
+      syncBrandColorPair(el('ge-brand-primary'), el('ge-brand-primary-hex'), selected.brandPrimaryColor);
+    }
+    if (selected.brandSecondaryColor) {
+      syncBrandColorPair(el('ge-brand-secondary'), el('ge-brand-secondary-hex'), selected.brandSecondaryColor);
+    }
+    if (selected.brandAccentColor) {
+      syncBrandColorPair(el('ge-brand-accent'), el('ge-brand-accent-hex'), selected.brandAccentColor);
+    }
+    if (selected.instagramUrl && el('ge-instagram')) el('ge-instagram').value = selected.instagramUrl;
+    if (selected.facebookUrl && el('ge-facebook')) el('ge-facebook').value = selected.facebookUrl;
+    if (selected.linkedinUrl && el('ge-linkedin')) el('ge-linkedin').value = selected.linkedinUrl;
+    if (selected.xUrl && el('ge-x')) el('ge-x').value = selected.xUrl;
+
+    hideImportReview();
+    setImportStatus('Applied to the form — review, then Save changes.', 'ok');
+  }
+
+  async function importFromWebsite() {
+    var websiteEl = el('ge-website');
+    var importBtn = el('ge-import-website');
+    var url = String((websiteEl && websiteEl.value) || '').trim();
+    if (!url) {
+      setImportStatus('Enter your website URL first.', 'error');
+      if (websiteEl) websiteEl.focus();
+      return;
+    }
+    if (importBtn) {
+      importBtn.disabled = true;
+      importBtn.textContent = 'Importing…';
+    }
+    hideImportReview();
+    setImportStatus('Reading your website…');
+    try {
+      var res = await api('/api/organiser/website-brand', {
+        method: 'POST',
+        body: JSON.stringify({ url: url }),
+      });
+      if (!res.ok || !res.data || !res.data.ok) {
+        throw new Error((res.data && (res.data.message || res.data.error)) || 'Import failed');
+      }
+      showImportReview(res.data, currentImportFieldSnapshot());
+    } catch (e) {
+      setImportStatus(e.message || 'Could not read that website.', 'error');
+    } finally {
+      if (importBtn) {
+        importBtn.disabled = false;
+        importBtn.textContent = 'Import from website';
       }
     }
   }
@@ -411,6 +628,8 @@
   function resetFormState() {
     currentGroup = null;
     showAlert('');
+    hideImportReview();
+    setImportStatus('');
     const form = el('ge-form');
     if (form) form.reset();
     resetLogoPreview();
@@ -758,6 +977,25 @@
     wireColorInputs(el('ge-brand-primary'), el('ge-brand-primary-hex'));
     wireColorInputs(el('ge-brand-secondary'), el('ge-brand-secondary-hex'));
     wireColorInputs(el('ge-brand-accent'), el('ge-brand-accent-hex'));
+
+    const importBtn = el('ge-import-website');
+    if (importBtn && !importBtn.dataset.geBound) {
+      importBtn.dataset.geBound = '1';
+      importBtn.addEventListener('click', importFromWebsite);
+    }
+    const importApply = el('ge-import-apply');
+    if (importApply && !importApply.dataset.geBound) {
+      importApply.dataset.geBound = '1';
+      importApply.addEventListener('click', applyImportSelection);
+    }
+    const importDismiss = el('ge-import-dismiss');
+    if (importDismiss && !importDismiss.dataset.geBound) {
+      importDismiss.dataset.geBound = '1';
+      importDismiss.addEventListener('click', function () {
+        hideImportReview();
+        setImportStatus('');
+      });
+    }
   }
 
   function init(options) {

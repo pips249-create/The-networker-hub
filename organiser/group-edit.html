@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260729brand" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260811import" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260708" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260807nav2" />
@@ -72,7 +72,27 @@
           </div>
           <div class="ee-field">
             <label for="ge-website">Website <span class="ee-optional">(optional)</span></label>
-            <input type="url" id="ge-website" placeholder="https://www.yourcompany.com" />
+            <div class="ge-website-import-row">
+              <input type="url" id="ge-website" placeholder="https://www.yourcompany.com" autocomplete="url" />
+              <button type="button" class="ee-btn ee-btn-outline" id="ge-import-website">
+                Import from website
+              </button>
+            </div>
+            <p class="ee-hint" style="margin:8px 0 0">
+              We’ll look for social links, brand colours, logo and description — you’ll choose what to apply.
+            </p>
+            <p class="ge-import-status" id="ge-import-status" role="status"></p>
+            <div class="ge-import-review" id="ge-import-review" hidden>
+              <h3 class="ge-import-review-title">What we found</h3>
+              <p class="ee-hint" style="margin:0 0 8px">
+                Tick what to apply. Empty fields are selected by default; existing values stay unless you opt in.
+              </p>
+              <div class="ge-import-review-list" id="ge-import-review-list"></div>
+              <div class="ge-import-review-actions">
+                <button type="button" class="ee-btn ee-btn-gold" id="ge-import-apply">Apply to form</button>
+                <button type="button" class="ee-btn ee-btn-outline" id="ge-import-dismiss">Dismiss</button>
+              </div>
+            </div>
           </div>
           <div class="ee-field ge-social-fields">
             <span class="ee-label-block">Social media <span class="ee-optional">(optional)</span></span>
@@ -169,6 +189,6 @@
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
-    <script src="../js/organiser-group-edit.js?v=20260729brand" defer></script>
+    <script src="../js/organiser-group-edit.js?v=20260811import" defer></script>
   </body>
 </html>
