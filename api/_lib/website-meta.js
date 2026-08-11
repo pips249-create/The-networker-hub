@@ -303,6 +303,40 @@ function rgbToHex(r, g, b) {
   );
 }
 
+function hslToHex(h, s, l) {
+  const hue = ((Number(h) % 360) + 360) % 360;
+  const sat = Math.max(0, Math.min(100, Number(s))) / 100;
+  const light = Math.max(0, Math.min(100, Number(l))) / 100;
+  const c = (1 - Math.abs(2 * light - 1)) * sat;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = light - c / 2;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (hue < 60) [r, g, b] = [c, x, 0];
+  else if (hue < 120) [r, g, b] = [x, c, 0];
+  else if (hue < 180) [r, g, b] = [0, c, x];
+  else if (hue < 240) [r, g, b] = [0, x, c];
+  else if (hue < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return rgbToHex((r + m) * 255, (g + m) * 255, (b + m) * 255);
+}
+
+function parseHslComponents(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  // "176.9, 28.16%, 59.61%" (Squarespace --accent-hsl) or "176.9 28.16% 59.61%"
+  const bare = value.match(
+    /^([\d.]+)\s*[, ]\s*([\d.]+)%?\s*[, ]\s*([\d.]+)%?\s*$/
+  );
+  if (bare) return hslToHex(bare[1], bare[2], bare[3]);
+  const fn = value.match(
+    /^hsla?\(\s*([\d.]+)(?:deg)?\s*[, ]\s*([\d.]+)%?\s*[, ]\s*([\d.]+)%?(?:\s*[,/]\s*[\d.]+%?)?\s*\)$/i
+  );
+  if (fn) return hslToHex(fn[1], fn[2], fn[3]);
+  return '';
+}
+
 function parseCssColor(raw) {
   const value = String(raw || '').trim();
   if (!value) return '';
@@ -312,7 +346,7 @@ function parseCssColor(raw) {
     /^rgba?\(\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*[,\s]\s*([\d.]+)(?:\s*[/,]\s*[\d.]+%?)?\s*\)$/i
   );
   if (rgb) return rgbToHex(rgb[1], rgb[2], rgb[3]);
-  return '';
+  return parseHslComponents(value);
 }
 
 function colorLuminance(hex) {
@@ -335,12 +369,131 @@ function isBoringColor(hex) {
   const mn = Math.min(r, g, b);
   if (mx > 245 && mn > 230) return true; // near white
   if (mx < 28) return true; // near black
-  if (mx - mn < 12 && mx > 200) return true; // light grey
-  if (mx - mn < 12 && mx < 60) return true; // dark grey
+  if (mx - mn < 14) return true; // greys (any lightness)
   return false;
 }
 
-function pickColors(html) {
+function stylesheetPriority(href) {
+  const u = String(href || '').toLowerCase();
+  if (!u) return 0;
+  if (u.includes('versioned-site-css') || /\/site\.css(?:\?|$)/.test(u)) return 100;
+  if (u.includes('static.css') || u.includes('custom.css') || u.includes('custom-css')) return 80;
+  if (u.includes('squarespace') && u.includes('site')) return 60;
+  if (u.includes('theme') || u.includes('brand')) return 40;
+  if (u.includes('assets.squarespace.com/universal')) return 5;
+  return 20;
+}
+
+function collectStylesheetHrefs(html, pageUrl) {
+  const found = [];
+  const seen = new Set();
+  function push(rawHref) {
+    const resolved = resolveUrl(pageUrl, decodeHtmlEntities(String(rawHref || '').trim()));
+    if (!resolved || !/^https?:\/\//i.test(resolved)) return;
+    const key = resolved.split('#')[0];
+    if (seen.has(key)) return;
+    seen.add(key);
+    found.push(key);
+  }
+
+  const linkTags = String(html || '').match(/<link\b[^>]*>/gi) || [];
+  linkTags.forEach((tag) => {
+    if (!/\brel=["'][^"']*stylesheet[^"']*["']/i.test(tag)) return;
+    const href = tag.match(/\bhref=["']([^"']+)["']/i);
+    if (href) push(href[1]);
+  });
+
+  return found
+    .map((href) => ({ href, score: stylesheetPriority(href) }))
+    .filter((item) => item.score >= 20)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map((item) => item.href);
+}
+
+async function fetchStylesheetTexts(html, pageUrl) {
+  const hrefs = collectStylesheetHrefs(html, pageUrl);
+  if (!hrefs.length) return [];
+  const texts = await Promise.all(
+    hrefs.map(async (href) => {
+      try {
+        const response = await fetchWithTimeout(href, BROWSER_HEADERS, 7000);
+        if (!response.ok) return '';
+        const type = String(response.headers.get('content-type') || '').toLowerCase();
+        if (type && !type.includes('css') && !type.includes('text/plain') && !type.includes('octet-stream')) {
+          return '';
+        }
+        return String(await response.text()).slice(0, 350000);
+      } catch {
+        return '';
+      }
+    })
+  );
+  return texts.filter(Boolean);
+}
+
+function pickColorsFromCssText(cssText, scored, baseWeight) {
+  const weight = Number(baseWeight) || 2;
+  const text = String(cssText || '');
+  if (!text) return;
+
+  function add(raw, w) {
+    const hex = parseCssColor(raw) || normalizeHexColor(raw);
+    if (!hex || isBoringColor(hex)) return;
+    scored.set(hex, (scored.get(hex) || 0) + w);
+  }
+
+  // Squarespace / theme palette HSL triples: --accent-hsl: 176.9,28.16%,59.61%
+  const paletteHslRe =
+    /--(safeLightAccent|safeDarkAccent|lightAccent|darkAccent|accent|brand|primary|secondary|main|theme|highlight)(?:-?color)?-hsl\s*:\s*([^;}{]+)/gi;
+  let match;
+  let foundPalette = false;
+  while ((match = paletteHslRe.exec(text))) {
+    foundPalette = true;
+    const name = String(match[1] || '').toLowerCase();
+    let w = 40 + weight;
+    if (name === 'accent' || name === 'brand' || name === 'primary' || name === 'main') w = 100 + weight;
+    else if (name === 'lightaccent' || name === 'secondary' || name === 'highlight') w = 80 + weight;
+    else if (name === 'darkaccent') w = 70 + weight;
+    else if (name === 'safelightaccent' || name === 'safedarkaccent') w = 30 + weight;
+    add(match[2], w);
+  }
+
+  // Direct color vars: --brand-primary: #abc123 / hsl(...)
+  const cssVarRe =
+    /--(?:brand|primary|secondary|accent|main|theme|highlight|lightAccent|darkAccent)[-a-zA-Z0-9]*\s*:\s*([^;}{"']+)/gi;
+  while ((match = cssVarRe.exec(text))) {
+    const prop = String(match[0].split(':')[0] || '');
+    if (/-hsl\s*$/i.test(prop.trim())) continue;
+    const raw = String(match[1] || '').trim();
+    if (/^var\(/i.test(raw)) continue;
+    add(raw, 20 + weight);
+  }
+
+  // Template CSS often contains many unrelated hexes — only mine them when
+  // we did not already find an explicit site palette.
+  if (foundPalette) return;
+
+  const hexes = text.match(/#(?:[0-9a-f]{6}|[0-9a-f]{3})\b/gi) || [];
+  hexes.slice(0, 80).forEach((h) => add(h, weight));
+
+  const hslFns =
+    text.match(
+      /hsla?\(\s*[\d.]+(?:deg)?\s*[, ]\s*[\d.]+%?\s*[, ]\s*[\d.]+%?(?:\s*[,/]\s*[\d.]+%?)?\s*\)/gi
+    ) || [];
+  hslFns.slice(0, 40).forEach((fn) => add(fn, weight + 1));
+
+  const rgbFns =
+    text.match(
+      /(?:background(?:-color)?|color|border-color|fill|stroke)\s*:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\)|hsla?\([^)]+\))/gi
+    ) || [];
+  rgbFns.slice(0, 80).forEach((decl) => {
+    const part = decl.split(':').slice(1).join(':');
+    add(part, weight + 1);
+  });
+}
+
+function pickColors(html, extraCssTexts) {
   const scored = new Map();
 
   function add(raw, weight) {
@@ -355,32 +508,25 @@ function pickColors(html) {
     metaContent(html, 'msapplication-navbutton-color'),
   ].forEach((c) => add(c, 12));
 
-  const cssVarRe =
-    /--(?:brand|primary|secondary|accent|main|color|theme|bg|background|highlight)[-a-z0-9]*\s*:\s*([^;}{"']+)/gi;
-  let match;
-  while ((match = cssVarRe.exec(html))) {
-    add(match[1], 8);
-  }
+  pickColorsFromCssText(html, scored, 2);
 
   const styleBlocks = String(html || '').match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [];
   styleBlocks.slice(0, 8).forEach((block) => {
-    const hexes = block.match(/#(?:[0-9a-f]{6}|[0-9a-f]{3})\b/gi) || [];
-    hexes.slice(0, 40).forEach((h) => add(h, 2));
+    pickColorsFromCssText(block, scored, 3);
   });
 
-  const inlineColors =
-    String(html || '').match(
-      /(?:background(?:-color)?|color)\s*:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/gi
-    ) || [];
-  inlineColors.slice(0, 60).forEach((decl) => {
-    const part = decl.split(':')[1];
-    add(part, 3);
+  (extraCssTexts || []).forEach((cssText) => {
+    pickColorsFromCssText(cssText, scored, 4);
   });
 
-  return [...scored.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([hex]) => hex)
-    .slice(0, 6);
+  const ranked = [...scored.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+  );
+  const topScore = ranked.length ? ranked[0][1] : 0;
+  // When we clearly found a theme palette, drop low-weight template noise.
+  const filtered =
+    topScore >= 70 ? ranked.filter(([, score]) => score >= 50) : ranked;
+  return filtered.map(([hex]) => hex).slice(0, 6);
 }
 
 function classifySocialHref(href) {
@@ -445,14 +591,22 @@ function pickSocialLinks(html, pageUrl) {
 function assignPalette(colors) {
   const list = (colors || []).map(normalizeHexColor).filter(Boolean);
   const primary = list[0] || '';
+  if (!primary) {
+    return {
+      brand_primary_color: '',
+      brand_secondary_color: '',
+      brand_accent_color: '',
+      colors: list,
+    };
+  }
   const accent =
     list.find((c) => c !== primary && Math.abs(colorLuminance(c) - colorLuminance(primary)) > 0.15) ||
     list[1] ||
     '';
+  // Only invent a contrast partner when we actually found a primary colour.
   const secondary =
     list.find((c) => c !== primary && c !== accent) ||
-    (primary && colorLuminance(primary) < 0.45 ? '#f7f1e8' : '#1a1a1a') ||
-    '';
+    (colorLuminance(primary) < 0.45 ? '#f7f1e8' : '#1a1a1a');
   return {
     brand_primary_color: primary,
     brand_secondary_color: secondary && secondary !== primary ? secondary : '',
@@ -570,7 +724,8 @@ async function fetchWebsiteMeta(rawUrl) {
     logo_url = pickLogo(page.html, page.pageUrl);
     description = pickDescription(page.html);
     socials = pickSocialLinks(page.html, page.pageUrl);
-    colors = pickColors(page.html);
+    const stylesheetTexts = await fetchStylesheetTexts(page.html, page.pageUrl);
+    colors = pickColors(page.html, stylesheetTexts);
     palette = assignPalette(colors);
   } else {
     blocked = true;
