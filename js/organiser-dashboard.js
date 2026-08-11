@@ -3266,18 +3266,21 @@
   function continueAfterClaimProfileSave(saved) {
     closeGroupEditorDrawer();
     trackClaimFunnel('profile_saved', (saved && (saved.slug || saved.name || saved.id)) || '');
+
+    // Finish this page's launch queue (events) before surfacing another claim on Overview.
+    const launch = window.HubOrganiserLaunchSetup;
+    const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
+    if (item) {
+      openLaunchSetupItem(item);
+      return;
+    }
+
     if ((state.pendingClaimGroups || []).length > 0) {
       renderGroupClaimModal();
       return;
     }
     if ((state.pendingClaimOpportunities || []).length > 0) {
       renderOpportunityClaimModal();
-      return;
-    }
-    const launch = window.HubOrganiserLaunchSetup;
-    const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
-    if (item) {
-      openLaunchSetupItem(item);
       return;
     }
     showReadyForEventPrompt();
@@ -7654,7 +7657,15 @@
     const drawer = document.getElementById('org-group-drawer');
     if (!drawer) return;
     drawer.classList.remove('is-open');
+    drawer.classList.remove('is-loading');
     document.body.classList.remove('org-group-drawer-open');
+    const loading = document.getElementById('org-group-drawer-loading');
+    if (loading) {
+      loading.classList.remove('is-visible');
+      loading.hidden = true;
+      loading.setAttribute('aria-hidden', 'true');
+      loading.setAttribute('aria-busy', 'false');
+    }
     setTimeout(function () {
       if (!drawer.classList.contains('is-open')) {
         drawer.hidden = true;
@@ -12566,6 +12577,11 @@
             familyKey: item.family.key,
           })
         );
+      } catch (e) {
+        /* ignore */
+      }
+      try {
+        setRoute('events-list', { skipEventsGuard: true, skipRouteLoading: true });
       } catch (e) {
         /* ignore */
       }

@@ -28,11 +28,74 @@
     return (config && config.editId) || '';
   }
 
-  function showAlert(msg) {
+  function showAlert(msg, kind) {
+    const text = msg ? String(msg) : '';
     const alertEl = el('ge-alert');
-    if (!alertEl) return;
-    alertEl.textContent = msg;
-    alertEl.hidden = !msg;
+    if (alertEl) {
+      alertEl.textContent = text;
+      alertEl.hidden = !text;
+      if (text && alertEl.scrollIntoView) {
+        try {
+          alertEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    const footStatus = el('ge-drawer-status');
+    if (footStatus) {
+      footStatus.textContent = text;
+      footStatus.hidden = !text;
+      footStatus.classList.toggle('is-error', Boolean(text) && kind === 'error');
+      footStatus.classList.toggle('is-ok', Boolean(text) && kind === 'ok');
+    }
+  }
+
+  let loadingHideTimer = null;
+  let loadingShowRaf = null;
+
+  function setEmbeddedLoading(on, message) {
+    const root = getRoot();
+    const drawer =
+      (root && root.id === 'org-group-drawer' && root) ||
+      document.getElementById('org-group-drawer');
+    const loading =
+      (drawer && drawer.querySelector('#org-group-drawer-loading')) ||
+      document.getElementById('org-group-drawer-loading');
+    if (!loading) return;
+
+    if (drawer) drawer.classList.toggle('is-loading', Boolean(on));
+
+    const textEl = loading.querySelector('.org-group-drawer-loading-text');
+    if (textEl) {
+      textEl.textContent = on
+        ? String(message || '').trim() || 'Loading your page…'
+        : 'Loading your page…';
+    }
+
+    if (loadingHideTimer) {
+      clearTimeout(loadingHideTimer);
+      loadingHideTimer = null;
+    }
+    if (loadingShowRaf) {
+      cancelAnimationFrame(loadingShowRaf);
+      loadingShowRaf = null;
+    }
+
+    if (on) {
+      loading.hidden = false;
+      loading.setAttribute('aria-hidden', 'false');
+      loading.setAttribute('aria-busy', 'true');
+      loadingShowRaf = requestAnimationFrame(function () {
+        loadingShowRaf = null;
+        loading.classList.add('is-visible');
+      });
+    } else {
+      loading.classList.remove('is-visible');
+      loading.hidden = true;
+      loading.setAttribute('aria-hidden', 'true');
+      loading.setAttribute('aria-busy', 'false');
+    }
   }
 
   function consumeFoundingToast() {
@@ -125,17 +188,10 @@
   function currentImportFieldSnapshot() {
     var g = currentGroup || {};
     return {
-      description: g.description || (el('ge-description') && el('ge-description').value) || '',
-      logoUrl: g.imageUrl || (el('ge-logo-url') && el('ge-logo-url').value) || '',
-      website: g.website || (el('ge-website') && el('ge-website').value) || '',
       // Colours: only "already set" when saved on the group — pickers always have a default.
       brandPrimaryColor: g.brandPrimaryColor || '',
       brandSecondaryColor: g.brandSecondaryColor || '',
       brandAccentColor: g.brandAccentColor || '',
-      instagramUrl: g.instagramUrl || (el('ge-instagram') && el('ge-instagram').value) || '',
-      facebookUrl: g.facebookUrl || (el('ge-facebook') && el('ge-facebook').value) || '',
-      linkedinUrl: g.linkedinUrl || (el('ge-linkedin') && el('ge-linkedin').value) || '',
-      xUrl: g.xUrl || (el('ge-x') && el('ge-x').value) || '',
     };
   }
 
@@ -158,23 +214,17 @@
       });
     }
 
-    pushItem('description', 'Description', importData.description);
-    pushItem('logoUrl', 'Logo', importData.logoUrl);
+    // Website import is colours-only — never offer logo, description, or socials.
     pushItem('brandPrimaryColor', 'Primary colour', importData.brandPrimaryColor, true);
     pushItem('brandSecondaryColor', 'Secondary colour', importData.brandSecondaryColor, true);
     pushItem('brandAccentColor', 'Accent colour', importData.brandAccentColor, true);
-    pushItem('instagramUrl', 'Instagram', importData.instagramUrl);
-    pushItem('facebookUrl', 'Facebook', importData.facebookUrl);
-    pushItem('linkedinUrl', 'LinkedIn', importData.linkedinUrl);
-    pushItem('xUrl', 'X (Twitter)', importData.xUrl);
-    pushItem('website', 'Website URL', importData.url || importData.website);
 
     pendingImport = { data: importData, items: items };
 
     if (!items.length) {
       hideImportReview();
       setImportStatus(
-        'We couldn’t find social links, colours, logo or description to import. Enter them by hand, or try another URL.',
+        'We couldn’t find brand colours on that site. Set them by hand below, or try another URL.',
         'error'
       );
       return;
@@ -214,7 +264,7 @@
     setImportStatus(
       'Found ' +
         items.length +
-        ' item' +
+        ' colour' +
         (items.length === 1 ? '' : 's') +
         '. Tick what you want, then Apply to form.',
       'ok'
@@ -229,22 +279,6 @@
     });
   }
 
-  function applyLogoFromImport(url) {
-    if (!url) return;
-    logoFile = null;
-    var fileInput = el('ge-logo-file');
-    if (fileInput) fileInput.value = '';
-    if (el('ge-logo-url')) el('ge-logo-url').value = url;
-    var preview = el('ge-logo-preview');
-    var previewImg = el('ge-logo-preview-img');
-    var placeholder = el('ge-logo-placeholder');
-    var qualityHint = el('ge-logo-quality');
-    if (previewImg) previewImg.src = url;
-    if (preview) preview.hidden = false;
-    if (placeholder) placeholder.hidden = true;
-    if (window.hubCheckLogoUrlQuality) window.hubCheckLogoUrlQuality(url, qualityHint);
-  }
-
   function applyImportSelection() {
     var list = el('ge-import-review-list');
     if (!pendingImport || !list) return;
@@ -255,17 +289,10 @@
       if (item) selected[item.key] = item.value;
     });
     if (!Object.keys(selected).length) {
-      setImportStatus('Tick at least one item to apply.', 'error');
+      setImportStatus('Tick at least one colour to apply.', 'error');
       return;
     }
 
-    if (selected.website && el('ge-website')) el('ge-website').value = selected.website;
-    if (selected.description && el('ge-description')) {
-      el('ge-description').value = selected.description;
-      var counter = el('ge-word-count');
-      if (counter) counter.textContent = String(countWords(selected.description));
-    }
-    if (selected.logoUrl) applyLogoFromImport(selected.logoUrl);
     if (selected.brandPrimaryColor) {
       syncBrandColorPair(el('ge-brand-primary'), el('ge-brand-primary-hex'), selected.brandPrimaryColor);
     }
@@ -275,13 +302,9 @@
     if (selected.brandAccentColor) {
       syncBrandColorPair(el('ge-brand-accent'), el('ge-brand-accent-hex'), selected.brandAccentColor);
     }
-    if (selected.instagramUrl && el('ge-instagram')) el('ge-instagram').value = selected.instagramUrl;
-    if (selected.facebookUrl && el('ge-facebook')) el('ge-facebook').value = selected.facebookUrl;
-    if (selected.linkedinUrl && el('ge-linkedin')) el('ge-linkedin').value = selected.linkedinUrl;
-    if (selected.xUrl && el('ge-x')) el('ge-x').value = selected.xUrl;
 
     hideImportReview();
-    setImportStatus('Applied to the form — review, then Save changes.', 'ok');
+    setImportStatus('Colours applied — review, then Save changes.', 'ok');
   }
 
   async function importFromWebsite() {
@@ -653,25 +676,32 @@
   }
 
   async function buildPayload() {
-    const name = el('ge-name').value.trim();
+    const nameEl = el('ge-name');
+    const descEl = el('ge-description');
+    const contactEl = el('ge-contact-email');
+    const name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
-      showAlert('Enter a group name.');
+      showAlert('Enter a group name.', 'error');
+      if (nameEl) nameEl.focus();
       return null;
     }
 
-    const description = el('ge-description').value.trim();
+    const description = descEl ? descEl.value.trim() : '';
     if (!description) {
-      showAlert('Enter a description for your group.');
+      showAlert('Enter a description for your group.', 'error');
+      if (descEl) descEl.focus();
       return null;
     }
     if (countWords(description) > DESCRIPTION_MAX_WORDS) {
-      showAlert('Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.');
+      showAlert('Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.', 'error');
+      if (descEl) descEl.focus();
       return null;
     }
 
-    const contactEmail = el('ge-contact-email').value.trim();
+    const contactEmail = contactEl ? contactEl.value.trim() : '';
     if (!contactEmail) {
-      showAlert('Enter a contact email.');
+      showAlert('Enter a contact email.', 'error');
+      if (contactEl) contactEl.focus();
       return null;
     }
 
@@ -692,7 +722,11 @@
         ? Math.min(3, Math.max(0, Math.floor(Number(el('ge-complimentary-visits').value) || 0)))
         : 0,
       complimentaryVisitsScope: (function () {
-        const checked = document.querySelector('input[name="ge-visits-scope"]:checked');
+        const scopeRoot = getRoot();
+        const checked = (scopeRoot.querySelector
+          ? scopeRoot.querySelector('input[name="ge-visits-scope"]:checked')
+          : null) || document.querySelector('#org-group-drawer input[name="ge-visits-scope"]:checked')
+          || document.querySelector('input[name="ge-visits-scope"]:checked');
         return checked && checked.value === 'across_groups' ? 'across_groups' : 'per_group';
       })(),
     };
@@ -748,11 +782,12 @@
         const err = res.data.error || '';
         if (err === 'group_not_owned') {
           showAlert(
-            'This organiser page is not linked to your account yet. Sign in with the email on the profile, or use Request access on the public page.'
+            'This organiser page is not linked to your account yet. Sign in with the email on the profile, or use Request access on the public page.',
+            'error'
           );
           return;
         }
-        showAlert(res.data.message || err || 'Could not save profile');
+        showAlert(res.data.message || err || 'Could not save profile', 'error');
         return;
       }
 
@@ -776,7 +811,8 @@
       if (logoWarning) msg = logoWarning + (saveWarnings.length ? ' ' + saveWarnings.join(' ') : '');
       else if (logoResolutionWarning) msg = logoResolutionWarning;
 
-      showAlert(msg);
+      const hasWarnings = Boolean(logoWarning || logoResolutionWarning || saveWarnings.length);
+      showAlert(msg, hasWarnings ? 'error' : 'ok');
       const qualityHint = el('ge-logo-quality');
       if (logoResolutionWarning && qualityHint) {
         qualityHint.textContent = logoResolutionWarning;
@@ -802,13 +838,11 @@
         }
       }
 
-      const hasWarnings = Boolean(logoWarning || logoResolutionWarning || saveWarnings.length);
       const delay = hasWarnings ? 2200 : isEmbedded() ? 900 : 700;
       const launchSetup = Boolean(config && config.onboardLaunch);
 
-      const continueToEvent = isEmbedded()
-        ? mode === 'continue' || onboardReview || launchSetup
-        : onboardReview || launchSetup || (!editId && mode === 'continue');
+      // Only the continue CTA advances setup. Plain "Save changes" stays on the form.
+      const continueToEvent = mode === 'continue';
 
       if (isEmbedded()) {
         if (!(continueToEvent && config.onContinue) && config.onSaved) {
@@ -822,6 +856,8 @@
               location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
             }
           }, delay);
+        } else if (mode === 'save' || mode === 'draft' || mode === 'published') {
+          /* keep drawer open after save in embedded editor */
         } else {
           setTimeout(function () {
             if (config.onClose) config.onClose();
@@ -830,10 +866,12 @@
         return;
       }
 
-      if (continueToEvent) stashGroupContinue(saved && saved.id);
-      setTimeout(function () {
-        location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
-      }, delay);
+      if (continueToEvent || onboardReview || launchSetup) stashGroupContinue(saved && saved.id);
+      if (continueToEvent || onboardReview || launchSetup) {
+        setTimeout(function () {
+          location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
+        }, delay);
+      }
     } finally {
       [saveChanges, draftBtn, publishBtn, continueBtn].forEach((b) => {
         if (b) b.disabled = false;
@@ -955,39 +993,37 @@
       form.addEventListener('submit', (e) => e.preventDefault());
     }
 
-    const saveChanges = el('ge-save-changes');
-    if (saveChanges && !saveChanges.dataset.geBound) {
-      saveChanges.dataset.geBound = '1';
-      saveChanges.addEventListener('click', () => saveGroup('save', saveChanges));
-    }
-
-    const draftBtn = el('ge-save-draft');
-    if (draftBtn && !draftBtn.dataset.geBound) {
-      draftBtn.dataset.geBound = '1';
-      draftBtn.addEventListener('click', () => saveGroup('draft', draftBtn));
-    }
-
-    const publishBtn = el('ge-publish');
-    if (publishBtn && !publishBtn.dataset.geBound) {
-      publishBtn.dataset.geBound = '1';
-      publishBtn.addEventListener('click', () => saveGroup('published', publishBtn));
-    }
-
-    const continueBtn = el('ge-save-continue');
-    if (continueBtn && !continueBtn.dataset.geBound) {
-      continueBtn.dataset.geBound = '1';
-      continueBtn.addEventListener('click', () => saveGroup('continue', continueBtn));
-    }
-
-    const cancelBtn = el('ge-cancel');
-    if (cancelBtn && !cancelBtn.dataset.geBound) {
-      cancelBtn.dataset.geBound = '1';
-      cancelBtn.addEventListener('click', (e) => {
-        if (!isEmbedded()) return;
+    function onActionClick(e) {
+      const btn = e.target && e.target.closest
+        ? e.target.closest(
+            '#ge-save-changes, #ge-save-continue, #ge-publish, #ge-save-draft, #ge-cancel'
+          )
+        : null;
+      if (!btn || btn.disabled) return;
+      const id = btn.id;
+      if (id === 'ge-save-changes') {
+        e.preventDefault();
+        saveGroup('save', btn);
+      } else if (id === 'ge-save-continue') {
+        e.preventDefault();
+        saveGroup('continue', btn);
+      } else if (id === 'ge-publish') {
+        e.preventDefault();
+        saveGroup('published', btn);
+      } else if (id === 'ge-save-draft') {
+        e.preventDefault();
+        saveGroup('draft', btn);
+      } else if (id === 'ge-cancel' && isEmbedded()) {
         e.preventDefault();
         if (config.onClose) config.onClose();
-      });
+      }
     }
+
+    const actionRoot =
+      (config && config.root && config.root.nodeType === 1 && config.root) ||
+      document.getElementById('org-group-drawer') ||
+      document;
+    actionRoot.addEventListener('click', onActionClick);
 
     function wireColorInputs(colorEl, hexEl) {
       if (!colorEl || !hexEl || colorEl.dataset.geBound) return;
@@ -1063,7 +1099,25 @@
     }
     if (!config) init(options || {});
     resetFormState();
-    return load();
+    if (isEmbedded()) {
+      const titleEl = el('ge-page-title');
+      const leadEl = el('ge-page-lead');
+      const onboard = Boolean(config.onboardReview || config.onboardLaunch);
+      if (onboard) {
+        if (titleEl) titleEl.textContent = 'Review your organiser page';
+        if (leadEl) leadEl.textContent = 'Loading your details…';
+      } else if (config.editId) {
+        if (titleEl) titleEl.textContent = 'Edit organiser page';
+        if (leadEl) leadEl.textContent = 'Loading…';
+      }
+      setEmbeddedLoading(
+        true,
+        onboard ? 'Loading your page…' : 'Loading…'
+      );
+    }
+    return Promise.resolve(load()).finally(function () {
+      if (isEmbedded()) setEmbeddedLoading(false);
+    });
   }
 
   global.HubGroupEdit = {

@@ -170,23 +170,44 @@
     var pendingFamilies = families.filter(function (fam) {
       return eventFamilyNeedsSetup(fam, tickets, stored);
     });
+    var queuedEventKeys = {};
 
-    // Profiles first for every unfinished organiser page, then events.
+    // Per organiser page: finish profile, then that page's events — before the next group.
     groups.forEach(function (g, idx) {
       if (!g || !g.id) return;
-      if (stored.profilesDone[String(g.id)]) return;
-      queue.push({
-        kind: 'profile',
-        id: String(g.id),
-        title: String(g.name || 'Organiser page').trim(),
-        thin: profileLooksThin(g),
-        indexHint: 'Group page',
-        group: g,
-        ordinal: idx + 1,
+      var gid = String(g.id);
+      if (!stored.profilesDone[gid]) {
+        queue.push({
+          kind: 'profile',
+          id: gid,
+          title: String(g.name || 'Organiser page').trim(),
+          thin: profileLooksThin(g),
+          indexHint: 'Group page',
+          group: g,
+          ordinal: idx + 1,
+        });
+        return;
+      }
+      pendingFamilies.forEach(function (fam) {
+        if (!fam || queuedEventKeys[fam.key]) return;
+        if (String(fam.organiserId || '') !== gid) return;
+        queuedEventKeys[fam.key] = true;
+        queue.push({
+          kind: 'event',
+          id: fam.key,
+          title: fam.title,
+          isSeries: fam.isSeries,
+          dateCount: fam.dateCount,
+          family: fam,
+          indexHint: fam.isSeries ? 'Series (' + fam.dateCount + ' dates)' : 'Event',
+        });
       });
     });
 
+    // Any remaining event families (orphan / unmatched organiser id).
     pendingFamilies.forEach(function (fam) {
+      if (!fam || queuedEventKeys[fam.key]) return;
+      queuedEventKeys[fam.key] = true;
       queue.push({
         kind: 'event',
         id: fam.key,

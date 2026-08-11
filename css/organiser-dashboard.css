@@ -9307,7 +9307,68 @@ body.org-group-drawer-open {
   font-size: 13px;
 }
 
+.org-group-drawer-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.org-group-drawer-loading:not(.is-visible),
+.org-group-drawer-loading[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.org-group-drawer-loading.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.org-group-drawer-loading-card {
+  text-align: center;
+  padding: 24px;
+  transform: translateY(4px);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.92;
+}
+
+.org-group-drawer-loading.is-visible .org-group-drawer-loading-card {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.org-group-drawer-loading-spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 14px;
+  border: 3px solid var(--od-border-soft);
+  border-top-color: var(--od-purple);
+  border-radius: 50%;
+  animation: org-dash-spin 0.8s linear infinite;
+}
+
+.org-group-drawer-loading-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--od-text-mid);
+}
+
+.org-group-drawer.is-loading .org-group-drawer-body {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .org-group-drawer-body {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -9456,11 +9517,38 @@ body.org-group-drawer-open {
 }
 
 .org-group-drawer-foot {
+  position: relative;
+  z-index: 5;
   flex-shrink: 0;
   padding: 16px 28px 22px;
   border-top: 1px solid var(--od-border);
   background: #fff;
   box-shadow: 0 -6px 20px rgba(13, 31, 60, 0.06);
+}
+
+.org-group-drawer-status-msg {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+  background: #f4f7f8;
+  color: var(--od-text-dark);
+}
+
+.org-group-drawer-status-msg.is-error {
+  background: #fdecea;
+  color: #8a1f11;
+}
+
+.org-group-drawer-status-msg.is-ok {
+  background: #e8f6ef;
+  color: #0f5c38;
+}
+
+.org-group-drawer-status-msg[hidden] {
+  display: none !important;
 }
 
 .org-group-drawer-actions {
@@ -10649,20 +10737,20 @@ body.org-event-drawer-open {
   pointer-events: auto;
 }
 
-/* Workspace comfort — step-by-step guides */
+/* Workspace comfort — step-by-step guides (docked into page head actions) */
 .org-main {
   position: relative;
 }
 
 .org-workspace-comfort {
-  position: absolute;
-  top: 12px;
-  right: clamp(12px, 2.5vw, 28px);
-  z-index: 30;
-  width: auto;
-  max-width: none;
+  display: none;
+}
+
+.org-workspace-comfort:has(#org-guide-toggle:not([hidden])) {
+  display: flex;
+  justify-content: flex-end;
   margin: 0;
-  padding: 0;
+  padding: 12px clamp(16px, 3vw, 32px) 0;
   box-sizing: border-box;
 }
 
@@ -10682,6 +10770,13 @@ body.org-event-drawer-open {
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(28, 32, 64, 0.08);
   transition: background-color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.org-guide-toggle[hidden],
+.org-guide-toggle.hidden {
+  display: none !important;
 }
 
 .org-guide-toggle:hover {
@@ -10695,12 +10790,40 @@ body.org-event-drawer-open {
   color: #fff;
 }
 
+.org-page-head--social {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: start;
+}
+
+.org-page-head--social > .org-page-kicker,
+.org-page-head--social > .org-page-title {
+  grid-column: 1;
+}
+
+.org-page-head--social > .org-page-lead {
+  grid-column: 1 / -1;
+}
+
+.org-page-head--social > .org-page-head-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  justify-content: flex-end;
+}
+
 .org-page-guide-wrap {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto 1rem;
-  padding: 3.25rem clamp(16px, 3vw, 32px) 0;
+  max-width: none;
+  margin: 0 0 1rem;
+  padding: 0;
   box-sizing: border-box;
+}
+
+.org-page-guide-wrap[hidden],
+.org-page-guide-wrap.hidden {
+  display: none !important;
 }
 
 .org-page-guide {
