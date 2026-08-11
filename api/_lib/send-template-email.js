@@ -118,6 +118,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_ranking_badge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_claim_confirmed',
   'organiser_launch_invite',
   'organiser_rebrand_announcement',
   'organiser_team_invite',
@@ -632,7 +633,8 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'organiser_email_verify' ||
     slug === 'account_welcome' ||
     slug === 'organiser_launch_invite' ||
-    slug === 'organiser_claim_invite'
+    slug === 'organiser_claim_invite' ||
+    slug === 'organiser_claim_confirmed'
   ) {
     return true;
   }

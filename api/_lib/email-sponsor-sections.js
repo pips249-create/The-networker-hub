@@ -53,6 +53,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_ticket_sales_nudge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_claim_confirmed',
   'organiser_launch_invite',
   'organiser_team_invite',
   'organiser_email_verify',
@@ -106,6 +107,7 @@ const ORGANISER_MINI_SPONSOR_SLUGS = new Set([
   'organiser_new_application',
   'organiser_featured_expiry_reminder',
   'organiser_ranking_badge',
+  'organiser_claim_confirmed',
   'organiser_low_upcoming_events',
   'organiser_monthly_group_update',
 ]);

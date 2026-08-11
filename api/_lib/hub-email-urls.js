@@ -119,6 +119,17 @@ function organiserDashboardUrl(siteUrl, options = {}) {
   return base + (qs ? '?' + qs : '') + hash;
 }
 
+/** Deep-link into organiser page edit (logo, website, description). */
+function organiserGroupEditUrl(organiserRow, siteUrl, options = {}) {
+  const site = siteBase(siteUrl);
+  const id = String(organiserRow?.id || '').trim();
+  if (!id) return site + '/organiser/#groups';
+  const params = new URLSearchParams({ id });
+  const onboard = String(options.onboard || '').trim();
+  if (onboard) params.set('onboard', onboard);
+  return site + '/organiser/group-edit?' + params.toString();
+}
+
 function organiserBusinessDashboardUrl(siteUrl, options = {}) {
   const base = siteBase(siteUrl) + '/organiser/';
   const renewId = String(options.renewOpportunityId || options.renew || '').trim();
@@ -259,6 +270,7 @@ module.exports = {
   eventPublicUrl,
   organiserPublicUrl,
   organiserDashboardUrl,
+  organiserGroupEditUrl,
   organiserBusinessDashboardUrl,
   opportunityPublicUrl,
   logoNavUrl,

@@ -18,6 +18,7 @@
 1. Email CTA → personal `/organisers/{slug}?email=…&intent=organiser-claim&auth=register|login&next=…` (their listing + events; other groups in the sidebar when the same email has more pages)
 2. **Claim / edit this page** → register (free) or sign in
 3. → `/organiser/?onboard=claim` → claim prompt
+4. On Yes → workspace onboarding + **claim confirmed email** (founding badge + add logo/website CTA)
 
 **Fallback (soft path A):** contacts with no public slug still get `/for-organisers?…` — rare.
 

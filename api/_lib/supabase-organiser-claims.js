@@ -205,6 +205,17 @@ async function claimGroupForSession(session, groupId) {
 
   const group = rowToGroup(data);
   group.ownershipClaimStatus = 'claimed';
+
+  try {
+    const { sendOrganiserClaimConfirmedEmail } = require('./organiser-claim-confirmed-emails');
+    await sendOrganiserClaimConfirmedEmail({ group, session });
+  } catch (e) {
+    console.warn(
+      'organiser claim confirmed email failed:',
+      e && e.message ? e.message : e
+    );
+  }
+
   return group;
 }
 

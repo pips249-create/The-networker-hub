@@ -17,6 +17,7 @@ const {
   eventPublicUrl,
   organiserPublicUrl,
   organiserDashboardUrl,
+  organiserGroupEditUrl,
   organiserBusinessDashboardUrl,
   opportunityPublicUrl,
 } = require('./hub-email-urls');
@@ -617,6 +618,24 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'organiser_claim_invite') {
     vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-claim-token';
+  }
+
+  if (slug === 'organiser_claim_confirmed') {
+    const previewGroup = {
+      id: '00000000-0000-4000-8000-000000000020',
+      slug: 'city-connectors',
+      name: vars.group_name || 'City Connectors',
+      foundingOrganiser: true,
+      foundingHomepage: true,
+    };
+    const built = require('./organiser-claim-confirmed-emails').buildOrganiserClaimConfirmedVars({
+      group: previewGroup,
+      session: { name: vars.user_name || 'Alex', email: vars.user_email || 'alex@example.com' },
+      siteUrl: site,
+    });
+    Object.assign(vars, built);
+    vars.profile_edit_url =
+      vars.profile_edit_url || organiserGroupEditUrl(previewGroup, site, { onboard: 'review' });
   }
 
   if (slug === 'organiser_featured_expiry_reminder') {

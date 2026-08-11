@@ -12,6 +12,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Claim your page & finish setup — The Networker Hub',
   },
+  organiser_claim_confirmed: {
+    file: 'organiser-claim-confirmed.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: "You're a Founding Organiser · 2026 — {{group_name}}",
+  },
   organiser_launch_invite: {
     file: 'organiser-launch-invite.html',
     marker: 'hub-email-layout-v3-purple',
