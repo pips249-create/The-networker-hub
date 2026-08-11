@@ -200,15 +200,34 @@ async function claimGroupForSession(session, groupId) {
     Object.assign(patch, await foundingFieldsForClaim(sb, claimedAt));
   }
 
-  const { data, error } = await sb.from('organisers').update(patch).eq('id', organiser.id).select('*').single();
+  const { data, error } = await sb
+    .from('organisers')
+    .update(patch)
+    .eq('id', organiser.id)
+    .eq('ownership_claim_status', 'pending')
+    .select('*')
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data) {
+    // Concurrent claim (double-click) — treat as already owned, never re-send mail.
+    const existing = await sb.from('organisers').select('*').eq('id', organiser.id).maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (sessionAlreadyOwnsClaimedGroup(session, existing.data)) {
+      const group = rowToGroup(existing.data);
+      group.ownershipClaimStatus = 'claimed';
+      return group;
+    }
+    const err = new Error('claim_not_available');
+    err.status = 404;
+    throw err;
+  }
 
   const group = rowToGroup(data);
   group.ownershipClaimStatus = 'claimed';
 
   try {
-    const { sendOrganiserClaimConfirmedEmail } = require('./organiser-claim-confirmed-emails');
-    await sendOrganiserClaimConfirmedEmail({ group, session });
+    const { maybeSendClaimConfirmedAfterOwnershipChange } = require('./organiser-claim-confirmed-emails');
+    await maybeSendClaimConfirmedAfterOwnershipChange(session);
   } catch (e) {
     console.warn(
       'organiser claim confirmed email failed:',
@@ -259,6 +278,16 @@ async function rejectGroupForSession(session, groupId, notes) {
     session,
     disputeId: dispute.id,
   });
+
+  try {
+    const { maybeSendClaimConfirmedAfterOwnershipChange } = require('./organiser-claim-confirmed-emails');
+    await maybeSendClaimConfirmedAfterOwnershipChange(session);
+  } catch (e) {
+    console.warn(
+      'organiser claim confirmed email after reject failed:',
+      e && e.message ? e.message : e
+    );
+  }
 
   return {
     disputeId: dispute.id,

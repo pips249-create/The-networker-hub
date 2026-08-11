@@ -628,8 +628,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       foundingOrganiser: true,
       foundingHomepage: true,
     };
+    const sibling = {
+      id: '00000000-0000-4000-8000-000000000021',
+      slug: 'city-connectors-north',
+      name: 'City Connectors North',
+      foundingOrganiser: true,
+    };
     const built = require('./organiser-claim-confirmed-emails').buildOrganiserClaimConfirmedVars({
       group: previewGroup,
+      groups: [previewGroup, sibling],
       session: { name: vars.user_name || 'Alex', email: vars.user_email || 'alex@example.com' },
       siteUrl: site,
     });

@@ -94,6 +94,7 @@
   };
 
   let groupClaimRejectMode = false;
+  let groupClaimSubmitInFlight = false;
   let opportunityClaimRejectMode = false;
 
   function isClaimOnboardIntent() {
@@ -12469,6 +12470,7 @@
   }
 
   async function submitGroupClaimAction(action) {
+    if (groupClaimSubmitInFlight) return;
     const list = state.pendingClaimGroups || [];
     const group = list[0];
     const errEl = document.getElementById('org-group-claim-error');
@@ -12477,6 +12479,7 @@
     const notesEl = document.getElementById('org-group-claim-notes');
     if (!group) return;
 
+    groupClaimSubmitInFlight = true;
     if (errEl) errEl.hidden = true;
     if (acceptBtn) acceptBtn.disabled = true;
     if (rejectBtn) rejectBtn.disabled = true;
@@ -12537,6 +12540,8 @@
       }
       if (acceptBtn) acceptBtn.disabled = false;
       if (rejectBtn) rejectBtn.disabled = false;
+    } finally {
+      groupClaimSubmitInFlight = false;
     }
   }
 

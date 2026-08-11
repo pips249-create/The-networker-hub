@@ -488,7 +488,17 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   };
 }
 
-async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllowlist, listUnsubscribeUrl }) {
+async function sendViaResend({
+  to,
+  subject,
+  html,
+  tags,
+  replyTo,
+  from,
+  skipAllowlist,
+  listUnsubscribeUrl,
+  idempotencyKey,
+}) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     const err = new Error(
@@ -550,12 +560,16 @@ async function sendViaResend({ to, subject, html, tags, replyTo, from, skipAllow
     };
   }
 
+  const headers = {
+    Authorization: `Bearer ${resendKey}`,
+    'Content-Type': 'application/json',
+  };
+  const idem = String(idempotencyKey || '').trim().slice(0, 256);
+  if (idem) headers['Idempotency-Key'] = idem;
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -660,7 +674,17 @@ function shouldAttachListUnsubscribe(slug) {
   return false;
 }
 
-async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject, resendTags, replyTo, from }) {
+async function sendTemplatedEmail({
+  slug,
+  to,
+  variables,
+  skipEmailCheck,
+  subject,
+  resendTags,
+  replyTo,
+  from,
+  idempotencyKey,
+}) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
       if (PREFERENCE_EMAIL_SLUGS[slug]) {
@@ -723,6 +747,7 @@ async function sendTemplatedEmail({ slug, to, variables, skipEmailCheck, subject
     from,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
     listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
+    idempotencyKey,
   });
   if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
     try {
