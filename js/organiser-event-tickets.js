@@ -2221,9 +2221,9 @@
     payment.renderInto(mount, paymentSetupState, group, {
       returnPath: paymentSetupReturnPath(),
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
-      title: 'Bank details needed before ticket sales go live',
+      title: 'Bank details needed before paid tickets go on sale',
       lead:
-        'You can finish your event setup first. When you are ready, add your UK bank account via Stripe — your event stays as a draft until this is complete.',
+        'You can set prices and finish this listing now. Add your UK bank account via Stripe later — only required before paid tickets can be purchased. Free events do not need bank details.',
       singleGroupOnly: true,
       onLinked: handlePaymentSetupLinked,
     });

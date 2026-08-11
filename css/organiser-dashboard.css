@@ -8958,6 +8958,84 @@ body.org-group-claim-active {
   background: var(--od-bg-soft, #faf7f2);
 }
 
+.org-launch-setup-progress {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--od-text-muted, #6b7280);
+}
+
+.org-launch-setup-progress[hidden] {
+  display: none !important;
+}
+
+.org-launch-setup-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.org-launch-setup-event-list[hidden] {
+  display: none !important;
+}
+
+.org-launch-setup-event-btn {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1.5px solid var(--od-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--od-text-dark);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.org-launch-setup-event-btn:hover {
+  border-color: var(--od-purple);
+  background: rgba(42, 122, 128, 0.06);
+}
+
+.org-launch-setup-event-btn strong {
+  display: block;
+  font-weight: 600;
+}
+
+.org-launch-setup-event-btn span {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--od-purple);
+}
+
+.org-group-drawer-actions .org-btn-linkish {
+  width: 100%;
+  justify-content: center;
+  min-height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--od-text-mid);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  box-shadow: none;
+}
+
+.org-group-drawer-actions .org-btn-linkish:hover {
+  color: var(--od-text-dark);
+  background: transparent;
+}
+
 .org-group-claim-card-head {
   display: flex;
   gap: 14px;

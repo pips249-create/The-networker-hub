@@ -465,7 +465,12 @@
     const hint = el('ge-actions-hint');
     const cancelLink = el('ge-cancel');
 
-    if (saveChanges) saveChanges.hidden = false;
+    if (saveChanges) {
+      saveChanges.hidden = false;
+      saveChanges.classList.remove('org-btn-linkish');
+      saveChanges.classList.add('org-btn-primary');
+      saveChanges.textContent = 'Save changes';
+    }
     if (continueBtn) continueBtn.hidden = true;
     if (publishBtn) {
       publishBtn.hidden = false;
@@ -500,18 +505,32 @@
         ? 'Confirm logo, description, contact details, and complimentary guest visits — we could not import all of this for you.'
         : 'Linked to your account — confirm the details below.';
     }
-    if (saveChanges) saveChanges.hidden = false;
+    if (saveChanges) {
+      saveChanges.hidden = false;
+      if (launchSetup || (config && config.onboardReview)) {
+        saveChanges.classList.add('org-btn-linkish');
+        saveChanges.classList.remove('org-btn-primary');
+        saveChanges.textContent = 'Save draft changes';
+      } else {
+        saveChanges.classList.remove('org-btn-linkish');
+        saveChanges.classList.add('org-btn-primary');
+        saveChanges.textContent = 'Save changes';
+      }
+    }
     if (continueBtn) {
       continueBtn.hidden = false;
       continueBtn.textContent = launchSetup
         ? 'Looks good — continue setup →'
         : 'Looks good — list my first event →';
+      if (saveChanges && continueBtn.parentNode && saveChanges.parentNode === continueBtn.parentNode) {
+        continueBtn.parentNode.insertBefore(continueBtn, saveChanges);
+      }
     }
     if (publishBtn) publishBtn.hidden = true;
     if (draftBtn) draftBtn.hidden = true;
     if (hint) {
       hint.textContent = launchSetup
-        ? 'Set complimentary visits (0–3) if you offer trial nights. Save when this page looks right — next we will show the events we have added for you.'
+        ? 'Set complimentary visits (0–3) if you offer trial nights. When this page looks right, continue — next we show any events we have added for you.'
         : 'Update anything that needs changing, then continue to set up your first event listing.';
     }
     if (g) showStatusBadge(g);

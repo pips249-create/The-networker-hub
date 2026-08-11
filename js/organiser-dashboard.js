@@ -3271,21 +3271,32 @@
     const launch = window.HubOrganiserLaunchSetup;
     const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
     if (item) {
-      // For seeded events, show the summary first — don't drop straight into the editor.
-      if (item.kind === 'event' && showLaunchSetupPrompt()) return;
+      // Seeded events → summary first. No events → open next profile or skip to complete.
+      if (item.kind === 'event') {
+        if (showLaunchSetupPrompt()) return;
+      }
+      if (item.kind === 'profile') {
+        openLaunchSetupItem(item);
+        return;
+      }
       openLaunchSetupItem(item);
       return;
     }
 
     if ((state.pendingClaimGroups || []).length > 0) {
-      renderGroupClaimModal();
+      showLaunchPageCompletePrompt({ nextClaim: true });
       return;
     }
     if ((state.pendingClaimOpportunities || []).length > 0) {
       renderOpportunityClaimModal();
       return;
     }
-    showReadyForEventPrompt();
+    // Profile done, no seeded events — offer first event or celebrate if they already have one.
+    if (!hasListedEvents()) {
+      showReadyForEventPrompt();
+      return;
+    }
+    showLaunchPageCompletePrompt({});
   }
 
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
@@ -12226,6 +12237,7 @@
         if (isLaunchSetupInProgress() && window.HubOrganiserLaunchSetup) {
           const item = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
           if (item) {
+            if (item.kind === 'event' && showLaunchSetupPrompt()) return;
             openLaunchSetupItem(item);
             return;
           }
@@ -12594,6 +12606,140 @@
     }
   }
 
+  function hideLaunchCompleteModal() {
+    const modal = document.getElementById('org-launch-complete');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    const claim = document.getElementById('org-group-claim');
+    const launch = document.getElementById('org-launch-setup');
+    const ready = document.getElementById('org-ready-event');
+    if (
+      (!claim || claim.hidden) &&
+      (!launch || launch.hidden) &&
+      (!ready || ready.hidden)
+    ) {
+      document.body.classList.remove('org-group-claim-active');
+    }
+  }
+
+  function showLaunchPageCompletePrompt(opts) {
+    opts = opts || {};
+    const modal = document.getElementById('org-launch-complete');
+    if (!modal || state.adminView) return false;
+
+    hideLaunchSetupModal();
+    hideReadyForEventModal();
+    hideGroupClaimModal();
+
+    const kicker = document.getElementById('org-launch-complete-kicker');
+    const titleEl = document.getElementById('org-launch-complete-title');
+    const introEl = document.getElementById('org-launch-complete-intro');
+    const nextBtn = document.getElementById('org-launch-complete-next');
+    const dashBtn = document.getElementById('org-launch-complete-dashboard');
+    const pendingClaims = (state.pendingClaimGroups || []).length;
+    const nextClaim = Boolean(opts.nextClaim && pendingClaims > 0);
+    const nextLaunch =
+      !nextClaim &&
+      window.HubOrganiserLaunchSetup &&
+      window.HubOrganiserLaunchSetup.nextItem
+        ? window.HubOrganiserLaunchSetup.nextItem(launchSetupInput())
+        : null;
+
+    if (kicker) {
+      kicker.textContent = nextClaim
+        ? 'Page ready · more groups to claim'
+        : nextLaunch
+          ? 'Page ready · more setup left'
+          : 'Page ready';
+    }
+    if (titleEl) {
+      titleEl.textContent = nextClaim
+        ? 'This organiser page is set'
+        : 'You’re set for this organiser page';
+    }
+    if (introEl) {
+      if (nextClaim) {
+        introEl.textContent =
+          'Great — this page is ready. Next we’ll ask about your other organiser page' +
+          (pendingClaims === 1 ? '' : 's') +
+          '. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September).';
+      } else if (nextLaunch && nextLaunch.kind === 'profile') {
+        introEl.textContent =
+          'This page is ready. Next, review your other organiser page. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September).';
+      } else {
+        introEl.textContent =
+          'Your listing is live in the workspace. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September). Bank details can wait — add them later when you sell paid tickets.';
+      }
+    }
+    if (nextBtn) {
+      if (nextClaim) {
+        nextBtn.hidden = false;
+        nextBtn.textContent = 'Claim next group →';
+        nextBtn.dataset.completeAction = 'claim';
+      } else if (nextLaunch) {
+        nextBtn.hidden = false;
+        nextBtn.textContent =
+          nextLaunch.kind === 'profile' ? 'Review next page →' : 'Continue setup →';
+        nextBtn.dataset.completeAction = 'launch';
+      } else {
+        nextBtn.hidden = true;
+        nextBtn.dataset.completeAction = '';
+      }
+    }
+    if (dashBtn) {
+      dashBtn.textContent = nextBtn && !nextBtn.hidden ? 'Go to Overview' : 'Go to My events';
+    }
+
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('org-group-claim-active');
+    trackClaimFunnel('page_setup_complete', nextClaim ? 'next_claim' : nextLaunch ? 'next_launch' : 'done');
+    return true;
+  }
+
+  function launchSetupProgressLabel(built, item) {
+    const profilesTotal = (state.groups || []).length || 0;
+    const profilesDone = profilesTotal
+      ? Math.max(
+          0,
+          profilesTotal -
+            (built.queue || []).filter(function (q) {
+              return q.kind === 'profile';
+            }).length
+        )
+      : 0;
+    const eventsLeft = (built.queue || []).filter(function (q) {
+      return q.kind === 'event';
+    }).length;
+    if (item && item.kind === 'event') {
+      return (
+        'Page ready · Events' +
+        (eventsLeft > 1 ? ' (' + eventsLeft + ' left)' : '') +
+        (profilesTotal > 1 ? ' · then other groups' : '')
+      );
+    }
+    if (item && item.kind === 'profile') {
+      return (
+        'Organiser page' +
+        (profilesTotal > 1 ? ' ' + Math.min(profilesDone + 1, profilesTotal) + ' of ' + profilesTotal : '') +
+        ' · then events'
+      );
+    }
+    return 'Finish setup';
+  }
+
+  function openLaunchSetupEventById(itemId) {
+    const launch = window.HubOrganiserLaunchSetup;
+    if (!launch) return;
+    const built = launch.buildQueue(launchSetupInput());
+    const match = (built.queue || []).find(function (q) {
+      return q.kind === 'event' && String(q.id) === String(itemId);
+    });
+    if (match) openLaunchSetupItem(match);
+  }
+
   function showLaunchSetupPrompt() {
     const modal = document.getElementById('org-launch-setup');
     const launch = window.HubOrganiserLaunchSetup;
@@ -12612,17 +12758,29 @@
     const eventsLeft = built.queue.filter(function (q) {
       return q.kind === 'event';
     }).length;
+    // No seeded events in queue — don't show an empty events summary.
+    if (item.kind === 'event' && eventsLeft < 1) {
+      hideLaunchSetupModal();
+      return false;
+    }
 
     hideReadyForEventModal();
     hideGroupClaimModal();
+    hideLaunchCompleteModal();
 
+    const progressEl = document.getElementById('org-launch-setup-progress');
     const kicker = document.getElementById('org-launch-setup-kicker');
     const titleEl = document.getElementById('org-launch-setup-title');
     const introEl = document.getElementById('org-launch-setup-intro');
     const labelEl = document.getElementById('org-launch-setup-item-label');
+    const listEl = document.getElementById('org-launch-setup-event-list');
     const metaEl = document.getElementById('org-launch-setup-item-meta');
     const queueEl = document.getElementById('org-launch-setup-queue');
 
+    if (progressEl) {
+      progressEl.hidden = false;
+      progressEl.textContent = launchSetupProgressLabel(built, item);
+    }
     if (kicker) {
       if (item.kind === 'event') {
         kicker.textContent =
@@ -12652,32 +12810,53 @@
             : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens 1 September — until then, get everything ready in the workspace.';
       } else {
         introEl.textContent =
-          'Review the information we prepared, add tickets, then publish. We’ll take you through each listing in turn. Public ticket buying opens 1 September.';
+          'Review the information we prepared, add tickets, then publish. Tap a listing below to start — or continue with the first one. Public ticket buying opens 1 September.';
       }
     }
     if (labelEl) {
       if (item.kind === 'event') {
-        const eventItems = built.queue.filter(function (q) {
-          return q.kind === 'event';
-        });
-        labelEl.textContent = eventItems
-          .map(function (ev, idx) {
-            const seriesBit =
-              ev.isSeries && ev.dateCount > 1 ? ' · ' + ev.dateCount + ' dates' : '';
-            return idx + 1 + '. ' + ev.title + seriesBit;
-          })
-          .join('\n');
-        labelEl.style.whiteSpace = 'pre-line';
+        labelEl.textContent = '';
+        labelEl.style.whiteSpace = '';
       } else {
         labelEl.style.whiteSpace = '';
         labelEl.textContent = item.title;
+      }
+    }
+    if (listEl) {
+      if (item.kind === 'event') {
+        const eventItems = built.queue.filter(function (q) {
+          return q.kind === 'event';
+        });
+        listEl.hidden = false;
+        listEl.innerHTML = eventItems
+          .map(function (ev, idx) {
+            const seriesBit =
+              ev.isSeries && ev.dateCount > 1 ? ' · ' + ev.dateCount + ' dates' : '';
+            return (
+              '<button type="button" class="org-launch-setup-event-btn" data-launch-event-id="' +
+              String(ev.id || '').replace(/"/g, '') +
+              '">' +
+              '<strong>' +
+              (idx + 1) +
+              '. ' +
+              String(ev.title || 'Event').replace(/</g, '&lt;') +
+              seriesBit +
+              '</strong>' +
+              '<span>Review →</span>' +
+              '</button>'
+            );
+          })
+          .join('');
+      } else {
+        listEl.hidden = true;
+        listEl.innerHTML = '';
       }
     }
     if (metaEl) {
       if (item.kind === 'event') {
         metaEl.textContent =
           eventsLeft > 1
-            ? 'Start with the first listing — details, tickets, then publish.'
+            ? 'Choose a listing, or start with the first — details, tickets, then publish.'
             : 'Next: check details, set tickets, then publish.';
       } else {
         metaEl.textContent =
@@ -12689,8 +12868,8 @@
       if (item.kind === 'event') {
         queueEl.textContent =
           eventsLeft > 1
-            ? eventsLeft + ' events / series to review.'
-            : '1 event to review.';
+            ? eventsLeft + ' events / series to review. Bank details can wait until you sell paid tickets.'
+            : '1 event to review. Bank details can wait until you sell paid tickets.';
       } else {
         const bits = [];
         if (profilesLeft) bits.push(profilesLeft + ' page' + (profilesLeft === 1 ? '' : 's'));
@@ -12720,11 +12899,15 @@
   function bindLaunchSetupUi() {
     const laterBtn = document.getElementById('org-launch-setup-later');
     const goBtn = document.getElementById('org-launch-setup-go');
+    const listEl = document.getElementById('org-launch-setup-event-list');
+    const completeNext = document.getElementById('org-launch-complete-next');
+    const completeDash = document.getElementById('org-launch-complete-dashboard');
     if (laterBtn) {
       laterBtn.addEventListener('click', function () {
         hideLaunchSetupModal();
         if (window.HubOrganiserLaunchSetup) window.HubOrganiserLaunchSetup.dismiss();
         updateGettingStartedVisibility();
+        updateSetupResumeBanner();
       });
     }
     if (goBtn) {
@@ -12737,6 +12920,46 @@
           return;
         }
         openLaunchSetupItem(item);
+      });
+    }
+    if (listEl && !listEl.dataset.bound) {
+      listEl.dataset.bound = '1';
+      listEl.addEventListener('click', function (e) {
+        const btn = e.target && e.target.closest ? e.target.closest('[data-launch-event-id]') : null;
+        if (!btn) return;
+        const id = btn.getAttribute('data-launch-event-id');
+        if (!id) return;
+        hideLaunchSetupModal();
+        openLaunchSetupEventById(id);
+      });
+    }
+    if (completeNext) {
+      completeNext.addEventListener('click', function () {
+        const action = completeNext.dataset.completeAction || '';
+        hideLaunchCompleteModal();
+        if (action === 'claim') {
+          renderGroupClaimModal();
+          return;
+        }
+        if (action === 'launch' && window.HubOrganiserLaunchSetup) {
+          const item = window.HubOrganiserLaunchSetup.nextItem(launchSetupInput());
+          if (item) {
+            if (item.kind === 'event' && showLaunchSetupPrompt()) return;
+            openLaunchSetupItem(item);
+          }
+        }
+      });
+    }
+    if (completeDash) {
+      completeDash.addEventListener('click', function () {
+        hideLaunchCompleteModal();
+        const nextVisible =
+          document.getElementById('org-launch-complete-next') &&
+          !document.getElementById('org-launch-complete-next').hidden;
+        setRoute(nextVisible ? 'dashboard' : 'events-list', {
+          skipEventsGuard: true,
+          skipRouteLoading: true,
+        });
       });
     }
   }
@@ -15872,12 +16095,19 @@
                 ? launch.nextItem(launchSetupInput())
                 : null;
             if (next) {
+              if (next.kind === 'event') {
+                showOrganiserAlert('Event ready. Choose your next listing…', false);
+                if (showLaunchSetupPrompt()) return;
+              }
               showOrganiserAlert('Event ready. Next setup step…', false);
               openLaunchSetupItem(next);
               return;
             }
-            showOrganiserAlert('Your event is live.', false);
-            showReadyForEventPrompt();
+            if ((state.pendingClaimGroups || []).length > 0) {
+              showLaunchPageCompletePrompt({ nextClaim: true });
+              return;
+            }
+            showLaunchPageCompletePrompt({});
           });
           return;
         }

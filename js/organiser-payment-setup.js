@@ -271,7 +271,7 @@
       (group?.name ? ' for ' + groupName : '') +
       '</a>' +
       '</div>' +
-      '<p class="hub-payment-setup-note">Opens in a new tab — return here when finished. Free events do not need bank details.</p>' +
+      '<p class="hub-payment-setup-note">Opens in a new tab — return here when finished. You can set ticket prices now and add bank details later. Free events do not need bank details.</p>' +
       multiProfileNoteHtml(opts.state, { showReuseButton: showReuseButton }) +
       '</div></div>'
     );
