@@ -488,7 +488,7 @@
     if (draftBtn) draftBtn.hidden = true;
     if (hint) {
       hint.textContent = launchSetup
-        ? 'Set complimentary visits (0–3) if you offer trial nights. If you have several organiser pages, you will review each one in turn.'
+        ? 'Set complimentary visits (0–3) if you offer trial nights. Save when this page looks right — we will ask about any other groups next.'
         : 'Update anything that needs changing, then continue to set up your first event listing.';
     }
     if (g) showStatusBadge(g);
@@ -726,7 +726,9 @@
     });
     if (triggerBtn) triggerBtn.disabled = true;
 
-    const onboardReview = config && config.onboardReview;
+    const onboardReview = Boolean(
+      (config && config.onboardReview) || (config && config.onboardLaunch)
+    );
 
     try {
       let res;
@@ -841,7 +843,9 @@
 
   async function load() {
     const editId = getEditId();
-    const onboardReview = config && config.onboardReview;
+    const onboardReview = Boolean(
+      (config && config.onboardReview) || (config && config.onboardLaunch)
+    );
 
     if (!isEmbedded()) {
       const backLink = getRoot().querySelector('.ee-back');

@@ -3263,6 +3263,26 @@
     openNewEventEditorDrawer({ groupId: groupId });
   }
 
+  function continueAfterClaimProfileSave(saved) {
+    closeGroupEditorDrawer();
+    trackClaimFunnel('profile_saved', (saved && (saved.slug || saved.name || saved.id)) || '');
+    if ((state.pendingClaimGroups || []).length > 0) {
+      renderGroupClaimModal();
+      return;
+    }
+    if ((state.pendingClaimOpportunities || []).length > 0) {
+      renderOpportunityClaimModal();
+      return;
+    }
+    const launch = window.HubOrganiserLaunchSetup;
+    const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
+    if (item) {
+      openLaunchSetupItem(item);
+      return;
+    }
+    showReadyForEventPrompt();
+  }
+
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
   const SERIES_STORAGE_KEY = 'hub_event_series';
@@ -7628,11 +7648,21 @@
   function openGroupEditorDrawer(groupOrId, options) {
     options = options || {};
     const drawer = document.getElementById('org-group-drawer');
+    const onboardLaunch = Boolean(options.onboardLaunch);
+    const onboardReview = Boolean(options.onboardReview || options.onboardLaunch);
     if (!drawer || !window.HubGroupEdit) {
       const id =
         typeof groupOrId === 'object' && groupOrId && groupOrId.id
           ? groupOrId.id
           : groupOrId || '';
+      if (onboardLaunch || onboardReview) {
+        location.href = id
+          ? (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.profileEditUrl
+              ? window.HubOrganiserLaunchSetup.profileEditUrl(id)
+              : '/organiser/group-edit?id=' + encodeURIComponent(id) + '&onboard=launch')
+          : '/organiser/group-edit';
+        return;
+      }
       location.href = id
         ? '/organiser/group-edit?id=' +
           encodeURIComponent(id) +
@@ -7642,6 +7672,8 @@
     }
 
     closeAllActionMenus();
+    hideGroupClaimModal();
+    hideOpportunityClaimModal();
     const editId =
       typeof groupOrId === 'object' && groupOrId && groupOrId.id
         ? groupOrId.id
@@ -7649,7 +7681,7 @@
 
     const refreshAfterSave = async function () {
       brandKitHydratedGroupId = null;
-      await loadBootstrap();
+      await loadBootstrap({ silent: true, skipClaimUi: true });
       renderAll();
       if (isSocialPageActive()) ensureBrandKitPanelReady();
     };
@@ -7673,12 +7705,18 @@
     window.HubGroupEdit.open({
       editId,
       embedded: true,
+      onboardLaunch: onboardLaunch,
+      onboardReview: onboardReview,
       focusBrand: Boolean(options.focusBrand),
       onClose: closeGroupEditorDrawer,
       onSaved: refreshAfterSave,
       onContinue: async function (saved) {
         await refreshAfterSave();
         requestAnimationFrame(function () {
+          if (onboardLaunch || onboardReview) {
+            continueAfterClaimProfileSave(saved);
+            return;
+          }
           handleGroupContinueToEvent(saved);
         });
       },
@@ -12484,7 +12522,10 @@
       item.title || item.id || ''
     );
     if (item.kind === 'profile') {
-      location.href = window.HubOrganiserLaunchSetup.profileEditUrl(item.id);
+      openGroupEditorDrawer(item.id, {
+        onboardLaunch: true,
+        onboardReview: true,
+      });
       return;
     }
     if (item.kind === 'event' && item.family && item.family.primary) {
@@ -12786,11 +12827,10 @@
           data.group.slug || data.group.name || data.group.id
         );
 
-        // Set up THIS page next — do not claim every sibling before profile review.
+        // Open THIS page in the half-page drawer. Do not reload claim modals first —
+        // loadBootstrap used to race and steal the first click.
         hideGroupClaimModal();
-        await loadBootstrap();
-        updateSetupResumeBanner();
-        updateGettingStartedPanel();
+        document.body.classList.remove('org-group-claim-active');
 
         if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.clearProfileReviewDone) {
           window.HubOrganiserOnboarding.clearProfileReviewDone();
@@ -12799,13 +12839,20 @@
           window.HubOrganiserLaunchSetup.prepareClaimOnboarding([data.group.id]);
         }
 
-        const editUrl =
-          window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.profileEditUrl
-            ? window.HubOrganiserLaunchSetup.profileEditUrl(data.group.id)
-            : '/organiser/group-edit?id=' +
-              encodeURIComponent(data.group.id) +
-              '&onboard=launch';
-        location.href = editUrl;
+        openGroupEditorDrawer(data.group, {
+          onboardLaunch: true,
+          onboardReview: true,
+        });
+
+        loadBootstrap({ silent: true, skipClaimUi: true })
+          .then(function () {
+            updateSetupResumeBanner();
+            updateGettingStartedPanel();
+            syncOverviewSetupQuietMode();
+          })
+          .catch(function () {
+            /* non-fatal — drawer already open */
+          });
         return;
       }
 
@@ -14321,6 +14368,7 @@
 
   async function loadBootstrap(options) {
     const silent = Boolean(options && options.silent);
+    const skipClaimUi = Boolean(options && options.skipClaimUi);
     const prefetch = options && options.prefetch;
     if (!silent) setDashboardLoading(true);
     let postReady = null;
@@ -14421,13 +14469,20 @@
       renderStripeConnectBanner();
     }
     postReady = function () {
-      renderGroupClaimModal();
-      renderOpportunityClaimModal();
+      syncPendingClaimFlag();
+      if (!skipClaimUi) {
+        renderGroupClaimModal();
+        renderOpportunityClaimModal();
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
+          window.HubOrganiserOnboarding.initAfterDashboardReady();
+        }
+      } else {
+        updateGettingStartedPanel();
+        updateSetupResumeBanner();
+        syncOverviewSetupQuietMode();
+      }
       updateTeamNavBadge();
       refreshPendingApplicationsSummary();
-      if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
-        window.HubOrganiserOnboarding.initAfterDashboardReady();
-      }
       enforceEventsOrganiserGate();
       if (document.querySelector('[data-org-page="events"].is-active')) {
         setEventsSub(eventsSubRoute);
