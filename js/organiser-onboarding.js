@@ -46,14 +46,18 @@
     {
       title: 'Memberships',
       body: 'Upload your member register, sell members-only tickets, and track renewals. Members get email alerts when you publish events.',
-      target: '#org-nav-memberships',
-      beforeShow: goDashboard,
+      target: '#org-page-memberships .org-page-head',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('memberships', { skipEventsGuard: true });
+      },
     },
     {
       title: 'Team & invites',
       body: 'Invite colleagues as team members to help manage events — assign which organiser pages they can access. Only the account owner can change bank details.',
-      target: '#org-nav-team',
-      beforeShow: goDashboard,
+      target: '#org-page-team .org-page-head',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('team', { skipEventsGuard: true });
+      },
     },
     {
       title: 'Share your event',
