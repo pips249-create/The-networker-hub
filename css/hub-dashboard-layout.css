@@ -194,15 +194,15 @@ body.hub-page-organiser.organiser-event-edit-page {
   padding-bottom: 24px;
 }
 
-/* Full-bleed website footer (body-level, same as public pages).
-   margin-top: auto pins it to the viewport bottom when main content is short
-   (avoids a mid-page footer with empty dark space underneath). */
+/* Full-bleed website footer after the dashboard shell (scroll to see it).
+   Do NOT use margin-top:auto — that pins the footer into the first viewport
+   and steals workspace height on short Overview pages. */
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer,
 body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   width: 100%;
   max-width: none;
-  margin-top: auto;
+  margin: 0;
 }
 
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer .site-footer,
@@ -213,7 +213,7 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
 }
 
 /* Claim / onboarding / drawers: hide marketing footer so it cannot cover
-   workspace content or sit under fixed modals (overflow:hidden + short shell). */
+   workspace content or sit under fixed modals. */
 body.hub-page-organiser.organiser-dashboard-page.org-claim-setup-active > #hub-site-footer,
 body.hub-page-organiser.organiser-dashboard-page.org-group-claim-active > #hub-site-footer,
 body.hub-page-organiser.organiser-dashboard-page.org-group-drawer-open > #hub-site-footer,
@@ -286,7 +286,9 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
   min-width: 720px;
 }
 
-/* Desktop: layout height follows main content; sidebar fills that height; full-bleed footer below */
+/* Desktop: workspace fills the first viewport; footer sits below the fold.
+   Shell min-height = viewport minus site nav (~84px) so Overview is not
+   squashed beside a marketing footer. */
 @media (min-width: 769px) {
   html:has(body.hub-page-organiser.organiser-dashboard-page),
   html:has(body.hub-page-account.attendee-dashboard-page) {
@@ -314,7 +316,9 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
   .organiser-dashboard-page #org-shell,
   .attendee-dashboard-page #ad-shell {
     flex: 0 0 auto;
-    min-height: 0;
+    /* Site nav min-height is 84px (hub.css .site-nav) */
+    min-height: calc(100dvh - 84px);
+    min-height: calc(100vh - 84px);
     overflow: visible;
   }
 
@@ -323,7 +327,8 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
     position: relative;
     display: block;
     flex: 0 0 auto;
-    min-height: 0;
+    min-height: calc(100dvh - 84px);
+    min-height: calc(100vh - 84px);
     overflow: visible;
     padding-left: 228px;
     background: none;
