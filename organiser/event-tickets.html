@@ -232,12 +232,22 @@
               <p>
                 Non-members can see the listing but cannot book. Members sign in with the email on your member list to get their ticket.
               </p>
+              <p>
+                We won’t charge your members for attending when this booking is £0.
+                New joiners pay your monthly or annual membership fee, plus our booking fee (4.5% + 20p).
+                Manage membership prices under <strong>Memberships</strong> in your workspace.
+              </p>
             </div>
             <div class="ee-info-box ee-membership-meeting-how" id="ee-membership-meeting-how" hidden>
               <strong>How this works</strong>
               <p>
                 Newcomers book complimentary guest visits. People on your member list book the member ticket when signed in.
                 After visits are used, guests join your monthly or annual membership on your organiser page — no public event ticket needed.
+              </p>
+              <p>
+                We won’t charge your members for attending when this booking is £0.
+                New joiners pay your membership fee, plus our booking fee (4.5% + 20p).
+                Manage prices under <strong>Memberships</strong> in your workspace.
               </p>
             </div>
             <p class="ee-tier-summary" id="ee-members-only-event-summary" aria-live="polite">Member ticket · unlimited available · Free</p>
@@ -251,11 +261,14 @@
                   <div class="ee-field">
                     <label for="ee-private-ticket-price">Price (&pound;)</label>
                     <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
-                    <p class="ee-hint">Usually 0 — members already pay monthly membership</p>
+                    <p class="ee-hint">Usually £0 — we don’t charge members for attending</p>
                   </div>
                 </div>
+                <p class="ee-hint" id="ee-private-ticket-fee-note">
+                  New joiners pay your monthly or annual membership fee, plus our booking fee (4.5% + 20p). You receive 100% of the membership price you set. Manage this under Memberships in your workspace.
+                </p>
                 <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
-                  Manage who can see this ticket under Memberships on your organiser page.
+                  Members on your list book when signed in with their membership email.
                 </p>
                 <div class="ee-field ee-guest-visits-field">
                   <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
@@ -608,6 +621,6 @@
     <script src="../js/organiser-field-tips.js?v=20260812membook" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260812uxfix1" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260812memfee" defer></script>
   </body>
 </html>

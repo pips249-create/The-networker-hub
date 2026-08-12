@@ -2002,7 +2002,7 @@
       setMembersOnlyTicketHint(
         membershipMeeting
           ? 'Members on your list book this free (or at the member price). Guests use complimentary visits first, then join membership — no public event ticket.'
-          : 'Members on your list book when signed in with their membership email. Use £0 when membership already covers attendance.',
+          : 'Members on your list book when signed in with their membership email.',
         'ok'
       );
     }
@@ -2728,7 +2728,7 @@
           : String(tier.quantityAvailable);
     }
     setMembersOnlyTicketHint(
-      'Members on your list book when signed in with their membership email. Use £0 when membership already covers attendance.',
+      'Members on your list book when signed in with their membership email.',
       'ok'
     );
     syncPrivateTicketFields();
