@@ -18,6 +18,7 @@ const DEFAULT_NAMES = {
   'catherine@thenetworkerhub.com': 'Catherine',
   'rosie@thenetworkerhub.com': 'Rosie',
   'rosie.mcgilvray@yahoo.co.uk': 'Rosie McGilvray',
+  'jamie@thenetworkerhub.com': 'Jamie',
 };
 
 async function main() {
