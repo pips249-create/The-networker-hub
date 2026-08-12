@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812doors2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812readability2" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -88,23 +88,23 @@
 
         <div class="ee-card" id="ee-panel-pay-how" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
-          <h2>How do you get paid?</h2>
+          <h2 data-hub-tip="pay-how">How do you get paid?</h2>
           <p class="ee-hint" style="margin-top:0" id="ee-pay-how-lead">
             Choose tickets, monthly membership, or both. Free trial visits are optional on either.
           </p>
           <fieldset class="ee-field ee-pay-how-options">
-            <legend class="ee-label-block">Money for this event</legend>
+            <legend class="ee-label-block" data-hub-tip="pay-how-money">Money for this event</legend>
             <label class="ee-check">
               <input type="radio" name="ee-pay-how" value="tickets" id="ee-pay-how-tickets" checked />
-              <span><strong>Tickets</strong> — one-off prices for this event</span>
+              <span><strong>Tickets</strong> — one-off for this event (paid or free)</span>
             </label>
             <label class="ee-check">
               <input type="radio" name="ee-pay-how" value="membership" id="ee-pay-how-membership" />
-              <span><strong>Monthly / annual membership</strong> — group dues (not an event ticket)</span>
+              <span data-hub-tip="pay-how-membership"><strong>Monthly / annual membership</strong></span>
             </label>
             <label class="ee-check">
               <input type="radio" name="ee-pay-how" value="both" id="ee-pay-how-both" />
-              <span><strong>Both</strong> — tickets and membership</span>
+              <span data-hub-tip="pay-how-both"><strong>Both</strong> — tickets and membership</span>
             </label>
           </fieldset>
           <p class="ee-hint" id="ee-pay-how-hint">You must choose tickets or membership (or both) before publishing.</p>
@@ -216,7 +216,7 @@
               <span>Closed meeting — only people on my member list can book (no trial visits)</span>
             </label>
             <p class="ee-hint">
-              Listing stays in the directory. Non-members cannot book or use free trial visits. Use this when membership is on and you do not want public booking.
+              Listing stays in the directory. Non-members cannot book or use free trial visits. Untick this if you want free trial visits for newcomers.
             </p>
           </div>
 
@@ -278,7 +278,7 @@
               <span class="ee-addon-toggle-copy">
                 <strong>Monthly / annual membership</strong>
                 <span class="ee-addon-summary"
-                  >Set Hub membership prices. After complimentary visits, guests join membership on your organiser page — no event ticket needed.</span
+                  >Set monthly and annual membership amounts. After complimentary visits, guests join on your organiser page — no event ticket needed.</span
                 >
               </span>
             </label>
@@ -315,8 +315,8 @@
                   />
                 </div>
               </div>
-              <fieldset class="ee-field" aria-label="VAT on membership price">
-                <legend class="ee-label-block">VAT on membership price</legend>
+              <fieldset class="ee-field" aria-label="VAT on membership">
+                <legend class="ee-label-block">VAT on membership</legend>
                 <label class="ee-check">
                   <input type="radio" name="ee-hub-membership-vat" value="included" checked />
                   <span>VAT included</span>
@@ -605,9 +605,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260812labels" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260812paytips" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260811eventnext" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260812inline" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260812membervisits" defer></script>
   </body>
 </html>

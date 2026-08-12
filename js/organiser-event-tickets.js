@@ -1153,8 +1153,9 @@
       attendanceDoor = 'general';
       attendanceMode = 'membership_meeting';
       setGuestProgrammeEnabled(true);
+      // Closed meeting means "no trial visits" — keep it off while visits are on.
       const moe = document.getElementById('ee-members-only-event-enabled');
-      if (moe) moe.checked = true;
+      if (moe) moe.checked = false;
       const priceEl = document.getElementById('ee-private-ticket-price');
       if (priceEl && (priceEl.value === '' || priceEl.value == null)) priceEl.value = '0';
       const optOut = document.getElementById('ee-guest-passes-disabled');
@@ -1164,7 +1165,12 @@
       attendanceDoor = 'general';
       setGuestProgrammeEnabled(isGuest);
       attendanceMode = isGuest ? 'guest_programme' : 'tickets';
-      if (isGuest) {
+      // Leaving membership-meeting must clear the closed/member-list shell when
+      // public tickets are on — otherwise Ticket 1 stays hidden after switching.
+      if (payHowIncludesTickets()) {
+        const moe = document.getElementById('ee-members-only-event-enabled');
+        if (moe) moe.checked = false;
+      } else if (isGuest) {
         const moe = document.getElementById('ee-members-only-event-enabled');
         if (moe) moe.checked = false;
       }
@@ -1648,9 +1654,35 @@
   }
 
   function handleMembersOnlyEventToggle() {
+    if (isMembershipOnlyPayHow()) {
+      if (membersOnlyEventEnabled()) {
+        // Closed meeting: member list only — turn free trial visits off.
+        const guestEl = document.getElementById('ee-guest-programme-enabled');
+        if (guestEl) {
+          guestEl.dataset.userToggled = '1';
+          guestEl.checked = false;
+        }
+        setAttendanceMode('tickets');
+        loadMemberRosterStatus();
+      } else {
+        // Unticked closed meeting → offer free trial visits again.
+        const guestEl = document.getElementById('ee-guest-programme-enabled');
+        if (guestEl) {
+          guestEl.dataset.userToggled = '1';
+          guestEl.checked = true;
+        }
+        const visits = document.getElementById('ee-guest-visits-allowed');
+        if (visits && !visits.dataset.touched) visits.value = '2';
+        setAttendanceMode('membership_meeting');
+        setMemberRosterStatusMessage('');
+      }
+      syncMembersOnlyEventMode();
+      updatePublishButton();
+      return;
+    }
     if (isMembershipMeetingMode()) {
-      const moe = document.getElementById('ee-members-only-event-enabled');
-      if (moe) moe.checked = true;
+      // Closed meeting and free visits are mutually exclusive on membership-only;
+      // for other modes, keep membership_meeting from forcing the box back on.
       syncMembersOnlyEventMode();
       updatePublishButton();
       return;
@@ -1715,6 +1747,24 @@
     const optOut = document.getElementById('ee-guest-passes-opt-out');
     const isCategory = attendanceMode === 'category_exclusivity';
     const isMeeting = isMembershipMeetingMode();
+    const membershipOnly = isMembershipOnlyPayHow();
+    const generalMount = document.getElementById('ee-general-guest-mount');
+
+    // Membership-only: keep free trial visits in Step 2 so visit count stays editable
+    // even when the closed-meeting / member-booking panel is open below.
+    if (membershipOnly && !isCategory) {
+      if (meetingMount) meetingMount.hidden = true;
+      if (ceMount) ceMount.hidden = true;
+      if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
+      if (generalMount && guestAddon) {
+        generalMount.hidden = false;
+        if (guestAddon.parentElement !== generalMount) generalMount.appendChild(guestAddon);
+        guestAddon.hidden = false;
+        fields.hidden = !guestProgrammeEnabled();
+        if (optOut) optOut.hidden = true;
+      }
+      return;
+    }
 
     if (isMeeting) {
       if (addonHome && guestAddon && guestAddon.parentElement !== addonHome) {
@@ -1727,6 +1777,7 @@
       fields.hidden = false;
       if (optOut) optOut.hidden = true;
       if (ceMount) ceMount.hidden = true;
+      if (generalMount) generalMount.hidden = true;
       return;
     }
 
@@ -1740,17 +1791,15 @@
       }
       fields.hidden = !guestProgrammeEnabled();
       if (optOut) optOut.hidden = true;
-      const generalMount = document.getElementById('ee-general-guest-mount');
       if (generalMount) generalMount.hidden = true;
       return;
     }
 
     // General ticketing — keep free trial visits in Step 2 pay-how panel.
-    const generalMount = document.getElementById('ee-general-guest-mount');
     if (meetingMount) meetingMount.hidden = true;
     if (ceMount) ceMount.hidden = true;
     if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
-    if (generalMount && guestAddon && !membersOnlyEventEnabled()) {
+    if (generalMount && guestAddon) {
       generalMount.hidden = false;
       if (guestAddon.parentElement !== generalMount) generalMount.appendChild(guestAddon);
       guestAddon.hidden = false;
@@ -1775,14 +1824,8 @@
     const membershipOnlyPay = isMembershipOnlyPayHow();
     // Membership-only (with or without visits) never shows public Ticket 1 rows.
     const on = membersOnlyEventEnabled() || membershipMeeting || membershipOnlyPay;
-    if (membershipMeeting) {
-      const moe = document.getElementById('ee-members-only-event-enabled');
-      if (moe) moe.checked = true;
-    } else if (membershipOnlyPay && !guestProgrammeEnabled()) {
-      // Membership without visits → closed meeting (member list only).
-      const moe = document.getElementById('ee-members-only-event-enabled');
-      if (moe) moe.checked = true;
-    }
+    // Do not force the closed-meeting checkbox here — user must be able to untick it
+    // and turn free trial visits back on.
     const addonOnly = !on && Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
     const toggleWrap = document.getElementById('ee-members-only-event-toggle');
     const publicWrap = document.getElementById('ee-public-tickets-wrap');
@@ -1798,16 +1841,19 @@
     const moeSummary = document.getElementById('ee-members-only-event-summary');
     const addonMount = document.getElementById('ee-private-ticket-fields-mount');
     if (toggleWrap) {
-      toggleWrap.classList.toggle('is-enabled', on && !membershipMeeting && !guestProgrammeEnabled());
+      toggleWrap.classList.toggle(
+        'is-enabled',
+        membersOnlyEventEnabled() && !guestProgrammeEnabled()
+      );
     }
     if (toggleWrap) {
-      // Closed meeting only for General + membership-only when visits are off.
+      // Always show for General + membership-only so organisers can switch
+      // between closed meeting and free trial visits.
       const showClosed =
-        !membershipMeeting &&
-        !guestProgrammeEnabled() &&
+        membershipOnlyPay &&
         isOpenBookingMode(attendanceMode) &&
         attendanceMode !== 'guest_programme' &&
-        membershipOnlyPay;
+        attendanceDoor !== 'application';
       toggleWrap.hidden = !showClosed;
     }
     if (publicWrap) publicWrap.hidden = on;
@@ -1909,7 +1955,10 @@
 
   function updateMembersOnlyEventSummary() {
     const summary = document.getElementById('ee-members-only-event-summary');
-    if (!summary || !membersOnlyEventEnabled()) return;
+    if (!summary) return;
+    if (!(membersOnlyEventEnabled() || isMembershipMeetingMode() || isMembershipOnlyPayHow())) {
+      return;
+    }
     const tier = collectMembersOnlyTicket([]);
     if (!tier) {
       summary.textContent = 'Member ticket · add a name below';
@@ -2056,8 +2105,8 @@
     }
     if (hint) {
       hint.textContent = includesMembership
-        ? 'After free trial visits, people join membership. Membership prices are set below.'
-        : 'Add at least one ticket type below. You can still offer free trial visits.';
+        ? 'After free trial visits, people join membership. Set monthly/annual amounts below.'
+        : 'Add at least one ticket type below (paid or free). You can still offer free trial visits.';
     }
 
     if (wrap) {
@@ -2094,12 +2143,11 @@
     }
 
     if (closedToggle) {
-      // Visible only for General + membership-only (not while already on the visits meeting path).
+      // Visible for General + membership-only so organisers can switch to/from closed.
       closedToggle.hidden =
         isApplication ||
         !includesMembership ||
         includesTickets ||
-        isMembershipMeetingMode() ||
         attendanceMode === 'guest_programme';
     }
 
@@ -2391,28 +2439,75 @@
       if (radio.dataset.boundPayHow) return;
       radio.dataset.boundPayHow = '1';
       radio.addEventListener('change', function () {
-        if (isMembershipOnlyPayHow()) {
-          const visitsToggle = document.getElementById('ee-guest-programme-enabled');
-          if (visitsToggle && !visitsToggle.dataset.userToggled) {
-            setGuestProgrammeEnabled(true);
-          }
-          if (guestProgrammeEnabled()) {
-            setMembersOnlyEventEnabled(false);
-            setAttendanceMode('membership_meeting');
-          } else {
-            setMembersOnlyEventEnabled(true);
-            setAttendanceMode('tickets');
-          }
-        } else {
-          setMembersOnlyEventEnabled(false);
-          const mode = resolveModeFromDoorAndPayHow();
-          setAttendanceMode(mode);
-        }
-        syncPayHowUi();
-        updatePublishButton();
+        applyPayHowSelection();
       });
     });
     syncPayHowUi();
+  }
+
+  /** Keep UI consistent when switching Tickets / Membership / Both. */
+  function applyPayHowSelection() {
+    if (isMembershipOnlyPayHow()) {
+      const visitsToggle = document.getElementById('ee-guest-programme-enabled');
+      if (visitsToggle && !visitsToggle.dataset.userToggled) {
+        setGuestProgrammeEnabled(true);
+      }
+      if (guestProgrammeEnabled()) {
+        setMembersOnlyEventEnabled(false);
+        setAttendanceMode('membership_meeting');
+      } else {
+        setMembersOnlyEventEnabled(true);
+        setAttendanceMode('tickets');
+      }
+    } else {
+      // Tickets or Both — leave membership-meeting / closed shell so public tiers show.
+      if (isMembershipMeetingMode()) {
+        attendanceMode = 'tickets';
+      }
+      setMembersOnlyEventEnabled(false);
+      if (!payHowIncludesMembership()) {
+        setHubMembershipEnabled(false);
+      }
+      setAttendanceMode(resolveModeFromDoorAndPayHow());
+      ensurePublicTiersAfterLeavingMembership();
+    }
+    syncPayHowUi();
+    syncMembersOnlyEventMode();
+    updateTierSummary();
+    updatePublishButton();
+  }
+
+  /**
+   * Membership-only stores the £0/member price in private fields. When switching
+   * to Tickets/Both, seed a public tier so the free ticket does not “vanish”.
+   */
+  function ensurePublicTiersAfterLeavingMembership() {
+    if (!payHowIncludesTickets()) return;
+    const wrap = document.getElementById('ee-tier-rows');
+    if (!wrap) return;
+    if (wrap.querySelectorAll('.ee-tier-row').length) {
+      const publicWrap = document.getElementById('ee-public-tickets-wrap');
+      if (publicWrap) publicWrap.hidden = false;
+      return;
+    }
+    const privateName = String(document.getElementById('ee-private-ticket-name')?.value || '').trim();
+    const privatePrice = document.getElementById('ee-private-ticket-price')?.value;
+    const row = addTierRow({ useDefaultName: false });
+    if (!row) return;
+    const nameEl = row.querySelector('.ee-tier-name');
+    const priceEl = row.querySelector('.ee-tier-price');
+    if (nameEl) {
+      nameEl.value =
+        privateName && !/^member ticket$/i.test(privateName) ? privateName : DEFAULT_TIER_NAME;
+    }
+    if (priceEl) {
+      priceEl.value =
+        privatePrice === '' || privatePrice == null ? '0' : String(privatePrice);
+    }
+    const publicWrap = document.getElementById('ee-public-tickets-wrap');
+    if (publicWrap) publicWrap.hidden = false;
+    const membersWrap = document.getElementById('ee-members-only-event-wrap');
+    if (membersWrap) membersWrap.hidden = true;
   }
 
   function bindCeChargeTicketFields() {

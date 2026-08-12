@@ -34,6 +34,45 @@ function normalizeAttendanceMode(mode) {
   return 'tickets';
 }
 
+/** Recover platform label for older rows that only stored meeting_link. */
+function inferOnlinePlatformFromLink(link) {
+  const u = String(link || '').trim().toLowerCase();
+  if (!u) return '';
+  if (u.includes('zoom.')) {
+    return /webinar/i.test(u) ? 'Zoom Webinar' : 'Zoom Meeting';
+  }
+  if (u.includes('teams.microsoft') || u.includes('teams.live') || u.includes('microsoft.com/l/meetup')) {
+    return 'Microsoft Teams';
+  }
+  if (u.includes('meet.google') || u.includes('hangouts.google')) return 'Google Meet';
+  if (u.includes('hopin.')) return 'Hopin';
+  if (/^https?:\/\//i.test(u)) return 'Other';
+  return '';
+}
+
+function isMissingMeetingPlatformColumnError(err) {
+  const msg = String(err?.message || err || '');
+  return /meeting_platform/i.test(msg) && /column|schema|does not exist|Could not find/i.test(msg);
+}
+
+async function insertEventRow(sb, row) {
+  let { data, error } = await sb.from('events').insert(row).select('*').single();
+  if (error && isMissingMeetingPlatformColumnError(error) && 'meeting_platform' in row) {
+    delete row.meeting_platform;
+    ({ data, error } = await sb.from('events').insert(row).select('*').single());
+  }
+  return { data, error };
+}
+
+async function updateEventRowById(sb, eventId, row) {
+  let { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
+  if (error && isMissingMeetingPlatformColumnError(error) && 'meeting_platform' in row) {
+    delete row.meeting_platform;
+    ({ data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single());
+  }
+  return { data, error };
+}
+
 function parseWorkspaceEventsQuery(req) {
   const limitRaw = parseInt(String(req?.query?.eventsLimit || ''), 10);
   const offsetRaw = parseInt(String(req?.query?.eventsOffset || ''), 10);
@@ -197,7 +236,8 @@ function rowToEvent(row) {
     city: String(row.city || '').trim(),
     postcode: String(row.postcode || '').trim(),
     eventFormat: String(row.meeting_type || '').trim(),
-    onlinePlatform: '',
+    onlinePlatform:
+      String(row.meeting_platform || '').trim() || inferOnlinePlatformFromLink(row.meeting_link),
     onlineLink: String(row.meeting_link || '').trim(),
     imageUrl: eventImageUrl(row),
     imagePosition: normalizeEventImagePosition(row.image_position),
@@ -903,7 +943,18 @@ async function buildEventRow(payload, eventId, mode) {
       }) || null;
   }
 
-  row.meeting_link = payload.onlineLink || null;
+  if (mode === 'create' || Object.prototype.hasOwnProperty.call(payload, 'onlineLink')) {
+    row.meeting_link = payload.onlineLink || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'onlinePlatform')) {
+    const platform = String(payload.onlinePlatform || '').trim();
+    row.meeting_platform = platform || inferOnlinePlatformFromLink(row.meeting_link) || null;
+  } else if (
+    Object.prototype.hasOwnProperty.call(payload, 'onlineLink') &&
+    row.meeting_link
+  ) {
+    row.meeting_platform = inferOnlinePlatformFromLink(row.meeting_link) || null;
+  }
 
   if (payload.industry) {
     row.industries = [String(payload.industry).trim()];
@@ -1009,7 +1060,7 @@ async function createEvent(payload) {
     'create'
   );
   row = await inheritGroupPhotoIfMissing(row, payload);
-  const { data, error } = await sb.from('events').insert(row).select('*').single();
+  const { data, error } = await insertEventRow(sb, row);
   if (error) throw new Error(error.message);
 
   let saved = data;
@@ -1093,6 +1144,8 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
     city: String(row.city || '').trim(),
     postcode: String(row.postcode || '').trim(),
     eventFormat: String(row.meeting_type || '').trim(),
+    onlinePlatform:
+      String(row.meeting_platform || '').trim() || inferOnlinePlatformFromLink(row.meeting_link),
     onlineLink: String(row.meeting_link || '').trim(),
     industry: Array.isArray(row.industries) ? row.industries[0] || '' : '',
     maxAttendees: row.max_attendees != null ? Number(row.max_attendees) : null,
@@ -1193,6 +1246,18 @@ async function updateEvent(eventId, payload) {
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
   const previousLink = String(existing?.meeting_link || '').trim();
   let patchPayload = { ...payload, groupId: payload.groupId };
+  // Don't wipe a saved join link / platform when the form briefly sends blanks.
+  const formatOnline = /online/i.test(
+    String(patchPayload.eventFormat || existing?.meeting_type || '')
+  );
+  if (formatOnline && existing) {
+    if (!String(patchPayload.onlineLink || '').trim() && existing.meeting_link) {
+      patchPayload.onlineLink = existing.meeting_link;
+    }
+    if (!String(patchPayload.onlinePlatform || '').trim() && existing.meeting_platform) {
+      patchPayload.onlinePlatform = existing.meeting_platform;
+    }
+  }
   patchPayload = await applyDuplicateTitleGuard(sb, existing, patchPayload);
   const saleLocked =
     existing &&
@@ -1216,6 +1281,9 @@ async function updateEvent(eventId, payload) {
     if (!String(patchPayload.onlineLink || '').trim()) {
       patchPayload.onlineLink = existing.meeting_link;
     }
+    if (!String(patchPayload.onlinePlatform || '').trim()) {
+      patchPayload.onlinePlatform = existing.meeting_platform || '';
+    }
     delete patchPayload.photoBase64;
     delete patchPayload.photoUrl;
     delete patchPayload.imagePosition;
@@ -1238,7 +1306,7 @@ async function updateEvent(eventId, payload) {
       }
     }
   }
-  const { data, error } = await sb.from('events').update(row).eq('id', eventId).select('*').single();
+  const { data, error } = await updateEventRowById(sb, eventId, row);
   if (error) throw new Error(error.message);
   if (existing?.starts_at !== data?.starts_at && data?.starts_at) {
     await syncTicketSaleEndsAfterStartChange(sb, eventId, existing?.starts_at, data.starts_at);

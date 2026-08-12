@@ -69,6 +69,30 @@
         'Let newcomers visit for free (up to 3) before they join membership or buy a ticket. After visits are used, they need membership or a paid ticket to keep attending.',
       hubertPrompt: 'What are free trial visits?',
     },
+    'pay-how': {
+      title: 'How do you get paid?',
+      body:
+        'Choose tickets for this event (paid or free), monthly/annual membership for your group, or both. Free trial visits are optional and work with either path.',
+      hubertPrompt: 'Should I use tickets or membership for my networking event?',
+    },
+    'pay-how-money': {
+      title: 'Money for this event',
+      body:
+        'Tickets are one-off for this listing — including free tickets at £0. Membership is your group dues on the organiser page. Both means guests can buy a ticket or join membership.',
+      hubertPrompt: 'What is the difference between tickets and membership?',
+    },
+    'pay-how-membership': {
+      title: 'Monthly / annual membership',
+      body:
+        'People join your group membership instead of buying a one-off event ticket. You can still offer free trial visits, or tick Closed meeting so only people on your member list can book.',
+      hubertPrompt: 'How does monthly membership work with events?',
+    },
+    'pay-how-both': {
+      title: 'Tickets and membership',
+      body:
+        'Offer public tickets for this event and monthly/annual membership. Guests can buy a ticket, use free trial visits if you offer them, or join membership.',
+      hubertPrompt: 'When should I offer both tickets and membership?',
+    },
     'member-only-event': {
       title: 'Member-only for this event',
       body:
@@ -90,14 +114,14 @@
     'members-only-event-listing': {
       title: 'Closed meeting — member list only',
       body:
-        'Only people on your member list can book — no public booking and no free trial visits. Use under General ticketing when membership is on and you do not want guests.',
+        'Only people on your member list can book — no public booking and no free trial visits. Untick this to offer free trial visits for newcomers. Use under General ticketing when membership is on.',
       hubertPrompt: 'How do I make an event members only with no public ticket?',
     },
     'hub-membership-prices': {
       title: 'Monthly / annual membership',
       body:
-        'Group dues (not an event ticket). After free trial visits, newcomers join on your organiser page. Prices also appear under Memberships.',
-      hubertPrompt: 'How do I set monthly membership prices when setting up tickets?',
+        'Your group membership on the organiser page (not a one-off event ticket). After free trial visits, newcomers join here. Amounts also appear under Memberships.',
+      hubertPrompt: 'How do I set monthly membership when setting up tickets?',
     },
     'category-exclusivity': {
       title: 'Application based',

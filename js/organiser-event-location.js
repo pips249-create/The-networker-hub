@@ -421,7 +421,15 @@
       document.getElementById('ee-postcode').value = ev.postcode || '';
     }
     if (document.getElementById('ee-platform')) {
-      const platform = ev.onlinePlatform || '';
+      let platform = ev.onlinePlatform || '';
+      if (!platform && ev.onlineLink) {
+        const u = String(ev.onlineLink).toLowerCase();
+        if (u.includes('zoom.')) platform = /webinar/i.test(u) ? 'Zoom Webinar' : 'Zoom Meeting';
+        else if (u.includes('teams.microsoft') || u.includes('teams.live')) platform = 'Microsoft Teams';
+        else if (u.includes('meet.google')) platform = 'Google Meet';
+        else if (u.includes('hopin.')) platform = 'Hopin';
+        else if (/^https?:\/\//i.test(u)) platform = 'Other';
+      }
       const platformSel = document.getElementById('ee-platform');
       if (platform && ![...platformSel.options].some((o) => o.value === platform || o.text === platform)) {
         const opt = document.createElement('option');

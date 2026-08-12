@@ -25,6 +25,8 @@ body.hub-page-organiser.organiser-event-edit-page {
   --ee-border: #e8dbea;
   --ee-radius: 10px;
   font-family: DM Sans, system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
   background: var(--ee-bg);
   color: var(--ee-text);
   min-height: 100vh;
@@ -57,9 +59,9 @@ body.hub-page-organiser.organiser-event-edit-page {
 
 .ee-wizard-summary {
   margin: 0 0 10px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ee-text-mid);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .ee-wizard-step-count,
@@ -207,7 +209,7 @@ a.ee-wizard-link:hover {
 }
 
 .ee-back-secondary {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--ee-text-mid);
 }
@@ -218,7 +220,7 @@ a.ee-wizard-link:hover {
 }
 
 .ee-subheading {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ee-purple-dark);
   margin: 18px 0 8px;
@@ -321,7 +323,7 @@ a.ee-wizard-link:hover {
 }
 
 .ee-card h2 {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--ee-purple-dark);
   margin: 0 0 14px;
@@ -333,7 +335,7 @@ a.ee-wizard-link:hover {
 
 .ee-field > label {
   display: block;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--ee-text-mid);
   margin-bottom: 6px;
@@ -435,8 +437,8 @@ a.ee-wizard-link:hover {
 .ee-field textarea {
   width: 100%;
   font: inherit;
-  font-size: 14px;
-  padding: 10px 12px;
+  font-size: 16px;
+  padding: 12px 14px;
   border: 1px solid var(--ee-border);
   border-radius: 6px;
   box-sizing: border-box;
@@ -765,10 +767,10 @@ a.ee-wizard-link:hover {
 }
 
 .ee-hint {
-  font-size: 11px;
-  color: var(--ee-text-soft);
+  font-size: 16px;
+  color: var(--ee-text-mid);
   margin-top: 8px;
-  line-height: 1.45;
+  line-height: 1.55;
 }
 
 .ee-actions {
@@ -818,9 +820,9 @@ a.ee-wizard-link:hover {
 
 .ee-btn {
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
-  padding: 11px 20px;
+  padding: 12px 22px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
@@ -1166,7 +1168,7 @@ a.ee-wizard-link:hover {
 }
 
 .ee-format-card span:last-child {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--ee-text-mid);
   line-height: 1.5;
 }
@@ -1224,7 +1226,7 @@ a.ee-wizard-link:hover {
 }
 
 .ee-step-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1271,8 +1273,8 @@ a.ee-wizard-link:hover {
 
 .ee-attendance-card > span:last-of-type {
   flex: 1 1 auto;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 17px;
+  line-height: 1.55;
   color: var(--ee-text-mid);
   font-weight: 400;
 }
@@ -1643,7 +1645,7 @@ body.ee-step2-modal-open {
 }
 
 .ee-label-block {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--ee-purple-dark);
   margin: 0 0 8px;
@@ -1672,7 +1674,7 @@ body.ee-step2-modal-open {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--ee-text);
   margin-bottom: 12px;
   cursor: pointer;
@@ -4074,7 +4076,7 @@ a.ee-btn.ee-btn-primary {
 
 .ee-label-block {
   display: block;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: #2d292b;
   margin-bottom: 4px;

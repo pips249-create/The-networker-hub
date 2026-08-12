@@ -1846,8 +1846,41 @@
     set('ee-address1', fields.addressLine1 || '');
     set('ee-city', fields.city || '');
     set('ee-postcode', fields.postcode || '');
-    set('ee-platform', fields.onlinePlatform || '');
     set('ee-join-link', fields.onlineLink || '');
+    const platformSel = document.getElementById('ee-platform');
+    if (platformSel) {
+      let platform = String(fields.onlinePlatform || '').trim();
+      if (!platform && fields.onlineLink) {
+        platform = inferPlatformFromJoinLink(fields.onlineLink);
+      }
+      if (platform) {
+        const match = [...platformSel.options].find(
+          (o) => o.value === platform || o.textContent === platform
+        );
+        if (!match) {
+          const opt = document.createElement('option');
+          opt.value = platform;
+          opt.textContent = platform;
+          platformSel.appendChild(opt);
+        }
+        platformSel.value = match ? match.value : platform;
+      } else {
+        platformSel.value = '';
+      }
+    }
+  }
+
+  function inferPlatformFromJoinLink(link) {
+    const u = String(link || '').trim().toLowerCase();
+    if (!u) return '';
+    if (u.includes('zoom.')) return /webinar/i.test(u) ? 'Zoom Webinar' : 'Zoom Meeting';
+    if (u.includes('teams.microsoft') || u.includes('teams.live') || u.includes('microsoft.com/l/meetup')) {
+      return 'Microsoft Teams';
+    }
+    if (u.includes('meet.google') || u.includes('hangouts.google')) return 'Google Meet';
+    if (u.includes('hopin.')) return 'Hopin';
+    if (/^https?:\/\//i.test(u)) return 'Other';
+    return '';
   }
 
   function bindFormatToggleButtons() {
