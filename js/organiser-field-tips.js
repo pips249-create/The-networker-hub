@@ -60,8 +60,8 @@
     'attendance-modes': {
       title: 'Attendance modes',
       body:
-        'Choose open ticket booking, Networking group meeting, or Category Exclusivity. Networking group meeting is for monthly membership groups: complimentary guest visits for newcomers, a free member ticket for your list, then join membership after visits — no public event ticket.',
-      hubertPrompt: 'What is the difference between ticket types, networking group meeting, guest visit programme, and Category Exclusivity?',
+        'Open ticket booking — anyone buys a ticket on the listing (optional guest visits and member rates later). Networking group meeting — free trial visits for newcomers, free member booking for your list, then join Hub monthly/annual membership (no public ticket). Category Exclusivity — guests apply with industry and job title; you approve before they pay (optional guest visits and membership).',
+      hubertPrompt: 'What is the difference between open ticket booking, networking group meeting, and Category Exclusivity?',
     },
     'guest-visit-programme': {
       title: 'Guest visit programme',
