@@ -447,7 +447,7 @@
     platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'moderation'],
     revenue: ['financials', 'revenue-targets', 'spotlight', 'sponsorship'],
-    comms: ['email', 'social'],
+    comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
   var METRICS_POLL_MS = 90000;
@@ -885,7 +885,12 @@
   }
 
   function navRouteKey(hash) {
-    var key = String(hash || '').split('/')[0];
+    var h = String(hash || '');
+    // Founding organisers is a separate sidebar item under Email & social
+    if (h === 'social/founding' || h.indexOf('social/founding/') === 0) {
+      return 'social-founding';
+    }
+    var key = h.split('/')[0];
     var parents = {
       'group-cleanup': 'cleanup',
       'event-cleanup': 'cleanup',
@@ -1226,6 +1231,7 @@
    * Resolve hub tab from hash. Bare `#hub` restores the last tab (redirect).
    * Returns null when a redirect was issued (hashchange will re-render).
    * options.pathFor(tab) maps tab keys to hash paths when they differ from hub/tab.
+   * options.restoreLastTab: false — bare `#hub` always opens the default tab (no redirect).
    */
   function resolveHubTab(fullHash, hub, allowedTabs, defaultTab, options) {
     var opts = options || {};
@@ -1247,6 +1253,11 @@
     }
     var bare = !explicit;
     if (bare) {
+      // Social posts has its own sidebar link (#social); never bounce it to founding.
+      if (opts.restoreLastTab === false) {
+        rememberHubTab(hub, fallback);
+        return fallback;
+      }
       var recalled = recalledHubTab(hub, fallback);
       if (allowed.indexOf(recalled) === -1) recalled = fallback;
       rememberHubTab(hub, recalled);
@@ -21764,6 +21775,8 @@
       pathFor: function (t) {
         return t === 'founding' ? 'social/founding' : 'social';
       },
+      // Sidebar "Social posts" is #social — don't restore founding over it
+      restoreLastTab: false,
     });
     if (!tab) return;
     var tabsHtml = adminHubTabsHtml(
