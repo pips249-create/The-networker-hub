@@ -41,6 +41,7 @@ function mapRow(row) {
     foundingOrganiserAt: row.founding_organiser_at || null,
     foundingHomepageUntil: homepageUntil,
     foundingHomepage: homepageActive,
+    isInternal: Boolean(row.is_internal),
   };
 }
 
@@ -48,7 +49,7 @@ async function listFounding(sb) {
   const { data, error } = await sb
     .from('organisers')
     .select(
-      'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until'
+      'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until, is_internal'
     )
     .not('founding_organiser_at', 'is', null)
     .order('founding_organiser_at', { ascending: true })
@@ -71,7 +72,7 @@ async function getOrganiser(sb, id) {
   const { data, error } = await sb
     .from('organisers')
     .select(
-      'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until'
+      'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until, is_internal'
     )
     .eq('id', id)
     .maybeSingle();
@@ -168,6 +169,10 @@ module.exports = async function handler(req, res) {
       };
     } else if (action === 'homepage_off' || action === 'revoke_homepage') {
       patch = { founding_homepage_until: null };
+    } else if (action === 'mark_internal') {
+      patch = { is_internal: true, founding_homepage_until: null };
+    } else if (action === 'mark_external') {
+      patch = { is_internal: false };
     } else {
       return json(res, 400, { error: 'unknown_action', message: 'Unknown action: ' + action });
     }
@@ -177,7 +182,7 @@ module.exports = async function handler(req, res) {
       .update(patch)
       .eq('id', organiserId)
       .select(
-        'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until'
+        'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until, is_internal'
       )
       .single();
     if (error) throw new Error(error.message);

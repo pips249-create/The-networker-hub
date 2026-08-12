@@ -158,6 +158,7 @@ async function listFoundingHomepageOrganisers(sb, now = new Date()) {
     .not('founding_homepage_until', 'is', null)
     .gt('founding_homepage_until', iso)
     .eq('ownership_claim_status', 'claimed')
+    .eq('is_internal', false)
     .order('ownership_claimed_at', { ascending: true })
     .limit(FOUNDING_HOMEPAGE_CAP);
   if (error) throw new Error(error.message);
@@ -173,6 +174,7 @@ async function listFoundingOrganisersForGateway(sb, limit = 48) {
     )
     .not('founding_organiser_at', 'is', null)
     .eq('ownership_claim_status', 'claimed')
+    .eq('is_internal', false)
     .order('founding_organiser_at', { ascending: true })
     .limit(Math.min(100, Math.max(1, Number(limit) || 48)));
   if (error) throw new Error(error.message);

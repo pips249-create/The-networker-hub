@@ -21883,6 +21883,7 @@
                   '">' +
                   '<td class="px-4 py-3"><p class="font-semibold text-brand-900">' +
                   esc(o.name) +
+                  (o.isInternal ? ' <span class="inline-flex rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-500">internal</span>' : '') +
                   '</p><p class="text-xs text-slate-500">' +
                   esc(o.email || '—') +
                   '</p></td>' +
@@ -21907,6 +21908,9 @@
                     ? '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-founding-action="homepage_off">Remove homepage</button>'
                     : '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-founding-action="homepage_on">Add homepage</button>') +
                   '<button type="button" class="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50" data-founding-action="revoke">Revoke badge</button>' +
+                  (o.isInternal
+                    ? '<button type="button" class="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50" data-founding-action="mark_external">Unmark internal</button>'
+                    : '<button type="button" class="rounded border border-orange-200 px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-50" data-founding-action="mark_internal">Mark internal</button>') +
                   '</div></td></tr>'
                 );
               })
@@ -21982,6 +21986,7 @@
           var action = btn.getAttribute('data-founding-action');
           if (!id || !action) return;
           if (action === 'revoke' && !window.confirm('Revoke founding badge (and homepage slot) for this group?')) return;
+          if (action === 'mark_internal' && !window.confirm('Mark this account as internal/test? It will be hidden from all public strips.')) return;
           runAction(id, action);
         });
       });
