@@ -124,7 +124,14 @@
   let autodraftDisabled = false;
   let cachedLocationFields = null;
 
-  const AUTODRAFT_INLINE_DEFAULT = 'Progress saves to your account automatically.';
+  const AUTODRAFT_INLINE_DEFAULT =
+    'Progress backs up here automatically. Listings stay Draft until Confirm & publish.';
+
+  function autodraftInlineDefault() {
+    return editId
+      ? 'Edits save to your account automatically. Listings stay Draft until Confirm & publish.'
+      : AUTODRAFT_INLINE_DEFAULT;
+  }
 
   function countWords(text) {
     return String(text || '')
@@ -163,7 +170,7 @@
         inline.classList.add('is-error');
         inline.classList.remove('is-restored', 'is-saving');
       } else {
-        inline.textContent = AUTODRAFT_INLINE_DEFAULT;
+        inline.textContent = autodraftInlineDefault();
         inline.classList.remove('is-error', 'is-restored', 'is-saving');
       }
     }
