@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { isUuid } = require('../uuid');
 
 function parseBody(req) {
   let body = req.body;
@@ -12,6 +13,49 @@ function parseBody(req) {
   return body || {};
 }
 
+function collectEventIds(body, queryEventId) {
+  const fromArray = Array.isArray(body.eventIds)
+    ? body.eventIds
+    : Array.isArray(body.event_ids)
+      ? body.event_ids
+      : [];
+  const single = String(
+    body.eventId || body.event_id || body.targetEventId || queryEventId || ''
+  ).trim();
+  const ids = fromArray
+    .map((id) => String(id || '').trim())
+    .concat(single ? [single] : [])
+    .filter((id) => isUuid(id));
+  return Array.from(new Set(ids));
+}
+
+function buildSendMessage(result) {
+  const dateCount = Array.isArray(result.eventIds) ? result.eventIds.length : 1;
+  const dateSuffix =
+    dateCount > 1 ? ' across ' + dateCount + ' dates' : '';
+  if (result.sent > 0) {
+    return (
+      'Sent ' +
+      result.sent +
+      ' member invite' +
+      (result.sent === 1 ? '' : 's') +
+      dateSuffix +
+      '. Members can book without applying.'
+    );
+  }
+  if (result.eligible === 0) {
+    return 'No active members on your Membership list to invite.';
+  }
+  return (
+    'Created ' +
+    result.created +
+    ' invite' +
+    (result.created === 1 ? '' : 's') +
+    dateSuffix +
+    (result.skipped ? ' (' + result.skipped + ' already invited).' : '.')
+  );
+}
+
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const { json, setCors, requireOrganiserSession } = api;
@@ -19,6 +63,7 @@ module.exports = async function handler(req, res) {
     listCeMemberInviteStats,
     previewCeMemberInvites,
     sendCeMemberInvites,
+    sendCeMemberInvitesForEvents,
   } = require('../supabase-organiser-ce-member-invites');
 
   setCors(req, res);
@@ -47,35 +92,32 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'POST') {
       const body = parseBody(req);
-      const targetEventId = String(
-        body.eventId || body.event_id || body.targetEventId || eventId || ''
-      ).trim();
+      const eventIds = collectEventIds(body, eventId);
       const sendEmails = body.sendEmails !== false && body.send_emails !== false;
-      if (!targetEventId) {
+      if (!eventIds.length) {
         return json(res, 400, { ok: false, error: 'missing_event_id' });
       }
 
-      const result = await sendCeMemberInvites(auth.session, {
-        eventId: targetEventId,
-        sendEmails,
+      const result =
+        eventIds.length === 1
+          ? await sendCeMemberInvites(auth.session, {
+              eventId: eventIds[0],
+              sendEmails,
+            })
+          : await sendCeMemberInvitesForEvents(auth.session, {
+              eventIds,
+              sendEmails,
+            });
+
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        eventIds: result.eventIds || eventIds,
+        message: buildSendMessage({
+          ...result,
+          eventIds: result.eventIds || eventIds,
+        }),
       });
-
-      const message =
-        result.sent > 0
-          ? 'Sent ' +
-            result.sent +
-            ' member invite' +
-            (result.sent === 1 ? '' : 's') +
-            '. Members can book without applying.'
-          : result.eligible === 0
-            ? 'No active members on your Membership list to invite.'
-            : 'Created ' +
-              result.created +
-              ' invite' +
-              (result.created === 1 ? '' : 's') +
-              (result.skipped ? ' (' + result.skipped + ' already invited).' : '.');
-
-      return json(res, 200, { ok: true, ...result, message });
     }
 
     return json(res, 405, { error: 'method_not_allowed' });

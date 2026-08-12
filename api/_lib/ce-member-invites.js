@@ -165,11 +165,37 @@ function ceMemberInviteEmailVariables({
 async function loadCeApplicationTicket(sb, eventId) {
   const { data, error } = await sb
     .from('tickets')
-    .select('id, name, price, quantity, ticket_type, status')
+    .select('id, name, price, quantity, ticket_type, visibility, status')
     .eq('event_id', eventId)
     .limit(20);
   if (error) throw new Error(error.message);
   const rows = data || [];
+  const application = rows.find((t) =>
+    /application/i.test(String(t.ticket_type || t.name || ''))
+  );
+  return application || rows[0] || null;
+}
+
+/**
+ * Ticket shown in member invite emails / used for seat checks.
+ * Prefer the Members only rate when the CE event has one; otherwise the application seat.
+ */
+async function loadCeMemberInviteTicket(sb, eventId) {
+  const { data, error } = await sb
+    .from('tickets')
+    .select('id, name, price, quantity, ticket_type, visibility, status')
+    .eq('event_id', eventId)
+    .limit(20);
+  if (error) throw new Error(error.message);
+  const rows = (data || []).filter((t) => {
+    const st = String(t.status || '').trim().toLowerCase();
+    return !st || st === 'active' || st === 'published';
+  });
+  const membersOnly = rows.find((t) => {
+    const vis = String(t.visibility || '').trim().toLowerCase();
+    return vis === 'members_only';
+  });
+  if (membersOnly) return membersOnly;
   const application = rows.find((t) =>
     /application/i.test(String(t.ticket_type || t.name || ''))
   );
@@ -190,5 +216,6 @@ module.exports = {
   buildCeMemberInviteUrl,
   ceMemberInviteEmailVariables,
   loadCeApplicationTicket,
+  loadCeMemberInviteTicket,
   assertCeMemberSeatAvailable,
 };

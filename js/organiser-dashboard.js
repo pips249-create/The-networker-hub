@@ -51,6 +51,7 @@
     ticketsScope: 'current',
     reviewsGroup: 'all',
     attendeesEvent: 'all',
+    attendeesEventIds: null,
     attendeesSearch: '',
     attendeesStatus: 'all',
     attendeesHideArchived: true,
@@ -4681,12 +4682,24 @@
     const approval = String(ev.approvalStatus || '').toLowerCase();
     return (
       st === 'published' ||
+      st === 'live' ||
       approval === 'approved' ||
       key === 'live' ||
       key === 'upcoming' ||
       key === 'pending_approval' ||
       key === 'archived'
     );
+  }
+
+  function ceMemberInviteCandidateEvents(ev) {
+    if (!ev) return [];
+    const source =
+      ev.isSeries && ev.seriesEvents && ev.seriesEvents.length
+        ? ev.seriesEvents
+        : [ev];
+    return source.filter(function (child) {
+      return eventIsCategoryExclusivity(child) && eventIsPublishedListing(child) && child.id;
+    });
   }
 
   function isEventDraftListing(ev) {
@@ -5087,14 +5100,6 @@
     return ids.some((id) => Boolean(eventApplicationTicket(id)));
   }
 
-  function eventIsPublishedListing(ev) {
-    if (!ev) return false;
-    const status = String(ev.status || '').toLowerCase();
-    const key = String(ev.statusKey || '').toLowerCase();
-    if (status === 'published' || status === 'live') return true;
-    return key === 'live' || key === 'upcoming' || key === 'published' || key === 'archived';
-  }
-
   function eventActionMenuHtmlWithItem(ev) {
     const id = ev.id;
     const title = ev.title;
@@ -5116,8 +5121,9 @@
           esc(id) +
           '"><span class="org-action-icon">🎓</span><span class="org-action-text"><strong>Invite previous attendees</strong><span>Email past attendees a locked ticket link</span></span></button>'
         : '';
+    const ceInviteTargets = ceMemberInviteCandidateEvents(ev);
     const ceMemberItem =
-      eventIsCategoryExclusivity(ev) && eventIsPublishedListing(ev)
+      ceInviteTargets.length > 0
         ? '<button type="button" class="org-action-item" data-send-ce-member-invites="' +
           esc(id) +
           '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Invite members</strong><span>Email your Membership list — they book without applying</span></span></button>'
@@ -5238,6 +5244,7 @@
   function applyAttendeesDeepLinkFromUrl() {
     const { route, eventId, membershipGroup, pendingOnly } = parseDeepLinkFromUrl();
     if (eventId) {
+      clearAttendeesSeriesFilter();
       filters.attendeesEvent = eventId;
       filters.ticketsEvent = eventId;
       filters.cancellationsEvent = eventId;
@@ -5770,7 +5777,7 @@
     }
     const pending = pendingApplicationsList().filter((a) => {
       if (filters.attendeesEvent === 'all') return true;
-      return a.eventId === filters.attendeesEvent;
+      return attendeesEventMatchesFilter(a.eventId);
     });
     if (!pending.length) {
       banner.hidden = true;
@@ -5953,7 +5960,7 @@
       list = list.filter((a) => !archivedEventIds.has(a.eventId));
     }
     if (filters.attendeesEvent !== 'all') {
-      list = list.filter((a) => a.eventId === filters.attendeesEvent);
+      list = list.filter((a) => attendeesEventMatchesFilter(a.eventId));
     }
     const search = String(filters.attendeesSearch || '').trim().toLowerCase();
     if (search) {
@@ -6035,9 +6042,55 @@
       '<span class="org-attendees-summary-note">Event bookings register — membership is separate. Members on your membership still appear here when they book.</span>';
   }
 
+  function attendeesEventFilterIds() {
+    if (Array.isArray(filters.attendeesEventIds) && filters.attendeesEventIds.length) {
+      return filters.attendeesEventIds.filter(Boolean);
+    }
+    if (filters.attendeesEvent && filters.attendeesEvent !== 'all') {
+      return [filters.attendeesEvent];
+    }
+    return [];
+  }
+
+  function attendeesEventMatchesFilter(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return false;
+    const ids = attendeesEventFilterIds();
+    if (!ids.length) return true;
+    return ids.indexOf(id) !== -1;
+  }
+
+  function clearAttendeesSeriesFilter() {
+    filters.attendeesEventIds = null;
+  }
+
+  function setAttendeesEventFilterFromAction(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) {
+      clearAttendeesSeriesFilter();
+      setAttendeesEventFilterValue('all', { skipRender: true });
+      return;
+    }
+    const row = findSeriesDisplayRowForEvent(id);
+    if (row && row.isSeries && row.seriesEventIds && row.seriesEventIds.length > 1) {
+      filters.attendeesEventIds = row.seriesEventIds.slice();
+      setAttendeesEventFilterValue(row.id || id, {
+        skipRender: true,
+        seriesCount: row.seriesCount,
+        seriesEventIds: row.seriesEventIds,
+      });
+      return;
+    }
+    clearAttendeesSeriesFilter();
+    setAttendeesEventFilterValue(id, { skipRender: true });
+  }
+
   function setAttendeesEventFilterValue(eventId, options) {
     const next = eventId || 'all';
     filters.attendeesEvent = next;
+    if (next === 'all' || !(options && options.seriesCount)) {
+      clearAttendeesSeriesFilter();
+    }
     const sel = document.getElementById('filter-attendees-event');
     if (sel) sel.value = next;
     const labelEl = document.getElementById('filter-attendees-event-label');
@@ -6048,9 +6101,29 @@
         const match = attendeesEventPickerOptions().find(function (row) {
           return row.id === next;
         });
-        labelEl.textContent = match
+        const seriesCount =
+          (options && options.seriesCount) ||
+          (filters.attendeesEventIds && filters.attendeesEventIds.length > 1
+            ? filters.attendeesEventIds.length
+            : 0);
+        // Re-apply series ids when label refresh keeps an explicit series selection.
+        if (options && options.seriesCount && Array.isArray(options.seriesEventIds)) {
+          filters.attendeesEventIds = options.seriesEventIds.slice();
+        }
+        const base = match
           ? match.label + (match.archived ? ' · Archived' : '')
           : 'Selected event';
+        labelEl.textContent =
+          seriesCount > 1 ? base + ' · all ' + seriesCount + ' dates' : base;
+        if (!match) {
+          const ev = findEventById(next);
+          if (ev) {
+            labelEl.textContent =
+              eventFilterOptionLabel(ev) +
+              (eventRowIsArchived(ev) ? ' · Archived' : '') +
+              (seriesCount > 1 ? ' · all ' + seriesCount + ' dates' : '');
+          }
+        }
       }
     }
     if (!(options && options.skipRender)) {
@@ -6133,6 +6206,10 @@
   function fillAttendeesEventFilter() {
     const sel = document.getElementById('filter-attendees-event');
     if (!sel) return;
+    const preservedSeriesIds =
+      Array.isArray(filters.attendeesEventIds) && filters.attendeesEventIds.length > 1
+        ? filters.attendeesEventIds.slice()
+        : null;
     const rows = attendeesEventPickerOptions();
     sel.innerHTML = '<option value="all">All events</option>';
     rows.forEach(function (row) {
@@ -6147,10 +6224,26 @@
         return row.id === filters.attendeesEvent;
       })
     ) {
-      filters.attendeesEvent = 'all';
+      // Keep an explicit Actions → See attendees selection even if the option
+      // list has not caught up yet (e.g. unpublished / lite summaries).
+      if (!preservedSeriesIds) {
+        const stillExists = eventsSourceList().some(function (ev) {
+          return String(ev.id) === String(filters.attendeesEvent);
+        });
+        if (!stillExists) filters.attendeesEvent = 'all';
+      }
     }
     sel.value = filters.attendeesEvent;
-    setAttendeesEventFilterValue(filters.attendeesEvent, { skipRender: true });
+    if (preservedSeriesIds) {
+      filters.attendeesEventIds = preservedSeriesIds;
+      setAttendeesEventFilterValue(filters.attendeesEvent, {
+        skipRender: true,
+        seriesCount: preservedSeriesIds.length,
+        seriesEventIds: preservedSeriesIds,
+      });
+    } else {
+      setAttendeesEventFilterValue(filters.attendeesEvent, { skipRender: true });
+    }
     const panel = document.getElementById('filter-attendees-event-panel');
     if (panel && !panel.hidden) {
       const search = document.getElementById('filter-attendees-event-search');
@@ -8679,12 +8772,17 @@
       const eventId = subBtn.getAttribute('data-filter-event');
       if (eventId) {
         filters.ticketsEvent = eventId;
-        filters.attendeesEvent = eventId;
         filters.cancellationsEvent = eventId;
         filters.reviewsGroup = 'all';
         const ticketSel = document.getElementById('filter-tickets-event');
         if (ticketSel) ticketSel.value = eventId;
-        setAttendeesEventFilterValue(eventId, { skipRender: true });
+        if (sub === 'events-attendees') {
+          setAttendeesEventFilterFromAction(eventId);
+        } else {
+          clearAttendeesSeriesFilter();
+          filters.attendeesEvent = eventId;
+          setAttendeesEventFilterValue(eventId, { skipRender: true });
+        }
         const cancelSel = document.getElementById('filter-cancellations-event');
         if (cancelSel) cancelSel.value = eventId;
       }
@@ -8714,6 +8812,7 @@
   let pendingPayoutEventId = null;
   let pendingAlumniInviteEventId = null;
   let pendingCeMemberInviteEventId = null;
+  let pendingCeMemberInviteEventIds = [];
   let pendingCancelEventId = null;
   let pendingCancelRefundRequired = false;
 
@@ -8991,8 +9090,29 @@
     showOrganiserAlert(data.message || 'Previous attendee invites sent.', false);
   }
 
+  function findSeriesDisplayRowForEvent(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return null;
+    const grouped = groupEventsIntoSeries(eventsSourceList());
+    for (let i = 0; i < grouped.length; i++) {
+      const row = grouped[i];
+      if (!row) continue;
+      if (String(row.id) === id) return row;
+      if (
+        row.seriesEvents &&
+        row.seriesEvents.some(function (child) {
+          return String(child.id) === id;
+        })
+      ) {
+        return row;
+      }
+    }
+    return findEventById(id);
+  }
+
   function closeCeMemberInvitesModal() {
     pendingCeMemberInviteEventId = null;
+    pendingCeMemberInviteEventIds = [];
     const modal = document.getElementById('modal-ce-member-invites');
     if (modal) modal.hidden = true;
     const errEl = document.getElementById('modal-ce-member-invites-error');
@@ -9000,11 +9120,58 @@
       errEl.hidden = true;
       errEl.textContent = '';
     }
+    const datesWrap = document.getElementById('modal-ce-member-invites-dates-wrap');
+    const datesEl = document.getElementById('modal-ce-member-invites-dates');
+    if (datesWrap) datesWrap.hidden = true;
+    if (datesEl) datesEl.innerHTML = '';
     const sendBtn = document.getElementById('modal-ce-member-invites-send');
     if (sendBtn) {
       sendBtn.disabled = false;
       sendBtn.textContent = 'Send member invites';
     }
+  }
+
+  function selectedCeMemberInviteEventIds() {
+    const datesEl = document.getElementById('modal-ce-member-invites-dates');
+    if (!datesEl || datesEl.hidden || !datesEl.children.length) {
+      return pendingCeMemberInviteEventIds.slice();
+    }
+    return Array.prototype.slice
+      .call(datesEl.querySelectorAll('input[type="checkbox"][data-ce-invite-event]:checked'))
+      .map(function (input) {
+        return String(input.getAttribute('data-ce-invite-event') || '').trim();
+      })
+      .filter(Boolean);
+  }
+
+  function renderCeMemberInviteDates(candidates) {
+    const datesWrap = document.getElementById('modal-ce-member-invites-dates-wrap');
+    const datesEl = document.getElementById('modal-ce-member-invites-dates');
+    if (!datesWrap || !datesEl) return;
+    if (!candidates || candidates.length <= 1) {
+      datesWrap.hidden = true;
+      datesEl.innerHTML = '';
+      return;
+    }
+    datesEl.innerHTML = candidates
+      .map(function (child) {
+        const dateLabel = formatDateShort(child.date) || 'Date TBC';
+        const timeLabel = formatTimeRange(child.date, child.endDate);
+        const statusLabel = child.statusLabel || child.statusKey || '';
+        return (
+          '<label class="org-ce-invite-date">' +
+          '<input type="checkbox" data-ce-invite-event="' +
+          esc(child.id) +
+          '" checked />' +
+          '<span>' +
+          esc(dateLabel) +
+          (timeLabel ? '<small>' + esc(timeLabel) + '</small>' : '') +
+          (statusLabel ? '<small>' + esc(statusLabel) + '</small>' : '') +
+          '</span></label>'
+        );
+      })
+      .join('');
+    datesWrap.hidden = false;
   }
 
   async function openCeMemberInvitesModal(eventId) {
@@ -9016,8 +9183,17 @@
     const sendBtn = document.getElementById('modal-ce-member-invites-send');
     if (!modal) return;
 
-    const ev = findEventById(eventId);
-    if (titleEl) titleEl.textContent = ev ? ev.title : 'Event';
+    const ev = findSeriesDisplayRowForEvent(eventId) || findEventById(eventId);
+    const inviteTargets = ceMemberInviteCandidateEvents(ev);
+    pendingCeMemberInviteEventIds = inviteTargets.map(function (row) {
+      return row.id;
+    });
+    if (titleEl) {
+      titleEl.textContent =
+        (ev && ev.title ? ev.title : 'Event') +
+        (inviteTargets.length > 1 ? ' · ' + inviteTargets.length + ' dates' : '');
+    }
+    renderCeMemberInviteDates(inviteTargets);
     if (statsEl) {
       statsEl.hidden = false;
       statsEl.textContent = 'Loading membership list…';
@@ -9029,8 +9205,9 @@
     if (sendBtn) sendBtn.disabled = true;
     openModal('modal-ce-member-invites');
 
+    const previewId = pendingCeMemberInviteEventIds[0] || eventId;
     const { ok, data } = await api(
-      '/api/organiser/ce-member-invites?eventId=' + encodeURIComponent(eventId)
+      '/api/organiser/ce-member-invites?eventId=' + encodeURIComponent(previewId)
     );
     if (!ok) {
       if (errEl) {
@@ -9051,6 +9228,10 @@
           : 'Free'
         : '';
     const already = data.stats || {};
+    const dateNote =
+      pendingCeMemberInviteEventIds.length > 1
+        ? ' · ' + pendingCeMemberInviteEventIds.length + ' dates selected by default'
+        : '';
     if (statsEl) {
       statsEl.hidden = false;
       statsEl.textContent =
@@ -9060,26 +9241,39 @@
             ' active member' +
             (count === 1 ? '' : 's') +
             ' can be invited' +
-            (priceLabel ? ' · seat ' + priceLabel : '') +
+            (priceLabel ? ' · member rate ' + priceLabel : '') +
+            dateNote +
             (already.sent || already.redeemed
-              ? ' · already invited: ' +
+              ? ' · already invited on this date: ' +
                 ((already.sent || 0) + (already.redeemed || 0))
               : '');
     }
-    if (sendBtn) sendBtn.disabled = count === 0;
+    if (sendBtn) sendBtn.disabled = count === 0 || pendingCeMemberInviteEventIds.length === 0;
   }
 
   async function submitCeMemberInvites() {
-    if (!pendingCeMemberInviteEventId) return;
+    const eventIds = selectedCeMemberInviteEventIds();
+    if (!eventIds.length) {
+      const errEl = document.getElementById('modal-ce-member-invites-error');
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = 'Choose at least one date to invite members to.';
+      }
+      return;
+    }
     const errEl = document.getElementById('modal-ce-member-invites-error');
     const sendBtn = document.getElementById('modal-ce-member-invites-send');
     if (sendBtn) {
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending…';
     }
+    const body =
+      eventIds.length === 1
+        ? { eventId: eventIds[0] }
+        : { eventIds: eventIds };
     const { ok, data } = await api('/api/organiser/ce-member-invites', {
       method: 'POST',
-      body: JSON.stringify({ eventId: pendingCeMemberInviteEventId }),
+      body: JSON.stringify(body),
     });
     if (!ok) {
       if (errEl) {
@@ -16127,6 +16321,7 @@
     const attendeesEventFilter = document.getElementById('filter-attendees-event');
     if (attendeesEventFilter) {
       attendeesEventFilter.addEventListener('change', () => {
+        clearAttendeesSeriesFilter();
         setAttendeesEventFilterValue(attendeesEventFilter.value);
       });
     }
@@ -16205,6 +16400,7 @@
         const selectedEvent = allEventOptions().find((ev) => ev.id === filters.attendeesEvent);
         if (filters.attendeesHideArchived && eventRowIsArchived(selectedEvent)) {
           filters.attendeesEvent = 'all';
+          clearAttendeesSeriesFilter();
         }
         listPages.attendees = 1;
         fillAttendeesEventFilter();

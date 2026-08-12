@@ -8,7 +8,7 @@ const { isCategoryExclusivityEvent } = require('./category-exclusivity');
 const { listRosterForOrganiser } = require('./organiser-member-roster');
 const {
   ceMemberInviteEmailVariables,
-  loadCeApplicationTicket,
+  loadCeMemberInviteTicket,
 } = require('./ce-member-invites');
 
 async function assertOrganiserOwnsCeEvent(session, eventId) {
@@ -66,7 +66,7 @@ async function previewCeMemberInvites(session, eventId) {
   const { event, sb } = await assertOrganiserOwnsCeEvent(session, eventId);
   const members = await listRosterForOrganiser(event.organiser_id, { status: 'active' });
   const activeMembers = (members || []).filter((m) => m.membershipActive && m.email);
-  const ticket = await loadCeApplicationTicket(sb, eventId);
+  const ticket = await loadCeMemberInviteTicket(sb, eventId);
   const stats = await listCeMemberInviteStats(session, eventId);
   return {
     targetEvent: {
@@ -75,10 +75,17 @@ async function previewCeMemberInvites(session, eventId) {
       slug: event.slug,
       status: event.status,
       attendanceMode: event.attendance_mode,
+      startsAt: event.starts_at,
     },
     activeMemberCount: activeMembers.length,
     ticket: ticket
-      ? { id: ticket.id, name: ticket.name, price: ticket.price, quantity: ticket.quantity }
+      ? {
+          id: ticket.id,
+          name: ticket.name,
+          price: ticket.price,
+          quantity: ticket.quantity,
+          visibility: ticket.visibility || null,
+        }
       : null,
     stats,
   };
@@ -102,7 +109,7 @@ async function sendCeMemberInvites(session, { eventId, sendEmails = true }) {
     throw err;
   }
 
-  const ticket = await loadCeApplicationTicket(sb, id);
+  const ticket = await loadCeMemberInviteTicket(sb, id);
   if (!ticket) {
     const err = new Error('ce_ticket_missing');
     err.status = 400;
@@ -202,8 +209,53 @@ async function sendCeMemberInvites(session, { eventId, sendEmails = true }) {
   return { eventId: id, ...result };
 }
 
+async function sendCeMemberInvitesForEvents(session, { eventIds, sendEmails = true }) {
+  const ids = Array.from(
+    new Set(
+      (Array.isArray(eventIds) ? eventIds : [])
+        .map((id) => String(id || '').trim())
+        .filter((id) => isUuid(id))
+    )
+  );
+  if (!ids.length) {
+    const err = new Error('missing_event_id');
+    err.status = 400;
+    throw err;
+  }
+
+  const combined = {
+    eventIds: ids,
+    eligible: 0,
+    created: 0,
+    sent: 0,
+    skipped: 0,
+    errors: [],
+    byEvent: [],
+  };
+
+  for (const eventId of ids) {
+    const result = await sendCeMemberInvites(session, { eventId, sendEmails });
+    if (!combined.eligible) combined.eligible = result.eligible || 0;
+    combined.created += result.created || 0;
+    combined.sent += result.sent || 0;
+    combined.skipped += result.skipped || 0;
+    if (Array.isArray(result.errors) && result.errors.length) {
+      combined.errors.push(
+        ...result.errors.map((row) => ({
+          ...row,
+          eventId,
+        }))
+      );
+    }
+    combined.byEvent.push(result);
+  }
+
+  return combined;
+}
+
 module.exports = {
   listCeMemberInviteStats,
   previewCeMemberInvites,
   sendCeMemberInvites,
+  sendCeMemberInvitesForEvents,
 };

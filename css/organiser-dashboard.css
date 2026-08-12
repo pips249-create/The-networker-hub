@@ -1573,6 +1573,41 @@
   color: var(--od-text-soft);
 }
 
+.org-ce-invite-dates {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.org-ce-invite-date {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--od-border-soft, #e6ebf0);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--od-text-dark, #1c2040);
+  cursor: pointer;
+}
+
+.org-ce-invite-date input {
+  margin-top: 2px;
+}
+
+.org-ce-invite-date span {
+  display: block;
+  line-height: 1.35;
+}
+
+.org-ce-invite-date small {
+  display: block;
+  margin-top: 2px;
+  color: var(--od-text-soft, #7a94a3);
+  font-size: 12px;
+}
+
 .org-action-menu-note {
   margin: 0;
   padding: 8px 14px 6px;
