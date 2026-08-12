@@ -12,7 +12,7 @@
   var steps = [
     {
       title: 'Welcome to your organiser workspace',
-      body: 'Your hub for events, memberships, business opportunities, and payouts. Follow the setup checklist when it appears — Hubert can answer questions anytime.',
+      body: 'A quick tour of each area — Overview, events, memberships, team, sharing, and payouts — so you know where everything lives. Hubert can answer questions anytime.',
       target: null,
       beforeShow: goDashboard,
     },
@@ -24,7 +24,7 @@
     },
     {
       title: 'Your setup checklist',
-      body: 'New organisers: create your organiser page, optionally set up membership, then list your first event. Dismiss the checklist anytime — your progress is saved.',
+      body: 'Track what’s left when you need it — polish your organiser page, membership, or events. Dismiss anytime; your progress is saved. Edit pages from Groups or My events whenever you’re ready.',
       target: '#org-getting-started',
       beforeShow: goDashboard,
     },
@@ -36,7 +36,7 @@
     },
     {
       title: 'My events',
-      body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Cancellations, Reviews, and Revenue — to switch sections.',
+      body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Cancellations, Reviews, and Revenue — to manage listings and bookings.',
       target: '#org-events-subnav',
       beforeShow: function () {
         // Skip the "create a group first" gate so the tour can show Events even with no page yet.
@@ -121,8 +121,8 @@
   }
 
   /**
-   * Soft-launch claim path: Overview tour runs after claim + page/event review
-   * (+ other groups), not before. Call when that queue is fully clear.
+   * Soft-launch claim path: Overview tour runs after claim(s) finish
+   * (not after forced page/event re-edit). Call when claim modals are clear.
    */
   function maybeStartOverviewTourAfterClaimSetup(opts) {
     opts = opts || {};
@@ -134,6 +134,7 @@
       /* ignore */
     }
     if (
+      !opts.skipLaunchQueueCheck &&
       window.HubOrganiserLaunchSetup &&
       typeof window.HubOrganiserLaunchSetup.progressSummary === 'function' &&
       typeof window.orgDashLaunchSetupInput === 'function'
@@ -423,7 +424,7 @@
     var claimOnboard = params.get('onboard') === 'claim';
     var hasPendingClaims = Boolean(window.hubPendingGroupClaims);
     if ((claimOnboard || hasPendingClaims) && window.orgDashOpenClaimModal) {
-      // Defer Overview tour until claim + reviews (+ other groups) finish.
+      // Defer Overview tour until claim(s) finish — then walk through each page.
       // Do not mark the tour done — soft-launch claim used to skip it forever.
       if (claimOnboard) clearTourDone();
       window.orgDashOpenClaimModal();

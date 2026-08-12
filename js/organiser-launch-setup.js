@@ -65,6 +65,33 @@
     writeState(s);
   }
 
+  /**
+   * After claim: skip forced profile/event re-edit. The workspace Overview tour
+   * teaches how to use each page; organisers edit from Groups / My events when ready.
+   */
+  function skipForcedReviewAfterClaim(groupIds, input) {
+    var s = readState();
+    (groupIds || []).forEach(function (id) {
+      if (id) s.profilesDone[String(id)] = true;
+    });
+    var families = buildEventFamilies(
+      (input && input.events) || [],
+      input && input.groupEventsIntoSeries
+    );
+    var idSet = {};
+    (groupIds || []).forEach(function (id) {
+      if (id) idSet[String(id)] = true;
+    });
+    families.forEach(function (fam) {
+      if (!fam || !fam.key) return;
+      if (!Object.keys(idSet).length || idSet[String(fam.organiserId || '')]) {
+        s.eventsDone[String(fam.key)] = true;
+      }
+    });
+    s.dismissed = true;
+    writeState(s);
+  }
+
   /** @deprecated prefer prepareClaimOnboarding */
   function unlockProfilesForReview(groupIds) {
     prepareClaimOnboarding(groupIds);
@@ -278,6 +305,7 @@
     dismiss: dismiss,
     clearDismissed: clearDismissed,
     prepareClaimOnboarding: prepareClaimOnboarding,
+    skipForcedReviewAfterClaim: skipForcedReviewAfterClaim,
     unlockProfilesForReview: unlockProfilesForReview,
     buildQueue: buildQueue,
     nextItem: nextItem,

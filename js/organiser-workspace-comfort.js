@@ -190,7 +190,9 @@
       hash === 'attendee-email' ||
       hash === 'connections-email' ||
       hash === 'group-updates' ||
-      hash === 'monthly-updates'
+      hash === 'monthly-updates' ||
+      hash === 'org-attendee-email-panel' ||
+      hash === 'org-group-update-panel'
     ) {
       return 'communicate';
     }

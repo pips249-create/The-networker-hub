@@ -220,6 +220,8 @@ function testUiWiring() {
   assert.ok(html.includes('Attendee round-up'));
   assert.ok(html.includes('id="oec-engagement"'));
   assert.ok(html.includes('id="oec-engagement-refresh"'));
+  assert.ok(html.includes('href="#group-updates"'));
+  assert.ok(html.includes('href="#attendee-email"'));
   assert.ok(html.includes('data-comm-tool'));
   assert.ok(html.includes('Monthly group update'));
   ok('Communicate page hosts attendee round-up + monthly group update');
@@ -234,6 +236,9 @@ function testUiWiring() {
   const dash = fs.readFileSync(path.join(__dirname, '../js/organiser-dashboard.js'), 'utf8');
   assert.ok(dash.includes('GROUP_UPDATES_JS'));
   assert.ok(dash.includes('ensureGroupUpdatesAssets'));
+  assert.ok(dash.includes('org-group-update-panel'));
+  assert.ok(dash.includes('communicateToolHash'));
+  assert.ok(dash.includes('syncCommunicateTools'));
   ok('dashboard loads monthly group updates on Communicate');
 
   const migration = fs.readFileSync(

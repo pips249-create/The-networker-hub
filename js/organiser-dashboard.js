@@ -1676,8 +1676,9 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260807comm5';
-  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260807comm5';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260812comm6';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260812comm6';
+  let communicateToolsBound = false;
 
   function loadStylesheetOnce(href) {
     if (!href) return Promise.resolve();
@@ -1789,7 +1790,10 @@
   }
 
   function isCommunicateRoute(route) {
-    const r = String(route || '').toLowerCase();
+    const r = String(route || '')
+      .toLowerCase()
+      .replace(/^#/, '')
+      .split('?')[0];
     return (
       r === 'communicate' ||
       r === 'social-communicate' ||
@@ -1799,8 +1803,63 @@
       r === 'attendee-email' ||
       r === 'connections-email' ||
       r === 'group-updates' ||
-      r === 'monthly-updates'
+      r === 'monthly-updates' ||
+      // In-page Communicate tool anchors (must not be treated as unknown routes)
+      r === 'org-attendee-email-panel' ||
+      r === 'org-group-update-panel'
     );
+  }
+
+  /** Canonical hash for Communicate tool deep-links. */
+  function communicateToolHash(routeOrHash) {
+    const r = String(routeOrHash || '')
+      .toLowerCase()
+      .replace(/^#/, '')
+      .split('?')[0];
+    if (
+      r === 'group-updates' ||
+      r === 'monthly-updates' ||
+      r === 'org-group-update-panel'
+    ) {
+      return 'group-updates';
+    }
+    if (
+      r === 'attendee-email' ||
+      r === 'email-who-attended' ||
+      r === 'connections-email' ||
+      r === 'org-attendee-email-panel' ||
+      r === 'email'
+    ) {
+      return 'attendee-email';
+    }
+    return 'communicate';
+  }
+
+  function resolveCommunicateHash(routeIn) {
+    const fromRoute = communicateToolHash(routeIn);
+    if (fromRoute !== 'communicate') return fromRoute;
+    const hashRaw = String(location.hash || '')
+      .replace(/^#/, '')
+      .toLowerCase()
+      .split('?')[0];
+    if (isCommunicateRoute(hashRaw)) return communicateToolHash(hashRaw);
+    return 'communicate';
+  }
+
+  function syncCommunicateTools(toolHash) {
+    const monthly = toolHash === 'group-updates';
+    document.querySelectorAll('[data-comm-tool]').forEach(function (el) {
+      const isMonthly = el.getAttribute('data-comm-tool') === 'monthly';
+      el.classList.toggle('is-active', monthly ? isMonthly : !isMonthly);
+    });
+    if (!toolHash || toolHash === 'communicate') return;
+    const panelId = monthly ? 'org-group-update-panel' : 'org-attendee-email-panel';
+    const panel = document.getElementById(panelId);
+    if (panel && panel.scrollIntoView) {
+      requestAnimationFrame(function () {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
   }
 
   function isAttendeeListEmailRoute(route) {
@@ -10067,8 +10126,10 @@
 
   function setRoute(route, options) {
     options = options || {};
+    const routeIn = route;
     if (isAttendeeListEmailRoute(route)) {
       options.openAttendeeEmail = true;
+      options.communicateHash = communicateToolHash(route);
       route = 'communicate';
     }
     closeNotificationsPanel();
@@ -10169,6 +10230,10 @@
       syncBusinessTabHighlights(null, false);
     }
     if (page === 'communicate' || options.openAttendeeEmail) {
+      const communicateHash =
+        options.communicateHash || resolveCommunicateHash(routeIn) || 'communicate';
+      options.communicateHash = communicateHash;
+      syncCommunicateTools(communicateHash);
       routeLoadTasks.push(
         new Promise(function (resolve) {
           requestAnimationFrame(function () {
@@ -10324,6 +10389,8 @@
               ? socialHashForTab(
                   socialTabPreferred || socialTabFromHash() || storedSocialTab() || 'linkedin'
                 )
+              : page === 'communicate'
+                ? options.communicateHash || resolveCommunicateHash(routeIn) || 'communicate'
               : page === 'dashboard'
                 ? ''
                 : page;
@@ -12648,49 +12715,45 @@
       })
       .filter(Boolean);
 
-    if (window.HubOrganiserOnboarding) {
-      if (window.HubOrganiserOnboarding.clearProfileReviewDone) {
-        window.HubOrganiserOnboarding.clearProfileReviewDone();
-      }
-      if (window.HubOrganiserOnboarding.clearReadyEventDismissed) {
-        window.HubOrganiserOnboarding.clearReadyEventDismissed();
-      }
-      if (window.HubOrganiserOnboarding.clearResumeDismissed) {
-        window.HubOrganiserOnboarding.clearResumeDismissed();
-      }
+    // After claim, skip forced profile/event re-edit — the Overview tour covers how to use each page.
+    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markProfileReviewDone) {
+      window.HubOrganiserOnboarding.markProfileReviewDone();
     }
-    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
-      window.HubOrganiserLaunchSetup.prepareClaimOnboarding(groupIds);
-    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.unlockProfilesForReview) {
-      window.HubOrganiserLaunchSetup.unlockProfilesForReview(groupIds);
-    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.clearDismissed) {
-      window.HubOrganiserLaunchSetup.clearDismissed();
+    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim) {
+      window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim(groupIds, launchSetupInput());
+    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.dismiss) {
+      window.HubOrganiserLaunchSetup.dismiss();
     }
 
     updateSetupResumeBanner();
+    syncOverviewSetupQuietMode();
 
-    const launch = window.HubOrganiserLaunchSetup;
-    const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
-    if (item) {
-      openLaunchSetupItem(item);
+    // Soft prompt only when they have a page but no listings yet.
+    if (!(state.groups || []).length) return;
+    if (!hasListedEvents()) {
+      showReadyForEventPrompt();
       return;
     }
-    if (needsOrganiserProfileReview()) {
-      location.href = organiserProfileReviewUrl();
-      return;
+    tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
+  }
+
+  function startWorkspaceTourAfterClaim() {
+    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.clearTourDone) {
+      window.HubOrganiserOnboarding.clearTourDone();
     }
-    showReadyForEventPrompt();
-    // No claim / profile / event queue left — Overview tour next.
-    if (
-      !(state.pendingClaimGroups || []).length &&
-      !(state.pendingClaimOpportunities || []).length &&
-      !isLaunchSetupInProgress()
-    ) {
-      const ready = document.getElementById('org-ready-event');
-      if (!ready || ready.hidden) {
-        tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
-      }
+    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markProfileReviewDone) {
+      window.HubOrganiserOnboarding.markProfileReviewDone();
     }
+    try {
+      setRoute('dashboard', { skipEventsGuard: true, skipRouteLoading: true });
+    } catch (e) {
+      /* ignore */
+    }
+    tryStartOverviewTourAfterClaimSetup({
+      ignoreOverlays: true,
+      skipLaunchQueueCheck: true,
+      delay: 500,
+    });
   }
 
   function launchSetupInput() {
@@ -13423,7 +13486,7 @@
         acceptBtn.classList.add('org-btn-danger');
         acceptBtn.classList.remove('org-btn-gold', 'org-btn-outline');
       } else {
-        acceptBtn.textContent = 'Yes — set up this page';
+        acceptBtn.textContent = 'Yes — this is my page';
         acceptBtn.classList.add('org-btn-gold');
         acceptBtn.classList.remove('org-btn-danger', 'org-btn-outline');
       }
@@ -13562,33 +13625,51 @@
         );
         clearClaimModalPostponed();
 
-        // Open THIS page in the half-page drawer. Do not reload claim modals first —
-        // loadBootstrap used to race and steal the first click.
         hideGroupClaimModal();
         document.body.classList.remove('org-group-claim-active');
 
-        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.clearProfileReviewDone) {
-          window.HubOrganiserOnboarding.clearProfileReviewDone();
+        // Do not force re-edit of the claimed page or seeded events — walk the workspace instead.
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markProfileReviewDone) {
+          window.HubOrganiserOnboarding.markProfileReviewDone();
         }
-        if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
-          window.HubOrganiserLaunchSetup.prepareClaimOnboarding([data.group.id]);
+        if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim) {
+          window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim(
+            [data.group.id],
+            launchSetupInput()
+          );
+        } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.markProfileDone) {
+          window.HubOrganiserLaunchSetup.markProfileDone(data.group.id);
+          if (window.HubOrganiserLaunchSetup.dismiss) {
+            window.HubOrganiserLaunchSetup.dismiss();
+          }
         }
 
-        openGroupEditorDrawer(data.group, {
-          onboardLaunch: true,
-          onboardReview: true,
-        });
-
-        // Refresh workspace data without a full re-render while the profile drawer
-        // is open — renderAll was racing and dropping the second-group review.
-        loadBootstrap({ silent: true, skipClaimUi: true, skipRenderIfGroupDrawer: true })
+        loadBootstrap({ silent: true, skipClaimUi: true })
           .then(function () {
             updateSetupResumeBanner();
             updateGettingStartedPanel();
             syncOverviewSetupQuietMode();
+
+            if ((state.pendingClaimGroups || []).length) {
+              clearClaimModalPostponed();
+              renderGroupClaimModal({ force: true });
+              return;
+            }
+            if ((state.pendingClaimOpportunities || []).length) {
+              renderOpportunityClaimModal();
+              return;
+            }
+            startWorkspaceTourAfterClaim();
           })
           .catch(function () {
-            /* non-fatal — drawer already open */
+            updateSetupResumeBanner();
+            updateGettingStartedPanel();
+            syncOverviewSetupQuietMode();
+            if ((state.pendingClaimGroups || []).length) {
+              renderGroupClaimModal({ force: true });
+              return;
+            }
+            startWorkspaceTourAfterClaim();
           });
         return;
       }

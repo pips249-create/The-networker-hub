@@ -2987,15 +2987,9 @@
       }
     } else {
       addTierRow();
-      if (
-        organiserComplimentaryVisits > 0 &&
-        !restoredDraft &&
-        (!loaded.event ||
-          (loaded.event.attendanceMode !== 'category_exclusivity' &&
-            loaded.event.attendanceMode !== 'guest_programme'))
-      ) {
-        setAttendanceMode('guest_programme');
-      }
+      // Keep Guest visit programme opt-in. Auto-enabling it for groups with
+      // complimentary visits made the default open ticket look like a
+      // members-only / member ticket setup.
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
