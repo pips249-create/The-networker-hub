@@ -562,10 +562,10 @@
       '</textarea>' +
       '<div class="org-partner-badge-actions">' +
       '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-partner-embed="' +
-      esc(embed) +
+      attrEsc(g.id) +
       '">Copy embed code</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
-      esc(profileUrl) +
+      attrEsc(profileUrl) +
       '">Copy profile link</button>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id, g.slug)) +
@@ -588,7 +588,9 @@
     root.innerHTML = groups.map(buildPartnerBadgeCardHtml).join('');
     root.querySelectorAll('[data-copy-partner-embed]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        copyOrganiserText(btn.getAttribute('data-copy-partner-embed') || '', btn);
+        const id = btn.getAttribute('data-copy-partner-embed') || '';
+        const ta = document.getElementById('partner-badge-code-' + id);
+        copyOrganiserText((ta && ta.value) || '', btn);
       });
     });
     bindRankingShareActions(root);
@@ -777,18 +779,18 @@
       '</p></div></div>' +
       '<div class="org-ranking-share-actions">' +
       '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-ranking-embed="' +
-      esc(embed) +
+      attrEsc(g.id) +
       '">Copy embed code</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-download-ranking-png="' +
-      esc(imgPreview) +
+      attrEsc(imgPreview) +
       '" data-download-name="' +
-      esc((g.name || 'group').replace(/[^\w\-]+/g, '-').slice(0, 40) + '-ranking-badge.png') +
+      attrEsc((g.name || 'group').replace(/[^\w\-]+/g, '-').slice(0, 40) + '-ranking-badge.png') +
       '">Download PNG</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-share="' +
-      esc(shareText) +
+      attrEsc(shareText) +
       '">Copy post text</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
-      esc(profileUrl) +
+      attrEsc(profileUrl) +
       '">Copy profile link</button>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(badgeShareUrl) +
@@ -818,7 +820,9 @@
     });
     root.querySelectorAll('[data-copy-ranking-embed]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        copyOrganiserText(btn.getAttribute('data-copy-ranking-embed') || '', btn);
+        const id = btn.getAttribute('data-copy-ranking-embed') || '';
+        const ta = document.getElementById('ranking-embed-' + id);
+        copyOrganiserText((ta && ta.value) || '', btn);
       });
     });
     root.querySelectorAll('[data-download-ranking-png]').forEach(function (btn) {
@@ -3370,6 +3374,13 @@
     const d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
     return d.innerHTML;
+  }
+
+  function attrEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
   }
 
   function setOrgEmpty(el, options) {
