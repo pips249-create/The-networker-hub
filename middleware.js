@@ -99,8 +99,8 @@ const INTERNAL_SALES_PREFIXES = [
  * Email 1/2: claim, auth, organiser workspace, trust pages, and setup guides only.
  * Soft-launch marketing for the co.uk banner lives under /peek (GATE_BYPASS), not here.
  * /about and /for-networkers redirect anonymous visitors into /peek while gated.
- * Public catalogue stays gated for anonymous visitors until SITE_ACCESS_PASSWORD is
- * removed at launch. Signed-in hub sessions unlock the full site (home + browse).
+ * Public catalogue stays gated until SITE_ACCESS_PASSWORD is removed at launch.
+ * Signed-in claim sessions unlock the organiser workspace only — not public browse.
  */
 const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/login',
@@ -109,7 +109,6 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/reset-password',
   '/welcome',
   '/organiser',
-  '/organisers',
   '/for-organisers',
   '/for-organisers.html',
   '/add-your-event',
@@ -132,6 +131,11 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/api/contact-chat',
   '/api/event-intake',
 ];
+
+/** Public organiser profile pages for Email 2 path B (`/organisers/{slug}` only). */
+function isPublicOrganiserProfilePath(pathname) {
+  return /^\/organisers\/[^/]+$/i.test(String(pathname || ''));
+}
 
 /** Old soft-launch URLs → closed /peek mini-site (banner + accidental deep links). */
 function softLaunchPeekRedirectPath(pathname) {
@@ -521,6 +525,7 @@ function isInternalSalesPath(pathname) {
 }
 
 function isOrganiserEarlyAccessPath(pathname) {
+  if (isPublicOrganiserProfilePath(pathname)) return true;
   return ORGANISER_EARLY_ACCESS_PREFIXES.some(function (prefix) {
     return pathname === prefix || pathname.startsWith(prefix + '/');
   });
@@ -671,10 +676,40 @@ async function maybeGateSiteAccess(request, url) {
     return { authorized: true };
   }
 
-  // Signed-in organisers / members / admins: full product after sign-in.
-  // Anonymous catalogue stays gated; team preview still uses the password cookie.
+  // Soft launch: signed-in claim/organiser sessions unlock the workspace only
+  // (early-access paths already bypass above). Do NOT open public browse until
+  // SITE_ACCESS_PASSWORD is removed on 1 September. Team preview still uses the
+  // password cookie. Platform admins keep full access for support.
   if (await hasValidSession(request)) {
-    return { authorized: true };
+    const secret = String(process.env.SESSION_SECRET || '').trim();
+    const cookies = parseCookies(request);
+    const session = secret ? await verifySignedToken(cookies.hub_session, secret) : null;
+    const role = String((session && session.role) || '')
+      .trim()
+      .toLowerCase();
+    if (role === 'admin') {
+      return { authorized: true };
+    }
+    // Friendly soft-launch: send workspace users to /organiser/ instead of the
+    // password wall when they hit the public catalogue from top nav.
+    if (
+      pathname === '/' ||
+      pathname === '/index' ||
+      pathname === '/index.html' ||
+      pathname === '/events' ||
+      pathname === '/events/index' ||
+      pathname.startsWith('/events/') ||
+      pathname === '/opportunities' ||
+      pathname.startsWith('/opportunities/') ||
+      pathname === '/rankings' ||
+      pathname.startsWith('/rankings/') ||
+      pathname.startsWith('/networking/') ||
+      pathname === '/organisers' ||
+      pathname === '/organisers/'
+    ) {
+      return Response.redirect(new URL('/organiser/', url.origin).toString(), 302);
+    }
+    return gateRedirect(url, pathname, search);
   }
 
   // Early-access paths (including /organiser claim) already returned above via
