@@ -39,12 +39,26 @@ function isSocialCrawler(request) {
   return SOCIAL_CRAWLER_UA.test(ua);
 }
 
-function isPublicListingPath(pathname) {
+function isPublicListingPath(pathname, searchParams) {
   const path = String(pathname || '').replace(/\/$/, '') || '/';
+  const params = searchParams || new URLSearchParams();
   const eventMatch = path.match(/^\/events\/([^/]+)$/);
   if (eventMatch && !SKIP_EVENT_SLUGS.has(decodeURIComponent(eventMatch[1]))) return true;
+  // Fallback share links: /events/event?id=… (and .html) — used when slug is missing.
+  if (
+    (path === '/events/event' || path === '/events/event.html') &&
+    (params.get('id') || params.get('slug'))
+  ) {
+    return true;
+  }
   const orgMatch = path.match(/^\/organisers\/([^/]+)$/);
   if (orgMatch && orgMatch[1] !== 'organiser.html') return true;
+  if (
+    (path === '/events/organiser' || path === '/events/organiser.html') &&
+    (params.get('id') || params.get('slug'))
+  ) {
+    return true;
+  }
   const oppMatch = path.match(/^\/opportunities\/([^/]+)$/);
   if (oppMatch && !SKIP_OPPORTUNITY_SLUGS.has(decodeURIComponent(oppMatch[1]))) return true;
   if (/^\/networking\/[^/]+$/.test(path)) return true;
@@ -624,6 +638,23 @@ async function maybeGateSiteAccess(request, url) {
     return sitePrivateResponse();
   }
 
+  // Event/organiser listing detail APIs power public listing pages opened from shared
+  // social captions. Allow single-item fetches (id/slug) so the page can render; keep
+  // browse/list payloads gated until launch.
+  if (
+    pathname === '/api/hub-listings' ||
+    pathname === '/api/events' ||
+    pathname.startsWith('/api/hub-listings/') ||
+    pathname.startsWith('/api/events/')
+  ) {
+    const hasDetail = url.searchParams.get('id') || url.searchParams.get('slug');
+    if (hasDetail) return null;
+    if ((await hasSiteAccess(request)) || (await hasValidSession(request))) {
+      return { authorized: true };
+    }
+    return sitePrivateResponse();
+  }
+
   // Email 2 path B: anonymous claim links may load one public organiser (+ siblings).
   // Full catalogue list stays gated until preview cookie / signed-in session.
   if (pathname === '/api/organisers' || pathname.startsWith('/api/organisers/')) {
@@ -647,7 +678,7 @@ async function maybeGateSiteAccess(request, url) {
   }
 
   // Let social crawlers fetch listing HTML + OG tags (still noindexed via authorized path).
-  if (isSocialCrawler(request) && isPublicListingPath(pathname)) {
+  if (isSocialCrawler(request) && isPublicListingPath(pathname, url.searchParams)) {
     return { authorized: true, socialCrawler: true };
   }
 
@@ -692,7 +723,7 @@ async function maybeGateSiteAccess(request, url) {
     if (role === 'admin') {
       return { authorized: true };
     }
-    if (isPublicListingPath(pathname)) {
+    if (isPublicListingPath(pathname, url.searchParams)) {
       return { authorized: true };
     }
     // Friendly soft-launch: send workspace users to /organiser/ instead of the

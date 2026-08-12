@@ -327,8 +327,14 @@
     return {
       id: summary.id,
       title: summary.title || 'Untitled event',
+      slug: summary.slug || null,
       date: summary.date || null,
       endDate: summary.endDate || null,
+      location: summary.location || '',
+      venue: summary.venue || '',
+      eventFormat: summary.eventFormat || summary.meeting_type || '',
+      imageUrl: summary.imageUrl || summary.image_url || '',
+      imagePosition: summary.imagePosition || summary.image_position || '',
       organiserGroupId: orgId,
       organiserId: orgId,
       status: promotable ? 'published' : statusKey || 'draft',
@@ -1668,7 +1674,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260730pages2';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812caption1';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260806expired1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812billingcompact';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
@@ -1676,8 +1682,8 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260812comm6';
-  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260812comm6';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260812comm7';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260812comm7';
   let communicateToolsBound = false;
 
   function loadStylesheetOnce(href) {
@@ -1860,6 +1866,18 @@
         panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
+  }
+
+  function bindCommunicateTools() {
+    if (communicateToolsBound) return;
+    communicateToolsBound = true;
+    document.querySelectorAll('[data-comm-tool]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const tool = link.getAttribute('data-comm-tool') === 'monthly' ? 'monthly' : 'roundup';
+        setRoute(tool === 'monthly' ? 'group-updates' : 'attendee-email');
+      });
+    });
   }
 
   function isAttendeeListEmailRoute(route) {
@@ -10230,6 +10248,7 @@
       syncBusinessTabHighlights(null, false);
     }
     if (page === 'communicate' || options.openAttendeeEmail) {
+      bindCommunicateTools();
       const communicateHash =
         options.communicateHash || resolveCommunicateHash(routeIn) || 'communicate';
       options.communicateHash = communicateHash;
@@ -13576,6 +13595,7 @@
       state.pendingClaimGroups = list.filter((g) => g.id !== group.id);
       groupClaimRejectMode = false;
       if (notesEl) notesEl.value = '';
+      syncPendingClaimFlag();
 
       // Decline must never open profile review/edit for this or another group.
       if (normalisedAction === 'reject') {

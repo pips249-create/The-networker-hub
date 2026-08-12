@@ -239,6 +239,7 @@ function testUiWiring() {
   assert.ok(dash.includes('org-group-update-panel'));
   assert.ok(dash.includes('communicateToolHash'));
   assert.ok(dash.includes('syncCommunicateTools'));
+  assert.ok(dash.includes('bindCommunicateTools'));
   ok('dashboard loads monthly group updates on Communicate');
 
   const migration = fs.readFileSync(

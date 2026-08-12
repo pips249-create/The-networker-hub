@@ -756,13 +756,7 @@
       });
     }
 
-    document.querySelectorAll('[data-comm-tool]').forEach(function (link) {
-      link.addEventListener('click', function () {
-        document.querySelectorAll('[data-comm-tool]').forEach(function (el) {
-          el.classList.toggle('is-active', el === link);
-        });
-      });
-    });
+    // Communicate tool tabs are owned by organiser-dashboard.js (preventDefault + setRoute).
   }
 
   function init(opts) {

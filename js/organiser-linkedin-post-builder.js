@@ -2453,6 +2453,8 @@
       refreshEvents: function () {
         syncEventField();
         if (isEventTemplate() && currentEvent()) applyEventToFields();
+        // Rebuild caption so slug URL + date/location appear once event data arrives.
+        fillCaptionFromTemplate();
         refresh();
       },
       prefillEvent: function (eventId) {

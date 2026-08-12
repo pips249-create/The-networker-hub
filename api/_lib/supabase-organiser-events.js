@@ -423,7 +423,9 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
   const sb = getSupabaseAdmin();
   let query = sb
     .from('events')
-    .select('id, title, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id')
+    .select(
+      'id, title, slug, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id, location_label, city, venue, meeting_type, image_url, image_position'
+    )
     .order('starts_at', {
       ascending: false,
     });
@@ -444,6 +446,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
     return {
       id: row.id,
       title: String(row.title || 'Untitled event').trim(),
+      slug: row.slug ? String(row.slug).trim() : null,
       organiserId: row.organiser_id || null,
       date: row.starts_at || null,
       endDate: row.ends_at || null,
@@ -452,6 +455,12 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
       attendanceMode: normalizeAttendanceMode(row.attendance_mode),
       seriesGroupId: row.series_group_id || null,
       status: row.status || null,
+      // Promote captions / public links need these before full events load.
+      location: String(row.location_label || row.city || row.venue || '').trim(),
+      venue: String(row.venue || '').trim(),
+      eventFormat: String(row.meeting_type || '').trim(),
+      imageUrl: eventImageUrl(row),
+      imagePosition: normalizeEventImagePosition(row.image_position),
     };
   });
 }
