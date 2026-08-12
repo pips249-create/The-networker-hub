@@ -1615,6 +1615,105 @@ body.ee-step2-modal-open {
   margin-top: 0;
 }
 
+.ee-pay-how-outcome {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef3f8;
+  color: #1c2040;
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.ee-next-steps {
+  margin: 18px 0 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f7f4ec 0%, #f1ebe0 100%);
+  border: 1px solid #e2d8c4;
+}
+
+.ee-next-steps-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b5c3e;
+}
+
+.ee-next-steps-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #1c2040;
+}
+
+.ee-optional-details {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ee-optional-details-summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.ee-optional-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ee-optional-details-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ee-text);
+}
+
+.ee-optional-details-hint {
+  font-size: 14px;
+  color: var(--ee-text-mid);
+}
+
+.ee-optional-details-body {
+  margin-top: 12px;
+}
+
+.ee-optional-details[open] .ee-optional-details-hint {
+  display: none;
+}
+
+.ep-members-cta {
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  border: 1px solid #d7e3d4;
+  background: #f3f8f2;
+}
+
+.ep-members-cta-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #3d6b45;
+}
+
+.ep-members-cta-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+}
+
+.ep-members-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .ee-ce-questions {
   margin-top: 4px;
 }

@@ -993,12 +993,18 @@
       /* ignore */
     }
     try {
+      const needsMembers = Boolean(seriesMeta.needsMembersAfterPublish);
+      const groupId = String(
+        seriesMeta.organiserGroupId || anchorEvent?.organiserGroupId || ''
+      ).trim();
       sessionStorage.setItem(
         PUBLISHED_PREVIEW_KEY,
         JSON.stringify({
           ids: eventIds.join(','),
           title: publishedTitle,
           image: publishedImage,
+          needsMembers: needsMembers,
+          organiserGroupId: groupId,
         })
       );
     } catch {
@@ -1008,6 +1014,11 @@
     publishedQs.set('ids', eventIds.join(','));
     publishedQs.set('published', '1');
     if (publishedTitle) publishedQs.set('title', publishedTitle);
+    if (seriesMeta.needsMembersAfterPublish) publishedQs.set('needsMembers', '1');
+    const groupId = String(
+      seriesMeta.organiserGroupId || anchorEvent?.organiserGroupId || ''
+    ).trim();
+    if (groupId) publishedQs.set('groupId', groupId);
     const publishedUrl = '/organiser/event-published?' + publishedQs.toString();
 
     try {
@@ -1031,6 +1042,10 @@
           title: publishedTitle,
           imageUrl: publishedImage,
           publishedUrl: publishedUrl,
+          needsMembers: Boolean(seriesMeta.needsMembersAfterPublish),
+          organiserGroupId: String(
+            seriesMeta.organiserGroupId || anchorEvent?.organiserGroupId || ''
+          ).trim(),
           launchSetup: Boolean(seriesMeta && seriesMeta.launchSetup),
           familyKey:
             (seriesMeta && seriesMeta.familyKey) ||

@@ -548,6 +548,33 @@
     }
   }
 
+  function markNeedsMembersOnSeriesMeta() {
+    seriesMeta.needsMembersAfterPublish = needsMembersAfterPublish();
+    persistSeriesMeta();
+  }
+
+  function buildPublishedPreviewPayload() {
+    return {
+      ids: eventIds.join(','),
+      title: seriesMeta.title || '',
+      image:
+        seriesMeta.imageUrl ||
+        (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
+        '',
+      needsMembers:
+        Boolean(seriesMeta.needsMembersAfterPublish) || needsMembersAfterPublish(),
+      organiserGroupId: String(seriesMeta.organiserGroupId || '').trim(),
+    };
+  }
+
+  function persistPublishedPreview() {
+    try {
+      sessionStorage.setItem(PUBLISHED_PREVIEW_KEY, JSON.stringify(buildPublishedPreviewPayload()));
+    } catch {
+      /* ignore */
+    }
+  }
+
   function renderSeriesSummary() {
     const countEl = document.getElementById('ee-series-count');
     const pills = document.getElementById('ee-series-pills');
@@ -2115,6 +2142,7 @@
         setMemberRosterStatusMessage('');
       }
       updatePublishButton();
+      syncTicketsNextSteps();
     })().finally(function () {
       loadMemberRosterStatus._inflight = null;
     });
@@ -2126,6 +2154,46 @@
     if (!membersOnlyEventEnabled()) return;
     if (memberRosterLoadState === 'ready' || memberRosterLoadState === 'error') return;
     await loadMemberRosterStatus();
+  }
+
+  function needsMembersAfterPublish() {
+    return (
+      membersOnlyEventEnabled() &&
+      memberRosterLoadState === 'ready' &&
+      Number(memberRosterActiveCount) === 0
+    );
+  }
+
+  function syncTicketsNextSteps() {
+    const wrap = document.getElementById('ee-tickets-next-steps');
+    const body = document.getElementById('ee-tickets-next-steps-body');
+    if (!wrap || !body) return;
+    if (!step2Confirmed) {
+      wrap.hidden = true;
+      return;
+    }
+
+    const parts = [];
+    parts.push('Continue to review, then Confirm & publish — that is what makes the listing live.');
+
+    if (membersOnlyEventEnabled()) {
+      if (needsMembersAfterPublish()) {
+        parts.push(
+          'Your member list is empty for now — that is fine. The listing can go live, and people book once you add them under Memberships.'
+        );
+      } else if (memberRosterActiveCount > 0) {
+        parts.push('People on your member list can book when signed in with their membership email.');
+      } else {
+        parts.push('Add people under Memberships whenever you are ready.');
+      }
+    } else if (payHowIncludesMembership() && !payHowIncludesTickets()) {
+      parts.push('New joiners pay your membership fee + booking fee (4.5% + 20p); manage prices under Memberships.');
+    } else if (payHowIncludesTickets()) {
+      parts.push('Ticket sales follow the sale dates you set on each ticket type.');
+    }
+
+    body.textContent = parts.join(' ');
+    wrap.hidden = false;
   }
 
   function privateTicketEnabled() {
@@ -2161,6 +2229,7 @@
     const includesMembership = payHowIncludesMembership();
     const isApplication = attendanceDoor === 'application';
     const hint = document.getElementById('ee-pay-how-hint');
+    const outcome = document.getElementById('ee-pay-how-outcome');
     const lead = document.getElementById('ee-pay-how-lead');
     const wrap = document.getElementById('ee-ce-price-wrap');
     const priceEl = document.getElementById('ee-ce-price');
@@ -2176,6 +2245,24 @@
       hint.textContent = includesMembership
         ? 'After free trial visits, people join membership. Set monthly/annual amounts below.'
         : 'Add at least one ticket type below (paid or free). You can still offer free trial visits.';
+    }
+    if (outcome) {
+      if (isApplication) {
+        outcome.textContent = includesTickets && includesMembership
+          ? 'Both — approved guests pay a ticket; members can join membership instead of applying.'
+          : includesMembership
+            ? 'Membership — after free visits, people join monthly/annual membership (no public ticket required).'
+            : 'Tickets after approval — you approve applicants, then they pay the ticket price.';
+      } else if (includesTickets && includesMembership) {
+        outcome.textContent =
+          'Both — public tickets for newcomers, plus membership for regulars. Turn on list-member booking so members are not charged twice.';
+      } else if (includesMembership) {
+        outcome.textContent =
+          'Membership only — members book from your list (usually £0). New joiners pay your membership fee + booking fee (4.5% + 20p).';
+      } else {
+        outcome.textContent =
+          'Tickets only — people buy a ticket for this event (paid or free). You can still offer free trial visits.';
+      }
     }
 
     if (wrap) {
@@ -2230,6 +2317,7 @@
 
     syncHubMembershipMount();
     syncGuestProgrammeMount();
+    syncTicketsNextSteps();
   }
 
   function ceGuestVisitsEnabled() {
@@ -2797,13 +2885,29 @@
     if (ev.refundTermsAgreed || ev.refundTermsAgreedAt) {
       lockRefundTermsCheckbox();
     }
+    hydrateAttendeeExtrasFromEvent(ev);
+    updatePublishButton();
+  }
+
+  function openAttendeeExtrasIfNeeded() {
+    const details = document.getElementById('ee-attendee-extras-details');
+    if (!details) return;
+    const anyChecked = ['ee-food-included', 'ee-collect-dietary', 'ee-collect-access'].some(
+      function (id) {
+        return Boolean(document.getElementById(id)?.checked);
+      }
+    );
+    if (anyChecked) details.open = true;
+  }
+
+  function hydrateAttendeeExtrasFromEvent(ev) {
     const food = document.getElementById('ee-food-included');
     const dietary = document.getElementById('ee-collect-dietary');
     const access = document.getElementById('ee-collect-access');
     if (food) food.checked = Boolean(ev.foodIncluded);
     if (dietary) dietary.checked = Boolean(ev.collectDietary);
     if (access) access.checked = Boolean(ev.collectAccessibility);
-    updatePublishButton();
+    openAttendeeExtrasIfNeeded();
   }
 
   async function loadExistingData() {
@@ -3151,6 +3255,7 @@
     if (dietary) dietary.checked = !!draft.askDietary;
     const access = document.getElementById('ee-collect-access');
     if (access) access.checked = !!draft.askAccessibility;
+    openAttendeeExtrasIfNeeded();
     return true;
   }
 
@@ -3327,6 +3432,7 @@
           'Finish ticket types below, then click Continue to review again.';
       }
     }
+    syncTicketsNextSteps();
   }
 
   function selectVatCard(radio) {
@@ -4430,6 +4536,7 @@
       }
       clearTicketDraft();
       if (options.redirectToReview) {
+        markNeedsMembersOnSeriesMeta();
         location.href = reviewPageUrl();
         return;
       }
@@ -4462,22 +4569,14 @@
       seriesMeta.imageUrl ||
       (seriesMeta.events && seriesMeta.events[0] && seriesMeta.events[0].imageUrl) ||
       '';
-    try {
-      sessionStorage.setItem(
-        PUBLISHED_PREVIEW_KEY,
-        JSON.stringify({
-          ids: eventIds.join(','),
-          title: publishedTitle,
-          image: publishedImage,
-        })
-      );
-    } catch {
-      /* ignore — preview falls back to API fetch */
-    }
+    persistPublishedPreview();
     const publishedQs = new URLSearchParams();
     publishedQs.set('ids', eventIds.join(','));
     publishedQs.set('published', '1');
     if (publishedTitle) publishedQs.set('title', publishedTitle);
+    if (buildPublishedPreviewPayload().needsMembers) publishedQs.set('needsMembers', '1');
+    const groupId = String(seriesMeta.organiserGroupId || '').trim();
+    if (groupId) publishedQs.set('groupId', groupId);
     const publishedUrl = '/organiser/event-published?' + publishedQs.toString();
 
     try {
@@ -4505,6 +4604,8 @@
           title: publishedTitle,
           imageUrl: publishedImage,
           publishedUrl: publishedUrl,
+          needsMembers: buildPublishedPreviewPayload().needsMembers,
+          organiserGroupId: String(seriesMeta.organiserGroupId || '').trim(),
           launchSetup: Boolean(seriesMeta && seriesMeta.launchSetup),
           familyKey:
             (seriesMeta && seriesMeta.familyKey) ||

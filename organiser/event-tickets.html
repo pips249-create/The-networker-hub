@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812uxfix1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812uxnext" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -107,7 +107,10 @@
               <span data-hub-tip="pay-how-both"><strong>Both</strong> — tickets and membership</span>
             </label>
           </fieldset>
-          <p class="ee-hint" id="ee-pay-how-hint">You must choose tickets or membership (or both) before publishing.</p>
+          <p class="ee-hint" id="ee-pay-how-hint" role="status">You must choose tickets or membership (or both) before publishing.</p>
+          <p class="ee-pay-how-outcome" id="ee-pay-how-outcome" role="status">
+            Tickets only — people buy a ticket for this event (paid or free).
+          </p>
           <div id="ee-general-guest-mount" class="ee-ce-guest-mount" style="margin-top:14px"></div>
           <div id="ee-hub-membership-mount-payhow" class="ee-hub-membership-mount" style="margin-top:14px"></div>
         </div>
@@ -558,23 +561,30 @@
         </div>
 
         <div class="ee-card" id="ee-attendee-extras-card" hidden>
-          <p class="ee-step-label" data-ee-step-label>Step 5 <span class="ee-optional">(optional)</span></p>
-          <h2>Attendee information at booking</h2>
-          <p class="ee-hint" style="margin-top:0">
-            Optional extras for events with catering or accessibility needs. We add a note to your listing description and can collect these details at checkout when registration is connected.
-          </p>
-          <label class="ee-check">
-            <input type="checkbox" id="ee-food-included" />
-            <span>Food or drink is included (e.g. breakfast, lunch, refreshments)</span>
-          </label>
-          <label class="ee-check">
-            <input type="checkbox" id="ee-collect-dietary" />
-            <span>Ask attendees about dietary requirements</span>
-          </label>
-          <label class="ee-check">
-            <input type="checkbox" id="ee-collect-access" />
-            <span>Ask attendees about accessibility requirements</span>
-          </label>
+          <details class="ee-optional-details" id="ee-attendee-extras-details">
+            <summary class="ee-optional-details-summary">
+              <span class="ee-step-label" data-ee-step-label>Step 5 <span class="ee-optional">(optional)</span></span>
+              <span class="ee-optional-details-title">Attendee information at booking</span>
+              <span class="ee-optional-details-hint">Food, dietary, accessibility — expand if needed</span>
+            </summary>
+            <div class="ee-optional-details-body">
+              <p class="ee-hint" style="margin-top:0">
+                Optional extras for events with catering or accessibility needs. We add a note to your listing description and can collect these details at checkout when registration is connected.
+              </p>
+              <label class="ee-check">
+                <input type="checkbox" id="ee-food-included" />
+                <span>Food or drink is included (e.g. breakfast, lunch, refreshments)</span>
+              </label>
+              <label class="ee-check">
+                <input type="checkbox" id="ee-collect-dietary" />
+                <span>Ask attendees about dietary requirements</span>
+              </label>
+              <label class="ee-check">
+                <input type="checkbox" id="ee-collect-access" />
+                <span>Ask attendees about accessibility requirements</span>
+              </label>
+            </div>
+          </details>
         </div>
 
         <div class="ee-modal" id="ee-tickets-confirm-modal" hidden>
@@ -595,6 +605,11 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <div class="ee-next-steps" id="ee-tickets-next-steps" hidden role="status">
+          <p class="ee-next-steps-kicker">What happens next</p>
+          <p class="ee-next-steps-body" id="ee-tickets-next-steps-body"></p>
         </div>
 
         <div class="ee-actions ee-actions--split" id="ee-tickets-actions" hidden>
@@ -621,6 +636,6 @@
     <script src="../js/organiser-field-tips.js?v=20260812membook" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260812rosterwarn" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260812uxnext" defer></script>
   </body>
 </html>

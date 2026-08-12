@@ -83,6 +83,11 @@
   const fallbackImage =
     (previewStash && previewStash.image) ||
     (urlImage && !/^data:/i.test(urlImage) && urlImage.length <= 2048 ? urlImage : '');
+  const needsMembersCta =
+    params.get('needsMembers') === '1' || Boolean(previewStash && previewStash.needsMembers);
+  const membersGroupId = String(
+    params.get('groupId') || (previewStash && previewStash.organiserGroupId) || ''
+  ).trim();
   if (previewStash) {
     try {
       sessionStorage.removeItem(PUBLISHED_PREVIEW_KEY);
@@ -790,6 +795,25 @@
     return merged;
   }
 
+  function showMembersCtaIfNeeded() {
+    const card = document.getElementById('ep-members-cta');
+    if (!card || !needsMembersCta) return;
+    card.hidden = false;
+    const go = document.getElementById('ep-members-cta-go');
+    const roster = document.getElementById('ep-members-cta-roster');
+    if (go) {
+      go.href = membersGroupId
+        ? '/organiser/?membershipGroup=' + encodeURIComponent(membersGroupId) + '#memberships'
+        : '/organiser/#memberships';
+    }
+    if (roster) {
+      roster.hidden = !membersGroupId;
+      if (membersGroupId) {
+        roster.href = '/organiser/member-roster?id=' + encodeURIComponent(membersGroupId);
+      }
+    }
+  }
+
   function markLiveOnBrowse(options) {
     options = options || {};
     const title = document.getElementById('ep-title');
@@ -800,9 +824,11 @@
       previewHint.textContent = 'This is how your event appears on the browse page.';
     }
     if (lead) {
-      lead.textContent =
-        'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the hub.';
+      lead.textContent = needsMembersCta
+        ? 'Your listing is live. Add people under Memberships so members can book this closed event, or share it free on social media.'
+        : 'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the hub.';
     }
+    showMembersCtaIfNeeded();
     setPromoteVisibility(true, {
       scrollIntoView: options.scrollIntoView != null ? options.scrollIntoView : justPublished,
     });
@@ -1200,6 +1226,7 @@
   if (primaryId) {
     markLiveOnBrowse({ scrollIntoView: justPublished });
   } else {
+    showMembersCtaIfNeeded();
     setPromoteVisibility(false);
   }
   fetchPreview();
