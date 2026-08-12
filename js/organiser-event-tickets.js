@@ -1912,7 +1912,11 @@
       return document.getElementById('ee-hub-membership-mount-meeting');
     }
     if (attendanceMode === 'category_exclusivity') {
-      return document.getElementById('ee-hub-membership-mount-ce');
+      // Show with Guest visits / Previous Attendees in Optional extras (not only in the CE modal).
+      return (
+        document.getElementById('ee-hub-membership-mount-extras') ||
+        document.getElementById('ee-hub-membership-mount-ce')
+      );
     }
     return null;
   }
@@ -1920,10 +1924,12 @@
   function syncHubMembershipMount() {
     const config = document.getElementById('ee-hub-membership-config');
     const addon = document.getElementById('ee-hub-membership-addon');
+    const extrasMount = document.getElementById('ee-hub-membership-mount-extras');
     if (!config || !addon) return;
     const target = hubMembershipMountTarget();
     const show = Boolean(target);
     config.hidden = !show;
+    if (extrasMount) extrasMount.hidden = !(show && target === extrasMount);
     if (show) {
       if (addon.parentElement !== target) target.appendChild(addon);
       if (isMembershipMeetingMode() && !hubMembershipEnabled()) {
