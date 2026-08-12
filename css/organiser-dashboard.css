@@ -1554,7 +1554,7 @@
 }
 
 .org-action-menu-header {
-  padding: 8px 14px 6px;
+  padding: 7px 14px 5px;
   font-size: 10px;
   font-weight: 700;
   color: var(--od-text-soft);
@@ -1610,9 +1610,9 @@
 
 .org-action-menu-note {
   margin: 0;
-  padding: 8px 14px 6px;
+  padding: 6px 14px 5px;
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.35;
   color: var(--od-text-soft);
   border-bottom: 0.5px solid var(--od-border-soft);
 }
@@ -8115,12 +8115,11 @@ a.hub-payment-setup-btn {
   position: fixed;
   z-index: 10060;
   display: block;
-  max-height: min(70vh, 360px);
+  max-height: min(70vh, 420px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  /* Make scrollability obvious when items are clipped */
   scrollbar-gutter: stable;
 }
 
@@ -8133,7 +8132,7 @@ a.hub-payment-setup-btn {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 500;
   color: var(--od-text-dark);

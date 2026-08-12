@@ -8583,20 +8583,24 @@
 
     const pad = 12;
     const gap = 6;
-    const hardCap = 360;
+    const hardCap = 420;
     // Keep the menu clear of the Hubert launcher in the bottom-right.
-    const bottomClearance = 100;
+    const bottomClearance = 88;
+    // Roughly header + note + 4–5 actions — below this, prefer the roomier side.
+    const minComfortable = 280;
     const rect = toggle.getBoundingClientRect();
     const spaceBelow = Math.max(
       0,
       window.innerHeight - rect.bottom - pad - gap - bottomClearance
     );
     const spaceAbove = Math.max(0, rect.top - pad - gap);
-    // Prefer below when usable; only flip up when there is clearly more room above.
-    // Cap height to the chosen side so a long menu scrolls instead of covering the page.
-    const openBelow = spaceBelow >= 160 || spaceBelow >= spaceAbove;
+    // Prefer below only when it can show a useful chunk; otherwise use the
+    // roomier side so first open isn't stuck on 1–2 items.
+    const openBelow =
+      spaceBelow >= minComfortable ||
+      (spaceBelow >= spaceAbove && spaceBelow >= 180);
     const avail = openBelow ? spaceBelow : spaceAbove;
-    const maxH = Math.max(140, Math.min(hardCap, avail));
+    const maxH = Math.min(hardCap, Math.max(avail, 140));
     menu.style.maxHeight = maxH + 'px';
 
     const menuW = Math.min(menu.offsetWidth || 260, window.innerWidth - pad * 2);
