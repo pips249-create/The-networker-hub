@@ -1674,7 +1674,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812caption1';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812colour1';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260806expired1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812billingcompact';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
@@ -2093,6 +2093,9 @@
       return;
     }
     if (!options.force && !isSocialPageActive()) return;
+    // So "Add colours & logo" on the LinkedIn tab works before visiting Colours & type.
+    bindBrandKitPanel();
+    renderBrandKitNudge();
     if (!linkedInPostBuilder) {
       linkedInPostBuilder = window.HubLinkedInPostBuilder.init(root, {
         getGroups: function () {
@@ -2415,6 +2418,7 @@
   }
 
   function openBrandKitFromNudge() {
+    ensureBrandKitPanelReady();
     setSocialTab('brand');
     var panel = document.getElementById('org-social-panel-brand');
     if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3050,10 +3054,11 @@
   function bindBrandKitPanel() {
     if (brandKitBound) return;
     var els = brandKitEls();
-    if (!els.form) return;
+    // Bind the share-tab "Add colours" nudge even before the brand form is focused.
+    if (!els.form && !els.nudgeShare && !els.nudge) return;
     brandKitBound = true;
 
-    els.form.addEventListener('submit', saveBrandKit);
+    if (els.form) els.form.addEventListener('submit', saveBrandKit);
     if (els.importBtn) els.importBtn.addEventListener('click', importBrandKitFromWebsite);
     if (els.reviewApply) els.reviewApply.addEventListener('click', applyBrandImportSelection);
     if (els.reviewDismiss) els.reviewDismiss.addEventListener('click', hideBrandImportReview);

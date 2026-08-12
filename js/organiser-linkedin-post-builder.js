@@ -590,45 +590,52 @@
 
     if (isPhotoHero && !quietBrand) {
       ctx.clearRect(0, 0, W, H);
+      var accent = bg.accent || tpl.accent || '#9a7aa8';
       if (eventImage) {
         drawCoverImage(ctx, eventImage, 0, 0, W, H, opts.eventImagePosition);
       } else {
+        // Readable empty state — never white-on-cream (looks like a blank preview).
         var ph = ctx.createLinearGradient(0, 0, W, H);
-        ph.addColorStop(0, bg.stops[0]);
-        ph.addColorStop(1, bg.stops[2] || bg.stops[1] || bg.stops[0]);
+        ph.addColorStop(0, bg.dark ? bg.stops[0] : '#2c2826');
+        ph.addColorStop(0.55, bg.dark ? bg.stops[1] || bg.stops[0] : '#3a3532');
+        ph.addColorStop(1, accent);
         ctx.fillStyle = ph;
         ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = 'rgba(255,255,255,0.72)';
-        ctx.font = '600 28px ' + bodyFace;
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = '600 30px ' + bodyFace;
         ctx.textAlign = 'center';
-        ctx.fillText('Your event photo will appear here', W / 2, H / 2 - 12);
-        ctx.fillStyle = 'rgba(255,255,255,0.55)';
-        ctx.font = '400 20px ' + bodyFace;
-        ctx.fillText('Pick an event with a photo for the best result', W / 2, H / 2 + 28);
+        ctx.fillText('Your event photo will appear here', W / 2, H / 2 - 16);
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.font = '400 22px ' + bodyFace;
+        ctx.fillText('Add a photo on the event listing for the best result', W / 2, H / 2 + 28);
         ctx.textAlign = 'left';
       }
 
-      var overlay = ctx.createLinearGradient(0, H * 0.28, 0, H);
+      // Brand-tinted gradient so Soft cream / Your brand / Navy visibly change photo posts.
+      var overlay = ctx.createLinearGradient(0, H * 0.22, 0, H);
       overlay.addColorStop(0, 'rgba(8, 12, 18, 0)');
-      overlay.addColorStop(0.4, 'rgba(8, 12, 18, 0.5)');
+      overlay.addColorStop(0.35, hexToRgba(accent, 0.18));
+      overlay.addColorStop(0.62, 'rgba(8, 12, 18, 0.55)');
       overlay.addColorStop(1, 'rgba(8, 12, 18, 0.92)');
       ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, W, H);
 
-      ctx.fillStyle = bg.accent || tpl.accent || '#9a7aa8';
-      ctx.fillRect(0, 0, W, 14);
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, 0, W, 22);
+      ctx.fillStyle = hexToRgba(accent, 0.55);
+      ctx.fillRect(0, 22, W, 8);
 
       var logoBoxW = 360;
       var logoBoxH = 150;
-      drawOrgLogoClear(ctx, orgLogo, W - logoBoxW - 36, 40, logoBoxW, logoBoxH, bg.accent || '#9a7aa8');
+      drawOrgLogoClear(ctx, orgLogo, W - logoBoxW - 36, 40, logoBoxW, logoBoxH, accent);
 
-      var overlay = overlayTextColors(bg);
+      var textColors = overlayTextColors(bg);
       var textBaseY = H - 270;
-      ctx.fillStyle = overlay.kicker;
+      ctx.fillStyle = textColors.kicker;
       ctx.font = '700 22px ' + bodyFace;
       ctx.fillText(kickerText, 56, textBaseY);
 
-      ctx.fillStyle = overlay.title;
+      ctx.fillStyle = textColors.title;
       ctx.font = '400 58px ' + titleFace;
       var heroTitle = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 920);
       var heroY = textBaseY + 62;
@@ -637,7 +644,7 @@
         heroY += 64;
       }
 
-      ctx.fillStyle = overlay.sub;
+      ctx.fillStyle = textColors.sub;
       ctx.font = '400 24px ' + bodyFace;
       var heroSub = wrapText(ctx, line3, 880);
       heroY += 10;
@@ -656,24 +663,38 @@
       // Landscape-friendly: photo across the top, brand panel below (not a portrait side-split).
       ctx.clearRect(0, 0, W, H);
       var photoH = Math.round(H * 0.5);
+      var splitAccent = bg.accent || tpl.accent || '#c9961f';
       if (eventImage) {
         drawCoverImage(ctx, eventImage, 0, 0, W, photoH, opts.eventImagePosition);
       } else {
-        ctx.fillStyle = bg.stops[1] || '#ebe0f0';
+        ctx.fillStyle = bg.dark ? bg.stops[0] : '#2c2826';
         ctx.fillRect(0, 0, W, photoH);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.font = '600 22px ' + bodyFace;
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = '600 24px ' + bodyFace;
         ctx.textAlign = 'center';
         ctx.fillText('Add an event photo', W / 2, photoH / 2);
         ctx.textAlign = 'left';
       }
+      ctx.fillStyle = hexToRgba(splitAccent, 0.35);
+      ctx.fillRect(0, photoH - 10, W, 10);
+
+      // Keep the lower panel dark enough for white overlay text; brand shows via
+      // primary (when dark), accent strip, and secondary wash.
       var panelColor = bg.dark ? bg.stops[0] : '#0d1f3c';
       ctx.fillStyle = panelColor;
       ctx.fillRect(0, photoH, W, H - photoH);
-      ctx.fillStyle = bg.accent || tpl.accent || '#c9961f';
+      // Secondary wash so brand secondary is visible on the lower panel.
+      if (bg.stops[1]) {
+        var panelWash = ctx.createLinearGradient(0, photoH, W, H);
+        panelWash.addColorStop(0, hexToRgba(bg.stops[1], bg.dark ? 0.22 : 0.28));
+        panelWash.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = panelWash;
+        ctx.fillRect(0, photoH, W, H - photoH);
+      }
+      ctx.fillStyle = splitAccent;
       ctx.fillRect(0, photoH, W, 10);
 
-      drawOrgLogoClear(ctx, orgLogo, 48, photoH + 36, 340, 140, bg.accent || '#c9961f');
+      drawOrgLogoClear(ctx, orgLogo, 48, photoH + 36, 340, 140, splitAccent);
 
       var splitColors = overlayTextColors(bg);
       var textX = 420;
@@ -1257,6 +1278,7 @@
       '<div class="org-post-field">' +
       '<span class="org-post-label">Choose a background colour</span>' +
       backgroundPickerHtml +
+      '<p class="org-post-hint" id="post-bg-hint">Photo styles use your colour on the accent bar and tint. Big type poster shows the full background.</p>' +
       '</div>' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Name shown on the picture</span>' +
@@ -2083,6 +2105,9 @@
       state.rendering = true;
       try {
         if (!ctx || !canvas) return;
+        // Always paint a base fill so a failed render never looks like an empty cream box.
+        ctx.fillStyle = '#2c2826';
+        ctx.fillRect(0, 0, W, H);
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogos();
         await ensureOrgLogo();
@@ -2108,6 +2133,16 @@
         updateCaptionPreview();
       } catch (err) {
         console.warn('LinkedIn preview render failed', err);
+        if (ctx) {
+          ctx.fillStyle = '#2c2826';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = '#f7f1e8';
+          ctx.font = '600 28px "DM Sans", Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Preview unavailable — try another style', W / 2, H / 2);
+          ctx.textAlign = 'left';
+        }
+        setStatus('Could not update the picture preview. Try another style or refresh the page.', true);
       } finally {
         state.rendering = false;
         if (state.renderPending) {
