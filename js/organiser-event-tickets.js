@@ -1082,10 +1082,16 @@
     const rest = document.getElementById('ee-tickets-rest');
     const openBooking = isOpenBookingMode(attendanceMode);
     const isCategory = attendanceMode === 'category_exclusivity';
+    const membershipMeeting = isMembershipMeetingMode();
 
     if (ticketsPanel) ticketsPanel.hidden = !openBooking;
     if (categoryPanel) categoryPanel.hidden = !isCategory;
-    if (optionalExtras) optionalExtras.hidden = (!openBooking && !isCategory) || membersOnlyEventEnabled();
+    // Closed members-only (no guests) hides extras; networking group meeting keeps them
+    // so Previous Attendees / membership stay available.
+    if (optionalExtras) {
+      optionalExtras.hidden =
+        (!openBooking && !isCategory) || (membersOnlyEventEnabled() && !membershipMeeting);
+    }
     if (paidWrap) paidWrap.hidden = false;
     if (attendeeExtras) attendeeExtras.hidden = false;
     if (actions) actions.hidden = false;
@@ -1093,6 +1099,7 @@
     document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
       el.hidden = false;
     });
+    syncMembersOnlyEventMode();
     syncAttendanceStepUi();
     syncTicketStepLabels();
     updatePublishButton();
@@ -1171,11 +1178,11 @@
       if (actions) actions.hidden = true;
     } else {
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-      if (optionalExtras)
+      if (optionalExtras) {
         optionalExtras.hidden =
           (!openBooking && !isCategory) ||
-          membersOnlyEventEnabled() ||
-          isMembershipMeetingMode();
+          (membersOnlyEventEnabled() && !isMembershipMeetingMode());
+      }
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
     }
 
@@ -1187,9 +1194,13 @@
     const optionalLead = document.querySelector('#ee-panel-optional-extras > .ee-hint');
     if (optionalLead) {
       optionalLead.innerHTML = isCategory
-        ? 'Optional add-ons for Category Exclusivity. Enable the <strong>Guest visit programme</strong> so newcomers can try a free visit without applying.'
-        : 'Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book? Turn on <strong>Member price</strong> below. For monthly membership + complimentary guests, choose <strong>Networking group meeting</strong> in Step 1 instead.';
+        ? 'Optional add-ons for Category Exclusivity. Turn on <strong>Guest visit programme</strong> and/or <strong>Monthly / annual membership</strong> so newcomers can try a free visit, then join membership. Previous Attendees is separate.'
+        : isMembershipMeetingMode()
+          ? 'Guest visits and membership prices are set in ticket setup above. Optionally add <strong>Previous Attendees</strong> for a returning rate.'
+          : 'Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book? Turn on <strong>Member price</strong> below. For monthly membership + complimentary guests, choose <strong>Networking group meeting</strong> in Step 1 instead.';
     }
+
+    syncHubMembershipMount();
 
     // CE already controls who books via Apply + membership — "Member-only for this event"
     // is an open-booking guest-programme opt-out and does not belong here.
@@ -1711,13 +1722,19 @@
       privateAddon.hidden = on || attendanceMode === 'category_exclusivity' || membershipMeeting;
     }
     if (optionalExtras && isOpenBookingMode(attendanceMode)) {
-      optionalExtras.hidden = on || membershipMeeting;
+      // Keep extras for networking meetings (Previous Attendees). Closed members-only hides them.
+      optionalExtras.hidden = on && !membershipMeeting;
     }
     if (optionalExtras && attendanceMode === 'category_exclusivity') optionalExtras.hidden = on;
     const guestAddon = document.getElementById('ee-guest-addon');
-    if (guestAddon) guestAddon.hidden = on && !membershipMeeting;
+    // Guest visits live in the networking Step 2 panel — hide the extras card there.
+    if (guestAddon) guestAddon.hidden = membershipMeeting || (on && !membershipMeeting);
     const alumniAddon = document.getElementById('ee-alumni-addon');
-    if (alumniAddon) alumniAddon.hidden = on || membershipMeeting;
+    if (alumniAddon) alumniAddon.hidden = on && !membershipMeeting;
+    const extrasMembershipMount = document.getElementById('ee-hub-membership-mount-extras');
+    if (extrasMembershipMount && membershipMeeting && step2Confirmed) {
+      extrasMembershipMount.hidden = false;
+    }
     if (panelTitle) {
       panelTitle.textContent = membershipMeeting
         ? 'Member ticket & guest visits'
@@ -1909,6 +1926,13 @@
 
   function hubMembershipMountTarget() {
     if (isMembershipMeetingMode()) {
+      // After Step 2 is confirmed, also surface membership in Optional extras.
+      if (step2Confirmed) {
+        return (
+          document.getElementById('ee-hub-membership-mount-extras') ||
+          document.getElementById('ee-hub-membership-mount-meeting')
+        );
+      }
       return document.getElementById('ee-hub-membership-mount-meeting');
     }
     if (attendanceMode === 'category_exclusivity') {
