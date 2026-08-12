@@ -83,7 +83,10 @@
     if (isMembersOnlyListing(ev)) {
       return 'Members only';
     }
-    if (String(ev?.attendanceMode || '') === 'guest_programme') {
+    if (
+      String(ev?.attendanceMode || '') === 'guest_programme' ||
+      String(ev?.attendanceMode || '') === 'membership_meeting'
+    ) {
       const member =
         ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))
           ? 'Free'

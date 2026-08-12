@@ -155,7 +155,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'What is the guest visit programme?',
     answer:
-      'An optional add-on on the event tickets step for networking groups. Tick Enable guest visit programme to offer 1–3 complimentary trial visits per newcomer (set on your organiser page) alongside your paid ticket types. New attendees use their free visit(s) first; paid member tickets unlock afterwards. For member-only dates, tick Member-only for this event while keeping paid tickets available.',
+      'An optional add-on on open ticket booking or Category Exclusivity, and built into Networking group meeting. Tick Enable guest visit programme (or choose Networking group meeting in Step 1) to offer 1–3 complimentary trial visits per newcomer. On open booking, paid member tickets unlock afterwards. On Networking group meeting, guests join your monthly/annual Hub membership after visits — no public event ticket. For open-booking member-only dates, tick Member-only for this event while keeping paid tickets available.',
     category: 'organisers',
     icon: '🎫',
   },

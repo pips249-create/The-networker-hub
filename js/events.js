@@ -455,7 +455,12 @@
       .querySelectorAll('.event-grid-card[data-id], .premium-card[data-id]')
       .forEach(function (card) {
         const ev = eventLookupById(card.getAttribute('data-id'));
-        if (!ev || String(ev.attendanceMode || '') !== 'guest_programme') return;
+        if (
+          !ev ||
+          (String(ev.attendanceMode || '') !== 'guest_programme' &&
+            String(ev.attendanceMode || '') !== 'membership_meeting')
+        )
+          return;
         const priceEl = card.querySelector('.event-grid-price, .premium-price');
         if (priceEl) priceEl.textContent = priceBadgeLabel(ev);
       });
@@ -466,7 +471,12 @@
     const organiserIds = [];
     const seen = {};
     source.forEach(function (ev) {
-      if (!ev || String(ev.attendanceMode || '') !== 'guest_programme') return;
+      if (
+        !ev ||
+        (String(ev.attendanceMode || '') !== 'guest_programme' &&
+          String(ev.attendanceMode || '') !== 'membership_meeting')
+      )
+        return;
       if (ev.guestPassesDisabled) return;
       if (!(Number(ev.complimentaryVisitsAllowed) > 0)) return;
       const organiserId = String(ev.organiserId || '').trim();

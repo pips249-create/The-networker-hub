@@ -1592,15 +1592,12 @@ body.ee-step2-modal-open {
   }
 }
 
-.ee-info-box {
-  font-size: 12px;
-  line-height: 1.55;
-  color: var(--ee-text-mid);
-  background: #fff8e6;
-  border-left: 4px solid var(--ee-gold);
-  padding: 12px 14px;
-  border-radius: 0 var(--ee-radius) var(--ee-radius) 0;
-  margin-bottom: 16px;
+.ee-hub-membership-mount {
+  margin-top: 16px;
+}
+
+.ee-hub-membership-mount .ee-addon-card {
+  margin-top: 0;
 }
 
 .ee-fixed-questions {

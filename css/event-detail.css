@@ -1496,6 +1496,25 @@ a:hover {
   border-radius: 10px;
 }
 
+.ticket-load-hint--membership-join {
+  text-align: left;
+  background: #fff8e6;
+  border: 1px solid #e8d9a8;
+  border-radius: 10px;
+}
+
+.ticket-load-hint--membership-join p {
+  margin: 0 0 12px;
+}
+
+.ticket-load-hint--membership-join p:last-child {
+  margin-bottom: 0;
+}
+
+.ticket-membership-join-actions {
+  margin-top: 4px;
+}
+
 .ticket-tiers {
   margin-bottom: 20px;
 }

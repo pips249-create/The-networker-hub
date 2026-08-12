@@ -1941,7 +1941,7 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
       ? fields.listing_cta_label || 'View events'
       : isCategoryExclusivity
         ? 'View event'
-        : attendanceMode === 'guest_programme'
+        : attendanceMode === 'guest_programme' || attendanceMode === 'membership_meeting'
           ? 'View member tickets'
           : 'View event'
     : fields.is_roundup

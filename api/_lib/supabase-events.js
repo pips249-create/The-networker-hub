@@ -24,6 +24,9 @@ function normalizeAttendanceMode(mode) {
     .toLowerCase()
     .replace(/[\s-]+/g, '_');
   if (m === 'osop' || m === 'category_exclusivity') return 'category_exclusivity';
+  if (m === 'membership_meeting' || m === 'networking_group' || m === 'networking_group_meeting') {
+    return 'membership_meeting';
+  }
   if (m === 'guest_programme' || m === 'guest_program') return 'guest_programme';
   if (m === 'tickets' || m === 'ticket' || m === 'open' || m === 'standard') return 'tickets';
   return 'tickets';
@@ -1299,8 +1302,27 @@ async function handle(req, res) {
         } catch {
           event.reviewItems = [];
         }
+        try {
+          const { getMembershipPlanForOrganiser } = require('./membership-billing');
+          const plan = await getMembershipPlanForOrganiser(organiser.id);
+          event.organiserMembershipOffered = Boolean(plan && plan.offered);
+          if (plan && plan.offered) {
+            event.organiserMembershipPlan = {
+              offered: true,
+              monthly: plan.monthly
+                ? { amountPounds: plan.monthly.amountPounds, label: plan.monthly.label }
+                : null,
+              annual: plan.annual
+                ? { amountPounds: plan.annual.amountPounds, label: plan.annual.label }
+                : null,
+            };
+          }
+        } catch {
+          event.organiserMembershipOffered = false;
+        }
       } else {
         event.reviewItems = [];
+        event.organiserMembershipOffered = false;
       }
       const related = await eventsFromPublishedRows(sb, relatedFiltered, organiser);
       const publicRelated = related.filter(

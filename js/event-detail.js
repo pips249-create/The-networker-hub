@@ -387,8 +387,21 @@
     return ticketTiersForEvent(ev).some(tierIsApplication);
   }
 
+  function eventIsMembershipMeeting(ev) {
+    return String(ev?.attendanceMode || '').trim() === 'membership_meeting';
+  }
+
+  function eventUsesMembershipAfterVisits(ev) {
+    if (!ev) return false;
+    if (eventIsMembershipMeeting(ev)) return true;
+    if (!eventIsCategoryExclusivity(ev)) return false;
+    if (!eventAllowsGuestPasses(ev)) return false;
+    return Boolean(ev.organiserMembershipOffered);
+  }
+
   function eventIsGuestProgramme(ev) {
-    return String(ev?.attendanceMode || '').trim() === 'guest_programme';
+    const mode = String(ev?.attendanceMode || '').trim();
+    return mode === 'guest_programme' || mode === 'membership_meeting';
   }
 
   function eventAllowsGuestPasses(ev) {
@@ -397,6 +410,28 @@
     if (eventIsGuestProgramme(ev)) return true;
     // Category Exclusivity (and any mode) can offer guest visits when a guest-visit tier exists
     return Boolean(ev.guestVisitTier);
+  }
+
+  function organiserMembershipJoinHref(ev) {
+    const base = organiserProfileHref(ev);
+    return base ? base + '#org-membership-join' : '';
+  }
+
+  function membershipJoinCtaHtml(ev) {
+    const href = organiserMembershipJoinHref(ev);
+    if (!href) {
+      return (
+        '<p class="ticket-load-hint">You have used your complimentary visits. Join this group\u2019s membership to keep attending, then book with the email on their member list.</p>'
+      );
+    }
+    return (
+      '<div class="ticket-load-hint ticket-load-hint--membership-join">' +
+      '<p>You have used your complimentary visits. Join this group\u2019s monthly or annual membership to keep attending — then book with your membership email.</p>' +
+      '<p class="ticket-membership-join-actions"><a class="btn btn-gold" href="' +
+      escapeHtml(href) +
+      '">Join membership</a></p>' +
+      '</div>'
+    );
   }
 
   function hasAlumniInviteLink(ev) {
@@ -680,6 +715,7 @@
   function guestVisitTierCardHtml(t, eligibility, soldOut, opts) {
     const remaining = eligibility?.remaining || 0;
     const isCategory = Boolean(opts && opts.isCategoryExclusivity);
+    const isMembershipMeeting = Boolean(opts && opts.isMembershipMeeting);
     let html =
       '<div class="guest-visit-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
@@ -696,9 +732,11 @@
     }
     html +=
       '<p class="guest-visit-tier-meta">' +
-      (isCategory
-        ? 'No application needed for a guest visit. Or apply below for a full Category Exclusivity place.'
-        : 'Paid tickets unlock after you use your complimentary visits.') +
+      (isMembershipMeeting
+        ? 'After your complimentary visits, join this group\u2019s membership to keep attending.'
+        : isCategory
+          ? 'No application needed for a guest visit. Or apply below for a full Category Exclusivity place.'
+          : 'Paid tickets unlock after you use your complimentary visits.') +
       '</p>' +
       '<div class="guest-visit-tier-price-row">' +
       '<span class="guest-visit-tier-price-label">Today</span>' +
@@ -2291,7 +2329,7 @@
       guest_visits_remaining:
         'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
       guest_visits_exhausted:
-        'You have used all complimentary visits with this organiser. Choose a member ticket instead.',
+        'You have used all complimentary visits with this organiser. Join their membership to keep attending, or book a member ticket if you are already on their list.',
       guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
       guest_passes_disabled: 'Guest passes are not available for this event.',
       alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
@@ -2522,6 +2560,8 @@
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
     const isCategoryExclusivity = eventIsCategoryExclusivity(ev);
     const isGuestProg = eventIsGuestProgramme(ev);
+    const isMembershipMeeting = eventIsMembershipMeeting(ev);
+    const membershipAfterVisits = eventUsesMembershipAfterVisits(ev);
     const rosterMember = isRosterMemberForEvent();
     const showGuestTier =
       eventAllowsGuestPasses(ev) &&
@@ -2530,6 +2570,14 @@
       !guestVisitEligibility.isRosterMember &&
       !rosterMembership?.isMember &&
       (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
+    const guestVisitsExhausted =
+      membershipAfterVisits &&
+      eventAllowsGuestPasses(ev) &&
+      guestVisitEligibility &&
+      !guestVisitEligibility.signedOut &&
+      !guestVisitEligibility.eligible &&
+      !rosterMember &&
+      Number(guestVisitEligibility.remaining) === 0;
     const showAlumniTier =
       ev.alumniFastPassEnabled &&
       ev.alumniTier &&
@@ -2589,6 +2637,7 @@
       }
       tier.innerHTML = guestVisitTierCardHtml(t, guestVisitEligibility, soldOut, {
         isCategoryExclusivity: isCategoryExclusivity,
+        isMembershipMeeting: membershipAfterVisits,
       });
       tiersEl.appendChild(tier);
     }
@@ -2743,6 +2792,8 @@
         '<p class="ticket-load-hint ticket-load-hint--warn">' +
         escapeHtml(alumniInviteBlockedMessage(alumniEligibility)) +
         '</p>';
+    } else if (guestVisitsExhausted && !firstSelectable) {
+      tiersEl.innerHTML = membershipJoinCtaHtml(ev);
     } else if (!firstSelectable && tiersEl.children.length && !isCategoryExclusivity) {
       const hint = ev.isSoldOut
         ? 'All ticket tiers are currently sold out.'
@@ -2754,12 +2805,16 @@
       !isCategoryExclusivity &&
       ev.hasMembersOnlyTiers
     ) {
-      tiersEl.innerHTML =
-        '<p class="ticket-load-hint">' +
-        (rosterMembership?.signedOut
-          ? 'This is a members-only event. Sign in with the email on this group\u2019s membership list to book.'
-          : 'This is a members-only event — booking is for people on this group\u2019s membership list only.') +
-        '</p>';
+      if (membershipAfterVisits && !rosterMember) {
+        tiersEl.innerHTML = membershipJoinCtaHtml(ev);
+      } else {
+        tiersEl.innerHTML =
+          '<p class="ticket-load-hint">' +
+          (rosterMembership?.signedOut
+            ? 'This is a members-only event. Sign in with the email on this group\u2019s membership list to book.'
+            : 'This is a members-only event — booking is for people on this group\u2019s membership list only.') +
+          '</p>';
+      }
     }
 
     renderVatNote(ev, tiers);

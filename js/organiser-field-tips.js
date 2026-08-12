@@ -60,13 +60,13 @@
     'attendance-modes': {
       title: 'Attendance modes',
       body:
-        'Choose open ticket booking or Category Exclusivity. With open booking you can also enable the guest visit programme so complimentary visits sit alongside your paid ticket types.',
-      hubertPrompt: 'What is the difference between ticket types, guest visit programme, and Category Exclusivity?',
+        'Choose open ticket booking, Networking group meeting, or Category Exclusivity. Networking group meeting is for monthly membership groups: complimentary guest visits for newcomers, a free member ticket for your list, then join membership after visits — no public event ticket.',
+      hubertPrompt: 'What is the difference between ticket types, networking group meeting, guest visit programme, and Category Exclusivity?',
     },
     'guest-visit-programme': {
       title: 'Guest visit programme',
       body:
-        'Offer 1–3 complimentary visits so newcomers can try your group before buying a paid member ticket. Choose whether the allowance applies to this organiser page only, or across all your organiser pages. Use “Member-only for this event” to skip guest passes on a specific date.',
+        'Offer 1–3 complimentary visits so newcomers can try your group. On open booking, paid member tickets unlock afterwards. On Networking group meeting, guests join your monthly membership after visits. Use “Member-only for this event” on open booking to skip guest passes on a specific date.',
       hubertPrompt: 'What is the guest visit programme for networking groups?',
     },
     'member-only-event': {
@@ -78,7 +78,7 @@
     'members-only-ticket': {
       title: 'Member price (public can still book)',
       body:
-        'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets above stay on sale for everyone else. It does not make the event members-only. For a meeting only members can book, use “This event is for my members only” instead.',
+        'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets above stay on sale for everyone else. It does not make the event members-only. For monthly membership + complimentary guests with no public ticket, choose Networking group meeting in Step 1.',
       hubertPrompt: 'What is the difference between a members-only rate and a members-only event?',
     },
     'ce-member-price': {
@@ -88,15 +88,21 @@
       hubertPrompt: 'How does Member price work on a Category Exclusivity event?',
     },
     'members-only-event-listing': {
-      title: 'Members-only event',
+      title: 'Closed meeting — member list only',
       body:
-        'Your event stays on the directory so members can find it, but only people on your member list can book — no public ticket needed. Add your member list first under Memberships. Non-members see the listing but cannot buy a ticket.',
+        'Your event stays on the directory, but only people on your member list can book — no public ticket and no complimentary guest visits. For monthly membership groups that also offer guest visits, choose Networking group meeting in Step 1 instead.',
       hubertPrompt: 'How do I make an event members only with no public ticket?',
+    },
+    'hub-membership-prices': {
+      title: 'Monthly / annual membership',
+      body:
+        'Set Hub membership prices on the tickets step. After complimentary visits, newcomers join on your organiser page. People on your member list book the member ticket. Prices also appear under Memberships and can be edited there anytime.',
+      hubertPrompt: 'How do I set monthly membership prices when setting up tickets?',
     },
     'category-exclusivity': {
       title: 'Category Exclusivity',
       body:
-        'Alternative to open ticket sales. Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link.',
+        'Alternative to open ticket sales. Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link. You can also enable guest visits and Hub monthly/annual membership so newcomers try a free visit, then join membership.',
       hubertPrompt: 'What is Category Exclusivity?',
     },
     'alumni-fast-pass': {

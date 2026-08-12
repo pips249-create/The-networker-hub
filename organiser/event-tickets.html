@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260811seriesux" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812memmtg2" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -67,13 +67,18 @@
           <p class="ee-step-label" data-ee-step-label>Step 1</p>
           <h2 data-hub-tip="attendance-modes">How should people attend?</h2>
           <p class="ee-hint ee-attendance-lead">
-            Pick one approach for this event. You can&rsquo;t mix open ticket sales with Category Exclusivity on the same listing.
+            Pick one approach for this event. You can&rsquo;t mix these modes on the same listing.
           </p>
           <div class="ee-attendance-options" role="group" aria-label="Attendance mode">
             <button type="button" class="ee-attendance-card is-active" data-mode="tickets" id="ee-mode-tickets" aria-pressed="true">
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
               <strong>Open ticket booking</strong>
-              <span>Attendees choose a ticket type and pay straight away. Best for most networking meetings and conferences.</span>
+              <span>Public ticket types people buy straight away. Optional guest visits and member rates in the next steps.</span>
+            </button>
+            <button type="button" class="ee-attendance-card" data-mode="membership_meeting" id="ee-mode-membership-meeting" aria-pressed="false">
+              <span class="ee-attendance-card-icon" aria-hidden="true">🤝</span>
+              <strong>Networking group meeting</strong>
+              <span>Complimentary guest visits for newcomers. Members book free. After visits, guests join your monthly membership — no public ticket.</span>
             </button>
             <button type="button" class="ee-attendance-card" data-mode="category_exclusivity" id="ee-mode-category-exclusivity" aria-pressed="false">
               <span class="ee-attendance-card-icon" aria-hidden="true">🪑</span>
@@ -104,8 +109,8 @@
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 data-hub-tip="category-exclusivity">Category Exclusivity</h2>
           <p class="ee-hint" style="margin-top:0">
-            Set the price, capacity, and application deadline. Guests apply instead of buying straight away.
-            Members on your list can book without applying — optionally set a separate member price below.
+            Guests apply instead of buying straight away. Optionally add complimentary visits and Hub monthly/annual membership
+            so newcomers try a free visit, then join membership. Members on your list can book without applying.
           </p>
           <div class="ee-row-2">
             <div class="ee-field">
@@ -187,6 +192,8 @@
               </p>
             </div>
           </div>
+
+          <div id="ee-hub-membership-mount-ce" class="ee-hub-membership-mount" style="margin-top:14px"></div>
         </div>
 
         <div class="ee-card" id="ee-panel-tickets" hidden>
@@ -199,10 +206,10 @@
           <div class="ee-members-only-event-toggle" id="ee-members-only-event-toggle" data-hub-tip="members-only-event-listing">
             <label class="ee-check">
               <input type="checkbox" id="ee-members-only-event-enabled" />
-              <span>This event is for my members only</span>
+              <span>Closed meeting — member list only (no guest visits)</span>
             </label>
             <p class="ee-hint">
-              Use this for member meetings. Only people on your member list can book — no public ticket needed. Your listing stays on the directory for visibility.
+              No public ticket and no complimentary guest visits. Your listing still appears in the directory. For monthly membership + guest visits, choose <strong>Networking group meeting</strong> in Step 1 instead.
             </p>
           </div>
 
@@ -213,10 +220,17 @@
           </div>
 
           <div id="ee-members-only-event-wrap" hidden>
-            <div class="ee-info-box ee-members-only-event-how">
-              <strong>Members-only event</strong>
+            <div class="ee-info-box ee-members-only-event-how" id="ee-members-only-event-how">
+              <strong>Closed members-only event</strong>
               <p>
                 Non-members can see the listing but cannot book. Members sign in with the email on your member list to get their ticket.
+              </p>
+            </div>
+            <div class="ee-info-box ee-membership-meeting-how" id="ee-membership-meeting-how" hidden>
+              <strong>How this works</strong>
+              <p>
+                Newcomers book complimentary guest visits. People on your member list book the member ticket when signed in.
+                After visits are used, guests join your monthly or annual membership on your organiser page — no public event ticket needed.
               </p>
             </div>
             <p class="ee-tier-summary" id="ee-members-only-event-summary" aria-live="polite">Member ticket · unlimited available · Free</p>
@@ -230,11 +244,11 @@
                   <div class="ee-field">
                     <label for="ee-private-ticket-price">Price (&pound;)</label>
                     <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
-                    <p class="ee-hint">Enter 0 for free</p>
+                    <p class="ee-hint">Usually 0 — members already pay monthly membership</p>
                   </div>
                 </div>
                 <p class="ee-hint" id="ee-private-ticket-roster-hint" aria-live="polite">
-                  Manage who can see this ticket under Member list on your organiser page.
+                  Manage who can see this ticket under Memberships on your organiser page.
                 </p>
                 <div class="ee-field ee-guest-visits-field">
                   <label for="ee-private-ticket-qty">Quantity available <span class="ee-optional">(optional)</span></label>
@@ -242,8 +256,78 @@
                 </div>
               </div>
             </div>
+            <div id="ee-membership-meeting-guest-mount" hidden></div>
+            <div id="ee-hub-membership-mount-meeting" class="ee-hub-membership-mount"></div>
             <p class="ee-hint" id="ee-members-only-roster-status" aria-live="polite"></p>
             <a class="ee-inline-link" id="ee-members-only-roster-link" href="/organiser/member-roster" hidden>Manage member list →</a>
+          </div>
+        </div>
+
+        <!-- Shared Hub membership prices (moved into networking meeting or CE panel) -->
+        <div id="ee-hub-membership-config" hidden>
+          <div class="ee-addon-card is-enabled" id="ee-hub-membership-addon" data-hub-tip="hub-membership-prices">
+            <label class="ee-addon-toggle">
+              <input type="checkbox" id="ee-hub-membership-enabled" />
+              <span class="ee-addon-toggle-copy">
+                <strong>Monthly / annual membership</strong>
+                <span class="ee-addon-summary"
+                  >Set Hub membership prices. After complimentary visits, guests join membership on your organiser page.</span
+                >
+              </span>
+            </label>
+            <div class="ee-addon-body" id="ee-hub-membership-fields" hidden>
+              <div class="ee-info-box">
+                <strong>Hub membership</strong>
+                <p>
+                  This is your group membership (not a one-off event ticket). Guests who have used their complimentary visits
+                  are sent to join on your organiser page. People already on your member list book the member ticket above.
+                </p>
+              </div>
+              <div class="ee-row-2">
+                <div class="ee-field">
+                  <label for="ee-hub-membership-monthly">Monthly (&pound;)</label>
+                  <input
+                    type="number"
+                    id="ee-hub-membership-monthly"
+                    min="1"
+                    step="0.01"
+                    placeholder="e.g. 25"
+                    inputmode="decimal"
+                  />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-hub-membership-annual">Annual (&pound;) <span class="ee-optional">(optional)</span></label>
+                  <input
+                    type="number"
+                    id="ee-hub-membership-annual"
+                    min="1"
+                    step="0.01"
+                    placeholder="e.g. 250"
+                    inputmode="decimal"
+                  />
+                </div>
+              </div>
+              <fieldset class="ee-field" aria-label="VAT on membership price">
+                <legend class="ee-label-block">VAT on membership price</legend>
+                <label class="ee-check">
+                  <input type="radio" name="ee-hub-membership-vat" value="included" checked />
+                  <span>VAT included</span>
+                </label>
+                <label class="ee-check">
+                  <input type="radio" name="ee-hub-membership-vat" value="added" />
+                  <span>+20% at checkout</span>
+                </label>
+                <label class="ee-check">
+                  <input type="radio" name="ee-hub-membership-vat" value="none" />
+                  <span>Not VAT registered</span>
+                </label>
+              </fieldset>
+              <p class="ee-hint" id="ee-hub-membership-status" aria-live="polite"></p>
+              <p class="ee-hint" id="ee-hub-membership-connect" hidden>
+                Add bank details before members can pay.
+                <a class="ee-inline-link" href="/organiser/payment-setup">Add bank details →</a>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -252,8 +336,8 @@
           <h2>Optional extras</h2>
           <p class="ee-hint" style="margin-top:0">
             Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book?
-            Turn on <strong>Member price</strong> below. For a meeting only members can book, skip this section and use
-            <strong>This event is for my members only</strong> instead.
+            Turn on <strong>Member price</strong> below. For monthly membership + complimentary guests, choose
+            <strong>Networking group meeting</strong> in Step 1 instead.
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon">
@@ -329,8 +413,8 @@
                 <p>
                   Set the member price below (use <strong>0</strong> for free). Non-members keep booking from
                   <strong>Public ticket types</strong> above. Members on your list see this extra ticket when signed in with their
-                  membership email. If only members should book at all, turn this off and use
-                  <strong>This event is for my members only</strong> instead.
+                  membership email. For complimentary guests + monthly membership (no public ticket), choose
+                  <strong>Networking group meeting</strong> in Step 1 instead.
                 </p>
               </div>
             </div>
@@ -516,6 +600,6 @@
     <script src="../js/organiser-field-tips.js?v=20260730memticket" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260811eventnext" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260812opentix" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260812memmtg2" defer></script>
   </body>
 </html>

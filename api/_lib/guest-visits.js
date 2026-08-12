@@ -337,7 +337,10 @@ async function assertPaidMemberBookingAllowed(
   sb,
   { organiserId, attendeeId, email, attendanceMode, guestPassesDisabled }
 ) {
-  if (String(attendanceMode || '').trim() !== 'guest_programme') return null;
+  if (String(attendanceMode || '').trim() !== 'guest_programme' &&
+      String(attendanceMode || '').trim() !== 'membership_meeting') {
+    return null;
+  }
   if (guestPassesDisabled) return null;
   const settings = await loadOrganiserGuestVisitSettings(sb, organiserId);
   if (settings.allowed < 1) return null;

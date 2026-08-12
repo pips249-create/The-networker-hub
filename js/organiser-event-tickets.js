@@ -252,6 +252,13 @@
         blockers.push('Add at least one person to your member list before publishing');
       }
     }
+    if (
+      hubMembershipEnabled() &&
+      (isMembershipMeetingMode() || attendanceMode === 'category_exclusivity') &&
+      !hubMembershipHasPrice()
+    ) {
+      blockers.push('Enter a monthly and/or annual Hub membership price');
+    }
     const alumni = collectAlumniFastPass();
     if (alumni.enabled && !alumni.saleEnd) {
       blockers.push('Choose a sale end for the previous attendee ticket');
@@ -796,10 +803,15 @@
   }
 
   function isOpenBookingMode(mode) {
-    return mode === 'tickets' || mode === 'guest_programme';
+    return mode === 'tickets' || mode === 'guest_programme' || mode === 'membership_meeting';
+  }
+
+  function isMembershipMeetingMode(mode) {
+    return (mode == null ? attendanceMode : mode) === 'membership_meeting';
   }
 
   function guestProgrammeEnabled() {
+    if (isMembershipMeetingMode()) return true;
     const el = document.getElementById('ee-guest-programme-enabled');
     return Boolean(el && el.checked);
   }
@@ -810,7 +822,16 @@
   }
 
   function resolveOpenBookingMode() {
+    if (isMembershipMeetingMode()) return 'membership_meeting';
     return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
+  }
+
+  function usesGuestVisitProgramme() {
+    return (
+      attendanceMode === 'guest_programme' ||
+      attendanceMode === 'membership_meeting' ||
+      ceGuestVisitsEnabled()
+    );
   }
 
   function syncAddonCard(cardId, enabled) {
@@ -858,6 +879,7 @@
 
   function attendanceModeLabel() {
     if (attendanceMode === 'category_exclusivity') return 'Category Exclusivity';
+    if (attendanceMode === 'membership_meeting') return 'Networking group meeting';
     if (attendanceMode === 'guest_programme') return 'Open booking with guest visits';
     return 'Open ticket booking';
   }
@@ -1074,15 +1096,32 @@
 
   function setAttendanceMode(mode) {
     const requested =
-      mode === 'guest_programme' || mode === 'tickets' || mode === 'category_exclusivity'
+      mode === 'guest_programme' ||
+      mode === 'tickets' ||
+      mode === 'category_exclusivity' ||
+      mode === 'membership_meeting'
         ? mode
         : 'tickets';
     const isCategory = requested === 'category_exclusivity';
+    const isMembershipMeeting = requested === 'membership_meeting';
     const isGuest = requested === 'guest_programme';
 
-    if (!isCategory) {
+    if (isMembershipMeeting) {
+      attendanceMode = 'membership_meeting';
+      setGuestProgrammeEnabled(true);
+      const moe = document.getElementById('ee-members-only-event-enabled');
+      if (moe) moe.checked = true;
+      const priceEl = document.getElementById('ee-private-ticket-price');
+      if (priceEl && (priceEl.value === '' || priceEl.value == null)) priceEl.value = '0';
+      const optOut = document.getElementById('ee-guest-passes-disabled');
+      if (optOut) optOut.checked = false;
+    } else if (!isCategory) {
       setGuestProgrammeEnabled(isGuest);
       attendanceMode = resolveOpenBookingMode();
+      if (isGuest) {
+        const moe = document.getElementById('ee-members-only-event-enabled');
+        if (moe) moe.checked = false;
+      }
     } else {
       attendanceMode = 'category_exclusivity';
     }
@@ -1092,7 +1131,9 @@
       const active =
         btnMode === 'category_exclusivity'
           ? isCategory
-          : btnMode === 'tickets' && !isCategory;
+          : btnMode === 'membership_meeting'
+            ? isMembershipMeeting
+            : btnMode === 'tickets' && !isCategory && !isMembershipMeeting;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
@@ -1124,36 +1165,43 @@
       if (actions) actions.hidden = true;
     } else {
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-      if (optionalExtras) optionalExtras.hidden = (!openBooking && !isCategory) || membersOnlyEventEnabled();
+      if (optionalExtras)
+        optionalExtras.hidden =
+          (!openBooking && !isCategory) ||
+          membersOnlyEventEnabled() ||
+          isMembershipMeetingMode();
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
     }
 
     const privateAddon = document.getElementById('ee-private-ticket-addon');
-    if (privateAddon) privateAddon.hidden = isCategory || membersOnlyEventEnabled();
+    if (privateAddon) {
+      privateAddon.hidden = isCategory || membersOnlyEventEnabled() || isMembershipMeetingMode();
+    }
 
     const optionalLead = document.querySelector('#ee-panel-optional-extras > .ee-hint');
     if (optionalLead) {
       optionalLead.innerHTML = isCategory
         ? 'Optional add-ons for Category Exclusivity. Enable the <strong>Guest visit programme</strong> so newcomers can try a free visit without applying.'
-        : 'Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book? Turn on <strong>Member price</strong> below. For a meeting only members can book, skip this section and use <strong>This event is for my members only</strong> instead.';
+        : 'Add-ons for events that already have public tickets above. Want members free or cheaper while non-members still book? Turn on <strong>Member price</strong> below. For monthly membership + complimentary guests, choose <strong>Networking group meeting</strong> in Step 1 instead.';
     }
 
     // CE already controls who books via Apply + membership — "Member-only for this event"
     // is an open-booking guest-programme opt-out and does not belong here.
     if (guestPassesOptOut) {
-      guestPassesOptOut.hidden = !guestOn || isCategory;
-      if (isCategory) {
+      guestPassesOptOut.hidden = !guestOn || isCategory || isMembershipMeetingMode();
+      if (isCategory || isMembershipMeetingMode()) {
         const optOut = document.getElementById('ee-guest-passes-disabled');
         if (optOut) optOut.checked = false;
       }
     }
 
-    if (guestFields) guestFields.hidden = !guestOn;
-    syncAddonCard('ee-guest-addon', guestOn);
+    if (guestFields && !isMembershipMeetingMode()) guestFields.hidden = !guestOn;
+    syncAddonCard('ee-guest-addon', guestOn && !isMembershipMeetingMode());
     syncGuestProgrammeNote();
     if (panelTitle) {
-      panelTitle.textContent =
-        attendanceMode === 'guest_programme'
+      panelTitle.textContent = isMembershipMeetingMode()
+        ? 'Member ticket & guest visits'
+        : attendanceMode === 'guest_programme'
           ? 'Member ticket types'
           : membersOnlyEventEnabled()
             ? 'Member ticket'
@@ -1161,12 +1209,14 @@
     }
     const panelLead = document.getElementById('ee-tickets-panel-lead');
     if (panelLead) {
-      panelLead.hidden = membersOnlyEventEnabled();
+      panelLead.hidden = membersOnlyEventEnabled() || isMembershipMeetingMode();
     }
     syncMembersOnlyEventMode();
+    syncHubMembershipMount();
     syncGuestVisitsInput();
     updateTierSummary();
     syncTicketStepLabels();
+    updatePublishButton();
   }
 
   function readGuestVisitsAllowed() {
@@ -1196,17 +1246,36 @@
     const summary = document.getElementById('ee-guest-programme-summary');
     if (!note) return;
     const isCategory = attendanceMode === 'category_exclusivity';
+    const isMembershipMeeting = isMembershipMeetingMode();
     const scope = readGuestVisitsScope();
     if (summary) {
       summary.textContent = isCategory
-        ? 'Let newcomers take a free visit without applying — guests still apply for a full place'
-        : 'Let newcomers visit for free before they buy a member ticket';
+        ? hubMembershipEnabled()
+          ? 'Free guest visits, then join membership — or apply for a Category Exclusivity place'
+          : 'Let newcomers take a free visit without applying — guests still apply for a full place'
+        : isMembershipMeeting
+          ? 'Complimentary visits first, then join membership'
+          : 'Let newcomers visit for free before they buy a member ticket';
     }
     if (isCategory) {
+      if (hubMembershipEnabled()) {
+        note.textContent =
+          scope === 'across_groups'
+            ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After visits, they join your Hub membership. People who want a Category Exclusivity place still apply.'
+            : 'Newcomers get up to 3 complimentary visits on this organiser page. After visits, they join your Hub membership. People who want a Category Exclusivity place still apply.';
+      } else {
+        note.textContent =
+          scope === 'across_groups'
+            ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages — no Category Exclusivity application needed for a guest visit. People who want a full place still apply.'
+            : 'Newcomers get up to 3 complimentary visits on this organiser page — no Category Exclusivity application needed for a guest visit. People who want a full place still apply.';
+      }
+      return;
+    }
+    if (isMembershipMeeting) {
       note.textContent =
         scope === 'across_groups'
-          ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages — no Category Exclusivity application needed for a guest visit. People who want a full place still apply.'
-          : 'Newcomers get up to 3 complimentary visits on this organiser page — no Category Exclusivity application needed for a guest visit. People who want a full place still apply.';
+          ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After that, they join your monthly or annual membership to keep attending.'
+          : 'Newcomers get up to 3 complimentary visits on this organiser page. After that, they join your monthly or annual membership to keep attending.';
       return;
     }
     if (scope === 'across_groups') {
@@ -1540,6 +1609,13 @@
   }
 
   function handleMembersOnlyEventToggle() {
+    if (isMembershipMeetingMode()) {
+      const moe = document.getElementById('ee-members-only-event-enabled');
+      if (moe) moe.checked = true;
+      syncMembersOnlyEventMode();
+      updatePublishButton();
+      return;
+    }
     if (membersOnlyEventEnabled()) {
       const guestEl = document.getElementById('ee-guest-programme-enabled');
       if (guestEl && guestEl.checked) {
@@ -1568,8 +1644,39 @@
     el.addEventListener('change', handleMembersOnlyEventToggle);
   }
 
+  function syncMembershipMeetingGuestMount() {
+    const mount = document.getElementById('ee-membership-meeting-guest-mount');
+    const fields = document.getElementById('ee-guest-programme-fields');
+    if (!fields) return;
+    let home = document.getElementById('ee-guest-programme-fields-home');
+    if (!home) {
+      home = document.createElement('div');
+      home.id = 'ee-guest-programme-fields-home';
+      const guestAddon = document.getElementById('ee-guest-addon');
+      if (guestAddon) guestAddon.appendChild(home);
+      else if (fields.parentElement) fields.parentElement.insertBefore(home, fields);
+    }
+    const optOut = document.getElementById('ee-guest-passes-opt-out');
+    if (isMembershipMeetingMode()) {
+      if (mount) {
+        mount.hidden = false;
+        if (fields.parentElement !== mount) mount.appendChild(fields);
+      }
+      fields.hidden = false;
+      if (optOut) optOut.hidden = true;
+    } else {
+      if (home && fields.parentElement !== home) home.appendChild(fields);
+      if (mount) mount.hidden = true;
+    }
+  }
+
   function syncMembersOnlyEventMode() {
-    const on = membersOnlyEventEnabled();
+    const membershipMeeting = isMembershipMeetingMode();
+    const on = membersOnlyEventEnabled() || membershipMeeting;
+    if (membershipMeeting) {
+      const moe = document.getElementById('ee-members-only-event-enabled');
+      if (moe) moe.checked = true;
+    }
     const addonOnly = !on && Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
     const toggleWrap = document.getElementById('ee-members-only-event-toggle');
     const publicWrap = document.getElementById('ee-public-tickets-wrap');
@@ -1580,30 +1687,43 @@
     const targetMount = memberTicketConfigMount();
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const panelLead = document.getElementById('ee-tickets-panel-lead');
-    const infoBox = membersWrap ? membersWrap.querySelector('.ee-members-only-event-how') : null;
+    const closedHow = document.getElementById('ee-members-only-event-how');
+    const meetingHow = document.getElementById('ee-membership-meeting-how');
     const moeSummary = document.getElementById('ee-members-only-event-summary');
     const addonMount = document.getElementById('ee-private-ticket-fields-mount');
 
-    if (toggleWrap) toggleWrap.classList.toggle('is-enabled', on);
+    if (toggleWrap) toggleWrap.classList.toggle('is-enabled', on && !membershipMeeting);
     if (toggleWrap) {
       toggleWrap.hidden =
-        !isOpenBookingMode(attendanceMode) || attendanceMode === 'guest_programme';
+        membershipMeeting ||
+        !isOpenBookingMode(attendanceMode) ||
+        attendanceMode === 'guest_programme';
     }
     if (publicWrap) publicWrap.hidden = on;
     if (membersWrap) membersWrap.hidden = !on;
-    if (privateAddon) privateAddon.hidden = on || attendanceMode === 'category_exclusivity';
-    if (optionalExtras && isOpenBookingMode(attendanceMode)) optionalExtras.hidden = on;
+    if (privateAddon) {
+      privateAddon.hidden = on || attendanceMode === 'category_exclusivity' || membershipMeeting;
+    }
+    if (optionalExtras && isOpenBookingMode(attendanceMode)) {
+      optionalExtras.hidden = on || membershipMeeting;
+    }
     if (optionalExtras && attendanceMode === 'category_exclusivity') optionalExtras.hidden = on;
     const guestAddon = document.getElementById('ee-guest-addon');
-    if (guestAddon) guestAddon.hidden = on;
+    if (guestAddon) guestAddon.hidden = on && !membershipMeeting;
     const alumniAddon = document.getElementById('ee-alumni-addon');
-    if (alumniAddon) alumniAddon.hidden = on;
+    if (alumniAddon) alumniAddon.hidden = on || membershipMeeting;
     if (panelTitle) {
-      panelTitle.textContent =
-        on ? 'Member ticket' : attendanceMode === 'guest_programme' ? 'Member ticket types' : 'Public ticket types';
+      panelTitle.textContent = membershipMeeting
+        ? 'Member ticket & guest visits'
+        : on
+          ? 'Member ticket'
+          : attendanceMode === 'guest_programme'
+            ? 'Member ticket types'
+            : 'Public ticket types';
     }
     if (panelLead) panelLead.hidden = on;
-    if (infoBox) infoBox.hidden = !on;
+    if (closedHow) closedHow.hidden = !on || membershipMeeting;
+    if (meetingHow) meetingHow.hidden = !membershipMeeting;
     if (moeSummary) moeSummary.hidden = !on;
 
     if (config && targetMount && config.parentElement !== targetMount) {
@@ -1620,11 +1740,28 @@
       if (groupId) rosterLink.href = '/organiser/member-roster?id=' + encodeURIComponent(groupId);
     }
 
+    syncMembershipMeetingGuestMount();
+    syncHubMembershipMount();
+
     if (on) {
       setMembersOnlyTicketHint(
-        'Members on your list see this ticket when signed in with their membership email.',
+        membershipMeeting
+          ? 'Members on your list book this ticket free (or at the member price). Guests use complimentary visits first, then join membership.'
+          : 'Members on your list see this ticket when signed in with their membership email.',
         'ok'
       );
+    }
+
+    if (membershipMeeting && memberRosterLoadState === 'idle') loadMemberRosterStatus();
+    if ((membershipMeeting || attendanceMode === 'category_exclusivity') && groupId) {
+      if (loadHubMembershipPlan._for !== groupId) {
+        loadHubMembershipPlan._for = groupId;
+        loadHubMembershipPlan(groupId);
+      } else {
+        syncHubMembershipMount();
+      }
+    } else {
+      syncHubMembershipMount();
     }
 
     updateMembersOnlyEventSummary();
@@ -1745,6 +1882,195 @@
 
   function ceGuestVisitsEnabled() {
     return attendanceMode === 'category_exclusivity' && guestProgrammeEnabled();
+  }
+
+  function hubMembershipEnabled() {
+    return Boolean(document.getElementById('ee-hub-membership-enabled')?.checked);
+  }
+
+  function setHubMembershipEnabled(on) {
+    const el = document.getElementById('ee-hub-membership-enabled');
+    if (el) el.checked = Boolean(on);
+    syncHubMembershipFields();
+  }
+
+  function syncHubMembershipFields() {
+    const enabled = hubMembershipEnabled();
+    const body = document.getElementById('ee-hub-membership-fields');
+    if (body) body.hidden = !enabled;
+    syncAddonCard('ee-hub-membership-addon', enabled);
+  }
+
+  function hubMembershipMountTarget() {
+    if (isMembershipMeetingMode()) {
+      return document.getElementById('ee-hub-membership-mount-meeting');
+    }
+    if (attendanceMode === 'category_exclusivity') {
+      return document.getElementById('ee-hub-membership-mount-ce');
+    }
+    return null;
+  }
+
+  function syncHubMembershipMount() {
+    const config = document.getElementById('ee-hub-membership-config');
+    const addon = document.getElementById('ee-hub-membership-addon');
+    if (!config || !addon) return;
+    const target = hubMembershipMountTarget();
+    const show = Boolean(target);
+    config.hidden = !show;
+    if (show) {
+      if (addon.parentElement !== target) target.appendChild(addon);
+      if (isMembershipMeetingMode() && !hubMembershipEnabled()) {
+        setHubMembershipEnabled(true);
+      }
+    } else if (addon.parentElement !== config) {
+      config.appendChild(addon);
+    }
+    syncHubMembershipFields();
+  }
+
+  function setHubMembershipStatus(msg, tone) {
+    const el = document.getElementById('ee-hub-membership-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('ee-hint-warn', tone === 'warn');
+    el.classList.toggle('ee-hint-ok', tone === 'ok');
+  }
+
+  function readHubMembershipVat() {
+    const checked = document.querySelector('input[name="ee-hub-membership-vat"]:checked');
+    const v = String(checked?.value || 'included').trim();
+    if (v === 'added' || v === 'none') return v;
+    return 'included';
+  }
+
+  function collectHubMembershipPayload() {
+    if (!hubMembershipEnabled()) return null;
+    const monthlyRaw = String(document.getElementById('ee-hub-membership-monthly')?.value || '').trim();
+    const annualRaw = String(document.getElementById('ee-hub-membership-annual')?.value || '').trim();
+    return {
+      active: true,
+      vatTreatment: readHubMembershipVat(),
+      monthlyAmountPounds: monthlyRaw === '' ? null : monthlyRaw,
+      annualAmountPounds: annualRaw === '' ? null : annualRaw,
+      clearMonthly: monthlyRaw === '',
+      clearAnnual: annualRaw === '',
+    };
+  }
+
+  function hubMembershipHasPrice() {
+    const monthly = Number(document.getElementById('ee-hub-membership-monthly')?.value || 0);
+    const annual = Number(document.getElementById('ee-hub-membership-annual')?.value || 0);
+    return (Number.isFinite(monthly) && monthly > 0) || (Number.isFinite(annual) && annual > 0);
+  }
+
+  async function loadHubMembershipPlan(groupId) {
+    const id = String(groupId || seriesMeta.organiserGroupId || '').trim();
+    if (!id) {
+      setHubMembershipStatus('Link this event to an organiser page to set membership prices.', 'warn');
+      return;
+    }
+    const { ok, data } = await api(
+      '/api/organiser/membership-plans?organiserId=' + encodeURIComponent(id)
+    );
+    if (!ok) {
+      setHubMembershipStatus('Could not load membership prices — refresh and try again.', 'warn');
+      return;
+    }
+    const plan = data.plan || null;
+    const monthlyEl = document.getElementById('ee-hub-membership-monthly');
+    const annualEl = document.getElementById('ee-hub-membership-annual');
+    if (monthlyEl) {
+      monthlyEl.value =
+        plan && plan.monthlyAmountPence != null
+          ? String((plan.monthlyAmountPence / 100).toFixed(2)).replace(/\.00$/, '')
+          : '';
+    }
+    if (annualEl) {
+      annualEl.value =
+        plan && plan.annualAmountPence != null
+          ? String((plan.annualAmountPence / 100).toFixed(2)).replace(/\.00$/, '')
+          : '';
+    }
+    const vat = String(plan?.vatTreatment || 'included');
+    document.querySelectorAll('input[name="ee-hub-membership-vat"]').forEach(function (radio) {
+      radio.checked = radio.value === vat;
+    });
+    const connectNote = document.getElementById('ee-hub-membership-connect');
+    if (connectNote) connectNote.hidden = data.connectReady !== false;
+    if (plan && plan.offered) {
+      setHubMembershipEnabled(true);
+      setHubMembershipStatus('Membership prices loaded from your Memberships settings.', 'ok');
+    } else if (isMembershipMeetingMode() || hubMembershipEnabled()) {
+      setHubMembershipStatus('Enter a monthly and/or annual price so guests can join after visits.', 'warn');
+    } else {
+      setHubMembershipStatus('');
+    }
+  }
+
+  async function saveHubMembershipPlanIfNeeded() {
+    if (!hubMembershipEnabled()) return { ok: true };
+    const groupId = String(seriesMeta.organiserGroupId || '').trim();
+    if (!groupId) {
+      return { ok: false, message: 'Choose an organiser page before setting membership prices.' };
+    }
+    if (!hubMembershipHasPrice()) {
+      return {
+        ok: false,
+        message: 'Enter a monthly and/or annual membership price (or turn off Hub membership).',
+      };
+    }
+    const payload = collectHubMembershipPayload();
+    const { ok, data } = await api('/api/organiser/membership-plans', {
+      method: 'PUT',
+      body: JSON.stringify(Object.assign({ organiserId: groupId }, payload)),
+    });
+    if (!ok) {
+      return {
+        ok: false,
+        message: data?.message || data?.error || 'Could not save membership prices.',
+      };
+    }
+    setHubMembershipStatus('Membership prices saved.', 'ok');
+    return { ok: true };
+  }
+
+  function bindHubMembershipFields() {
+    const enabled = document.getElementById('ee-hub-membership-enabled');
+    if (enabled && !enabled.dataset.boundHubMembership) {
+      enabled.dataset.boundHubMembership = '1';
+      enabled.addEventListener('change', function () {
+        syncHubMembershipFields();
+        if (hubMembershipEnabled() && attendanceMode === 'category_exclusivity') {
+          setGuestProgrammeEnabled(true);
+          if (!ceMemberTicketEnabled()) {
+            const ceMember = document.getElementById('ee-ce-member-ticket-enabled');
+            if (ceMember) {
+              ceMember.checked = true;
+              syncCeMemberTicketFields();
+            }
+          }
+          setAttendanceMode('category_exclusivity');
+        }
+        if (hubMembershipEnabled() && seriesMeta.organiserGroupId) {
+          loadHubMembershipPlan(seriesMeta.organiserGroupId);
+        }
+        syncGuestProgrammeNote();
+        updatePublishButton();
+      });
+    }
+    ['ee-hub-membership-monthly', 'ee-hub-membership-annual'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el || el.dataset.boundHubMembershipInput) return;
+      el.dataset.boundHubMembershipInput = '1';
+      el.addEventListener('input', updatePublishButton);
+      el.addEventListener('change', updatePublishButton);
+    });
+    document.querySelectorAll('input[name="ee-hub-membership-vat"]').forEach(function (radio) {
+      if (radio.dataset.boundHubMembershipVat) return;
+      radio.dataset.boundHubMembershipVat = '1';
+      radio.addEventListener('change', updatePublishButton);
+    });
   }
 
   function syncCeMemberTicketFields() {
@@ -1868,7 +2194,7 @@
     if (addonEl) addonEl.checked = false;
     setMembersOnlyEventEnabled(true);
     showAlert(
-      'Switched to “This event is for my members only” — no public ticket needed. Set the member ticket details above.',
+      'Switched to closed member-list booking — no public ticket or guest visits. Set the member ticket details above.',
       'ok'
     );
     updatePublishButton();
@@ -2272,9 +2598,19 @@
         setGuestProgrammeEnabled(true);
         setAttendanceMode('category_exclusivity');
       }
+    } else if (draft.attendanceMode === 'membership_meeting') {
+      setAttendanceMode('membership_meeting');
+      if (Array.isArray(draft.tiers) && draft.tiers.length) prefillMembersOnlyTicket(draft.tiers);
     } else if (draft.attendanceMode === 'guest_programme') {
-      setAttendanceMode('guest_programme');
-      if (Array.isArray(draft.tiers) && draft.tiers.length) prefillTiers(draft.tiers);
+      setAttendanceMode(
+        draft.membersOnlyEvent || ticketsAreMembersOnlyEvent(draft.tiers || [])
+          ? 'membership_meeting'
+          : 'guest_programme'
+      );
+      if (Array.isArray(draft.tiers) && draft.tiers.length) {
+        if (isMembershipMeetingMode()) prefillMembersOnlyTicket(draft.tiers);
+        else prefillTiers(draft.tiers);
+      }
     } else if (Array.isArray(draft.tiers) && draft.tiers.length) {
       setAttendanceMode('tickets');
       if (draft.membersOnlyEvent) {
@@ -2927,8 +3263,12 @@
       if (loaded.event.imagePosition && !seriesMeta.imagePosition) {
         seriesMeta.imagePosition = loaded.event.imagePosition;
       }
-      if (loaded.event.attendanceMode === 'guest_programme') {
-        setAttendanceMode('guest_programme');
+      if (loaded.event.attendanceMode === 'membership_meeting') {
+        setAttendanceMode('membership_meeting');
+      } else if (loaded.event.attendanceMode === 'guest_programme') {
+        setAttendanceMode(
+          ticketsAreMembersOnlyEvent(loaded.tickets) ? 'membership_meeting' : 'guest_programme'
+        );
       } else if (loaded.event.attendanceMode === 'category_exclusivity') {
         setAttendanceMode('category_exclusivity');
       }
@@ -2962,7 +3302,16 @@
       const memberTickets = loaded.tickets.filter(
         (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isMembersOnlyTicket(t)
       );
-      if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
+      if (
+        loaded.event &&
+        (loaded.event.attendanceMode === 'membership_meeting' ||
+          (loaded.event.attendanceMode === 'guest_programme' &&
+            ticketsAreMembersOnlyEvent(loaded.tickets)))
+      ) {
+        setAttendanceMode('membership_meeting');
+        prefillMembersOnlyTicket(loaded.tickets);
+        prefillGuestPassesDisabled(loaded.event);
+      } else if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode('guest_programme');
         prefillTiers(memberTickets);
         prefillMembersOnlyTicket(loaded.tickets);
@@ -2994,7 +3343,14 @@
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
     document.getElementById('ee-mode-tickets')?.addEventListener('click', () => {
-      setAttendanceMode(resolveOpenBookingMode());
+      const moe = document.getElementById('ee-members-only-event-enabled');
+      if (moe) moe.checked = false;
+      setGuestProgrammeEnabled(false);
+      setAttendanceMode('tickets');
+      updatePublishButton();
+    });
+    document.getElementById('ee-mode-membership-meeting')?.addEventListener('click', () => {
+      setAttendanceMode('membership_meeting');
       updatePublishButton();
     });
     document.getElementById('ee-mode-category-exclusivity')?.addEventListener('click', () => {
@@ -3023,6 +3379,12 @@
     bindPrivateTicketFields();
     bindMembersOnlyEventToggle();
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
+      if (isMembershipMeetingMode()) {
+        setGuestProgrammeEnabled(true);
+        setAttendanceMode('membership_meeting');
+        updatePublishButton();
+        return;
+      }
       if (document.getElementById('ee-guest-programme-enabled')?.checked) {
         setMembersOnlyEventEnabled(false);
       }
@@ -3058,6 +3420,7 @@
     bindAlumniFastPassFields();
     bindCategoryExclusivityCloseFields();
     bindCeMemberTicketFields();
+    bindHubMembershipFields();
     document.getElementById('ee-ce-price')?.addEventListener('input', updatePublishButton);
     document.getElementById('ee-ce-price')?.addEventListener('change', updatePublishButton);
     if (!selectedRefundPolicy && !document.querySelector('input[name="refund-policy"]:checked')) {
@@ -3146,7 +3509,7 @@
       return;
     }
 
-    if (attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()) {
+    if (usesGuestVisitProgramme()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
         showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
@@ -3154,6 +3517,13 @@
         updatePublishButton();
         return;
       }
+    }
+
+    if (hubMembershipEnabled() && !hubMembershipHasPrice()) {
+      showAlert('Enter a monthly and/or annual Hub membership price, or turn membership off.', 'warn');
+      document.getElementById('ee-hub-membership-monthly')?.focus();
+      updatePublishButton();
+      return;
     }
 
     if (needsBankDetailsSetup(tiers)) {
@@ -3258,7 +3628,7 @@
         updatePublishButton();
         return;
       }
-      if (attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()) {
+      if (usesGuestVisitProgramme()) {
         const visits = readGuestVisitsAllowed();
         if (visits < 1) {
           showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
@@ -3318,7 +3688,7 @@
     if (btn) btn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
 
-    if (attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()) {
+    if (usesGuestVisitProgramme()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
         showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
@@ -3347,13 +3717,24 @@
       }
     }
 
+    if (hubMembershipEnabled()) {
+      const membershipSaved = await saveHubMembershipPlanIfNeeded();
+      if (!membershipSaved.ok) {
+        showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
+        if (btn) btn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
+        updatePublishButton();
+        return;
+      }
+    }
+
     const body = {
       eventIds,
       tickets: tiers,
       publish,
       attendanceMode,
       guestPassesDisabled:
-        attendanceMode === 'guest_programme' || ceGuestVisitsEnabled()
+        usesGuestVisitProgramme()
           ? collectGuestPassesDisabled()
           : false,
       enableGuestVisits: ceGuestVisitsEnabled(),

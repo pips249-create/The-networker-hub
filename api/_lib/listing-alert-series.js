@@ -14,6 +14,7 @@ function listingAlertAttendanceMode(eventRows) {
   if (modes.some((m) => m === 'category_exclusivity' || m === 'osop')) {
     return 'category_exclusivity';
   }
+  if (modes.some((m) => m === 'membership_meeting')) return 'membership_meeting';
   if (modes.some((m) => m === 'guest_programme')) return 'guest_programme';
   return 'tickets';
 }
@@ -109,7 +110,7 @@ function buildListingAlertSeriesCopy({
     .trim()
     .toLowerCase();
   const isCategoryExclusivity = mode === 'category_exclusivity' || mode === 'osop';
-  const isGuestProgramme = mode === 'guest_programme';
+  const isGuestProgramme = mode === 'guest_programme' || mode === 'membership_meeting';
 
   // Plain-text only — templates wrap organiser/event names in <strong>.
   // Never put HTML tags or &apos; entities in these strings (they get escaped).
@@ -297,7 +298,7 @@ function buildListingAlertRoundupCopy({
     .trim()
     .toLowerCase();
   const isCategoryExclusivity = mode === 'category_exclusivity' || mode === 'osop';
-  const isGuestProgramme = mode === 'guest_programme';
+  const isGuestProgramme = mode === 'guest_programme' || mode === 'membership_meeting';
 
   if (variant === 'member_roster') {
     const followOn = isCategoryExclusivity

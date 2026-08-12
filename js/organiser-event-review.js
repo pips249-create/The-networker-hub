@@ -415,6 +415,14 @@
   function reviewAttendanceLabel() {
     const mode = anchorEvent?.attendanceMode || 'tickets';
     if (mode === 'category_exclusivity') return 'Category Exclusivity — apply, then approve before payment';
+    if (mode === 'membership_meeting') {
+      const visits = organiserComplimentaryVisits || 1;
+      return (
+        'Networking group meeting — complimentary visits (up to ' +
+        visits +
+        '), free member ticket, then join membership'
+      );
+    }
     if (mode === 'guest_programme') {
       const visits = organiserComplimentaryVisits || 1;
       return (

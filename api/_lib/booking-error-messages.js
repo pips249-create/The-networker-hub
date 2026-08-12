@@ -13,7 +13,7 @@ const BOOKING_ERROR_MESSAGES = {
   stripe_not_configured: 'Card checkout is not configured on this server.',
   guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
   guest_visits_exhausted:
-    'You have used all complimentary visits with this organiser. Book a member ticket instead.',
+    'You have used all complimentary visits with this organiser. Join their membership to keep attending, or book a member ticket if you are already on their list.',
   guest_visits_remaining:
     'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
   guest_passes_disabled: 'Guest passes are not available for this event.',
