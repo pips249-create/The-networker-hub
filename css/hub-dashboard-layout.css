@@ -149,6 +149,8 @@ body.hub-page-organiser.organiser-event-edit-page {
   min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
   min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   display: flex;
+  flex-direction: row;
+  align-items: stretch;
   width: 100%;
   max-width: 100%;
 }
@@ -259,6 +261,8 @@ body.attendee-dashboard-page.ad-share-modal-open > #hub-site-footer {
   min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
   min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   display: flex;
+  flex-direction: row;
+  align-items: stretch;
   width: 100%;
   max-width: 100%;
 }
@@ -310,7 +314,8 @@ body.attendee-dashboard-page.ad-share-modal-open > #hub-site-footer {
   min-width: 720px;
 }
 
-/* Desktop: absolute sidebar; shell already sized above for all breakpoints. */
+/* Desktop: in-flow flex sidebar stretches with main content (teal column
+   stays continuous). Shell min-height keeps the marketing footer below the fold. */
 @media (min-width: 769px) {
   html:has(body.hub-page-organiser.organiser-dashboard-page),
   html:has(body.hub-page-account.attendee-dashboard-page) {
@@ -333,35 +338,57 @@ body.attendee-dashboard-page.ad-share-modal-open > #hub-site-footer {
   .organiser-dashboard-page .org-dashboard-layout,
   .attendee-dashboard-page .ad-dashboard-layout {
     position: relative;
-    display: block;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
     overflow: visible;
-    padding-left: 228px;
-    background: none;
+    padding-left: 0;
+  }
+
+  .organiser-dashboard-page .org-dashboard-layout {
+    background: linear-gradient(
+      to right,
+      var(--od-purple-light, #d4f0f3) 0,
+      var(--od-purple-light, #d4f0f3) 228px,
+      transparent 228px
+    );
+  }
+
+  .attendee-dashboard-page .ad-dashboard-layout {
+    background: linear-gradient(
+      to right,
+      var(--ad-teal-pale, #f3eef5) 0,
+      var(--ad-teal-pale, #f3eef5) 228px,
+      transparent 228px
+    );
   }
 
   .organiser-dashboard-page .org-sidebar,
   .attendee-dashboard-page .ad-sidebar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    align-self: stretch;
+    flex-shrink: 0;
     width: 228px;
     height: auto;
     max-height: none;
     overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: visible;
   }
 
   .organiser-dashboard-page .hub-side-nav--minimal,
   .attendee-dashboard-page .hub-side-nav--minimal {
+    flex: 1 1 auto;
     min-height: 100%;
   }
 
   .organiser-dashboard-page .org-main,
   .attendee-dashboard-page .ad-main {
     display: block;
-    width: 100%;
+    flex: 1 1 auto;
+    width: auto;
     min-width: 0;
     min-height: 0;
     overflow: visible;
