@@ -1375,8 +1375,9 @@ body.nav-menu-open {
 
   .organiser-dashboard-page #org-shell,
   .attendee-dashboard-page #ad-shell {
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto !important;
+    min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+    min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
     width: 100%;
     max-width: 100%;
     overflow: visible !important;
@@ -1385,8 +1386,9 @@ body.nav-menu-open {
   .organiser-dashboard-page .org-dashboard-layout,
   .attendee-dashboard-page .ad-dashboard-layout {
     flex-direction: column !important;
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto !important;
+    min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+    min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
     width: 100%;
     max-width: 100%;
     overflow: visible !important;

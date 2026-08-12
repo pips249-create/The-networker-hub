@@ -22,10 +22,16 @@ body.hub-page-account .site-nav {
 
 body.hub-page-organiser.organiser-dashboard-page,
 body.hub-page-account.attendee-dashboard-page {
+  /* Site nav min-height is 84px (hub.css .site-nav) */
+  --hub-dash-nav-offset: 84px;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  min-height: 100vh;
+  height: auto;
+  max-height: none;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body.hub-page-account.account-settings-page {
@@ -124,10 +130,14 @@ body.hub-page-organiser.organiser-event-edit-page {
   flex-shrink: 0;
 }
 
-/* ─── Organiser dashboard: sidebar + scrollable main ─── */
+/* ─── Organiser dashboard: sidebar + main ───
+   Shell must NOT flex-grow into the footer’s slot. It fills at least one
+   viewport under the nav so the marketing footer stays below the fold on
+   every route (Overview, Events, Groups, etc.) at every breakpoint. */
 .organiser-dashboard-page #org-shell {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+  min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -135,8 +145,9 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .organiser-dashboard-page .org-dashboard-layout {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+  min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   display: flex;
   width: 100%;
   max-width: 100%;
@@ -173,8 +184,9 @@ body.hub-page-organiser.organiser-event-edit-page {
 
 .organiser-dashboard-page #org-signin,
 .attendee-dashboard-page #ad-signin {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+  min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   overflow-y: auto;
 }
 
@@ -194,15 +206,16 @@ body.hub-page-organiser.organiser-event-edit-page {
   padding-bottom: 24px;
 }
 
-/* Full-bleed website footer after the dashboard shell (scroll to see it).
-   Do NOT use margin-top:auto — that pins the footer into the first viewport
-   and steals workspace height on short Overview pages. */
+/* Full-bleed website footer AFTER the shell (scroll to see it).
+   Never use margin-top:auto here — that pins the footer into the first
+   viewport and steals workspace height on short pages. */
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer,
 body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
   flex: 0 0 auto;
   width: 100%;
   max-width: none;
-  margin: 0;
+  margin: 0 !important;
+  margin-top: 0 !important;
 }
 
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer .site-footer,
@@ -212,19 +225,29 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
   box-sizing: border-box;
 }
 
-/* Claim / onboarding / drawers: hide marketing footer so it cannot cover
-   workspace content or sit under fixed modals. */
+/* Overlays / locked-scroll modes: hide marketing footer so it cannot cover
+   workspace content or sit under fixed modals/drawers/tours. */
 body.hub-page-organiser.organiser-dashboard-page.org-claim-setup-active > #hub-site-footer,
 body.hub-page-organiser.organiser-dashboard-page.org-group-claim-active > #hub-site-footer,
 body.hub-page-organiser.organiser-dashboard-page.org-group-drawer-open > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-site-footer {
+body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-onboard-active > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-notifications-open > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-cancel-modal-open > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-more-sheet-open > #hub-site-footer,
+body.hub-page-account.attendee-dashboard-page.ad-review-modal-open > #hub-site-footer,
+body.hub-page-account.attendee-dashboard-page.ad-view-review-modal-open > #hub-site-footer,
+body.hub-page-account.attendee-dashboard-page.ad-payment-modal-open > #hub-site-footer,
+body.hub-page-account.attendee-dashboard-page.ad-cancel-modal-open > #hub-site-footer,
+body.hub-page-account.attendee-dashboard-page.ad-share-modal-open > #hub-site-footer {
   display: none !important;
 }
 
-/* ─── Attendee dashboard: sidebar + scrollable main ─── */
+/* ─── Attendee dashboard: sidebar + main ─── */
 .attendee-dashboard-page #ad-shell {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+  min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -232,8 +255,9 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
 }
 
 .attendee-dashboard-page .ad-dashboard-layout {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: calc(100dvh - var(--hub-dash-nav-offset, 84px));
+  min-height: calc(100vh - var(--hub-dash-nav-offset, 84px));
   display: flex;
   width: 100%;
   max-width: 100%;
@@ -286,23 +310,11 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
   min-width: 720px;
 }
 
-/* Desktop: workspace fills the first viewport; footer sits below the fold.
-   Shell min-height = viewport minus site nav (~84px) so Overview is not
-   squashed beside a marketing footer. */
+/* Desktop: absolute sidebar; shell already sized above for all breakpoints. */
 @media (min-width: 769px) {
   html:has(body.hub-page-organiser.organiser-dashboard-page),
   html:has(body.hub-page-account.attendee-dashboard-page) {
     background: #f4f8fa;
-  }
-
-  body.hub-page-organiser.organiser-dashboard-page,
-  body.hub-page-account.attendee-dashboard-page {
-    height: auto;
-    min-height: 100dvh;
-    min-height: 100vh;
-    max-height: none;
-    overflow-x: hidden;
-    overflow-y: auto;
   }
 
   body.hub-page-organiser.organiser-event-edit-page {
@@ -315,10 +327,6 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
 
   .organiser-dashboard-page #org-shell,
   .attendee-dashboard-page #ad-shell {
-    flex: 0 0 auto;
-    /* Site nav min-height is 84px (hub.css .site-nav) */
-    min-height: calc(100dvh - 84px);
-    min-height: calc(100vh - 84px);
     overflow: visible;
   }
 
@@ -326,9 +334,6 @@ body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-si
   .attendee-dashboard-page .ad-dashboard-layout {
     position: relative;
     display: block;
-    flex: 0 0 auto;
-    min-height: calc(100dvh - 84px);
-    min-height: calc(100vh - 84px);
     overflow: visible;
     padding-left: 228px;
     background: none;
