@@ -25,25 +25,7 @@ const {
   foundingBadgeEmailAttachment,
 } = require('./founding-organiser-badge');
 
-/** Email-safe badge chip — matches the Hub profile pill (fallback if image blocked). */
-function foundingBadgeChipHtml({ size }) {
-  const large = size === 'large';
-  const pad = large ? '12px 22px' : '10px 18px';
-  const fontSize = large ? '15px' : '13px';
-  return (
-    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
-    '<tr><td style="padding:' +
-    pad +
-    ';border-radius:999px;background:#f5ebd8;border:1px solid #c4a574;' +
-    "font-family:'DM Sans',system-ui,sans-serif;font-size:" +
-    fontSize +
-    ';font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#452d5c;' +
-    'line-height:1.2;white-space:nowrap;">' +
-    '&#9733; Founding Organiser &middot; 2026' +
-    '</td></tr></table>'
-  );
-}
-
+/** Email-safe badge image for founding unlock emails. */
 function foundingBadgeImageHtml({ siteUrl, width }) {
   const w = width || 420;
   const src = foundingBadgePublicUrl(siteUrl);
