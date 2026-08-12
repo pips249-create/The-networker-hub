@@ -16701,34 +16701,32 @@
           } catch {
             /* ignore */
           }
-          loadBootstrap({ silent: true, skipClaimUi: true }).then(function () {
-            renderAll();
-            const publishedEvent =
-              (publishedEventId &&
-                (state.events || []).find(function (ev) {
-                  return String(ev.id) === String(publishedEventId);
-                })) ||
-              (publishedEventIds[0] &&
-                (state.events || []).find(function (ev) {
-                  return String(ev.id) === String(publishedEventIds[0]);
-                })) ||
-              {
-                id: publishedEventId || publishedEventIds[0] || '',
-                slug: e.data.slug || '',
-                title: e.data.title || '',
-              };
-            // Always celebrate publish first — do not auto-open the next profile
-            // review (that felt like being sent back to "your organiser page").
-            if ((state.pendingClaimGroups || []).length > 0) {
-              showLaunchPageCompletePrompt({
-                nextClaim: true,
-                fromPublish: true,
-                event: publishedEvent,
-              });
-              return;
-            }
-            showLaunchPageCompletePrompt({ fromPublish: true, event: publishedEvent });
-          });
+          const publishedEventOptimistic = {
+            id: publishedEventId || publishedEventIds[0] || '',
+            slug: e.data.slug || '',
+            title: e.data.title || '',
+            imageUrl: e.data.imageUrl || '',
+          };
+          // Celebrate immediately — don't wait on bootstrap (that felt like a second load).
+          if ((state.pendingClaimGroups || []).length > 0) {
+            showLaunchPageCompletePrompt({
+              nextClaim: true,
+              fromPublish: true,
+              event: publishedEventOptimistic,
+            });
+          } else {
+            showLaunchPageCompletePrompt({
+              fromPublish: true,
+              event: publishedEventOptimistic,
+            });
+          }
+          loadBootstrap({ silent: true, skipClaimUi: true })
+            .then(function () {
+              renderAll();
+            })
+            .catch(function () {
+              /* non-fatal — celebration already shown */
+            });
           return;
         }
         if (e.data.publishedUrl) {

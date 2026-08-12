@@ -55,8 +55,13 @@
       setPageLoading(true, message, progressStep);
       return Promise.resolve()
         .then(fn)
-        .finally(function () {
+        .then(function (result) {
+          if (!(opts && opts.keepOnSuccess)) setPageLoading(false);
+          return result;
+        })
+        .catch(function (err) {
           setPageLoading(false);
+          throw err;
         });
     }
     if (global.FactLoader) {
@@ -65,14 +70,19 @@
     setPageLoading(true, message, progressStep);
     return Promise.resolve()
       .then(fn)
-      .finally(function () {
+      .then(function (result) {
+        if (!(opts && opts.keepOnSuccess)) setPageLoading(false);
+        return result;
+      })
+      .catch(function (err) {
         setPageLoading(false);
+        throw err;
       });
   }
 
   global.organiserPageLoading = {
-    show: function (message) {
-      setPageLoading(true, message);
+    show: function (message, opts) {
+      setPageLoading(true, message, opts && opts.progressStep);
     },
     hide: function () {
       setPageLoading(false);

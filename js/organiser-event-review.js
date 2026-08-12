@@ -1025,6 +1025,9 @@
     location.href = publishedUrl;
   }
 
+  let publishInFlight = false;
+  let uiBound = false;
+
   function resetPublishUi() {
     const confirmBtn = document.getElementById('ee-review-confirm');
     const backBtn = document.getElementById('ee-review-back');
@@ -1054,6 +1057,7 @@
   }
 
   async function publishListing() {
+    if (publishInFlight) return;
     showAlert('');
 
     if (!loadedTickets.length) {
@@ -1084,20 +1088,24 @@
       return;
     }
 
-    if (window.HubOrganiserTerms) {
-      try {
-        await window.HubOrganiserTerms.requireAcceptance();
-      } catch {
-        showAlert('Accept the organiser terms to publish, or cancel and come back when you are ready.', 'warn');
-        return;
-      }
-    }
-
+    publishInFlight = true;
     setPublishUiBusy();
 
-    const loading = window.organiserPageLoading;
-    let result;
+    let publishedOk = false;
     try {
+      if (window.HubOrganiserTerms) {
+        try {
+          await window.HubOrganiserTerms.requireAcceptance();
+        } catch {
+          showAlert(
+            'Accept the organiser terms to publish, or cancel and come back when you are ready.',
+            'warn'
+          );
+          return;
+        }
+      }
+
+      const loading = window.organiserPageLoading;
       const body = buildPublishBody();
       const tiers = ticketsForPublish(loadedTickets);
       const alumniFastPass = alumniFastPassFromLoaded(anchorEvent, loadedTickets);
@@ -1126,18 +1134,21 @@
         });
       };
 
+      let result;
+      // Keep the overlay up on success so we don't flash a second load before redirect / parent modal.
       if (loading && loading.run) {
         result = await loading.run('Creating and publishing your event', publishWork, {
           progressStep: 'publish',
+          keepOnSuccess: true,
         });
       } else {
-        if (loading) loading.show('Creating and publishing your event');
+        if (loading) loading.show('Creating and publishing your event', { progressStep: 'publish' });
         result = await publishWork();
-        if (loading) loading.hide();
       }
 
-      if (!result.ok) {
-        const data = result.data || {};
+      if (!result || !result.ok) {
+        if (loading) loading.hide();
+        const data = (result && result.data) || {};
         if (
           data.error === 'stripe_connect_required' ||
           /connect stripe|bank details/i.test(String(data.message || ''))
@@ -1159,13 +1170,24 @@
         return;
       }
 
+      publishedOk = true;
       redirectAfterPublish();
+    } catch (err) {
+      console.error(err);
+      const loading = window.organiserPageLoading;
+      if (loading) loading.hide();
+      showAlert('Could not publish your event. Check your connection and try again.', 'warn');
     } finally {
-      resetPublishUi();
+      if (!publishedOk) {
+        publishInFlight = false;
+        resetPublishUi();
+      }
     }
   }
 
   function bindUi() {
+    if (uiBound) return;
+    uiBound = true;
     const ticketsUrl = ticketsPageUrl();
     const backTickets = document.getElementById('ee-back-tickets-link');
     const backEdit = document.getElementById('ee-review-back');
@@ -1174,7 +1196,13 @@
       backTickets.hidden = false;
     }
     if (backEdit) backEdit.href = ticketsUrl;
-    document.getElementById('ee-review-confirm')?.addEventListener('click', publishListing);
+    const confirmBtn = document.getElementById('ee-review-confirm');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        publishListing();
+      });
+    }
   }
 
   function removeStaleReviewRefundCheck() {
