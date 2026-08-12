@@ -45,7 +45,7 @@ function heroBadgeHtml({ founding, siteUrl }) {
     return (
       '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 18px;">' +
       '<tr><td style="text-align:center;">' +
-      foundingBadgeImageHtml({ siteUrl, width: 420 }) +
+      foundingBadgeImageHtml({ siteUrl, width: 260 }) +
       '</td></tr></table>'
     );
   }
@@ -66,8 +66,8 @@ function foundingPerkRowHtml({ foundingHomepage, siteUrl }) {
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">' +
     '<tr><td style="padding:22px 24px;text-align:center;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 14px;">Your badge</p>' +
-    '<div style="background:#f5f0e8;border-radius:14px;padding:16px 12px;margin:0 auto 12px;max-width:460px;">' +
-    foundingBadgeImageHtml({ siteUrl, width: 400 }) +
+    '<div style="background:#f5f0e8;border-radius:14px;padding:18px 12px;margin:0 auto 12px;max-width:320px;">' +
+    foundingBadgeImageHtml({ siteUrl, width: 240 }) +
     '</div>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:rgba(255,255,255,0.78);margin:0;">This badge is also attached as a PNG so you can save or share it. It shows on your Hub organiser page too.</p>' +
     homepageLine +
