@@ -8582,28 +8582,32 @@
     menu.style.webkitOverflowScrolling = 'touch';
 
     const pad = 12;
-    const maxH = Math.min(window.innerHeight - pad * 2, 420);
+    const gap = 6;
+    const hardCap = 420;
+    const rect = toggle.getBoundingClientRect();
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - pad - gap);
+    const spaceAbove = Math.max(0, rect.top - pad - gap);
+    // Prefer below when usable; only flip up when there is clearly more room above.
+    // Cap height to the chosen side so a long menu scrolls instead of covering the page.
+    const openBelow = spaceBelow >= 160 || spaceBelow >= spaceAbove;
+    const avail = openBelow ? spaceBelow : spaceAbove;
+    const maxH = Math.max(140, Math.min(hardCap, avail));
     menu.style.maxHeight = maxH + 'px';
 
-    const rect = toggle.getBoundingClientRect();
     const menuW = Math.min(menu.offsetWidth || 260, window.innerWidth - pad * 2);
-    // Use capped height so positioning keeps the menu on-screen and scrollable.
     const menuH = Math.min(menu.scrollHeight || 200, maxH);
 
-    let top = rect.bottom + 6;
-    let left = rect.right - menuW;
+    let top = openBelow ? rect.bottom + gap : rect.top - menuH - gap;
+    if (top < pad) top = pad;
     if (top + menuH > window.innerHeight - pad) {
-      const above = rect.top - menuH - 6;
-      if (above >= pad) top = above;
-      else top = pad;
+      top = Math.max(pad, window.innerHeight - pad - menuH);
     }
+
+    let left = rect.right - menuW;
     if (left < pad) left = pad;
     if (left + menuW > window.innerWidth - pad) {
       left = window.innerWidth - menuW - pad;
     }
-    // Re-clamp height to whatever space remains below the chosen top.
-    const availBelow = window.innerHeight - top - pad;
-    menu.style.maxHeight = Math.max(160, Math.min(maxH, availBelow)) + 'px';
 
     menu.style.top = top + 'px';
     menu.style.left = left + 'px';
