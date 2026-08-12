@@ -22,6 +22,10 @@ function mapRow(row) {
     city: row.city || null,
     postcode: row.postcode || null,
     meetingLink: row.meeting_link || null,
+    attendanceDoor: row.attendance_door || 'general',
+    payHow: row.pay_how || null,
+    freeTrialVisits: row.free_trial_visits || 'no',
+    freeTrialDetails: row.free_trial_details || null,
     pricing: row.pricing || 'Free',
     ticketDetails: row.ticket_details || null,
     description: row.description || null,
@@ -41,7 +45,7 @@ async function listEventIntake(limit, status) {
   let query = sb
     .from('event_intake_submissions')
     .select(
-      'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
+      'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
     )
     .order('created_at', { ascending: false })
     .limit(max);
@@ -97,7 +101,7 @@ async function updateEventIntakeStatus(id, status, session) {
     .update(patch)
     .eq('id', id)
     .select(
-      'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
+      'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
     )
     .single();
 
@@ -149,7 +153,7 @@ module.exports = async function handler(req, res) {
       return json(res, 503, {
         ok: false,
         error: 'event_intake_table_missing',
-        message: 'Run migration 243_event_intake_submissions.sql in Supabase.',
+        message: 'Run migrations 243_event_intake_submissions.sql and 249_event_intake_ticket_flow.sql in Supabase.',
       });
     }
     if (e.code === 'invalid_status') {

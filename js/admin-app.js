@@ -21594,10 +21594,43 @@
                   ' · ' +
                   esc(locationLine(row)) +
                   '</dd></div>' +
-                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Pricing</dt><dd>' +
-                  esc(row.pricing || 'Free') +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">How people get in</dt><dd>' +
+                  esc(
+                    row.attendanceDoor === 'category_exclusivity'
+                      ? 'Category Exclusivity'
+                      : 'General ticketing'
+                  ) +
+                  '</dd></div>' +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Pay / access</dt><dd>' +
+                  esc(
+                    (function () {
+                      var p = String(row.payHow || '').trim();
+                      if (p === 'both') return 'Tickets + membership';
+                      if (p === 'membership') return 'Membership';
+                      if (p === 'paid_tickets') return 'Paid tickets';
+                      if (p === 'free_tickets') return 'Free tickets';
+                      return row.pricing || 'Free';
+                    })()
+                  ) +
                   (tickets ? ' — ' + esc(tickets) : '') +
                   '</dd></div>' +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Free trial visits</dt><dd>' +
+                  esc(
+                    String(row.freeTrialVisits || '').toLowerCase() === 'yes'
+                      ? 'Yes' +
+                          (row.freeTrialDetails
+                            ? ' — ' + String(row.freeTrialDetails)
+                            : '')
+                      : 'No'
+                  ) +
+                  '</dd></div>' +
+                  (row.organiserWebsiteUrl
+                    ? '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Organiser website</dt><dd><a class="text-brand-700 hover:underline break-all" href="' +
+                      attrEsc(row.organiserWebsiteUrl) +
+                      '" target="_blank" rel="noopener">' +
+                      esc(row.organiserWebsiteUrl) +
+                      '</a></dd></div>'
+                    : '') +
                   (row.photoUrl
                     ? '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Photo</dt><dd><a class="text-brand-700 hover:underline break-all" href="' +
                       attrEsc(row.photoUrl) +

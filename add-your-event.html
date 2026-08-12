@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260811a">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260812tickets">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -50,6 +50,18 @@
         Prefer to manage events yourself later? You can claim your organiser page anytime from
         <a href="/for-organisers">For organisers</a>.
       </p>
+      <div class="ei-book">
+        <h2>Prefer to talk it through?</h2>
+        <p>
+          Book a short call with Catherine, Jamie, or Rosie — we&rsquo;ll take your details and list the event for you.
+        </p>
+        <a
+          class="btn btn-secondary ei-book-btn"
+          href="https://savvycal.com/TheNetworkerHub/website-preview"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Book a call →</a>
+      </div>
       <p class="ei-aside-note">
         Questions?
         <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>
@@ -149,23 +161,69 @@
         </fieldset>
 
         <fieldset class="ei-fieldset">
-          <legend>Tickets</legend>
-          <div class="ei-field">
-            <span class="ei-label-block">Pricing</span>
-            <div class="ei-choice" role="group" aria-label="Pricing">
+          <legend>Tickets &amp; access</legend>
+
+          <div class="ei-field ei-field--full">
+            <span class="ei-label-block">How should people get in?</span>
+            <div class="ei-choice" role="group" aria-label="How people get in">
               <label class="ei-choice-option">
-                <input type="radio" name="pricing" value="Free" checked>
-                <span>Free</span>
+                <input type="radio" name="attendanceDoor" value="general" checked>
+                <span>General ticketing</span>
               </label>
               <label class="ei-choice-option">
-                <input type="radio" name="pricing" value="Paid">
-                <span>Paid / ticketed</span>
+                <input type="radio" name="attendanceDoor" value="category_exclusivity">
+                <span>Category Exclusivity</span>
+              </label>
+            </div>
+            <p class="ei-note" style="margin-top:8px">
+              General = anyone can book. Category Exclusivity = you approve each seat (e.g. one per industry).
+            </p>
+          </div>
+
+          <div class="ei-field ei-field--full" style="margin-top:14px">
+            <span class="ei-label-block">How do people pay / get access?</span>
+            <div class="ei-choice" role="group" aria-label="How people pay">
+              <label class="ei-choice-option">
+                <input type="radio" name="payHow" value="free_tickets" checked>
+                <span>Free tickets</span>
+              </label>
+              <label class="ei-choice-option">
+                <input type="radio" name="payHow" value="paid_tickets">
+                <span>Paid tickets</span>
+              </label>
+              <label class="ei-choice-option">
+                <input type="radio" name="payHow" value="membership">
+                <span>Membership</span>
+              </label>
+              <label class="ei-choice-option">
+                <input type="radio" name="payHow" value="both">
+                <span>Tickets + membership</span>
               </label>
             </div>
           </div>
-          <label class="ei-field ei-field--full" id="ei-ticket-details-wrap" hidden>
-            <span>Ticket details</span>
-            <textarea name="ticketDetails" rows="3" placeholder="e.g. Member £15 / Guest £25 · max 40 places"></textarea>
+
+          <div class="ei-field ei-field--full" style="margin-top:14px">
+            <span class="ei-label-block">Free trial visits?</span>
+            <div class="ei-choice" role="group" aria-label="Free trial visits">
+              <label class="ei-choice-option">
+                <input type="radio" name="freeTrialVisits" value="no" checked>
+                <span>No</span>
+              </label>
+              <label class="ei-choice-option">
+                <input type="radio" name="freeTrialVisits" value="yes">
+                <span>Yes</span>
+              </label>
+            </div>
+          </div>
+
+          <label class="ei-field ei-field--full" id="ei-trial-details-wrap" hidden style="margin-top:14px">
+            <span>Trial visit details <span class="ei-optional">(optional)</span></span>
+            <input type="text" name="freeTrialDetails" placeholder="e.g. 2 free visits before joining">
+          </label>
+
+          <label class="ei-field ei-field--full" id="ei-ticket-details-wrap" hidden style="margin-top:14px">
+            <span>Ticket / membership details</span>
+            <textarea name="ticketDetails" rows="3" placeholder="e.g. Guest £25 · Member £15 · Membership £40/month · max 40 places"></textarea>
           </label>
         </fieldset>
 
@@ -197,6 +255,6 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260811intake1" data-root=""></script>
-<script src="js/event-intake-page.js?v=20260811b"></script>
+<script src="js/event-intake-page.js?v=20260812tickets"></script>
 </body>
 </html>

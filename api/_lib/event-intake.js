@@ -48,12 +48,54 @@ function row(label, value) {
   );
 }
 
+function normalizeAttendanceDoor(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  if (value === 'category_exclusivity' || value === 'application' || /exclusiv|approv|ce\b/.test(value)) {
+    return 'category_exclusivity';
+  }
+  return 'general';
+}
+
+function normalizePayHow(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  if (value === 'both' || value === 'tickets_and_membership') return 'both';
+  if (value === 'membership' || value === 'monthly' || value === 'annual') return 'membership';
+  if (value === 'paid_tickets' || value === 'paid' || value === 'tickets') return 'paid_tickets';
+  if (value === 'free_tickets' || value === 'free') return 'free_tickets';
+  // Legacy Free/Paid radios
+  if (/paid|ticket/.test(value) && !/free/.test(value)) return 'paid_tickets';
+  return 'free_tickets';
+}
+
+function pricingFromPayHow(payHow) {
+  if (payHow === 'paid_tickets' || payHow === 'both') return 'Paid';
+  if (payHow === 'membership') return 'Membership';
+  return 'Free';
+}
+
+function attendanceDoorLabel(door) {
+  return door === 'category_exclusivity' ? 'Category Exclusivity' : 'General ticketing';
+}
+
+function payHowLabel(payHow) {
+  if (payHow === 'both') return 'Tickets + membership';
+  if (payHow === 'membership') return 'Membership';
+  if (payHow === 'paid_tickets') return 'Paid tickets';
+  return 'Free tickets';
+}
+
 function normalizeIntakeInput(body) {
   body = body || {};
   const formatRaw = String(body.format || body.meeting_type || '').trim();
   const format = /online|virtual|zoom|teams/i.test(formatRaw) ? 'Online' : 'In person';
-  const pricingRaw = String(body.pricing || body.ticket_type || '').trim();
-  const pricing = /paid|ticket/i.test(pricingRaw) ? 'Paid' : 'Free';
+  const attendanceDoor = normalizeAttendanceDoor(
+    body.attendanceDoor || body.attendance_door || body.door || body.mode
+  );
+  const payHow = normalizePayHow(
+    body.payHow || body.pay_how || body.pricing || body.ticket_type || 'free_tickets'
+  );
+  const trialRaw = String(body.freeTrialVisits || body.free_trial_visits || '').trim().toLowerCase();
+  const freeTrialVisits = trialRaw === 'yes' || trialRaw === 'true' || trialRaw === '1' ? 'yes' : 'no';
 
   return {
     contactName: String(body.name || body.contactName || body.contact_name || '').trim(),
@@ -68,7 +110,6 @@ function normalizeIntakeInput(body) {
         body.websiteUrl ||
         ''
     )
-      .trim()
       .trim() || null,
     groupName: String(body.group || body.groupName || body.group_name || body.organiser || '').trim(),
     eventTitle: String(body.title || body.eventTitle || body.event_title || '').trim(),
@@ -81,7 +122,14 @@ function normalizeIntakeInput(body) {
     city: String(body.city || '').trim() || null,
     postcode: String(body.postcode || '').trim() || null,
     meetingLink: String(body.meetingLink || body.meeting_link || body.joinLink || '').trim() || null,
-    pricing,
+    attendanceDoor,
+    payHow,
+    pricing: pricingFromPayHow(payHow),
+    freeTrialVisits,
+    freeTrialDetails:
+      freeTrialVisits === 'yes'
+        ? String(body.freeTrialDetails || body.free_trial_details || '').trim() || null
+        : null,
     ticketDetails: String(body.ticketDetails || body.ticket_details || body.tickets || '').trim() || null,
     description: String(body.description || '').trim() || null,
     photoUrl: String(body.photoUrl || body.photo_url || body.image || '').trim() || null,
@@ -137,11 +185,13 @@ function validateIntake(input) {
       };
     }
   }
-  if (input.pricing === 'Paid' && !input.ticketDetails) {
+  const needsDetails =
+    input.payHow === 'paid_tickets' || input.payHow === 'membership' || input.payHow === 'both';
+  if (needsDetails && !input.ticketDetails) {
     return {
       ok: false,
       error: 'missing_tickets',
-      message: 'For paid events, tell us the ticket name(s), price(s), and capacity if limited.',
+      message: 'Add ticket and/or membership details (prices, capacity, or membership term).',
     };
   }
   return { ok: true };
@@ -172,8 +222,11 @@ function buildStaffEmailHtml(input) {
     row('Postcode', input.postcode) +
     row('Join link', input.meetingLink) +
     row('Organiser website', input.organiserWebsiteUrl) +
-    row('Pricing', input.pricing) +
-    row('Tickets', input.ticketDetails) +
+    row('How people get in', attendanceDoorLabel(input.attendanceDoor)) +
+    row('Pay / access', payHowLabel(input.payHow)) +
+    row('Free trial visits', input.freeTrialVisits === 'yes' ? 'Yes' : 'No') +
+    row('Trial details', input.freeTrialDetails) +
+    row('Ticket / membership details', input.ticketDetails) +
     row('Photo URL', input.photoUrl) +
     '</table>' +
     (input.description
@@ -236,6 +289,10 @@ async function submitEventIntake(body) {
     city: input.city,
     postcode: input.postcode,
     meeting_link: input.meetingLink,
+    attendance_door: input.attendanceDoor,
+    pay_how: input.payHow,
+    free_trial_visits: input.freeTrialVisits,
+    free_trial_details: input.freeTrialDetails,
     pricing: input.pricing,
     ticket_details: input.ticketDetails,
     description: input.description,

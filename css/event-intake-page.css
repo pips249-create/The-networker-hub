@@ -52,6 +52,28 @@
   font-weight: 600;
 }
 
+.ei-book {
+  margin: 20px 0 16px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--ei-line);
+}
+
+.ei-book h2 {
+  margin-bottom: 8px;
+}
+
+.ei-book p {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ei-muted);
+}
+
+.ei-book-btn {
+  display: inline-flex;
+  width: auto;
+}
+
 .ei-form-panel {
   background: var(--surface, #fff);
   border: 1px solid var(--ei-line);

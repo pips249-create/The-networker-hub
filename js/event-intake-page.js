@@ -10,6 +10,7 @@
   var inPersonEl = document.getElementById('ei-location-inperson');
   var onlineEl = document.getElementById('ei-location-online');
   var ticketWrap = document.getElementById('ei-ticket-details-wrap');
+  var trialWrap = document.getElementById('ei-trial-details-wrap');
 
   function setStatus(message, tone) {
     if (!statusEl) return;
@@ -31,20 +32,31 @@
     if (onlineEl) onlineEl.hidden = !isOnline;
   }
 
-  function syncPricing() {
-    var checked = form.querySelector('input[name="pricing"]:checked');
-    var isPaid = checked && checked.value === 'Paid';
-    if (ticketWrap) ticketWrap.hidden = !isPaid;
+  function syncPayHow() {
+    var checked = form.querySelector('input[name="payHow"]:checked');
+    var payHow = checked ? checked.value : 'free_tickets';
+    var needsDetails = payHow === 'paid_tickets' || payHow === 'membership' || payHow === 'both';
+    if (ticketWrap) ticketWrap.hidden = !needsDetails;
+  }
+
+  function syncTrial() {
+    var checked = form.querySelector('input[name="freeTrialVisits"]:checked');
+    var yes = checked && checked.value === 'yes';
+    if (trialWrap) trialWrap.hidden = !yes;
   }
 
   form.querySelectorAll('input[name="format"]').forEach(function (el) {
     el.addEventListener('change', syncFormat);
   });
-  form.querySelectorAll('input[name="pricing"]').forEach(function (el) {
-    el.addEventListener('change', syncPricing);
+  form.querySelectorAll('input[name="payHow"]').forEach(function (el) {
+    el.addEventListener('change', syncPayHow);
+  });
+  form.querySelectorAll('input[name="freeTrialVisits"]').forEach(function (el) {
+    el.addEventListener('change', syncTrial);
   });
   syncFormat();
-  syncPricing();
+  syncPayHow();
+  syncTrial();
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -67,7 +79,10 @@
       city: String(fd.get('city') || '').trim(),
       postcode: String(fd.get('postcode') || '').trim(),
       meetingLink: String(fd.get('meetingLink') || '').trim(),
-      pricing: String(fd.get('pricing') || 'Free').trim(),
+      attendanceDoor: String(fd.get('attendanceDoor') || 'general').trim(),
+      payHow: String(fd.get('payHow') || 'free_tickets').trim(),
+      freeTrialVisits: String(fd.get('freeTrialVisits') || 'no').trim(),
+      freeTrialDetails: String(fd.get('freeTrialDetails') || '').trim(),
       ticketDetails: String(fd.get('ticketDetails') || '').trim(),
       description: String(fd.get('description') || '').trim(),
       photoUrl: String(fd.get('photoUrl') || '').trim(),
@@ -98,7 +113,8 @@
           );
           form.reset();
           syncFormat();
-          syncPricing();
+          syncPayHow();
+          syncTrial();
           return;
         }
         setStatus(
