@@ -271,14 +271,14 @@ const FALLBACK_REPLIES = [
       'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–3 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
   },
   {
-    match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme)|(guest visit|complimentary visit|guest programme).*(paid|member).*(ticket|tier)/i,
+    match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme|free trial visit)|(guest visit|complimentary visit|guest programme|free trial visit).*(paid|member).*(ticket|tier)/i,
     reply:
-      'Yes — on open booking, add your paid ticket type(s) first, then enable the guest visit programme. Newcomers use complimentary visits first; once used, paid member tickets unlock. For monthly membership groups with no public ticket, choose Networking group meeting in Step 1: complimentary visits + free member ticket for your list, then guests join membership after visits. For member-only dates with paid tickets still on sale, tick “Member-only for this event”.',
+      'Yes — on Set up tickets choose General ticketing or Application based, then under How do you get paid pick Tickets (or Both) and turn on Free trial visits. Newcomers use complimentary visits first; once used, they buy a ticket or join membership. For monthly membership with no event ticket, choose Membership + Free trial visits. Closed meeting (member list only, no visits) is under General when membership is on.',
   },
   {
-    match: /difference.*(ticket type|guest visit|category exclusiv|networking group)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|networking group meeting/i,
+    match: /difference.*(ticket type|guest visit|category exclusiv|application based|general ticket)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|how (do|should) people get in|networking group meeting/i,
     reply:
-      'Three attendance modes: Open ticket booking (public tickets, optional guest visits), Networking group meeting (complimentary visits + free member ticket + Hub monthly/annual membership — no public ticket), or Category Exclusivity (apply first). On Category Exclusivity you can also tick Monthly/annual membership and Guest visit programme so newcomers try a free visit, then join membership.',
+      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats, e.g. one per industry). Then choose how you get paid — Tickets, Monthly/annual membership, or Both. Free trial visits are optional. You must have tickets or membership (or both). Membership + visits with no event ticket is the networking-club path; Application based adds the apply-and-approve seat gate.',
   },
   {
     match: /\bvat\b|value added tax/i,
@@ -473,17 +473,17 @@ const FALLBACK_REPLIES = [
   {
     match: /category exclusivity|one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
     reply:
-      'Category Exclusivity is an alternative to open ticket sales on the tickets step. Instead of buying straight away, prospective attendees apply to join — they answer two fixed questions (their industry and job title). You review and approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. You can set an optional price (leave at £0 for free), a places limit, and an application closing date. It cannot be combined with open public ticket types on the same event, but you can optionally add a Members only rate so people on your Membership list book without applying (or use Invite members after publish).',
+      'Application based (Category Exclusivity) is on the tickets step. People apply with industry and job title; you approve or decline. You do not have to sell a ticket — choose Monthly/annual membership (and optional Free trial visits) so newcomers try the group then join. Or charge a ticket after approval, or Both. List-member booking lets people on your Membership list book without applying (or use Invite members after publish). It cannot be mixed with General ticketing on the same event.',
   },
   {
     match: /change.*application question|custom.*application question|edit.*application question|different application question|application question.*change|can i change.*question/i,
     reply:
-      'For Category Exclusivity events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For standard open ticket booking, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
+      'For Application based (Category Exclusivity) events, the application questions are fixed: (1) What industry are you in? and (2) What is your job title? These cannot be changed. For General ticketing, you can optionally turn on extra fields under Attendee information at booking on the tickets step — tick the boxes to note food is included, or to collect dietary or accessibility requirements at checkout.',
   },
   {
-    match: /guest visit|complimentary visit|trial visit|visitor ticket|member ticket/i,
+    match: /guest visit|complimentary visit|trial visit|visitor ticket|free trial visit|member ticket/i,
     reply:
-      'Guest visits: on open booking, enable the guest visit programme alongside paid tickets. On Networking group meeting (Step 1), complimentary visits come with a free member ticket for your list — after visits, newcomers join your monthly/annual membership (set under Memberships). Choose whether the allowance applies to this organiser page only, or across all your organiser pages. For open-booking member-only dates, tick “Member-only for this event” while keeping paid tickets live.',
+      'Free trial visits: on Set up tickets, choose General ticketing or Application based, then turn on Free trial visits (1–3). After visits, people need a ticket or monthly/annual membership — so also choose Tickets, Membership, or Both under How do you get paid. Allowance can apply to this organiser page only, or across all your organiser pages. Closed meeting (member list only, no visits) is under General when membership is on.',
   },
   {
     match: /how do i set up a members only ticket with the member (list|roster)/i,

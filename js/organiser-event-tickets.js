@@ -2499,8 +2499,8 @@
 
   function handlePrivateTicketAddonToggle() {
     // Member rate stays an optional add-on beside public tickets.
-    // Closed member-list booking is only via the explicit "Closed meeting" control
-    // or Networking group meeting — never auto-switched from this toggle.
+    // Closed member-list booking is only via the explicit Closed meeting control
+    // under General + membership — never auto-switched from this toggle.
     syncPrivateTicketFields();
     updatePublishButton();
   }

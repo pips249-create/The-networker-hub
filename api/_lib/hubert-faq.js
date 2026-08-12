@@ -155,14 +155,14 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'What is the guest visit programme?',
     answer:
-      'An optional add-on on open ticket booking or Category Exclusivity, and built into Networking group meeting. Tick Enable guest visit programme (or choose Networking group meeting in Step 1) to offer 1–3 complimentary trial visits per newcomer. On open booking, paid member tickets unlock afterwards. On Networking group meeting, guests join your monthly/annual Hub membership after visits — no public event ticket. For open-booking member-only dates, tick Member-only for this event while keeping paid tickets available.',
+      'On Set up tickets, choose General ticketing or Application based, then turn on Free trial visits (1–3 per newcomer). After visits, people must buy a ticket or join monthly/annual membership — so also choose Tickets, Membership, or Both under How do you get paid. For membership clubs with no event ticket, pick Membership + Free trial visits. Closed meeting (member list only, no visits) is available under General when membership is on.',
     category: 'organisers',
     icon: '🎫',
   },
   {
     question: 'What is Category Exclusivity?',
     answer:
-      'An alternative to open ticket sales. Prospective attendees apply instead of buying straight away — they answer two fixed questions (industry and job title). You approve or deny from your organiser dashboard; approved applicants receive a payment link to complete booking.',
+      'Application based (also called Category Exclusivity): prospective attendees apply with industry and job title; you approve or decline from your organiser dashboard. You can charge a ticket after approval, or use free trial visits then monthly membership with no event ticket. People already on your membership list can book without applying when you enable list-member booking.',
     category: 'organisers',
     icon: '🪑',
   },

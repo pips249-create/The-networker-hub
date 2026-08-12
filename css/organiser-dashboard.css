@@ -8028,6 +8028,43 @@ a.hub-payment-setup-btn {
   margin: 12px 0 0;
 }
 
+.org-event-actions {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 96px;
+}
+
+.org-event-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--od-radius-sm);
+  background: #fff;
+  color: var(--od-purple);
+  border: 1.5px solid var(--od-border);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.org-event-edit-btn:hover {
+  background: var(--od-purple-pale);
+}
+
+.org-event-actions .org-action-wrap {
+  width: 100%;
+}
+
+.org-event-actions .org-action-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 .org-action-wrap {
   position: relative;
   display: inline-block;

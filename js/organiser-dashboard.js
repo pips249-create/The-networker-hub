@@ -5031,6 +5031,23 @@
     return eventActionMenuHtml(item || { id: id, title: title });
   }
 
+  function eventQuickEditButtonHtml(id) {
+    return (
+      '<button type="button" class="org-event-edit-btn" data-edit-event="' +
+      esc(id) +
+      '">Edit</button>'
+    );
+  }
+
+  function wrapEventActionsHtml(id, actionWrapHtml) {
+    return (
+      '<div class="org-event-actions">' +
+      eventQuickEditButtonHtml(id) +
+      actionWrapHtml +
+      '</div>'
+    );
+  }
+
   function eventActionMenuHtml(evOrId, title) {
     const ev =
       typeof evOrId === 'object' && evOrId
@@ -5038,31 +5055,32 @@
         : { id: evOrId, title: title || 'Event' };
     const id = ev.id;
     const shortTitle = String(ev.title || title || 'Event').slice(0, 32);
-    return (
+    return wrapEventActionsHtml(
+      id,
       '<div class="org-action-wrap">' +
-      '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
-      '<div class="org-action-menu" role="menu">' +
-      '<div class="org-action-menu-header">' +
-      esc(shortTitle) +
-      '</div>' +
-      '<button type="button" class="org-action-item" data-edit-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
-      '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
-      '<button type="button" class="org-action-item" data-manage-tickets="' +
-      esc(id) +
-      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
-      '<button type="button" class="org-action-item" data-duplicate-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
-      '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
-      eventDeleteActionHtml(ev) +
-      eventUnpublishActionHtml(ev) +
-      '</div></div>'
+        '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
+        '<div class="org-action-menu" role="menu">' +
+        '<div class="org-action-menu-header">' +
+        esc(shortTitle) +
+        '</div>' +
+        '<button type="button" class="org-action-item" data-edit-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
+        '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
+        '<button type="button" class="org-action-item" data-manage-tickets="' +
+        esc(id) +
+        '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
+        '<button type="button" class="org-action-item" data-duplicate-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
+        '<button type="button" class="org-action-item" data-org-goto-sub="events-reviews" data-filter-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">★</span><span class="org-action-text"><strong>Reviews</strong><span>Read &amp; reply to reviews</span></span></button>' +
+        eventDeleteActionHtml(ev) +
+        eventUnpublishActionHtml(ev) +
+        '</div></div>'
     );
   }
 
@@ -5137,38 +5155,39 @@
       '<button type="button" class="org-action-item" data-send-attendee-email="' +
       esc(id) +
       '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Attendee round-up</strong><span>Email who attended so guests can reconnect</span></span></button>';
-    return (
+    return wrapEventActionsHtml(
+      id,
       '<div class="org-action-wrap">' +
-      '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
-      '<div class="org-action-menu" role="menu">' +
-      '<div class="org-action-menu-header">' +
-      esc(shortTitle) +
-      (isSeriesParent ? '<span class="org-action-menu-sub">' + esc(String(ev.seriesCount)) + ' dates</span>' : '') +
-      '</div>' +
-      seriesNote +
-      '<button type="button" class="org-action-item" data-edit-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
-      '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
-      ceMemberItem +
-      connectionsItem +
-      '<button type="button" class="org-action-item" data-manage-tickets="' +
-      esc(id) +
-      '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
-      eventPromoteActionHtml(ev) +
-      '<button type="button" class="org-action-item" data-duplicate-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
-      '<button type="button" class="org-action-item" data-org-goto-sub="events-revenue" data-filter-event="' +
-      esc(id) +
-      '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
-      alumniItem +
-      cancelItem +
-      deleteItem +
-      eventUnpublishActionHtml(ev) +
-      '</div></div>'
+        '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
+        '<div class="org-action-menu" role="menu">' +
+        '<div class="org-action-menu-header">' +
+        esc(shortTitle) +
+        (isSeriesParent ? '<span class="org-action-menu-sub">' + esc(String(ev.seriesCount)) + ' dates</span>' : '') +
+        '</div>' +
+        seriesNote +
+        '<button type="button" class="org-action-item" data-edit-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">✎</span><span class="org-action-text"><strong>Edit event</strong><span>Update details, times &amp; tickets</span></span></button>' +
+        '<button type="button" class="org-action-item" data-org-goto-sub="events-attendees" data-filter-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>See attendees</strong><span>View who registered for this event</span></span></button>' +
+        ceMemberItem +
+        connectionsItem +
+        '<button type="button" class="org-action-item" data-manage-tickets="' +
+        esc(id) +
+        '"><span class="org-action-icon">🎟️</span><span class="org-action-text"><strong>Ticket types</strong><span>Edit tiers and publish</span></span></button>' +
+        eventPromoteActionHtml(ev) +
+        '<button type="button" class="org-action-item" data-duplicate-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">⧉</span><span class="org-action-text"><strong>Duplicate event</strong><span>Draft copy — add new dates &amp; publish</span></span></button>' +
+        '<button type="button" class="org-action-item" data-org-goto-sub="events-revenue" data-filter-event="' +
+        esc(id) +
+        '"><span class="org-action-icon">£</span><span class="org-action-text"><strong>Revenue &amp; payout</strong><span>Request payout when eligible</span></span></button>' +
+        alumniItem +
+        cancelItem +
+        deleteItem +
+        eventUnpublishActionHtml(ev) +
+        '</div></div>'
     );
   }
 
@@ -5408,7 +5427,7 @@
     if (hubSummary) hubSummary.hidden = eventsSubRoute !== 'events-list';
     const titles = {
       'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
-      'events-tickets': ['Tickets', 'Overview of ticket tiers. Open an event → Set up tickets for members-only rates, Category Exclusivity, and guest visits.'],
+      'events-tickets': ['Tickets', 'Overview of ticket tiers. Open an event → Set up tickets for General or Application based booking, free trial visits, and membership.'],
       'events-attendees': [
         'Attendees',
         'Registrations and Category Exclusivity applications — see who is new to your group vs returning, filter by event, and export a CSV.',
