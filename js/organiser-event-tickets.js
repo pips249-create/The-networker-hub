@@ -998,7 +998,7 @@
       text.innerHTML =
         '<strong>' +
         esc(attendanceModeLabel()) +
-        '</strong> — chosen for this event. Change only if you need a different attendance mode.';
+        '</strong> — chosen for this event. Change only if you need a different way in.';
     }
   }
 
@@ -1868,12 +1868,18 @@
     const moeSummary = document.getElementById('ee-members-only-event-summary');
     const addonMount = document.getElementById('ee-private-ticket-fields-mount');
 
-    if (toggleWrap) toggleWrap.classList.toggle('is-enabled', on && !membershipMeeting);
     if (toggleWrap) {
-      toggleWrap.hidden =
-        membershipMeeting ||
-        !isOpenBookingMode(attendanceMode) ||
-        attendanceMode === 'guest_programme';
+      toggleWrap.classList.toggle('is-enabled', on && !membershipMeeting);
+    }
+    if (toggleWrap) {
+      // Closed meeting only for General + membership-only (not ticket sales paths).
+      const showClosed =
+        !membershipMeeting &&
+        isOpenBookingMode(attendanceMode) &&
+        attendanceMode !== 'guest_programme' &&
+        payHowIncludesMembership() &&
+        !payHowIncludesTickets();
+      toggleWrap.hidden = !showClosed;
     }
     if (publicWrap) publicWrap.hidden = on;
     if (membersWrap) membersWrap.hidden = !on;
@@ -3519,9 +3525,50 @@
     }
   }
 
+  function bindAttendanceStep1Ui() {
+    const generalBtn = document.getElementById('ee-mode-tickets');
+    const applicationBtn = document.getElementById('ee-mode-category-exclusivity');
+    const continueBtn = document.getElementById('ee-attendance-continue');
+    if (generalBtn && !generalBtn.dataset.boundAttendanceDoor) {
+      generalBtn.dataset.boundAttendanceDoor = '1';
+      generalBtn.addEventListener('click', () => {
+        setAttendanceDoor('general');
+        updatePublishButton();
+      });
+    }
+    if (applicationBtn && !applicationBtn.dataset.boundAttendanceDoor) {
+      applicationBtn.dataset.boundAttendanceDoor = '1';
+      applicationBtn.addEventListener('click', () => {
+        setAttendanceDoor('application');
+        updatePublishButton();
+      });
+    }
+    if (continueBtn && !continueBtn.dataset.boundAttendanceContinue) {
+      continueBtn.dataset.boundAttendanceContinue = '1';
+      continueBtn.addEventListener('click', () => {
+        openStep2Modal();
+      });
+    }
+    document.getElementById('ee-step2-modal-done')?.addEventListener('click', () => {
+      closeStep2Modal({ confirm: true });
+    });
+    document.querySelectorAll('[data-ee-step2-close]').forEach(function (el) {
+      if (el.dataset.boundStep2Close) return;
+      el.dataset.boundStep2Close = '1';
+      el.addEventListener('click', function () {
+        closeStep2Modal({ confirm: false });
+      });
+    });
+    bindPayHowFields();
+    parkStep2Panels();
+    hideLaterTicketSteps();
+    syncAttendanceStepUi();
+  }
+
   async function init() {
     loadSeriesMeta();
     bindGuestPassesFields();
+    bindAttendanceStep1Ui();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
       return;
@@ -3687,25 +3734,7 @@
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
-    document.getElementById('ee-mode-tickets')?.addEventListener('click', () => {
-      setAttendanceDoor('general');
-      updatePublishButton();
-    });
-    document.getElementById('ee-mode-category-exclusivity')?.addEventListener('click', () => {
-      setAttendanceDoor('application');
-      updatePublishButton();
-    });
-    document.getElementById('ee-attendance-continue')?.addEventListener('click', () => {
-      openStep2Modal();
-    });
-    document.getElementById('ee-step2-modal-done')?.addEventListener('click', () => {
-      closeStep2Modal({ confirm: true });
-    });
-    document.querySelectorAll('[data-ee-step2-close]').forEach(function (el) {
-      el.addEventListener('click', function () {
-        closeStep2Modal({ confirm: false });
-      });
-    });
+    bindAttendanceStep1Ui();
     parkStep2Panels();
     if (loaded.tickets && loaded.tickets.length) {
       step2Confirmed = true;
