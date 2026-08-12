@@ -272,8 +272,13 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
   min-width: 720px;
 }
 
-/* Desktop: page scrolls; sticky nav + sidebar; full-bleed footer after shell */
+/* Desktop: page scrolls; sticky nav + sidebar; full-bleed footer after content */
 @media (min-width: 769px) {
+  html:has(body.hub-page-organiser.organiser-dashboard-page),
+  html:has(body.hub-page-account.attendee-dashboard-page) {
+    background: #f4f8fa;
+  }
+
   body.hub-page-organiser.organiser-dashboard-page,
   body.hub-page-account.attendee-dashboard-page {
     height: auto;
@@ -295,18 +300,35 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
   .organiser-dashboard-page #org-shell,
   .attendee-dashboard-page #ad-shell {
     flex: 1 0 auto;
-    min-height: calc(100dvh - 72px);
-    min-height: calc(100vh - 72px);
+    min-height: 0;
     overflow: visible;
   }
 
   .organiser-dashboard-page .org-dashboard-layout,
   .attendee-dashboard-page .ad-dashboard-layout {
-    flex: 1 0 auto;
-    min-height: calc(100dvh - 72px);
-    min-height: calc(100vh - 72px);
+    flex: 0 0 auto;
+    min-height: 0;
     overflow: visible;
     align-items: stretch;
+  }
+
+  /* Keep sidebar colour filling the row even when sticky nav is shorter than main */
+  .organiser-dashboard-page .org-dashboard-layout {
+    background: linear-gradient(
+      to right,
+      var(--od-purple-light, #d4f0f3) 0,
+      var(--od-purple-light, #d4f0f3) 228px,
+      transparent 228px
+    );
+  }
+
+  .attendee-dashboard-page .ad-dashboard-layout {
+    background: linear-gradient(
+      to right,
+      var(--ad-teal-pale, #f3eef5) 0,
+      var(--ad-teal-pale, #f3eef5) 228px,
+      transparent 228px
+    );
   }
 
   .organiser-dashboard-page .org-sidebar,
@@ -325,7 +347,6 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
   .organiser-dashboard-page .hub-side-nav--minimal,
   .attendee-dashboard-page .hub-side-nav--minimal {
     flex: 1;
-    min-height: min(100%, calc(100dvh - 72px));
   }
 
   .organiser-dashboard-page .org-main,
