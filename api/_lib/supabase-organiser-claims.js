@@ -325,17 +325,20 @@ async function bootstrapOrganiserFromPendingClaims(session) {
   const now = new Date().toISOString();
   const { data: hub } = await sb
     .from('hub_accounts')
-    .select('organiser_access_at, organiser_email_verified_at, hub_view')
+    .select('organiser_access_at, organiser_email_verified_at, hub_view, role')
     .eq('user_id', session.sub)
     .maybeSingle();
 
+  // Only enable organiser access / view — never rewrite platform role (login was demoting admins).
   const patch = {
     user_id: session.sub,
-    role: 'client',
     hub_view: 'organiser',
     organiser_access_at: hub?.organiser_access_at || now,
     organiser_email_verified_at: hub?.organiser_email_verified_at || now,
   };
+  if (!hub) {
+    patch.role = 'client';
+  }
 
   const { error } = await sb.from('hub_accounts').upsert(patch, { onConflict: 'user_id' });
   if (error) throw new Error(error.message);
