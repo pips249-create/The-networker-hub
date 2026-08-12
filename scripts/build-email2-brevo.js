@@ -165,6 +165,7 @@ function fillTemplate(template, vars) {
     terms_url: SITE + '/legal-policies#terms',
     refunds_url: SITE + '/legal-policies#refunds',
     contact_url: SITE + '/contact',
+    add_event_url: SITE + '/add-your-event',
     unsubscribe_url: '{{ unsubscribe }}',
     sponsor_row: sponsorRow,
   };

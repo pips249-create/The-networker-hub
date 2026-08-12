@@ -19,6 +19,15 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function normalizePhone(raw) {
+  return String(raw || '').trim().replace(/\s+/g, ' ');
+}
+
+function isValidPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 15;
+}
+
 function escHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -49,6 +58,7 @@ function normalizeIntakeInput(body) {
   return {
     contactName: String(body.name || body.contactName || body.contact_name || '').trim(),
     email: normalizeEmail(body.email),
+    phone: normalizePhone(body.phone || body.telephone || body.mobile || body.tel),
     groupName: String(body.group || body.groupName || body.group_name || body.organiser || '').trim(),
     eventTitle: String(body.title || body.eventTitle || body.event_title || '').trim(),
     eventDates: String(body.dates || body.eventDates || body.event_dates || '').trim(),
@@ -76,6 +86,9 @@ function validateIntake(input) {
   if (!input.contactName) return { ok: false, error: 'missing_name', message: 'Enter your name.' };
   if (!isValidEmail(input.email)) {
     return { ok: false, error: 'invalid_email', message: 'Enter a valid email address.' };
+  }
+  if (!isValidPhone(input.phone)) {
+    return { ok: false, error: 'invalid_phone', message: 'Enter a valid phone number.' };
   }
   if (!input.groupName) {
     return { ok: false, error: 'missing_group', message: 'Enter your group or organiser name.' };
@@ -117,6 +130,7 @@ function buildStaffEmailHtml(input) {
     '<table style="border-collapse:collapse;width:100%;max-width:560px;">' +
     row('Contact', input.contactName) +
     row('Email', input.email) +
+    row('Phone', input.phone) +
     row('Group', input.groupName) +
     row('Title', input.eventTitle) +
     row('Date(s)', input.eventDates) +
@@ -179,6 +193,7 @@ async function submitEventIntake(body) {
   const insertPayload = {
     contact_name: input.contactName,
     email: input.email,
+    phone: input.phone,
     group_name: input.groupName,
     event_title: input.eventTitle,
     event_dates: input.eventDates,

@@ -9,6 +9,7 @@ function mapRow(row) {
     id: row.id,
     contactName: row.contact_name,
     email: row.email,
+    phone: row.phone || null,
     groupName: row.group_name,
     eventTitle: row.event_title,
     eventDates: row.event_dates,
@@ -39,7 +40,7 @@ async function listEventIntake(limit, status) {
   let query = sb
     .from('event_intake_submissions')
     .select(
-      'id, contact_name, email, group_name, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
+      'id, contact_name, email, phone, group_name, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
     )
     .order('created_at', { ascending: false })
     .limit(max);
@@ -95,7 +96,7 @@ async function updateEventIntakeStatus(id, status, session) {
     .update(patch)
     .eq('id', id)
     .select(
-      'id, contact_name, email, group_name, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
+      'id, contact_name, email, phone, group_name, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
     )
     .single();
 

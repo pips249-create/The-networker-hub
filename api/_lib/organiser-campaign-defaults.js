@@ -13,6 +13,7 @@ function campaignSiteVars(host) {
     legacy_logo_url: site + '/assets/logo-networker-legacy.png',
     logo_footer_url: site + '/assets/logo-email-footer.png',
     for_organisers_url: site + '/for-organisers',
+    add_event_url: site + '/add-your-event',
     company_name: 'The Networker Group Ltd',
     company_number: '15252227',
     legacy_email: LEGACY_REPLY_EMAIL,

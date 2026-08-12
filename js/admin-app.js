@@ -21546,7 +21546,15 @@
                   attrEsc(row.email || '') +
                   '">' +
                   esc(row.email || '—') +
-                  '</a></p></div>' +
+                  '</a>' +
+                  (row.phone
+                    ? ' · <a class="text-brand-700 hover:underline" href="tel:' +
+                      attrEsc(String(row.phone).replace(/\s+/g, '')) +
+                      '">' +
+                      esc(row.phone) +
+                      '</a>'
+                    : '') +
+                  '</p></div>' +
                   '<div class="flex flex-wrap gap-2">' +
                   actions +
                   '</div></div>' +

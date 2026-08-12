@@ -670,6 +670,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     Object.assign(vars, campaignSiteVars(site));
     if (slug === 'organiser_launch_invite') {
       vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-launch-token';
+      vars.add_event_url = vars.add_event_url || site + '/add-your-event';
     }
   }
 

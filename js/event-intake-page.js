@@ -54,6 +54,7 @@
     var payload = {
       name: String(fd.get('name') || '').trim(),
       email: String(fd.get('email') || '').trim(),
+      phone: String(fd.get('phone') || '').trim(),
       group: String(fd.get('group') || '').trim(),
       title: String(fd.get('title') || '').trim(),
       dates: String(fd.get('dates') || '').trim(),
