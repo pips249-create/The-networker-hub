@@ -38,7 +38,7 @@ async function resolveEmail2SponsorBlock(sb) {
   }
 }
 
-/** Compact sponsor strip for Email 2 body (under CTAs) — quieter than the header band. */
+/** Quiet inline sponsor credit for Email 2 — no bordered card. */
 function buildEmail2SponsorStripHtml({ site, logo, company, ctaUrl }) {
   const name = String(company || 'My Medical Cover').trim() || 'My Medical Cover';
   const logoSrc = String(logo || '').trim() || MMC_CDN_LOGO;
@@ -53,22 +53,18 @@ function buildEmail2SponsorStripHtml({ site, logo, company, ctaUrl }) {
 
   return (
     '<tr>' +
-    '<td class="mobile-pad" style="padding:20px 40px 8px;text-align:center;background:#ffffff;">' +
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:280px;margin:0 auto;border:1px solid #e8e4e0;border-radius:12px;background:#f7f5f2;">' +
-    '<tr>' +
-    '<td style="padding:14px 16px;text-align:center;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#8a8486;text-transform:uppercase;letter-spacing:1.1px;margin:0 0 10px;line-height:1;">Supported by</p>' +
+    '<td class="mobile-pad" style="padding:8px 40px 20px;text-align:center;background:#ffffff;border-top:1px solid #eee9e4;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#9a9496;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;line-height:1;">Supported by</p>' +
     '<a href="' +
     safeUrl +
     '" style="display:inline-block;text-decoration:none;line-height:0;">' +
-    '<span style="display:inline-block;padding:10px 14px;background:#1a1a2e;border-radius:8px;line-height:0;">' +
+    '<span style="display:inline-block;padding:8px 12px;background:#1a1a2e;border-radius:6px;line-height:0;">' +
     '<img src="' +
     safeLogo +
     '" alt="' +
     safeName +
-    '" width="120" style="max-width:120px;width:auto;max-height:36px;height:auto;display:block;margin:0 auto;border:0;">' +
+    '" width="100" style="max-width:100px;width:auto;max-height:28px;height:auto;display:block;margin:0 auto;border:0;">' +
     '</span></a>' +
-    '</td></tr></table>' +
     '</td></tr>'
   );
 }
