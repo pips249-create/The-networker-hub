@@ -4569,9 +4569,32 @@
   padding-top: 28px;
 }
 
+.org-page-head--overview .org-page-head-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.org-page-head--overview .org-overview-add {
+  padding-top: 22px;
+}
+
+.org-page-head--overview .org-page-lead {
+  max-width: 32em;
+}
+
 .org-page-head--split .org-add-menu {
   right: 0;
   left: auto;
+}
+
+/* Setup first, then hubs — quieter when checklist is on */
+#org-page-dashboard .org-getting-started:not([hidden]) ~ .org-hub-portals {
+  margin-top: 4px;
+}
+
+#org-page-dashboard .org-setup-resume:not([hidden]) + .org-getting-started:not([hidden]) {
+  margin-top: 12px;
 }
 
 .org-page-kicker {

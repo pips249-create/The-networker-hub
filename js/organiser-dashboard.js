@@ -12718,6 +12718,13 @@
     const panel = document.getElementById('org-getting-started');
     const checklistVisible = panel && !panel.hidden;
 
+    // One setup surface at a time — checklist owns Overview until dismissed/complete.
+    if (checklistVisible) {
+      banner.hidden = true;
+      syncOverviewSetupQuietMode();
+      return;
+    }
+
     if (!checklistDismissed && !tourDone && !checklistVisible) {
       banner.hidden = true;
       syncOverviewSetupQuietMode();

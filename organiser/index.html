@@ -18,15 +18,15 @@
     />
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260723partner" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812overview1" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260812overview1" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260811calbusy" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260805bottom2" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260807rank" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260812menuh3" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260812overview1" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
@@ -74,43 +74,41 @@
               <span class="org-notifications-nav-label">Notifications</span>
               <span class="org-notifications-count" id="org-notifications-count" hidden aria-hidden="true">0</span>
             </button>
-            <a href="#social" class="hub-side-nav-link" data-org-route="social">Promote</a>
-            <a href="#team" class="hub-side-nav-link" data-org-route="team" id="org-nav-team">
-              Team &amp; invites
-              <span class="org-nav-badge" id="org-team-nav-badge" hidden>Invite</span>
-            </a>
 
-            <span class="hub-side-nav-divider">Events</span>
-            <a href="#events-list" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="events-list">
+            <span class="hub-side-nav-divider hub-side-nav-divider--first">Your hubs</span>
+            <a href="#events-list" class="hub-side-nav-link" data-org-route="events-list">
               My events
               <span class="org-nav-badge" id="org-pending-applications-nav-badge" hidden>Review</span>
               <span class="org-nav-badge" id="org-pending-reviews-nav-badge" hidden>Reply</span>
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
-            <a href="/add-your-event" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-send-event">
-              Send us an event
+            <a href="#memberships" class="hub-side-nav-link" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
+              Memberships
             </a>
+            <a href="#business-overview" class="hub-side-nav-link" data-org-route="business-overview">
+              My business opportunities
+              <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>Reply</span>
+            </a>
+
+            <span class="hub-side-nav-divider">More</span>
+            <a href="#social" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="social">Promote</a>
             <a href="#communicate" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="communicate">
               Communicate
             </a>
             <a href="#groups" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="groups">Organiser pages</a>
-            <a href="#memberships" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
-              Memberships
-            </a>
-            <span class="hub-side-nav-divider">Business opportunities</span>
-            <a href="#business-overview" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="business-overview">
-              My business opportunities
-              <span class="org-nav-badge" id="org-opp-enquiry-nav-badge" hidden>Reply</span>
+            <a href="#team" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="team" id="org-nav-team">
+              Team &amp; invites
+              <span class="org-nav-badge" id="org-team-nav-badge" hidden>Invite</span>
             </a>
             <a href="#business-list" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="business-list">List a business opportunity</a>
+            <a href="/add-your-event" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-send-event">
+              Send us an event
+            </a>
 
             <div class="hub-side-nav-bottom">
               <span class="hub-side-nav-divider">Help</span>
               <a href="../guides/list-an-event" class="hub-side-nav-link hub-side-nav-link--nested">Organiser guides</a>
               <a href="../contact" class="hub-side-nav-link hub-side-nav-link--nested">Help &amp; contact</a>
-              <div class="hub-side-nav-util">
-                <a href="#events-list" data-org-route="events-list">My events</a>
-              </div>
             </div>
           </nav>
           <div
@@ -196,51 +194,41 @@
 
         <!-- Overview -->
         <section class="org-page is-active" id="org-page-dashboard" data-org-page="dashboard">
-          <header class="org-page-head org-page-head--split">
+          <header class="org-page-head org-page-head--split org-page-head--overview">
             <div class="org-page-head-text">
               <p class="org-page-kicker">Organiser workspace</p>
               <h1 class="org-page-title" id="org-page-title">Overview</h1>
               <p class="org-page-lead" id="org-page-lead">
-                Use the sidebar for events, attendees, revenue, and more — or jump in with the shortcuts below.
-              </p>
-              <p class="org-workspace-map" aria-label="Workspace areas">
-                <span class="org-workspace-map-label">Go to</span>
-                <a href="#events-list" data-org-route="events-list">My events</a>
-                <a href="#communicate" data-org-route="communicate">Communicate</a>
-                <a href="#events-revenue" data-org-route="events-revenue">Revenue</a>
-                <a href="#social" data-org-route="social">Promote</a>
-                <a href="#team" data-org-route="team">Team</a>
+                Create something new, or open one of your three hubs below.
               </p>
             </div>
             <div class="org-page-head-actions">
-              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-start-tour">Take the tour again</button>
-              <button type="button" class="ee-hubert-help-btn" data-hubert-help>Hubert&apos;s help</button>
-            <div class="org-overview-add" id="org-add-menu-wrap">
-              <button
-                type="button"
-                class="org-btn org-btn-gold org-add-toggle"
-                id="org-add-toggle"
-                aria-expanded="false"
-                aria-haspopup="true"
-                aria-controls="org-add-menu"
-              >
-                + Add new <span class="org-add-chev" aria-hidden="true">▾</span>
-              </button>
-              <div class="org-add-menu" id="org-add-menu" role="menu" hidden>
-                <a role="menuitem" class="org-add-menu-item" href="/organiser/group-edit">
-                  <strong>Organiser page</strong>
-                  <span>Your public page on the hub</span>
-                </a>
-                <a role="menuitem" class="org-add-menu-item" href="/organiser/event-edit">
-                  <strong>Event</strong>
-                  <span>Meeting, exhibition or conference</span>
-                </a>
-                <button type="button" role="menuitem" class="org-add-menu-item" data-action="add-opportunity-listing">
-                  <strong>Business opportunity</strong>
-                  <span>Franchise, partnership or side hustle listing</span>
+              <div class="org-overview-add" id="org-add-menu-wrap">
+                <button
+                  type="button"
+                  class="org-btn org-btn-gold org-add-toggle"
+                  id="org-add-toggle"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  aria-controls="org-add-menu"
+                >
+                  + Add new <span class="org-add-chev" aria-hidden="true">▾</span>
                 </button>
+                <div class="org-add-menu" id="org-add-menu" role="menu" hidden>
+                  <a role="menuitem" class="org-add-menu-item" href="/organiser/group-edit">
+                    <strong>Organiser page</strong>
+                    <span>Your public page on the hub</span>
+                  </a>
+                  <a role="menuitem" class="org-add-menu-item" href="/organiser/event-edit">
+                    <strong>Event</strong>
+                    <span>Meeting, exhibition or conference</span>
+                  </a>
+                  <button type="button" role="menuitem" class="org-add-menu-item" data-action="add-opportunity-listing">
+                    <strong>Business opportunity</strong>
+                    <span>Franchise, partnership or side hustle listing</span>
+                  </button>
+                </div>
               </div>
-            </div>
             </div>
           </header>
 
@@ -255,53 +243,13 @@
             </div>
           </div>
 
-          <div class="org-hub-portals" aria-label="Workspace areas">
-            <button type="button" class="org-hub-portal org-hub-portal--events" data-org-route="events-list">
-              <span class="org-hub-portal-icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              </span>
-              <span class="org-hub-portal-body">
-                <strong>My events</strong>
-                <span class="org-hub-portal-meta" id="hub-portal-meta-events">—</span>
-              </span>
-              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
-            </button>
-            <button type="button" class="org-hub-portal org-hub-portal--business" data-org-route="business-overview">
-              <span class="org-hub-portal-icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-              </span>
-              <span class="org-hub-portal-body">
-                <strong>My business opportunities</strong>
-                <span class="org-hub-portal-meta" id="hub-portal-meta-business">—</span>
-              </span>
-              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
-            </button>
-            <button type="button" class="org-hub-portal org-hub-portal--members" data-org-memberships-nav>
-              <span class="org-hub-portal-icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              </span>
-              <span class="org-hub-portal-body">
-                <strong>Memberships</strong>
-                <span class="org-hub-portal-meta">Member register, members-only tickets &amp; reports</span>
-              </span>
-              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
-            </button>
-          </div>
-
-          <div id="org-payment-setup-dashboard" hidden></div>
-
           <div class="org-getting-started" id="org-getting-started" hidden>
             <div class="org-getting-started-head">
               <div>
                 <h2 class="org-getting-started-title">Here&apos;s what to do first</h2>
                 <p class="org-section-sub org-getting-started-sub">
                   <span id="org-getting-started-progress">3 steps to get your workspace ready.</span>
-                  Full tools now — public ticket buying opens 1 September.
-                  <a href="../guides/list-a-conference-or-exhibition" class="org-getting-started-guides">Conferences guide</a>
-                  ·
-                  <a href="../guides/list-an-event" class="org-getting-started-guides">List an event</a>
-                  ·
-                  <a href="../guides/claim-your-organiser-page" class="org-getting-started-guides">Claim guide</a>
+                  Public ticket buying opens 1 September.
                 </p>
               </div>
               <button type="button" class="org-btn org-btn-outline org-btn-sm" id="org-getting-started-dismiss">Dismiss</button>
@@ -325,10 +273,50 @@
             </ol>
           </div>
 
+          <div class="org-hub-portals" aria-label="Workspace areas">
+            <button type="button" class="org-hub-portal org-hub-portal--events" data-org-route="events-list">
+              <span class="org-hub-portal-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </span>
+              <span class="org-hub-portal-body">
+                <strong>My events</strong>
+                <span class="org-hub-portal-meta" id="hub-portal-meta-events">—</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" class="org-hub-portal org-hub-portal--members" data-org-memberships-nav>
+              <span class="org-hub-portal-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </span>
+              <span class="org-hub-portal-body">
+                <strong>Memberships</strong>
+                <span class="org-hub-portal-meta">Member register, members-only tickets &amp; reports</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" class="org-hub-portal org-hub-portal--business" data-org-route="business-overview">
+              <span class="org-hub-portal-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              </span>
+              <span class="org-hub-portal-body">
+                <strong>My business opportunities</strong>
+                <span class="org-hub-portal-meta" id="hub-portal-meta-business">—</span>
+              </span>
+              <span class="org-hub-portal-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <div id="org-payment-setup-dashboard" hidden></div>
+
           <aside class="hub-dash-context hub-dash-context--organiser hub-dash-context--overview-foot">
             <p>
               Looking for tickets you bought?
               <button type="button" class="hub-dash-context-btn" data-hub-switch="attendee">Go to My Hub</button>
+            </p>
+            <p class="org-overview-quiet-help">
+              <button type="button" class="org-overview-quiet-link" id="org-start-tour">Take the tour again</button>
+              <span class="org-overview-quiet-sep" aria-hidden="true">·</span>
+              <button type="button" class="org-overview-quiet-link" data-hubert-help>Hubert&apos;s help</button>
             </p>
           </aside>
         </section>
@@ -2673,10 +2661,10 @@
               <span class="org-more-sheet-link-label">Notifications</span>
               <span class="org-nav-badge" id="org-more-notifications-badge" hidden>New</span>
             </button>
+            <a href="#memberships" class="org-more-sheet-link" data-org-route="memberships" data-org-memberships-nav>Memberships</a>
+            <a href="#groups" class="org-more-sheet-link" data-org-route="groups">Organiser pages</a>
             <a href="#social" class="org-more-sheet-link" data-org-route="social">Promote</a>
             <a href="#communicate" class="org-more-sheet-link" data-org-route="communicate">Communicate</a>
-            <a href="#groups" class="org-more-sheet-link" data-org-route="groups">Organiser pages</a>
-            <a href="#memberships" class="org-more-sheet-link" data-org-route="memberships" data-org-memberships-nav>Memberships</a>
             <a href="#team" class="org-more-sheet-link" data-org-route="team" id="org-more-team">
               <span class="org-more-sheet-link-label">Team &amp; invites</span>
               <span class="org-nav-badge" id="org-more-team-badge" hidden>Invite</span>
@@ -3600,7 +3588,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260812dupfix" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260812overview1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260812commfix" defer></script>
   </body>
 </html>
