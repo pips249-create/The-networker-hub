@@ -1023,8 +1023,12 @@
       title.textContent =
         attendanceMode === 'category_exclusivity'
           ? 'Step 2 — Category Exclusivity'
-          : 'Step 2 — ticket types';
+          : attendanceMode === 'membership_meeting'
+            ? 'Step 2 — networking group meeting'
+            : 'Step 2 — ticket types';
     }
+    syncMembersOnlyEventMode();
+    panel.hidden = false;
   }
 
   function closeStep2Modal(opts) {
@@ -1116,8 +1120,10 @@
       const optOut = document.getElementById('ee-guest-passes-disabled');
       if (optOut) optOut.checked = false;
     } else if (!isCategory) {
+      // Set mode directly — do not call resolveOpenBookingMode() while still on
+      // membership_meeting, or open booking stays stuck on the member-ticket UI.
       setGuestProgrammeEnabled(isGuest);
-      attendanceMode = resolveOpenBookingMode();
+      attendanceMode = isGuest ? 'guest_programme' : 'tickets';
       if (isGuest) {
         const moe = document.getElementById('ee-members-only-event-enabled');
         if (moe) moe.checked = false;
