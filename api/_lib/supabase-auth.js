@@ -363,10 +363,12 @@ async function registerUser({ email, password, name, marketingOptIn }) {
     metadata: { full_name: name || '' },
   });
 
+  const existingHub = existing ? await getHubAccount(existing.id) : null;
   const accountPayload = {
     user_id: userId,
-    role: USER_ROLES.CLIENT,
-    hub_view: 'attendee',
+    // Preserve admin if this email was already promoted (e.g. silent import reclaim)
+    role: existingHub?.role === USER_ROLES.ADMIN ? USER_ROLES.ADMIN : USER_ROLES.CLIENT,
+    hub_view: existingHub?.role === USER_ROLES.ADMIN ? existingHub.hub_view || 'organiser' : 'attendee',
     display_name: name || null,
     emails_enabled: optedInToMarketing,
     email_pref_event_reminders: true,
@@ -410,7 +412,7 @@ async function registerUser({ email, password, name, marketingOptIn }) {
   return {
     id: userId,
     email: em,
-    role: USER_ROLES.CLIENT,
+    role: accountPayload.role,
     name: name || '',
   };
 }
@@ -608,9 +610,11 @@ async function provisionOrganiserLogin(organiserId) {
     }
   }
 
+  const existingHub = createdAuth ? null : await getHubAccount(userId);
   const hubPatch = {
     user_id: userId,
-    role: USER_ROLES.CLIENT,
+    // Never demote an existing platform admin when linking organiser pages
+    role: existingHub?.role === USER_ROLES.ADMIN ? USER_ROLES.ADMIN : USER_ROLES.CLIENT,
     hub_view: 'organiser',
     display_name: name || null,
   };
@@ -620,7 +624,6 @@ async function provisionOrganiserLogin(organiserId) {
     hubPatch.organiser_access_at = now;
     hubPatch.organiser_email_verified_at = now;
   } else {
-    const existingHub = await getHubAccount(userId);
     if (!existingHub) hubPatch.emails_enabled = false;
     if (!existingHub?.organiser_access_at) hubPatch.organiser_access_at = now;
     if (!existingHub?.organiser_email_verified_at) hubPatch.organiser_email_verified_at = now;
@@ -722,10 +725,11 @@ async function importAuthUserSilent({ email, name, role }) {
     metadata: { imported: true, role: role || 'attendee' },
   });
   const sb = getSupabaseAdmin();
+  const existingHub = await getHubAccount(userId).catch(() => null);
   await sb.from('hub_accounts').upsert(
     {
       user_id: userId,
-      role: 'client',
+      role: existingHub?.role === USER_ROLES.ADMIN ? USER_ROLES.ADMIN : 'client',
       hub_view: role === 'organiser' ? 'organiser' : 'attendee',
       display_name: name || null,
     },
