@@ -820,6 +820,10 @@ a.ee-wizard-link:hover {
   color: #a43f3f;
 }
 
+.ee-autodraft-status.is-saving {
+  color: #55705c;
+}
+
 .ee-dates-times {
   margin-top: 16px;
 }
@@ -1591,12 +1595,24 @@ body.ee-step2-modal-open {
   margin-bottom: 12px;
 }
 
+.ee-pay-how-options {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
 .ee-pay-how-options .ee-check {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   align-items: flex-start;
+  margin-bottom: 6px;
 }
 
 .ee-pay-how-options .ee-check + .ee-check {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .ee-ce-questions {

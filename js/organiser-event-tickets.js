@@ -1387,12 +1387,23 @@
   function syncGuestVisitsInput() {
     const el = document.getElementById('ee-guest-visits-allowed');
     if (!el) return;
+    // Never fight the organiser while they are typing a visit count.
+    if (el.dataset.touched === '1') return;
     const current = Number(el.value);
     if (!Number.isFinite(current) || current < 1) {
       el.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits || 1)));
-    } else if (organiserComplimentaryVisits > 0 && (!el.dataset.touched || current < 1)) {
+    } else if (organiserComplimentaryVisits > 0) {
       el.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
     }
+  }
+
+  function syncGuestVisitsScopeFromOrganiser() {
+    const scopeWrap = document.getElementById('ee-visits-scope-wrap');
+    if (scopeWrap && scopeWrap.dataset.userScoped === '1') return;
+    // If the organiser already edited the visit count, don't yank the scope radio
+    // when a slow group settings fetch finishes.
+    const visitsEl = document.getElementById('ee-guest-visits-allowed');
+    if (visitsEl && visitsEl.dataset.touched === '1') return;
     setGuestVisitsScope(organiserComplimentaryVisitsScope);
   }
 
@@ -2860,10 +2871,10 @@
       group.complimentaryVisitsScope === 'across_groups' ? 'across_groups' : 'per_group';
     organiserGroupName = String(group.name || '').trim();
     const visitsEl = document.getElementById('ee-guest-visits-allowed');
-    if (visitsEl && organiserComplimentaryVisits > 0) {
+    if (visitsEl && organiserComplimentaryVisits > 0 && visitsEl.dataset.touched !== '1') {
       visitsEl.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
     }
-    setGuestVisitsScope(organiserComplimentaryVisitsScope);
+    syncGuestVisitsScopeFromOrganiser();
   }
 
   async function loadOrganiserGuestVisitSetting(groupId) {
@@ -3962,12 +3973,23 @@
           if (n > 3) guestVisitsEl.value = '3';
           if (n < 1 && guestVisitsEl.value !== '') guestVisitsEl.value = '1';
         }
-        if (attendanceMode === 'guest_programme') setAttendanceMode('guest_programme');
+        syncGuestProgrammeNote();
+        updatePublishButton();
+      });
+      guestVisitsEl.addEventListener('change', () => {
+        guestVisitsEl.dataset.touched = '1';
+        const n = Math.floor(Number(guestVisitsEl.value));
+        if (!Number.isFinite(n) || n < 1) guestVisitsEl.value = '1';
+        else if (n > 3) guestVisitsEl.value = '3';
+        syncGuestProgrammeNote();
         updatePublishButton();
       });
     }
     document.querySelectorAll('input[name="ee-visits-scope"]').forEach((radio) => {
       radio.addEventListener('change', () => {
+        const scopeWrap = document.getElementById('ee-visits-scope-wrap');
+        if (scopeWrap) scopeWrap.dataset.userScoped = '1';
+        organiserComplimentaryVisitsScope = readGuestVisitsScope();
         syncGuestProgrammeNote();
         updatePublishButton();
       });

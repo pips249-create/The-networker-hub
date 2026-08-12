@@ -156,30 +156,29 @@
   function setAutodraftStatus(text, tone) {
     const el = document.getElementById('ee-autodraft-status');
     const inline = document.getElementById('ee-autodraft-inline');
-    if (el) {
-      el.textContent = text || '';
-      el.className =
-        'ee-hint ee-autodraft-status' +
-        (tone === 'restored' ? ' is-restored' : tone === 'error' ? ' is-error' : '');
-    }
+    // Keep the inline line as the static helper; put live save status only in #ee-autodraft-status.
     if (inline) {
       if (tone === 'error' && text) {
         inline.textContent = text;
         inline.classList.add('is-error');
         inline.classList.remove('is-restored', 'is-saving');
-      } else if (tone === 'saving') {
-        inline.textContent = text || 'Saving to your account…';
-        inline.classList.add('is-saving');
-        inline.classList.remove('is-error', 'is-restored');
-      } else if (text && (tone === 'restored' || tone === 'saved' || !tone)) {
-        inline.textContent = text;
-        inline.classList.remove('is-error', 'is-saving');
-        if (tone === 'restored') inline.classList.add('is-restored');
-        else inline.classList.remove('is-restored');
-      } else if (!text) {
+      } else {
         inline.textContent = AUTODRAFT_INLINE_DEFAULT;
         inline.classList.remove('is-error', 'is-restored', 'is-saving');
       }
+    }
+    if (el) {
+      el.textContent = text || '';
+      el.className =
+        'ee-hint ee-autodraft-status' +
+        (tone === 'restored'
+          ? ' is-restored'
+          : tone === 'error'
+            ? ' is-error'
+            : tone === 'saving'
+              ? ' is-saving'
+              : '');
+      el.hidden = !text;
     }
   }
 
