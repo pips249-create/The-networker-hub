@@ -980,6 +980,16 @@ async function buildEventRow(payload, eventId, mode) {
   if (payload._clearDuplicatedFrom) {
     row.duplicated_from_event_id = null;
   }
+  if (Object.prototype.hasOwnProperty.call(payload, 'attendanceMode') && payload.attendanceMode) {
+    row.attendance_mode = normalizeAttendanceMode(payload.attendanceMode);
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'guestPassesDisabled')) {
+    row.guest_passes_disabled = Boolean(payload.guestPassesDisabled);
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'vatTreatment') && payload.vatTreatment) {
+    const vat = String(payload.vatTreatment || '').trim();
+    if (['included', 'added', 'none'].includes(vat)) row.vat_treatment = vat;
+  }
 
   if (!isLocked && touchDate) {
     const dates = parseDateIso(payload.date, payload.endDate);
@@ -1153,7 +1163,7 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
     maxAttendees: row.max_attendees != null ? Number(row.max_attendees) : null,
     recurrencePattern: null,
     recurrenceEndDate: null,
-    photoUrl: eventImageUrl(row) || '',
+    photoUrl: eventImageUrl(row) || undefined,
     listingStatus: 'draft',
     date: '',
     endDate: '',
@@ -1164,29 +1174,61 @@ async function duplicateEventForSession(session, sourceEventId, groupIds) {
     },
   });
 
-  const { data: sourceTickets, error: ticketErr } = await sb
-    .from('tickets')
-    .select('*')
-    .eq('event_id', id)
-    .order('display_order', { ascending: true });
-  if (ticketErr) throw new Error(ticketErr.message);
+  // Best-effort: copy booking mode / VAT without failing the whole duplicate if a
+  // newer attendance_mode value is not on this database yet.
+  try {
+    const modePatch = {
+      attendance_mode: normalizeAttendanceMode(row.attendance_mode),
+      guest_passes_disabled: Boolean(row.guest_passes_disabled),
+    };
+    const vat = String(row.vat_treatment || '').trim();
+    if (['included', 'added', 'none'].includes(vat)) modePatch.vat_treatment = vat;
+    const { error: modeErr } = await sb.from('events').update(modePatch).eq('id', event.id);
+    if (modeErr) {
+      console.error('[duplicateEvent] mode copy failed for', event.id, modeErr.message);
+    } else {
+      event.attendanceMode = modePatch.attendance_mode;
+      event.guestPassesDisabled = modePatch.guest_passes_disabled;
+      if (modePatch.vat_treatment) event.vatTreatment = modePatch.vat_treatment;
+    }
+  } catch (modeCopyErr) {
+    console.error('[duplicateEvent] mode copy failed for', event.id, modeCopyErr?.message || modeCopyErr);
+  }
 
+  // Keep ticket setup on the draft copy; failures here must not lose the new event.
   let ticketCount = 0;
-  for (const t of sourceTickets || []) {
-    await createTicket({
-      eventId: event.id,
-      name: t.name,
-      price: t.price,
-      description: t.description,
-      status: 'Active',
-      quantityAvailable: t.quantity,
-      saleStart: t.sale_starts_at,
-      saleEnd: t.sale_ends_at,
-      ticketType: t.ticket_type,
-      displayOrder: t.display_order,
-      categoryExclusivity: t.ticket_type === 'Application-based',
-    });
-    ticketCount += 1;
+  try {
+    const { data: sourceTickets, error: ticketErr } = await sb
+      .from('tickets')
+      .select('*')
+      .eq('event_id', id)
+      .order('display_order', { ascending: true });
+    if (ticketErr) throw new Error(ticketErr.message);
+
+    for (const t of sourceTickets || []) {
+      await createTicket({
+        eventId: event.id,
+        name: t.name,
+        price: t.price,
+        description: t.description,
+        status: 'Active',
+        quantityAvailable: t.quantity,
+        saleStart: t.sale_starts_at,
+        saleEnd: t.sale_ends_at,
+        ticketType: t.ticket_type,
+        displayOrder: t.display_order,
+        categoryExclusivity: t.ticket_type === 'Application-based',
+        visibility: t.visibility,
+        seriesScope: t.series_scope,
+      });
+      ticketCount += 1;
+    }
+  } catch (ticketCopyErr) {
+    console.error(
+      '[duplicateEvent] ticket copy failed for',
+      event.id,
+      ticketCopyErr?.message || ticketCopyErr
+    );
   }
 
   return { event, ticketCount };
@@ -1590,6 +1632,16 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
     insertOccurrences.push(occurrence);
   }
 
+  // Undated drafts (e.g. Duplicate event) have no date key, so they never match
+  // occurrences above. Without this, we insert a new dated row and then delete the
+  // undated anchor as an "orphan" — the editor keeps the deleted id → Event not found.
+  const anchorDateKey = londonDateKeyFromIso(anchorRow.starts_at);
+  if (!anchorDateKey && !usedPeerIds.has(anchorId) && insertOccurrences.length) {
+    const firstOcc = insertOccurrences.shift();
+    usedPeerIds.add(anchorId);
+    toUpdate.push({ peer: anchorRow, occurrence: firstOcc });
+  }
+
   const insertRows = insertOccurrences.map((occurrence) =>
     mergeOccurrenceIntoRow(sharedRow, occurrence, resolvedSeriesGroupId)
   );
@@ -1602,7 +1654,9 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
     ),
   ]);
 
-  const orphanPeers = peers.filter((peer) => peer?.id && !usedPeerIds.has(peer.id));
+  const orphanPeers = peers.filter(
+    (peer) => peer?.id && peer.id !== anchorId && !usedPeerIds.has(peer.id)
+  );
   if (orphanPeers.length) {
     await Promise.all(orphanPeers.map((peer) => deleteDraftEventIfAllowed(sb, peer.id)));
   }

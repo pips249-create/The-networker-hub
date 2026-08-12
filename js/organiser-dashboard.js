@@ -8377,6 +8377,13 @@
       res.data.message || 'Event duplicated as a draft — add dates and publish when ready.',
       false
     );
+    // Clear stale series meta from the source listing so the draft copy does not
+    // inherit sibling dates / ids that confuse save + ticket setup.
+    try {
+      sessionStorage.removeItem(SERIES_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
     await loadBootstrap();
     renderAll();
     setRoute('events-list');

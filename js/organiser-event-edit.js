@@ -1080,6 +1080,10 @@
       return cached;
     }
 
+    if (!res.ok && res.data && res.data.message) {
+      showAlert(String(res.data.message));
+    }
+
     return cached;
   }
 
