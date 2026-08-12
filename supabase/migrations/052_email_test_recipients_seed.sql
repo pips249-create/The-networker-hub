@@ -11,7 +11,8 @@ from (
     ('andreagaiga8@gmail.com', 'Andrea'),
     ('pips249@gmail.com', 'Pips'),
     ('hancher249@gmail.com', 'Hancher'),
-    ('rosie.mcgilvray@yahoo.co.uk', 'Rosie (Yahoo)')
+    ('rosie.mcgilvray@yahoo.co.uk', 'Rosie (Yahoo)'),
+    ('jamie@thenetworkerhub.com', 'Jamie')
 ) as v(email, label)
 where not exists (
   select 1
