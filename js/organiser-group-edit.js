@@ -13,6 +13,7 @@
   let pendingImport = null;
   let loadGeneration = 0;
   let formDirty = false;
+  let saveInFlight = false;
 
   function getRoot() {
     return (config && config.root) || document;
@@ -485,7 +486,23 @@
     update();
   }
 
+  function resetActionButtons() {
+    ['ge-save-changes', 'ge-save-continue', 'ge-publish', 'ge-save-draft', 'ge-cancel'].forEach(function (id) {
+      const btn = el(id);
+      if (!btn) return;
+      btn.disabled = false;
+      btn.classList.remove('is-busy');
+      btn.removeAttribute('aria-busy');
+      if (btn.dataset.idleLabel != null) {
+        btn.textContent = btn.dataset.idleLabel;
+        delete btn.dataset.idleLabel;
+      }
+    });
+    if (isEmbedded()) setEmbeddedLoading(false);
+  }
+
   function configureEditActions(g) {
+    resetActionButtons();
     const saveChanges = el('ge-save-changes');
     const continueBtn = el('ge-save-continue');
     const publishBtn = el('ge-publish');
@@ -518,6 +535,7 @@
   }
 
   function configureOnboardReviewActions(g) {
+    resetActionButtons();
     const saveChanges = el('ge-save-changes');
     const continueBtn = el('ge-save-continue');
     const publishBtn = el('ge-publish');
@@ -593,6 +611,7 @@
   }
 
   function configureCreateActions() {
+    resetActionButtons();
     const saveChanges = el('ge-save-changes');
     const continueBtn = el('ge-save-continue');
     const publishBtn = el('ge-publish');
@@ -602,7 +621,10 @@
     const statusLine = el('ge-status-line');
 
     if (saveChanges) saveChanges.hidden = true;
-    if (continueBtn) continueBtn.hidden = false;
+    if (continueBtn) {
+      continueBtn.hidden = false;
+      continueBtn.textContent = 'Save and create event →';
+    }
     if (publishBtn) publishBtn.hidden = true;
     if (draftBtn) draftBtn.hidden = true;
     if (cancelLink) cancelLink.hidden = isEmbedded();
@@ -611,6 +633,24 @@
       hint.textContent =
         'Your profile goes live when you save, then you’ll set up your first event. Verification follows separately.';
     }
+  }
+
+  function resetFormState() {
+    currentGroup = null;
+    formDirty = false;
+    showAlert('');
+    hideImportReview();
+    setImportStatus('');
+    const form = el('ge-form');
+    if (form) form.reset();
+    resetLogoPreview();
+    const statusLine = el('ge-status-line');
+    if (statusLine) statusLine.hidden = true;
+    resetActionButtons();
+    ['ge-save-changes', 'ge-save-continue', 'ge-publish', 'ge-save-draft', 'ge-cancel'].forEach((id) => {
+      const btn = el(id);
+      if (btn) btn.hidden = true;
+    });
   }
 
   function prefillGroup(g) {
@@ -704,23 +744,6 @@
     } catch {
       /* ignore */
     }
-  }
-
-  function resetFormState() {
-    currentGroup = null;
-    formDirty = false;
-    showAlert('');
-    hideImportReview();
-    setImportStatus('');
-    const form = el('ge-form');
-    if (form) form.reset();
-    resetLogoPreview();
-    const statusLine = el('ge-status-line');
-    if (statusLine) statusLine.hidden = true;
-    ['ge-save-changes', 'ge-save-continue', 'ge-publish', 'ge-save-draft', 'ge-cancel'].forEach((id) => {
-      const btn = el(id);
-      if (btn) btn.hidden = true;
-    });
   }
 
   function markFormDirty() {
@@ -833,10 +856,13 @@
   }
 
   async function saveGroup(mode, triggerBtn) {
+    if (saveInFlight) return;
     if (triggerBtn && (triggerBtn.disabled || triggerBtn.classList.contains('is-busy'))) return;
     showAlert('');
     const payload = await buildPayload();
     if (!payload) return;
+
+    saveInFlight = true;
 
     const editId = getEditId();
     if (mode === 'published') payload.listingStatus = 'published';
@@ -1013,8 +1039,10 @@
         }, delay);
       }
     } finally {
-      if (!keepBusy) {
-        if (continueOnboard) setEmbeddedLoading(false);
+      // Always unlock the footer after save/continue finishes — keepBusy used to leave
+      // buttons disabled if the drawer stayed open or was reopened without a full reset.
+      if (continueOnboard) setEmbeddedLoading(false);
+      if (!keepBusy || document.body.classList.contains('org-group-drawer-open')) {
         actionBtns.forEach((b) => {
           if (b) b.disabled = false;
         });
@@ -1150,30 +1178,34 @@
       form.addEventListener('submit', (e) => e.preventDefault());
     }
 
+    function handleActionButton(btn, e) {
+      if (!btn || btn.disabled || btn.classList.contains('is-busy') || btn.hidden) return;
+      const id = btn.id;
+      if (id === 'ge-save-changes') {
+        if (e) e.preventDefault();
+        saveGroup('save', btn);
+      } else if (id === 'ge-save-continue') {
+        if (e) e.preventDefault();
+        saveGroup('continue', btn);
+      } else if (id === 'ge-publish') {
+        if (e) e.preventDefault();
+        saveGroup('published', btn);
+      } else if (id === 'ge-save-draft') {
+        if (e) e.preventDefault();
+        saveGroup('draft', btn);
+      } else if (id === 'ge-cancel' && isEmbedded()) {
+        if (e) e.preventDefault();
+        if (config.onClose) config.onClose();
+      }
+    }
+
     function onActionClick(e) {
       const btn = e.target && e.target.closest
         ? e.target.closest(
             '#ge-save-changes, #ge-save-continue, #ge-publish, #ge-save-draft, #ge-cancel'
           )
         : null;
-      if (!btn || btn.disabled || btn.classList.contains('is-busy')) return;
-      const id = btn.id;
-      if (id === 'ge-save-changes') {
-        e.preventDefault();
-        saveGroup('save', btn);
-      } else if (id === 'ge-save-continue') {
-        e.preventDefault();
-        saveGroup('continue', btn);
-      } else if (id === 'ge-publish') {
-        e.preventDefault();
-        saveGroup('published', btn);
-      } else if (id === 'ge-save-draft') {
-        e.preventDefault();
-        saveGroup('draft', btn);
-      } else if (id === 'ge-cancel' && isEmbedded()) {
-        e.preventDefault();
-        if (config.onClose) config.onClose();
-      }
+      handleActionButton(btn, e);
     }
 
     const actionRoot =
@@ -1181,6 +1213,18 @@
       document.getElementById('org-group-drawer') ||
       document;
     actionRoot.addEventListener('click', onActionClick);
+
+    // Direct bindings — survive cases where delegated clicks are blocked.
+    ['ge-save-changes', 'ge-save-continue', 'ge-publish', 'ge-save-draft', 'ge-cancel'].forEach(
+      function (id) {
+        const btn = el(id) || document.getElementById(id);
+        if (!btn || btn.dataset.geClickBound) return;
+        btn.dataset.geClickBound = '1';
+        btn.addEventListener('click', function (e) {
+          handleActionButton(btn, e);
+        });
+      }
+    );
 
     function wireColorInputs(colorEl, hexEl) {
       if (!colorEl || !hexEl || colorEl.dataset.geBound) return;
