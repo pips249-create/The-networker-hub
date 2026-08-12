@@ -47,6 +47,8 @@ async function listPendingClaimGroupsForSession(session) {
       .from('organisers')
       .select('*')
       .eq('ownership_claim_status', 'pending')
+      // Never allow internal/test profiles to be claimed by real users.
+      .eq('is_internal', false)
       .eq('supabase_user_id', uid);
     if (byUser.error) throw new Error(byUser.error.message);
     addRows(byUser.data);
@@ -57,6 +59,8 @@ async function listPendingClaimGroupsForSession(session) {
       .from('organisers')
       .select('*')
       .eq('ownership_claim_status', 'pending')
+      // Never allow internal/test profiles to be claimed by real users.
+      .eq('is_internal', false)
       .or(`email.eq.${em},contact_email.eq.${em}`);
     if (byEmail.error) throw new Error(byEmail.error.message);
     addRows(byEmail.data);
@@ -81,7 +85,12 @@ async function getPendingClaimGroupForSession(session, groupId) {
   }
 
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb.from('organisers').select('*').eq('id', id).maybeSingle();
+  const { data, error } = await sb
+    .from('organisers')
+    .select('*')
+    .eq('id', id)
+    .eq('is_internal', false)
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data || !sessionMatchesPendingProfile(session, data)) {
     const err = new Error('claim_not_available');
