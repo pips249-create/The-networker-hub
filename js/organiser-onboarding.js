@@ -93,6 +93,15 @@
     }
   }
 
+  function clearTourDone() {
+    try {
+      localStorage.removeItem(TOUR_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    tourAutoStarted = false;
+  }
+
   function markTourDone() {
     try {
       localStorage.setItem(TOUR_KEY, '1');
@@ -101,6 +110,53 @@
     }
     hideTour();
     if (afterTourStep) afterTourStep();
+  }
+
+  function claimOrLaunchOverlayOpen() {
+    var ids = ['org-group-claim', 'org-launch-setup', 'org-launch-complete', 'org-ready-event', 'org-opportunity-claim'];
+    return ids.some(function (id) {
+      var el = document.getElementById(id);
+      return Boolean(el && !el.hidden);
+    });
+  }
+
+  /**
+   * Soft-launch claim path: Overview tour runs after claim + page/event review
+   * (+ other groups), not before. Call when that queue is fully clear.
+   */
+  function maybeStartOverviewTourAfterClaimSetup(opts) {
+    opts = opts || {};
+    if (isTourDone() || isTourOpen()) return false;
+    if (claimOrLaunchOverlayOpen() && !opts.ignoreOverlays) return false;
+    try {
+      if (window.hubPendingGroupClaims) return false;
+    } catch (e) {
+      /* ignore */
+    }
+    if (
+      window.HubOrganiserLaunchSetup &&
+      typeof window.HubOrganiserLaunchSetup.progressSummary === 'function' &&
+      typeof window.orgDashLaunchSetupInput === 'function'
+    ) {
+      try {
+        var progress = window.HubOrganiserLaunchSetup.progressSummary(
+          window.orgDashLaunchSetupInput()
+        );
+        if (progress && !progress.dismissed && progress.remaining > 0) return false;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    tourAutoStarted = true;
+    if (window.orgDashSetRoute) {
+      try {
+        window.orgDashSetRoute('dashboard', { skipEventsGuard: true, skipRouteLoading: true });
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    window.setTimeout(showTour, opts.delay != null ? opts.delay : 450);
+    return true;
   }
 
   function isProfileReviewDone() {
@@ -367,7 +423,9 @@
     var claimOnboard = params.get('onboard') === 'claim';
     var hasPendingClaims = Boolean(window.hubPendingGroupClaims);
     if ((claimOnboard || hasPendingClaims) && window.orgDashOpenClaimModal) {
-      markTourDone();
+      // Defer Overview tour until claim + reviews (+ other groups) finish.
+      // Do not mark the tour done — soft-launch claim used to skip it forever.
+      if (claimOnboard) clearTourDone();
       window.orgDashOpenClaimModal();
       if (window.orgDashHandleClaimOnboardMismatch) {
         window.orgDashHandleClaimOnboardMismatch();
@@ -384,8 +442,10 @@
     initAfterDashboardReady: initAfterDashboardReady,
     showTour: showTour,
     markTourDone: markTourDone,
+    clearTourDone: clearTourDone,
     isTourDone: isTourDone,
     isTourOpen: isTourOpen,
+    maybeStartOverviewTourAfterClaimSetup: maybeStartOverviewTourAfterClaimSetup,
     shouldDeferGroupClaim: shouldDeferGroupClaim,
     setAfterTourStep: function (fn) {
       afterTourStep = fn;

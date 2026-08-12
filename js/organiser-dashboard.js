@@ -12622,6 +12622,17 @@
       return;
     }
     showReadyForEventPrompt();
+    // No claim / profile / event queue left — Overview tour next.
+    if (
+      !(state.pendingClaimGroups || []).length &&
+      !(state.pendingClaimOpportunities || []).length &&
+      !isLaunchSetupInProgress()
+    ) {
+      const ready = document.getElementById('org-ready-event');
+      if (!ready || ready.hidden) {
+        tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
+      }
+    }
   }
 
   function launchSetupInput() {
@@ -12642,6 +12653,20 @@
       tickets: state.tickets || [],
       groupEventsIntoSeries: groupEventsIntoSeries,
     };
+  }
+
+  window.orgDashLaunchSetupInput = launchSetupInput;
+
+  function tryStartOverviewTourAfterClaimSetup(opts) {
+    if (
+      !window.HubOrganiserOnboarding ||
+      !window.HubOrganiserOnboarding.maybeStartOverviewTourAfterClaimSetup
+    ) {
+      return false;
+    }
+    if ((state.pendingClaimGroups || []).length > 0) return false;
+    if ((state.pendingClaimOpportunities || []).length > 0) return false;
+    return window.HubOrganiserOnboarding.maybeStartOverviewTourAfterClaimSetup(opts || {});
   }
 
   function hideLaunchSetupModal() {
@@ -12838,7 +12863,8 @@
       }
     }
     if (dashBtn) {
-      dashBtn.textContent = nextBtn && !nextBtn.hidden ? 'Go to Overview' : 'Go to My events';
+      dashBtn.textContent =
+        nextBtn && !nextBtn.hidden ? 'Go to Overview' : 'Tour Overview →';
     }
 
     const previewLink = document.getElementById('org-launch-complete-preview');
@@ -13170,6 +13196,7 @@
           } catch (e) {
             /* ignore */
           }
+          tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
         }
       });
     }
@@ -13179,7 +13206,17 @@
         const nextVisible =
           document.getElementById('org-launch-complete-next') &&
           !document.getElementById('org-launch-complete-next').hidden;
-        setRoute(nextVisible ? 'dashboard' : 'events-list', {
+        // When there is still another group/event step, Overview is just a pause.
+        // When setup is finished, land on Overview and run the workspace tour.
+        if (!nextVisible) {
+          setRoute('dashboard', {
+            skipEventsGuard: true,
+            skipRouteLoading: true,
+          });
+          tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
+          return;
+        }
+        setRoute('dashboard', {
           skipEventsGuard: true,
           skipRouteLoading: true,
         });
@@ -13620,6 +13657,7 @@
           window.HubOrganiserOnboarding.markReadyEventDismissed();
         }
         updateGettingStartedVisibility();
+        tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
       });
     }
     if (goBtn) {

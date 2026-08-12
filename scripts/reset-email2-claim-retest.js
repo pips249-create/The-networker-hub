@@ -129,7 +129,9 @@ async function main() {
   }
 
   console.log('\nDone. Clear browser localStorage keys before retest:');
-  console.log('  hub_launch_setup_v1, hub_organiser_profile_review_v1, hub_claim_review_order_v1, hub_claim_focus_v1');
+  console.log(
+    '  hub_launch_setup_v1, hub_organiser_profile_review_v1, hub_claim_review_order_v1, hub_claim_focus_v1, hub_founding_toast, hub_organiser_tour_v3'
+  );
 }
 
 main().catch(function (e) {
