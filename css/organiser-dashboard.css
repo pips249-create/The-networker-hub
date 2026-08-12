@@ -9222,6 +9222,12 @@ body.org-onboard-active {
   overflow: hidden;
 }
 
+/* Notifications panel sits above the tour shell — raise the tour when both are open
+   so the spotlight can punch through to the open panel. */
+body.org-onboard-active.org-notifications-open .org-onboard {
+  z-index: 10050;
+}
+
 .org-onboard {
   position: fixed;
   inset: 0;

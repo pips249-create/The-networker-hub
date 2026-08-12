@@ -10463,6 +10463,8 @@
   }
 
   window.orgDashSetRoute = setRoute;
+  window.orgDashOpenNotifications = openNotificationsPanel;
+  window.orgDashCloseNotifications = closeNotificationsPanel;
 
   function updateTeamNavBadge() {
     const badge = document.getElementById('org-team-nav-badge');
@@ -12318,6 +12320,13 @@
     }
 
     const onboarding = window.HubOrganiserOnboarding;
+
+    // Keep the tour uncluttered — no setup/review banners over the walkthrough.
+    if (onboarding && onboarding.isTourOpen && onboarding.isTourOpen()) {
+      banner.hidden = true;
+      syncOverviewSetupQuietMode();
+      return;
+    }
 
     if ((state.pendingClaimGroups || []).length > 0) {
       const dismissBtn = document.getElementById('org-setup-resume-dismiss');

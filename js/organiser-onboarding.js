@@ -9,38 +9,48 @@
     if (window.orgDashSetRoute) window.orgDashSetRoute('dashboard');
   }
 
+  function refreshSetupChrome() {
+    if (typeof window.orgDashUpdateSetupResume === 'function') {
+      try {
+        window.orgDashUpdateSetupResume();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }
+
   var steps = [
     {
       title: 'Welcome to your organiser workspace',
-      body: 'A quick tour of each area — Overview, events, memberships, team, sharing, and payouts — so you know where everything lives. Hubert can answer questions anytime.',
+      body: 'A quick walk through the main areas — where your pages, events, memberships, team, and payouts live. Hubert (bottom right) can answer questions anytime.',
       target: null,
       beforeShow: goDashboard,
     },
     {
-      title: 'Jump in from Overview',
-      body: 'Use these shortcuts for My events, business opportunities, and Memberships — your member register for members-only tickets and renewals.',
-      target: '.org-hub-portals',
-      beforeShow: goDashboard,
-    },
-    {
-      title: 'Your setup checklist',
-      body: 'Track what’s left when you need it — polish your organiser page, membership, or events. Dismiss anytime; your progress is saved. Edit pages from Groups or My events whenever you’re ready.',
-      target: '#org-getting-started',
-      beforeShow: goDashboard,
-    },
-    {
       title: 'Notifications',
-      body: 'Pending applications, payout setup, and other action items show up here — open Notifications in the sidebar so nothing slips through.',
-      target: '#org-notifications-nav',
-      beforeShow: goDashboard,
+      body: 'Action items land here — pending applications, payout setup, and other alerts. Open this anytime from the sidebar so nothing slips through.',
+      target: '#org-notifications-panel .org-notifications-panel-sheet',
+      beforeShow: function () {
+        goDashboard();
+        if (typeof window.orgDashOpenNotifications === 'function') {
+          window.orgDashOpenNotifications();
+        }
+      },
     },
     {
       title: 'My events',
-      body: 'Open My events in the sidebar, then use the tabs — Events, Tickets, Attendees, Cancellations, Reviews, and Revenue — to manage listings and bookings.',
-      target: '#org-events-subnav',
+      body: 'Your listings live here. Use the tabs — Events, Tickets, Attendees, Cancellations, Reviews, and Revenue — to manage bookings and payouts.',
+      target: '#org-page-events .org-page-head',
       beforeShow: function () {
-        // Skip the "create a group first" gate so the tour can show Events even with no page yet.
         if (window.orgDashSetRoute) window.orgDashSetRoute('events-list', { skipEventsGuard: true });
+      },
+    },
+    {
+      title: 'Organiser pages',
+      body: 'Your public group pages live here — edit logo, description, and contact details anytime. Events are published under an organiser page.',
+      target: '#org-page-groups .org-page-head',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('groups', { skipEventsGuard: true });
       },
     },
     {
@@ -53,16 +63,16 @@
     },
     {
       title: 'Team & invites',
-      body: 'Invite colleagues as team members to help manage events — assign which organiser pages they can access. Only the account owner can change bank details.',
+      body: 'Invite colleagues to help manage events — assign which organiser pages they can access. Only the account owner can change bank details.',
       target: '#org-page-team .org-page-head',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('team', { skipEventsGuard: true });
       },
     },
     {
-      title: 'Share your event',
+      title: 'Promote & share',
       body: 'Make a free LinkedIn post with ready-made words and a picture, or pay for extra visibility on the hub.',
-      target: '#org-social-subnav',
+      target: '#org-page-social .org-page-head',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('social');
       },
@@ -73,6 +83,14 @@
       target: '#events-tab-revenue',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('events-revenue', { skipEventsGuard: true });
+      },
+    },
+    {
+      title: 'You’re ready — start with My events',
+      body: 'Check any listings we prepared, set tickets if needed, then publish. Polish your organiser page under Organiser pages anytime. Ask Hubert if you get stuck.',
+      target: '#org-page-events .org-page-head',
+      beforeShow: function () {
+        if (window.orgDashSetRoute) window.orgDashSetRoute('events-list', { skipEventsGuard: true });
       },
     },
   ];
@@ -261,6 +279,14 @@
     tourEl.classList.remove('is-open');
     document.body.classList.remove('org-onboard-active');
     clearSpotlight();
+    if (typeof window.orgDashCloseNotifications === 'function') {
+      try {
+        window.orgDashCloseNotifications();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    refreshSetupChrome();
   }
 
   function clearSpotlight() {
@@ -298,21 +324,42 @@
     if (bodyEl) bodyEl.textContent = step.body;
     if (nextBtn) nextBtn.textContent = stepIndex >= steps.length - 1 ? 'Finish tour' : 'Next';
 
-    var target = step.target ? document.querySelector(step.target) : null;
-    if (target) {
-      target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-      positionSpotlight(target);
-    } else {
-      clearSpotlight();
+    // Allow route/panel paint before measuring the spotlight target.
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        if (!isTourOpen()) return;
+        var current = steps[stepIndex];
+        var target = current && current.target ? document.querySelector(current.target) : null;
+        if (target) {
+          target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+          positionSpotlight(target);
+        } else {
+          clearSpotlight();
+        }
+      });
+    });
+  }
+
+  function clearForcedReviewForTour() {
+    // Workspace tour replaces forced profile/event re-edit — clear leftover review queues.
+    markProfileReviewDone();
+    try {
+      if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.dismiss) {
+        window.HubOrganiserLaunchSetup.dismiss();
+      }
+    } catch (e) {
+      /* ignore */
     }
   }
 
   function showTour() {
     if (!tourEl) return;
+    clearForcedReviewForTour();
     stepIndex = 0;
     tourEl.hidden = false;
     tourEl.classList.add('is-open');
     document.body.classList.add('org-onboard-active');
+    refreshSetupChrome();
     renderStep();
   }
 
