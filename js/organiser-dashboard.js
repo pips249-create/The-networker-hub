@@ -13170,6 +13170,7 @@
         if (window.HubOrganiserLaunchSetup) window.HubOrganiserLaunchSetup.dismiss();
         updateGettingStartedVisibility();
         updateSetupResumeBanner();
+        tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true, delay: 600 });
       });
     }
     if (goBtn) {
