@@ -194,12 +194,15 @@ body.hub-page-organiser.organiser-event-edit-page {
   padding-bottom: 24px;
 }
 
-/* Full-bleed website footer (body-level, same as public pages) */
+/* Full-bleed website footer (body-level, same as public pages).
+   margin-top: auto pins it to the viewport bottom when main content is short
+   (avoids a mid-page footer with empty dark space underneath). */
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer,
 body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
   flex-shrink: 0;
   width: 100%;
   max-width: none;
+  margin-top: auto;
 }
 
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer .site-footer,
@@ -207,6 +210,15 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
   width: 100%;
   max-width: none;
   box-sizing: border-box;
+}
+
+/* Claim / onboarding / drawers: hide marketing footer so it cannot cover
+   workspace content or sit under fixed modals (overflow:hidden + short shell). */
+body.hub-page-organiser.organiser-dashboard-page.org-claim-setup-active > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-group-claim-active > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-group-drawer-open > #hub-site-footer,
+body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-site-footer {
+  display: none !important;
 }
 
 /* ─── Attendee dashboard: sidebar + scrollable main ─── */
