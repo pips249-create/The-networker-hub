@@ -1183,7 +1183,9 @@
           bodyEl.textContent =
             next.kind === 'profile'
               ? 'Next: review “' + next.title + '” (profile + complimentary visits).'
-              : 'Next: finish tickets and publish for “' + next.title + '”.';
+              : 'Next: set tickets and Confirm & publish for “' +
+                next.title +
+                '” — it stays Draft until then. Public buying opens 1 September.';
         }
         banner.hidden = false;
       })

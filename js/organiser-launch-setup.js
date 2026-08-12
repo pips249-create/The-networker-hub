@@ -1,6 +1,6 @@
 /**
- * Guided launch setup after claim: profiles → seeded events (series = one item) → tickets → review.
- * Handles multiple organiser pages and multiple/recurring seeded listings as a queue.
+ * Guided launch setup after claim: profiles → unfinished events (series = one item) → tickets → publish.
+ * Handles multiple organiser pages and multiple/recurring listings as a queue.
  */
 (function (global) {
   var STORAGE_KEY = 'hub_launch_setup_v1';
@@ -42,6 +42,44 @@
     writeState(s);
   }
 
+  function markEventFamilyMembersDone(family) {
+    if (!family || !family.key) return;
+    var s = readState();
+    s.eventsDone[String(family.key)] = true;
+    (family.events || []).forEach(function (ev) {
+      if (ev && ev.id) s.eventsDone['ev:' + String(ev.id)] = true;
+    });
+    writeState(s);
+  }
+
+  function eventLooksPublished(ev) {
+    if (!ev) return false;
+    var st = String(ev.status || '').toLowerCase();
+    var key = String(ev.statusKey || ev.listingStatus || '').toLowerCase();
+    var approval = String(ev.approvalStatus || '').toLowerCase();
+    if (st === 'draft' || key === 'draft' || st === 'unpublished' || key === 'unpublished') {
+      return false;
+    }
+    return (
+      st === 'published' ||
+      st === 'live' ||
+      approval === 'approved' ||
+      key === 'live' ||
+      key === 'upcoming' ||
+      key === 'archived' ||
+      key === 'pending_approval' ||
+      key === 'published'
+    );
+  }
+
+  function familyMarkedDone(family, stored) {
+    if (!family || !family.key || !stored || !stored.eventsDone) return false;
+    if (stored.eventsDone[String(family.key)]) return true;
+    return (family.events || []).some(function (ev) {
+      return ev && ev.id && stored.eventsDone['ev:' + String(ev.id)];
+    });
+  }
+
   function dismiss() {
     var s = readState();
     s.dismissed = true;
@@ -54,11 +92,14 @@
     writeState(s);
   }
 
-  /** After claim: reopen profile + event review (ignore prior dismiss / done flags). */
+  /**
+   * After claim: reopen thin profile review for these groups.
+   * Do not wipe eventsDone — finished / published listings must not bounce back
+   * when the organiser claims another page.
+   */
   function prepareClaimOnboarding(groupIds) {
     var s = readState();
     s.dismissed = false;
-    s.eventsDone = {};
     (groupIds || []).forEach(function (id) {
       if (id) delete s.profilesDone[String(id)];
     });
@@ -137,7 +178,13 @@
 
   function eventFamilyNeedsSetup(family, tickets, stored) {
     if (!family || !family.key) return false;
-    if (stored.eventsDone[family.key]) return false;
+    if (familyMarkedDone(family, stored)) {
+      // Heal alternate keys (series key vs ev:id) so claim/reloads stay consistent.
+      if (!stored.eventsDone[String(family.key)]) {
+        markEventFamilyMembersDone(family);
+      }
+      return false;
+    }
     var members = family.events || [];
     if (!members.length) return false;
     var ids = members.map(function (e) {
@@ -147,9 +194,20 @@
     var anySalesOn = members.some(function (e) {
       return e.ticketSalesEnabled === true || e.ticket_sales_enabled === true;
     });
-    // Admin-seeded listings ship without sales / tiers — keep them in the queue until reviewed.
+    var anyPublished = members.some(eventLooksPublished);
+    // Already published in the workspace — leave the setup queue even if local flags lagged.
+    if (anyPublished && (anySalesOn || tiers.length)) {
+      markEventFamilyMembersDone(family);
+      return false;
+    }
+    if (anyPublished) {
+      markEventFamilyMembersDone(family);
+      return false;
+    }
+    // Draft listings without sales / tiers stay until the organiser publishes.
     if (!anySalesOn) return true;
     if (!tiers.length) return true;
+    markEventFamilyMembersDone(family);
     return false;
   }
 
@@ -309,6 +367,7 @@
     readState: readState,
     markProfileDone: markProfileDone,
     markEventFamilyDone: markEventFamilyDone,
+    markEventFamilyMembersDone: markEventFamilyMembersDone,
     dismiss: dismiss,
     clearDismissed: clearDismissed,
     prepareClaimOnboarding: prepareClaimOnboarding,
@@ -321,5 +380,6 @@
     seriesFamilyKey: seriesFamilyKey,
     profileLooksThin: profileLooksThin,
     profileNeedsReview: profileNeedsReview,
+    eventLooksPublished: eventLooksPublished,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

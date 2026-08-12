@@ -12678,12 +12678,12 @@
         if (titleEl) {
           titleEl.textContent =
             eventsLeft > 1
-              ? 'Review your events & tickets (' + eventsLeft + ' left)'
-              : 'Review your event & tickets';
+              ? 'Publish your draft events (' + eventsLeft + ' left)'
+              : 'Publish your draft event';
         }
         if (bodyEl) {
           bodyEl.textContent =
-            'Check the listing we prepared, set tickets, and publish. Public ticket buying opens 1 September.';
+            'Listings stay Draft until tickets + Confirm & publish. Public ticket buying opens 1 September.';
         }
       }
       const goBtnLaunch = document.getElementById('org-setup-resume-go');
@@ -13310,18 +13310,18 @@
     if (introEl) {
       if (opts.fromPublish && nextClaim) {
         introEl.textContent =
-          'Nice work — this listing is published in the workspace. Next we’ll ask about your other organiser page' +
+          'Nice work — this listing is live in your workspace (attendees still cannot buy on the public site until 1 September). Next we’ll ask about your other organiser page' +
           (pendingClaims === 1 ? '' : 's') +
           '. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
       } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'profile') {
         introEl.textContent =
-          'Your listing is live. Next, review your other organiser page. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
+          'Your listing is live in the workspace. Public ticket buying opens 1 September. Next, review your other organiser page. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
       } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'event') {
         introEl.textContent =
-          'Your listing is live. You still have more events to review on this page — continue when you are ready.';
+          'Your listing is live in the workspace. You still have draft events to publish on this page — continue when you are ready. Public buying opens 1 September.';
       } else if (opts.fromPublish) {
         introEl.textContent =
-          'Your listing is live in the workspace. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September). Bank details can wait — add them later when you sell paid tickets.';
+          'Your listing is live in the workspace. Public ticket buying opens 1 September. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September). Free tickets are fine without bank details; add them before you sell paid tickets.';
       } else if (nextClaim) {
         introEl.textContent =
           'Great — this page is ready. Next we’ll ask about your other organiser page' +
@@ -13332,7 +13332,7 @@
           'This page is ready. Next, review your other organiser page. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September).';
       } else {
         introEl.textContent =
-          'Your listing is live in the workspace. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September). Bank details can wait — add them later when you sell paid tickets.';
+          'You’re set in the workspace. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September). Free tickets can publish without bank details; add them before paid sales.';
       }
     }
     if (nextBtn) {
@@ -13495,8 +13495,7 @@
     }
     if (kicker) {
       if (item.kind === 'event') {
-        kicker.textContent =
-          eventsLeft > 1 ? 'Your events are ready to review' : 'Your event is ready to review';
+        kicker.textContent = 'Still in draft — publish to finish';
       } else {
         kicker.textContent =
           built.queue.length === 1
@@ -13513,8 +13512,8 @@
       } else {
         titleEl.textContent =
           eventsLeft > 1
-            ? 'We’ve added these events for you'
-            : 'We’ve added an event for you';
+            ? 'Finish setup for these events'
+            : 'Finish setup for this event';
       }
     }
     if (introEl) {
@@ -13525,7 +13524,7 @@
             : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens 1 September — until then, get everything ready in the workspace.';
       } else {
         introEl.textContent =
-          'Review the information we prepared, add tickets, then publish. Tap a listing below to start — or continue with the first one. Public ticket buying opens 1 September.';
+          'Listings stay Draft until you set tickets and tap Confirm & publish. Saving details alone is not enough. Publish now in the workspace — public ticket buying still opens 1 September.';
       }
     }
     if (labelEl) {
@@ -13580,7 +13579,7 @@
               '</strong>' +
               metaHtml +
               '</span>' +
-              '<span class="org-launch-setup-event-go">Review →</span>' +
+              '<span class="org-launch-setup-event-go">Publish →</span>' +
               '</button>'
             );
           })
@@ -13595,8 +13594,8 @@
       if (item.kind === 'event') {
         metaEl.textContent =
           eventsLeft > 1
-            ? 'Choose a listing, or start with the first — details, tickets, then publish.'
-            : 'Next: check details, set tickets, then publish.';
+            ? 'Open a listing → details, tickets, then Confirm & publish. Drafts stay here until you publish.'
+            : 'Next: details, tickets, then Confirm & publish. It stays Draft until then.';
       } else {
         metaEl.textContent =
           item.indexHint +
@@ -13608,14 +13607,14 @@
         if (eventsLeft > 6) {
           queueEl.textContent =
             eventsLeft +
-            ' events / series to review — scroll the list. Bank details can wait until you sell paid tickets.';
+            ' drafts left — scroll the list. Free tickets can publish now; paid tickets need bank details first.';
         } else if (eventsLeft > 1) {
           queueEl.textContent =
             eventsLeft +
-            ' events / series to review. Bank details can wait until you sell paid tickets.';
+            ' drafts left to publish. Free tickets can publish now; paid tickets need bank details first.';
         } else {
           queueEl.textContent =
-            '1 event to review. Bank details can wait until you sell paid tickets.';
+            '1 draft left to publish. Free tickets can publish now; paid tickets need bank details first.';
         }
       } else {
         const bits = [];
@@ -13631,9 +13630,12 @@
         item.kind === 'profile'
           ? 'Review profile →'
           : eventsLeft > 1
-            ? 'Review first event →'
-            : 'Review event →';
+            ? 'Publish first event →'
+            : 'Publish event →';
     }
+
+    const laterBtnLabel = document.getElementById('org-launch-setup-later');
+    if (laterBtnLabel) laterBtnLabel.textContent = 'Remind me later';
 
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
