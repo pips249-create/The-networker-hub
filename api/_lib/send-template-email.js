@@ -498,6 +498,7 @@ async function sendViaResend({
   skipAllowlist,
   listUnsubscribeUrl,
   idempotencyKey,
+  attachments,
 }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
@@ -550,6 +551,25 @@ async function sendViaResend({
     body.reply_to = replyToAddress;
   }
   if (tagList.length) body.tags = tagList;
+
+  const attachmentList = Array.isArray(attachments)
+    ? attachments
+        .map(function (att) {
+          if (!att || typeof att !== 'object') return null;
+          const filename = String(att.filename || '').trim();
+          const content = String(att.content || '').trim();
+          if (!filename || !content) return null;
+          const row = { filename, content };
+          const contentType = String(att.contentType || att.content_type || '').trim();
+          if (contentType) row.content_type = contentType;
+          if (att.contentId || att.content_id) {
+            row.content_id = String(att.contentId || att.content_id).trim();
+          }
+          return row;
+        })
+        .filter(Boolean)
+    : [];
+  if (attachmentList.length) body.attachments = attachmentList;
 
   const unsub = String(listUnsubscribeUrl || '').trim();
   if (unsub) {
@@ -684,6 +704,7 @@ async function sendTemplatedEmail({
   replyTo,
   from,
   idempotencyKey,
+  attachments,
 }) {
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
@@ -748,6 +769,7 @@ async function sendTemplatedEmail({
     skipAllowlist: shouldSkipEmailAllowlist(slug),
     listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
     idempotencyKey,
+    attachments,
   });
   if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
     try {

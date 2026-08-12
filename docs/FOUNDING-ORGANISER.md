@@ -16,7 +16,7 @@ Do **not** limit the badge to 50 — that creates #51 disappointment. Cap only t
 - Migration: `supabase/migrations/241_founding_organiser.sql`
 - Award on first published event (eligible if claimed before 1 Sept): `api/_lib/founding-organiser.js` via `publishEventsWithRefund`
 - Claim alone no longer awards the badge
-- Claim confirmation email: `api/_lib/organiser-claim-confirmed-emails.js` + `email-templates/organiser-claim-confirmed.html` (migration `242_organiser_claim_confirmed_email.sql`) — founding perk row appears when the badge is unlocked (first publish)
+- Claim confirmation email: `api/_lib/organiser-claim-confirmed-emails.js` + `email-templates/organiser-claim-confirmed.html` (migration `242_organiser_claim_confirmed_email.sql`) — founding perk row appears when the badge is unlocked (first publish). Badge PNG is embedded in the body and attached as `Founding-Organiser-2026-badge.png` (`assets/founding-organiser-badge-2026.png`).
 - API: `GET /api/founding-organisers`
 - Email 2 + `/for-organisers` claim invite copy mention both perks + group social
 

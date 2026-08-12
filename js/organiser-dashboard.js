@@ -1674,7 +1674,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812colour1';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812layout1';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260806expired1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812billingcompact';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
@@ -2124,13 +2124,29 @@
     }
     // Warm full event rows (photos, etc.) after first paint — summaries cover the picker immediately.
     ensureEventsLoaded().then(function (ok) {
-      if (!ok || !linkedInPostBuilder || !linkedInPostBuilder.refreshEvents) return;
-      linkedInPostBuilder.refreshEvents();
+      if (!linkedInPostBuilder) return;
+      // Groups may have landed from lean bootstrap after the first hydrate — always resync.
+      if (linkedInPostBuilder.refreshGroups) linkedInPostBuilder.refreshGroups();
+      if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
+      if (ok && linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     });
     // Business opportunity captions need listings — load them when Promote opens.
-    loadOpportunitiesList().catch(function () {
-      /* non-fatal */
-    });
+    loadOpportunitiesList()
+      .then(function () {
+        if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
+          linkedInPostBuilder.refreshOpportunities();
+        }
+      })
+      .catch(function () {
+        /* non-fatal */
+      });
+  }
+
+  function refreshLinkedInPostBuilderFromState() {
+    if (!linkedInPostBuilder || !isSocialPageActive()) return;
+    if (linkedInPostBuilder.refreshGroups) linkedInPostBuilder.refreshGroups();
+    if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
+    if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
   }
 
   function ensureAttendeeEmailPanelReady(preferredEventId) {
@@ -15112,6 +15128,8 @@
     updateGettingStartedPanel();
     if (state.opportunitiesLoaded) renderOpportunitiesList();
     renderRevenueConnectCopy();
+    // Promote LinkedIn builder may have hydrated before bootstrap — push fresh groups/events.
+    refreshLinkedInPostBuilderFromState();
     if (document.querySelector('[data-org-page="business-overview"].is-active') && state.opportunitiesLoaded) {
       if (businessSubRoute === 'business-enquiries') renderOpportunityEnquiries();
       else if (businessSubRoute === 'business-insights') {

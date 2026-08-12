@@ -132,7 +132,7 @@
       group: 'events',
       groupLabel: 'Events & group',
       theme: 'event_spotlight',
-      styleHint: 'Large logo header, photo card, and clear event details',
+      styleHint: 'Organiser logo header, full-width photo strip, and clear event details',
       accent: '#9a7aa8',
       kicker: 'TICKETS OPEN',
       line1: 'Save your seat',
@@ -261,6 +261,25 @@
     var dw = img.width * scale;
     var dh = img.height * scale;
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  }
+
+  function isHubBrandingUrl(url) {
+    var u = String(url || '').toLowerCase();
+    if (!u) return false;
+    if (/\/assets\/logo/i.test(u)) return true;
+    if (/logo-nav|logo-hub|logo-wordmark|logo-transparent/i.test(u)) return true;
+    if (/thenetworkerhub\.com.*\/logo/i.test(u)) return true;
+    return false;
+  }
+
+  function isLikelyLogoAssetUrl(url, organiserLogoUrl) {
+    var photo = String(url || '').trim();
+    var logo = String(organiserLogoUrl || '').trim();
+    if (!photo) return false;
+    if (isHubBrandingUrl(photo)) return true;
+    if (logo && photo === logo) return true;
+    if (/\/logo[.\-_/]/i.test(photo) || /\/img\/logo\./i.test(photo)) return true;
+    return false;
   }
 
   /** Organiser logo without a white card — works better on photos and brand panels. */
@@ -837,40 +856,50 @@
     var creditColor = bg.credit;
 
     if (isEventSpotlight && !quietBrand) {
-      drawOrgLogoClear(ctx, orgLogo, 56, 48, 420, 180, bg.accent || '#9a7aa8');
+      // Clean brand spotlight: one org mark, optional full-width photo, event copy, one Hub credit.
+      var spotAccent = bg.accent || tpl.accent || '#9a7aa8';
+      ctx.fillStyle = spotAccent;
+      ctx.fillRect(0, 0, W, 16);
+
+      var logoW = 280;
+      var logoH = 120;
+      drawOrgLogoClear(ctx, orgLogo, 56, 48, logoW, logoH, spotAccent);
+
       ctx.fillStyle = kickerColor;
-      ctx.font = '700 22px ' + bodyFace;
-      ctx.fillText(kickerText, 540, 100);
+      ctx.font = '700 20px ' + bodyFace;
+      ctx.fillText(kickerText, 56 + logoW + 36, 88);
       ctx.fillStyle = titleColor;
-      ctx.font = '700 36px ' + titleFace;
-      var spotName = wrapText(ctx, name || 'Your group', 560);
+      ctx.font = '700 34px ' + titleFace;
+      var spotName = wrapText(ctx, name || 'Your group', 760);
       for (var sn = 0; sn < Math.min(2, spotName.length); sn++) {
-        ctx.fillText(spotName[sn], 540, 160 + sn * 42);
+        ctx.fillText(spotName[sn], 56 + logoW + 36, 140 + sn * 40);
       }
 
-      var coverY = 300;
-      var coverAreaW = 1056;
-      var coverH = eventImage ? 380 : 0;
-      var coverW = eventImage ? Math.round(coverH * (16 / 10)) : 0;
-      var coverX = eventImage ? 72 + Math.round((coverAreaW - coverW) / 2) : 72;
-      if (eventImage) {
-        drawCoverImage(ctx, eventImage, coverX, coverY, coverW, coverH, opts.eventImagePosition);
+      var hasPhoto = Boolean(eventImage);
+      var stripY = 220;
+      var stripH = hasPhoto ? 420 : 0;
+      if (hasPhoto) {
+        // Full-bleed photo strip — not a floating logo card in the middle.
+        drawCoverImage(ctx, eventImage, 0, stripY, W, stripH, opts.eventImagePosition);
+        ctx.fillStyle = spotAccent;
+        ctx.fillRect(0, stripY + stripH, W, 10);
       }
-      var spotlightTextY = eventImage ? 720 : 360;
+
+      var spotlightTextY = hasPhoto ? stripY + stripH + 72 : 320;
       ctx.fillStyle = titleColor;
-      ctx.font = '400 58px ' + titleFace;
+      ctx.font = '400 56px ' + titleFace;
       var eventTitleLines = wrapText(ctx, [line1, line2].filter(Boolean).join(' '), 1000);
       var eventY = spotlightTextY;
       for (var et = 0; et < Math.min(3, eventTitleLines.length); et++) {
-        ctx.fillText(eventTitleLines[et], 72, eventY);
-        eventY += 64;
+        ctx.fillText(eventTitleLines[et], 56, eventY);
+        eventY += 62;
       }
       ctx.fillStyle = subColor;
       ctx.font = '400 26px ' + bodyFace;
-      var eventSubLines = wrapText(ctx, line3, 900);
-      eventY += 10;
+      var eventSubLines = wrapText(ctx, line3, 920);
+      eventY += 12;
       for (var es = 0; es < Math.min(2, eventSubLines.length); es++) {
-        ctx.fillText(eventSubLines[es], 72, eventY);
+        ctx.fillText(eventSubLines[es], 56, eventY);
         eventY += 34;
       }
       if (hubLogos.onDark || hubLogos.onLight) {
@@ -1441,7 +1470,7 @@
       if (tpl.theme === 'event_split') return 'Landscape photo across the top, brand colour below';
       if (tpl.theme === 'event_poster') return 'Bold typographic poster with a large logo';
       if (tpl.theme === 'event_magazine') return 'Photo strip across the top with editorial type';
-      if (tpl.theme === 'event_spotlight') return 'Large logo header with a photo card underneath';
+      if (tpl.theme === 'event_spotlight') return 'Organiser logo header with a full-width photo strip';
       if (tpl.theme === 'opportunity') return 'Professional layout for business listings';
       return 'Text on a coloured background';
     }
@@ -1998,7 +2027,7 @@
       }
 
       state.orgLogoUrl = resolveLogoUrl();
-      if (!state.orgLogoUrl) {
+      if (!state.orgLogoUrl || isHubBrandingUrl(state.orgLogoUrl)) {
         state.orgLogoImg = null;
         return null;
       }
@@ -2044,7 +2073,10 @@
       }
       var url =
         (event && (event.imageUrl || event.photoUrl || event.photo_url)) || state.eventImageUrl || '';
-      if (!url) {
+      var orgLogoUrl = resolveLogoUrl();
+      // Never treat Hub branding or the organiser logo as the event cover — that
+      // stacks the same mark three times on Brand spotlight.
+      if (!url || isLikelyLogoAssetUrl(url, orgLogoUrl)) {
         state.eventImageImg = null;
         return null;
       }
