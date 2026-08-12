@@ -15,7 +15,7 @@ let cachedBase64 = null;
 
 function foundingBadgePublicUrl(siteUrl) {
   const base = String(siteUrl || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
-  return base + '/assets/' + BADGE_FILENAME;
+  return base + PUBLIC_BADGE_PATH;
 }
 
 function loadFoundingBadgeBase64() {
