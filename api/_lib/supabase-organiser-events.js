@@ -472,7 +472,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
   let query = sb
     .from('events')
     .select(
-      'id, title, slug, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id, location_label, city, venue, meeting_type, image_url, image_position'
+      'id, title, slug, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id, location_label, city, venue, meeting_type, meeting_link, image_url, image_position'
     )
     .order('starts_at', {
       ascending: false,
@@ -507,6 +507,8 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
       location: String(row.location_label || row.city || row.venue || '').trim(),
       venue: String(row.venue || '').trim(),
       eventFormat: String(row.meeting_type || '').trim(),
+      onlineLink: String(row.meeting_link || '').trim(),
+      onlinePlatform: inferOnlinePlatformFromLink(row.meeting_link),
       imageUrl: eventImageUrl(row),
       imagePosition: normalizeEventImagePosition(row.image_position),
     };
@@ -2122,6 +2124,7 @@ function seriesDetailsPatchFromRow(row) {
     latitude: row.latitude,
     longitude: row.longitude,
     meeting_link: row.meeting_link,
+    meeting_platform: row.meeting_platform,
     image_url: row.image_url,
     image_position: row.image_position ?? null,
     industries: row.industries,
@@ -2160,7 +2163,15 @@ async function propagateSeriesEventDetails(sb, updatedRow) {
       delete patch.longitude;
     }
     const { error: updateErr } = await sb.from('events').update(patch).eq('id', peer.id);
-    if (updateErr) throw new Error(updateErr.message);
+    if (updateErr) {
+      if (isMissingMeetingPlatformColumnError(updateErr) && 'meeting_platform' in patch) {
+        delete patch.meeting_platform;
+        const { error: retryErr } = await sb.from('events').update(patch).eq('id', peer.id);
+        if (retryErr) throw new Error(retryErr.message);
+      } else {
+        throw new Error(updateErr.message);
+      }
+    }
   }
 
   if (updatedRow.series_group_id) {

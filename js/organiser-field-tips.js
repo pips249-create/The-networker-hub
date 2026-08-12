@@ -100,10 +100,10 @@
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
     'members-only-ticket': {
-      title: 'List-member ticket (public can still book)',
+      title: 'List-member booking (public can still book)',
       body:
-        'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets stay on sale for everyone else. It does not make the event members-only.',
-      hubertPrompt: 'What is a list-member ticket?',
+        'People on your member list book free or cheaper when signed in. Public tickets stay on sale for everyone else. Use £0 when membership already covers attendance — members should not pay again.',
+      hubertPrompt: 'What is list-member booking?',
     },
     'ce-member-price': {
       title: 'List-member booking',

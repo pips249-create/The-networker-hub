@@ -322,14 +322,17 @@
     if (QuarterTime && draft.startTime && draft.endTime && !options.skipTimes) {
       QuarterTime.setValues('ee-start-time', 'ee-end-time', draft.startTime, draft.endTime);
     }
-    fillLocationFields({
-      venue: draft.venue,
-      addressLine1: draft.address1,
-      city: draft.city,
-      postcode: draft.postcode,
-      onlinePlatform: draft.platform,
-      onlineLink: draft.joinLink,
-    });
+    fillLocationFields(
+      {
+        venue: draft.venue,
+        addressLine1: draft.address1,
+        city: draft.city,
+        postcode: draft.postcode,
+        onlinePlatform: draft.platform,
+        onlineLink: draft.joinLink,
+      },
+      { keepIfLoaded: Boolean(options.keepLoadedLocation) }
+    );
     const description = document.getElementById('ee-description');
     if (description) description.dispatchEvent(new Event('input', { bubbles: true }));
     renderCalendar();
@@ -397,6 +400,8 @@
         : storedSeriesDateKeysFromMeta();
     applyDraftToForm(draft, {
       keepLoadedDescription: true,
+      // Stale browser drafts often have blank platform/link and must not wipe server prefill.
+      keepLoadedLocation: true,
       // Restore times too — skipping them made time edits look like autosave was broken.
       skipTimes: false,
       preserveDateKeys: preserveDateKeys.length > 1 ? preserveDateKeys : null,
@@ -1052,11 +1057,21 @@
     if (res.ok && res.data.event) return res.data.event;
 
     const cached = (bootstrapEvents || []).find((e) => e.id === eventId) || null;
-    if (cached && String(cached.description || '').trim()) return cached;
-
     if (!res.ok) {
       const retry = await api('/api/organiser/events?id=' + encodeURIComponent(eventId));
       if (retry.ok && retry.data.event) return retry.data.event;
+    }
+
+    // Bootstrap list rows are often lite — never prefer them over a failed id fetch
+    // when they omit join details for an online listing.
+    if (cached && String(cached.description || '').trim()) {
+      const format = String(cached.eventFormat || cached.location || '').toLowerCase();
+      const looksOnline =
+        format.includes('online') || String(cached.location || '').toLowerCase() === 'online';
+      if (looksOnline && !String(cached.onlineLink || '').trim()) {
+        return null;
+      }
+      return cached;
     }
 
     return cached;
@@ -1823,6 +1838,13 @@
     const postcode = showOnline ? '' : fieldValue('ee-postcode').trim();
     const parts = [venue, address1, city, postcode].filter(Boolean);
     const fullAddress = parts.join(', ');
+    let onlinePlatform = showOnline ? fieldValue('ee-platform').trim() : '';
+    let onlineLink = showOnline ? fieldValue('ee-join-link').trim() : '';
+    // Disabled online fields or a blank paint must not wipe a known saved link/platform.
+    if (showOnline && cachedLocationFields) {
+      if (!onlinePlatform) onlinePlatform = String(cachedLocationFields.onlinePlatform || '').trim();
+      if (!onlineLink) onlineLink = String(cachedLocationFields.onlineLink || '').trim();
+    }
     return {
       venue,
       addressLine1: address1,
@@ -1831,16 +1853,21 @@
       location: showOnline ? 'Online' : fullAddress,
       fullAddress: showOnline ? 'Online' : fullAddress,
       eventFormat,
-      onlinePlatform: showOnline ? fieldValue('ee-platform').trim() : '',
-      onlineLink: showOnline ? fieldValue('ee-join-link').trim() : '',
+      onlinePlatform,
+      onlineLink,
     };
   }
 
-  function fillLocationFields(fields) {
+  function fillLocationFields(fields, options) {
     if (!fields) return;
+    options = options || {};
+    const keepIfLoaded = Boolean(options.keepIfLoaded);
     const set = (id, val) => {
       const el = document.getElementById(id);
-      if (el && val != null) el.value = String(val);
+      if (!el || val == null) return;
+      const next = String(val);
+      if (keepIfLoaded && !next.trim() && String(el.value || '').trim()) return;
+      el.value = next;
     };
     set('ee-venue', fields.venue || '');
     set('ee-address1', fields.addressLine1 || '');
@@ -1853,7 +1880,9 @@
       if (!platform && fields.onlineLink) {
         platform = inferPlatformFromJoinLink(fields.onlineLink);
       }
-      if (platform) {
+      if (keepIfLoaded && !platform && String(platformSel.value || '').trim()) {
+        /* keep server-prefilled platform */
+      } else if (platform) {
         const match = [...platformSel.options].find(
           (o) => o.value === platform || o.textContent === platform
         );
@@ -1864,10 +1893,31 @@
           platformSel.appendChild(opt);
         }
         platformSel.value = match ? match.value : platform;
-      } else {
+      } else if (!keepIfLoaded) {
         platformSel.value = '';
       }
     }
+    // Keep cache aligned with what is actually on the form (after keep-if-loaded merges).
+    cachedLocationFields = {
+      venue: fieldValue('ee-venue').trim(),
+      addressLine1: fieldValue('ee-address1').trim(),
+      city: fieldValue('ee-city').trim(),
+      postcode: fieldValue('ee-postcode').trim(),
+      location: '',
+      fullAddress: '',
+      eventFormat: eventFormat,
+      onlinePlatform: fieldValue('ee-platform').trim(),
+      onlineLink: fieldValue('ee-join-link').trim(),
+    };
+    cachedLocationFields.location = [
+      cachedLocationFields.venue,
+      cachedLocationFields.addressLine1,
+      cachedLocationFields.city,
+      cachedLocationFields.postcode,
+    ]
+      .filter(Boolean)
+      .join(', ');
+    cachedLocationFields.fullAddress = cachedLocationFields.addressLine1 || '';
   }
 
   function inferPlatformFromJoinLink(link) {

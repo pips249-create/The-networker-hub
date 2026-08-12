@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812readability2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812readability3" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -183,8 +183,8 @@
             <div class="ee-addon-body" id="ee-ce-member-ticket-fields" hidden>
               <div class="ee-row-2">
                 <div class="ee-field">
-                  <label for="ee-ce-member-ticket-name">Ticket name</label>
-                  <input type="text" id="ee-ce-member-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+                  <label for="ee-ce-member-ticket-name">Booking name</label>
+                  <input type="text" id="ee-ce-member-ticket-name" value="Members on your list" placeholder="e.g. Members on your list" />
                 </div>
                 <div class="ee-field">
                   <label for="ee-ce-member-ticket-price">Price (&pound;)</label>
@@ -245,8 +245,8 @@
               <div id="ee-member-ticket-config">
                 <div class="ee-row-2">
                   <div class="ee-field">
-                    <label for="ee-private-ticket-name">Ticket name</label>
-                    <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+                    <label for="ee-private-ticket-name">Booking name</label>
+                    <input type="text" id="ee-private-ticket-name" value="Members on your list" placeholder="e.g. Members on your list" />
                   </div>
                   <div class="ee-field">
                     <label for="ee-private-ticket-price">Price (&pound;)</label>
@@ -291,7 +291,7 @@
                   enable list-member booking.
                 </p>
               </div>
-              <div class="ee-row-2">
+              <div class="ee-hub-membership-amounts">
                 <div class="ee-field">
                   <label for="ee-hub-membership-monthly">Monthly (&pound;)</label>
                   <input
@@ -341,10 +341,10 @@
 
         <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
-          <h2>Optional extras</h2>
-          <p class="ee-hint" style="margin-top:0">
-            Optional add-ons. Free trial visits and monthly membership are set in Step 2 when you choose them under how you get paid.
-            Turn on <strong>List-member ticket</strong> if people on your list should get a free or cheaper ticket while the public still books.
+          <h2 id="ee-optional-extras-title">Member access</h2>
+          <p class="ee-hint" style="margin-top:0" id="ee-optional-extras-lead">
+            Free trial visits and monthly membership are set in Step 2. Turn on
+            <strong>List-member booking</strong> so people on your member list (or paying membership) are not charged the public ticket again — use £0.
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon">
@@ -410,9 +410,9 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="members-only-ticket">List-member ticket (public can still book)</strong>
+                <strong data-hub-tip="members-only-ticket">List-member booking (public can still book)</strong>
                 <span class="ee-addon-summary"
-                  >People on your member list get a free or cheaper ticket when signed in. Everyone else still buys the public ticket.</span
+                  >People on your member list book free (or cheaper) when signed in. Everyone else still buys the public ticket. Use £0 when membership already covers attendance.</span
                 >
               </span>
             </label>
@@ -605,9 +605,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260812paytips" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260812membook" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260811eventnext" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260812membervisits" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260812memberaccess" defer></script>
   </body>
 </html>

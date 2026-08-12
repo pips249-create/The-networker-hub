@@ -491,6 +491,12 @@ a.ee-wizard-link:hover {
   gap: 12px;
 }
 
+.ee-hub-membership-amounts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
 .ee-upload-zone {
   border: 2px dashed var(--ee-border);
   border-radius: 8px;
