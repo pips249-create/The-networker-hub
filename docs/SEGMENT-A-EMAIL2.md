@@ -1,6 +1,6 @@
 # Segment A — Email 2 (confirm organiser page)
 
-**When:** **Tue 11 Aug 2026** (Email 1 sent 5 Aug; claim wave deferred from Fri 7 Aug)  
+**When:** **Wed 12 Aug 2026** — soft batch **first 100**, then widen  
 **Status:** **Path B** — CTA lands on their public organiser page first; Claim / Edit → free account → organiser claim flow  
 **Template:** `organiser_launch_invite`  
 **Subject (Brevo):** `Congratulations: {{ contact.ORGANISER_NAME }} is ready`  
@@ -27,7 +27,9 @@
 |------|-----|
 | `data/email2-brevo-ready.html` | Brevo campaign HTML |
 | `data/email2-brevo-preview.html` | Browser preview |
-| `data/Segment-A-Email2-Brevo-import.csv` | Re-import — `CLAIM_URL` is now `/organisers/{slug}?…` |
+| `data/Segment-A-Email2-1st-100-Brevo-import.csv` | Soft batch — 1st 100 (A–Z by group name) |
+| `data/Segment-A-Email2-2nd-100-Brevo-import.csv` | Soft batch — **2nd 100** (next A–Z after 1st 100) |
+| `data/Segment-A-Email2-Brevo-import.csv` | Full Segment A (~1,096) — use after soft batches are stable |
 | `data/Segment-A-Email2-TEST-Brevo-import.csv` | Catherine + Rosie + test addresses |
 
 Rebuild:
@@ -38,13 +40,18 @@ node scripts/build-email2-brevo.js
 
 **Deploy Hub before send** so path B organiser pages + claim banner work on production (gate allowlist for `/organisers/:slug` and `/api/organisers?slug=`).
 
-### Brevo send
-1. [ ] Deploy Hub (path B claim landing)
-2. [ ] Re-import `data/Segment-A-Email2-Brevo-import.csv` (update existing)
-3. [ ] Map `ORGANISER_NAME` / `OTHER_GROUPS_NOTE` / `CLAIM_URL`
-4. [ ] Paste `data/email2-brevo-ready.html`
-5. [ ] Subject / reply-to / from as Email 1
-6. [ ] Test send → CTA opens their organiser page → Claim / edit → password form → claim
-7. [ ] Blast Segment A
+### Brevo send — first 100
+1. [x] Deploy Hub (path B + soft-launch nav + founding seal badge)
+2. [x] Prod Path B smoke passed (claim → save → publish → badge email)
+3. [ ] Create / open Email 2 campaign in Brevo
+4. [ ] Import `data/Segment-A-Email2-1st-100-Brevo-import.csv` into a **new list** (e.g. `Email2 soft batch 100`) — update existing contacts if prompted
+5. [ ] Map attributes: `ORGANISER_NAME` ← Organiser name · `OTHER_GROUPS_NOTE` · `CLAIM_URL`
+6. [ ] Paste `data/email2-brevo-ready.html` as the campaign body
+7. [ ] Subject / reply-to / from as Email 1 (`catherine@thenetworkerhub.com` reply-to)
+8. [ ] Audience = that first-100 list only (not full Segment A)
+9. [ ] Optional: one more test send to yourself from the campaign
+10. [ ] **Send now** — first 100
+
+Widen to full Segment A later with `data/Segment-A-Email2-Brevo-import.csv`.
 
 Email 1 tracking: `docs/SEGMENT-A-EMAIL1.md`
