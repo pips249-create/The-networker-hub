@@ -10,8 +10,9 @@
   const EDIT_AUTODRAFT_PREFIX = 'hub_event_edit_autodraft_v1:';
   const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
   const params = new URLSearchParams(location.search);
-  const editId = params.get('id') || '';
+  let editId = params.get('id') || '';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+  const SERVER_AUTODRAFT_DELAY_MS = 2500;
 
   if (isEmbedDrawer) {
     document.documentElement.classList.add('ee-embed-drawer-root');
@@ -116,9 +117,14 @@
   let currentSeriesDateOnly = false;
   let currentSeriesContext = null;
   let autodraftTimer = null;
+  let serverAutodraftTimer = null;
+  let serverAutodraftInFlight = null;
+  let lastServerAutodraftFingerprint = '';
   let restoringAutodraft = false;
   let autodraftDisabled = false;
   let cachedLocationFields = null;
+
+  const AUTODRAFT_INLINE_DEFAULT = 'Progress saves to your account automatically.';
 
   function countWords(text) {
     return String(text || '')
@@ -133,22 +139,48 @@
     return id ? AUTODRAFT_PREFIX + id : '';
   }
 
-  function autodraftSavedMessage(draft) {
-    if (draft && draft.hadUploadedPhoto) {
-      return editId
-        ? 'Autosaved — re-select the uploaded image if you leave this page.'
-        : 'Draft autosaved — re-select the uploaded image if you close this page.';
+  function autodraftSavedMessage(draft, opts) {
+    opts = opts || {};
+    if (opts.server) {
+      if (draft && draft.hadUploadedPhoto) {
+        return 'Saved to your account — re-select a new upload if you change the image.';
+      }
+      return 'Saved to your account';
     }
-    return '';
+    if (draft && draft.hadUploadedPhoto) {
+      return 'Saved a backup in this browser — re-select the uploaded image if you leave.';
+    }
+    return 'Saved a backup in this browser';
   }
 
   function setAutodraftStatus(text, tone) {
     const el = document.getElementById('ee-autodraft-status');
-    if (!el) return;
-    el.textContent = text || '';
-    el.className =
-      'ee-hint ee-autodraft-status' +
-      (tone === 'restored' ? ' is-restored' : tone === 'error' ? ' is-error' : '');
+    const inline = document.getElementById('ee-autodraft-inline');
+    if (el) {
+      el.textContent = text || '';
+      el.className =
+        'ee-hint ee-autodraft-status' +
+        (tone === 'restored' ? ' is-restored' : tone === 'error' ? ' is-error' : '');
+    }
+    if (inline) {
+      if (tone === 'error' && text) {
+        inline.textContent = text;
+        inline.classList.add('is-error');
+        inline.classList.remove('is-restored', 'is-saving');
+      } else if (tone === 'saving') {
+        inline.textContent = text || 'Saving to your account…';
+        inline.classList.add('is-saving');
+        inline.classList.remove('is-error', 'is-restored');
+      } else if (text && (tone === 'restored' || tone === 'saved' || !tone)) {
+        inline.textContent = text;
+        inline.classList.remove('is-error', 'is-saving');
+        if (tone === 'restored') inline.classList.add('is-restored');
+        else inline.classList.remove('is-restored');
+      } else if (!text) {
+        inline.textContent = AUTODRAFT_INLINE_DEFAULT;
+        inline.classList.remove('is-error', 'is-restored', 'is-saving');
+      }
+    }
   }
 
   function fieldValue(id) {
@@ -190,7 +222,8 @@
         String(draft.description || '').trim() ||
         String(draft.photoUrl || '').trim() ||
         draft.hadUploadedPhoto ||
-        (Array.isArray(draft.dates) && draft.dates.length)
+        (Array.isArray(draft.dates) && draft.dates.length) ||
+        (draft.editId && (String(draft.startTime || '').trim() || String(draft.endTime || '').trim()))
     );
   }
 
@@ -203,13 +236,11 @@
     try {
       if (!autodraftHasWork(draft)) {
         localStorage.removeItem(key);
-        setAutodraftStatus('');
         return;
       }
       localStorage.setItem(key, JSON.stringify(draft));
-      setAutodraftStatus(autodraftSavedMessage(draft));
     } catch {
-      setAutodraftStatus('Could not autosave in this browser.', 'error');
+      setAutodraftStatus('Could not save a browser backup.', 'error');
     }
   }
 
@@ -217,13 +248,20 @@
     if (restoringAutodraft || autodraftDisabled) return;
     window.clearTimeout(autodraftTimer);
     autodraftTimer = window.setTimeout(saveAutodraftNow, 700);
+    window.clearTimeout(serverAutodraftTimer);
+    serverAutodraftTimer = window.setTimeout(function () {
+      if (typeof saveServerAutodraftNow === 'function') {
+        saveServerAutodraftNow();
+      }
+    }, SERVER_AUTODRAFT_DELAY_MS);
   }
 
   function clearAutodraft(groupId) {
     window.clearTimeout(autodraftTimer);
+    window.clearTimeout(serverAutodraftTimer);
     const keys = [];
     if (editId) keys.push(EDIT_AUTODRAFT_PREFIX + editId);
-    const createKey = autodraftKey(groupId);
+    const createKey = !editId ? autodraftKey(groupId) : AUTODRAFT_PREFIX + String(groupId || '').trim();
     if (createKey && (!editId || createKey !== EDIT_AUTODRAFT_PREFIX + editId)) keys.push(createKey);
     keys.forEach((key) => {
       try {
@@ -328,6 +366,7 @@
         : 'Restored your autosaved draft.',
       'restored'
     );
+    scheduleAutodraft();
     return true;
   }
 
@@ -358,7 +397,8 @@
         : storedSeriesDateKeysFromMeta();
     applyDraftToForm(draft, {
       keepLoadedDescription: true,
-      skipTimes: true,
+      // Restore times too — skipping them made time edits look like autosave was broken.
+      skipTimes: false,
       preserveDateKeys: preserveDateKeys.length > 1 ? preserveDateKeys : null,
     });
     setAutodraftStatus(
@@ -367,6 +407,7 @@
         : 'Restored unsaved changes from this browser.',
       'restored'
     );
+    scheduleAutodraft();
     return true;
   }
 
@@ -386,6 +427,13 @@
       }
     });
     window.addEventListener('pagehide', saveAutodraftNow);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'hidden') return;
+      saveAutodraftNow();
+      if (typeof flushServerAutodraft === 'function') {
+        flushServerAutodraft();
+      }
+    });
   }
 
   let postcodeLookupTimer = null;
@@ -1120,7 +1168,10 @@
     [startEl, endEl].forEach((el) => {
       if (!el || el.dataset.dateListBound) return;
       el.dataset.dateListBound = '1';
-      el.addEventListener('change', renderSelectedList);
+      el.addEventListener('change', function () {
+        renderSelectedList();
+        scheduleAutodraft();
+      });
     });
   }
 
@@ -1171,6 +1222,7 @@
           showAlert('');
           renderCalendar();
           renderSelectedList();
+          scheduleAutodraft();
         });
       }
       grid.appendChild(btn);
@@ -2327,62 +2379,91 @@
     renderCalendar();
   });
 
-  async function saveEvent(options) {
-    const publish = options && options.publish;
-    showAlert('');
+  function promoteToSavedEventId(newId) {
+    const id = String(newId || '').trim();
+    if (!id || id === editId) return;
+    const prevGroup = fieldValue('ee-group').trim();
+    const prevCreateKey = prevGroup ? AUTODRAFT_PREFIX + prevGroup : '';
+    editId = id;
+    if (document.body) document.body.classList.remove('ee-is-new-listing');
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('id', id);
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    } catch {
+      /* ignore */
+    }
+    if (prevCreateKey) {
+      try {
+        localStorage.removeItem(prevCreateKey);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
 
-    const organiserGroupId = document.getElementById('ee-group').value;
-    const title = document.getElementById('ee-title').value.trim();
+  function serverAutodraftFingerprint(payload) {
+    try {
+      return JSON.stringify({
+        title: payload.title,
+        type: payload.type,
+        description: payload.description,
+        occurrences: payload.occurrences,
+        recurrencePattern: payload.recurrencePattern,
+        recurrenceEndDate: payload.recurrenceEndDate,
+        venue: payload.venue,
+        addressLine1: payload.addressLine1,
+        city: payload.city,
+        postcode: payload.postcode,
+        onlinePlatform: payload.onlinePlatform,
+        onlineLink: payload.onlineLink,
+        photoUrl: payload.photoUrl,
+        imagePosition: payload.imagePosition,
+        eventFormat: eventFormat,
+      });
+    } catch {
+      return String(Date.now());
+    }
+  }
+
+  function buildEventSavePayload(options) {
+    const opts = options || {};
+    const quiet = Boolean(opts.quiet);
+    const organiserGroupId = fieldValue('ee-group').trim();
+    const title = fieldValue('ee-title').trim();
     if (!organiserGroupId || !title) {
-      showAlert('Choose a group and enter an event title.');
-      return;
+      return { ok: false, error: 'Choose a group and enter an event title.' };
     }
     const duplicateTitleError = validateDuplicateTitle(title);
     if (duplicateTitleError) {
-      showAlert(duplicateTitleError);
-      return;
+      return { ok: false, error: duplicateTitleError };
     }
 
-    const description = document.getElementById('ee-description').value.trim();
+    const description = fieldValue('ee-description').trim();
     if (countWords(description) > DESCRIPTION_MAX_WORDS) {
-      showAlert('Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.');
-      return;
+      return {
+        ok: false,
+        error: 'Description must be ' + DESCRIPTION_MAX_WORDS + ' words or fewer.',
+      };
     }
 
     const dateKeys = getSelectedDateKeys();
     const timeCheck = validateTimes();
-    if (publish && !timeCheck.ok) {
-      showAlert(timeCheck.message);
-      return;
-    }
-    if (publish && !dateKeys.length) {
-      showAlert('Select at least one date on the calendar before continuing.');
-      return;
-    }
-
     let occurrences = [];
     if (dateKeys.length) {
       if (!timeCheck.ok) {
-        showAlert(timeCheck.message);
-        return;
+        if (!quiet) return { ok: false, error: timeCheck.message };
+      } else {
+        occurrences = buildOccurrences(dateKeys, timeCheck.start, timeCheck.end);
       }
-      occurrences = buildOccurrences(dateKeys, timeCheck.start, timeCheck.end);
     }
 
     const recurrence = deriveRecurrenceFromDates(dateKeys);
     const locFields = buildLocationFields();
-    if (publish && eventFormat === 'in-person' && !currentEventLocked && !currentSeriesDateOnly) {
-      if (!locFields.postcode) {
-        showAlert('Enter a postcode before continuing — we use it to place your event on the map.');
-        const postcodeEl = document.getElementById('ee-postcode');
-        if (postcodeEl) postcodeEl.focus();
-        return;
-      }
-    }
-    let payload = {
+    const payload = {
       organiserGroupId,
       title,
-      type: canonicalEventType(document.getElementById('ee-type').value),
+      type: canonicalEventType(fieldValue('ee-type')),
       description,
       recurrencePattern: recurrence.recurrencePattern,
       recurrenceEndDate: recurrence.recurrenceEndDate,
@@ -2392,17 +2473,137 @@
     if (!editId) payload.listingStatus = 'draft';
 
     if (!currentEventLocked) {
-      const photoUrl = document.getElementById('ee-photo-url').value.trim();
+      const photoUrl = fieldValue('ee-photo-url').trim();
       if (photoUrl) payload.photoUrl = photoUrl;
-
-      if (photoFile) {
-        payload.photoBase64 = await readFileAsBase64(photoFile);
-        payload.photoMime = photoFile.type;
-        payload.photoFilename = photoFile.name;
-      }
       payload.imagePosition = photoPosition || '';
     }
 
+    return {
+      ok: true,
+      payload: payload,
+      organiserGroupId: organiserGroupId,
+      title: title,
+      timeCheck: timeCheck,
+      dateKeys: dateKeys,
+    };
+  }
+
+  async function persistEventPayload(payload) {
+    if (editId) {
+      return api('/api/organiser/events', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: editId, ...payload }),
+      });
+    }
+    return api('/api/organiser/events', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async function saveServerAutodraftNow() {
+    if (restoringAutodraft || autodraftDisabled) return null;
+    saveAutodraftNow();
+
+    const built = buildEventSavePayload({ quiet: true });
+    if (!built.ok) return null;
+
+    const fingerprint = serverAutodraftFingerprint(built.payload);
+    if (fingerprint && fingerprint === lastServerAutodraftFingerprint) return null;
+
+    const run = (async function () {
+      setAutodraftStatus('Saving to your account…', 'saving');
+      const res = await persistEventPayload(built.payload);
+      if (!res.ok) {
+        setAutodraftStatus(
+          "Couldn't save to your account — kept a browser backup.",
+          'error'
+        );
+        return res;
+      }
+
+      const saved = res.data.event || (res.data.events && res.data.events[0]) || {};
+      const newId = saved.id || (res.data.eventIds && res.data.eventIds[0]) || '';
+      if (!editId && newId) promoteToSavedEventId(newId);
+
+      lastServerAutodraftFingerprint = fingerprint;
+      const draft = collectAutodraft();
+      if (draft) {
+        try {
+          const key = autodraftKey(draft.groupId);
+          if (key) localStorage.setItem(key, JSON.stringify(draft));
+        } catch {
+          /* ignore */
+        }
+      }
+      setAutodraftStatus(autodraftSavedMessage(draft, { server: true }), 'saved');
+      return res;
+    })();
+
+    serverAutodraftInFlight = run;
+    try {
+      return await run;
+    } finally {
+      if (serverAutodraftInFlight === run) serverAutodraftInFlight = null;
+    }
+  }
+
+  async function flushServerAutodraft() {
+    window.clearTimeout(serverAutodraftTimer);
+    if (serverAutodraftInFlight) {
+      try {
+        await serverAutodraftInFlight;
+      } catch {
+        /* ignore */
+      }
+    }
+    return saveServerAutodraftNow();
+  }
+
+  async function saveEvent(options) {
+    const publish = options && options.publish;
+    showAlert('');
+
+    await flushServerAutodraft();
+
+    const built = buildEventSavePayload({ quiet: false });
+    if (!built.ok) {
+      showAlert(built.error || 'Could not save event');
+      return;
+    }
+
+    if (publish && !built.timeCheck.ok) {
+      showAlert(built.timeCheck.message);
+      return;
+    }
+    if (publish && !built.dateKeys.length) {
+      showAlert('Select at least one date on the calendar before continuing.');
+      return;
+    }
+    if (
+      publish &&
+      eventFormat === 'in-person' &&
+      !currentEventLocked &&
+      !currentSeriesDateOnly
+    ) {
+      if (!built.payload.postcode) {
+        showAlert('Enter a postcode before continuing — we use it to place your event on the map.');
+        const postcodeEl = document.getElementById('ee-postcode');
+        if (postcodeEl) postcodeEl.focus();
+        return;
+      }
+    }
+
+    let payload = built.payload;
+    if (!currentEventLocked && photoFile && !options.quiet) {
+      payload = { ...payload };
+      payload.photoBase64 = await readFileAsBase64(photoFile);
+      payload.photoMime = photoFile.type;
+      payload.photoFilename = photoFile.name;
+    }
+
+    const organiserGroupId = built.organiserGroupId;
+    const title = built.title;
     const submitBtn = document.getElementById('ee-submit');
     const draftBtn = document.getElementById('ee-save-draft');
     const loading = window.organiserPageLoading;
@@ -2410,18 +2611,7 @@
       if (b) b.disabled = true;
     });
 
-    const saveWork = async () => {
-      if (editId) {
-        return api('/api/organiser/events', {
-          method: 'PATCH',
-          body: JSON.stringify({ id: editId, ...payload }),
-        });
-      }
-      return api('/api/organiser/events', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    };
+    const saveWork = async () => persistEventPayload(payload);
 
     const saveLabel = publish
       ? 'Continuing to tickets'
@@ -2460,6 +2650,7 @@
     autodraftDisabled = true;
     clearAutodraft(organiserGroupId);
     const savedEvent = res.data.event || {};
+    if (!editId && savedEvent.id) promoteToSavedEventId(savedEvent.id);
     showAttendeeUpdateAlerts(savedEvent);
 
     if (!publish) {

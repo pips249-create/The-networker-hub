@@ -548,7 +548,7 @@ const FALLBACK_REPLIES = [
   {
     match: /(start )?times? (change|changed|wrong|shift|shifted|jump|jumped)|hour (out|off|wrong)|clocks? (change|go back|go forward)|daylight saving|british summer|why.*(different|wrong).*time.*(date|series|recurring)|recurring.*time.*(wrong|change|hour)/i,
     reply:
-      'Event times are always UK local time (Europe/London). On a multi-date series, the start and end time you set applies as the same clock time on every date — for example 10:15 stays 10:15 before and after the clocks change. If an older series shows a one-hour difference across autumn or spring, open the listing in Edit event, confirm the start time, and save again so every date is rewritten correctly. Need a different time on one day? Create that session as its own listing.',
+      'Event times are always UK local time (Europe/London). On a multi-date series, the start and end time you set applies as the same clock time on every date — for example 10:15 stays 10:15 before and after the clocks change. If an older series shows a one-hour difference across autumn or spring (for example November an hour earlier than September), refresh My Events — the Hub realigns those dates to the same UK wall-clock time automatically — or open Edit event, confirm the start time, and save again. Need a different time on one day? Create that session as its own listing.',
   },
   {
     match: /can i set different times|different (start )?times?.*(date|day|session)|same time every (date|day)/i,

@@ -3611,12 +3611,17 @@
 
   function formatDateShort(raw) {
     if (!raw) return '—';
+    if (window.HubEventTimezone && typeof window.HubEventTimezone.formatDateShort === 'function') {
+      const label = window.HubEventTimezone.formatDateShort(raw);
+      return label || '—';
+    }
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+      timeZone: 'Europe/London',
     });
   }
 

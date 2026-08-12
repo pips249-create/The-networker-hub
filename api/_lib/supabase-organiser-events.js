@@ -26,6 +26,9 @@ function normalizeAttendanceMode(mode) {
     .toLowerCase()
     .replace(/[\s-]+/g, '_');
   if (m === 'osop' || m === 'category_exclusivity') return 'category_exclusivity';
+  if (m === 'membership_meeting' || m === 'networking_group' || m === 'networking_group_meeting') {
+    return 'membership_meeting';
+  }
   if (m === 'guest_programme' || m === 'guest_program') return 'guest_programme';
   if (m === 'tickets' || m === 'ticket' || m === 'open' || m === 'standard') return 'tickets';
   return 'tickets';
@@ -148,7 +151,10 @@ function payloadTouchesDate(payload) {
   return false;
 }
 
-const { parseEventDateInputToUtcIso } = require('./event-timezone');
+const {
+  parseEventDateInputToUtcIso,
+  planSeriesWallClockRealignment,
+} = require('./event-timezone');
 
 function parseDateIso(dateStr, endStr) {
   return {
@@ -379,7 +385,8 @@ async function listAllOrganiserEvents() {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from('events').select('*').order('starts_at', { ascending: true });
   if (error) throw new Error(error.message);
-  return (data || []).map(rowToEvent);
+  const repaired = await repairSeriesWallClocksForEventRows(sb, data || []);
+  return repaired.map(rowToEvent);
 }
 
 async function listEventIdsForOrganiserGroups(groupIds, allEvents) {
@@ -412,7 +419,8 @@ async function listEventsForSeriesGroup(groupIds, seriesGroupId) {
   else query = query.in('organiser_id', groups);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return (data || []).map(rowToEvent);
+  const repaired = await repairSeriesWallClocksForEventRows(sb, data || []);
+  return repaired.map(rowToEvent);
 }
 
 async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options) {
@@ -584,7 +592,52 @@ async function listEventsForOrganiser(email, groupIds, options) {
   }
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return (data || []).map(rowToEvent);
+  const repaired = await repairSeriesWallClocksForEventRows(sb, data || []);
+  return repaired.map(rowToEvent);
+}
+
+/**
+ * Series should share one UK wall-clock start/end. Older rows kept the same UTC
+ * clock across BST→GMT and display an hour early in winter — rewrite those here.
+ */
+async function repairSeriesWallClocksForEventRows(sb, rows) {
+  const list = Array.isArray(rows) ? rows.slice() : [];
+  if (!list.length) return list;
+
+  const byId = new Map(list.map((row) => [row.id, row]));
+  const groupIds = [
+    ...new Set(list.map((row) => String(row.series_group_id || '').trim()).filter(Boolean)),
+  ];
+  if (!groupIds.length) return list;
+
+  for (const gid of groupIds) {
+    let peers;
+    try {
+      peers = await loadActiveSeriesPeerRows(sb, gid, null);
+    } catch {
+      continue;
+    }
+    if (!peers || peers.length < 2) continue;
+    const plan = planSeriesWallClockRealignment(peers);
+    if (!plan.needsRepair || !plan.patches.length) continue;
+
+    for (const patch of plan.patches) {
+      const payload = { starts_at: patch.starts_at };
+      if (patch.ends_at) payload.ends_at = patch.ends_at;
+      const { data, error } = await sb
+        .from('events')
+        .update(payload)
+        .eq('id', patch.id)
+        .select('*')
+        .maybeSingle();
+      if (error || !data) continue;
+      byId.set(data.id, data);
+      const peerIdx = peers.findIndex((p) => p.id === data.id);
+      if (peerIdx >= 0) peers[peerIdx] = data;
+    }
+  }
+
+  return list.map((row) => byId.get(row.id) || row);
 }
 
 async function listUpcomingEventsForOrganiser(groupIds, limit) {
@@ -600,8 +653,9 @@ async function listUpcomingEventsForOrganiser(groupIds, limit) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
+  const repaired = await repairSeriesWallClocksForEventRows(sb, data || []);
   const cutoff = Date.now() - 86400000;
-  return (data || [])
+  return repaired
     .map(rowToEvent)
     .filter((ev) => {
       if (!ev.date) return true;
@@ -2075,9 +2129,10 @@ async function createTicketsForEvents({
   const { guestVisitTierPayload } = require('./guest-visits');
   const { alumniTierPayload } = require('./alumni-invites');
 
-  // Guest visits are the default attendance mode, or an optional add-on on Category Exclusivity.
+  // Guest visits: guest_programme, membership_meeting, or optional add-on on Category Exclusivity.
   const guestVisitsEnabled =
     mode === 'guest_programme' ||
+    mode === 'membership_meeting' ||
     (mode === 'category_exclusivity' && Boolean(enableGuestVisits));
 
   if (guestVisitsEnabled) {

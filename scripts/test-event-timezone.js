@@ -65,6 +65,34 @@ assert(
 const sameUtcNov = '2025-11-17T09:15:00.000Z';
 assert('Wrong same-UTC Nov would show 09:15', formatTime(sameUtcNov) === '09:15');
 
+const { planSeriesWallClockRealignment } = require('../api/_lib/event-timezone');
+const dstBrokenSeries = [
+  { id: 'a', starts_at: '2026-09-03T09:15:00.000Z', ends_at: '2026-09-03T11:15:00.000Z' },
+  { id: 'b', starts_at: '2026-10-14T09:15:00.000Z', ends_at: '2026-10-14T11:15:00.000Z' },
+  { id: 'c', starts_at: '2026-11-17T09:15:00.000Z', ends_at: '2026-11-17T11:15:00.000Z' },
+];
+const plan = planSeriesWallClockRealignment(dstBrokenSeries);
+assert('DST-broken series needs repair', plan.needsRepair === true);
+assert('Canonical wall start is 10:15', plan.canonicalStart === '10:15');
+assert('Canonical wall end is 12:15', plan.canonicalEnd === '12:15');
+const novPatch = plan.patches.find((p) => p.id === 'c');
+assert(
+  'Nov realigns to 10:15Z (GMT wall 10:15)',
+  novPatch && novPatch.starts_at === '2026-11-17T10:15:00.000Z'
+);
+assert(
+  'Nov end realigns to 12:15Z',
+  novPatch && novPatch.ends_at === '2026-11-17T12:15:00.000Z'
+);
+assert(
+  'Healthy series needs no repair',
+  planSeriesWallClockRealignment([
+    { id: 'a', starts_at: '2026-09-03T09:15:00.000Z', ends_at: '2026-09-03T11:15:00.000Z' },
+    { id: 'b', starts_at: '2026-10-14T09:15:00.000Z', ends_at: '2026-10-14T11:15:00.000Z' },
+    { id: 'c', starts_at: '2026-11-17T10:15:00.000Z', ends_at: '2026-11-17T12:15:00.000Z' },
+  ]).needsRepair === false
+);
+
 assert(
   'UTC host still formats booking email times in London',
   (() => {

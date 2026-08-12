@@ -1238,7 +1238,7 @@ a.ee-wizard-link:hover {
 
 .ee-attendance-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -1250,8 +1250,8 @@ a.ee-wizard-link:hover {
   text-align: left;
   border: 2px solid var(--ee-border);
   border-radius: var(--ee-radius);
-  padding: 28px 24px;
-  min-height: 200px;
+  padding: 22px 18px;
+  min-height: 180px;
   background: var(--ee-white);
   font-family: inherit;
   cursor: pointer;
@@ -1363,6 +1363,19 @@ body.ee-step2-modal-open {
   margin: 0;
   color: #55705c;
   font-weight: 600;
+}
+
+.ee-autodraft-inline.is-restored {
+  color: #2f5d3a;
+}
+
+.ee-autodraft-inline.is-saving {
+  color: #5a6b7a;
+  font-weight: 600;
+}
+
+.ee-autodraft-inline.is-error {
+  color: #9b1c1c;
 }
 
 .ee-number-stepper {
@@ -1573,7 +1586,7 @@ body.ee-step2-modal-open {
   gap: 12px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .ee-attendance-options {
     grid-template-columns: 1fr;
   }

@@ -108,6 +108,20 @@
     return d.toLocaleDateString('en-GB', DATE_FMT);
   }
 
+  var DATE_SHORT_FMT = {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: EVENT_TZ,
+  };
+
+  function formatDateShort(startsAt) {
+    if (!startsAt) return '';
+    var d = new Date(startsAt);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', DATE_SHORT_FMT);
+  }
+
   function formatEventDateTime(startsAt) {
     var starts = startsAt ? new Date(startsAt) : null;
     if (!starts || Number.isNaN(starts.getTime())) {
@@ -228,6 +242,7 @@
     formatTime: formatTime,
     formatTimeRange: formatTimeRange,
     formatDateOnly: formatDateOnly,
+    formatDateShort: formatDateShort,
     formatEventDateTime: formatEventDateTime,
     formatDateTimeLong: formatDateTimeLong,
     londonTimeFromIso: londonTimeFromIso,
