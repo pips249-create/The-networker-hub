@@ -4681,13 +4681,15 @@
           ? 'org-badge-gold'
           : key === 'pending_approval'
             ? 'org-badge-gold'
-            : key === 'archived'
-            ? 'org-badge-blue'
-            : key === 'cancelled'
-              ? 'org-badge-red'
-              : key === 'unpublished'
+            : key === 'pending_review'
+              ? 'org-badge-teal'
+              : key === 'archived'
+              ? 'org-badge-blue'
+              : key === 'cancelled'
                 ? 'org-badge-red'
-                : 'org-badge-purple';
+                : key === 'unpublished'
+                  ? 'org-badge-red'
+                  : 'org-badge-purple';
     return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
   }
 
@@ -10636,6 +10638,36 @@
     const revenueNum = Number(ev.revenueNum) || 0;
     const revClass = revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
 
+    // If this event is in the launch review queue (needs tickets/setup), show Pending review.
+    var evStatusKey = ev.statusKey || 'draft';
+    var evStatusLabel = ev.statusLabel || 'Draft';
+    if (
+      window.HubOrganiserLaunchSetup &&
+      window.HubOrganiserLaunchSetup.buildQueue &&
+      typeof window.orgDashLaunchSetupInput === 'function'
+    ) {
+      try {
+        var _launch = window.HubOrganiserLaunchSetup.buildQueue(window.orgDashLaunchSetupInput());
+        if (!_launch.stored.dismissed) {
+          var _evId = String(ev.id || '');
+          var _inQueue = (_launch.queue || []).some(function (item) {
+            if (item.kind !== 'event') return false;
+            var fam = item.family;
+            if (!fam) return false;
+            return (fam.events || []).some(function (e) {
+              return String(e.id || '') === _evId;
+            });
+          });
+          if (_inQueue) {
+            evStatusKey = 'pending_review';
+            evStatusLabel = 'Pending review';
+          }
+        }
+      } catch (e) {
+        /* non-fatal */
+      }
+    }
+
     tr.innerHTML =
       '<td class="org-td-thumb" data-label="">' +
       thumbHtml(ev) +
@@ -10652,7 +10684,7 @@
       '" data-label="Revenue">' +
       esc(ev.revenueDisplay || formatGbpAmount(revenueNum) || '£0') +
       '</td><td data-label="Status">' +
-      statusBadgeHtml(ev.statusKey || 'draft', ev.statusLabel || 'Draft') +
+      statusBadgeHtml(evStatusKey, evStatusLabel) +
       '</td><td class="org-td-actions" data-label="Actions">' +
       eventActionMenuHtmlWithItem(ev) +
       '</td>';

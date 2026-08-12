@@ -6646,6 +6646,11 @@
   color: var(--od-green);
 }
 
+.org-badge-teal {
+  background: #d6f4f0;
+  color: #0d6e7a;
+}
+
 .org-badge-purple {
   background: var(--od-purple-pale);
   color: var(--od-purple-dark);
