@@ -18,6 +18,24 @@
   let eventsLoadGen = 0;
   let reviewsLoadingPromise = null;
 
+  function isPlatformWebsiteImportUrl(url) {
+    try {
+      var raw = String(url || '').trim();
+      if (!raw) return false;
+      var test = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+      var host = new URL(test).hostname.toLowerCase().replace(/^www\./, '');
+      return (
+        host === 'thenetworkerhub.com' ||
+        host === 'thenetworkerhub.co.uk' ||
+        host === 'the-networker.co.uk' ||
+        host === 'the-networker.com' ||
+        /\.vercel\.app$/.test(host)
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
   const filters = {
     eventsStatus: 'all',
     eventsType: 'all',
@@ -2762,6 +2780,14 @@
     var url = String((els.website && els.website.value) || '').trim();
     if (!url) {
       setBrandKitStatus('Enter your website URL first.', 'error');
+      if (els.website) els.website.focus();
+      return;
+    }
+    if (isPlatformWebsiteImportUrl(url)) {
+      setBrandKitStatus(
+        'Enter your own business website (e.g. yourcompany.co.uk), not The Networker Hub.',
+        'error'
+      );
       if (els.website) els.website.focus();
       return;
     }

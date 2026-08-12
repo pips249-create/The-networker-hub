@@ -139,6 +139,33 @@ function isBlockedHost(hostname) {
   return false;
 }
 
+const PLATFORM_WEBSITE_HOSTS = new Set([
+  'thenetworkerhub.com',
+  'thenetworkerhub.co.uk',
+  'the-networker.co.uk',
+  'the-networker.com',
+]);
+
+function normalizeWebsiteHost(hostname) {
+  return String(hostname || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^www\./, '');
+}
+
+function isPlatformWebsiteUrl(input) {
+  const url = normalizeWebsiteUrl(input);
+  if (!url) return false;
+  try {
+    const host = normalizeWebsiteHost(new URL(url).hostname);
+    if (PLATFORM_WEBSITE_HOSTS.has(host)) return true;
+    if (/\.vercel\.app$/i.test(host)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function urlVariants(url) {
   const variants = [];
   const seen = new Set();
@@ -703,6 +730,14 @@ async function fetchWebsiteMeta(rawUrl) {
     throw err;
   }
 
+  if (isPlatformWebsiteUrl(url)) {
+    const err = new Error('platform_url');
+    err.status = 400;
+    err.message =
+      'That is The Networker Hub — enter your own business website (e.g. yourcompany.co.uk) to import brand colours.';
+    throw err;
+  }
+
   const cached = readMetaCache(url);
   if (cached) return { ...cached };
 
@@ -791,6 +826,7 @@ async function fetchWebsiteMeta(rawUrl) {
 module.exports = {
   fetchWebsiteMeta,
   normalizeWebsiteUrl,
+  isPlatformWebsiteUrl,
   cleanDescription,
   normalizeHexColor,
   assignPalette,

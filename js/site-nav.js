@@ -212,6 +212,20 @@
     return root + path;
   }
 
+  function signOutRedirectUrl() {
+    var path = String(window.location.pathname || '').toLowerCase();
+    if (
+      document.body.classList.contains('hub-page-organiser') ||
+      path.indexOf('/organiser') === 0 ||
+      path.indexOf('/for-organisers') === 0
+    ) {
+      return (
+        '/login?intent=organiser-claim&next=' + encodeURIComponent('/organiser/?onboard=claim')
+      );
+    }
+    return '/login';
+  }
+
   function isLinkActive(key) {
     if (key === 'peek-hub') {
       return page === 'peek-hub' || /\/peek\/?$/.test(String(window.location.pathname || ''));
@@ -701,7 +715,7 @@
         closeMenu();
         cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href('/');
+          window.location.href = href(signOutRedirectUrl());
         });
       });
     }
@@ -911,7 +925,7 @@
       signOut.addEventListener('click', function () {
         cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href('/');
+          window.location.href = href(signOutRedirectUrl());
         });
       });
     }

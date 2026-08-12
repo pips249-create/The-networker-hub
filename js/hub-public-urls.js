@@ -55,5 +55,28 @@
     organiserDetailHref: organiserDetailHref,
     opportunityDetailHref: opportunityDetailHref,
     slugifyTitle: slugifyTitle,
+    isPlatformWebsiteUrl: isPlatformWebsiteUrl,
   };
+
+  function isPlatformWebsiteUrl(input) {
+    var raw = String(input || '').trim();
+    if (!raw) return false;
+    var url = raw;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    try {
+      var host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+      if (
+        host === 'thenetworkerhub.com' ||
+        host === 'thenetworkerhub.co.uk' ||
+        host === 'the-networker.co.uk' ||
+        host === 'the-networker.com' ||
+        /\.vercel\.app$/.test(host)
+      ) {
+        return true;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

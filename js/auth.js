@@ -43,6 +43,13 @@
     }
   }
 
+  function isOrganiserClaimEntry() {
+    var intent = getIntentParam();
+    if (intent === 'organiser-claim') return true;
+    var next = getNextParam();
+    return Boolean(next && next.indexOf('onboard=claim') !== -1);
+  }
+
   function isNetworkerAuthIntentFromPage() {
     var intent = getIntentParam();
     if (intent === 'networker') return true;
@@ -455,12 +462,15 @@
     if (getIntentParam() === 'organiser-claim') return;
     if (!isOrganiserAuthIntentFromPage()) return;
 
-    var registerTitle = document.querySelector('#register-form') && document.querySelector('.auth-card--wizard h1');
+    var registerFull = document.getElementById('register-full');
+    if (!registerFull || registerFull.hidden) return;
+
+    var registerTitle = document.getElementById('register-form-title');
     if (registerTitle) {
       registerTitle.textContent = 'Create your organiser account';
     }
 
-    var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
+    var registerLede = document.getElementById('register-form-lede');
     if (registerLede) {
       registerLede.textContent =
         'Step 1 of 2 — create your account to list events and manage your group. We enable organiser access automatically; confirm your email before publishing.';
@@ -798,12 +808,14 @@
     }
   }
 
-  function maybeRedirectAuthenticatedClaimEntry() {
-    var params = new URLSearchParams(window.location.search);
-    var next = params.get('next') || '';
-    var intent = params.get('intent') || '';
-    var isClaimEntry = intent === 'organiser-claim' || next.indexOf('onboard=claim') !== -1;
-    if (!isClaimEntry) return;
+  function claimContinueUrl() {
+    var next = getNextParam();
+    return next || '/organiser/?onboard=claim';
+  }
+
+  /** Login only — returning users with a claim link should skip straight to setup. */
+  function maybeRedirectAuthenticatedClaimLogin() {
+    if (!loginForm || !isOrganiserClaimEntry()) return;
 
     fetch('/api/auth/session', { credentials: 'include' })
       .then(function (res) {
@@ -811,7 +823,74 @@
       })
       .then(function (data) {
         if (!data.ok || !data.user) return;
-        window.location.replace(next || '/organiser/?onboard=claim');
+        window.location.replace(claimContinueUrl());
+      })
+      .catch(function () {
+        /* stay on auth form */
+      });
+  }
+
+  /**
+   * Register must always show password + T&Cs — never silently skip because a session exists.
+   */
+  function maybeShowAuthenticatedRegisterNotice() {
+    if (!registerForm || !isOrganiserClaimEntry()) return;
+
+    fetch('/api/auth/session', { credentials: 'include' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.ok || !data.user) return;
+
+        var full = document.getElementById('register-full');
+        if (!full) return;
+
+        var notice = document.getElementById('auth-signed-in-notice');
+        if (!notice) {
+          notice = document.createElement('div');
+          notice.id = 'auth-signed-in-notice';
+          notice.className = 'auth-intent-callout auth-signed-in-notice';
+          notice.setAttribute('role', 'status');
+          full.insertBefore(notice, full.firstChild);
+        }
+
+        var email = String((data.user && data.user.email) || '').trim();
+        var continueHref = claimContinueUrl();
+        notice.hidden = false;
+        notice.innerHTML =
+          '<p class="auth-intent-callout-kicker">Already signed in</p>' +
+          '<p class="auth-intent-callout-text">You&rsquo;re signed in as <strong>' +
+          (email || 'your account') +
+          '</strong>. Continue to claim setup, or sign out to create a different account with a new password.</p>' +
+          '<p class="auth-intent-callout-note">' +
+          '<a class="auth-submit auth-signed-in-continue" href="' +
+          continueHref +
+          '">Continue to claim setup &rarr;</a> ' +
+          '<button type="button" class="auth-early-secondary auth-signed-in-signout" style="margin-left:0.75rem;border:none;background:none;cursor:pointer;font:inherit;">Sign out</button>' +
+          '</p>';
+
+        var form = document.getElementById('register-form');
+        if (form) form.hidden = true;
+
+        var continueBtn = notice.querySelector('.auth-signed-in-continue');
+        if (continueBtn) {
+          continueBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = continueHref;
+          });
+        }
+
+        var signOutBtn = notice.querySelector('.auth-signed-in-signout');
+        if (signOutBtn) {
+          signOutBtn.addEventListener('click', function () {
+            signOutBtn.disabled = true;
+            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+              .finally(function () {
+                window.location.reload();
+              });
+          });
+        }
       })
       .catch(function () {
         /* stay on auth form */
@@ -851,7 +930,8 @@
 
     var params = new URLSearchParams(window.location.search);
     var forceFull =
-      params.get('intent') === 'organiser-claim' ||
+      isOrganiserClaimEntry() ||
+      isOrganiserAuthIntentFromPage() ||
       params.get('signup') === '1' ||
       params.get('signup') === 'true';
 
@@ -885,5 +965,6 @@
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
   initLoginAudienceToggle();
-  maybeRedirectAuthenticatedClaimEntry();
+  maybeRedirectAuthenticatedClaimLogin();
+  maybeShowAuthenticatedRegisterNotice();
 })();
