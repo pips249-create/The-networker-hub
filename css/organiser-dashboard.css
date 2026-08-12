@@ -8115,11 +8115,13 @@ a.hub-payment-setup-btn {
   position: fixed;
   z-index: 10060;
   display: block;
-  max-height: min(70vh, 420px);
+  max-height: min(70vh, 360px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  /* Make scrollability obvious when items are clipped */
+  scrollbar-gutter: stable;
 }
 
 .org-table-wrap tbody td.org-td-actions {

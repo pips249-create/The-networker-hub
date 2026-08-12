@@ -8583,9 +8583,14 @@
 
     const pad = 12;
     const gap = 6;
-    const hardCap = 420;
+    const hardCap = 360;
+    // Keep the menu clear of the Hubert launcher in the bottom-right.
+    const bottomClearance = 100;
     const rect = toggle.getBoundingClientRect();
-    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - pad - gap);
+    const spaceBelow = Math.max(
+      0,
+      window.innerHeight - rect.bottom - pad - gap - bottomClearance
+    );
     const spaceAbove = Math.max(0, rect.top - pad - gap);
     // Prefer below when usable; only flip up when there is clearly more room above.
     // Cap height to the chosen side so a long menu scrolls instead of covering the page.
@@ -8599,8 +8604,9 @@
 
     let top = openBelow ? rect.bottom + gap : rect.top - menuH - gap;
     if (top < pad) top = pad;
-    if (top + menuH > window.innerHeight - pad) {
-      top = Math.max(pad, window.innerHeight - pad - menuH);
+    const maxBottom = window.innerHeight - pad - (openBelow ? bottomClearance : 0);
+    if (top + menuH > maxBottom) {
+      top = Math.max(pad, maxBottom - menuH);
     }
 
     let left = rect.right - menuW;
@@ -16812,7 +16818,17 @@
       }
     });
 
-    window.addEventListener('scroll', closeAllActionMenus, true);
+    window.addEventListener(
+      'scroll',
+      (e) => {
+        const t = e.target;
+        // Scrolling inside the floating Actions menu must not close it.
+        if (t && t.nodeType === 1 && t.closest && t.closest('.org-action-menu')) return;
+        if (t && t.classList && t.classList.contains('org-action-menu')) return;
+        closeAllActionMenus();
+      },
+      true
+    );
     window.addEventListener('resize', closeAllActionMenus);
 
     document.getElementById('org-shell')?.addEventListener('click', (e) => {
