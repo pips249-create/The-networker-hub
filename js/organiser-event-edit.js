@@ -2594,6 +2594,16 @@
     if (restoringAutodraft || autodraftDisabled) return null;
     saveAutodraftNow();
 
+    // Only PATCH an existing draft/event. Creating a new row on every keystroke
+    // flooded My Events with unfinished Draft listings before Confirm & publish.
+    if (!editId) {
+      const draft = collectAutodraft();
+      if (autodraftHasWork(draft)) {
+        setAutodraftStatus(autodraftSavedMessage(draft, { server: false }), 'saved');
+      }
+      return null;
+    }
+
     const built = buildEventSavePayload({ quiet: true });
     if (!built.ok) return null;
 
@@ -2610,10 +2620,6 @@
         );
         return res;
       }
-
-      const saved = res.data.event || (res.data.events && res.data.events[0]) || {};
-      const newId = saved.id || (res.data.eventIds && res.data.eventIds[0]) || '';
-      if (!editId && newId) promoteToSavedEventId(newId);
 
       lastServerAutodraftFingerprint = fingerprint;
       const draft = collectAutodraft();
