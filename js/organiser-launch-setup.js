@@ -107,7 +107,9 @@
   function profileNeedsReview(group, stored) {
     if (!group || !group.id) return false;
     if (stored.profilesDone[String(group.id)]) return false;
-    return true;
+    // Only nudge incomplete pages (missing description or photo).
+    // Organisers who already filled their profile shouldn’t see this after publishing.
+    return profileLooksThin(group);
   }
 
   function seriesFamilyKey(ev, allEvents) {
@@ -211,21 +213,26 @@
     });
     var queuedEventKeys = {};
 
-    // Per organiser page: finish profile, then that page's events — before the next group.
+    // Per organiser page: finish thin profiles, then that page's events — before the next group.
     groups.forEach(function (g, idx) {
       if (!g || !g.id) return;
       var gid = String(g.id);
-      if (!stored.profilesDone[gid]) {
+      if (profileNeedsReview(g, stored)) {
         queue.push({
           kind: 'profile',
           id: gid,
           title: String(g.name || 'Organiser page').trim(),
-          thin: profileLooksThin(g),
+          thin: true,
           indexHint: 'Group page',
           group: g,
           ordinal: idx + 1,
         });
         return;
+      }
+      // Heal localStorage when the page already looks complete.
+      if (!stored.profilesDone[gid]) {
+        stored.profilesDone[gid] = true;
+        writeState(stored);
       }
       pendingFamilies.forEach(function (fam) {
         if (!fam || queuedEventKeys[fam.key]) return;
@@ -313,5 +320,6 @@
     profileEditUrl: profileEditUrl,
     seriesFamilyKey: seriesFamilyKey,
     profileLooksThin: profileLooksThin,
+    profileNeedsReview: profileNeedsReview,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

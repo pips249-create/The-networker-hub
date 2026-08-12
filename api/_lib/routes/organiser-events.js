@@ -88,6 +88,7 @@ module.exports = async function handler(req, res) {
     listEventsForSession,
     listEventsForSeriesGroup,
     groupOwnedBySession,
+    filterOwnedEventIds,
     createEvent,
     createEventsForOccurrences,
     updateEvent,
@@ -110,6 +111,12 @@ module.exports = async function handler(req, res) {
   const auth = requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  const EVENT_NOT_OWNED = {
+    error: 'event_not_owned',
+    message:
+      'You do not have access to this event. Open it from My Events, or create a new listing under an organiser page you own.',
+  };
+
   async function requireVerifiedForPublish(body) {
     if (!isPublishIntent(body)) return null;
     const verified = await assertOrganiserEmailVerified(auth.session);
@@ -122,14 +129,18 @@ module.exports = async function handler(req, res) {
     return null;
   }
 
-  async function ownedEventIds() {
+  /** Prefer id+group checks — listing the full catalogue can miss drafts (row caps). */
+  async function sessionGroups() {
     const groups = await listGroupsForSession(auth.session);
-    const events = await listEventsForSession(
-      auth.session,
-      groups.map((g) => g.id),
-      []
-    );
-    return { groups, events, allowed: new Set(events.map((e) => e.id)) };
+    return { groups, groupIds: groups.map((g) => g.id) };
+  }
+
+  async function assertOwnsEventId(eventId) {
+    const { groups, groupIds } = await sessionGroups();
+    if (isPlatformAdmin(auth.session)) return { ok: true, groups, groupIds };
+    const owned = await filterOwnedEventIds([eventId], groupIds, false);
+    if (!owned.length) return { ok: false, groups, groupIds };
+    return { ok: true, groups, groupIds };
   }
 
   if (req.method === 'GET') {
@@ -146,10 +157,8 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, events });
       }
       if (eventId) {
-        const { groups, allowed } = await ownedEventIds();
-        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-          return json(res, 403, { error: 'event_not_owned' });
-        }
+        const access = await assertOwnsEventId(eventId);
+        if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
         const event = await getEventById(eventId);
         let enriched = event;
         try {
@@ -162,12 +171,12 @@ module.exports = async function handler(req, res) {
         if (
           !isPlatformAdmin(auth.session) &&
           event.organiserGroupId &&
-          !groupOwnedBySession(auth.session, groups, event.organiserGroupId)
+          !groupOwnedBySession(auth.session, access.groups, event.organiserGroupId)
         ) {
           const emailMatch =
             event.ownerEmail && event.ownerEmail === auth.session.email.toLowerCase();
-          if (!emailMatch && !allowed.has(eventId)) {
-            return json(res, 403, { error: 'event_not_owned' });
+          if (!emailMatch) {
+            return json(res, 403, EVENT_NOT_OWNED);
           }
         }
         return json(res, 200, { ok: true, event: enriched });
@@ -193,10 +202,9 @@ module.exports = async function handler(req, res) {
     if (!eventId) return json(res, 400, { error: 'missing_event_id' });
 
     try {
-      const { groups, allowed } = await ownedEventIds();
-      if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-        return json(res, 403, { error: 'event_not_owned' });
-      }
+      const access = await assertOwnsEventId(eventId);
+      if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
+      const { groups } = access;
       validateEventDescription(body);
       const occ = normalizeOccurrences(body);
       const base = eventPayloadFromBody(body, auth.session.email);
@@ -280,14 +288,12 @@ module.exports = async function handler(req, res) {
       const eventId = String(body.id || body.eventId || '').trim();
       if (!eventId) return json(res, 400, { error: 'missing_event_id' });
       try {
-        const { groups, allowed } = await ownedEventIds();
-        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-          return json(res, 403, { error: 'event_not_owned' });
-        }
+        const access = await assertOwnsEventId(eventId);
+        if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
         const result = await duplicateEventForSession(
           auth.session,
           eventId,
-          groups.map((g) => g.id)
+          access.groupIds
         );
         return json(res, 201, {
           ok: true,
@@ -309,10 +315,8 @@ module.exports = async function handler(req, res) {
       const eventId = String(body.id || body.eventId || '').trim();
       if (!eventId) return json(res, 400, { error: 'missing_event_id' });
       try {
-        const { allowed } = await ownedEventIds();
-        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-          return json(res, 403, { error: 'event_not_owned' });
-        }
+        const access = await assertOwnsEventId(eventId);
+        if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
         const updated = await updateEvent(eventId, { listingStatus: 'unpublished' });
         try {
           const { resolveOrganiserAccess } = require('../supabase-organiser-access');
@@ -345,10 +349,8 @@ module.exports = async function handler(req, res) {
       const eventId = String(body.id || body.eventId || '').trim();
       if (!eventId) return json(res, 400, { error: 'missing_event_id' });
       try {
-        const { allowed } = await ownedEventIds();
-        if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-          return json(res, 403, { error: 'event_not_owned' });
-        }
+        const access = await assertOwnsEventId(eventId);
+        if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
         const updated = await republishEvent(eventId);
         try {
           const { resolveOrganiserAccess } = require('../supabase-organiser-access');
@@ -442,10 +444,8 @@ module.exports = async function handler(req, res) {
     if (!eventId) return json(res, 400, { error: 'missing_event_id' });
 
     try {
-      const { groups, allowed } = await ownedEventIds();
-      if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-        return json(res, 403, { error: 'event_not_owned' });
-      }
+      const eventAccess = await assertOwnsEventId(eventId);
+      if (!eventAccess.ok) return json(res, 403, EVENT_NOT_OWNED);
       const { resolveOrganiserAccess } = require('../supabase-organiser-access');
       const access = await resolveOrganiserAccess(auth.session);
       if (!isPlatformAdmin(auth.session) && access && !access.canDeleteEvents) {
@@ -457,7 +457,7 @@ module.exports = async function handler(req, res) {
       const deleted = await deleteEventForSession(
         auth.session,
         eventId,
-        groups.map((g) => g.id)
+        eventAccess.groupIds
       );
       try {
         const { logFromSession } = require('../entity-activity-log');

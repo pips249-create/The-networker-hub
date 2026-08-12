@@ -2642,7 +2642,12 @@
           : err === 'duplicate_title_matches_source'
             ? res.data.message ||
               'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
-            : res.data.message || err || 'Could not save event';
+            : err === 'event_not_owned'
+              ? res.data.message ||
+                'You do not have access to this event. Open it from My Events, or start a new listing under an organiser page you own.'
+              : err === 'group_not_owned'
+                ? 'Pick an organiser page you own before saving.'
+                : res.data.message || err || 'Could not save event';
       showAlert(msg);
       return;
     }

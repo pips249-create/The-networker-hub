@@ -246,9 +246,10 @@ module.exports = async function handler(req, res) {
     if (!name) return json(res, 400, { error: 'missing_name' });
 
     try {
-      const allowed = await ownedEventIds();
-      if (!isPlatformAdmin(auth.session) && !allowed.allowed.has(eventId)) {
-        return json(res, 403, { error: 'event_not_owned' });
+      const ctx = await ownedEventIds();
+      if (!isPlatformAdmin(auth.session)) {
+        const ids = await filterOwnedEventIds([eventId], ctx.groupIds, ctx.adminView);
+        if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
       }
       const ticket = await createTicket({
         eventId,

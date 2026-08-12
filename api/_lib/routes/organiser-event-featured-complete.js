@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
     requireOrganiserSession,
     getEventById,
     listGroupsForSession,
-    listEventsForSession,
+    filterOwnedEventIds,
     isPlatformAdmin,
   } = api;
 
@@ -60,14 +60,15 @@ module.exports = async function handler(req, res) {
     }
 
     const groups = await listGroupsForSession(auth.session);
-    const events = await listEventsForSession(
-      auth.session,
-      groups.map((g) => g.id),
-      []
-    );
-    const allowed = new Set(events.map((e) => e.id));
-    if (!isPlatformAdmin(auth.session) && !allowed.has(eventId)) {
-      return json(res, 403, { ok: false, error: 'event_not_owned' });
+    if (!isPlatformAdmin(auth.session)) {
+      const owned = await filterOwnedEventIds(
+        [eventId],
+        groups.map((g) => g.id),
+        false
+      );
+      if (!owned.length) {
+        return json(res, 403, { ok: false, error: 'event_not_owned' });
+      }
     }
 
     const event = await getEventById(eventId);

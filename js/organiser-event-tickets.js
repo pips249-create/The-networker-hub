@@ -821,7 +821,6 @@
   }
 
   function guestProgrammeEnabled() {
-    if (isMembershipMeetingMode()) return true;
     const el = document.getElementById('ee-guest-programme-enabled');
     return Boolean(el && el.checked);
   }
@@ -829,6 +828,20 @@
   function setGuestProgrammeEnabled(on) {
     const el = document.getElementById('ee-guest-programme-enabled');
     if (el) el.checked = Boolean(on);
+  }
+
+  function isMembershipOnlyPayHow() {
+    return payHowIncludesMembership() && !payHowIncludesTickets();
+  }
+
+  function resolveModeFromDoorAndPayHow() {
+    if (attendanceDoor === 'application') return 'category_exclusivity';
+    if (membersOnlyEventEnabled() && isMembershipOnlyPayHow()) return 'tickets';
+    if (isMembershipOnlyPayHow()) {
+      return guestProgrammeEnabled() ? 'membership_meeting' : 'tickets';
+    }
+    if (membersOnlyEventEnabled()) return 'tickets';
+    return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
   }
 
   function resolveOpenBookingMode() {
@@ -924,15 +937,6 @@
     return h === 'membership' || h === 'both';
   }
 
-  function resolveModeFromDoorAndPayHow() {
-    if (attendanceDoor === 'application') return 'category_exclusivity';
-    if (membersOnlyEventEnabled()) return 'tickets';
-    if (!payHowIncludesTickets() && payHowIncludesMembership()) {
-      return guestProgrammeEnabled() ? 'membership_meeting' : 'tickets';
-    }
-    return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
-  }
-
   function setAttendanceDoor(door, opts) {
     const options = opts || {};
     attendanceDoor = door === 'application' ? 'application' : 'general';
@@ -1021,55 +1025,15 @@
   }
 
   function ensureStep2Home() {
-    if (step2Home) return step2Home;
-    const form = document.getElementById('ee-tickets-form');
-    if (!form) return null;
-    step2Home = document.createElement('div');
-    step2Home.id = 'ee-step2-home';
-    step2Home.hidden = true;
-    const attendance = document.getElementById('ee-attendance-card-wrap');
-    if (attendance && attendance.nextSibling) {
-      form.insertBefore(step2Home, attendance.nextSibling);
-    } else {
-      form.appendChild(step2Home);
-    }
-    return step2Home;
+    return null;
   }
 
   function parkStep2Panels() {
-    const home = ensureStep2Home();
-    if (!home) return;
-    step2PanelIds().forEach(function (id) {
-      const panel = document.getElementById(id);
-      if (panel && panel.parentElement !== home) home.appendChild(panel);
-    });
+    /* Panels stay inline — no modal parking. */
   }
 
   function unparkStep2Panels() {
-    const form = document.getElementById('ee-tickets-form');
-    const home = document.getElementById('ee-step2-home');
-    if (!form) return;
-    const anchor =
-      document.getElementById('ee-panel-optional-extras') ||
-      document.getElementById('ee-paid-setup-wrap') ||
-      document.getElementById('ee-attendee-extras-card');
-    step2PanelIds().forEach(function (id) {
-      const panel = document.getElementById(id);
-      if (!panel) return;
-      if (home && panel.parentElement === home) {
-        if (anchor && anchor.parentElement === form) {
-          form.insertBefore(panel, anchor);
-        } else {
-          form.appendChild(panel);
-        }
-      } else if (!panel.parentElement) {
-        if (anchor && anchor.parentElement === form) {
-          form.insertBefore(panel, anchor);
-        } else {
-          form.appendChild(panel);
-        }
-      }
-    });
+    /* no-op */
   }
 
   function hideLaterTicketSteps() {
@@ -1086,71 +1050,44 @@
     });
   }
 
-  function openStep2Modal() {
-    parkStep2Panels();
-    hideLaterTicketSteps();
+  /** After Step 1 door choice — show pay-how + tickets inline (no popup). */
+  function confirmStep1AndRevealSteps() {
     showAlert('');
-    const modal = document.getElementById('ee-step2-modal');
-    const body = document.getElementById('ee-step2-modal-body');
-    const payHow = document.getElementById('ee-panel-pay-how');
-    const panel = activeStep2Panel();
-    if (!modal || !body || !panel) return;
-    if (payHow) {
-      payHow.hidden = false;
-      body.appendChild(payHow);
+    step2Confirmed = true;
+    if (isMembershipOnlyPayHow()) {
+      if (guestProgrammeEnabled()) setAttendanceMode('membership_meeting');
+      else {
+        setMembersOnlyEventEnabled(true);
+        setAttendanceMode('tickets');
+      }
+    } else {
+      setAttendanceMode(resolveModeFromDoorAndPayHow());
     }
-    panel.hidden = false;
-    body.appendChild(panel);
-    // Hide the other detail panel
-    const ticketsPanel = document.getElementById('ee-panel-tickets');
-    const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
-    if (ticketsPanel && ticketsPanel !== panel) ticketsPanel.hidden = true;
-    if (categoryPanel && categoryPanel !== panel) categoryPanel.hidden = true;
-    modal.hidden = false;
-    document.body.classList.add('ee-step2-modal-open');
-    const title = document.getElementById('ee-step2-modal-title');
-    if (title) {
-      title.textContent =
-        attendanceDoor === 'application'
-          ? 'Step 2 — Application based'
-          : 'Step 2 — General ticketing';
+    revealPostStep2();
+    const focusEl = document.getElementById('ee-panel-pay-how') || activeStep2Panel();
+    try {
+      focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {
+      /* ignore */
     }
-    syncPayHowUi();
-    syncMembersOnlyEventMode();
-    panel.hidden = false;
+  }
+
+  function openStep2Modal() {
+    confirmStep1AndRevealSteps();
   }
 
   function closeStep2Modal(opts) {
-    const requestedConfirm = !opts || opts.confirm !== false;
-    // If they filled ticket types then hit Close/backdrop, keep their work —
-    // dumping them back on Step 1 felt like a glitch.
-    const confirm = requestedConfirm || step2HasUsableTiers();
-    const modal = document.getElementById('ee-step2-modal');
-    const home = ensureStep2Home();
-    const body = document.getElementById('ee-step2-modal-body');
-    if (body && home) {
-      Array.from(body.children).forEach(function (child) {
-        home.appendChild(child);
-      });
-    }
-    if (modal) modal.hidden = true;
+    const confirm = !opts || opts.confirm !== false || step2HasUsableTiers();
     document.body.classList.remove('ee-step2-modal-open');
+    const modal = document.getElementById('ee-step2-modal');
+    if (modal) modal.hidden = true;
     if (confirm) {
       step2Confirmed = true;
       showAlert('');
       revealPostStep2();
-      const focusEl =
-        activeStep2Panel() ||
-        document.getElementById('ee-paid-setup-wrap') ||
-        document.getElementById('ee-tickets-actions');
-      try {
-        focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch {
-        /* ignore */
-      }
     } else {
+      step2Confirmed = false;
       hideLaterTicketSteps();
-      parkStep2Panels();
       const ticketsPanel = document.getElementById('ee-panel-tickets');
       const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
       const payHowPanel = document.getElementById('ee-panel-pay-how');
@@ -1253,25 +1190,12 @@
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const openBooking = isOpenBookingMode(attendanceMode);
     const guestOn = guestProgrammeEnabled();
-    const modalOpen = document.getElementById('ee-step2-modal') && !document.getElementById('ee-step2-modal').hidden;
-
-    if (!step2Confirmed && !modalOpen) {
+    if (!step2Confirmed) {
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = true;
       if (payHowPanel) payHowPanel.hidden = true;
       if (optionalExtras) optionalExtras.hidden = true;
       hideLaterTicketSteps();
-    } else if (modalOpen) {
-      if (payHowPanel) payHowPanel.hidden = false;
-      if (ticketsPanel) ticketsPanel.hidden = !openBooking;
-      if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
-      if (optionalExtras) optionalExtras.hidden = true;
-      const paidWrap = document.getElementById('ee-paid-setup-wrap');
-      const attendeeExtras = document.getElementById('ee-attendee-extras-card');
-      const actions = document.getElementById('ee-tickets-actions');
-      if (paidWrap) paidWrap.hidden = true;
-      if (attendeeExtras) attendeeExtras.hidden = true;
-      if (actions) actions.hidden = true;
     } else {
       if (payHowPanel) payHowPanel.hidden = false;
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
@@ -1368,9 +1292,9 @@
         ? hubMembershipEnabled()
           ? 'Free trial visits, then join monthly membership (no ticket required)'
           : 'Let newcomers take a free visit — they still apply for a Category Exclusivity seat'
-        : isMembershipMeeting
-          ? 'Complimentary visits first, then join membership'
-          : 'Let newcomers visit for free before they buy a member ticket';
+        : isMembershipMeeting || isMembershipOnlyPayHow()
+          ? 'Let newcomers visit for free before they join membership'
+          : 'Let newcomers visit for free before they buy a ticket';
     }
     if (isCategory) {
       if (hubMembershipEnabled()) {
@@ -1386,11 +1310,11 @@
       }
       return;
     }
-    if (isMembershipMeeting) {
+    if (isMembershipMeeting || (isMembershipOnlyPayHow() && guestProgrammeEnabled())) {
       note.textContent =
         scope === 'across_groups'
-          ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After that, they join your monthly or annual membership to keep attending.'
-          : 'Newcomers get up to 3 complimentary visits on this organiser page. After that, they join your monthly or annual membership to keep attending.';
+          ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After that, they join your monthly or annual membership to keep attending — no event ticket to buy.'
+          : 'Newcomers get up to 3 complimentary visits on this organiser page. After that, they join your monthly or annual membership to keep attending — no event ticket to buy.';
       return;
     }
     if (scope === 'across_groups') {
@@ -1848,8 +1772,14 @@
 
   function syncMembersOnlyEventMode() {
     const membershipMeeting = isMembershipMeetingMode();
-    const on = membersOnlyEventEnabled() || membershipMeeting;
+    const membershipOnlyPay = isMembershipOnlyPayHow();
+    // Membership-only (with or without visits) never shows public Ticket 1 rows.
+    const on = membersOnlyEventEnabled() || membershipMeeting || membershipOnlyPay;
     if (membershipMeeting) {
+      const moe = document.getElementById('ee-members-only-event-enabled');
+      if (moe) moe.checked = true;
+    } else if (membershipOnlyPay && !guestProgrammeEnabled()) {
+      // Membership without visits → closed meeting (member list only).
       const moe = document.getElementById('ee-members-only-event-enabled');
       if (moe) moe.checked = true;
     }
@@ -1867,30 +1797,34 @@
     const meetingHow = document.getElementById('ee-membership-meeting-how');
     const moeSummary = document.getElementById('ee-members-only-event-summary');
     const addonMount = document.getElementById('ee-private-ticket-fields-mount');
-
     if (toggleWrap) {
-      toggleWrap.classList.toggle('is-enabled', on && !membershipMeeting);
+      toggleWrap.classList.toggle('is-enabled', on && !membershipMeeting && !guestProgrammeEnabled());
     }
     if (toggleWrap) {
-      // Closed meeting only for General + membership-only (not ticket sales paths).
+      // Closed meeting only for General + membership-only when visits are off.
       const showClosed =
         !membershipMeeting &&
+        !guestProgrammeEnabled() &&
         isOpenBookingMode(attendanceMode) &&
         attendanceMode !== 'guest_programme' &&
-        payHowIncludesMembership() &&
-        !payHowIncludesTickets();
+        membershipOnlyPay;
       toggleWrap.hidden = !showClosed;
     }
     if (publicWrap) publicWrap.hidden = on;
     if (membersWrap) membersWrap.hidden = !on;
     if (privateAddon) {
-      privateAddon.hidden = on || attendanceMode === 'category_exclusivity' || membershipMeeting;
+      privateAddon.hidden =
+        on || attendanceMode === 'category_exclusivity' || membershipMeeting || membershipOnlyPay;
     }
-    if (optionalExtras && isOpenBookingMode(attendanceMode)) {
-      // Keep extras for networking meetings (Previous Attendees). Closed members-only hides them.
-      optionalExtras.hidden = on && !membershipMeeting;
+    if (optionalExtras) {
+      if (!step2Confirmed) {
+        optionalExtras.hidden = true;
+      } else if (isOpenBookingMode(attendanceMode)) {
+        optionalExtras.hidden = on && !membershipMeeting;
+      } else if (attendanceMode === 'category_exclusivity') {
+        optionalExtras.hidden = on;
+      }
     }
-    if (optionalExtras && attendanceMode === 'category_exclusivity') optionalExtras.hidden = on;
     const guestAddon = document.getElementById('ee-guest-addon');
     // Guest visits live in Step 2 mounts — don't hide when already relocated there.
     if (
@@ -1911,15 +1845,17 @@
     }
     if (panelTitle) {
       panelTitle.textContent = membershipMeeting
-        ? 'Member ticket & guest visits'
-        : on
-          ? 'Member ticket'
-          : attendanceMode === 'guest_programme'
-            ? 'Member ticket types'
-            : 'Public ticket types';
+        ? 'Member booking & free trial visits'
+        : membershipOnlyPay
+          ? 'Member booking'
+          : on
+            ? 'Member ticket'
+            : attendanceMode === 'guest_programme'
+              ? 'Member ticket types'
+              : 'Public ticket types';
     }
     if (panelLead) panelLead.hidden = on;
-    if (closedHow) closedHow.hidden = !on || membershipMeeting;
+    if (closedHow) closedHow.hidden = !on || membershipMeeting || guestProgrammeEnabled();
     if (meetingHow) meetingHow.hidden = !membershipMeeting;
     if (moeSummary) moeSummary.hidden = !on;
 
@@ -1941,9 +1877,14 @@
     syncHubMembershipMount();
 
     if (on) {
+      const nameEl = document.getElementById('ee-private-ticket-name');
+      if (nameEl) {
+        const n = String(nameEl.value || '').trim();
+        if (!n || /^general admission$/i.test(n)) nameEl.value = 'Member ticket';
+      }
       setMembersOnlyTicketHint(
         membershipMeeting
-          ? 'Members on your list book this ticket free (or at the member price). Guests use complimentary visits first, then join membership.'
+          ? 'Members on your list book this free (or at the member price). Guests use complimentary visits first, then join membership — no public event ticket.'
           : 'Members on your list see this ticket when signed in with their membership email.',
         'ok'
       );
@@ -2141,9 +2082,13 @@
       setHubMembershipEnabled(false);
     }
 
-    // Membership-only general → networking meeting path (visits on unless closed).
+    // Membership-only: default free trial visits on once (user can untick).
+    // Do not re-force on every sync — that made the checkbox impossible to clear.
     if (!isApplication && includesMembership && !includesTickets && !membersOnlyEventEnabled()) {
-      setGuestProgrammeEnabled(true);
+      const visitsToggle = document.getElementById('ee-guest-programme-enabled');
+      if (visitsToggle && !visitsToggle.dataset.userToggled && !visitsToggle.checked) {
+        setGuestProgrammeEnabled(true);
+      }
       const visits = document.getElementById('ee-guest-visits-allowed');
       if (visits && !visits.dataset.touched) visits.value = '2';
     }
@@ -2446,15 +2391,22 @@
       if (radio.dataset.boundPayHow) return;
       radio.dataset.boundPayHow = '1';
       radio.addEventListener('change', function () {
-        const mode = resolveModeFromDoorAndPayHow();
-        if (mode === 'membership_meeting') {
-          setAttendanceMode('membership_meeting');
-        } else if (mode === 'category_exclusivity') {
-          setAttendanceMode('category_exclusivity');
-        } else if (mode === 'guest_programme') {
-          setAttendanceMode('guest_programme');
+        if (isMembershipOnlyPayHow()) {
+          const visitsToggle = document.getElementById('ee-guest-programme-enabled');
+          if (visitsToggle && !visitsToggle.dataset.userToggled) {
+            setGuestProgrammeEnabled(true);
+          }
+          if (guestProgrammeEnabled()) {
+            setMembersOnlyEventEnabled(false);
+            setAttendanceMode('membership_meeting');
+          } else {
+            setMembersOnlyEventEnabled(true);
+            setAttendanceMode('tickets');
+          }
         } else {
-          setAttendanceMode('tickets');
+          setMembersOnlyEventEnabled(false);
+          const mode = resolveModeFromDoorAndPayHow();
+          setAttendanceMode(mode);
         }
         syncPayHowUi();
         updatePublishButton();
@@ -3546,21 +3498,10 @@
     if (continueBtn && !continueBtn.dataset.boundAttendanceContinue) {
       continueBtn.dataset.boundAttendanceContinue = '1';
       continueBtn.addEventListener('click', () => {
-        openStep2Modal();
+        confirmStep1AndRevealSteps();
       });
     }
-    document.getElementById('ee-step2-modal-done')?.addEventListener('click', () => {
-      closeStep2Modal({ confirm: true });
-    });
-    document.querySelectorAll('[data-ee-step2-close]').forEach(function (el) {
-      if (el.dataset.boundStep2Close) return;
-      el.dataset.boundStep2Close = '1';
-      el.addEventListener('click', function () {
-        closeStep2Modal({ confirm: false });
-      });
-    });
     bindPayHowFields();
-    parkStep2Panels();
     hideLaterTicketSteps();
     syncAttendanceStepUi();
   }
@@ -3746,9 +3687,17 @@
     bindPrivateTicketFields();
     bindMembersOnlyEventToggle();
     document.getElementById('ee-guest-programme-enabled')?.addEventListener('change', () => {
-      if (isMembershipMeetingMode() && payHowIncludesMembership() && !payHowIncludesTickets()) {
-        setGuestProgrammeEnabled(true);
-        setAttendanceMode('membership_meeting');
+      const toggle = document.getElementById('ee-guest-programme-enabled');
+      if (toggle) toggle.dataset.userToggled = '1';
+      if (isMembershipOnlyPayHow()) {
+        if (guestProgrammeEnabled()) {
+          setMembersOnlyEventEnabled(false);
+          setAttendanceMode('membership_meeting');
+        } else {
+          // Unticked visits on membership-only → closed meeting (no public ticket).
+          setMembersOnlyEventEnabled(true);
+          setAttendanceMode('tickets');
+        }
         updatePublishButton();
         return;
       }
@@ -3817,13 +3766,12 @@
 
   async function continueToReview() {
     if (!step2Confirmed) {
-      // Tiers already filled (e.g. closed the step 2 window after editing) — continue.
       if (step2HasUsableTiers()) {
         step2Confirmed = true;
         revealPostStep2();
       } else {
-        openStep2Modal();
-        showAlert('Finish ticket setup in the step 2 window, then click Done — continue.', 'warn');
+        confirmStep1AndRevealSteps();
+        showAlert('Choose how you get paid and finish ticket setup below, then continue.', 'warn');
         return;
       }
     }

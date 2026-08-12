@@ -967,17 +967,26 @@
       if (onboardReview && window.HubOrganiserOnboarding) {
         window.HubOrganiserOnboarding.markProfileReviewDone();
       }
-      if ((onboardReview || (config && config.onboardLaunch)) && saved && saved.id && window.HubOrganiserLaunchSetup) {
-        window.HubOrganiserLaunchSetup.markProfileDone(saved.id);
-        try {
-          if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
-            window.HubAnalytics.track('organiser_claim_funnel', {
-              step: 'profile_saved',
-              detail: String(saved.slug || saved.name || saved.id || '').slice(0, 80),
-            });
+      if (saved && saved.id && window.HubOrganiserLaunchSetup) {
+        const launchMarked = onboardReview || (config && config.onboardLaunch);
+        const looksComplete =
+          typeof window.HubOrganiserLaunchSetup.profileLooksThin === 'function'
+            ? !window.HubOrganiserLaunchSetup.profileLooksThin(saved)
+            : false;
+        if (launchMarked || looksComplete) {
+          window.HubOrganiserLaunchSetup.markProfileDone(saved.id);
+        }
+        if (launchMarked) {
+          try {
+            if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+              window.HubAnalytics.track('organiser_claim_funnel', {
+                step: 'profile_saved',
+                detail: String(saved.slug || saved.name || saved.id || '').slice(0, 80),
+              });
+            }
+          } catch (e) {
+            /* ignore */
           }
-        } catch (e) {
-          /* ignore */
         }
       }
 

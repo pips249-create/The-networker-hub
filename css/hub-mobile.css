@@ -3060,7 +3060,8 @@ body.nav-menu-open {
   }
 
   .organiser-event-edit-page .ee-attendance-card {
-    min-height: 56px;
+    min-height: 0;
+    height: auto;
   }
 
   .organiser-event-edit-page .ee-actions-note {

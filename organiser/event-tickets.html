@@ -17,11 +17,11 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812twodoors" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812doors2" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260807nav2" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page">
     <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
@@ -73,30 +73,16 @@
             <button type="button" class="ee-attendance-card is-active" data-door="general" data-mode="tickets" id="ee-mode-tickets" aria-pressed="true">
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
               <strong>General ticketing</strong>
-              <span>Anyone can book. Add event tickets, free trial visits, and/or monthly membership.</span>
+              <span>Anyone can book — no approval step. Then add tickets, free trial visits, and/or monthly membership.</span>
             </button>
             <button type="button" class="ee-attendance-card" data-door="application" data-mode="category_exclusivity" id="ee-mode-category-exclusivity" aria-pressed="false">
               <span class="ee-attendance-card-icon" aria-hidden="true">🪑</span>
               <strong>Application based</strong>
-              <span>You approve who gets the seat (e.g. one per industry). Same options: tickets, free trial visits, and/or monthly membership.</span>
+              <span>You approve each seat (e.g. one per industry). Then add tickets, free trial visits, and/or monthly membership.</span>
             </button>
           </div>
           <div class="ee-attendance-next">
             <button type="button" class="ee-btn ee-btn-gold" id="ee-attendance-continue">Continue →</button>
-          </div>
-        </div>
-
-        <div class="ee-step2-modal" id="ee-step2-modal" hidden>
-          <div class="ee-step2-modal-backdrop" data-ee-step2-close tabindex="-1"></div>
-          <div class="ee-step2-modal-panel" role="dialog" aria-modal="true" aria-labelledby="ee-step2-modal-title">
-            <div class="ee-step2-modal-head">
-              <h2 id="ee-step2-modal-title">Step 2 — how you get paid</h2>
-              <button type="button" class="ee-btn ee-btn-outline ee-step2-modal-close" data-ee-step2-close aria-label="Close">Close</button>
-            </div>
-            <div class="ee-step2-modal-body" id="ee-step2-modal-body"></div>
-            <div class="ee-step2-modal-foot">
-              <button type="button" class="ee-btn ee-btn-gold" id="ee-step2-modal-done">Done — continue</button>
-            </div>
           </div>
         </div>
 
@@ -622,6 +608,6 @@
     <script src="../js/organiser-field-tips.js?v=20260812labels" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260811eventnext" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260812twodoors3" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260812inline" defer></script>
   </body>
 </html>
