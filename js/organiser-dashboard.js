@@ -12755,26 +12755,55 @@
       })
       .filter(Boolean);
 
-    // After claim, skip forced profile/event re-edit — the Overview tour covers how to use each page.
-    if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markProfileReviewDone) {
-      window.HubOrganiserOnboarding.markProfileReviewDone();
+    if (window.HubOrganiserOnboarding) {
+      if (window.HubOrganiserOnboarding.clearProfileReviewDone) {
+        window.HubOrganiserOnboarding.clearProfileReviewDone();
+      }
+      if (window.HubOrganiserOnboarding.clearReadyEventDismissed) {
+        window.HubOrganiserOnboarding.clearReadyEventDismissed();
+      }
+      if (window.HubOrganiserOnboarding.clearResumeDismissed) {
+        window.HubOrganiserOnboarding.clearResumeDismissed();
+      }
     }
-    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim) {
-      window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim(groupIds, launchSetupInput());
-    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.dismiss) {
-      window.HubOrganiserLaunchSetup.dismiss();
+    if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
+      window.HubOrganiserLaunchSetup.prepareClaimOnboarding(groupIds);
+    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.unlockProfilesForReview) {
+      window.HubOrganiserLaunchSetup.unlockProfilesForReview(groupIds);
+    } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.clearDismissed) {
+      window.HubOrganiserLaunchSetup.clearDismissed();
     }
 
     updateSetupResumeBanner();
     syncOverviewSetupQuietMode();
 
+    const launch = window.HubOrganiserLaunchSetup;
+    const item = launch && launch.nextItem ? launch.nextItem(launchSetupInput()) : null;
+    if (item) {
+      openLaunchSetupItem(item);
+      return;
+    }
+    if (needsOrganiserProfileReview()) {
+      location.href = organiserProfileReviewUrl();
+      return;
+    }
     // Soft prompt only when they have a page but no listings yet.
     if (!(state.groups || []).length) return;
     if (!hasListedEvents()) {
       showReadyForEventPrompt();
       return;
     }
-    tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
+    // No claim / profile / event queue left — Overview tour next.
+    if (
+      !(state.pendingClaimGroups || []).length &&
+      !(state.pendingClaimOpportunities || []).length &&
+      !isLaunchSetupInProgress()
+    ) {
+      const ready = document.getElementById('org-ready-event');
+      if (!ready || ready.hidden) {
+        tryStartOverviewTourAfterClaimSetup({ ignoreOverlays: true });
+      }
+    }
   }
 
   function startWorkspaceTourAfterClaim() {
@@ -13526,7 +13555,7 @@
         acceptBtn.classList.add('org-btn-danger');
         acceptBtn.classList.remove('org-btn-gold', 'org-btn-outline');
       } else {
-        acceptBtn.textContent = 'Yes — this is my page';
+        acceptBtn.textContent = 'Yes — set up this page';
         acceptBtn.classList.add('org-btn-gold');
         acceptBtn.classList.remove('org-btn-danger', 'org-btn-outline');
       }
@@ -13666,51 +13695,33 @@
         );
         clearClaimModalPostponed();
 
+        // Open THIS page in the half-page drawer. Do not jump to the workspace tour yet —
+        // loadBootstrap used to race and steal the first click / skip profile review.
         hideGroupClaimModal();
         document.body.classList.remove('org-group-claim-active');
 
-        // Do not force re-edit of the claimed page or seeded events — walk the workspace instead.
-        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markProfileReviewDone) {
-          window.HubOrganiserOnboarding.markProfileReviewDone();
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.clearProfileReviewDone) {
+          window.HubOrganiserOnboarding.clearProfileReviewDone();
         }
-        if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim) {
-          window.HubOrganiserLaunchSetup.skipForcedReviewAfterClaim(
-            [data.group.id],
-            launchSetupInput()
-          );
-        } else if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.markProfileDone) {
-          window.HubOrganiserLaunchSetup.markProfileDone(data.group.id);
-          if (window.HubOrganiserLaunchSetup.dismiss) {
-            window.HubOrganiserLaunchSetup.dismiss();
-          }
+        if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
+          window.HubOrganiserLaunchSetup.prepareClaimOnboarding([data.group.id]);
         }
 
-        loadBootstrap({ silent: true, skipClaimUi: true })
+        openGroupEditorDrawer(data.group, {
+          onboardLaunch: true,
+          onboardReview: true,
+        });
+
+        // Refresh workspace data without a full re-render while the profile drawer
+        // is open — renderAll was racing and dropping the second-group review.
+        loadBootstrap({ silent: true, skipClaimUi: true, skipRenderIfGroupDrawer: true })
           .then(function () {
             updateSetupResumeBanner();
             updateGettingStartedPanel();
             syncOverviewSetupQuietMode();
-
-            if ((state.pendingClaimGroups || []).length) {
-              clearClaimModalPostponed();
-              renderGroupClaimModal({ force: true });
-              return;
-            }
-            if ((state.pendingClaimOpportunities || []).length) {
-              renderOpportunityClaimModal();
-              return;
-            }
-            startWorkspaceTourAfterClaim();
           })
           .catch(function () {
-            updateSetupResumeBanner();
-            updateGettingStartedPanel();
-            syncOverviewSetupQuietMode();
-            if ((state.pendingClaimGroups || []).length) {
-              renderGroupClaimModal({ force: true });
-              return;
-            }
-            startWorkspaceTourAfterClaim();
+            /* non-fatal — drawer already open */
           });
         return;
       }
