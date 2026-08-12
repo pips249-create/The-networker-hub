@@ -680,6 +680,8 @@ async function maybeGateSiteAccess(request, url) {
   // (early-access paths already bypass above). Do NOT open public browse until
   // SITE_ACCESS_PASSWORD is removed on 1 September. Team preview still uses the
   // password cookie. Platform admins keep full access for support.
+  // Individual listing pages stay reachable so organisers can preview their own
+  // public event / organiser URLs after publishing.
   if (await hasValidSession(request)) {
     const secret = String(process.env.SESSION_SECRET || '').trim();
     const cookies = parseCookies(request);
@@ -690,6 +692,9 @@ async function maybeGateSiteAccess(request, url) {
     if (role === 'admin') {
       return { authorized: true };
     }
+    if (isPublicListingPath(pathname)) {
+      return { authorized: true };
+    }
     // Friendly soft-launch: send workspace users to /organiser/ instead of the
     // password wall when they hit the public catalogue from top nav.
     if (
@@ -698,14 +703,22 @@ async function maybeGateSiteAccess(request, url) {
       pathname === '/index.html' ||
       pathname === '/events' ||
       pathname === '/events/index' ||
-      pathname.startsWith('/events/') ||
+      pathname === '/events/' ||
       pathname === '/opportunities' ||
-      pathname.startsWith('/opportunities/') ||
+      pathname === '/opportunities/' ||
       pathname === '/rankings' ||
-      pathname.startsWith('/rankings/') ||
-      pathname.startsWith('/networking/') ||
+      pathname === '/rankings/' ||
       pathname === '/organisers' ||
       pathname === '/organisers/'
+    ) {
+      return Response.redirect(new URL('/organiser/', url.origin).toString(), 302);
+    }
+    // Nested catalogue browse paths (filters, etc.) — still soft-launch locked.
+    if (
+      pathname.startsWith('/events/') ||
+      pathname.startsWith('/opportunities/') ||
+      pathname.startsWith('/rankings/') ||
+      pathname.startsWith('/networking/')
     ) {
       return Response.redirect(new URL('/organiser/', url.origin).toString(), 302);
     }

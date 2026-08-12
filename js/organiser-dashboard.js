@@ -12942,12 +12942,35 @@
         }) ||
         ordered[0] ||
         null;
-      if (g && (g.slug || g.id)) {
+
+      let href = '';
+      let label = 'View your public page';
+      const publishedEvent =
+        opts.event && typeof opts.event === 'object' ? opts.event : null;
+      if (opts.fromPublish && publishedEvent && (publishedEvent.slug || publishedEvent.id)) {
+        if (
+          window.HubPublicUrls &&
+          typeof window.HubPublicUrls.eventDetailHref === 'function'
+        ) {
+          href = window.HubPublicUrls.eventDetailHref(publishedEvent);
+        } else if (publishedEvent.slug) {
+          href = '/events/' + encodeURIComponent(String(publishedEvent.slug).trim());
+        } else {
+          href = '/events/event.html?id=' + encodeURIComponent(String(publishedEvent.id).trim());
+        }
+        label = 'View your public event';
+      } else if (g && (g.slug || g.id)) {
+        href = groupPublicProfileAbsUrl(g.id, g.slug);
+        label = 'View your public page';
+      }
+
+      if (href) {
         previewLink.hidden = false;
-        previewLink.setAttribute('href', groupPublicProfileUrl(g.id, g.slug));
-        previewLink.textContent = 'View your public page';
+        previewLink.setAttribute('href', href);
+        previewLink.textContent = label;
       } else {
         previewLink.hidden = true;
+        previewLink.setAttribute('href', '#');
       }
     }
 
@@ -16536,13 +16559,31 @@
           }
           loadBootstrap({ silent: true, skipClaimUi: true }).then(function () {
             renderAll();
+            const publishedEvent =
+              (publishedEventId &&
+                (state.events || []).find(function (ev) {
+                  return String(ev.id) === String(publishedEventId);
+                })) ||
+              (publishedEventIds[0] &&
+                (state.events || []).find(function (ev) {
+                  return String(ev.id) === String(publishedEventIds[0]);
+                })) ||
+              {
+                id: publishedEventId || publishedEventIds[0] || '',
+                slug: e.data.slug || '',
+                title: e.data.title || '',
+              };
             // Always celebrate publish first — do not auto-open the next profile
             // review (that felt like being sent back to "your organiser page").
             if ((state.pendingClaimGroups || []).length > 0) {
-              showLaunchPageCompletePrompt({ nextClaim: true, fromPublish: true });
+              showLaunchPageCompletePrompt({
+                nextClaim: true,
+                fromPublish: true,
+                event: publishedEvent,
+              });
               return;
             }
-            showLaunchPageCompletePrompt({ fromPublish: true });
+            showLaunchPageCompletePrompt({ fromPublish: true, event: publishedEvent });
           });
           return;
         }
