@@ -185,11 +185,19 @@ body.hub-page-organiser.organiser-event-edit-page {
   box-sizing: border-box;
 }
 
-/* Full-width website footer below sidebar + main (scrolls with shell) */
-.organiser-dashboard-page #org-shell > #hub-site-footer,
-.attendee-dashboard-page #ad-shell > #hub-site-footer {
+/* Full-bleed website footer (body-level, same as public pages) */
+body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer,
+body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
   flex-shrink: 0;
   width: 100%;
+  max-width: none;
+}
+
+body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer .site-footer,
+body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 /* ─── Attendee dashboard: sidebar + scrollable main ─── */
@@ -264,10 +272,18 @@ body.hub-page-organiser.organiser-event-edit-page {
   min-width: 720px;
 }
 
-/* Desktop: shell scrolls; sidebar sticks; footer is full-width below the row */
+/* Desktop: page scrolls; sticky nav + sidebar; full-bleed footer after shell */
 @media (min-width: 769px) {
   body.hub-page-organiser.organiser-dashboard-page,
-  body.hub-page-account.attendee-dashboard-page,
+  body.hub-page-account.attendee-dashboard-page {
+    height: auto;
+    min-height: 100dvh;
+    min-height: 100vh;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   body.hub-page-organiser.organiser-event-edit-page {
     height: 100dvh;
     height: 100vh;
@@ -278,23 +294,25 @@ body.hub-page-organiser.organiser-event-edit-page {
 
   .organiser-dashboard-page #org-shell,
   .attendee-dashboard-page #ad-shell {
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    flex: 1 0 auto;
+    min-height: calc(100dvh - 72px);
+    min-height: calc(100vh - 72px);
+    overflow: visible;
   }
 
   .organiser-dashboard-page .org-dashboard-layout,
   .attendee-dashboard-page .ad-dashboard-layout {
-    flex: 0 0 auto;
-    min-height: 100%;
+    flex: 1 0 auto;
+    min-height: calc(100dvh - 72px);
+    min-height: calc(100vh - 72px);
     overflow: visible;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .organiser-dashboard-page .org-sidebar,
   .attendee-dashboard-page .ad-sidebar {
     position: sticky;
-    top: 0;
+    top: 72px;
     align-self: flex-start;
     flex-shrink: 0;
     height: auto;
