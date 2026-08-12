@@ -23,7 +23,7 @@
   display: none !important;
 }
 
-/* Auth overlay — does not replace the shell (avoids CLS on boot) */
+/* Auth gate — opaque cover; shell must stay display:none while gated */
 .admin-gate {
   position: fixed;
   inset: 0;
@@ -32,12 +32,18 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: rgba(248, 250, 252, 0.96);
+  background: #f8fafc;
 }
 
 .admin-gate.hidden,
 .admin-gate[hidden] {
-  display: none;
+  display: none !important;
+}
+
+/* Equal-specificity .admin-shell { display:flex } would otherwise win over .hidden */
+.admin-shell.hidden,
+.admin-shell[hidden] {
+  display: none !important;
 }
 
 body.hub-page-admin.hub-admin-active {

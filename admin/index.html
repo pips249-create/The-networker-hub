@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
   <link rel="stylesheet" href="../css/hub.css?v=20260728footer">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260807nav2">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260806presets1">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260812gate1">
   <link rel="stylesheet" href="../css/networking-regions.css?v=20260716cp2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260721a">
   <link rel="stylesheet" href="../css/events-page.css?v=20260721a">
@@ -30,11 +30,11 @@
   <!-- Empty mount only — scripts load after Overview so LCP text can paint first -->
   <div id="hub-site-nav"></div>
 
-  <div id="admin-gate" class="admin-gate hidden" hidden>
+  <div id="admin-gate" class="admin-gate" role="status" aria-live="polite">
     <p class="text-slate-500" id="admin-gate-msg">Verifying admin access…</p>
   </div>
 
-  <div id="admin-shell" class="admin-shell">
+  <div id="admin-shell" class="admin-shell hidden" hidden aria-hidden="true">
     <div id="admin-sidebar-backdrop" class="hidden fixed inset-0 z-40 bg-slate-900/40 lg:hidden" aria-hidden="true"></div>
     <aside id="admin-sidebar" class="bg-brand-900 text-white shadow-xl" aria-label="Command Center navigation">
       <div class="admin-sidebar-head">
@@ -298,6 +298,6 @@
   <script src="../js/sponsor-hub.js?v=20260806pageviews" defer></script>
   <script src="../js/cms-ad-blocks.js?v=20260806cityad1" defer></script>
   <script src="../js/admin-social-posts.js?v=20260730" defer></script>
-  <script src="../js/admin-app.js?v=20260811founding" defer></script>
+  <script src="../js/admin-app.js?v=20260812gate1" defer></script>
 </body>
 </html>

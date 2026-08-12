@@ -22267,6 +22267,8 @@
 
   function showAdminGate(html) {
     shell.classList.add('hidden');
+    shell.hidden = true;
+    shell.setAttribute('aria-hidden', 'true');
     gate.hidden = false;
     gate.classList.remove('hidden');
     if (html) gate.innerHTML = html;
@@ -22275,7 +22277,9 @@
   function hideAdminGate() {
     gate.hidden = true;
     gate.classList.add('hidden');
+    shell.hidden = false;
     shell.classList.remove('hidden');
+    shell.removeAttribute('aria-hidden');
   }
 
   function boot(user) {
@@ -22292,6 +22296,14 @@
     bindGroupCleanupForms();
     bindEventCleanupForms();
     bindOpportunityCleanupForms();
+    // Metrics only after admin session is confirmed — never paint cache for guests
+    adminMetricsCache = readCachedAdminMetrics();
+    if (adminMetricsCache && document.getElementById('dashboard-action-queue')) {
+      applyDashboardMetrics(adminMetricsCache);
+      applyDashboardNotifications(adminMetricsCache);
+    }
+    fetchAdminMetrics(false, true);
+    fetchAdminMetrics(false, false);
     bindModerationActions();
     bindFinancialsActions();
     var refreshBadge = document.getElementById('admin-data-badge');
@@ -22328,13 +22340,10 @@
 
   bindAdminPageGuides();
 
-  adminMetricsCache = readCachedAdminMetrics();
-  if (adminMetricsCache && document.getElementById('dashboard-action-queue')) {
-    applyDashboardMetrics(adminMetricsCache);
-    applyDashboardNotifications(adminMetricsCache);
-  }
-  fetchAdminMetrics(false, true);
-  fetchAdminMetrics(false, false);
+  // Keep shell locked behind the gate until /api/auth/session confirms admin.
+  showAdminGate(
+    '<p class="text-slate-500" id="admin-gate-msg">Verifying admin access…</p>'
+  );
 
   fetch('/api/auth/session', { credentials: 'include' })
     .then(function (res) {
