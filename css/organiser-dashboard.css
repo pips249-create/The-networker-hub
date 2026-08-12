@@ -9532,7 +9532,8 @@ body.org-group-drawer-open {
   color: var(--od-text-mid);
 }
 
-.org-group-drawer.is-loading .org-group-drawer-body {
+.org-group-drawer.is-loading .org-group-drawer-body,
+.org-group-drawer.is-loading .org-group-drawer-foot {
   opacity: 0.35;
   pointer-events: none;
 }

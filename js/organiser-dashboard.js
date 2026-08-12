@@ -7886,8 +7886,19 @@
 
     const refreshAfterSave = async function () {
       brandKitHydratedGroupId = null;
-      await loadBootstrap({ silent: true, skipClaimUi: true });
-      renderAll();
+      await loadBootstrap({
+        silent: true,
+        skipClaimUi: true,
+        skipRenderIfGroupDrawer: true,
+      });
+      // Never rebuild the whole dashboard while the editor is open — that raced saves.
+      if (!document.body.classList.contains('org-group-drawer-open')) {
+        renderAll();
+      } else {
+        updateSetupResumeBanner();
+        updateGettingStartedPanel();
+        syncOverviewSetupQuietMode();
+      }
       if (isSocialPageActive()) ensureBrandKitPanelReady();
     };
 
@@ -7926,12 +7937,22 @@
       onSaved: refreshAfterSave,
       onContinue: async function (saved) {
         if (onboardLaunch || onboardReview) {
-          // Advance claim setup immediately — waiting on bootstrap felt like a second load.
           mergeSavedGroupLocally(saved);
+          // Refresh workspace quietly first so the next setup step sees the saved page.
+          try {
+            await loadBootstrap({
+              silent: true,
+              skipClaimUi: true,
+              skipRenderIfGroupDrawer: true,
+            });
+            mergeSavedGroupLocally(saved);
+          } catch (e) {
+            /* non-fatal — we already have the saved group from the PATCH response */
+          }
           continueAfterClaimProfileSave(saved);
-          refreshAfterSave().catch(function () {
-            /* non-fatal */
-          });
+          if (!document.body.classList.contains('org-group-drawer-open')) {
+            renderAll();
+          }
           return;
         }
         await refreshAfterSave();

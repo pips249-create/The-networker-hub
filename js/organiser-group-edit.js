@@ -11,6 +11,8 @@
   let config = null;
   let bound = false;
   let pendingImport = null;
+  let loadGeneration = 0;
+  let formDirty = false;
 
   function getRoot() {
     return (config && config.root) || document;
@@ -706,6 +708,7 @@
 
   function resetFormState() {
     currentGroup = null;
+    formDirty = false;
     showAlert('');
     hideImportReview();
     setImportStatus('');
@@ -718,6 +721,30 @@
       const btn = el(id);
       if (btn) btn.hidden = true;
     });
+  }
+
+  function markFormDirty() {
+    formDirty = true;
+  }
+
+  function bindDirtyTracking() {
+    const form = el('ge-form');
+    if (!form || form.dataset.geDirtyBound) return;
+    form.dataset.geDirtyBound = '1';
+    form.addEventListener(
+      'input',
+      function () {
+        markFormDirty();
+      },
+      true
+    );
+    form.addEventListener(
+      'change',
+      function () {
+        markFormDirty();
+      },
+      true
+    );
   }
 
   async function buildPayload() {
@@ -876,6 +903,11 @@
 
       const saved = enrichGroupFromApi(res.data.group);
       if (saved) stashSavedGroup(saved);
+      formDirty = false;
+      if (saved && mode === 'save') {
+        prefillGroup(saved);
+        formDirty = false;
+      }
 
       const logoWarning = res.data.logoWarning || res.data.group?.logoWarning;
       const logoResolutionWarning =
@@ -945,15 +977,23 @@
         if (continueToEvent) {
           keepBusy = true;
           setActionBusy(triggerBtn, true, 'Continuing…');
-          const advance = function () {
-            if (config.onContinue) config.onContinue(saved, mode);
-            else {
-              stashGroupContinue(saved && saved.id);
-              location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
+          const advance = async function () {
+            try {
+              if (config.onContinue) await config.onContinue(saved, mode);
+              else {
+                stashGroupContinue(saved && saved.id);
+                location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
+              }
+            } finally {
+              if (continueOnboard) setEmbeddedLoading(false);
             }
           };
-          if (delay > 0) setTimeout(advance, delay);
-          else advance();
+          if (delay > 0) {
+            await new Promise(function (resolve) {
+              setTimeout(resolve, delay);
+            });
+          }
+          await advance();
         } else if (mode === 'save' || mode === 'draft' || mode === 'published') {
           /* keep drawer open after save in embedded editor */
         } else {
@@ -988,6 +1028,7 @@
     const onboardReview = Boolean(
       (config && config.onboardReview) || (config && config.onboardLaunch)
     );
+    const thisLoad = ++loadGeneration;
 
     if (!isEmbedded()) {
       const backLink = getRoot().querySelector('.ee-back');
@@ -1001,6 +1042,7 @@
     }
 
     const sessionRes = await api('/api/auth/session');
+    if (thisLoad !== loadGeneration) return;
     if (!sessionRes.ok || !sessionRes.data.user) {
       if (isEmbedded()) {
         showAlert('Your session expired — refresh the page and sign in again.');
@@ -1046,16 +1088,26 @@
       }
 
       const res = await api('/api/organiser/groups?id=' + encodeURIComponent(editId));
+      if (thisLoad !== loadGeneration) return;
+      // Never clobber in-progress edits if a stale reload finishes late.
+      if (formDirty) {
+        if (onboardReview) configureOnboardReviewActions(currentGroup);
+        else configureEditActions(currentGroup);
+        return;
+      }
       if (res.ok && res.data.group) {
         const g = enrichGroupFromApi(res.data.group);
         prefillGroup(g);
+        formDirty = false;
         if (onboardReview) configureOnboardReviewActions(g);
         else configureEditActions(g);
       } else {
         const boot = await api('/api/organiser/bootstrap');
+        if (thisLoad !== loadGeneration || formDirty) return;
         const local = enrichGroupFromApi((boot.data.groups || []).find((x) => x.id === editId));
         if (local) {
           prefillGroup(local);
+          formDirty = false;
           if (onboardReview) configureOnboardReviewActions(local);
           else configureEditActions(local);
         } else showAlert('Could not load this profile.');
@@ -1073,6 +1125,7 @@
       }
       configureCreateActions();
       const boot = await api('/api/organiser/bootstrap');
+      if (thisLoad !== loadGeneration) return;
       if (boot.ok) showMultiProfileTip(boot.data.groups || []);
       if (!isEmbedded() && window.HubFlowTour) {
         window.HubFlowTour.startGroupTour({ isEdit: false, delay: 350 });
@@ -1180,6 +1233,7 @@
       onContinue: options.onContinue || null,
     };
     bindEvents();
+    bindDirtyTracking();
     bindLogoUpload();
     bindWordCounter();
     return {
@@ -1190,6 +1244,7 @@
   }
 
   function openWith(options) {
+    const prevId = getEditId();
     if (options) {
       if (options.root) config.root = options.root;
       if (options.editId != null) config.editId = options.editId;
@@ -1202,6 +1257,19 @@
       if (options.focusBrand != null) config.focusBrand = Boolean(options.focusBrand);
     }
     if (!config) init(options || {});
+
+    const nextId = getEditId();
+    const drawerOpen =
+      isEmbedded() &&
+      document.body.classList.contains('org-group-drawer-open') &&
+      String(prevId || '') === String(nextId || '') &&
+      formDirty;
+    // Same page already open with unsaved edits — keep the form, only refresh callbacks.
+    if (drawerOpen) {
+      if (config.onboardReview || config.onboardLaunch) configureOnboardReviewActions(currentGroup);
+      return Promise.resolve();
+    }
+
     resetFormState();
     if (isEmbedded()) {
       const titleEl = el('ge-page-title');
