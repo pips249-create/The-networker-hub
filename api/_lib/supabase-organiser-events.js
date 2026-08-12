@@ -120,7 +120,7 @@ function resolveSeriesGroupId(existingSeriesGroupId, occurrenceCount) {
 
 const { normalizeEventType } = require('./event-types');
 const { ukOutcode } = require('./supabase-events');
-const { deriveLocationFields, resolveRegionSlug } = require('./uk-outcode');
+const { deriveLocationFields, resolveRegionSlug, parseFullUkPostcode } = require('./uk-outcode');
 
 function mapEventType(type) {
   return normalizeEventType(type);
@@ -778,12 +778,49 @@ async function buildEventRow(payload, eventId, mode) {
     row.event_type = mapEventType(payload.type);
     row.meeting_type = mapMeetingType(payload.eventFormat);
     row.venue = payload.venue || null;
-    row.address = payload.addressLine1 || payload.fullAddress || null;
+    const venueNorm = String(row.venue || '')
+      .trim()
+      .toLowerCase();
+    let addressLine = String(payload.addressLine1 || '').trim();
+    const fullAddress = String(payload.fullAddress || payload.location || '').trim();
+    // Never treat a venue / location-label mash as the street address.
+    if (!addressLine && fullAddress) {
+      const fullNorm = fullAddress.toLowerCase();
+      const looksLikeLabel =
+        (venueNorm && (fullNorm === venueNorm || fullNorm.startsWith(venueNorm + ','))) ||
+        fullAddress.includes(',');
+      if (!looksLikeLabel) addressLine = fullAddress;
+    }
+    if (addressLine && venueNorm) {
+      const addressNorm = addressLine.toLowerCase().replace(/\s+/g, ' ').trim();
+      const pcNorm = String(payload.postcode || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '');
+      if (
+        addressNorm === venueNorm ||
+        addressNorm === venueNorm + ',' ||
+        (pcNorm &&
+          (addressNorm === venueNorm + ', ' + pcNorm ||
+            addressNorm === venueNorm + ' ' + pcNorm ||
+            addressNorm === venueNorm + ', ' + String(payload.postcode || '').trim().toLowerCase()))
+      ) {
+        addressLine = '';
+      }
+    }
+    row.address = addressLine || null;
     const derived = deriveLocationFields(payload);
-    row.city = derived.city || null;
+    let city = derived.city || null;
+    if (city && venueNorm && city.trim().toLowerCase() === venueNorm) {
+      city = null;
+    }
+    row.city = city;
     row.postcode = derived.postcode || null;
-    row.outcode = ukOutcode(derived.postcode) || null;
-    row.location_label = derived.location || derived.city || payload.venue || null;
+    if (row.postcode) {
+      const formatted = parseFullUkPostcode(row.postcode);
+      if (formatted) row.postcode = formatted;
+    }
+    row.outcode = ukOutcode(row.postcode) || null;
     if (row.postcode) {
       const geo = await geocodeUkPostcode(row.postcode);
       if (geo) {
@@ -792,6 +829,8 @@ async function buildEventRow(payload, eventId, mode) {
         if (!row.city && geo.city) row.city = geo.city;
       }
     }
+    row.location_label =
+      [row.venue, row.address, row.city, row.postcode].filter(Boolean).join(', ') || null;
     row.region_slug =
       resolveRegionSlug({
         outcode: row.outcode,

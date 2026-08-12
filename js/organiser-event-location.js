@@ -365,11 +365,40 @@
     copy.city = String(ev.city || '').trim();
     copy.postcode = String(ev.postcode || '').trim();
     copy.location = String(ev.location || '').trim();
-    if (!copy.postcode && copy.location && window.hubParseFullUkPostcode) {
-      copy.postcode = window.hubParseFullUkPostcode(copy.location);
+    if (copy.postcode && window.hubParseFullUkPostcode) {
+      const formatted = window.hubParseFullUkPostcode(copy.postcode);
+      if (formatted) copy.postcode = formatted;
+    } else if (!copy.postcode && copy.location && window.hubParseFullUkPostcode) {
+      copy.postcode = window.hubParseFullUkPostcode(copy.location) || '';
+    }
+    const venueNorm = copy.venue.toLowerCase();
+    if (copy.city && venueNorm && copy.city.toLowerCase() === venueNorm) {
+      copy.city = '';
+    }
+    if (copy.addressLine1 && venueNorm) {
+      const addressNorm = copy.addressLine1.toLowerCase().replace(/\s+/g, ' ').trim();
+      const pcCompact = copy.postcode.replace(/\s+/g, '').toLowerCase();
+      const pcSpaced = copy.postcode.toLowerCase();
+      if (
+        addressNorm === venueNorm ||
+        addressNorm === venueNorm + ',' ||
+        (pcCompact &&
+          (addressNorm === venueNorm + ', ' + pcCompact ||
+            addressNorm === venueNorm + ' ' + pcCompact ||
+            addressNorm === venueNorm + ', ' + pcSpaced ||
+            addressNorm === venueNorm + ' ' + pcSpaced))
+      ) {
+        copy.addressLine1 = '';
+      }
+    }
+    if (copy.addressLine1 && copy.location && copy.addressLine1 === copy.location) {
+      copy.addressLine1 = '';
     }
     if (!copy.city && copy.location && window.hubParseCityFromLocationLabel) {
-      copy.city = window.hubParseCityFromLocationLabel(copy.location, copy.postcode);
+      const parsedCity = window.hubParseCityFromLocationLabel(copy.location, copy.postcode);
+      if (parsedCity && (!venueNorm || parsedCity.toLowerCase() !== venueNorm)) {
+        copy.city = parsedCity;
+      }
     }
     copy.onlinePlatform = String(ev.onlinePlatform || '').trim();
     copy.onlineLink = String(ev.onlineLink || '').trim();
@@ -378,10 +407,6 @@
     else if (!copy.onlineLink && looksLikeUrl(copy.addressLine1)) copy.onlineLink = copy.addressLine1;
     if (looksLikeUrl(copy.venue)) copy.venue = '';
     if (looksLikeUrl(copy.addressLine1)) copy.addressLine1 = '';
-    const locLower = copy.location.toLowerCase();
-    if (!copy.addressLine1 && copy.location && locLower !== 'online' && !looksLikeUrl(copy.location)) {
-      copy.addressLine1 = copy.location;
-    }
     return copy;
   }
 
@@ -411,6 +436,7 @@
     }
     eventFormat = resolveEventFormat(ev);
     applyFormatUi(eventFormat);
+    lookupCityFromPostcode();
   }
 
   function clearLocationFieldErrors() {
@@ -492,9 +518,15 @@
   async function lookupCityFromPostcode() {
     const postcodeEl = document.getElementById('ee-postcode');
     const cityEl = document.getElementById('ee-city');
+    const venueEl = document.getElementById('ee-venue');
     if (!postcodeEl || !cityEl) return;
     const postcode = postcodeEl.value.trim().replace(/\s+/g, '');
-    if (!postcode || cityEl.value.trim()) return;
+    if (!postcode) return;
+    const venueNorm = String((venueEl && venueEl.value) || '')
+      .trim()
+      .toLowerCase();
+    const cityVal = cityEl.value.trim();
+    if (cityVal && (!venueNorm || cityVal.toLowerCase() !== venueNorm)) return;
     try {
       const res = await fetch(
         'https://api.postcodes.io/postcodes/' + encodeURIComponent(postcode)
@@ -502,6 +534,10 @@
       const data = await res.json();
       if (data.status === 200 && data.result && data.result.admin_district) {
         cityEl.value = data.result.admin_district;
+        if (window.hubParseFullUkPostcode) {
+          const formatted = window.hubParseFullUkPostcode(postcodeEl.value);
+          if (formatted) postcodeEl.value = formatted;
+        }
         scheduleAutodraft();
       }
     } catch {
