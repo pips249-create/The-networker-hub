@@ -2371,8 +2371,15 @@
       if (elLine2) elLine2.value = state.line2;
       if (elLine3) elLine3.value = state.line3;
       if (!state.backgroundTouched) {
-        state.backgroundId = defaultBackgroundIdForTemplate(tpl);
-        syncBackgroundSelection();
+        // Keep organiser brand colours when switching picture styles; only fall
+        // back to Soft cream / Navy when the group has no brand palette yet.
+        syncBrandBackground({ preferBrand: true });
+        if (!brandBg || state.backgroundId !== 'brand') {
+          state.backgroundId = brandBg
+            ? 'brand'
+            : defaultBackgroundIdForTemplate(tpl);
+          syncBackgroundSelection();
+        }
       }
       syncCategoryTabs();
       syncOpportunityGate();
@@ -2506,7 +2513,13 @@
         syncOpportunityGate();
         syncListingField();
         syncEventField();
+        // Always re-apply brand when the organiser page has colours and the user
+        // has not explicitly picked Soft cream / Charcoal / Navy.
         syncBrandBackground({ preferBrand: !state.backgroundTouched });
+        if (!state.backgroundTouched && brandBg) {
+          state.backgroundId = 'brand';
+          syncBackgroundSelection();
+        }
         if (isEventTemplate() && currentEvent()) applyEventToFields();
         else applyGroupToFields(false);
         refresh();

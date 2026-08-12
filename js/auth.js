@@ -948,7 +948,15 @@
         ? window.hubProbeCatalogueAccess()
         : fetch('/api/events?probe=1', { credentials: 'include', cache: 'no-store' })
             .then(function (res) {
-              return res.status === 200;
+              if (res.status !== 200) return false;
+              return res
+                .json()
+                .then(function (data) {
+                  return !(data && data.open === false);
+                })
+                .catch(function () {
+                  return true;
+                });
             })
             .catch(function () {
               return false;

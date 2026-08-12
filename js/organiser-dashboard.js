@@ -1674,7 +1674,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812layout1';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812brand1';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260806expired1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812billingcompact';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
@@ -2015,6 +2015,17 @@
             return ensureLinkedInPostBuilder({ force: true });
           })
           .then(function () {
+            // Apply organiser-page brand colours on first open — not only after
+            // visiting the Colours & type tab.
+            var group = currentBrandKitGroup();
+            if (
+              group &&
+              group.brandPrimaryColor &&
+              linkedInPostBuilder &&
+              linkedInPostBuilder.useBrandBackground
+            ) {
+              linkedInPostBuilder.useBrandBackground(group.id);
+            }
             renderBrandKitNudge();
           })
           .catch(function () {

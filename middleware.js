@@ -640,7 +640,8 @@ async function maybeGateSiteAccess(request, url) {
 
   // Event/organiser listing detail APIs power public listing pages opened from shared
   // social captions. Allow single-item fetches (id/slug) so the page can render; keep
-  // browse/list payloads gated until launch.
+  // browse/list payloads (and the nav catalogue probe) gated until launch — same as
+  // HTML /events redirects for soft-launch claim sessions.
   if (
     pathname === '/api/hub-listings' ||
     pathname === '/api/events' ||
@@ -649,8 +650,20 @@ async function maybeGateSiteAccess(request, url) {
   ) {
     const hasDetail = url.searchParams.get('id') || url.searchParams.get('slug');
     if (hasDetail) return null;
-    if ((await hasSiteAccess(request)) || (await hasValidSession(request))) {
+    if (await hasSiteAccess(request)) {
       return { authorized: true };
+    }
+    if (await hasValidSession(request)) {
+      const secret = String(process.env.SESSION_SECRET || '').trim();
+      const cookies = parseCookies(request);
+      const session = secret ? await verifySignedToken(cookies.hub_session, secret) : null;
+      const role = String((session && session.role) || '')
+        .trim()
+        .toLowerCase();
+      // Platform admins keep catalogue access for support; organisers/members do not.
+      if (role === 'admin') {
+        return { authorized: true };
+      }
     }
     return sitePrivateResponse();
   }

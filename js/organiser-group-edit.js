@@ -1039,6 +1039,7 @@
         }, delay);
       }
     } finally {
+      saveInFlight = false;
       // Always unlock the footer after save/continue finishes — keepBusy used to leave
       // buttons disabled if the drawer stayed open or was reopened without a full reset.
       if (continueOnboard) setEmbeddedLoading(false);
@@ -1205,6 +1206,9 @@
             '#ge-save-changes, #ge-save-continue, #ge-publish, #ge-save-draft, #ge-cancel'
           )
         : null;
+      if (!btn) return;
+      // Prefer the direct listener when present to avoid double-firing.
+      if (btn.dataset.geClickBound) return;
       handleActionButton(btn, e);
     }
 

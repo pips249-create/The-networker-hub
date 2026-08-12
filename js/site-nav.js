@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260811perf1';
+  var NAV_BUILD = '20260812softnav1';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -469,7 +469,12 @@
       html += link('/', 'Home', 'home');
     }
     if (early) {
-      html += link('/for-organisers', 'For organisers', 'for-organisers');
+      // Soft launch: only destinations they can actually open (no catalogue browse).
+      if (user && user.organiserUiVisible) {
+        html += link('/organiser/', 'Organiser workspace', 'organiser');
+      } else {
+        html += link('/for-organisers', 'For organisers', 'for-organisers');
+      }
       html += link('/contact', 'Contact', 'contact');
     } else {
       html += link('/events/', 'Events', 'events');
@@ -543,7 +548,11 @@
     }
     if (early) {
       html += '<p class="nav-mobile-section-label">Explore</p>';
-      html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
+      if (user && user.organiserUiVisible) {
+        html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
+      } else {
+        html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
+      }
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
     } else {
@@ -986,8 +995,16 @@
     if (!force && catalogueProbePromise) return catalogueProbePromise;
     catalogueProbePromise = fetch('/api/events?probe=1', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
-        // Only treat a successful catalogue response as open (not 401/500/etc).
-        return res.status === 200;
+        // Soft-launch claim sessions get 403 on browse/probe; preview cookie / admin get 200.
+        if (res.status !== 200) return false;
+        return res
+          .json()
+          .then(function (data) {
+            return !(data && data.open === false);
+          })
+          .catch(function () {
+            return true;
+          });
       })
       .catch(function () {
         return false;
