@@ -1764,6 +1764,9 @@
     if (seriesGroupId) {
       const peers = all.filter((peer) => String(peer.seriesGroupId || '').trim() === seriesGroupId);
       if (peers.length > 1) return sortEventsByDate(peers);
+      // Incomplete bootstrap lists often only include the primary id — caller
+      // should fetch by seriesGroupId rather than falling through to title match.
+      return peers.length === 1 ? peers : [ev];
     }
     const groupId = ev.organiserGroupId || ev.groupId || '';
     const titleKey = String(ev.title || '').trim().toLowerCase();
@@ -1777,6 +1780,122 @@
       return true;
     });
     return peers.length > 1 ? sortEventsByDate(peers) : [ev];
+  }
+
+  function readStoredSeriesMeta() {
+    try {
+      const raw = sessionStorage.getItem(SERIES_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Prefer full series peers even when bootstrap only returned the primary event. */
+  async function resolveSeriesPeersForEdit(ev, bootstrapEvents) {
+    if (!ev || !ev.id) return [];
+    if (String(ev.duplicatedFromEventId || '').trim()) return [ev];
+
+    let peers = findSeriesPeers(ev, bootstrapEvents || []);
+    const stored = readStoredSeriesMeta();
+    const storedIds = Array.isArray(stored && stored.eventIds)
+      ? stored.eventIds.map(String).filter(Boolean)
+      : [];
+    const storedEvents = Array.isArray(stored && stored.events) ? stored.events : [];
+    const editIdStr = String(ev.id);
+    const storedCoversEdit =
+      storedIds.length > 1 &&
+      (storedIds.includes(editIdStr) ||
+        storedEvents.some(function (row) {
+          return row && String(row.id) === editIdStr;
+        }));
+
+    if (storedCoversEdit && storedIds.length > peers.length) {
+      const byId = new Map();
+      (bootstrapEvents || []).forEach(function (row) {
+        if (row && row.id) byId.set(String(row.id), row);
+      });
+      peers.forEach(function (row) {
+        if (row && row.id) byId.set(String(row.id), row);
+      });
+      storedEvents.forEach(function (row) {
+        if (!row || !row.id) return;
+        const id = String(row.id);
+        const cur = byId.get(id) || { id: id };
+        byId.set(id, {
+          ...cur,
+          id: id,
+          title: cur.title || row.title || ev.title || '',
+          date: cur.date || row.date || row.startsAt || row.starts_at || '',
+          endDate: cur.endDate || row.endDate || row.endsAt || row.ends_at || '',
+          seriesGroupId: cur.seriesGroupId || row.seriesGroupId || ev.seriesGroupId || '',
+          organiserGroupId:
+            cur.organiserGroupId || row.organiserGroupId || ev.organiserGroupId || ev.groupId || '',
+          imageUrl: cur.imageUrl || row.imageUrl || '',
+          imagePosition: cur.imagePosition || row.imagePosition || '',
+        });
+      });
+      storedIds.forEach(function (id) {
+        if (!byId.has(id)) byId.set(id, { id: id, title: ev.title || '' });
+      });
+      peers = sortEventsByDate(
+        storedIds.map(function (id) {
+          return byId.get(id);
+        }).filter(Boolean)
+      );
+    }
+
+    const seriesGroupId = String(
+      (ev && ev.seriesGroupId) ||
+        (peers[0] && peers[0].seriesGroupId) ||
+        (stored && stored.seriesGroupId) ||
+        ''
+    ).trim();
+    const needsFetch =
+      seriesGroupId &&
+      (peers.length <= 1 ||
+        peers.some(function (peer) {
+          return !peer || !peer.date;
+        }));
+    if (needsFetch) {
+      try {
+        const res = await api(
+          '/api/organiser/events?seriesGroupId=' + encodeURIComponent(seriesGroupId)
+        );
+        if (res.ok && Array.isArray(res.data.events) && res.data.events.length > 1) {
+          peers = sortEventsByDate(res.data.events);
+        }
+      } catch {
+        /* keep local peers */
+      }
+    }
+
+    const stillMissingDates = peers.filter(function (peer) {
+      return peer && peer.id && !peer.date;
+    });
+    if (stillMissingDates.length && peers.length > 1) {
+      await Promise.all(
+        stillMissingDates.map(async function (peer) {
+          try {
+            const res = await api('/api/organiser/events?id=' + encodeURIComponent(peer.id));
+            if (res.ok && res.data.event) {
+              const full = res.data.event;
+              const idx = peers.findIndex(function (row) {
+                return row && String(row.id) === String(peer.id);
+              });
+              if (idx >= 0) peers[idx] = { ...peers[idx], ...full };
+            }
+          } catch {
+            /* ignore */
+          }
+        })
+      );
+      peers = sortEventsByDate(peers);
+    }
+
+    return peers.length ? peers : [ev];
   }
 
   function eventWallTimeFromIso(iso) {
@@ -1967,9 +2086,41 @@
         ev = await fetchEventForEdit(editId, data.events || []);
         fillGroupsSelect(ev ? ev.organiserGroupId || ev.groupId : '', false);
         if (ev) {
-          const peers = findSeriesPeers(ev, data.events || []);
+          const peers = await resolveSeriesPeersForEdit(ev, data.events || []);
           if (peers.length > 1) {
             ev._seriesPeers = peers;
+            // Keep series meta in sync so location/tickets see every date.
+            try {
+              const stored = readStoredSeriesMeta() || {};
+              sessionStorage.setItem(
+                SERIES_STORAGE_KEY,
+                JSON.stringify(
+                  preserveSeriesLaunchFlags({
+                    ...stored,
+                    title: stored.title || ev.title || '',
+                    eventIds: peers.map(function (peer) {
+                      return peer.id;
+                    }),
+                    events: peers.map(function (peer) {
+                      return {
+                        id: peer.id,
+                        title: peer.title || ev.title || '',
+                        date: peer.date || '',
+                        endDate: peer.endDate || '',
+                        imageUrl: peer.imageUrl || '',
+                        imagePosition: peer.imagePosition || '',
+                        seriesGroupId: peer.seriesGroupId || ev.seriesGroupId || '',
+                      };
+                    }),
+                    seriesGroupId: ev.seriesGroupId || peers[0].seriesGroupId || '',
+                    organiserGroupId: ev.organiserGroupId || ev.groupId || '',
+                    eventFormat: resolveEventFormat(ev),
+                  })
+                )
+              );
+            } catch {
+              /* ignore */
+            }
           }
           prefillFromEvent(ev);
         } else {
