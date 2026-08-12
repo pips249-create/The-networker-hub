@@ -96,9 +96,12 @@ function buildSponsorSection(block, options) {
   const safeUrl = url.replace(/"/g, '&quot;');
   const bandBg = sponsorEmailLogoBandColor(block, options?.logoBandBg);
   const logoHtml = buildSponsorLogoMarkup(logo, name, bandBg);
-  // Sit on the cream header band — no bordered white card (that fought the wave layout).
+  // Sit on the cream header band by default — Email 2 moves this below the CTA on white.
+  const sectionBg = String(options?.sectionBg || '#f5f0e8').trim() || '#f5f0e8';
   return (
-    '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:#f5f0e8;">' +
+    '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:' +
+    sectionBg +
+    ';">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:11px;font-weight:600;color:#8a8284;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 8px;line-height:1;">' +
     label +
     '</p>' +

@@ -74,6 +74,8 @@ async function buildEmail2SponsorVars(options = {}) {
     campaign: 'email2_launch',
     logoBandBg: '#1a1a2e',
     siteUrl: site,
+    // Email 2 places the sponsor under the CTA on the white body, not the cream header.
+    sectionBg: '#ffffff',
   });
 
   if (!inner) {
