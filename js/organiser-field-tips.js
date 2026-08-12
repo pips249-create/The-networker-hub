@@ -100,10 +100,10 @@
       hubertPrompt: 'How do I set monthly membership prices when setting up tickets?',
     },
     'category-exclusivity': {
-      title: 'Category Exclusivity',
+      title: 'Application Based / Category Exclusivity',
       body:
         'Alternative to open ticket sales. Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link. You can also enable guest visits and Hub monthly/annual membership so newcomers try a free visit, then join membership.',
-      hubertPrompt: 'What is Category Exclusivity?',
+      hubertPrompt: 'What is Application Based / Category Exclusivity?',
     },
     'alumni-fast-pass': {
       title: 'Previous Attendees',
