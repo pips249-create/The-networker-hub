@@ -209,8 +209,8 @@ body.hub-page-organiser.organiser-event-edit-page {
 /* Full-bleed website footer AFTER the shell (scroll to see it).
    Never use margin-top:auto here — that pins the footer into the first
    viewport and steals workspace height on short pages. */
-body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer,
-body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
+body.organiser-dashboard-page > #hub-site-footer,
+body.attendee-dashboard-page > #hub-site-footer {
   flex: 0 0 auto;
   width: 100%;
   max-width: none;
@@ -218,8 +218,8 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
   margin-top: 0 !important;
 }
 
-body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer .site-footer,
-body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
+body.organiser-dashboard-page > #hub-site-footer .site-footer,
+body.attendee-dashboard-page > #hub-site-footer .site-footer {
   width: 100%;
   max-width: none;
   box-sizing: border-box;
@@ -227,19 +227,19 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
 
 /* Overlays / locked-scroll modes: hide marketing footer so it cannot cover
    workspace content or sit under fixed modals/drawers/tours. */
-body.hub-page-organiser.organiser-dashboard-page.org-claim-setup-active > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-group-claim-active > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-group-drawer-open > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-event-drawer-open > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-onboard-active > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-notifications-open > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-cancel-modal-open > #hub-site-footer,
-body.hub-page-organiser.organiser-dashboard-page.org-more-sheet-open > #hub-site-footer,
-body.hub-page-account.attendee-dashboard-page.ad-review-modal-open > #hub-site-footer,
-body.hub-page-account.attendee-dashboard-page.ad-view-review-modal-open > #hub-site-footer,
-body.hub-page-account.attendee-dashboard-page.ad-payment-modal-open > #hub-site-footer,
-body.hub-page-account.attendee-dashboard-page.ad-cancel-modal-open > #hub-site-footer,
-body.hub-page-account.attendee-dashboard-page.ad-share-modal-open > #hub-site-footer {
+body.organiser-dashboard-page.org-claim-setup-active > #hub-site-footer,
+body.organiser-dashboard-page.org-group-claim-active > #hub-site-footer,
+body.organiser-dashboard-page.org-group-drawer-open > #hub-site-footer,
+body.organiser-dashboard-page.org-event-drawer-open > #hub-site-footer,
+body.organiser-dashboard-page.org-onboard-active > #hub-site-footer,
+body.organiser-dashboard-page.org-notifications-open > #hub-site-footer,
+body.organiser-dashboard-page.org-cancel-modal-open > #hub-site-footer,
+body.organiser-dashboard-page.org-more-sheet-open > #hub-site-footer,
+body.attendee-dashboard-page.ad-review-modal-open > #hub-site-footer,
+body.attendee-dashboard-page.ad-view-review-modal-open > #hub-site-footer,
+body.attendee-dashboard-page.ad-payment-modal-open > #hub-site-footer,
+body.attendee-dashboard-page.ad-cancel-modal-open > #hub-site-footer,
+body.attendee-dashboard-page.ad-share-modal-open > #hub-site-footer {
   display: none !important;
 }
 
