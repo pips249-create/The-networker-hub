@@ -13392,6 +13392,9 @@
     // previously gold "Back" sat on the right and habitually claimed via Yes next.
     if (acceptBtn) {
       acceptBtn.disabled = false;
+      acceptBtn.classList.remove('is-busy');
+      acceptBtn.removeAttribute('aria-busy');
+      delete acceptBtn.dataset.idleLabel;
       if (groupClaimRejectMode) {
         acceptBtn.textContent = 'Confirm — not my group';
         acceptBtn.classList.add('org-btn-danger');
@@ -13404,6 +13407,9 @@
     }
     if (rejectBtn) {
       rejectBtn.disabled = false;
+      rejectBtn.classList.remove('is-busy');
+      rejectBtn.removeAttribute('aria-busy');
+      delete rejectBtn.dataset.idleLabel;
       if (groupClaimRejectMode) {
         rejectBtn.textContent = 'Back';
         rejectBtn.classList.add('org-btn-outline');
@@ -13429,6 +13435,25 @@
     }
   }
 
+  function setGroupClaimBtnBusy(btn, busy, label) {
+    if (!btn) return;
+    if (busy) {
+      if (btn.dataset.idleLabel == null) btn.dataset.idleLabel = btn.textContent || '';
+      btn.disabled = true;
+      btn.classList.add('is-busy');
+      btn.setAttribute('aria-busy', 'true');
+      if (label) btn.textContent = label;
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('is-busy');
+      btn.removeAttribute('aria-busy');
+      if (btn.dataset.idleLabel != null) {
+        btn.textContent = btn.dataset.idleLabel;
+        delete btn.dataset.idleLabel;
+      }
+    }
+  }
+
   async function submitGroupClaimAction(action) {
     if (groupClaimSubmitInFlight) return;
     const list = state.pendingClaimGroups || [];
@@ -13443,8 +13468,13 @@
 
     groupClaimSubmitInFlight = true;
     if (errEl) errEl.hidden = true;
-    if (acceptBtn) acceptBtn.disabled = true;
-    if (rejectBtn) rejectBtn.disabled = true;
+    if (normalisedAction === 'claim') {
+      setGroupClaimBtnBusy(acceptBtn, true, 'Setting up…');
+      if (rejectBtn) rejectBtn.disabled = true;
+    } else {
+      setGroupClaimBtnBusy(acceptBtn, true, 'Removing…');
+      if (rejectBtn) rejectBtn.disabled = true;
+    }
 
     try {
       const body = { groupId: group.id, action: normalisedAction };
@@ -13557,7 +13587,7 @@
         errEl.textContent = e.message || 'Something went wrong. Please try again.';
         errEl.hidden = false;
       }
-      if (acceptBtn) acceptBtn.disabled = false;
+      setGroupClaimBtnBusy(acceptBtn, false);
       if (rejectBtn) rejectBtn.disabled = false;
     } finally {
       groupClaimSubmitInFlight = false;
