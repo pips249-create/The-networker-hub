@@ -878,10 +878,10 @@
   let step2Home = null;
 
   function attendanceModeLabel() {
-    if (attendanceMode === 'category_exclusivity') return 'Category Exclusivity';
+    if (attendanceMode === 'category_exclusivity') return 'Application Based / Category Exclusivity';
     if (attendanceMode === 'membership_meeting') return 'Networking group meeting';
-    if (attendanceMode === 'guest_programme') return 'Open booking with guest visits';
-    return 'Open ticket booking';
+    if (attendanceMode === 'guest_programme') return 'General Ticket Booking with guest visits';
+    return 'General Ticket Booking';
   }
 
   function ensureAttendanceSummary() {
@@ -1022,7 +1022,7 @@
     if (title) {
       title.textContent =
         attendanceMode === 'category_exclusivity'
-          ? 'Step 2 — Category Exclusivity'
+          ? 'Step 2 — Application Based / Category Exclusivity'
           : attendanceMode === 'membership_meeting'
             ? 'Step 2 — networking group meeting'
             : 'Step 2 — ticket types';

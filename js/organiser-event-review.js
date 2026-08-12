@@ -414,7 +414,9 @@
 
   function reviewAttendanceLabel() {
     const mode = anchorEvent?.attendanceMode || 'tickets';
-    if (mode === 'category_exclusivity') return 'Category Exclusivity — apply, then approve before payment';
+    if (mode === 'category_exclusivity') {
+      return 'Application Based / Category Exclusivity — apply, then approve before payment';
+    }
     if (mode === 'membership_meeting') {
       const visits = organiserComplimentaryVisits || 1;
       return (
@@ -426,10 +428,12 @@
     if (mode === 'guest_programme') {
       const visits = organiserComplimentaryVisits || 1;
       return (
-        'Guest visit programme — newcomers can visit up to ' + visits + ' time(s) before buying a member ticket'
+        'General Ticket Booking with guest visits — newcomers can visit up to ' +
+        visits +
+        ' time(s) before buying a member ticket'
       );
     }
-    return 'Open ticket booking';
+    return 'General Ticket Booking';
   }
 
   function formatTierPrice(price) {

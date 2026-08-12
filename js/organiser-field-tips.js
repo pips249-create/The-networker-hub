@@ -60,8 +60,8 @@
     'attendance-modes': {
       title: 'Attendance modes',
       body:
-        'Open ticket booking — anyone buys a ticket on the listing (optional guest visits and member rates later). Networking group meeting — free trial visits for newcomers, free member booking for your list, then join Hub monthly/annual membership (no public ticket). Category Exclusivity — guests apply with industry and job title; you approve before they pay (optional guest visits and membership).',
-      hubertPrompt: 'What is the difference between open ticket booking, networking group meeting, and Category Exclusivity?',
+        'General Ticket Booking — anyone buys a ticket (optional guest visits, member rates, early bird, VIP, etc.). Networking group meeting — free trial visits for newcomers, free member booking for your list, then join Hub monthly/annual membership (no public ticket). Application Based / Category Exclusivity — guests apply with industry and job title; you approve before they pay (optional guest visits and membership).',
+      hubertPrompt: 'What is the difference between General Ticket Booking, networking group meeting, and Application Based Category Exclusivity?',
     },
     'guest-visit-programme': {
       title: 'Guest visit programme',
