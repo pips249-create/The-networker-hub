@@ -21527,6 +21527,21 @@
                       attrEsc(row.id) +
                       '">Reopen</button>';
 
+                var findOrgBtn =
+                  '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-find-organiser="1" data-ei-group-name="' +
+                  attrEsc(row.groupName || '') +
+                  '">Find organiser</button>';
+
+                var importBrandBtn = row.organiserWebsiteUrl
+                  ? '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-import-brand="1" data-ei-group-name="' +
+                    attrEsc(row.groupName || '') +
+                    '" data-ei-website="' +
+                    attrEsc(row.organiserWebsiteUrl || '') +
+                    '">Import logo + description</button>'
+                  : '';
+
+                actions += ' ' + findOrgBtn + (importBrandBtn ? ' ' + importBrandBtn : '');
+
                 return (
                   '<article class="border border-slate-200 rounded-lg p-4 space-y-2">' +
                   '<div class="flex flex-wrap items-start justify-between gap-2">' +
@@ -21616,6 +21631,68 @@
         loadEventIntakeAdmin();
         return;
       }
+
+      var findOrgBtn = e.target.closest('[data-ei-find-organiser]');
+      if (findOrgBtn && main.contains(findOrgBtn)) {
+        var q = findOrgBtn.getAttribute('data-ei-group-name') || '';
+        q = String(q).trim();
+        if (!q) {
+          window.alert('Enter a group name first.');
+          return;
+        }
+        adminGet('/api/admin/organisers?limit=5&q=' + encodeURIComponent(q))
+          .then(function (data) {
+            var list = data && Array.isArray(data.organisers) ? data.organisers : [];
+            if (!list.length) {
+              window.alert('No organiser profile found for "' + q + '".');
+              return;
+            }
+            location.replace('#cleanup/groups?organiser=' + attrEsc(list[0].id));
+          })
+          .catch(function (err) {
+            window.alert((err && err.message) || 'Could not find organiser.');
+          });
+        return;
+      }
+
+      var importBrandBtn = e.target.closest('[data-ei-import-brand]');
+      if (importBrandBtn && main.contains(importBrandBtn)) {
+        var q2 = importBrandBtn.getAttribute('data-ei-group-name') || '';
+        var website = importBrandBtn.getAttribute('data-ei-website') || '';
+        q2 = String(q2).trim();
+        website = String(website).trim();
+        if (!q2 || !website) {
+          window.alert('Missing organiser name or website URL.');
+          return;
+        }
+
+        adminGet('/api/admin/organisers?limit=5&q=' + encodeURIComponent(q2))
+          .then(function (data) {
+            var list = data && Array.isArray(data.organisers) ? data.organisers : [];
+            if (!list.length) throw new Error('no_org');
+            var organiser = list[0];
+            return adminPost('/api/admin/organisers', {
+              action: 'fetch_website_meta',
+              url: website,
+            }).then(function (meta) {
+              return adminPost('/api/admin/organisers', {
+                action: 'bulk_update',
+                ids: [organiser.id],
+                website: meta.url || website,
+                description: meta.description || null,
+                photo_url: meta.logo_url || meta.logoUrl || null,
+              });
+            }).then(function () {
+              window.alert('Brand details imported. Opening organiser profile…');
+              location.replace('#cleanup/groups?organiser=' + attrEsc(organiser.id));
+            });
+          })
+          .catch(function (err) {
+            window.alert((err && err.message) || 'Could not import organiser brand.');
+          });
+        return;
+      }
+
       var statusBtn = e.target.closest('[data-ei-status]');
       if (!statusBtn || !main.contains(statusBtn)) return;
       var id = statusBtn.getAttribute('data-ei-id');

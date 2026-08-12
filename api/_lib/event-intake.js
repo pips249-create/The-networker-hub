@@ -59,6 +59,17 @@ function normalizeIntakeInput(body) {
     contactName: String(body.name || body.contactName || body.contact_name || '').trim(),
     email: normalizeEmail(body.email),
     phone: normalizePhone(body.phone || body.telephone || body.mobile || body.tel),
+    organiserWebsiteUrl: String(
+      body.organiserWebsiteUrl ||
+        body.organiser_website_url ||
+        body.organiser_website ||
+        body.organiserUrl ||
+        body.organizerWebsiteUrl ||
+        body.websiteUrl ||
+        ''
+    )
+      .trim()
+      .trim() || null,
     groupName: String(body.group || body.groupName || body.group_name || body.organiser || '').trim(),
     eventTitle: String(body.title || body.eventTitle || body.event_title || '').trim(),
     eventDates: String(body.dates || body.eventDates || body.event_dates || '').trim(),
@@ -87,7 +98,7 @@ function validateIntake(input) {
   if (!isValidEmail(input.email)) {
     return { ok: false, error: 'invalid_email', message: 'Enter a valid email address.' };
   }
-  if (!isValidPhone(input.phone)) {
+  if (input.phone && !isValidPhone(input.phone)) {
     return { ok: false, error: 'invalid_phone', message: 'Enter a valid phone number.' };
   }
   if (!input.groupName) {
@@ -98,6 +109,24 @@ function validateIntake(input) {
   }
   if (!input.eventDates) {
     return { ok: false, error: 'missing_dates', message: 'Enter the event date(s).' };
+  }
+  if (input.organiserWebsiteUrl) {
+    try {
+      const url = new URL(input.organiserWebsiteUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        return {
+          ok: false,
+          error: 'invalid_organiser_website_url',
+          message: 'Enter a valid organiser website URL (https://…).',
+        };
+      }
+    } catch {
+      return {
+        ok: false,
+        error: 'invalid_organiser_website_url',
+        message: 'Enter a valid organiser website URL (https://…).',
+      };
+    }
   }
   if (input.format === 'In person') {
     if (!input.city && !input.venue && !input.postcode) {
@@ -142,6 +171,7 @@ function buildStaffEmailHtml(input) {
     row('City', input.city) +
     row('Postcode', input.postcode) +
     row('Join link', input.meetingLink) +
+    row('Organiser website', input.organiserWebsiteUrl) +
     row('Pricing', input.pricing) +
     row('Tickets', input.ticketDetails) +
     row('Photo URL', input.photoUrl) +
@@ -200,6 +230,7 @@ async function submitEventIntake(body) {
     start_time: input.startTime,
     end_time: input.endTime,
     format: input.format,
+    organiser_website_url: input.organiserWebsiteUrl,
     venue: input.venue,
     address_line1: input.addressLine1,
     city: input.city,

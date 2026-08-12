@@ -56,6 +56,7 @@
       email: String(fd.get('email') || '').trim(),
       phone: String(fd.get('phone') || '').trim(),
       group: String(fd.get('group') || '').trim(),
+      organiserWebsiteUrl: String(fd.get('organiserWebsiteUrl') || '').trim(),
       title: String(fd.get('title') || '').trim(),
       dates: String(fd.get('dates') || '').trim(),
       startTime: String(fd.get('startTime') || '').trim(),
