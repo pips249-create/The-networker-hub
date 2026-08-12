@@ -20,6 +20,8 @@ dotenv.config({ path: path.join(root, '.env') });
 const { getSupabaseAdmin } = require('../api/_lib/supabase');
 const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
 
+const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
+
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
   'hello@thenetworkerhub.com',
@@ -178,6 +180,7 @@ async function main() {
     const email = normEmail(o.contact_email || o.email);
     if (!email || !email.includes('@')) continue;
     if (isInternalTest(o.name, email) || isExhibition(o.name)) continue;
+    if (isExcludedLaunchOrganiser({ email, slug: o.slug, name: o.name })) continue;
     const prev = organiserByEmail.get(email);
     if (!prev) {
       organiserByEmail.set(email, {

@@ -27,6 +27,8 @@ const SITE = 'https://www.thenetworkerhub.com';
 const DEFAULT_OUT = path.join(root, 'ops/organiser-outreach-tracker.csv');
 const PHONE_CSV = path.join(root, 'data/networking-groups-organisers.csv');
 
+const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
+
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
   'hello@thenetworkerhub.com',
@@ -70,6 +72,7 @@ function normEmail(v) {
 
 function isInternalTest(name, email) {
   if (SKIP_EMAILS.has(email)) return true;
+  if (isExcludedLaunchOrganiser({ email, name })) return true;
   if (/@example\.com$/i.test(email)) return true;
   if (/^e2e[- ]/i.test(name || '') || /\be2e\b/i.test(email)) return true;
   if (/pip'?s test|testing category|rosie posy|the networker hub$/i.test(name || '')) return true;

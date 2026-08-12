@@ -39,6 +39,8 @@ async function buildEmail2SponsorRow() {
   return html;
 }
 
+const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
+
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
   'hello@thenetworkerhub.com',
@@ -48,6 +50,7 @@ const SKIP_EMAILS = new Set([
 
 function isInternalTest(name, email) {
   if (SKIP_EMAILS.has(email)) return true;
+  if (isExcludedLaunchOrganiser({ email, name })) return true;
   if (/pip'?s test|testing category|rosie posy|the networker hub$/i.test(name || '')) return true;
   return false;
 }
@@ -208,6 +211,7 @@ function fillTemplate(template, vars) {
     if (!isPublicOrganiser(r)) continue;
     const name = String(r.name || '').trim();
     const slug = publicOrganiserSlug(r) || '';
+    if (isExcludedLaunchOrganiser({ email, slug, name })) continue;
     if (!byEmail.has(email)) {
       byEmail.set(email, { email, groups: [] });
     }
