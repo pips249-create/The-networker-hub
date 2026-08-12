@@ -1576,8 +1576,28 @@ body.ee-step2-modal-open {
   margin-bottom: 12px;
 }
 
+.ee-pay-how-options .ee-check {
+  align-items: flex-start;
+}
+
+.ee-pay-how-options .ee-check + .ee-check {
+  margin-top: 8px;
+}
+
 .ee-ce-questions {
   margin-top: 4px;
+}
+
+.ee-ce-pay-path .ee-check {
+  align-items: flex-start;
+}
+
+.ee-ce-pay-path .ee-check + .ee-check {
+  margin-top: 8px;
+}
+
+.ee-ce-guest-mount .ee-addon-card {
+  margin-top: 0;
 }
 
 #ee-paid-setup-wrap {

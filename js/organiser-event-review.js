@@ -415,25 +415,32 @@
   function reviewAttendanceLabel() {
     const mode = anchorEvent?.attendanceMode || 'tickets';
     if (mode === 'category_exclusivity') {
-      return 'Application Based / Category Exclusivity — apply, then approve before payment';
+      const ceTier = (loadedTickets || []).find(function (t) {
+        return t && (t.categoryExclusivity || /application/i.test(String(t.ticketType || '')));
+      });
+      const priceNum = Number(ceTier?.price);
+      const paid = Number.isFinite(priceNum) && priceNum > 0;
+      return paid
+        ? 'Application based — apply, then approve before payment'
+        : 'Application based — apply for a seat (membership / free trial visits)';
     }
     if (mode === 'membership_meeting') {
       const visits = organiserComplimentaryVisits || 1;
       return (
-        'Networking group meeting — complimentary visits (up to ' +
+        'General ticketing — membership with complimentary visits (up to ' +
         visits +
-        '), free member ticket, then join membership'
+        ')'
       );
     }
     if (mode === 'guest_programme') {
       const visits = organiserComplimentaryVisits || 1;
       return (
-        'General Ticket Booking with guest visits — newcomers can visit up to ' +
+        'General ticketing with free trial visits — up to ' +
         visits +
-        ' time(s) before buying a member ticket'
+        ' visit(s) before buying a ticket'
       );
     }
-    return 'General Ticket Booking';
+    return 'General ticketing';
   }
 
   function formatTierPrice(price) {

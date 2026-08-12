@@ -772,6 +772,10 @@
     const priceDisplay = priceNum > 0 ? t.price || fmt(priceNum) : 'Free';
     const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
     const closeDate = t.saleEnd ? formatCategoryExclusivityCloseDate(t.saleEnd) : '';
+    const bookStep =
+      priceNum > 0
+        ? '<li><strong>3. Pay</strong><span>Approved applicants receive a payment link</span></li>'
+        : '<li><strong>3. Attend</strong><span>Your place is confirmed — no ticket to buy</span></li>';
     let html =
       '<div class="category-exclusivity-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
@@ -785,7 +789,7 @@
         '<ol class="category-exclusivity-tier-steps">' +
         '<li><strong>1. Apply</strong><span>Answer two quick questions about you</span></li>' +
         '<li><strong>2. Review</strong><span>The organiser approves or declines</span></li>' +
-        '<li><strong>3. Book</strong><span>Approved applicants receive a payment link</span></li>' +
+        bookStep +
         '</ol>';
     }
     if (remainingLabel) {
@@ -797,7 +801,9 @@
     if (!soldOut) {
       html +=
         '<div class="category-exclusivity-tier-price-row">' +
-        '<span class="category-exclusivity-tier-price-label">If approved</span>' +
+        '<span class="category-exclusivity-tier-price-label">' +
+        (priceNum > 0 ? 'If approved' : 'Ticket charge') +
+        '</span>' +
         '<span class="category-exclusivity-tier-price">' +
         escapeHtml(priceDisplay) +
         '</span></div>';

@@ -58,52 +58,52 @@
       hubertPrompt: 'When do I add the Zoom or Teams link for an online event?',
     },
     'attendance-modes': {
-      title: 'Attendance modes',
+      title: 'How people get in',
       body:
-        'General Ticket Booking — anyone buys a ticket (optional guest visits, member rates, early bird, VIP, etc.). Networking group meeting — free trial visits for newcomers, free member booking for your list, then join Hub monthly/annual membership (no public ticket). Application Based / Category Exclusivity — guests apply with industry and job title; you approve before they pay (optional guest visits and membership).',
-      hubertPrompt: 'What is the difference between General Ticket Booking, networking group meeting, and Application Based Category Exclusivity?',
+        'Two choices: General ticketing (anyone can book) or Application based (you approve seats, e.g. one per industry). Next you add tickets, free trial visits, and/or monthly membership — you must have tickets or membership (or both).',
+      hubertPrompt: 'How should I set up tickets for my event?',
     },
     'guest-visit-programme': {
-      title: 'Guest visit programme',
+      title: 'Free trial visits',
       body:
-        'Offer 1–3 complimentary visits so newcomers can try your group. On open booking, paid member tickets unlock afterwards. On Networking group meeting, guests join your monthly membership after visits. Use “Member-only for this event” on open booking to skip guest passes on a specific date.',
-      hubertPrompt: 'What is the guest visit programme for networking groups?',
+        'Let newcomers visit for free (up to 3) before they join membership or buy a ticket. After visits are used, they need membership or a paid ticket to keep attending.',
+      hubertPrompt: 'What are free trial visits?',
     },
     'member-only-event': {
       title: 'Member-only for this event',
       body:
-        'Turns off complimentary guest passes on this date only. Paid member tickets stay on sale and anyone can book them directly — even if they still have free visits left on your organiser page. Your guest visit programme continues on your other events. Use for conferences, member evenings, or any date where you want paying attendees only.',
+        'Turns off complimentary guest passes on this date only. Paid member tickets stay on sale and anyone can book them directly — even if they still have free visits left on your organiser page. Your free trial visits continue on your other events.',
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
     'members-only-ticket': {
-      title: 'Member price (public can still book)',
+      title: 'List-member ticket (public can still book)',
       body:
-        'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets above stay on sale for everyone else. It does not make the event members-only. For monthly membership + complimentary guests with no public ticket, choose Networking group meeting in Step 1.',
-      hubertPrompt: 'What is the difference between a members-only rate and a members-only event?',
+        'Add a free or cheaper ticket that only people on your member list see when they sign in. Public tickets stay on sale for everyone else. It does not make the event members-only.',
+      hubertPrompt: 'What is a list-member ticket?',
     },
     'ce-member-price': {
-      title: 'Member price on Category Exclusivity',
+      title: 'List-member booking',
       body:
-        'Optional rate for people already on your membership list. They book without applying. Guests still apply for Category Exclusivity — this does not turn the event into a members-only listing.',
-      hubertPrompt: 'How does Member price work on a Category Exclusivity event?',
+        'Optional booking for people already on your membership list. They book without applying. Guests still apply. Use £0 when monthly membership covers attendance.',
+      hubertPrompt: 'How does list-member booking work on an application-based event?',
     },
     'members-only-event-listing': {
       title: 'Closed meeting — member list only',
       body:
-        'Your event stays on the directory, but only people on your member list can book — no public ticket and no complimentary guest visits. For monthly membership groups that also offer guest visits, choose Networking group meeting in Step 1 instead.',
+        'Only people on your member list can book — no public booking and no free trial visits. Use under General ticketing when membership is on and you do not want guests.',
       hubertPrompt: 'How do I make an event members only with no public ticket?',
     },
     'hub-membership-prices': {
       title: 'Monthly / annual membership',
       body:
-        'Set Hub membership prices on the tickets step. After complimentary visits, newcomers join on your organiser page. People on your member list book the member ticket. Prices also appear under Memberships and can be edited there anytime.',
+        'Group dues (not an event ticket). After free trial visits, newcomers join on your organiser page. Prices also appear under Memberships.',
       hubertPrompt: 'How do I set monthly membership prices when setting up tickets?',
     },
     'category-exclusivity': {
-      title: 'Application Based / Category Exclusivity',
+      title: 'Application based',
       body:
-        'Alternative to open ticket sales. Attendees apply instead of buying straight away. They answer two fixed questions — industry and job title. You approve or deny from your dashboard; approved applicants receive a payment link. You can also enable guest visits and Hub monthly/annual membership so newcomers try a free visit, then join membership.',
-      hubertPrompt: 'What is Application Based / Category Exclusivity?',
+        'You approve who gets the seat (e.g. one per industry). Guests apply with industry and job title. Add tickets after approval, free trial visits, and/or monthly membership — you must have tickets or membership.',
+      hubertPrompt: 'What is application based ticketing?',
     },
     'alumni-fast-pass': {
       title: 'Previous Attendees',
