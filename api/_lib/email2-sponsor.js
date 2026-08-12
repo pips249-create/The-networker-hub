@@ -3,7 +3,8 @@
  * Barnsgate declined; keep Brevo HTML and Resend/admin sends aligned.
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
-const { buildSponsorSection, fetchSponsorBlockForSlot } = require('./email-booking-defaults');
+const { fetchSponsorBlockForSlot } = require('./email-booking-defaults');
+const { withSponsorClickThrough } = require('./sponsor-utm');
 const { sponsorCompanyName } = require('./cms-sponsor-fields');
 const { emailSiteBase, toPublicAssetUrl } = require('./hub-email-urls');
 
@@ -37,10 +38,44 @@ async function resolveEmail2SponsorBlock(sb) {
   }
 }
 
+/** Compact sponsor strip for Email 2 body (under CTAs) — quieter than the header band. */
+function buildEmail2SponsorStripHtml({ site, logo, company, ctaUrl }) {
+  const name = String(company || 'My Medical Cover').trim() || 'My Medical Cover';
+  const logoSrc = String(logo || '').trim() || MMC_CDN_LOGO;
+  const tracked = withSponsorClickThrough(ctaUrl || MMC_CTA, 'email2_launch', {
+    campaign: 'email2_launch',
+    company: name,
+    siteUrl: site,
+  });
+  const safeUrl = String(tracked || MMC_CTA).replace(/"/g, '&quot;');
+  const safeLogo = logoSrc.replace(/"/g, '&quot;');
+  const safeName = name.replace(/"/g, '&quot;');
+
+  return (
+    '<tr>' +
+    '<td class="mobile-pad" style="padding:20px 40px 8px;text-align:center;background:#ffffff;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:280px;margin:0 auto;border:1px solid #e8e4e0;border-radius:12px;background:#f7f5f2;">' +
+    '<tr>' +
+    '<td style="padding:14px 16px;text-align:center;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:600;color:#8a8486;text-transform:uppercase;letter-spacing:1.1px;margin:0 0 10px;line-height:1;">Supported by</p>' +
+    '<a href="' +
+    safeUrl +
+    '" style="display:inline-block;text-decoration:none;line-height:0;">' +
+    '<span style="display:inline-block;padding:10px 14px;background:#1a1a2e;border-radius:8px;line-height:0;">' +
+    '<img src="' +
+    safeLogo +
+    '" alt="' +
+    safeName +
+    '" width="120" style="max-width:120px;width:auto;max-height:36px;height:auto;display:block;margin:0 auto;border:0;">' +
+    '</span></a>' +
+    '</td></tr></table>' +
+    '</td></tr>'
+  );
+}
+
 /**
  * @param {object} [options]
  * @param {string} [options.siteUrl]
- * @param {boolean} [options.wrapRow] wrap in the standard email <tr> sponsor band
  */
 async function buildEmail2SponsorVars(options = {}) {
   const site = emailSiteBase(options.siteUrl);
@@ -59,37 +94,14 @@ async function buildEmail2SponsorVars(options = {}) {
     ? sponsorCompanyName(block)
     : 'My Medical Cover';
   const cta = String((block && block.cta_url) || MMC_CTA).trim() || MMC_CTA;
-  const emailBlock = {
-    ...(block || {}),
-    company_name: company,
-    logo_url: hubPng || MMC_CDN_LOGO,
-    image_url: hubPng || MMC_CDN_LOGO,
-    cta_url: cta,
-    active: true,
-  };
+  const logo = hubPng || MMC_CDN_LOGO;
 
-  const inner = buildSponsorSection(emailBlock, {
-    label: 'Powered by',
-    placement: 'email2_launch',
-    campaign: 'email2_launch',
-    logoBandBg: '#1a1a2e',
-    siteUrl: site,
-    // Email 2 places the sponsor under the CTA on the white body, not the cream header.
-    sectionBg: '#ffffff',
+  const sponsorRow = buildEmail2SponsorStripHtml({
+    site,
+    logo,
+    company,
+    ctaUrl: cta,
   });
-
-  if (!inner) {
-    return { sponsor_row: '', sponsor_section: '', mini_sponsors_row: '', tracked: [] };
-  }
-
-  const sponsorRow =
-    options.wrapRow === false
-      ? inner
-      : /^<tr[\s>]/i.test(inner)
-        ? inner
-        : '<tr><td class="mobile-pad" style="padding:6px 40px 2px;text-align:center;background:#f5f0e8;">' +
-          inner +
-          '</td></tr>';
 
   return {
     sponsor_row: sponsorRow,
@@ -99,9 +111,9 @@ async function buildEmail2SponsorVars(options = {}) {
   };
 }
 
-/** Inner HTML only (no wrapping <tr>) — for Brevo template fill. */
+/** Full <tr> strip for Brevo template fill. */
 async function buildEmail2SponsorRowHtml(siteUrl) {
-  const vars = await buildEmail2SponsorVars({ siteUrl, wrapRow: false });
+  const vars = await buildEmail2SponsorVars({ siteUrl });
   return vars.sponsor_row || '';
 }
 
