@@ -3823,6 +3823,10 @@ body.ee-embed-drawer .ee-embed-back:not([hidden]) {
   border-top: 1px solid rgba(91, 47, 153, 0.12);
 }
 
+.hub-payment-setup-checklist-item[hidden] {
+  display: none !important;
+}
+
 .hub-payment-setup-checklist-item:first-child {
   border-top: none;
   padding-top: 0;

@@ -7527,38 +7527,102 @@ body.org-notifications-open {
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  background: linear-gradient(135deg, #fff9ec 0%, #f3ecfa 100%);
-  border: 2px solid rgba(189, 147, 46, 0.45);
-  border-radius: 14px;
+  background: linear-gradient(135deg, #fffdf8 0%, #f7f3fc 100%);
+  border: 1px solid rgba(189, 147, 46, 0.35);
+  border-radius: 12px;
   padding: 18px 20px;
   margin-bottom: 18px;
-  box-shadow: 0 8px 24px rgba(91, 47, 153, 0.08);
+  box-shadow: 0 4px 14px rgba(91, 47, 153, 0.05);
 }
 
 .hub-payment-setup-card--compact {
-  padding: 16px 18px;
-  margin-bottom: 16px;
-}
-
-.hub-payment-setup-card--dense {
   padding: 12px 14px;
   margin-bottom: 12px;
   gap: 12px;
 }
 
+.hub-payment-setup-card--collapsible {
+  flex-direction: column;
+  gap: 0;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.hub-payment-setup-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .hub-payment-setup-summary {
+    flex-wrap: wrap;
+  }
+
+  .hub-payment-setup-toggle {
+    margin-left: auto;
+  }
+}
+
+.hub-payment-setup-summary-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.hub-payment-setup-card--collapsible .hub-payment-setup-icon {
+  font-size: 20px;
+  margin-top: 1px;
+}
+
+.hub-payment-setup-card--collapsible .hub-payment-setup-title {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.hub-payment-setup-card--collapsible .hub-payment-setup-lead {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--od-text-soft, #736b6e);
+}
+
+.hub-payment-setup-toggle {
+  flex-shrink: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.hub-payment-setup-details {
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(91, 47, 153, 0.1);
+}
+
+.hub-payment-setup-details[hidden] {
+  display: none !important;
+}
+
+.hub-payment-setup-card--collapsible.is-collapsed .hub-payment-setup-details {
+  display: none !important;
+}
+
+.hub-payment-setup-card--dense {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  gap: 0;
+}
+
 .hub-payment-setup-card--dense .hub-payment-setup-icon {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .hub-payment-setup-card--dense .hub-payment-setup-title {
-  margin: 0 0 4px;
-  font-size: 1rem;
-}
-
-.hub-payment-setup-card--dense .hub-payment-setup-lead {
-  margin: 0 0 8px;
-  font-size: 13px;
-  line-height: 1.4;
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .hub-payment-setup-card--dense .hub-payment-setup-checklist {
@@ -7696,6 +7760,10 @@ a.hub-payment-setup-btn {
   gap: 10px 12px;
   padding: 10px 0;
   border-top: 1px solid rgba(91, 47, 153, 0.12);
+}
+
+.hub-payment-setup-checklist-item[hidden] {
+  display: none !important;
 }
 
 .hub-payment-setup-checklist-item:first-child {

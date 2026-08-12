@@ -277,13 +277,41 @@
     );
   }
 
+  var COLLAPSE_STORAGE_KEY = 'hub-payment-setup-banner-collapsed';
+
+  function readCollapsePreference() {
+    try {
+      var stored = sessionStorage.getItem(COLLAPSE_STORAGE_KEY);
+      if (stored === '0') return false;
+      if (stored === '1') return true;
+    } catch (e) {
+      /* ignore */
+    }
+    return true;
+  }
+
+  function writeCollapsePreference(collapsed) {
+    try {
+      sessionStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function checklistHtml(state, options) {
     const opts = options || {};
     const pending = state?.pendingGroups || [];
     const compact = Boolean(opts.compact);
     const manyGroups = pending.length > 3;
     const dense = compact && manyGroups;
+    const collapsible = compact;
+    const startCollapsed = collapsible && readCollapsePreference();
     const title = opts.title || 'Add bank details to sell paid tickets';
+    const countLabel =
+      pending.length +
+      ' organiser page' +
+      (pending.length === 1 ? '' : 's') +
+      ' need bank details';
     const lead = dense
       ? pending.length +
         ' organiser pages still need bank details before paid tickets can go live.'
@@ -344,10 +372,49 @@
           ' pages</button>'
         : '';
 
+    const listBlock =
+      '<ul class="hub-payment-setup-checklist">' +
+      items +
+      '</ul>' +
+      expandToggle +
+      (dense
+        ? ''
+        : '<p class="hub-payment-setup-note">Opens Stripe in a new tab — return here when finished. Paid tickets need bank details before publish. Free events do not.</p>' +
+          multiProfileNoteHtml(state, { showReuseButton: showReuseButton }));
+
+    if (collapsible) {
+      return (
+        '<div class="hub-payment-setup-card hub-payment-setup-card--checklist hub-payment-setup-card--compact' +
+        (dense ? ' hub-payment-setup-card--dense' : '') +
+        ' hub-payment-setup-card--collapsible' +
+        (startCollapsed ? ' is-collapsed' : '') +
+        '" role="status">' +
+        '<div class="hub-payment-setup-summary">' +
+        '<div class="hub-payment-setup-icon" aria-hidden="true">🏦</div>' +
+        '<div class="hub-payment-setup-summary-copy">' +
+        '<h2 class="hub-payment-setup-title">' +
+        esc(title) +
+        '</h2>' +
+        '<p class="hub-payment-setup-lead">' +
+        esc(countLabel) +
+        '</p>' +
+        '</div>' +
+        '<button type="button" class="hub-payment-setup-toggle org-btn org-btn-outline org-btn-sm" data-payment-collapse aria-expanded="' +
+        (startCollapsed ? 'false' : 'true') +
+        '">' +
+        (startCollapsed ? 'Show pages' : 'Hide') +
+        '</button>' +
+        '</div>' +
+        '<div class="hub-payment-setup-details"' +
+        (startCollapsed ? ' hidden' : '') +
+        '>' +
+        listBlock +
+        '</div></div>'
+      );
+    }
+
     return (
       '<div class="hub-payment-setup-card hub-payment-setup-card--checklist' +
-      (compact ? ' hub-payment-setup-card--compact' : '') +
-      (dense ? ' hub-payment-setup-card--dense' : '') +
       '" role="status">' +
       '<div class="hub-payment-setup-icon" aria-hidden="true">🏦</div>' +
       '<div class="hub-payment-setup-body">' +
@@ -357,14 +424,7 @@
       '<p class="hub-payment-setup-lead">' +
       esc(lead) +
       '</p>' +
-      '<ul class="hub-payment-setup-checklist">' +
-      items +
-      '</ul>' +
-      expandToggle +
-      (dense
-        ? ''
-        : '<p class="hub-payment-setup-note">Opens Stripe in a new tab — return here when finished. Paid tickets need bank details before publish. Free events do not.</p>' +
-          multiProfileNoteHtml(state, { showReuseButton: showReuseButton })) +
+      listBlock +
       '</div></div>'
     );
   }
@@ -374,6 +434,21 @@
     root.dataset.paymentBound = '1';
     const opts = options || {};
     root.addEventListener('click', function (e) {
+      const collapseBtn = e.target.closest('[data-payment-collapse]');
+      if (collapseBtn && root.contains(collapseBtn)) {
+        e.preventDefault();
+        const card = collapseBtn.closest('.hub-payment-setup-card');
+        if (!card) return;
+        const details = card.querySelector('.hub-payment-setup-details');
+        const nextCollapsed = collapseBtn.getAttribute('aria-expanded') === 'true';
+        collapseBtn.setAttribute('aria-expanded', nextCollapsed ? 'false' : 'true');
+        collapseBtn.textContent = nextCollapsed ? 'Show pages' : 'Hide';
+        card.classList.toggle('is-collapsed', nextCollapsed);
+        if (details) details.hidden = nextCollapsed;
+        writeCollapsePreference(nextCollapsed);
+        return;
+      }
+
       const expandBtn = e.target.closest('[data-payment-expand]');
       if (expandBtn && root.contains(expandBtn)) {
         e.preventDefault();
