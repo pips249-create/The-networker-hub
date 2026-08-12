@@ -3,15 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
   <title>Confirm your organiser page</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
     img { border:0; display:block; max-width:100%; height:auto; }
     body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#e8ecf5; }
     table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
-        @media only screen and (max-width:600px) {
-      .email-outer-pad { padding:8px 0 !important; }
+    a[x-apple-data-detectors] { color:inherit !important; text-decoration:none !important; }
+    u + #body a { color:inherit; text-decoration:none; }
+    @media only screen and (max-width:600px) {
+      .email-outer-pad { padding:0 !important; }
       .email-wrapper {
         width:100% !important;
         max-width:100% !important;
@@ -19,19 +32,29 @@
         box-shadow:none !important;
         overflow:visible !important;
       }
-      .hero-title { font-size:24px !important; line-height:1.2 !important; }
-      .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
-      .mobile-header-pad { padding:24px 16px 0 !important; }
-      .email-logo-header { max-width:200px !important; width:200px !important; height:auto !important; }
-      .email-logo-footer { max-width:168px !important; width:168px !important; height:auto !important; }
-      .feature-cell { display:block !important; width:100% !important; height:auto !important; padding:0 0 10px !important; }
-      .feature-cell:last-child { padding-bottom:0 !important; }
-      .feature-cell td[height] { height:auto !important; }
-      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
+      .hero-title { font-size:22px !important; line-height:1.25 !important; }
+      .mobile-pad { padding-left:20px !important; padding-right:20px !important; }
+      .mobile-header-pad { padding:20px 20px 0 !important; }
+      .mobile-footer-pad { padding:24px 20px 32px !important; }
+      .email-logo-header { max-width:180px !important; width:180px !important; height:auto !important; }
+      .email-logo-footer { max-width:150px !important; width:150px !important; height:auto !important; }
+      .email-cta a {
+        display:block !important;
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box !important;
+        text-align:center !important;
+        padding:16px 18px !important;
+        font-size:16px !important;
+        line-height:1.35 !important;
+        white-space:normal !important;
+      }
+      .step-card-pad { padding:14px 14px !important; }
+      .body-copy { font-size:15px !important; line-height:1.65 !important; }
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
+<body id="body" style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
 <!-- Preheader: inbox preview text -->
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
   Your free page is ready — claim before 1 September for Founding Organiser extras.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -40,69 +63,82 @@
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
   <tr>
     <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
-      <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(28,32,64,0.12);">
+      <!--[if mso]><table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td><![endif]-->
+      <table class="email-wrapper" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(28,32,64,0.12);">
         <tr>
-          <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">
+          <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 16px;text-align:center;">
             <a href="{{for_organisers_url}}" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_url}}" alt="The Networker Hub" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;">
+              <img class="email-logo-header" src="{{logo_url}}" alt="The Networker Hub" width="220" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:220px;width:100%;">
             </a>
           </td>
         </tr>
 
+        <!-- Simple divider instead of SVG (many mobile clients break SVG waves) -->
         <tr>
-          <td style="background:#f5f0e8;padding:0;text-align:center;">
-            <div style="line-height:0;font-size:0;margin-top:8px;">
-              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
-                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
-              </svg>
-            </div>
-          </td>
+          <td style="background:#ffffff;padding:0;line-height:0;font-size:0;border-top:8px solid #f5f0e8;">&nbsp;</td>
         </tr>
+
         <tr>
-          <td class="mobile-pad" style="padding:28px 40px 16px;text-align:left;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Early invite &middot; organisers only</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Congratulations: {{group_name}} is ready</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 18px;">Hi there. We&rsquo;re delighted to say your free organiser page is ready on <strong style="color:#1c2040;">The Networker Hub</strong>{{other_groups_note}}.</p>
+          <td class="mobile-pad" style="padding:24px 40px 16px;text-align:left;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Early invite &middot; organisers only</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:26px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.2;">Congratulations: {{group_name}} is ready</h1>
+            <p class="body-copy" style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 18px;">Hi there. We&rsquo;re delighted to say your free organiser page is ready on <strong style="color:#1c2040;">The Networker Hub</strong>{{other_groups_note}}.</p>
+
+            <!-- Stacked steps (not 3 columns) — reliable on mobile email clients -->
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-radius:16px;overflow:hidden;border:2px solid #452d5c;">
               <tr>
-                <td style="background:#452d5c;padding:16px 20px;text-align:center;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;color:#c4a574;text-transform:uppercase;letter-spacing:1.4px;margin:0 0 4px;">Your free workspace</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:20px;font-weight:700;color:#ffffff;margin:0;line-height:1.25;">From here you can</p>
+                <td style="background:#452d5c;padding:14px 18px;text-align:center;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:700;color:#c4a574;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 4px;">Your free workspace</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:18px;font-weight:700;color:#ffffff;margin:0;line-height:1.25;">From here you can</p>
                 </td>
               </tr>
               <tr>
-                <td style="background:#f5f0e8;padding:16px;">
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="table-layout:fixed;">
+                <td style="background:#f5f0e8;padding:12px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;border-top:4px solid #c4a574;margin:0 0 10px;">
                     <tr>
-                      <td class="feature-cell" width="33%" valign="top" height="200" style="width:33%;padding:0 4px 0 0;vertical-align:top;height:200px;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;border-top:4px solid #c4a574;">
+                      <td class="step-card-pad" style="padding:14px 16px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                           <tr>
-                            <td height="196" valign="top" style="height:196px;padding:16px 12px 18px;text-align:center;vertical-align:top;">
-                              <div style="width:36px;height:36px;line-height:36px;margin:0 auto 10px;text-align:center;border-radius:50%;background:#c4a574;color:#1c2040;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;">1</div>
-                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;line-height:1.3;">Polish your page</p>
-                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:#635c5e;line-height:1.45;margin:0;">Update your logo, story and details so the listing looks the part.</p>
+                            <td valign="top" style="padding:0 12px 0 0;width:36px;">
+                              <div style="width:32px;height:32px;line-height:32px;text-align:center;border-radius:50%;background:#c4a574;color:#1c2040;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;">1</div>
+                            </td>
+                            <td valign="top" style="padding:0;">
+                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 4px;line-height:1.3;">Polish your page</p>
+                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:#635c5e;line-height:1.45;margin:0;">Update your logo, story and details so the listing looks the part.</p>
                             </td>
                           </tr>
                         </table>
                       </td>
-                      <td class="feature-cell" width="34%" valign="top" height="200" style="width:34%;padding:0 4px;vertical-align:top;height:200px;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;border-top:4px solid #c4a574;">
+                    </tr>
+                  </table>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;border-top:4px solid #c4a574;margin:0 0 10px;">
+                    <tr>
+                      <td class="step-card-pad" style="padding:14px 16px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                           <tr>
-                            <td height="196" valign="top" style="height:196px;padding:16px 12px 18px;text-align:center;vertical-align:top;">
-                              <div style="width:36px;height:36px;line-height:36px;margin:0 auto 10px;text-align:center;border-radius:50%;background:#c4a574;color:#1c2040;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;">2</div>
-                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;line-height:1.3;">List events early</p>
-                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:#635c5e;line-height:1.45;margin:0;">Add your meeting dates and create LinkedIn promo graphics while it&rsquo;s still organisers only.</p>
+                            <td valign="top" style="padding:0 12px 0 0;width:36px;">
+                              <div style="width:32px;height:32px;line-height:32px;text-align:center;border-radius:50%;background:#c4a574;color:#1c2040;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;">2</div>
+                            </td>
+                            <td valign="top" style="padding:0;">
+                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 4px;line-height:1.3;">List events early</p>
+                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:#635c5e;line-height:1.45;margin:0;">Add your meeting dates and create LinkedIn promo graphics while it&rsquo;s still organisers only.</p>
                             </td>
                           </tr>
                         </table>
                       </td>
-                      <td class="feature-cell" width="33%" valign="top" height="200" style="width:33%;padding:0 0 0 4px;vertical-align:top;height:200px;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;border-top:4px solid #c4a574;">
+                    </tr>
+                  </table>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;border-top:4px solid #c4a574;margin:0;">
+                    <tr>
+                      <td class="step-card-pad" style="padding:14px 16px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                           <tr>
-                            <td height="196" valign="top" style="height:196px;padding:16px 12px 18px;text-align:center;vertical-align:top;">
-                              <div style="width:36px;height:36px;line-height:36px;margin:0 auto 10px;text-align:center;border-radius:50%;background:#c4a574;color:#1c2040;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;">3</div>
-                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;line-height:1.3;">Let the Hub help</p>
-                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:#635c5e;line-height:1.45;margin:0;">Booking emails, LinkedIn posts and member tools, included free of charge.</p>
+                            <td valign="top" style="padding:0 12px 0 0;width:36px;">
+                              <div style="width:32px;height:32px;line-height:32px;text-align:center;border-radius:50%;background:#c4a574;color:#1c2040;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;">3</div>
+                            </td>
+                            <td valign="top" style="padding:0;">
+                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 4px;line-height:1.3;">Let the Hub help</p>
+                              <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:#635c5e;line-height:1.45;margin:0;">Booking emails, LinkedIn posts and member tools, included free of charge.</p>
                             </td>
                           </tr>
                         </table>
@@ -112,29 +148,31 @@
                 </td>
               </tr>
             </table>
-            <!-- Mid CTA: early click after the steps -->
+
+            <!-- Mid CTA: short label so long group names don't blow the button on phones -->
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0 8px;">
               <tr>
                 <td class="email-cta" style="text-align:center;padding:0;">
-                  <a href="{{claim_url}}" style="display:inline-block;text-align:center;padding:16px 32px;background:#452d5c;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0;border:2px solid #452d5c;">See {{group_name}} on the Hub &rarr;</a>
+                  <a href="{{claim_url}}" style="display:inline-block;text-align:center;padding:16px 28px;background:#452d5c;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0;border:2px solid #452d5c;max-width:100%;box-sizing:border-box;">See your page on the Hub &rarr;</a>
                 </td>
               </tr>
               <tr>
                 <td style="text-align:center;padding:10px 0 0;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.55;color:#8a8486;margin:0;">Opens your group listing first &mdash; no password yet.</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.55;color:#8a8486;margin:0;">Opens <strong style="color:#635c5e;">{{group_name}}</strong> first &mdash; no password yet.</p>
                 </td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:18px 0 14px;">Last year <strong style="color:#1c2040;">17,000+</strong> networkers used the directory and <strong style="color:#1c2040;">27,000+</strong> events were listed. Public browsing and ticket buying open on <strong style="color:#1c2040;">1 September</strong> &mdash; confirm now and you can polish your page and list autumn dates before that rush.</p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;line-height:1.5;margin:0 0 8px;">Claim before 1 September and you also get Founding Organiser · 2026 extras:</p>
+
+            <p class="body-copy" style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:18px 0 14px;">Last year <strong style="color:#1c2040;">17,000+</strong> networkers used the directory and <strong style="color:#1c2040;">27,000+</strong> events were listed. Public browsing and ticket buying open on <strong style="color:#1c2040;">1 September</strong> &mdash; confirm now and you can polish your page and list autumn dates before that rush.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;line-height:1.45;margin:0 0 8px;">Claim before 1 September and you also get Founding Organiser · 2026 extras:</p>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 12px;">
               <tr>
-                <td style="padding:0 0 6px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.55;color:#635c5e;">
+                <td style="padding:0 0 8px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.55;color:#635c5e;">
                   <strong style="color:#1c2040;">Founding badge</strong> — unlocks on your Hub page when you publish your first event
                 </td>
               </tr>
               <tr>
-                <td style="padding:0 0 6px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.55;color:#635c5e;">
+                <td style="padding:0 0 8px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.55;color:#635c5e;">
                   <strong style="color:#1c2040;">Homepage showcase</strong> — the first 50 also appear on our homepage through November (with a link to your website)
                 </td>
               </tr>
@@ -144,12 +182,12 @@
                 </td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;line-height:1.5;margin:0 0 12px;text-align:center;">Free to list &middot; you keep 100% of your ticket sales</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;line-height:1.5;margin:0 0 4px;text-align:center;">Free to list &middot; you keep 100% of your ticket sales</p>
           </td>
         </tr>
         <tr>
-          <td class="mobile-pad email-cta" style="padding:0 40px 6px;text-align:center;">
-            <a href="{{claim_url}}" style="display:inline-block;text-align:center;padding:17px 40px;background:#452d5c;border-radius:999px;color:#ffffff;font-size:17px;font-weight:700;text-decoration:none;margin:0;border:2px solid #452d5c;">Claim your free page &rarr;</a>
+          <td class="mobile-pad email-cta" style="padding:8px 40px 6px;text-align:center;">
+            <a href="{{claim_url}}" style="display:inline-block;text-align:center;padding:17px 32px;background:#452d5c;border-radius:999px;color:#ffffff;font-size:17px;font-weight:700;text-decoration:none;margin:0;border:2px solid #452d5c;max-width:100%;box-sizing:border-box;">Claim your free page &rarr;</a>
           </td>
         </tr>
         <tr>
@@ -162,8 +200,8 @@
 
         <tr>
           <td class="mobile-pad" style="padding:16px 40px 28px;text-align:left;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0 0 14px;">Stuck or want a hand? <a href="mailto:catherine@thenetworkerhub.com?subject=Organiser%20help" style="color:#4aa8f0;text-decoration:none;font-weight:600;">Catherine</a> and <a href="mailto:rosie@thenetworkerhub.com?subject=Organiser%20help" style="color:#4aa8f0;text-decoration:none;font-weight:600;">Rosie</a> are happy to help &mdash; email either of us, or message us on <a href="https://www.linkedin.com/company/the-networker-group-ltd" style="color:#4aa8f0;text-decoration:none;font-weight:600;">LinkedIn</a>.</p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0 0 14px;">Prefer Catherine or Jamie list an event for you? <a href="{{add_event_url}}" style="color:#4aa8f0;text-decoration:none;font-weight:600;">Send us the details</a> &mdash; usually live within one business day.</p>
+            <p class="body-copy" style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0 0 14px;">Stuck or want a hand? <a href="mailto:catherine@thenetworkerhub.com?subject=Organiser%20help" style="color:#4aa8f0;text-decoration:none;font-weight:600;">Catherine</a> and <a href="mailto:rosie@thenetworkerhub.com?subject=Organiser%20help" style="color:#4aa8f0;text-decoration:none;font-weight:600;">Rosie</a> are happy to help &mdash; email either of us, or message us on <a href="https://www.linkedin.com/company/the-networker-group-ltd" style="color:#4aa8f0;text-decoration:none;font-weight:600;">LinkedIn</a>.</p>
+            <p class="body-copy" style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0 0 14px;">Prefer Catherine or Jamie list an event for you? <a href="{{add_event_url}}" style="color:#4aa8f0;text-decoration:none;font-weight:600;">Send us the details</a> &mdash; usually live within one business day.</p>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Rosie &amp; Catherine<br><span style="color:#8a8486;">The Networker Hub</span></p>
           </td>
         </tr>
@@ -171,14 +209,14 @@
         <tr>
           <td class="mobile-footer-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{for_organisers_url}}" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+              <img src="{{logo_footer_url}}" alt="The Networker Hub" width="180" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:180px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
               Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
               Same team as <a href="{{legacy_site_url}}/" style="color:#d9c4e0;text-decoration:none;">the-networker.co.uk</a><br>
               <a href="mailto:{{support_email}}" style="color:#d9c4e0;text-decoration:none;">{{support_email}}</a>
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;line-height:1.8;">
               <a href="{{privacy_url}}" style="color:#d9c4e0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{terms_url}}" style="color:#d9c4e0;text-decoration:none;">Terms</a>
@@ -186,12 +224,13 @@
               <a href="{{refunds_url}}" style="color:#d9c4e0;text-decoration:none;">Refunds</a>
               &nbsp;&middot;&nbsp;
               <a href="{{contact_url}}" style="color:#d9c4e0;text-decoration:none;">Contact</a>
-            &nbsp;&middot;&nbsp;
+              &nbsp;&middot;&nbsp;
               <a href="{{unsubscribe_url}}" style="color:#ebe0f0;text-decoration:none;">Unsubscribe</a>
             </p>
           </td>
         </tr>
       </table>
+      <!--[if mso]></td></tr></table><![endif]-->
     </td>
   </tr>
 </table>
