@@ -1215,9 +1215,16 @@ async function loadActiveSeriesPeerRows(sb, seriesGroupId, fallbackRow) {
 async function deleteDraftEventIfAllowed(sb, eventId) {
   const id = String(eventId || '').trim();
   if (!id) return false;
-  const { data: row, error } = await sb.from('events').select('id, locked').eq('id', id).maybeSingle();
+  // Only remove true drafts — never wipe published/unpublished siblings when the
+  // editor temporarily loads a truncated series (one date) and saves.
+  const { data: row, error } = await sb
+    .from('events')
+    .select('id, locked, status')
+    .eq('id', id)
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!row || row.locked) return false;
+  if (String(row.status || '').toLowerCase() !== 'draft') return false;
 
   const { count, error: regErr } = await sb
     .from('registrations')
