@@ -262,10 +262,21 @@
       if (photoUrl) photoUrl.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    const preserveDateKeys = Array.isArray(options.preserveDateKeys)
+      ? options.preserveDateKeys.filter(function (keyName) {
+          return /^\d{4}-\d{2}-\d{2}$/.test(String(keyName));
+        })
+      : [];
     selectedDates.clear();
     (Array.isArray(draft.dates) ? draft.dates : []).forEach((keyName) => {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(keyName))) selectedDates.add(String(keyName));
     });
+    // Series listings: never let a stale autosave drop dates already loaded from the server.
+    if (preserveDateKeys.length > 1) {
+      preserveDateKeys.forEach(function (keyName) {
+        selectedDates.add(String(keyName));
+      });
+    }
     const firstDate = [...selectedDates].sort()[0];
     if (firstDate) {
       const parts = firstDate.split('-').map(Number);
@@ -343,7 +354,15 @@
     }
 
     if (!autodraftHasWork(draft)) return false;
-    applyDraftToForm(draft, { keepLoadedDescription: true, skipTimes: true });
+    const preserveDateKeys =
+      selectedDates.size > 1
+        ? getSelectedDateKeys()
+        : storedSeriesDateKeysFromMeta();
+    applyDraftToForm(draft, {
+      keepLoadedDescription: true,
+      skipTimes: true,
+      preserveDateKeys: preserveDateKeys.length > 1 ? preserveDateKeys : null,
+    });
     setAutodraftStatus(
       draft.hadUploadedPhoto
         ? 'Restored unsaved changes from this browser. Please re-select its uploaded image.'
@@ -1793,6 +1812,35 @@
     }
   }
 
+  function storedSeriesDateKeysFromMeta() {
+    const stored = readStoredSeriesMeta();
+    if (!stored) return [];
+    const keys = new Set();
+    const rows = Array.isArray(stored.events) ? stored.events : [];
+    rows.forEach(function (row) {
+      if (!row || !row.date) return;
+      const parts = londonCalendarPartsFromIso(row.date);
+      if (!parts) return;
+      keys.add(dateKey(parts.year, parts.month - 1, parts.day));
+    });
+    return [...keys].sort();
+  }
+
+  async function fetchEventsByIds(ids) {
+    const wanted = (ids || []).map(String).filter(Boolean);
+    if (!wanted.length) return [];
+    const results = await Promise.all(
+      wanted.map(function (id) {
+        return api('/api/organiser/events?id=' + encodeURIComponent(id));
+      })
+    );
+    return results
+      .map(function (res) {
+        return res.ok && res.data.event ? res.data.event : null;
+      })
+      .filter(Boolean);
+  }
+
   /** Prefer full series peers even when bootstrap only returned the primary event. */
   async function resolveSeriesPeersForEdit(ev, bootstrapEvents) {
     if (!ev || !ev.id) return [];
@@ -1837,13 +1885,21 @@
           imagePosition: cur.imagePosition || row.imagePosition || '',
         });
       });
-      storedIds.forEach(function (id) {
-        if (!byId.has(id)) byId.set(id, { id: id, title: ev.title || '' });
+      const missingIds = storedIds.filter(function (id) {
+        return !byId.has(String(id)) || !byId.get(String(id)).date;
       });
+      if (missingIds.length) {
+        const fetched = await fetchEventsByIds(missingIds);
+        fetched.forEach(function (row) {
+          if (row && row.id) byId.set(String(row.id), row);
+        });
+      }
       peers = sortEventsByDate(
-        storedIds.map(function (id) {
-          return byId.get(id);
-        }).filter(Boolean)
+        storedIds
+          .map(function (id) {
+            return byId.get(String(id));
+          })
+          .filter(Boolean)
       );
     }
 
@@ -1893,6 +1949,20 @@
         })
       );
       peers = sortEventsByDate(peers);
+    }
+
+    if (peers.length <= 1) {
+      try {
+        const res = await api('/api/organiser/events');
+        if (res.ok && Array.isArray(res.data.events) && res.data.events.length) {
+          const titlePeers = findSeriesPeers(ev, res.data.events);
+          if (titlePeers.length > peers.length) {
+            peers = titlePeers;
+          }
+        }
+      } catch {
+        /* keep local peers */
+      }
     }
 
     return peers.length ? peers : [ev];
