@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { isAdminRole } = require('../auth');
 
 function parseBody(req) {
   let body = req.body;
@@ -35,8 +36,14 @@ module.exports = async function handler(req, res) {
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+  const { listPendingClaimGroupsForSession } = require('../supabase-organiser-claims');
   const access = await resolveOrganiserAccess(auth.session);
-  if (!access.canCreateGroups && !isAdminRole(auth.session.role)) {
+  const pendingClaims = await listPendingClaimGroupsForSession(auth.session).catch(() => []);
+  const canClaim =
+    access.canCreateGroups ||
+    isAdminRole(auth.session.role) ||
+    (pendingClaims && pendingClaims.length > 0);
+  if (!canClaim) {
     return json(res, 403, {
       error: 'forbidden',
       message: 'Only the account owner can claim or reject organiser pages.',

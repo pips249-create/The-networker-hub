@@ -418,7 +418,9 @@ async function resolveOrganiserAccess(session) {
 
   const legacyGroupIds = new Set();
   if (!useTeamWorkspace && (uid || em)) {
-    let legacyQuery = sb.from('organisers').select('id');
+    let legacyQuery = sb
+      .from('organisers')
+      .select('id, email, contact_email, supabase_user_id, ownership_claim_status');
     if (uid && em) {
       legacyQuery = legacyQuery.or(
         `supabase_user_id.eq.${uid},email.eq.${em},contact_email.eq.${em}`
