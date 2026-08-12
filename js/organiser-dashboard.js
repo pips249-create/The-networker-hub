@@ -7891,6 +7891,15 @@
       if (isSocialPageActive()) ensureBrandKitPanelReady();
     };
 
+    const mergeSavedGroupLocally = function (saved) {
+      if (!saved || !saved.id) return;
+      state.groups = [saved].concat(
+        (state.groups || []).filter(function (g) {
+          return g && String(g.id) !== String(saved.id);
+        })
+      );
+    };
+
     if (!groupEditReady) {
       window.HubGroupEdit.init({
         root: drawer,
@@ -7916,12 +7925,17 @@
       onClose: closeGroupEditorDrawer,
       onSaved: refreshAfterSave,
       onContinue: async function (saved) {
+        if (onboardLaunch || onboardReview) {
+          // Advance claim setup immediately — waiting on bootstrap felt like a second load.
+          mergeSavedGroupLocally(saved);
+          continueAfterClaimProfileSave(saved);
+          refreshAfterSave().catch(function () {
+            /* non-fatal */
+          });
+          return;
+        }
         await refreshAfterSave();
         requestAnimationFrame(function () {
-          if (onboardLaunch || onboardReview) {
-            continueAfterClaimProfileSave(saved);
-            return;
-          }
           handleGroupContinueToEvent(saved);
         });
       },

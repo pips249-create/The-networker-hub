@@ -840,7 +840,13 @@
     setActionBusy(triggerBtn, true, busyLabel);
 
     let keepBusy = false;
+    const continueOnboard =
+      mode === 'continue' && (onboardReview || launchSetup) && isEmbedded();
     try {
+      if (continueOnboard) {
+        setEmbeddedLoading(true, 'Saving your page…');
+      }
+
       let res;
       if (editId) {
         res = await api('/api/organiser/groups', {
@@ -856,6 +862,7 @@
 
       if (!res.ok) {
         const err = res.data.error || '';
+        if (continueOnboard) setEmbeddedLoading(false);
         if (err === 'group_not_owned') {
           showAlert(
             'This organiser page is not linked to your account yet. Sign in with the email on the profile, or use Request access on the public page.',
@@ -888,7 +895,9 @@
       else if (logoResolutionWarning) msg = logoResolutionWarning;
 
       const hasWarnings = Boolean(logoWarning || logoResolutionWarning || saveWarnings.length);
-      showAlert(msg, hasWarnings ? 'error' : 'ok');
+      if (!continueOnboard) {
+        showAlert(msg, hasWarnings ? 'error' : 'ok');
+      }
       const qualityHint = el('ge-logo-quality');
       if (logoResolutionWarning && qualityHint) {
         qualityHint.textContent = logoResolutionWarning;
@@ -914,7 +923,17 @@
         }
       }
 
-      const delay = hasWarnings ? 2200 : isEmbedded() ? 900 : 700;
+      // Claim/onboard continue: advance immediately (no second bootstrap wait flash).
+      // Other continues keep a short pause so the success message is readable.
+      const delay = continueOnboard
+        ? hasWarnings
+          ? 1200
+          : 0
+        : hasWarnings
+          ? 2200
+          : isEmbedded()
+            ? 900
+            : 700;
 
       // Only the continue CTA advances setup. Plain "Save changes" stays on the form.
       const continueToEvent = mode === 'continue';
@@ -926,13 +945,15 @@
         if (continueToEvent) {
           keepBusy = true;
           setActionBusy(triggerBtn, true, 'Continuing…');
-          setTimeout(function () {
+          const advance = function () {
             if (config.onContinue) config.onContinue(saved, mode);
             else {
               stashGroupContinue(saved && saved.id);
               location.href = launchSetup ? '/organiser/?onboard=launch' : '/organiser/#groups';
             }
-          }, delay);
+          };
+          if (delay > 0) setTimeout(advance, delay);
+          else advance();
         } else if (mode === 'save' || mode === 'draft' || mode === 'published') {
           /* keep drawer open after save in embedded editor */
         } else {
@@ -953,6 +974,7 @@
       }
     } finally {
       if (!keepBusy) {
+        if (continueOnboard) setEmbeddedLoading(false);
         actionBtns.forEach((b) => {
           if (b) b.disabled = false;
         });
