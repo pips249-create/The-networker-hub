@@ -275,12 +275,10 @@
       }
     }
     if (membersOnlyEventEnabled()) {
-      if (memberRosterLoadState === 'loading' || memberRosterLoadState === 'idle') {
-        blockers.push('Checking your member list…');
-      } else if (memberRosterLoadState === 'error' || memberRosterActiveCount == null) {
-        blockers.push('Could not verify your member list — refresh and try again');
-      } else if (memberRosterActiveCount === 0) {
-        blockers.push('Add at least one person to your member list before publishing');
+      // Empty member list is a warning only — organisers can publish the listing and
+      // add people later under Memberships. Keep checking so the status line stays accurate.
+      if (memberRosterLoadState === 'idle') {
+        loadMemberRosterStatus();
       }
     }
     if (guestProgrammeEnabled() && !payHowIncludesTickets() && !payHowIncludesMembership()) {
@@ -2103,13 +2101,13 @@
         if (memberRosterActiveCount > 0) {
           setMemberRosterStatusMessage(
             memberRosterActiveCount === 1
-              ? '1 active member on your list — ready to publish.'
-              : memberRosterActiveCount + ' active members on your list — ready to publish.',
+              ? '1 active member on your list — they can book when signed in.'
+              : memberRosterActiveCount + ' active members on your list — they can book when signed in.',
             'ok'
           );
         } else {
           setMemberRosterStatusMessage(
-            'Add at least one person to your member list before you publish.',
+            'Your listing can go live now. Add people under Memberships when you’re ready — until then nobody on a member list can book this closed event.',
             'warn'
           );
         }

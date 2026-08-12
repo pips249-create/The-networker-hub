@@ -4,7 +4,6 @@ const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-
 const { validateRefundPublishPayload } = require('../event-refund-policy');
 const { tiersHavePaidPrice } = require('../supabase-events');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
-const { countActiveRosterMembers } = require('../organiser-member-roster');
 
 function requestHasPaidTickets(tiers, alumniFastPass) {
   if (alumniFastPass?.enabled && Number(alumniFastPass.price) > 0) return true;
@@ -153,13 +152,8 @@ module.exports = async function handler(req, res) {
               message: 'Link this event to an organiser page before publishing a members-only event.',
             });
           }
-          const activeMembers = await countActiveRosterMembers(organiserId);
-          if (activeMembers < 1) {
-            return json(res, 400, {
-              error: 'member_list_required',
-              message: 'Add at least one person to your member list before publishing a members-only event.',
-            });
-          }
+          // Empty roster is allowed — organisers often publish first, then add members
+          // under Memberships. Booking simply stays unavailable until someone is listed.
         }
 
         const alumniRaw = body.alumniFastPass || body.alumni_fast_pass;
