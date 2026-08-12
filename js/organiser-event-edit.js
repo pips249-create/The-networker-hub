@@ -136,12 +136,10 @@
   function autodraftSavedMessage(draft) {
     if (draft && draft.hadUploadedPhoto) {
       return editId
-        ? 'Progress autosaved in this browser — re-select the uploaded image if you leave this page.'
-        : 'Draft autosaved in this browser. Re-select the uploaded image if you close this page.';
+        ? 'Autosaved — re-select the uploaded image if you leave this page.'
+        : 'Draft autosaved — re-select the uploaded image if you close this page.';
     }
-    return editId
-      ? 'Progress autosaved in this browser.'
-      : 'Draft autosaved in this browser.';
+    return '';
   }
 
   function setAutodraftStatus(text, tone) {

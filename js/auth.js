@@ -863,12 +863,12 @@
           '<p class="auth-intent-callout-text">You&rsquo;re signed in as <strong>' +
           (email || 'your account') +
           '</strong>. Continue to claim setup, or sign out to create a different account with a new password.</p>' +
-          '<p class="auth-intent-callout-note">' +
+          '<div class="auth-signed-in-actions" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;align-items:center;">' +
           '<a class="auth-submit auth-signed-in-continue" href="' +
           continueHref +
-          '">Continue to claim setup &rarr;</a> ' +
-          '<button type="button" class="auth-early-secondary auth-signed-in-signout" style="margin-left:0.75rem;border:none;background:none;cursor:pointer;font:inherit;">Sign out</button>' +
-          '</p>';
+          '" style="flex:1;min-width:180px;color:#fff;text-decoration:none;">Continue to claim setup &rarr;</a>' +
+          '<button type="button" class="auth-signed-in-signout" style="background:none;border:none;cursor:pointer;font:inherit;font-weight:600;color:var(--lavender-deep);text-decoration:underline;padding:4px 0;">Sign out</button>' +
+          '</div>';
 
         var form = document.getElementById('register-form');
         if (form) form.hidden = true;
