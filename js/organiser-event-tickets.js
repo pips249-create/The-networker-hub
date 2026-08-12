@@ -654,6 +654,32 @@
     persistSeriesMeta();
   }
 
+  function seedSeriesMetaFromLoadedEvent(ev) {
+    if (!ev || !ev.id) return;
+    const existing = Array.isArray(seriesMeta.events) ? seriesMeta.events.slice() : [];
+    const byId = new Map(existing.map((row) => [row.id, row]));
+    const cur = byId.get(ev.id) || { id: ev.id };
+    byId.set(ev.id, {
+      id: ev.id,
+      title: cur.title || ev.title || '',
+      date: cur.date || ev.date || '',
+      endDate: cur.endDate || ev.endDate || '',
+      imageUrl: cur.imageUrl || ev.imageUrl || seriesMeta.imageUrl || '',
+      imagePosition: cur.imagePosition || ev.imagePosition || seriesMeta.imagePosition || '',
+      seriesGroupId: cur.seriesGroupId || ev.seriesGroupId || '',
+    });
+    if (!eventIds.includes(ev.id)) eventIds = [ev.id].concat(eventIds.filter((id) => id !== ev.id));
+    seriesMeta.events = eventIds.map((id) => byId.get(id) || { id });
+    seriesMeta.eventIds = eventIds.slice();
+    if (ev.title && !seriesMeta.title) seriesMeta.title = ev.title;
+    if (ev.organiserGroupId && !seriesMeta.organiserGroupId) {
+      seriesMeta.organiserGroupId = ev.organiserGroupId;
+    }
+    if (ev.imageUrl && !seriesMeta.imageUrl) seriesMeta.imageUrl = ev.imageUrl;
+    if (ev.imagePosition && !seriesMeta.imagePosition) seriesMeta.imagePosition = ev.imagePosition;
+    persistSeriesMeta();
+  }
+
   async function expandSeriesEventIds(anchorEvent) {
     if (eventIds.length > 1) {
       persistSeriesMeta();
@@ -2795,24 +2821,69 @@
     return collectTiers();
   }
 
+  function findCachedOrganiserGroup(groupId) {
+    const id = String(groupId || '').trim();
+    if (!id) return null;
+    const fromList = function (groups) {
+      if (!Array.isArray(groups)) return null;
+      return (
+        groups.find(function (g) {
+          return String(g && g.id) === id;
+        }) || null
+      );
+    };
+    const embedBootstrap = window.HubOrganiserEmbedBootstrap;
+    if (embedBootstrap && embedBootstrap.readCache) {
+      const hit = fromList((embedBootstrap.readCache() || {}).groups);
+      if (hit) return hit;
+    }
+    if (paymentSetupState && Array.isArray(paymentSetupState.groups)) {
+      const hit = fromList(paymentSetupState.groups);
+      if (hit) return hit;
+    }
+    try {
+      const raw = sessionStorage.getItem(ORG_BOOTSTRAP_CACHE_KEY);
+      if (raw) {
+        const hit = fromList((JSON.parse(raw) || {}).groups);
+        if (hit) return hit;
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function applyGuestVisitSettingsFromGroup(group) {
+    if (!group) return;
+    organiserComplimentaryVisits = Number(group.complimentaryVisitsAllowed) || 0;
+    organiserComplimentaryVisitsScope =
+      group.complimentaryVisitsScope === 'across_groups' ? 'across_groups' : 'per_group';
+    organiserGroupName = String(group.name || '').trim();
+    const visitsEl = document.getElementById('ee-guest-visits-allowed');
+    if (visitsEl && organiserComplimentaryVisits > 0) {
+      visitsEl.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
+    }
+    setGuestVisitsScope(organiserComplimentaryVisitsScope);
+  }
+
   async function loadOrganiserGuestVisitSetting(groupId) {
     if (!groupId) {
       organiserComplimentaryVisits = 0;
       organiserComplimentaryVisitsScope = 'per_group';
       return;
     }
+    const cached = findCachedOrganiserGroup(groupId);
+    if (
+      cached &&
+      (cached.complimentaryVisitsAllowed != null || cached.complimentaryVisitsScope != null)
+    ) {
+      applyGuestVisitSettingsFromGroup(cached);
+      return;
+    }
     const { ok, data } = await api('/api/organiser/groups?id=' + encodeURIComponent(groupId));
     if (ok && data.group) {
-      organiserComplimentaryVisits = Number(data.group.complimentaryVisitsAllowed) || 0;
-      organiserComplimentaryVisitsScope =
-        data.group.complimentaryVisitsScope === 'across_groups' ? 'across_groups' : 'per_group';
-      organiserGroupName = String(data.group.name || '').trim();
+      applyGuestVisitSettingsFromGroup(data.group);
     }
-    const visitsEl = document.getElementById('ee-guest-visits-allowed');
-    if (visitsEl && organiserComplimentaryVisits > 0) {
-      visitsEl.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits)));
-    }
-    setGuestVisitsScope(organiserComplimentaryVisitsScope);
   }
 
   async function saveOrganiserGuestVisitsAllowed(groupId, allowed, scope) {
@@ -3688,33 +3759,43 @@
 
     const loading = window.organiserPageLoading;
     const bootWork = async () => {
+      // Start secondary fetches immediately so they overlap primary tickets/event load.
+      const earlyGroupId = String(seriesMeta.organiserGroupId || '').trim();
+      const paymentPromise = loadPaymentSetupState();
+      const guestPromise = earlyGroupId
+        ? loadOrganiserGuestVisitSetting(earlyGroupId)
+        : Promise.resolve();
+
       const loaded = await loadExistingData();
-      if (loaded.authFailed) return loaded;
+      if (loaded.authFailed) {
+        await Promise.allSettled([paymentPromise, guestPromise]);
+        return loaded;
+      }
 
       if (loaded.event) {
-        if (loaded.event.title && !seriesMeta.title) seriesMeta.title = loaded.event.title;
-        if (loaded.event.organiserGroupId && !seriesMeta.organiserGroupId) {
-          seriesMeta.organiserGroupId = loaded.event.organiserGroupId;
-        }
-        if (loaded.event.imageUrl && !seriesMeta.imageUrl) {
-          seriesMeta.imageUrl = loaded.event.imageUrl;
-        }
-        if (loaded.event.imagePosition && !seriesMeta.imagePosition) {
-          seriesMeta.imagePosition = loaded.event.imagePosition;
-        }
+        seedSeriesMetaFromLoadedEvent(loaded.event);
       }
 
       await expandSeriesEventIds(loaded.event);
       await hydrateSeriesEvents(loaded.event);
 
-      const secondary = [loadPaymentSetupState()];
-      if (seriesMeta.organiserGroupId) {
-        secondary.push(loadOrganiserGuestVisitSetting(seriesMeta.organiserGroupId));
+      // Do not block first paint on payment/roster — refresh UI when they finish.
+      const secondary = [paymentPromise, guestPromise];
+      const lateGroupId = String(seriesMeta.organiserGroupId || '').trim();
+      if (lateGroupId && lateGroupId !== earlyGroupId) {
+        secondary.push(loadOrganiserGuestVisitSetting(lateGroupId));
       }
       if (loaded.tickets && ticketsAreMembersOnlyEvent(loaded.tickets)) {
         secondary.push(loadMemberRosterStatus());
       }
-      await Promise.all(secondary);
+      Promise.allSettled(secondary).then(function () {
+        try {
+          syncGuestProgrammeNote();
+          updatePublishButton();
+        } catch {
+          /* ignore */
+        }
+      });
 
       return loaded;
     };
