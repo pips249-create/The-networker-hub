@@ -200,8 +200,6 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer {
   flex-shrink: 0;
   width: 100%;
   max-width: none;
-  position: relative;
-  z-index: 2;
 }
 
 body.hub-page-organiser.organiser-dashboard-page > #hub-site-footer .site-footer,
@@ -276,7 +274,7 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
   min-width: 720px;
 }
 
-/* Desktop: page scrolls; sticky nav + sidebar; full-bleed footer after content */
+/* Desktop: page scrolls with full-bleed footer; sidebar stretches with content (no sticky overlap) */
 @media (min-width: 769px) {
   html:has(body.hub-page-organiser.organiser-dashboard-page),
   html:has(body.hub-page-account.attendee-dashboard-page) {
@@ -316,7 +314,6 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
     align-items: stretch;
   }
 
-  /* Keep sidebar colour filling the row even when sticky nav is shorter than main */
   .organiser-dashboard-page .org-dashboard-layout {
     background: linear-gradient(
       to right,
@@ -337,15 +334,13 @@ body.hub-page-account.attendee-dashboard-page > #hub-site-footer .site-footer {
 
   .organiser-dashboard-page .org-sidebar,
   .attendee-dashboard-page .ad-sidebar {
-    position: sticky;
-    top: 72px;
-    align-self: flex-start;
+    position: relative;
+    align-self: stretch;
     flex-shrink: 0;
     height: auto;
-    max-height: calc(100dvh - 72px);
-    max-height: calc(100vh - 72px);
+    max-height: none;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: visible;
   }
 
   .organiser-dashboard-page .hub-side-nav--minimal,
