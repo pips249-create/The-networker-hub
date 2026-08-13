@@ -35,7 +35,7 @@
       '<h2 class="how-reviews-title" id="how-reviews-work-title">How reviews work</h2>' +
       '<div class="how-reviews-body">' +
       '<p>Reviews are sorted to surface the most useful feedback first — newer reviews, clearer comments, and ratings from verified bookings tend to appear higher.</p>' +
-      '<p>Only guests who booked through The Networker Hub can leave a review after attending. Organisers can reply publicly from their dashboard; replies show on their profile.</p>' +
+      '<p>Only guests who booked through The Networker Hub and attended can leave a review. Organisers can mark a no-show after the event so that person does not get a review email. Organisers can reply publicly from their dashboard; replies show on their profile.</p>' +
       '<p>We moderate reviews flagged for policy issues. Ranking badges on the Hub need a published profile, at least <strong>8 reviews</strong>, and <strong>10+ past-event ticket purchases</strong>. Groups are ranked by average rating, then by review rate (reviews ÷ past-event ticket purchases).</p>' +
       '<p><a class="how-reviews-more" href="/rankings">See this month’s leaderboard →</a></p>' +
       '</div>' +

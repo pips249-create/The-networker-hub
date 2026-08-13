@@ -219,6 +219,14 @@ async function loadEligibleAttendees(sb, eventId) {
   }
 
   let result = await fetch('full');
+  if (result.error && /no_show_at/i.test(String(result.error.message || ''))) {
+    const selectWithout = baseSelect.replace(/\n\s*no_show_at,/, '');
+    result = await sb
+      .from('registrations')
+      .select(selectWithout)
+      .eq('event_id', eventId)
+      .is('cancelled_at', null);
+  }
   if (result.error && /job_title|column/.test(String(result.error.message || ''))) {
     result = await fetch('legacy');
   }

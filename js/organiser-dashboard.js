@@ -5624,6 +5624,21 @@
     }
     if (archiveNote) archiveNote.hidden = filters.attendeesView !== 'archive';
     if (blockedNote) blockedNote.hidden = filters.attendeesView !== 'blocked';
+    const postEventNote = document.getElementById('attendees-post-event-note');
+    if (postEventNote) {
+      const selectedId = String(filters.attendeesEvent || 'all');
+      const selectedEvent =
+        selectedId && selectedId !== 'all'
+          ? (state.events || []).find((ev) => ev.id === selectedId)
+          : null;
+      const showPostEvent =
+        filters.attendeesView === 'active' &&
+        selectedEvent &&
+        (eventOccurrenceHasEnded(selectedEvent) ||
+          (eventOccurrenceRaw(selectedEvent) &&
+            new Date(eventOccurrenceRaw(selectedEvent)).getTime() <= Date.now()));
+      postEventNote.hidden = !showPostEvent;
+    }
     if (filterNote && (filters.attendeesView === 'archive' || filters.attendeesView === 'blocked')) {
       filterNote.hidden = true;
     }
@@ -5879,6 +5894,7 @@
     if (applicationStatus === 'Denied') {
       return filters.attendeesView === 'archive' ? 'Archived' : 'Application denied';
     }
+    if (a.isNoShow) return 'Did not attend';
     return 'Confirmed';
   }
 
@@ -5896,7 +5912,22 @@
     if (a.needsPayment) {
       return '<span class="org-badge org-badge-gold">Approved</span>';
     }
+    if (a.isNoShow) {
+      return '<span class="org-badge org-badge-archived">Did not attend</span>';
+    }
     return '<span class="org-badge org-badge-green">Confirmed</span>';
+  }
+
+  function attendeeEventHasStarted(a) {
+    const ev = (state.events || []).find((row) => row.id === a.eventId);
+    if (ev) {
+      const startRaw = eventOccurrenceRaw(ev);
+      const startMs = startRaw ? new Date(startRaw).getTime() : NaN;
+      if (!Number.isNaN(startMs) && startMs <= Date.now()) return true;
+      return eventOccurrenceHasEnded(ev);
+    }
+    const startMs = a.eventDate ? new Date(a.eventDate).getTime() : NaN;
+    return !Number.isNaN(startMs) && startMs <= Date.now();
   }
 
   function attendeePaidDisplay(a) {
@@ -5977,8 +6008,11 @@
       list = list.filter(
         (a) =>
           String(a.applicationStatus || 'Approved') === 'Approved' &&
-          !a.needsPayment
+          !a.needsPayment &&
+          !a.isNoShow
       );
+    } else if (filters.attendeesStatus === 'no_show') {
+      list = list.filter((a) => a.isNoShow);
     }
     if (filters.attendeesPendingOnly) {
       list = list.filter((a) => String(a.applicationStatus || '') === 'Pending');
@@ -6340,6 +6374,7 @@
       'Dietary requirements',
       'Accessibility requirements',
       'Paid',
+      'Did not attend',
       'Registered',
     ];
     const lines = rows.map((a) =>
@@ -6360,6 +6395,7 @@
         a.dietaryRequirements || '',
         a.accessibilityRequirements || '',
         a.amountDisplay || a.paymentStatus || '',
+        a.isNoShow ? 'Yes' : '',
         a.registeredAt,
       ]
         .map((c) => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"')
@@ -6623,6 +6659,17 @@
       : '<button type="button" class="org-inline-link org-attendee-block-btn" data-show-block-form="' +
         esc(a.id) +
         '">Block from events</button>';
+    const noShowAction = !attendeeEventHasStarted(a)
+      ? ''
+      : a.isNoShow
+        ? '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
+          '<button type="button" class="org-inline-link" data-mark-attended="' +
+          esc(a.id) +
+          '">They attended</button>'
+        : '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
+          '<button type="button" class="org-inline-link" data-mark-no-show="' +
+          esc(a.id) +
+          '">Didn\'t attend</button>';
     return (
       '<div class="org-attendee-row-actions" data-block-row="' +
       esc(a.id) +
@@ -6630,6 +6677,7 @@
       '<a class="org-inline-link org-attendee-live-link" href="' +
       esc(liveUrl) +
       '" target="_blank" rel="noopener">View live</a>' +
+      noShowAction +
       '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
       blockAction +
       '<div class="org-attendee-block-panel" hidden>' +
@@ -6791,6 +6839,32 @@
     if (!row) return;
     const panel = row.querySelector('.org-attendee-block-panel');
     if (panel) panel.hidden = true;
+  }
+
+  async function setAttendeeAttendance(registrationId, action) {
+    const attendee = state.attendeesAll.find((row) => row.id === registrationId);
+    const name = attendee ? attendee.name : 'this person';
+    const confirmMsg =
+      action === 'no_show'
+        ? 'Mark ' +
+          name +
+          ' as didn’t attend?\n\nThey will not get a review email and cannot leave a review for this event. Undo anytime if they did show up.'
+        : 'Mark ' + name + ' as attended? They will be able to leave a review for this event.';
+    if (!window.confirm(confirmMsg)) return;
+
+    const { ok: apiOk, data } = await api('/api/organiser/attendee-attendance', {
+      method: 'POST',
+      body: JSON.stringify({ registrationId, action }),
+    });
+    if (!apiOk || !data.ok) {
+      showOrganiserAlert(data.message || data.error || 'Could not update attendance.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    if (attendee) attendee.isNoShow = Boolean(data.isNoShow);
+    renderAttendees();
+    showOrganiserAlert(data.message || 'Attendance updated.', false);
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   async function resendApprovalEmail(registrationId) {
@@ -7078,6 +7152,8 @@
         tr.className = 'org-attendee-row-archived';
       } else if (a.isBlocked) {
         tr.className = 'org-attendee-row-is-blocked';
+      } else if (a.isNoShow) {
+        tr.className = 'org-attendee-row-no-show';
       }
       const isPendingApp = String(a.applicationStatus || '') === 'Pending';
       const registeredLabel =
@@ -16864,6 +16940,8 @@
         const cancelBlockBtn = e.target.closest('[data-cancel-block-attendee]');
         const unblockBtn = e.target.closest('[data-unblock-attendee]');
         const unblockBlockBtn = e.target.closest('[data-unblock-block]');
+        const noShowBtn = e.target.closest('[data-mark-no-show]');
+        const attendedBtn = e.target.closest('[data-mark-attended]');
         if (approveBtn) {
           reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
           return;
@@ -16919,6 +16997,14 @@
         }
         if (unblockBlockBtn) {
           unblockFromBlockList(unblockBlockBtn.getAttribute('data-unblock-block'));
+          return;
+        }
+        if (noShowBtn) {
+          setAttendeeAttendance(noShowBtn.getAttribute('data-mark-no-show'), 'no_show');
+          return;
+        }
+        if (attendedBtn) {
+          setAttendeeAttendance(attendedBtn.getAttribute('data-mark-attended'), 'attended');
         }
       });
     }

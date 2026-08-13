@@ -303,7 +303,9 @@
             var msg =
               data.error === 'not_eligible'
                 ? 'Only confirmed ticket holders can leave a review for this event.'
-                : data.error === 'review_already_submitted'
+                : data.error === 'did_not_attend'
+                  ? 'This review is only available to people who attended the event.'
+                  : data.error === 'review_already_submitted'
                   ? 'You have already reviewed this event.'
                   : data.error === 'event_not_finished'
                     ? 'You can leave a review after the event has finished.'

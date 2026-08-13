@@ -2417,6 +2417,7 @@
                 <option value="confirmed">Confirmed</option>
                 <option value="pending">Application pending</option>
                 <option value="awaiting_payment">Awaiting payment</option>
+                <option value="no_show">Did not attend</option>
               </select>
               <select id="filter-attendees-relationship" aria-label="Filter by organiser page relationship">
                 <option value="all">All attendees</option>
@@ -2463,6 +2464,9 @@
             <p class="org-attendees-filter-note" id="attendees-blocked-note" hidden>
               People blocked from booking this organiser page’s future events. Unblock anytime. Private notes stay on your side only.
               <button type="button" class="org-inline-link" id="btn-attendees-view-active-from-blocked">Back to attendees</button>
+            </p>
+            <p class="org-attendees-filter-note" id="attendees-post-event-note" hidden>
+              Mark anyone who didn’t attend so they don’t get a review email. Then send the attendee round-up from Communicate.
             </p>
             <p class="org-load-hint" id="attendees-load-hint" hidden>Loading attendees…</p>
             <p class="org-load-hint org-load-hint-error" id="attendees-load-error" hidden></p>
@@ -3635,7 +3639,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260813free0" defer></script>
-    <script src="../js/organiser-workspace-comfort.js?v=20260812ux3" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260813noshow1" defer></script>
+    <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

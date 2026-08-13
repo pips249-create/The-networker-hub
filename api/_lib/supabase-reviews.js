@@ -35,7 +35,7 @@ function isEligibleRegistration(reg) {
 }
 
 async function findRegistrationForReview(sb, attendeeId, eventId) {
-  const res = await sb
+  let res = await sb
     .from('registrations')
     .select('id, payment_status, application_status, no_show_at')
     .eq('attendee_id', attendeeId)
@@ -44,6 +44,17 @@ async function findRegistrationForReview(sb, attendeeId, eventId) {
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (res.error && /no_show_at|column/i.test(res.error.message || '')) {
+    res = await sb
+      .from('registrations')
+      .select('id, payment_status, application_status')
+      .eq('attendee_id', attendeeId)
+      .eq('event_id', eventId)
+      .neq('payment_status', 'Refunded')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }

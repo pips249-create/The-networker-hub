@@ -12449,9 +12449,11 @@
       opportunity_saved_search_match:
         'Sends when a new listing matches a member\u2019s saved opportunity search.',
       post_event_review_request:
-        'Events directory sponsor. Cron: ~24 hours after the event ends (or starts_at if no end time), to paid/free attendees who have not reviewed yet. Skips denied/cancelled. Window: events ended in the last 14 days.',
+        'Events directory sponsor. Cron: ~24 hours after the event ends (or starts_at if no end time), to paid/free attendees who have not reviewed yet. Skips denied/cancelled/no-shows. Window: events ended in the last 14 days.',
       post_event_review_reminder:
-        'Events directory sponsor. Cron: 5 days after the review request if they still have not left a review.',
+        'Events directory sponsor. Cron: 5 days after the review request if they still have not left a review. Skips no-shows.',
+      organiser_post_event_checklist:
+        'Organisers directory sponsor. Hourly cron after an event ends (48-hour window): mark no-shows before review emails, then send the attendee round-up.',
       password_reset:
         'Account security email for attendees, organisers, and admins (not attendee-only). Events, Organisers, and Business Opportunities main sponsors above the footer (no header banner). Reset link expires in 15 minutes.',
     };

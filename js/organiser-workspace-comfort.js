@@ -26,6 +26,7 @@
       steps: [
         'Filter by event to see who registered or applied.',
         'Approve or decline pending applications from the actions on each row.',
+        'After an event, mark anyone who didn’t attend so they don’t get a review email.',
         'Block someone from future events if needed — upcoming bookings with you are cancelled and refunded.',
         'Export when you need a spreadsheet for your records.',
       ],
