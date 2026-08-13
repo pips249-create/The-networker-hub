@@ -351,13 +351,8 @@ async function listOrganisersForAdmin(query) {
   else {
     if (featuredOnly) dbQuery = dbQuery.eq('featured', true);
     if (q) {
-      if (q.includes('@')) {
-        const needle = q.toLowerCase();
-        dbQuery = dbQuery.or(`email.ilike.%${needle}%,contact_email.ilike.%${needle}%`);
-      } else {
-        // Word-split + &/and synonym + light typo tolerance (edit distance ≤ 1 on 5+ letter terms).
-        dbQuery = applyIlikeSearch(dbQuery, q, ['name']);
-      }
+      // Name or contact email — word-split, &/and synonym, light typo tolerance.
+      dbQuery = applyIlikeSearch(dbQuery, q, ['name', 'email', 'contact_email']);
     }
     if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
     if (visibility === 'browse') {

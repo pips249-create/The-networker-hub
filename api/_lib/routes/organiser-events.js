@@ -422,6 +422,18 @@ module.exports = async function handler(req, res) {
       }
 
       const eventIds = events.map((e) => e.id);
+      if (auth.session && auth.session.impersonator && auth.session.impersonator.email) {
+        try {
+          const { logOutreachFromEventCreate } = require('../organiser-sales-outreach');
+          await logOutreachFromEventCreate({
+            adminEmail: auth.session.impersonator.email,
+            organiserId: groupId,
+            eventTitle: title,
+          });
+        } catch (logErr) {
+          console.warn('[organiser-events] outreach log', logErr && logErr.message ? logErr.message : logErr);
+        }
+      }
       return json(res, 201, {
         ok: true,
         event: events[0],

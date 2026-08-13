@@ -197,7 +197,7 @@
     },
     'sales-kit': {
       title: 'Organiser sales kit',
-      subtitle: 'Cheat sheets, decks, leave-behinds, and walkthrough tools for Catherine, Rosie & Jamie',
+      subtitle: 'Shared outreach log, cheat sheets, and walkthrough tools for Catherine, Rosie & Jamie',
     },
     sponsorship: {
       title: 'Ads & sponsors',
@@ -397,11 +397,11 @@
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
+        'Pin one agreed demo organiser at the top — everyone impersonates that group for live walkthroughs.',
+        'Log outreach first — or impersonate / list an event and it appears automatically so the others do not message the same group.',
         'Open your named cheat sheet before a walkthrough — print one A4 or keep it on your phone.',
-        'Use the standard sales deck for longer pitches; BMU / WIBN decks when presenting to those networks.',
-        'Follow the screen order on this page so demos stay consistent across the team.',
+        'Copy the 60-second Loom script and record once while clicking; share the Loom for onboarding.',
         'After the meeting, copy the follow-up email, personalise it, and send the leave-behind PDF.',
-        'Book setup calls via SavvyCal when they want help listing their first events.',
       ],
     },
     campaigns: {
@@ -16564,7 +16564,7 @@
       '<button type="button" id="group-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
       '<span id="group-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
-      '<input type="search" id="group-cleanup-search" placeholder="Search by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
+      '<input type="search" id="group-cleanup-search" placeholder="Search by name or email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(groupCleanupState.q) +
       '">' +
       '<select id="group-cleanup-visibility" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[12rem]" aria-label="Browse visibility">' +
@@ -22321,120 +22321,496 @@
       'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
       'Best wishes,\n{{sender}}';
 
+    var loomScript =
+      'Organiser walkthrough — ~60 seconds (record in Loom while clicking)\n\n' +
+      '1. Hook (say): “Ticketing built for UK networking groups — free to list, you keep 100% of the ticket price.”\n' +
+      '2. Open /events/ — show filters, map, Organisers tab.\n' +
+      '3. Open a public organiser page — reviews + upcoming meetings.\n' +
+      '4. Open an event page — guest visit + members-only tickets (no access codes).\n' +
+      '5. Impersonate the pinned demo organiser → organiser dashboard.\n' +
+      '6. Show Attendees (visit tracking), Promote (LinkedIn post), then mention attendee round-up.\n' +
+      '7. Close (say): “List autumn dates now. Public buying opens 1 September. Claim before then for Founding Organiser · 2026.”\n' +
+      '8. CTA: claim page + next 2–3 dates, or book SavvyCal.';
+
+    var outcomeLabels = {
+      interested: 'Interested',
+      listed: 'Listed / claimed',
+      follow_up: 'Follow up',
+      not_now: 'Not now',
+      other: 'Other',
+    };
+    var sourceLabels = {
+      manual: 'Typed in',
+      impersonate: 'Impersonated',
+      event_create: 'Listed event',
+    };
+
     main.innerHTML =
-      '<div class="space-y-5">' +
-      '<section class="admin-dash-section">' +
-      '<div class="admin-dash-section-head"><h3>Walkthrough cheat sheets</h3>' +
-      '<p>One A4 each — open on phone or print before a demo. Same talking points; named for Catherine, Rosie &amp; Jamie.</p></div>' +
-      '<div class="admin-dash-section-body">' +
-      '<div class="admin-shortcut-grid">' +
-      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#catherine" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Catherine</span>' +
-      '<span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
-      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#rosie" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Rosie</span>' +
-      '<span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
-      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#jamie" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Jamie</span>' +
-      '<span class="admin-shortcut-desc">Open &amp; print his sheet</span></a>' +
-      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">All three</span>' +
-      '<span class="admin-shortcut-desc">Print pack · /p-tnh-org-cheats-c8r3</span></a>' +
-      '</div></div></section>' +
-      '<section class="admin-dash-section">' +
-      '<div class="admin-dash-section-head"><h3>Decks &amp; leave-behinds</h3>' +
-      '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
-      '<div class="admin-dash-section-body">' +
-      '<div class="admin-shortcut-grid">' +
-      '<a class="admin-shortcut" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Standard sales deck</span>' +
-      '<span class="admin-shortcut-desc">Present fullscreen · objections included</span></a>' +
-      '<a class="admin-shortcut" href="/p-tnh-bmu-onboard-k7m2" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">BMU deck</span>' +
-      '<span class="admin-shortcut-desc">Business Mentoring University</span></a>' +
-      '<a class="admin-shortcut" href="/p-tnh-wibn-onboard-w9m3" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">WIBN deck</span>' +
-      '<span class="admin-shortcut-desc">Women in Business Network</span></a>' +
-      '<a class="admin-shortcut" href="/assets/guides/organiser-benefits-linkedin.pdf" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Benefits PDF</span>' +
-      '<span class="admin-shortcut-desc">Leave-behind / LinkedIn one-pager</span></a>' +
-      '<a class="admin-shortcut" href="/for-organisers" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Public for-organisers</span>' +
-      '<span class="admin-shortcut-desc">What they see on the website</span></a>' +
-      '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerHub/website-preview" target="_blank" rel="noopener">' +
-      '<span class="admin-shortcut-label">Book a setup call</span>' +
-      '<span class="admin-shortcut-desc">SavvyCal · Catherine / Rosie / Jamie</span></a>' +
-      '</div></div></section>' +
-      '<section class="admin-dash-section">' +
-      '<div class="admin-dash-section-head"><h3>Suggested demo order</h3>' +
-      '<p>Keep walkthroughs consistent across the team — ~15 minutes.</p></div>' +
-      '<div class="admin-dash-section-body">' +
-      '<ol class="list-decimal pl-5 space-y-2 text-sm text-slate-700">' +
-      '<li><strong>Hook</strong> — ticketing for UK networking groups; free to list; keep 100% of ticket price.</li>' +
-      '<li><strong>Discovery</strong> — open <a class="text-brand-700 font-semibold hover:underline" href="/events/" target="_blank" rel="noopener">/events/</a> (filters, map, organiser browse) then their public organiser page if claimed.</li>' +
-      '<li><strong>Event page &amp; tickets</strong> — guest visits, members-only tier, Category Exclusivity if relevant.</li>' +
-      '<li><strong>Workspace</strong> — impersonate or use a demo organiser: events, attendees, Promote (LinkedIn post), Revenue / Stripe.</li>' +
-      '<li><strong>Engage tools</strong> — visit tracking, name badges, attendee round-up email.</li>' +
-      '<li><strong>Soft launch</strong> — list now; public buying 1 Sept; Founding Organiser · 2026.</li>' +
-      '<li><strong>Close</strong> — claim page + list next 2–3 dates, or book SavvyCal.</li>' +
-      '</ol>' +
-      '<div class="mt-4 flex flex-wrap gap-2">' +
-      '<a href="#accounts/impersonate" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Impersonate for live demo</a>' +
-      '<a href="#cleanup/groups" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Fix / create listings</a>' +
-      '<a href="#analytics/insights" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Pitch open stats</a>' +
-      '<a href="#social/founding" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Founding organisers</a>' +
-      '</div></div></section>' +
-      '<section class="admin-dash-section">' +
-      '<div class="admin-dash-section-head"><h3>Lines to remember</h3>' +
-      '<p>Short answers when they push back.</p></div>' +
-      '<div class="admin-dash-section-body space-y-3 text-sm text-slate-700">' +
-      '<p><strong>“We’re on Eventbrite.”</strong> List both for a month — compare admin time and new bookings.</p>' +
-      '<p><strong>“Members won’t sign up.”</strong> Browse free; about two minutes only when they book.</p>' +
-      '<p><strong>“We have a CRM.”</strong> Keep it for renewals; Hub handles booking visibility and member rates.</p>' +
-      '<p><strong>“What’s the catch?”</strong> None on listing. Attendees pay 4.5% + 20p. Optional Premium Spotlight.</p>' +
-      '<p><strong>Pricing:</strong> Free to list · they receive the ticket price they set · free events need no Stripe.</p>' +
-      '</div></section>' +
-      '<section class="admin-dash-section">' +
-      '<div class="admin-dash-section-head"><h3>Post-demo follow-up email</h3>' +
-      '<p>Copy, swap <code class="text-xs">{{name}}</code> and <code class="text-xs">{{sender}}</code>, send with the benefits PDF.</p></div>' +
-      '<div class="admin-dash-section-body space-y-3">' +
-      '<textarea id="sales-kit-followup" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[220px]" readonly>' +
-      esc(followUp) +
-      '</textarea>' +
-      '<button type="button" id="sales-kit-copy-followup" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy follow-up email</button>' +
-      '<span id="sales-kit-copy-status" class="text-sm text-slate-500 ml-2" aria-live="polite"></span>' +
-      '</div></section>' +
+      '<div class="space-y-5" id="sales-kit-root">' +
+      '<p class="text-sm text-slate-500" id="sales-kit-status">Loading sales kit…</p>' +
       '</div>';
 
-    var copyBtn = document.getElementById('sales-kit-copy-followup');
-    var status = document.getElementById('sales-kit-copy-status');
-    var area = document.getElementById('sales-kit-followup');
-    if (copyBtn && area) {
-      copyBtn.addEventListener('click', function () {
-        var text = area.value || '';
-        function done(ok) {
-          if (status) status.textContent = ok ? 'Copied.' : 'Select the text and copy manually.';
-        }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(
-            function () {
-              done(true);
-            },
-            function () {
-              done(false);
-            }
-          );
-        } else {
-          area.focus();
-          area.select();
-          try {
-            done(document.execCommand('copy'));
-          } catch (e) {
+    var root = document.getElementById('sales-kit-root');
+    var state = {
+      demoOrganiser: null,
+      internalCandidates: [],
+      demos: [],
+      search: [],
+    };
+
+    function copyText(text, statusEl, okMsg) {
+      function done(ok) {
+        if (statusEl) statusEl.textContent = ok ? okMsg || 'Copied.' : 'Select the text and copy manually.';
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () {
+            done(true);
+          },
+          function () {
             done(false);
           }
+        );
+        return;
+      }
+      done(false);
+    }
+
+    function paint() {
+      if (!root) return;
+      var demo = state.demoOrganiser;
+      var demos = state.demos || [];
+      var today = new Date().toISOString().slice(0, 10);
+
+      function logSectionHtml() {
+        return (
+        '<section class="admin-dash-section" id="sales-kit-outreach">' +
+        '<div class="admin-dash-section-head"><h3>Who we spoke to</h3>' +
+        '<p>Type a note, or it logs itself when you impersonate a group or list an event for them — e.g. Jamie listed BMUK, so Rosie and Catherine can see it.</p></div>' +
+        '<div class="admin-dash-section-body space-y-4">' +
+        '<form id="sales-kit-demo-form" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 bg-slate-50 border border-slate-200 rounded-xl p-4">' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-at">Date</label>' +
+        '<input id="sales-kit-shown-at" type="date" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(today) +
+        '" /></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-by">Who spoke to them</label>' +
+        '<select id="sales-kit-shown-by" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+        '<option>Catherine</option><option>Rosie</option><option>Jamie</option><option>Other</option></select></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-outcome">Outcome</label>' +
+        '<select id="sales-kit-outcome" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+        '<option value="follow_up">Follow up</option>' +
+        '<option value="interested">Interested</option>' +
+        '<option value="listed">Listed / claimed</option>' +
+        '<option value="not_now">Not now</option>' +
+        '<option value="other">Other</option></select></div>' +
+        '<div class="md:col-span-2 lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-org-name">Group / contact</label>' +
+        '<input id="sales-kit-org-name" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="e.g. BMUK" /></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-org-email">Email</label>' +
+        '<input id="sales-kit-org-email" type="email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="optional" /></div>' +
+        '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-notes">Notes</label>' +
+        '<input id="sales-kit-notes" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Spoke to Sam — interested, sending PDF. Don’t contact again this week." /></div>' +
+        '<div class="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-2">' +
+        '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Log conversation</button>' +
+        '<span id="sales-kit-log-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
+        '</div></form>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-log-filter">Check before you message</label>' +
+        '<input id="sales-kit-log-filter" type="search" class="w-full max-w-md rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Search BMUK, a name, or email…" /></div>' +
+        (demos.length
+          ? adminTableScroll(
+              '<table class="w-full text-sm" id="sales-kit-log-table"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+                '<tr><th class="px-3 py-2 text-left">Date</th><th class="px-3 py-2 text-left">Who</th><th class="px-3 py-2 text-left">Group</th><th class="px-3 py-2 text-left">How</th><th class="px-3 py-2 text-left">Outcome</th><th class="px-3 py-2 text-left">Notes</th><th class="px-3 py-2"></th></tr></thead><tbody>' +
+                demos
+                  .map(function (d) {
+                    var hay = [d.organiserName, d.organiserEmail, d.shownBy, d.notes, d.outcome, d.source]
+                      .join(' ')
+                      .toLowerCase();
+                    return (
+                      '<tr class="border-t border-slate-100 align-top sales-kit-log-row" data-hay="' +
+                      attrEsc(hay) +
+                      '">' +
+                      '<td class="px-3 py-2 whitespace-nowrap">' +
+                      esc(d.shownAt || '—') +
+                      '</td>' +
+                      '<td class="px-3 py-2">' +
+                      esc(d.shownBy) +
+                      '</td>' +
+                      '<td class="px-3 py-2"><div class="font-medium">' +
+                      esc(d.organiserName) +
+                      '</div>' +
+                      (d.organiserEmail
+                        ? '<div class="text-xs text-slate-500">' + esc(d.organiserEmail) + '</div>'
+                        : '') +
+                      '</td>' +
+                      '<td class="px-3 py-2 text-slate-600">' +
+                      esc(sourceLabels[d.source] || 'Typed in') +
+                      '</td>' +
+                      '<td class="px-3 py-2">' +
+                      esc(outcomeLabels[d.outcome] || d.outcome) +
+                      '</td>' +
+                      '<td class="px-3 py-2 text-slate-600 max-w-[18rem]">' +
+                      esc(d.notes || '—') +
+                      '</td>' +
+                      '<td class="px-3 py-2 text-right"><button type="button" class="sales-kit-delete-demo text-xs font-semibold text-red-700 hover:underline" data-id="' +
+                      attrEsc(d.id) +
+                      '">Remove</button></td></tr>'
+                    );
+                  })
+                  .join('') +
+                '</tbody></table>'
+            )
+          : '<p class="text-sm text-slate-500">Nothing logged yet. Add BMUK (or anyone you have spoken to) so the others can see it.</p>') +
+        '</div></section>'
+        );
+      }
+
+      root.innerHTML =
+        logSectionHtml() +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Agreed demo organiser</h3>' +
+        '<p>One shared group for live walkthroughs — keep events, tickets, and Promote looking polished.</p></div>' +
+        '<div class="admin-dash-section-body space-y-4">' +
+        (demo
+          ? '<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex flex-wrap items-start justify-between gap-3">' +
+            '<div class="min-w-0">' +
+            '<p class="font-semibold text-emerald-950">' +
+            esc(demo.name) +
+            '</p>' +
+            '<p class="text-sm text-emerald-900/80 mt-1">' +
+            esc(demo.email || 'No email on profile') +
+            (demo.slug ? ' · /organisers/' + esc(demo.slug) : '') +
+            '</p></div>' +
+            '<div class="flex flex-wrap gap-2">' +
+            '<button type="button" id="sales-kit-impersonate-demo" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900"' +
+            (demo.email || demo.id ? '' : ' disabled') +
+            '>Impersonate → dashboard</button>' +
+            (demo.slug
+              ? '<a class="rounded-lg border border-emerald-300 bg-white text-sm font-semibold px-3 py-2 text-emerald-950 hover:bg-emerald-100" href="/organisers/' +
+                attrEsc(demo.slug) +
+                '" target="_blank" rel="noopener">Public page</a>'
+              : '') +
+            '<button type="button" id="sales-kit-clear-demo" class="rounded-lg border border-slate-300 bg-white text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Unpin</button>' +
+            '</div></div>'
+          : '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
+            '<p class="font-semibold">No demo organiser pinned yet</p>' +
+            '<p class="mt-1">Search below and set one group the whole team uses for demos. It will also be marked internal so it stays out of public founding strips.</p>' +
+            '</div>') +
+        '<div class="grid gap-3 md:grid-cols-[1fr_auto] items-end">' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-demo-q">Find a group to pin</label>' +
+        '<input id="sales-kit-demo-q" type="search" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Name or email…" /></div>' +
+        '<button type="button" id="sales-kit-demo-search" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Search</button>' +
+        '</div>' +
+        '<div id="sales-kit-demo-results" class="text-sm text-slate-600"></div>' +
+        ((state.internalCandidates || []).length
+          ? '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Internal groups</p>' +
+            '<div class="flex flex-wrap gap-2">' +
+            state.internalCandidates
+              .map(function (o) {
+                return (
+                  '<button type="button" class="sales-kit-pin-org rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-id="' +
+                  attrEsc(o.id) +
+                  '">' +
+                  esc(o.name) +
+                  (o.isWalkthroughDemo ? ' · pinned' : '') +
+                  '</button>'
+                );
+              })
+              .join('') +
+            '</div></div>'
+          : '') +
+        '</div></section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Walkthrough cheat sheets</h3>' +
+        '<p>One A4 each — open on phone or print before a demo.</p></div>' +
+        '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
+        '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#catherine" target="_blank" rel="noopener"><span class="admin-shortcut-label">Catherine</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
+        '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#rosie" target="_blank" rel="noopener"><span class="admin-shortcut-label">Rosie</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
+        '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#jamie" target="_blank" rel="noopener"><span class="admin-shortcut-label">Jamie</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
+        '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3" target="_blank" rel="noopener"><span class="admin-shortcut-label">All three</span><span class="admin-shortcut-desc">Print pack</span></a>' +
+        '</div></div></section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Decks &amp; leave-behinds</h3>' +
+        '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
+        '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
+        '<a class="admin-shortcut" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener"><span class="admin-shortcut-label">Standard sales deck</span><span class="admin-shortcut-desc">Present fullscreen</span></a>' +
+        '<a class="admin-shortcut" href="/p-tnh-bmu-onboard-k7m2" target="_blank" rel="noopener"><span class="admin-shortcut-label">BMU deck</span><span class="admin-shortcut-desc">Business Mentoring University</span></a>' +
+        '<a class="admin-shortcut" href="/p-tnh-wibn-onboard-w9m3" target="_blank" rel="noopener"><span class="admin-shortcut-label">WIBN deck</span><span class="admin-shortcut-desc">Women in Business Network</span></a>' +
+        '<a class="admin-shortcut" href="/assets/guides/organiser-benefits-linkedin.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Benefits PDF</span><span class="admin-shortcut-desc">Leave-behind</span></a>' +
+        '<a class="admin-shortcut" href="/for-organisers" target="_blank" rel="noopener"><span class="admin-shortcut-label">Public for-organisers</span><span class="admin-shortcut-desc">Website page</span></a>' +
+        '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerHub/website-preview" target="_blank" rel="noopener"><span class="admin-shortcut-label">Book a setup call</span><span class="admin-shortcut-desc">SavvyCal</span></a>' +
+        '</div></div></section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>60-second Loom script</h3>' +
+        '<p>Record once while clicking this path — share the Loom with anyone new to demos.</p></div>' +
+        '<div class="admin-dash-section-body space-y-3">' +
+        '<textarea id="sales-kit-loom" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[200px]" readonly>' +
+        esc(loomScript) +
+        '</textarea>' +
+        '<div class="flex flex-wrap gap-2 items-center">' +
+        '<button type="button" id="sales-kit-copy-loom" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy Loom script</button>' +
+        '<a href="https://www.loom.com/looms/videos" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50" target="_blank" rel="noopener">Open Loom</a>' +
+        '<span id="sales-kit-loom-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
+        '</div>' +
+        '<ol class="list-decimal pl-5 space-y-1.5 text-sm text-slate-700">' +
+        '<li><strong>Hook</strong> — UK networking ticketing; free to list; keep 100%.</li>' +
+        '<li><strong>Discovery</strong> — <a class="text-brand-700 font-semibold hover:underline" href="/events/" target="_blank" rel="noopener">/events/</a> filters, map, organiser browse.</li>' +
+        '<li><strong>Event page</strong> — guest visits + members-only tickets.</li>' +
+        '<li><strong>Workspace</strong> — impersonate the pinned demo organiser.</li>' +
+        '<li><strong>Engage</strong> — visit tracking, LinkedIn Promote, attendee round-up.</li>' +
+        '<li><strong>Close</strong> — list now; 1 Sept public buying; Founding Organiser · 2026.</li>' +
+        '</ol></div></section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Lines to remember</h3>' +
+        '<p>Short answers when they push back.</p></div>' +
+        '<div class="admin-dash-section-body space-y-3 text-sm text-slate-700">' +
+        '<p><strong>“We’re on Eventbrite.”</strong> List both for a month — compare admin time and new bookings.</p>' +
+        '<p><strong>“Members won’t sign up.”</strong> Browse free; about two minutes only when they book.</p>' +
+        '<p><strong>“We have a CRM.”</strong> Keep it for renewals; Hub handles booking visibility and member rates.</p>' +
+        '<p><strong>“What’s the catch?”</strong> None on listing. Attendees pay 4.5% + 20p. Optional Premium Spotlight.</p>' +
+        '</div></section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Post-demo follow-up email</h3>' +
+        '<p>Copy, swap <code class="text-xs">{{name}}</code> and <code class="text-xs">{{sender}}</code>, send with the benefits PDF.</p></div>' +
+        '<div class="admin-dash-section-body space-y-3">' +
+        '<textarea id="sales-kit-followup" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[200px]" readonly>' +
+        esc(followUp) +
+        '</textarea>' +
+        '<button type="button" id="sales-kit-copy-followup" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy follow-up email</button>' +
+        '<span id="sales-kit-copy-status" class="text-sm text-slate-500 ml-2" aria-live="polite"></span>' +
+        '</div></section>';
+
+      bindPainted();
+    }
+
+    function renderSearchResults(rows) {
+      var box = document.getElementById('sales-kit-demo-results');
+      if (!box) return;
+      if (!(rows || []).length) {
+        box.innerHTML = '<p class="text-slate-500">No groups matched.</p>';
+        return;
+      }
+      box.innerHTML =
+        '<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">' +
+        rows
+          .map(function (o) {
+            return (
+              '<li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2">' +
+              '<div class="min-w-0"><p class="font-medium text-slate-900">' +
+              esc(o.name) +
+              '</p><p class="text-xs text-slate-500">' +
+              esc(o.email || 'No email') +
+              '</p></div>' +
+              '<button type="button" class="sales-kit-pin-org rounded-lg bg-brand-700 text-white text-xs font-semibold px-2.5 py-1.5 hover:bg-brand-900" data-id="' +
+              attrEsc(o.id) +
+              '">Pin as demo</button></li>'
+            );
+          })
+          .join('') +
+        '</ul>';
+    }
+
+    function pinOrganiser(id) {
+      adminPost('/api/admin/sales-kit', { action: 'set_demo_organiser', organiserId: id }).then(
+        function (data) {
+          if (!data || !data.ok) {
+            window.alert((data && data.message) || 'Could not pin demo organiser.');
+            return;
+          }
+          state.demoOrganiser = data.demoOrganiser || null;
+          load();
         }
+      );
+    }
+
+    function bindPainted() {
+      var followBtn = document.getElementById('sales-kit-copy-followup');
+      var followStatus = document.getElementById('sales-kit-copy-status');
+      var followArea = document.getElementById('sales-kit-followup');
+      if (followBtn && followArea) {
+        followBtn.addEventListener('click', function () {
+          copyText(followArea.value || '', followStatus);
+        });
+      }
+
+      var loomBtn = document.getElementById('sales-kit-copy-loom');
+      var loomStatus = document.getElementById('sales-kit-loom-status');
+      var loomArea = document.getElementById('sales-kit-loom');
+      if (loomBtn && loomArea) {
+        loomBtn.addEventListener('click', function () {
+          copyText(loomArea.value || '', loomStatus);
+        });
+      }
+
+      var searchBtn = document.getElementById('sales-kit-demo-search');
+      var searchInput = document.getElementById('sales-kit-demo-q');
+      function runSearch() {
+        var q = searchInput ? String(searchInput.value || '').trim() : '';
+        if (!q) {
+          renderSearchResults([]);
+          return;
+        }
+        adminGet('/api/admin/sales-kit?q=' + encodeURIComponent(q)).then(function (data) {
+          renderSearchResults((data && data.search) || []);
+        });
+      }
+      if (searchBtn) searchBtn.addEventListener('click', runSearch);
+      if (searchInput) {
+        searchInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            runSearch();
+          }
+        });
+      }
+
+      root.querySelectorAll('.sales-kit-pin-org').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          pinOrganiser(btn.getAttribute('data-id'));
+        });
+      });
+
+      var clearBtn = document.getElementById('sales-kit-clear-demo');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          if (!window.confirm('Unpin the demo organiser?')) return;
+          adminPost('/api/admin/sales-kit', { action: 'clear_demo_organiser' }).then(function (data) {
+            if (!data || !data.ok) {
+              window.alert((data && data.message) || 'Could not unpin.');
+              return;
+            }
+            state.demoOrganiser = null;
+            paint();
+          });
+        });
+      }
+
+      var impBtn = document.getElementById('sales-kit-impersonate-demo');
+      if (impBtn && state.demoOrganiser) {
+        impBtn.addEventListener('click', function () {
+          impBtn.disabled = true;
+          adminPost('/api/admin/impersonate', {
+            organiserId: state.demoOrganiser.id,
+            email: state.demoOrganiser.email,
+            view: 'organiser',
+            provision: true,
+          }).then(function (data) {
+            if (!data || !data.ok) {
+              window.alert((data && data.message) || 'Could not impersonate.');
+              impBtn.disabled = false;
+              return;
+            }
+            try {
+              sessionStorage.removeItem('hub_nav_session_v1');
+            } catch (e) {
+              /* ignore */
+            }
+            window.location.href =
+              String(data.redirect || '/organiser/').charAt(0) === '/'
+                ? String(data.redirect || '/organiser/')
+                : '../' + String(data.redirect || '/organiser/');
+          });
+        });
+      }
+
+      var filterInput = document.getElementById('sales-kit-log-filter');
+      if (filterInput) {
+        filterInput.addEventListener('input', function () {
+          var q = String(filterInput.value || '').trim().toLowerCase();
+          root.querySelectorAll('.sales-kit-log-row').forEach(function (row) {
+            var hay = String(row.getAttribute('data-hay') || '');
+            row.hidden = Boolean(q) && hay.indexOf(q) === -1;
+          });
+        });
+      }
+
+      var form = document.getElementById('sales-kit-demo-form');
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var statusEl = document.getElementById('sales-kit-log-status');
+          var payload = {
+            action: 'add_demo',
+            shownAt: document.getElementById('sales-kit-shown-at').value,
+            shownBy: document.getElementById('sales-kit-shown-by').value,
+            outcome: document.getElementById('sales-kit-outcome').value,
+            organiserName: document.getElementById('sales-kit-org-name').value,
+            organiserEmail: document.getElementById('sales-kit-org-email').value,
+            notes: document.getElementById('sales-kit-notes').value,
+          };
+          var nameKey = String(payload.organiserName || '').trim().toLowerCase();
+          var existing = (state.demos || []).find(function (d) {
+            return String(d.organiserName || '').trim().toLowerCase() === nameKey;
+          });
+          if (
+            existing &&
+            !window.confirm(
+              existing.shownBy +
+                ' already logged ' +
+                existing.organiserName +
+                ' on ' +
+                (existing.shownAt || 'an earlier date') +
+                '. Add another note anyway?'
+            )
+          ) {
+            return;
+          }
+          if (statusEl) statusEl.textContent = 'Saving…';
+          adminPost('/api/admin/sales-kit', payload).then(function (data) {
+            if (!data || !data.ok) {
+              if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
+              return;
+            }
+            if (statusEl) statusEl.textContent = 'Logged.';
+            load();
+          });
+        });
+      }
+
+      root.querySelectorAll('.sales-kit-delete-demo').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!window.confirm('Remove this walkthrough log?')) return;
+          adminPost('/api/admin/sales-kit', {
+            action: 'delete_demo',
+            id: btn.getAttribute('data-id'),
+          }).then(function (data) {
+            if (!data || !data.ok) {
+              window.alert((data && data.message) || 'Could not remove.');
+              return;
+            }
+            load();
+          });
+        });
       });
     }
+
+    function load() {
+      adminGet('/api/admin/sales-kit').then(function (data) {
+        if (!data || data.ok === false || data.error) {
+          if (root) {
+            root.innerHTML =
+              '<div class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-950">' +
+              '<p class="font-semibold">Sales kit data not ready</p>' +
+              '<p class="text-sm mt-2">' +
+              esc(
+                (data && data.message) ||
+                  'Run migration 252_organiser_sales_kit.sql in Supabase, then refresh.'
+              ) +
+              '</p>' +
+              '<p class="text-sm mt-3">Cheat sheets and decks still work:</p>' +
+              '<div class="mt-3 flex flex-wrap gap-2">' +
+              '<a class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2" href="/p-tnh-org-cheats-c8r3" target="_blank" rel="noopener">Cheat sheets</a>' +
+              '<a class="rounded-lg border border-amber-300 bg-white text-sm font-semibold px-3 py-2" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener">Sales deck</a>' +
+              '</div></div>';
+          }
+          return;
+        }
+        state.demoOrganiser = data.demoOrganiser || null;
+        state.internalCandidates = data.internalCandidates || [];
+        state.demos = data.demos || [];
+        paint();
+      });
+    }
+
+    load();
   }
 
   var routes = {

@@ -835,6 +835,18 @@ module.exports = async function handler(req, res) {
           events = result.events;
         }
 
+        try {
+          const { logOutreachFromEventCreate } = require('../organiser-sales-outreach');
+          const adminSession = sessionFromRequest(req);
+          await logOutreachFromEventCreate({
+            adminEmail: adminSession && adminSession.email,
+            organiserId,
+            eventTitle: title,
+          });
+        } catch (logErr) {
+          console.warn('[admin-events] outreach log', logErr && logErr.message ? logErr.message : logErr);
+        }
+
         return json(res, 201, {
           ok: true,
           event: events[0],

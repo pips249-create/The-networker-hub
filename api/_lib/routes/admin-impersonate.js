@@ -159,6 +159,54 @@ module.exports = async function handler(req, res) {
       'security'
     );
 
+    try {
+      const { logOutreachFromImpersonate } = require('../organiser-sales-outreach');
+      const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+      if (isSupabaseConfigured()) {
+        const sb = getSupabaseAdmin();
+        let orgId = organiserIdsToClaim[0] || organiserId || '';
+        let orgName = target.name || '';
+        let orgEmail = email;
+        if (orgId) {
+          const { data: orgRow } = await sb
+            .from('organisers')
+            .select('id, name, email, contact_email, is_internal, is_walkthrough_demo')
+            .eq('id', orgId)
+            .maybeSingle();
+          if (orgRow) {
+            orgName = orgRow.name || orgName;
+            orgEmail = String(orgRow.contact_email || orgRow.email || orgEmail || '')
+              .trim()
+              .toLowerCase();
+          }
+        } else {
+          const { data: byEmail } = await sb
+            .from('organisers')
+            .select('id, name, email, contact_email, is_internal, is_walkthrough_demo')
+            .or('email.eq.' + email + ',contact_email.eq.' + email)
+            .limit(1)
+            .maybeSingle();
+          if (byEmail) {
+            orgId = byEmail.id;
+            orgName = byEmail.name || orgName;
+            orgEmail = String(byEmail.contact_email || byEmail.email || orgEmail || '')
+              .trim()
+              .toLowerCase();
+          }
+        }
+        if (orgId) {
+          await logOutreachFromImpersonate({
+            adminEmail: session.email,
+            organiserId: orgId,
+            organiserName: orgName,
+            organiserEmail: orgEmail,
+          });
+        }
+      }
+    } catch (logErr) {
+      console.warn('[impersonate] outreach log', logErr && logErr.message ? logErr.message : logErr);
+    }
+
     const redirect =
       body.redirect ||
       (body.view === 'organiser'
