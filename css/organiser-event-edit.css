@@ -1023,6 +1023,12 @@ a.ee-wizard-link:hover {
 .ee-tier-row-expanded .ee-tier-price-row,
 .ee-tier-row-expanded .ee-tier-sale-row {
   margin-top: 4px;
+  align-items: start;
+}
+
+.ee-tier-row-expanded .ee-hint--below {
+  margin-top: 6px;
+  margin-bottom: 0;
 }
 
 .ee-tier-row-expanded .ee-sale-custom-wrap {
@@ -1431,6 +1437,7 @@ body.ee-step2-modal-open {
 #ee-tickets-form .ee-card[hidden],
 #ee-paid-setup-wrap[hidden],
 #ee-tickets-actions[hidden],
+#ee-tickets-submit[hidden],
 #ee-public-tickets-wrap[hidden],
 #ee-members-only-event-wrap[hidden] {
   display: none !important;

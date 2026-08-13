@@ -2,6 +2,16 @@
  * Organiser dashboard — groups, events, ticket types (Supabase via /api/organiser/*).
  */
 (function () {
+  // Never nest the full workspace inside the event-list drawer iframe.
+  try {
+    if (window.self !== window.top) {
+      window.top.location.href = window.location.href;
+      return;
+    }
+  } catch (err) {
+    /* cross-origin */
+  }
+
   const ORG_PAGE_SIZE = 10;
   const EVENTS_FETCH_SIZE = 100;
   const DESCRIPTION_MAX_WORDS = 500;
@@ -6602,14 +6612,15 @@
         '<button type="button" class="org-application-resend-approval-btn" data-resend-approval-email="' +
         esc(a.id) +
         '">Resend payment email</button>' +
-        '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
+        '<div class="org-attendee-row-actions org-attendee-row-actions--nested">' +
         (a.isBlocked
-          ? '<button type="button" class="org-inline-link org-attendee-unblock-btn" data-unblock-attendee="' +
+          ? '<button type="button" class="org-attendee-action-btn org-attendee-action-btn--muted" data-unblock-attendee="' +
             esc(a.id) +
             '">Unblock</button>'
-          : '<button type="button" class="org-inline-link org-attendee-block-btn" data-show-block-form="' +
+          : '<button type="button" class="org-attendee-action-btn org-attendee-action-btn--danger" data-show-block-form="' +
             esc(a.id) +
             '">Block from events</button>') +
+        '</div>' +
         '<div class="org-attendee-block-panel" hidden>' +
         '<label class="org-application-deny-label" for="block-note-' +
         esc(a.id) +
@@ -6653,21 +6664,19 @@
     const liveUrl = attendeeEventPublicUrl(a);
     const blockPanelId = 'block-note-' + esc(a.id);
     const blockAction = a.isBlocked
-      ? '<button type="button" class="org-inline-link org-attendee-unblock-btn" data-unblock-attendee="' +
+      ? '<button type="button" class="org-attendee-action-btn org-attendee-action-btn--muted" data-unblock-attendee="' +
         esc(a.id) +
         '">Unblock</button>'
-      : '<button type="button" class="org-inline-link org-attendee-block-btn" data-show-block-form="' +
+      : '<button type="button" class="org-attendee-action-btn org-attendee-action-btn--danger" data-show-block-form="' +
         esc(a.id) +
         '">Block from events</button>';
     const noShowAction = !attendeeEventHasStarted(a)
       ? ''
       : a.isNoShow
-        ? '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
-          '<button type="button" class="org-inline-link" data-mark-attended="' +
+        ? '<button type="button" class="org-attendee-action-btn" data-mark-attended="' +
           esc(a.id) +
           '">They attended</button>'
-        : '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
-          '<button type="button" class="org-inline-link" data-mark-no-show="' +
+        : '<button type="button" class="org-attendee-action-btn" data-mark-no-show="' +
           esc(a.id) +
           '">Didn\'t attend</button>';
     return (
@@ -6677,9 +6686,10 @@
       '<a class="org-inline-link org-attendee-live-link" href="' +
       esc(liveUrl) +
       '" target="_blank" rel="noopener">View live</a>' +
-      noShowAction +
-      '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
+      (noShowAction ? '<div class="org-attendee-row-actions-secondary">' + noShowAction + '</div>' : '') +
+      '<div class="org-attendee-row-actions-secondary">' +
       blockAction +
+      '</div>' +
       '<div class="org-attendee-block-panel" hidden>' +
       '<label class="org-application-deny-label" for="' +
       blockPanelId +
@@ -17545,6 +17555,11 @@
       if (e.data && e.data.type === 'hub-event-goto-edit') {
         const editId = e.data.eventId || '';
         if (editId) openEventEditorDrawer(editId, { fromLocation: true });
+        return;
+      }
+      if (e.data && e.data.type === 'hub-open-group-editor') {
+        closeEventEditorDrawer();
+        openGroupEditorDrawer();
       }
     });
 

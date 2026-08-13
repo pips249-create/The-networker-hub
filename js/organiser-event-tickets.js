@@ -971,7 +971,8 @@
     });
   }
 
-  let step2Confirmed = false;
+  let step2Confirmed = false; // Step 1 (door) done
+  let payHowConfirmed = false; // Step 2 (how you get paid) done
   let step2Home = null;
 
   function attendanceModeLabel() {
@@ -1047,6 +1048,7 @@
     wrap.appendChild(summary);
     document.getElementById('ee-attendance-change')?.addEventListener('click', function () {
       step2Confirmed = false;
+      payHowConfirmed = false;
       showAlert('');
       syncAttendanceStepUi();
       hideLaterTicketSteps();
@@ -1057,6 +1059,7 @@
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryPanel) categoryPanel.hidden = true;
       if (payHowPanel) payHowPanel.hidden = true;
+      syncPayHowContinueUi();
       syncTicketStepLabels();
       wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
@@ -1112,19 +1115,65 @@
     const paidWrap = document.getElementById('ee-paid-setup-wrap');
     const attendeeExtras = document.getElementById('ee-attendee-extras-card');
     const actions = document.getElementById('ee-tickets-actions');
+    const ticketsPanel = document.getElementById('ee-panel-tickets');
+    const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
     if (optionalExtras) optionalExtras.hidden = true;
     if (paidWrap) paidWrap.hidden = true;
     if (attendeeExtras) attendeeExtras.hidden = true;
     if (actions) actions.hidden = true;
+    if (ticketsPanel) ticketsPanel.hidden = true;
+    if (categoryPanel) categoryPanel.hidden = true;
     document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
       el.hidden = true;
     });
   }
 
-  /** After Step 1 door choice — show pay-how + tickets inline (no popup). */
+  function syncPayHowContinueUi() {
+    const next = document.getElementById('ee-pay-how-next');
+    if (!next) return;
+    next.hidden = !step2Confirmed || payHowConfirmed;
+  }
+
+  /** After Step 1 door choice — show pay-how only until they continue. */
+  function revealPayHowStep() {
+    hideLaterTicketSteps();
+    const payHowPanel = document.getElementById('ee-panel-pay-how');
+    if (payHowPanel) payHowPanel.hidden = false;
+    syncPayHowUi();
+    syncGuestProgrammeMount();
+    syncHubMembershipMount();
+    syncAttendanceStepUi();
+    syncPayHowContinueUi();
+    syncTicketStepLabels();
+    updatePublishButton();
+  }
+
+  /** After Step 1 door choice — show pay-how only (ticket types wait for Step 2 continue). */
   function confirmStep1AndRevealSteps() {
     showAlert('');
     step2Confirmed = true;
+    payHowConfirmed = false;
+    if (isMembershipOnlyPayHow()) {
+      if (guestProgrammeEnabled()) setAttendanceMode('membership_meeting');
+      else {
+        setMembersOnlyEventEnabled(true);
+        setAttendanceMode('tickets');
+      }
+    } else {
+      setAttendanceMode(resolveModeFromDoorAndPayHow());
+    }
+    revealPayHowStep();
+    const focusEl = document.getElementById('ee-panel-pay-how');
+    try {
+      focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function confirmPayHowAndRevealRest() {
+    showAlert('');
+    payHowConfirmed = true;
     if (isMembershipOnlyPayHow()) {
       if (guestProgrammeEnabled()) setAttendanceMode('membership_meeting');
       else {
@@ -1135,7 +1184,7 @@
       setAttendanceMode(resolveModeFromDoorAndPayHow());
     }
     revealPostStep2();
-    const focusEl = document.getElementById('ee-panel-pay-how') || activeStep2Panel();
+    const focusEl = activeStep2Panel() || document.getElementById('ee-panel-tickets');
     try {
       focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
@@ -1154,10 +1203,12 @@
     if (modal) modal.hidden = true;
     if (confirm) {
       step2Confirmed = true;
+      payHowConfirmed = true;
       showAlert('');
       revealPostStep2();
     } else {
       step2Confirmed = false;
+      payHowConfirmed = false;
       hideLaterTicketSteps();
       const ticketsPanel = document.getElementById('ee-panel-tickets');
       const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
@@ -1165,6 +1216,7 @@
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryPanel) categoryPanel.hidden = true;
       if (payHowPanel) payHowPanel.hidden = true;
+      syncPayHowContinueUi();
       syncAttendanceStepUi();
       syncTicketStepLabels();
     }
@@ -1201,6 +1253,7 @@
     syncPayHowUi();
     syncMembersOnlyEventMode();
     syncAttendanceStepUi();
+    syncPayHowContinueUi();
     syncTicketStepLabels();
     updatePublishButton();
   }
@@ -1273,6 +1326,13 @@
       if (payHowPanel) payHowPanel.hidden = true;
       if (optionalExtras) optionalExtras.hidden = true;
       hideLaterTicketSteps();
+    } else if (!payHowConfirmed) {
+      if (payHowPanel) payHowPanel.hidden = false;
+      if (ticketsPanel) ticketsPanel.hidden = true;
+      if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = true;
+      if (optionalExtras) optionalExtras.hidden = true;
+      hideLaterTicketSteps();
+      if (payHowPanel) payHowPanel.hidden = false;
     } else {
       if (payHowPanel) payHowPanel.hidden = false;
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
@@ -1297,12 +1357,12 @@
     const optionalTitle = document.getElementById('ee-optional-extras-title');
     const bothPayHow = payHowIncludesTickets() && payHowIncludesMembership();
     if (optionalTitle) {
-      optionalTitle.textContent = bothPayHow ? 'Member access' : 'Optional extras';
+      optionalTitle.textContent = bothPayHow ? 'Member booking rate' : 'Extra rates (optional)';
     }
     if (optionalLead) {
       optionalLead.innerHTML = bothPayHow
-        ? 'Because you chose tickets <strong>and</strong> membership, turn on <strong>List-member booking</strong> at £0 so people on your member list (or paying membership) are not charged the public ticket again.'
-        : 'Optional add-ons. Free trial visits and monthly membership are chosen in Step 2. Use <strong>List-member booking</strong> if people on your list should pay less (or £0) while the public still books.';
+        ? 'Because you also offer membership, turn on <strong>List-member booking</strong> (usually £0) so people on your member list are not charged the public ticket again. You can also add a returning rate for previous attendees.'
+        : 'Optional. Give people on your member list a cheaper (or free) ticket, and/or a returning rate for previous attendees. Public tickets above stay available for everyone else.';
     }
 
     syncHubMembershipMount();
@@ -1337,6 +1397,7 @@
     syncHubMembershipMount();
     syncGuestVisitsInput();
     updateTierSummary();
+    syncPayHowContinueUi();
     syncTicketStepLabels();
     updatePublishButton();
   }
@@ -1478,12 +1539,13 @@
       '<div class="ee-field ee-tier-desc-field"><label>Description <span class="ee-optional">(optional)</span></label>' +
       '<textarea class="ee-tier-desc" rows="2" placeholder="What is included with this ticket"></textarea></div>' +
       '<div class="ee-row-2 ee-tier-price-row">' +
-      '<div class="ee-field"><label>Price (£)</label><p class="ee-hint">Enter 0 for free</p>' +
+      '<div class="ee-field"><label>Price (£)</label>' +
       '<div class="ee-number-stepper">' +
       '<button type="button" class="ee-number-step ee-tier-price-down" aria-label="Decrease price">↓</button>' +
       '<input type="number" class="ee-tier-price" min="0" step="0.01" value="0" />' +
       '<button type="button" class="ee-number-step ee-tier-price-up" aria-label="Increase price">↑</button>' +
-      '</div></div>' +
+      '</div>' +
+      '<p class="ee-hint ee-hint--below">enter 0 for free tickets</p></div>' +
       '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
       '<div class="ee-number-stepper">' +
       '<button type="button" class="ee-number-step ee-tier-qty-down" aria-label="Decrease quantity">↓</button>' +
@@ -1497,12 +1559,12 @@
       '<span><strong>Full series pass</strong> — one price covers every date in this listing (not per session)</span>' +
       '</label></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
-      '<div class="ee-field"><label>Sale start <span class="ee-optional">(optional)</span></label>' +
-      '<p class="ee-hint" style="margin-top:0">Leave blank and sales start today.</p>' +
+      '<div class="ee-field"><label>Sale start</label>' +
       '<div class="ee-datetime-split">' +
       '<input type="date" class="ee-tier-sale-start-date" />' +
       '<select class="ee-tier-sale-start-time" aria-label="Sale start time"></select>' +
-      '</div></div>' +
+      '</div>' +
+      '<p class="ee-hint ee-hint--below">leave blank for sales to start today</p></div>' +
       '<div class="ee-field"><label>Sale end</label>' +
       saleEndSelectHtml('at_start') +
       '<div class="ee-sale-custom-wrap" hidden>' +
@@ -1955,7 +2017,7 @@
         on || attendanceMode === 'category_exclusivity' || membershipMeeting || membershipOnlyPay;
     }
     if (optionalExtras) {
-      if (!step2Confirmed) {
+      if (!step2Confirmed || !payHowConfirmed) {
         optionalExtras.hidden = true;
       } else if (isOpenBookingMode(attendanceMode)) {
         optionalExtras.hidden = on && !membershipMeeting;
@@ -1978,7 +2040,7 @@
     const alumniAddon = document.getElementById('ee-alumni-addon');
     if (alumniAddon) alumniAddon.hidden = on && !membershipMeeting;
     const extrasMembershipMount = document.getElementById('ee-hub-membership-mount-extras');
-    if (extrasMembershipMount && membershipMeeting && step2Confirmed) {
+    if (extrasMembershipMount && membershipMeeting && step2Confirmed && payHowConfirmed) {
       extrasMembershipMount.hidden = false;
     }
     if (panelTitle) {
@@ -2168,7 +2230,7 @@
     const wrap = document.getElementById('ee-tickets-next-steps');
     const body = document.getElementById('ee-tickets-next-steps-body');
     if (!wrap || !body) return;
-    if (!step2Confirmed) {
+    if (!ticketsSetupReadyForReview()) {
       wrap.hidden = true;
       return;
     }
@@ -2242,9 +2304,15 @@
         : 'Choose tickets, monthly membership, or both. Free trial visits are optional.';
     }
     if (hint) {
-      hint.textContent = includesMembership
-        ? 'After free trial visits, people join membership. Set monthly/annual amounts below.'
-        : 'Add at least one ticket type below (paid or free). You can still offer free trial visits.';
+      if (!payHowConfirmed) {
+        hint.textContent = includesMembership
+          ? 'After free trial visits, people join membership. Continue to set membership amounts and access.'
+          : 'Choose tickets or membership (or both), then continue to add ticket types.';
+      } else {
+        hint.textContent = includesMembership
+          ? 'After free trial visits, people join membership. Set monthly/annual amounts below.'
+          : 'Add at least one ticket type below (paid or free). You can still offer free trial visits.';
+      }
     }
     if (outcome) {
       if (isApplication) {
@@ -3394,12 +3462,31 @@
     syncTicketStepLabels();
   }
 
+  function ticketsSetupReadyForReview(tiers) {
+    if (!payHowConfirmed) return false;
+    try {
+      const list = tiers || collectActiveTiers();
+      return getPublishBlockers(list, { includeBankDetails: false }).length === 0;
+    } catch {
+      return false;
+    }
+  }
+
+  function syncContinueToReviewVisibility(tiers) {
+    const btn = document.getElementById('ee-tickets-submit');
+    const nextSteps = document.getElementById('ee-tickets-next-steps');
+    const ready = ticketsSetupReadyForReview(tiers);
+    if (btn) btn.hidden = !ready;
+    if (nextSteps && !ready) nextSteps.hidden = true;
+  }
+
   function updatePublishButton() {
     const btn = document.getElementById('ee-tickets-submit');
     const warn = document.getElementById('ee-publish-warn');
     if (!btn) return;
     if (ticketsLocked) {
       btn.disabled = true;
+      btn.hidden = false;
       const saveBtn = document.getElementById('ee-tickets-save');
       if (saveBtn) saveBtn.disabled = true;
       if (warn) warn.hidden = true;
@@ -3415,6 +3502,7 @@
       const bankPending = needsBankDetailsSetup(tiers);
       // Keep Publish clickable so incomplete setup shows a clear message instead of a dead click.
       btn.disabled = false;
+      syncContinueToReviewVisibility(tiers);
       refreshPaymentSetupCard(tiers);
       if (warn) {
         if (!blockers.length && !bankPending) {
@@ -3446,6 +3534,7 @@
       }
     } catch {
       btn.disabled = false;
+      syncContinueToReviewVisibility();
       if (warn) {
         warn.hidden = false;
         warn.textContent =
@@ -3847,6 +3936,7 @@
     const generalBtn = document.getElementById('ee-mode-tickets');
     const applicationBtn = document.getElementById('ee-mode-category-exclusivity');
     const continueBtn = document.getElementById('ee-attendance-continue');
+    const payHowContinueBtn = document.getElementById('ee-pay-how-continue');
     if (generalBtn && !generalBtn.dataset.boundAttendanceDoor) {
       generalBtn.dataset.boundAttendanceDoor = '1';
       generalBtn.addEventListener('click', () => {
@@ -3867,8 +3957,15 @@
         confirmStep1AndRevealSteps();
       });
     }
+    if (payHowContinueBtn && !payHowContinueBtn.dataset.boundPayHowContinue) {
+      payHowContinueBtn.dataset.boundPayHowContinue = '1';
+      payHowContinueBtn.addEventListener('click', () => {
+        confirmPayHowAndRevealRest();
+      });
+    }
     bindPayHowFields();
     hideLaterTicketSteps();
+    syncPayHowContinueUi();
     syncAttendanceStepUi();
   }
 
@@ -4055,9 +4152,11 @@
     parkStep2Panels();
     if (loaded.tickets && loaded.tickets.length) {
       step2Confirmed = true;
+      payHowConfirmed = true;
       revealPostStep2();
     } else {
       hideLaterTicketSteps();
+      syncPayHowContinueUi();
       syncAttendanceStepUi();
     }
     bindPrivateTicketFields();
@@ -4153,12 +4252,21 @@
 
   async function continueToReview() {
     if (!step2Confirmed) {
+      confirmStep1AndRevealSteps();
+      showAlert('Choose how people get in, then how you get paid, then continue.', 'warn');
+      return;
+    }
+    if (!payHowConfirmed) {
       if (step2HasUsableTiers()) {
-        step2Confirmed = true;
+        payHowConfirmed = true;
         revealPostStep2();
       } else {
-        confirmStep1AndRevealSteps();
-        showAlert('Choose how you get paid and finish ticket setup below, then continue.', 'warn');
+        revealPayHowStep();
+        showAlert('Choose how you get paid, then continue to ticket types.', 'warn');
+        document.getElementById('ee-panel-pay-how')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
         return;
       }
     }

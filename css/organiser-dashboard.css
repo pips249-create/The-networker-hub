@@ -7537,18 +7537,66 @@ body.org-notifications-open {
 
 .org-attendee-row-actions {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.org-attendee-row-actions--nested {
+  margin-top: 8px;
+}
+
+.org-attendee-row-actions-secondary {
+  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+}
+
+.org-attendee-action-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 6px 8px;
+  justify-content: center;
+  margin: 0;
+  padding: 5px 10px;
+  border: 1px solid rgba(28, 32, 64, 0.22);
+  border-radius: 8px;
+  background: #fff;
+  color: #1c2040;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.org-attendee-action-btn:hover {
+  background: #f4f6fb;
+}
+
+.org-attendee-action-btn--danger {
+  border-color: rgba(176, 42, 55, 0.45);
+  background: #fff7f7;
+  color: #9b1c1c;
+}
+
+.org-attendee-action-btn--danger:hover {
+  background: #fdecec;
+  border-color: rgba(176, 42, 55, 0.7);
+}
+
+.org-attendee-action-btn--muted {
+  border-color: rgba(28, 32, 64, 0.18);
+  color: #4a5168;
 }
 
 .org-attendee-actions-sep {
-  color: rgba(28, 32, 64, 0.35);
+  display: none;
 }
 
 .org-attendee-block-panel {
   flex-basis: 100%;
-  margin-top: 8px;
+  width: 100%;
+  margin-top: 4px;
   padding: 12px;
   border: 1px solid rgba(28, 32, 64, 0.12);
   border-radius: 10px;

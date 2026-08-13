@@ -1757,6 +1757,24 @@
     }
   }
 
+  function requestOpenGroupEditor(e) {
+    if (!isEmbedDrawer || !window.parent || window.parent === window) return false;
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    window.parent.postMessage({ type: 'hub-open-group-editor' }, window.location.origin);
+    return true;
+  }
+
+  function bindGroupEditorLinks() {
+    document.addEventListener('click', (e) => {
+      const link = e.target && e.target.closest ? e.target.closest('a[href*="/organiser/group-edit"]') : null;
+      if (!link) return;
+      requestOpenGroupEditor(e);
+    });
+  }
+
   function bindCopyFromGroupButtons() {
     const titleBtn = document.getElementById('ee-copy-title-from-group');
     const descBtn = document.getElementById('ee-copy-desc-from-group');
@@ -2524,8 +2542,14 @@
     const quiet = Boolean(opts.quiet);
     const organiserGroupId = fieldValue('ee-group').trim();
     const title = fieldValue('ee-title').trim();
-    if (!organiserGroupId || !title) {
-      return { ok: false, error: 'Choose a group and enter an event title.' };
+    if (!organiserGroupId && !title) {
+      return { ok: false, error: 'Choose an organiser page and enter an event title.' };
+    }
+    if (!organiserGroupId) {
+      return { ok: false, error: 'Choose an organiser page.' };
+    }
+    if (!title) {
+      return { ok: false, error: 'Enter an event title.' };
     }
     const duplicateTitleError = validateDuplicateTitle(title);
     if (duplicateTitleError) {
@@ -2668,6 +2692,14 @@
     const built = buildEventSavePayload({ quiet: false });
     if (!built.ok) {
       showAlert(built.error || 'Could not save event');
+      const err = String(built.error || '');
+      if (err.includes('event title')) {
+        const titleEl = document.getElementById('ee-title');
+        if (titleEl) titleEl.focus();
+      } else if (err.includes('organiser page')) {
+        const groupEl = document.getElementById('ee-group');
+        if (groupEl && !groupEl.disabled) groupEl.focus();
+      }
       return;
     }
 
@@ -2842,6 +2874,7 @@
     try {
       bindPhotoUpload();
       bindWordCounter();
+      bindGroupEditorLinks();
       bindCopyFromGroupButtons();
       bindFormatToggleButtons();
       const cancelBtn = document.getElementById('ee-cancel-event-btn');

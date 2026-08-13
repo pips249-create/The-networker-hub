@@ -100,7 +100,7 @@
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
     'members-only-ticket': {
-      title: 'List-member booking (public can still book)',
+      title: 'Cheaper rate for people on your member list',
       body:
         'People on your member list book free or cheaper when signed in. Public tickets stay on sale for everyone else. Use £0 when membership already covers attendance — members should not pay again.',
       hubertPrompt: 'What is list-member booking?',
@@ -130,9 +130,9 @@
       hubertPrompt: 'What is application based ticketing?',
     },
     'alumni-fast-pass': {
-      title: 'Previous Attendees',
+      title: 'Returning rate for previous attendees',
       body:
-        'Optional returning ticket for previous attendees of a past event. Send locked booking links from your dashboard after publish — great for repeat conferences.',
+        'Optional returning ticket for people who came to a past event. After you publish, send them personal booking links from your dashboard.',
       hubertPrompt: 'What is Previous Attendees for repeat events?',
     },
     'vat-treatment': {

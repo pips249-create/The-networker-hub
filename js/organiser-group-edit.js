@@ -1358,6 +1358,16 @@
 
   const geForm = document.getElementById('ge-form');
   if (geForm && !geForm.closest('#org-group-drawer')) {
+    // Standalone group-edit must never run inside the event drawer iframe —
+    // that nests the form (and later the dashboard) under "List event" chrome.
+    try {
+      if (window.self !== window.top) {
+        window.top.location.href = window.location.href;
+        return;
+      }
+    } catch (err) {
+      /* cross-origin */
+    }
     const params = new URLSearchParams(location.search);
     const onboard = params.get('onboard') || '';
     init({

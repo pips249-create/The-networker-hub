@@ -113,6 +113,9 @@
           </p>
           <div id="ee-general-guest-mount" class="ee-ce-guest-mount" style="margin-top:14px"></div>
           <div id="ee-hub-membership-mount-payhow" class="ee-hub-membership-mount" style="margin-top:14px"></div>
+          <div class="ee-attendance-next" id="ee-pay-how-next">
+            <button type="button" class="ee-btn ee-btn-gold" id="ee-pay-how-continue">Continue →</button>
+          </div>
         </div>
 
         <div class="ee-card" id="ee-panel-category-exclusivity" hidden>
@@ -361,10 +364,10 @@
 
         <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
-          <h2 id="ee-optional-extras-title">Member access</h2>
+          <h2 id="ee-optional-extras-title">Extra rates (optional)</h2>
           <p class="ee-hint" style="margin-top:0" id="ee-optional-extras-lead">
-            Free trial visits and monthly membership are set in Step 2. Turn on
-            <strong>List-member booking</strong> so people on your member list (or paying membership) are not charged the public ticket again — use £0.
+            Optional. Give people on your member list a cheaper (or free) ticket, and/or a returning rate for previous
+            attendees. Public tickets above stay available for everyone else.
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon">
@@ -430,9 +433,9 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="members-only-ticket">List-member booking (public can still book)</strong>
+                <strong data-hub-tip="members-only-ticket">Cheaper rate for people on your member list</strong>
                 <span class="ee-addon-summary"
-                  >People on your member list book free (or cheaper) when signed in. Everyone else still buys the public ticket. Use £0 when membership already covers attendance.</span
+                  >They book at your member price when signed in. Everyone else still buys the public ticket. Use £0 if membership already covers the meeting.</span
                 >
               </span>
             </label>
@@ -440,7 +443,7 @@
               <div class="ee-info-box ee-private-ticket-how" id="ee-private-ticket-how">
                 <strong>Public tickets stay on sale</strong>
                 <p>
-                  Set the list-member price below (use <strong>0</strong> for free). Non-members keep booking from
+                  Set the member price below (use <strong>0</strong> for free). Non-members keep booking from
                   <strong>Public ticket types</strong> above. Members see this extra ticket when signed in with their
                   membership email.
                 </p>
@@ -452,8 +455,8 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-alumni-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="alumni-fast-pass">Previous Attendees</strong>
-                <span class="ee-addon-summary">Invite past attendees to a returning rate with personal booking links</span>
+                <strong data-hub-tip="alumni-fast-pass">Returning rate for previous attendees</strong>
+                <span class="ee-addon-summary">Offer a special price and send personal booking links after you publish</span>
               </span>
             </label>
             <div class="ee-addon-body" id="ee-alumni-fields" hidden>
@@ -621,7 +624,7 @@
           <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ee-tickets-back-edit" hidden>
             ← Event details
           </button>
-          <button type="submit" class="ee-btn ee-btn-gold" id="ee-tickets-submit">Continue to review →</button>
+          <button type="submit" class="ee-btn ee-btn-gold" id="ee-tickets-submit" hidden>Continue to review →</button>
         </div>
       </form>
     </div>
