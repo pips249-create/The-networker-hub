@@ -135,7 +135,7 @@ If Supabase, Stripe, Resend, or Vercel notifies you of a breach:
 - [ ] RLS policies reviewed after schema changes
 - [ ] Admin accounts use strong passwords; impersonation audited
 - [ ] DPAs on file for all subprocessors
-- [ ] Backups and restore tested (Supabase)
+- [ ] Backups and restore tested (Supabase) — see `docs/OPS-RELIABILITY.md`
 - [ ] Staff know this procedure exists
 
 ---

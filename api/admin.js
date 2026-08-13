@@ -2,7 +2,7 @@
  * Single serverless function for all /api/admin/* routes (Hobby plan function limit).
  */
 const { getSubRoute } = require('./_lib/route-path');
-const { json, setCors, sessionFromRequest, requireAdmin } = require('./_lib/auth');
+const { json, setCors, sessionFromRequest, requireAdminLive } = require('./_lib/auth');
 
 const routes = {
   metrics: require('./_lib/routes/admin-metrics'),
@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
     setCors(req, res);
 
     const session = sessionFromRequest(req);
-    const gate = requireAdmin(session);
+    const gate = await requireAdminLive(session);
     if (!gate.ok) {
       return json(res, gate.status, { error: gate.error, message: gate.message });
     }

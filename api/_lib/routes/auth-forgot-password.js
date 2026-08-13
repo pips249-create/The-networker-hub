@@ -10,7 +10,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
-const { enforceRateLimit } = require('../rate-limit');
+const { enforceRateLimitAsync } = require('../rate-limit');
 const { isRecipientAllowed } = require('../email-allowlist');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
@@ -131,7 +131,7 @@ module.exports = async function handler(req, res) {
 
   if (!email) return json(res, 400, { error: 'missing_email' });
 
-  const limited = enforceRateLimit(req, res, 'auth_forgot_password', { max: 6, windowMs: 300_000 });
+  const limited = await enforceRateLimitAsync(req, res, 'auth_forgot_password', { max: 6, windowMs: 300_000 });
   if (!limited.allowed) {
     return json(res, 429, {
       error: 'rate_limited',

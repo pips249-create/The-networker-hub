@@ -91,11 +91,11 @@
     });
   }
 
-  // co.uk banner soft unlock — /site-access?peek=TOKEN&next=/
+  // co.uk banner soft unlock — opens /peek only (not the full gated Hub)
   if (peekToken && !lockRequested) {
     var peekMsg = document.getElementById('site-access-message');
-    showAlert(peekMsg, 'Opening your Hub preview…', 'success');
-    postSiteAccess({ peek: peekToken, next: getNextParam() })
+    showAlert(peekMsg, 'Opening Peek preview…', 'success');
+    postSiteAccess({ peek: peekToken, next: '/peek' })
       .then(function (result) {
         if (!result.ok) {
           showAlert(
@@ -108,15 +108,14 @@
           } catch (err) {}
           return;
         }
-        window.location.replace(result.data.redirect || getNextParam() || '/');
+        window.location.replace(result.data.redirect || '/peek');
       })
       .catch(function () {
-        // Fall back to GET unlock (sets cookie + redirect)
         window.location.replace(
           '/api/auth/site-access?peek=' +
             encodeURIComponent(peekToken) +
             '&next=' +
-            encodeURIComponent(getNextParam() || '/')
+            encodeURIComponent('/peek')
         );
       });
   } else if (peekError) {

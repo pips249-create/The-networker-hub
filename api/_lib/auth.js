@@ -244,6 +244,41 @@ function requireAdmin(session) {
   return { ok: true, session };
 }
 
+/**
+ * Prefer this on privileged entry points: cookie role + live hub_accounts.role.
+ * Revoking admin in the DB takes effect immediately (not after session expiry).
+ */
+async function requireAdminLive(session) {
+  const gate = requireAdmin(session);
+  if (!gate.ok) return gate;
+
+  const userId = String(session.sub || session.userId || session.id || '').trim();
+  if (!userId) {
+    return { ok: false, status: 403, error: 'admin_only' };
+  }
+
+  try {
+    const { getHubAccount } = require('./supabase-auth');
+    const { isSupabaseConfigured } = require('./supabase');
+    if (!isSupabaseConfigured()) {
+      return { ok: false, status: 503, error: 'supabase_not_configured' };
+    }
+    const hub = await getHubAccount(userId);
+    if (!isAdminRole(hub?.role)) {
+      return { ok: false, status: 403, error: 'admin_only', message: 'Admin access revoked.' };
+    }
+    return { ok: true, session: { ...session, role: USER_ROLES.ADMIN } };
+  } catch (e) {
+    console.error('[auth] requireAdminLive failed', e?.message || e);
+    return {
+      ok: false,
+      status: 503,
+      error: 'admin_check_failed',
+      message: 'Could not verify admin access. Try again.',
+    };
+  }
+}
+
 function cleanEnvVal(v) {
   if (v == null || v === '') return '';
   let s = String(v).trim();
@@ -679,6 +714,7 @@ module.exports = {
   clearSessionCookie,
   json,
   requireAdmin,
+  requireAdminLive,
   airtableConfig,
   airtableFetch,
   escapeFormulaValue,

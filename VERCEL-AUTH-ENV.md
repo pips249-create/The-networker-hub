@@ -194,15 +194,15 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 | Key | Value | Notes |
 |-----|--------|--------|
 | `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, the public only sees `/site-access` (waitlist + team unlock). Everyone else needs this shared password. |
-| `SITE_ACCESS_BANNER_TOKEN` | `co-uk-peek-2026` | Soft unlock for the co.uk “Peek at the Hub” banner. Must match `peek=` in `marketing/co-uk-upgrade-banner-snippet.html`. Not the team password. |
+| `SITE_ACCESS_BANNER_TOKEN` | `co-uk-peek-2026` | Soft preview for the co.uk “Peek at the Hub” banner. Must match `peek=` if used. **Does not** unlock the full Hub — only `/peek`. |
 
-**Cookie:** after a correct password **or** banner peek token, a signed `hub_site_preview` cookie unlocks the site for 7 days (signed with the preview password value).
+**Team password cookie:** after the correct `SITE_ACCESS_PASSWORD`, a signed `hub_site_preview` cookie unlocks the full site for 7 days (signed with the preview password value).
 
-**Banner Peek URL:** `/api/auth/site-access?peek=co-uk-peek-2026&next=/` → sets cookie → redirects into the Hub.
+**Banner peek:** `/api/auth/site-access?peek=co-uk-peek-2026&next=/peek` → redirects into **/peek only** (no full-site cookie). Prefer linking straight to `https://www.thenetworkerhub.com/peek` from WordPress.
 
-**Still works without unlocking:** Stripe webhooks, Vercel crons (`CRON_SECRET`), and CSS/JS/assets for the gate page.
+**Still works without unlocking:** Stripe webhooks, Vercel crons (`CRON_SECRET`), `/api/health`, and CSS/JS/assets for the gate page.
 
-**No admin bypass:** signed-in admins must also use the preview password while the gate is on.
+**Admin sessions:** platform admins with a valid `hub_session` can use Command Centre while gated; catalogue browse still needs the team preview password (or wait until the gate is removed).
 
 **Keeping the site private until launch (1st September 2026):**
 1. Keep `SITE_ACCESS_PASSWORD` set in Vercel Production.

@@ -9,7 +9,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
-const { enforceRateLimit } = require('../rate-limit');
+const { enforceRateLimitAsync } = require('../rate-limit');
 const {
   isOrganiserAuthIntent,
   maybeAutoEnableOrganiserAccess,
@@ -62,7 +62,7 @@ module.exports = async function handler(req, res) {
     return json(res, 400, { error: 'missing_credentials' });
   }
 
-  const limited = enforceRateLimit(req, res, 'auth_login', { max: 12, windowMs: 300_000 });
+  const limited = await enforceRateLimitAsync(req, res, 'auth_login', { max: 12, windowMs: 300_000 });
   if (!limited.allowed) {
     return json(res, 429, {
       error: 'rate_limited',

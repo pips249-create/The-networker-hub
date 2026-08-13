@@ -3,6 +3,7 @@ const { ensureAttendeeId, resolveAttendeeId } = require('./supabase-favourites')
 const { sendApplicationEmails } = require('./registration-emails');
 const { resolveTicketSalesEnabled, isTicketOnSale } = require('./ticket-sales');
 const { assertApplicationSeatAvailable, countApprovedApplicationSeats } = require('./application-capacity');
+const { assertEventHasCapacity, rethrowIfCapacityExceeded } = require('./event-capacity');
 const { isUuid } = require('./uuid');
 const { assertNotBlockedByOrganiser } = require('./organiser-attendee-blocks');
 
@@ -125,6 +126,8 @@ async function createApplicationFromSubmission(input) {
     }
   }
 
+  await assertEventHasCapacity(sb, eventId, 1);
+
   const session = {
     email,
     name: input.name || input.customerName || null,
@@ -172,7 +175,10 @@ async function createApplicationFromSubmission(input) {
   };
 
   const ins = await sb.from('registrations').insert(row).select('*').single();
-  if (ins.error) throw new Error(ins.error.message);
+  if (ins.error) {
+    rethrowIfCapacityExceeded(ins.error);
+    throw new Error(ins.error.message);
+  }
 
   const { lockEventOnFirstSale } = require('./event-sale-lock');
   await lockEventOnFirstSale(sb, eventId);

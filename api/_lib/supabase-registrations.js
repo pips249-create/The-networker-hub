@@ -27,6 +27,7 @@ const {
   markCeMemberInviteRedeemed,
   assertCeMemberSeatAvailable,
 } = require('./ce-member-invites');
+const { assertEventHasCapacity, rethrowIfCapacityExceeded } = require('./event-capacity');
 
 /**
  * Insert a registration after successful checkout.
@@ -227,6 +228,8 @@ async function createRegistrationFromPayment(input) {
   const ticketId = input.ticketId || input.ticket_id || null;
   const quantity = parseQuantity(input.quantity ?? input.qty, 1);
 
+  await assertEventHasCapacity(sb, eventId, quantity);
+
   let eventAttendanceMode = 'tickets';
   const evMetaRes = await sb
     .from('events')
@@ -396,7 +399,10 @@ async function createRegistrationFromPayment(input) {
   if (bookingGroupId) row.booking_group_id = bookingGroupId;
 
   const ins = await sb.from('registrations').insert(row).select('*').single();
-  if (ins.error) throw new Error(ins.error.message);
+  if (ins.error) {
+    rethrowIfCapacityExceeded(ins.error);
+    throw new Error(ins.error.message);
+  }
 
   if (registrationKind === 'alumni' && alumniEligibility?.invite?.id) {
     await markInviteRedeemed(sb, {

@@ -124,6 +124,18 @@
 | **Retention** | Chat history in browser session only — **not stored** in Hub database |
 | **Notes** | Do not enter unnecessary personal data in chat. Optional OpenAI integration exists in code but is **disabled** (no `OPENAI_API_KEY`). |
 
+### J. Organiser membership lists (rosters)
+
+| Item | Detail |
+|------|--------|
+| **Purpose** | Organisers maintain per-group membership lists for Members-only tickets, Hub-billed memberships, digests of new events, and booking reminders |
+| **Data subjects** | People added by organisers to a group membership list (may not yet have a Hub account) |
+| **Categories of data** | Name, email, optional industry/category, membership expiry, claim/invite status, Stripe subscription refs (when Hub-billed) |
+| **Lawful basis** | **Legitimate interests** of organiser + Hub to operate membership-gated events (Art. 6(1)(f)); **Contract** where the person pays Hub-billed membership (Art. 6(1)(b)); organiser remains responsible for lawful collection of the list they upload |
+| **Recipients** | Supabase; Resend (invites, digests, payment messages); Stripe (Hub-billed memberships); the organiser (controller of their list) |
+| **Retention** | While the membership row is active + up to 2 years after removal unless financial records require longer |
+| **Notes** | CSV import is organiser-initiated (plain-text JSON upload, size-capped). New-event digests respect Hub `organiser_alerts` preferences when the email matches a Hub account. |
+
 ---
 
 ## 3. Subprocessors
@@ -154,8 +166,12 @@ Organisers are **separate controllers** for attendee data they receive. Organise
 - HTTPS everywhere; session cookies; `SESSION_SECRET` for auth
 - Supabase RLS on member-facing tables; service role for server APIs only
 - Passwords hashed by Supabase Auth
-- Rate limiting on auth endpoints
+- Rate limiting on auth / site-access via shared Supabase buckets (`consume_rate_limit`), with in-memory fallback
 - Stripe webhook signature verification
+- Admin Command Centre re-checks `hub_accounts.role` live (revocation does not wait for cookie expiry)
+- Cron endpoints require `CRON_SECRET` on all Vercel deployments
+- Event capacity enforced in Postgres (`registrations` trigger) to reduce oversell races
+- Banner peek token opens `/peek` only — not the full gated Hub
 - Admin impersonation restricted to admin role
 
 ---
@@ -170,5 +186,6 @@ Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hello@thenetworkerhub
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-08-13 | Membership roster/CSV processing (Art. 30 §J); security measures updated (admin live check, cron, capacity trigger) | Catherine Hancher |
 | 2026-07-10 | Hubert confirmed fallback-only (no OpenAI); complaints register; DPA filed dates | Catherine Hancher |
 | 2026-07-08 | Initial RoPA created | — |

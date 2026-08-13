@@ -8,7 +8,7 @@ const {
   siteAccessStatus,
 } = require('../site-access');
 const { addPreviewWaitlistEmail } = require('../preview-waitlist');
-const { enforceRateLimit } = require('../rate-limit');
+const { enforceRateLimitAsync } = require('../rate-limit');
 const { timingSafeEqualString } = require('../crypto-utils');
 
 function parseBody(req) {
@@ -31,18 +31,29 @@ function safeNextPath(raw) {
   return redirect;
 }
 
-function matchesUnlockSecret(password) {
+/** Banner soft-preview may only land inside the closed /peek mini-site. */
+function safePeekNextPath(raw) {
+  const next = safeNextPath(raw);
+  if (next === '/peek' || next.startsWith('/peek/') || next.startsWith('/peek?')) {
+    return next;
+  }
+  return '/peek';
+}
+
+function matchesTeamPassword(password) {
   const value = String(password || '').trim();
-  if (!value) return false;
   const team = getSiteAccessPassword();
+  return Boolean(value && team && timingSafeEqualString(value, team));
+}
+
+function matchesBannerPeek(password) {
+  const value = String(password || '').trim();
   const banner = getBannerPeekToken();
-  if (team && timingSafeEqualString(value, team)) return true;
-  if (banner && timingSafeEqualString(value, banner)) return true;
-  return false;
+  return Boolean(value && banner && timingSafeEqualString(value, banner));
 }
 
 async function handleWaitlistSignup(req, res, body) {
-  const limited = enforceRateLimit(req, res, 'site_access_waitlist', { max: 6, windowMs: 300_000 });
+  const limited = await enforceRateLimitAsync(req, res, 'site_access_waitlist', { max: 6, windowMs: 300_000 });
   if (!limited.allowed) {
     return json(res, 429, {
       error: 'rate_limited',
@@ -96,7 +107,7 @@ async function handleLockPreview(req, res) {
 
 async function handlePasswordUnlock(req, res, body) {
   try {
-    const limited = enforceRateLimit(req, res, 'site_access_password', { max: 8, windowMs: 300_000 });
+    const limited = await enforceRateLimitAsync(req, res, 'site_access_password', { max: 8, windowMs: 300_000 });
     if (!limited.allowed) {
       return json(res, 429, {
         error: 'rate_limited',
@@ -121,9 +132,17 @@ async function handlePasswordUnlock(req, res, body) {
       });
     }
 
-    const password = String(body.password || body.peek || '').trim();
-
-    if (!matchesUnlockSecret(password)) {
+    const password = String(body.password || '').trim();
+    // Banner peek token must NOT unlock the full Hub — only the team password does.
+    if (!matchesTeamPassword(password)) {
+      if (matchesBannerPeek(password) || matchesBannerPeek(String(body.peek || '').trim())) {
+        return json(res, 200, {
+          ok: true,
+          peekOnly: true,
+          redirect: safePeekNextPath(body.next),
+          message: 'Soft preview opens the Peek pages only — not the full Hub.',
+        });
+      }
       return json(res, 401, {
         error: 'invalid_password',
         message: 'Incorrect preview password. Check SITE_ACCESS_PASSWORD in Vercel matches exactly.',
@@ -149,8 +168,8 @@ async function handlePasswordUnlock(req, res, body) {
   }
 }
 
-function handlePeekUnlockGet(req, res) {
-  const limited = enforceRateLimit(req, res, 'site_access_banner_peek', { max: 20, windowMs: 300_000 });
+async function handlePeekUnlockGet(req, res) {
+  const limited = await enforceRateLimitAsync(req, res, 'site_access_banner_peek', { max: 20, windowMs: 300_000 });
   if (!limited.allowed) {
     res.statusCode = 429;
     res.setHeader('Location', '/site-access');
@@ -168,11 +187,11 @@ function handlePeekUnlockGet(req, res) {
   }
 
   const peek = String(url.searchParams.get('peek') || '').trim();
-  const next = safeNextPath(url.searchParams.get('next') || '/');
+  const nextRaw = url.searchParams.get('next') || '/peek';
 
   if (!isSiteAccessRequired()) {
     res.statusCode = 302;
-    res.setHeader('Location', next);
+    res.setHeader('Location', safePeekNextPath(nextRaw));
     return res.end();
   }
 
@@ -182,21 +201,29 @@ function handlePeekUnlockGet(req, res) {
     return res.end();
   }
 
-  if (!matchesUnlockSecret(peek)) {
+  // Public banner token → /peek only (no full-site cookie).
+  if (matchesBannerPeek(peek)) {
     res.statusCode = 302;
-    res.setHeader('Location', '/site-access?peek_error=1');
+    res.setHeader('Location', safePeekNextPath(nextRaw));
+    res.setHeader('Cache-Control', 'no-store');
     return res.end();
   }
 
-  if (!setSiteAccessCookie(res)) {
+  // Team password via GET peek= still unlocks full preview (internal share links).
+  if (matchesTeamPassword(peek)) {
+    if (!setSiteAccessCookie(res)) {
+      res.statusCode = 302;
+      res.setHeader('Location', '/site-access?peek_error=1');
+      return res.end();
+    }
     res.statusCode = 302;
-    res.setHeader('Location', '/site-access?peek_error=1');
+    res.setHeader('Location', safeNextPath(nextRaw));
+    res.setHeader('Cache-Control', 'no-store');
     return res.end();
   }
 
   res.statusCode = 302;
-  res.setHeader('Location', next);
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Location', '/site-access?peek_error=1');
   return res.end();
 }
 

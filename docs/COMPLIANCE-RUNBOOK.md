@@ -43,7 +43,8 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | ICO registration | Follow `docs/ICO-REGISTRATION.md` — **ZB694959** · expires 29 May 2027 | Catherine | ☑ Verified 6 Aug 2026 |
 | Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☑ Done (confirmed 6 Aug 2026) |
 | DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☑ Filed 10 Jul 2026 |
-| RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Created |
+| RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Updated 13 Aug 2026 (roster §J) |
+| Backups / monitoring | `docs/OPS-RELIABILITY.md` — Supabase Pro backups + UptimeRobot on `/api/health` | Catherine | ☐ Confirm Pro + monitor |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
 | GDPR requests | `docs/GDPR-SAR-PROCEDURE.md` — hello@ monitored | Catherine / Rosie | ☑ Procedure + owners |
 | Complaints | `docs/COMPLAINTS-PROCEDURE.md` — log in Command Centre → Support → Complaints | Catherine Hancher | ☑ hello@thenetworkerhub.com monitored |
@@ -97,6 +98,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | `docs/SUPPORT-INBOX-RUNBOOK.md` | hello@ triage and SLAs |
 | `docs/EMAIL-DNS-SETUP.md` | SPF / DKIM / DMARC for Resend |
 | `docs/ICO-REGISTRATION.md` | ICO fee verification |
+| `docs/OPS-RELIABILITY.md` | Backups, restore drill, uptime monitoring |
 | `docs/DPA-SUBPROCESSORS.md` | Processor agreements |
 | `docs/VAT-ORGANISER-GUIDANCE.md` | Organiser VAT summary |
 

@@ -2,7 +2,7 @@ const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { sendAccountWelcomeEmail } = require('../account-emails');
-const { enforceRateLimit } = require('../rate-limit');
+const { enforceRateLimitAsync } = require('../rate-limit');
 const {
   isOrganiserAuthIntent,
   isOrganiserClaimNext,
@@ -64,7 +64,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const limited = enforceRateLimit(req, res, 'auth_register', { max: 8, windowMs: 300_000 });
+  const limited = await enforceRateLimitAsync(req, res, 'auth_register', { max: 8, windowMs: 300_000 });
   if (!limited.allowed) {
     return json(res, 429, {
       error: 'rate_limited',
