@@ -118,9 +118,9 @@
       hubertPrompt: 'How do I make an event members only with no public ticket?',
     },
     'hub-membership-prices': {
-      title: 'Monthly / annual membership',
+      title: 'Group membership fee',
       body:
-        'Your group membership on the organiser page (not a one-off event ticket). After free trial visits, newcomers join here. Amounts also appear under Memberships.',
+        'What people pay to join your group — not a ticket for this one event. After free trial visits, newcomers join on your organiser page. People already on your member list book the meeting without buying a public ticket again (usually £0). Amounts also appear under Memberships.',
       hubertPrompt: 'How do I set monthly membership when setting up tickets?',
     },
     'category-exclusivity': {

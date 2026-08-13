@@ -2449,9 +2449,9 @@
     if (connectNote) connectNote.hidden = data.connectReady !== false;
     if (plan && plan.offered) {
       setHubMembershipEnabled(true);
-      setHubMembershipStatus('Membership prices loaded from your Memberships settings.', 'ok');
+      setHubMembershipStatus('Membership fees loaded from your Memberships settings.', 'ok');
     } else if (isMembershipMeetingMode() || hubMembershipEnabled()) {
-      setHubMembershipStatus('Enter a monthly and/or annual price so guests can join after visits.', 'warn');
+      setHubMembershipStatus('Enter a monthly and/or annual fee so newcomers can join the group after visits.', 'warn');
     } else {
       setHubMembershipStatus('');
     }
@@ -2466,7 +2466,7 @@
     if (!hubMembershipHasPrice()) {
       return {
         ok: false,
-        message: 'Enter a monthly and/or annual membership price (or turn off Hub membership).',
+        message: 'Enter a monthly and/or annual membership fee (or turn off group membership).',
       };
     }
     const payload = collectHubMembershipPayload();
@@ -2477,10 +2477,10 @@
     if (!ok) {
       return {
         ok: false,
-        message: data?.message || data?.error || 'Could not save membership prices.',
+        message: data?.message || data?.error || 'Could not save membership fees.',
       };
     }
-    setHubMembershipStatus('Membership prices saved.', 'ok');
+    setHubMembershipStatus('Membership fees saved.', 'ok');
     return { ok: true };
   }
 
@@ -4204,7 +4204,7 @@
     }
 
     if (hubMembershipEnabled() && !hubMembershipHasPrice()) {
-      showAlert('Enter a monthly and/or annual Hub membership price, or turn membership off.', 'warn');
+      showAlert('Enter a monthly and/or annual group membership fee, or turn membership off.', 'warn');
       document.getElementById('ee-hub-membership-monthly')?.focus();
       updatePublishButton();
       return;
