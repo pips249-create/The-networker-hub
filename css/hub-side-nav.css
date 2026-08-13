@@ -66,7 +66,8 @@
 }
 
 .hub-side-nav-bottom {
-  margin-top: auto;
+  /* Sit under the last nav group — not pinned to the viewport bottom */
+  margin-top: 10px;
   padding-top: 4px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
@@ -142,6 +143,55 @@
 /* Primary hubs sit at full weight; tools under More stay nested/quieter */
 .organiser-dashboard-page .hub-side-nav--minimal > .hub-side-nav-link:not(.hub-side-nav-link--nested):not(.org-notifications-nav) {
   font-weight: 700;
+}
+
+.hub-side-nav-more {
+  margin: 10px 0 0;
+  border-top: 1px solid rgba(13, 110, 122, 0.18);
+  padding-top: 8px;
+}
+
+.hub-side-nav-more-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--od-purple, #0d6e7a);
+  user-select: none;
+}
+
+.hub-side-nav-more-summary::-webkit-details-marker {
+  display: none;
+}
+
+.hub-side-nav-more-summary:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.hub-side-nav-more-chev {
+  font-size: 11px;
+  opacity: 0.7;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.hub-side-nav-more[open] > .hub-side-nav-more-summary .hub-side-nav-more-chev {
+  transform: rotate(0deg);
+}
+
+.hub-side-nav-more-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 2px 0 4px;
 }
 
 .organiser-dashboard-page .hub-side-nav-bottom {
