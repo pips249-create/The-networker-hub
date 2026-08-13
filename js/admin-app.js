@@ -397,11 +397,12 @@
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
+        'Copy the leave-behind link or PDF after a chat — that is what organisers should receive, not the internal cheat sheets.',
         'Pin one agreed demo organiser at the top — everyone impersonates that group for live walkthroughs.',
         'Log outreach first — or impersonate / list an event and it appears automatically so the others do not message the same group.',
         'Open your named cheat sheet before a walkthrough — print one A4 or keep it on your phone.',
         'Copy the 60-second Loom script and record once while clicking; share the Loom for onboarding.',
-        'After the meeting, copy the follow-up email, personalise it, and send the leave-behind PDF.',
+        'After the meeting, copy the follow-up email and include the leave-behind link.',
       ],
     },
     campaigns: {
@@ -22315,7 +22316,8 @@
       '• Built for networking groups — guest visits, member rates, visit tracking, attendee round-ups\n' +
       '• List autumn dates now; public browsing & ticket buying open 1 September\n' +
       '• Claim before 1 Sept + publish your first event → Founding Organiser · 2026\n\n' +
-      'Benefits one-pager: https://thenetworkerhub.com/assets/guides/organiser-benefits-linkedin.pdf\n' +
+      'Benefits one-pager: https://thenetworkerhub.com/guides/organiser-leavebehind\n' +
+      'PDF: https://thenetworkerhub.com/assets/guides/organiser-leavebehind.pdf\n' +
       'For organisers: https://thenetworkerhub.com/for-organisers\n' +
       'Book a setup call: https://savvycal.com/TheNetworkerHub/website-preview\n\n' +
       'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
@@ -22519,8 +22521,24 @@
           : '') +
         '</div></section>' +
         '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Send after the chat</h3>' +
+        '<p>Clean one-pager for organisers — no internal notes. Email the link, or attach the PDF.</p></div>' +
+        '<div class="admin-dash-section-body space-y-3">' +
+        '<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex flex-wrap items-start justify-between gap-3">' +
+        '<div class="min-w-0">' +
+        '<p class="font-semibold text-emerald-950">Organiser leave-behind</p>' +
+        '<p class="text-sm text-emerald-900/80 mt-1 break-all">thenetworkerhub.com/guides/organiser-leavebehind</p>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-2">' +
+        '<button type="button" id="sales-kit-copy-leavebehind" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy link</button>' +
+        '<a class="rounded-lg border border-emerald-300 bg-white text-sm font-semibold px-3 py-2 text-emerald-950 hover:bg-emerald-100" href="/assets/guides/organiser-leavebehind.pdf" download>Download PDF</a>' +
+        '<a class="rounded-lg border border-emerald-300 bg-white text-sm font-semibold px-3 py-2 text-emerald-950 hover:bg-emerald-100" href="/guides/organiser-leavebehind" target="_blank" rel="noopener">Open page</a>' +
+        '</div></div>' +
+        '<span id="sales-kit-leavebehind-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
+        '</div></section>' +
+        '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Walkthrough cheat sheets</h3>' +
-        '<p>One A4 each — open on phone or print before a demo.</p></div>' +
+        '<p>Internal only — for Catherine, Rosie &amp; Jamie before a demo.</p></div>' +
         '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
         '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#catherine" target="_blank" rel="noopener"><span class="admin-shortcut-label">Catherine</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#rosie" target="_blank" rel="noopener"><span class="admin-shortcut-label">Rosie</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
@@ -22534,7 +22552,8 @@
         '<a class="admin-shortcut" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener"><span class="admin-shortcut-label">Standard sales deck</span><span class="admin-shortcut-desc">Present fullscreen</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-bmu-onboard-k7m2" target="_blank" rel="noopener"><span class="admin-shortcut-label">BMU deck</span><span class="admin-shortcut-desc">Business Mentoring University</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-wibn-onboard-w9m3" target="_blank" rel="noopener"><span class="admin-shortcut-label">WIBN deck</span><span class="admin-shortcut-desc">Women in Business Network</span></a>' +
-        '<a class="admin-shortcut" href="/assets/guides/organiser-benefits-linkedin.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Benefits PDF</span><span class="admin-shortcut-desc">Leave-behind</span></a>' +
+        '<a class="admin-shortcut" href="/assets/guides/organiser-leavebehind.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind PDF</span><span class="admin-shortcut-desc">Send after the chat</span></a>' +
+        '<a class="admin-shortcut" href="/guides/organiser-leavebehind" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind page</span><span class="admin-shortcut-desc">Shareable link</span></a>' +
         '<a class="admin-shortcut" href="/for-organisers" target="_blank" rel="noopener"><span class="admin-shortcut-label">Public for-organisers</span><span class="admin-shortcut-desc">Website page</span></a>' +
         '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerHub/website-preview" target="_blank" rel="noopener"><span class="admin-shortcut-label">Book a setup call</span><span class="admin-shortcut-desc">SavvyCal</span></a>' +
         '</div></div></section>' +
@@ -22569,7 +22588,7 @@
         '</div></section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Post-demo follow-up email</h3>' +
-        '<p>Copy, swap <code class="text-xs">{{name}}</code> and <code class="text-xs">{{sender}}</code>, send with the benefits PDF.</p></div>' +
+        '<p>Copy, swap <code class="text-xs">{{name}}</code> and <code class="text-xs">{{sender}}</code>, and include the leave-behind link or PDF.</p></div>' +
         '<div class="admin-dash-section-body space-y-3">' +
         '<textarea id="sales-kit-followup" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[200px]" readonly>' +
         esc(followUp) +
@@ -22622,6 +22641,18 @@
     }
 
     function bindPainted() {
+      var leaveBtn = document.getElementById('sales-kit-copy-leavebehind');
+      var leaveStatus = document.getElementById('sales-kit-leavebehind-status');
+      if (leaveBtn) {
+        leaveBtn.addEventListener('click', function () {
+          copyText(
+            'https://www.thenetworkerhub.com/guides/organiser-leavebehind',
+            leaveStatus,
+            'Link copied — paste into email or WhatsApp.'
+          );
+        });
+      }
+
       var followBtn = document.getElementById('sales-kit-copy-followup');
       var followStatus = document.getElementById('sales-kit-copy-status');
       var followArea = document.getElementById('sales-kit-followup');
