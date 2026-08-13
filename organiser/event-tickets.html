@@ -90,18 +90,20 @@
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 data-hub-tip="pay-how">Tickets or membership?</h2>
           <p class="ee-hint ee-attendance-lead" id="ee-pay-how-lead">
-            Pick one. You can add free trial visits below if you want.
+            Pick one option, then continue.
           </p>
           <div id="ee-pay-how-summary" class="ee-attendance-summary" hidden>
             <p class="ee-attendance-summary-copy" id="ee-pay-how-summary-text"></p>
             <button type="button" class="ee-btn ee-btn-outline" id="ee-pay-how-change">Change</button>
           </div>
-          <div class="ee-attendance-options ee-pay-how-options" role="group" aria-label="Tickets or membership">
+          <div class="ee-attendance-options ee-pay-how-options" role="radiogroup" aria-label="Tickets or membership">
             <button
               type="button"
               class="ee-attendance-card is-active"
               data-pay-how="tickets"
               id="ee-pay-how-tickets"
+              role="radio"
+              aria-checked="true"
               aria-pressed="true"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
@@ -113,25 +115,29 @@
               class="ee-attendance-card"
               data-pay-how="membership"
               id="ee-pay-how-membership"
+              role="radio"
+              aria-checked="false"
               aria-pressed="false"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
-              <strong data-hub-tip="pay-how-membership">Membership package</strong>
-              <span>People join your group (monthly or annual) instead of buying a one-off ticket.</span>
+              <strong data-hub-tip="pay-how-membership">Group membership</strong>
+              <span>People join your group for a monthly or yearly fee, then come to meetings as members.</span>
             </button>
             <button
               type="button"
               class="ee-attendance-card"
               data-pay-how="both"
               id="ee-pay-how-both"
+              role="radio"
+              aria-checked="false"
               aria-pressed="false"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">✨</span>
               <strong data-hub-tip="pay-how-both">Both</strong>
-              <span>Tickets for newcomers, plus a membership package for regulars.</span>
+              <span>Tickets for newcomers, and group membership for regulars.</span>
             </button>
           </div>
-          <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose tickets or a membership package (or both) before publishing.</p>
+          <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose tickets or group membership (or both) before publishing.</p>
           <p class="ee-pay-how-outcome" id="ee-pay-how-outcome" role="status">
             Tickets — people book a ticket for this event (paid or free).
           </p>
