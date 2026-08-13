@@ -2359,6 +2359,7 @@
             <div class="org-toolbar org-toolbar--section">
               <p class="org-section-sub org-sub-lead org-sub-lead--flush">
                 Everyone registered or applied for your events — see who is new to your organiser page vs returning, filter by event, export a CSV, or print name badges for check-in.
+                Block someone from future bookings from the Actions column if you need to.
                 After an event, send an <a class="org-inline-link" href="#communicate" data-org-route="communicate">Attendee round-up</a> from Communicate.
               </p>
             </div>
@@ -2444,6 +2445,9 @@
               <button type="button" class="org-inline-link org-attendees-archive-link" id="btn-attendees-view-archive" hidden>
                 Archived applications
               </button>
+              <button type="button" class="org-inline-link org-attendees-archive-link" id="btn-attendees-view-blocked" hidden>
+                Blocked from your events
+              </button>
             </div>
             <div class="org-applications-banner org-applications-banner--pending" id="attendees-pending-banner" hidden role="status"></div>
             <div class="org-applications-banner" id="attendees-seat-refill-banner" hidden role="status"></div>
@@ -2455,6 +2459,10 @@
             <p class="org-attendees-filter-note" id="attendees-archive-note" hidden>
               Archived Category Exclusivity applications — declined applicants you can reconsider when a seat opens.
               <button type="button" class="org-inline-link" id="btn-attendees-view-active">Back to attendees</button>
+            </p>
+            <p class="org-attendees-filter-note" id="attendees-blocked-note" hidden>
+              People blocked from booking this organiser page’s future events. Unblock anytime. Private notes stay on your side only.
+              <button type="button" class="org-inline-link" id="btn-attendees-view-active-from-blocked">Back to attendees</button>
             </p>
             <p class="org-load-hint" id="attendees-load-hint" hidden>Loading attendees…</p>
             <p class="org-load-hint org-load-hint-error" id="attendees-load-error" hidden></p>

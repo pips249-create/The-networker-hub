@@ -4,6 +4,7 @@ const { sendApplicationEmails } = require('./registration-emails');
 const { resolveTicketSalesEnabled, isTicketOnSale } = require('./ticket-sales');
 const { assertApplicationSeatAvailable, countApprovedApplicationSeats } = require('./application-capacity');
 const { isUuid } = require('./uuid');
+const { assertNotBlockedByOrganiser } = require('./organiser-attendee-blocks');
 
 function ticketIsApplication(row) {
   const ticketType = String(row.ticket_type || '').trim();
@@ -87,6 +88,10 @@ async function createApplicationFromSubmission(input) {
     err.code = 'missing_organiser';
     throw err;
   }
+  await assertNotBlockedByOrganiser(sb, {
+    organiserId: eventRow.organiser_id,
+    email,
+  });
   if (!ticketIsApplication(ticketRow)) {
     const err = new Error('not_application_ticket');
     err.code = 'not_application_ticket';

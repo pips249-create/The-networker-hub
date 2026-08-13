@@ -24,6 +24,7 @@ const {
   isMembersOnlyTicket,
 } = require('../ticket-visibility');
 const { assertMembersOnlyBookingAllowed, getActiveRosterMembership } = require('../organiser-member-roster');
+const { assertNotBlockedByOrganiser } = require('../organiser-attendee-blocks');
 const { bookingErrorResponse } = require('../booking-error-messages');
 const {
   resolveSeriesBundleItems,
@@ -158,6 +159,22 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'missing_organiser',
         message: 'This event is not available for booking.',
+      });
+    }
+    try {
+      await assertNotBlockedByOrganiser(sb, {
+        organiserId: evRes.data.organiser_id,
+        email: checkoutEmail,
+        attendeeId: null,
+      });
+    } catch (blockErr) {
+      const mapped = bookingErrorResponse(blockErr.message || blockErr.code);
+      if (mapped) return json(res, mapped.status, mapped.body);
+      return json(res, blockErr.status || 403, {
+        ok: false,
+        error: blockErr.message || 'organiser_attendance_blocked',
+        message:
+          "You're not able to book this organiser's events. Contact them if you think this is a mistake.",
       });
     }
     const { isEventPast } = require('../event-timezone');

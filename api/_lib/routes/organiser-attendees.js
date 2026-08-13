@@ -1,6 +1,10 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const { resolveOrganiserApiScope } = require('../organiser-api-scope');
+const {
+  listBlocksForOrganiserIds,
+  normalizeBlockEmail,
+} = require('../organiser-attendee-blocks');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
@@ -61,6 +65,7 @@ module.exports = async function handler(req, res) {
     }
     let attendees = [];
     let cancellations = [];
+    let blocks = [];
     try {
       if (view === 'cancellations' && listBookingCancellationsForOrganiserEvents) {
         cancellations = await listBookingCancellationsForOrganiserEvents(
@@ -69,15 +74,31 @@ module.exports = async function handler(req, res) {
           scope.adminView,
           eventIds
         );
+      } else if (view === 'blocks') {
+        blocks = await listBlocksForOrganiserIds(scope.groupIds || [], { status: 'active' });
       } else {
         attendees = await listAttendeesForOrganiserEvents(eventIds, filterEventId);
+        blocks = await listBlocksForOrganiserIds(scope.groupIds || [], { status: 'active' });
+        const blockKeys = new Set(
+          (blocks || []).map((b) => String(b.organiserId || '') + '\0' + normalizeBlockEmail(b.email))
+        );
+        attendees = (attendees || []).map((a) => {
+          const key = String(a.organiserId || '') + '\0' + normalizeBlockEmail(a.email);
+          return { ...a, isBlocked: blockKeys.has(key) };
+        });
       }
     } catch (e) {
       return json(res, 500, {
-        error: view === 'cancellations' ? 'cancellations_fetch_failed' : 'attendees_fetch_failed',
+        error:
+          view === 'cancellations'
+            ? 'cancellations_fetch_failed'
+            : view === 'blocks'
+              ? 'blocks_fetch_failed'
+              : 'attendees_fetch_failed',
         message: e.message,
         attendees: [],
         cancellations: [],
+        blocks: [],
       });
     }
 
@@ -85,6 +106,7 @@ module.exports = async function handler(req, res) {
       ok: true,
       attendees,
       cancellations,
+      blocks,
       view,
       eventCount: eventIds.length,
       airtable: airtableSetupHint && airtableSetupHint('events'),

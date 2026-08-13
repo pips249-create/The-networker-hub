@@ -230,6 +230,8 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
                 : 'Free',
         registeredAt: row.created_at || '',
         isRosterMember,
+        organiserId,
+        attendeeId: String(row.attendee_id || '').trim(),
         groupRelationship: relationship.groupRelationship,
         priorVisitCount: relationship.priorVisitCount,
         visitCount:

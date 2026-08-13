@@ -36,6 +36,7 @@ function statusForError(code) {
   ) {
     return 400;
   }
+  if (code === 'organiser_attendance_blocked') return 403;
   return 500;
 }
 
@@ -53,6 +54,8 @@ function messageForError(code) {
     applications_closed: 'Applications have closed for this event.',
     applications_full: 'All places have been taken for this event.',
     already_applied: 'You have already applied for this event.',
+    organiser_attendance_blocked:
+      "You're not able to book this organiser's events. Contact them if you think this is a mistake.",
   };
   return messages[code] || 'Could not submit your application. Please try again.';
 }

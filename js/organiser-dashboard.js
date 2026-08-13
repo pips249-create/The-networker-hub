@@ -77,6 +77,7 @@
     tickets: [],
     attendeesAll: [],
     attendeesLoaded: false,
+    attendeeBlocks: [],
     pendingApplicationsCount: 0,
     pendingApplicationsPreview: [],
     cancellationsAll: [],
@@ -5583,7 +5584,9 @@
   }
 
   function setAttendeesView(view) {
-    filters.attendeesView = view === 'archive' ? 'archive' : 'active';
+    if (view === 'archive') filters.attendeesView = 'archive';
+    else if (view === 'blocked') filters.attendeesView = 'blocked';
+    else filters.attendeesView = 'active';
     filters.attendeesPendingOnly = false;
     listPages.attendees = 1;
     renderAttendees();
@@ -5591,9 +5594,12 @@
 
   function renderAttendeesArchiveNav() {
     const link = document.getElementById('btn-attendees-view-archive');
+    const blockedLink = document.getElementById('btn-attendees-view-blocked');
     const archiveNote = document.getElementById('attendees-archive-note');
+    const blockedNote = document.getElementById('attendees-blocked-note');
     const filterNote = document.getElementById('attendees-filter-note');
     const archivedCount = archivedApplicationsList().length;
+    const blockedCount = (state.attendeeBlocks || []).length;
     if (link) {
       if (filters.attendeesView === 'archive') {
         link.hidden = true;
@@ -5605,14 +5611,28 @@
             : 'Archived applications (' + String(archivedCount) + ')';
       }
     }
+    if (blockedLink) {
+      if (filters.attendeesView === 'blocked') {
+        blockedLink.hidden = true;
+      } else {
+        blockedLink.hidden = blockedCount < 1;
+        blockedLink.textContent =
+          blockedCount === 1
+            ? 'Blocked from your events (1)'
+            : 'Blocked from your events (' + String(blockedCount) + ')';
+      }
+    }
     if (archiveNote) archiveNote.hidden = filters.attendeesView !== 'archive';
-    if (filterNote && filters.attendeesView === 'archive') filterNote.hidden = true;
+    if (blockedNote) blockedNote.hidden = filters.attendeesView !== 'blocked';
+    if (filterNote && (filters.attendeesView === 'archive' || filters.attendeesView === 'blocked')) {
+      filterNote.hidden = true;
+    }
   }
 
   function renderSeatRefillBanner() {
     const banner = document.getElementById('attendees-seat-refill-banner');
     if (!banner) return;
-    if (filters.attendeesView === 'archive') {
+    if (filters.attendeesView === 'archive' || filters.attendeesView === 'blocked') {
       banner.hidden = true;
       return;
     }
@@ -5729,7 +5749,7 @@
   function renderPendingApplicationsBanner() {
     const banner = document.getElementById('attendees-pending-banner');
     if (!banner) return;
-    if (filters.attendeesView === 'archive') {
+    if (filters.attendeesView === 'archive' || filters.attendeesView === 'blocked') {
       banner.hidden = true;
       return;
     }
@@ -5889,6 +5909,18 @@
   }
 
   function filteredAttendeesList() {
+    if (filters.attendeesView === 'blocked') {
+      let list = (state.attendeeBlocks || []).slice();
+      const search = String(filters.attendeesSearch || '').trim().toLowerCase();
+      if (search) {
+        list = list.filter((b) =>
+          [b.name, b.email, b.reason].some((value) =>
+            String(value || '').toLowerCase().includes(search)
+          )
+        );
+      }
+      return list;
+    }
     let list = state.attendeesAll.slice();
     if (filters.attendeesView === 'archive') {
       list = list.filter(
@@ -6233,6 +6265,7 @@
       const { ok, data } = await api('/api/organiser/attendees?eventId=all');
       if (ok) {
         state.attendeesAll = data.attendees || [];
+        state.attendeeBlocks = data.blocks || [];
         state.attendeesLoaded = true;
         maybeClearAttendeesPendingFilter();
         updateMyEventsTabCounts();
@@ -6267,7 +6300,27 @@
   function exportAttendeesCsv() {
     const rows = filteredAttendeesList();
     if (!rows.length) {
-      alert('No attendees to export for this filter.');
+      alert(
+        filters.attendeesView === 'blocked'
+          ? 'No blocked people to export.'
+          : 'No attendees to export for this filter.'
+      );
+      return;
+    }
+    if (filters.attendeesView === 'blocked') {
+      const header = ['Name', 'Email', 'Private note', 'Blocked at'];
+      const lines = rows.map((b) =>
+        [b.name, b.email, b.reason || '', b.createdAt || '']
+          .map((c) => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"')
+          .join(',')
+      );
+      const csv = [header.join(','), ...lines].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'blocked-attendees.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
       return;
     }
     const header = [
@@ -6505,13 +6558,38 @@
     }
     if (a.needsPayment) {
       return (
-        '<div class="org-application-review org-application-review--awaiting">' +
+        '<div class="org-application-review org-application-review--awaiting" data-block-row="' +
+        esc(a.id) +
+        '">' +
         '<p class="org-application-review-label">Awaiting payment</p>' +
         '<p class="org-application-review-hint">The attendee can pay from My Hub.</p>' +
         '<button type="button" class="org-application-resend-approval-btn" data-resend-approval-email="' +
         esc(a.id) +
         '">Resend payment email</button>' +
-        '</div>'
+        '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
+        (a.isBlocked
+          ? '<button type="button" class="org-inline-link org-attendee-unblock-btn" data-unblock-attendee="' +
+            esc(a.id) +
+            '">Unblock</button>'
+          : '<button type="button" class="org-inline-link org-attendee-block-btn" data-show-block-form="' +
+            esc(a.id) +
+            '">Block from events</button>') +
+        '<div class="org-attendee-block-panel" hidden>' +
+        '<label class="org-application-deny-label" for="block-note-' +
+        esc(a.id) +
+        '">Private note (optional)</label>' +
+        '<textarea id="block-note-' +
+        esc(a.id) +
+        '" class="org-attendee-block-note" maxlength="500" rows="2" placeholder="e.g. Disruptive at venue — keep for your records only"></textarea>' +
+        '<p class="org-application-deny-hint">They will not see this note. Blocking stops future bookings and cancels upcoming tickets with you.</p>' +
+        '<div class="org-application-deny-panel-actions">' +
+        '<button type="button" class="org-application-deny-confirm-btn" data-confirm-block-attendee="' +
+        esc(a.id) +
+        '">Block from future events</button>' +
+        '<button type="button" class="org-application-deny-cancel-btn" data-cancel-block-attendee="' +
+        esc(a.id) +
+        '">Cancel</button>' +
+        '</div></div></div>'
       );
     }
     if (
@@ -6537,11 +6615,182 @@
       );
     }
     const liveUrl = attendeeEventPublicUrl(a);
+    const blockPanelId = 'block-note-' + esc(a.id);
+    const blockAction = a.isBlocked
+      ? '<button type="button" class="org-inline-link org-attendee-unblock-btn" data-unblock-attendee="' +
+        esc(a.id) +
+        '">Unblock</button>'
+      : '<button type="button" class="org-inline-link org-attendee-block-btn" data-show-block-form="' +
+        esc(a.id) +
+        '">Block from events</button>';
     return (
+      '<div class="org-attendee-row-actions" data-block-row="' +
+      esc(a.id) +
+      '">' +
       '<a class="org-inline-link org-attendee-live-link" href="' +
       esc(liveUrl) +
-      '" target="_blank" rel="noopener">View live</a>'
+      '" target="_blank" rel="noopener">View live</a>' +
+      '<span class="org-attendee-actions-sep" aria-hidden="true">·</span>' +
+      blockAction +
+      '<div class="org-attendee-block-panel" hidden>' +
+      '<label class="org-application-deny-label" for="' +
+      blockPanelId +
+      '">Private note (optional)</label>' +
+      '<textarea id="' +
+      blockPanelId +
+      '" class="org-attendee-block-note" maxlength="500" rows="2" placeholder="e.g. Disruptive at venue — keep for your records only"></textarea>' +
+      '<p class="org-application-deny-hint">They will not see this note. Blocking stops future bookings for this organiser page and cancels their upcoming tickets with you (paid tickets are refunded).</p>' +
+      '<div class="org-application-deny-panel-actions">' +
+      '<button type="button" class="org-application-deny-confirm-btn" data-confirm-block-attendee="' +
+      esc(a.id) +
+      '">Block from future events</button>' +
+      '<button type="button" class="org-application-deny-cancel-btn" data-cancel-block-attendee="' +
+      esc(a.id) +
+      '">Cancel</button>' +
+      '</div></div></div>'
     );
+  }
+
+  async function blockAttendeeFromRow(registrationId, reason) {
+    const attendee = state.attendeesAll.find((row) => row.id === registrationId);
+    const name = attendee ? attendee.name : 'this person';
+    const ok = window.confirm(
+      'Block ' +
+        name +
+        ' from booking your events?\n\nTheir upcoming bookings with you will be cancelled and paid tickets refunded. Past events stay in your records.'
+    );
+    if (!ok) return;
+
+    const payload = {
+      registrationId,
+      organiserId: attendee && attendee.organiserId ? attendee.organiserId : undefined,
+      reason: String(reason || '').trim(),
+    };
+    const { ok: apiOk, data } = await api('/api/organiser/attendee-blocks', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!apiOk || !data.ok) {
+      showOrganiserAlert(data.message || data.error || 'Could not block this person.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    if (attendee) attendee.isBlocked = true;
+    if (data.block) {
+      const existing = (state.attendeeBlocks || []).find((b) => b.id === data.block.id);
+      if (!existing) {
+        state.attendeeBlocks = [
+          {
+            id: data.block.id,
+            organiserId: data.block.organiserId,
+            email: data.block.email || (attendee && attendee.email) || '',
+            name: (attendee && attendee.name) || '',
+            reason: data.block.reason || '',
+            status: 'active',
+            createdAt: data.block.createdAt || new Date().toISOString(),
+          },
+        ].concat(state.attendeeBlocks || []);
+      }
+    }
+    if (data.cancelledCount > 0 || data.deniedCount > 0) {
+      await ensureAttendeesLoaded({ force: true });
+    } else {
+      renderAttendees();
+    }
+    showOrganiserAlert(data.message || 'Blocked from your future events.', false);
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function unblockAttendeeFromRow(registrationId) {
+    const attendee = state.attendeesAll.find((row) => row.id === registrationId);
+    if (!attendee || !attendee.organiserId || !attendee.email) {
+      showOrganiserAlert('Could not find this person to unblock.', true);
+      return;
+    }
+    const ok = window.confirm(
+      'Allow ' + (attendee.name || 'this person') + ' to book your events again?'
+    );
+    if (!ok) return;
+
+    const { ok: apiOk, data } = await api('/api/organiser/attendee-blocks', {
+      method: 'DELETE',
+      body: JSON.stringify({
+        organiserId: attendee.organiserId,
+        email: attendee.email,
+      }),
+    });
+
+    if (!apiOk || !data.ok) {
+      showOrganiserAlert(data.message || data.error || 'Could not unblock this person.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    attendee.isBlocked = false;
+    const email = String(attendee.email || '').trim().toLowerCase();
+    state.attendeeBlocks = (state.attendeeBlocks || []).filter(
+      (b) =>
+        !(
+          String(b.organiserId || '') === String(attendee.organiserId || '') &&
+          String(b.email || '').toLowerCase() === email
+        )
+    );
+    renderAttendees();
+    showOrganiserAlert(data.message || 'They can book your events again.', false);
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function unblockFromBlockList(blockId) {
+    const block = (state.attendeeBlocks || []).find((b) => b.id === blockId);
+    if (!block) return;
+    const ok = window.confirm(
+      'Allow ' + (block.name || block.email || 'this person') + ' to book your events again?'
+    );
+    if (!ok) return;
+
+    const { ok: apiOk, data } = await api('/api/organiser/attendee-blocks', {
+      method: 'DELETE',
+      body: JSON.stringify({
+        organiserId: block.organiserId,
+        id: block.id,
+      }),
+    });
+
+    if (!apiOk || !data.ok) {
+      showOrganiserAlert(data.message || data.error || 'Could not unblock this person.', true);
+      alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    state.attendeeBlocks = (state.attendeeBlocks || []).filter((b) => b.id !== blockId);
+    state.attendeesAll.forEach((a) => {
+      if (
+        String(a.organiserId || '') === String(block.organiserId || '') &&
+        String(a.email || '').toLowerCase() === String(block.email || '').toLowerCase()
+      ) {
+        a.isBlocked = false;
+      }
+    });
+    if (!(state.attendeeBlocks || []).length) setAttendeesView('active');
+    else renderAttendees();
+    showOrganiserAlert(data.message || 'They can book your events again.', false);
+    alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function showBlockPanel(registrationId) {
+    const row = document.querySelector('[data-block-row="' + registrationId + '"]');
+    if (!row) return;
+    const panel = row.querySelector('.org-attendee-block-panel');
+    if (panel) panel.hidden = false;
+  }
+
+  function hideBlockPanel(registrationId) {
+    const row = document.querySelector('[data-block-row="' + registrationId + '"]');
+    if (!row) return;
+    const panel = row.querySelector('.org-attendee-block-panel');
+    if (panel) panel.hidden = true;
   }
 
   async function resendApprovalEmail(registrationId) {
@@ -6714,7 +6963,7 @@
     const connectionsBtn = document.getElementById('btn-email-attendee-list');
     if (connectionsBtn) {
       const eventId = String(filters.attendeesEvent || 'all');
-      connectionsBtn.hidden = !eventId || eventId === 'all';
+      connectionsBtn.hidden = !eventId || eventId === 'all' || filters.attendeesView === 'blocked';
     }
     if (!body) return;
     renderAttendeesFilterNote();
@@ -6722,8 +6971,62 @@
     renderPendingApplicationsBanner();
     renderSeatRefillBanner();
     const list = filteredAttendeesList();
-    renderAttendeesSummary(list);
+    if (filters.attendeesView === 'blocked') {
+      const summaryEl = document.getElementById('attendees-relationship-summary');
+      if (summaryEl) {
+        summaryEl.hidden = true;
+        summaryEl.textContent = '';
+      }
+    } else {
+      renderAttendeesSummary(list);
+    }
     body.innerHTML = '';
+
+    if (filters.attendeesView === 'blocked') {
+      const thead = document.querySelector('#sub-events-attendees .org-attendees-table thead tr');
+      if (thead) {
+        thead.innerHTML =
+          '<th>Name</th><th>Email</th><th>Private note</th><th>Blocked</th><th>Actions</th>';
+      }
+      if (!list.length) {
+        setOrgEmpty(empty, {
+          show: true,
+          title: 'No blocked people',
+          text: 'When you block someone from an attendee row, they appear here and cannot book your future events.',
+        });
+        updatePaginationNav('attendees', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+        return;
+      }
+      setOrgEmpty(empty, { show: false });
+      const pageInfo = paginateList(list, listPages.attendees);
+      listPages.attendees = pageInfo.page;
+      updatePaginationNav('attendees', pageInfo);
+      pageInfo.items.forEach((b) => {
+        const tr = document.createElement('tr');
+        tr.className = 'org-attendee-row-blocked';
+        tr.innerHTML =
+          '<td class="org-td-name" data-label="Name">' +
+          esc(b.name || '—') +
+          '</td><td data-label="Email">' +
+          esc(b.email || '—') +
+          '</td><td data-label="Private note">' +
+          esc(b.reason || '—') +
+          '</td><td data-label="Blocked">' +
+          esc(formatDateShort(b.createdAt)) +
+          '</td><td class="org-td-actions" data-label="Actions">' +
+          '<button type="button" class="org-inline-link" data-unblock-block="' +
+          esc(b.id) +
+          '">Unblock</button></td>';
+        body.appendChild(tr);
+      });
+      return;
+    }
+
+    const thead = document.querySelector('#sub-events-attendees .org-attendees-table thead tr');
+    if (thead && thead.children.length !== 11) {
+      thead.innerHTML =
+        '<th>Name</th><th>Visits</th><th>Email</th><th>Event</th><th>Ticket</th><th>Qty</th><th>Status</th><th>Application answers</th><th>Paid</th><th>Registered</th><th>Actions</th>';
+    }
 
     if (!list.length) {
       const hasAttendees = state.attendeesAll.length > 0;
@@ -6773,6 +7076,8 @@
         String(a.applicationStatus || '') === 'Denied'
       ) {
         tr.className = 'org-attendee-row-archived';
+      } else if (a.isBlocked) {
+        tr.className = 'org-attendee-row-is-blocked';
       }
       const isPendingApp = String(a.applicationStatus || '') === 'Pending';
       const registeredLabel =
@@ -15626,6 +15931,7 @@
     if (!silent) {
       state.attendeesLoaded = false;
       state.attendeesAll = [];
+      state.attendeeBlocks = [];
     }
     if (eventsSubRoute === 'events-cancellations') {
       loadCancellationsAll().then(() => renderCancellations());
@@ -16522,6 +16828,16 @@
     if (btnAttendeesViewActive) {
       btnAttendeesViewActive.addEventListener('click', () => setAttendeesView('active'));
     }
+    const btnAttendeesViewActiveFromBlocked = document.getElementById(
+      'btn-attendees-view-active-from-blocked'
+    );
+    if (btnAttendeesViewActiveFromBlocked) {
+      btnAttendeesViewActiveFromBlocked.addEventListener('click', () => setAttendeesView('active'));
+    }
+    const btnAttendeesViewBlocked = document.getElementById('btn-attendees-view-blocked');
+    if (btnAttendeesViewBlocked) {
+      btnAttendeesViewBlocked.addEventListener('click', () => setAttendeesView('blocked'));
+    }
 
     const attendeesPanel = document.getElementById('sub-events-attendees');
     if (attendeesPanel && !attendeesPanel.dataset.seatRefillBound) {
@@ -16543,6 +16859,11 @@
         const resendBtn = e.target.closest('[data-resend-application-alert]');
         const resendApprovalBtn = e.target.closest('[data-resend-approval-email]');
         const reconsiderBtn = e.target.closest('[data-reconsider-application]');
+        const showBlockBtn = e.target.closest('[data-show-block-form]');
+        const confirmBlockBtn = e.target.closest('[data-confirm-block-attendee]');
+        const cancelBlockBtn = e.target.closest('[data-cancel-block-attendee]');
+        const unblockBtn = e.target.closest('[data-unblock-attendee]');
+        const unblockBlockBtn = e.target.closest('[data-unblock-block]');
         if (approveBtn) {
           reviewApplication(approveBtn.getAttribute('data-approve-application'), 'approve');
           return;
@@ -16575,6 +16896,29 @@
             reconsiderBtn.getAttribute('data-reconsider-application'),
             reconsiderBtn.getAttribute('data-reconsider-mode')
           );
+          return;
+        }
+        if (showBlockBtn) {
+          showBlockPanel(showBlockBtn.getAttribute('data-show-block-form'));
+          return;
+        }
+        if (confirmBlockBtn) {
+          const registrationId = confirmBlockBtn.getAttribute('data-confirm-block-attendee');
+          const row = document.querySelector('[data-block-row="' + registrationId + '"]');
+          const textarea = row ? row.querySelector('.org-attendee-block-note') : null;
+          blockAttendeeFromRow(registrationId, textarea ? textarea.value : '');
+          return;
+        }
+        if (cancelBlockBtn) {
+          hideBlockPanel(cancelBlockBtn.getAttribute('data-cancel-block-attendee'));
+          return;
+        }
+        if (unblockBtn) {
+          unblockAttendeeFromRow(unblockBtn.getAttribute('data-unblock-attendee'));
+          return;
+        }
+        if (unblockBlockBtn) {
+          unblockFromBlockList(unblockBlockBtn.getAttribute('data-unblock-block'));
         }
       });
     }

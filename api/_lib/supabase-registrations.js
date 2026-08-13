@@ -19,6 +19,7 @@ const {
   assertMembersOnlyBookingAllowed,
   getActiveRosterMembership,
 } = require('./organiser-member-roster');
+const { assertNotBlockedByOrganiser } = require('./organiser-attendee-blocks');
 const { parseBundleMetadata, newBookingGroupId } = require('./series-bundle-checkout');
 const { requiresApprovedApplication } = require('./category-exclusivity');
 const {
@@ -129,6 +130,12 @@ async function createRegistrationFromPayment(input) {
       return { action: 'exists', id: linked.id, registration: linked };
     }
 
+    await assertNotBlockedByOrganiser(sb, {
+      organiserId: linked.organiser_id,
+      email,
+      attendeeId: linked.attendee_id,
+    });
+
     const amountPaid =
       input.amountPaid != null
         ? Number(input.amountPaid)
@@ -237,6 +244,11 @@ async function createRegistrationFromPayment(input) {
     err.code = 'missing_organiser';
     throw err;
   }
+  await assertNotBlockedByOrganiser(sb, {
+    organiserId,
+    email,
+    attendeeId: null,
+  });
   const guestPassesDisabled = Boolean(evMetaRes.data?.guest_passes_disabled);
 
   let ticketRow = null;

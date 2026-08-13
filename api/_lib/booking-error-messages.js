@@ -32,6 +32,8 @@ const BOOKING_ERROR_MESSAGES = {
     'Your membership has expired. Contact the organiser to renew before booking member tickets.',
   already_going:
     "You're already going to this event. View your ticket in My Hub.",
+  organiser_attendance_blocked:
+    "You're not able to book this organiser's events. Contact them if you think this is a mistake.",
 };
 
 const ALUMNI_ERROR_CODES = new Set([
@@ -43,6 +45,7 @@ const ALUMNI_ERROR_CODES = new Set([
   'alumni_single_seat_only',
   'members_only_not_eligible',
   'membership_expired',
+  'organiser_attendance_blocked',
 ]);
 
 function bookingErrorResponse(msg) {

@@ -7524,11 +7524,51 @@ body.org-notifications-open {
 
 .org-attendees-archive-nav {
   margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
 }
 
 .org-attendees-archive-link {
   font-size: 13px;
   font-weight: 600;
+}
+
+.org-attendee-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.org-attendee-actions-sep {
+  color: rgba(28, 32, 64, 0.35);
+}
+
+.org-attendee-block-panel {
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid rgba(28, 32, 64, 0.12);
+  border-radius: 10px;
+  background: #f8f9fc;
+}
+
+.org-attendee-block-note {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(28, 32, 64, 0.18);
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+  min-height: 56px;
+}
+
+.org-attendee-row-is-blocked td {
+  opacity: 0.92;
 }
 
 .org-application-review--archive .org-application-reconsider-pending-btn {
