@@ -2,8 +2,8 @@
 
 **Dual-site SEO hold:** co.uk stays live **~3 months** (through **~November 2026**)  
 **Soft banner:** install **now** — keep until hard 301s  
-**Banner CTA (one):** Sneak Peek → `/peek/for-organisers`  
-**Landing URL:** `https://www.thenetworkerhub.com/peek/for-organisers?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`  
+**Banner CTA (one):** Sneak Peek → `/peek` (choose For organisers or For networkers)  
+**Landing URL:** `https://www.thenetworkerhub.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`  
 **Hard redirect:** deferred until SEO hold ends — see `docs/LEGACY-REDIRECT-MAP.md`
 
 UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`
