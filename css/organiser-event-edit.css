@@ -1734,6 +1734,15 @@ body.ee-step2-modal-open {
 }
 
 /* —— Booking options help page —— */
+/* Event-edit pages lock body scroll into .ee-wrap; this page has no .ee-wrap. */
+body.hub-page-organiser.organiser-booking-options-page,
+body.organiser-booking-options-page {
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
 .organiser-booking-options-page {
   background:
     radial-gradient(ellipse 80% 50% at 10% -10%, rgba(13, 110, 122, 0.12), transparent 55%),
@@ -1743,6 +1752,9 @@ body.ee-step2-modal-open {
 
 .ee-booking-help {
   padding: 0 16px 56px;
+  flex: 1 1 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ee-booking-help-shell {
@@ -1787,6 +1799,14 @@ body.ee-step2-modal-open {
   grid-template-columns: 1fr;
   gap: 10px;
   margin: 0 0 28px;
+  position: sticky;
+  top: 84px;
+  z-index: 20;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(244, 248, 250, 0.94);
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  backdrop-filter: blur(8px);
 }
 
 @media (min-width: 780px) {
@@ -1803,16 +1823,24 @@ body.ee-step2-modal-open {
   padding: 14px 14px 16px;
   border-radius: 12px;
   border: 1.5px solid rgba(13, 110, 122, 0.18);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.92);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 .ee-booking-help-compare-item:hover {
   border-color: var(--ee-purple);
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(28, 50, 64, 0.06);
+}
+
+.ee-booking-help-compare-item.is-active,
+.ee-booking-help-compare-item--focus.is-active {
+  border-color: var(--ee-purple);
+  background: linear-gradient(165deg, #ffffff 0%, #d4f0f3 100%);
+  box-shadow: 0 0 0 2px rgba(13, 110, 122, 0.18);
 }
 
 .ee-booking-help-compare-item--focus {
@@ -1853,12 +1881,29 @@ body.ee-step2-modal-open {
 }
 
 .ee-booking-help-section {
-  margin: 0 0 18px;
+  margin: 0 0 22px;
   padding: 22px 20px 20px;
   border-radius: 14px;
   border: 1px solid rgba(26, 46, 59, 0.08);
-  background: rgba(255, 255, 255, 0.92);
-  scroll-margin-top: 88px;
+  border-left: 5px solid #7a94a3;
+  background: rgba(255, 255, 255, 0.96);
+  scroll-margin-top: 200px;
+}
+
+.ee-booking-help-section#tickets {
+  border-left-color: #0d6e7a;
+}
+
+.ee-booking-help-section#membership {
+  border-left-color: #bd932e;
+}
+
+.ee-booking-help-section#both {
+  border-left-color: #084a52;
+}
+
+.ee-booking-help-section.is-current {
+  box-shadow: 0 10px 28px rgba(28, 50, 64, 0.08);
 }
 
 .ee-booking-help-section--accent {
