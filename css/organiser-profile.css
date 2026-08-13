@@ -524,6 +524,147 @@
   margin-bottom: 14px;
 }
 
+.org-claim-founding {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #1c2040;
+  color: #fff;
+}
+
+.org-claim-founding-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c4a574;
+}
+
+.org-claim-founding-lede {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.org-claim-peers {
+  margin: 0 0 14px;
+  padding: 12px 0 4px;
+  border-top: 1px solid rgba(138, 107, 61, 0.22);
+}
+
+.org-claim-peers[hidden] {
+  display: none !important;
+}
+
+.org-claim-peers-kicker {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a6b3d;
+}
+
+.org-claim-peers-lede {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b6570;
+}
+
+.org-claim-peers-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.org-claim-peers-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+}
+
+.org-claim-peers-track--marquee {
+  animation: org-claim-peers-scroll 28s linear infinite;
+}
+
+.org-claim-peers-marquee:hover .org-claim-peers-track--marquee,
+.org-claim-peers-marquee:focus-within .org-claim-peers-track--marquee {
+  animation-play-state: paused;
+}
+
+@keyframes org-claim-peers-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .org-claim-peers-track--marquee {
+    animation: none;
+  }
+
+  .org-claim-peers-marquee {
+    overflow-x: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .org-claim-peers-track {
+    width: auto;
+    flex-wrap: wrap;
+  }
+}
+
+.org-claim-peer-item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 44px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(45, 38, 54, 0.1);
+  box-shadow: 0 1px 2px rgba(45, 38, 54, 0.04);
+  text-decoration: none;
+  color: inherit;
+}
+
+.org-claim-peer-item--dark {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+}
+
+.org-claim-peer-logo {
+  max-width: 56px;
+  max-height: 28px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.org-claim-peer-initial {
+  font-size: 14px;
+  font-weight: 700;
+  color: #452d5c;
+  line-height: 1;
+}
+
+.org-claim-peer-item--dark .org-claim-peer-initial,
+.org-claim-peer-item--fallback .org-claim-peer-initial {
+  color: #452d5c;
+}
+
+.org-claim-peer-item--dark.org-claim-peer-item--fallback {
+  background: #fff;
+  border-color: rgba(45, 38, 54, 0.1);
+}
+
 .org-claim-invite-note {
   margin: 0;
   font-size: 13px;

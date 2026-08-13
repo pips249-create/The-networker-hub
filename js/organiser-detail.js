@@ -192,6 +192,141 @@
     } catch (e) {
       /* ignore */
     }
+
+    loadClaimPeerStrip(org);
+  }
+
+  var CLAIM_PEERS_MIN = 4;
+
+  function claimPeerItemHtml(org) {
+    var name = String((org && org.name) || 'Organiser').trim() || 'Organiser';
+    var photo = String((org && (org.photoUrl || org.photo_url)) || '').trim();
+    var href = String((org && (org.href || org.website)) || '').trim();
+    var initial = name.charAt(0).toUpperCase() || '?';
+    var dark = org && (org.logoBandDark || org.logo_band_dark);
+    var classes =
+      'org-claim-peer-item' +
+      (dark ? ' org-claim-peer-item--dark' : '') +
+      (photo ? '' : ' org-claim-peer-item--fallback');
+    var inner;
+    if (photo) {
+      inner =
+        '<img class="org-claim-peer-logo" src="' +
+        escapeHtml(photo) +
+        '" alt="' +
+        escapeHtml(name) +
+        '" loading="lazy" decoding="async" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'org-claim-peer-item--fallback\');this.parentElement.classList.remove(\'org-claim-peer-item--dark\')}" />' +
+        '<span class="org-claim-peer-initial" hidden aria-hidden="true">' +
+        escapeHtml(initial) +
+        '</span>';
+    } else {
+      inner =
+        '<span class="org-claim-peer-initial" aria-hidden="true">' +
+        escapeHtml(initial) +
+        '</span>';
+    }
+    if (href && /^https?:\/\//i.test(href)) {
+      return (
+        '<a class="' +
+        classes +
+        '" href="' +
+        escapeHtml(href) +
+        '" target="_blank" rel="noopener noreferrer" title="' +
+        escapeHtml(name) +
+        '">' +
+        inner +
+        '</a>'
+      );
+    }
+    return (
+      '<div class="' +
+      classes +
+      '" title="' +
+      escapeHtml(name) +
+      '">' +
+      inner +
+      '</div>'
+    );
+  }
+
+  function renderClaimPeerStrip(list) {
+    var wrap = document.getElementById('org-claim-peers');
+    var track = document.getElementById('org-claim-peers-track');
+    var marquee = document.getElementById('org-claim-peers-marquee');
+    var lede = document.getElementById('org-claim-peers-lede');
+    if (!wrap || !track) return;
+
+    if (!list || list.length < CLAIM_PEERS_MIN) {
+      wrap.hidden = true;
+      track.innerHTML = '';
+      return;
+    }
+
+    wrap.hidden = false;
+    if (lede) {
+      lede.textContent =
+        list.length === 1
+          ? 'Another group has already confirmed their page ahead of launch.'
+          : list.length +
+            ' groups have already confirmed their pages ahead of launch.';
+    }
+
+    var items = list.map(claimPeerItemHtml).join('');
+    var prefersReducedMotion = false;
+    try {
+      prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (e) {
+      /* ignore */
+    }
+    var useMarquee = list.length >= 5 && !prefersReducedMotion;
+    track.classList.toggle('org-claim-peers-track--marquee', useMarquee);
+    track.innerHTML = useMarquee ? items + items : items;
+    if (marquee) {
+      marquee.setAttribute(
+        'aria-label',
+        'Organisers already on The Networker Hub'
+      );
+    }
+  }
+
+  function loadClaimPeerStrip(currentOrg) {
+    var wrap = document.getElementById('org-claim-peers');
+    if (!wrap) return;
+    var currentId = String((currentOrg && currentOrg.id) || '').trim();
+    var currentSlug = String((currentOrg && currentOrg.slug) || '').trim().toLowerCase();
+    var currentName = String((currentOrg && currentOrg.name) || '')
+      .trim()
+      .toLowerCase();
+
+    fetch('/api/founding-organisers?for=gateway', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (data) {
+        var rows = data && Array.isArray(data.organisers) ? data.organisers : [];
+        var filtered = rows.filter(function (row) {
+          if (!row) return false;
+          var id = String(row.id || '').trim();
+          var slug = String(row.slug || '').trim().toLowerCase();
+          var name = String(row.name || '').trim().toLowerCase();
+          if (currentId && id && id === currentId) return false;
+          if (currentSlug && slug && slug === currentSlug) return false;
+          if (currentName && name && name === currentName) return false;
+          return true;
+        });
+        // Prefer logo tiles when we have them; keep enough for a strip.
+        var withLogo = filtered.filter(function (row) {
+          return String(row.photoUrl || row.photo_url || '').trim();
+        });
+        var pool = withLogo.length >= CLAIM_PEERS_MIN ? withLogo : filtered;
+        renderClaimPeerStrip(pool.slice(0, 24));
+      })
+      .catch(function () {
+        renderClaimPeerStrip([]);
+      });
   }
 
   function renderSiblingGroups(siblings, q) {
