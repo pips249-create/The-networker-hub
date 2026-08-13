@@ -13731,27 +13731,27 @@
         introEl.textContent =
           'Nice work — this listing is live in your workspace (attendees still cannot buy on the public site until 1 September). Next we’ll ask about your other organiser page' +
           (pendingClaims === 1 ? '' : 's') +
-          '. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
+          '.';
       } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'profile') {
         introEl.textContent =
-          'Your listing is live in the workspace. Public ticket buying opens 1 September. Next, review your other organiser page. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September).';
+          'Your listing is live in the workspace. Public ticket buying opens 1 September. Next, review your other organiser page.';
       } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'event') {
         introEl.textContent =
           'Your listing is live in the workspace. You still have draft events to publish on this page — continue when you are ready. Public buying opens 1 September.';
       } else if (opts.fromPublish) {
         introEl.textContent =
-          'Your listing is live in the workspace. Public ticket buying opens 1 September. Founding Organiser · 2026 unlocks with this publish (if you claimed before 1 September). Free tickets are fine without bank details; add them before you sell paid tickets.';
+          'Your listing is live in the workspace. Public ticket buying opens 1 September. Free tickets are fine without bank details; add them before you sell paid tickets.';
       } else if (nextClaim) {
         introEl.textContent =
           'Great — this page is ready. Next we’ll ask about your other organiser page' +
           (pendingClaims === 1 ? '' : 's') +
-          '. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September).';
+          '. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your Hub page.';
       } else if (nextLaunch && nextLaunch.kind === 'profile') {
         introEl.textContent =
-          'This page is ready. Next, review your other organiser page. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September).';
+          'This page is ready. Next, review your other organiser page. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your Hub page.';
       } else {
         introEl.textContent =
-          'You’re set in the workspace. Founding Organiser · 2026 unlocks when you publish your first event (if you claimed before 1 September). Free tickets can publish without bank details; add them before paid sales.';
+          'You’re set in the workspace. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your Hub page. Free tickets can publish without bank details; add them before paid sales.';
       }
     }
     if (nextBtn) {

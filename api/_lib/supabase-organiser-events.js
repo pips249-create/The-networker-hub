@@ -2046,7 +2046,7 @@ async function publishEventsWithRefund(eventIds, refundPayload, ticketsForSales)
 
   await publishOrganiserListingsForEventIds(sb, updated);
 
-  // Founding Organiser · 2026 — unlock after first published event (claim must be pre-deadline).
+  // Founding Organiser · 2026 — safety net if badge was missed on claim (pre-deadline only).
   try {
     const { maybeAwardFoundingAfterEventPublish } = require('./founding-organiser');
     const { rowToGroup } = require('./supabase-organiser');

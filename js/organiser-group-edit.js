@@ -1093,7 +1093,7 @@
     }
 
     if (onboardReview || (config && config.onboardLaunch)) {
-      // Founding toast only appears after first published event (server sets sessionStorage).
+      // Founding toast if set after claim (or publish safety-net award).
       consumeFoundingToast();
     }
 

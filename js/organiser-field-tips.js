@@ -94,13 +94,13 @@
       hubertPrompt: 'What does Member-only for this event do on the tickets step?',
     },
     'members-only-ticket': {
-      title: 'Cheaper rate for people on your member list',
+      title: 'Members pay less',
       body:
-        'People on your member list book free or cheaper when signed in. Public tickets stay on sale for everyone else. Use £0 when membership already covers attendance — members should not pay again.',
+        'People on your member list book free or cheaper when signed in. Everyone else still uses the public ticket. Use £0 when membership already covers attendance.',
       hubertPrompt: 'What is list-member booking?',
     },
     'ce-member-price': {
-      title: 'List-member booking',
+      title: 'Members pay less',
       body:
         'Optional booking for people already on your membership list. They book without applying. Guests still apply. Use £0 when monthly membership covers attendance.',
       hubertPrompt: 'How does list-member booking work on an application-based event?',

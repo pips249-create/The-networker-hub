@@ -226,12 +226,23 @@
       if (!(payHowIncludesMembership() && privateTicketEnabled() && collectMembersOnlyTicket())) {
         blockers.push(
           payHowIncludesMembership()
-            ? 'Add a public ticket type, or turn on List-member booking for people on your member list'
-            : 'Add at least one ticket type with a name'
+            ? 'Add a public ticket, or turn on Members pay less for people on your member list'
+            : 'Add at least one ticket with a name'
         );
       }
     } else if (!tiersHaveRequiredSaleEnds(list)) {
-      blockers.push('Choose a valid sale end for every ticket tier');
+      blockers.push('Choose a valid sale end for every ticket');
+    }
+    const unpaidNamed = Array.from(document.querySelectorAll('.ee-tier-row')).some(function (row) {
+      const name = row.querySelector('.ee-tier-name')?.value.trim();
+      if (!name) return false;
+      const paid = row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="paid"]');
+      if (!paid) return false;
+      const price = Number(row.querySelector('.ee-tier-price')?.value);
+      return !Number.isFinite(price) || price <= 0;
+    });
+    if (unpaidNamed) {
+      blockers.push('Enter a price for each paid ticket');
     }
     if (!payHowIncludesTickets() && !payHowIncludesMembership()) {
       blockers.push('Choose tickets or monthly membership (or both)');
@@ -247,7 +258,7 @@
       !isMembershipMeetingMode()
     ) {
       blockers.push(
-        'Turn on List-member booking (usually £0) so members on your list are not charged the public ticket again'
+        'Turn on Members pay less (usually £0) so members on your list are not charged the public ticket again'
       );
     }
     if (hasPaid && !collectVatTreatment()) {
@@ -1010,7 +1021,7 @@
   function setAttendanceDoor(door, opts) {
     const options = opts || {};
     attendanceDoor = door === 'application' ? 'application' : 'general';
-    document.querySelectorAll('.ee-attendance-card').forEach(function (btn) {
+    document.querySelectorAll('#ee-attendance-card-wrap .ee-attendance-card').forEach(function (btn) {
       const active = (btn.getAttribute('data-door') || '') === attendanceDoor;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -1057,7 +1068,7 @@
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryPanel) categoryPanel.hidden = true;
       if (payHowPanel) payHowPanel.hidden = true;
-      syncPayHowContinueUi();
+      syncPayHowStepUi();
       syncTicketStepLabels();
       wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
@@ -1126,6 +1137,51 @@
     });
   }
 
+  function payHowLabel() {
+    const h = readPayHow();
+    if (h === 'both') return 'Both — tickets and membership package';
+    if (h === 'membership') return 'Membership package';
+    return 'Tickets';
+  }
+
+  function syncPayHowStepUi() {
+    const panel = document.getElementById('ee-panel-pay-how');
+    if (!panel) return;
+    const collapsed = Boolean(step2Confirmed && payHowConfirmed);
+    panel.classList.toggle('is-collapsed', collapsed);
+    const summary = document.getElementById('ee-pay-how-summary');
+    if (summary) summary.hidden = !collapsed;
+    const text = document.getElementById('ee-pay-how-summary-text');
+    if (text) {
+      text.innerHTML =
+        '<strong>' +
+        esc(payHowLabel()) +
+        '</strong> — chosen for this event. Change only if you need a different option.';
+    }
+    syncPayHowContinueUi();
+  }
+
+  function bindPayHowChange() {
+    const btn = document.getElementById('ee-pay-how-change');
+    if (!btn || btn.dataset.boundPayHowChange) return;
+    btn.dataset.boundPayHowChange = '1';
+    btn.addEventListener('click', function () {
+      payHowConfirmed = false;
+      showAlert('');
+      hideLaterTicketSteps();
+      const payHowPanel = document.getElementById('ee-panel-pay-how');
+      if (payHowPanel) payHowPanel.hidden = false;
+      syncPayHowStepUi();
+      syncPayHowUi();
+      syncTicketStepLabels();
+      try {
+        payHowPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+
   function syncPayHowContinueUi() {
     const next = document.getElementById('ee-pay-how-next');
     if (!next) return;
@@ -1141,7 +1197,7 @@
     syncGuestProgrammeMount();
     syncHubMembershipMount();
     syncAttendanceStepUi();
-    syncPayHowContinueUi();
+    syncPayHowStepUi();
     syncTicketStepLabels();
     updatePublishButton();
   }
@@ -1214,7 +1270,7 @@
       if (ticketsPanel) ticketsPanel.hidden = true;
       if (categoryPanel) categoryPanel.hidden = true;
       if (payHowPanel) payHowPanel.hidden = true;
-      syncPayHowContinueUi();
+      syncPayHowStepUi();
       syncAttendanceStepUi();
       syncTicketStepLabels();
     }
@@ -1239,7 +1295,9 @@
     if (categoryPanel) categoryPanel.hidden = !isCategory;
     if (optionalExtras) {
       optionalExtras.hidden =
-        (!openBooking && !isCategory) || (membersOnlyEventEnabled() && !membershipMeeting);
+        (!openBooking && !isCategory) ||
+        (membersOnlyEventEnabled() && !membershipMeeting) ||
+        !payHowIncludesMembership();
     }
     if (paidWrap) paidWrap.hidden = false;
     if (attendeeExtras) attendeeExtras.hidden = false;
@@ -1251,7 +1309,7 @@
     syncPayHowUi();
     syncMembersOnlyEventMode();
     syncAttendanceStepUi();
-    syncPayHowContinueUi();
+    syncPayHowStepUi();
     syncTicketStepLabels();
     updatePublishButton();
   }
@@ -1298,7 +1356,7 @@
       }
     }
 
-    document.querySelectorAll('.ee-attendance-card, .ee-mode-btn').forEach((btn) => {
+    document.querySelectorAll('#ee-attendance-card-wrap .ee-attendance-card, .ee-mode-btn').forEach((btn) => {
       const door = btn.getAttribute('data-door');
       const active = door
         ? door === attendanceDoor
@@ -1308,6 +1366,8 @@
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+    // Keep Step 2 pay-how selection in sync (do not reuse attendance card active logic).
+    setPayHow(readPayHow());
 
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const optionalExtras = document.getElementById('ee-panel-optional-extras');
@@ -1337,7 +1397,8 @@
       if (optionalExtras) {
         optionalExtras.hidden =
           (!openBooking && !isCategory) ||
-          (membersOnlyEventEnabled() && !isMembershipMeetingMode());
+          (membersOnlyEventEnabled() && !isMembershipMeetingMode()) ||
+          !payHowIncludesMembership();
       }
       if (categoryExclusivityPanel) categoryExclusivityPanel.hidden = !isCategory;
     }
@@ -1348,19 +1409,20 @@
         isCategory ||
         membersOnlyEventEnabled() ||
         isMembershipMeetingMode() ||
-        !payHowIncludesTickets();
+        !payHowIncludesTickets() ||
+        !payHowIncludesMembership();
     }
 
     const optionalLead = document.getElementById('ee-optional-extras-lead');
     const optionalTitle = document.getElementById('ee-optional-extras-title');
     const bothPayHow = payHowIncludesTickets() && payHowIncludesMembership();
     if (optionalTitle) {
-      optionalTitle.textContent = bothPayHow ? 'Member booking rate' : 'Extra rates (optional)';
+      optionalTitle.textContent = bothPayHow ? 'Members pay less' : 'Members pay less (optional)';
     }
     if (optionalLead) {
       optionalLead.innerHTML = bothPayHow
-        ? 'Because you also offer membership, turn on <strong>List-member booking</strong> (usually £0) so people on your member list are not charged the public ticket again.'
-        : 'Optional. Give people on your member list a cheaper (or free) ticket while public tickets above stay available for everyone else.';
+        ? 'Turn this on (usually £0) so people on your member list are not charged the public ticket again.'
+        : 'Optional. Let people on your member list book cheaper (or free) while everyone else uses the ticket above.';
     }
 
     syncHubMembershipMount();
@@ -1382,10 +1444,10 @@
       panelTitle.textContent = isMembershipMeetingMode()
         ? 'Member booking & free trial visits'
         : attendanceMode === 'guest_programme'
-          ? 'Ticket types'
+          ? 'Your ticket'
           : membersOnlyEventEnabled()
             ? 'Member booking'
-            : 'Public ticket types';
+            : 'Your ticket';
     }
     const panelLead = document.getElementById('ee-tickets-panel-lead');
     if (panelLead) {
@@ -1395,7 +1457,7 @@
     syncHubMembershipMount();
     syncGuestVisitsInput();
     updateTierSummary();
-    syncPayHowContinueUi();
+    syncPayHowStepUi();
     syncTicketStepLabels();
     updatePublishButton();
   }
@@ -1533,28 +1595,36 @@
       '</div>' +
       '<div class="ee-tier-body">' +
       '<div class="ee-field ee-tier-name-field"><label>Ticket name</label>' +
-      '<input type="text" class="ee-tier-name" required placeholder="e.g. General Admission, Early Bird" /></div>' +
-      '<div class="ee-field ee-tier-desc-field"><label>Description <span class="ee-optional">(optional)</span></label>' +
-      '<textarea class="ee-tier-desc" rows="2" placeholder="What is included with this ticket"></textarea></div>' +
-      '<div class="ee-row-2 ee-tier-price-row">' +
-      '<div class="ee-field"><label>Price (£)</label>' +
+      '<input type="text" class="ee-tier-name" required placeholder="e.g. General admission" /></div>' +
+      '<div class="ee-field ee-tier-price-mode-field">' +
+      '<span class="ee-label-block">Is this ticket free or paid?</span>' +
+      '<div class="ee-tier-price-mode" role="group" aria-label="Free or paid">' +
+      '<button type="button" class="ee-tier-price-mode-btn is-active" data-price-mode="free" aria-pressed="true">Free</button>' +
+      '<button type="button" class="ee-tier-price-mode-btn" data-price-mode="paid" aria-pressed="false">Paid</button>' +
+      '</div></div>' +
+      '<div class="ee-field ee-tier-price-field" hidden>' +
+      '<label>Price (£)</label>' +
       '<div class="ee-number-stepper">' +
       '<button type="button" class="ee-number-step ee-tier-price-down" aria-label="Decrease price">↓</button>' +
       '<input type="number" class="ee-tier-price" min="0" step="0.01" value="0" />' +
       '<button type="button" class="ee-number-step ee-tier-price-up" aria-label="Increase price">↑</button>' +
-      '</div>' +
-      '<p class="ee-hint ee-hint--below">enter 0 for free tickets</p></div>' +
-      '<div class="ee-field"><label>Quantity available <span class="ee-optional">(optional)</span></label>' +
+      '</div></div>' +
+      '<details class="ee-tier-advanced">' +
+      '<summary>More options</summary>' +
+      '<div class="ee-tier-advanced-body">' +
+      '<div class="ee-field ee-tier-desc-field"><label>Description <span class="ee-optional">(optional)</span></label>' +
+      '<textarea class="ee-tier-desc" rows="2" placeholder="What is included with this ticket"></textarea></div>' +
+      '<div class="ee-field"><label>How many available <span class="ee-optional">(optional)</span></label>' +
       '<div class="ee-number-stepper">' +
       '<button type="button" class="ee-number-step ee-tier-qty-down" aria-label="Decrease quantity">↓</button>' +
       '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" />' +
       '<button type="button" class="ee-number-step ee-tier-qty-up" aria-label="Increase quantity">↑</button>' +
-      '</div></div>' +
       '</div>' +
+      '<p class="ee-hint ee-hint--below">Leave blank for unlimited</p></div>' +
       '<div class="ee-field ee-tier-series-pass-field" hidden data-field-tip="event-series-pass-tier">' +
       '<label class="ee-check-label">' +
       '<input type="checkbox" class="ee-tier-series-pass" /> ' +
-      '<span><strong>Full series pass</strong> — one price covers every date in this listing (not per session)</span>' +
+      '<span><strong>Full series pass</strong> — one price covers every date in this listing</span>' +
       '</label></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start</label>' +
@@ -1571,7 +1641,7 @@
       '<input type="date" class="ee-tier-sale-custom-date" />' +
       '<select class="ee-tier-sale-custom-time" aria-label="Custom sale end time"></select>' +
       '</div></div></div>' +
-      '</div>' +
+      '</div></div></details>' +
       '</div></div>'
     );
   }
@@ -1603,17 +1673,27 @@
       if (minPrice == null || price < minPrice) minPrice = price;
     });
     const qtyLabel = hasUnlimited && count ? 'unlimited' : String(totalQty);
-    const fromPrice = minPrice == null ? '0' : minPrice.toFixed(2);
-    const noun = 'ticket type';
+    const fromPrice = minPrice == null ? 0 : Number(minPrice);
+    const priceLabel =
+      minPrice == null || fromPrice === 0
+        ? 'Free'
+        : count > 1
+          ? 'from £' + fromPrice.toFixed(2)
+          : '£' + fromPrice.toFixed(2);
     summary.textContent =
-      count +
-      ' ' +
-      noun +
-      (count === 1 ? '' : 's') +
-      ' · ' +
-      qtyLabel +
-      ' total available · from £' +
-      fromPrice;
+      count + ' ticket' + (count === 1 ? '' : 's') + ' · ' + qtyLabel + ' · ' + priceLabel;
+    syncTierToolbarVisibility();
+  }
+
+  function syncTierToolbarVisibility() {
+    const wrap = document.getElementById('ee-tier-rows');
+    if (!wrap) return;
+    const rows = wrap.querySelectorAll('.ee-tier-row');
+    const multi = rows.length > 1;
+    rows.forEach(function (row) {
+      const toolbar = row.querySelector('.ee-tier-toolbar');
+      if (toolbar) toolbar.hidden = !multi;
+    });
   }
 
   function moveTierRow(row, dir) {
@@ -1638,6 +1718,52 @@
     field.hidden = !seriesHasMultipleDates();
   }
 
+  function syncTierPriceMode(row) {
+    if (!row) return;
+    const priceEl = row.querySelector('.ee-tier-price');
+    const priceField = row.querySelector('.ee-tier-price-field');
+    const raw = String((priceEl && priceEl.value) || '').trim();
+    const price = Number(raw);
+    const paidSelected = Boolean(
+      row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="paid"]')
+    );
+    const isFree =
+      Number.isFinite(price) && price > 0 ? false : paidSelected ? false : true;
+    row.querySelectorAll('.ee-tier-price-mode-btn').forEach(function (btn) {
+      const mode = btn.getAttribute('data-price-mode');
+      const active = isFree ? mode === 'free' : mode === 'paid';
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (priceField) priceField.hidden = isFree;
+  }
+
+  function setTierPriceMode(row, mode) {
+    if (!row) return;
+    const priceEl = row.querySelector('.ee-tier-price');
+    const priceField = row.querySelector('.ee-tier-price-field');
+    const paid = mode === 'paid';
+    row.querySelectorAll('.ee-tier-price-mode-btn').forEach(function (btn) {
+      const active = (btn.getAttribute('data-price-mode') || '') === (paid ? 'paid' : 'free');
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (priceField) priceField.hidden = !paid;
+    if (!priceEl) return;
+    if (!paid) {
+      priceEl.value = '0';
+    } else if (!Number(priceEl.value) || Number(priceEl.value) <= 0) {
+      priceEl.value = '';
+      try {
+        priceEl.focus();
+      } catch {
+        /* ignore */
+      }
+    }
+    priceEl.dispatchEvent(new Event('input', { bubbles: true }));
+    priceEl.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
   function bindTierRow(row) {
     const saleSelect = row.querySelector('.ee-tier-sale-end');
     const customWrap = row.querySelector('.ee-sale-custom-wrap');
@@ -1650,14 +1776,22 @@
     populateQuarterTimeSelect(row.querySelector('.ee-tier-sale-custom-time'), '18:00');
     row.querySelectorAll('input, textarea, select').forEach((el) => {
       el.addEventListener('input', function () {
+        if (el.classList && el.classList.contains('ee-tier-price')) syncTierPriceMode(row);
         updateTierSummary();
         updatePublishButton();
       });
       el.addEventListener('change', function () {
+        if (el.classList && el.classList.contains('ee-tier-price')) syncTierPriceMode(row);
         updateTierSummary();
         updatePublishButton();
       });
     });
+    row.querySelectorAll('.ee-tier-price-mode-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setTierPriceMode(row, btn.getAttribute('data-price-mode') || 'free');
+      });
+    });
+    syncTierPriceMode(row);
     const up = row.querySelector('.ee-tier-up');
     const down = row.querySelector('.ee-tier-down');
     if (up) up.addEventListener('click', () => moveTierRow(row, -1));
@@ -1763,6 +1897,17 @@
       passEl.checked = String(ticket.seriesScope || ticket.series_scope || '').trim() === 'series_pass';
     }
     syncSeriesPassFieldVisibility(row);
+    syncTierPriceMode(row);
+    const advanced = row.querySelector('.ee-tier-advanced');
+    if (advanced) {
+      const hasAdvanced =
+        Boolean(ticket.description) ||
+        (ticket.quantityAvailable != null && ticket.quantityAvailable !== '') ||
+        Boolean(ticket.saleStart) ||
+        (ticket.saleEndOption && ticket.saleEndOption !== 'at_start') ||
+        String(ticket.seriesScope || ticket.series_scope || '').trim() === 'series_pass';
+      advanced.open = hasAdvanced;
+    }
   }
 
   function isMembersOnlyTicket(ticket) {
@@ -2007,10 +2152,17 @@
     if (membersWrap) membersWrap.hidden = !on;
     if (privateAddon) {
       privateAddon.hidden =
-        on || attendanceMode === 'category_exclusivity' || membershipMeeting || membershipOnlyPay;
+        on ||
+        attendanceMode === 'category_exclusivity' ||
+        membershipMeeting ||
+        membershipOnlyPay ||
+        !payHowIncludesMembership();
     }
     if (optionalExtras) {
       if (!step2Confirmed || !payHowConfirmed) {
+        optionalExtras.hidden = true;
+      } else if (!payHowIncludesMembership()) {
+        // Plain tickets path — skip "Members pay less" to keep the happy path simple.
         optionalExtras.hidden = true;
       } else if (isOpenBookingMode(attendanceMode)) {
         optionalExtras.hidden = on && !membershipMeeting;
@@ -2043,11 +2195,15 @@
           ? 'Member booking'
           : on
             ? 'Member booking'
-            : attendanceMode === 'guest_programme'
-              ? 'Ticket types'
-              : 'Public ticket types';
+            : 'Your ticket';
     }
-    if (panelLead) panelLead.hidden = on;
+    if (panelLead) {
+      panelLead.hidden = on;
+      if (!on) {
+        panelLead.textContent =
+          'Give it a name and choose free or a price. Most organisers only need one ticket.';
+      }
+    }
     if (closedHow) closedHow.hidden = !on || membershipMeeting || guestProgrammeEnabled();
     if (meetingHow) meetingHow.hidden = !membershipMeeting;
     if (moeSummary) moeSummary.hidden = !on;
@@ -2293,36 +2449,37 @@
 
     if (lead) {
       lead.textContent = isApplication
-        ? 'Offer tickets after approval (paid or free), a membership package, or both. Free trial visits are optional.'
-        : 'Offer tickets for this event (paid or free), a membership package, or both. Free trial visits are optional.';
+        ? 'Pick one. You can add free trial visits below if you want.'
+        : 'Pick one. You can add free trial visits below if you want.';
     }
     if (hint) {
+      // Keep the status line for screen readers / continue prompts, but hide the visual clutter.
+      hint.hidden = true;
       if (!payHowConfirmed) {
         hint.textContent = includesMembership
-          ? 'After free trial visits, people can join a membership package. Continue to set amounts and access.'
-          : 'Choose tickets or a membership package (or both), then continue to add ticket types.';
+          ? 'Continue to set your membership package amounts.'
+          : 'Continue to add your ticket.';
       } else {
         hint.textContent = includesMembership
-          ? 'After free trial visits, people can join a membership package. Set monthly/annual amounts below.'
-          : 'Add at least one ticket type below (paid or free). You can still offer free trial visits.';
+          ? 'Set monthly/annual amounts below.'
+          : 'Add your ticket below.';
       }
     }
     if (outcome) {
       if (isApplication) {
         outcome.textContent = includesTickets && includesMembership
-          ? 'Both — approved guests book a ticket; members can join a membership package instead of applying.'
+          ? 'Both — approved guests book a ticket; members can join a membership package instead.'
           : includesMembership
-            ? 'Membership package — after free visits, people join monthly/annual membership (no public ticket required).'
-            : 'Tickets after approval — you approve applicants, then they book the ticket (paid or free).';
+            ? 'Membership package — after free visits, people join (no public ticket needed).'
+            : 'Tickets after approval — you approve, then they book (paid or free).';
       } else if (includesTickets && includesMembership) {
         outcome.textContent =
-          'Both — public tickets for newcomers, plus a membership package for regulars. Turn on list-member booking so members are not charged twice.';
+          'Both — tickets for newcomers, membership package for regulars. Turn on Members pay less so members are not charged twice.';
       } else if (includesMembership) {
         outcome.textContent =
-          'Membership package — members book from your list (usually £0). New joiners pay your membership fee + booking fee (4.5% + 20p).';
+          'Membership package — members book from your list (usually £0). New joiners pay your membership fee + booking fee.';
       } else {
-        outcome.textContent =
-          'Tickets only — people book a ticket for this event (paid or free). You can still offer free trial visits.';
+        outcome.textContent = 'Tickets — people book a ticket for this event (paid or free).';
       }
     }
 
@@ -2677,6 +2834,7 @@
   }
 
   function bindPayHowFields() {
+    bindPayHowChange();
     document.querySelectorAll('.ee-pay-how-options .ee-attendance-card').forEach(function (btn) {
       if (btn.dataset.boundPayHow) return;
       btn.dataset.boundPayHow = '1';
@@ -2687,6 +2845,7 @@
       });
     });
     syncPayHowUi();
+    syncPayHowStepUi();
   }
 
   /** Keep UI consistent when switching Tickets / Membership / Both. */
@@ -3879,7 +4038,7 @@
     }
     bindPayHowFields();
     hideLaterTicketSteps();
-    syncPayHowContinueUi();
+    syncPayHowStepUi();
     syncAttendanceStepUi();
   }
 
@@ -4070,7 +4229,7 @@
       revealPostStep2();
     } else {
       hideLaterTicketSteps();
-      syncPayHowContinueUi();
+      syncPayHowStepUi();
       syncAttendanceStepUi();
     }
     bindPrivateTicketFields();

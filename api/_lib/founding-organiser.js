@@ -1,8 +1,8 @@
 /**
- * Founding Organiser cohort — claim before soft launch, badge after first published event.
- * Eligibility: ownership claimed before 1 Sept 2026.
- * Award: first published event for that organiser page.
+ * Founding Organiser cohort — claim before soft launch unlocks the badge.
+ * Eligibility / award: ownership claimed before 1 Sept 2026.
  * Homepage strip: first 50 awards, visible until end of Nov 2026.
+ * maybeAwardFoundingAfterEventPublish remains as a safety net for older claims.
  */
 const FOUNDING_CLAIM_DEADLINE = new Date('2026-09-01T00:00:00+01:00');
 const FOUNDING_HOMEPAGE_UNTIL = new Date('2026-11-30T23:59:59+00:00');
@@ -66,7 +66,6 @@ function isFoundingOrganiser(row) {
 
 /**
  * Patch fields to set on claim when still inside the founding window.
- * @deprecated Founding is awarded on first published event — prefer maybeAwardFoundingAfterEventPublish.
  * Homepage slot is assigned only while under the cap (best-effort; rare races OK).
  */
 async function foundingFieldsForClaim(sb, now = new Date()) {
@@ -116,8 +115,8 @@ async function foundingHomepageSlotPatch(sb) {
 }
 
 /**
- * Award founding after the organiser publishes their first event.
- * Claim must have happened before the soft-launch deadline; publish may be later.
+ * Safety net: award founding on publish if claim was pre-deadline but badge was missed
+ * (e.g. claimed before award-on-claim shipped). Prefer foundingFieldsForClaim on claim.
  * @returns {Promise<object[]>} updated organiser rows that newly received founding
  */
 async function maybeAwardFoundingAfterEventPublish(sb, organiserIds, now = new Date()) {

@@ -262,6 +262,15 @@ async function createGroup(payload) {
     ownership_claimed_at: claimedAt,
   };
 
+  if (userCreated) {
+    try {
+      const { foundingFieldsForClaim } = require('./founding-organiser');
+      Object.assign(insert, await foundingFieldsForClaim(sb, new Date()));
+    } catch (e) {
+      console.warn('founding fields on create group failed:', e && e.message ? e.message : e);
+    }
+  }
+
   if (
     payload.complimentaryVisitsAllowed !== undefined ||
     payload.complimentary_visits_allowed !== undefined

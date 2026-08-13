@@ -90,8 +90,12 @@
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 data-hub-tip="pay-how">Tickets or membership?</h2>
           <p class="ee-hint ee-attendance-lead" id="ee-pay-how-lead">
-            Offer tickets for this event (paid or free), a membership package, or both. Free trial visits are optional.
+            Pick one. You can add free trial visits below if you want.
           </p>
+          <div id="ee-pay-how-summary" class="ee-attendance-summary" hidden>
+            <p class="ee-attendance-summary-copy" id="ee-pay-how-summary-text"></p>
+            <button type="button" class="ee-btn ee-btn-outline" id="ee-pay-how-change">Change</button>
+          </div>
           <div class="ee-attendance-options ee-pay-how-options" role="group" aria-label="Tickets or membership">
             <button
               type="button"
@@ -102,7 +106,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
               <strong>Tickets</strong>
-              <span>One-off for this event — paid or free. Set prices on the next step.</span>
+              <span>One-off for this event — paid or free. Most organisers start here.</span>
             </button>
             <button
               type="button"
@@ -110,11 +114,10 @@
               data-pay-how="membership"
               id="ee-pay-how-membership"
               aria-pressed="false"
-              data-hub-tip="pay-how-membership"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
-              <strong>Membership package</strong>
-              <span>Monthly or annual group membership. People join your organiser page instead of buying a one-off ticket.</span>
+              <strong data-hub-tip="pay-how-membership">Membership package</strong>
+              <span>People join your group (monthly or annual) instead of buying a one-off ticket.</span>
             </button>
             <button
               type="button"
@@ -122,16 +125,15 @@
               data-pay-how="both"
               id="ee-pay-how-both"
               aria-pressed="false"
-              data-hub-tip="pay-how-both"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">✨</span>
-              <strong>Both</strong>
-              <span>Public tickets for newcomers, plus a membership package for regulars.</span>
+              <strong data-hub-tip="pay-how-both">Both</strong>
+              <span>Tickets for newcomers, plus a membership package for regulars.</span>
             </button>
           </div>
-          <p class="ee-hint" id="ee-pay-how-hint" role="status">Choose tickets or a membership package (or both) before publishing.</p>
+          <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose tickets or a membership package (or both) before publishing.</p>
           <p class="ee-pay-how-outcome" id="ee-pay-how-outcome" role="status">
-            Tickets only — people book a ticket for this event (paid or free).
+            Tickets — people book a ticket for this event (paid or free).
           </p>
           <div id="ee-general-guest-mount" class="ee-ce-guest-mount" style="margin-top:14px"></div>
           <div id="ee-hub-membership-mount-payhow" class="ee-hub-membership-mount" style="margin-top:14px"></div>
@@ -194,7 +196,7 @@
             <p>
               They can book without applying (signed in with their membership email).
               After you publish, use <strong>Invite members</strong> on the event.
-              Optionally add a list-member booking below (usually free when membership covers attendance).
+              Optionally add Members pay less below (usually free when membership covers attendance).
             </p>
           </div>
 
@@ -202,9 +204,9 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-ce-member-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong>List-member booking (optional)</strong>
+                <strong>Members pay less (optional)</strong>
                 <span class="ee-addon-summary"
-                  >People already on your membership list book without applying. Guests still apply. Use £0 when membership covers attendance.</span
+                  >People already on your member list book without applying. Guests still apply. Use £0 when membership covers attendance.</span
                 >
               </span>
             </label>
@@ -233,9 +235,9 @@
 
         <div class="ee-card" id="ee-panel-tickets" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
-          <h2 id="ee-tickets-panel-title">Public ticket types</h2>
+          <h2 id="ee-tickets-panel-title">Your ticket</h2>
           <p class="ee-hint" id="ee-tickets-panel-lead" style="margin-top:0">
-            These are the tickets everyone sees on your listing — e.g. Standard, Early bird, or Member rate.
+            Give it a name and choose free or a price. Most organisers only need one ticket.
           </p>
 
           <div class="ee-members-only-event-toggle" id="ee-members-only-event-toggle" data-hub-tip="members-only-event-listing">
@@ -244,14 +246,14 @@
               <span>Members only — no public booking or free visits</span>
             </label>
             <p class="ee-hint">
-              Listing stays in the directory. Only signed-in members can book. Untick this if you want free trial visits for newcomers.
+              Only signed-in members can book. Untick this if you want free trial visits for newcomers.
             </p>
           </div>
 
           <div id="ee-public-tickets-wrap">
-            <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">0 ticket types · unlimited available · from £0</p>
+            <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">1 ticket · Free</p>
             <div id="ee-tier-rows"></div>
-            <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket type</button>
+            <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket</button>
           </div>
 
           <div id="ee-members-only-event-wrap" hidden>
@@ -386,10 +388,9 @@
 
         <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
-          <h2 id="ee-optional-extras-title">Extra rates (optional)</h2>
+          <h2 id="ee-optional-extras-title">Members pay less (optional)</h2>
           <p class="ee-hint" style="margin-top:0" id="ee-optional-extras-lead">
-            Optional. Give people on your member list a cheaper (or free) ticket while public tickets above stay available
-            for everyone else.
+            Optional. Let people on your member list book cheaper (or free) while everyone else uses the ticket above.
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon">
@@ -455,9 +456,9 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="members-only-ticket">Cheaper rate for people on your member list</strong>
+                <strong data-hub-tip="members-only-ticket">Members pay less</strong>
                 <span class="ee-addon-summary"
-                  >They book at your member price when signed in. Everyone else still buys the public ticket. Use £0 if membership already covers the meeting.</span
+                  >People on your member list book at a lower price when signed in. Everyone else still uses the public ticket.</span
                 >
               </span>
             </label>
@@ -465,8 +466,8 @@
               <div class="ee-info-box ee-private-ticket-how" id="ee-private-ticket-how">
                 <strong>Public tickets stay on sale</strong>
                 <p>
-                  Set the member price below (use <strong>0</strong> for free). Non-members keep booking from
-                  <strong>Public ticket types</strong> above. Members see this extra ticket when signed in with their
+                  Set the member price below (use <strong>0</strong> for free). Everyone else keeps using
+                  <strong>Your ticket</strong> above. Members see this extra option when signed in with their
                   membership email.
                 </p>
               </div>
@@ -475,7 +476,7 @@
         </div>
 
         <p class="ee-hint ee-free-tickets-note" id="ee-free-tickets-note" hidden>
-          All your ticket types are free — VAT and refund policy are not required.
+          All your tickets are free — VAT and refund policy are not required.
         </p>
 
         <div id="ee-paid-setup-wrap" hidden>

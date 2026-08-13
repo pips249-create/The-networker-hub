@@ -1,8 +1,8 @@
 /**
  * Post-claim confirmation — logo/website CTA.
- * Founding perk row is included when the badge has already been unlocked (first published event).
+ * Founding perk row is included when the badge was awarded on claim (before soft launch).
  * One email per claim batch (after the last pending page is confirmed/rejected),
- * and again (force) when founding unlocks on publish.
+ * and again (force) if founding unlocks later via the publish safety net.
  */
 const { sendTemplatedEmail } = require('./send-template-email');
 const { emailGreetingName } = require('./email-display-name');
@@ -118,8 +118,8 @@ function buildOrganiserClaimConfirmedVars({ group, groups, session, siteUrl }) {
         ? 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is below (and attached as a PNG) — and on each confirmed Hub profile.'
         : 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is below (and attached as a PNG) — and on your Hub profile.'
       : multi
-        ? 'Thanks for confirming. Finish each page, then publish an event — that unlocks your Founding Organiser · 2026 badge (for pages claimed before 1 September).'
-        : 'Thanks for confirming. Add your logo and publish an event to unlock your Founding Organiser · 2026 badge (if you claimed before 1 September).',
+        ? 'Thanks for confirming. Add a logo and website on each page so members recognise your groups on the Hub.'
+        : 'Thanks for confirming. Add your logo and website so members recognise your group on the Hub.',
     founding_perk_row: founding
       ? foundingPerkRowHtml({ foundingHomepage, siteUrl: site })
       : '',

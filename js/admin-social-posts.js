@@ -1442,7 +1442,7 @@
       var names = foundingNameLists(state.foundingOrganisers);
       if (!names.list.length) {
         captionEl.value =
-          'No founding organisers yet. Badges unlock when a group claims before 1 September and publishes their first event.';
+          'No founding organisers yet. Badges unlock when a group claims before 1 September.';
         setPreview(hubLogoUrl(), url, 'No founding organisers yet');
         state.foundingCardUrl = '';
         renderTags(null);

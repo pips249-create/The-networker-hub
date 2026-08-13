@@ -1031,6 +1031,63 @@ a.ee-wizard-link:hover {
   margin-bottom: 0;
 }
 
+.ee-tier-price-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ee-tier-price-mode-btn {
+  min-width: 5.5rem;
+  padding: 10px 16px;
+  border: 2px solid var(--ee-border);
+  border-radius: 8px;
+  background: var(--ee-white);
+  color: var(--ee-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ee-tier-price-mode-btn.is-active {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple-pale);
+  box-shadow: inset 0 0 0 1px var(--ee-purple);
+}
+
+.ee-tier-advanced {
+  margin-top: 8px;
+  border-top: 1px solid var(--ee-border);
+  padding-top: 10px;
+}
+
+.ee-tier-advanced > summary {
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-purple-dark, #5b2f99);
+  list-style: none;
+}
+
+.ee-tier-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ee-tier-advanced > summary::before {
+  content: '+ ';
+  font-weight: 700;
+}
+
+.ee-tier-advanced[open] > summary::before {
+  content: '− ';
+}
+
+.ee-tier-advanced-body {
+  margin-top: 12px;
+}
+
 .ee-tier-row-expanded .ee-sale-custom-wrap {
   margin-top: 8px;
 }
@@ -1281,10 +1338,29 @@ a.ee-wizard-link:hover {
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
+/* Keep tip hosts as left-aligned cards (hub-field-tip defaults to inline row). */
+.ee-attendance-card.hub-field-tip-host {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.ee-attendance-card.hub-field-tip-host > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .ee-attendance-card strong {
   font-size: 18px;
   line-height: 1.25;
   color: var(--ee-text);
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .ee-attendance-card > span:last-of-type {
@@ -1449,6 +1525,15 @@ body.ee-step2-modal-open {
   display: none !important;
 }
 
+#ee-panel-pay-how.is-collapsed .ee-pay-how-options,
+#ee-panel-pay-how.is-collapsed #ee-pay-how-lead,
+#ee-panel-pay-how.is-collapsed #ee-pay-how-next,
+#ee-panel-pay-how.is-collapsed #ee-pay-how-hint,
+#ee-panel-pay-how.is-collapsed #ee-pay-how-outcome,
+#ee-panel-pay-how.is-collapsed > h2 {
+  display: none !important;
+}
+
 .ee-attendance-summary {
   display: none;
   align-items: center;
@@ -1462,8 +1547,17 @@ body.ee-step2-modal-open {
   border: 1px solid var(--ee-border);
 }
 
-.ee-attendance-card-wrap.is-collapsed .ee-attendance-summary {
+.ee-attendance-card-wrap.is-collapsed .ee-attendance-summary,
+#ee-panel-pay-how.is-collapsed #ee-pay-how-summary {
   display: flex;
+}
+
+#ee-pay-how-summary[hidden] {
+  display: none !important;
+}
+
+.ee-tier-toolbar[hidden] {
+  display: none !important;
 }
 
 .ee-attendance-summary-copy {

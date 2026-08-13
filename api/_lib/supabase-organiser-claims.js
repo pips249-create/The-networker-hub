@@ -203,8 +203,13 @@ async function claimGroupForSession(session, groupId) {
   if (account?.id && !organiser.organiser_account_id) {
     patch.organiser_account_id = account.id;
   }
-  // Founding Organiser badge is awarded when they publish their first event
-  // (if this claim was before the soft-launch deadline) — not on claim alone.
+  // Founding Organiser · 2026 — badge (+ homepage slot if under cap) on claim before deadline.
+  try {
+    const { foundingFieldsForClaim } = require('./founding-organiser');
+    Object.assign(patch, await foundingFieldsForClaim(sb, claimedAt));
+  } catch (e) {
+    console.warn('founding fields on claim failed:', e && e.message ? e.message : e);
+  }
 
   const { data, error } = await sb
     .from('organisers')
@@ -383,6 +388,12 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   };
   if (account?.id && !organiser.organiser_account_id) {
     patch.organiser_account_id = account.id;
+  }
+  try {
+    const { foundingFieldsForClaim } = require('./founding-organiser');
+    Object.assign(patch, await foundingFieldsForClaim(sb, new Date(now)));
+  } catch (e) {
+    console.warn('founding fields on admin claim failed:', e && e.message ? e.message : e);
   }
 
   const { error: upErr } = await sb.from('organisers').update(patch).eq('id', oid);
