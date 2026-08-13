@@ -825,7 +825,7 @@
     }
     if (lead) {
       lead.textContent = needsMembersCta
-        ? 'Your listing is live. Add people under Memberships so members can book this closed event, or share it free on social media.'
+        ? 'Your listing is live. Add people under Memberships so members can book this members-only meeting, or share it free on social media.'
         : 'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the hub.';
     }
     showMembersCtaIfNeeded();

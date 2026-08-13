@@ -84,7 +84,7 @@
     'pay-how-membership': {
       title: 'Monthly / annual membership',
       body:
-        'People join your group membership instead of buying a one-off event ticket. You can still offer free trial visits, or tick Closed meeting so only people on your member list can book.',
+        'People join your group membership instead of buying a one-off event ticket. You can still offer free trial visits, or tick Members only so only signed-in members can book.',
       hubertPrompt: 'How does monthly membership work with events?',
     },
     'pay-how-both': {
@@ -112,9 +112,9 @@
       hubertPrompt: 'How does list-member booking work on an application-based event?',
     },
     'members-only-event-listing': {
-      title: 'Closed meeting — member list only',
+      title: 'Members only',
       body:
-        'Only people on your member list can book — no public booking and no free trial visits. Untick this to offer free trial visits for newcomers. Use under General ticketing when membership is on.',
+        'Only signed-in members can book — no public booking and no free trial visits. Untick this to offer free trial visits for newcomers. Use under General ticketing when membership is on.',
       hubertPrompt: 'How do I make an event members only with no public ticket?',
     },
     'hub-membership-prices': {

@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260811intake1';
+  var FOOTER_BUILD = '20260813peekintake';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -42,6 +42,9 @@
         '<a href="' +
         href('/peek/for-organisers') +
         '">For organisers</a>' +
+        '<a href="' +
+        href('/add-your-event') +
+        '">Send us your event</a>' +
         '<a href="' +
         href('/peek/for-networkers') +
         '">For networkers</a>' +

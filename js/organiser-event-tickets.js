@@ -1450,7 +1450,7 @@
   }
 
   const DEFAULT_TIER_NAME = 'General admission';
-  const DEFAULT_MEMBER_BOOKING_NAME = 'Members on your list';
+  const DEFAULT_MEMBER_BOOKING_NAME = 'Member ticket';
   const LEGACY_MEMBER_TICKET_NAME_RE = /^member ticket$/i;
 
   function ticketOrderLabel(index) {
@@ -2026,8 +2026,8 @@
       if (priceEl && (priceEl.value === '' || priceEl.value == null)) priceEl.value = '0';
       setMembersOnlyTicketHint(
         membershipMeeting
-          ? 'Members on your list book this free (or at the member price). Guests use complimentary visits first, then join membership — no public event ticket.'
-          : 'Members on your list book when signed in with their membership email.',
+          ? 'Members book this free (or at the member price). Guests use complimentary visits first, then join membership — no public event ticket.'
+          : 'Members book when signed in with their membership email.',
         'ok'
       );
     }
@@ -2134,7 +2134,7 @@
           );
         } else {
           setMemberRosterStatusMessage(
-            'Your listing can go live now. Add people under Memberships when you’re ready — until then nobody on a member list can book this closed event.',
+            'Your listing can go live now. Add people under Memberships when you’re ready — until then nobody can book this members-only meeting.',
             'warn'
           );
         }
@@ -2772,7 +2772,7 @@
     syncMembersOnlyEventMode();
     if (enabled && !membersOnlyEventEnabled()) {
       setMembersOnlyTicketHint(
-        'Members on your list see this ticket when signed in with their membership email.',
+        'Members see this ticket when signed in with their membership email.',
         'ok'
       );
     } else if (!membersOnlyEventEnabled()) {
@@ -2834,7 +2834,7 @@
           : String(tier.quantityAvailable);
     }
     setMembersOnlyTicketHint(
-      'Members on your list book when signed in with their membership email.',
+      'Members book when signed in with their membership email.',
       'ok'
     );
     syncPrivateTicketFields();
