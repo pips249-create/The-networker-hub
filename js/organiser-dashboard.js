@@ -10619,13 +10619,10 @@
     const nestedActive = more.querySelector(
       '.hub-side-nav-link.is-active, .hub-side-nav-link[aria-current="page"]'
     );
+    // Promote + Communicate are top-level under Grow; only open More for nested tools.
     const moreRoutes = {
-      social: true,
-      communicate: true,
       team: true,
       'business-list': true,
-      visibility: true,
-      leaderboard: true,
     };
     if (nestedActive || moreRoutes[activeRoute]) {
       more.open = true;

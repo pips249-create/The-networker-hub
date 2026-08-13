@@ -140,7 +140,7 @@
   padding-top: 20px;
 }
 
-/* Primary hubs sit at full weight; tools under More stay nested/quieter */
+/* Primary hubs + Grow (Promote / Communicate) sit at full weight; More stays nested/quieter */
 .organiser-dashboard-page .hub-side-nav--minimal > .hub-side-nav-link:not(.hub-side-nav-link--nested):not(.org-notifications-nav) {
   font-weight: 700;
 }
