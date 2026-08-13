@@ -17,135 +17,310 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813book1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813book3" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page organiser-booking-options-page">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260812softnav1" data-root="../" data-page="organiser" defer></script>
 
-    <div class="ee-wrap ee-booking-help">
-      <div class="ee-back-row">
-        <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
-        <a class="ee-back ee-back-secondary" href="/organiser/event-tickets">Set up tickets</a>
-      </div>
+    <div class="ee-booking-help">
+      <div class="ee-booking-help-shell">
+        <div class="ee-back-row">
+    30|          <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
+          <a class="ee-back ee-back-secondary" href="/organiser/event-tickets">Set up tickets</a>
+        </div>
 
-      <h1 class="ee-title">How booking options work</h1>
-      <p class="ee-lead">
-        When you set up tickets, you pick one path. This page explains what each means for you and for the
-        people who attend — so you can choose with confidence.
-      </p>
+        <header class="ee-booking-help-hero">
+          <p class="ee-booking-help-eyebrow">Organiser workspace</p>
+          <h1 class="ee-booking-help-title">How booking options work</h1>
+          <p class="ee-booking-help-lede">
+            When you set up tickets, you pick one path. Start with the short comparison below, then read the
+            detail for the option that fits your group.
+    40|          </p>
+        </header>
 
-      <nav class="ee-booking-help-toc" aria-label="On this page">
-        <a href="#tickets">Ticket for this event</a>
-        <a href="#membership">Convert free visits into members</a>
-        <a href="#both">Ticket and membership</a>
-      </nav>
+        <nav class="ee-booking-help-compare" aria-label="Compare booking options">
+          <a class="ee-booking-help-compare-item" href="#tickets">
+            <span class="ee-booking-help-compare-num" aria-hidden="true">1</span>
+            <span class="ee-booking-help-compare-copy">
+              <strong>Ticket for this event</strong>
+              <span>Best for one-off or simple paid/free booking</span>
+            </span>
+    50|          </a>
+          <a class="ee-booking-help-compare-item ee-booking-help-compare-item--focus" href="#membership">
+            <span class="ee-booking-help-compare-num" aria-hidden="true">2</span>
+            <span class="ee-booking-help-compare-copy">
+              <strong>Convert free visits into members</strong>
+              <span>Best for weekly groups with try-before-you-join</span>
+            </span>
+          </a>
+          <a class="ee-booking-help-compare-item" href="#both">
+            <span class="ee-booking-help-compare-num" aria-hidden="true">3</span>
+    60|            <span class="ee-booking-help-compare-copy">
+              <strong>Ticket and membership</strong>
+              <span>Best when you need guests and regulars</span>
+            </span>
+          </a>
+        </nav>
 
-      <article class="ee-card ee-booking-help-card" id="tickets">
-        <p class="ee-booking-help-kicker">Option 1</p>
-        <h2>Ticket for this event</h2>
-        <p class="ee-booking-help-pick">
-          <strong>Pick this if</strong> you just want people to book this meeting — free or paid — with a
-          simple ticket name and price.
-        </p>
-        <h3>What attendees see</h3>
-        <p>
-          Your ticket types on the event page (for example General admission £15, or Early bird £10). They
-          book that ticket for that date.
-        </p>
-        <h3>What you set up</h3>
-        <ul>
-          <li>Ticket name, free or paid price, optional description</li>
-          <li>Optional cap on how many are available (leave blank for unlimited)</li>
-        </ul>
-        <h3>What you get</h3>
-        <p>
-          A clear guest list for that event. No monthly membership and no free-visit programme on this path.
-        </p>
-      </article>
+        <article class="ee-booking-help-section" id="tickets">
+          <div class="ee-booking-help-section-head">
+            <p class="ee-booking-help-kicker">Option 1</p>
+    70|            <h2>Ticket for this event</h2>
+            <p class="ee-booking-help-pick">
+              <strong>Pick this if</strong> you just want people to book this meeting — free or paid — with a
+              simple ticket name and price.
+            </p>
+          </div>
+          <div class="ee-booking-help-grid">
+            <div class="ee-booking-help-panel">
+              <h3>What attendees see</h3>
+              <p>
+    80|                Your ticket types on the event page. They pick a tier and book that ticket for that date.
+              </p>
+            </div>
+            <div class="ee-booking-help-panel">
+              <h3>What you set up</h3>
+              <ul>
+                <li>Ticket name, free or paid price, optional description</li>
+                <li>Optional cap on how many are available (leave blank for unlimited)</li>
+              </ul>
+            </div>
+    90|            <div class="ee-booking-help-panel">
+              <h3>What you get</h3>
+              <p>
+                A clear guest list for that event. No monthly membership and no free-visit programme on this
+                path.
+              </p>
+            </div>
+          </div>
+          <div class="ee-booking-help-example">
+            <h3>Example — exhibition or conference day</h3>
+   100|            <ul class="ee-booking-help-example-tiers">
+              <li>
+                <strong>Early bird</strong>
+                <span>£49</span>
+                <em>Cheaper rate until a sale end date you set</em>
+              </li>
+              <li>
+                <strong>General admission</strong>
+                <span>£79</span>
+                <em>Standard day ticket once early bird ends</em>
+   110|              </li>
+              <li>
+                <strong>VIP / lunch included</strong>
+                <span>£129</span>
+                <em>Optional extras as their own ticket type</em>
+              </li>
+            </ul>
+            <p class="ee-hint" style="margin: 10px 0 0">
+              You choose the names and prices — these figures are only to show how multiple ticket types work.
+            </p>
+          </div>
+        </article>
 
-      <article class="ee-card ee-booking-help-card" id="membership">
-        <p class="ee-booking-help-kicker">Option 2</p>
-        <h2>Convert free visits into members</h2>
-        <p class="ee-booking-help-pick">
-          <strong>Pick this if</strong> you run a regular group and want newcomers to try a few meetings,
-          then join <em>your</em> membership — so you keep their visit history and reports in one place.
-        </p>
-        <h3>How the path works</h3>
-        <ol class="ee-booking-help-steps">
-          <li>
-            <strong>Free trial visits</strong> — newcomers can attend a few times without joining (you choose
-            how many, up to 3).
-          </li>
-          <li>
-            <strong>Member ticket for this meeting</strong> — people already on your member list book at your
-            member price (often £0 when membership covers attendance).
-          </li>
-          <li>
-            <strong>Monthly or yearly join fee</strong> — after free visits are used, newcomers pay to join
-            your group. That fee is yours; we only add our booking fee on the join payment.
-          </li>
-        </ol>
-        <h3>What attendees see</h3>
-        <p>
-          A chance to try your meetings first. When visits are used, a clear next step to join your group —
-          not a surprise lock-in, and not “signing up to The Networker Hub” as a product. They are joining
-          <strong>your</strong> group on the Hub.
-        </p>
-        <h3>What you get</h3>
-        <ul>
-          <li>Visit history for people who tried your meetings</li>
-          <li>A member list you can manage under Memberships</li>
-          <li>Reports on who came, who joined, and who is ready to pay</li>
-        </ul>
-        <p class="ee-hint" style="margin-bottom: 0">
-          This path is about growing your community — free visits become members you can follow, not one-off
-          guests who disappear.
-        </p>
-      </article>
+        <article class="ee-booking-help-section ee-booking-help-section--accent" id="membership">
+          <div class="ee-booking-help-section-head">
+            <p class="ee-booking-help-kicker">Option 2</p>
+            <h2>Convert free visits into members</h2>
+            <p class="ee-booking-help-pick">
+              <strong>Pick this if</strong> you run a regular group and want newcomers to try a few meetings,
+              then join <em>your</em> membership — so you keep their visit history and reports in one place.
+            </p>
+          </div>
 
-      <article class="ee-card ee-booking-help-card" id="both">
-        <p class="ee-booking-help-kicker">Option 3</p>
-        <h2>Ticket and membership</h2>
-        <p class="ee-booking-help-pick">
-          <strong>Pick this if</strong> some people should buy a normal ticket for this event, while regulars
-          join (or already belong to) your group and book at a member rate.
-        </p>
-        <h3>What attendees see</h3>
-        <p>
-          Newcomers can buy a public ticket for this date. Members (or people converting after free visits)
-          book the member rate — often free when membership already covers the meeting.
-        </p>
-        <h3>What you set up</h3>
-        <ul>
-          <li>Public ticket types for this event</li>
-          <li>Optional free trial visits and your monthly/yearly join fee</li>
-          <li>Member ticket price for list members (often £0)</li>
-        </ul>
-        <h3>What you get</h3>
-        <p>
-          Room for one-off guests <em>and</em> a path into membership with history and reports — useful when
-          you want both open booking and a growing member base.
-        </p>
-      </article>
+          <ol class="ee-booking-help-path">
+            <li>
+              <span class="ee-booking-help-path-num">1</span>
+              <div>
+                <strong>Free trial visits</strong>
+                <p>Newcomers attend a few times without joining (you choose how many, up to 3).</p>
+              </div>
+            </li>
+            <li>
+              <span class="ee-booking-help-path-num">2</span>
+              <div>
+                <strong>Member ticket for this meeting</strong>
+                <p>People on your member list book at your member price (often £0).</p>
+              </div>
+            </li>
+            <li>
+              <span class="ee-booking-help-path-num">3</span>
+              <div>
+                <strong>Monthly or yearly join fee</strong>
+                <p>
+                  After visits are used, newcomers pay to join your group. That fee is yours; we only add our
+                  booking fee on the join payment.
+                </p>
+              </div>
+            </li>
+          </ol>
 
-      <div class="ee-card ee-booking-help-card ee-booking-help-card--quiet">
-        <h2>Not sure?</h2>
-        <p>
-          Most one-off or ticketed events use <strong>Ticket for this event</strong>. Most weekly networking
-          groups that want a try-before-you-join path use <strong>Convert free visits into members</strong>.
-        </p>
-        <p style="margin-bottom: 0">
-          You can change your mind before you publish. If you already have ticket sales on an event, some
-          settings lock — Hubert or
-          <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a> can help.
-        </p>
-      </div>
+          <div class="ee-booking-help-grid">
+            <div class="ee-booking-help-panel">
+              <h3>What attendees see</h3>
+              <p>
+                A chance to try your meetings first. When visits are used, a clear next step to join
+                <strong>your</strong> group on the Hub — not a surprise lock-in, and not “signing up to The
+                Networker Hub” as a product.
+              </p>
+            </div>
+            <div class="ee-booking-help-panel">
+              <h3>What you get</h3>
+              <ul>
+                <li>Visit history for people who tried your meetings</li>
+                <li>A member list under Memberships</li>
+                <li>Reports on who came, who joined, and who is ready to pay</li>
+              </ul>
+            </div>
+            <div class="ee-booking-help-panel ee-booking-help-panel--note">
+              <h3>Why groups choose this</h3>
+              <p>
+                Free visits become members you can follow — not one-off guests who disappear after a single
+                meeting.
+              </p>
+            </div>
+          </div>
 
-      <div class="ee-actions ee-actions--split" style="margin-top: 8px">
-        <a class="ee-btn ee-btn-outline" href="/organiser/#events-list">Back to dashboard</a>
-        <a class="ee-btn ee-btn-gold" href="/organiser/event-tickets">Continue to set up tickets →</a>
+          <div class="ee-booking-help-benefits">
+            <h3>Benefits of running membership through the Hub</h3>
+            <ul>
+              <li>
+                <strong>You keep 100% of the membership price you set</strong> — members pay a separate
+                booking fee (4.5% + 20p) on top; that is not taken from your fee.
+              </li>
+              <li>
+                <strong>Join, renew and cancel in one place</strong> — members manage their card and renewal
+                from My Hub; you manage the list under Memberships.
+              </li>
+              <li>
+                <strong>Visit history and reports</strong> — see who tried the group, who joined, who has
+                booked, and who is due to renew.
+              </li>
+              <li>
+                <strong>Your brand, your group</strong> — people join <em>your</em> membership on your
+                organiser page, not a Hub subscription.
+              </li>
+              <li>
+                <strong>Invite to pay</strong> — ask people on your list to pay the join fee when you are
+                ready, without chasing bank transfers by hand.
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="ee-booking-help-section" id="both">
+          <div class="ee-booking-help-section-head">
+            <p class="ee-booking-help-kicker">Option 3</p>
+            <h2>Ticket and membership</h2>
+            <p class="ee-booking-help-pick">
+              <strong>Pick this if</strong> some people should buy a normal ticket for this event, while
+              regulars join (or already belong to) your group and book at a member rate.
+            </p>
+          </div>
+          <div class="ee-booking-help-grid">
+            <div class="ee-booking-help-panel">
+              <h3>What attendees see</h3>
+              <p>
+                Newcomers can buy a public ticket for this date. Members (or people converting after free
+                visits) book the member rate — often free when membership already covers the meeting.
+              </p>
+            </div>
+            <div class="ee-booking-help-panel">
+              <h3>What you set up</h3>
+              <ul>
+                <li>Public ticket types for this event</li>
+                <li>Optional free trial visits and your monthly/yearly join fee</li>
+                <li>Member ticket price for list members (often £0)</li>
+              </ul>
+            </div>
+            <div class="ee-booking-help-panel">
+              <h3>What you get</h3>
+              <p>
+                Room for one-off guests <em>and</em> a path into membership with history and reports — useful
+                when you want both open booking and a growing member base.
+              </p>
+            </div>
+          </div>
+
+          <div class="ee-booking-help-example">
+            <h3>Example — breakfast networking with lunch add-on</h3>
+            <ul class="ee-booking-help-example-tiers">
+              <li>
+                <strong>Free trial visits</strong>
+                <span>2 free</span>
+                <em>Newcomers try two meetings before joining</em>
+              </li>
+              <li>
+                <strong>Guest — meeting + lunch</strong>
+                <span>£18</span>
+                <em>Public ticket so visitors can add lunch on the day</em>
+              </li>
+              <li>
+                <strong>Member ticket</strong>
+                <span>£0</span>
+                <em>Members get lunch included in their membership</em>
+              </li>
+              <li>
+                <strong>Monthly membership</strong>
+                <span>£35 / month</span>
+                <em>Join fee after free visits — covers meetings and lunch</em>
+              </li>
+            </ul>
+            <p class="ee-hint" style="margin: 10px 0 0">
+              Guests pay for extras; members already covered by membership book at £0. Prices are examples —
+              you set your own.
+            </p>
+          </div>
+
+          <div class="ee-booking-help-benefits">
+            <h3>Benefits of running membership through the Hub</h3>
+            <ul>
+              <li>
+                <strong>You keep 100% of the membership price you set</strong> — members pay a separate
+                booking fee (4.5% + 20p) on top.
+              </li>
+              <li>
+                <strong>One list for guests and members</strong> — see who bought lunch as a guest, who joined,
+                and who is already on membership.
+              </li>
+              <li>
+                <strong>Visit history and reports</strong> — track free visits used, renewals due, and who has
+                booked the next meeting.
+              </li>
+              <li>
+                <strong>Your brand, your group</strong> — membership is for <em>your</em> networking group on
+                your organiser page.
+              </li>
+              <li>
+                <strong>Less chasing</strong> — join and renew online; invite people to pay when you are ready.
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <aside class="ee-booking-help-unsure" aria-labelledby="ee-booking-help-unsure-title">
+          <h2 id="ee-booking-help-unsure-title">Not sure?</h2>
+          <div class="ee-booking-help-unsure-grid">
+            <p>
+              Most one-off or ticketed events use <strong>Ticket for this event</strong>.
+            </p>
+            <p>
+              Most weekly networking groups use <strong>Convert free visits into members</strong>.
+            </p>
+            <p>
+              You can change your mind before you publish. If ticket sales have already started, some settings
+              lock — ask Hubert or email
+              <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>.
+            </p>
+          </div>
+        </aside>
+
+        <div class="ee-actions ee-actions--split ee-booking-help-actions">
+          <a class="ee-btn ee-btn-outline" href="/organiser/#events-list">Back to dashboard</a>
+          <a class="ee-btn ee-btn-gold" href="/organiser/event-tickets">Continue to set up tickets →</a>
+        </div>
       </div>
     </div>
   </body>
