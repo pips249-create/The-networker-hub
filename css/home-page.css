@@ -1833,7 +1833,7 @@ html:has(.home-page) {
 
 .home-partners-track--marquee {
   width: max-content;
-  animation: home-partners-marquee 40s linear infinite;
+  animation: home-partners-marquee var(--home-marquee-duration, 80s) linear infinite;
   will-change: transform;
 }
 
@@ -2888,6 +2888,11 @@ html:has(.home-page) {
   background: rgba(255, 255, 255, 0.92);
 }
 
+.home-founding-item .home-partner-logo {
+  max-width: 148px;
+  max-height: 52px;
+}
+
 .home-founding-initial {
   display: flex;
   align-items: center;
@@ -2899,6 +2904,11 @@ html:has(.home-page) {
   font-weight: 400;
   color: #452d5c;
   letter-spacing: 0.02em;
+}
+
+/* Author `display: flex` above must not override the HTML hidden attribute */
+.home-founding-initial[hidden] {
+  display: none !important;
 }
 
 .home-locations {

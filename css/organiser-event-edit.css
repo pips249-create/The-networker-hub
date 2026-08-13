@@ -1702,7 +1702,7 @@ body.ee-step2-modal-open {
 }
 
 .ee-pay-how-options.ee-attendance-options {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .ee-pay-how-outcome {

@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813payfix" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813join3" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -88,15 +88,15 @@
 
         <div class="ee-card" id="ee-panel-pay-how" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
-          <h2 data-hub-tip="pay-how">Tickets or membership?</h2>
+          <h2 data-hub-tip="pay-how">How will people book?</h2>
           <p class="ee-hint ee-attendance-lead" id="ee-pay-how-lead">
-            Pick one option, then continue.
+            Choose how people pay to attend. Pick one, then continue.
           </p>
           <div id="ee-pay-how-summary" class="ee-attendance-summary" hidden>
             <p class="ee-attendance-summary-copy" id="ee-pay-how-summary-text"></p>
             <button type="button" class="ee-btn ee-btn-outline" id="ee-pay-how-change">Change</button>
           </div>
-          <div class="ee-attendance-options ee-pay-how-options" role="radiogroup" aria-label="Tickets or membership">
+          <div class="ee-attendance-options ee-pay-how-options" role="radiogroup" aria-label="How people book">
             <button
               type="button"
               class="ee-attendance-card is-active"
@@ -107,8 +107,11 @@
               aria-pressed="true"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
-              <strong>Tickets</strong>
-              <span>One-off for this event — paid or free. Most organisers start here.</span>
+              <strong>Ticket for this event</strong>
+              <span
+                >Add ticket types with a name, price and description — free or paid. Example: General admission
+                £15, or Early bird £10.</span
+              >
             </button>
             <button
               type="button"
@@ -120,8 +123,11 @@
               aria-pressed="false"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
-              <strong data-hub-tip="pay-how-membership">Group membership</strong>
-              <span>People join your group for a monthly or yearly fee, then come to meetings as members.</span>
+              <strong data-hub-tip="pay-how-membership">Convert free visits into members</strong>
+              <span
+                >Let newcomers try a few meetings free. When they join your group, you keep their visit history and
+                reports in one place — who came, who joined, and who is ready to pay.</span
+              >
             </button>
             <button
               type="button"
@@ -133,13 +139,16 @@
               aria-pressed="false"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">✨</span>
-              <strong data-hub-tip="pay-how-both">Both</strong>
-              <span>Tickets for newcomers, and group membership for regulars.</span>
+              <strong data-hub-tip="pay-how-both">Ticket and membership</strong>
+              <span
+                >Newcomers buy a ticket for this event. Regulars convert from free visits into members and book at a
+                member rate (often £0) — so you keep their history and reports.</span
+              >
             </button>
           </div>
-          <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose tickets or group membership (or both) before publishing.</p>
+          <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose how people book before publishing.</p>
           <p class="ee-pay-how-outcome" id="ee-pay-how-outcome" role="status">
-            Tickets — people book a ticket for this event (paid or free).
+            Next: set your ticket name and whether it is free or paid.
           </p>
           <div id="ee-general-guest-mount" class="ee-ce-guest-mount" style="margin-top:14px"></div>
           <div id="ee-hub-membership-mount-payhow" class="ee-hub-membership-mount" style="margin-top:14px"></div>
@@ -277,13 +286,11 @@
             <div class="ee-info-box ee-membership-meeting-how" id="ee-membership-meeting-how" hidden>
               <strong>How this works</strong>
               <p>
-                Newcomers book complimentary guest visits. People on your member list book the member ticket when signed in.
-                After visits are used, guests join your monthly or annual membership on your organiser page — no public event ticket needed.
-              </p>
-              <p>
-                We won’t charge your members for attending when this booking is £0.
-                New joiners pay your membership fee, plus our booking fee (4.5% + 20p).
-                Manage prices under <strong>Memberships</strong> in your workspace.
+                1) Newcomers use free trial visits so they can try your meetings first.
+                2) When they join, they become members of <em>your</em> group — you can see their visit history and
+                reports.
+                3) Set a member ticket for this meeting (often £0), then the monthly or yearly fee they pay after free
+                visits are used.
               </p>
             </div>
             <p class="ee-tier-summary" id="ee-members-only-event-summary" aria-live="polite">Member ticket · unlimited available · Free</p>
@@ -291,13 +298,13 @@
               <div id="ee-member-ticket-config">
                 <div class="ee-row-2">
                   <div class="ee-field">
-                    <label for="ee-private-ticket-name">Booking name</label>
-                    <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
-                  </div>
-                  <div class="ee-field">
-                    <label for="ee-private-ticket-price">Price (&pound;)</label>
-                    <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
-                    <p class="ee-hint">Usually £0 — we don’t charge members for attending</p>
+                  <label for="ee-private-ticket-name">Member ticket name</label>
+                  <input type="text" id="ee-private-ticket-name" value="Member ticket" placeholder="e.g. Member ticket" />
+                </div>
+                <div class="ee-field">
+                  <label for="ee-private-ticket-price">Member ticket price (&pound;)</label>
+                  <input type="number" id="ee-private-ticket-price" min="0" step="0.01" value="0" inputmode="decimal" />
+                  <p class="ee-hint">What members pay to book this meeting — often £0</p>
                   </div>
                 </div>
                 <p class="ee-hint" id="ee-private-ticket-fee-note">
@@ -327,7 +334,7 @@
               <span class="ee-addon-toggle-copy">
                 <strong>Group membership fee</strong>
                 <span class="ee-addon-summary"
-                  >What people pay to join your group — not a ticket for this one event.</span
+                  >What people pay to join your group after free visits — so you can keep them as members with history and reports.</span
                 >
               </span>
             </label>
@@ -335,13 +342,12 @@
               <div class="ee-info-box">
                 <strong>How this works</strong>
                 <p>
-                  <strong>Monthly / annual</strong> is the ongoing fee to join the group.
-                  After any free trial visits, newcomers join membership on your organiser page.
-                  People already on your member list can book this meeting without buying a public ticket again
-                  (when list-member booking is on) — usually &pound;0 to attend.
+                  Free visits are the trial. The fee below is how newcomers convert into members of your group.
+                  Once they join, you can see their attendance history and reports — not just a one-off ticket.
                 </p>
                 <p class="ee-hint" style="margin:10px 0 0">
-                  Ticket = this event. This section = membership for the group. Use £0 if joining is free and you manage the list yourself. You can change these amounts later under Memberships.
+                  People already on your member list book this meeting with the member ticket (often £0). Use £0 here
+                  if joining is free and you manage the list yourself. You can change amounts later under Memberships.
                 </p>
               </div>
               <div class="ee-hub-membership-amounts">
@@ -405,7 +411,7 @@
               <span class="ee-addon-toggle-copy">
                 <strong data-hub-tip="guest-visit-programme">Free trial visits</strong>
                 <span class="ee-addon-summary" id="ee-guest-programme-summary"
-                  >Let newcomers visit for free before they join membership or buy a ticket</span
+                  >Let newcomers try your meetings free — then convert them into members you can track</span
                 >
               </span>
             </label>
@@ -413,7 +419,8 @@
               <div class="ee-info-box ee-guest-how" id="ee-guest-programme-note">
                 <strong>How it works</strong>
                 <p id="ee-guest-programme-note-text">
-                  Newcomers get up to 3 complimentary visits across your organiser page. After that, they must join membership or buy a ticket to keep attending.
+                  Newcomers get up to 3 complimentary visits so they can try your meetings first. When visits are used,
+                  they join your group as members — you then keep their visit history and reports in one place.
                 </p>
               </div>
               <div class="ee-field ee-guest-visits-field">
@@ -628,9 +635,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260813payfix" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260813qty1" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260813payfix" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260813qty1" defer></script>
   </body>
 </html>

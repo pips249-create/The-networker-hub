@@ -1816,6 +1816,8 @@ function buildTicketInsertRow({
     quantityAvailable != null && quantityAvailable !== ''
       ? Number(quantityAvailable)
       : null;
+  // Treat 0 / negative as unlimited — organisers leaving quantity blank sometimes saved 0 and showed sold out.
+  const qtySafe = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) : null;
   let type =
     ticketType ||
     (categoryExclusivity || /application/i.test(String(name || '')) ? 'Application-based' : 'Standard');
@@ -1831,7 +1833,7 @@ function buildTicketInsertRow({
     name: name || 'Ticket',
     description: description || null,
     price: priceNum,
-    quantity: Number.isFinite(qty) ? qty : null,
+    quantity: qtySafe,
     status: mapTicketStatus(status),
     sale_starts_at: saleStart || null,
     sale_ends_at: saleEnd || null,

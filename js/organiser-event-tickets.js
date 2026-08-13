@@ -1016,9 +1016,9 @@
 
   function payHowLabel() {
     const h = readPayHow();
-    if (h === 'both') return 'Both — tickets and group membership';
-    if (h === 'membership') return 'Group membership';
-    return 'Tickets';
+    if (h === 'both') return 'Ticket and membership';
+    if (h === 'membership') return 'Convert free visits into members';
+    return 'Ticket for this event';
   }
 
   function payHowIncludesTickets() {
@@ -1615,6 +1615,12 @@
       '<input type="number" class="ee-tier-price" min="0" step="0.01" value="0" />' +
       '<button type="button" class="ee-number-step ee-tier-price-up" aria-label="Increase price">↑</button>' +
       '</div></div>' +
+      '<div class="ee-field ee-tier-series-pass-field" hidden data-field-tip="event-series-pass-tier">' +
+      '<label class="ee-check-label">' +
+      '<input type="checkbox" class="ee-tier-series-pass" /> ' +
+      '<span><strong>Multiple dates</strong> — one ticket covers every date in this listing (full series pass)</span>' +
+      '</label>' +
+      '<p class="ee-hint ee-hint--below">Leave unticked for weekly meetings (pay per date). Tick only if one purchase should cover all dates.</p></div>' +
       '<details class="ee-tier-advanced">' +
       '<summary>More options</summary>' +
       '<div class="ee-tier-advanced-body">' +
@@ -1623,15 +1629,10 @@
       '<div class="ee-field"><label>How many available <span class="ee-optional">(optional)</span></label>' +
       '<div class="ee-number-stepper">' +
       '<button type="button" class="ee-number-step ee-tier-qty-down" aria-label="Decrease quantity">↓</button>' +
-      '<input type="number" class="ee-tier-qty" min="0" step="1" placeholder="Unlimited" />' +
+      '<input type="number" class="ee-tier-qty" min="1" step="1" placeholder="Unlimited" inputmode="numeric" />' +
       '<button type="button" class="ee-number-step ee-tier-qty-up" aria-label="Increase quantity">↑</button>' +
       '</div>' +
-      '<p class="ee-hint ee-hint--below">Leave blank for unlimited</p></div>' +
-      '<div class="ee-field ee-tier-series-pass-field" hidden data-field-tip="event-series-pass-tier">' +
-      '<label class="ee-check-label">' +
-      '<input type="checkbox" class="ee-tier-series-pass" /> ' +
-      '<span><strong>Full series pass</strong> — one price covers every date in this listing</span>' +
-      '</label></div>' +
+      '<p class="ee-hint ee-hint--below">Defaults to unlimited. Only set a number if you want a hard cap.</p></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start</label>' +
       '<div class="ee-datetime-split">' +
@@ -1650,6 +1651,16 @@
       '</div></div></details>' +
       '</div></div>'
     );
+  }
+
+  /** Blank / 0 / invalid → unlimited (null). Qty 0 was wrongly saving as sold out. */
+  function normalizeTicketQuantity(raw) {
+    if (raw == null) return null;
+    const s = String(raw).trim();
+    if (s === '') return null;
+    const n = Number(s);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return Math.floor(n);
   }
 
   function updateTierSummary() {
@@ -1672,9 +1683,9 @@
       const name = row.querySelector('.ee-tier-name')?.value.trim();
       if (!name) return;
       count += 1;
-      const qtyRaw = row.querySelector('.ee-tier-qty')?.value;
-      if (qtyRaw === '' || qtyRaw == null) hasUnlimited = true;
-      else totalQty += Number(qtyRaw) || 0;
+      const qtyNorm = normalizeTicketQuantity(row.querySelector('.ee-tier-qty')?.value);
+      if (qtyNorm == null) hasUnlimited = true;
+      else totalQty += qtyNorm;
       const price = Number(row.querySelector('.ee-tier-price')?.value) || 0;
       if (minPrice == null || price < minPrice) minPrice = price;
     });
@@ -1807,11 +1818,22 @@
       if (!input) return;
       const step = Number(opts && opts.step) || 1;
       const min = opts && opts.min != null ? Number(opts.min) : 0;
+      const allowEmpty = Boolean(opts && opts.allowEmpty);
       const raw = String(input.value || '').trim();
-      let current = raw === '' ? (opts && opts.emptyAs != null ? Number(opts.emptyAs) : 0) : Number(raw);
+      if (allowEmpty && raw === '' && delta < 0) return;
+      let current =
+        raw === ''
+          ? opts && opts.emptyAs != null
+            ? Number(opts.emptyAs)
+            : 0
+          : Number(raw);
       if (!Number.isFinite(current)) current = 0;
-      const next = Math.max(min, Math.round((current + delta * step) * 100) / 100);
-      input.value = String(next);
+      const next = Math.round((current + delta * step) * 100) / 100;
+      if (allowEmpty && next < min) {
+        input.value = '';
+      } else {
+        input.value = String(Math.max(min, next));
+      }
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
@@ -1823,10 +1845,22 @@
       stepNumberInput(row.querySelector('.ee-tier-price'), -1, { step: 1, min: 0 });
     });
     row.querySelector('.ee-tier-qty-up')?.addEventListener('click', () => {
-      stepNumberInput(row.querySelector('.ee-tier-qty'), 1, { step: 1, min: 0, emptyAs: 0 });
+      // Blank = unlimited; first ↑ starts a cap at 1 (never 0 / sold out).
+      stepNumberInput(row.querySelector('.ee-tier-qty'), 1, {
+        step: 1,
+        min: 1,
+        emptyAs: 0,
+        allowEmpty: true,
+      });
     });
     row.querySelector('.ee-tier-qty-down')?.addEventListener('click', () => {
-      stepNumberInput(row.querySelector('.ee-tier-qty'), -1, { step: 1, min: 0, emptyAs: 0 });
+      // ↓ from 1 clears back to unlimited (blank), never writes 0.
+      stepNumberInput(row.querySelector('.ee-tier-qty'), -1, {
+        step: 1,
+        min: 1,
+        emptyAs: 0,
+        allowEmpty: true,
+      });
     });
 
     const removeBtn = row.querySelector('.ee-tier-remove');
@@ -1873,10 +1907,8 @@
     if (priceEl) priceEl.value = ticket.price === '' || ticket.price == null ? '0' : String(ticket.price);
     const qtyEl = row.querySelector('.ee-tier-qty');
     if (qtyEl) {
-      qtyEl.value =
-        ticket.quantityAvailable == null || ticket.quantityAvailable === ''
-          ? ''
-          : String(ticket.quantityAvailable);
+      const qtyNorm = normalizeTicketQuantity(ticket.quantityAvailable);
+      qtyEl.value = qtyNorm == null ? '' : String(qtyNorm);
     }
     if (ticket.saleStart) {
       const dateEl = row.querySelector('.ee-tier-sale-start-date');
@@ -1906,12 +1938,12 @@
     syncTierPriceMode(row);
     const advanced = row.querySelector('.ee-tier-advanced');
     if (advanced) {
+      const qtyNorm = normalizeTicketQuantity(ticket.quantityAvailable);
       const hasAdvanced =
         Boolean(ticket.description) ||
-        (ticket.quantityAvailable != null && ticket.quantityAvailable !== '') ||
+        qtyNorm != null ||
         Boolean(ticket.saleStart) ||
-        (ticket.saleEndOption && ticket.saleEndOption !== 'at_start') ||
-        String(ticket.seriesScope || ticket.series_scope || '').trim() === 'series_pass';
+        (ticket.saleEndOption && ticket.saleEndOption !== 'at_start');
       advanced.open = hasAdvanced;
     }
   }
@@ -2048,9 +2080,23 @@
     const membershipOnly = isMembershipOnlyPayHow();
     const generalMount = document.getElementById('ee-general-guest-mount');
 
-    // Membership-only: keep free trial visits in Step 2 so visit count stays editable
-    // even when the closed-meeting / member-booking panel is open below.
-    if (membershipOnly && !isCategory) {
+    // Tickets-only: free visits belong on the “Join the group” path, not here.
+    if (!payHowIncludesMembership() && !isCategory) {
+      if (meetingMount) meetingMount.hidden = true;
+      if (ceMount) ceMount.hidden = true;
+      if (generalMount) generalMount.hidden = true;
+      if (addonHome && guestAddon && guestAddon.parentElement !== addonHome) {
+        addonHome.appendChild(guestAddon);
+      }
+      if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
+      if (guestAddon) guestAddon.hidden = true;
+      fields.hidden = true;
+      if (optOut) optOut.hidden = true;
+      return;
+    }
+
+    // Membership-only (and ticket+membership before continue): keep free trial visits in Step 2.
+    if ((membershipOnly || (payHowIncludesMembership() && !isCategory)) && !isMeeting) {
       if (meetingMount) meetingMount.hidden = true;
       if (ceMount) ceMount.hidden = true;
       if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
@@ -2072,10 +2118,20 @@
         meetingMount.hidden = false;
         if (fields.parentElement !== meetingMount) meetingMount.appendChild(fields);
       }
-      fields.hidden = false;
+      // Prefer keeping the full free-visits card visible in Step 2 when still on pay-how.
+      if (generalMount && guestAddon && !payHowConfirmed) {
+        generalMount.hidden = false;
+        if (guestAddon.parentElement !== generalMount) generalMount.appendChild(guestAddon);
+        guestAddon.hidden = false;
+        if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
+        fields.hidden = !guestProgrammeEnabled();
+        if (meetingMount) meetingMount.hidden = true;
+      } else {
+        fields.hidden = false;
+      }
       if (optOut) optOut.hidden = true;
       if (ceMount) ceMount.hidden = true;
-      if (generalMount) generalMount.hidden = true;
+      if (generalMount && payHowConfirmed) generalMount.hidden = true;
       return;
     }
 
@@ -2090,19 +2146,6 @@
       fields.hidden = !guestProgrammeEnabled();
       if (optOut) optOut.hidden = true;
       if (generalMount) generalMount.hidden = true;
-      return;
-    }
-
-    // General ticketing — keep free trial visits in Step 2 pay-how panel.
-    if (meetingMount) meetingMount.hidden = true;
-    if (ceMount) ceMount.hidden = true;
-    if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
-    if (generalMount && guestAddon) {
-      generalMount.hidden = false;
-      if (guestAddon.parentElement !== generalMount) generalMount.appendChild(guestAddon);
-      guestAddon.hidden = false;
-      fields.hidden = !guestProgrammeEnabled();
-      if (optOut) optOut.hidden = true;
       return;
     }
 
@@ -2278,8 +2321,11 @@
       return;
     }
     const qtyRaw = tier.quantityAvailable;
-    const qtyLabel =
-      qtyRaw == null || qtyRaw === '' ? 'unlimited' : String(Math.max(0, Number(qtyRaw) || 0));
+    const qtyNorm =
+      qtyRaw == null || qtyRaw === '' || !Number.isFinite(Number(qtyRaw)) || Number(qtyRaw) <= 0
+        ? null
+        : Math.floor(Number(qtyRaw));
+    const qtyLabel = qtyNorm == null ? 'unlimited' : String(qtyNorm);
     const priceNum = Number(tier.price);
     const priceLabel = !Number.isFinite(priceNum) || priceNum <= 0 ? 'Free' : '£' + priceNum.toFixed(2);
     summary.textContent =
@@ -2454,36 +2500,36 @@
     const closedToggle = document.getElementById('ee-members-only-event-toggle');
 
     if (lead) {
-      lead.textContent = 'Pick one option, then continue.';
+      lead.textContent = 'Choose how people pay to attend. Pick one, then continue.';
     }
     if (hint) {
       // Keep the status line for screen readers / continue prompts, but hide the visual clutter.
       hint.hidden = true;
       if (!payHowConfirmed) {
         hint.textContent = includesMembership
-          ? 'Continue to set your group membership amounts.'
-          : 'Continue to add your ticket.';
+          ? 'Continue to set your membership fee.'
+          : 'Continue to set your ticket.';
       } else {
         hint.textContent = includesMembership
-          ? 'Set monthly/annual amounts below.'
-          : 'Add your ticket below.';
+          ? 'Set the monthly or yearly membership fee below.'
+          : 'Set your ticket below.';
       }
     }
     if (outcome) {
       if (isApplication) {
         outcome.textContent = includesTickets && includesMembership
-          ? 'Both — approved guests book a ticket; members can join your group instead.'
+          ? 'Next: set the ticket price after approval, and your membership fee.'
           : includesMembership
-            ? 'Group membership — after free visits, people join (no one-off ticket needed).'
-            : 'Tickets after approval — you approve, then they book (paid or free).';
+            ? 'Next: free visits, then membership so you keep visit history and reports.'
+            : 'Next: set the ticket price people pay after you approve them.';
       } else if (includesTickets && includesMembership) {
         outcome.textContent =
-          'Both — tickets for newcomers, group membership for regulars. Turn on Members pay less so members are not charged twice.';
+          'Next: add ticket types for newcomers, then membership settings for regulars.';
       } else if (includesMembership) {
         outcome.textContent =
-          'Group membership — members book from your list (usually £0). New joiners pay your membership fee + booking fee.';
+          'Next: set free visits, then convert joiners into members with history and reports — member ticket + monthly/yearly fee.';
       } else {
-        outcome.textContent = 'Tickets — people book a ticket for this event (paid or free).';
+        outcome.textContent = 'Next: add ticket types — name, price and description.';
       }
     }
 
@@ -2507,9 +2553,10 @@
       setHubMembershipEnabled(true);
     } else {
       setHubMembershipEnabled(false);
+      if (guestProgrammeEnabled()) setGuestProgrammeEnabled(false);
     }
 
-    // Membership-only: default free trial visits on once (user can untick).
+    // Membership path: default free trial visits on once (user can untick).
     // Do not re-force on every sync — that made the checkbox impossible to clear.
     if (!isApplication && includesMembership && !includesTickets && !membersOnlyEventEnabled()) {
       const visitsToggle = document.getElementById('ee-guest-programme-enabled');
@@ -2788,7 +2835,7 @@
       description:
         'Book without applying — for people on this group\u2019s membership list. Guests use Category Exclusivity application above.',
       status: 'Available',
-      quantityAvailable: qty === '' || qty == null ? null : Number(qty),
+      quantityAvailable: normalizeTicketQuantity(qty),
       saleStart: ceTier?.saleStart || null,
       saleEnd: ceTier?.saleEnd || null,
       saleEndOption: ceTier?.saleEndOption || 'at_start',
@@ -2829,10 +2876,8 @@
     }
     const qtyEl = document.getElementById('ee-ce-member-ticket-qty');
     if (qtyEl) {
-      qtyEl.value =
-        tier.quantityAvailable == null || tier.quantityAvailable === ''
-          ? ''
-          : String(tier.quantityAvailable);
+      const qtyNorm = normalizeTicketQuantity(tier.quantityAvailable);
+      qtyEl.value = qtyNorm == null ? '' : String(qtyNorm);
     }
     syncCeMemberTicketFields();
   }
@@ -2874,6 +2919,8 @@
       setMembersOnlyEventEnabled(false);
       if (!payHowIncludesMembership()) {
         setHubMembershipEnabled(false);
+        // Free visits belong on Join the group — clear them on tickets-only.
+        setGuestProgrammeEnabled(false);
       }
       setAttendanceMode(resolveModeFromDoorAndPayHow());
       ensurePublicTiersAfterLeavingMembership();
@@ -3024,7 +3071,7 @@
       price: price === '' || price == null ? 0 : price,
       description: 'For members on your list when signed in',
       status: 'Available',
-      quantityAvailable: qty === '' || qty == null ? null : Number(qty),
+      quantityAvailable: normalizeTicketQuantity(qty),
       saleStart: template?.saleStart || null,
       saleEnd,
       saleEndOption: template?.saleEndOption || 'at_start',
@@ -3054,10 +3101,8 @@
     }
     const qtyEl = document.getElementById('ee-private-ticket-qty');
     if (qtyEl) {
-      qtyEl.value =
-        tier.quantityAvailable == null || tier.quantityAvailable === ''
-          ? ''
-          : String(tier.quantityAvailable);
+      const qtyNorm = normalizeTicketQuantity(tier.quantityAvailable);
+      qtyEl.value = qtyNorm == null ? '' : String(qtyNorm);
     }
     setMembersOnlyTicketHint(
       'Members book when signed in with their membership email.',
@@ -3296,7 +3341,7 @@
         price,
         description: desc,
         status: 'Available',
-        quantityAvailable: qty === '' ? null : Number(qty),
+        quantityAvailable: normalizeTicketQuantity(qty),
         saleStart,
         saleEnd,
         saleEndOption: saleOption,
@@ -3359,10 +3404,7 @@
       return {
         name: String(t.name || '').trim(),
         price: String(t.price ?? ''),
-        quantityAvailable:
-          t.quantityAvailable == null || t.quantityAvailable === ''
-            ? null
-            : Number(t.quantityAvailable),
+        quantityAvailable: normalizeTicketQuantity(t.quantityAvailable),
         saleEnd: t.saleEnd || '',
         saleStart: t.saleStart || '',
         ticketType: String(t.ticketType || '').trim(),
@@ -3863,10 +3905,8 @@
     }
     const placesEl = document.getElementById('ee-ce-places');
     if (placesEl) {
-      placesEl.value =
-        ticket.quantityAvailable == null || ticket.quantityAvailable === ''
-          ? ''
-          : String(ticket.quantityAvailable);
+      const qtyNorm = normalizeTicketQuantity(ticket.quantityAvailable);
+      placesEl.value = qtyNorm == null ? '' : String(qtyNorm);
     }
     const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
     const closeSel = document.getElementById('ee-ce-close');
@@ -3956,7 +3996,7 @@
       price: price === '' ? 0 : price,
       description,
       status: 'Available',
-      quantityAvailable: places === '' ? null : Number(places),
+      quantityAvailable: normalizeTicketQuantity(places),
       saleEnd,
       saleEndOption: saleOption,
       saleEndCustom: customDt,

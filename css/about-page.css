@@ -1094,7 +1094,7 @@ html:has(.about-page) {
 
 .about-founding-track--marquee {
   width: max-content;
-  animation: about-founding-marquee 40s linear infinite;
+  animation: about-founding-marquee var(--about-marquee-duration, 80s) linear infinite;
   will-change: transform;
 }
 
@@ -1186,6 +1186,10 @@ html:has(.about-page) {
   font-weight: 400;
   color: #452d5c;
   letter-spacing: 0.02em;
+}
+
+.about-founding-initial[hidden] {
+  display: none !important;
 }
 
 .about-founding-cta {

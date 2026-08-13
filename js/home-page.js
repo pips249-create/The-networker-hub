@@ -416,6 +416,10 @@
     track.classList.toggle('home-partners-track--scroll', isScrollable);
     track.classList.toggle('home-partners-track--static', isStatic);
     track.innerHTML = useMarquee ? items + items : items;
+    track.style.setProperty(
+      '--home-marquee-duration',
+      useMarquee ? Math.max(60, Math.round(partners.length * 3.8)) + 's' : ''
+    );
     enhancePartnerLogoBands(track);
 
     if (marquee) {
@@ -574,6 +578,11 @@
     track.classList.toggle('home-partners-track--scroll', isScrollable);
     track.classList.toggle('home-partners-track--static', isStatic);
     track.innerHTML = useMarquee ? items + items : items;
+    // ~3.8s per logo so a full strip is readable (was a fixed 40s for every length).
+    track.style.setProperty(
+      '--home-marquee-duration',
+      useMarquee ? Math.max(60, Math.round(list.length * 3.8)) + 's' : ''
+    );
 
     if (marquee) {
       marquee.classList.toggle('home-partners-marquee--scrollable', isScrollable);

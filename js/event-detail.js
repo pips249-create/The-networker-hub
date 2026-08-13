@@ -2607,10 +2607,17 @@
   }
 
   function tierRemainingCount(t) {
-    const cap = t.quantityAvailable;
-    if (cap == null || !Number.isFinite(Number(cap))) return null;
+    const capRaw = Number(t.quantityAvailable);
+    // Cap of 0 was a common mis-save meaning "unlimited" — treat as no cap.
+    if (!Number.isFinite(capRaw) || capRaw <= 0) return null;
     const sold = Math.max(0, Number(t.registrationsCount) || 0);
-    return Math.max(0, Number(cap) - sold);
+    return Math.max(0, Math.floor(capRaw) - sold);
+  }
+
+  function tierCapacityCap(t) {
+    const capRaw = Number(t && t.quantityAvailable);
+    if (!Number.isFinite(capRaw) || capRaw <= 0) return null;
+    return Math.floor(capRaw);
   }
 
   function tierRemainingLabel(t) {
@@ -2618,8 +2625,8 @@
     if (left == null || left <= 0) return '';
     if (left === 1) return 'Only 1 ticket left';
     if (left <= 5) return 'Only ' + left + ' tickets left';
-    const cap = Number(t.quantityAvailable);
-    if (Number.isFinite(cap) && left <= Math.max(10, Math.ceil(cap * 0.2))) {
+    const cap = tierCapacityCap(t);
+    if (cap != null && left <= Math.max(10, Math.ceil(cap * 0.2))) {
       return left + ' tickets remaining';
     }
     return '';
@@ -2732,11 +2739,11 @@
       tier.setAttribute('data-price', String(priceNum));
       tier.setAttribute('data-label', t.label || t.name || 'Application');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
-      const cap = t.quantityAvailable;
+      const cap = tierCapacityCap(t);
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
       tier.setAttribute('data-qty-max', '1');
-      if (cap != null && Number.isFinite(Number(cap))) {
-        const left = Math.max(0, Number(cap) - sold);
+      if (cap != null) {
+        const left = Math.max(0, cap - sold);
         if (left <= 0) {
           soldOut = true;
           tier.classList.add('sold-out', 'tier-disabled');
@@ -2762,10 +2769,10 @@
       const t = ev.alumniTier;
       let soldOut = panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
-      const cap = t.quantityAvailable;
+      const cap = tierCapacityCap(t);
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
-      if (cap != null && Number.isFinite(Number(cap))) {
-        const left = Math.max(0, Number(cap) - sold);
+      if (cap != null) {
+        const left = Math.max(0, cap - sold);
         if (left <= 0) soldOut = true;
       }
       const tier = document.createElement('div');
@@ -2820,10 +2827,10 @@
       tier.setAttribute('data-tier-name', t.name || t.label || 'Ticket');
       if (t.isSeriesPass) tier.setAttribute('data-series-pass', '1');
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
-      const cap = t.quantityAvailable;
+      const cap = tierCapacityCap(t);
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
-      if (cap != null && Number.isFinite(Number(cap))) {
-        tier.setAttribute('data-qty-max', String(Math.max(0, Number(cap) - sold)));
+      if (cap != null) {
+        tier.setAttribute('data-qty-max', String(Math.max(0, cap - sold)));
       } else {
         tier.setAttribute('data-qty-max', '99');
       }

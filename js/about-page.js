@@ -137,6 +137,10 @@
     track.classList.toggle('about-founding-track--scroll', isScrollable);
     track.classList.toggle('about-founding-track--static', isStatic);
     track.innerHTML = useMarquee ? items + items : items;
+    track.style.setProperty(
+      '--about-marquee-duration',
+      useMarquee ? Math.max(60, Math.round(list.length * 3.8)) + 's' : ''
+    );
 
     if (marquee) {
       marquee.classList.toggle('about-founding-marquee--scrollable', isScrollable);

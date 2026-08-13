@@ -66,25 +66,25 @@
     'guest-visit-programme': {
       title: 'Free trial visits',
       body:
-        'Let newcomers visit for free (up to 3) before they join membership or buy a ticket. After visits are used, they need membership or a paid ticket to keep attending.',
+        'Let newcomers try a few meetings free (up to 3). When they join your group, you keep their visit history and reports — so free visits become members you can follow, not one-off guests.',
       hubertPrompt: 'What are free trial visits?',
     },
     'pay-how': {
-      title: 'Tickets or membership?',
+      title: 'How will people book?',
       body:
-        'Choose tickets for this event (paid or free), group membership for your organiser page, or both. Free trial visits are optional and work with either path.',
+        'Ticket for this event = ticket types only. Convert free visits into members = trial visits, then join your group so you keep history and reports. Ticket and membership = both.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
-      title: 'Group membership',
+      title: 'Convert free visits into members',
       body:
-        'People pay a monthly or yearly fee to join your group, then attend meetings as members instead of buying a one-off ticket each time. You can still offer free trial visits.',
-      hubertPrompt: 'How does monthly membership work with events?',
+        'Free visits let people try your meetings. When they join, they become members of your group — you can see who came, who joined, and their history. Set a member ticket for this meeting, then the monthly or yearly fee after visits are used.',
+      hubertPrompt: 'How does converting free visits into membership work?',
     },
     'pay-how-both': {
-      title: 'Both',
+      title: 'Ticket and membership',
       body:
-        'Offer tickets for newcomers and group membership for regulars. Guests can buy a ticket, use free trial visits if you offer them, or join membership.',
+        'Newcomers buy a ticket for this event. Regulars join the group and book at a member rate (often £0) so they are not charged the ticket again.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
@@ -114,7 +114,7 @@
     'hub-membership-prices': {
       title: 'Group membership fee',
       body:
-        'What people pay to join your group — not a ticket for this one event. After free trial visits, newcomers join on your organiser page. Use £0 if membership is free and you manage the list yourself. People already on your member list book the meeting without buying a public ticket again (usually £0). Amounts also appear under Memberships.',
+        'What people pay to join your group after free visits. Once they are members, you keep their attendance history and reports. People already on your list book this meeting with the member ticket (usually £0).',
       hubertPrompt: 'How do I set monthly membership when setting up tickets?',
     },
     'category-exclusivity': {
@@ -136,9 +136,9 @@
       hubertPrompt: 'How do tickets work when my event has multiple dates?',
     },
     'event-series-pass-tier': {
-      title: 'Full series pass',
+      title: 'Multiple dates (full series pass)',
       body:
-        'One checkout price covers every date in this listing — ideal for a 3-day conference pass. Quantity limits how many passes you sell overall. Add separate per-day tiers (without this tick) if you also want single-session tickets or Book all remaining dates.',
+        'Shown when this listing has more than one date. Tick it only if one purchase should cover every date (e.g. a 3-day conference). Leave it unticked for weekly networking meetings — each date keeps its own ticket, and attendees can still book all remaining dates in one checkout when prices match.',
       hubertPrompt: 'How do I sell one conference pass price for all days?',
     },
     'stripe-refunds': {

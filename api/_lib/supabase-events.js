@@ -229,7 +229,8 @@ function ticketIsGuestVisit(row, ticketName) {
 function ticketRowToTier(row, registrationCount) {
   const priceNum = parsePriceNum(row.price);
   const { display: price, priceKey } = normalizePrice(priceNum);
-  const qty = row.quantity != null ? Math.max(0, Number(row.quantity)) : null;
+  const qtyRaw = row.quantity != null ? Number(row.quantity) : null;
+  const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : null;
   const sold = Math.max(0, Number(registrationCount) || 0);
   const soldOut = qty !== null && Number.isFinite(qty) && sold >= qty;
   const name = String(row.name || 'Ticket').trim();

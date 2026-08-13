@@ -158,10 +158,14 @@ async function listFoundingHomepageOrganisers(sb, now = new Date()) {
     .gt('founding_homepage_until', iso)
     .eq('ownership_claim_status', 'claimed')
     .eq('is_internal', false)
+    .not('photo_url', 'is', null)
+    .neq('photo_url', '')
     .order('ownership_claimed_at', { ascending: true })
     .limit(FOUNDING_HOMEPAGE_CAP);
   if (error) throw new Error(error.message);
-  return mergeSoftLaunchFoundingShowcase(data || []);
+  // Drop rows whose photo_url is whitespace-only after trim
+  const withLogo = (data || []).filter((row) => String(row.photo_url || '').trim());
+  return mergeSoftLaunchFoundingShowcase(withLogo);
 }
 
 /** All founding claimants — for the public preview gateway social-proof strip. */
@@ -174,10 +178,13 @@ async function listFoundingOrganisersForGateway(sb, limit = 48) {
     .not('founding_organiser_at', 'is', null)
     .eq('ownership_claim_status', 'claimed')
     .eq('is_internal', false)
+    .not('photo_url', 'is', null)
+    .neq('photo_url', '')
     .order('founding_organiser_at', { ascending: true })
     .limit(Math.min(100, Math.max(1, Number(limit) || 48)));
   if (error) throw new Error(error.message);
-  return mergeSoftLaunchFoundingShowcase(data || []);
+  const withLogo = (data || []).filter((row) => String(row.photo_url || '').trim());
+  return mergeSoftLaunchFoundingShowcase(withLogo);
 }
 
 module.exports = {
