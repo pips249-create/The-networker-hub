@@ -175,13 +175,46 @@ async function sendDueOrganiserListingAlertEmails(sb) {
     }
 
     const organiserEvents = eventsByOrganiser.get(organiserId) || [];
-    const unalertedEvents = sortEventsByStartsAt(
+    let unalertedEvents = sortEventsByStartsAt(
       organiserEvents.filter((eventRow) => {
         const alertKey = String(favourite.id) + ':' + String(eventRow.id);
         if (alerted.has(alertKey)) return false;
         return eventPublishedAfterFavourite(eventRow, favouriteCreated);
       })
     );
+
+    // Same inbox may already have the member-list email — do not send a second listing alert.
+    if (unalertedEvents.length) {
+      try {
+        const {
+          loadEventIdsAlreadyRosterAlertedForEmail,
+        } = require('./organiser-member-roster');
+        const rosterAlerted = await loadEventIdsAlreadyRosterAlertedForEmail(sb, {
+          email: attendeeEmail,
+          organiserId,
+          eventIds: unalertedEvents.map((row) => row.id),
+        });
+        if (rosterAlerted.size) {
+          const stillNeeded = [];
+          for (const eventRow of unalertedEvents) {
+            if (rosterAlerted.has(String(eventRow.id))) {
+              // Claim favourite row so we do not keep re-checking forever.
+              try {
+                await claimFavouriteListingAlertEvents(sb, favourite.id, [eventRow]);
+                alerted.add(String(favourite.id) + ':' + String(eventRow.id));
+              } catch {
+                /* best-effort */
+              }
+              continue;
+            }
+            stillNeeded.push(eventRow);
+          }
+          unalertedEvents = stillNeeded;
+        }
+      } catch {
+        /* non-fatal — proceed with favourite-only dedupe */
+      }
+    }
 
     if (!unalertedEvents.length) {
       result.skipped += 1;

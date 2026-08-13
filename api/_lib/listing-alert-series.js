@@ -3,7 +3,27 @@ const { eventPublicUrl } = require('./hub-email-urls');
 const { isEventPublishedForSale } = require('./ticket-sales');
 
 const LISTING_ALERT_EVENT_COLUMNS =
-  'id, title, slug, starts_at, status, approval_status, venue, city, location_label, organiser_id, published_at, created_at, series_group_id, attendance_mode';
+  'id, title, slug, starts_at, status, approval_status, venue, city, location_label, meeting_type, organiser_id, published_at, created_at, series_group_id, attendance_mode';
+
+function formatListingAlertLocation(anchor) {
+  const meetingType = String(anchor?.meeting_type || '')
+    .trim()
+    .toLowerCase();
+  if (meetingType === 'online' || (meetingType.includes('online') && !meetingType.includes('person'))) {
+    return 'Online';
+  }
+  const raw = String(anchor?.location_label || anchor?.venue || anchor?.city || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!raw) return 'See event page';
+  // Collapse historic "Online, Online" / "online, online" labels from older saves.
+  const parts = raw
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length && parts.every((part) => /^online$/i.test(part))) return 'Online';
+  return raw;
+}
 
 function listingAlertAttendanceMode(eventRows) {
   const modes = (eventRows || []).map((row) =>
@@ -77,15 +97,12 @@ function groupEventsForListingAlerts(events) {
 function buildListingAlertEventDisplay(eventRows, siteUrl) {
   const rows = sortEventsByStartsAt(eventRows || []);
   const anchor = pickListingAlertAnchorEvent(rows) || {};
-  const eventLocation =
-    String(anchor.location_label || anchor.venue || anchor.city || '').trim() ||
-    'See event page';
 
   return {
     event_name: String(anchor.title || 'Event').trim(),
     event_date: formatListingAlertDateList(rows),
     event_time: formatListingAlertTimeSuffix(rows),
-    event_location: eventLocation,
+    event_location: formatListingAlertLocation(anchor),
     event_url: eventPublicUrl(anchor, siteUrl),
     anchorEvent: anchor,
     eventIds: rows.map((row) => row.id).filter(Boolean),
@@ -457,6 +474,7 @@ module.exports = {
   sortEventsByStartsAt,
   formatListingAlertDateList,
   formatListingAlertTimeSuffix,
+  formatListingAlertLocation,
   formatListingNameList,
   pickListingAlertAnchorEvent,
   groupEventsForListingAlerts,

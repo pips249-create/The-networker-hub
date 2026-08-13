@@ -6,6 +6,7 @@ const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
 const { resolveClaimDispute, clearDisputedProfileEmail, resolveOrganiserClaimRequest, approveOrganiserClaimRequest } = require('../admin-supabase-data');
+const { applyIlikeSearch } = require('../search-match');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.,email.is.null,email.eq.,contact_email.is.null,contact_email.eq.';
@@ -354,7 +355,8 @@ async function listOrganisersForAdmin(query) {
         const needle = q.toLowerCase();
         dbQuery = dbQuery.or(`email.ilike.%${needle}%,contact_email.ilike.%${needle}%`);
       } else {
-        dbQuery = dbQuery.ilike('name', `%${q}%`);
+        // Word-split + &/and synonym + light typo tolerance (edit distance ≤ 1 on 5+ letter terms).
+        dbQuery = applyIlikeSearch(dbQuery, q, ['name']);
       }
     }
     if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);

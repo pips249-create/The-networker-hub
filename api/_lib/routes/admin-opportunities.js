@@ -15,6 +15,7 @@ const { addMonths } = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
+const { applyIlikeSearch } = require('../search-match');
 
 const TEST_SAMPLE_LISTINGS = [
   {
@@ -249,8 +250,12 @@ async function listOpportunitiesForAdmin(query) {
   if (noImage) dbQuery = dbQuery.or('image_url.is.null,image_url.eq.');
 
   if (search) {
-    const term = `%${search}%`;
-    dbQuery = dbQuery.or(`title.ilike.${term},host.ilike.${term},owner_email.ilike.${term}`);
+    if (search.includes('@')) {
+      const term = `%${search.toLowerCase()}%`;
+      dbQuery = dbQuery.or(`owner_email.ilike.${term}`);
+    } else {
+      dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'host', 'owner_email']);
+    }
   }
 
   dbQuery = dbQuery.range(offset, offset + limit - 1);

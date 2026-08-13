@@ -13,6 +13,7 @@ const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
 const { parseEventDateInputToUtcIso } = require('../event-timezone');
+const { applyIlikeSearch } = require('../search-match');
 
 function parseBody(req) {
   let body = req.body;
@@ -224,8 +225,7 @@ async function listEventsForAdmin(query) {
   }
 
   if (search) {
-    const term = `%${search}%`;
-    dbQuery = dbQuery.or(`title.ilike.${term},city.ilike.${term}`);
+    dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'city']);
   }
 
   dbQuery = dbQuery.range(offset, offset + limit - 1);

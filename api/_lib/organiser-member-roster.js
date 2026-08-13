@@ -1812,6 +1812,87 @@ async function releaseRosterListingAlertEvents(sb, memberId, eventIds) {
 }
 
 /**
+ * After a member-list new-event email, mark matching saved-organiser alerts so the
+ * morning cron does not send a second "NEW LISTING" email to the same inbox.
+ * Looks up favourites by attendee id and by email (roster rows often lack attendee_id).
+ */
+async function markFavouriteListingAlertsForEmail(sb, { email, organiserId, eventRows, attendeeId }) {
+  const orgId = String(organiserId || '').trim();
+  const rows = (eventRows || []).filter((row) => row?.id);
+  if (!orgId || !rows.length) return;
+
+  const attendeeIds = new Set();
+  const directId = String(attendeeId || '').trim();
+  if (directId) attendeeIds.add(directId);
+
+  const em = normalizeRosterEmail(email);
+  if (em) {
+    try {
+      const resolved = await resolveAttendeeIdByEmail(sb, em);
+      if (resolved) attendeeIds.add(String(resolved));
+    } catch {
+      /* ignore — still try direct id */
+    }
+  }
+  if (!attendeeIds.size) return;
+
+  const favRes = await sb
+    .from('organiser_favourites')
+    .select('id')
+    .eq('organiser_id', orgId)
+    .in('attendee_id', [...attendeeIds]);
+  if (favRes.error) throw new Error(favRes.error.message);
+  const favouriteIds = (favRes.data || []).map((row) => row.id).filter(Boolean);
+  if (!favouriteIds.length) return;
+
+  const payload = [];
+  for (const favouriteId of favouriteIds) {
+    for (const row of rows) {
+      payload.push({ organiser_favourite_id: favouriteId, event_id: row.id });
+    }
+  }
+  if (!payload.length) return;
+  const { error } = await sb.from('organiser_favourite_listing_alerts').upsert(payload, {
+    onConflict: 'organiser_favourite_id,event_id',
+    ignoreDuplicates: true,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Events this inbox already got via the member-list path (any roster row for the email).
+ */
+async function loadEventIdsAlreadyRosterAlertedForEmail(sb, { email, organiserId, eventIds }) {
+  const em = normalizeRosterEmail(email);
+  const orgId = String(organiserId || '').trim();
+  const ids = [...new Set((eventIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!em || !orgId || !ids.length) return new Set();
+
+  const rosterRes = await sb
+    .from('organiser_member_roster')
+    .select('id')
+    .eq('organiser_id', orgId)
+    .eq('email', em);
+  if (rosterRes.error) {
+    if (isMissingRelationError(rosterRes.error)) return new Set();
+    throw new Error(rosterRes.error.message);
+  }
+  const memberIds = (rosterRes.data || []).map((row) => String(row.id || '').trim()).filter(Boolean);
+  if (!memberIds.length) return new Set();
+
+  const alertedRes = await sb
+    .from('organiser_roster_listing_alerts')
+    .select('event_id')
+    .in('roster_member_id', memberIds)
+    .in('event_id', ids);
+  if (alertedRes.error) {
+    if (isMissingRelationError(alertedRes.error)) return new Set();
+    throw new Error(alertedRes.error.message);
+  }
+  return new Set((alertedRes.data || []).map((row) => String(row.event_id)));
+}
+
+/**
  * Send one member-list new-event email and record dedupe row.
  * Returns 'sent' | 'skipped' | throws on hard failure.
  */
@@ -2014,26 +2095,15 @@ async function sendMemberRosterNewEventAlert(sb, { eventRow, organiser, member, 
   }
   if (alreadyAlerted) alreadyAlerted.add(memberId);
 
-  if (member.attendeeId) {
-    try {
-      const fav = await sb
-        .from('organiser_favourites')
-        .select('id')
-        .eq('attendee_id', member.attendeeId)
-        .eq('organiser_id', organiserId)
-        .maybeSingle();
-      if (fav.data?.id) {
-        await sb.from('organiser_favourite_listing_alerts').upsert(
-          unalertedEvents.map((row) => ({
-            organiser_favourite_id: fav.data.id,
-            event_id: row.id,
-          })),
-          { onConflict: 'organiser_favourite_id,event_id', ignoreDuplicates: true }
-        );
-      }
-    } catch {
-      /* non-fatal */
-    }
+  try {
+    await markFavouriteListingAlertsForEmail(sb, {
+      email,
+      organiserId,
+      eventRows: unalertedEvents,
+      attendeeId: member.attendeeId,
+    });
+  } catch {
+    /* non-fatal — cron still has claim-before-send */
   }
 
   return 'sent';
@@ -2317,6 +2387,8 @@ module.exports = {
   sendMemberRosterInviteEmail,
   sendMemberRosterPayInviteEmail,
   sendMemberRosterNewEventAlert,
+  markFavouriteListingAlertsForEmail,
+  loadEventIdsAlreadyRosterAlertedForEmail,
   buildOrganiserInviteIntroSection,
   buildOrganiserAvatarMarkup,
   buildRosterUpcomingEventSection,

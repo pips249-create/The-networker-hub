@@ -882,67 +882,85 @@ async function buildEventRow(payload, eventId, mode) {
   if (!isLocked) {
     row.event_type = mapEventType(payload.type);
     row.meeting_type = mapMeetingType(payload.eventFormat);
-    row.venue = payload.venue || null;
-    const venueNorm = String(row.venue || '')
-      .trim()
-      .toLowerCase();
-    let addressLine = String(payload.addressLine1 || '').trim();
-    const fullAddress = String(payload.fullAddress || payload.location || '').trim();
-    // Never treat a venue / location-label mash as the street address.
-    if (!addressLine && fullAddress) {
-      const fullNorm = fullAddress.toLowerCase();
-      const looksLikeLabel =
-        (venueNorm && (fullNorm === venueNorm || fullNorm.startsWith(venueNorm + ','))) ||
-        fullAddress.includes(',');
-      if (!looksLikeLabel) addressLine = fullAddress;
-    }
-    if (addressLine && venueNorm) {
-      const addressNorm = addressLine.toLowerCase().replace(/\s+/g, ' ').trim();
-      const pcNorm = String(payload.postcode || '')
+    const isOnlineMeeting = String(row.meeting_type || '').toLowerCase() === 'online';
+    if (isOnlineMeeting) {
+      // Online listings must not treat the literal "Online" placeholder as venue/city/address —
+      // that produced labels like "Online, Online" in emails and browse cards.
+      row.venue = null;
+      row.address = null;
+      row.city = null;
+      row.postcode = null;
+      row.outcode = null;
+      row.latitude = null;
+      row.longitude = null;
+      row.location_label = 'Online';
+      row.region_slug = 'online';
+    } else {
+      row.venue = payload.venue || null;
+      const venueNorm = String(row.venue || '')
         .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '');
-      if (
-        addressNorm === venueNorm ||
-        addressNorm === venueNorm + ',' ||
-        (pcNorm &&
-          (addressNorm === venueNorm + ', ' + pcNorm ||
-            addressNorm === venueNorm + ' ' + pcNorm ||
-            addressNorm === venueNorm + ', ' + String(payload.postcode || '').trim().toLowerCase()))
-      ) {
-        addressLine = '';
+        .toLowerCase();
+      let addressLine = String(payload.addressLine1 || '').trim();
+      const fullAddress = String(payload.fullAddress || payload.location || '').trim();
+      // Never treat a venue / location-label mash as the street address.
+      if (!addressLine && fullAddress) {
+        const fullNorm = fullAddress.toLowerCase();
+        const looksLikeLabel =
+          (venueNorm && (fullNorm === venueNorm || fullNorm.startsWith(venueNorm + ','))) ||
+          fullAddress.includes(',');
+        if (!looksLikeLabel) addressLine = fullAddress;
       }
-    }
-    row.address = addressLine || null;
-    const derived = deriveLocationFields(payload);
-    let city = derived.city || null;
-    if (city && venueNorm && city.trim().toLowerCase() === venueNorm) {
-      city = null;
-    }
-    row.city = city;
-    row.postcode = derived.postcode || null;
-    if (row.postcode) {
-      const formatted = parseFullUkPostcode(row.postcode);
-      if (formatted) row.postcode = formatted;
-    }
-    row.outcode = ukOutcode(row.postcode) || null;
-    if (row.postcode) {
-      const geo = await geocodeUkPostcode(row.postcode);
-      if (geo) {
-        if (geo.latitude != null) row.latitude = geo.latitude;
-        if (geo.longitude != null) row.longitude = geo.longitude;
-        if (!row.city && geo.city) row.city = geo.city;
+      if (addressLine && venueNorm) {
+        const addressNorm = addressLine.toLowerCase().replace(/\s+/g, ' ').trim();
+        const pcNorm = String(payload.postcode || '')
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, '');
+        if (
+          addressNorm === venueNorm ||
+          addressNorm === venueNorm + ',' ||
+          (pcNorm &&
+            (addressNorm === venueNorm + ', ' + pcNorm ||
+              addressNorm === venueNorm + ' ' + pcNorm ||
+              addressNorm ===
+                venueNorm + ', ' + String(payload.postcode || '').trim().toLowerCase()))
+        ) {
+          addressLine = '';
+        }
       }
+      row.address = addressLine || null;
+      const derived = deriveLocationFields(payload);
+      let city = derived.city || null;
+      if (city && venueNorm && city.trim().toLowerCase() === venueNorm) {
+        city = null;
+      }
+      // Never keep a bogus city of "Online" on in-person rows either.
+      if (city && /^online$/i.test(String(city).trim())) city = null;
+      row.city = city;
+      row.postcode = derived.postcode || null;
+      if (row.postcode) {
+        const formatted = parseFullUkPostcode(row.postcode);
+        if (formatted) row.postcode = formatted;
+      }
+      row.outcode = ukOutcode(row.postcode) || null;
+      if (row.postcode) {
+        const geo = await geocodeUkPostcode(row.postcode);
+        if (geo) {
+          if (geo.latitude != null) row.latitude = geo.latitude;
+          if (geo.longitude != null) row.longitude = geo.longitude;
+          if (!row.city && geo.city) row.city = geo.city;
+        }
+      }
+      row.location_label =
+        [row.venue, row.address, row.city, row.postcode].filter(Boolean).join(', ') || null;
+      row.region_slug =
+        resolveRegionSlug({
+          outcode: row.outcode,
+          postcode: row.postcode,
+          city: row.city,
+          location: row.location_label,
+        }) || null;
     }
-    row.location_label =
-      [row.venue, row.address, row.city, row.postcode].filter(Boolean).join(', ') || null;
-    row.region_slug =
-      resolveRegionSlug({
-        outcode: row.outcode,
-        postcode: row.postcode,
-        city: row.city,
-        location: row.location_label,
-      }) || null;
   }
 
   if (mode === 'create' || Object.prototype.hasOwnProperty.call(payload, 'onlineLink')) {

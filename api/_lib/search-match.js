@@ -1,10 +1,19 @@
 /**
- * Browse filter search matching — word-split AND, substring, light typo tolerance.
- * Typos (edit distance ≤ 1) only apply to terms of 5+ characters.
+ * Browse / admin search matching — word-split AND, substring, light typo tolerance.
+ * Treats "&" and "and" as the same connector. Typos (edit distance ≤ 1) only apply
+ * to terms of 5+ characters.
  */
 
 const FUZZY_MIN_LEN = 5;
 const MAX_TERM_LEN = 48;
+
+/** "&" and "and" are interchangeable connectors in group/event names. */
+function normalizeAmpersands(text) {
+  return String(text || '')
+    .replace(/&+/g, ' and ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function sanitizeSearchTerm(term) {
   return String(term || '')
@@ -15,11 +24,15 @@ function sanitizeSearchTerm(term) {
 }
 
 function tokenizeSearchQuery(query) {
-  return String(query || '')
+  return normalizeAmpersands(String(query || ''))
     .toLowerCase()
     .split(/\s+/)
     .map(sanitizeSearchTerm)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(function (t) {
+      // Drop connector so "Wine & Dine" and "Wine and Dine" match the same way.
+      return t !== 'and';
+    });
 }
 
 function levenshtein(a, b) {
@@ -55,18 +68,18 @@ function levenshtein(a, b) {
 }
 
 function haystackWords(haystack) {
-  return String(haystack || '')
+  return normalizeAmpersands(String(haystack || ''))
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter(function (w) {
-      return w.length >= 4;
+      return w.length >= 4 && w !== 'and';
     });
 }
 
 function termMatchesHaystack(term, haystack) {
   const t = sanitizeSearchTerm(term);
-  if (!t) return true;
-  const hay = String(haystack || '').toLowerCase();
+  if (!t || t === 'and') return true;
+  const hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
   if (hay.indexOf(t) !== -1) return true;
   if (t.length < FUZZY_MIN_LEN) return false;
 
@@ -82,7 +95,7 @@ function termMatchesHaystack(term, haystack) {
 function haystackMatchesQuery(haystack, query) {
   const terms = tokenizeSearchQuery(query);
   if (!terms.length) return true;
-  const hay = String(haystack || '').toLowerCase();
+  const hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
   for (let i = 0; i < terms.length; i++) {
     if (!termMatchesHaystack(terms[i], hay)) return false;
   }
@@ -113,7 +126,7 @@ function typoVariantTerms(term) {
 
 function searchTermIlikePatterns(term) {
   const t = sanitizeSearchTerm(term);
-  if (!t) return [];
+  if (!t || t === 'and') return [];
   const patterns = ['%' + t + '%'];
   const variants = typoVariantTerms(t);
   for (let i = 0; i < variants.length; i++) {
@@ -122,8 +135,41 @@ function searchTermIlikePatterns(term) {
   return patterns;
 }
 
+/**
+ * Build PostgREST `.or(...)` filter strings (one per query term; AND them together).
+ * Returns null when there is nothing to filter.
+ */
+function buildIlikeOrFilters(query, fields) {
+  const terms = tokenizeSearchQuery(query);
+  const fieldList = (fields || []).filter(Boolean);
+  if (!terms.length || !fieldList.length) return null;
+
+  return terms.map(function (term) {
+    const patterns = searchTermIlikePatterns(term);
+    const parts = [];
+    for (let i = 0; i < patterns.length; i++) {
+      for (let j = 0; j < fieldList.length; j++) {
+        parts.push(fieldList[j] + '.ilike.' + patterns[i]);
+      }
+    }
+    return parts.join(',');
+  }).filter(Boolean);
+}
+
+/** Apply word-split + fuzzy ilike filters to a Supabase/PostgREST query builder. */
+function applyIlikeSearch(dbQuery, query, fields) {
+  const filters = buildIlikeOrFilters(query, fields);
+  if (!filters || !filters.length) return dbQuery;
+  let next = dbQuery;
+  for (let i = 0; i < filters.length; i++) {
+    next = next.or(filters[i]);
+  }
+  return next;
+}
+
 module.exports = {
   FUZZY_MIN_LEN,
+  normalizeAmpersands,
   sanitizeSearchTerm,
   tokenizeSearchQuery,
   levenshtein,
@@ -131,4 +177,6 @@ module.exports = {
   haystackMatchesQuery,
   typoVariantTerms,
   searchTermIlikePatterns,
+  buildIlikeOrFilters,
+  applyIlikeSearch,
 };

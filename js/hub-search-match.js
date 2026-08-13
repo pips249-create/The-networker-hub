@@ -1,10 +1,18 @@
 /**
- * Browse filter search matching — word-split AND, substring, light typo tolerance.
- * Mirrors api/_lib/search-match.js for client-side opportunity (and similar) filters.
+ * Browse / admin search matching — word-split AND, substring, light typo tolerance.
+ * Treats "&" and "and" as the same connector.
+ * Mirrors api/_lib/search-match.js for client-side filters.
  */
 (function (global) {
   var FUZZY_MIN_LEN = 5;
   var MAX_TERM_LEN = 48;
+
+  function normalizeAmpersands(text) {
+    return String(text || '')
+      .replace(/&+/g, ' and ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   function sanitizeSearchTerm(term) {
     return String(term || '')
@@ -15,11 +23,14 @@
   }
 
   function tokenizeSearchQuery(query) {
-    return String(query || '')
+    return normalizeAmpersands(String(query || ''))
       .toLowerCase()
       .split(/\s+/)
       .map(sanitizeSearchTerm)
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter(function (t) {
+        return t !== 'and';
+      });
   }
 
   function levenshtein(a, b) {
@@ -60,18 +71,18 @@
   }
 
   function haystackWords(haystack) {
-    return String(haystack || '')
+    return normalizeAmpersands(String(haystack || ''))
       .toLowerCase()
       .split(/[^a-z0-9]+/)
       .filter(function (w) {
-        return w.length >= 4;
+        return w.length >= 4 && w !== 'and';
       });
   }
 
   function termMatchesHaystack(term, haystack) {
     var t = sanitizeSearchTerm(term);
-    if (!t) return true;
-    var hay = String(haystack || '').toLowerCase();
+    if (!t || t === 'and') return true;
+    var hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
     if (hay.indexOf(t) !== -1) return true;
     if (t.length < FUZZY_MIN_LEN) return false;
 
@@ -87,7 +98,7 @@
   function haystackMatchesQuery(haystack, query) {
     var terms = tokenizeSearchQuery(query);
     if (!terms.length) return true;
-    var hay = String(haystack || '').toLowerCase();
+    var hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
     for (var i = 0; i < terms.length; i++) {
       if (!termMatchesHaystack(terms[i], hay)) return false;
     }
@@ -96,6 +107,7 @@
 
   global.HubSearchMatch = {
     FUZZY_MIN_LEN: FUZZY_MIN_LEN,
+    normalizeAmpersands: normalizeAmpersands,
     sanitizeSearchTerm: sanitizeSearchTerm,
     tokenizeSearchQuery: tokenizeSearchQuery,
     levenshtein: levenshtein,

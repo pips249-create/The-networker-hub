@@ -214,6 +214,8 @@ function parseCityFromLocationLabel(location, postcodeHint) {
     const partNorm = part.replace(/\s+/g, '').toUpperCase();
     if (pcNorm && partNorm === pcNorm) continue;
     if (parseOutcode(part)) continue;
+    // "Online" is a format placeholder, not a city.
+    if (/^online$/i.test(part.trim())) continue;
     if (part.length >= 2 && part.length <= 64) return part;
   }
   return '';

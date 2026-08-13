@@ -27,12 +27,18 @@ const hay = 'manchester breakfast networking club city centre';
 
 assert('tokenize empty query', tokenizeSearchQuery('').length === 0);
 assert('tokenize splits words', tokenizeSearchQuery('  Manchester Club ').join('|') === 'manchester|club');
+assert('tokenize drops and connector', tokenizeSearchQuery('Wine & Dine').join('|') === 'wine|dine');
+assert('tokenize and synonym', tokenizeSearchQuery('Wine and Dine').join('|') === 'wine|dine');
 
 assert('exact substring', haystackMatchesQuery(hay, 'manchester'));
 assert('partial word', haystackMatchesQuery(hay, 'manch'));
 assert('multi-word AND', haystackMatchesQuery(hay, 'networking manchester'));
 assert('multi-word order independent', haystackMatchesQuery(hay, 'club breakfast'));
 assert('missing word fails', !haystackMatchesQuery(hay, 'networking london'));
+
+assert('ampersand matches and', haystackMatchesQuery('Wine & Dine Networking', 'wine and dine'));
+assert('and matches ampersand', haystackMatchesQuery('Wine and Dine Networking', 'wine & dine'));
+assert('ampersand multi-word', haystackMatchesQuery('Marks & Spencer Business Club', 'marks spencer'));
 
 assert('typo substitution (edit 1)', haystackMatchesQuery(hay, 'manchaster'));
 assert('typo transposition', haystackMatchesQuery(hay, 'mancehster'));
