@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813step3a" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813step3b" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -90,7 +90,7 @@
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 data-hub-tip="pay-how">How will people book?</h2>
           <p class="ee-hint ee-attendance-lead" id="ee-pay-how-lead">
-            Choose how people pay to attend. Pick one, then continue.
+            Pick one path, then continue.
           </p>
           <p class="ee-booking-help-under ee-booking-help-under--lead">
             <a
@@ -118,10 +118,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
               <strong>Ticket for this event</strong>
-              <span
-                >Add ticket types with a name, price and description — free or paid. Example: General admission
-                £15, or Early bird £10.</span
-              >
+              <span>Ticket types with a name and price — free or paid.</span>
             </button>
             <button
               type="button"
@@ -134,10 +131,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
               <strong data-hub-tip="pay-how-membership">Convert free visits into members</strong>
-              <span
-                >Let visitors try a few meetings free, then join your group with a monthly or annual fee. You keep
-                visit history and reports — who came, who joined, and who is ready to pay.</span
-              >
+              <span>Visitors try a few meetings free, then join with a monthly or annual fee.</span>
             </button>
             <button
               type="button"
@@ -150,10 +144,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">✨</span>
               <strong data-hub-tip="pay-how-both">Ticket and membership</strong>
-              <span
-                >Visitors buy a ticket for this event (for example meeting + lunch). Members book at a member
-                rate (often £0) because membership already covers it.</span
-              >
+              <span>Visitors buy a ticket; members book at a member rate (often £0).</span>
             </button>
           </div>
           <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose how people book before publishing.</p>
@@ -268,10 +259,10 @@
           <div class="ee-members-only-event-toggle" id="ee-members-only-event-toggle" data-hub-tip="members-only-event-listing">
             <label class="ee-check">
               <input type="checkbox" id="ee-members-only-event-enabled" />
-              <span>Members only — no public booking or free visits</span>
+              <span>Closed meeting — members only (no free visits)</span>
             </label>
             <p class="ee-hint">
-              Only signed-in members can book. Untick this if you want free trial visits for visitors.
+              Only signed-in members can book. Leave unticked to keep free trial visits.
             </p>
           </div>
 
@@ -283,14 +274,10 @@
 
           <div id="ee-members-only-event-wrap" hidden>
             <div class="ee-info-box ee-members-only-event-how" id="ee-members-only-event-how">
-              <strong>Members-only meeting</strong>
+              <strong>Closed meeting</strong>
               <p>
-                Non-members can see the listing but cannot book. Members sign in with the email on your member list to get their ticket.
-              </p>
-              <p>
-                We won’t charge your members for attending when this booking is £0.
-                New joiners pay your monthly or annual membership fee, plus our booking fee (4.5% + 20p).
-                Manage membership prices under <strong>Memberships</strong> in your workspace.
+                Non-members can see the listing but cannot book. Members sign in with their membership email.
+                New joiners pay your membership fee (you keep 100%); we add the booking fee on top.
               </p>
             </div>
             <div class="ee-compact-summary" id="ee-membership-visits-summary" hidden>
@@ -340,14 +327,13 @@
               <span class="ee-addon-toggle-copy">
                 <strong>Group membership fee</strong>
                 <span class="ee-addon-summary"
-                  >What people pay to join your group after free visits — so you can keep them as members with history and reports.</span
+                  >Monthly or annual fee after free visits. Change later under Memberships.</span
                 >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-hub-membership-fields" hidden>
               <p class="ee-hint ee-hub-membership-lead" id="ee-hub-membership-lead">
-                What visitors pay to join after free visits. Members already on your list use the member ticket above
-                (often £0). You can change amounts later under Memberships.
+                Fee to join after free visits. Existing members use the member ticket (often £0).
               </p>
               <div class="ee-hub-membership-amounts">
                 <div class="ee-field">
@@ -399,9 +385,9 @@
 
         <div class="ee-card ee-optional-extras" id="ee-panel-optional-extras" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
-          <h2 id="ee-optional-extras-title">Members pay less (optional)</h2>
+          <h2 id="ee-optional-extras-title">Member ticket price</h2>
           <p class="ee-hint" style="margin-top:0" id="ee-optional-extras-lead">
-            Optional. Let people on your member list book cheaper (or free) while everyone else uses the ticket above.
+            Set what people on your member list pay for this event (often £0).
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon">
@@ -410,19 +396,18 @@
               <span class="ee-addon-toggle-copy">
                 <strong data-hub-tip="guest-visit-programme">Free trial visits</strong>
                 <span class="ee-addon-summary" id="ee-guest-programme-summary"
-                  >Let visitors try your group free — then join your membership at your price</span
+                  >Let visitors try your group free — then join at your price</span
                 >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-guest-programme-fields" hidden>
               <p class="ee-hint ee-guest-how-short" id="ee-guest-programme-note">
                 <span id="ee-guest-programme-note-text"
-                  >Visitors get free trial visits (up to 3), then we invite them to join at the price you set. You keep
-                  100% of the membership fee.</span
+                  >Up to 3 free visits, then we invite them to join. You keep 100% of the membership fee.</span
                 >
               </p>
               <div class="ee-field ee-guest-visits-field">
-                <label for="ee-guest-visits-allowed">Complimentary visits per visitor</label>
+                <label for="ee-guest-visits-allowed">Free trial visits per visitor</label>
                 <input
                   type="number"
                   id="ee-guest-visits-allowed"
@@ -435,29 +420,34 @@
                 />
                 <p class="ee-hint" id="ee-guest-visits-max">Hub maximum: 3</p>
               </div>
-              <fieldset class="ee-field" id="ee-visits-scope-wrap">
-                <legend class="ee-label-block">Where do complimentary visits apply?</legend>
-                <label class="ee-check">
-                  <input type="radio" name="ee-visits-scope" value="per_group" checked />
-                  <span>This organiser page only</span>
-                </label>
-                <label class="ee-check">
-                  <input type="radio" name="ee-visits-scope" value="across_groups" />
-                  <span>Across all my organiser pages</span>
-                </label>
-                <p class="ee-hint" id="ee-visits-scope-hint">
-                  “Across all pages” shares the free allowance across every group on your account.
-                </p>
-              </fieldset>
-              <div id="ee-guest-passes-opt-out">
-                <label class="ee-check">
-                  <input type="checkbox" id="ee-guest-passes-disabled" aria-describedby="ee-member-only-explainer" />
-                  <span data-hub-tip="member-only-event">Member-only for this event</span>
-                </label>
-                <p class="ee-hint" id="ee-member-only-explainer">
-                  Hides guest passes on this date only. Paid member tickets stay on sale for anyone.
-                </p>
-              </div>
+              <details class="ee-tier-advanced" id="ee-guest-visits-advanced">
+                <summary>More options</summary>
+                <div class="ee-tier-advanced-body">
+                  <fieldset class="ee-field" id="ee-visits-scope-wrap">
+                    <legend class="ee-label-block">Where do free trial visits apply?</legend>
+                    <label class="ee-check">
+                      <input type="radio" name="ee-visits-scope" value="per_group" checked />
+                      <span>This organiser page only</span>
+                    </label>
+                    <label class="ee-check">
+                      <input type="radio" name="ee-visits-scope" value="across_groups" />
+                      <span>Across all my organiser pages</span>
+                    </label>
+                    <p class="ee-hint" id="ee-visits-scope-hint">
+                      “Across all pages” shares the free allowance across every group on your account.
+                    </p>
+                  </fieldset>
+                  <div id="ee-guest-passes-opt-out">
+                    <label class="ee-check">
+                      <input type="checkbox" id="ee-guest-passes-disabled" aria-describedby="ee-member-only-explainer" />
+                      <span data-hub-tip="member-only-event">Pause free visits on this date only</span>
+                    </label>
+                    <p class="ee-hint" id="ee-member-only-explainer">
+                      Hides free visits for this event only. Paid tickets stay on sale.
+                    </p>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -467,21 +457,16 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="members-only-ticket">Members pay less</strong>
+                <strong data-hub-tip="members-only-ticket">Member ticket price</strong>
                 <span class="ee-addon-summary"
-                  >People on your member list book at a lower price when signed in. Everyone else still uses the public ticket.</span
+                  >People on your member list book at this price when signed in. Visitors still use the public ticket.</span
                 >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-private-ticket-fields-mount" hidden>
-              <div class="ee-info-box ee-private-ticket-how" id="ee-private-ticket-how">
-                <strong>Public tickets stay on sale</strong>
-                <p>
-                  Set the member price below (use <strong>0</strong> for free). Everyone else keeps using
-                  <strong>Your ticket</strong> above. Members see this extra option when signed in with their
-                  membership email.
-                </p>
-              </div>
+              <p class="ee-hint ee-private-ticket-how" id="ee-private-ticket-how">
+                Use £0 when membership already covers attendance. Visitors keep using the public ticket above.
+              </p>
             </div>
           </div>
         </div>
@@ -633,9 +618,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260813step3a" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260813step3b" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260813book9" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260813step3b" defer></script>
   </body>
 </html>

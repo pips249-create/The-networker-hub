@@ -226,7 +226,7 @@
       if (!(payHowIncludesMembership() && privateTicketEnabled() && collectMembersOnlyTicket())) {
         blockers.push(
           payHowIncludesMembership()
-            ? 'Add a public ticket, or turn on Members pay less for people on your member list'
+            ? 'Add a public ticket, or set a member ticket price for people on your member list'
             : 'Add at least one ticket with a name'
         );
       }
@@ -258,7 +258,7 @@
       !isMembershipMeetingMode()
     ) {
       blockers.push(
-        'Turn on Members pay less (usually £0) so members on your list are not charged the public ticket again'
+        'Set a member ticket price (usually £0) so members on your list are not charged the public ticket again'
       );
     }
     if (hasPaid && !collectVatTreatment()) {
@@ -1433,11 +1433,11 @@
     const optionalTitle = document.getElementById('ee-optional-extras-title');
     const bothPayHow = payHowIncludesTickets() && payHowIncludesMembership();
     if (optionalTitle) {
-      optionalTitle.textContent = bothPayHow ? 'Members pay less' : 'Members pay less (optional)';
+      optionalTitle.textContent = bothPayHow ? 'Member ticket price' : 'Member ticket price (optional)';
     }
     if (optionalLead) {
-      optionalLead.innerHTML = bothPayHow
-        ? 'Turn this on (usually £0) so people on your member list are not charged the public ticket again.'
+      optionalLead.textContent = bothPayHow
+        ? 'Required for this path. Set what members pay for this event (often £0). Visitors still use the public ticket.'
         : 'Optional. Let people on your member list book cheaper (or free) while everyone else uses the ticket above.';
     }
 
@@ -1503,6 +1503,8 @@
       radio.checked = radio.value === value;
     });
     organiserComplimentaryVisitsScope = value;
+    const advanced = document.getElementById('ee-guest-visits-advanced');
+    if (advanced && value === 'across_groups') advanced.open = true;
     syncGuestProgrammeNote();
   }
 
@@ -1531,8 +1533,8 @@
       } else {
         note.textContent =
           scope === 'across_groups'
-            ? 'Visitors get up to 3 complimentary visits shared across all your organiser pages — no application needed for a guest visit. People who want a full place still apply (no ticket charge unless you set one).'
-            : 'Visitors get up to 3 complimentary visits on this organiser page — no application needed for a guest visit. People who want a full place still apply (no ticket charge unless you set one).';
+            ? 'Visitors get up to 3 free trial visits shared across your organiser pages — no application needed. People who want a full place still apply.'
+            : 'Visitors get up to 3 free trial visits on this organiser page — no application needed. People who want a full place still apply.';
       }
       return;
     }
@@ -1545,10 +1547,10 @@
     }
     if (scope === 'across_groups') {
       note.textContent =
-        'Visitors get up to 3 complimentary visits shared across all your organiser pages. After that, they must buy a paid member ticket to keep attending any of your groups.';
+        'Visitors get up to 3 free trial visits shared across your organiser pages. After that, they need a paid member ticket to keep attending.';
     } else {
       note.textContent =
-        'Visitors get up to 3 complimentary visits across this organiser page. After that, they must buy a paid member ticket to keep attending.';
+        'Visitors get up to 3 free trial visits on this organiser page. After that, they need a paid member ticket to keep attending.';
     }
   }
 
@@ -2570,7 +2572,7 @@
     const closedToggle = document.getElementById('ee-members-only-event-toggle');
 
     if (lead) {
-      lead.textContent = 'Choose how people pay to attend. Pick one, then continue.';
+      lead.textContent = 'Pick one path, then continue.';
     }
     if (hint) {
       // Keep the status line for screen readers / continue prompts, but hide the visual clutter.
@@ -2588,18 +2590,16 @@
     if (outcome) {
       if (isApplication) {
         outcome.textContent = includesTickets && includesMembership
-          ? 'Next: set the ticket price after approval, and your membership fee.'
+          ? 'Next: ticket price after approval, then your join fee.'
           : includesMembership
-            ? 'Next: free visits, then membership so you keep visit history and reports.'
-            : 'Next: set the ticket price people pay after you approve them.';
+            ? 'Next: free visits, then your join fee.'
+            : 'Next: ticket price after you approve.';
       } else if (includesTickets && includesMembership) {
-        outcome.textContent =
-          'Next: add ticket types for visitors, then membership settings for members.';
+        outcome.textContent = 'Next: visitor tickets, then member price and join fee.';
       } else if (includesMembership) {
-        outcome.textContent =
-          'Next: set free visits, then convert joiners into members with history and reports — member ticket + monthly or annual fee.';
+        outcome.textContent = 'Next: free visits, then member ticket and join fee.';
       } else {
-        outcome.textContent = 'Next: add ticket types — name, price and description.';
+        outcome.textContent = 'Next: ticket name and price.';
       }
     }
 
@@ -2690,6 +2690,11 @@
       if (!payHowConfirmed) return null;
       return document.getElementById('ee-hub-membership-mount-meeting');
     }
+    // Ticket + membership: fee after visitor tickets, with the member price step.
+    if (payHowIncludesTickets() && payHowIncludesMembership()) {
+      if (!payHowConfirmed) return null;
+      return document.getElementById('ee-hub-membership-mount-extras');
+    }
     return (
       document.getElementById('ee-hub-membership-mount-payhow') ||
       document.getElementById('ee-hub-membership-mount-extras')
@@ -2707,14 +2712,19 @@
     if (extrasMount) extrasMount.hidden = !(show && target === extrasMount);
     if (show) {
       if (addon.parentElement !== target) target.appendChild(addon);
-      if (isMembershipMeetingMode() && !hubMembershipEnabled()) {
+      if (
+        (isMembershipMeetingMode() || (payHowIncludesTickets() && payHowIncludesMembership())) &&
+        !hubMembershipEnabled()
+      ) {
         setHubMembershipEnabled(true);
       }
     } else if (addon.parentElement !== config) {
       config.appendChild(addon);
     }
-    const locked = isMembershipMeetingMode() || isMembershipOnlyPayHow();
-    addon.classList.toggle('is-locked', locked && hubMembershipEnabled());
+    const locked =
+      (isMembershipMeetingMode() || isMembershipOnlyPayHow() || (payHowIncludesTickets() && payHowIncludesMembership())) &&
+      hubMembershipEnabled();
+    addon.classList.toggle('is-locked', locked);
     syncHubMembershipFields();
   }
 
@@ -3012,6 +3022,8 @@
     if (enabled && !enabled.checked) {
       enabled.checked = true;
     }
+    const addon = document.getElementById('ee-private-ticket-addon');
+    if (addon) addon.classList.add('is-locked');
     const nameEl = document.getElementById('ee-private-ticket-name');
     if (nameEl) {
       const n = String(nameEl.value || '').trim();
@@ -3113,6 +3125,9 @@
 
   function syncPrivateTicketFields() {
     const enabled = privateTicketEnabled();
+    const both = payHowIncludesTickets() && payHowIncludesMembership();
+    const addon = document.getElementById('ee-private-ticket-addon');
+    if (addon) addon.classList.toggle('is-locked', both && enabled && !membersOnlyEventEnabled());
     syncAddonCard('ee-private-ticket-addon', enabled && !membersOnlyEventEnabled());
     syncMembersOnlyEventMode();
     if (enabled && !membersOnlyEventEnabled()) {
@@ -3366,7 +3381,7 @@
     const id = String(groupId || '').trim();
     const n = Math.min(3, Math.max(1, Math.floor(Number(allowed) || 0)));
     const visitsScope = scope === 'across_groups' ? 'across_groups' : 'per_group';
-    if (!id || n < 1) return { ok: false, message: 'Enter how many complimentary visits (1–3).' };
+    if (!id || n < 1) return { ok: false, message: 'Enter how many free trial visits (1–3).' };
     const { ok, data } = await api('/api/organiser/groups', {
       method: 'PATCH',
       body: JSON.stringify({
@@ -4525,7 +4540,7 @@
     if (usesGuestVisitProgramme()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
-        showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
+        showAlert('Enter how many free trial visits a visitor can take (1–3).', 'warn');
         document.getElementById('ee-guest-visits-allowed')?.focus();
         updatePublishButton();
         return;
@@ -4644,7 +4659,7 @@
       if (usesGuestVisitProgramme()) {
         const visits = readGuestVisitsAllowed();
         if (visits < 1) {
-          showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
+          showAlert('Enter how many free trial visits a visitor can take (1–3).', 'warn');
           document.getElementById('ee-guest-visits-allowed')?.focus();
           updatePublishButton();
           return;
@@ -4704,7 +4719,7 @@
     if (usesGuestVisitProgramme()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
-        showAlert('Enter how many complimentary visits a guest can take (1–3).', 'warn');
+        showAlert('Enter how many free trial visits a visitor can take (1–3).', 'warn');
         if (btn) btn.disabled = false;
         if (saveBtn) saveBtn.disabled = false;
         updatePublishButton();
@@ -4721,7 +4736,7 @@
       if (visits !== organiserComplimentaryVisits || readGuestVisitsScope() !== organiserComplimentaryVisitsScope) {
         const saved = await saveOrganiserGuestVisitsAllowed(groupId, visits, readGuestVisitsScope());
         if (!saved.ok) {
-          showAlert(saved.message || 'Could not save complimentary visit allowance.', 'warn');
+          showAlert(saved.message || 'Could not save free trial visit allowance.', 'warn');
           if (btn) btn.disabled = false;
           if (saveBtn) saveBtn.disabled = false;
           updatePublishButton();
