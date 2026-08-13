@@ -409,8 +409,8 @@
     social: {
       title: 'How to draft social posts',
       steps: [
-        'Pick an event, organiser, or opportunity as the source.',
-        'Review the generated caption and edit if needed.',
+        'Pick a post type — listings, Top 10, Founding organisers, or Hub promos.',
+        'Review the generated caption (and download the graphic for Top 10 / Founding posts).',
         'Copy the text or open the share link for LinkedIn, Facebook, or X.',
       ],
     },
@@ -21824,7 +21824,12 @@
   }
 
   function foundingLinkedInCaption(organisers) {
-    var list = (organisers || []).slice();
+    if (window.AdminSocialPosts && typeof window.AdminSocialPosts.foundingLinkedInCaption === 'function') {
+      return window.AdminSocialPosts.foundingLinkedInCaption(organisers);
+    }
+    var list = (organisers || []).slice().filter(function (o) {
+      return o && !o.isInternal;
+    });
     var homepage = list.filter(function (o) {
       return o.foundingHomepage;
     });

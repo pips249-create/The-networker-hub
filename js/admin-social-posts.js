@@ -160,6 +160,33 @@
         },
       ],
     },
+    founding_organisers: {
+      label: 'Founding organisers',
+      source: 'founding',
+      styles: [
+        {
+          id: 'welcome',
+          label: 'Group welcome',
+          caption:
+            'Proud to welcome our Founding Organisers on The Networker Hub.\n\nThese networking groups have already confirmed their pages ahead of our 1 September launch — and they\'re part of the Hub organiser leaderboard.\n\n{{name_block}}\n\nRunning a UK networking group? Confirm your page and join them:\n{{url}}\n\n#TheNetworkerHub #UKNetworking #FoundingOrganisers',
+          image: 'founding_card',
+        },
+        {
+          id: 'leaderboard',
+          label: 'Leaderboard shoutout',
+          caption:
+            '👏 Founding Organisers are live on The Networker Hub — and on the organiser leaderboard.\n\n{{name_block}}\n\nConfirm your page before 1 September:\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers',
+          image: 'founding_card',
+        },
+        {
+          id: 'short',
+          label: 'Short & punchy',
+          caption:
+            'Meet our Founding Organisers 🎉\n\n{{name_block_short}}\n\nJoin them on The Networker Hub → {{url}}',
+          image: 'founding_card',
+        },
+      ],
+    },
     ranking_top10: {
       label: 'Top 10 groups (monthly)',
       source: 'ranking',
@@ -284,6 +311,7 @@
     logo: { label: 'Logo or brand image' },
     organiser: { label: 'Group profile photo' },
     ranking_card: { label: 'Top 10 ranking graphic' },
+    founding_card: { label: 'Founding organisers graphic' },
     hub: { label: 'Networker Hub logo' },
     none: { label: 'No image' },
   };
@@ -336,6 +364,10 @@
 
   function hubOpportunitiesUrl() {
     return siteOrigin() + '/opportunities/';
+  }
+
+  function hubForOrganisersUrl() {
+    return siteOrigin() + '/for-organisers';
   }
 
   function applyTemplate(tpl, vars) {
@@ -519,6 +551,7 @@
     var choice = override === 'auto' || !override ? styleImage || 'listing' : override;
     if (choice === 'none') return '';
     if (choice === 'ranking_card') return context.rankingCardUrl || hubLogoUrl();
+    if (choice === 'founding_card') return context.foundingCardUrl || hubLogoUrl();
     if (choice === 'hub') return hubLogoUrl();
     if (choice === 'organiser') {
       return (context.organiser && context.organiser.photo_url) || context.organiserPhoto || hubLogoUrl();
@@ -527,6 +560,57 @@
       return context.logoUrl || context.listingImage || hubLogoUrl();
     }
     return context.listingImage || context.logoUrl || hubLogoUrl();
+  }
+
+  function publicFoundingOrganisers(organisers) {
+    return (organisers || []).filter(function (o) {
+      return o && !o.isInternal;
+    });
+  }
+
+  function foundingNameLists(organisers) {
+    var list = publicFoundingOrganisers(organisers);
+    var homepage = list.filter(function (o) {
+      return o.foundingHomepage;
+    });
+    var featured = (homepage.length ? homepage : list).slice(0, 40);
+    var names = featured
+      .map(function (o) {
+        return o.name;
+      })
+      .filter(Boolean);
+    var more = Math.max(0, list.length - names.length);
+    var nameBlock = names.length
+      ? names
+          .map(function (n) {
+            return '• ' + n;
+          })
+          .join('\n')
+      : '• (confirmations will appear here as groups claim)';
+    if (more > 0) nameBlock += '\n• …and ' + more + ' more founding organisers';
+    var shortNames = names.slice(0, 12);
+    var shortMore = Math.max(0, list.length - shortNames.length);
+    var nameBlockShort = shortNames.length
+      ? shortNames
+          .map(function (n) {
+            return '• ' + n;
+          })
+          .join('\n')
+      : '• (more names coming soon)';
+    if (shortMore > 0) nameBlockShort += '\n• …and ' + shortMore + ' more';
+    return { nameBlock: nameBlock, nameBlockShort: nameBlockShort, featured: featured, list: list };
+  }
+
+  function foundingLinkedInCaption(organisers) {
+    var names = foundingNameLists(organisers);
+    return (
+      'Proud to welcome our Founding Organisers on The Networker Hub.\n\n' +
+      'These networking groups have already confirmed their pages ahead of our 1 September launch — and they\'re part of the Hub organiser leaderboard.\n\n' +
+      names.nameBlock +
+      '\n\nRunning a UK networking group? Confirm your page and join them:\n' +
+      hubForOrganisersUrl() +
+      '\n\n#TheNetworkerHub #UKNetworking #FoundingOrganisers'
+    );
   }
 
   function loadImage(url) {
@@ -657,6 +741,99 @@
     return canvas.toDataURL('image/png');
   }
 
+  async function generateFoundingCardImage(organisers) {
+    var names = foundingNameLists(organisers);
+    var withPhotos = names.featured.filter(function (o) {
+      return String(o.photoUrl || '').trim();
+    });
+    var tiles = (withPhotos.length ? withPhotos : names.featured).slice(0, 20);
+    var cols = tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4;
+    var rows = Math.max(1, Math.ceil(Math.max(tiles.length, 1) / cols));
+    var width = 1080;
+    var headerHeight = 200;
+    var footerHeight = 110;
+    var padX = 64;
+    var gap = 20;
+    var cell = Math.floor((width - padX * 2 - gap * (cols - 1)) / cols);
+    var height = headerHeight + rows * (cell + gap) - gap + footerHeight + 24;
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var ctx = canvas.getContext('2d');
+
+    var gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#1c2040');
+    gradient.addColorStop(1, '#3a2d5c');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 44px Georgia, "DM Serif Display", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Founding Organisers · 2026', width / 2, 78);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = '500 24px system-ui, sans-serif';
+    ctx.fillText('Confirmed ahead of launch on The Networker Hub', width / 2, 126);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(80, 160, width - 160, 2);
+
+    var logo = await loadImage(hubLogoUrl());
+    if (logo) {
+      ctx.drawImage(logo, width - 130, 36, 72, 72);
+    }
+
+    if (!tiles.length) {
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.font = '500 26px system-ui, sans-serif';
+      ctx.fillText('Names will appear here as groups confirm', width / 2, headerHeight + 80);
+    } else {
+      for (var i = 0; i < tiles.length; i++) {
+        var org = tiles[i];
+        var col = i % cols;
+        var row = Math.floor(i / cols);
+        var x = padX + col * (cell + gap);
+        var y = headerHeight + row * (cell + gap);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        roundRect(ctx, x, y, cell, cell, 18);
+        ctx.fill();
+
+        var photo = await loadImage(org.photoUrl);
+        var inset = 18;
+        var box = cell - inset * 2;
+        if (photo) {
+          var scale = Math.min(box / photo.width, box / photo.height);
+          var dw = photo.width * scale;
+          var dh = photo.height * scale;
+          var dx = x + (cell - dw) / 2;
+          var dy = y + (cell - dh) / 2;
+          ctx.drawImage(photo, dx, dy, dw, dh);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+          ctx.font = '600 22px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          var label = truncateCanvasText(ctx, org.name || 'Group', box - 8);
+          ctx.fillText(label, x + cell / 2, y + cell / 2);
+          ctx.textBaseline = 'alphabetic';
+        }
+      }
+    }
+
+    var countLine =
+      names.list.length === 1
+        ? '1 founding organiser'
+        : String(names.list.length || 0) + ' founding organisers';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '500 22px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(countLine + ' · thenetworkerhub.com', width / 2, height - 48);
+
+    return canvas.toDataURL('image/png');
+  }
+
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -712,6 +889,9 @@
       rankingSnapshots: [],
       rankingEntries: [],
       selectedSnapshotId: '',
+      foundingOrganisers: [],
+      foundingCardUrl: '',
+      foundingLoaded: false,
       searchQuery: '',
       searchResults: [],
       searchLoading: false,
@@ -720,7 +900,7 @@
 
     main.innerHTML =
       '<div class="space-y-6 max-w-4xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Draft social posts from live Hub listings. Search for an event or group, pick a caption style, then copy or open a share link. Top 10 posts generate a leaderboard graphic you can download.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Draft social posts from live Hub listings. Search for an event or group, pick a caption style, then copy or open a share link. Top 10 and Founding organiser posts generate a graphic you can download.</p>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
       '<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Post type</label>' +
@@ -1232,10 +1412,73 @@
         });
     }
 
+    function loadFoundingOrganisers() {
+      return adminGet('/api/admin/founding').then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || 'founding_failed');
+        state.foundingOrganisers = data.organisers || [];
+        state.foundingLoaded = true;
+        return data;
+      });
+    }
+
+    function buildFromFounding() {
+      var style = currentStyle();
+      var url = hubForOrganisersUrl();
+      if (!state.foundingLoaded) {
+        captionEl.value = 'Loading founding organisers…';
+        setPreview(hubLogoUrl(), url, 'Loading…');
+        renderTags(null);
+        loadFoundingOrganisers()
+          .then(function () {
+            buildFromFounding();
+          })
+          .catch(function () {
+            captionEl.value =
+              'Could not load founding organisers. Open the Founding organisers tab or check migration 241.';
+            setPreview(hubLogoUrl(), url, 'Could not load founding list');
+          });
+        return;
+      }
+      var names = foundingNameLists(state.foundingOrganisers);
+      if (!names.list.length) {
+        captionEl.value =
+          'No founding organisers yet. Badges unlock when a group claims before 1 September and publishes their first event.';
+        setPreview(hubLogoUrl(), url, 'No founding organisers yet');
+        state.foundingCardUrl = '';
+        renderTags(null);
+        return;
+      }
+      var caption = applyTemplate(style.caption, {
+        name_block: names.nameBlock,
+        name_block_short: names.nameBlockShort,
+        url: url,
+      });
+      captionEl.value = caption;
+      setPreview(hubLogoUrl(), url, 'Generating founding graphic…');
+      renderTags(null);
+      generateFoundingCardImage(state.foundingOrganisers)
+        .then(function (dataUrl) {
+          state.foundingCardUrl = dataUrl;
+          var imageUrl = resolveImageChoice(style.image, state.imageOverride, {
+            foundingCardUrl: dataUrl,
+            listingImage: dataUrl,
+          });
+          setPreview(imageUrl, url, imageNoteForChoice(state.imageOverride, style));
+        })
+        .catch(function () {
+          state.foundingCardUrl = '';
+          setPreview(hubLogoUrl(), url, 'Could not generate founding graphic');
+        });
+    }
+
     function rebuildCaption() {
       var cfg = postTypeConfig(state.postTypeKey);
       if (cfg.source === 'ranking') {
         buildFromRanking();
+        return;
+      }
+      if (cfg.source === 'founding') {
+        buildFromFounding();
         return;
       }
       if (cfg.source === 'none') {
@@ -1326,7 +1569,7 @@
 
       rankingPeriodWrap.classList.add('hidden');
 
-      if (cfg.source === 'none') {
+      if (cfg.source === 'founding' || cfg.source === 'none') {
         sourceWrapEl.classList.add('hidden');
         recentEl.classList.add('hidden');
         rebuildCaption();
@@ -1394,7 +1637,11 @@
       if (!state.imageUrl || !String(state.imageUrl).startsWith('data:image/')) return;
       var link = document.createElement('a');
       link.href = state.imageUrl;
-      link.download = 'networker-top10-' + (state.selectedSnapshotId || 'ranking') + '.png';
+      var stamp = new Date().toISOString().slice(0, 10);
+      link.download =
+        state.postTypeKey === 'founding_organisers'
+          ? 'networker-founding-organisers-' + stamp + '.png'
+          : 'networker-top10-' + (state.selectedSnapshotId || 'ranking') + '.png';
       link.click();
     });
 
@@ -1414,6 +1661,8 @@
   global.AdminSocialPosts = {
     render: render,
     generateRankingCardImage: generateRankingCardImage,
+    generateFoundingCardImage: generateFoundingCardImage,
+    foundingLinkedInCaption: foundingLinkedInCaption,
     rankedListText: rankedListText,
   };
 })(typeof window !== 'undefined' ? window : global);

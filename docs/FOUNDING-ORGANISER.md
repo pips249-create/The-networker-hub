@@ -30,7 +30,7 @@ Do **not** limit the badge to 50 — that creates #51 disappointment. Cap only t
 - Manually award by organiser UUID
 - **Copy group LinkedIn caption** (Founding organisers on the leaderboard)
 
-**Email & social → Social posts** (`#social`) is the general listing caption composer (events / opportunities / organisers) — separate from the founding group announcement.
+**Email & social → Social posts** (`#social`) — listing captions plus post type **Founding organisers** (caption styles + downloadable logo graphic).
 
 ### Ops (social)
-After a batch of claims lands (or weekly), open Command Centre → Founding organisers → **Copy caption** → paste on LinkedIn. Prefer logos from the homepage 50 in any graphic you make. No promise of a personal post per group.
+After a batch of claims lands (or weekly), open Command Centre → **Social posts** → post type **Founding organisers** → copy caption / download graphic → paste on LinkedIn. Prefer logos from the homepage 50 in any graphic (the composer does this automatically). The Founding organisers tab still has a one-click **Copy caption** shortcut. No promise of a personal post per group.
