@@ -625,6 +625,8 @@ const PREFERENCE_EMAIL_SLUGS = {
   booking_reminder: 'event_reminders',
   online_join_reminder: 'event_reminders',
   saved_organiser_new_listing: 'organiser_alerts',
+  // Membership new-event digests — same opt-out as saved-group listing alerts.
+  member_roster_new_event: 'organiser_alerts',
   organiser_monthly_group_update: 'organiser_roundups',
 };
 
@@ -688,7 +690,9 @@ function shouldAttachListUnsubscribe(slug) {
     s === 'organiser_rebrand_announcement' ||
     s === 'organiser_launch_invite' ||
     s === 'organiser_claim_invite' ||
-    s === 'organiser_monthly_group_update'
+    s === 'organiser_monthly_group_update' ||
+    s === 'member_roster_new_event' ||
+    s === 'saved_organiser_new_listing'
   ) {
     return true;
   }

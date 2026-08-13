@@ -41,6 +41,33 @@ const QUEUE_KINDS = {
 const MAX_SPREAD_MS = 2 * 60 * 60 * 1000;
 const MIN_GAP_MS = 5000;
 
+/** Matches vercel.json cron `organiser-listing-alerts` (08:30 UTC). */
+const NEW_EVENT_DIGEST_HOUR_UTC = 8;
+const NEW_EVENT_DIGEST_MINUTE_UTC = 30;
+
+/**
+ * Next daily membership new-event digest window (UTC).
+ * Same morning as saved-organiser listing alerts so roundups can bundle.
+ */
+function nextNewEventDigestUtc(from) {
+  const d = from instanceof Date ? from : new Date();
+  const target = new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      NEW_EVENT_DIGEST_HOUR_UTC,
+      NEW_EVENT_DIGEST_MINUTE_UTC,
+      0,
+      0
+    )
+  );
+  if (d.getTime() >= target.getTime()) {
+    target.setUTCDate(target.getUTCDate() + 1);
+  }
+  return target;
+}
+
 function staggerScheduledFor(index, total, baseTime) {
   const base = baseTime instanceof Date ? baseTime : new Date();
   if (total <= 1) return base.toISOString();
@@ -97,13 +124,18 @@ async function queueNewEventAlerts(eventRow, members, options) {
   const list = (members || []).filter((m) => m && m.id && m.email && m.membershipActive !== false);
   if (!eventId || !organiserId || !list.length) return { queued: 0 };
 
-  const base = options?.baseTime || new Date();
+  // Default: daily digest (not publish-time blast). Callers may pass immediate/baseTime.
+  const digest = options?.digest !== false && !options?.immediate && !options?.baseTime;
+  const base = options?.baseTime || (digest ? nextNewEventDigestUtc() : new Date());
   const rows = list.map((member, index) => ({
     kind: QUEUE_KINDS.NEW_EVENT,
     organiser_id: organiserId,
     roster_member_id: member.id,
     event_id: eventId,
-    scheduled_for: scheduledForQueueRow(index, list.length, base, options),
+    scheduled_for: scheduledForQueueRow(index, list.length, base, {
+      ...options,
+      immediate: digest ? false : options?.immediate,
+    }),
   }));
 
   return enqueueRosterEmailQueue(rows);
@@ -367,7 +399,7 @@ async function processDueRosterEmails(sb, options) {
   return result;
 }
 
-/** Process due queue rows in a loop — used on publish and by the daily cron catch-up. */
+/** Process due queue rows in a loop — used by hourly cron and invite/import drains. */
 async function drainDueRosterEmails(sb, options) {
   const maxRuntimeMs = Math.min(Math.max(Number(options?.maxRuntimeMs) || 50000, 5000), 280000);
   const maxBatches = Math.min(Math.max(Number(options?.maxBatches) || 12, 1), 30);
@@ -403,4 +435,5 @@ module.exports = {
   queueMembershipPayInviteEmails,
   processDueRosterEmails,
   drainDueRosterEmails,
+  nextNewEventDigestUtc,
 };

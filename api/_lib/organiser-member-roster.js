@@ -2170,8 +2170,11 @@ async function notifyRosterMemberOfUpcomingLiveEvents(organiserId, member) {
  * Email active member-list people when their organiser publishes an Approved event.
  * Deduped per (roster_member_id, event_id). Also marks favourite listing alerts so
  * the daily saved-organiser cron does not double-send to the same inbox.
+ *
+ * @param {object} eventRow
+ * @param {object} [queueOptions] - passed to queueNewEventAlerts (default: daily digest)
  */
-async function notifyRosterMembersOfPublishedEvent(eventRow) {
+async function notifyRosterMembersOfPublishedEvent(eventRow, queueOptions) {
   const result = { sent: 0, skipped: 0, queued: 0, errors: [] };
   const eventId = String(eventRow?.id || '').trim();
   const organiserId = String(eventRow?.organiser_id || eventRow?.organiserId || '').trim();
@@ -2210,27 +2213,11 @@ async function notifyRosterMembersOfPublishedEvent(eventRow) {
 
   if (!toQueue.length) return result;
 
-  const { queueNewEventAlerts, drainDueRosterEmails } = require('./organiser-roster-email-queue');
-  // Small lists: send now. Larger lists: stagger over up to 2 hours (queue + cron drain).
-  const queued = await queueNewEventAlerts(eventRow, toQueue, {
-    immediate: toQueue.length <= 40,
-  });
+  const { queueNewEventAlerts } = require('./organiser-roster-email-queue');
+  // Default: daily digest (08:30 UTC). Catch-up passes baseTime: now so rows are due immediately.
+  const queued = await queueNewEventAlerts(eventRow, toQueue, queueOptions);
   result.queued = queued.queued || 0;
-  result.sent = result.queued;
-
-  if (result.queued > 0) {
-    try {
-      const processed = await drainDueRosterEmails(sb, { batchSize: 80, maxBatches: 12 });
-      result.sent = processed.sent || 0;
-      result.skipped += processed.skipped || 0;
-      result.failed = processed.failed || 0;
-      if (Array.isArray(processed.errors) && processed.errors.length) {
-        result.errors.push(...processed.errors.slice(0, 10));
-      }
-    } catch (err) {
-      result.errors.push({ message: err.message || String(err) });
-    }
-  }
+  result.sent = 0;
 
   return result;
 }

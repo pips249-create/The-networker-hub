@@ -274,7 +274,7 @@ async function sendDueOrganiserListingAlertEmails(sb) {
  * Groups by organiser so catch-up can round up several new listings into one send.
  */
 async function sendDueMemberRosterListingAlertEmails(sb) {
-  const result = { sent: 0, skipped: 0, errors: [], checked: 0 };
+  const result = { sent: 0, skipped: 0, queued: 0, errors: [], checked: 0 };
   const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const eventsRes = await sb
     .from('events')
@@ -309,8 +309,10 @@ async function sendDueMemberRosterListingAlertEmails(sb) {
 
   for (const row of byOrganiser.values()) {
     try {
-      const r = await notifyRosterMembersOfPublishedEvent(row);
+      // Due now so the same-morning digest drain can send (not deferred to tomorrow).
+      const r = await notifyRosterMembersOfPublishedEvent(row, { baseTime: new Date() });
       result.sent += r.sent || 0;
+      result.queued = (result.queued || 0) + (r.queued || 0);
       result.skipped += r.skipped || 0;
       if (r.errors && r.errors.length) result.errors.push(...r.errors);
     } catch (e) {

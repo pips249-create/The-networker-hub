@@ -40,8 +40,8 @@ Organisers can still renew people off-platform and update expiry dates manually.
 | **Invite to pay** | Organiser invites one member or bulk-queues renewals | `member_roster_pay_invite` |
 | **Payment failed** | Stripe renewal card fails (`past_due`) | `member_roster_payment_failed` (+ organiser copy) |
 | **Renewal receipt** | Successful first payment or subscription renewal | `member_roster_renewal_receipt` |
-| **New event published** | Sent when you publish an Approved event (all members processed on publish; daily cron catches anything missed) | `member_roster_new_event` |
-| **Missed publish email** | Daily cron safety net for events published in the last 14 days | `member_roster_new_event` |
+| **New event published** | Queued on publish; sent in the **daily digest** (08:30 UTC) with other recent listings from that group (not an immediate blast). Hub accounts can turn these off under **Email preferences → New event alerts**. | `member_roster_new_event` |
+| **Missed publish email** | Same daily digest / hourly queue drain for events published in the last 14 days | `member_roster_new_event` |
 | **Rejoin / reinstated** | When a member is added back to an active membership | Upcoming live events (`member_roster_new_event`) |
 | **Not booked reminder** | When organiser clicks **Email not booked** on the membership page | `member_roster_booking_reminder` |
 

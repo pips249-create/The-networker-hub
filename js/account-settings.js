@@ -94,9 +94,11 @@
     const master = document.getElementById('as-email-master');
     const reminders = document.getElementById('as-email-reminders');
     const organiserAlerts = document.getElementById('as-email-organiser-alerts');
+    const organiserRoundups = document.getElementById('as-email-organiser-roundups');
     if (master) master.checked = profile.emailsEnabled === true;
     if (reminders) reminders.checked = profile.emailPrefEventReminders !== false;
     if (organiserAlerts) organiserAlerts.checked = profile.emailPrefOrganiserAlerts !== false;
+    if (organiserRoundups) organiserRoundups.checked = profile.emailPrefOrganiserRoundups !== false;
     syncEmailPrefDisabled();
   }
 
@@ -238,6 +240,8 @@
           emailPrefEventReminders: document.getElementById('as-email-reminders')?.checked ?? true,
           emailPrefOrganiserAlerts:
             document.getElementById('as-email-organiser-alerts')?.checked ?? true,
+          emailPrefOrganiserRoundups:
+            document.getElementById('as-email-organiser-roundups')?.checked ?? true,
         }),
       });
       const data = await res.json();

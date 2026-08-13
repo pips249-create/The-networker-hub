@@ -105,7 +105,7 @@ const KNOWLEDGE_SECTIONS = [
       'Per networking group (organiser page), organisers maintain a Member list at /organiser/member-roster — name, email, and optional membership expiry. ' +
       'PURPOSE: unlock Members only ticket tiers. The public never sees those tickets; people on the list see them automatically when signed in with the same email — no access codes. ' +
       'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
-      'When you publish a new Approved event, people on the member list are emailed automatically (Members only rates apply when they sign in with that email). ' +
+      'When you publish a new Approved event, people on the member list are queued for a daily digest email (Members only rates apply when they sign in with that email). ' +
       'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning among your uploaded members only, members who missed recent meetings, memberships expiring within 14 days. Reports never include non-members who booked the event — use Attendees for full event lists. Download members CSV or an event report CSV. Email booking reminders to members who have not booked; members are also auto-emailed when you publish Approved events. ' +
       'MEMBERS: when added, they see the group under My Hub → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
       'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a booking fee (4.5% + 20p, same as tickets); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My Hub → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
@@ -328,7 +328,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what happens when i publish|after i publish|publish my event|how long.*approv|listing review|when will my event go live|event approval/i,
     reply:
-      'When you publish, your event is submitted for hub approval — typically within one working day. Once Approved and tied to a published organiser profile, it appears on /events/ and attendees can book. People on your member list are emailed automatically when you publish Approved events.',
+      'When you publish, your event is submitted for hub approval — typically within one working day. Once Approved and tied to a published organiser profile, it appears on /events/ and attendees can book. People on your member list get a daily digest email about new Approved events (not an instant blast on publish).',
   },
   {
     match: /venue step|event location step|where do i (set|add) the venue|online join link|postcode.*event/i,
@@ -513,7 +513,7 @@ const FALLBACK_REPLIES = [
   {
     match: /member.*(email|notif|alert).*event|email.*member.*(new )?event|notify.*member.*list|when.*(publish|add).*event.*member/i,
     reply:
-      'When you publish an Approved event, people on that organiser page’s member list are emailed automatically — they can sign in with their membership email to see Members only tickets. The email goes out on publish (and a daily safety check covers any that were missed). This is separate from the invite email sent when you first add someone to the list.',
+      'When you publish an Approved event, people on that organiser page’s member list are queued for a daily digest — they can sign in with their membership email to see Members only tickets. Multiple new listings from the same group are bundled into one email. This is separate from the invite email sent when you first add someone to the list.',
   },
   {
     match: /membership expir|expiring membership|renew.*membership.*(list|roster)|(list|roster).*expir/i,
