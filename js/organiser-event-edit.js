@@ -2357,8 +2357,8 @@
       if (editId) {
         document.getElementById('ee-page-title').textContent = 'Edit event';
         document.getElementById('ee-page-lead').textContent =
-          'Update your listing, location, and dates, then continue to tickets.';
-        document.getElementById('ee-submit').textContent = 'Continue to tickets →';
+          'Update details, location, and dates, then continue to Set up tickets.';
+        document.getElementById('ee-submit').textContent = 'Continue to Set up tickets →';
 
         let ev = null;
         ev = await fetchEventForEdit(editId, data.events || []);

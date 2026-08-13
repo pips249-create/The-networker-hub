@@ -6,10 +6,10 @@
     dashboard: {
       title: 'How to use Overview',
       steps: [
-        'Follow the setup checklist if you are just getting started.',
-        'Use the sidebar for events, organiser pages, revenue, and business opportunities.',
-        'Open Notifications when the badge shows something needs attention.',
-        'Use + Add new to create an organiser page, event, or business opportunity listing.',
+        'Follow the setup checklist if it appears — page, membership, then first event.',
+        'Use + Add new to create an organiser page, event, or business opportunity.',
+        'Open one of the three hubs: My events, Memberships, or Business opportunities.',
+        'Check To-do when the badge shows something needs your attention.',
       ],
     },
     'events-list': {
@@ -55,9 +55,10 @@
     memberships: {
       title: 'How to manage memberships',
       steps: [
-        'Create member lists for groups that offer members-only ticket rates.',
-        'Invite people by email — they accept from their inbox.',
-        'Link a list when setting up tickets on an event.',
+        'Choose the organiser page whose members you want to manage.',
+        'Add people one by one, or import a spreadsheet.',
+        'Once you have members, open Reports for list health and booking insights.',
+        'Link the list when setting Members only tickets on an event.',
       ],
     },
     'business-overview': {
@@ -95,10 +96,9 @@
     social: {
       title: 'How to promote your group',
       steps: [
-        'Reach out with a free LinkedIn post drafted for your next event.',
-        'Set colours & type once — LinkedIn pictures and branded emails use them.',
-        'Email guests from Communicate under My events (Attendee round-up is free).',
-        'Get found on the Hub with Feature event, Top groups, partner badge, or More reach.',
+        'Start with a free LinkedIn post for your next event.',
+        'Use Colours & type if you want the image in your brand look.',
+        'Open More ways to get found for Feature event, Top groups, badges, or paid reach.',
       ],
     },
     communicate: {

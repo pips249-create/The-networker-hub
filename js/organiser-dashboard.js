@@ -7684,25 +7684,27 @@
     const confirmBtn = document.getElementById('btn-event-delete-confirm');
     if (confirmBtn) confirmBtn.disabled = false;
     const ev = findEventById(eventId);
-    const label = ev && ev.title ? ev.title : 'this event';
+    const seriesRow = findSeriesDisplayRowForEvent(eventId);
+    const label =
+      String((ev && ev.title) || (seriesRow && seriesRow.title) || '').trim() || 'this event';
     const dateLabel = ev && ev.date ? formatDateShort(ev.date) : '';
     const sold = eventTicketsSoldCount(ev);
     const isSeriesDate =
       dateLabel &&
-      groupEventsIntoSeries(state.events || []).some(function (row) {
+      groupEventsIntoSeries(eventsSourceList()).some(function (row) {
         return (
           row.isSeries &&
           row.seriesCount > 1 &&
           row.seriesEvents &&
           row.seriesEvents.some(function (child) {
-            return child.id === eventId;
+            return String(child.id) === String(eventId);
           })
         );
       });
 
     if (titleEl) {
       titleEl.textContent =
-        '"' + label + '"' + (dateLabel ? ' · ' + dateLabel : '');
+        '“' + label + '”' + (dateLabel ? ' · ' + dateLabel : '');
     }
     if (seriesEl) {
       seriesEl.hidden = !isSeriesDate;
@@ -8200,21 +8202,49 @@
   }
 
   function findEventById(id) {
-    const allEvents = state.events.slice();
-    (state.upcomingEvents || []).forEach((ev) => {
-      if (ev && ev.id && !allEvents.some((e) => e.id === ev.id)) allEvents.push(ev);
+    const needle = String(id || '').trim();
+    if (!needle) return null;
+
+    const allEvents = (state.events || []).slice();
+    const pushUnique = function (ev) {
+      if (!ev || !ev.id) return;
+      if (
+        allEvents.some(function (e) {
+          return String(e.id) === String(ev.id);
+        })
+      ) {
+        return;
+      }
+      allEvents.push(ev);
+    };
+
+    (state.upcomingEvents || []).forEach(pushUnique);
+    // Lean bootstrap can leave state.events empty while the Events list
+    // renders from eventSummaries via eventsSourceList().
+    (state.eventSummaries || []).forEach(function (summary) {
+      pushUnique(summaryToEventRow(summary));
     });
-    const direct = allEvents.find((x) => x.id === id);
+
+    const direct = allEvents.find(function (x) {
+      return String(x.id) === needle;
+    });
     if (direct) return direct;
+
     const grouped = groupEventsIntoSeries(allEvents);
     for (let i = 0; i < grouped.length; i++) {
       const row = grouped[i];
       if (row.isSeries && row.seriesEvents) {
-        const child = row.seriesEvents.find((x) => x.id === id);
+        const child = row.seriesEvents.find(function (x) {
+          return String(x.id) === needle;
+        });
         if (child) return child;
       }
     }
-    return grouped.find((row) => row.id === id) || null;
+    return (
+      grouped.find(function (row) {
+        return String(row.id) === needle;
+      }) || null
+    );
   }
 
   function eventExistsInState(eventId) {
@@ -10783,6 +10813,40 @@
     resetGroupLogoPicker();
   }
 
+  function buildCancelReliabilityPolicyText(past, limit) {
+    const pastCount = Math.max(0, Number(past) || 0);
+    const yearLimit = Math.max(1, Number(limit) || 3);
+    const pastLabel =
+      pastCount + ' event' + (pastCount === 1 ? '' : 's') + ' in the past year';
+
+    if (pastCount >= yearLimit) {
+      return (
+        'You have cancelled ' +
+        pastLabel +
+        ' — at or over our reliability limit of ' +
+        yearLimit +
+        '. Further cancellations may lead to a reliability review and possible suspension from The Networker Hub.'
+      );
+    }
+
+    if (pastCount >= yearLimit - 1) {
+      return (
+        'You have cancelled ' +
+        pastLabel +
+        '. You are approaching the limit of ' +
+        yearLimit +
+        ' cancellations in a 12-month period — further cancels can affect your account standing under our organiser reliability standards.'
+      );
+    }
+
+    let text =
+      'Event cancellations are reviewed under our organiser reliability standards. Cancelling repeatedly in a 12-month period can affect your account standing.';
+    if (pastCount > 0) {
+      text += ' You have cancelled ' + pastLabel + '.';
+    }
+    return text;
+  }
+
   function openCancelEventModal(eventId) {
     if (!eventId) return;
     closeEventEditorDrawer();
@@ -10800,13 +10864,13 @@
     const isSeriesDate =
       ev &&
       ev.date &&
-      groupEventsIntoSeries(state.events || []).some(function (row) {
+      groupEventsIntoSeries(eventsSourceList()).some(function (row) {
         return (
           row.isSeries &&
           row.seriesCount > 1 &&
           row.seriesEvents &&
           row.seriesEvents.some(function (child) {
-            return child.id === eventId;
+            return String(child.id) === String(eventId);
           })
         );
       });
@@ -10818,12 +10882,14 @@
     }
     if (titleEl) {
       const dateLine = ev && ev.date ? ' · ' + formatDateShort(ev.date) : '';
-      titleEl.textContent = ev && ev.title ? '“' + ev.title + '”' + dateLine : '';
+      const cancelLabel =
+        String((ev && ev.title) || '').trim() ||
+        String((findSeriesDisplayRowForEvent(eventId) || {}).title || '').trim();
+      titleEl.textContent = cancelLabel ? '“' + cancelLabel + '”' + dateLine : '';
     }
     if (policyEl) {
       policyEl.hidden = false;
-      policyEl.textContent =
-        'Cancelling more than 3 events in a 12-month period may result in your account being suspended from The Networker Hub.';
+      policyEl.textContent = buildCancelReliabilityPolicyText(0, 3);
     }
     syncCancelModalRefundUi({ ev: ev, sold: sold, isSeriesDate: isSeriesDate });
     if (modal) {
@@ -10851,22 +10917,10 @@
         });
         const policyEl = document.getElementById('modal-event-cancel-policy');
         if (!policyEl || policyEl.hidden) return;
-        const past = Number(ctx.cancellationsPastYear) || 0;
-        const limit = Number(ctx.cancellationLimit) || 3;
-        let policyText =
-          'Cancelling more than ' +
-          limit +
-          ' events in a 12-month period may result in your account being suspended from The Networker Hub.';
-        if (past > 0) {
-          policyText +=
-            ' You have cancelled ' +
-            past +
-            ' event' +
-            (past === 1 ? '' : 's') +
-            ' in the past year' +
-            (past >= limit ? ' — further cancellations may lead to suspension.' : '.');
-        }
-        policyEl.textContent = policyText;
+        policyEl.textContent = buildCancelReliabilityPolicyText(
+          ctx.cancellationsPastYear,
+          ctx.cancellationLimit
+        );
       })
       .catch(function () {
         /* optional context */

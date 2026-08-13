@@ -27,8 +27,8 @@
       beforeShow: goDashboard,
     },
     {
-      title: 'Notifications',
-      body: 'Action items land here — pending applications, payout setup, and other alerts. Open this anytime from the sidebar so nothing slips through.',
+      title: 'To-do',
+      body: 'Action items land here — applications to approve, payout setup, enquiries, and other alerts. Open anytime from the sidebar so nothing slips through.',
       target: '#org-notifications-panel .org-notifications-panel-sheet',
       beforeShow: function () {
         goDashboard();
@@ -55,7 +55,7 @@
     },
     {
       title: 'Memberships',
-      body: 'Upload your member register, sell members-only tickets, and track renewals. Members get email alerts when you publish events.',
+      body: 'Choose an organiser page, add members (or import a spreadsheet), then unlock Reports. Use the list for members-only tickets.',
       target: '#org-page-memberships .org-page-head',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('memberships', { skipEventsGuard: true });

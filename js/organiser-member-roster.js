@@ -621,9 +621,13 @@
 
   function setRegisterTab(tab) {
     const next = tab === 'reports' ? 'reports' : 'members';
-    activeRegisterTab = next;
+    if (next === 'reports' && !hasMembersForReports()) {
+      activeRegisterTab = 'members';
+    } else {
+      activeRegisterTab = next;
+    }
     document.querySelectorAll('[data-omr-register-tab]').forEach(function (btn) {
-      const active = btn.dataset.omrRegisterTab === next;
+      const active = btn.dataset.omrRegisterTab === activeRegisterTab;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
       btn.tabIndex = active ? 0 : -1;
@@ -631,20 +635,57 @@
     const membersPanel = document.getElementById('omr-panel-members');
     const reportsPanel = document.getElementById('omr-panel-reports');
     if (membersPanel) {
-      membersPanel.hidden = next !== 'members';
-      membersPanel.classList.toggle('is-active', next === 'members');
+      membersPanel.hidden = activeRegisterTab !== 'members';
+      membersPanel.classList.toggle('is-active', activeRegisterTab === 'members');
     }
     if (reportsPanel) {
-      reportsPanel.hidden = next !== 'reports';
-      reportsPanel.classList.toggle('is-active', next === 'reports');
+      reportsPanel.hidden = activeRegisterTab !== 'reports';
+      reportsPanel.classList.toggle('is-active', activeRegisterTab === 'reports');
     }
     const register = document.querySelector('.omr-register');
-    if (register) register.classList.toggle('is-reports-view', next === 'reports');
+    if (register) register.classList.toggle('is-reports-view', activeRegisterTab === 'reports');
     const countEl = document.getElementById('omr-count');
-    if (countEl) countEl.hidden = next === 'reports';
+    if (countEl) countEl.hidden = activeRegisterTab === 'reports';
     syncMembersEventFilter();
     syncReportsSetupFields();
     syncReportsPanelState();
+    syncReportsTabAvailability();
+  }
+
+  function hasMembersForReports() {
+    return Number(rosterActiveTotal || 0) > 0 || Number(rosterTotal || 0) > 0;
+  }
+
+  function syncReportsTabAvailability() {
+    const tab = document.getElementById('omr-tab-reports');
+    const subnav = document.getElementById('omr-register-subnav');
+    const hasMembers = hasMembersForReports();
+    if (tab) {
+      tab.hidden = !hasMembers;
+      if (!hasMembers && activeRegisterTab === 'reports') {
+        activeRegisterTab = 'members';
+        document.querySelectorAll('[data-omr-register-tab]').forEach(function (btn) {
+          const active = btn.dataset.omrRegisterTab === 'members';
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          btn.tabIndex = active ? 0 : -1;
+        });
+        const membersPanel = document.getElementById('omr-panel-members');
+        const reportsPanel = document.getElementById('omr-panel-reports');
+        if (membersPanel) {
+          membersPanel.hidden = false;
+          membersPanel.classList.add('is-active');
+        }
+        if (reportsPanel) {
+          reportsPanel.hidden = true;
+          reportsPanel.classList.remove('is-active');
+        }
+      }
+    }
+    if (subnav) {
+      subnav.classList.toggle('omr-register-subnav--members-only', !hasMembers);
+      subnav.hidden = !hasMembers;
+    }
   }
 
   function setReportTab(tab) {
@@ -1733,6 +1774,7 @@
 
       const tabCount = document.getElementById('omr-tab-count-members');
       if (tabCount) tabCount.textContent = String(totalActive);
+      syncReportsTabAvailability();
 
       const rows = members;
       if (count) {
@@ -2243,6 +2285,14 @@
       jumpToAddSection('omr-add-details');
     });
     document.getElementById('omr-jump-import')?.addEventListener('click', function () {
+      const details = document.getElementById('omr-import-card');
+      if (details && details.tagName === 'DETAILS') details.open = true;
+      jumpToAddSection('omr-import-card');
+    });
+    document.getElementById('omr-empty-add')?.addEventListener('click', function () {
+      jumpToAddSection('omr-add-details');
+    });
+    document.getElementById('omr-empty-import')?.addEventListener('click', function () {
       const details = document.getElementById('omr-import-card');
       if (details && details.tagName === 'DETAILS') details.open = true;
       jumpToAddSection('omr-import-card');
