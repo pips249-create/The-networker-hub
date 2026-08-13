@@ -98,6 +98,7 @@ function assertListKindAllowed(event, listKind) {
 
 function isEligibleRegistration(row) {
   if (row.cancelled_at) return false;
+  if (row.no_show_at) return false;
   const applicationStatus = String(row.application_status || 'Approved').trim();
   if (applicationStatus === 'Pending' || applicationStatus === 'Denied') return false;
   const paymentStatus = String(row.payment_status || '').trim();
@@ -193,6 +194,7 @@ async function loadEligibleAttendees(sb, eventId) {
   const baseSelect = `
     id,
     cancelled_at,
+    no_show_at,
     application_status,
     payment_status,
     guest_names,

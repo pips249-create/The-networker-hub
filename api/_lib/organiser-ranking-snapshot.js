@@ -65,6 +65,7 @@ function isEligibleRegistrationForRanking(reg) {
   const payment = String(reg.payment_status || '');
   if (payment !== 'Paid' && payment !== 'Free') return false;
   if (reg.cancelled_at) return false;
+  if (reg.no_show_at) return false;
   if (reg.application_status && reg.application_status !== 'Approved') return false;
   return true;
 }
@@ -77,14 +78,28 @@ async function loadEligibleAttendeeCountsByOrganiser(sb) {
   const nowMs = Date.now();
 
   while (true) {
-    const { data, error } = await sb
+    let query = sb
       .from('registrations')
       .select(
-        'organiser_id, quantity, payment_status, application_status, cancelled_at, events!inner(organiser_id, starts_at, ends_at)'
+        'organiser_id, quantity, payment_status, application_status, cancelled_at, no_show_at, events!inner(organiser_id, starts_at, ends_at)'
       )
       .in('payment_status', ['Paid', 'Free'])
       .is('cancelled_at', null)
+      .is('no_show_at', null)
       .range(from, from + pageSize - 1);
+    let { data, error } = await query;
+    if (error && /no_show_at|column/i.test(error.message || '')) {
+      const retry = await sb
+        .from('registrations')
+        .select(
+          'organiser_id, quantity, payment_status, application_status, cancelled_at, events!inner(organiser_id, starts_at, ends_at)'
+        )
+        .in('payment_status', ['Paid', 'Free'])
+        .is('cancelled_at', null)
+        .range(from, from + pageSize - 1);
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw new Error(error.message);
     if (!data || !data.length) break;
 

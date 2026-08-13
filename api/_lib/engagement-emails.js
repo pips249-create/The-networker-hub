@@ -1163,7 +1163,7 @@ async function sendDuePostEventReviewEmails(sb, options) {
   if (!events.length) return result;
   const eventIds = events.map((e) => e.id);
 
-  const { data: registrations, error: regErr } = await sb
+  let { data: registrations, error: regErr } = await sb
     .from('registrations')
     .select(
       'id, attendee_id, event_id, ticket_id, amount_paid, payment_status, application_status, quantity, created_at, post_event_review_sent_at'
@@ -1172,7 +1172,22 @@ async function sendDuePostEventReviewEmails(sb, options) {
     .is('post_event_review_sent_at', null)
     .in('payment_status', ['Paid', 'Free'])
     .neq('application_status', 'Denied')
-    .is('cancelled_at', null);
+    .is('cancelled_at', null)
+    .is('no_show_at', null);
+  if (regErr && /no_show_at|column/i.test(regErr.message || '')) {
+    const retry = await sb
+      .from('registrations')
+      .select(
+        'id, attendee_id, event_id, ticket_id, amount_paid, payment_status, application_status, quantity, created_at, post_event_review_sent_at'
+      )
+      .in('event_id', eventIds)
+      .is('post_event_review_sent_at', null)
+      .in('payment_status', ['Paid', 'Free'])
+      .neq('application_status', 'Denied')
+      .is('cancelled_at', null);
+    registrations = retry.data;
+    regErr = retry.error;
+  }
   if (regErr) throw new Error(regErr.message);
 
   const siteUrl = siteBase();
@@ -1293,7 +1308,7 @@ async function sendDuePostEventReviewReminderEmails(sb) {
   const reminderBefore = daysAgo(POST_EVENT_REVIEW_REMINDER_DAYS);
   const result = { sent: 0, skipped: 0, errors: [], candidates: [] };
 
-  const { data: registrations, error: regErr } = await sb
+  let { data: registrations, error: regErr } = await sb
     .from('registrations')
     .select(
       'id, attendee_id, event_id, payment_status, application_status, post_event_review_sent_at, post_event_review_reminder_sent_at'
@@ -1304,7 +1319,24 @@ async function sendDuePostEventReviewReminderEmails(sb) {
     .in('payment_status', ['Paid', 'Free'])
     .neq('application_status', 'Denied')
     .is('cancelled_at', null)
+    .is('no_show_at', null)
     .limit(200);
+  if (regErr && /no_show_at|column/i.test(regErr.message || '')) {
+    const retry = await sb
+      .from('registrations')
+      .select(
+        'id, attendee_id, event_id, payment_status, application_status, post_event_review_sent_at, post_event_review_reminder_sent_at'
+      )
+      .not('post_event_review_sent_at', 'is', null)
+      .is('post_event_review_reminder_sent_at', null)
+      .lte('post_event_review_sent_at', reminderBefore)
+      .in('payment_status', ['Paid', 'Free'])
+      .neq('application_status', 'Denied')
+      .is('cancelled_at', null)
+      .limit(200);
+    registrations = retry.data;
+    regErr = retry.error;
+  }
   if (regErr) throw new Error(regErr.message);
   if (!(registrations || []).length) return result;
 

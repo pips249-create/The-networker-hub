@@ -49,6 +49,7 @@ module.exports = async function handler(req, res) {
       'review_already_submitted',
       'event_not_finished',
       'not_eligible',
+      'did_not_attend',
       'attendee_not_found',
       'missing_organiser',
     ]);

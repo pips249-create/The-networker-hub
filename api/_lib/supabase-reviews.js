@@ -37,7 +37,7 @@ function isEligibleRegistration(reg) {
 async function findRegistrationForReview(sb, attendeeId, eventId) {
   const res = await sb
     .from('registrations')
-    .select('id, payment_status, application_status')
+    .select('id, payment_status, application_status, no_show_at')
     .eq('attendee_id', attendeeId)
     .eq('event_id', eventId)
     .neq('payment_status', 'Refunded')
@@ -90,6 +90,9 @@ async function submitReview(session, input) {
   if (!eventHasEnded(ev)) throw new Error('event_not_finished');
 
   const registration = await findRegistrationForReview(sb, attendeeId, eventId);
+  if (registration && registration.no_show_at) {
+    throw new Error('did_not_attend');
+  }
   if (!isEligibleRegistration(registration)) {
     throw new Error('not_eligible');
   }
