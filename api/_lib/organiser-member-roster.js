@@ -576,11 +576,11 @@ async function sendMemberRosterPayInviteEmail({ organiserRow, memberEmail, membe
 
   const { getMembershipPlanForOrganiser } = require('./membership-billing');
   const plan = await getMembershipPlanForOrganiser(organiserRow.id);
-  if (!plan || !plan.offered) {
+  if (!plan || !plan.offered || !plan.paid) {
     const err = new Error('membership_not_offered');
     err.status = 400;
     err.message =
-      'Set a monthly or annual membership price before sending a pay invite.';
+      'Set a paid monthly or annual membership price before sending a pay invite.';
     throw err;
   }
 
@@ -2258,10 +2258,10 @@ async function queueMembershipPayInvites(organiserId, options) {
   const scope = String(opts.scope || 'renewal').trim().toLowerCase();
   const { getMembershipPlanForOrganiser } = require('./membership-billing');
   const plan = await getMembershipPlanForOrganiser(orgId);
-  if (!plan || !plan.offered) {
+  if (!plan || !plan.offered || !plan.paid) {
     const err = new Error('membership_not_offered');
     err.status = 400;
-    err.message = 'Set a monthly or annual membership price before sending pay invites.';
+    err.message = 'Set a paid monthly or annual membership price before sending pay invites.';
     throw err;
   }
 

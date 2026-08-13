@@ -308,7 +308,7 @@
                   (when list-member booking is on) — usually &pound;0 to attend.
                 </p>
                 <p class="ee-hint" style="margin:10px 0 0">
-                  Ticket = this event. This section = membership for the group. You can change these amounts later under Memberships.
+                  Ticket = this event. This section = membership for the group. Use £0 if joining is free and you manage the list yourself. You can change these amounts later under Memberships.
                 </p>
               </div>
               <div class="ee-hub-membership-amounts">
@@ -317,9 +317,9 @@
                   <input
                     type="number"
                     id="ee-hub-membership-monthly"
-                    min="1"
+                    min="0"
                     step="0.01"
-                    placeholder="e.g. 25"
+                    placeholder="0 = free"
                     inputmode="decimal"
                   />
                 </div>
@@ -328,9 +328,9 @@
                   <input
                     type="number"
                     id="ee-hub-membership-annual"
-                    min="1"
+                    min="0"
                     step="0.01"
-                    placeholder="e.g. 250"
+                    placeholder="0 = free, or e.g. 250"
                     inputmode="decimal"
                   />
                 </div>
@@ -637,9 +637,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260813membcopy" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260813free0" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260813membcopy" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260813free0" defer></script>
   </body>
 </html>

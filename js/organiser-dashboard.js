@@ -1681,7 +1681,7 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812brand1';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260812ux2';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260813free0';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';

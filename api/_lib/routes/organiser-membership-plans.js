@@ -3,6 +3,7 @@ const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const {
   getMembershipPlanForOrganiser,
   upsertMembershipPlan,
+  isPaidMembershipAmountPence,
   MEMBERSHIP_FEE_LABEL,
   MEMBERSHIP_FEE_EXPLANATION,
 } = require('../membership-billing');
@@ -92,13 +93,20 @@ module.exports = async function handler(req, res) {
     if (req.method === 'PUT' || req.method === 'PATCH') {
       if (connectRequiredForPaidCheckout()) {
         const connect = await getOrganiserConnectById(getSupabaseAdmin(), organiserId);
-        const enabling =
+        const monthlyRaw = body.monthlyAmountPounds ?? body.monthly_amount_pounds;
+        const annualRaw = body.annualAmountPounds ?? body.annual_amount_pounds;
+        const monthlyPence =
+          monthlyRaw === '' || monthlyRaw == null
+            ? null
+            : Math.round(Number(String(monthlyRaw).replace(/[£,\s]/g, '')) * 100);
+        const annualPence =
+          annualRaw === '' || annualRaw == null
+            ? null
+            : Math.round(Number(String(annualRaw).replace(/[£,\s]/g, '')) * 100);
+        const enablingPaid =
           body.active !== false &&
-          (body.monthlyAmountPounds != null ||
-            body.annualAmountPounds != null ||
-            body.monthly_amount_pounds != null ||
-            body.annual_amount_pounds != null);
-        if (enabling && !connect?.ready) {
+          (isPaidMembershipAmountPence(monthlyPence) || isPaidMembershipAmountPence(annualPence));
+        if (enablingPaid && !connect?.ready) {
           return json(res, 400, {
             ok: false,
             error: 'stripe_connect_required',

@@ -419,6 +419,12 @@
 
   function membershipJoinCtaHtml(ev) {
     const href = organiserMembershipJoinHref(ev);
+    const plan = ev && ev.organiserMembershipPlan;
+    const freeOnly =
+      plan &&
+      plan.offered &&
+      !(Number(plan.monthly && plan.monthly.amountPounds) > 0) &&
+      !(Number(plan.annual && plan.annual.amountPounds) > 0);
     if (!href) {
       return (
         '<p class="ticket-load-hint">You have used your complimentary visits. Join this group\u2019s membership to keep attending, then book with the email on their member list.</p>'
@@ -426,10 +432,16 @@
     }
     return (
       '<div class="ticket-load-hint ticket-load-hint--membership-join">' +
-      '<p>You have used your complimentary visits. Join this group\u2019s monthly or annual membership to keep attending — then book with your membership email.</p>' +
-      '<p class="ticket-membership-join-actions"><a class="btn btn-gold" href="' +
-      escapeHtml(href) +
-      '">Join membership</a></p>' +
+      '<p>' +
+      (freeOnly
+        ? 'You have used your complimentary visits. Ask the organiser to add you to their member list to keep attending — then book with that email.'
+        : 'You have used your complimentary visits. Join this group\u2019s monthly or annual membership to keep attending — then book with your membership email.') +
+      '</p>' +
+      (freeOnly
+        ? ''
+        : '<p class="ticket-membership-join-actions"><a class="btn btn-gold" href="' +
+          escapeHtml(href) +
+          '">Join membership</a></p>') +
       '</div>'
     );
   }
@@ -5189,6 +5201,7 @@
     try {
       await window.CmsAdBlocks.loadPageCarouselAds(sidebarEl, {
         slot: 'event_page_carousel_ads',
+        showPlaceholder: true,
       });
     } catch {
       /* non-fatal */

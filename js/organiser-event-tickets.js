@@ -237,7 +237,7 @@
       blockers.push('Choose tickets or monthly membership (or both)');
     }
     if (payHowIncludesMembership() && !hubMembershipHasPrice()) {
-      blockers.push('Enter a monthly and/or annual membership amount');
+      blockers.push('Enter a monthly and/or annual membership amount (0 is fine if joining is free)');
     }
     if (
       payHowIncludesTickets() &&
@@ -2408,9 +2408,14 @@
   }
 
   function hubMembershipHasPrice() {
-    const monthly = Number(document.getElementById('ee-hub-membership-monthly')?.value || 0);
-    const annual = Number(document.getElementById('ee-hub-membership-annual')?.value || 0);
-    return (Number.isFinite(monthly) && monthly > 0) || (Number.isFinite(annual) && annual > 0);
+    const monthlyRaw = String(document.getElementById('ee-hub-membership-monthly')?.value || '').trim();
+    const annualRaw = String(document.getElementById('ee-hub-membership-annual')?.value || '').trim();
+    if (monthlyRaw === '' && annualRaw === '') return false;
+    const monthly = monthlyRaw === '' ? null : Number(monthlyRaw);
+    const annual = annualRaw === '' ? null : Number(annualRaw);
+    const monthlyOk = monthly == null || (Number.isFinite(monthly) && monthly >= 0);
+    const annualOk = annual == null || (Number.isFinite(annual) && annual >= 0);
+    return monthlyOk && annualOk && (monthly != null || annual != null);
   }
 
   async function loadHubMembershipPlan(groupId) {
@@ -2446,12 +2451,27 @@
       radio.checked = radio.value === vat;
     });
     const connectNote = document.getElementById('ee-hub-membership-connect');
-    if (connectNote) connectNote.hidden = data.connectReady !== false;
+    if (connectNote) {
+      const paid =
+        (Number(monthlyEl?.value) || 0) >= 1 || (Number(annualEl?.value) || 0) >= 1;
+      connectNote.hidden = data.connectReady !== false || !paid;
+    }
     if (plan && plan.offered) {
       setHubMembershipEnabled(true);
-      setHubMembershipStatus('Membership fees loaded from your Memberships settings.', 'ok');
+      const freeOnly =
+        (plan.monthlyAmountPence == null || Number(plan.monthlyAmountPence) < 100) &&
+        (plan.annualAmountPence == null || Number(plan.annualAmountPence) < 100);
+      setHubMembershipStatus(
+        freeOnly
+          ? 'Free membership loaded from your Memberships settings — people join via your member list.'
+          : 'Membership fees loaded from your Memberships settings.',
+        'ok'
+      );
     } else if (isMembershipMeetingMode() || hubMembershipEnabled()) {
-      setHubMembershipStatus('Enter a monthly and/or annual fee so newcomers can join the group after visits.', 'warn');
+      setHubMembershipStatus(
+        'Enter a monthly and/or annual fee (use 0 if membership is free).',
+        'warn'
+      );
     } else {
       setHubMembershipStatus('');
     }
@@ -2466,7 +2486,7 @@
     if (!hubMembershipHasPrice()) {
       return {
         ok: false,
-        message: 'Enter a monthly and/or annual membership fee (or turn off group membership).',
+        message: 'Enter a monthly and/or annual membership fee (0 is fine if joining is free), or turn off group membership.',
       };
     }
     const payload = collectHubMembershipPayload();
@@ -4204,7 +4224,7 @@
     }
 
     if (hubMembershipEnabled() && !hubMembershipHasPrice()) {
-      showAlert('Enter a monthly and/or annual group membership fee, or turn membership off.', 'warn');
+      showAlert('Enter a monthly and/or annual group membership fee (0 is fine if joining is free), or turn membership off.', 'warn');
       document.getElementById('ee-hub-membership-monthly')?.focus();
       updatePublishButton();
       return;

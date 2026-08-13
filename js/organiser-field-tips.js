@@ -120,7 +120,7 @@
     'hub-membership-prices': {
       title: 'Group membership fee',
       body:
-        'What people pay to join your group — not a ticket for this one event. After free trial visits, newcomers join on your organiser page. People already on your member list book the meeting without buying a public ticket again (usually £0). Amounts also appear under Memberships.',
+        'What people pay to join your group — not a ticket for this one event. After free trial visits, newcomers join on your organiser page. Use £0 if membership is free and you manage the list yourself. People already on your member list book the meeting without buying a public ticket again (usually £0). Amounts also appear under Memberships.',
       hubertPrompt: 'How do I set monthly membership when setting up tickets?',
     },
     'category-exclusivity': {

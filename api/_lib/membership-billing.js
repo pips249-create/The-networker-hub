@@ -89,8 +89,18 @@ function applicationFeePercentFromPence(organiserPence, hubPence) {
   return Math.round((hub / total) * 10000) / 100;
 }
 
+function parseMembershipPounds(raw) {
+  const pounds = Number(String(raw).replace(/[£,\s]/g, ''));
+  if (!Number.isFinite(pounds) || pounds < 0) return null;
+  return pounds;
+}
+
+function isPaidMembershipAmountPence(pence) {
+  return pence != null && Number(pence) >= 100;
+}
+
 function planIntervalClient(amountPence, vatTreatment, interval, label) {
-  if (amountPence == null || amountPence < 100) return null;
+  if (amountPence == null || amountPence < 0) return null;
   const totals = calculateMembershipTotals(poundsFromPence(amountPence), vatTreatment);
   return {
     amountPence,
@@ -127,6 +137,9 @@ function planRowToClient(row) {
     monthly,
     annual,
     offered: Boolean(monthly || annual),
+    paid: Boolean(
+      isPaidMembershipAmountPence(monthlyPence) || isPaidMembershipAmountPence(annualPence)
+    ),
     feeLabel: MEMBERSHIP_FEE_LABEL,
     feeExplanation: MEMBERSHIP_FEE_EXPLANATION,
     updatedAt: row.updated_at || null,
@@ -188,8 +201,8 @@ async function upsertMembershipPlan(organiserId, payload) {
   if (clearMonthly) {
     monthlyPence = null;
   } else if (hasMonthlyKey && monthlyRaw != null && monthlyRaw !== '') {
-    const pounds = Number(String(monthlyRaw).replace(/[£,\s]/g, ''));
-    if (!Number.isFinite(pounds) || pounds < 1) {
+    const pounds = parseMembershipPounds(monthlyRaw);
+    if (pounds == null) {
       const err = new Error('invalid_monthly_amount');
       err.status = 400;
       throw err;
@@ -200,8 +213,8 @@ async function upsertMembershipPlan(organiserId, payload) {
   if (clearAnnual) {
     annualPence = null;
   } else if (hasAnnualKey && annualRaw != null && annualRaw !== '') {
-    const pounds = Number(String(annualRaw).replace(/[£,\s]/g, ''));
-    if (!Number.isFinite(pounds) || pounds < 1) {
+    const pounds = parseMembershipPounds(annualRaw);
+    if (pounds == null) {
       const err = new Error('invalid_annual_amount');
       err.status = 400;
       throw err;
@@ -886,6 +899,7 @@ module.exports = {
   MEMBERSHIP_FEE_FIXED: MEMBERSHIP_HUB_FEE_FIXED,
   poundsFromPence,
   penceFromPounds,
+  isPaidMembershipAmountPence,
   normalizeInterval,
   normalizeVatTreatment,
   calculateMembershipFeePounds,

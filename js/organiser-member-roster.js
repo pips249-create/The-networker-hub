@@ -2755,9 +2755,9 @@
       if (vatIncluded) vatIncluded.checked = vat === 'included';
       if (vatAdded) vatAdded.checked = vat === 'added';
       if (vatNone) vatNone.checked = vat === 'none';
-      billingOffered = Boolean(plan && plan.offered);
+      billingOffered = Boolean(plan && plan.paid);
       const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
-      if (payInviteWrap) payInviteWrap.hidden = !billingOffered;
+      if (payInviteWrap) payInviteWrap.hidden = !(plan && plan.paid);
       try {
         renderRoster();
       } catch {
@@ -2789,8 +2789,10 @@
   function updateBillingPreview() {
     const el = document.getElementById('omr-billing-preview');
     if (!el) return;
-    const monthly = Number(document.getElementById('omr-billing-monthly')?.value || 0);
-    const annual = Number(document.getElementById('omr-billing-annual')?.value || 0);
+    const monthlyRaw = String(document.getElementById('omr-billing-monthly')?.value || '').trim();
+    const annualRaw = String(document.getElementById('omr-billing-annual')?.value || '').trim();
+    const monthly = monthlyRaw === '' ? NaN : Number(monthlyRaw);
+    const annual = annualRaw === '' ? NaN : Number(annualRaw);
     const vatAdded = document.getElementById('omr-billing-vat-added')?.checked === true;
     function money(n) {
       return '£' + Number(n).toFixed(2).replace(/\.00$/, '');
@@ -2830,7 +2832,9 @@
     }
     el.textContent = parts.length
       ? parts.join(' · ')
-      : 'Enter a monthly and/or annual price. Leave blank to not offer that option.';
+      : (Number.isFinite(monthly) && monthly === 0) || (Number.isFinite(annual) && annual === 0)
+        ? '£0 membership — people join via your member list, with no charge through the Hub.'
+        : 'Enter a monthly and/or annual price. Use 0 if joining is free. Leave blank to not offer that option.';
   }
 
   async function saveBillingPlan(e) {

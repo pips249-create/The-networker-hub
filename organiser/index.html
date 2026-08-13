@@ -751,7 +751,7 @@
                 <div class="omr-billing-panel-intro">
                   <h2 class="omr-section-title">Membership prices</h2>
                   <p class="omr-billing-lead">
-                    Members pay your price plus a booking fee (4.5% + 20p). You receive 100% of the membership price.
+                    Members pay your price plus a booking fee (4.5% + 20p). You receive 100% of the membership price. Use £0 if joining is free and you manage the list yourself — no bank details needed then.
                   </p>
                   <details class="omr-billing-more">
                     <summary>Fee, VAT &amp; price-change notes</summary>
@@ -771,11 +771,11 @@
                   <div class="omr-billing-prices">
                     <label class="omr-billing-field">
                       <span>Monthly (£)</span>
-                      <input type="number" id="omr-billing-monthly" name="monthly" min="1" step="0.01" placeholder="e.g. 25" inputmode="decimal" />
+                      <input type="number" id="omr-billing-monthly" name="monthly" min="0" step="0.01" placeholder="0 = free" inputmode="decimal" />
                     </label>
                     <label class="omr-billing-field">
                       <span>Annual (£)</span>
-                      <input type="number" id="omr-billing-annual" name="annual" min="1" step="0.01" placeholder="e.g. 250" inputmode="decimal" />
+                      <input type="number" id="omr-billing-annual" name="annual" min="0" step="0.01" placeholder="0 = free" inputmode="decimal" />
                     </label>
                   </div>
                   <div class="omr-billing-actions">
@@ -3635,7 +3635,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260813navpages" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260813free0" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260812ux3" defer></script>
   </body>
 </html>
