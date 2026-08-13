@@ -195,6 +195,10 @@
       title: 'Sales targets',
       subtitle: 'Track progress towards your revenue goal',
     },
+    'sales-kit': {
+      title: 'Organiser sales kit',
+      subtitle: 'Cheat sheets, decks, leave-behinds, and walkthrough tools for Catherine, Rosie & Jamie',
+    },
     sponsorship: {
       title: 'Ads & sponsors',
       subtitle: 'Manage sponsor logos and advert placements',
@@ -218,7 +222,7 @@
       title: 'How to use Home',
       steps: [
         'Glance at the numbers at the top — Hub booking fees, events, organisers, and member accounts.',
-        'Use Quick links if you already know where you want to go.',
+        'Use Quick links if you already know where you want to go — Organiser sales kit has cheat sheets and demo decks.',
         'If Things to do appears, start with Urgent items and click Go there on each row.',
         'Recent activity shows new sign-ups, events, and reviews.',
         'At a glance lists the same key counts in more detail.',
@@ -390,6 +394,16 @@
         'Use Report for monthly sponsor packs — filter by brand and directory (Events / Organisers / Opportunities), then Download PDF.',
       ],
     },
+    'sales-kit': {
+      title: 'How to use the organiser sales kit',
+      steps: [
+        'Open your named cheat sheet before a walkthrough — print one A4 or keep it on your phone.',
+        'Use the standard sales deck for longer pitches; BMU / WIBN decks when presenting to those networks.',
+        'Follow the screen order on this page so demos stay consistent across the team.',
+        'After the meeting, copy the follow-up email, personalise it, and send the leave-behind PDF.',
+        'Book setup calls via SavvyCal when they want help listing their first events.',
+      ],
+    },
     campaigns: {
       title: 'How to send email campaigns',
       steps: [
@@ -446,7 +460,7 @@
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'moderation'],
-    revenue: ['financials', 'revenue-targets', 'spotlight', 'sponsorship'],
+    revenue: ['financials', 'revenue-targets', 'sales-kit', 'spotlight', 'sponsorship'],
     comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
@@ -831,6 +845,25 @@
       .replace(/&/g, '&amp;')
       .replace(/"/g, '&quot;')
       .replace(/</g, '&lt;');
+  }
+
+  /** Name search: &/and interchangeable + light typo tolerance when HubSearchMatch is loaded. */
+  function adminTextMatchesSearch(haystack, query) {
+    var q = String(query || '').trim();
+    if (!q) return true;
+    if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+      return window.HubSearchMatch.haystackMatchesQuery(haystack, q);
+    }
+    var hay = String(haystack || '')
+      .toLowerCase()
+      .replace(/&+/g, ' and ')
+      .replace(/\s+/g, ' ');
+    var needle = q
+      .toLowerCase()
+      .replace(/&+/g, ' and ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return hay.indexOf(needle) !== -1;
   }
 
   function formField(form, name) {
@@ -5830,6 +5863,7 @@
         '<a href="#cleanup/groups" class="admin-shortcut"><span class="admin-shortcut-label">Fix listings</span><span class="admin-shortcut-desc">Group pages and events</span></a>' +
         '<a href="#spotlight/events" class="admin-shortcut"><span class="admin-shortcut-label">Premium Spotlight</span><span class="admin-shortcut-desc">Featured carousels</span></a>' +
         '<a href="#revenue-targets" class="admin-shortcut"><span class="admin-shortcut-label">Sales targets</span><span class="admin-shortcut-desc">Forecast vs actual</span></a>' +
+        '<a href="#sales-kit" class="admin-shortcut"><span class="admin-shortcut-label">Organiser sales kit</span><span class="admin-shortcut-desc">Cheat sheets &amp; demos</span></a>' +
         '<a href="#financials/payouts" class="admin-shortcut"><span class="admin-shortcut-label">Payouts</span><span class="admin-shortcut-desc">Approve and mark paid</span></a>' +
         '<a href="#moderation/reports" class="admin-shortcut"><span class="admin-shortcut-label">Open reports</span><span class="admin-shortcut-desc">Listing and review reports</span></a>' +
         '<a href="#analytics/insights" class="admin-shortcut"><span class="admin-shortcut-label">Analytics</span><span class="admin-shortcut-desc">Tickets, demand, growth</span></a>' +
@@ -6198,7 +6232,7 @@
       var role = directoryRole ? directoryRole.value : 'All';
       return liveUsers.filter(function (u) {
         if (role !== 'All' && u.role !== role) return false;
-        if (q && (u.name + u.email).toLowerCase().indexOf(q) === -1) return false;
+        if (q && !adminTextMatchesSearch(u.name + ' ' + u.email, q)) return false;
         return true;
       });
     }
@@ -7032,16 +7066,12 @@
       return;
     }
     var stripe = data.stripeAccounts || [];
-    var q = String(financialsState.organisersQ || '')
-      .trim()
-      .toLowerCase();
+    var q = String(financialsState.organisersQ || '').trim();
     var statusFilter = String(financialsState.organisersStatus || '').trim();
     var filtered = stripe.filter(function (s) {
       if (statusFilter && String(s.status || '') !== statusFilter) return false;
       if (!q) return true;
-      return String(s.organiser || '')
-        .toLowerCase()
-        .indexOf(q) >= 0;
+      return adminTextMatchesSearch(s.organiser || '', q);
     });
     var pageData = paginateRows(filtered, financialsState.organisersPage, FINANCIALS_PAGE_SIZE);
     financialsState.organisersPage = pageData.page;
@@ -17602,17 +17632,13 @@
     }
 
     function filteredEntries(data) {
-      var q = String(rankingsState.q || '')
-        .trim()
-        .toLowerCase();
+      var q = String(rankingsState.q || '').trim();
       var tier = String(rankingsState.tier || '').trim();
       return (data.entries || []).filter(function (row) {
         if (tier && String(row.tier || '') !== tier) return false;
         if (!q) return true;
         var org = row.organisers || {};
-        return String(org.name || '')
-          .toLowerCase()
-          .indexOf(q) >= 0;
+        return adminTextMatchesSearch(org.name || '', q);
       });
     }
 
@@ -18696,7 +18722,7 @@
   }
 
   function filterFeaturedSpotlightEvents(events) {
-    var q = String(featuredSpotlightState.q || '').trim().toLowerCase();
+    var q = String(featuredSpotlightState.q || '').trim();
     var featured = featuredSpotlightState.featured;
     var type = featuredSpotlightState.eventType;
     var when = featuredSpotlightState.when;
@@ -18714,14 +18740,13 @@
         if (new Date(ev.starts_at).getTime() >= now) return false;
       }
       if (!q) return true;
-      var hay = (
+      var hay =
         String(ev.title || '') +
         ' ' +
         String(ev.organiser_name || '') +
         ' ' +
-        String(ev.city || '')
-      ).toLowerCase();
-      return hay.indexOf(q) >= 0;
+        String(ev.city || '');
+      return adminTextMatchesSearch(hay, q);
     });
   }
 
@@ -22288,6 +22313,137 @@
     else withHubTabs(tabsHtml, renderModerationReports);
   }
 
+  function renderSalesKit() {
+    var followUp =
+      'Hi {{name}},\n\n' +
+      'Lovely to show you around The Networker Hub today.\n\n' +
+      'Quick recap:\n' +
+      '• Free to list — you keep 100% of the ticket price (attendees pay 4.5% + 20p)\n' +
+      '• Built for networking groups — guest visits, member rates, visit tracking, attendee round-ups\n' +
+      '• List autumn dates now; public browsing & ticket buying open 1 September\n' +
+      '• Claim before 1 Sept + publish your first event → Founding Organiser · 2026\n\n' +
+      'Benefits one-pager: https://thenetworkerhub.com/assets/guides/organiser-benefits-linkedin.pdf\n' +
+      'For organisers: https://thenetworkerhub.com/for-organisers\n' +
+      'Book a setup call: https://savvycal.com/TheNetworkerHub/website-preview\n\n' +
+      'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
+      'Best wishes,\n{{sender}}';
+
+    main.innerHTML =
+      '<div class="space-y-5">' +
+      '<section class="admin-dash-section">' +
+      '<div class="admin-dash-section-head"><h3>Walkthrough cheat sheets</h3>' +
+      '<p>One A4 each — open on phone or print before a demo. Same talking points; named for Catherine, Rosie &amp; Jamie.</p></div>' +
+      '<div class="admin-dash-section-body">' +
+      '<div class="admin-shortcut-grid">' +
+      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#catherine" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Catherine</span>' +
+      '<span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
+      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#rosie" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Rosie</span>' +
+      '<span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
+      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#jamie" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Jamie</span>' +
+      '<span class="admin-shortcut-desc">Open &amp; print his sheet</span></a>' +
+      '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">All three</span>' +
+      '<span class="admin-shortcut-desc">Print pack · /p-tnh-org-cheats-c8r3</span></a>' +
+      '</div></div></section>' +
+      '<section class="admin-dash-section">' +
+      '<div class="admin-dash-section-head"><h3>Decks &amp; leave-behinds</h3>' +
+      '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
+      '<div class="admin-dash-section-body">' +
+      '<div class="admin-shortcut-grid">' +
+      '<a class="admin-shortcut" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Standard sales deck</span>' +
+      '<span class="admin-shortcut-desc">Present fullscreen · objections included</span></a>' +
+      '<a class="admin-shortcut" href="/p-tnh-bmu-onboard-k7m2" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">BMU deck</span>' +
+      '<span class="admin-shortcut-desc">Business Mentoring University</span></a>' +
+      '<a class="admin-shortcut" href="/p-tnh-wibn-onboard-w9m3" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">WIBN deck</span>' +
+      '<span class="admin-shortcut-desc">Women in Business Network</span></a>' +
+      '<a class="admin-shortcut" href="/assets/guides/organiser-benefits-linkedin.pdf" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Benefits PDF</span>' +
+      '<span class="admin-shortcut-desc">Leave-behind / LinkedIn one-pager</span></a>' +
+      '<a class="admin-shortcut" href="/for-organisers" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Public for-organisers</span>' +
+      '<span class="admin-shortcut-desc">What they see on the website</span></a>' +
+      '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerHub/website-preview" target="_blank" rel="noopener">' +
+      '<span class="admin-shortcut-label">Book a setup call</span>' +
+      '<span class="admin-shortcut-desc">SavvyCal · Catherine / Rosie / Jamie</span></a>' +
+      '</div></div></section>' +
+      '<section class="admin-dash-section">' +
+      '<div class="admin-dash-section-head"><h3>Suggested demo order</h3>' +
+      '<p>Keep walkthroughs consistent across the team — ~15 minutes.</p></div>' +
+      '<div class="admin-dash-section-body">' +
+      '<ol class="list-decimal pl-5 space-y-2 text-sm text-slate-700">' +
+      '<li><strong>Hook</strong> — ticketing for UK networking groups; free to list; keep 100% of ticket price.</li>' +
+      '<li><strong>Discovery</strong> — open <a class="text-brand-700 font-semibold hover:underline" href="/events/" target="_blank" rel="noopener">/events/</a> (filters, map, organiser browse) then their public organiser page if claimed.</li>' +
+      '<li><strong>Event page &amp; tickets</strong> — guest visits, members-only tier, Category Exclusivity if relevant.</li>' +
+      '<li><strong>Workspace</strong> — impersonate or use a demo organiser: events, attendees, Promote (LinkedIn post), Revenue / Stripe.</li>' +
+      '<li><strong>Engage tools</strong> — visit tracking, name badges, attendee round-up email.</li>' +
+      '<li><strong>Soft launch</strong> — list now; public buying 1 Sept; Founding Organiser · 2026.</li>' +
+      '<li><strong>Close</strong> — claim page + list next 2–3 dates, or book SavvyCal.</li>' +
+      '</ol>' +
+      '<div class="mt-4 flex flex-wrap gap-2">' +
+      '<a href="#accounts/impersonate" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Impersonate for live demo</a>' +
+      '<a href="#cleanup/groups" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Fix / create listings</a>' +
+      '<a href="#analytics/insights" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Pitch open stats</a>' +
+      '<a href="#social/founding" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-2 text-slate-700 hover:bg-slate-50">Founding organisers</a>' +
+      '</div></div></section>' +
+      '<section class="admin-dash-section">' +
+      '<div class="admin-dash-section-head"><h3>Lines to remember</h3>' +
+      '<p>Short answers when they push back.</p></div>' +
+      '<div class="admin-dash-section-body space-y-3 text-sm text-slate-700">' +
+      '<p><strong>“We’re on Eventbrite.”</strong> List both for a month — compare admin time and new bookings.</p>' +
+      '<p><strong>“Members won’t sign up.”</strong> Browse free; about two minutes only when they book.</p>' +
+      '<p><strong>“We have a CRM.”</strong> Keep it for renewals; Hub handles booking visibility and member rates.</p>' +
+      '<p><strong>“What’s the catch?”</strong> None on listing. Attendees pay 4.5% + 20p. Optional Premium Spotlight.</p>' +
+      '<p><strong>Pricing:</strong> Free to list · they receive the ticket price they set · free events need no Stripe.</p>' +
+      '</div></section>' +
+      '<section class="admin-dash-section">' +
+      '<div class="admin-dash-section-head"><h3>Post-demo follow-up email</h3>' +
+      '<p>Copy, swap <code class="text-xs">{{name}}</code> and <code class="text-xs">{{sender}}</code>, send with the benefits PDF.</p></div>' +
+      '<div class="admin-dash-section-body space-y-3">' +
+      '<textarea id="sales-kit-followup" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[220px]" readonly>' +
+      esc(followUp) +
+      '</textarea>' +
+      '<button type="button" id="sales-kit-copy-followup" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy follow-up email</button>' +
+      '<span id="sales-kit-copy-status" class="text-sm text-slate-500 ml-2" aria-live="polite"></span>' +
+      '</div></section>' +
+      '</div>';
+
+    var copyBtn = document.getElementById('sales-kit-copy-followup');
+    var status = document.getElementById('sales-kit-copy-status');
+    var area = document.getElementById('sales-kit-followup');
+    if (copyBtn && area) {
+      copyBtn.addEventListener('click', function () {
+        var text = area.value || '';
+        function done(ok) {
+          if (status) status.textContent = ok ? 'Copied.' : 'Select the text and copy manually.';
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(
+            function () {
+              done(true);
+            },
+            function () {
+              done(false);
+            }
+          );
+        } else {
+          area.focus();
+          area.select();
+          try {
+            done(document.execCommand('copy'));
+          } catch (e) {
+            done(false);
+          }
+        }
+      });
+    }
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalyticsHub,
@@ -22300,6 +22456,7 @@
     moderation: renderModerationHub,
     financials: renderFinancialsHub,
     'revenue-targets': renderRevenueTargetsHub,
+    'sales-kit': renderSalesKit,
     spotlight: renderSpotlightHub,
     featured: renderFeatured,
     support: renderSupportHub,

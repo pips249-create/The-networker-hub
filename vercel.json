@@ -48,6 +48,8 @@
     { "source": "/p/tnh-barnsgate-ev-m4p8", "destination": "/p-tnh-barnsgate-ev-m4p8", "permanent": true },
     { "source": "/p-tnh-org-onboard-x4n7.html", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
     { "source": "/p/tnh-org-onboard-x4n7", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
+    { "source": "/p-tnh-org-cheats-c8r3.html", "destination": "/p-tnh-org-cheats-c8r3", "permanent": true },
+    { "source": "/p/tnh-org-cheats-c8r3", "destination": "/p-tnh-org-cheats-c8r3", "permanent": true },
     { "source": "/p-tnh-bmu-onboard-k7m2.html", "destination": "/p-tnh-bmu-onboard-k7m2", "permanent": true },
     { "source": "/p/tnh-bmu-onboard-k7m2", "destination": "/p-tnh-bmu-onboard-k7m2", "permanent": true },
     { "source": "/p-tnh-wibn-onboard-w9m3.html", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
@@ -313,6 +315,10 @@
     {
       "source": "/p-tnh-org-onboard-x4n7",
       "destination": "/p-tnh-org-onboard-x4n7.html"
+    },
+    {
+      "source": "/p-tnh-org-cheats-c8r3",
+      "destination": "/marketing/internal/organiser-demo-cheatsheets.html"
     },
     {
       "source": "/p-tnh-ev-hub-k7m2",

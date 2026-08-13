@@ -10,6 +10,7 @@ const PITCH_LABELS = {
   '/p-tnh-barnsgate-ev-m4p8': 'Barnsgate — Events Headline',
   '/p-tnh-ev-hub-k7m2': 'Events Headline — sales walkthrough',
   '/p-tnh-org-onboard-x4n7': 'Organiser onboarding pitch',
+  '/p-tnh-org-cheats-c8r3': 'Organiser demo cheat sheets',
   '/p-tnh-bmu-onboard-k7m2': 'BMU onboarding pitch',
   '/p-tnh-wibn-onboard-w9m3': 'WIBN onboarding pitch',
 };
