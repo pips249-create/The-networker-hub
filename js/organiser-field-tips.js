@@ -66,13 +66,13 @@
     'guest-visit-programme': {
       title: 'Free trial visits',
       body:
-        'Allow newcomers to try your organiser page for free (up to 3 visits). After that, we invite them to join your membership at the price you set. Join and renew are automated, and you keep 100% of the membership fee.',
+        'Allow visitors to try your organiser page for free (up to 3 visits). After that, we invite them to join your membership at the price you set. Join and renew are automated, and you keep 100% of the membership fee.',
       hubertPrompt: 'What are free trial visits?',
     },
     'pay-how': {
       title: 'How will people book?',
       body:
-        'Ticket for this event = ticket types only. Convert free visits into members = trial visits, then join your group so you keep history and reports. Ticket and membership = both. Open “How do these booking options work?” for a plain-English walkthrough.',
+        'Ticket for this event = ticket types only. Convert free visits into members = trial visits, then join your group so you keep history and reports. Ticket and membership = visitors buy tickets; members book at a member rate. Open “How do these booking options work?” for a plain-English walkthrough.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
@@ -84,7 +84,7 @@
     'pay-how-both': {
       title: 'Ticket and membership',
       body:
-        'Newcomers buy a ticket for this event. Regulars join the group and book at a member rate (often £0) so they are not charged the ticket again.',
+        'Visitors buy a public ticket for this event (for example meeting + lunch). Members book at a member rate (often £0) because membership already covers attendance. Optional free visits still apply before someone joins.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
@@ -108,7 +108,7 @@
     'members-only-event-listing': {
       title: 'Members only',
       body:
-        'Only signed-in members can book — no public booking and no free trial visits. Untick this to offer free trial visits for newcomers. Use under General ticketing when membership is on.',
+        'Only signed-in members can book — no public booking and no free trial visits. Untick this to offer free trial visits for visitors. Use under General ticketing when membership is on.',
       hubertPrompt: 'How do I make an event members only with no public ticket?',
     },
     'hub-membership-prices': {

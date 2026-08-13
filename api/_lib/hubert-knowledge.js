@@ -278,7 +278,7 @@ const FALLBACK_REPLIES = [
   {
     match: /difference.*(ticket type|guest visit|category exclusiv|application based|general ticket)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|how (do|should) people get in|networking group meeting|booking options|how will people book|convert free visits/i,
     reply:
-      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats). Then choose how people book — Ticket for this event, Convert free visits into members, or Ticket and membership. Full plain-English walkthrough: /organiser/booking-options (also linked from Set up tickets). Free trial visits sit on the membership paths so newcomers try meetings, then join your group with history and reports.',
+      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats). Then choose how people book — Ticket for this event, Convert free visits into members, or Ticket and membership. Full plain-English walkthrough: /organiser/booking-options (also linked from Set up tickets). Free trial visits sit on the membership paths so visitors try meetings, then join your group with history and reports.',
   },
   {
     match: /\bvat\b|value added tax/i,

@@ -1501,38 +1501,38 @@
       summary.textContent = isCategory
         ? hubMembershipEnabled()
           ? 'Free trial visits, then join monthly membership (no ticket required)'
-          : 'Let newcomers take a free visit — they still apply for a Category Exclusivity seat'
+          : 'Let visitors take a free visit — they still apply for a Category Exclusivity seat'
         : isMembershipMeeting || isMembershipOnlyPayHow()
-          ? 'Let newcomers try your group free — then join your membership at your price'
-          : 'Let newcomers visit for free before they buy a ticket';
+          ? 'Let visitors try your group free — then join your membership at your price'
+          : 'Let visitors visit for free before they buy a ticket';
     }
     if (isCategory) {
       if (hubMembershipEnabled()) {
         note.textContent =
           scope === 'across_groups'
-            ? 'Allow newcomers to try your groups for free with up to 3 complimentary visits shared across all your organiser pages. After that, we invite them to join your membership at the price you set. Category Exclusivity still controls who gets a seat. You keep 100% of the membership fee.'
-            : 'Allow newcomers to try this organiser page for free with up to 3 complimentary visits. After that, we invite them to join your membership at the price you set. Category Exclusivity still controls who gets a seat. You keep 100% of the membership fee.';
+            ? 'Allow visitors to try your groups for free with up to 3 complimentary visits shared across all your organiser pages. After that, we invite them to join your membership at the price you set. Category Exclusivity still controls who gets a seat. You keep 100% of the membership fee.'
+            : 'Allow visitors to try this organiser page for free with up to 3 complimentary visits. After that, we invite them to join your membership at the price you set. Category Exclusivity still controls who gets a seat. You keep 100% of the membership fee.';
       } else {
         note.textContent =
           scope === 'across_groups'
-            ? 'Newcomers get up to 3 complimentary visits shared across all your organiser pages — no application needed for a guest visit. People who want a full place still apply (no ticket charge unless you set one).'
-            : 'Newcomers get up to 3 complimentary visits on this organiser page — no application needed for a guest visit. People who want a full place still apply (no ticket charge unless you set one).';
+            ? 'Visitors get up to 3 complimentary visits shared across all your organiser pages — no application needed for a guest visit. People who want a full place still apply (no ticket charge unless you set one).'
+            : 'Visitors get up to 3 complimentary visits on this organiser page — no application needed for a guest visit. People who want a full place still apply (no ticket charge unless you set one).';
       }
       return;
     }
     if (isMembershipMeeting || (isMembershipOnlyPayHow() && guestProgrammeEnabled())) {
       note.textContent =
         scope === 'across_groups'
-          ? 'Allow newcomers to try your groups for free with up to 3 complimentary visits shared across all your organiser pages. After that, we invite them to join your membership at the price you set. No need to chase subscriptions — we automate join and renew for you, and you keep 100% of the membership fee.'
-          : 'Allow newcomers to try this organiser page for free with up to 3 complimentary visits. After that, we invite them to join your membership at the price you set. No need to chase subscriptions — we automate join and renew for you, and you keep 100% of the membership fee.';
+          ? 'Allow visitors to try your groups for free with up to 3 complimentary visits shared across all your organiser pages. After that, we invite them to join your membership at the price you set. No need to chase subscriptions — we automate join and renew for you, and you keep 100% of the membership fee.'
+          : 'Allow visitors to try this organiser page for free with up to 3 complimentary visits. After that, we invite them to join your membership at the price you set. No need to chase subscriptions — we automate join and renew for you, and you keep 100% of the membership fee.';
       return;
     }
     if (scope === 'across_groups') {
       note.textContent =
-        'Newcomers get up to 3 complimentary visits shared across all your organiser pages. After that, they must buy a paid member ticket to keep attending any of your groups.';
+        'Visitors get up to 3 complimentary visits shared across all your organiser pages. After that, they must buy a paid member ticket to keep attending any of your groups.';
     } else {
       note.textContent =
-        'Newcomers get up to 3 complimentary visits across this organiser page. After that, they must buy a paid member ticket to keep attending.';
+        'Visitors get up to 3 complimentary visits across this organiser page. After that, they must buy a paid member ticket to keep attending.';
     }
   }
 
@@ -2524,7 +2524,7 @@
             : 'Next: set the ticket price people pay after you approve them.';
       } else if (includesTickets && includesMembership) {
         outcome.textContent =
-          'Next: add ticket types for newcomers, then membership settings for regulars.';
+          'Next: add ticket types for visitors, then membership settings for members.';
       } else if (includesMembership) {
         outcome.textContent =
           'Next: set free visits, then convert joiners into members with history and reports — member ticket + monthly or annual fee.';
