@@ -1680,8 +1680,8 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812brand1';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260806expired1';
-  const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812billingcompact';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260812ux2';
+  const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
@@ -1972,6 +1972,9 @@
     const tabs = document.querySelectorAll('[data-social-tab]');
     const panels = document.querySelectorAll('[data-social-panel]');
     const hint = document.getElementById('org-social-tab-hint');
+    const moreFold = document.getElementById('org-promote-more');
+    const primary = document.getElementById('org-promote-primary');
+    const hubTabs = { spotlight: true, ranking: true, partner: true, reach: true };
     const routeLoadToken =
       bootstrapReady &&
       !options.skipRouteLoading &&
@@ -1986,7 +1989,7 @@
       const on = id === tab && !btn.hidden;
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-selected', on ? 'true' : 'false');
-      btn.tabIndex = on ? 0 : -1;
+      if (btn.getAttribute('role') === 'tab') btn.tabIndex = on ? 0 : -1;
     });
 
     panels.forEach(function (panel) {
@@ -1996,20 +1999,28 @@
       panel.hidden = !on;
     });
 
+    if (moreFold) {
+      if (hubTabs[tab]) moreFold.open = true;
+    }
+    if (primary) {
+      primary.classList.toggle('is-secondary', tab === 'brand' || Boolean(hubTabs[tab]));
+    }
+
     if (hint) {
-      // Tip points people toward LinkedIn — hide when they are already there or on a focused tool.
       hint.hidden =
         tab === 'linkedin' ||
         tab === 'spotlight' ||
         tab === 'ranking' ||
         tab === 'partner' ||
-        tab === 'reach';
+        tab === 'reach' ||
+        tab === 'brand';
     }
 
     var socialPage = document.getElementById('org-page-social');
     if (socialPage) {
-      // Rails stay visible together; mode classes are no longer required for layout.
-      socialPage.classList.remove('org-promote--hub', 'org-promote--reach');
+      socialPage.classList.toggle('org-promote--hub', Boolean(hubTabs[tab]));
+      socialPage.classList.toggle('org-promote--brand', tab === 'brand');
+      socialPage.classList.remove('org-promote--reach');
     }
 
     if (tab === 'spotlight') ensureFeaturedUpgradePanelReady();
@@ -3772,87 +3783,45 @@
 
     const missingJoin = collectEventsNeedingJoinLink(state.events);
     if (missingJoin.length) {
-      const preview = missingJoin
-        .slice(0, 3)
-        .map((ev) => {
-          const date = formatDateShort(ev.date);
-          const dateSuffix =
-            date && date !== '—' ? ' <span class="org-notice-chip-date">(' + esc(date) + ')</span>' : '';
-          return (
-            '<button type="button" class="org-notice-chip" data-edit-event="' +
-            esc(ev.id) +
-            '">' +
-            esc(ev.title) +
-            dateSuffix +
-            '</button>'
-          );
-        })
-        .join('');
-      const more =
-        missingJoin.length > 3
-          ? '<span class="org-notice-chip-more">+' + String(missingJoin.length - 3) + ' more</span>'
-          : '';
       const first = missingJoin[0];
       notices.push({
         id: 'join-links',
         type: 'warning',
         title:
           missingJoin.length === 1
-            ? 'Add a meeting link before your online event'
+            ? 'Add a meeting link'
             : 'Add meeting links for ' + missingJoin.length + ' online events',
         text:
           missingJoin.length === 1
-            ? '“' +
-              esc(first.title || 'Your event') +
-              '” is online but has no join URL yet. Ticket holders will not receive joining instructions by email until you paste the meeting link in the event editor.'
-            : missingJoin.length +
-              ' upcoming online events are missing a join URL. Attendees need this link by email before each event starts — open each event below to add it.',
-        actions: '<div class="org-notice-chips">' + preview + more + '</div>',
+            ? '“' + esc(first.title || 'Your event') + '” is online but has no join URL yet.'
+            : 'Ticket holders need a join URL by email before each online event.',
+        actions:
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-edit-event="' +
+          esc(first.id) +
+          '">' +
+          (missingJoin.length === 1 ? 'Add meeting link' : 'Fix first event') +
+          '</button>',
       });
     }
 
     const pending = pendingApplicationsList();
     const pendingCount = pendingApplicationsCount();
     if (pendingCount) {
-      const preview = pending
-        .slice(0, 3)
-        .map((a) => {
-          return (
-            '<button type="button" class="org-notice-chip" data-review-application="' +
-            esc(a.id) +
-            '">' +
-            esc(a.name || 'Applicant') +
-            ' · ' +
-            esc(a.eventTitle || 'Event') +
-            '</button>'
-          );
-        })
-        .join('');
-      const more =
-        pendingCount > 3
-          ? '<span class="org-notice-chip-more">+' + String(pendingCount - 3) + ' more</span>'
-          : '';
-      const first = pending[0];
       notices.push({
         id: 'applications',
         type: 'action',
         title:
           pendingCount === 1
-            ? 'Category Exclusivity application needs your decision'
-            : pendingCount + ' Category Exclusivity applications need your decision',
+            ? 'Approve or decline 1 application'
+            : 'Approve or decline ' + pendingCount + ' applications',
         text:
           pendingCount === 1
-            ? '<strong>' +
-              esc(first.name || 'Someone') +
-              '</strong> applied for a seat at <strong>' +
-              esc(first.eventTitle || 'your event') +
-              '</strong>. Check their industry and job title match your event rules, then approve or decline their seat.'
-            : 'People have applied for seats at your Category Exclusivity events. Review each applicant\'s industry and job title, then approve or decline before the event.',
+            ? 'Someone applied for a Category Exclusivity seat.'
+            : 'People are waiting for a seat decision on your Category Exclusivity events.',
         actions:
-          '<div class="org-notice-chips">' +
-          preview +
-          more +
-          '</div><button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees">Open attendees &amp; applications</button>',
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees" data-attendees-pending="1">' +
+          (pendingCount === 1 ? 'Review application' : 'Review ' + pendingCount + ' applications') +
+          '</button>',
       });
     }
 
@@ -3865,20 +3834,14 @@
         type: 'action',
         title:
           refillOps.length === 1
-            ? 'Seat available — archived applications to review'
-            : totalOpen + ' seats available across your Category Exclusivity events',
+            ? 'Review archived applications for open seats'
+            : 'Fill ' + totalOpen + ' open seats from archived applications',
         text:
           refillOps.length === 1
-            ? '<strong>' +
-              esc(refillOps[0].eventTitle) +
-              '</strong> has ' +
-              (refillOps[0].openSeats === 1 ? '1 seat' : refillOps[0].openSeats + ' seats') +
-              ' open and ' +
-              (refillOps[0].archivedCount === 1
-                ? '1 archived application'
-                : refillOps[0].archivedCount + ' archived applications') +
-              ' you can reconsider.'
-            : 'You have archived applicants who may fit open seats. Review archived applications in Attendees.',
+            ? esc(refillOps[0].eventTitle) +
+              ' has open seats and archived applicants you can reconsider.'
+            : totalArchived +
+              ' archived applications may fit open Category Exclusivity seats.',
         actions:
           '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees" data-attendees-archive="1">Review archived applications</button>',
       });
@@ -3890,13 +3853,10 @@
       notices.push({
         id: 'payment-setup',
         type: 'action',
-        title: 'Complete payment setup to receive payouts',
-        text:
-          'Stripe Connect is not finished for <strong>' +
-          groupName +
-          '</strong>. Connect your bank account so ticket revenue can reach you after each event.',
+        title: 'Set up payouts',
+        text: 'Finish Stripe Connect for <strong>' + groupName + '</strong> so ticket revenue can reach you.',
         actions:
-          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-revenue">Open revenue &amp; setup</button>',
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-revenue">Set up payouts</button>',
       });
     }
 
@@ -3907,14 +3867,16 @@
         type: 'action',
         title:
           newEnquiries === 1
-            ? '1 new business opportunity enquiry'
-            : newEnquiries + ' new business opportunity enquiries',
+            ? 'Reply to 1 business enquiry'
+            : 'Reply to ' + newEnquiries + ' business enquiries',
         text:
           newEnquiries === 1
-            ? 'A member sent a message about one of your business opportunities. Reply from your workspace while the lead is still warm.'
-            : 'Members have sent new messages about your business opportunities. Review and reply from Enquiries received.',
+            ? 'A member messaged one of your business opportunities.'
+            : 'Members have messaged your business opportunity listings.',
         actions:
-          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-enquiries">View enquiries</button>',
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="business-enquiries">' +
+          (newEnquiries === 1 ? 'Open enquiry' : 'Open enquiries') +
+          '</button>',
       });
     }
 
@@ -3939,14 +3901,12 @@
         type: 'action',
         title:
           roundUpReady.length === 1
-            ? 'Ready to send who attended?'
-            : roundUpReady.length + ' events ready for an Attendee round-up',
+            ? 'Send who attended'
+            : 'Send Attendee round-up for ' + roundUpReady.length + ' events',
         text:
           roundUpReady.length === 1
-            ? '“' +
-              esc(first.title || 'Your event') +
-              '” has finished and has guests who can reconnect. You still have your free Attendee round-up for this organiser page.'
-            : 'Past events still have no Attendee round-up. You get one free send per organiser page — open Communicate when you’re ready.',
+            ? '“' + esc(first.title || 'Your event') + '” has finished — reconnect guests while it’s fresh.'
+            : 'Past events still have no Attendee round-up. One free send per organiser page.',
         actions:
           '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="communicate" data-send-attendee-email="' +
           esc(first.id) +
@@ -3956,45 +3916,21 @@
 
     const unrepliedReviews = unrepliedReviewsList();
     if (unrepliedReviews.length) {
-      const firstReview = unrepliedReviews[0];
-      const preview = unrepliedReviews
-        .slice(0, 3)
-        .map(function (r) {
-          return (
-            '<button type="button" class="org-notice-chip" data-org-route="events-reviews">' +
-            esc(r.authorName || 'Guest') +
-            ' · ' +
-            esc(r.eventTitle || 'Event') +
-            '</button>'
-          );
-        })
-        .join('');
-      const more =
-        unrepliedReviews.length > 3
-          ? '<span class="org-notice-chip-more">+' +
-            String(unrepliedReviews.length - 3) +
-            ' more</span>'
-          : '';
       notices.push({
         id: 'reviews-reply',
         type: 'action',
         title:
           unrepliedReviews.length === 1
-            ? 'A review is waiting for your reply'
-            : unrepliedReviews.length + ' reviews are waiting for your reply',
+            ? 'Reply to 1 review'
+            : 'Reply to ' + unrepliedReviews.length + ' reviews',
         text:
           unrepliedReviews.length === 1
-            ? '<strong>' +
-              esc(firstReview.authorName || 'Someone') +
-              '</strong> left feedback on <strong>' +
-              esc(firstReview.eventTitle || 'your event') +
-              '</strong>. A short public reply helps future guests trust your group.'
-            : 'Attendees have left feedback you have not replied to yet. Responding publicly builds trust for future bookings.',
+            ? 'A guest left feedback waiting for your public reply.'
+            : 'Attendees have left feedback you have not replied to yet.',
         actions:
-          '<div class="org-notice-chips">' +
-          preview +
-          more +
-          '</div><button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-reviews">Open reviews</button>',
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-reviews">' +
+          (unrepliedReviews.length === 1 ? 'Reply to review' : 'Reply to reviews') +
+          '</button>',
       });
     }
 
@@ -4024,7 +3960,7 @@
     if (navBtn) {
       navBtn.setAttribute(
         'aria-label',
-        count > 0 ? 'Notifications, ' + count + ' need action' : 'Notifications'
+        count > 0 ? 'To-do, ' + count + ' need action' : 'To-do'
       );
     }
     refreshOrgBottomMoreCount(count);
@@ -4223,23 +4159,18 @@
     if (subEl) {
       subEl.textContent =
         actionItems > 0
-          ? actionItems +
-            ' item' +
-            (actionItems === 1 ? '' : 's') +
-            ' need' +
-            (actionItems === 1 ? 's' : '') +
-            ' action'
+          ? actionItems + ' to do'
           : notices.length + ' update' + (notices.length === 1 ? '' : 's');
     }
     if (emptyEl) emptyEl.hidden = true;
 
     root.hidden = false;
     root.innerHTML =
-      '<ul class="org-notices-list">' +
+      '<ul class="org-notices-list org-notices-list--todo">' +
       notices
         .map((n) => {
           return (
-            '<li class="org-notice org-notice--' +
+            '<li class="org-notice org-notice--todo org-notice--' +
             esc(n.type) +
             '" data-notice-id="' +
             esc(n.id) +
@@ -4248,9 +4179,9 @@
             '<h3 class="org-notice-title">' +
             esc(n.title) +
             '</h3>' +
-            '<p class="org-notice-text">' +
-            n.text +
-            '</p>' +
+            (n.text
+              ? '<p class="org-notice-text">' + n.text + '</p>'
+              : '') +
             (n.actions ? '<div class="org-notice-actions">' + n.actions + '</div>' : '') +
             '</div></li>'
           );
@@ -5426,8 +5357,11 @@
     const hubSummary = document.getElementById('org-events-hub-summary');
     if (hubSummary) hubSummary.hidden = eventsSubRoute !== 'events-list';
     const titles = {
-      'events-list': ['My Events', 'Manage all your event listings — click any event name to edit.'],
-      'events-tickets': ['Tickets', 'Overview of ticket tiers. Open an event → Set up tickets for General or Application based booking, free trial visits, and membership.'],
+      'events-list': ['My Events', 'Open a listing to edit details, or list a new event.'],
+      'events-tickets': [
+        'Tickets',
+        'Overview of ticket tiers across your events. Open an event and choose Set up tickets for full options.',
+      ],
       'events-attendees': [
         'Attendees',
         'Registrations and Category Exclusivity applications — see who is new to your group vs returning, filter by event, and export a CSV.',
@@ -7512,7 +7446,7 @@
           : remaining + ' steps left';
 
     const parts = [
-      '<nav class="ee-wizard" aria-label="Create event progress">',
+      '<nav class="ee-wizard" aria-label="List event progress">',
       '<p class="ee-wizard-summary">',
       '<span class="ee-wizard-step-count">Step ',
       String(stepNum),
@@ -7669,7 +7603,7 @@
     let drawerTitle = 'Edit event';
     if (isNew) {
       eventDrawerCreateFlow = true;
-      drawerTitle = 'New event';
+      drawerTitle = 'List event';
       frameUrl = eventEditorFrameUrl({
         groupId: drawerOpts.groupId || '',
         format: drawerOpts.format || 'in-person',
@@ -9957,6 +9891,12 @@
     const groups = memberListGroups();
     const multi = groups.length > 1;
     card.hidden = false;
+    card.classList.toggle('org-memberships-page-card--pick', multi);
+
+    const kicker = card.querySelector('.org-memberships-page-kicker');
+    if (kicker) {
+      kicker.textContent = multi ? 'Choose organiser page' : 'Managing membership for';
+    }
 
     if (nameEl) {
       nameEl.textContent = g.name || 'Organiser page';
@@ -10233,6 +10173,8 @@
       String(activeRoute || '').indexOf('events-') === 0
     ) {
       bottomPrimary = 'events-list';
+    } else if (page === 'memberships' || activeRoute === 'memberships') {
+      bottomPrimary = 'memberships';
     } else if (
       page === 'business-overview' ||
       page === 'business-list' ||
@@ -10256,6 +10198,27 @@
     document.querySelectorAll('.org-more-sheet-link[data-org-route]').forEach((a) => {
       a.classList.toggle('is-active', a.getAttribute('data-org-route') === activeRoute);
     });
+
+    syncSidebarMoreDisclosure(activeRoute);
+  }
+
+  function syncSidebarMoreDisclosure(activeRoute) {
+    const more = document.getElementById('org-nav-more');
+    if (!more) return;
+    const nestedActive = more.querySelector(
+      '.hub-side-nav-link.is-active, .hub-side-nav-link[aria-current="page"]'
+    );
+    const moreRoutes = {
+      social: true,
+      communicate: true,
+      team: true,
+      'business-list': true,
+      visibility: true,
+      leaderboard: true,
+    };
+    if (nestedActive || moreRoutes[activeRoute]) {
+      more.open = true;
+    }
   }
 
   function syncEventsTabHighlights(sub, enabled) {
