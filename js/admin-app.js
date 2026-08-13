@@ -7398,23 +7398,14 @@
     var pagerEl = document.getElementById('moderation-listings-pager');
     var statusEl = document.getElementById('moderation-status');
     if (!listingsEl) return;
-    var q = String(moderationListingsState.q || '')
-      .trim()
-      .toLowerCase();
+    var q = String(moderationListingsState.q || '').trim();
     var statusFilter = String(moderationListingsState.status || '').trim();
     var filtered = (liveListings || []).filter(function (l) {
       if (statusFilter && String(l.status || '') !== statusFilter) return false;
       if (!q) return true;
-      return (
-        String(l.title || '')
-          .toLowerCase()
-          .indexOf(q) >= 0 ||
-        String(l.organiser || '')
-          .toLowerCase()
-          .indexOf(q) >= 0 ||
-        String(l.city || '')
-          .toLowerCase()
-          .indexOf(q) >= 0
+      return adminTextMatchesSearch(
+        String(l.title || '') + ' ' + String(l.organiser || '') + ' ' + String(l.city || ''),
+        q
       );
     });
     var pageData = paginateRows(filtered, moderationListingsState.page, MODERATION_LISTINGS_PAGE_SIZE);
@@ -18834,14 +18825,14 @@
   }
 
   function filterSpotlightOrganisers(rows) {
-    var q = String(spotlightOrganiserState.q || '').trim().toLowerCase();
+    var q = String(spotlightOrganiserState.q || '').trim();
     var featured = spotlightOrganiserState.featured;
     return (rows || []).filter(function (o) {
       if (featured === 'yes' && !o.featured) return false;
       if (featured === 'no' && o.featured) return false;
       if (!q) return true;
-      var hay = (String(o.name || '') + ' ' + String(o.city || '') + ' ' + String(o.email || '')).toLowerCase();
-      return hay.indexOf(q) >= 0;
+      var hay = String(o.name || '') + ' ' + String(o.city || '') + ' ' + String(o.email || '');
+      return adminTextMatchesSearch(hay, q);
     });
   }
 
@@ -18899,14 +18890,14 @@
   }
 
   function filterSpotlightOpportunities(rows) {
-    var q = String(spotlightOpportunityState.q || '').trim().toLowerCase();
+    var q = String(spotlightOpportunityState.q || '').trim();
     var featured = spotlightOpportunityState.featured;
     return (rows || []).filter(function (o) {
       if (featured === 'yes' && !o.featured) return false;
       if (featured === 'no' && o.featured) return false;
       if (!q) return true;
-      var hay = (String(o.title || '') + ' ' + String(o.host || '') + ' ' + String(o.owner_email || '')).toLowerCase();
-      return hay.indexOf(q) >= 0;
+      var hay = String(o.title || '') + ' ' + String(o.host || '') + ' ' + String(o.owner_email || '');
+      return adminTextMatchesSearch(hay, q);
     });
   }
 
@@ -22015,9 +22006,11 @@
       else if (state.assetFilter === 'missing_website') rows = rows.filter(needsWebsite);
       else if (state.assetFilter === 'needs_assets') rows = rows.filter(needsAssets);
       if (state.q) {
-        var q = state.q.toLowerCase();
         rows = rows.filter(function (o) {
-          return [o.name, o.email, o.slug, o.website].join(' ').toLowerCase().indexOf(q) !== -1;
+          return adminTextMatchesSearch(
+            [o.name, o.email, o.slug, o.website].join(' '),
+            state.q
+          );
         });
       }
 

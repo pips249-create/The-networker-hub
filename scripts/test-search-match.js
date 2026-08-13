@@ -55,6 +55,12 @@ const variants = typoVariantTerms('manchestr');
 assert('typo variants include deletion prefix of manchester', variants.indexOf('manchest') !== -1);
 assert('ilike patterns include exact', searchTermIlikePatterns('London').indexOf('%london%') !== -1);
 assert('short term no typo patterns', searchTermIlikePatterns('bath').length === 1);
+assert(
+  'ilike patterns include substitution wildcard',
+  searchTermIlikePatterns('manchaster').some(function (p) {
+    return p === '%manch_ster%';
+  })
+);
 
 // Location-style multi-word queries (city + area)
 assert(

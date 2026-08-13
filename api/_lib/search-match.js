@@ -132,6 +132,12 @@ function searchTermIlikePatterns(term) {
   for (let i = 0; i < variants.length; i++) {
     patterns.push('%' + variants[i] + '%');
   }
+  // Single-character substitution via LIKE `_` so e.g. "manchaster" still hits "manchester".
+  if (t.length >= FUZZY_MIN_LEN) {
+    for (let i = 0; i < t.length; i++) {
+      patterns.push('%' + t.slice(0, i) + '_' + t.slice(i + 1) + '%');
+    }
+  }
   return patterns;
 }
 

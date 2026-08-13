@@ -6,6 +6,7 @@
 const { json } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { publicOrganiserSlug } = require('../organiser-slug');
+const { haystackMatchesQuery } = require('../search-match');
 const {
   FOUNDING_HOMEPAGE_CAP,
   FOUNDING_HOMEPAGE_UNTIL,
@@ -89,12 +90,12 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const q = String(req.query?.q || '').trim().toLowerCase();
+      const q = String(req.query?.q || '').trim();
       let organisers = await listFounding(sb);
       if (q) {
         organisers = organisers.filter((o) => {
-          const hay = [o.name, o.email, o.slug, o.website].join(' ').toLowerCase();
-          return hay.indexOf(q) !== -1;
+          const hay = [o.name, o.email, o.slug, o.website].join(' ');
+          return haystackMatchesQuery(hay, q);
         });
       }
       const homepageUsed = organisers.filter((o) => o.foundingHomepage).length;
