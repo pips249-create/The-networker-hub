@@ -70,27 +70,21 @@
       hubertPrompt: 'What are free trial visits?',
     },
     'pay-how': {
-      title: 'How do you get paid?',
+      title: 'Tickets or membership?',
       body:
-        'Choose tickets for this event (paid or free), monthly/annual membership for your group, or both. Free trial visits are optional and work with either path.',
+        'Choose tickets for this event (paid or free), a membership package for your group, or both. Free trial visits are optional and work with either path.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
-    'pay-how-money': {
-      title: 'Money for this event',
-      body:
-        'Tickets are one-off for this listing — including free tickets at £0. Membership is your group dues on the organiser page. Both means guests can buy a ticket or join membership.',
-      hubertPrompt: 'What is the difference between tickets and membership?',
-    },
     'pay-how-membership': {
-      title: 'Monthly / annual membership',
+      title: 'Membership package',
       body:
         'People join your group membership instead of buying a one-off event ticket. You can still offer free trial visits, or tick Members only so only signed-in members can book.',
       hubertPrompt: 'How does monthly membership work with events?',
     },
     'pay-how-both': {
-      title: 'Tickets and membership',
+      title: 'Both',
       body:
-        'Offer public tickets for this event and monthly/annual membership. Guests can buy a ticket, use free trial visits if you offer them, or join membership.',
+        'Offer public tickets for this event and a membership package. Guests can buy a ticket, use free trial visits if you offer them, or join membership.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
@@ -128,12 +122,6 @@
       body:
         'You approve who gets the seat (e.g. one per industry). Guests apply with industry and job title. Add tickets after approval, free trial visits, and/or monthly membership — you must have tickets or membership.',
       hubertPrompt: 'What is application based ticketing?',
-    },
-    'alumni-fast-pass': {
-      title: 'Returning rate for previous attendees',
-      body:
-        'Optional returning ticket for people who came to a past event. After you publish, send them personal booking links from your dashboard.',
-      hubertPrompt: 'What is Previous Attendees for repeat events?',
     },
     'vat-treatment': {
       title: 'VAT on ticket prices',

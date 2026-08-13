@@ -88,28 +88,50 @@
 
         <div class="ee-card" id="ee-panel-pay-how" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
-          <h2 data-hub-tip="pay-how">How do you get paid?</h2>
-          <p class="ee-hint" style="margin-top:0" id="ee-pay-how-lead">
-            Choose tickets, monthly membership, or both. Free trial visits are optional on either.
+          <h2 data-hub-tip="pay-how">Tickets or membership?</h2>
+          <p class="ee-hint ee-attendance-lead" id="ee-pay-how-lead">
+            Offer tickets for this event (paid or free), a membership package, or both. Free trial visits are optional.
           </p>
-          <fieldset class="ee-field ee-pay-how-options">
-            <legend class="ee-label-block" data-hub-tip="pay-how-money">Money for this event</legend>
-            <label class="ee-check">
-              <input type="radio" name="ee-pay-how" value="tickets" id="ee-pay-how-tickets" checked />
-              <span><strong>Tickets</strong> — one-off for this event (paid or free)</span>
-            </label>
-            <label class="ee-check">
-              <input type="radio" name="ee-pay-how" value="membership" id="ee-pay-how-membership" />
-              <span data-hub-tip="pay-how-membership"><strong>Monthly / annual membership</strong></span>
-            </label>
-            <label class="ee-check">
-              <input type="radio" name="ee-pay-how" value="both" id="ee-pay-how-both" />
-              <span data-hub-tip="pay-how-both"><strong>Both</strong> — tickets and membership</span>
-            </label>
-          </fieldset>
-          <p class="ee-hint" id="ee-pay-how-hint" role="status">You must choose tickets or membership (or both) before publishing.</p>
+          <div class="ee-attendance-options ee-pay-how-options" role="group" aria-label="Tickets or membership">
+            <button
+              type="button"
+              class="ee-attendance-card is-active"
+              data-pay-how="tickets"
+              id="ee-pay-how-tickets"
+              aria-pressed="true"
+            >
+              <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
+              <strong>Tickets</strong>
+              <span>One-off for this event — paid or free. Set prices on the next step.</span>
+            </button>
+            <button
+              type="button"
+              class="ee-attendance-card"
+              data-pay-how="membership"
+              id="ee-pay-how-membership"
+              aria-pressed="false"
+              data-hub-tip="pay-how-membership"
+            >
+              <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
+              <strong>Membership package</strong>
+              <span>Monthly or annual group membership. People join your organiser page instead of buying a one-off ticket.</span>
+            </button>
+            <button
+              type="button"
+              class="ee-attendance-card"
+              data-pay-how="both"
+              id="ee-pay-how-both"
+              aria-pressed="false"
+              data-hub-tip="pay-how-both"
+            >
+              <span class="ee-attendance-card-icon" aria-hidden="true">✨</span>
+              <strong>Both</strong>
+              <span>Public tickets for newcomers, plus a membership package for regulars.</span>
+            </button>
+          </div>
+          <p class="ee-hint" id="ee-pay-how-hint" role="status">Choose tickets or a membership package (or both) before publishing.</p>
           <p class="ee-pay-how-outcome" id="ee-pay-how-outcome" role="status">
-            Tickets only — people buy a ticket for this event (paid or free).
+            Tickets only — people book a ticket for this event (paid or free).
           </p>
           <div id="ee-general-guest-mount" class="ee-ce-guest-mount" style="margin-top:14px"></div>
           <div id="ee-hub-membership-mount-payhow" class="ee-hub-membership-mount" style="margin-top:14px"></div>
@@ -366,8 +388,8 @@
           <p class="ee-step-label" data-ee-step-label>Step 3 <span class="ee-optional">(optional)</span></p>
           <h2 id="ee-optional-extras-title">Extra rates (optional)</h2>
           <p class="ee-hint" style="margin-top:0" id="ee-optional-extras-lead">
-            Optional. Give people on your member list a cheaper (or free) ticket, and/or a returning rate for previous
-            attendees. Public tickets above stay available for everyone else.
+            Optional. Give people on your member list a cheaper (or free) ticket while public tickets above stay available
+            for everyone else.
           </p>
 
           <div class="ee-addon-card" id="ee-guest-addon">
@@ -447,47 +469,6 @@
                   <strong>Public ticket types</strong> above. Members see this extra ticket when signed in with their
                   membership email.
                 </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="ee-addon-card" id="ee-alumni-addon">
-            <label class="ee-addon-toggle">
-              <input type="checkbox" id="ee-alumni-enabled" />
-              <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="alumni-fast-pass">Returning rate for previous attendees</strong>
-                <span class="ee-addon-summary">Offer a special price and send personal booking links after you publish</span>
-              </span>
-            </label>
-            <div class="ee-addon-body" id="ee-alumni-fields" hidden>
-              <div class="ee-field">
-                <label for="ee-alumni-price">Previous attendee price (&pound;)</label>
-                <input type="number" id="ee-alumni-price" min="0" step="0.01" value="0" inputmode="decimal" />
-                <p class="ee-hint">Set to 0 for a free returning ticket.</p>
-              </div>
-              <div class="ee-field ee-guest-visits-field">
-                <label for="ee-alumni-qty">Quantity available <span class="ee-optional">(optional)</span></label>
-                <input type="number" id="ee-alumni-qty" min="0" step="1" inputmode="numeric" placeholder="Unlimited" />
-              </div>
-              <div class="ee-field">
-                <label for="ee-alumni-sale-end">Sale ends</label>
-                <select id="ee-alumni-sale-end">
-                  <option value="at_start">When the event starts</option>
-                  <option value="12_hours">12 hours before the event</option>
-                  <option value="1_day">1 day before the event</option>
-                  <option value="1_week" selected>1 week before the event</option>
-                  <option value="custom">Custom date &amp; time</option>
-                </select>
-              </div>
-              <div id="ee-alumni-sale-end-custom" class="ee-sale-custom" hidden>
-                <div class="ee-field">
-                  <label for="ee-alumni-sale-end-date">Custom sale end date</label>
-                  <input type="date" id="ee-alumni-sale-end-date" />
-                </div>
-                <div class="ee-field">
-                  <label for="ee-alumni-sale-end-time">Time</label>
-                  <select id="ee-alumni-sale-end-time"></select>
-                </div>
               </div>
             </div>
           </div>

@@ -1602,28 +1602,12 @@ body.ee-step2-modal-open {
   margin-bottom: 12px;
 }
 
-.ee-pay-how-options {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-}
-
-.ee-pay-how-options .ee-check {
-  display: flex;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  align-items: flex-start;
-  margin-bottom: 6px;
-}
-
-.ee-pay-how-options .ee-check + .ee-check {
-  margin-top: 0;
+.ee-pay-how-options.ee-attendance-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .ee-pay-how-outcome {
-  margin: 10px 0 0;
+  margin: 14px 0 0;
   padding: 10px 12px;
   border-radius: 8px;
   background: #eef3f8;
@@ -1744,7 +1728,8 @@ body.ee-step2-modal-open {
 }
 
 @media (max-width: 900px) {
-  .ee-attendance-options {
+  .ee-attendance-options,
+  .ee-pay-how-options.ee-attendance-options {
     grid-template-columns: 1fr;
   }
 }
