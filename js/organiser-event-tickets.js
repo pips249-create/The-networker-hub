@@ -980,6 +980,7 @@
 
   let step2Confirmed = false; // Step 1 (door) done
   let payHowConfirmed = false; // Step 2 (tickets or membership) done
+  let payHowChoice = 'tickets';
   let step2Home = null;
 
   function attendanceModeLabel() {
@@ -993,6 +994,9 @@
   }
 
   function readPayHow() {
+    if (payHowChoice === 'membership' || payHowChoice === 'both' || payHowChoice === 'tickets') {
+      return payHowChoice;
+    }
     const active = document.querySelector('.ee-pay-how-options .ee-attendance-card.is-active');
     const v = active && active.getAttribute('data-pay-how');
     if (v === 'membership' || v === 'both' || v === 'tickets') return v;
@@ -1001,11 +1005,20 @@
 
   function setPayHow(value) {
     const v = value === 'membership' || value === 'both' ? value : 'tickets';
+    payHowChoice = v;
     document.querySelectorAll('.ee-pay-how-options .ee-attendance-card').forEach(function (btn) {
       const active = (btn.getAttribute('data-pay-how') || '') === v;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      btn.setAttribute('aria-checked', active ? 'true' : 'false');
     });
+  }
+
+  function payHowLabel() {
+    const h = readPayHow();
+    if (h === 'both') return 'Both — tickets and group membership';
+    if (h === 'membership') return 'Group membership';
+    return 'Tickets';
   }
 
   function payHowIncludesTickets() {
@@ -1366,8 +1379,8 @@
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
-    // Keep Step 2 pay-how selection in sync (do not reuse attendance card active logic).
-    setPayHow(readPayHow());
+    // Keep Step 2 pay-how highlight correct (attendance cards must not overwrite these).
+    setPayHow(payHowChoice);
 
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const optionalExtras = document.getElementById('ee-panel-optional-extras');
