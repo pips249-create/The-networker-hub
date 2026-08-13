@@ -2511,7 +2511,7 @@
           : 'Continue to set your ticket.';
       } else {
         hint.textContent = includesMembership
-          ? 'Set the monthly or yearly membership fee below.'
+          ? 'Set the monthly or annual membership fee below.'
           : 'Set your ticket below.';
       }
     }
@@ -2527,7 +2527,7 @@
           'Next: add ticket types for newcomers, then membership settings for regulars.';
       } else if (includesMembership) {
         outcome.textContent =
-          'Next: set free visits, then convert joiners into members with history and reports — member ticket + monthly/yearly fee.';
+          'Next: set free visits, then convert joiners into members with history and reports — member ticket + monthly or annual fee.';
       } else {
         outcome.textContent = 'Next: add ticket types — name, price and description.';
       }

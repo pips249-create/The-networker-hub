@@ -78,7 +78,7 @@
     'pay-how-membership': {
       title: 'Convert free visits into members',
       body:
-        'Free visits let people try your meetings. When they join, they become members of your group — you can see who came, who joined, and their history. Set a member ticket for this meeting, then the monthly or yearly fee after visits are used. Full walkthrough: How booking options work in your organiser workspace.',
+        'Free visits let people try your meetings. When they join, they become members of your group — you can see who came, who joined, and their history. Set a member ticket for this meeting, then the monthly or annual fee after visits are used. Full walkthrough: How booking options work in your organiser workspace.',
       hubertPrompt: 'How does converting free visits into membership work?',
     },
     'pay-how-both': {
