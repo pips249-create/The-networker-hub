@@ -654,7 +654,9 @@
       .then(function (shown) {
         if (shown) return true;
         return window.CmsAdBlocks.loadCmsAd('opportunity_page_sidebar_ad').then(function (block) {
-          return window.CmsAdBlocks.renderCompactAd(el, block, 'opportunity_page_sidebar_ad');
+          return window.CmsAdBlocks.renderCompactAd(el, block, 'opportunity_page_sidebar_ad', {
+            showPlaceholder: true,
+          });
         });
       })
       .catch(function () {});

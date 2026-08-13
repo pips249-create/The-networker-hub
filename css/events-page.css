@@ -381,6 +381,14 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
   margin-bottom: 10px;
 }
 
+.sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-tagline .sponsor-fallback-price {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-body {
   display: none;
 }
@@ -1548,6 +1556,13 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   font-size: 16px;
   font-weight: 800;
   margin-bottom: 8px;
+}
+.sponsor-hub--fallback .sponsor-tagline .sponsor-fallback-price {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 .sponsor-hub--fallback .sponsor-body {
   font-size: 13px;

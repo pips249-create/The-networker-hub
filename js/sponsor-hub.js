@@ -13,8 +13,15 @@
   };
 
   var SPONSOR_FALLBACK = {
-    headline: 'Your brand here',
+    headline: 'Get your brand seen here',
     ctaLabel: 'View sponsorship options →',
+  };
+
+  var SPONSOR_FALLBACK_PRICES = {
+    events_sponsor_hub: '£2,000 / month + VAT',
+    organisers_sponsor_hub: '£1,000 / month + VAT',
+    opportunities_sponsor_hub: '£2,000 / month + VAT',
+    sponsor_hub: '£2,000 / month + VAT',
   };
 
   function advertisingUrlForSlot(slot) {
@@ -222,12 +229,17 @@
       String(slot || els.sponsorHub.getAttribute('data-slot') || 'events_sponsor_hub').trim() ||
       'events_sponsor_hub';
     var ctaUrl = advertisingUrlForSlot(slotKey);
+    var price = SPONSOR_FALLBACK_PRICES[slotKey] || SPONSOR_FALLBACK_PRICES.events_sponsor_hub;
 
     if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = true;
     if (els.sponsorCompany) els.sponsorCompany.hidden = true;
     if (els.sponsorTagline) {
       els.sponsorTagline.hidden = false;
-      els.sponsorTagline.textContent = SPONSOR_FALLBACK.headline;
+      els.sponsorTagline.innerHTML =
+        escapeHtml(SPONSOR_FALLBACK.headline) +
+        '<span class="sponsor-fallback-price">' +
+        escapeHtml(price) +
+        '</span>';
     }
     if (els.sponsorBody) {
       els.sponsorBody.hidden = true;

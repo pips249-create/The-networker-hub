@@ -202,6 +202,92 @@ function directoryFromSlot(slotOrPlacement) {
   return '';
 }
 
+/** Expand report filter keys to concrete placement values (incl. legacy aliases). */
+const PLACEMENT_FILTER_GROUPS = {
+  events_sponsor_hub: ['events_sponsor_hub', 'events_hero', 'sponsor_hub'],
+  organisers_sponsor_hub: ['organisers_sponsor_hub', 'organisers_hero'],
+  opportunities_sponsor_hub: ['opportunities_sponsor_hub', 'opportunities_hero'],
+  events_page_partner: [
+    'events_page_partner',
+    'event_page_carousel_ads',
+    'events_email_mini',
+  ],
+  organisers_page_partner: [
+    'organisers_page_partner',
+    'organiser_page_carousel_ads',
+    'organisers_email_mini',
+  ],
+  opportunities_page_partner: [
+    'opportunities_page_partner',
+    'opportunity_page_carousel_ads',
+    'opportunity_page_sidebar_ad',
+    'opportunities_email_mini',
+  ],
+  page_partners: [
+    'page_partners',
+    'page_partner_carousel',
+    'page_partner',
+    'events_page_partner',
+    'organisers_page_partner',
+    'opportunities_page_partner',
+    'event_page_carousel_ads',
+    'organiser_page_carousel_ads',
+    'opportunity_page_carousel_ads',
+    'opportunity_page_sidebar_ad',
+    'events_email_mini',
+    'organisers_email_mini',
+    'opportunities_email_mini',
+    'email_mini_sponsor',
+  ],
+  email_mini_sponsors: [
+    'email_mini_sponsor',
+    'events_email_mini',
+    'organisers_email_mini',
+    'opportunities_email_mini',
+    'hub_partner_email',
+  ],
+};
+
+const LEGACY_PAGE_PARTNER_PLACEMENTS = new Set([
+  'page_partner_carousel',
+  'page_partner',
+]);
+
+function expandPlacementFilter(raw) {
+  const key = normalizePlacement(raw);
+  if (!key) return [];
+  if (PLACEMENT_FILTER_GROUPS[key]) return PLACEMENT_FILTER_GROUPS[key].slice();
+  return [key];
+}
+
+function pathMatchesPagePartnerDirectory(path, directory) {
+  const p = String(path || '').toLowerCase();
+  if (!p) return false;
+  if (directory === 'organisers') return /organiser/.test(p);
+  if (directory === 'opportunities') return /opportunit/.test(p);
+  if (directory === 'events') {
+    if (/organiser/.test(p) || /opportunit/.test(p)) return false;
+    return /\/events\//.test(p) || /event\.html/.test(p) || p === '/events' || p.indexOf('/events?') === 0;
+  }
+  return false;
+}
+
+function isLegacyPagePartnerPlacement(placement) {
+  return LEGACY_PAGE_PARTNER_PLACEMENTS.has(normalizePlacement(placement));
+}
+
+function placementFilterMeta(raw) {
+  const key = normalizePlacement(raw);
+  if (!key) return { key: '', keys: [], directory: '', includeLegacyByPath: false };
+  const keys = expandPlacementFilter(key);
+  const directory = directoryFromSlot(key);
+  const includeLegacyByPath =
+    key === 'events_page_partner' ||
+    key === 'organisers_page_partner' ||
+    key === 'opportunities_page_partner';
+  return { key, keys, directory, includeLegacyByPath };
+}
+
 function resolvePackDirectory({ brand, placementFilter, byPlacement }) {
   const fromPlacement = directoryFromSlot(placementFilter);
   if (fromPlacement) return fromPlacement;
@@ -471,6 +557,8 @@ function formatNum(n) {
 }
 
 async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter, placementFilter }) {
+  const filterMeta = placementFilterMeta(placementFilter);
+  const placementKeys = filterMeta.keys;
   let clicksReq = sb
     .from('sponsor_clicks')
     .select('id, created_at, placement, company_name, destination_url, path')
@@ -480,7 +568,15 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .limit(REPORT_ROW_CAP);
 
   if (companyFilter) clicksReq = clicksReq.ilike('company_name', companyIlike(companyFilter));
-  if (placementFilter) clicksReq = clicksReq.eq('placement', placementFilter);
+  if (placementKeys.length === 1) {
+    clicksReq = clicksReq.eq('placement', placementKeys[0]);
+  } else if (placementKeys.length > 1) {
+    // Include legacy page-partner rows when we will path-match them client-side.
+    const clickKeys = filterMeta.includeLegacyByPath
+      ? placementKeys.concat(Array.from(LEGACY_PAGE_PARTNER_PLACEMENTS))
+      : placementKeys;
+    clicksReq = clicksReq.in('placement', clickKeys);
+  }
 
   let impressionsReq = sb
     .from('sponsor_impression_daily')
@@ -490,7 +586,11 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .limit(REPORT_ROW_CAP);
 
   if (companyFilter) impressionsReq = impressionsReq.ilike('company_name', companyIlike(companyFilter));
-  if (placementFilter) impressionsReq = impressionsReq.eq('placement', placementFilter);
+  if (placementKeys.length === 1) {
+    impressionsReq = impressionsReq.eq('placement', placementKeys[0]);
+  } else if (placementKeys.length > 1) {
+    impressionsReq = impressionsReq.in('placement', placementKeys);
+  }
 
   let emailsReq = sb
     .from('sponsor_email_send_daily')
@@ -500,7 +600,11 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .limit(REPORT_ROW_CAP);
 
   if (companyFilter) emailsReq = emailsReq.ilike('company_name', companyIlike(companyFilter));
-  if (placementFilter) emailsReq = emailsReq.eq('placement', placementFilter);
+  if (placementKeys.length === 1) {
+    emailsReq = emailsReq.eq('placement', placementKeys[0]);
+  } else if (placementKeys.length > 1) {
+    emailsReq = emailsReq.in('placement', placementKeys);
+  }
 
   let opensReq = sb
     .from('sponsor_email_open_daily')
@@ -535,7 +639,17 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     throw new Error(clicksRes.error.message);
   }
 
-  const clickRows = clicksRes.data || [];
+  let clickRows = clicksRes.data || [];
+  if (filterMeta.includeLegacyByPath && filterMeta.directory) {
+    const exact = new Set(placementKeys);
+    clickRows = clickRows.filter(function (row) {
+      const place = normalizePlacement(row.placement);
+      if (exact.has(place)) return true;
+      if (!isLegacyPagePartnerPlacement(place)) return false;
+      return pathMatchesPagePartnerDirectory(row.path, filterMeta.directory);
+    });
+  }
+
   const impressionRows = impressionsRes.error ? [] : impressionsRes.data || [];
   const emailRows = emailsRes.error ? [] : emailsRes.data || [];
   const openRows = opensRes.error ? [] : opensRes.data || [];
@@ -717,6 +831,7 @@ async function getSponsorClicksReport(query) {
     from,
     to,
     directory,
+    placementFilter: placementFilter || '',
     brand: brandOut,
     brands,
     hubLogoUrl: '/assets/logo-nav-transparent.png',

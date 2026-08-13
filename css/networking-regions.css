@@ -218,8 +218,10 @@
 
 .networking-city-partner-logo-link {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   width: 100%;
   text-decoration: none;
   color: inherit;
@@ -246,14 +248,27 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 56px;
+  min-height: 56px;
+  height: auto;
   max-width: none;
+  padding: 8px 10px;
+  box-sizing: border-box;
   border-radius: 10px;
   border: 1px dashed rgba(122, 119, 144, 0.4);
   background: rgba(255, 255, 255, 0.85);
   color: #8a879c;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.networking-city-partner-placeholder-price {
+  display: block;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.3;
+  color: #635c5e;
   text-align: center;
 }
 

@@ -1958,6 +1958,14 @@
   margin-bottom: 8px;
 }
 
+.opp-browse-page .sponsor-hub--fallback .sponsor-tagline .sponsor-fallback-price {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
 .opp-browse-page .sponsor-list {
   list-style: none;
   margin: 0 0 16px;

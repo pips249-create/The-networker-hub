@@ -50,6 +50,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_hub_suspended',
   'organiser_ranking_badge',
   'organiser_low_upcoming_events',
+  'organiser_post_event_checklist',
   'organiser_ticket_sales_nudge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
@@ -109,6 +110,7 @@ const ORGANISER_MINI_SPONSOR_SLUGS = new Set([
   'organiser_ranking_badge',
   'organiser_claim_confirmed',
   'organiser_low_upcoming_events',
+  'organiser_post_event_checklist',
   'organiser_monthly_group_update',
 ]);
 
@@ -394,17 +396,26 @@ async function getEmailSponsorVars(slug) {
       tracked.push.apply(tracked, mini.tracked);
     } else if (EVENT_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchEventMiniSponsorAds(sb, 3);
-      const mini = buildMiniSponsorsRow(ads);
+      const mini = buildMiniSponsorsRow(ads, {
+        placement: 'events_email_mini',
+        campaign: 'events_email_mini',
+      });
       miniRow = mini.html;
       tracked.push.apply(tracked, mini.tracked);
     } else if (ORGANISER_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchMiniSponsorAds(sb, ORGANISER_PAGE_CAROUSEL_SLOT, 3);
-      const mini = buildMiniSponsorsRow(ads);
+      const mini = buildMiniSponsorsRow(ads, {
+        placement: 'organisers_email_mini',
+        campaign: 'organisers_email_mini',
+      });
       miniRow = mini.html;
       tracked.push.apply(tracked, mini.tracked);
     } else if (OPPORTUNITY_MINI_SPONSOR_SLUGS.has(slug)) {
       const ads = await fetchMiniSponsorAds(sb, OPPORTUNITY_PAGE_CAROUSEL_SLOT, 3);
-      const mini = buildMiniSponsorsRow(ads);
+      const mini = buildMiniSponsorsRow(ads, {
+        placement: 'opportunities_email_mini',
+        campaign: 'opportunities_email_mini',
+      });
       miniRow = mini.html;
       tracked.push.apply(tracked, mini.tracked);
     }

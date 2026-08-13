@@ -12,7 +12,28 @@
     opportunity_page_sidebar_ad: '/advertising#ad-panel-opportunities',
   };
 
-  var PLACEHOLDER_CTA = 'View sponsorship options →';
+  var PLACEHOLDER_COPY = {
+    event_page_carousel_ads: {
+      headline: 'Get your business seen here',
+      price: '£600 / month + VAT',
+      cta: 'Advertise here →',
+    },
+    organiser_page_carousel_ads: {
+      headline: 'Get your business seen here',
+      price: '£300 / month + VAT',
+      cta: 'Advertise here →',
+    },
+    opportunity_page_carousel_ads: {
+      headline: 'Get your business seen here',
+      price: '£600 / month + VAT',
+      cta: 'Advertise here →',
+    },
+    opportunity_page_sidebar_ad: {
+      headline: 'Get your business seen here',
+      price: '£600 / month + VAT',
+      cta: 'Advertise here →',
+    },
+  };
 
   function advertisingPathForSlot(slotOrSubject) {
     var key = String(slotOrSubject || '').trim().toLowerCase();
@@ -23,6 +44,28 @@
     if (/organiser/i.test(subject)) return PLACEMENT_AD_PATHS.organiser_page_carousel_ads;
     if (/opportunit/i.test(subject)) return PLACEMENT_AD_PATHS.opportunity_page_carousel_ads;
     return PLACEMENT_AD_PATHS.event_page_carousel_ads;
+  }
+
+  function placeholderCopyForSlot(slotOrSubject) {
+    var key = String(slotOrSubject || '').trim().toLowerCase();
+    if (PLACEHOLDER_COPY[key]) return PLACEHOLDER_COPY[key];
+    var subject = String(slotOrSubject || '');
+    if (/organiser/i.test(subject)) return PLACEHOLDER_COPY.organiser_page_carousel_ads;
+    if (/opportunit/i.test(subject)) return PLACEHOLDER_COPY.opportunity_page_carousel_ads;
+    return PLACEHOLDER_COPY.event_page_carousel_ads;
+  }
+
+  function placeholderPitchHtml(copy) {
+    return (
+      '<div class="cms-ad-placeholder-pitch">' +
+      '<p class="cms-ad-placeholder-headline">' +
+      esc(copy.headline) +
+      '</p>' +
+      '<p class="cms-ad-placeholder-price">' +
+      esc(copy.price) +
+      '</p>' +
+      '</div>'
+    );
   }
 
   function esc(s) {
@@ -204,11 +247,17 @@
       '</aside>';
     var logoLink = container.querySelector('.cms-ad-compact-logo-link');
     if (logoLink && window.CmsSponsorFields) {
+      var placement = pagePartnerPlacement(slot || 'opportunity_page_sidebar_ad');
       window.CmsSponsorFields.applyCtaLink(logoLink, ctaUrl, {
-        placement: slot || 'page_partner',
+        placement: placement,
         company: company,
-        campaign: slot || 'page_partner',
+        campaign: placement,
       });
+      if (window.CmsSponsorFields.trackSponsorImpression) {
+        window.CmsSponsorFields.trackSponsorImpression(placement, company, {
+          el: container,
+        });
+      }
     }
     return true;
   }
@@ -245,7 +294,8 @@
       '<a class="networking-city-partner-logo-link" href="' +
       esc(href) +
       '">' +
-      '<div class="networking-city-partner-logo-placeholder">Your logo here</div>' +
+      '<div class="networking-city-partner-logo-placeholder">Get your business seen here</div>' +
+      '<span class="networking-city-partner-placeholder-price">From £29 / month + VAT</span>' +
       '</a>' +
       '</aside>';
     return true;
@@ -406,18 +456,17 @@
   function renderCarouselPlaceholder(container, slotOrSubject) {
     if (!container) return false;
     var href = advertisingPathForSlot(slotOrSubject);
+    var copy = placeholderCopyForSlot(slotOrSubject);
     container.hidden = false;
     container.innerHTML =
       '<aside class="cms-ad-carousel-placeholder" aria-label="Sponsored placement available">' +
-      '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
+      '<span class="cms-ad-logo-only-badge">Available</span>' +
       '<a class="cms-ad-carousel-placeholder-link" href="' +
       esc(href) +
       '">' +
-      '<div class="sponsor-logo-wrap sponsor-logo-band">' +
-      '<div class="cms-ad-logo-only-placeholder">Your logo here</div>' +
-      '</div>' +
+      placeholderPitchHtml(copy) +
       '<span class="cms-ad-carousel-placeholder-cta">' +
-      esc(PLACEHOLDER_CTA) +
+      esc(copy.cta) +
       '</span>' +
       '</a></aside>';
     return true;
@@ -425,15 +474,20 @@
 
   function renderCompactPlaceholder(container, slot) {
     if (!container) return false;
-    var href = advertisingPathForSlot(slot || 'opportunity_page_sidebar_ad');
+    var slotKey = slot || 'opportunity_page_sidebar_ad';
+    var href = advertisingPathForSlot(slotKey);
+    var copy = placeholderCopyForSlot(slotKey);
     container.hidden = false;
     container.innerHTML =
-      '<aside class="cms-ad-compact cms-ad-compact--available cms-ad-compact--logo-only" aria-label="Sponsored sidebar placement available">' +
-      '<span class="cms-ad-compact-badge">Sponsored</span>' +
+      '<aside class="cms-ad-compact cms-ad-compact--available" aria-label="Sponsored sidebar placement available">' +
+      '<span class="cms-ad-compact-badge">Available</span>' +
       '<a class="cms-ad-compact-placeholder-link" href="' +
       esc(href) +
       '">' +
-      logoMarkup('', 'cms-ad-compact-logo', 'cms-ad-compact-logo-placeholder') +
+      placeholderPitchHtml(copy) +
+      '<span class="cms-ad-compact-cta cms-ad-compact-cta--placeholder">' +
+      esc(copy.cta) +
+      '</span>' +
       '</a></aside>';
     return true;
   }
@@ -528,17 +582,33 @@
     return company ? 'Visit ' + company : 'Sponsored partner';
   }
 
-  function applyLogoLink(el, linkUrl) {
+  function pagePartnerPlacement(slotOrSubject) {
+    var key = String(slotOrSubject || '').trim().toLowerCase();
+    if (key === 'organiser_page_carousel_ads' || /organiser/.test(key)) {
+      return 'organisers_page_partner';
+    }
+    if (
+      key === 'opportunity_page_carousel_ads' ||
+      key === 'opportunity_page_sidebar_ad' ||
+      /opportunit/.test(key)
+    ) {
+      return 'opportunities_page_partner';
+    }
+    return 'events_page_partner';
+  }
+
+  function applyLogoLink(el, linkUrl, slotOrSubject) {
     if (!el || !window.CmsSponsorFields) return;
     var company = el.getAttribute('aria-label') || '';
     if (/^Visit /i.test(company)) company = company.replace(/^Visit\s+/i, '');
+    var placement = pagePartnerPlacement(slotOrSubject);
     window.CmsSponsorFields.applyCtaLink(el, normalizeCta(linkUrl), {
-      placement: 'page_partner_carousel',
+      placement: placement,
       company: company,
-      campaign: 'page_partner_carousel',
+      campaign: placement,
     });
     if (window.CmsSponsorFields.trackSponsorImpression) {
-      window.CmsSponsorFields.trackSponsorImpression('page_partner_carousel', company, {
+      window.CmsSponsorFields.trackSponsorImpression(placement, company, {
         el: el.closest('.cms-ad-logo-only, .cms-ad-carousel, .cms-ad-sidebar') || el,
       });
     }
@@ -552,7 +622,7 @@
     });
   }
 
-  function renderLogoOnlyAd(container, block) {
+  function renderLogoOnlyAd(container, block, slotOrSubject) {
     if (!container || !block) return false;
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
     var linkUrl = normalizeCta(block.cta_url);
@@ -567,7 +637,7 @@
       '<span class="cms-ad-logo-only-badge">Sponsored</span>' +
       logoLinkMarkup(logo, linkUrl, carouselAriaLabel(block), true, block) +
       '</aside>';
-    applyLogoLink(container.querySelector('.cms-ad-logo-link'), block.cta_url);
+    applyLogoLink(container.querySelector('.cms-ad-logo-link'), block.cta_url, slotOrSubject);
     wireCarouselLogoBands(container);
     return true;
   }
@@ -607,7 +677,7 @@
     }
 
     if (list.length === 1) {
-      return renderLogoOnlyAd(container, list[0]);
+      return renderLogoOnlyAd(container, list[0], slotOrSubject);
     }
 
     if (options.shuffle !== false) {
@@ -650,7 +720,7 @@
     list.forEach(function (block, index) {
       var slide = container.querySelector('[data-carousel-slide="' + index + '"]');
       if (!slide) return;
-      applyLogoLink(slide.querySelector('.cms-ad-logo-link'), block.cta_url);
+      applyLogoLink(slide.querySelector('.cms-ad-logo-link'), block.cta_url, slotOrSubject);
     });
 
     wireCarouselLogoBands(container);
@@ -742,12 +812,14 @@
   function loadOrganiserPageCarouselAds(container) {
     return loadPageCarouselAds(container, {
       slot: 'organiser_page_carousel_ads',
+      showPlaceholder: true,
     });
   }
 
   function loadOpportunityPageCarouselAds(container) {
     return loadPageCarouselAds(container, {
       slot: 'opportunity_page_carousel_ads',
+      showPlaceholder: true,
     });
   }
 
