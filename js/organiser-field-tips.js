@@ -66,7 +66,7 @@
     'guest-visit-programme': {
       title: 'Free trial visits',
       body:
-        'Let newcomers try a few meetings free (up to 3). When they join your group, you keep their visit history and reports — so free visits become members you can follow, not one-off guests.',
+        'Allow newcomers to try your organiser page for free (up to 3 visits). After that, we invite them to join your membership at the price you set. Join and renew are automated, and you keep 100% of the membership fee.',
       hubertPrompt: 'What are free trial visits?',
     },
     'pay-how': {
