@@ -1535,6 +1535,7 @@ body.ee-step2-modal-open {
 #ee-panel-pay-how.is-collapsed #ee-pay-how-next,
 #ee-panel-pay-how.is-collapsed #ee-pay-how-hint,
 #ee-panel-pay-how.is-collapsed #ee-pay-how-outcome,
+#ee-panel-pay-how.is-collapsed .ee-booking-help-under,
 #ee-panel-pay-how.is-collapsed > h2 {
   display: none !important;
 }
@@ -1714,6 +1715,111 @@ body.ee-step2-modal-open {
   font-size: 15px;
   line-height: 1.4;
   font-weight: 600;
+}
+
+.ee-booking-help-under {
+  margin: 12px 0 0;
+}
+
+.ee-booking-help-under--lead {
+  margin: 8px 0 14px;
+}
+
+.ee-booking-help-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ee-booking-help {
+  padding-bottom: 48px;
+}
+
+.ee-booking-help-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  background: var(--ee-white);
+  border: 1px solid var(--ee-border);
+  border-radius: var(--ee-radius);
+}
+
+.ee-booking-help-toc a {
+  color: var(--ee-purple);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.ee-booking-help-toc a:hover {
+  text-decoration: underline;
+}
+
+.ee-booking-help-card {
+  margin-bottom: 16px;
+}
+
+.ee-booking-help-card h2 {
+  margin: 0 0 10px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+  color: var(--ee-text);
+}
+
+.ee-booking-help-card h3 {
+  margin: 18px 0 6px;
+  font-size: 1.05rem;
+  color: var(--ee-text);
+}
+
+.ee-booking-help-card p,
+.ee-booking-help-card li {
+  color: var(--ee-text-mid);
+}
+
+.ee-booking-help-card ul,
+.ee-booking-help-card ol {
+  margin: 0 0 8px;
+  padding-left: 1.25em;
+}
+
+.ee-booking-help-card li + li {
+  margin-top: 6px;
+}
+
+.ee-booking-help-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-text-soft);
+}
+
+.ee-booking-help-pick {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ee-purple-pale);
+  color: var(--ee-text);
+}
+
+.ee-booking-help-steps {
+  margin: 0 0 8px;
+  padding-left: 1.25em;
+}
+
+.ee-booking-help-card--quiet {
+  background: #f8fafb;
+}
+
+.ee-booking-help-card--quiet h2 {
+  font-size: 1.25rem;
 }
 
 .ee-next-steps {

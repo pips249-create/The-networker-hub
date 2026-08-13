@@ -72,13 +72,13 @@
     'pay-how': {
       title: 'How will people book?',
       body:
-        'Ticket for this event = ticket types only. Convert free visits into members = trial visits, then join your group so you keep history and reports. Ticket and membership = both.',
+        'Ticket for this event = ticket types only. Convert free visits into members = trial visits, then join your group so you keep history and reports. Ticket and membership = both. Open “How do these booking options work?” for a plain-English walkthrough.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
       title: 'Convert free visits into members',
       body:
-        'Free visits let people try your meetings. When they join, they become members of your group — you can see who came, who joined, and their history. Set a member ticket for this meeting, then the monthly or yearly fee after visits are used.',
+        'Free visits let people try your meetings. When they join, they become members of your group — you can see who came, who joined, and their history. Set a member ticket for this meeting, then the monthly or yearly fee after visits are used. Full walkthrough: How booking options work in your organiser workspace.',
       hubertPrompt: 'How does converting free visits into membership work?',
     },
     'pay-how-both': {

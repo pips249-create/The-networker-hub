@@ -276,9 +276,9 @@ const FALLBACK_REPLIES = [
       'Yes — on Set up tickets choose General ticketing or Application based, then under How do you get paid pick Tickets (or Both) and turn on Free trial visits. Newcomers use complimentary visits first; once used, they buy a ticket or join membership. For monthly membership with no event ticket, choose Membership + Free trial visits. Closed meeting (member list only, no visits) is under General when membership is on.',
   },
   {
-    match: /difference.*(ticket type|guest visit|category exclusiv|application based|general ticket)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|how (do|should) people get in|networking group meeting/i,
+    match: /difference.*(ticket type|guest visit|category exclusiv|application based|general ticket)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|how (do|should) people get in|networking group meeting|booking options|how will people book|convert free visits/i,
     reply:
-      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats, e.g. one per industry). Then choose how you get paid — Tickets, Monthly/annual membership, or Both. Free trial visits are optional. You must have tickets or membership (or both). Membership + visits with no event ticket is the networking-club path; Application based adds the apply-and-approve seat gate.',
+      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats). Then choose how people book — Ticket for this event, Convert free visits into members, or Ticket and membership. Full plain-English walkthrough: /organiser/booking-options (also linked from Set up tickets). Free trial visits sit on the membership paths so newcomers try meetings, then join your group with history and reports.',
   },
   {
     match: /\bvat\b|value added tax/i,
