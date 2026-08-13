@@ -899,6 +899,29 @@
         priceNum > 0 ? publicListingPriceLabel(ev, { withFrom: false }) : 'Free';
       return;
     }
+    if (ev.isMembersOnlyEvent || ev.hasMembersOnlyTiers) {
+      if (isRosterMemberForEvent()) {
+        const memberOnly = (rosterMemberTickets || []).find(function (t) {
+          return t.isMembersOnly;
+        });
+        labelEl.textContent = 'Member booking';
+        if (memberOnly) {
+          priceEl.textContent =
+            memberOnly.priceKey === 'free' || !(Number(memberOnly.priceNum) > 0)
+              ? 'Free'
+              : memberOnly.price || memberTicketPriceLabel(ev);
+        } else {
+          priceEl.textContent =
+            ev.priceKey === 'free' || ev.priceKey === 'members_only'
+              ? 'Free'
+              : memberTicketPriceLabel(ev);
+        }
+        return;
+      }
+      labelEl.textContent = 'Members only';
+      priceEl.textContent = 'Sign in';
+      return;
+    }
     labelEl.textContent = 'Tickets from';
     priceEl.textContent =
       ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
@@ -2461,24 +2484,52 @@
     }
   }
 
+  function presentMemberBookingTier(tier) {
+    if (!tier || !tier.isMembersOnly) return tier;
+    const rawName = String(tier.name || '').trim();
+    const generic =
+      !rawName ||
+      /^standard(\s+ticket)?$/i.test(rawName) ||
+      /^ticket$/i.test(rawName);
+    if (!generic) return tier;
+    const free =
+      tier.priceKey === 'free' || !(Number(tier.priceNum) > 0);
+    return Object.assign({}, tier, {
+      name: 'Member booking',
+      label: 'Member booking',
+      description: free
+        ? 'Included with your membership'
+        : tier.description || 'Member rate — your membership',
+    });
+  }
+
   function ticketTiersForEvent(ev) {
-    const base =
-      ev.tickets && ev.tickets.length
-        ? ev.tickets.slice()
-        : [
-            {
-              id: (ev.id || 'event') + '-standard',
-              name: 'Standard ticket',
-              description:
-                ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access',
-              price: ev.price,
-              priceKey: ev.priceKey,
-              priceNum: ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0,
-              soldOut: Boolean(ev.isSoldOut),
-              quantityAvailable: ev.spotsLeft,
-              label: 'Standard',
-            },
-          ];
+    const membersOnlyListing = Boolean(
+      ev && (ev.isMembersOnlyEvent || ev.hasMembersOnlyTiers)
+    );
+    // Never invent a public "Standard ticket" for closed / member-list listings —
+    // those tiers stay hidden until roster eligibility returns the real member rates.
+    let base;
+    if (ev.tickets && ev.tickets.length) {
+      base = ev.tickets.slice();
+    } else if (membersOnlyListing) {
+      base = [];
+    } else {
+      base = [
+        {
+          id: (ev.id || 'event') + '-standard',
+          name: 'Standard ticket',
+          description:
+            ev.priceKey === 'free' ? 'Free admission' : 'Ticket includes full event access',
+          price: ev.price,
+          priceKey: ev.priceKey,
+          priceNum: ev.priceKey === 'free' ? 0 : Number(ev.priceNum) || 0,
+          soldOut: Boolean(ev.isSoldOut),
+          quantityAvailable: ev.spotsLeft,
+          label: 'Standard',
+        },
+      ];
+    }
     const extras = (rosterMemberTickets || []).filter(
       (tier) => !base.some((existing) => existing.id === tier.id)
     );
@@ -2493,12 +2544,18 @@
       });
       if (memberOnlyTiers.length > 0) {
         combined = memberOnlyTiers;
+      } else if (membersOnlyListing) {
+        combined = [];
       }
       combined.sort(function (a, b) {
         return (a.isMembersOnly ? 0 : 1) - (b.isMembersOnly ? 0 : 1);
       });
+    } else if (membersOnlyListing) {
+      combined = combined.filter(function (t) {
+        return t.isMembersOnly;
+      });
     }
-    return combined;
+    return combined.map(presentMemberBookingTier);
   }
 
   function renderVatNote(ev, tiers) {
@@ -2729,11 +2786,15 @@
         : isPass
           ? 'All dates included — one checkout'
           : isMemberTier
-          ? 'Member rate — your membership'
+          ? priceNum > 0
+            ? 'Member rate — your membership'
+            : 'Included with your membership'
           : rosterMember && isCategoryExclusivity
           ? 'Member booking — no application needed'
           : rosterMember && isGuestProg
-          ? 'Member rate — your membership'
+          ? priceNum > 0
+            ? 'Member rate — your membership'
+            : 'Included with your membership'
           : remainingLabel || t.description || '';
 
       const tier = document.createElement('div');
