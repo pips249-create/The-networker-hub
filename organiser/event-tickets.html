@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813book7" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813step3a" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -95,6 +95,7 @@
           <p class="ee-booking-help-under ee-booking-help-under--lead">
             <a
               class="ee-btn ee-btn-outline ee-booking-help-btn"
+              id="ee-booking-options-link"
               href="/organiser/booking-options"
               target="_blank"
               rel="noopener noreferrer"
@@ -292,15 +293,11 @@
                 Manage membership prices under <strong>Memberships</strong> in your workspace.
               </p>
             </div>
-            <div class="ee-info-box ee-membership-meeting-how" id="ee-membership-meeting-how" hidden>
-              <strong>How this works</strong>
-              <p>
-                1) Visitors use free trial visits so they can try your meetings first.
-                2) When they join, they become members of <em>your</em> group — you can see their visit history and
-                reports.
-                3) Set a member ticket for this meeting (often £0), then the monthly or annual fee they pay after free
-                visits are used.
-              </p>
+            <div class="ee-compact-summary" id="ee-membership-visits-summary" hidden>
+              <p class="ee-compact-summary-copy" id="ee-membership-visits-summary-text"></p>
+              <button type="button" class="ee-btn ee-btn-outline" id="ee-membership-visits-change">
+                Change free visits
+              </button>
             </div>
             <p class="ee-tier-summary" id="ee-members-only-event-summary" aria-live="polite">Member ticket · unlimited available · Free</p>
             <div id="ee-members-only-event-fields-mount">
@@ -348,17 +345,10 @@
               </span>
             </label>
             <div class="ee-addon-body" id="ee-hub-membership-fields" hidden>
-              <div class="ee-info-box">
-                <strong>How this works</strong>
-                <p>
-                  Free visits are the trial. The fee below is how visitors convert into members of your group.
-                  Once they join, you can see their attendance history and reports — not just a one-off ticket.
-                </p>
-                <p class="ee-hint" style="margin:10px 0 0">
-                  People already on your member list book this meeting with the member ticket (often £0). Use £0 here
-                  if joining is free and you manage the list yourself. You can change amounts later under Memberships.
-                </p>
-              </div>
+              <p class="ee-hint ee-hub-membership-lead" id="ee-hub-membership-lead">
+                What visitors pay to join after free visits. Members already on your list use the member ticket above
+                (often £0). You can change amounts later under Memberships.
+              </p>
               <div class="ee-hub-membership-amounts">
                 <div class="ee-field">
                   <label for="ee-hub-membership-monthly">Monthly (&pound;)</label>
@@ -425,14 +415,12 @@
               </span>
             </label>
             <div class="ee-addon-body" id="ee-guest-programme-fields" hidden>
-              <div class="ee-info-box ee-guest-how" id="ee-guest-programme-note">
-                <strong>How it works</strong>
-                <p id="ee-guest-programme-note-text">
-                  Allow visitors to try this organiser page for free with up to 3 complimentary visits. After that, we
-                  invite them to join your membership at the price you set. No need to chase subscriptions — we automate
-                  join and renew for you, and you keep 100% of the membership fee.
-                </p>
-              </div>
+              <p class="ee-hint ee-guest-how-short" id="ee-guest-programme-note">
+                <span id="ee-guest-programme-note-text"
+                  >Visitors get free trial visits (up to 3), then we invite them to join at the price you set. You keep
+                  100% of the membership fee.</span
+                >
+              </p>
               <div class="ee-field ee-guest-visits-field">
                 <label for="ee-guest-visits-allowed">Complimentary visits per visitor</label>
                 <input
@@ -645,9 +633,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260813visits1" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260813step3a" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260813visits1" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260813book9" defer></script>
   </body>
 </html>

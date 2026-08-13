@@ -1159,10 +1159,20 @@
     if (summary) summary.hidden = !collapsed;
     const text = document.getElementById('ee-pay-how-summary-text');
     if (text) {
-      text.innerHTML =
+      const base =
         '<strong>' +
         esc(payHowLabel()) +
         '</strong> — chosen for this event. Change only if you need a different option.';
+      if (isMembershipOnlyPayHow() && guestProgrammeEnabled()) {
+        const visits = readGuestVisitsAllowed();
+        text.innerHTML =
+          base +
+          ' Free trial visits: <strong>' +
+          esc(String(visits)) +
+          '</strong> per visitor.';
+      } else {
+        text.innerHTML = base;
+      }
     }
     syncPayHowContinueUi();
   }
@@ -1448,7 +1458,7 @@
     syncGuestProgrammeNote();
     if (panelTitle) {
       panelTitle.textContent = isMembershipMeetingMode()
-        ? 'Member booking & free trial visits'
+        ? 'Member ticket & join fee'
         : attendanceMode === 'guest_programme'
           ? 'Your ticket'
           : membersOnlyEventEnabled()
@@ -1457,7 +1467,13 @@
     }
     const panelLead = document.getElementById('ee-tickets-panel-lead');
     if (panelLead) {
-      panelLead.hidden = membersOnlyEventEnabled() || isMembershipMeetingMode();
+      if (isMembershipMeetingMode()) {
+        panelLead.hidden = false;
+        panelLead.textContent =
+          'Free visits stay as you set them in Step 2. Here, set the member ticket for this meeting and the fee to join your group.';
+      } else {
+        panelLead.hidden = membersOnlyEventEnabled() || isMembershipMeetingMode();
+      }
     }
     syncMembersOnlyEventMode();
     syncHubMembershipMount();
@@ -1510,8 +1526,8 @@
       if (hubMembershipEnabled()) {
         note.textContent =
           scope === 'across_groups'
-            ? 'Allow visitors to try your groups for free with up to 3 complimentary visits shared across all your organiser pages. After that, we invite them to join your membership at the price you set. Category Exclusivity still controls who gets a seat. You keep 100% of the membership fee.'
-            : 'Allow visitors to try this organiser page for free with up to 3 complimentary visits. After that, we invite them to join your membership at the price you set. Category Exclusivity still controls who gets a seat. You keep 100% of the membership fee.';
+            ? 'Up to 3 free visits shared across your organiser pages, then invite to join. Category Exclusivity still controls seats. You keep 100% of the membership fee.'
+            : 'Up to 3 free visits on this organiser page, then invite to join. Category Exclusivity still controls seats. You keep 100% of the membership fee.';
       } else {
         note.textContent =
           scope === 'across_groups'
@@ -1523,8 +1539,8 @@
     if (isMembershipMeeting || (isMembershipOnlyPayHow() && guestProgrammeEnabled())) {
       note.textContent =
         scope === 'across_groups'
-          ? 'Allow visitors to try your groups for free with up to 3 complimentary visits shared across all your organiser pages. After that, we invite them to join your membership at the price you set. No need to chase subscriptions — we automate join and renew for you, and you keep 100% of the membership fee.'
-          : 'Allow visitors to try this organiser page for free with up to 3 complimentary visits. After that, we invite them to join your membership at the price you set. No need to chase subscriptions — we automate join and renew for you, and you keep 100% of the membership fee.';
+          ? 'Visitors get free trial visits shared across your organiser pages (up to 3), then we invite them to join. You keep 100% of the membership fee.'
+          : 'Visitors get free trial visits on this organiser page (up to 3), then we invite them to join. You keep 100% of the membership fee.';
       return;
     }
     if (scope === 'across_groups') {
@@ -2114,24 +2130,20 @@
       if (addonHome && guestAddon && guestAddon.parentElement !== addonHome) {
         addonHome.appendChild(guestAddon);
       }
-      if (meetingMount) {
-        meetingMount.hidden = false;
-        if (fields.parentElement !== meetingMount) meetingMount.appendChild(fields);
-      }
-      // Prefer keeping the full free-visits card visible in Step 2 when still on pay-how.
-      if (generalMount && guestAddon && !payHowConfirmed) {
+      // Free visits stay on Step 2 — do not repeat the form on Step 3.
+      if (generalMount && guestAddon) {
         generalMount.hidden = false;
         if (guestAddon.parentElement !== generalMount) generalMount.appendChild(guestAddon);
         guestAddon.hidden = false;
         if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
         fields.hidden = !guestProgrammeEnabled();
-        if (meetingMount) meetingMount.hidden = true;
-      } else {
-        fields.hidden = false;
+      }
+      if (meetingMount) {
+        meetingMount.hidden = true;
+        meetingMount.replaceChildren();
       }
       if (optOut) optOut.hidden = true;
       if (ceMount) ceMount.hidden = true;
-      if (generalMount && payHowConfirmed) generalMount.hidden = true;
       return;
     }
 
@@ -2178,7 +2190,7 @@
     const panelTitle = document.getElementById('ee-tickets-panel-title');
     const panelLead = document.getElementById('ee-tickets-panel-lead');
     const closedHow = document.getElementById('ee-members-only-event-how');
-    const meetingHow = document.getElementById('ee-membership-meeting-how');
+    const visitsSummary = document.getElementById('ee-membership-visits-summary');
     const moeSummary = document.getElementById('ee-members-only-event-summary');
     const addonMount = document.getElementById('ee-private-ticket-fields-mount');
     if (toggleWrap) {
@@ -2210,11 +2222,14 @@
     if (optionalExtras) {
       if (!step2Confirmed || !payHowConfirmed) {
         optionalExtras.hidden = true;
+      } else if (membershipMeeting || membershipOnlyPay) {
+        // Membership path: member ticket + join fee live in the tickets panel.
+        optionalExtras.hidden = true;
       } else if (!payHowIncludesMembership()) {
         // Plain tickets path — skip "Members pay less" to keep the happy path simple.
         optionalExtras.hidden = true;
       } else if (isOpenBookingMode(attendanceMode)) {
-        optionalExtras.hidden = on && !membershipMeeting;
+        optionalExtras.hidden = on;
       } else if (attendanceMode === 'category_exclusivity') {
         optionalExtras.hidden = on;
       }
@@ -2239,7 +2254,7 @@
     }
     if (panelTitle) {
       panelTitle.textContent = membershipMeeting
-        ? 'Member booking & free trial visits'
+        ? 'Member ticket & join fee'
         : membershipOnlyPay
           ? 'Member booking'
           : on
@@ -2247,14 +2262,23 @@
             : 'Your ticket';
     }
     if (panelLead) {
-      panelLead.hidden = on;
-      if (!on) {
+      if (membershipMeeting) {
+        panelLead.hidden = false;
         panelLead.textContent =
-          'Give it a name and choose free or a price. Most organisers only need one ticket.';
+          'Free visits stay as you set them in Step 2. Here, set the member ticket for this meeting and the fee to join your group.';
+      } else {
+        panelLead.hidden = on;
+        if (!on) {
+          panelLead.textContent =
+            'Give it a name and choose free or a price. Most organisers only need one ticket.';
+        }
       }
     }
     if (closedHow) closedHow.hidden = !on || membershipMeeting || guestProgrammeEnabled();
-    if (meetingHow) meetingHow.hidden = !membershipMeeting;
+    if (visitsSummary) {
+      visitsSummary.hidden = !(membershipMeeting && payHowConfirmed && guestProgrammeEnabled());
+    }
+    syncMembershipVisitsSummary();
     if (moeSummary) moeSummary.hidden = !on;
 
     if (config && targetMount && config.parentElement !== targetMount) {
@@ -2284,12 +2308,17 @@
       }
       const priceEl = document.getElementById('ee-private-ticket-price');
       if (priceEl && (priceEl.value === '' || priceEl.value == null)) priceEl.value = '0';
+      const feeNote = document.getElementById('ee-private-ticket-fee-note');
+      if (feeNote) feeNote.hidden = Boolean(membershipMeeting);
       setMembersOnlyTicketHint(
         membershipMeeting
-          ? 'Members book this free (or at the member price). Guests use complimentary visits first, then join membership — no public event ticket.'
+          ? 'What members pay to book this meeting — often £0 when membership covers attendance.'
           : 'Members book when signed in with their membership email.',
         'ok'
       );
+    } else {
+      const feeNote = document.getElementById('ee-private-ticket-fee-note');
+      if (feeNote) feeNote.hidden = false;
     }
 
     if (membershipMeeting && memberRosterLoadState === 'idle') loadMemberRosterStatus();
@@ -2307,6 +2336,47 @@
     updateMembersOnlyEventSummary();
     updateTierSummary();
     syncTicketStepLabels();
+  }
+
+  function syncMembershipVisitsSummary() {
+    const text = document.getElementById('ee-membership-visits-summary-text');
+    if (!text) return;
+    if (!(isMembershipMeetingMode() && guestProgrammeEnabled())) {
+      text.textContent = '';
+      return;
+    }
+    const visits = readGuestVisitsAllowed();
+    const scope = readGuestVisitsScope();
+    const scopeLabel =
+      scope === 'across_groups' ? 'across all your organiser pages' : 'on this organiser page';
+    text.innerHTML =
+      '<strong>Free trial visits</strong> — ' +
+      esc(String(visits)) +
+      ' per visitor ' +
+      esc(scopeLabel) +
+      ' (set in Step 2).';
+  }
+
+  function bindMembershipVisitsChange() {
+    const btn = document.getElementById('ee-membership-visits-change');
+    if (!btn || btn.dataset.boundVisitsChange) return;
+    btn.dataset.boundVisitsChange = '1';
+    btn.addEventListener('click', function () {
+      payHowConfirmed = false;
+      showAlert('');
+      hideLaterTicketSteps();
+      const payHowPanel = document.getElementById('ee-panel-pay-how');
+      if (payHowPanel) payHowPanel.hidden = false;
+      syncPayHowStepUi();
+      syncPayHowUi();
+      syncTicketStepLabels();
+      try {
+        const guest = document.getElementById('ee-general-guest-mount') || payHowPanel;
+        guest?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        /* ignore */
+      }
+    });
   }
 
   function updateMembersOnlyEventSummary() {
@@ -2615,11 +2685,10 @@
     if (attendanceMode === 'category_exclusivity') {
       return document.getElementById('ee-hub-membership-mount-ce');
     }
-    if (isMembershipMeetingMode()) {
-      return (
-        document.getElementById('ee-hub-membership-mount-meeting') ||
-        document.getElementById('ee-hub-membership-mount-payhow')
-      );
+    if (isMembershipMeetingMode() || isMembershipOnlyPayHow()) {
+      // Join fee belongs on Step 3 with the member ticket — not again on Step 2.
+      if (!payHowConfirmed) return null;
+      return document.getElementById('ee-hub-membership-mount-meeting');
     }
     return (
       document.getElementById('ee-hub-membership-mount-payhow') ||
@@ -2644,6 +2713,8 @@
     } else if (addon.parentElement !== config) {
       config.appendChild(addon);
     }
+    const locked = isMembershipMeetingMode() || isMembershipOnlyPayHow();
+    addon.classList.toggle('is-locked', locked && hubMembershipEnabled());
     syncHubMembershipFields();
   }
 
@@ -2884,6 +2955,7 @@
 
   function bindPayHowFields() {
     bindPayHowChange();
+    bindMembershipVisitsChange();
     document.querySelectorAll('.ee-pay-how-options .ee-attendance-card').forEach(function (btn) {
       if (btn.dataset.boundPayHow) return;
       btn.dataset.boundPayHow = '1';
@@ -4106,6 +4178,12 @@
       }
     }
 
+    const bookingOptionsLink = document.getElementById('ee-booking-options-link');
+    if (bookingOptionsLink && eventIds.length) {
+      bookingOptionsLink.href =
+        '/organiser/booking-options?ids=' + encodeURIComponent(eventIds.join(','));
+    }
+
     const loading = window.organiserPageLoading;
     const bootWork = async () => {
       // Start secondary fetches immediately so they overlap primary tickets/event load.
@@ -4314,6 +4392,8 @@
           if (n < 1 && guestVisitsEl.value !== '') guestVisitsEl.value = '1';
         }
         syncGuestProgrammeNote();
+        syncMembershipVisitsSummary();
+        syncPayHowStepUi();
         updatePublishButton();
       });
       guestVisitsEl.addEventListener('change', () => {
@@ -4322,6 +4402,8 @@
         if (!Number.isFinite(n) || n < 1) guestVisitsEl.value = '1';
         else if (n > 3) guestVisitsEl.value = '3';
         syncGuestProgrammeNote();
+        syncMembershipVisitsSummary();
+        syncPayHowStepUi();
         updatePublishButton();
       });
     }
@@ -4331,6 +4413,8 @@
         if (scopeWrap) scopeWrap.dataset.userScoped = '1';
         organiserComplimentaryVisitsScope = readGuestVisitsScope();
         syncGuestProgrammeNote();
+        syncMembershipVisitsSummary();
+        syncPayHowStepUi();
         updatePublishButton();
       });
     });
