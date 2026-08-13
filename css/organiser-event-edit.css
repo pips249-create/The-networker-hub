@@ -1734,33 +1734,61 @@ body.ee-step2-modal-open {
 }
 
 /* —— Booking options help page —— */
-/* Event-edit pages lock body scroll into .ee-wrap; this page has no .ee-wrap. */
-body.hub-page-organiser.organiser-booking-options-page,
-body.organiser-booking-options-page {
+/* Standalone scrollable page — do not inherit event-edit locked viewport. */
+html:has(body.organiser-booking-options-page) {
   height: auto !important;
   max-height: none !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
 }
 
-.organiser-booking-options-page {
+body.hub-page-organiser.organiser-booking-options-page,
+body.organiser-booking-options-page {
+  display: block !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 100vh;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  --ee-purple: #0d6e7a;
+  --ee-purple-dark: #084a52;
+  --ee-purple-light: #d4f0f3;
+  --ee-purple-pale: #e8f6f8;
+  --ee-gold: #bd932e;
+  --ee-text: #1a2e3b;
+  --ee-text-mid: #4a6272;
+  --ee-text-soft: #7a94a3;
+  --ee-bg: #f4f8fa;
+  --ee-white: #fff;
+  --ee-border: #e8dbea;
+  --ee-radius: 10px;
+  font-family: DM Sans, system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ee-text);
   background:
     radial-gradient(ellipse 80% 50% at 10% -10%, rgba(13, 110, 122, 0.12), transparent 55%),
     radial-gradient(ellipse 70% 45% at 100% 0%, rgba(189, 147, 46, 0.1), transparent 50%),
     linear-gradient(180deg, #eef5f7 0%, #f4f8fa 40%, #f7f4ef 100%);
 }
 
+.organiser-booking-options-page #hub-site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 .ee-booking-help {
-  padding: 0 16px 56px;
-  flex: 1 1 auto;
+  display: block;
   width: 100%;
+  max-width: 100%;
+  padding: 12px 16px 72px;
   box-sizing: border-box;
 }
 
 .ee-booking-help-shell {
   max-width: 920px;
   margin: 0 auto;
-  padding-top: 8px;
 }
 
 .ee-booking-help-hero {
@@ -1799,14 +1827,10 @@ body.organiser-booking-options-page {
   grid-template-columns: 1fr;
   gap: 10px;
   margin: 0 0 28px;
-  position: sticky;
-  top: 84px;
-  z-index: 20;
-  padding: 10px;
-  border-radius: 14px;
-  background: rgba(244, 248, 250, 0.94);
-  border: 1px solid rgba(13, 110, 122, 0.14);
-  backdrop-filter: blur(8px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  position: static;
 }
 
 @media (min-width: 780px) {
@@ -1823,7 +1847,7 @@ body.organiser-booking-options-page {
   padding: 14px 14px 16px;
   border-radius: 12px;
   border: 1.5px solid rgba(13, 110, 122, 0.18);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   text-decoration: none;
   color: inherit;
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease,
@@ -1887,7 +1911,7 @@ body.organiser-booking-options-page {
   border: 1px solid rgba(26, 46, 59, 0.08);
   border-left: 5px solid #7a94a3;
   background: rgba(255, 255, 255, 0.96);
-  scroll-margin-top: 200px;
+  scroll-margin-top: 96px;
 }
 
 .ee-booking-help-section#tickets {
