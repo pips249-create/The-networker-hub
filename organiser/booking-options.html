@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813book8" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813book9" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -27,17 +27,41 @@
       <div class="ee-booking-help-shell">
         <div class="ee-back-row">
           <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
-          <a class="ee-back ee-back-secondary" href="/organiser/event-tickets">Set up tickets</a>
+          <a class="ee-back ee-back-secondary" data-tickets-link href="/organiser/event-tickets">Set up tickets</a>
         </div>
 
         <header class="ee-booking-help-hero">
           <p class="ee-booking-help-eyebrow">Organiser workspace</p>
           <h1 class="ee-booking-help-title">How booking options work</h1>
           <p class="ee-booking-help-lede">
-            When you set up tickets, you choose one path. Start with the short comparison below, then scroll
-            (or click an option) to read the detail for that path.
+            After you choose <strong>General ticketing</strong> or <strong>Application based</strong>, you pick
+            one booking path. Use the quick pick below, then open an option for the detail.
           </p>
         </header>
+
+        <aside class="ee-booking-help-chooser" aria-label="Quick pick">
+          <p class="ee-booking-help-chooser-label">Which sounds like you?</p>
+          <ul class="ee-booking-help-chooser-list">
+            <li>
+              <a href="#tickets" data-booking-nav="tickets">
+                <span class="ee-booking-help-chooser-q">One-off or ticketed day?</span>
+                <span class="ee-booking-help-chooser-a">→ Ticket for this event</span>
+              </a>
+            </li>
+            <li>
+              <a href="#membership" data-booking-nav="membership">
+                <span class="ee-booking-help-chooser-q">Weekly group, try then join?</span>
+                <span class="ee-booking-help-chooser-a">→ Convert free visits into members</span>
+              </a>
+            </li>
+            <li>
+              <a href="#both" data-booking-nav="both">
+                <span class="ee-booking-help-chooser-q">Guests pay; members at a member rate?</span>
+                <span class="ee-booking-help-chooser-a">→ Ticket and membership</span>
+              </a>
+            </li>
+          </ul>
+        </aside>
 
         <nav class="ee-booking-help-compare" aria-label="Compare booking options">
           <a class="ee-booking-help-compare-item" href="#tickets" data-booking-nav="tickets">
@@ -47,15 +71,12 @@
               <span>Best for one-off or simple paid or free booking</span>
             </span>
           </a>
-          <a
-            class="ee-booking-help-compare-item ee-booking-help-compare-item--focus"
-            href="#membership"
-            data-booking-nav="membership"
-          >
+          <a class="ee-booking-help-compare-item" href="#membership" data-booking-nav="membership">
             <span class="ee-booking-help-compare-num" aria-hidden="true">2</span>
             <span class="ee-booking-help-compare-copy">
               <strong>Convert free visits into members</strong>
               <span>Best for weekly groups with try-before-you-join</span>
+              <span class="ee-booking-help-compare-badge">Popular for weekly groups</span>
             </span>
           </a>
           <a class="ee-booking-help-compare-item" href="#both" data-booking-nav="both">
@@ -117,7 +138,7 @@
                 <em>Optional extras as their own ticket type</em>
               </li>
             </ul>
-            <p class="ee-hint" style="margin: 10px 0 0">
+            <p class="ee-hint ee-booking-help-example-note">
               You choose the names and prices — these figures are only to show how several ticket types work.
             </p>
           </div>
@@ -170,6 +191,14 @@
               </p>
             </div>
             <div class="ee-booking-help-panel">
+              <h3>What you set up</h3>
+              <ul>
+                <li>How many free trial visits (up to 3)</li>
+                <li>Member ticket price for this meeting (often £0)</li>
+                <li>Monthly or annual membership fee after visits are used</li>
+              </ul>
+            </div>
+            <div class="ee-booking-help-panel">
               <h3>What you get</h3>
               <ul>
                 <li>Visit history for people who tried your meetings</li>
@@ -177,16 +206,34 @@
                 <li>Reports on who came, who joined, and who is ready to pay</li>
               </ul>
             </div>
-            <div class="ee-booking-help-panel ee-booking-help-panel--note">
-              <h3>Why groups choose this</h3>
-              <p>
-                Free visits become members you can keep in touch with — not one-off guests who vanish after a
-                single meeting.
-              </p>
-            </div>
           </div>
 
-          <div class="ee-booking-help-benefits">
+          <div class="ee-booking-help-example">
+            <h3>Example — weekly networking breakfast</h3>
+            <ul class="ee-booking-help-example-tiers">
+              <li>
+                <strong>Free trial visits</strong>
+                <span>2 free</span>
+                <em>Visitors try two meetings before joining</em>
+              </li>
+              <li>
+                <strong>Member ticket</strong>
+                <span>£0</span>
+                <em>Members book each meeting at no extra charge</em>
+              </li>
+              <li>
+                <strong>Monthly membership</strong>
+                <span>£35 a month</span>
+                <em>Join fee after free visits — covers ongoing meetings</em>
+              </li>
+            </ul>
+            <p class="ee-hint ee-booking-help-example-note">
+              Prices are examples — you set your own. No public visitor ticket on this path; guests use free
+              visits, then join.
+            </p>
+          </div>
+
+          <div class="ee-booking-help-benefits" id="membership-benefits">
             <h3>Benefits of running membership through the Hub</h3>
             <ul>
               <li>
@@ -273,40 +320,21 @@
                 <em>Join fee after free visits — covers meetings and lunch</em>
               </li>
             </ul>
-            <p class="ee-hint" style="margin: 10px 0 0">
+            <p class="ee-hint ee-booking-help-example-note">
               Visitors pay for the ticket (and lunch). Members already covered by membership book at £0. Prices
               are examples — you set your own.
             </p>
           </div>
 
-          <div class="ee-booking-help-benefits">
-            <h3>Benefits of running membership through the Hub</h3>
-            <ul>
-              <li>
-                <strong>You keep 100% of the membership price you set</strong> — members pay a separate
-                booking fee (4.5% + 20p) on top.
-              </li>
-              <li>
-                <strong>One list for guests and members</strong> — see who bought lunch as a guest, who joined,
-                and who is already on membership.
-              </li>
-              <li>
-                <strong>Visit history and reports</strong> — track free visits used, renewals due, and who has
-                booked the next meeting.
-              </li>
-              <li>
-                <strong>Your brand, your group</strong> — membership is for <em>your</em> networking group on
-                your organiser page.
-              </li>
-              <li>
-                <strong>Less chasing</strong> — join and renew online; invite people to pay when you are ready.
-              </li>
-            </ul>
-          </div>
+          <p class="ee-booking-help-benefits-ref">
+            Membership fee handling, visit history, and “your brand, your group” work the same as Option 2 —
+            see
+            <a href="#membership-benefits" data-booking-nav="membership">Benefits of running membership through the Hub</a>.
+          </p>
         </article>
 
         <aside class="ee-booking-help-unsure" aria-labelledby="ee-booking-help-unsure-title">
-          <h2 id="ee-booking-help-unsure-title">Not sure?</h2>
+          <h2 id="ee-booking-help-unsure-title">Still not sure?</h2>
           <div class="ee-booking-help-unsure-grid">
             <p>
               Most one-off or ticketed events use <strong>Ticket for this event</strong>.
@@ -324,18 +352,49 @@
 
         <div class="ee-actions ee-actions--split ee-booking-help-actions">
           <a class="ee-btn ee-btn-outline" href="/organiser/#events-list">Back to dashboard</a>
-          <a class="ee-btn ee-btn-gold" href="/organiser/event-tickets">Continue to set up tickets →</a>
+          <a class="ee-btn ee-btn-gold" data-tickets-link href="/organiser/event-tickets"
+            >Continue to set up tickets →</a
+          >
         </div>
       </div>
     </div>
+
+    <div class="ee-booking-help-sticky-cta" hidden>
+      <a class="ee-btn ee-btn-gold" data-tickets-link href="/organiser/event-tickets"
+        >Continue to set up tickets →</a
+      >
+    </div>
+
     <script>
       (function () {
-        var sections = ['tickets', 'membership', 'both'].map(function (id) {
-          return document.getElementById(id);
-        }).filter(Boolean);
-        var navLinks = Array.prototype.slice.call(
-          document.querySelectorAll('[data-booking-nav]')
-        );
+        var params = new URLSearchParams(location.search);
+        var ids = (params.get('ids') || '').trim();
+        var ticketsHref = '/organiser/event-tickets' + (ids ? '?ids=' + encodeURIComponent(ids) : '');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-tickets-link]'), function (el) {
+          el.setAttribute('href', ticketsHref);
+        });
+
+        var stickyCta = document.querySelector('.ee-booking-help-sticky-cta');
+        var bottomActions = document.querySelector('.ee-booking-help-actions');
+        if (stickyCta && bottomActions && 'IntersectionObserver' in window) {
+          stickyCta.hidden = false;
+          var stickyObserver = new IntersectionObserver(
+            function (entries) {
+              var entry = entries[0];
+              var show = entry && !entry.isIntersecting;
+              stickyCta.classList.toggle('is-visible', show);
+            },
+            { root: null, threshold: 0.15 }
+          );
+          stickyObserver.observe(bottomActions);
+        }
+
+        var sections = ['tickets', 'membership', 'both']
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        var navLinks = Array.prototype.slice.call(document.querySelectorAll('[data-booking-nav]'));
         if (!sections.length || !navLinks.length) return;
 
         function setActive(id) {
@@ -353,7 +412,9 @@
         navLinks.forEach(function (link) {
           link.addEventListener('click', function (e) {
             var id = link.getAttribute('data-booking-nav');
-            var target = document.getElementById(id);
+            var hrefId = (link.getAttribute('href') || '').replace(/^#/, '');
+            var target =
+              (hrefId && document.getElementById(hrefId)) || document.getElementById(id);
             if (!target) return;
             e.preventDefault();
             setActive(id);
@@ -363,9 +424,9 @@
               target.scrollIntoView(true);
             }
             if (history.replaceState) {
-              history.replaceState(null, '', '#' + id);
+              history.replaceState(null, '', '#' + (hrefId || id));
             } else {
-              location.hash = id;
+              location.hash = hrefId || id;
             }
           });
         });
@@ -392,7 +453,8 @@
         }
 
         var hash = (location.hash || '').replace(/^#/, '');
-        if (hash && document.getElementById(hash)) setActive(hash);
+        if (hash === 'membership-benefits') setActive('membership');
+        else if (hash && document.getElementById(hash)) setActive(hash);
         else setActive(sections[0].id);
       })();
     </script>
