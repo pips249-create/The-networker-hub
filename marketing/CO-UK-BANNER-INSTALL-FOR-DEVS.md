@@ -21,7 +21,7 @@ File: `marketing/co-uk-upgrade-banner-snippet.html` — paste the **entire** fil
 ### Sneak Peek CTA (already in the snippet)
 
 ```
-https://www.thenetworkerhub.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
+https://www.thenetworkerhub.com/peek/for-organisers?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
 ```
 
 ---
