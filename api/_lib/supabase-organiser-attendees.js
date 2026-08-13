@@ -39,8 +39,9 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
       quantity,
       guest_names,
       cancelled_at,
+      no_show_at,
       attendees ( name, email, company, business_sector, job_title ),
-      events ( title, organiser_id, starts_at ),
+      events ( title, organiser_id, starts_at, ends_at ),
       tickets ( name, price, ticket_type )
     `;
   const extrasSelect = `
@@ -64,11 +65,26 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
     const select = includeExtras
       ? selectBase.replace('guest_names,', 'guest_names,\n' + extrasSelect)
       : selectBase;
-    return sb
+    let result = await sb
       .from('registrations')
       .select(select)
       .in('event_id', eventFilterIds)
       .is('cancelled_at', null);
+    if (result.error && /no_show_at/i.test(String(result.error.message || ''))) {
+      result = await sb
+        .from('registrations')
+        .select(select.replace(/\n?\s*no_show_at,/, ''))
+        .in('event_id', eventFilterIds)
+        .is('cancelled_at', null);
+    }
+    if (result.error && /ends_at/i.test(String(result.error.message || ''))) {
+      result = await sb
+        .from('registrations')
+        .select(select.replace(', ends_at', '').replace(/\n?\s*no_show_at,/, ''))
+        .in('event_id', eventFilterIds)
+        .is('cancelled_at', null);
+    }
+    return result;
   }
 
   async function fetchWithProfileFallback(includeExtras, eventFilterIds) {
@@ -199,6 +215,8 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
         eventId: row.event_id,
         eventTitle: String(event.title || 'Event').trim(),
         eventDate: event.starts_at || '',
+        eventEndsAt: event.ends_at || '',
+        isNoShow: Boolean(row.no_show_at),
         name,
         email,
         company: String(attendee.company || '').trim(),

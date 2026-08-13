@@ -252,6 +252,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Only {{upcoming_count}} events left on your calendar',
   },
+  organiser_post_event_checklist: {
+    file: 'organiser-post-event-checklist.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'After {{event_name}} — two quick steps',
+  },
   event_removed_by_hub: {
     file: 'event-removed-by-hub.html',
     marker: 'hub-email-layout-v3-purple',

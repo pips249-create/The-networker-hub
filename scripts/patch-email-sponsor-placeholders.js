@@ -49,6 +49,7 @@ const ORGANISER_MINI_FILES = [
   'organiser-featured-expiry-reminder.html',
   'organiser-ranking-badge.html',
   'organiser-low-upcoming-events.html',
+  'organiser-post-event-checklist.html',
 ];
 
 const ORGANISER_MAIN_ONLY_FILES = [

@@ -140,6 +140,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'category_exclusivity_payment_reminder',
   'event_almost_full',
   'organiser_low_upcoming_events',
+  'organiser_post_event_checklist',
   'password_reset',
   'organiser_email_verify',
   'post_event_review_request',
