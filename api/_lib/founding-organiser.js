@@ -115,8 +115,8 @@ async function foundingHomepageSlotPatch(sb) {
 }
 
 /**
- * Safety net: award founding on publish if claim was pre-deadline but badge was missed
- * (e.g. claimed before award-on-claim shipped). Prefer foundingFieldsForClaim on claim.
+ * Safety net: award founding on publish only for organisers who really claimed
+ * (pre-deadline) and whose Hub user has signed in — never for admin-provisioned accounts.
  * @returns {Promise<object[]>} updated organiser rows that newly received founding
  */
 async function maybeAwardFoundingAfterEventPublish(sb, organiserIds, now = new Date()) {
@@ -129,6 +129,17 @@ async function maybeAwardFoundingAfterEventPublish(sb, organiserIds, now = new D
     if (error) throw new Error(error.message);
     if (!row || row.founding_organiser_at) continue;
     if (!claimedDuringFoundingWindow(row)) continue;
+
+    // Admin-provisioned logins have never signed in — do not award founding.
+    const uid = String(row.supabase_user_id || '').trim();
+    if (!uid) continue;
+    try {
+      const { data: authData } = await sb.auth.admin.getUserById(uid);
+      if (!authData || !authData.user || !authData.user.last_sign_in_at) continue;
+    } catch (e) {
+      console.warn('founding publish award auth check failed:', e && e.message ? e.message : e);
+      continue;
+    }
 
     const patch = {
       founding_organiser_at: now.toISOString(),

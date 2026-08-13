@@ -14,7 +14,7 @@ Do **not** limit the badge to 50 — that creates #51 disappointment. Cap only t
 
 ### Technical
 - Migration: `supabase/migrations/241_founding_organiser.sql` (+ `254_founding_award_on_claim.sql` backfill)
-- Award on claim (before 1 Sept): `api/_lib/founding-organiser.js` → `foundingFieldsForClaim` via `supabase-organiser-claims`
+- Award on claim (before 1 Sept): `api/_lib/founding-organiser.js` → `foundingFieldsForClaim` via `claimGroupForSession` only (personalised claim URL). **Not** on admin provision / `ensureOrganiserClaimedForAdminEvent`.
 - **Backfill:** migration 254 awards the badge to every page already claimed before 1 Sept (dated to `ownership_claimed_at`), and backdates anyone who got the badge later via the old publish rule. First 50 by claim time get homepage slots.
 - Publish path keeps `maybeAwardFoundingAfterEventPublish` as a safety net for older claims that missed the badge
 - Claim confirmation email: `api/_lib/organiser-claim-confirmed-emails.js` + `email-templates/organiser-claim-confirmed.html` (migration `242_organiser_claim_confirmed_email.sql`) — founding perk row + badge PNG when the claim was in-window. Badge PNG is embedded in the body and attached as `Founding-Organiser-2026-badge.png` (`assets/founding-organiser-badge-2026.png`).

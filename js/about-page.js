@@ -71,10 +71,7 @@
         esc(photo) +
         '" alt="' +
         esc(name) +
-        '" loading="lazy" decoding="async" class="about-founding-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'about-founding-item--fallback\');this.parentElement.classList.remove(\'about-founding-item--dark-logo\')}" />' +
-        '<span class="about-founding-initial" hidden aria-hidden="true">' +
-        esc(initial) +
-        '</span>';
+        '" loading="lazy" decoding="async" class="about-founding-logo" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'about-founding-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'about-founding-item--fallback\');this.parentElement.classList.remove(\'about-founding-item--dark-logo\');this.parentElement.appendChild(s);" />';
     } else {
       inner =
         '<span class="about-founding-initial" aria-hidden="true">' + esc(initial) + '</span>';
@@ -129,9 +126,9 @@
 
     var items = list.map(foundingItemHtml).join('');
     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var useMarquee = list.length > 1 && !prefersReducedMotion;
-    var isStatic = list.length <= 1;
-    var isScrollable = !useMarquee && list.length > 1;
+    var useMarquee = list.length >= 6 && !prefersReducedMotion;
+    var isStatic = !useMarquee;
+    var isScrollable = false;
 
     track.classList.toggle('about-founding-track--marquee', useMarquee);
     track.classList.toggle('about-founding-track--scroll', isScrollable);
@@ -145,8 +142,7 @@
     if (marquee) {
       marquee.classList.toggle('about-founding-marquee--scrollable', isScrollable);
       marquee.scrollLeft = 0;
-      if (isScrollable) marquee.setAttribute('tabindex', '0');
-      else marquee.setAttribute('tabindex', '-1');
+      marquee.setAttribute('tabindex', '-1');
     }
   }
 

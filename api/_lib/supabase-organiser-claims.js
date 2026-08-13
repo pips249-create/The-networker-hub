@@ -389,12 +389,8 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   if (account?.id && !organiser.organiser_account_id) {
     patch.organiser_account_id = account.id;
   }
-  try {
-    const { foundingFieldsForClaim } = require('./founding-organiser');
-    Object.assign(patch, await foundingFieldsForClaim(sb, new Date(now)));
-  } catch (e) {
-    console.warn('founding fields on admin claim failed:', e && e.message ? e.message : e);
-  }
+  // Do NOT award Founding Organiser here — admin/provisioned claims are not
+  // the personalised claim-URL flow. Badge only via claimGroupForSession.
 
   const { error: upErr } = await sb.from('organisers').update(patch).eq('id', oid);
   if (upErr) throw new Error(upErr.message);

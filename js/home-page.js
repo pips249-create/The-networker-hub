@@ -508,15 +508,14 @@
     var darkClass = org.logoBandDark ? ' home-partner-item--dark-logo' : '';
     var inner;
     if (photo) {
+      // No fallback initial in the DOM while the logo is present — CSS `display`
+      // on .home-founding-initial was overriding [hidden] and showing giant letters.
       inner =
         '<img src="' +
         esc(photo) +
         '" alt="' +
         esc(name) +
-        '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'home-founding-item--fallback\');this.parentElement.classList.remove(\'home-partner-item--dark-logo\')}" />' +
-        '<span class="home-founding-initial" hidden aria-hidden="true">' +
-        esc(initial) +
-        '</span>';
+        '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'home-founding-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'home-founding-item--fallback\');this.parentElement.classList.remove(\'home-partner-item--dark-logo\');this.parentElement.appendChild(s);" />';
     } else {
       inner =
         '<span class="home-founding-initial" aria-hidden="true">' + esc(initial) + '</span>';
@@ -570,15 +569,15 @@
 
     var items = list.map(foundingItemHtml).join('');
     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var useMarquee = list.length > 1 && !prefersReducedMotion;
-    var isStatic = list.length <= 1;
-    var isScrollable = !useMarquee && list.length > 1;
+    // Need a full row before looping — otherwise 2 logos look duplicated (BMUK, FC, BMUK, FC).
+    var useMarquee = list.length >= 6 && !prefersReducedMotion;
+    var isStatic = !useMarquee;
+    var isScrollable = false;
 
     track.classList.toggle('home-partners-track--marquee', useMarquee);
     track.classList.toggle('home-partners-track--scroll', isScrollable);
     track.classList.toggle('home-partners-track--static', isStatic);
     track.innerHTML = useMarquee ? items + items : items;
-    // ~3.8s per logo so a full strip is readable (was a fixed 40s for every length).
     track.style.setProperty(
       '--home-marquee-duration',
       useMarquee ? Math.max(60, Math.round(list.length * 3.8)) + 's' : ''
@@ -587,8 +586,7 @@
     if (marquee) {
       marquee.classList.toggle('home-partners-marquee--scrollable', isScrollable);
       marquee.scrollLeft = 0;
-      if (isScrollable) marquee.setAttribute('tabindex', '0');
-      else marquee.setAttribute('tabindex', '-1');
+      marquee.setAttribute('tabindex', '-1');
     }
   }
 
