@@ -72,19 +72,19 @@
     'pay-how': {
       title: 'Tickets or membership?',
       body:
-        'Choose tickets for this event (paid or free), a membership package for your group, or both. Free trial visits are optional and work with either path.',
+        'Choose tickets for this event (paid or free), group membership for your organiser page, or both. Free trial visits are optional and work with either path.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
-      title: 'Membership package',
+      title: 'Group membership',
       body:
-        'People join your group membership instead of buying a one-off event ticket. You can still offer free trial visits, or tick Members only so only signed-in members can book.',
+        'People pay a monthly or yearly fee to join your group, then attend meetings as members instead of buying a one-off ticket each time. You can still offer free trial visits.',
       hubertPrompt: 'How does monthly membership work with events?',
     },
     'pay-how-both': {
       title: 'Both',
       body:
-        'Offer public tickets for this event and a membership package. Guests can buy a ticket, use free trial visits if you offer them, or join membership.',
+        'Offer tickets for newcomers and group membership for regulars. Guests can buy a ticket, use free trial visits if you offer them, or join membership.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {

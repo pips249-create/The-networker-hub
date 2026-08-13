@@ -1150,13 +1150,6 @@
     });
   }
 
-  function payHowLabel() {
-    const h = readPayHow();
-    if (h === 'both') return 'Both — tickets and membership package';
-    if (h === 'membership') return 'Membership package';
-    return 'Tickets';
-  }
-
   function syncPayHowStepUi() {
     const panel = document.getElementById('ee-panel-pay-how');
     if (!panel) return;
@@ -2461,16 +2454,14 @@
     const closedToggle = document.getElementById('ee-members-only-event-toggle');
 
     if (lead) {
-      lead.textContent = isApplication
-        ? 'Pick one. You can add free trial visits below if you want.'
-        : 'Pick one. You can add free trial visits below if you want.';
+      lead.textContent = 'Pick one option, then continue.';
     }
     if (hint) {
       // Keep the status line for screen readers / continue prompts, but hide the visual clutter.
       hint.hidden = true;
       if (!payHowConfirmed) {
         hint.textContent = includesMembership
-          ? 'Continue to set your membership package amounts.'
+          ? 'Continue to set your group membership amounts.'
           : 'Continue to add your ticket.';
       } else {
         hint.textContent = includesMembership
@@ -2481,16 +2472,16 @@
     if (outcome) {
       if (isApplication) {
         outcome.textContent = includesTickets && includesMembership
-          ? 'Both — approved guests book a ticket; members can join a membership package instead.'
+          ? 'Both — approved guests book a ticket; members can join your group instead.'
           : includesMembership
-            ? 'Membership package — after free visits, people join (no public ticket needed).'
+            ? 'Group membership — after free visits, people join (no one-off ticket needed).'
             : 'Tickets after approval — you approve, then they book (paid or free).';
       } else if (includesTickets && includesMembership) {
         outcome.textContent =
-          'Both — tickets for newcomers, membership package for regulars. Turn on Members pay less so members are not charged twice.';
+          'Both — tickets for newcomers, group membership for regulars. Turn on Members pay less so members are not charged twice.';
       } else if (includesMembership) {
         outcome.textContent =
-          'Membership package — members book from your list (usually £0). New joiners pay your membership fee + booking fee.';
+          'Group membership — members book from your list (usually £0). New joiners pay your membership fee + booking fee.';
       } else {
         outcome.textContent = 'Tickets — people book a ticket for this event (paid or free).';
       }

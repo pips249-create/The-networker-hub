@@ -1382,6 +1382,11 @@ a.ee-wizard-link:hover {
   box-shadow: inset 0 0 0 1px var(--ee-purple);
 }
 
+.ee-pay-how-options .ee-attendance-card.is-active {
+  border-width: 3px;
+  box-shadow: inset 0 0 0 1px var(--ee-purple), 0 0 0 3px rgba(91, 47, 153, 0.18);
+}
+
 .ee-attendance-next {
   display: flex;
   justify-content: flex-end;
