@@ -2138,8 +2138,8 @@
       return;
     }
 
-    // Membership-only (and ticket+membership before continue): keep free trial visits in Step 2.
-    if ((membershipOnly || (payHowIncludesMembership() && !isCategory)) && !isMeeting) {
+    // Membership-only: keep free trial visits on the path-choice step.
+    if (membershipOnly && !isMeeting) {
       if (meetingMount) meetingMount.hidden = true;
       if (ceMount) ceMount.hidden = true;
       if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
@@ -2150,6 +2150,21 @@
         fields.hidden = !guestProgrammeEnabled();
         if (optOut) optOut.hidden = true;
       }
+      return;
+    }
+
+    // Ticket and membership: free visits belong after Continue, not under the cards.
+    if (payHowIncludesTickets() && payHowIncludesMembership() && !isCategory && !isMeeting) {
+      if (meetingMount) meetingMount.hidden = true;
+      if (ceMount) ceMount.hidden = true;
+      if (generalMount) generalMount.hidden = true;
+      if (addonHome && guestAddon && guestAddon.parentElement !== addonHome) {
+        addonHome.appendChild(guestAddon);
+      }
+      if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
+      if (guestAddon) guestAddon.hidden = !payHowConfirmed;
+      fields.hidden = !payHowConfirmed || !guestProgrammeEnabled();
+      if (optOut) optOut.hidden = !payHowConfirmed || !guestProgrammeEnabled();
       return;
     }
 
@@ -2620,7 +2635,7 @@
             ? 'Next: free visits, then your join fee.'
             : 'Next: ticket price after you approve.';
       } else if (includesTickets && includesMembership) {
-        outcome.textContent = 'Next: visitor tickets, then member price and join fee.';
+        outcome.textContent = 'Next: visitor tickets, then member price, join fee, and optional free visits.';
       } else if (includesMembership) {
         outcome.textContent = 'Next: free visits, then member ticket and join fee.';
       } else {
