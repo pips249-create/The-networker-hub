@@ -564,12 +564,6 @@
             .trim();
         }
 
-        function addScore(scores, key, n, phrases, weight) {
-          for (var i = 0; i < phrases.length; i++) {
-            if (hasPhrase(n, phrases[i])) scores[key] += weight;
-          }
-        }
-
         function hasPhrase(n, phrase) {
           if (!phrase) return false;
           if (phrase.indexOf(' ') !== -1) return n.indexOf(phrase) !== -1;
@@ -583,73 +577,13 @@
           return false;
         }
 
-        var lastSuggested = '';
-
         function suggestOption(raw) {
           var n = norm(raw);
           var words = n.split(' ').filter(Boolean);
-          if (!n) {
-            lastSuggested = '';
-            return null;
-          }
-          if (n.length < 4 || words.length < 2) {
-            return lastSuggested || null;
-          }
+          if (!n || words.length < 2) return null;
 
-          var scores = { tickets: 0, membership: 0, both: 0 };
-
-          addScore(scores, 'tickets', n, [
-            'masterclass',
-            'master class',
-            'workshop',
-            'conference',
-            'exhibition',
-            'expo',
-            'seminar',
-            'bootcamp',
-            'training day',
-            'training course',
-            'webinar',
-            'retreat',
-            'summit',
-            'awards',
-            'one off',
-            'oneoff',
-            'ticketed',
-            'day course',
-            '3 day',
-            '3 days',
-            'three day',
-            'three days',
-            'two day',
-            '2 day',
-            'weekend course',
-          ], 6);
-          addScore(scores, 'tickets', n, [
-            'course',
-            'class',
-            'classes',
-            'training',
-            'tickets',
-            'ticket',
-            'mixer',
-            'dinner',
-            'lunch',
-            'breakfast',
-            'event',
-            'events',
-            'day',
-            'days',
-          ], 2);
-
-          addScore(scores, 'membership', n, [
-            'new group',
-            'new networking',
-            'create a group',
-            'creating a group',
-            'start a group',
-            'starting a group',
-            'starting up',
+          var hasMembers = hasAny(n, ['member', 'members', 'membership', 'regulars']);
+          var noMembersYet = hasAny(n, [
             'no members',
             'without members',
             'dont have members',
@@ -660,7 +594,30 @@
             'no one yet',
             'from scratch',
             'brand new',
+          ]);
+          var hasOldOrExisting = hasAny(n, [
+            'old',
+            'existing',
+            'established',
+            'returning',
+            'current members',
+            'already have',
+            'already run',
+            'on the books',
+            'regulars',
+            'new and old',
+            'new and existing',
+          ]);
+          var newGroup = hasAny(n, [
+            'new group',
+            'create a group',
+            'creating a group',
+            'start a group',
+            'starting a group',
+            'starting up',
             'just starting',
+          ]);
+          var tryJoin = hasAny(n, [
             'try then join',
             'try a meeting',
             'try free',
@@ -668,86 +625,6 @@
             'free visits',
             'trial visit',
             'trial visits',
-          ], 6);
-          addScore(scores, 'membership', n, [
-            'new',
-            'starting',
-            'beginners',
-            'grow a group',
-            'membership',
-            'join',
-          ], 1);
-
-          addScore(scores, 'both', n, [
-            'existing group',
-            'existing members',
-            'already have members',
-            'already have a group',
-            'already run',
-            'established group',
-            'established members',
-            'current members',
-            'old members',
-            'returning members',
-            'new and old',
-            'new and existing',
-            'my members',
-            'our members',
-            'have members',
-            'with members',
-            'got members',
-            'and members',
-            'member list',
-            'guest ticket',
-            'guests pay',
-            'visitors pay',
-            'members pay less',
-            'member price',
-            'members for free',
-            'members do not pay',
-            'members dont pay',
-            'do not pay monthly',
-            'dont pay monthly',
-            'no monthly',
-            'invite members',
-            'invite them',
-            'monthly group',
-            'monthly meeting',
-            'monthly masterclass',
-            'every month',
-            'each month',
-          ], 6);
-          addScore(scores, 'both', n, [
-            'existing',
-            'established',
-            'regulars',
-            'roster',
-            'invite',
-            'invites',
-            'members',
-            'member',
-            'monthly',
-          ], 2);
-
-          var mentionsMembers = hasAny(n, [
-            'member',
-            'members',
-            'membership',
-            'regulars',
-            'old members',
-            'existing',
-          ]);
-          var mixedOrOld = hasAny(n, [
-            'old',
-            'existing',
-            'established',
-            'returning',
-            'new and old',
-            'new and existing',
-            'current members',
-            'have members',
-            'with members',
-            'got members',
           ]);
           var recurring = hasAny(n, [
             'monthly',
@@ -756,28 +633,49 @@
             'weekly',
             'every week',
             'regular',
+            'ongoing',
+          ]);
+          var twoPrices = hasAny(n, [
+            'guest ticket',
+            'guests pay',
+            'visitors pay',
+            'members pay',
+            'member price',
+            'invite',
           ]);
 
-          if (mentionsMembers && (mixedOrOld || recurring)) {
-            scores.both += 10;
-            scores.tickets = Math.min(scores.tickets, 1);
-            scores.membership = Math.min(scores.membership, 2);
-          } else if (
-            mentionsMembers &&
-            !hasAny(n, ['no members', 'without members', 'dont have members', 'do not have members'])
-          ) {
-            scores.both += 6;
-            scores.tickets = Math.min(scores.tickets, 2);
+          // Members always beat the event format (masterclass, seminar, event).
+          if (hasMembers && (hasOldOrExisting || recurring || twoPrices)) return 'both';
+          if (hasMembers && !noMembersYet && !newGroup) return 'both';
+
+          if ((newGroup || noMembersYet || tryJoin) && !hasOldOrExisting) {
+            return 'membership';
           }
 
-          var best = 'tickets';
-          if (scores.membership > scores[best]) best = 'membership';
-          if (scores.both > scores[best]) best = 'both';
-          if (scores[best] <= 0) {
-            return lastSuggested || null;
-          }
-          lastSuggested = best;
-          return best;
+          var oneOff = hasAny(n, [
+            'masterclass',
+            'workshop',
+            'conference',
+            'exhibition',
+            'expo',
+            'seminar',
+            'bootcamp',
+            'webinar',
+            'retreat',
+            'summit',
+            'awards',
+            'one off',
+            'ticketed',
+            '3 day',
+            '3 days',
+            'three day',
+            'three days',
+            'ticket',
+            'tickets',
+          ]);
+          if (oneOff && !hasMembers) return 'tickets';
+
+          return null;
         }
 
         var findCta = document.getElementById('ee-booking-help-suggest-cta');
