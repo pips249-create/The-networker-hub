@@ -206,7 +206,7 @@ async function claimGroupForSession(session, groupId) {
   // Founding Organiser · 2026 — badge (+ homepage slot if under cap) on claim before deadline.
   try {
     const { foundingFieldsForClaim } = require('./founding-organiser');
-    Object.assign(patch, await foundingFieldsForClaim(sb, claimedAt));
+    Object.assign(patch, await foundingFieldsForClaim(sb, claimedAt, { session, row: organiser }));
   } catch (e) {
     console.warn('founding fields on claim failed:', e && e.message ? e.message : e);
   }

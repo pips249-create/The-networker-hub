@@ -858,7 +858,7 @@ window.HUB_SEO_DATA = {
           "@type": "WebPage",
           "url": "https://www.thenetworkerhub.com/for-organisers",
           "name": "For Organisers – The Networker Hub",
-          "description": "Organiser dashboard, free trial visits, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
+          "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
           "about": {
             "@context": "https://schema.org",
             "@type": "Organization",
@@ -1836,7 +1836,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#webpage",
           "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits",
           "name": "Export attendees & track visits – How-to guides – The Networker Hub",
-          "description": "How to download attendee lists, filter by visit count, export name badges, and use free trial visits on The Networker Hub.",
+          "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker Hub.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
@@ -1848,7 +1848,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#howto",
           "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits",
           "name": "How to export attendees and track visits on The Networker Hub",
-          "description": "How to download attendee lists, filter by visit count, export name badges, and use free trial visits on The Networker Hub.",
+          "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker Hub.",
           "step": [
             {
               "@type": "HowToStep",
@@ -1881,8 +1881,8 @@ window.HUB_SEO_DATA = {
             {
               "@type": "HowToStep",
               "position": 5,
-              "name": "Set up free trial visits",
-              "text": "On Set up tickets, turn on Free trial visits so visitors can try your group (up to 3 visits) before joining membership or buying a ticket.",
+              "name": "Set up the guest visit programme",
+              "text": "On the event tickets step, tick Enable guest visit programme to offer complimentary trial visits before paid member tickets. Configure visit limits on your organiser page.",
               "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#guest-visits"
             }
           ]

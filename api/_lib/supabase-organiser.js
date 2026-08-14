@@ -265,7 +265,10 @@ async function createGroup(payload) {
   if (userCreated) {
     try {
       const { foundingFieldsForClaim } = require('./founding-organiser');
-      Object.assign(insert, await foundingFieldsForClaim(sb, new Date()));
+      Object.assign(
+        insert,
+        await foundingFieldsForClaim(sb, new Date(), { session: payload.session, row: insert })
+      );
     } catch (e) {
       console.warn('founding fields on create group failed:', e && e.message ? e.message : e);
     }

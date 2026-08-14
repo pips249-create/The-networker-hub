@@ -8,6 +8,33 @@ const FOUNDING_CLAIM_DEADLINE = new Date('2026-09-01T00:00:00+01:00');
 const FOUNDING_HOMEPAGE_UNTIL = new Date('2026-11-30T23:59:59+00:00');
 const FOUNDING_HOMEPAGE_CAP = 50;
 
+/** Workspace accounts whose groups must never appear as Founding Organisers. */
+const STAFF_FOUNDING_EXCLUDED_EMAILS = new Set(
+  [
+    'rosie@the-networker.co.uk',
+    'rosie@thenetworkerhub.com',
+    'jamie@thenetworkerhub.com',
+    'catherine@thenetworkerhub.com',
+    'pips249@gmail.com',
+  ].map((email) => email.toLowerCase())
+);
+
+function normalizeEmail(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
+
+function isStaffFoundingExcludedEmail(email) {
+  return STAFF_FOUNDING_EXCLUDED_EMAILS.has(normalizeEmail(email));
+}
+
+function isStaffFoundingExcludedRow(row, session) {
+  if (row && row.is_internal) return true;
+  const emails = [session && session.email, row && row.email, row && row.contact_email];
+  return emails.some((email) => isStaffFoundingExcludedEmail(email));
+}
+
 /**
  * Soft-launch showcase tiles until the real organiser claims (and gets a homepage slot).
  * Deduped by name / BMUK aliases when merging with DB rows.
@@ -68,7 +95,10 @@ function isFoundingOrganiser(row) {
  * Patch fields to set on claim when still inside the founding window.
  * Homepage slot is assigned only while under the cap (best-effort; rare races OK).
  */
-async function foundingFieldsForClaim(sb, now = new Date()) {
+async function foundingFieldsForClaim(sb, now = new Date(), opts = {}) {
+  if (isStaffFoundingExcludedRow(opts.row, opts.session)) {
+    return { is_internal: true };
+  }
   if (!isFoundingClaimWindow(now)) return {};
 
   const patch = {
@@ -128,6 +158,7 @@ async function maybeAwardFoundingAfterEventPublish(sb, organiserIds, now = new D
     const { data: row, error } = await sb.from('organisers').select('*').eq('id', id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!row || row.founding_organiser_at) continue;
+    if (isStaffFoundingExcludedRow(row)) continue;
     if (!claimedDuringFoundingWindow(row)) continue;
 
     // Admin-provisioned logins have never signed in — do not award founding.
@@ -163,7 +194,7 @@ async function listFoundingHomepageOrganisers(sb, now = new Date()) {
   const { data, error } = await sb
     .from('organisers')
     .select(
-      'id, name, slug, photo_url, website, industries, founding_organiser_at, founding_homepage_until, ownership_claimed_at'
+      'id, name, slug, photo_url, website, industries, founding_organiser_at, founding_homepage_until, ownership_claimed_at, email, contact_email, organiser_account_id'
     )
     .not('founding_homepage_until', 'is', null)
     .gt('founding_homepage_until', iso)
@@ -174,8 +205,8 @@ async function listFoundingHomepageOrganisers(sb, now = new Date()) {
     .order('ownership_claimed_at', { ascending: true })
     .limit(FOUNDING_HOMEPAGE_CAP);
   if (error) throw new Error(error.message);
-  // Drop rows whose photo_url is whitespace-only after trim
-  const withLogo = (data || []).filter((row) => String(row.photo_url || '').trim());
+  const publicRows = await filterStaffFoundingRows(sb, data || []);
+  const withLogo = publicRows.filter((row) => String(row.photo_url || '').trim());
   return mergeSoftLaunchFoundingShowcase(withLogo);
 }
 
@@ -184,7 +215,7 @@ async function listFoundingOrganisersForGateway(sb, limit = 48) {
   const { data, error } = await sb
     .from('organisers')
     .select(
-      'id, name, slug, photo_url, website, industries, founding_organiser_at, founding_homepage_until, ownership_claimed_at'
+      'id, name, slug, photo_url, website, industries, founding_organiser_at, founding_homepage_until, ownership_claimed_at, email, contact_email, organiser_account_id'
     )
     .not('founding_organiser_at', 'is', null)
     .eq('ownership_claim_status', 'claimed')
@@ -194,8 +225,31 @@ async function listFoundingOrganisersForGateway(sb, limit = 48) {
     .order('founding_organiser_at', { ascending: true })
     .limit(Math.min(100, Math.max(1, Number(limit) || 48)));
   if (error) throw new Error(error.message);
-  const withLogo = (data || []).filter((row) => String(row.photo_url || '').trim());
+  const publicRows = await filterStaffFoundingRows(sb, data || []);
+  const withLogo = publicRows.filter((row) => String(row.photo_url || '').trim());
   return mergeSoftLaunchFoundingShowcase(withLogo);
+}
+
+async function filterStaffFoundingRows(sb, rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const accountIds = [
+    ...new Set(list.map((row) => row && row.organiser_account_id).filter(Boolean).map(String)),
+  ];
+  const accountEmails = new Map();
+  if (accountIds.length) {
+    const { data, error } = await sb
+      .from('organiser_accounts')
+      .select('id, email')
+      .in('id', accountIds);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((account) => {
+      accountEmails.set(String(account.id), normalizeEmail(account.email));
+    });
+  }
+  return list.filter((row) => {
+    if (!row || isStaffFoundingExcludedRow(row)) return false;
+    return !isStaffFoundingExcludedEmail(accountEmails.get(String(row.organiser_account_id || '')));
+  });
 }
 
 module.exports = {
@@ -203,6 +257,9 @@ module.exports = {
   FOUNDING_HOMEPAGE_UNTIL,
   FOUNDING_HOMEPAGE_CAP,
   SOFT_LAUNCH_FOUNDING_SHOWCASE,
+  STAFF_FOUNDING_EXCLUDED_EMAILS,
+  isStaffFoundingExcludedEmail,
+  isStaffFoundingExcludedRow,
   isFoundingClaimWindow,
   isFoundingHomepageActive,
   isFoundingOrganiser,
