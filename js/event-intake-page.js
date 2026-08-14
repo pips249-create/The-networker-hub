@@ -36,7 +36,7 @@
     'ei-pay-how': {
       title: 'How do people pay / get access?',
       body:
-        'How they get a place on the day. Free or paid tickets are for this event. Membership is joining your group. Tickets + membership is two prices: guests buy a ticket, members pay a different price (often free). We set up card payments, VAT, and refunds when we list it.',
+        'How they get a place on the day. Free or paid tickets are for this event. Membership is for newcomers: try meetings, then join to come regularly. Tickets + membership is for an existing group: guests try free then join, and members book at a different price (often free). We set up card payments, VAT, and refunds when we list it.',
     },
     'ei-pay-free': {
       title: 'Free tickets',
@@ -51,12 +51,12 @@
     'ei-pay-membership': {
       title: 'Membership',
       body:
-        'People attend because they join your group (monthly or annual fee), not by buying a one-off ticket. Tell us the membership price and term in the box that appears.',
+        'For newcomers: they try your meetings, then join so they can attend regularly (monthly or annual fee). Tell us the membership price and term in the box that appears.',
     },
     'ei-pay-both': {
       title: 'Tickets + membership',
       body:
-        'Choose this if guests pay a ticket and members pay a different price (often free, because membership already covers the meeting). Tell us both prices in the box that appears.',
+        'For an existing group that wants to grow. Guests try meetings free, then join to come regularly. Your existing members book at a different price, or for free. Tell us both prices in the box that appears.',
     },
     'ei-max-places': {
       title: 'Max places',
