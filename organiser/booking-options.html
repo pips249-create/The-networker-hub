@@ -114,6 +114,12 @@
                     <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
                   </td>
                 </tr>
+                <tr data-option="tickets">
+                  <td>New people only — they pay for their own breakfast with a ticket</td>
+                  <td>
+                    <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
+                  </td>
+                </tr>
                 <tr data-option="membership">
                   <td>A new group. I have no members yet</td>
                   <td>
@@ -543,7 +549,7 @@
         var optionCopy = {
           tickets: {
             name: 'Option 1 — Ticket for this event',
-            why: 'This sounds like a one-off or ticketed event. People book a ticket for the date. No membership.',
+            why: 'This sounds like a ticketed date. Everyone books the same way — for example they pay for their own breakfast with a ticket. No membership needed.',
           },
           membership: {
             name: 'Option 2 — Free visits, then membership',
@@ -635,18 +641,55 @@
             'regular',
             'ongoing',
           ]);
+          var newMembersOnly = hasAny(n, [
+            'new members only',
+            'only new members',
+            'just new members',
+            'newcomers only',
+            'new people only',
+          ]);
+          var paysByTicket = hasAny(n, [
+            'ticket',
+            'tickets',
+            'buy a ticket',
+            'with a ticket',
+            'breakfast ticket',
+            'pay for breakfast',
+            'own breakfast',
+            'pay their own',
+            'pay for their own',
+            'pay for lunch',
+            'own lunch',
+          ]);
           var twoPrices = hasAny(n, [
             'guest ticket',
             'guests pay',
             'visitors pay',
-            'members pay',
+            'members pay less',
+            'members pay nothing',
+            'members pay a different',
             'member price',
-            'invite',
+            'members for free',
+            'members go free',
+            'different price',
           ]);
 
+          // Same ticket for everyone (e.g. new members buy their own breakfast) is Option 1.
+          if (paysByTicket && newMembersOnly && !hasOldOrExisting && !twoPrices) {
+            return 'tickets';
+          }
+          if (paysByTicket && !hasOldOrExisting && !twoPrices && !tryJoin && !newGroup) {
+            return 'tickets';
+          }
+
           // Members always beat the event format (masterclass, seminar, event).
-          if (hasMembers && (hasOldOrExisting || recurring || twoPrices)) return 'both';
-          if (hasMembers && !noMembersYet && !newGroup) return 'both';
+          if (hasMembers && !newMembersOnly && (hasOldOrExisting || twoPrices)) return 'both';
+          if (hasMembers && !newMembersOnly && !noMembersYet && !newGroup && recurring) {
+            return 'both';
+          }
+          if (hasMembers && !newMembersOnly && !noMembersYet && !newGroup && !paysByTicket) {
+            return 'both';
+          }
 
           if ((newGroup || noMembersYet || tryJoin) && !hasOldOrExisting) {
             return 'membership';
