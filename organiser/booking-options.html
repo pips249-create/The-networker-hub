@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814ex1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814table1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -74,6 +74,47 @@
             </span>
           </a>
         </nav>
+
+        <section class="ee-booking-help-table-wrap" aria-labelledby="ee-booking-help-table-title">
+          <h2 id="ee-booking-help-table-title">Which option do I need?</h2>
+          <p class="ee-booking-help-table-lede">Find your situation, then tap the option.</p>
+          <div class="ee-booking-help-table-scroll">
+            <table class="ee-booking-help-table">
+              <thead>
+                <tr>
+                  <th scope="col">If this is you</th>
+                  <th scope="col">You need</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>I just want people to book this date — free or paid</td>
+                  <td>
+                    <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>I have a new group. Nobody is a member yet</td>
+                  <td>
+                    <a href="#membership" data-booking-nav="membership">Option 2 — Free visits, then membership</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>I have a group, and existing members</td>
+                  <td>
+                    <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Guests should pay a ticket. Members should pay less, or nothing</td>
+                  <td>
+                    <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         <article class="ee-booking-help-section" id="tickets">
           <div class="ee-booking-help-section-head">
@@ -352,23 +393,9 @@
 
         <aside class="ee-booking-help-unsure" aria-labelledby="ee-booking-help-unsure-title">
           <h2 id="ee-booking-help-unsure-title">Still not sure?</h2>
-          <div class="ee-booking-help-unsure-grid">
-            <p>
-              <strong>Just a ticket?</strong>
-              Option 1.
-            </p>
-            <p>
-              <strong>New group?</strong>
-              Option 2 — try free, then join.
-            </p>
-            <p>
-              <strong>Already have members?</strong>
-              Option 3 — guest ticket and a member price.
-            </p>
-          </div>
           <p class="ee-hint ee-booking-help-unsure-foot">
-            You can change your mind before you publish. If ticket sales have already started, some settings
-            lock — ask Hubert or email
+            Use the table above. You can change your mind before you publish. If ticket sales have already
+            started, some settings lock — ask Hubert or email
             <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>.
           </p>
         </aside>

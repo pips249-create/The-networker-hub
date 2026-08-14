@@ -2331,7 +2331,113 @@ body.organiser-booking-options-page {
   color: var(--ee-text-mid);
 }
 
-.ee-booking-help-unsure {
+.ee-booking-help-table-wrap {
+  margin: 0 0 28px;
+  padding: 18px 18px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(13, 110, 122, 0.18);
+  background: #fff;
+}
+
+.ee-booking-help-table-wrap h2 {
+  margin: 0 0 4px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--ee-purple-dark);
+}
+
+.ee-booking-help-table-lede {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--ee-text-mid);
+}
+
+.ee-booking-help-table-scroll {
+  overflow-x: auto;
+  margin: 0 -6px;
+  padding: 0 6px 10px;
+}
+
+.ee-booking-help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.ee-booking-help-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-text-soft);
+  border-bottom: 2px solid rgba(13, 110, 122, 0.2);
+}
+
+.ee-booking-help-table td {
+  padding: 14px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(26, 46, 59, 0.08);
+  color: var(--ee-text);
+}
+
+.ee-booking-help-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ee-booking-help-table td:last-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ee-booking-help-table a {
+  color: var(--ee-purple-dark);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.ee-booking-help-table a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .ee-booking-help-table thead {
+    display: none;
+  }
+
+  .ee-booking-help-table,
+  .ee-booking-help-table tbody,
+  .ee-booking-help-table tr,
+  .ee-booking-help-table td {
+    display: block;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .ee-booking-help-table tr {
+    margin: 0 0 10px;
+    padding: 10px 12px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(13, 110, 122, 0.14);
+    background: #f7fbfc;
+  }
+
+  .ee-booking-help-table td {
+    padding: 4px 0;
+    border: none;
+  }
+
+  .ee-booking-help-table td:first-child {
+    font-size: 15px;
+  }
+
+  .ee-booking-help-table td:last-child {
+    padding-top: 8px;
+  }
+}
   margin: 8px 0 20px;
   padding: 20px 20px 18px;
   border-radius: 14px;
