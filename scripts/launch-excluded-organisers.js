@@ -4,9 +4,18 @@
 const EXCLUDED_EMAILS = new Set([
   'alex@property-connect.org',
   'caroline@business-network-ltd.co.uk',
+  'getconnected@my-chamber.co.uk',
+  'enquiries@lincs-chamber.co.uk',
+  'customerservices@tvchamber.co.uk',
 ]);
 
-const EXCLUDED_SLUGS = new Set(['property-connect', 'the-business-network-ltd']);
+const EXCLUDED_SLUGS = new Set([
+  'property-connect',
+  'the-business-network-ltd',
+  'chamber-of-trade-mid-yorkshire',
+  'chamber-of-trade-lincolnshire',
+  'chamber-of-trade-thames-valley',
+]);
 
 function normalizeEmail(email) {
   return String(email || '')
