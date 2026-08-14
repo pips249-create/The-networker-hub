@@ -15,7 +15,8 @@
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260807nav2" />
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260814tickets4">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260814tickets5">
+<link rel="stylesheet" href="css/hub-field-tip.css?v=20260711">
 <script src="js/hub-seo-static-config.js?v=20260811a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="add-your-event"></script>
 <script src="js/hub-seo-data.js?v=20260612" defer></script>
@@ -107,7 +108,7 @@
               <input type="text" name="title" required placeholder="e.g. Friday breakfast networking">
             </label>
             <label class="ei-field ei-field--full">
-              <span>Date(s)</span>
+              <span data-hub-tip="ei-dates">Date(s)</span>
               <input type="text" name="dates" required placeholder="e.g. Fri 12 Sep 2026 — or every Friday from Sept">
             </label>
             <label class="ei-field">
@@ -119,7 +120,7 @@
               <input type="text" name="endTime" placeholder="e.g. 9:00am">
             </label>
             <div class="ei-field ei-field--full">
-              <span class="ei-label-block">Format</span>
+              <span class="ei-label-block" data-hub-tip="ei-format">Format</span>
               <div class="ei-choice" role="group" aria-label="Event format">
                 <label class="ei-choice-option">
                   <input type="radio" name="format" value="In person" checked>
@@ -156,7 +157,7 @@
 
           <div class="ei-grid ei-location" id="ei-location-online" hidden>
             <label class="ei-field ei-field--full">
-              <span>Meeting / join link <span class="ei-optional">(optional)</span></span>
+              <span data-hub-tip="ei-meeting-link">Meeting / join link <span class="ei-optional">(optional)</span></span>
               <input type="url" name="meetingLink" placeholder="https://zoom.us/j/… or Teams link">
             </label>
           </div>
@@ -169,9 +170,9 @@
           </p>
 
           <div class="ei-field ei-field--full">
-            <span class="ei-label-block">How should people get in?</span>
+            <span class="ei-label-block" data-hub-tip="ei-get-in">How should people get in?</span>
             <div class="ei-cards" role="group" aria-label="How people get in">
-              <label class="ei-card">
+              <label class="ei-card" data-hub-tip="ei-get-in-general">
                 <input type="radio" name="attendanceDoor" value="general" checked>
                 <span class="ei-choice-dot" aria-hidden="true"></span>
                 <span class="ei-card-copy">
@@ -179,7 +180,7 @@
                   <span>Anyone can book — no approval step.</span>
                 </span>
               </label>
-              <label class="ei-card">
+              <label class="ei-card" data-hub-tip="ei-get-in-application">
                 <input type="radio" name="attendanceDoor" value="category_exclusivity">
                 <span class="ei-choice-dot" aria-hidden="true"></span>
                 <span class="ei-card-copy">
@@ -191,9 +192,9 @@
           </div>
 
           <div class="ei-field ei-field--full ei-stack">
-            <span class="ei-label-block">How do people pay / get access?</span>
+            <span class="ei-label-block" data-hub-tip="ei-pay-how">How do people pay / get access?</span>
             <div class="ei-cards ei-cards--2x2" role="group" aria-label="How people pay">
-              <label class="ei-card">
+              <label class="ei-card" data-hub-tip="ei-pay-free">
                 <input type="radio" name="payHow" value="free_tickets" checked>
                 <span class="ei-choice-dot" aria-hidden="true"></span>
                 <span class="ei-card-copy">
@@ -201,7 +202,7 @@
                   <span>Anyone can book at no charge.</span>
                 </span>
               </label>
-              <label class="ei-card">
+              <label class="ei-card" data-hub-tip="ei-pay-paid">
                 <input type="radio" name="payHow" value="paid_tickets">
                 <span class="ei-choice-dot" aria-hidden="true"></span>
                 <span class="ei-card-copy">
@@ -209,7 +210,7 @@
                   <span>Guests pay a ticket price.</span>
                 </span>
               </label>
-              <label class="ei-card">
+              <label class="ei-card" data-hub-tip="ei-pay-membership">
                 <input type="radio" name="payHow" value="membership">
                 <span class="ei-choice-dot" aria-hidden="true"></span>
                 <span class="ei-card-copy">
@@ -217,7 +218,7 @@
                   <span>People join your group to attend.</span>
                 </span>
               </label>
-              <label class="ei-card">
+              <label class="ei-card" data-hub-tip="ei-pay-both">
                 <input type="radio" name="payHow" value="both">
                 <span class="ei-choice-dot" aria-hidden="true"></span>
                 <span class="ei-card-copy">
@@ -230,11 +231,11 @@
 
           <div class="ei-grid ei-stack">
             <label class="ei-field">
-              <span>Max places <span class="ei-optional">(optional)</span></span>
+              <span data-hub-tip="ei-max-places">Max places <span class="ei-optional">(optional)</span></span>
               <input type="number" name="maxPlaces" min="1" step="1" inputmode="numeric" placeholder="e.g. 40">
             </label>
             <div class="ei-field">
-              <span class="ei-label-block">Free trial visits?</span>
+              <span class="ei-label-block" data-hub-tip="ei-trial">Free trial visits?</span>
               <div class="ei-choice ei-choice--compact" role="group" aria-label="Free trial visits">
                 <label class="ei-choice-option">
                   <input type="radio" name="freeTrialVisits" value="no" checked>
@@ -256,7 +257,7 @@
           </label>
 
           <label class="ei-field ei-field--full ei-stack" id="ei-ticket-details-wrap" hidden>
-            <span id="ei-ticket-details-label">Ticket / membership details</span>
+            <span class="ei-label-block" data-hub-tip="ei-ticket-details"><span id="ei-ticket-details-label">Ticket / membership details</span></span>
             <textarea name="ticketDetails" id="ei-ticket-details" rows="3" placeholder="e.g. Guest £25 · Member £15 · Membership £40/month"></textarea>
           </label>
         </fieldset>
@@ -289,6 +290,7 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260811intake1" data-root=""></script>
-<script src="js/event-intake-page.js?v=20260814tickets2"></script>
+<script src="js/event-intake-page.js?v=20260814tips1"></script>
+<script src="js/hub-field-tip.js?v=20260814intake1"></script>
 </body>
 </html>

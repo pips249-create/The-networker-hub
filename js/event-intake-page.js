@@ -1,6 +1,81 @@
 /**
- * /add-your-event — submit event details for staff to list.
+ * /add-your-event — field tips + submit event details for staff to list.
  */
+(function (global) {
+  global.EventIntakeFieldTips = {
+    'ei-dates': {
+      title: 'Date(s)',
+      body:
+        'One date, several dates, or a simple pattern is fine — e.g. Fri 12 Sep 2026, or every Friday from September. We will put the real calendar dates on the listing.',
+    },
+    'ei-format': {
+      title: 'Format',
+      body:
+        'In person = people meet at a venue. Online = Zoom, Teams, or similar. Choose the main way people attend.',
+    },
+    'ei-meeting-link': {
+      title: 'Meeting / join link',
+      body:
+        'Optional for now. We only share the link with people who have a place — it is not shown on the public listing. You can send it later.',
+    },
+    'ei-get-in': {
+      title: 'How should people get in?',
+      body:
+        'This is who can take a seat. General ticketing = anyone can book. Application based = you approve each person first, often one per industry or role.',
+    },
+    'ei-get-in-general': {
+      title: 'General ticketing',
+      body:
+        'Anyone can book until the event is full. No application and no approval step. Typical for open networking breakfasts and mixers.',
+    },
+    'ei-get-in-application': {
+      title: 'Application based',
+      body:
+        'People apply (industry and job title). You approve or decline so you can keep a mix of seats — e.g. one accountant, one solicitor. Use this for category exclusivity.',
+    },
+    'ei-pay-how': {
+      title: 'How do people pay / get access?',
+      body:
+        'How they get a place on the day. Free or paid tickets are for this event. Membership is joining your group. Tickets + membership is both: visitors pay a ticket, members book at a member rate. We set up card payments, VAT, and refunds when we list it.',
+    },
+    'ei-pay-free': {
+      title: 'Free tickets',
+      body:
+        'No charge to book this event. People still reserve a place so you know who is coming.',
+    },
+    'ei-pay-paid': {
+      title: 'Paid tickets',
+      body:
+        'Guests pay a ticket price for this event (one-off). Tell us the price in the box that appears — we will add card payments when we list it.',
+    },
+    'ei-pay-membership': {
+      title: 'Membership',
+      body:
+        'People attend because they join your group (monthly or annual fee), not by buying a one-off ticket. Tell us the membership price and term in the box that appears.',
+    },
+    'ei-pay-both': {
+      title: 'Tickets + membership',
+      body:
+        'Visitors buy a ticket for this event. People already in your group book at a member rate (often £0 if membership covers the meeting). Tell us both prices in the box that appears.',
+    },
+    'ei-max-places': {
+      title: 'Max places',
+      body:
+        'Optional room or Zoom cap for this date — the total number of people you can take. Leave blank if there is no limit.',
+    },
+    'ei-trial': {
+      title: 'Free trial visits',
+      body:
+        'Let new people try one or more meetings before they join or buy. If yes, say how many visits in the details box. Hub maximum is usually 3.',
+    },
+    'ei-ticket-details': {
+      title: 'Prices and membership details',
+      body:
+        'Write the numbers in plain English — e.g. Guest £25, Member £0, Membership £40/month. We copy this onto the listing for you.',
+    },
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 (function () {
   var form = document.getElementById('ei-form');
   if (!form) return;

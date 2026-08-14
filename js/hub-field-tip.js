@@ -16,6 +16,7 @@
       global.OrganiserFieldTips,
       global.ForOrganisersFeatureTips,
       global.ForAttendeesFeatureTips,
+      global.EventIntakeFieldTips,
     ];
     for (var i = 0; i < registries.length; i++) {
       if (registries[i] && registries[i][id]) return registries[i][id];
@@ -140,6 +141,10 @@
       }
       openPopover(btn, tip);
     });
+    btn.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
     return btn;
   }
 
@@ -149,7 +154,14 @@
     if (!tip) return;
     el.setAttribute('data-hub-tip-bound', '1');
     var btn = createButton(tipId, tip);
-    if (el.tagName === 'H2' || el.tagName === 'H3' || el.classList.contains('ee-mode-btn') || el.classList.contains('ee-attendance-card')) {
+    if (
+      el.tagName === 'H2' ||
+      el.tagName === 'H3' ||
+      el.classList.contains('ee-mode-btn') ||
+      el.classList.contains('ee-attendance-card') ||
+      el.classList.contains('ei-card') ||
+      el.classList.contains('ei-label-block')
+    ) {
       el.classList.add('hub-field-tip-host');
       el.appendChild(btn);
     } else {

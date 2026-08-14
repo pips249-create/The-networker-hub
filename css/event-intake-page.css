@@ -256,6 +256,26 @@
   outline-offset: 2px;
 }
 
+.ei-label-block.hub-field-tip-host {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+
+.ei-card.hub-field-tip-host {
+  display: flex;
+  align-items: flex-start;
+}
+
+.ei-card .hub-field-tip-btn {
+  margin-left: auto;
+}
+
+.ei-field > span .hub-field-tip-inline {
+  text-transform: none;
+}
+
 .ei-choice {
   display: flex;
   flex-wrap: wrap;
