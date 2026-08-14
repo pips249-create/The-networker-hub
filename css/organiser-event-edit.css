@@ -1581,7 +1581,7 @@ body.ee-step2-modal-open {
 
 .ee-fee-kicker {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1618,6 +1618,14 @@ body.ee-step2-modal-open {
 
 .ee-member-ticket-card .ee-fee-kicker {
   color: var(--ee-gold);
+}
+
+.ee-membership-fee-card .ee-addon-toggle-copy strong,
+.ee-member-ticket-card .ee-addon-toggle-copy strong {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ee-text);
 }
 
 .ee-addon-card.is-locked .ee-addon-toggle {
@@ -4669,6 +4677,11 @@ body.ee-embed-drawer .ee-card {
 body.ee-embed-drawer .ee-card h2 {
   font-size: 14px;
   margin-bottom: 10px;
+}
+
+body.ee-embed-drawer .ee-membership-fee-card .ee-addon-toggle-copy strong,
+body.ee-embed-drawer .ee-member-ticket-card .ee-addon-toggle-copy strong {
+  font-size: 20px;
 }
 
 body.ee-embed-drawer .ee-field {
