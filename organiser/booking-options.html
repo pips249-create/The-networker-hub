@@ -564,6 +564,12 @@
             .trim();
         }
 
+        function addScore(scores, key, n, phrases, weight) {
+          for (var i = 0; i < phrases.length; i++) {
+            if (n.indexOf(phrases[i]) !== -1) scores[key] += weight;
+          }
+        }
+
         function hasAny(n, phrases) {
           for (var i = 0; i < phrases.length; i++) {
             if (n.indexOf(phrases[i]) !== -1) return true;
@@ -571,108 +577,158 @@
           return false;
         }
 
+        var lastSuggested = '';
+
         function suggestOption(raw) {
           var n = norm(raw);
           var words = n.split(' ').filter(Boolean);
-          if (n.length < 8 || words.length < 3) return null;
+          if (!n) {
+            lastSuggested = '';
+            return null;
+          }
+          if (n.length < 4 || words.length < 2) {
+            return lastSuggested || null;
+          }
 
-          var existing = hasAny(n, [
-            'existing group',
-            'existing members',
-            'already have members',
-            'already have a group',
-            'established group',
-            'on the books',
-            'current members',
-            'my members',
-            'our members',
-          ]);
-          var inviteOrEmail = hasAny(n, [
-            'invite',
-            'invites',
-            'email',
-            'emails',
-            'member list',
-            'mailing',
-          ]);
-          var noMonthly = hasAny(n, [
-            'dont pay monthly',
-            'do not pay monthly',
-            'doesnt pay monthly',
-            'no monthly',
-            'not pay a monthly',
-            'dont pay a monthly',
-            'free for members',
-            'members free',
-            'members do not pay',
-            'members dont pay',
-          ]);
-          var twoPrices = hasAny(n, [
-            'guest ticket',
-            'guests pay',
-            'visitors pay',
-            'members pay less',
-            'member price',
-            'members pay nothing',
-            'members for free',
-          ]);
-          var newGroup = hasAny(n, [
+          var scores = { tickets: 0, membership: 0, both: 0 };
+
+          addScore(scores, 'tickets', n, [
+            'masterclass',
+            'master class',
+            'workshop',
+            'conference',
+            'exhibition',
+            'expo',
+            'seminar',
+            'bootcamp',
+            'training day',
+            'training course',
+            'webinar',
+            'retreat',
+            'summit',
+            'awards',
+            'one off',
+            'oneoff',
+            'ticketed',
+            'day course',
+            '3 day',
+            '3 days',
+            'three day',
+            'three days',
+            'two day',
+            '2 day',
+            'weekend course',
+          ], 6);
+          addScore(scores, 'tickets', n, [
+            'course',
+            'class',
+            'classes',
+            'training',
+            'tickets',
+            'ticket',
+            'mixer',
+            'dinner',
+            'lunch',
+            'breakfast',
+            'event',
+            'events',
+            'day',
+            'days',
+          ], 2);
+
+          addScore(scores, 'membership', n, [
             'new group',
+            'new networking',
             'create a group',
             'creating a group',
-            'starting a group',
             'start a group',
+            'starting a group',
+            'starting up',
             'no members',
-            'nobody yet',
+            'without members',
             'dont have members',
             'do not have members',
-            'no one coming',
-            'nobody coming',
+            'havent got members',
+            'have not got members',
+            'nobody yet',
+            'no one yet',
             'from scratch',
-          ]);
-          var tryJoin = hasAny(n, [
+            'brand new',
+            'just starting',
             'try then join',
             'try a meeting',
             'try free',
             'free visit',
             'free visits',
             'trial visit',
-          ]);
-          var oneOff = hasAny(n, [
-            'masterclass',
-            'workshop',
-            'conference',
-            'exhibition',
-            'seminar',
-            'bootcamp',
-            '3 day',
-            '3 days',
-            'three day',
-            'three days',
-            'one off',
-            'one-off',
-            'awards',
-            'ticket only',
-            'just tickets',
-            'no membership',
-          ]);
+            'trial visits',
+          ], 6);
+          addScore(scores, 'membership', n, [
+            'new',
+            'starting',
+            'beginners',
+            'grow a group',
+            'membership',
+            'join',
+          ], 1);
 
-          if (existing || inviteOrEmail || noMonthly || twoPrices) {
-            return 'both';
+          addScore(scores, 'both', n, [
+            'existing group',
+            'existing members',
+            'already have members',
+            'already have a group',
+            'already run',
+            'established group',
+            'established members',
+            'current members',
+            'my members',
+            'our members',
+            'have members',
+            'with members',
+            'got members',
+            'member list',
+            'guest ticket',
+            'guests pay',
+            'visitors pay',
+            'members pay less',
+            'member price',
+            'members for free',
+            'members do not pay',
+            'members dont pay',
+            'do not pay monthly',
+            'dont pay monthly',
+            'no monthly',
+            'invite members',
+            'invite them',
+          ], 6);
+          addScore(scores, 'both', n, [
+            'existing',
+            'established',
+            'regulars',
+            'roster',
+            'invite',
+            'invites',
+          ], 2);
+
+          if (scores.tickets && scores.both && (n.indexOf('masterclass') !== -1 || n.indexOf('workshop') !== -1 || n.indexOf('conference') !== -1)) {
+            if (!hasAny(n, ['members', 'existing', 'established', 'guest'])) {
+              scores.both -= 4;
+            }
           }
-          if (newGroup || tryJoin) {
-            return 'membership';
+          if (scores.membership && scores.tickets && hasAny(n, ['masterclass', 'workshop', 'conference', 'exhibition', 'course'])) {
+            if (!hasAny(n, ['new group', 'no members', 'try free'])) {
+              scores.membership -= 3;
+            }
           }
-          if (oneOff) {
-            return 'tickets';
+
+          var best = 'tickets';
+          if (scores.membership > scores[best]) best = 'membership';
+          if (scores.both > scores[best]) best = 'both';
+          if (scores[best] <= 0) {
+            return lastSuggested || null;
           }
-          if (n.indexOf('membership') !== -1 || n.indexOf('join') !== -1) {
-            return 'membership';
-          }
-          if (n.indexOf('ticket') !== -1) {
-            return 'tickets';
-          }
-          return null;
+          lastSuggested = best;
+          return best;
         }
 
         var findCta = document.getElementById('ee-booking-help-suggest-cta');
@@ -684,7 +740,7 @@
           var raw = findInput.value.trim();
           var option = suggestOption(raw);
           if (findSuggest) findSuggest.hidden = !option;
-          if (findEmpty) findEmpty.hidden = !(raw.length >= 8 && !option);
+          if (findEmpty) findEmpty.hidden = !(raw.length >= 12 && !option);
           if (tableAlt) tableAlt.hidden = !!option;
           if (tableScroll) tableScroll.hidden = !!option;
           if (!option) {
