@@ -355,8 +355,30 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const hasPaidTickets = pricedTiers.some((t) => t.priceNum > 0);
 
   const hasTicketTiers = eventTickets.length > 0;
-  const spotsLeft = null;
-  const isSoldOut = hasTicketTiers && pricedTiers.length > 0 && pricedTiers.every((t) => t.soldOut);
+  const eventCapRaw = row.max_attendees != null ? Number(row.max_attendees) : null;
+  const eventCap =
+    Number.isFinite(eventCapRaw) && eventCapRaw > 0 ? Math.floor(eventCapRaw) : null;
+  const occupiedFromTiers = tiers.reduce(
+    (sum, t) => sum + Math.max(0, Number(t.registrationsCount) || 0),
+    0
+  );
+  const occupied =
+    row._eventOccupiedSeats != null && Number.isFinite(Number(row._eventOccupiedSeats))
+      ? Math.max(0, Math.floor(Number(row._eventOccupiedSeats)))
+      : occupiedFromTiers;
+  const spotsLeft = eventCap != null ? Math.max(0, eventCap - occupied) : null;
+  const eventFull = spotsLeft != null && spotsLeft <= 0;
+  if (eventFull) {
+    tiers.forEach((t) => {
+      t.soldOut = true;
+    });
+    pricedTiers.forEach((t) => {
+      t.soldOut = true;
+    });
+  }
+  const isSoldOut =
+    eventFull ||
+    (hasTicketTiers && pricedTiers.length > 0 && pricedTiers.every((t) => t.soldOut));
   const ticketsOnSale = eventHasTicketsOnSale(eventTickets, undefined, row.starts_at);
   const ticketSalesOpensAtDate = earliestTicketSaleStart(eventTickets);
   const ticketSalesOpensAt = ticketSalesOpensAtDate ? ticketSalesOpensAtDate.toISOString() : null;
@@ -481,7 +503,8 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     hasTicketTiers,
     salesClosedReason,
     spotsLeft,
-    capacity: null,
+    capacity: eventCap,
+    maxAttendees: eventCap,
     urgency: '',
     dateLine: buildDateLine(locationShort, parsedDate, time),
     meetingType: format || typeRaw,
@@ -1291,6 +1314,14 @@ async function handle(req, res) {
         ...t,
         _registrationCount: regCounts.get(t.id) || 0,
       }));
+      if (row.max_attendees != null) {
+        try {
+          const { countEventOccupiedSeats } = require('./event-capacity');
+          row._eventOccupiedSeats = await countEventOccupiedSeats(sb, eventId);
+        } catch {
+          /* fall back to approved tier sums in rowToEvent */
+        }
+      }
       const event = enrichEventPhotoFromSeries(
         rowToEvent(row, organiser, tickets, organiserRanking),
         seriesSiblingRows

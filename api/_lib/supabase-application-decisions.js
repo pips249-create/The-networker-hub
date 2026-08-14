@@ -6,6 +6,7 @@ const {
   sendOrganiserApplicationAlertEmail,
 } = require('./registration-emails');
 const { assertApplicationSeatAvailable } = require('./application-capacity');
+const { assertEventHasCapacity } = require('./event-capacity');
 const { isUuid } = require('./uuid');
 
 function parsePriceNum(raw) {
@@ -121,6 +122,10 @@ async function reviewApplicationForOrganiser(session, registrationId, action, op
 
   if (decision === 'approve') {
     await assertApplicationSeatAvailable(sb, ticket);
+    // Pending apps already hold an event seat; exclude this registration so approve is not blocked by itself.
+    await assertEventHasCapacity(sb, registration.event_id, Math.max(1, Number(registration.quantity) || 1), {
+      excludeRegistrationId: id,
+    });
   }
 
   let patch;
@@ -349,6 +354,9 @@ async function reconsiderArchivedApplicationForOrganiser(session, registrationId
     };
   } else {
     await assertApplicationSeatAvailable(sb, ticket, { excludeRegistrationId: id });
+    await assertEventHasCapacity(sb, registration.event_id, Math.max(1, Number(registration.quantity) || 1), {
+      excludeRegistrationId: id,
+    });
     if (isFree) {
       patch = {
         application_status: 'Approved',

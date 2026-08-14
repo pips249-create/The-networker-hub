@@ -241,6 +241,7 @@
       event_not_published: 'This event is not open for bookings yet.',
       ticket_not_found: 'That ticket type is no longer available.',
       ticket_sold_out: 'Sorry — that ticket tier is sold out.',
+      event_sold_out: 'Sorry — this event is fully booked.',
       ticket_sales_disabled: 'Ticket sales are not open for this event yet.',
       stripe_not_configured: 'Card checkout is not set up yet. Please try again later or contact support.',
       stripe_connect_required:

@@ -427,15 +427,15 @@
       !(Number(plan.annual && plan.annual.amountPounds) > 0);
     if (!href) {
       return (
-        '<p class="ticket-load-hint">You have used your complimentary visits. Join this group\u2019s membership to keep attending, then book with the email on their member list.</p>'
+        '<p class="ticket-load-hint">You have used your free visits. Join this group\u2019s membership to keep attending, then book with the email on their member list.</p>'
       );
     }
     return (
       '<div class="ticket-load-hint ticket-load-hint--membership-join">' +
       '<p>' +
       (freeOnly
-        ? 'You have used your complimentary visits. Ask the organiser to add you to their member list to keep attending — then book with that email.'
-        : 'You have used your complimentary visits. Join this group\u2019s monthly or annual membership to keep attending — then book with your membership email.') +
+        ? 'You have used your free visits. Ask the organiser to add you to their member list to keep attending — then book with that email.'
+        : 'You have used your free visits. Join this group\u2019s monthly or annual membership to keep attending — then book with your membership email.') +
       '</p>' +
       (freeOnly
         ? ''
@@ -732,7 +732,7 @@
       '<div class="guest-visit-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
       '">' +
-      '<div class="guest-visit-tier-badge"><span aria-hidden="true">🎫</span> Complimentary guest visit</div>';
+      '<div class="guest-visit-tier-badge"><span aria-hidden="true">🎫</span> Free visit</div>';
     if (eligibility?.signedOut) {
       html +=
         '<p class="guest-visit-tier-lead">Sign in to check how many trial visits you have left with this organiser.</p>';
@@ -745,10 +745,10 @@
     html +=
       '<p class="guest-visit-tier-meta">' +
       (isMembershipMeeting
-        ? 'After your complimentary visits, join this group\u2019s membership to keep attending.'
+        ? 'After your free visits, join this group\u2019s membership to keep attending.'
         : isCategory
-          ? 'No application needed for a guest visit. Or apply below for a full Category Exclusivity place.'
-          : 'Paid tickets unlock after you use your complimentary visits.') +
+          ? 'No application needed for a free visit. Or apply below for a full Category Exclusivity place.'
+          : 'Paid tickets unlock after you use your free visits.') +
       '</p>' +
       '<div class="guest-visit-tier-price-row">' +
       '<span class="guest-visit-tier-price-label">Today</span>' +
@@ -862,13 +862,13 @@
         (guestVisitEligibility.eligible || guestVisitEligibility.signedOut);
       if (showGuestHeader) {
         const remaining = Number(guestVisitEligibility.remaining) || 0;
-        labelEl.textContent = 'Complimentary visit';
+        labelEl.textContent = 'Free visit';
         priceEl.textContent = 'Free';
         if (guestVisitEligibility.signedOut) {
-          labelEl.textContent = 'Guest visit available';
+          labelEl.textContent = 'Free visit available';
         } else if (remaining > 1) {
           labelEl.textContent =
-            remaining + ' complimentary visits left';
+            remaining + ' free visits left';
         }
         return;
       }
@@ -2360,6 +2360,7 @@
       event_not_published: 'This event is not open for bookings yet.',
       ticket_not_found: 'That ticket type is no longer available.',
       ticket_sold_out: 'Sorry — that ticket tier is sold out.',
+      event_sold_out: 'Sorry — this event is fully booked.',
       ticket_sales_disabled: 'Ticket sales are not open for this event yet.',
       missing_email: 'Please enter your email address.',
       missing_name: 'Please enter your full name.',
@@ -2368,11 +2369,11 @@
       stripe_connect_required:
         'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
       guest_visits_remaining:
-        'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
+        'Use your free visit before booking a paid member ticket with this organiser.',
       guest_visits_exhausted:
-        'You have used all complimentary visits with this organiser. Join their membership to keep attending, or book a member ticket if you are already on their list.',
-      guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
-      guest_passes_disabled: 'Guest passes are not available for this event.',
+        'You have used all free visits with this organiser. Join their membership to keep attending, or book a member ticket if you are already on their list.',
+      guest_visits_not_enabled: 'Free visits are not available for this organiser.',
+      guest_passes_disabled: 'Free visits are not available for this event.',
       alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
       not_invited: 'This previous attendee ticket is invite-only. Use the link from your email.',
       email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
@@ -2609,9 +2610,23 @@
   function tierRemainingCount(t) {
     const capRaw = Number(t.quantityAvailable);
     // Cap of 0 was a common mis-save meaning "unlimited" — treat as no cap.
-    if (!Number.isFinite(capRaw) || capRaw <= 0) return null;
-    const sold = Math.max(0, Number(t.registrationsCount) || 0);
-    return Math.max(0, Math.floor(capRaw) - sold);
+    let tierLeft = null;
+    if (Number.isFinite(capRaw) && capRaw > 0) {
+      const sold = Math.max(0, Number(t.registrationsCount) || 0);
+      tierLeft = Math.max(0, Math.floor(capRaw) - sold);
+    }
+    const eventLeftRaw = Number(currentEvent && currentEvent.spotsLeft);
+    const eventLeft =
+      currentEvent &&
+      currentEvent.capacity != null &&
+      Number.isFinite(eventLeftRaw) &&
+      eventLeftRaw >= 0
+        ? Math.floor(eventLeftRaw)
+        : null;
+    if (tierLeft == null && eventLeft == null) return null;
+    if (tierLeft == null) return eventLeft;
+    if (eventLeft == null) return tierLeft;
+    return Math.min(tierLeft, eventLeft);
   }
 
   function tierCapacityCap(t) {
@@ -2690,10 +2705,10 @@
       hint.className = 'ticket-load-hint';
       const signedInEmail = String(guestVisitEligibility.viewerEmail || '').trim();
       hint.textContent = signedInEmail
-        ? 'Complimentary visits are for newcomers. Member tickets need the email on this group\u2019s membership list (you\u2019re signed in as ' +
+        ? 'Free visits are for visitors. Member tickets need the email on this group\u2019s membership list (you\u2019re signed in as ' +
           signedInEmail +
           ').'
-        : 'Complimentary visits are for newcomers. Sign in with the email on this group\u2019s membership list for member tickets.';
+        : 'Free visits are for visitors. Sign in with the email on this group\u2019s membership list for member tickets.';
       tiersEl.appendChild(hint);
     }
 
@@ -2708,7 +2723,7 @@
       tier.id = 'ev-tier-guest-visit';
       tier.setAttribute('data-ticket-id', t.id);
       tier.setAttribute('data-price', '0');
-      tier.setAttribute('data-label', 'Guest visit');
+      tier.setAttribute('data-label', 'Free visit');
       tier.setAttribute('data-qty-max', '1');
       tier.setAttribute('data-guest-visit', '1');
       if (!soldOut) {
@@ -2829,7 +2844,10 @@
       if (t.stripePaymentLink) tier.setAttribute('data-stripe-link', t.stripePaymentLink);
       const cap = tierCapacityCap(t);
       const sold = Math.max(0, Number(t.registrationsCount) || 0);
-      if (cap != null) {
+      const remaining = tierRemainingCount(t);
+      if (remaining != null) {
+        tier.setAttribute('data-qty-max', String(remaining));
+      } else if (cap != null) {
         tier.setAttribute('data-qty-max', String(Math.max(0, cap - sold)));
       } else {
         tier.setAttribute('data-qty-max', '99');
@@ -4004,7 +4022,7 @@
     ) {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;
-      buy.textContent = 'Book complimentary visit';
+      buy.textContent = 'Book free visit';
     } else if (showAlumniTierSelected(ev)) {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = true;

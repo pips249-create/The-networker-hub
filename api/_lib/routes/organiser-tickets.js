@@ -213,6 +213,12 @@ module.exports = async function handler(req, res) {
           enableGuestVisits: Boolean(
             body.enableGuestVisits ?? body.enable_guest_visits ?? false
           ),
+          maxAttendees:
+            body.maxAttendees !== undefined
+              ? body.maxAttendees
+              : body.max_attendees !== undefined
+                ? body.max_attendees
+                : undefined,
           attendeeExtras:
             body.attendeeExtras != null && typeof body.attendeeExtras === 'object'
               ? body.attendeeExtras

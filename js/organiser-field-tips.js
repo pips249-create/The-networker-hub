@@ -72,14 +72,14 @@
     'pay-how': {
       title: 'How will people book?',
       body:
-        'Ticket = ticket types only. Convert free visits = try then join. Ticket and membership = visitors buy tickets; members book at a member rate. Open “How do these booking options work?” for detail.',
+        'Ticket = ticket types only. Free visits, then membership = try meetings free, then join. Ticket and membership = visitors buy tickets; members book at a member rate. Open “How do these booking options work?” for detail.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
-      title: 'Convert free visits into members',
+      title: 'Free visits, then membership',
       body:
         'Free visits first, then a monthly or annual join fee. You keep visit history and reports. Full walkthrough: How booking options work.',
-      hubertPrompt: 'How does converting free visits into membership work?',
+      hubertPrompt: 'How does Free visits, then membership work?',
     },
     'pay-how-both': {
       title: 'Ticket and membership',
@@ -92,6 +92,12 @@
       body:
         'Hides free trial visits for this event only. Public or member tickets stay available as you set them.',
       hubertPrompt: 'How do I turn off free visits for one event?',
+    },
+    'event-capacity': {
+      title: 'Event capacity',
+      body:
+        'One room total for this date. Public tickets, member tickets, and free visits all count toward it. Per-ticket “how many available” stays optional as a sub-limit (e.g. only 10 public of 50 seats).',
+      hubertPrompt: 'How do I set a maximum capacity with member and public tickets?',
     },
     'members-only-ticket': {
       title: 'Member ticket price',

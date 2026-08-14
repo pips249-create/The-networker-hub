@@ -1017,7 +1017,7 @@
   function payHowLabel() {
     const h = readPayHow();
     if (h === 'both') return 'Ticket and membership';
-    if (h === 'membership') return 'Convert free visits into members';
+    if (h === 'membership') return 'Free visits, then membership';
     return 'Ticket for this event';
   }
 
@@ -1139,15 +1139,39 @@
     const actions = document.getElementById('ee-tickets-actions');
     const ticketsPanel = document.getElementById('ee-panel-tickets');
     const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+    const capacityCard = document.getElementById('ee-event-capacity-card');
     if (optionalExtras) optionalExtras.hidden = true;
     if (paidWrap) paidWrap.hidden = true;
     if (attendeeExtras) attendeeExtras.hidden = true;
     if (actions) actions.hidden = true;
     if (ticketsPanel) ticketsPanel.hidden = true;
     if (categoryPanel) categoryPanel.hidden = true;
+    if (capacityCard) capacityCard.hidden = true;
     document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
       el.hidden = true;
     });
+  }
+
+  function syncEventCapacityCard() {
+    const card = document.getElementById('ee-event-capacity-card');
+    if (!card) return;
+    const ticketsPanel = document.getElementById('ee-panel-tickets');
+    const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+    const show =
+      Boolean(payHowConfirmed) &&
+      ((ticketsPanel && !ticketsPanel.hidden) || (categoryPanel && !categoryPanel.hidden));
+    card.hidden = !show;
+  }
+
+  function collectEventCapacity() {
+    return normalizeTicketQuantity(document.getElementById('ee-event-capacity')?.value);
+  }
+
+  function prefillEventCapacity(ev) {
+    const el = document.getElementById('ee-event-capacity');
+    if (!el) return;
+    const qtyNorm = normalizeTicketQuantity(ev && (ev.maxAttendees ?? ev.capacity));
+    el.value = qtyNorm == null ? '' : String(qtyNorm);
   }
 
   function syncPayHowStepUi() {
@@ -1322,6 +1346,7 @@
     document.querySelectorAll('.ee-tickets-after-step2').forEach(function (el) {
       el.hidden = false;
     });
+    syncEventCapacityCard();
     syncPayHowUi();
     syncMembersOnlyEventMode();
     syncAttendanceStepUi();
@@ -1650,7 +1675,7 @@
       '<input type="number" class="ee-tier-qty" min="1" step="1" placeholder="Unlimited" inputmode="numeric" />' +
       '<button type="button" class="ee-number-step ee-tier-qty-up" aria-label="Increase quantity">↑</button>' +
       '</div>' +
-      '<p class="ee-hint ee-hint--below">Defaults to unlimited. Only set a number if you want a hard cap.</p></div>' +
+      '<p class="ee-hint ee-hint--below">Defaults to unlimited. Only set a number if you want a hard cap for this ticket type. Use Event capacity for the room total.</p></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start</label>' +
       '<div class="ee-datetime-split">' +
@@ -3499,7 +3524,11 @@
         categoryExclusivity: Boolean(t.categoryExclusivity),
       };
     });
-    return JSON.stringify({ attendanceMode: attendanceMode, tiers: normalized });
+    return JSON.stringify({
+      attendanceMode: attendanceMode,
+      maxAttendees: collectEventCapacity(),
+      tiers: normalized,
+    });
   }
 
   function captureSavedTicketsSnapshot(tiers) {
@@ -3516,6 +3545,7 @@
         savedAt: Date.now(),
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
+        maxAttendees: collectEventCapacity(),
         guestPassesDisabled: collectGuestPassesDisabled(),
         enableGuestVisits: ceGuestVisitsEnabled(),
         membersOnlyEvent: membersOnlyEventEnabled(),
@@ -3589,6 +3619,9 @@
       return false;
     }
     if (!draft.membersOnlyEvent) syncMembersOnlyEventMode();
+    if (draft.maxAttendees !== undefined) {
+      prefillEventCapacity({ maxAttendees: draft.maxAttendees });
+    }
     if (draft.guestPassesDisabled != null) {
       const guestEl = document.getElementById('ee-guest-passes-disabled');
       if (guestEl) guestEl.checked = Boolean(draft.guestPassesDisabled);
@@ -4287,6 +4320,7 @@
         setAttendanceMode('category_exclusivity');
       }
       prefillGuestPassesDisabled(loaded.event);
+      prefillEventCapacity(loaded.event);
       prefillRefundFromEvent(loaded.event);
       applyTicketsLockUi(loaded.event);
       const alumniTicket = loaded.tickets.find(isAlumniTicket);
@@ -4449,6 +4483,7 @@
     }
     bindVatOptions();
     syncMembersOnlyEventMode();
+    syncEventCapacityCard();
     updatePublishButton();
     captureSavedTicketsSnapshot(collectActiveTiers());
 
@@ -4761,6 +4796,7 @@
       tickets: tiers,
       publish,
       attendanceMode,
+      maxAttendees: collectEventCapacity(),
       guestPassesDisabled:
         usesGuestVisitProgramme()
           ? collectGuestPassesDisabled()

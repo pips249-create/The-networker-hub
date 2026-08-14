@@ -32,6 +32,7 @@ function statusForError(code) {
     code === 'applications_not_open' ||
     code === 'applications_closed' ||
     code === 'applications_full' ||
+    code === 'event_sold_out' ||
     code === 'already_applied'
   ) {
     return 400;
@@ -53,6 +54,7 @@ function messageForError(code) {
     applications_not_open: 'Applications are not open yet for this event.',
     applications_closed: 'Applications have closed for this event.',
     applications_full: 'All places have been taken for this event.',
+    event_sold_out: 'Sorry — this event is fully booked.',
     already_applied: 'You have already applied for this event.',
     organiser_attendance_blocked:
       "You're not able to book this organiser's events. Contact them if you think this is a mistake.",

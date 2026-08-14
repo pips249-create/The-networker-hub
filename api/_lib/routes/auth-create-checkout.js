@@ -38,6 +38,7 @@ const {
   assertCeMemberSeatAvailable,
   loadCeApplicationTicket,
 } = require('../ce-member-invites');
+const { availableEventQty, assertEventHasCapacity } = require('../event-capacity');
 
 function parseBody(req) {
   let body = req.body;
@@ -428,6 +429,20 @@ module.exports = async function handler(req, res) {
           : isGuestVisit || isAlumni || ceMemberEligibility
             ? 1
             : requestedQty;
+        try {
+          if (seriesMultiDate && Array.isArray(seriesMultiDate.items)) {
+            for (const item of seriesMultiDate.items) {
+              await assertEventHasCapacity(sb, item.eventId, 1);
+            }
+          } else {
+            await assertEventHasCapacity(sb, eventId, qty);
+          }
+        } catch (capErr) {
+          if (capErr.code === 'event_sold_out' || capErr.message === 'event_sold_out') {
+            return json(res, 400, { ok: false, error: 'event_sold_out' });
+          }
+          throw capErr;
+        }
         const guestNames = normalizeGuestNames(body.guestNames || body.guest_names, qty);
         if (isGuestVisit) {
           if (evRes.data.guest_passes_disabled) {
@@ -447,10 +462,10 @@ module.exports = async function handler(req, res) {
           } catch (guestErr) {
             const code = guestErr.message || 'guest_visit_not_allowed';
             const messages = {
-              guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
+              guest_visits_not_enabled: 'Free visits are not available for this organiser.',
               guest_visits_exhausted:
-                'You have used all complimentary visits with this organiser. Book a member ticket instead.',
-              guest_passes_disabled: 'Guest passes are not available for this event.',
+                'You have used all free visits with this organiser. Book a member ticket instead.',
+              guest_passes_disabled: 'Free visits are not available for this event.',
             };
             return json(res, guestErr.status || 400, {
               ok: false,
@@ -623,6 +638,16 @@ module.exports = async function handler(req, res) {
       maxQty = await availableTicketQty(sb, ticketId);
       if (maxQty < 1) {
         return json(res, 400, { ok: false, error: 'ticket_sold_out' });
+      }
+    }
+
+    if (!seriesMultiDate || seriesMultiDate.pricingMode !== 'series_pass') {
+      const eventLeft = await availableEventQty(sb, eventId);
+      if (eventLeft != null) {
+        if (eventLeft < 1) {
+          return json(res, 400, { ok: false, error: 'event_sold_out' });
+        }
+        maxQty = Math.min(maxQty, eventLeft);
       }
     }
 

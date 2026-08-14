@@ -1290,7 +1290,7 @@ function enrichOrganiserOverview(groups, events, tickets) {
 
   const enrichedEvents = events.map((ev) => {
     const tiers = ticketsByEvent[ev.id] || [];
-    let capacity = Number(ev.capacity) || 0;
+    let capacity = Number(ev.maxAttendees || ev.capacity) || 0;
     if (!capacity) {
       capacity = tiers.reduce((sum, t) => sum + (Number(t.quantityAvailable) || 0), 0);
     }

@@ -130,7 +130,7 @@
               aria-pressed="false"
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
-              <strong data-hub-tip="pay-how-membership">Convert free visits into members</strong>
+              <strong data-hub-tip="pay-how-membership">Free visits, then membership</strong>
               <span>Visitors try a few meetings free, then join with a monthly or annual fee.</span>
             </button>
             <button
@@ -158,6 +158,27 @@
           </div>
         </div>
 
+        <div class="ee-card" id="ee-event-capacity-card" hidden>
+          <h2 data-hub-tip="event-capacity">Event capacity</h2>
+          <p class="ee-hint" style="margin-top:0">
+            Maximum people for this date across every ticket type (public, member, free visits). Optional
+            per-ticket quantities below still work as sub-limits.
+          </p>
+          <div class="ee-field">
+            <label for="ee-event-capacity"
+              >Maximum attendees <span class="ee-optional">(optional)</span></label
+            >
+            <input
+              type="number"
+              id="ee-event-capacity"
+              min="1"
+              step="1"
+              inputmode="numeric"
+              placeholder="Unlimited"
+            />
+          </div>
+        </div>
+
         <div class="ee-card" id="ee-panel-category-exclusivity" hidden>
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 data-hub-tip="category-exclusivity">Application based</h2>
@@ -168,7 +189,7 @@
           <div class="ee-field">
             <label for="ee-ce-places">Places available <span class="ee-optional">(optional)</span></label>
             <input type="number" id="ee-ce-places" min="0" step="1" inputmode="numeric" placeholder="e.g. 20" />
-            <p class="ee-hint">Maximum approved applicants. Leave blank for unlimited.</p>
+            <p class="ee-hint">Optional sub-limit for applications. Use Event capacity above for the room total.</p>
           </div>
           <div class="ee-field">
             <label for="ee-ce-close">Applications close <span class="ee-optional">(optional)</span></label>
@@ -618,9 +639,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260813step3b" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260814visits1" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260813step3b" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260814visits1" defer></script>
   </body>
 </html>

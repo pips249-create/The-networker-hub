@@ -9,6 +9,7 @@ const { isGuestVisitTicket } = require('./guest-visits');
 const { isAlumniTicket } = require('./alumni-invites');
 const { isMembersOnlyTicket } = require('./ticket-visibility');
 const { ensureAttendeeId } = require('./supabase-favourites');
+const { availableEventQty } = require('./event-capacity');
 
 function parsePriceNum(raw) {
   if (raw == null || raw === '') return 0;
@@ -344,6 +345,8 @@ async function resolveSeriesBundleItems(sb, { eventId, ticketId, email, userId }
 
     const left = await availableTicketQty(sb, match.id);
     if (left < 1) continue;
+    const eventLeft = await availableEventQty(sb, peer.id);
+    if (eventLeft != null && eventLeft < 1) continue;
 
     items.push({
       eventId: peer.id,

@@ -370,7 +370,9 @@ function enrichOrganiserOverview(groups, events, tickets, groupEventCounts) {
 
   const enrichedEvents = events.map((ev) => {
     const tiers = ticketsByEvent[ev.id] || [];
-    const capacity = tiers.reduce((sum, t) => sum + (Number(t.quantityAvailable) || 0), 0);
+    const eventCap = Number(ev.maxAttendees || ev.capacity) || 0;
+    const tierCap = tiers.reduce((sum, t) => sum + (Number(t.quantityAvailable) || 0), 0);
+    const capacity = eventCap > 0 ? eventCap : tierCap;
     const sold = ev.ticketsSold != null ? Number(ev.ticketsSold) : 0;
     const revenueNum = ev.revenueNum || 0;
     const status = deriveListingStatus(
@@ -979,9 +981,13 @@ async function buildEventRow(payload, eventId, mode) {
   if (payload.industry) {
     row.industries = [String(payload.industry).trim()];
   }
-  if (payload.maxAttendees != null && payload.maxAttendees !== '') {
-    const cap = Number(payload.maxAttendees);
-    row.max_attendees = Number.isFinite(cap) ? cap : null;
+  if (Object.prototype.hasOwnProperty.call(payload, 'maxAttendees')) {
+    if (payload.maxAttendees == null || payload.maxAttendees === '') {
+      row.max_attendees = null;
+    } else {
+      const cap = Number(payload.maxAttendees);
+      row.max_attendees = Number.isFinite(cap) && cap > 0 ? Math.floor(cap) : null;
+    }
   }
   if (payload.recurrencePattern) {
     row.recurrence_pattern = payload.recurrencePattern;
@@ -2270,6 +2276,7 @@ async function createTicketsForEvents({
   alumniFastPass,
   guestPassesDisabled,
   enableGuestVisits,
+  maxAttendees,
 }) {
   const sb = getSupabaseAdmin();
   const ids = await expandEventIdsToSeriesPeers(sb, eventIds);
@@ -2347,10 +2354,14 @@ async function createTicketsForEvents({
     );
   }
 
+  const { normalizeEventCapacity } = require('./event-capacity');
   const alumniEventUpdate = {
     alumni_fast_pass_enabled: Boolean(alumniConfig),
     guest_passes_disabled: guestVisitsEnabled ? guestPassesDisabledFlag : false,
   };
+  if (maxAttendees !== undefined) {
+    alumniEventUpdate.max_attendees = normalizeEventCapacity(maxAttendees);
+  }
   if (alumniConfig?.sourceEventId) {
     const sourceId = String(alumniConfig.sourceEventId).trim();
     const { data: sourceEv, error: sourceErr } = await sb
