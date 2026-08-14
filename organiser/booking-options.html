@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814ask1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814box2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -92,13 +92,14 @@
             <p class="ee-booking-help-suggest-kicker">We suggest</p>
             <p class="ee-booking-help-suggest-title" id="ee-booking-help-suggest-title"></p>
             <p class="ee-booking-help-suggest-why" id="ee-booking-help-suggest-why"></p>
+            <p class="ee-booking-help-suggest-cta" id="ee-booking-help-suggest-cta"></p>
           </div>
           <p class="ee-booking-help-find-empty" id="ee-booking-help-find-empty" hidden>
             We are not sure yet. Add a little more — new group, existing members, or a one-off event such as a
             masterclass — or pick a row below.
           </p>
-          <p class="ee-booking-help-table-lede">Or pick the row that sounds like you</p>
-          <div class="ee-booking-help-table-scroll">
+          <p class="ee-booking-help-table-lede" id="ee-booking-help-table-alt">Or pick the row that sounds like you</p>
+          <div class="ee-booking-help-table-scroll" id="ee-booking-help-table-scroll">
             <table class="ee-booking-help-table">
               <thead>
                 <tr>
@@ -107,59 +108,20 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  data-option="tickets"
-                  data-match="ticket book this date free paid rsvp one-off mixer lunch awards night"
-                >
-                  <td>I just want people to book this date — free or paid</td>
+                <tr data-option="tickets">
+                  <td>A one-off event, masterclass or ticketed day</td>
                   <td>
                     <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
                   </td>
                 </tr>
-                <tr
-                  data-option="tickets"
-                  data-match="masterclass workshop course conference exhibition training seminar three 3 day days weekend bootcamp"
-                >
-                  <td>I have a masterclass, workshop or 3-day course</td>
-                  <td>
-                    <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
-                  </td>
-                </tr>
-                <tr
-                  data-option="membership"
-                  data-match="new group no members nobody none starting scratch create starting out first meeting try join"
-                >
-                  <td>I want to create a new group. I have no members</td>
+                <tr data-option="membership">
+                  <td>A new group. I have no members yet</td>
                   <td>
                     <a href="#membership" data-booking-nav="membership">Option 2 — Free visits, then membership</a>
                   </td>
                 </tr>
-                <tr
-                  data-option="both"
-                  data-match="existing group already have members established regulars on the books"
-                >
-                  <td>I have an existing group, with members</td>
-                  <td>
-                    <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
-                  </td>
-                </tr>
-                <tr
-                  data-option="both"
-                  data-match="invite email emails list roster monthly amount fee don't dont do not pay free member price zero nothing existing"
-                >
-                  <td>
-                    Members do not pay a monthly amount. I want to invite them to events and send emails
-                    <span class="ee-booking-help-table-tip">Set the member price to £0. Invite them from your member list.</span>
-                  </td>
-                  <td>
-                    <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
-                  </td>
-                </tr>
-                <tr
-                  data-option="both"
-                  data-match="guest ticket visitors pay members cheaper less nothing lunch different price"
-                >
-                  <td>Guests should pay a ticket. Members should pay less, or nothing</td>
+                <tr data-option="both">
+                  <td>An existing group, with members</td>
                   <td>
                     <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
                   </td>
@@ -713,29 +675,39 @@
           return null;
         }
 
+        var findCta = document.getElementById('ee-booking-help-suggest-cta');
+        var tableAlt = document.getElementById('ee-booking-help-table-alt');
+        var tableScroll = document.getElementById('ee-booking-help-table-scroll');
+
         function showSuggestion() {
           if (!findInput) return;
           var raw = findInput.value.trim();
           var option = suggestOption(raw);
           if (findSuggest) findSuggest.hidden = !option;
           if (findEmpty) findEmpty.hidden = !(raw.length >= 8 && !option);
+          if (tableAlt) tableAlt.hidden = !!option;
+          if (tableScroll) tableScroll.hidden = !!option;
           if (!option) {
             if (findTitle) findTitle.innerHTML = '';
             if (findWhy) findWhy.textContent = '';
+            if (findCta) findCta.innerHTML = '';
             return;
           }
           var copy = optionCopy[option];
           if (findTitle) {
-            findTitle.innerHTML =
-              '<a href="#' +
+            findTitle.textContent = copy.name;
+          }
+          if (findWhy) findWhy.textContent = copy.why;
+          if (findCta) {
+            findCta.innerHTML =
+              '<a class="ee-btn ee-btn-gold" href="#' +
               option +
               '" data-booking-nav="' +
               option +
-              '">' +
-              copy.name +
-              '</a>';
+              '">Read Option ' +
+              (option === 'tickets' ? '1' : option === 'membership' ? '2' : '3') +
+              ' →</a>';
           }
-          if (findWhy) findWhy.textContent = copy.why;
         }
 
         if (findInput) {
