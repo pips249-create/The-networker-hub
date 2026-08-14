@@ -72,19 +72,19 @@
     'pay-how': {
       title: 'How will people book?',
       body:
-        'Ticket = people book a ticket for this date. Free visits, then membership = one way in for a new group: try free, then join (no guest ticket). Ticket and membership = two prices for a group that already has members: guest ticket plus member price (often free). Open “How do these booking options work?” for detail.',
+        '1 = everyone books a ticket. 2 = new group: try free, then join. 3 = already have members: guest ticket, members pay less or nothing. Open “How do these booking options work?” for examples.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
       title: 'Free visits, then membership',
       body:
-        'For a new group. One way in: visitors try a few meetings free, then join. There is no guest ticket. Stay on this option when they join. Full walkthrough: How booking options work.',
+        'New group. People try a meeting free, then join. You stay on this option when they become members.',
       hubertPrompt: 'How does Free visits, then membership work?',
     },
     'pay-how-both': {
       title: 'Ticket and membership',
       body:
-        'For a group that already has members. Two prices at once: a guest ticket, and a member price (often free). Not the next step after Free visits, then membership.',
+        'You already have members. Guests buy a ticket. Members pay a different price, or nothing.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
