@@ -72,7 +72,7 @@
     'pay-how': {
       title: 'How will people book?',
       body:
-        'Ticket = ticket types only. Free visits, then membership = try meetings free, then join. Ticket and membership = more than one price: visitors pay a ticket, members book at their membership rate. Open “How do these booking options work?” for detail.',
+        'Ticket = people book a ticket for this date. Free visits, then membership = try meetings free, then join. Ticket and membership = guests buy a ticket, members pay a different price (often free). Open “How do these booking options work?” for detail.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
@@ -84,7 +84,7 @@
     'pay-how-both': {
       title: 'Ticket and membership',
       body:
-        'Choose this if you have more than one tier of pricing: visitors pay one ticket price, then members book at their membership rate (often £0). Optional free visits still apply before someone joins.',
+        'Choose this if guests pay a ticket and members pay a different price (often free). People can still try a few meetings free before they join.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
