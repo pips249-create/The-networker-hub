@@ -2197,6 +2197,11 @@ body.organiser-booking-options-page {
   border-color: rgba(189, 147, 46, 0.22);
 }
 
+.ee-booking-help-section > .ee-booking-help-panel--note {
+  margin: 0 0 16px;
+  max-width: 42em;
+}
+
 .ee-booking-help-panel h3 {
   margin: 0 0 8px;
   font-size: 0.95rem;

@@ -78,13 +78,13 @@
     'pay-how-membership': {
       title: 'Free visits, then membership',
       body:
-        'For newcomers and visitors only: they try a few meetings free, then join so they can come regularly. You keep visit history and reports. Full walkthrough: How booking options work.',
+        'For newcomers and visitors: they try a few meetings free, then join so they can come regularly. Stay on this option — when they join, they book as members next time. We do not move you on to Ticket and membership. Full walkthrough: How booking options work.',
       hubertPrompt: 'How does Free visits, then membership work?',
     },
     'pay-how-both': {
       title: 'Ticket and membership',
       body:
-        'For an existing group that wants to grow. Guests try meetings free, then join to come regularly. Your current members book at a different price, or for free.',
+        'A different choice from Free visits, then membership — not the next step. For an existing group that wants to grow: guests try free, then join, while your current members book at a different price, or for free.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
