@@ -2355,36 +2355,42 @@ body.organiser-booking-options-page {
 
 .ee-booking-help-find {
   display: grid;
-  gap: 6px;
-  margin: 0 0 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ee-text-mid);
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 16px 16px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--ee-purple);
+  background: linear-gradient(180deg, #e8f6f8 0%, #ffffff 55%);
+  box-shadow: 0 8px 24px rgba(13, 110, 122, 0.12);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-purple-dark);
 }
 
 .ee-booking-help-find input,
 .ee-booking-help-find textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1.5px solid rgba(13, 110, 122, 0.28);
+  padding: 16px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(13, 110, 122, 0.35);
   font: inherit;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--ee-text);
-  background: #f7fbfc;
+  background: #fff;
   resize: vertical;
-  min-height: 5.5rem;
+  min-height: 7rem;
+  box-shadow: inset 0 1px 2px rgba(13, 110, 122, 0.06);
 }
 
 .ee-booking-help-find input:focus,
 .ee-booking-help-find textarea:focus {
   outline: none;
-  border-color: var(--ee-purple);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.12);
+  border-color: var(--ee-gold);
+  background: #fffef8;
+  box-shadow: 0 0 0 4px rgba(189, 147, 46, 0.22);
 }
 
 .ee-booking-help-suggest {
