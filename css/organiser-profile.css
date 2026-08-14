@@ -456,6 +456,37 @@
   padding: 12px 0;
 }
 
+.org-reviews-claim-preview[hidden] {
+  display: none !important;
+}
+
+.org-reviews-claim-preview-lede {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3d4f66;
+}
+
+.org-review-card--example {
+  border-style: dashed;
+  border-left-style: dashed;
+  background: #fff;
+  position: relative;
+}
+
+.org-review-example-badge {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #1c2040;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .org-profile-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -917,6 +948,23 @@ body.org-claim-invite-active #org-region-cta {
   font-weight: 600;
   color: #2563eb;
   white-space: nowrap;
+}
+
+.org-events-claim-preview[hidden] {
+  display: none !important;
+}
+
+.org-events-claim-preview-lede {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3d4f66;
+}
+
+.org-event-row--example {
+  border-style: dashed;
+  cursor: default;
+  pointer-events: none;
 }
 
 .org-profile-empty {

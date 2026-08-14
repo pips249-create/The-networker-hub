@@ -137,15 +137,15 @@
     }
     if (textEl) {
       textEl.textContent =
-        'Have a look at the details and any upcoming events below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute \u2014 then you can edit this page.';
+        'Have a look at the details below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute \u2014 then you can edit this page.';
     }
     if (btn) {
       btn.setAttribute('href', authHref);
       var label = btn.querySelector('.org-claim-cta-label');
       if (label) {
-        label.textContent = 'Create a free account to claim \u2192';
+        label.textContent = 'You must claim your page to edit it \u2192';
       } else {
-        btn.textContent = 'Create a free account to claim \u2192';
+        btn.textContent = 'You must claim your page to edit it \u2192';
       }
       bindClaimCtaBusy(btn);
     }
@@ -522,7 +522,10 @@
     var leadEl = document.getElementById('org-reviews-lead');
     var feed = document.getElementById('org-reviews-feed');
     var emptyEl = document.getElementById('org-reviews-empty');
+    var claimPreview = document.getElementById('org-reviews-claim-preview');
+    var headingEl = document.getElementById('org-showcase-heading');
     var ratingWrap = document.getElementById('org-rating-wrap');
+    var isClaimPreview = queryParams().isClaim || document.body.classList.contains('org-claim-invite-active');
 
     if (starsEl) starsEl.innerHTML = starsHtml(rating);
     if (summaryEl) {
@@ -545,6 +548,8 @@
           ' rating' +
           (count === 1 ? '' : 's') +
           '</strong>.';
+      } else if (isClaimPreview) {
+        leadEl.textContent = 'Reviews from people who attend your events will appear in this panel.';
       } else {
         leadEl.textContent = 'Reviews appear here after attendees share feedback from events.';
       }
@@ -556,11 +561,22 @@
     var items = resolveReviewItems(org);
     if (items.length) {
       if (emptyEl) emptyEl.hidden = true;
+      if (claimPreview) claimPreview.hidden = true;
       items.forEach(function (review) {
         appendReviewCard(feed, review, { organiserId: org.id });
       });
       return;
     }
+
+    if (isClaimPreview) {
+      if (emptyEl) emptyEl.hidden = true;
+      if (claimPreview) claimPreview.hidden = false;
+      if (headingEl) headingEl.textContent = 'Where your reviews will sit';
+      if (ratingWrap) ratingWrap.hidden = true;
+      return;
+    }
+
+    if (claimPreview) claimPreview.hidden = true;
 
     if (count > 0) {
       if (emptyEl) emptyEl.hidden = true;
@@ -832,15 +848,26 @@
   function renderEvents(events) {
     var list = document.getElementById('org-events');
     var empty = document.getElementById('org-events-empty');
+    var claimPreview = document.getElementById('org-events-claim-preview');
+    var heading = document.getElementById('org-upcoming-heading');
+    var isClaimPreview = queryParams().isClaim || document.body.classList.contains('org-claim-invite-active');
     if (!list) return;
 
     if (!events || !events.length) {
       list.innerHTML = '';
-      if (empty) empty.hidden = false;
+      if (isClaimPreview) {
+        if (empty) empty.hidden = true;
+        if (claimPreview) claimPreview.hidden = false;
+        if (heading) heading.textContent = 'Where your events will sit';
+      } else {
+        if (empty) empty.hidden = false;
+        if (claimPreview) claimPreview.hidden = true;
+      }
       applyOrganiserRegionCta([]);
       return;
     }
     if (empty) empty.hidden = true;
+    if (claimPreview) claimPreview.hidden = true;
 
     list.innerHTML = events
       .map(function (ev) {

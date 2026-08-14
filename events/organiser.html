@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e">
   <link rel="stylesheet" href="../css/fact-loader.css?v=20260723">
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728mark">
-  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260814claimsticky">
+  <link rel="stylesheet" href="../css/organiser-profile.css?v=20260814claimevents">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260813filler1">
 </head>
 <body class="organiser-profile-page hub-is-page-loading">
@@ -60,11 +60,10 @@
     <p class="org-claim-invite-kicker" id="org-claim-invite-kicker">Preview — not claimed yet</p>
     <p class="org-claim-invite-title" id="org-claim-invite-title">This is a preview of your page</p>
     <p class="org-claim-invite-text" id="org-claim-invite-text">
-      Have a look at the details and any upcoming events below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute — then you can edit this page.
+      Have a look at the details below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute — then you can edit this page.
     </p>
     <div class="org-claim-invite-actions" id="org-claim-invite-actions">
-      <a class="org-profile-btn org-profile-btn--primary" id="org-claim-edit-btn" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim"><span class="org-claim-cta-label">Create a free account to claim →</span></a>
-      <a class="org-profile-btn" href="#org-upcoming">See upcoming events</a>
+      <a class="org-profile-btn org-profile-btn--primary" id="org-claim-edit-btn" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim"><span class="org-claim-cta-label">You must claim your page to edit it →</span></a>
     </div>
 
     <div class="org-claim-founding" id="org-claim-founding">
@@ -133,15 +132,42 @@
         </div>
         <div class="org-reviews-feed" id="org-reviews-feed" aria-live="polite"></div>
         <p class="org-reviews-empty" id="org-reviews-empty" hidden>No reviews yet — be the first after attending one of their events.</p>
+        <div class="org-reviews-claim-preview" id="org-reviews-claim-preview" hidden>
+          <p class="org-reviews-claim-preview-lede">Your reviews will sit here after attendees book through the Hub and leave feedback. You can reply in public from your dashboard.</p>
+          <article class="org-review-card org-review-card--example" aria-label="Example review">
+            <p class="org-review-example-badge">Example</p>
+            <div class="org-review-card-header">
+              <strong>Alex P.</strong>
+              <span class="org-review-card-date">After an event</span>
+            </div>
+            <div class="org-review-card-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <p>Friendly room, well run, and I left with two useful introductions. I would come again.</p>
+            <div class="org-review-organiser-reply">
+              <div class="org-review-organiser-reply-label">Your reply</div>
+              <p class="org-review-organiser-reply-text">Thanks for coming — glad the introductions were useful. See you at the next one.</p>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
     <div class="org-profile-layout">
       <div class="org-profile-main">
     <section class="org-profile-section org-profile-section--events" id="org-upcoming">
-      <h2>Upcoming listings</h2>
+      <h2 id="org-upcoming-heading">Upcoming listings</h2>
       <div class="org-events-list" id="org-events"></div>
       <p class="org-profile-empty" id="org-events-empty" hidden>No upcoming listings right now.</p>
+      <div class="org-events-claim-preview" id="org-events-claim-preview" hidden>
+        <p class="org-events-claim-preview-lede">Your events will sit here. After you claim this page, you can add listings from your dashboard — or send Catherine or Jamie the details and we can list one for you.</p>
+        <div class="org-event-row org-event-row--example" aria-label="Example event">
+          <div>
+            <p class="org-review-example-badge">Example</p>
+            <p class="org-event-row-title">Monthly networking breakfast</p>
+            <p class="org-event-row-meta">Tue 8 Sep · Your venue · In person</p>
+          </div>
+          <span class="org-event-row-cta">View event →</span>
+        </div>
+      </div>
       <a class="detail-region-cta" id="org-region-cta" href="#" hidden>More networking groups in this area →</a>
     </section>
 
@@ -280,7 +306,7 @@
 
 <div id="org-claim-sticky" class="org-claim-sticky" hidden>
   <p class="org-claim-sticky-copy">Preview only — claim to edit this page</p>
-  <a class="org-profile-btn org-profile-btn--primary" id="org-claim-sticky-btn" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim"><span class="org-claim-cta-label">Create a free account</span></a>
+  <a class="org-profile-btn org-profile-btn--primary" id="org-claim-sticky-btn" href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim"><span class="org-claim-cta-label">Claim your page to edit it</span></a>
 </div>
 
 <div id="hub-site-footer"></div>
@@ -299,6 +325,6 @@
 <script src="../js/postcode-outcode.js?v=20260727city"></script>
 <script src="../js/detail-region-cta.js?v=20260727city"></script>
 <script src="../js/plain-text-format.js?v=20260728paras1"></script>
-<script src="../js/organiser-detail.js?v=20260814claimsticky"></script>
+<script src="../js/organiser-detail.js?v=20260814claimevents"></script>
 </body>
 </html>
