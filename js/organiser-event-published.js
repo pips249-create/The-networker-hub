@@ -5,8 +5,8 @@
   const featuredPlanDuration = document.getElementById('ep-featured-plan-duration');
 
   function beforePublicCatalogueLaunch() {
-    // Europe/London midnight 1 Sept 2026 — matches soft-launch copy elsewhere.
-    return Date.now() < Date.parse('2026-09-01T00:00:00+01:00');
+    // Europe/London midnight 25 Aug 2026 — public browsing (tickets stay 1 Sept).
+    return Date.now() < Date.parse('2026-08-25T00:00:00+01:00');
   }
 
   (function syncSoftLaunchShareNote() {
@@ -950,7 +950,7 @@
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
     const softNote =
-      'Link copied. Public browsing opens 1 September — until then, cold traffic may see the waitlist page.';
+      'Link copied. Public browsing opens 25 August — until then, cold traffic may see the waitlist page.';
     const okMsg = beforePublicCatalogueLaunch() ? softNote : 'Link copied to clipboard';
     const copied = await copyText(listingUrl, feedback, '', okMsg);
     if (copied) markShareDone('copy_caption');

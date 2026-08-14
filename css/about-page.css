@@ -1188,6 +1188,10 @@ html:has(.about-page) {
   letter-spacing: 0.02em;
 }
 
+.about-founding-item:has(.about-founding-logo) .about-founding-initial {
+  display: none !important;
+}
+
 .about-founding-initial[hidden] {
   display: none !important;
 }

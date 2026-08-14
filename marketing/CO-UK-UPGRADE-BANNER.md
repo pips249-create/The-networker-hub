@@ -8,7 +8,7 @@
 
 UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`
 
-Product voice: rotating **Find your next…**, launch line (**Hub opens 1 September**), dismissible **7 days** (`tnh_upgrade_banner_dismissed_v7`).
+Product voice: rotating **Find your next…**, launch line (**Browse from 25 August**), dismissible **7 days** (`tnh_upgrade_banner_dismissed_v14`).
 
 ---
 
@@ -18,7 +18,7 @@ Product voice: rotating **Find your next…**, launch line (**Hub opens 1 Septem
 2. Lands on Hub **`/peek`** (closed mini-site — no catalogue unlock, no sign-in)
 3. From there: **`/peek/about-us`**, **`/peek/for-organisers`**, **`/peek/for-networkers`**, or launch updates
 4. Old `/about` and `/for-networkers` URLs redirect into `/peek` while the gate is on
-5. Public events / opportunities stay gated until 1 September
+5. Public events / opportunities browse from 25 August; tickets and enquiries from 1 September
 
 ---
 
@@ -58,7 +58,7 @@ Do **not** change the banner to `position: fixed` — that is what would clash w
 
 1. Confirm Hub `/peek` loads without the password gate.
 2. WPCode / Code Snippets → Header → paste `co-uk-upgrade-banner-snippet.html` (see `CO-UK-BANNER-INSTALL-FOR-DEVS.md`).
-3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v7`).
+3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v14`).
 
 ---
 

@@ -723,7 +723,7 @@ async function maybeGateSiteAccess(request, url) {
 
   // Soft launch: signed-in claim/organiser sessions unlock the workspace only
   // (early-access paths already bypass above). Do NOT open public browse until
-  // SITE_ACCESS_PASSWORD is removed on 1 September. Team preview still uses the
+  // SITE_ACCESS_PASSWORD is removed on 25 August (public browsing). Team preview still uses the
   // password cookie. Platform admins keep full access for support.
   // Individual listing pages stay reachable so organisers can preview their own
   // public event / organiser URLs after publishing.

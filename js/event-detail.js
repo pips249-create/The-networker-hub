@@ -1794,7 +1794,9 @@
 
   function openSeriesDatePickerForAnotherDate() {
     const wrap = document.getElementById('ev-series-dates');
-    if (!wrap || wrap.hidden) return;
+    if (!wrap) return;
+    if (seriesDatesList.length > 1) wrap.hidden = false;
+    if (wrap.hidden) return;
     setSeriesDatePickerOpen(true);
     try {
       wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3762,6 +3764,7 @@
   }
 
   function applyEventApplicationUi(ev) {
+    bindAlreadyGoingActions();
     const panel = document.getElementById('tickets');
     const statusPanel = document.getElementById('category-exclusivity-application-status');
     const titleEl = document.getElementById('category-exclusivity-application-status-title');

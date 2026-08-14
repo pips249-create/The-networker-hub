@@ -30,7 +30,7 @@ https://www.thenetworkerhub.com/peek?utm_source=the-networker.co.uk&utm_medium=b
 
 Three columns (unequal widths):
 
-1. **We’re upgrading** · Launching **1st September**
+1. **We’re upgrading** · Browse from **25 August**
 2. **Find your next** *[rotating word]*
 3. **Sneak Peek →** (opens Hub `/peek` mini-site)
 
@@ -44,7 +44,7 @@ No Hub logo — co.uk purple header keeps the brand.
 |------|------|
 | Placement | **In document flow** above the purple nav — `position: relative` only |
 | CTA | **Sneak Peek** → Hub `/peek` (+ UTMs above) |
-| Dismiss | × hides for **7 days** (`localStorage` key `tnh_upgrade_banner_dismissed_v12`) |
+| Dismiss | × hides for **7 days** (`localStorage` key `tnh_upgrade_banner_dismissed_v14`) |
 | Motion | Rotating word after “Find your next…” every 3.2s |
 
 **Do not** switch the banner to `position: fixed` or `sticky` — that covers Elementor hero videos.

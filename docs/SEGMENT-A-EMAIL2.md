@@ -8,7 +8,7 @@
 **Paste HTML:** `data/email2-brevo-ready.html`  
 **Sponsor:** My Medical Cover (Barnsgate declined)
 
-**Positioning:** Early access for organisers only. Full workspace after they claim. Public browse + ticket purchase stay closed until **1 September 2026**.  
+**Positioning:** Early access for organisers only. Full workspace after they claim. Public browsing opens **25 August 2026**; ticket purchase and opportunity enquiries stay closed until **1 September 2026**.  
 
 **Why claim before 1 Sept:** Founding Organiser · 2026 badge for everyone who claims in time; **first 50** also get homepage showcase (+ website link) through November; **group social post** naming founding organisers now on the Hub organiser leaderboard (not personal one-to-ones). See `docs/FOUNDING-ORGANISER.md`.
 

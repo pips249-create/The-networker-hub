@@ -204,7 +204,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 
 **Admin sessions:** platform admins with a valid `hub_session` can use Command Centre while gated; catalogue browse still needs the team preview password (or wait until the gate is removed).
 
-**Keeping the site private until launch (1st September 2026):**
+**Keeping the site private until browsing opens (25 August 2026):**
 1. Keep `SITE_ACCESS_PASSWORD` set in Vercel Production.
 2. Do not set `DISABLE_SITE_ACCESS_GATE=true`.
 3. Share the password only with your team.

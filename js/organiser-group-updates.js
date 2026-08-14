@@ -8,6 +8,9 @@
     bootstrap: null,
     creditPacks: [],
     bound: false,
+    loadPromise: null,
+    loadingFor: '',
+    loadedFor: '',
     autosaveTimer: null,
     dirty: false,
     switchingGroup: false,
@@ -618,6 +621,7 @@
     state.dirty = false;
     state.organiserId = id;
     state.updateId = '';
+    state.loadedFor = '';
     clearComposer();
     try {
       await loadBootstrap();
@@ -895,12 +899,30 @@
     } catch (e) {
       pendingSession = '';
     }
-    await loadBootstrap();
-    if (pendingSession) {
-      await completeCreditsPurchase(pendingSession).catch(function (err) {
-        setStatus(friendlyError(err) || 'Payment received, but credits need a moment to appear — refresh shortly.', 'error');
-      });
+    if (!pendingSession && state.loadedFor === state.organiserId && state.bootstrap) {
+      return;
     }
+    if (!pendingSession && state.loadPromise && state.loadingFor === state.organiserId) {
+      return state.loadPromise;
+    }
+    var loadFor = state.organiserId;
+    state.loadingFor = loadFor;
+    state.loadPromise = (async function () {
+      await loadBootstrap();
+      if (pendingSession) {
+        await completeCreditsPurchase(pendingSession).catch(function (err) {
+          setStatus(
+            friendlyError(err) ||
+              'Payment received, but credits need a moment to appear — refresh shortly.',
+            'error'
+          );
+        });
+      }
+      if (state.organiserId === loadFor) state.loadedFor = loadFor;
+    })().finally(function () {
+      if (state.loadingFor === loadFor) state.loadPromise = null;
+    });
+    return state.loadPromise;
   }
 
   global.HubOrganiserGroupUpdates = {

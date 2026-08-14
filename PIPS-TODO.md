@@ -187,10 +187,10 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | [ ] | 10 | **Wider email** (500–1,000) — claim profile + help link; track claim rate (**requires Resend Pro** if via Resend) |
 | [x] | 10–11 | FAQ / support inbox ready (login, publish event, bookings, payouts) — pre-drafts in `docs/SUPPORT-INBOX-RUNBOOK.md` |
 | [ ] | 11 | Performance pass — pagination, images, API caching under load |
-| [ ] | 11 | **Soft launch** — redirect + limited traffic |
+| [ ] | 11 | **Soft launch** — public browsing 25 August (tickets still closed) |
 | [ ] | 12 | **Full launch email** to remainder of 3,500 list (**requires Resend Pro**) |
 
-### 1 September — Launch day checklist
+### 25 August — Browse open · 1 September — Tickets & enquiries
 
 | Done | Task |
 |:----:|------|
@@ -205,7 +205,7 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
 | [ ] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
-| [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (1st September) |
+| [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (25 August browse) |
 | [ ] | **Supabase Pro** active before gate-off (backups + no auto-pause on live ticketing) |
 
 ---

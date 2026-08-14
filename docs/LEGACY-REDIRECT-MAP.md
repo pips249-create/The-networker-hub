@@ -1,6 +1,6 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** banner install now (August 2026) · Hub soft launch **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
+**Status:** banner install now (August 2026) · Hub browsing **25 August 2026** · tickets **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
 **Target host:** `https://www.thenetworkerhub.com`  
 **Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel); **website stays live** during the SEO hold
 

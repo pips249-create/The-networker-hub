@@ -1,6 +1,6 @@
 # SEO & AEO launch plan
 
-**Private until 1st September 2026** · Public hub: `www.thenetworkerhub.com`  
+**Private until 25 August 2026** (tickets & enquiries from 1 September) · Public hub: `www.thenetworkerhub.com`  
 Code foundations ~65% ready — gate, domain, and Search Console still decide launch discoverability.
 
 > Cursor canvas side panel: `seo-aeo-launch-plan.canvas.tsx` (open from the Canvas / right sidebar in Cursor).
@@ -57,14 +57,19 @@ Code foundations ~65% ready — gate, domain, and Search Console still decide la
 
 ---
 
-## Launch week (1st September)
+## Browse week (25 August)
 
-1. Remove `SITE_ACCESS_PASSWORD` → Redeploy.
+1. Remove `SITE_ACCESS_PASSWORD` → Redeploy (public browsing on).
 2. Confirm `/robots.txt` Allow, `/sitemap.xml` 200, `/llms.txt` + `/agents.txt` 200, no public `noindex`.
 3. Search Console: verify → submit `https://www.thenetworkerhub.com/sitemap.xml` → request indexing on home + 3–5 key pages.
-4. Flip `the-networker.co.uk` → hub 301s; keep legacy brand email working.
-5. If GBP exists: set website to live hub URL and publish only if verified without a Magpas Maps pin. Otherwise skip — GSC is enough for launch week.
+4. Keep tickets and opportunity enquiries closed until 1 September; banner copy should say so.
+5. If GBP exists: set website to live hub URL and publish only if verified without a Magpas Maps pin. Otherwise skip — GSC is enough.
 6. Week 1–2: watch Coverage / Page indexing; fix 404s from old URLs; confirm Event schema where eligible.
+
+## Tickets week (1st September)
+
+1. Turn on checkout and opportunity enquiries.
+2. Do **not** flip `the-networker.co.uk` → hub 301s yet (SEO hold ~November). Keep legacy brand email working.
 
 ---
 

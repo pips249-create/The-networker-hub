@@ -129,15 +129,15 @@
 
     if (breadcrumb) breadcrumb.hidden = true;
     if (invite) invite.hidden = false;
-    if (kicker) kicker.textContent = 'We\u2019ve set this up for you';
+    if (kicker) kicker.textContent = 'Preview \u2014 not claimed yet';
     if (titleEl && org && org.name) {
-      titleEl.textContent = org.name + ' is ready on The Networker Hub';
+      titleEl.textContent = 'This is a preview of ' + org.name;
     } else if (titleEl) {
-      titleEl.textContent = 'Your group page is ready';
+      titleEl.textContent = 'This is a preview of your page';
     }
     if (textEl) {
       textEl.textContent =
-        'Have a look at the details and any upcoming events below. When you\u2019re happy, claim the page so you can edit it \u2014 creating an account is free and takes about a minute.';
+        'Have a look at the details and any upcoming events below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute \u2014 then you can edit this page.';
     }
     if (btn) {
       btn.setAttribute('href', authHref);
@@ -149,6 +149,7 @@
       }
       bindClaimCtaBusy(btn);
     }
+    bindClaimStickyBar(authHref);
     // Keep request-access available when the email on file is wrong / outdated.
     if (claimSection) {
       claimSection.hidden = false;
@@ -196,6 +197,40 @@
     loadClaimPeerStrip(org);
   }
 
+  function bindClaimStickyBar(authHref) {
+    var sticky = document.getElementById('org-claim-sticky');
+    var stickyBtn = document.getElementById('org-claim-sticky-btn');
+    var sentinel = document.getElementById('org-claim-invite-actions')
+      || document.getElementById('org-claim-edit-btn');
+    if (!sticky) return;
+
+    if (stickyBtn) {
+      stickyBtn.setAttribute('href', authHref);
+      bindClaimCtaBusy(stickyBtn);
+    }
+
+    function setStickyVisible(visible) {
+      sticky.hidden = !visible;
+      document.body.classList.toggle('org-claim-sticky-visible', visible);
+    }
+
+    if (!sentinel || typeof IntersectionObserver !== 'function') {
+      setStickyVisible(true);
+      return;
+    }
+
+    setStickyVisible(false);
+    var observer = new IntersectionObserver(
+      function (entries) {
+        var entry = entries && entries[0];
+        var inviteCtaVisible = !!(entry && entry.isIntersecting);
+        setStickyVisible(!inviteCtaVisible);
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8px 0px' }
+    );
+    observer.observe(sentinel);
+  }
+
   var CLAIM_PEERS_MIN = 4;
 
   function claimPeerItemHtml(org) {
@@ -215,10 +250,7 @@
         escapeHtml(photo) +
         '" alt="' +
         escapeHtml(name) +
-        '" loading="lazy" decoding="async" onerror="this.hidden=true;var f=this.nextElementSibling;if(f){f.hidden=false;this.parentElement.classList.add(\'org-claim-peer-item--fallback\');this.parentElement.classList.remove(\'org-claim-peer-item--dark\')}" />' +
-        '<span class="org-claim-peer-initial" hidden aria-hidden="true">' +
-        escapeHtml(initial) +
-        '</span>';
+        '" loading="lazy" decoding="async" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'org-claim-peer-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'org-claim-peer-item--fallback\');this.parentElement.classList.remove(\'org-claim-peer-item--dark\');this.parentElement.appendChild(s);" />';
     } else {
       inner =
         '<span class="org-claim-peer-initial" aria-hidden="true">' +

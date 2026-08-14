@@ -2893,6 +2893,11 @@ html:has(.home-page) {
   max-height: 52px;
 }
 
+/* Logo tiles: never show a letter beside an image */
+.home-founding-item:has(.home-partner-logo) .home-founding-initial {
+  display: none !important;
+}
+
 .home-founding-initial {
   display: flex;
   align-items: center;

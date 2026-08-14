@@ -2889,6 +2889,9 @@
   async function loadForGroup(groupId) {
     const id = String(groupId || '').trim();
     bindControlsOnce();
+    if (String(organiserId || '') !== id) {
+      groupRosterSummary = null;
+    }
     organiserId = id;
     syncGroupSelect();
 
@@ -2926,7 +2929,6 @@
     reportsLoadedKey = '';
     reportsStale = false;
     reportsSetupEditing = false;
-    groupRosterSummary = null;
     page = 1;
     setRegisterTab('members');
     const bodyEl = document.getElementById('omr-body');
@@ -2937,26 +2939,39 @@
     activeLoadPromise = (async function () {
       page = 1;
 
-      try {
-        const group = await api('/api/organiser/groups?id=' + encodeURIComponent(id));
-        if (getOrganiserId() !== id) return;
-        groupRosterSummary =
-          group.group && group.group.rosterSummary
-            ? group.group.rosterSummary
-            : { active: 0, unclaimed: 0, expiringSoon: 0 };
-        const title = document.getElementById('omr-title');
-        if (title && group.group && group.group.name) {
-          title.textContent = 'Membership — ' + group.group.name;
-        }
-      } catch {
-        /* ignore */
-      }
+      const groupP = api('/api/organiser/groups?id=' + encodeURIComponent(id))
+        .then(function (group) {
+          if (getOrganiserId() !== id) return;
+          groupRosterSummary =
+            group.group && group.group.rosterSummary
+              ? group.group.rosterSummary
+              : groupRosterSummary || { active: 0, unclaimed: 0, expiringSoon: 0 };
+          const title = document.getElementById('omr-title');
+          if (title && group.group && group.group.name) {
+            title.textContent = 'Membership — ' + group.group.name;
+          }
+          if (typeof window.updateMembershipPageCard === 'function' && groupRosterSummary) {
+            window.updateMembershipPageCard(id, groupRosterSummary);
+          }
+        })
+        .catch(function () {
+          /* ignore */
+        });
 
-      await loadEvents();
+      const eventsP = Promise.resolve(loadEvents()).catch(function () {
+        return null;
+      });
+      const billingP = Promise.resolve(loadBillingPlan()).catch(function () {
+        return null;
+      });
+      await fetchRosterPage(1, { showLoader: false });
       if (getOrganiserId() !== id) return;
-      await loadBillingPlan();
-      if (getOrganiserId() !== id) return;
-      await refresh();
+      setRosterLoading(false);
+      if (!rosterAppearsPainted()) renderRoster();
+
+      Promise.all([groupP, eventsP, billingP]).catch(function () {
+        return null;
+      });
     })().finally(function () {
       if (activeLoadGroupId === id) {
         setRosterLoading(false);

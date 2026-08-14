@@ -209,7 +209,7 @@
       if (titleEl) titleEl.textContent = 'Find your existing listing';
       if (descEl) {
         descEl.innerHTML =
-          'Your email did not match a listing on file. After you sign in, open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet. (Public browsing opens 1 September.)';
+          'Your email did not match a listing on file. After you sign in, open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet. (Public browsing opens 25 August.)';
       }
       if (createBtn) createBtn.hidden = true;
       if (!findLink) {
@@ -229,7 +229,7 @@
     if (titleEl) titleEl.textContent = 'Create your organiser page';
     if (descEl) {
       descEl.innerHTML =
-        'Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 1 September). If yours is already listed, open it and request access instead of creating a duplicate.';
+        'Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 25 August). If yours is already listed, open it and request access instead of creating a duplicate.';
     }
     if (createBtn) createBtn.hidden = false;
     if (findLink) findLink.hidden = true;
@@ -656,7 +656,7 @@
       done();
       if (window.HubCatalogueOpen !== true && publicListingLinkNeedsLaunchNote(value)) {
         showOrganiserAlert(
-          'Link copied. Public event and opportunity pages open for everyone on 1 September — until then, cold traffic may see the waitlist page.',
+          'Link copied. Public event and opportunity pages open for everyone on 25 August — until then, cold traffic may see the waitlist page.',
           false
         );
       }
@@ -673,7 +673,7 @@
   }
 
   function publicListingLinkNeedsLaunchNote(url) {
-    if (!(Date.now() < Date.parse('2026-09-01T00:00:00+01:00'))) return false;
+    if (!(Date.now() < Date.parse('2026-08-25T00:00:00+01:00'))) return false;
     try {
       const path = new URL(url, location.origin).pathname.replace(/\/$/, '') || '/';
       if (path.indexOf('/organisers/') === 0) return false;
@@ -1691,7 +1691,7 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260812brand1';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260813free0';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260814fast1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';
@@ -1699,7 +1699,7 @@
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
   const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260812comm7';
-  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260812comm7';
+  const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260814fast1';
   let communicateToolsBound = false;
 
   function loadStylesheetOnce(href) {
@@ -1796,6 +1796,13 @@
   function ensureGroupUpdatesAssets() {
     if (window.HubOrganiserGroupUpdates) return Promise.resolve();
     return loadScriptOnce(GROUP_UPDATES_JS);
+  }
+
+  function prefetchHeavyWorkspaceAssets() {
+    ensureMemberRosterAssets();
+    ensureEventConnectionsAssets();
+    ensureGroupUpdatesAssets();
+    ensureLinkedInPostBuilderAssets();
   }
 
   const SOCIAL_TAB_STORAGE_KEY = 'hub_org_social_tab_v1';
@@ -2119,18 +2126,17 @@
   function ensureLinkedInPostBuilder(options) {
     options = options || {};
     const root = document.getElementById('org-post-builder-root');
-    if (!root) return;
+    if (!root) return Promise.resolve();
     if (!window.HubLinkedInPostBuilder) {
-      ensureLinkedInPostBuilderAssets()
+      return ensureLinkedInPostBuilderAssets()
         .then(function () {
-          ensureLinkedInPostBuilder(options);
+          return ensureLinkedInPostBuilder(options);
         })
         .catch(function () {
-          /* non-fatal */
+          return null;
         });
-      return;
     }
-    if (!options.force && !isSocialPageActive()) return;
+    if (!options.force && !isSocialPageActive()) return Promise.resolve();
     // So "Add colours & logo" on the LinkedIn tab works before visiting Colours & type.
     bindBrandKitPanel();
     renderBrandKitNudge();
@@ -2160,15 +2166,13 @@
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
       if (linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     }
-    // Warm full event rows (photos, etc.) after first paint — summaries cover the picker immediately.
+    // Warm full event rows and opportunity captions after first paint.
     ensureEventsLoaded().then(function (ok) {
       if (!linkedInPostBuilder) return;
-      // Groups may have landed from lean bootstrap after the first hydrate — always resync.
       if (linkedInPostBuilder.refreshGroups) linkedInPostBuilder.refreshGroups();
       if (linkedInPostBuilder.refreshOpportunities) linkedInPostBuilder.refreshOpportunities();
       if (ok && linkedInPostBuilder.refreshEvents) linkedInPostBuilder.refreshEvents();
     });
-    // Business opportunity captions need listings — load them when Promote opens.
     loadOpportunitiesList()
       .then(function () {
         if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
@@ -2178,6 +2182,7 @@
       .catch(function () {
         /* non-fatal */
       });
+    return Promise.resolve();
   }
 
   function refreshLinkedInPostBuilderFromState() {
@@ -2188,7 +2193,7 @@
   }
 
   function ensureAttendeeEmailPanelReady(preferredEventId) {
-    ensureEventConnectionsAssets()
+    const connectionsP = ensureEventConnectionsAssets()
       .then(function () {
         if (window.HubOrganiserEventConnections && window.HubOrganiserEventConnections.init) {
           var events =
@@ -2203,17 +2208,18 @@
         }
       })
       .catch(function () {
-        /* non-fatal */
+        return null;
       });
-    ensureGroupUpdatesAssets()
+    const updatesP = ensureGroupUpdatesAssets()
       .then(function () {
         if (window.HubOrganiserGroupUpdates && window.HubOrganiserGroupUpdates.init) {
-          window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
+          return window.HubOrganiserGroupUpdates.init({ groups: state.groups || [] });
         }
       })
       .catch(function () {
-        /* non-fatal */
+        return null;
       });
+    return Promise.all([connectionsP, updatesP]);
   }
 
   function setAttendeeEmailPanelVisible(show) {
@@ -10450,11 +10456,12 @@
       groupId &&
       (membershipsRosterLoadedFor !== groupId || !membershipsRosterAppearsPainted());
 
-    if (needsRosterLoad) {
-      setMembershipsPageLoading(true, 'Loading membership…');
-    } else {
-      setMembershipsPageLoading(false);
-      workspace.hidden = false;
+    setMembershipsPageLoading(false);
+    workspace.hidden = false;
+    const pageLoading = document.getElementById('omr-page-loading');
+    if (needsRosterLoad && pageLoading) {
+      pageLoading.hidden = false;
+      pageLoading.setAttribute('aria-busy', 'true');
     }
 
     fillMembershipsGroupFilter();
@@ -10470,7 +10477,17 @@
         membershipsRosterLoadedFor = '';
         updateMembershipPageCard(filters.membershipsGroup);
         syncMembershipGroupUrl();
-        setMembershipsPageLoading(true, 'Loading membership…');
+        workspace.hidden = false;
+        setMembershipsPageLoading(false);
+        if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.setLoading === 'function') {
+          window.OrganiserMemberRoster.setLoading(true);
+        } else {
+          const pageLoading = document.getElementById('omr-page-loading');
+          if (pageLoading) {
+            pageLoading.hidden = false;
+            pageLoading.setAttribute('aria-busy', 'true');
+          }
+        }
         ensureMemberRosterAssets()
           .then(function () {
             workspace.hidden = false;
@@ -10951,19 +10968,8 @@
         options.communicateHash || resolveCommunicateHash(routeIn) || 'communicate';
       options.communicateHash = communicateHash;
       syncCommunicateTools(communicateHash);
-      routeLoadTasks.push(
-        new Promise(function (resolve) {
-          requestAnimationFrame(function () {
-            try {
-              ensureAttendeeEmailPanelReady(
-                filters.attendeesEvent !== 'all' ? filters.attendeesEvent : ''
-              );
-            } catch (e) {
-              /* ignore */
-            }
-            resolve();
-          });
-        })
+      ensureAttendeeEmailPanelReady(
+        filters.attendeesEvent !== 'all' ? filters.attendeesEvent : ''
       );
     }
     if (page === 'social') {
@@ -10993,28 +10999,7 @@
       if (tabToOpen === 'reach' || socialTabPreferred === 'reach') {
         ensurePromoteReachReady();
       }
-      routeLoadTasks.push(
-        new Promise(function (resolve) {
-          requestAnimationFrame(function () {
-            Promise.resolve()
-              .then(function () {
-                return ensureLinkedInPostBuilder({ force: true });
-              })
-              .then(function () {
-                return loadOpportunitiesList();
-              })
-              .then(function () {
-                if (linkedInPostBuilder && linkedInPostBuilder.refreshOpportunities) {
-                  linkedInPostBuilder.refreshOpportunities();
-                }
-              })
-              .catch(function () {
-                return null;
-              })
-              .then(resolve);
-          });
-        })
-      );
+      ensureLinkedInPostBuilder({ force: true });
     }
     if (page === 'team') {
       routeLoadTasks.push(
@@ -14305,7 +14290,7 @@
     if (introEl) {
       introEl.textContent = groupClaimRejectMode
         ? 'This will remove the page below from your dashboard and notify the Hub team. Add an optional note if the email match looks wrong.'
-        : 'You have early access to the organiser workspace before we open to the public on 1 September. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until launch day.';
+        : 'You have early access to the organiser workspace before public browsing opens on 25 August. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until 1 September.';
     }
   }
 
@@ -16101,15 +16086,17 @@
       if (parseRoute().page === 'communicate' || parseRoute().openAttendeeEmail) {
         ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
       }
-      // Warm editor CSS after first paint so group/event drawers open without a flash.
+      // Warm editor CSS and heavy workspace pages after first paint.
       if (typeof requestIdleCallback === 'function') {
         requestIdleCallback(function () {
           ensureEventEditCss();
-        }, { timeout: 4000 });
+          prefetchHeavyWorkspaceAssets();
+        }, { timeout: 2500 });
       } else {
         setTimeout(function () {
           ensureEventEditCss();
-        }, 1800);
+          prefetchHeavyWorkspaceAssets();
+        }, 600);
       }
     };
     } catch (e) {
