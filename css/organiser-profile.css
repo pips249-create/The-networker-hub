@@ -214,6 +214,10 @@
   margin-bottom: 14px;
 }
 
+.org-showcase-rating[hidden] {
+  display: none !important;
+}
+
 .org-showcase-rating .stars {
   display: inline-flex;
   gap: 2px;
@@ -460,31 +464,29 @@
   display: none !important;
 }
 
-.org-reviews-claim-preview-lede {
-  margin: 0 0 12px;
-  font-size: 14px;
-  line-height: 1.55;
-  color: #3d4f66;
-}
-
 .org-review-card--example {
-  border-style: dashed;
-  border-left-style: dashed;
+  padding: 12px 14px;
   background: #fff;
-  position: relative;
+  border: 1px dashed rgba(37, 99, 235, 0.35);
+  border-left: 3px dashed #2563eb;
 }
 
 .org-review-example-badge {
   display: inline-block;
-  margin: 0 0 8px;
-  padding: 2px 8px;
+  margin-left: 8px;
+  padding: 1px 7px;
+  vertical-align: middle;
   border-radius: 999px;
-  background: #1c2040;
-  color: #fff;
-  font-size: 10px;
+  background: #e8eef8;
+  color: #1e3a5f;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+body.org-claim-invite-active .how-reviews-trigger {
+  display: none !important;
 }
 
 .org-profile-layout {

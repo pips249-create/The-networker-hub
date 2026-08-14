@@ -549,7 +549,7 @@
           (count === 1 ? '' : 's') +
           '</strong>.';
       } else if (isClaimPreview) {
-        leadEl.textContent = 'Reviews from people who attend your events will appear in this panel.';
+        leadEl.textContent = 'Reviews from people who attend your events will appear here.';
       } else {
         leadEl.textContent = 'Reviews appear here after attendees share feedback from events.';
       }
@@ -571,7 +571,7 @@
     if (isClaimPreview) {
       if (emptyEl) emptyEl.hidden = true;
       if (claimPreview) claimPreview.hidden = false;
-      if (headingEl) headingEl.textContent = 'Where your reviews will sit';
+      if (headingEl) headingEl.textContent = 'Reviews';
       if (ratingWrap) ratingWrap.hidden = true;
       return;
     }
@@ -858,7 +858,7 @@
       if (isClaimPreview) {
         if (empty) empty.hidden = true;
         if (claimPreview) claimPreview.hidden = false;
-        if (heading) heading.textContent = 'Where your events will sit';
+        if (heading) heading.textContent = 'Upcoming listings';
       } else {
         if (empty) empty.hidden = false;
         if (claimPreview) claimPreview.hidden = true;
