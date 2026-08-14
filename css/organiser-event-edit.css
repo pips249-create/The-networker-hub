@@ -1923,6 +1923,12 @@ body.organiser-booking-options-page {
   color: var(--ee-text-mid);
 }
 
+.ee-booking-help-lede--quiet {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: var(--ee-text-soft);
+}
+
 .ee-booking-help-chooser {
   margin: 0 0 16px;
   padding: 14px 16px 12px;
@@ -2028,8 +2034,8 @@ body.organiser-booking-options-page {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  padding: 14px 14px 16px;
-  border-radius: 12px;
+  padding: 16px 16px 18px;
+  border-radius: 14px;
   border: 1.5px solid rgba(13, 110, 122, 0.18);
   background: rgba(255, 255, 255, 0.96);
   text-decoration: none;
@@ -2038,10 +2044,22 @@ body.organiser-booking-options-page {
     background 0.15s ease;
 }
 
+.ee-booking-help-compare-item[data-booking-nav='tickets'] {
+  border-color: rgba(13, 110, 122, 0.28);
+}
+
+.ee-booking-help-compare-item[data-booking-nav='membership'] {
+  border-color: rgba(189, 147, 46, 0.35);
+}
+
+.ee-booking-help-compare-item[data-booking-nav='both'] {
+  border-color: rgba(8, 74, 82, 0.28);
+}
+
 .ee-booking-help-compare-item:hover {
   border-color: var(--ee-purple);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(28, 50, 64, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(28, 50, 64, 0.08);
 }
 
 .ee-booking-help-compare-item.is-active {
@@ -2050,23 +2068,55 @@ body.organiser-booking-options-page {
   box-shadow: 0 0 0 2px rgba(13, 110, 122, 0.18);
 }
 
+.ee-booking-help-compare-item[data-booking-nav='membership'].is-active {
+  border-color: var(--ee-gold);
+  background: linear-gradient(165deg, #ffffff 0%, #f7edd4 100%);
+  box-shadow: 0 0 0 2px rgba(189, 147, 46, 0.22);
+}
+
+.ee-booking-help-compare-item[data-booking-nav='both'].is-active {
+  border-color: #084a52;
+  background: linear-gradient(165deg, #ffffff 0%, #dce8ea 100%);
+  box-shadow: 0 0 0 2px rgba(8, 74, 82, 0.18);
+}
+
+.ee-booking-help-compare-mark {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  flex-shrink: 0;
+}
+
+.ee-booking-help-compare-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
 .ee-booking-help-compare-num {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
   background: var(--ee-purple);
 }
 
+.ee-booking-help-compare-item[data-booking-nav='membership'] .ee-booking-help-compare-num {
+  background: var(--ee-gold);
+}
+
+.ee-booking-help-compare-item[data-booking-nav='both'] .ee-booking-help-compare-num {
+  background: #084a52;
+}
+
 .ee-booking-help-compare-copy {
   display: grid;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -2078,9 +2128,11 @@ body.organiser-booking-options-page {
 }
 
 .ee-booking-help-compare-copy strong {
-  font-size: 16px;
-  line-height: 1.3;
-  color: var(--ee-text);
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.22rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ee-purple-dark);
 }
 
 .ee-booking-help-compare-copy > span:not(.ee-booking-help-compare-badge) {
@@ -2309,9 +2361,17 @@ body.organiser-booking-options-page {
 
 .ee-booking-help-unsure-grid p {
   margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(26, 46, 59, 0.06);
   font-size: 14px;
   line-height: 1.5;
   color: var(--ee-text-mid);
+}
+
+.ee-booking-help-unsure-foot {
+  margin: 12px 0 0;
 }
 
 .ee-booking-help-unsure a {
@@ -2365,10 +2425,19 @@ body.organiser-booking-options-page {
 
 .ee-booking-help-example {
   margin-top: 14px;
-  padding: 14px 14px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(26, 46, 59, 0.08);
-  background: #fff;
+  padding: 16px 16px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(189, 147, 46, 0.28);
+  background: linear-gradient(180deg, #fffdf6 0%, #ffffff 40%);
+}
+
+.ee-booking-help-example-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ee-gold);
 }
 
 .ee-booking-help-example-note {
@@ -2410,24 +2479,35 @@ body.organiser-booking-options-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
+    'who price'
     'name price'
     'note note';
   gap: 2px 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #f6fafb;
-  border: 1px solid rgba(26, 46, 59, 0.05);
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(26, 46, 59, 0.06);
+}
+
+.ee-booking-help-example-who {
+  grid-area: who;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-gold);
 }
 
 .ee-booking-help-example-tiers strong {
   grid-area: name;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ee-text);
 }
 
-.ee-booking-help-example-tiers span {
+.ee-booking-help-example-tiers span:not(.ee-booking-help-example-who) {
   grid-area: price;
-  font-size: 14px;
+  align-self: center;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--ee-purple-dark);
   white-space: nowrap;
