@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260813step3b" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814feestyle" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -342,19 +342,20 @@
 
         <!-- Shared Hub membership prices (moved into networking meeting or CE panel) -->
         <div id="ee-hub-membership-config" hidden>
-          <div class="ee-addon-card is-enabled" id="ee-hub-membership-addon" data-hub-tip="hub-membership-prices">
+          <div class="ee-addon-card ee-membership-fee-card is-enabled" id="ee-hub-membership-addon" data-hub-tip="hub-membership-prices">
+            <p class="ee-fee-kicker">Ongoing — to join your group</p>
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-hub-membership-enabled" />
               <span class="ee-addon-toggle-copy">
                 <strong>Group membership fee</strong>
                 <span class="ee-addon-summary"
-                  >Monthly or annual fee after free visits. Change later under Memberships.</span
+                  >Monthly or annual. Change later under Memberships.</span
                 >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-hub-membership-fields" hidden>
               <p class="ee-hint ee-hub-membership-lead" id="ee-hub-membership-lead">
-                Fee to join after free visits. Existing members use the member ticket (often £0).
+                What people pay to belong to your group. Separate from the member ticket for this meeting.
               </p>
               <div class="ee-hub-membership-amounts">
                 <div class="ee-field">
@@ -474,13 +475,14 @@
 
           <div id="ee-hub-membership-mount-extras" class="ee-hub-membership-mount" hidden></div>
 
-          <div class="ee-addon-card" id="ee-private-ticket-addon">
+          <div class="ee-addon-card ee-member-ticket-card" id="ee-private-ticket-addon">
+            <p class="ee-fee-kicker">This meeting</p>
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-private-ticket-enabled" />
               <span class="ee-addon-toggle-copy">
                 <strong data-hub-tip="members-only-ticket">Member ticket price</strong>
                 <span class="ee-addon-summary"
-                  >People on your member list book at this price when signed in. Visitors still use the public ticket.</span
+                  >What members pay to book this date when signed in. Visitors still use the public ticket.</span
                 >
               </span>
             </label>
@@ -639,7 +641,7 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260814visits1" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260814feestyle" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
     <script src="../js/organiser-event-tickets.js?v=20260814visits1" defer></script>

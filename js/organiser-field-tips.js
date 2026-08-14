@@ -120,7 +120,7 @@
     'hub-membership-prices': {
       title: 'Group membership fee',
       body:
-        'Monthly or annual fee to join your group after free visits. Members already on your list book with the member ticket (usually £0). Change amounts later under Memberships.',
+        'Monthly or annual fee to belong to your group — not the ticket for this meeting. Members already on your list book with the member ticket (usually £0). Change amounts later under Memberships.',
       hubertPrompt: 'How do I set monthly membership when setting up tickets?',
     },
     'category-exclusivity': {

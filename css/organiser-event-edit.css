@@ -1579,6 +1579,47 @@ body.ee-step2-modal-open {
   margin: 0 0 12px;
 }
 
+.ee-fee-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ee-text-soft);
+}
+
+.ee-membership-fee-card {
+  border-color: rgba(13, 110, 122, 0.28);
+  background: #f3f8f9;
+  padding: 14px 14px 12px;
+}
+
+.ee-membership-fee-card.is-enabled,
+.ee-membership-fee-card.is-locked {
+  border-color: #0d6e7a;
+  background: #eef6f7;
+}
+
+.ee-membership-fee-card .ee-fee-kicker {
+  color: #0d6e7a;
+}
+
+.ee-member-ticket-card {
+  border-color: var(--ee-border);
+  background: var(--ee-white);
+}
+
+.ee-member-ticket-card.is-enabled,
+.ee-member-ticket-card.is-locked {
+  border-color: #1a2e3b;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(26, 46, 59, 0.04);
+}
+
+.ee-member-ticket-card .ee-fee-kicker {
+  color: var(--ee-gold);
+}
+
 .ee-addon-card.is-locked .ee-addon-toggle {
   cursor: default;
   pointer-events: none;
