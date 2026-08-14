@@ -74,9 +74,9 @@
         'You set the ticket price and receive that full amount. Attendees pay a separate booking fee (4.5% + 20p per ticket) at checkout — see /help/pricing-fees for worked examples.',
     },
     'fo-guest-visit': {
-      title: 'Guest visit programme',
+      title: 'Free trial visits',
       body:
-        'Offer 1–3 complimentary trial visits so newcomers can try your group before buying a member ticket. You can apply visits per organiser page, or share them across all your pages, with per-event overrides available.',
+        'Offer 1–3 free trial visits so visitors can try your group before joining membership. You can apply visits per organiser page, or share them across all your pages, with per-event overrides available.',
     },
     'fo-category-exclusivity': {
       title: 'Category Exclusivity applications',

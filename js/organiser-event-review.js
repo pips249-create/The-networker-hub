@@ -427,7 +427,7 @@
     if (mode === 'membership_meeting') {
       const visits = organiserComplimentaryVisits || 1;
       return (
-        'General ticketing — membership with complimentary visits (up to ' +
+        'General ticketing — membership with free trial visits (up to ' +
         visits +
         ')'
       );

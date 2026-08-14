@@ -94,7 +94,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
       'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
-      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable the guest visit programme: newcomers get 1–3 complimentary visits (Hub maximum) before paid member tickets unlock — either on this organiser page only, or shared across all your organiser pages. Use “Member-only for this event” to skip guest passes on a specific date (e.g. conferences) while keeping paid tickets available. NETWORKING GROUP MEETING (Step 1): for groups with monthly/annual Hub membership — complimentary guest visits for newcomers, a free member ticket for people on your member list, then join membership after visits (no public event ticket). “Closed meeting — member list only” is different: no public ticket and no guest visits. The optional “Member price (public can still book)” add-on adds a hidden rate for your member list while public tickets stay on sale. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable Free trial visits: visitors get 1–3 free visits (Hub maximum) before paid member tickets unlock — either on this organiser page only, or shared across all your organiser pages. Use “Pause free visits on this date only” to skip free visits on a specific date (e.g. conferences) while keeping paid tickets available. NETWORKING GROUP MEETING: for groups with monthly/annual Hub membership — free visits for visitors, a free member ticket for people on your member list, then join membership after visits (no public event ticket). “Closed meeting — member list only” is different: no public ticket and no free visits. The optional member ticket price adds a hidden rate for your member list while public tickets stay on sale. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
       'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. After the event starts, mark Didn’t attend on anyone who no-showed — they skip the review email and cannot leave a review for that event. Download attendees CSV or export printable name badges (PDF).',
@@ -268,17 +268,17 @@ const FALLBACK_REPLIES = [
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
     reply:
-      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include the guest visit programme (1–3 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
+      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
   },
   {
     match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme|free trial visit)|(guest visit|complimentary visit|guest programme|free trial visit).*(paid|member).*(ticket|tier)/i,
     reply:
-      'Yes — on Set up tickets choose General ticketing or Application based, then under How do you get paid pick Tickets (or Both) and turn on Free trial visits. Newcomers use complimentary visits first; once used, they buy a ticket or join membership. For monthly membership with no event ticket, choose Membership + Free trial visits. Closed meeting (member list only, no visits) is under General when membership is on.',
+      'Yes — on Set up tickets choose General ticketing or Application based, then pick how people book and turn on Free trial visits. Visitors use free visits first; once used, they buy a ticket or join membership. For monthly membership with no event ticket, choose Free visits, then membership. Closed meeting (member list only, no visits) is under General when membership is on.',
   },
   {
     match: /difference.*(ticket type|guest visit|category exclusiv|application based|general ticket)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|how (do|should) people get in|networking group meeting|booking options|how will people book|convert free visits/i,
     reply:
-      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats). Then choose how people book — Ticket for this event, Convert free visits into members, or Ticket and membership. Full plain-English walkthrough: /organiser/booking-options (also linked from Set up tickets). Free trial visits sit on the membership paths so visitors try meetings, then join your group with history and reports.',
+      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats). Then choose how people book — Ticket for this event, Free visits, then membership, or Ticket and membership. Full plain-English walkthrough: /organiser/booking-options (also linked from Set up tickets). Free trial visits sit on the membership paths so visitors try meetings, then join your group with history and reports.',
   },
   {
     match: /\bvat\b|value added tax/i,
@@ -473,7 +473,7 @@ const FALLBACK_REPLIES = [
   {
     match: /category exclusivity|one seat only|osop\b|application.?based (ticket|attend|booking)|application to attend/i,
     reply:
-      'Application based (Category Exclusivity) is on the tickets step. People apply with industry and job title; you approve or decline. You do not have to sell a ticket — choose Monthly/annual membership (and optional Free trial visits) so newcomers try the group then join. Or charge a ticket after approval, or Both. List-member booking lets people on your Membership list book without applying (or use Invite members after publish). It cannot be mixed with General ticketing on the same event.',
+      'Application based (Category Exclusivity) is on the tickets step. People apply with industry and job title; you approve or decline. You do not have to sell a ticket — choose Free visits, then membership so visitors try the group then join. Or charge a ticket after approval, or Ticket and membership. List-member booking lets people on your Membership list book without applying (or use Invite members after publish). It cannot be mixed with General ticketing on the same event.',
   },
   {
     match: /change.*application question|custom.*application question|edit.*application question|different application question|application question.*change|can i change.*question/i,
@@ -483,7 +483,7 @@ const FALLBACK_REPLIES = [
   {
     match: /guest visit|complimentary visit|trial visit|visitor ticket|free trial visit|member ticket/i,
     reply:
-      'Free trial visits: on Set up tickets, choose General ticketing or Application based, then turn on Free trial visits (1–3). After visits, people need a ticket or monthly/annual membership — so also choose Tickets, Membership, or Both under How do you get paid. Allowance can apply to this organiser page only, or across all your organiser pages. Closed meeting (member list only, no visits) is under General when membership is on.',
+      'Free trial visits: on Set up tickets, choose General ticketing or Application based, then pick how people book and turn on Free trial visits (1–3 per visitor). After visits, people need a ticket or monthly/annual membership. Allowance can apply to this organiser page only, or across all your organiser pages. Closed meeting (member list only, no visits) is under General when membership is on.',
   },
   {
     match: /how do i set up a members only ticket with the member (list|roster)/i,
@@ -528,7 +528,7 @@ const FALLBACK_REPLIES = [
   {
     match: /disallow guest|guest pass.*(off|disable|opt)|member.?only (date|event|evening)|no guest (pass|visit).*conference/i,
     reply:
-      'On the tickets step, enable the guest visit programme, then tick “Member-only for this event”. Paid member tickets stay available and visitors can book them directly — complimentary guest passes are hidden for that date. Useful for conferences or member-only evenings.',
+      'On the tickets step, turn on Free trial visits, then tick “Pause free visits on this date only”. Paid member tickets stay available and visitors can book them directly — free visits are hidden for that date. Useful for conferences or closed evenings.',
   },
   {
     match: /name badge|printable badge|avery l?7160|avery l?7163|sticker sheet|badge pdf/i,
@@ -583,7 +583,7 @@ const FALLBACK_REPLIES = [
   {
     match: /visit count|1st visit|first visit|returning attendee|new to your group|repeat attendee/i,
     reply:
-      'Open /organiser/ → Events → Attendees. Each registration shows a visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page — not annual membership records. Filter by new or returning, filter by event, and export a CSV with visit counts. Use this to welcome newcomers and spot regulars.',
+      'Open /organiser/ → Events → Attendees. Each registration shows a visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page — not annual membership records. Filter by new or returning, filter by event, and export a CSV with visit counts. Use this to welcome visitors and spot regulars.',
   },
   {
     match: /previous attendees?|alumni ticket|alumni rate|past attendee invite/i,

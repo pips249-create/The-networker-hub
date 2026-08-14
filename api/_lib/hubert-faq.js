@@ -113,7 +113,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Why should I list my networking group on The Networker Hub?',
     answer:
-      'The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.',
+      'The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.',
     category: 'organisers',
     icon: '⭐',
   },
@@ -153,9 +153,9 @@ const FAQ_AEO_ENTRIES = [
     icon: '📊',
   },
   {
-    question: 'What is the guest visit programme?',
+    question: 'What are free trial visits?',
     answer:
-      'On Set up tickets, choose General ticketing or Application based, then turn on Free trial visits (1–3 per newcomer). After visits, people must buy a ticket or join monthly/annual membership — so also choose Tickets, Membership, or Both under How do you get paid. For membership clubs with no event ticket, pick Membership + Free trial visits. Closed meeting (member list only, no visits) is available under General when membership is on.',
+      'On Set up tickets, choose General ticketing or Application based, then pick how people book. Turn on Free trial visits (1–3 per visitor). After visits, people join monthly/annual membership or buy a ticket. For groups with no event ticket, pick Free visits, then membership. Closed meeting (member list only, no visits) is available under General when membership is on.',
     category: 'organisers',
     icon: '🎫',
   },

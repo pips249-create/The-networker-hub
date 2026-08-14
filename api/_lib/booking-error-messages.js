@@ -11,14 +11,14 @@ const BOOKING_ERROR_MESSAGES = {
   event_not_published: 'This event is not available for booking.',
   missing_organiser: 'This event is not available for booking.',
   stripe_not_configured: 'Card checkout is not configured on this server.',
-  guest_visits_not_enabled: 'Guest visits are not available for this organiser.',
+  guest_visits_not_enabled: 'Free visits are not available for this organiser.',
   guest_visits_exhausted:
-    'You have used all complimentary visits with this organiser. Join their membership to keep attending, or book a member ticket if you are already on their list.',
+    'You have used all free visits with this organiser. Join their membership to keep attending, or book a member ticket if you are already on their list.',
   guest_visits_remaining:
-    'Use your complimentary guest visit before booking a paid member ticket with this organiser.',
-  guest_passes_disabled: 'Guest passes are not available for this event.',
-  guest_visit_single_seat_only: 'Guest visits are limited to one seat per booking.',
-  guest_visit_must_be_free: 'Guest visit bookings must be free.',
+    'Use your free visit before booking a paid member ticket with this organiser.',
+  guest_passes_disabled: 'Free visits are not available for this event.',
+  guest_visit_single_seat_only: 'Free visits are limited to one seat per booking.',
+  guest_visit_must_be_free: 'Free visit bookings must be free.',
   alumni_not_eligible: 'This previous attendee ticket is invite-only. Use the link from your email.',
   not_invited: 'This previous attendee ticket is invite-only. Use the link from your email.',
   email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
@@ -34,6 +34,9 @@ const BOOKING_ERROR_MESSAGES = {
     "You're already going to this event. View your ticket in My Hub.",
   organiser_attendance_blocked:
     "You're not able to book this organiser's events. Contact them if you think this is a mistake.",
+  ticket_sold_out: 'Sorry — that ticket tier is sold out.',
+  event_sold_out: 'Sorry — this event is fully booked.',
+  applications_full: 'Sorry — all places for this event are taken.',
 };
 
 const ALUMNI_ERROR_CODES = new Set([

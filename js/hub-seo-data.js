@@ -93,7 +93,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Why should I list my networking group on The Networker Hub?",
-      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.",
+      "answer": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.",
       "category": "organisers",
       "icon": "⭐"
     },
@@ -128,8 +128,8 @@ window.HUB_SEO_DATA = {
       "icon": "📊"
     },
     {
-      "question": "What is the guest visit programme?",
-      "answer": "On Set up tickets, choose General ticketing or Application based, then turn on Free trial visits (1–3 per newcomer). After visits, people must buy a ticket or join monthly/annual membership — so also choose Tickets, Membership, or Both under How do you get paid. For membership clubs with no event ticket, pick Membership + Free trial visits. Closed meeting (member list only, no visits) is available under General when membership is on.",
+      "question": "What are free trial visits?",
+      "answer": "On Set up tickets, choose General ticketing or Application based, then pick how people book. Turn on Free trial visits (1–3 per visitor). After visits, people join monthly/annual membership or buy a ticket. For groups with no event ticket, pick Free visits, then membership. Closed meeting (member list only, no visits) is available under General when membership is on.",
       "category": "organisers",
       "icon": "🎫"
     },
@@ -458,7 +458,7 @@ window.HUB_SEO_DATA = {
               "name": "Why should I list my networking group on The Networker Hub?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include the guest visit programme (1–2 complimentary trial visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
+                "text": "The Networker Hub is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page."
               }
             },
             {
@@ -503,10 +503,10 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Question",
-              "name": "What is the guest visit programme?",
+              "name": "What are free trial visits?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "On Set up tickets, choose General ticketing or Application based, then turn on Free trial visits (1–3 per newcomer). After visits, people must buy a ticket or join monthly/annual membership — so also choose Tickets, Membership, or Both under How do you get paid. For membership clubs with no event ticket, pick Membership + Free trial visits. Closed meeting (member list only, no visits) is available under General when membership is on."
+                "text": "On Set up tickets, choose General ticketing or Application based, then pick how people book. Turn on Free trial visits (1–3 per visitor). After visits, people join monthly/annual membership or buy a ticket. For groups with no event ticket, pick Free visits, then membership. Closed meeting (member list only, no visits) is available under General when membership is on."
               }
             },
             {
@@ -858,7 +858,7 @@ window.HUB_SEO_DATA = {
           "@type": "WebPage",
           "url": "https://www.thenetworkerhub.com/for-organisers",
           "name": "For Organisers – The Networker Hub",
-          "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
+          "description": "Organiser dashboard, free trial visits, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
           "about": {
             "@context": "https://schema.org",
             "@type": "Organization",
@@ -1836,7 +1836,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#webpage",
           "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits",
           "name": "Export attendees & track visits – How-to guides – The Networker Hub",
-          "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker Hub.",
+          "description": "How to download attendee lists, filter by visit count, export name badges, and use free trial visits on The Networker Hub.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker Hub",
@@ -1848,7 +1848,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#howto",
           "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits",
           "name": "How to export attendees and track visits on The Networker Hub",
-          "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker Hub.",
+          "description": "How to download attendee lists, filter by visit count, export name badges, and use free trial visits on The Networker Hub.",
           "step": [
             {
               "@type": "HowToStep",
@@ -1881,8 +1881,8 @@ window.HUB_SEO_DATA = {
             {
               "@type": "HowToStep",
               "position": 5,
-              "name": "Set up the guest visit programme",
-              "text": "On the event tickets step, tick Enable guest visit programme to offer complimentary trial visits before paid member tickets. Configure visit limits on your organiser page.",
+              "name": "Set up free trial visits",
+              "text": "On Set up tickets, turn on Free trial visits so visitors can try your group (up to 3 visits) before joining membership or buying a ticket.",
               "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#guest-visits"
             }
           ]

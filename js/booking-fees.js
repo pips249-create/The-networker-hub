@@ -53,22 +53,22 @@
     const eligibility = opts.guestVisitEligibility || null;
     if (eligibility && eligibility.isRosterMember) return '';
     if (eligibility && eligibility.signedOut) {
-      return allowed === 1 ? 'up to 1 complimentary visit' : 'up to ' + allowed + ' complimentary visits';
+      return allowed === 1 ? 'up to 1 free visit' : 'up to ' + allowed + ' free visits';
     }
     if (eligibility && eligibility.eligible === true && Number.isFinite(Number(eligibility.remaining))) {
       const remaining = Math.max(0, Number(eligibility.remaining) || 0);
       if (remaining < 1) return '';
-      return remaining === 1 ? '1 complimentary visit left' : remaining + ' complimentary visits left';
+      return remaining === 1 ? '1 free visit left' : remaining + ' free visits left';
     }
 
     if (opts.guestVisitRemaining != null && Number.isFinite(Number(opts.guestVisitRemaining))) {
       const remaining = Math.max(0, Number(opts.guestVisitRemaining) || 0);
       if (remaining < 1) return '';
-      return remaining === 1 ? '1 complimentary visit left' : remaining + ' complimentary visits left';
+      return remaining === 1 ? '1 free visit left' : remaining + ' free visits left';
     }
 
     // Public browse copy: organiser allowance, not the viewer's remaining balance.
-    return allowed === 1 ? 'up to 1 complimentary visit' : 'up to ' + allowed + ' complimentary visits';
+    return allowed === 1 ? 'up to 1 free visit' : 'up to ' + allowed + ' free visits';
   }
 
   function isMembersOnlyListing(ev) {
