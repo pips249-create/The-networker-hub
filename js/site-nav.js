@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260812softnav1';
+  var NAV_BUILD = '20260814listevent1';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -296,10 +296,12 @@
   }
 
   function listEventCta(user, extraClass) {
-    var forOrganisers = !(user && user.organiserUiVisible);
-    var path = forOrganisers ? '/for-organisers' : '/organiser/';
-    var pageKey = forOrganisers ? 'for-organisers' : 'organiser';
-    var isActive = page === pageKey;
+    var canSelfServe = !!(user && user.organiserUiVisible);
+    var path = canSelfServe ? '/organiser/event-edit' : '/add-your-event';
+    var loc = String(window.location.pathname || '').toLowerCase();
+    var isActive = canSelfServe
+      ? loc.indexOf('/organiser/event-edit') !== -1
+      : page === 'add-your-event' || loc.indexOf('/add-your-event') !== -1;
     var active = isActive ? ' aria-current="page"' : '';
     var cls = 'nav-organiser' + (extraClass ? ' ' + extraClass : '');
     return (
@@ -779,6 +781,28 @@
     bindNavDropdown(nav, 'nav-more', 'nav-more-toggle', 'nav-more-menu');
   }
 
+  function bindListEventCta() {
+    mount.querySelectorAll('a.nav-organiser').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var dashBtn = document.getElementById('btn-new-event');
+        if (dashBtn) {
+          e.preventDefault();
+          dashBtn.click();
+          return;
+        }
+        if (
+          lastNavUser &&
+          lastNavUser.organiserUiVisible &&
+          window.HubOrganiserActions &&
+          typeof window.HubOrganiserActions.goToAddEvent === 'function'
+        ) {
+          e.preventDefault();
+          window.HubOrganiserActions.goToAddEvent();
+        }
+      });
+    });
+  }
+
   function renderImpersonationBanner(sessionData) {
     var existing = document.getElementById('hub-impersonation-banner');
     if (existing) existing.remove();
@@ -928,6 +952,7 @@
 
     bindMyHubDropdown(nav);
     bindMoreDropdown(nav);
+    bindListEventCta();
 
     var signOut = document.getElementById('nav-signout');
     if (signOut) {
