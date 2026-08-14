@@ -15,7 +15,7 @@
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260807nav2" />
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260814tickets5">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260814cal1">
 <link rel="stylesheet" href="css/hub-field-tip.css?v=20260711">
 <script src="js/hub-seo-static-config.js?v=20260811a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="add-your-event"></script>
@@ -107,10 +107,24 @@
               <span>Event title</span>
               <input type="text" name="title" required placeholder="e.g. Friday breakfast networking">
             </label>
-            <label class="ei-field ei-field--full">
-              <span data-hub-tip="ei-dates">Date(s)</span>
-              <input type="text" name="dates" required placeholder="e.g. Fri 12 Sep 2026 — or every Friday from Sept">
-            </label>
+            <div class="ei-field ei-field--full">
+              <span class="ei-label-block" data-hub-tip="ei-dates">Date(s)</span>
+              <p class="ei-cal-hint">Click every date this event runs. The same start and end time apply to all.</p>
+              <input type="hidden" name="dates" id="ei-dates" value="">
+              <div class="ei-calendar">
+                <div class="ei-cal-header">
+                  <button type="button" id="ei-cal-prev" aria-label="Previous month">‹</button>
+                  <span class="ei-cal-month" id="ei-cal-month-label"></span>
+                  <button type="button" id="ei-cal-next" aria-label="Next month">›</button>
+                </div>
+                <div class="ei-cal-weekdays" aria-hidden="true">
+                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+                <div class="ei-cal-days" id="ei-cal-days" role="grid" aria-label="Select event dates"></div>
+              </div>
+              <p class="ei-cal-count"><strong id="ei-date-count">0</strong> date(s) selected</p>
+              <ul class="ei-date-list" id="ei-date-list"></ul>
+            </div>
             <label class="ei-field">
               <span>Start time <span class="ei-optional">(optional)</span></span>
               <input type="text" name="startTime" placeholder="e.g. 7:30am">
@@ -290,7 +304,7 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260811intake1" data-root=""></script>
-<script src="js/event-intake-page.js?v=20260814tips1"></script>
+<script src="js/event-intake-page.js?v=20260814cal1"></script>
 <script src="js/hub-field-tip.js?v=20260814intake1"></script>
 </body>
 </html>

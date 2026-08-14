@@ -6,7 +6,7 @@
     'ei-dates': {
       title: 'Date(s)',
       body:
-        'One date, several dates, or a simple pattern is fine — e.g. Fri 12 Sep 2026, or every Friday from September. We will put the real calendar dates on the listing.',
+        'Click every date this event runs — one click per meeting day. Weekly breakfasts: tap each Friday. A conference: tap every day you meet. The same start and end time apply to all selected dates.',
     },
     'ei-format': {
       title: 'Format',
@@ -171,9 +171,155 @@
   syncPayHow();
   syncTrial();
 
+  var selectedDates = {};
+  var calNow = new Date();
+  var calYear = calNow.getFullYear();
+  var calMonth = calNow.getMonth();
+  var datesInput = document.getElementById('ei-dates');
+  var calDays = document.getElementById('ei-cal-days');
+  var calLabel = document.getElementById('ei-cal-month-label');
+  var dateCount = document.getElementById('ei-date-count');
+  var dateList = document.getElementById('ei-date-list');
+
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function dateKey(y, m, d) {
+    return y + '-' + pad2(m + 1) + '-' + pad2(d);
+  }
+
+  function parseDateKey(key) {
+    var parts = String(key || '').split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+
+  function formatDateLabel(key) {
+    return parseDateKey(key).toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  function selectedDateKeys() {
+    return Object.keys(selectedDates).sort();
+  }
+
+  function syncDatesField() {
+    var keys = selectedDateKeys();
+    var labels = keys.map(formatDateLabel);
+    if (datesInput) datesInput.value = labels.join(', ');
+    if (dateCount) dateCount.textContent = String(keys.length);
+    if (dateList) {
+      dateList.innerHTML = keys
+        .map(function (k) {
+          return '<li>' + formatDateLabel(k) + '</li>';
+        })
+        .join('');
+    }
+  }
+
+  function renderCalendar() {
+    if (!calDays) return;
+    var first = new Date(calYear, calMonth, 1);
+    if (calLabel) {
+      calLabel.textContent = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    }
+    var startDow = (first.getDay() + 6) % 7;
+    var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var html = '';
+    var prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+    var i;
+    for (i = 0; i < startDow; i++) {
+      html +=
+        '<button type="button" class="ei-cal-day is-other" disabled>' +
+        (prevMonthDays - startDow + i + 1) +
+        '</button>';
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      var key = dateKey(calYear, calMonth, d);
+      var cell = new Date(calYear, calMonth, d);
+      var past = cell < today;
+      var selected = !!selectedDates[key];
+      html +=
+        '<button type="button" class="ei-cal-day' +
+        (selected ? ' is-selected' : '') +
+        (past ? ' is-past' : '') +
+        '" data-date-key="' +
+        key +
+        '"' +
+        (past ? ' disabled' : '') +
+        '>' +
+        d +
+        '</button>';
+    }
+    var totalCells = startDow + daysInMonth;
+    var trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (i = 1; i <= trailing; i++) {
+      html += '<button type="button" class="ei-cal-day is-other" disabled>' + i + '</button>';
+    }
+    calDays.innerHTML = html;
+  }
+
+  function clearCalendar() {
+    selectedDates = {};
+    var now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+    renderCalendar();
+    syncDatesField();
+  }
+
+  if (calDays) {
+    calDays.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ei-cal-day');
+      if (!btn || btn.disabled || !btn.getAttribute('data-date-key')) return;
+      var key = btn.getAttribute('data-date-key');
+      if (selectedDates[key]) delete selectedDates[key];
+      else selectedDates[key] = true;
+      renderCalendar();
+      syncDatesField();
+    });
+  }
+  var prevBtn = document.getElementById('ei-cal-prev');
+  var nextBtn = document.getElementById('ei-cal-next');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function () {
+      calMonth -= 1;
+      if (calMonth < 0) {
+        calMonth = 11;
+        calYear -= 1;
+      }
+      renderCalendar();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function () {
+      calMonth += 1;
+      if (calMonth > 11) {
+        calMonth = 0;
+        calYear += 1;
+      }
+      renderCalendar();
+    });
+  }
+  renderCalendar();
+  syncDatesField();
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     setStatus('', '');
+
+    if (!selectedDateKeys().length) {
+      setStatus('Click at least one date on the calendar.', 'error');
+      var cal = document.querySelector('.ei-calendar');
+      if (cal && cal.scrollIntoView) cal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     var fd = new FormData(form);
     var payload = {
@@ -226,6 +372,7 @@
             'ok'
           );
           form.reset();
+          clearCalendar();
           syncFormat();
           syncPayHow();
           syncTrial();

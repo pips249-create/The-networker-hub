@@ -362,6 +362,138 @@
   border: 0;
 }
 
+.ei-cal-hint {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ei-muted);
+}
+
+.ei-calendar {
+  width: 100%;
+  max-width: 420px;
+  padding: 14px;
+  border: 1px solid var(--ei-line);
+  border-radius: 14px;
+  background: rgba(194, 153, 209, 0.1);
+}
+
+.ei-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ei-cal-header button {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ei-ink);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ei-cal-month {
+  flex: 1;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ei-ink);
+}
+
+.ei-cal-weekdays,
+.ei-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.ei-cal-weekdays {
+  margin-bottom: 6px;
+}
+
+.ei-cal-weekdays span {
+  display: block;
+  padding: 6px 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ei-muted);
+}
+
+.ei-cal-days {
+  min-height: 220px;
+}
+
+.ei-cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  max-height: 48px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ei-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.ei-cal-day:hover:not(:disabled):not(.is-selected) {
+  background: rgba(194, 153, 209, 0.16);
+}
+
+.ei-cal-day.is-other {
+  color: var(--ei-muted);
+  opacity: 0.45;
+}
+
+.ei-cal-day.is-past:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ei-cal-day.is-selected,
+.ei-cal-day.is-selected:hover:not(:disabled) {
+  background: #7a3d8a;
+  border-color: #5c2d68;
+  color: #fff;
+  font-weight: 700;
+}
+
+.ei-cal-count {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: var(--ei-muted);
+}
+
+.ei-date-list {
+  margin: 8px 0 0;
+  padding-left: 1.15rem;
+  max-height: 8rem;
+  overflow-y: auto;
+  color: var(--ei-ink);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.ei-date-list:empty {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .ei-layout {
     grid-template-columns: 1fr;
