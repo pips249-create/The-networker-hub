@@ -2353,6 +2353,65 @@ body.organiser-booking-options-page {
   color: var(--ee-text-mid);
 }
 
+.ee-booking-help-find {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ee-text-mid);
+}
+
+.ee-booking-help-find input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(13, 110, 122, 0.28);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ee-text);
+  background: #f7fbfc;
+}
+
+.ee-booking-help-find input:focus {
+  outline: none;
+  border-color: var(--ee-purple);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.12);
+}
+
+.ee-booking-help-find-result {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(189, 147, 46, 0.12);
+  border: 1px solid rgba(189, 147, 46, 0.28);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ee-purple-dark);
+}
+
+.ee-booking-help-find-result a {
+  color: var(--ee-purple-dark);
+}
+
+.ee-booking-help-find-empty {
+  margin: 4px 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ee-text-mid);
+}
+
+.ee-booking-help-table-tip {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ee-text-mid);
+}
+
 .ee-booking-help-table-scroll {
   overflow-x: auto;
   margin: 0 -6px;

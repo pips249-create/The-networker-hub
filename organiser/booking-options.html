@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814table1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814find1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -77,7 +77,17 @@
 
         <section class="ee-booking-help-table-wrap" aria-labelledby="ee-booking-help-table-title">
           <h2 id="ee-booking-help-table-title">Which option do I need?</h2>
-          <p class="ee-booking-help-table-lede">Find your situation, then tap the option.</p>
+          <p class="ee-booking-help-table-lede">Type what you run, or pick a row that sounds like you.</p>
+          <label class="ee-booking-help-find" for="ee-booking-help-find">
+            <span>Describe your group or event</span>
+            <input
+              type="search"
+              id="ee-booking-help-find"
+              autocomplete="off"
+              placeholder="e.g. I have a 3-day masterclass"
+            />
+          </label>
+          <p class="ee-booking-help-find-result" id="ee-booking-help-find-result" hidden></p>
           <div class="ee-booking-help-table-scroll">
             <table class="ee-booking-help-table">
               <thead>
@@ -87,25 +97,58 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                <tr
+                  data-option="tickets"
+                  data-match="ticket book this date free paid rsvp one-off mixer lunch awards night"
+                >
                   <td>I just want people to book this date — free or paid</td>
                   <td>
                     <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
                   </td>
                 </tr>
-                <tr>
-                  <td>I have a new group. Nobody is a member yet</td>
+                <tr
+                  data-option="tickets"
+                  data-match="masterclass workshop course conference exhibition training seminar three 3 day days weekend bootcamp"
+                >
+                  <td>I have a masterclass, workshop or 3-day course</td>
+                  <td>
+                    <a href="#tickets" data-booking-nav="tickets">Option 1 — Ticket for this event</a>
+                  </td>
+                </tr>
+                <tr
+                  data-option="membership"
+                  data-match="new group no members nobody none starting scratch create starting out first meeting try join"
+                >
+                  <td>I want to create a new group. I have no members</td>
                   <td>
                     <a href="#membership" data-booking-nav="membership">Option 2 — Free visits, then membership</a>
                   </td>
                 </tr>
-                <tr>
-                  <td>I have a group, and existing members</td>
+                <tr
+                  data-option="both"
+                  data-match="existing group already have members established regulars on the books"
+                >
+                  <td>I have an existing group, with members</td>
                   <td>
                     <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
                   </td>
                 </tr>
-                <tr>
+                <tr
+                  data-option="both"
+                  data-match="invite email emails list roster monthly amount fee don't dont do not pay free member price zero nothing existing"
+                >
+                  <td>
+                    Members do not pay a monthly amount. I want to invite them to events and send emails
+                    <span class="ee-booking-help-table-tip">Set the member price to £0. Invite them from your member list.</span>
+                  </td>
+                  <td>
+                    <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
+                  </td>
+                </tr>
+                <tr
+                  data-option="both"
+                  data-match="guest ticket visitors pay members cheaper less nothing lunch different price"
+                >
                   <td>Guests should pay a ticket. Members should pay less, or nothing</td>
                   <td>
                     <a href="#both" data-booking-nav="both">Option 3 — Ticket and membership</a>
@@ -114,6 +157,10 @@
               </tbody>
             </table>
           </div>
+          <p class="ee-booking-help-find-empty" id="ee-booking-help-find-empty" hidden>
+            Nothing quite matches. Try “new group”, “existing members”, or “masterclass” — or email
+            <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>.
+          </p>
         </section>
 
         <article class="ee-booking-help-section" id="tickets">
@@ -444,11 +491,16 @@
             return document.getElementById(id);
           })
           .filter(Boolean);
-        var navLinks = Array.prototype.slice.call(document.querySelectorAll('[data-booking-nav]'));
-        if (!sections.length || !navLinks.length) return;
+        if (!sections.length) return;
+
+        function compareLinks() {
+          return Array.prototype.slice.call(
+            document.querySelectorAll('.ee-booking-help-compare-item[data-booking-nav]')
+          );
+        }
 
         function setActive(id) {
-          navLinks.forEach(function (link) {
+          compareLinks().forEach(function (link) {
             var on = link.getAttribute('data-booking-nav') === id;
             link.classList.toggle('is-active', on);
             if (on) link.setAttribute('aria-current', 'true');
@@ -459,27 +511,35 @@
           });
         }
 
-        navLinks.forEach(function (link) {
-          link.addEventListener('click', function (e) {
+        function goToOption(id, hrefId) {
+          var target =
+            (hrefId && document.getElementById(hrefId)) || document.getElementById(id);
+          if (!target) return;
+          setActive(id);
+          try {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } catch (err) {
+            target.scrollIntoView(true);
+          }
+          if (history.replaceState) {
+            history.replaceState(null, '', '#' + (hrefId || id));
+          } else {
+            location.hash = hrefId || id;
+          }
+        }
+
+        var helpRoot = document.querySelector('.ee-booking-help');
+        if (helpRoot) {
+          helpRoot.addEventListener('click', function (e) {
+            var link = e.target.closest('[data-booking-nav]');
+            if (!link || !helpRoot.contains(link)) return;
             var id = link.getAttribute('data-booking-nav');
             var hrefId = (link.getAttribute('href') || '').replace(/^#/, '');
-            var target =
-              (hrefId && document.getElementById(hrefId)) || document.getElementById(id);
-            if (!target) return;
+            if (!id && !hrefId) return;
             e.preventDefault();
-            setActive(id);
-            try {
-              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (err) {
-              target.scrollIntoView(true);
-            }
-            if (history.replaceState) {
-              history.replaceState(null, '', '#' + (hrefId || id));
-            } else {
-              location.hash = hrefId || id;
-            }
+            goToOption(id, hrefId);
           });
-        });
+        }
 
         if ('IntersectionObserver' in window) {
           var observer = new IntersectionObserver(
@@ -506,6 +566,91 @@
         if (hash === 'membership-benefits') setActive('membership');
         else if (hash && document.getElementById(hash)) setActive(hash);
         else setActive(sections[0].id);
+
+        var findInput = document.getElementById('ee-booking-help-find');
+        var findResult = document.getElementById('ee-booking-help-find-result');
+        var findEmpty = document.getElementById('ee-booking-help-find-empty');
+        var findRows = Array.prototype.slice.call(
+          document.querySelectorAll('.ee-booking-help-table tbody tr')
+        );
+        var optionNames = {
+          tickets: 'Option 1 — Ticket for this event',
+          membership: 'Option 2 — Free visits, then membership',
+          both: 'Option 3 — Ticket and membership',
+        };
+
+        function wordsFrom(text) {
+          return String(text || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9£ ]+/g, ' ')
+            .split(/\s+/)
+            .filter(function (w) {
+              return w.length > 1;
+            });
+        }
+
+        function rowScore(row, queryWords) {
+          var hay = wordsFrom(
+            (row.getAttribute('data-match') || '') + ' ' + (row.textContent || '')
+          );
+          var hits = 0;
+          queryWords.forEach(function (word) {
+            if (hay.indexOf(word) !== -1) hits += 1;
+          });
+          return hits;
+        }
+
+        function filterRows() {
+          if (!findInput || !findRows.length) return;
+          var query = findInput.value.trim();
+          var queryWords = wordsFrom(query);
+          var anyQuery = queryWords.length > 0;
+          var visible = 0;
+          var scores = { tickets: 0, membership: 0, both: 0 };
+
+          findRows.forEach(function (row) {
+            var option = row.getAttribute('data-option') || '';
+            var score = anyQuery ? rowScore(row, queryWords) : 1;
+            var show = !anyQuery || score > 0;
+            row.hidden = !show;
+            if (show) {
+              visible += 1;
+              if (anyQuery && scores[option] !== undefined) scores[option] += score;
+            }
+          });
+
+          if (findEmpty) findEmpty.hidden = !anyQuery || visible > 0;
+
+          if (findResult) {
+            if (!anyQuery) {
+              findResult.hidden = true;
+              findResult.textContent = '';
+              return;
+            }
+            var best = Object.keys(scores).sort(function (a, b) {
+              return scores[b] - scores[a];
+            })[0];
+            if (visible && scores[best] > 0) {
+              findResult.hidden = false;
+              findResult.innerHTML =
+                'That sounds like <a href="#' +
+                best +
+                '" data-booking-nav="' +
+                best +
+                '">' +
+                optionNames[best] +
+                '</a>.';
+            } else {
+              findResult.hidden = true;
+              findResult.textContent = '';
+            }
+          }
+        }
+
+        if (findInput) {
+          findInput.addEventListener('input', filterRows);
+          findInput.addEventListener('search', filterRows);
+        }
       })();
     </script>
   </body>
