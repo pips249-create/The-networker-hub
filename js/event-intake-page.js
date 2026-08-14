@@ -36,7 +36,7 @@
     'ei-pay-how': {
       title: 'How do people pay / get access?',
       body:
-        'How they get a place on the day. Free or paid tickets are for this event. Membership is joining your group. Tickets + membership is both: visitors pay a ticket, members book at a member rate. We set up card payments, VAT, and refunds when we list it.',
+        'How they get a place on the day. Free or paid tickets are for this event. Membership is joining your group. Tickets + membership is for more than one tier of pricing: visitors pay one ticket price, members book at their membership rate. We set up card payments, VAT, and refunds when we list it.',
     },
     'ei-pay-free': {
       title: 'Free tickets',
@@ -56,7 +56,7 @@
     'ei-pay-both': {
       title: 'Tickets + membership',
       body:
-        'Visitors buy a ticket for this event. People already in your group book at a member rate (often £0 if membership covers the meeting). Tell us both prices in the box that appears.',
+        'Choose this if you have more than one tier of pricing: visitors pay one ticket price, then members book at their membership rate (often £0 if membership covers the meeting). Tell us both prices in the box that appears.',
     },
     'ei-max-places': {
       title: 'Max places',

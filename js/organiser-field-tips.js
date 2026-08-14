@@ -84,7 +84,7 @@
     'pay-how-both': {
       title: 'Ticket and membership',
       body:
-        'Choose this if you have more than one price: visitors pay a ticket, members book at their membership rate (often £0). Optional free visits still apply before someone joins.',
+        'Choose this if you have more than one tier of pricing: visitors pay one ticket price, then members book at their membership rate (often £0). Optional free visits still apply before someone joins.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {
