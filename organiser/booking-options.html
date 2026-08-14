@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814find1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814ask1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -77,17 +77,28 @@
 
         <section class="ee-booking-help-table-wrap" aria-labelledby="ee-booking-help-table-title">
           <h2 id="ee-booking-help-table-title">Which option do I need?</h2>
-          <p class="ee-booking-help-table-lede">Type what you run, or pick a row that sounds like you.</p>
+          <p class="ee-booking-help-table-lede">
+            Type how you run your group. We will suggest Option 1, 2 or 3.
+          </p>
           <label class="ee-booking-help-find" for="ee-booking-help-find">
-            <span>Describe your group or event</span>
-            <input
-              type="search"
+            <span>Tell us about your group</span>
+            <textarea
               id="ee-booking-help-find"
+              rows="3"
               autocomplete="off"
-              placeholder="e.g. I have a 3-day masterclass"
-            />
+              placeholder="e.g. I have an existing breakfast group. Members do not pay monthly. I want to invite them to events and send emails."
+            ></textarea>
           </label>
-          <p class="ee-booking-help-find-result" id="ee-booking-help-find-result" hidden></p>
+          <div class="ee-booking-help-suggest" id="ee-booking-help-suggest" hidden>
+            <p class="ee-booking-help-suggest-kicker">We suggest</p>
+            <p class="ee-booking-help-suggest-title" id="ee-booking-help-suggest-title"></p>
+            <p class="ee-booking-help-suggest-why" id="ee-booking-help-suggest-why"></p>
+          </div>
+          <p class="ee-booking-help-find-empty" id="ee-booking-help-find-empty" hidden>
+            We are not sure yet. Add a little more — new group, existing members, or a one-off event such as a
+            masterclass — or pick a row below.
+          </p>
+          <p class="ee-booking-help-table-lede">Or pick the row that sounds like you</p>
           <div class="ee-booking-help-table-scroll">
             <table class="ee-booking-help-table">
               <thead>
@@ -157,10 +168,6 @@
               </tbody>
             </table>
           </div>
-          <p class="ee-booking-help-find-empty" id="ee-booking-help-find-empty" hidden>
-            Nothing quite matches. Try “new group”, “existing members”, or “masterclass” — or email
-            <a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>.
-          </p>
         </section>
 
         <article class="ee-booking-help-section" id="tickets">
@@ -568,88 +575,172 @@
         else setActive(sections[0].id);
 
         var findInput = document.getElementById('ee-booking-help-find');
-        var findResult = document.getElementById('ee-booking-help-find-result');
+        var findSuggest = document.getElementById('ee-booking-help-suggest');
+        var findTitle = document.getElementById('ee-booking-help-suggest-title');
+        var findWhy = document.getElementById('ee-booking-help-suggest-why');
         var findEmpty = document.getElementById('ee-booking-help-find-empty');
-        var findRows = Array.prototype.slice.call(
-          document.querySelectorAll('.ee-booking-help-table tbody tr')
-        );
-        var optionNames = {
-          tickets: 'Option 1 — Ticket for this event',
-          membership: 'Option 2 — Free visits, then membership',
-          both: 'Option 3 — Ticket and membership',
+        var optionCopy = {
+          tickets: {
+            name: 'Option 1 — Ticket for this event',
+            why: 'This sounds like a one-off or ticketed event. People book a ticket for the date. No membership.',
+          },
+          membership: {
+            name: 'Option 2 — Free visits, then membership',
+            why: 'This sounds like a new group. People try a meeting free, then join. You stay on this option when they become members.',
+          },
+          both: {
+            name: 'Option 3 — Ticket and membership',
+            why: 'This sounds like a group that already has members. Guests can buy a ticket. Members book at their own price — set that to £0 if they should not pay. You can invite them and they can receive emails.',
+          },
         };
 
-        function wordsFrom(text) {
+        function norm(text) {
           return String(text || '')
             .toLowerCase()
+            .replace(/['’]/g, '')
             .replace(/[^a-z0-9£ ]+/g, ' ')
-            .split(/\s+/)
-            .filter(function (w) {
-              return w.length > 1;
-            });
+            .replace(/\s+/g, ' ')
+            .trim();
         }
 
-        function rowScore(row, queryWords) {
-          var hay = wordsFrom(
-            (row.getAttribute('data-match') || '') + ' ' + (row.textContent || '')
-          );
-          var hits = 0;
-          queryWords.forEach(function (word) {
-            if (hay.indexOf(word) !== -1) hits += 1;
-          });
-          return hits;
-        }
-
-        function filterRows() {
-          if (!findInput || !findRows.length) return;
-          var query = findInput.value.trim();
-          var queryWords = wordsFrom(query);
-          var anyQuery = queryWords.length > 0;
-          var visible = 0;
-          var scores = { tickets: 0, membership: 0, both: 0 };
-
-          findRows.forEach(function (row) {
-            var option = row.getAttribute('data-option') || '';
-            var score = anyQuery ? rowScore(row, queryWords) : 1;
-            var show = !anyQuery || score > 0;
-            row.hidden = !show;
-            if (show) {
-              visible += 1;
-              if (anyQuery && scores[option] !== undefined) scores[option] += score;
-            }
-          });
-
-          if (findEmpty) findEmpty.hidden = !anyQuery || visible > 0;
-
-          if (findResult) {
-            if (!anyQuery) {
-              findResult.hidden = true;
-              findResult.textContent = '';
-              return;
-            }
-            var best = Object.keys(scores).sort(function (a, b) {
-              return scores[b] - scores[a];
-            })[0];
-            if (visible && scores[best] > 0) {
-              findResult.hidden = false;
-              findResult.innerHTML =
-                'That sounds like <a href="#' +
-                best +
-                '" data-booking-nav="' +
-                best +
-                '">' +
-                optionNames[best] +
-                '</a>.';
-            } else {
-              findResult.hidden = true;
-              findResult.textContent = '';
-            }
+        function hasAny(n, phrases) {
+          for (var i = 0; i < phrases.length; i++) {
+            if (n.indexOf(phrases[i]) !== -1) return true;
           }
+          return false;
+        }
+
+        function suggestOption(raw) {
+          var n = norm(raw);
+          var words = n.split(' ').filter(Boolean);
+          if (n.length < 8 || words.length < 3) return null;
+
+          var existing = hasAny(n, [
+            'existing group',
+            'existing members',
+            'already have members',
+            'already have a group',
+            'established group',
+            'on the books',
+            'current members',
+            'my members',
+            'our members',
+          ]);
+          var inviteOrEmail = hasAny(n, [
+            'invite',
+            'invites',
+            'email',
+            'emails',
+            'member list',
+            'mailing',
+          ]);
+          var noMonthly = hasAny(n, [
+            'dont pay monthly',
+            'do not pay monthly',
+            'doesnt pay monthly',
+            'no monthly',
+            'not pay a monthly',
+            'dont pay a monthly',
+            'free for members',
+            'members free',
+            'members do not pay',
+            'members dont pay',
+          ]);
+          var twoPrices = hasAny(n, [
+            'guest ticket',
+            'guests pay',
+            'visitors pay',
+            'members pay less',
+            'member price',
+            'members pay nothing',
+            'members for free',
+          ]);
+          var newGroup = hasAny(n, [
+            'new group',
+            'create a group',
+            'creating a group',
+            'starting a group',
+            'start a group',
+            'no members',
+            'nobody yet',
+            'dont have members',
+            'do not have members',
+            'no one coming',
+            'nobody coming',
+            'from scratch',
+          ]);
+          var tryJoin = hasAny(n, [
+            'try then join',
+            'try a meeting',
+            'try free',
+            'free visit',
+            'free visits',
+            'trial visit',
+          ]);
+          var oneOff = hasAny(n, [
+            'masterclass',
+            'workshop',
+            'conference',
+            'exhibition',
+            'seminar',
+            'bootcamp',
+            '3 day',
+            '3 days',
+            'three day',
+            'three days',
+            'one off',
+            'one-off',
+            'awards',
+            'ticket only',
+            'just tickets',
+            'no membership',
+          ]);
+
+          if (existing || inviteOrEmail || noMonthly || twoPrices) {
+            return 'both';
+          }
+          if (newGroup || tryJoin) {
+            return 'membership';
+          }
+          if (oneOff) {
+            return 'tickets';
+          }
+          if (n.indexOf('membership') !== -1 || n.indexOf('join') !== -1) {
+            return 'membership';
+          }
+          if (n.indexOf('ticket') !== -1) {
+            return 'tickets';
+          }
+          return null;
+        }
+
+        function showSuggestion() {
+          if (!findInput) return;
+          var raw = findInput.value.trim();
+          var option = suggestOption(raw);
+          if (findSuggest) findSuggest.hidden = !option;
+          if (findEmpty) findEmpty.hidden = !(raw.length >= 8 && !option);
+          if (!option) {
+            if (findTitle) findTitle.innerHTML = '';
+            if (findWhy) findWhy.textContent = '';
+            return;
+          }
+          var copy = optionCopy[option];
+          if (findTitle) {
+            findTitle.innerHTML =
+              '<a href="#' +
+              option +
+              '" data-booking-nav="' +
+              option +
+              '">' +
+              copy.name +
+              '</a>';
+          }
+          if (findWhy) findWhy.textContent = copy.why;
         }
 
         if (findInput) {
-          findInput.addEventListener('input', filterRows);
-          findInput.addEventListener('search', filterRows);
+          findInput.addEventListener('input', showSuggestion);
         }
       })();
     </script>
