@@ -1257,12 +1257,46 @@
       setAttendanceMode(resolveModeFromDoorAndPayHow());
     }
     revealPayHowStep();
-    const focusEl = document.getElementById('ee-panel-pay-how');
-    try {
-      focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch {
-      /* ignore */
-    }
+    scrollStepIntoView(document.getElementById('ee-panel-pay-how'));
+  }
+
+  function stickyChromeOffset() {
+    let h = 16;
+    const nav = document.getElementById('hub-site-nav');
+    if (nav && nav.offsetParent !== null) h += nav.getBoundingClientRect().height;
+    const wizard = document.querySelector('#ee-wizard-mount .ee-wizard');
+    if (wizard && wizard.offsetParent !== null) h += wizard.getBoundingClientRect().height;
+    return h;
+  }
+
+  function scrollStepIntoView(el) {
+    if (!el) return;
+    const run = function () {
+      const offset = stickyChromeOffset();
+      const rect = el.getBoundingClientRect();
+      let scroller = el.parentElement;
+      while (scroller && scroller !== document.body) {
+        const style = window.getComputedStyle(scroller);
+        const oy = style.overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && scroller.scrollHeight > scroller.clientHeight + 8) {
+          break;
+        }
+        scroller = scroller.parentElement;
+      }
+      if (scroller && scroller !== document.body && scroller !== document.documentElement) {
+        const sRect = scroller.getBoundingClientRect();
+        scroller.scrollTo({
+          top: scroller.scrollTop + rect.top - sRect.top - offset,
+          behavior: 'smooth',
+        });
+        return;
+      }
+      const top = rect.top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    };
+    requestAnimationFrame(function () {
+      requestAnimationFrame(run);
+    });
   }
 
   function confirmPayHowAndRevealRest() {
@@ -1278,12 +1312,7 @@
       setAttendanceMode(resolveModeFromDoorAndPayHow());
     }
     revealPostStep2();
-    const focusEl = activeStep2Panel() || document.getElementById('ee-panel-tickets');
-    try {
-      focusEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch {
-      /* ignore */
-    }
+    scrollStepIntoView(activeStep2Panel() || document.getElementById('ee-panel-tickets'));
   }
 
   function openStep2Modal() {
@@ -1675,7 +1704,7 @@
       '<input type="number" class="ee-tier-qty" min="1" step="1" placeholder="Unlimited" inputmode="numeric" />' +
       '<button type="button" class="ee-number-step ee-tier-qty-up" aria-label="Increase quantity">↑</button>' +
       '</div>' +
-      '<p class="ee-hint ee-hint--below">Defaults to unlimited. Only set a number if you want a hard cap for this ticket type. Use Event capacity for the room total.</p></div>' +
+      '<p class="ee-hint ee-hint--below">Defaults to unlimited. Only set a number if you want a hard cap for this ticket type. Use Event capacity below for the room total.</p></div>' +
       '<div class="ee-row-2 ee-tier-sale-row">' +
       '<div class="ee-field"><label>Sale start</label>' +
       '<div class="ee-datetime-split">' +
