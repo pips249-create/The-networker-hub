@@ -143,22 +143,43 @@
   color: var(--ei-ink);
 }
 
-.ei-field input[type='radio'],
-.ei-field input[type='checkbox'] {
-  width: 1.05rem;
-  height: 1.05rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  flex: 0 0 auto;
-  accent-color: #7a3d8a;
-}
-
 .ei-field input:not([type='radio']):not([type='checkbox']):focus,
 .ei-field textarea:focus {
   outline: 2px solid rgba(154, 122, 168, 0.35);
   outline-offset: 1px;
+}
+
+/* Native radios are clipped — they inherit text-field width/padding from shared form CSS. */
+.event-intake-page .ei-card > input[type='radio'],
+.event-intake-page .ei-choice-option > input[type='radio'] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  background: transparent !important;
+}
+
+.ei-choice-dot {
+  flex: 0 0 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 2px;
+  box-sizing: border-box;
+  border: 2px solid rgba(45, 38, 54, 0.35);
+  border-radius: 50%;
+  background: #fff;
+}
+
+.ei-card:has(input:checked) .ei-choice-dot,
+.ei-choice-option:has(input:checked) .ei-choice-dot {
+  border-color: #7a3d8a;
+  box-shadow: inset 0 0 0 3.5px #7a3d8a;
 }
 
 .ei-section-lead {
@@ -184,6 +205,7 @@
 }
 
 .ei-card {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -196,10 +218,6 @@
   min-width: 0;
   min-height: 100%;
   box-sizing: border-box;
-}
-
-.ei-card input[type='radio'] {
-  margin: 3px 0 0;
 }
 
 .ei-card-copy {
@@ -251,6 +269,7 @@
 }
 
 .ei-choice-option {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -264,8 +283,8 @@
   color: var(--ei-ink);
 }
 
-.ei-choice-option input[type='radio'] {
-  margin: 0;
+.ei-choice-option .ei-choice-dot {
+  margin-top: 0;
 }
 
 .ei-choice-option:has(input:checked) {
