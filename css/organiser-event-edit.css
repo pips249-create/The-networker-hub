@@ -1997,6 +1997,16 @@ body.organiser-booking-options-page {
   position: static;
 }
 
+.ee-booking-help-compare-label {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-text-soft);
+}
+
 @media (min-width: 780px) {
   .ee-booking-help-compare {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2010,7 +2020,7 @@ body.organiser-booking-options-page {
   }
 
   .organiser-booking-options-page .ee-booking-help-section {
-    scroll-margin-top: 180px;
+    scroll-margin-top: 240px;
   }
 }
 
@@ -2060,8 +2070,15 @@ body.organiser-booking-options-page {
   min-width: 0;
 }
 
+.ee-booking-help-compare-q {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ee-text-mid);
+}
+
 .ee-booking-help-compare-copy strong {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.3;
   color: var(--ee-text);
 }
