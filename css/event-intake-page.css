@@ -130,7 +130,7 @@
   opacity: 0.8;
 }
 
-.ei-field input,
+.ei-field input:not([type='radio']):not([type='checkbox']),
 .ei-field select,
 .ei-field textarea {
   width: 100%;
@@ -143,7 +143,19 @@
   color: var(--ei-ink);
 }
 
-.ei-field input:focus,
+.ei-field input[type='radio'],
+.ei-field input[type='checkbox'] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  flex: 0 0 auto;
+  accent-color: #7a3d8a;
+}
+
+.ei-field input:not([type='radio']):not([type='checkbox']):focus,
 .ei-field textarea:focus {
   outline: 2px solid rgba(154, 122, 168, 0.35);
   outline-offset: 1px;
@@ -181,16 +193,18 @@
   border-radius: 14px;
   background: var(--surface-warm, #faf7f2);
   cursor: pointer;
+  min-width: 0;
   min-height: 100%;
+  box-sizing: border-box;
 }
 
-.ei-card input {
-  margin: 4px 0 0;
-  flex: 0 0 auto;
+.ei-card input[type='radio'] {
+  margin: 3px 0 0;
 }
 
 .ei-card-copy {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
@@ -250,7 +264,7 @@
   color: var(--ei-ink);
 }
 
-.ei-choice-option input {
+.ei-choice-option input[type='radio'] {
   margin: 0;
 }
 
