@@ -2452,14 +2452,29 @@ body.organiser-booking-options-page {
 }
 
 .ee-booking-help-benefits ul {
+  list-style: none;
   margin: 0;
-  padding-left: 1.15em;
+  padding: 0;
 }
 
 .ee-booking-help-benefits li {
+  position: relative;
+  padding-left: 1.7em;
   font-size: 14px;
   line-height: 1.5;
   color: var(--ee-text-mid);
+}
+
+.ee-booking-help-benefits li::before {
+  content: '';
+  position: absolute;
+  left: 0.2em;
+  top: 0.42em;
+  width: 0.42em;
+  height: 0.72em;
+  border-right: 2.5px solid var(--ee-purple);
+  border-bottom: 2.5px solid var(--ee-purple);
+  transform: rotate(40deg);
 }
 
 .ee-booking-help-benefits li + li {
