@@ -24,6 +24,7 @@ function mapRow(row) {
     meetingLink: row.meeting_link || null,
     attendanceDoor: row.attendance_door || 'general',
     payHow: row.pay_how || null,
+    maxPlaces: row.max_places || null,
     freeTrialVisits: row.free_trial_visits || 'no',
     freeTrialDetails: row.free_trial_details || null,
     pricing: row.pricing || 'Free',
@@ -39,23 +40,31 @@ function mapRow(row) {
   };
 }
 
+const INTAKE_SELECT =
+  'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, max_places, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by';
+const INTAKE_SELECT_LEGACY = INTAKE_SELECT.replace('pay_how, max_places, ', 'pay_how, ');
+
 async function listEventIntake(limit, status) {
   const sb = getSupabaseAdmin();
   const max = Math.min(Math.max(Number(limit) || 100, 1), 500);
-  let query = sb
-    .from('event_intake_submissions')
-    .select(
-      'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
-    )
-    .order('created_at', { ascending: false })
-    .limit(max);
-
   const statusFilter = String(status || '').trim().toLowerCase();
-  if (statusFilter && statusFilter !== 'all') {
-    query = query.eq('status', statusFilter);
+
+  async function run(selectCols) {
+    let query = sb
+      .from('event_intake_submissions')
+      .select(selectCols)
+      .order('created_at', { ascending: false })
+      .limit(max);
+    if (statusFilter && statusFilter !== 'all') {
+      query = query.eq('status', statusFilter);
+    }
+    return query;
   }
 
-  const res = await query;
+  let res = await run(INTAKE_SELECT);
+  if (res.error && /max_places/i.test(res.error.message || '')) {
+    res = await run(INTAKE_SELECT_LEGACY);
+  }
   if (res.error) {
     if (/event_intake_submissions/i.test(res.error.message || '')) {
       const err = new Error('event_intake_table_missing');
@@ -96,14 +105,23 @@ async function updateEventIntakeStatus(id, status, session) {
         : String((session && (session.email || session.userEmail || session.sub)) || 'admin').trim(),
   };
 
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('event_intake_submissions')
     .update(patch)
     .eq('id', id)
-    .select(
-      'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by'
-    )
+    .select(INTAKE_SELECT)
     .single();
+
+  if (error && /max_places/i.test(error.message || '')) {
+    const retry = await sb
+      .from('event_intake_submissions')
+      .update(patch)
+      .eq('id', id)
+      .select(INTAKE_SELECT_LEGACY)
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) throw new Error(error.message);
   return { ok: true, submission: mapRow(data) };

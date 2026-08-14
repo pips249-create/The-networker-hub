@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260812tickets">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260814tickets2">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
@@ -162,68 +162,92 @@
 
         <fieldset class="ei-fieldset">
           <legend>Tickets &amp; access</legend>
+          <p class="ei-section-lead">
+            Tell us how people book. We set up payments, VAT, and refunds when we list the event.
+          </p>
 
           <div class="ei-field ei-field--full">
             <span class="ei-label-block">How should people get in?</span>
-            <div class="ei-choice" role="group" aria-label="How people get in">
-              <label class="ei-choice-option">
+            <div class="ei-cards" role="group" aria-label="How people get in">
+              <label class="ei-card">
                 <input type="radio" name="attendanceDoor" value="general" checked>
-                <span>General ticketing</span>
+                <span class="ei-card-copy">
+                  <strong>General ticketing</strong>
+                  <span>Anyone can book — no approval step.</span>
+                </span>
               </label>
-              <label class="ei-choice-option">
+              <label class="ei-card">
                 <input type="radio" name="attendanceDoor" value="category_exclusivity">
-                <span>Category Exclusivity</span>
+                <span class="ei-card-copy">
+                  <strong>Application based</strong>
+                  <span>You approve each seat (e.g. one per industry).</span>
+                </span>
               </label>
             </div>
-            <p class="ei-note" style="margin-top:8px">
-              General = anyone can book. Category Exclusivity = you approve each seat (e.g. one per industry).
-            </p>
           </div>
 
-          <div class="ei-field ei-field--full" style="margin-top:14px">
+          <div class="ei-field ei-field--full ei-stack">
             <span class="ei-label-block">How do people pay / get access?</span>
-            <div class="ei-choice" role="group" aria-label="How people pay">
-              <label class="ei-choice-option">
+            <div class="ei-cards ei-cards--2x2" role="group" aria-label="How people pay">
+              <label class="ei-card">
                 <input type="radio" name="payHow" value="free_tickets" checked>
-                <span>Free tickets</span>
+                <span class="ei-card-copy">
+                  <strong>Free tickets</strong>
+                  <span>Anyone can book at no charge.</span>
+                </span>
               </label>
-              <label class="ei-choice-option">
+              <label class="ei-card">
                 <input type="radio" name="payHow" value="paid_tickets">
-                <span>Paid tickets</span>
+                <span class="ei-card-copy">
+                  <strong>Paid tickets</strong>
+                  <span>Guests pay a ticket price.</span>
+                </span>
               </label>
-              <label class="ei-choice-option">
+              <label class="ei-card">
                 <input type="radio" name="payHow" value="membership">
-                <span>Membership</span>
+                <span class="ei-card-copy">
+                  <strong>Membership</strong>
+                  <span>People join your group to attend.</span>
+                </span>
               </label>
-              <label class="ei-choice-option">
+              <label class="ei-card">
                 <input type="radio" name="payHow" value="both">
-                <span>Tickets + membership</span>
+                <span class="ei-card-copy">
+                  <strong>Tickets + membership</strong>
+                  <span>Visitors buy a ticket; members book at a member rate.</span>
+                </span>
               </label>
             </div>
           </div>
 
-          <div class="ei-field ei-field--full" style="margin-top:14px">
-            <span class="ei-label-block">Free trial visits?</span>
-            <div class="ei-choice" role="group" aria-label="Free trial visits">
-              <label class="ei-choice-option">
-                <input type="radio" name="freeTrialVisits" value="no" checked>
-                <span>No</span>
-              </label>
-              <label class="ei-choice-option">
-                <input type="radio" name="freeTrialVisits" value="yes">
-                <span>Yes</span>
-              </label>
+          <div class="ei-grid ei-stack">
+            <label class="ei-field">
+              <span>Max places <span class="ei-optional">(optional)</span></span>
+              <input type="number" name="maxPlaces" min="1" step="1" inputmode="numeric" placeholder="e.g. 40">
+            </label>
+            <div class="ei-field">
+              <span class="ei-label-block">Free trial visits?</span>
+              <div class="ei-choice ei-choice--compact" role="group" aria-label="Free trial visits">
+                <label class="ei-choice-option">
+                  <input type="radio" name="freeTrialVisits" value="no" checked>
+                  <span>No</span>
+                </label>
+                <label class="ei-choice-option">
+                  <input type="radio" name="freeTrialVisits" value="yes">
+                  <span>Yes</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <label class="ei-field ei-field--full" id="ei-trial-details-wrap" hidden style="margin-top:14px">
+          <label class="ei-field ei-field--full ei-stack" id="ei-trial-details-wrap" hidden>
             <span>Trial visit details <span class="ei-optional">(optional)</span></span>
             <input type="text" name="freeTrialDetails" placeholder="e.g. 2 free visits before joining">
           </label>
 
-          <label class="ei-field ei-field--full" id="ei-ticket-details-wrap" hidden style="margin-top:14px">
-            <span>Ticket / membership details</span>
-            <textarea name="ticketDetails" rows="3" placeholder="e.g. Guest £25 · Member £15 · Membership £40/month · max 40 places"></textarea>
+          <label class="ei-field ei-field--full ei-stack" id="ei-ticket-details-wrap" hidden>
+            <span id="ei-ticket-details-label">Ticket / membership details</span>
+            <textarea name="ticketDetails" id="ei-ticket-details" rows="3" placeholder="e.g. Guest £25 · Member £15 · Membership £40/month"></textarea>
           </label>
         </fieldset>
 
@@ -255,6 +279,6 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260811intake1" data-root=""></script>
-<script src="js/event-intake-page.js?v=20260812tickets"></script>
+<script src="js/event-intake-page.js?v=20260814tickets2"></script>
 </body>
 </html>

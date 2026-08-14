@@ -74,7 +74,15 @@ function pricingFromPayHow(payHow) {
 }
 
 function attendanceDoorLabel(door) {
-  return door === 'category_exclusivity' ? 'Category Exclusivity' : 'General ticketing';
+  return door === 'category_exclusivity' ? 'Application based' : 'General ticketing';
+}
+
+function normalizeMaxPlaces(raw) {
+  const digits = String(raw == null ? '' : raw).trim();
+  if (!digits) return null;
+  const n = Number.parseInt(digits, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 100000) return null;
+  return n;
 }
 
 function payHowLabel(payHow) {
@@ -96,6 +104,7 @@ function normalizeIntakeInput(body) {
   );
   const trialRaw = String(body.freeTrialVisits || body.free_trial_visits || '').trim().toLowerCase();
   const freeTrialVisits = trialRaw === 'yes' || trialRaw === 'true' || trialRaw === '1' ? 'yes' : 'no';
+  const maxPlacesRaw = String(body.maxPlaces || body.max_places || body.capacity || '').trim();
 
   return {
     contactName: String(body.name || body.contactName || body.contact_name || '').trim(),
@@ -124,6 +133,8 @@ function normalizeIntakeInput(body) {
     meetingLink: String(body.meetingLink || body.meeting_link || body.joinLink || '').trim() || null,
     attendanceDoor,
     payHow,
+    maxPlaces: normalizeMaxPlaces(maxPlacesRaw),
+    maxPlacesRaw,
     pricing: pricingFromPayHow(payHow),
     freeTrialVisits,
     freeTrialDetails:
@@ -191,7 +202,14 @@ function validateIntake(input) {
     return {
       ok: false,
       error: 'missing_tickets',
-      message: 'Add ticket and/or membership details (prices, capacity, or membership term).',
+      message: 'Add ticket and/or membership details (prices or membership term).',
+    };
+  }
+  if (input.maxPlacesRaw && input.maxPlaces == null) {
+    return {
+      ok: false,
+      error: 'invalid_max_places',
+      message: 'Enter a whole number for max places, or leave it blank.',
     };
   }
   return { ok: true };
@@ -224,6 +242,7 @@ function buildStaffEmailHtml(input) {
     row('Organiser website', input.organiserWebsiteUrl) +
     row('How people get in', attendanceDoorLabel(input.attendanceDoor)) +
     row('Pay / access', payHowLabel(input.payHow)) +
+    row('Max places', input.maxPlaces) +
     row('Free trial visits', input.freeTrialVisits === 'yes' ? 'Yes' : 'No') +
     row('Trial details', input.freeTrialDetails) +
     row('Ticket / membership details', input.ticketDetails) +
@@ -291,6 +310,7 @@ async function submitEventIntake(body) {
     meeting_link: input.meetingLink,
     attendance_door: input.attendanceDoor,
     pay_how: input.payHow,
+    max_places: input.maxPlaces,
     free_trial_visits: input.freeTrialVisits,
     free_trial_details: input.freeTrialDetails,
     pricing: input.pricing,
@@ -302,11 +322,28 @@ async function submitEventIntake(body) {
     source: 'add_your_event',
   };
 
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('event_intake_submissions')
     .insert(insertPayload)
     .select('id, created_at')
     .single();
+
+  if (error && /max_places/i.test(error.message || '')) {
+    const fallback = Object.assign({}, insertPayload);
+    delete fallback.max_places;
+    if (input.maxPlaces) {
+      fallback.ticket_details = ['Max places: ' + input.maxPlaces, fallback.ticket_details]
+        .filter(Boolean)
+        .join('\n');
+    }
+    const retry = await sb
+      .from('event_intake_submissions')
+      .insert(fallback)
+      .select('id, created_at')
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     if (/event_intake_submissions/i.test(error.message || '')) {

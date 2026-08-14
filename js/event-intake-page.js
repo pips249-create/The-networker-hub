@@ -10,7 +10,28 @@
   var inPersonEl = document.getElementById('ei-location-inperson');
   var onlineEl = document.getElementById('ei-location-online');
   var ticketWrap = document.getElementById('ei-ticket-details-wrap');
+  var ticketField = document.getElementById('ei-ticket-details');
+  var ticketLabel = document.getElementById('ei-ticket-details-label');
   var trialWrap = document.getElementById('ei-trial-details-wrap');
+
+  var PAY_COPY = {
+    paid_tickets: {
+      label: 'Ticket prices',
+      placeholder: 'e.g. Guest £25 · early bird £20',
+    },
+    membership: {
+      label: 'Membership details',
+      placeholder: 'e.g. £40/month or £400/year',
+    },
+    both: {
+      label: 'Ticket / membership details',
+      placeholder: 'e.g. Guest £25 · Member £0 · Membership £40/month',
+    },
+    application: {
+      label: 'Application notes <span class="ei-optional">(optional)</span>',
+      placeholder: 'e.g. one seat per industry',
+    },
+  };
 
   function setStatus(message, tone) {
     if (!statusEl) return;
@@ -25,23 +46,37 @@
     statusEl.className = 'ei-status' + (tone === 'ok' ? ' is-ok' : tone === 'error' ? ' is-error' : '');
   }
 
+  function selectedValue(name, fallback) {
+    var checked = form.querySelector('input[name="' + name + '"]:checked');
+    return checked ? checked.value : fallback;
+  }
+
   function syncFormat() {
-    var checked = form.querySelector('input[name="format"]:checked');
-    var isOnline = checked && checked.value === 'Online';
+    var isOnline = selectedValue('format', 'In person') === 'Online';
     if (inPersonEl) inPersonEl.hidden = !!isOnline;
     if (onlineEl) onlineEl.hidden = !isOnline;
   }
 
   function syncPayHow() {
-    var checked = form.querySelector('input[name="payHow"]:checked');
-    var payHow = checked ? checked.value : 'free_tickets';
-    var needsDetails = payHow === 'paid_tickets' || payHow === 'membership' || payHow === 'both';
-    if (ticketWrap) ticketWrap.hidden = !needsDetails;
+    var payHow = selectedValue('payHow', 'free_tickets');
+    var door = selectedValue('attendanceDoor', 'general');
+    var needsPrices = payHow === 'paid_tickets' || payHow === 'membership' || payHow === 'both';
+    var showNotes = needsPrices || door === 'category_exclusivity';
+    if (ticketWrap) ticketWrap.hidden = !showNotes;
+    if (!ticketLabel || !ticketField) return;
+    var copy = needsPrices
+      ? PAY_COPY[payHow]
+      : door === 'category_exclusivity'
+        ? PAY_COPY.application
+        : null;
+    if (!copy) return;
+    ticketLabel.innerHTML = copy.label;
+    ticketField.placeholder = copy.placeholder;
+    ticketField.required = needsPrices;
   }
 
   function syncTrial() {
-    var checked = form.querySelector('input[name="freeTrialVisits"]:checked');
-    var yes = checked && checked.value === 'yes';
+    var yes = selectedValue('freeTrialVisits', 'no') === 'yes';
     if (trialWrap) trialWrap.hidden = !yes;
   }
 
@@ -49,6 +84,9 @@
     el.addEventListener('change', syncFormat);
   });
   form.querySelectorAll('input[name="payHow"]').forEach(function (el) {
+    el.addEventListener('change', syncPayHow);
+  });
+  form.querySelectorAll('input[name="attendanceDoor"]').forEach(function (el) {
     el.addEventListener('change', syncPayHow);
   });
   form.querySelectorAll('input[name="freeTrialVisits"]').forEach(function (el) {
@@ -81,6 +119,7 @@
       meetingLink: String(fd.get('meetingLink') || '').trim(),
       attendanceDoor: String(fd.get('attendanceDoor') || 'general').trim(),
       payHow: String(fd.get('payHow') || 'free_tickets').trim(),
+      maxPlaces: String(fd.get('maxPlaces') || '').trim(),
       freeTrialVisits: String(fd.get('freeTrialVisits') || 'no').trim(),
       freeTrialDetails: String(fd.get('freeTrialDetails') || '').trim(),
       ticketDetails: String(fd.get('ticketDetails') || '').trim(),

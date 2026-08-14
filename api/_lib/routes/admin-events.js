@@ -794,6 +794,8 @@ module.exports = async function handler(req, res) {
         }
 
         const details = eventDetailsFromAdminBody(body);
+        const attendanceMode = String(body.attendance_mode || body.attendanceMode || 'tickets').trim();
+        const maxAttendeesRaw = body.max_attendees != null ? body.max_attendees : body.maxAttendees;
         const base = {
           title,
           groupId: organiserId,
@@ -809,6 +811,9 @@ module.exports = async function handler(req, res) {
           photoBase64: details.photoBase64,
           photoMime: details.photoMime,
           photoFilename: details.photoFilename,
+          onlineLink: String(body.meeting_link || body.onlineLink || '').trim(),
+          attendanceMode,
+          maxAttendees: maxAttendeesRaw,
         };
 
         const seriesGroupId = resolveSeriesGroupId(null, occ.length);
@@ -847,12 +852,35 @@ module.exports = async function handler(req, res) {
           console.warn('[admin-events] outreach log', logErr && logErr.message ? logErr.message : logErr);
         }
 
+        let ticketsCreated = 0;
+        const ticketPayloads = Array.isArray(body.tickets) ? body.tickets : [];
+        if (ticketPayloads.length && events.length) {
+          try {
+            const { createTicketsForEvents } = require('../supabase-organiser-events');
+            const ticketResult = await createTicketsForEvents({
+              eventIds: events.map((ev) => ev.id),
+              tickets: ticketPayloads,
+              publish: false,
+              attendanceMode,
+              enableGuestVisits: Boolean(body.enable_guest_visits || body.enableGuestVisits),
+              maxAttendees: maxAttendeesRaw,
+            });
+            ticketsCreated = Number(ticketResult && ticketResult.created) || 0;
+          } catch (ticketErr) {
+            console.warn(
+              '[admin-events] intake tickets',
+              ticketErr && ticketErr.message ? ticketErr.message : ticketErr
+            );
+          }
+        }
+
         return json(res, 201, {
           ok: true,
           event: events[0],
           events,
           eventIds: events.map((e) => e.id),
           seriesGroupId: seriesGroupId || events[0]?.seriesGroupId || null,
+          ticketsCreated,
         });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'create_failed', message: e.message });

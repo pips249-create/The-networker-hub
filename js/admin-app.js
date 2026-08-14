@@ -21569,13 +21569,209 @@
     document.body.addEventListener('click', handleOpportunityCleanupClick);
   }
 
+  function parseIntakeDateToYmd(text) {
+    var s = String(text || '');
+    var iso = s.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+    if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
+    var uk = s.match(
+      /\b(\d{1,2})(?:st|nd|rd|th)?\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(20\d{2})\b/i
+    );
+    if (!uk) return '';
+    var months = {
+      jan: '01',
+      feb: '02',
+      mar: '03',
+      apr: '04',
+      may: '05',
+      jun: '06',
+      jul: '07',
+      aug: '08',
+      sep: '09',
+      oct: '10',
+      nov: '11',
+      dec: '12',
+    };
+    var day = ('0' + uk[1]).slice(-2);
+    var mon = months[uk[2].slice(0, 3).toLowerCase()] || '';
+    return mon ? uk[3] + '-' + mon + '-' + day : '';
+  }
+
+  function parseIntakeHhMm(text, fallback) {
+    var s = String(text || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\./g, '')
+      .replace(/\s+/g, '');
+    if (!s) return fallback || '';
+    var m = s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm)?$/);
+    if (!m) return fallback || '';
+    var h = parseInt(m[1], 10);
+    var min = m[2] || '00';
+    var ap = m[3] || '';
+    if (ap === 'pm' && h < 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    if (h > 23) return fallback || '';
+    return ('0' + h).slice(-2) + ':' + min;
+  }
+
+  function firstPoundAmount(text) {
+    var m = String(text || '').match(/£\s*(\d+(?:\.\d{1,2})?)/);
+    return m ? m[1] : '';
+  }
+
+  function intakePayHowLabel(payHow, pricing) {
+    var p = String(payHow || '').trim();
+    if (p === 'both') return 'Tickets + membership';
+    if (p === 'membership') return 'Membership';
+    if (p === 'paid_tickets') return 'Paid tickets';
+    if (p === 'free_tickets') return 'Free tickets';
+    return pricing || 'Free';
+  }
+
+  function eventIntakeCreateFormHtml(row) {
+    var payHow = String(row.payHow || 'free_tickets').trim() || 'free_tickets';
+    var door = row.attendanceDoor === 'category_exclusivity' ? 'category_exclusivity' : 'general';
+    var format = String(row.format || 'In person');
+    var ymd = parseIntakeDateToYmd(row.eventDates);
+    var start = parseIntakeHhMm(row.startTime, '10:00') || '10:00';
+    var end = parseIntakeHhMm(row.endTime, '') || defaultEventCreateEndTime(start);
+    var paid = payHow === 'paid_tickets' || payHow === 'both';
+    var ticketName =
+      payHow === 'free_tickets'
+        ? 'Free ticket'
+        : payHow === 'membership'
+          ? 'Member ticket'
+          : payHow === 'both'
+            ? 'Guest ticket'
+            : 'Standard ticket';
+    var ticketPrice = paid ? firstPoundAmount(row.ticketDetails) : '0';
+    var descParts = [];
+    if (row.description) descParts.push(String(row.description).trim());
+    if (row.notes) descParts.push(String(row.notes).trim());
+    if ((payHow === 'membership' || payHow === 'both') && row.ticketDetails) {
+      descParts.push('Membership: ' + String(row.ticketDetails).trim());
+    }
+    if (String(row.freeTrialVisits || '').toLowerCase() === 'yes' && row.freeTrialDetails) {
+      descParts.push('Free trial visits: ' + String(row.freeTrialDetails).trim());
+    }
+
+    return (
+      '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3 grid sm:grid-cols-2 gap-3" data-intake-id="' +
+      attrEsc(row.id) +
+      '" data-pay-how="' +
+      attrEsc(payHow) +
+      '">' +
+      '<p class="sm:col-span-2 text-xs text-slate-600">Pre-filled from their request. Publish the listing now — they review tickets, then add Stripe (if paid), VAT, refunds, and terms before sales open.</p>' +
+      '<p class="sm:col-span-2 text-[11px] text-slate-500">They wrote dates as: <strong>' +
+      esc(row.eventDates || '—') +
+      '</strong>' +
+      (row.ticketDetails ? ' · Tickets: ' + esc(row.ticketDetails) : '') +
+      '</p>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<div class="ei-create-org-picker relative">' +
+      '<input type="hidden" name="organiser_id">' +
+      '<input type="search" class="ei-create-org-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Search by group name…" value="' +
+      attrEsc(row.groupName || '') +
+      '" autocomplete="off">' +
+      '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
+      '<p class="ei-create-org-chosen hidden mt-1 text-xs text-brand-800"></p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Contact: ' +
+      esc(row.email || '—') +
+      '. Create the group first under Groups if it is not listed.</p></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
+      '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(row.eventTitle || '') +
+      '"></div>' +
+      eventDescriptionFieldHtml(descParts.join('\n\n')) +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Start time</label>' +
+      '<input type="time" name="start_time" value="' +
+      attrEsc(start) +
+      '" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">End time</label>' +
+      '<input type="time" name="end_time" value="' +
+      attrEsc(end) +
+      '" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Event dates</label>' +
+      '<div class="ei-create-dates space-y-2 mb-2">' +
+      eventCreateDateRowHtml(ymd) +
+      '</div>' +
+      '<button type="button" class="ei-create-add-date text-xs font-semibold text-brand-700 hover:underline">+ Add another date</button></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
+      '<select name="meeting_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      meetingFormatOptions(format) +
+      '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
+      '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventTypeOptions('Meeting') +
+      '</select></div>' +
+      eventLocationFieldsHtml(
+        {
+          meeting_type: format,
+          venue: row.venue || '',
+          address: row.addressLine1 || '',
+          city: row.city || '',
+          postcode: row.postcode || '',
+        },
+        'ei-create-location event-location-fields'
+      ) +
+      '<div class="ei-create-online sm:col-span-2' +
+      (String(format) === 'Online' ? '' : ' hidden') +
+      '"><label class="block text-xs font-semibold text-slate-500 mb-1">Meeting / join link</label>' +
+      '<input type="url" name="meeting_link" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(row.meetingLink || '') +
+      '" placeholder="https://zoom.us/j/…"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">How people get in</label>' +
+      '<select name="attendance_door" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="general"' +
+      (door === 'general' ? ' selected' : '') +
+      '>General ticketing</option>' +
+      '<option value="category_exclusivity"' +
+      (door === 'category_exclusivity' ? ' selected' : '') +
+      '>Application based</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Pay / access</label>' +
+      '<input type="text" readonly class="w-full rounded-lg border border-slate-200 px-3 py-2 bg-slate-50 text-sm" value="' +
+      attrEsc(intakePayHowLabel(payHow, row.pricing)) +
+      '"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Max places</label>' +
+      '<input type="number" name="max_places" min="1" step="1" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(row.maxPlaces ? String(row.maxPlaces) : '') +
+      '" placeholder="Optional"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket name</label>' +
+      '<input type="text" name="ticket_name" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ticketName) +
+      '"></div>' +
+      '<div class="ei-create-price"' +
+      (paid ? '' : ' hidden') +
+      '><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket price (£)</label>' +
+      '<input type="number" name="ticket_price" min="0" step="0.01" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ticketPrice) +
+      '" placeholder="e.g. 25">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Leave VAT, refunds, and Stripe for the organiser.</p></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Listing status</label>' +
+      '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      eventStatusOptions('published') +
+      '</select>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Published = visible listing. Ticket sales stay closed until they confirm.</p></div>' +
+      (row.photoUrl
+        ? '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Photo URL</label>' +
+          '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(row.photoUrl) +
+          '"></div>'
+        : '') +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
+      '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel>Cancel</button>' +
+      '<span class="ei-create-msg text-xs"></span></div></form>'
+    );
+  }
+
   function renderEventIntakeAdmin() {
     main.innerHTML =
       '<div class="space-y-4">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Event requests</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing under Events, then mark done.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing from the request — they finish Stripe (if paid), VAT, refunds, and terms before ticket sales open.</p></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="open">Open</button>' +
       '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="all">All</button>' +
@@ -21661,6 +21857,12 @@
                   : '';
 
                 actions += ' ' + findOrgBtn + (importBrandBtn ? ' ' + importBrandBtn : '');
+                if (row.status === 'open') {
+                  actions +=
+                    ' <button type="button" class="admin-btn admin-btn-primary text-xs" data-ei-create-toggle="' +
+                    attrEsc(row.id) +
+                    '">Create listing</button>';
+                }
 
                 return (
                   '<article class="border border-slate-200 rounded-lg p-4 space-y-2">' +
@@ -21706,7 +21908,7 @@
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">How people get in</dt><dd>' +
                   esc(
                     row.attendanceDoor === 'category_exclusivity'
-                      ? 'Category Exclusivity'
+                      ? 'Application based'
                       : 'General ticketing'
                   ) +
                   '</dd></div>' +
@@ -21723,6 +21925,11 @@
                   ) +
                   (tickets ? ' — ' + esc(tickets) : '') +
                   '</dd></div>' +
+                  (row.maxPlaces
+                    ? '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Max places</dt><dd>' +
+                      esc(String(row.maxPlaces)) +
+                      '</dd></div>'
+                    : '') +
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Free trial visits</dt><dd>' +
                   esc(
                     String(row.freeTrialVisits || '').toLowerCase() === 'yes'
@@ -21752,6 +21959,7 @@
                     ? '<p class="text-sm text-slate-600"><strong>Description:</strong> ' + esc(desc) + '</p>'
                     : '') +
                   (notes ? '<p class="text-sm text-slate-600"><strong>Notes:</strong> ' + esc(notes) + '</p>' : '') +
+                  eventIntakeCreateFormHtml(row) +
                   '</article>'
                 );
               })
@@ -21767,11 +21975,221 @@
             : total + ' shown · filter: ' + filter,
           'ok'
         );
+        bindEventIntakeCreateForms();
       })
       .catch(function (err) {
         bodyEl.innerHTML =
           '<p class="text-sm text-red-700">' + esc((err && err.message) || 'Could not load requests') + '</p>';
         setStatus((err && err.message) || 'Could not load requests', 'error');
+      });
+  }
+
+  function collectEiCreateOccurrences(form) {
+    var startTime = formFieldVal(form, 'start_time') || '10:00';
+    var endTime = formFieldVal(form, 'end_time') || defaultEventCreateEndTime(startTime);
+    var keys = [];
+    form.querySelectorAll('.ei-create-dates input[type="date"]').forEach(function (input) {
+      var value = String(input.value || '').trim();
+      if (value && keys.indexOf(value) === -1) keys.push(value);
+    });
+    keys.sort();
+    return keys.map(function (key) {
+      return {
+        date: combineEventCreateDateTime(key, startTime),
+        endDate: combineEventCreateDateTime(key, endTime),
+      };
+    });
+  }
+
+  function bindEventIntakeCreateForms() {
+    (main.querySelectorAll('.ei-create-form') || []).forEach(function (form) {
+      if (form.dataset.bound === '1') return;
+      form.dataset.bound = '1';
+      var dates = form.querySelector('.ei-create-dates');
+      var addDate = form.querySelector('.ei-create-add-date');
+      if (addDate) {
+        addDate.addEventListener('click', function () {
+          if (dates) dates.insertAdjacentHTML('beforeend', eventCreateDateRowHtml(''));
+        });
+      }
+      if (dates) {
+        dates.addEventListener('click', function (e) {
+          var remove = e.target.closest('.event-create-remove-date');
+          if (!remove || !dates.contains(remove)) return;
+          var row = remove.closest('.event-create-date-row');
+          if (row && dates.querySelectorAll('.event-create-date-row').length > 1) row.remove();
+        });
+      }
+      var formatEl = form.querySelector('select[name="meeting_type"]');
+      if (formatEl) {
+        formatEl.addEventListener('change', function () {
+          var online = !isInPersonMeetingFormat(formatEl.value);
+          var loc = form.querySelector('.ei-create-location');
+          var join = form.querySelector('.ei-create-online');
+          if (loc) loc.classList.toggle('hidden', online);
+          if (join) join.classList.toggle('hidden', !online);
+        });
+      }
+      var search = form.querySelector('.ei-create-org-search');
+      var results = form.querySelector('.ei-create-org-results');
+      var hidden = form.querySelector('input[name="organiser_id"]');
+      var chosen = form.querySelector('.ei-create-org-chosen');
+      var searchTimer = null;
+      function setOrg(id, name) {
+        if (hidden) hidden.value = id || '';
+        if (chosen) {
+          chosen.textContent = name ? 'Using: ' + name : '';
+          chosen.classList.toggle('hidden', !name);
+        }
+        if (results) {
+          results.innerHTML = '';
+          results.classList.add('hidden');
+        }
+      }
+      function runSearch(q) {
+        q = String(q || '').trim();
+        if (!q || !results) return;
+        adminGet('/api/admin/organisers?limit=8&q=' + encodeURIComponent(q))
+          .then(function (data) {
+            var list = data && Array.isArray(data.organisers) ? data.organisers : [];
+            if (!list.length) {
+              results.innerHTML =
+                '<p class="px-3 py-2 text-xs text-slate-500">No group found. Create it under Groups first.</p>';
+              results.classList.remove('hidden');
+              return;
+            }
+            results.innerHTML = list
+              .map(function (o) {
+                return (
+                  '<button type="button" class="ei-create-org-result w-full text-left px-3 py-2 text-sm hover:bg-brand-50 border-b border-slate-100 last:border-0" data-id="' +
+                  attrEsc(o.id) +
+                  '" data-name="' +
+                  attrEsc(o.name || '') +
+                  '">' +
+                  esc(o.name || 'Untitled') +
+                  '</button>'
+                );
+              })
+              .join('');
+            results.classList.remove('hidden');
+            if (list.length === 1 && hidden && !hidden.value) {
+              setOrg(list[0].id, list[0].name);
+            }
+          })
+          .catch(function () {
+            results.innerHTML = '<p class="px-3 py-2 text-xs text-red-700">Could not search groups.</p>';
+            results.classList.remove('hidden');
+          });
+      }
+      if (search) {
+        search.addEventListener('input', function () {
+          if (hidden) hidden.value = '';
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () {
+            runSearch(search.value);
+          }, 250);
+        });
+        search.addEventListener('focus', function () {
+          if (!hidden || !hidden.value) runSearch(search.value);
+        });
+      }
+      if (results) {
+        results.addEventListener('click', function (e) {
+          var btn = e.target.closest('.ei-create-org-result');
+          if (!btn) return;
+          setOrg(btn.getAttribute('data-id'), btn.getAttribute('data-name'));
+          if (search) search.value = btn.getAttribute('data-name') || '';
+        });
+      }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitEventIntakeCreateForm(form);
+      });
+    });
+  }
+
+  function submitEventIntakeCreateForm(form) {
+    var msg = form.querySelector('.ei-create-msg');
+    var btn = form.querySelector('[type="submit"]');
+    var organiserId = formFieldVal(form, 'organiser_id');
+    var occurrences = collectEiCreateOccurrences(form);
+    var status = formFieldVal(form, 'status') || 'published';
+    var payHow = form.getAttribute('data-pay-how') || 'free_tickets';
+    var intakeId = form.getAttribute('data-intake-id');
+    function setMsg(text, ok) {
+      if (!msg) return;
+      msg.textContent = text || '';
+      msg.className = 'ei-create-msg text-xs ' + (ok ? 'text-emerald-700 font-semibold' : 'text-red-700 font-semibold');
+    }
+    if (!organiserId) {
+      setMsg('Choose an organiser / group first.');
+      return;
+    }
+    if (status !== 'draft' && !occurrences.length) {
+      setMsg('Add at least one date before publishing.');
+      return;
+    }
+    var paid = payHow === 'paid_tickets' || payHow === 'both';
+    var price = paid ? Number(formFieldVal(form, 'ticket_price')) : 0;
+    if (paid && (!Number.isFinite(price) || price < 0)) {
+      setMsg('Enter a ticket price (0 is allowed).');
+      return;
+    }
+    var door = formFieldVal(form, 'attendance_door') || 'general';
+    var ticketName = formFieldVal(form, 'ticket_name') || (paid ? 'Standard ticket' : 'Free ticket');
+    var maxPlaces = formFieldVal(form, 'max_places');
+    var tickets = [
+      {
+        name: ticketName,
+        price: paid ? price : 0,
+        quantityAvailable: maxPlaces || null,
+        categoryExclusivity: door === 'category_exclusivity',
+        ticketType: door === 'category_exclusivity' ? 'Application-based' : 'Standard',
+      },
+    ];
+    if (btn) btn.disabled = true;
+    setMsg('Creating…');
+    msg.className = 'ei-create-msg text-xs text-slate-500';
+    adminPost(
+      '/api/admin/events',
+      Object.assign(
+        {
+          action: 'create',
+          title: formFieldVal(form, 'title'),
+          organiser_id: organiserId,
+          occurrences: occurrences,
+          event_type: formFieldVal(form, 'event_type') || 'Meeting',
+          meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
+          status: status,
+          meeting_link: formFieldVal(form, 'meeting_link'),
+          attendance_mode: door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
+          max_attendees: maxPlaces,
+          tickets: tickets,
+          photo_url: formFieldVal(form, 'photo_url'),
+        },
+        eventDetailsPayloadFromForm(form)
+      )
+    )
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || data.error || 'Create failed');
+        if (!intakeId) return data;
+        return adminPatch('/api/admin/event-intake', { id: intakeId, status: 'done' }).then(function () {
+          return data;
+        });
+      })
+      .then(function (data) {
+        var count = Array.isArray(data.events) ? data.events.length : 1;
+        setMsg(
+          (count > 1 ? count + ' dates listed. ' : 'Listing created. ') +
+            'They still need to review tickets, add Stripe if paid, VAT, refunds, and terms.',
+          true
+        );
+        if (btn) btn.disabled = false;
+        loadEventIntakeAdmin();
+      })
+      .catch(function (err) {
+        setMsg(err.message || 'Could not create listing');
+        if (btn) btn.disabled = false;
       });
   }
 
@@ -21782,6 +22200,27 @@
       if (filterBtn && main.contains(filterBtn)) {
         main.dataset.eiFilter = filterBtn.getAttribute('data-ei-filter') || 'open';
         loadEventIntakeAdmin();
+        return;
+      }
+
+      var createToggle = e.target.closest('[data-ei-create-toggle]');
+      if (createToggle && main.contains(createToggle)) {
+        var createId = createToggle.getAttribute('data-ei-create-toggle');
+        var createForm = main.querySelector('.ei-create-form[data-intake-id="' + createId + '"]');
+        if (createForm) {
+          createForm.classList.toggle('hidden');
+          var search = createForm.querySelector('.ei-create-org-search');
+          if (search && !createForm.classList.contains('hidden')) {
+            search.dispatchEvent(new Event('focus'));
+          }
+        }
+        return;
+      }
+
+      var createCancel = e.target.closest('[data-ei-create-cancel]');
+      if (createCancel && main.contains(createCancel)) {
+        var cancelForm = createCancel.closest('.ei-create-form');
+        if (cancelForm) cancelForm.classList.add('hidden');
         return;
       }
 
@@ -22314,7 +22753,7 @@
       'Quick recap:\n' +
       '• Free to list — you keep 100% of the ticket price (attendees pay 4.5% + 20p)\n' +
       '• Built for networking groups — guest visits, member rates, visit tracking, attendee round-ups\n' +
-      '• List autumn dates now; public browsing & ticket buying open 1 September\n' +
+      '• List autumn dates now; public browsing 25 August, ticket buying 1 September\n' +
       '• Claim before 1 Sept → Founding Organiser · 2026\n\n' +
       'Benefits one-pager: https://thenetworkerhub.com/guides/organiser-leavebehind\n' +
       'PDF: https://thenetworkerhub.com/assets/guides/organiser-leavebehind.pdf\n' +
@@ -22331,7 +22770,7 @@
       '4. Open an event page — guest visit + members-only tickets (no access codes).\n' +
       '5. Impersonate the pinned demo organiser → organiser dashboard.\n' +
       '6. Show Attendees (visit tracking), Promote (LinkedIn post), then mention attendee round-up.\n' +
-      '7. Close (say): “List autumn dates now. Public buying opens 1 September. Claim before then for Founding Organiser · 2026.”\n' +
+      '7. Close (say): “List autumn dates now. Browsing opens 25 August; buying opens 1 September. Claim before 1 September for Founding Organiser · 2026.”\n' +
       '8. CTA: claim page + next 2–3 dates, or book SavvyCal.';
 
     var outcomeLabels = {
