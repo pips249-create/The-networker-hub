@@ -273,12 +273,12 @@ const FALLBACK_REPLIES = [
   {
     match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme|free trial visit)|(guest visit|complimentary visit|guest programme|free trial visit).*(paid|member).*(ticket|tier)/i,
     reply:
-      'Yes — on Set up tickets choose General ticketing or Application based, then pick how people book and turn on Free trial visits. Visitors use free visits first; once used, they buy a ticket or join membership. For monthly membership with no event ticket, choose Free visits, then membership. Closed meeting (member list only, no visits) is under General when membership is on.',
+      'Yes — enable the guest visit programme (Complimentary visits) on Set up tickets alongside your tickets (paid, free, or both). Visitors use complimentary visits first; once used, they buy a paid ticket or join membership. You can still offer a free ticket and a paid ticket. Do not add a ticket named First Meeting for a first visit — that can be booked on every remaining date with no visit limit. For monthly membership with no event ticket, choose Free visits, then membership.',
   },
   {
     match: /difference.*(ticket type|guest visit|category exclusiv|application based|general ticket)|ticket type.*guest visit.*category|guest visit.*category exclusiv|attendance mode|how (do|should) people get in|networking group meeting|booking options|how will people book|convert free visits/i,
     reply:
-      'Two ways in: General ticketing (anyone can book) or Application based (you approve seats). Then choose how people book — Ticket for this event, Free visits, then membership, or Ticket and membership. Full plain-English walkthrough: /organiser/booking-options (also linked from Set up tickets). Free trial visits sit on the membership paths so visitors try meetings, then join your group with history and reports.',
+      'Two ways in: Ticket types (General ticketing — anyone can book) or Category Exclusivity (application based — you approve seats). Complimentary visits are an optional add-on — first visit, then they pay or join. Then choose how people book — Ticket for this event, Free visits, then membership, or Ticket and membership. Full walkthrough: /organiser/booking-options.',
   },
   {
     match: /\bvat\b|value added tax/i,

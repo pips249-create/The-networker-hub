@@ -64,10 +64,10 @@
       hubertPrompt: 'How should I set up tickets for my event?',
     },
     'guest-visit-programme': {
-      title: 'Free trial visits',
+      title: 'Complimentary visits',
       body:
-        'Visitors try your organiser page free (up to 3 visits). After that, we invite them to join at your price. Join and renew are automated, and you keep 100% of the membership fee.',
-      hubertPrompt: 'What are free trial visits?',
+        'Visitors try your group with a complimentary visit (up to 3). After that they book your ticket, or join membership if you offer it. You can still have a free ticket and a paid ticket. Do not add a ticket named First Meeting for a first visit — that can be booked on every remaining date with no visit limit.',
+      hubertPrompt: 'What are complimentary visits?',
     },
     'pay-how': {
       title: 'How will people book?',

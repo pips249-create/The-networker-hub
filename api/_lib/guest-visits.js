@@ -32,6 +32,72 @@ function isGuestVisitTicket(ticket) {
   return /^guest\s*visit$/i.test(String(ticket.name || '').trim());
 }
 
+function isMembersOnlyTicket(ticket) {
+  return String(ticket?.visibility || '').toLowerCase() === 'members_only';
+}
+
+function isAlumniTicket(ticket) {
+  if (!ticket) return false;
+  const type = String(ticket.ticket_type || ticket.ticketType || '').trim();
+  if (type === 'Alumni') return true;
+  return Boolean(ticket.isAlumni) || /^alumni/i.test(String(ticket.name || '').trim());
+}
+
+/** Public tickets people can buy without being on the member list. */
+function isPublicSaleTicket(ticket) {
+  if (!ticket) return false;
+  if (isGuestVisitTicket(ticket) || isAlumniTicket(ticket) || isMembersOnlyTicket(ticket)) {
+    return false;
+  }
+  const type = String(ticket.ticket_type || ticket.ticketType || '').trim().toLowerCase();
+  if (type === 'guest-visit' || type === 'alumni') return false;
+  return true;
+}
+
+function ticketPriceAmount(ticket) {
+  const n = Number(ticket && ticket.price);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * “First meeting”, “guest visit”, “taster” etc — organisers often create these
+ * as a £0 ticket instead of the complimentary visit programme.
+ */
+function looksLikeComplimentaryVisitTicketName(name) {
+  const n = String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, '');
+  if (!n) return false;
+  if (/^guest\s*visit$/i.test(n)) return true;
+  return (
+    /\b(first|1st|trial|taster|intro|introductory|complimentary|visitor|guest)\b/.test(n) &&
+    /\b(visit|meeting|ticket|session|breakfast|lunch|event)\b/.test(n)
+  );
+}
+
+function publicTicketsMixFreeAndPaid(tickets) {
+  const publicTiers = (Array.isArray(tickets) ? tickets : []).filter(isPublicSaleTicket);
+  const hasFree = publicTiers.some((t) => ticketPriceAmount(t) <= 0);
+  const hasPaid = publicTiers.some((t) => ticketPriceAmount(t) > 0);
+  return hasFree && hasPaid;
+}
+
+/**
+ * Free + paid public tickets are allowed (e.g. online free, in-person paid).
+ * A £0 ticket named like a first visit (“First Meeting”) next to a paid ticket
+ * is the pattern that must use complimentary visits — that ticket can be
+ * booked on every remaining date with no visit cap.
+ */
+function publicFreeTicketIsFirstVisitStandIn(tickets) {
+  const publicTiers = (Array.isArray(tickets) ? tickets : []).filter(isPublicSaleTicket);
+  const hasPaid = publicTiers.some((t) => ticketPriceAmount(t) > 0);
+  if (!hasPaid) return false;
+  return publicTiers.some(
+    (t) => ticketPriceAmount(t) <= 0 && looksLikeComplimentaryVisitTicketName(t && t.name)
+  );
+}
+
 function guestVisitTierPayload() {
   return {
     name: GUEST_VISIT_TIER_NAME,
@@ -370,6 +436,12 @@ module.exports = {
   clampComplimentaryVisitsAllowed,
   normalizeComplimentaryVisitsScope,
   isGuestVisitTicket,
+  isMembersOnlyTicket,
+  isAlumniTicket,
+  isPublicSaleTicket,
+  looksLikeComplimentaryVisitTicketName,
+  publicTicketsMixFreeAndPaid,
+  publicFreeTicketIsFirstVisitStandIn,
   guestVisitTierPayload,
   resolveSiblingOrganiserIds,
   loadOrganiserGuestVisitSettings,

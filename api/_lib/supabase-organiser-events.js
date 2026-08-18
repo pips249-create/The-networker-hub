@@ -2286,7 +2286,15 @@ async function createTicketsForEvents({
   const mode = normalizeAttendanceMode(attendanceMode);
 
   const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
-  const { guestVisitTierPayload } = require('./guest-visits');
+  const { guestVisitTierPayload, publicFreeTicketIsFirstVisitStandIn } = require('./guest-visits');
+  if (publicFreeTicketIsFirstVisitStandIn(tiers)) {
+    const e = new Error(
+      'A ticket named like a first visit (for example First Meeting) next to a paid ticket should be complimentary visits. You can still offer a free ticket and a paid ticket; complimentary visits cap how many times a new person can come (1–3).'
+    );
+    e.status = 400;
+    e.code = 'use_complimentary_visits';
+    throw e;
+  }
   const { alumniTierPayload } = require('./alumni-invites');
 
   // Guest visits: guest_programme, membership_meeting, or optional add-on on Category Exclusivity.

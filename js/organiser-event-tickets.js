@@ -293,7 +293,12 @@
       }
     }
     if (guestProgrammeEnabled() && !payHowIncludesTickets() && !payHowIncludesMembership()) {
-      blockers.push('After free trial visits, people need tickets or membership — choose one above');
+      blockers.push('After complimentary visits, people need tickets or membership — choose one above');
+    }
+    if (publicFreeTicketIsFirstVisitStandIn(list)) {
+      blockers.push(
+        'A first-visit ticket (for example First Meeting) should be complimentary visits — you can still keep a free ticket and a paid ticket'
+      );
     }
     return blockers;
   }
@@ -1576,7 +1581,7 @@
           : 'Let visitors take a free visit — they still apply for a Category Exclusivity seat'
         : isMembershipMeeting || isMembershipOnlyPayHow()
           ? 'Let visitors try your group free — then join your membership at your price'
-          : 'Let visitors visit for free before they buy a ticket';
+          : 'Let visitors try a complimentary visit before they buy a ticket';
     }
     if (isCategory) {
       if (hubMembershipEnabled()) {
@@ -1679,7 +1684,10 @@
       '<div class="ee-tier-price-mode" role="group" aria-label="Free or paid">' +
       '<button type="button" class="ee-tier-price-mode-btn is-active" data-price-mode="free" aria-pressed="true">Free</button>' +
       '<button type="button" class="ee-tier-price-mode-btn" data-price-mode="paid" aria-pressed="false">Paid</button>' +
-      '</div></div>' +
+      '</div>' +
+      '<p class="ee-hint ee-hint--below ee-tier-price-mode-hint">You can have a free ticket and a paid ticket. First visit still free? Tick complimentary visits below — do not name a ticket First Meeting.</p>' +
+      '<p class="ee-hint ee-hint-warn ee-complimentary-visit-hint" hidden></p>' +
+      '</div>' +
       '<div class="ee-field ee-tier-price-field" hidden>' +
       '<label>Price (£)</label>' +
       '<div class="ee-number-stepper">' +
@@ -1772,6 +1780,7 @@
     summary.textContent =
       count + ' ticket' + (count === 1 ? '' : 's') + ' · ' + qtyLabel + ' · ' + priceLabel;
     syncTierToolbarVisibility();
+    updateComplimentaryVisitHints();
   }
 
   function syncTierToolbarVisibility() {
@@ -1851,6 +1860,175 @@
     }
     priceEl.dispatchEvent(new Event('input', { bubbles: true }));
     priceEl.dispatchEvent(new Event('change', { bubbles: true }));
+    updateComplimentaryVisitHints();
+  }
+
+  function looksLikeComplimentaryVisitTicketName(name) {
+    const n = String(name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/['’]/g, '');
+    if (!n) return false;
+    if (/^guest\s*visit$/i.test(n)) return true;
+    return (
+      /\b(first|1st|trial|taster|intro|introductory|complimentary|visitor|guest)\b/.test(n) &&
+      /\b(visit|meeting|ticket|session|breakfast|lunch|event)\b/.test(n)
+    );
+  }
+
+  function publicTierRowIsFree(row) {
+    if (!row) return false;
+    const paid = row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="paid"]');
+    if (paid) {
+      const price = Number(row.querySelector('.ee-tier-price')?.value);
+      return !Number.isFinite(price) || price <= 0;
+    }
+    return true;
+  }
+
+  function publicTierRowIsPaid(row) {
+    if (!row) return false;
+    const price = Number(row.querySelector('.ee-tier-price')?.value);
+    const paidSelected = Boolean(
+      row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="paid"]')
+    );
+    return paidSelected && Number.isFinite(price) && price > 0;
+  }
+
+  function publicRowsHavePaidTicket(exceptRow) {
+    return Array.from(document.querySelectorAll('.ee-tier-row')).some(function (row) {
+      return row !== exceptRow && publicTierRowIsPaid(row);
+    });
+  }
+
+  function publicFreeTicketIsFirstVisitStandIn(tiers) {
+    const list = (tiers || []).filter(function (t) {
+      if (isGuestVisitTicket(t) || isAlumniTicket(t) || isMembersOnlyTicket(t)) return false;
+      return String(t.visibility || 'public').toLowerCase() !== 'members_only';
+    });
+    const hasPaid = list.some(function (t) {
+      const price = Number(t.price);
+      return Number.isFinite(price) && price > 0;
+    });
+    if (!hasPaid) return false;
+    return list.some(function (t) {
+      const price = Number(t.price);
+      const free = !Number.isFinite(price) || price <= 0;
+      return free && looksLikeComplimentaryVisitTicketName(t && t.name);
+    });
+  }
+
+  function rowLooksLikeFirstVisitStandIn(row) {
+    if (!publicTierRowIsFree(row)) return false;
+    const name = row.querySelector('.ee-tier-name')?.value.trim() || '';
+    return looksLikeComplimentaryVisitTicketName(name);
+  }
+
+  function updateComplimentaryVisitHints() {
+    const rows = Array.from(document.querySelectorAll('.ee-tier-row'));
+    const hasPaid = rows.some(publicTierRowIsPaid);
+    const standIn = hasPaid && rows.some(rowLooksLikeFirstVisitStandIn);
+    rows.forEach(function (row) {
+      const hint = row.querySelector('.ee-complimentary-visit-hint');
+      if (!hint) return;
+      const show = hasPaid && rowLooksLikeFirstVisitStandIn(row);
+      hint.hidden = !show;
+      hint.textContent = show
+        ? 'This looks like a first visit. Use complimentary visits so people cannot book every remaining date at £0. You can still keep a separate free ticket.'
+        : '';
+    });
+    const banner = document.getElementById('ee-complimentary-visit-banner');
+    if (banner) {
+      banner.hidden = !standIn;
+    }
+  }
+
+  function confirmComplimentaryVisitSwitch() {
+    const modal = document.getElementById('ee-tickets-confirm-modal');
+    const body = document.getElementById('ee-tickets-confirm-body');
+    const hint = document.getElementById('ee-tickets-confirm-hint');
+    const okBtn = document.getElementById('ee-tickets-confirm-ok');
+    const title = document.getElementById('ee-tickets-confirm-title');
+    const message =
+      'You can keep a free ticket and a paid ticket. If this ticket is meant as a first visit, use complimentary visits instead — a free First Meeting ticket can be booked on every remaining date, with no visit limit.';
+    if (!modal || !okBtn) {
+      return Promise.resolve(window.confirm(message + '\n\nSwitch to complimentary visits?'));
+    }
+    if (title) title.textContent = 'Use complimentary visits for the first visit?';
+    if (body) body.textContent = message;
+    if (hint) {
+      hint.textContent =
+        'We will remove first-visit tickets (for example First Meeting) and turn on complimentary visits. Your other tickets stay.';
+    }
+    if (okBtn) okBtn.textContent = 'Switch to complimentary visits';
+    return new Promise(function (resolve) {
+      let settled = false;
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        modal.hidden = true;
+        document.body.classList.remove('ee-modal-open');
+        document.removeEventListener('keydown', onKey);
+        resolve(Boolean(ok));
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') finish(false);
+      }
+      modal.querySelectorAll('[data-ee-confirm-cancel]').forEach(function (el) {
+        el.onclick = function () {
+          finish(false);
+        };
+      });
+      okBtn.onclick = function () {
+        finish(true);
+      };
+      document.addEventListener('keydown', onKey);
+      modal.hidden = false;
+      document.body.classList.add('ee-modal-open');
+      try {
+        okBtn.focus();
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+
+  function convertFreePublicTicketsToComplimentaryVisits() {
+    document.querySelectorAll('.ee-tier-row').forEach(function (row) {
+      if (rowLooksLikeFirstVisitStandIn(row)) row.remove();
+    });
+    const wrap = document.getElementById('ee-tier-rows');
+    if (wrap && !wrap.querySelector('.ee-tier-row')) {
+      addTierRow({ useDefaultName: true });
+      const first = wrap.querySelector('.ee-tier-row');
+      if (first) setTierPriceMode(first, 'paid');
+    }
+    const visits = document.getElementById('ee-guest-visits-allowed');
+    if (visits && !visits.dataset.touched) {
+      visits.value = String(Math.min(3, Math.max(1, organiserComplimentaryVisits || 1)));
+    }
+    const toggle = document.getElementById('ee-guest-programme-enabled');
+    if (toggle) toggle.dataset.userToggled = '1';
+    setGuestProgrammeEnabled(true);
+    setMembersOnlyEventEnabled(false);
+    if (attendanceDoor === 'application') {
+      setAttendanceMode('category_exclusivity');
+    } else {
+      setAttendanceMode(resolveModeFromDoorAndPayHow());
+    }
+    updateComplimentaryVisitHints();
+    updateTierSummary();
+    updatePublishButton();
+    const guestAddon = document.getElementById('ee-guest-addon');
+    try {
+      guestAddon?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {
+      /* ignore */
+    }
+    showAlert(
+      'Complimentary visits are on. Visitors get a limited number of complimentary first visits, then they use your tickets. Review the visit count, then save.',
+      'ok'
+    );
   }
 
   function bindTierRow(row) {
@@ -1866,18 +2044,27 @@
     row.querySelectorAll('input, textarea, select').forEach((el) => {
       el.addEventListener('input', function () {
         if (el.classList && el.classList.contains('ee-tier-price')) syncTierPriceMode(row);
+        updateComplimentaryVisitHints();
         updateTierSummary();
         updatePublishButton();
       });
       el.addEventListener('change', function () {
         if (el.classList && el.classList.contains('ee-tier-price')) syncTierPriceMode(row);
+        updateComplimentaryVisitHints();
         updateTierSummary();
         updatePublishButton();
       });
     });
     row.querySelectorAll('.ee-tier-price-mode-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        setTierPriceMode(row, btn.getAttribute('data-price-mode') || 'free');
+        const mode = btn.getAttribute('data-price-mode') || 'free';
+        setTierPriceMode(row, mode);
+        updateComplimentaryVisitHints();
+        if (mode === 'free' && publicRowsHavePaidTicket(row) && rowLooksLikeFirstVisitStandIn(row)) {
+          confirmComplimentaryVisitSwitch().then(function (ok) {
+            if (ok) convertFreePublicTicketsToComplimentaryVisits();
+          });
+        }
       });
     });
     syncTierPriceMode(row);
@@ -1965,6 +2152,7 @@
     wrap.appendChild(row);
     syncSeriesPassFieldVisibility(row);
     updateTierSummary();
+    updateComplimentaryVisitHints();
     updatePublishButton();
     return row;
   }
@@ -2018,6 +2206,7 @@
         (ticket.saleEndOption && ticket.saleEndOption !== 'at_start');
       advanced.open = hasAdvanced;
     }
+    updateComplimentaryVisitHints();
   }
 
   function isMembersOnlyTicket(ticket) {
@@ -2152,20 +2341,27 @@
     const membershipOnly = isMembershipOnlyPayHow();
     const generalMount = document.getElementById('ee-general-guest-mount');
 
-    // Tickets-only: free visits belong on the “Join the group” path, not here.
+    const ticketsGuestMount = document.getElementById('ee-tickets-guest-mount');
+
+    // Tickets-only: complimentary visits sit with the public tickets (first visit
+    // before a paid ticket), not only on the membership path.
     if (!payHowIncludesMembership() && !isCategory) {
       if (meetingMount) meetingMount.hidden = true;
       if (ceMount) ceMount.hidden = true;
       if (generalMount) generalMount.hidden = true;
-      if (addonHome && guestAddon && guestAddon.parentElement !== addonHome) {
-        addonHome.appendChild(guestAddon);
+      if (ticketsGuestMount && guestAddon) {
+        ticketsGuestMount.hidden = !payHowConfirmed;
+        if (guestAddon.parentElement !== ticketsGuestMount) ticketsGuestMount.appendChild(guestAddon);
+        guestAddon.hidden = !payHowConfirmed;
+      } else if (guestAddon) {
+        guestAddon.hidden = !payHowConfirmed;
       }
       if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
-      if (guestAddon) guestAddon.hidden = true;
-      fields.hidden = true;
-      if (optOut) optOut.hidden = true;
+      fields.hidden = !payHowConfirmed || !guestProgrammeEnabled();
+      if (optOut) optOut.hidden = !payHowConfirmed || !guestProgrammeEnabled();
       return;
     }
+    if (ticketsGuestMount) ticketsGuestMount.hidden = true;
 
     // Membership-only: keep free trial visits on the path-choice step.
     if (membershipOnly && !isMeeting) {
@@ -4436,6 +4632,11 @@
     }
 
     document.getElementById('ee-add-tier').addEventListener('click', () => addTierRow({ useDefaultName: false }));
+    document.getElementById('ee-switch-complimentary-visits')?.addEventListener('click', function () {
+      confirmComplimentaryVisitSwitch().then(function (ok) {
+        if (ok) convertFreePublicTicketsToComplimentaryVisits();
+      });
+    });
     bindAttendanceStep1Ui();
     parkStep2Panels();
     if (loaded.tickets && loaded.tickets.length) {
@@ -4671,6 +4872,20 @@
 
     const loading = window.organiserPageLoading;
     const tiers = collectActiveTiers();
+    if (publicFreeTicketIsFirstVisitStandIn(tiers)) {
+      const ok = await confirmComplimentaryVisitSwitch();
+      if (ok) {
+        convertFreePublicTicketsToComplimentaryVisits();
+        updatePublishButton();
+        return;
+      }
+      showAlert(
+        'Rename that first-visit ticket, or switch it to complimentary visits. You can still keep a free ticket and a paid ticket.',
+        'warn'
+      );
+      updatePublishButton();
+      return;
+    }
     if (!tiers.length) {
       const msg = publish
         ? 'Your event is not live until you publish a ticket type — please add at least one ticket tier above.'
@@ -4898,6 +5113,14 @@
     const data = result.data;
 
     if (!ok) {
+      if (data.error === 'use_complimentary_visits') {
+        showAlert(
+          data.message ||
+            'A first-visit ticket should be complimentary visits. You can still keep a free ticket and a paid ticket.',
+          'warn'
+        );
+        return;
+      }
       if (data.error === 'event_has_ticket_sales') {
         applyTicketsLockUi({ locked: true });
         showAlert(

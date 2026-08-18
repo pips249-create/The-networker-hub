@@ -10,6 +10,9 @@ const {
   loadOrganiserGuestVisitSettings,
   countUsedGuestVisits,
   getGuestVisitEligibility,
+  looksLikeComplimentaryVisitTicketName,
+  publicTicketsMixFreeAndPaid,
+  publicFreeTicketIsFirstVisitStandIn,
   GUEST_VISIT_SCOPE_PER_GROUP,
   GUEST_VISIT_SCOPE_ACROSS_GROUPS,
 } = require('../api/_lib/guest-visits');
@@ -24,6 +27,58 @@ function assert(label, condition) {
   }
   console.log('OK  ', label);
 }
+
+assert(
+  'first meeting looks like complimentary visit',
+  looksLikeComplimentaryVisitTicketName('First Meeting')
+);
+assert(
+  'complimentary visit name matches',
+  looksLikeComplimentaryVisitTicketName('Complimentary visit')
+);
+assert(
+  'general admission is not a complimentary visit name',
+  !looksLikeComplimentaryVisitTicketName('General admission')
+);
+assert(
+  'free + paid public tickets is a mix',
+  publicTicketsMixFreeAndPaid([
+    { name: 'Online', price: 0, ticketType: 'Standard' },
+    { name: 'In person', price: 18, ticketType: 'Standard' },
+  ])
+);
+assert(
+  'ordinary free + paid is not a first-visit stand-in',
+  !publicFreeTicketIsFirstVisitStandIn([
+    { name: 'Online', price: 0, ticketType: 'Standard' },
+    { name: 'In person', price: 18, ticketType: 'Standard' },
+  ])
+);
+assert(
+  'first meeting + paid is a first-visit stand-in',
+  publicFreeTicketIsFirstVisitStandIn([
+    { name: 'First Meeting', price: 0, ticketType: 'Standard' },
+    { name: 'General Attendance', price: 18, ticketType: 'Standard' },
+  ])
+);
+assert(
+  'guest visit + paid ticket is not a first-visit stand-in',
+  !publicFreeTicketIsFirstVisitStandIn([
+    { name: 'Guest visit', price: 0, ticketType: 'Guest-visit' },
+    { name: 'General Attendance', price: 18, ticketType: 'Standard' },
+  ])
+);
+assert(
+  'member-only £0 + public paid is not a first-visit stand-in',
+  !publicFreeTicketIsFirstVisitStandIn([
+    { name: 'Member ticket', price: 0, visibility: 'members_only' },
+    { name: 'General Attendance', price: 18, ticketType: 'Standard' },
+  ])
+);
+assert(
+  'all-free event is not a first-visit stand-in',
+  !publicFreeTicketIsFirstVisitStandIn([{ name: 'General admission', price: 0, ticketType: 'Standard' }])
+);
 
 function makeSb(handlers) {
   return {

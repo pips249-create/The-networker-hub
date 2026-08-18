@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814ticks1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260818comp1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -118,7 +118,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
               <strong>Ticket for this event</strong>
-              <span>Everyone books a ticket — free or paid.</span>
+              <span>Everyone books a ticket. You can offer a free ticket and a paid ticket. First visit still free? Tick complimentary visits.</span>
             </button>
             <button
               type="button"
@@ -267,9 +267,23 @@
           </div>
 
           <div id="ee-public-tickets-wrap">
+            <p class="ee-hint" style="margin-top:0">
+              Add a paid ticket if people pay per meeting. You can also add a free ticket. If the first visit is free, tick complimentary visits below — do not name a ticket First Meeting.
+            </p>
+            <div class="ee-info-box ee-complimentary-visit-banner" id="ee-complimentary-visit-banner" hidden>
+              <strong>First visit should be complimentary visits</strong>
+              <p>
+                You can keep a free ticket and a paid ticket. A ticket named like First Meeting can be booked on every remaining date, with no visit limit.
+                Complimentary visits cap how many times a new person can come (1–3).
+              </p>
+              <button type="button" class="ee-btn ee-btn-primary" id="ee-switch-complimentary-visits">
+                Switch to complimentary visits
+              </button>
+            </div>
             <p class="ee-tier-summary" id="ee-tier-summary" aria-live="polite">1 ticket · Free</p>
             <div id="ee-tier-rows"></div>
             <button type="button" class="ee-btn ee-btn-outline" id="ee-add-tier">+ Add another ticket</button>
+            <div id="ee-tickets-guest-mount" class="ee-ce-guest-mount" style="margin-top:16px"></div>
           </div>
 
           <div id="ee-members-only-event-wrap" hidden>
@@ -416,20 +430,20 @@
             <label class="ee-addon-toggle">
               <input type="checkbox" id="ee-guest-programme-enabled" />
               <span class="ee-addon-toggle-copy">
-                <strong data-hub-tip="guest-visit-programme">Free trial visits</strong>
+                <strong data-hub-tip="guest-visit-programme">Complimentary visits</strong>
                 <span class="ee-addon-summary" id="ee-guest-programme-summary"
-                  >Let visitors try your group free — then join at your price</span
+                  >Let visitors try your group — then they book a ticket or join</span
                 >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-guest-programme-fields" hidden>
               <p class="ee-hint ee-guest-how-short" id="ee-guest-programme-note">
                 <span id="ee-guest-programme-note-text"
-                  >Up to 3 free visits, then we invite them to join. You keep 100% of the membership fee.</span
+                  >Up to 3 complimentary visits, then they use your tickets or join. You keep 100% of membership fees.</span
                 >
               </p>
               <div class="ee-field ee-guest-visits-field">
-                <label for="ee-guest-visits-allowed">Free trial visits per visitor</label>
+                <label for="ee-guest-visits-allowed">Complimentary visits per visitor</label>
                 <input
                   type="number"
                   id="ee-guest-visits-allowed"
@@ -641,9 +655,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260814simple2" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260818comp2" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260812launchfix" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260814scroll1" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260818comp2" defer></script>
   </body>
 </html>
