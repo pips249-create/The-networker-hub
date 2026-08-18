@@ -3190,6 +3190,7 @@
       }
     });
     main.addEventListener('click', function (e) {
+      if (!e || !e.target || typeof e.target.closest !== 'function') return;
       if (e.target.closest('#health-bulk-clear')) {
         clearSelectedHealthEvents();
         main.querySelectorAll('.health-select-checkbox').forEach(function (cb) {
@@ -3343,6 +3344,7 @@
     if (!main || main.dataset.moderationBound) return;
     main.dataset.moderationBound = '1';
     main.addEventListener('click', function (e) {
+      if (!e || !e.target || typeof e.target.closest !== 'function') return;
       var dismissBtn = e.target.closest('.moderation-dismiss-report-btn');
       if (dismissBtn) {
         var reportId = dismissBtn.getAttribute('data-report-id');
@@ -15604,6 +15606,7 @@
   }
 
   function handleGroupCleanupClick(e) {
+    if (!e || !e.target || typeof e.target.closest !== 'function') return;
     var groupQuick = e.target.closest('[data-group-quick]');
     if (groupQuick) {
       var gKey = groupQuick.getAttribute('data-group-quick');
@@ -16053,6 +16056,7 @@
 
   function handleEventCleanupClick(e) {
     if (!document.getElementById('event-cleanup-list')) return;
+    if (!e || !e.target || typeof e.target.closest !== 'function') return;
 
     var activityLoad = e.target.closest('.entity-activity-load');
     if (activityLoad) {
@@ -22023,44 +22027,7 @@
     if (main.dataset.eiFilter) eventIntakeFilter = main.dataset.eiFilter;
     main.dataset.eiFilter = eventIntakeFilter;
     loadEventIntakeAdmin();
-    var statusEl = document.getElementById('event-intake-status');
-    var section = statusEl && statusEl.closest('section');
-    if (section && section.dataset.eiListen !== '1') {
-      section.dataset.eiListen = '1';
-      section.addEventListener('click', function (e) {
-        var t = e.target && e.target.closest ? e.target : e.target && e.target.parentElement;
-        if (!t || !t.closest) return;
-        var filterBtn = t.closest('[data-ei-filter]');
-        if (filterBtn && window.AdminEventIntake) {
-          window.AdminEventIntake.filter(filterBtn.getAttribute('data-ei-filter'), e);
-          return;
-        }
-        var createToggle = t.closest('[data-ei-create-toggle]');
-        if (createToggle && window.AdminEventIntake) {
-          window.AdminEventIntake.toggleCreate(createToggle, e);
-          return;
-        }
-        var cancel = t.closest('[data-ei-create-cancel]');
-        if (cancel && window.AdminEventIntake) {
-          window.AdminEventIntake.cancelCreate(cancel, e);
-          return;
-        }
-        var findBtn = t.closest('[data-ei-find-organiser]');
-        if (findBtn && window.AdminEventIntake) {
-          window.AdminEventIntake.findOrganiser(findBtn, e);
-          return;
-        }
-        var importBtn = t.closest('[data-ei-import-brand]');
-        if (importBtn && window.AdminEventIntake) {
-          window.AdminEventIntake.importBrand(importBtn, e);
-          return;
-        }
-        var statusBtn = t.closest('[data-ei-status]');
-        if (statusBtn && window.AdminEventIntake) {
-          window.AdminEventIntake.setStatus(statusBtn, e);
-        }
-      });
-    }
+    bindEventIntakeDocClicks();
   }
 
   function loadEventIntakeAdmin() {
@@ -22177,7 +22144,7 @@
                       '</a>'
                     : '') +
                   '</p></div>' +
-                  '<div class="flex flex-wrap gap-2">' +
+                  '<div class="flex flex-wrap gap-2 relative z-40">' +
                   actions +
                   '</div></div>' +
                   eventIntakeCreateFormHtml(row) +
@@ -22393,8 +22360,10 @@
   function showIntakeCreateForm(form) {
     if (!form) return;
     form.hidden = false;
+    form.removeAttribute('hidden');
     form.classList.remove('hidden');
-    if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    form.style.display = 'block';
+    if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     var search = form.querySelector('.ei-create-org-search');
     var email = String(form.getAttribute('data-contact-email') || '').trim();
     if (search) {
@@ -22416,7 +22385,9 @@
   function hideIntakeCreateForm(form) {
     if (!form) return;
     form.hidden = true;
+    form.setAttribute('hidden', '');
     form.classList.add('hidden');
+    form.style.display = 'none';
   }
 
   function eventIntakeCardForm(el) {
@@ -22425,7 +22396,19 @@
   }
 
   function bindEventIntakeCreateForms() {
-    var root = document.getElementById('event-intake-body') || main;
+    var page = document.getElementById('admin-main') || main;
+    var root = document.getElementById('event-intake-body') || page;
+    if (!root) return;
+    bindEventIntakeDocClicks();
+    (page || root)
+      .querySelectorAll(
+        '[data-ei-filter], [data-ei-create-toggle], [data-ei-create-cancel], [data-ei-find-organiser], [data-ei-import-brand], [data-ei-status]'
+      )
+      .forEach(function (btn) {
+        if (btn.dataset.eiBound === '1') return;
+        btn.dataset.eiBound = '1';
+        btn.addEventListener('click', handleEventIntakeDocClick);
+      });
     (root.querySelectorAll('.ei-create-form') || []).forEach(function (form) {
       if (form.dataset.bound === '1') return;
       form.dataset.bound = '1';
@@ -22627,18 +22610,78 @@
     return true;
   }
 
+  function eventIntakeClickEl(e) {
+    var t = e && e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    return t && typeof t.closest === 'function' ? t : null;
+  }
+
+  function handleEventIntakeDocClick(e) {
+    var t = eventIntakeClickEl(e);
+    if (!t) return;
+    var btn =
+      t.closest('[data-ei-filter]') ||
+      t.closest('[data-ei-create-toggle]') ||
+      t.closest('[data-ei-create-cancel]') ||
+      t.closest('[data-ei-find-organiser]') ||
+      t.closest('[data-ei-import-brand]') ||
+      t.closest('[data-ei-status]');
+    if (!btn) return;
+    var api = window.AdminEventIntake;
+    if (!api) return;
+    if (btn.hasAttribute('data-ei-filter')) {
+      api.filter(btn.getAttribute('data-ei-filter'), e);
+      return;
+    }
+    if (btn.hasAttribute('data-ei-create-toggle')) {
+      api.toggleCreate(btn, e);
+      return;
+    }
+    if (btn.hasAttribute('data-ei-create-cancel')) {
+      api.cancelCreate(btn, e);
+      return;
+    }
+    if (btn.hasAttribute('data-ei-find-organiser')) {
+      api.findOrganiser(btn, e);
+      return;
+    }
+    if (btn.hasAttribute('data-ei-import-brand')) {
+      api.importBrand(btn, e);
+      return;
+    }
+    if (btn.hasAttribute('data-ei-status')) {
+      api.setStatus(btn, e);
+    }
+  }
+
+  function bindEventIntakeDocClicks() {
+    if (window.__eventIntakeDocClickBound) return;
+    window.__eventIntakeDocClickBound = true;
+    document.addEventListener('click', handleEventIntakeDocClick, true);
+  }
+
   window.AdminEventIntake = {
     filter: function (status, e) {
-      if (!eiOnce(e && e.currentTarget, e)) return;
+      var el = eventIntakeClickEl(e);
+      if (el && el.closest) el = el.closest('[data-ei-filter]') || el;
+      if (!eiOnce(el, e)) return;
       eventIntakeFilter = String(status || 'open');
+      var rootMain = document.getElementById('admin-main');
+      if (rootMain) rootMain.dataset.eiFilter = eventIntakeFilter;
       if (main) main.dataset.eiFilter = eventIntakeFilter;
       loadEventIntakeAdmin();
     },
     toggleCreate: function (btn, e) {
       if (!eiOnce(btn, e)) return;
       var form = eventIntakeCardForm(btn);
-      if (!form) return;
-      if (form.hidden || form.classList.contains('hidden')) showIntakeCreateForm(form);
+      if (!form) {
+        window.alert('Could not open the listing form on this request. Hard-refresh (Cmd+Shift+R) and try again.');
+        return;
+      }
+      var closed =
+        form.hidden || form.classList.contains('hidden') || form.style.display === 'none';
+      if (closed) showIntakeCreateForm(form);
       else hideIntakeCreateForm(form);
     },
     cancelCreate: function (btn, e) {
@@ -22649,15 +22692,27 @@
       if (!eiOnce(btn, e)) return;
       var id = btn.getAttribute('data-ei-id');
       var status = btn.getAttribute('data-ei-status');
-      if (!id || !status) return;
+      if (!id || !status) {
+        window.alert('This request is missing an id. Hard-refresh (Cmd+Shift+R) and try again.');
+        return;
+      }
+      var prevLabel = btn.textContent;
       btn.disabled = true;
-      adminPatch('/api/admin/event-intake', { id: id, status: status })
+      btn.textContent =
+        status === 'done' ? 'Saving…' : status === 'spam' ? 'Marking spam…' : 'Reopening…';
+      var statusEl = document.getElementById('event-intake-status');
+      if (statusEl) {
+        statusEl.textContent = 'Updating request…';
+        statusEl.className = 'text-sm text-slate-500';
+      }
+      adminPost('/api/admin/event-intake', { id: id, status: status })
         .then(function (data) {
           if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
           loadEventIntakeAdmin();
         })
         .catch(function (err) {
           btn.disabled = false;
+          btn.textContent = prevLabel;
           window.alert((err && err.message) || 'Could not update request.');
         });
     },
@@ -22746,6 +22801,8 @@
         });
     },
   };
+
+  bindEventIntakeDocClicks();
 
   function renderCleanupHub(fullHash) {
     var tab = resolveHubTab(

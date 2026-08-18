@@ -236,6 +236,7 @@ body.hub-page-admin .site-nav {
   background: rgba(248, 250, 252, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
 }
 
 .admin-hub-tab {
@@ -250,6 +251,7 @@ body.hub-page-admin .site-nav {
   color: #475569;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+  pointer-events: auto;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 

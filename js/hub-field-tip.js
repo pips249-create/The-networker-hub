@@ -180,11 +180,10 @@
   }
 
   document.addEventListener('click', function (e) {
-    if (
-      e.target.closest('.hub-field-tip-btn') ||
-      e.target.closest('.hub-field-tip-popover') ||
-      e.target.closest('[data-hub-tip-ask]')
-    ) {
+    var t = e && e.target;
+    if (t && t.nodeType !== 1) t = t.parentElement;
+    if (!t || typeof t.closest !== 'function') return;
+    if (t.closest('.hub-field-tip-btn') || t.closest('.hub-field-tip-popover') || t.closest('[data-hub-tip-ask]')) {
       return;
     }
     closePopover();
