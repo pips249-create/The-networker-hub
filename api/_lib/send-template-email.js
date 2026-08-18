@@ -109,6 +109,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_booking_cancelled',
   'event_removed_by_hub',
   'event_unpublished_by_hub',
+  'organiser_listing_updated_by_hub',
   'organiser_hub_warning',
   'organiser_hub_suspended',
   'organiser_ticket_sales_nudge',
@@ -655,12 +656,13 @@ const MEMBER_ROSTER_EMAIL_SLUGS = new Set([
 ]);
 
 /**
- * Conduct moderation mail — must reach the organiser even while the pre-launch
- * allowlist is on (warnings/suspensions are enforcement, not marketing).
+ * Organiser ops mail — must reach the group even while the pre-launch
+ * allowlist is on (warnings, suspensions, and listing-change notes).
  */
 const ORGANISER_MODERATION_EMAIL_SLUGS = new Set([
   'organiser_hub_warning',
   'organiser_hub_suspended',
+  'organiser_listing_updated_by_hub',
 ]);
 
 function shouldSkipEmailAllowlist(slug) {

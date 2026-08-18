@@ -976,6 +976,77 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (body.action === 'message_organiser') {
+    const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    const eventId = String(body.eventId || body.event_id || '').trim();
+    const reason = String(body.reason || '').trim();
+    const message = String(body.message || body.details || '').trim();
+    if (!organiserId) {
+      return json(res, 400, { ok: false, error: 'missing_id', message: 'Organiser id is required.' });
+    }
+    if (!message) {
+      return json(res, 400, { ok: false, error: 'missing_message', message: 'Write a short note for the organiser.' });
+    }
+    try {
+      const sb = getSupabaseAdmin();
+      const { sendOrganiserListingUpdatedEmail } = require('../admin-organiser-message-emails');
+      const result = await sendOrganiserListingUpdatedEmail(sb, {
+        organiserId,
+        eventId,
+        reason,
+        message,
+      });
+      if (result.skipped) {
+        const skippedMessages = {
+          missing_organiser: 'Choose a networking group first.',
+          organiser_not_found: 'That networking group was not found.',
+          missing_organiser_email: 'This group has no contact email — add one on the profile, then try again.',
+          missing_message: 'Write a short note for the organiser.',
+        };
+        return json(res, 400, {
+          ok: false,
+          error: result.reason || 'message_skipped',
+          message: skippedMessages[result.reason] || 'Could not send the message.',
+        });
+      }
+      if (!result.sent) {
+        return json(res, 500, {
+          ok: false,
+          error: result.code || 'send_failed',
+          message: result.error || 'Could not send the email.',
+        });
+      }
+      try {
+        const { logFromSession } = require('../entity-activity-log');
+        await logFromSession(session, null, {
+          entity_type: eventId ? 'event' : 'organiser',
+          entity_id: eventId || organiserId,
+          organiser_id: organiserId,
+          action: 'admin_listing_message',
+          summary:
+            'Hub admin emailed organiser about a listing change' +
+            (result.listingLabel ? ': ' + String(result.listingLabel).slice(0, 80) : '') +
+            (reason ? ' (' + reason + ')' : ''),
+          metadata: { reason, to: result.to, eventId: eventId || null, source: 'admin' },
+        });
+      } catch {
+        /* ignore */
+      }
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message: 'Email sent to ' + result.to + '.',
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'message_failed',
+        message: e.message || 'Could not email the organiser.',
+      });
+    }
+  }
+
   if (body.action === 'issue_warning') {
     const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
     if (!organiserId) {

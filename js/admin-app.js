@@ -131,6 +131,10 @@
       title: 'Fix listings',
       subtitle: 'Click a row to add a photo, description, or website',
     },
+    'event-intake': {
+      title: 'Fix listings',
+      subtitle: 'Open a request and create the listing — we match or create the group for you',
+    },
     'event-cleanup': {
       title: 'Fix listings',
       subtitle: 'Search events, then click a row to edit details',
@@ -295,6 +299,17 @@
         'Click the row to expand it.',
         'Add a logo URL, description, and website, then Save.',
         'Use Fill from website if the group already has a site listed.',
+        'Use Email organiser after a listing change to tell them what you updated.',
+      ],
+    },
+    'event-intake': {
+      title: 'How to list an event request',
+      steps: [
+        'Click Create listing (or the request card) to open the pre-filled form.',
+        'Check the dates, venue, and ticket price — we match their group by email, or create one if it is new.',
+        'Create listing publishes the event. Ticket sales stay closed.',
+        'They sign in to add Stripe (if paid), VAT, refunds, and terms before sales open.',
+        'Mark done if you listed it another way; Spam for junk.',
       ],
     },
     'event-cleanup': {
@@ -304,6 +319,7 @@
         'Click the row to expand the editor.',
         'Update details, organiser, or dates, then Save.',
         'Open the public event page link to check it looks right.',
+        'Use Email organiser to tell the group about a wording or ticket change.',
       ],
     },
     'event-health': {
@@ -946,6 +962,9 @@
       if (hash.indexOf('issues') !== -1 || hash === 'event-health') {
         return PAGE_META['event-health'].subtitle;
       }
+      if (hash.indexOf('requests') !== -1) {
+        return PAGE_META['event-intake'].subtitle;
+      }
       if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') {
         return PAGE_META['event-cleanup'].subtitle;
       }
@@ -1132,6 +1151,7 @@
     var hash = String(fullHash || route || 'dashboard');
     if (route === 'cleanup' || hash.indexOf('cleanup/') === 0) {
       if (hash.indexOf('issues') !== -1 || hash === 'event-health') return 'event-health';
+      if (hash.indexOf('requests') !== -1) return 'event-intake';
       if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') return 'event-cleanup';
       if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') return 'opportunity-cleanup';
       return 'group-cleanup';
@@ -13987,6 +14007,19 @@
       eventPhotoFieldHtml('event-photo-' + ev.id, ev.photo_url || '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
+      (ev.organiser_id
+        ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50" data-message-organiser-event="' +
+          attrEsc(ev.id) +
+          '" data-organiser-id="' +
+          attrEsc(ev.organiser_id) +
+          '" data-organiser-email="' +
+          attrEsc(ev.organiser_email || '') +
+          '" data-organiser-name="' +
+          attrEsc(ev.organiser_name || '') +
+          '" data-listing-label="' +
+          attrEsc(ev.title || 'Untitled') +
+          '">Email organiser</button>'
+        : '<span class="text-xs text-amber-800">Link an organiser before you can email them about this listing.</span>') +
       (ev.can_reinstate
         ? '<button type="button" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-4 py-2 hover:bg-emerald-100" data-reinstate-event="' +
           attrEsc(ev.id) +
@@ -14586,6 +14619,15 @@
       '</span></label></div>' +
       '<div class="group-cleanup-quick-actions flex flex-col items-stretch gap-2 shrink-0">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 whitespace-nowrap">Save</button>' +
+      '<button type="button" class="group-message-organiser rounded-lg border border-slate-300 bg-white text-slate-800 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-organiser-id="' +
+      attrEsc(o.id) +
+      '" data-organiser-email="' +
+      attrEsc(o.email || '') +
+      '" data-organiser-name="' +
+      attrEsc(o.name || '') +
+      '" data-listing-label="' +
+      attrEsc(o.name || 'this group') +
+      '">Email organiser</button>' +
       '<button type="button" class="group-open-full-editor text-xs font-semibold text-brand-700 hover:underline text-center" data-organiser-id="' +
       attrEsc(o.id) +
       '" data-group-email="' +
@@ -15769,6 +15811,20 @@
       return;
     }
 
+    var messageBtn = e.target.closest('.group-message-organiser');
+    if (messageBtn) {
+      sendAdminListingMessage(
+        {
+          organiserId: messageBtn.getAttribute('data-organiser-id'),
+          organiserEmail: messageBtn.getAttribute('data-organiser-email'),
+          organiserName: messageBtn.getAttribute('data-organiser-name'),
+          listingLabel: messageBtn.getAttribute('data-listing-label'),
+        },
+        messageBtn
+      );
+      return;
+    }
+
     var warnBtn = e.target.closest('.group-issue-warning');
     if (warnBtn) {
       var warnPanel = warnBtn.closest('.group-moderation-panel');
@@ -16001,6 +16057,21 @@
     var activityLoad = e.target.closest('.entity-activity-load');
     if (activityLoad) {
       loadEntityActivityPanel(activityLoad.closest('.entity-activity-panel'));
+      return;
+    }
+
+    var eventMessageBtn = e.target.closest('[data-message-organiser-event]');
+    if (eventMessageBtn) {
+      sendAdminListingMessage(
+        {
+          organiserId: eventMessageBtn.getAttribute('data-organiser-id'),
+          eventId: eventMessageBtn.getAttribute('data-message-organiser-event'),
+          organiserEmail: eventMessageBtn.getAttribute('data-organiser-email'),
+          organiserName: eventMessageBtn.getAttribute('data-organiser-name'),
+          listingLabel: eventMessageBtn.getAttribute('data-listing-label'),
+        },
+        eventMessageBtn
+      );
       return;
     }
 
@@ -17029,6 +17100,165 @@
       modal._resolve = resolve;
       modal._reject = reject;
     });
+  }
+
+  var ADMIN_LISTING_MESSAGE_REASONS = [
+    {
+      value: 'Listing wording',
+      starter:
+        'We have updated the wording on your listing so guest visits are described as complimentary rather than free. Please take a look and reply if anything else should change.',
+    },
+    {
+      value: 'Ticket details',
+      starter:
+        'We have updated a ticket name or price label on your listing. Please take a look and reply if anything else should change.',
+    },
+    {
+      value: 'Event description',
+      starter:
+        'We have edited the description on your listing. Please take a look and reply if anything else should change.',
+    },
+    {
+      value: 'Date, time or location',
+      starter:
+        'We have corrected the date, time, or location on your listing. Please take a look and reply if anything else should change.',
+    },
+    { value: 'Other', starter: '' },
+  ];
+
+  function ensureAdminListingMessageModal() {
+    if (document.getElementById('admin-listing-message-modal')) return;
+    var modal = document.createElement('div');
+    modal.id = 'admin-listing-message-modal';
+    modal.className = 'hidden fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50';
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'admin-listing-message-title');
+    modal.innerHTML =
+      '<div class="w-full max-w-lg rounded-xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">' +
+      '<div><h2 id="admin-listing-message-title" class="text-lg font-semibold text-brand-900">Email organiser</h2>' +
+      '<p id="admin-listing-message-sub" class="text-sm text-slate-600 mt-1">Tell the group you have changed something on their listing.</p></div>' +
+      '<p id="admin-listing-message-to" class="text-xs text-slate-500 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"></p>' +
+      '<div><label for="admin-listing-message-reason" class="block text-xs font-semibold text-slate-500 mb-1">What changed</label>' +
+      '<select id="admin-listing-message-reason" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">' +
+      ADMIN_LISTING_MESSAGE_REASONS.map(function (r) {
+        return '<option value="' + attrEsc(r.value) + '">' + esc(r.value) + '</option>';
+      }).join('') +
+      '</select></div>' +
+      '<div><label for="admin-listing-message-body" class="block text-xs font-semibold text-slate-500 mb-1">Message</label>' +
+      '<textarea id="admin-listing-message-body" rows="5" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="We have updated…"></textarea>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Sent to the group contact email. They can reply to hello@thenetworkerhub.com.</p></div>' +
+      '<p id="admin-listing-message-error" class="text-xs text-red-700 font-semibold hidden"></p>' +
+      '<div class="flex justify-end gap-2 pt-1">' +
+      '<button type="button" id="admin-listing-message-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>' +
+      '<button type="button" id="admin-listing-message-confirm" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Send email</button>' +
+      '</div></div>';
+    document.body.appendChild(modal);
+
+    var reasonEl = document.getElementById('admin-listing-message-reason');
+    var bodyEl = document.getElementById('admin-listing-message-body');
+    function starterFor(reason) {
+      var found = ADMIN_LISTING_MESSAGE_REASONS.find(function (r) {
+        return r.value === reason;
+      });
+      return found ? found.starter : '';
+    }
+    if (reasonEl && bodyEl) {
+      reasonEl.addEventListener('change', function () {
+        var next = starterFor(reasonEl.value);
+        var current = String(bodyEl.value || '').trim();
+        var matchesStarter = ADMIN_LISTING_MESSAGE_REASONS.some(function (r) {
+          return r.starter && r.starter === current;
+        });
+        if (!current || matchesStarter) bodyEl.value = next;
+      });
+    }
+
+    document.getElementById('admin-listing-message-cancel').addEventListener('click', function () {
+      setAdminOverlayOpen(modal, false);
+      if (modal._reject) modal._reject(new Error('cancelled'));
+    });
+    document.getElementById('admin-listing-message-confirm').addEventListener('click', function () {
+      var errEl = document.getElementById('admin-listing-message-error');
+      var reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+      var message = bodyEl ? String(bodyEl.value || '').trim() : '';
+      if (!message) {
+        if (errEl) {
+          errEl.textContent = 'Write a short note for the organiser.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      if (errEl) errEl.classList.add('hidden');
+      setAdminOverlayOpen(modal, false);
+      if (modal._resolve) {
+        modal._resolve({ reason: reason, message: message });
+      }
+    });
+  }
+
+  function promptAdminListingMessage(opts) {
+    ensureAdminListingMessageModal();
+    var o = opts || {};
+    var modal = document.getElementById('admin-listing-message-modal');
+    var sub = document.getElementById('admin-listing-message-sub');
+    var toEl = document.getElementById('admin-listing-message-to');
+    var reasonEl = document.getElementById('admin-listing-message-reason');
+    var bodyEl = document.getElementById('admin-listing-message-body');
+    var errEl = document.getElementById('admin-listing-message-error');
+    var listingLabel = o.listingLabel || 'this listing';
+    if (sub) {
+      sub.textContent =
+        'Tell ' +
+        (o.organiserName || 'the group') +
+        ' you have changed something on “' +
+        listingLabel +
+        '”.';
+    }
+    if (toEl) {
+      toEl.textContent = o.organiserEmail
+        ? 'Sends to ' + o.organiserEmail
+        : 'Sends to the group contact email on file.';
+    }
+    if (reasonEl) reasonEl.value = ADMIN_LISTING_MESSAGE_REASONS[0].value;
+    if (bodyEl) bodyEl.value = ADMIN_LISTING_MESSAGE_REASONS[0].starter;
+    if (errEl) errEl.classList.add('hidden');
+    setAdminOverlayOpen(modal, true);
+    return new Promise(function (resolve, reject) {
+      modal._resolve = resolve;
+      modal._reject = reject;
+    });
+  }
+
+  function sendAdminListingMessage(opts, triggerBtn) {
+    var o = opts || {};
+    if (!o.organiserId) {
+      window.alert('This listing is not linked to a networking group yet.');
+      return;
+    }
+    promptAdminListingMessage(o)
+      .then(function (payload) {
+        if (triggerBtn) triggerBtn.disabled = true;
+        return adminPost('/api/admin/organisers', {
+          action: 'message_organiser',
+          organiserId: o.organiserId,
+          eventId: o.eventId || '',
+          reason: payload.reason,
+          message: payload.message,
+        }).then(function (data) {
+          if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Send failed');
+          window.alert(data.message || 'Email sent.');
+        });
+      })
+      .catch(function (err) {
+        if (err && err.message === 'cancelled') return;
+        window.alert(err.message || 'Could not email the organiser.');
+      })
+      .finally(function () {
+        if (triggerBtn) triggerBtn.disabled = false;
+      });
   }
 
   function formatEventBulkDeleteResult(data) {
@@ -21569,6 +21799,8 @@
     document.body.addEventListener('click', handleOpportunityCleanupClick);
   }
 
+  var eventIntakeFilter = 'open';
+
   function parseIntakeDateToYmd(text) {
     var s = String(text || '');
     var iso = s.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
@@ -21600,10 +21832,9 @@
     var s = String(text || '')
       .trim()
       .toLowerCase()
-      .replace(/\./g, '')
       .replace(/\s+/g, '');
     if (!s) return fallback || '';
-    var m = s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm)?$/);
+    var m = s.match(/^(\d{1,2})(?:[:.](\d{2}))?(am|pm)?$/);
     if (!m) return fallback || '';
     var h = parseInt(m[1], 10);
     var min = m[2] || '00';
@@ -21656,12 +21887,19 @@
     }
 
     return (
-      '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3 grid sm:grid-cols-2 gap-3" data-intake-id="' +
+      '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3" data-intake-id="' +
       attrEsc(row.id) +
       '" data-pay-how="' +
       attrEsc(payHow) +
+      '" data-group-name="' +
+      attrEsc(row.groupName || '') +
+      '" data-contact-email="' +
+      attrEsc(row.email || '') +
+      '" data-website="' +
+      attrEsc(row.organiserWebsiteUrl || '') +
       '">' +
-      '<p class="sm:col-span-2 text-xs text-slate-600">Pre-filled from their request. Publish the listing now — they review tickets, then add Stripe (if paid), VAT, refunds, and terms before sales open.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
+      '<p class="sm:col-span-2 text-xs text-slate-600">Pre-filled from their request. We will match their group by email, or create it if it is new. Ticket sales stay closed until they confirm.</p>' +
       '<p class="sm:col-span-2 text-[11px] text-slate-500">They wrote dates as: <strong>' +
       esc(row.eventDates || '—') +
       '</strong>' +
@@ -21670,14 +21908,14 @@
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
       '<div class="ei-create-org-picker relative">' +
       '<input type="hidden" name="organiser_id">' +
-      '<input type="search" class="ei-create-org-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Search by group name…" value="' +
+      '<input type="search" class="ei-create-org-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Search by group name or email…" value="' +
       attrEsc(row.groupName || '') +
       '" autocomplete="off">' +
       '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
       '<p class="ei-create-org-chosen hidden mt-1 text-xs text-brand-800"></p></div>' +
       '<p class="text-[11px] text-slate-500 mt-1">Contact: ' +
       esc(row.email || '—') +
-      '. Create the group first under Groups if it is not listed.</p></div>' +
+      '. If this group is not on the Hub yet, creating the listing will add it.</p></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(row.eventTitle || '') +
@@ -21761,7 +21999,7 @@
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
       '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel>Cancel</button>' +
-      '<span class="ei-create-msg text-xs"></span></div></form>'
+      '<span class="ei-create-msg text-xs"></span></div></div></form>'
     );
   }
 
@@ -21773,15 +22011,17 @@
       '<div><h3 class="font-bold text-brand-900">Event requests</h3>' +
       '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing from the request — they finish Stripe (if paid), VAT, refunds, and terms before ticket sales open.</p></div>' +
       '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="open">Open</button>' +
-      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="all">All</button>' +
-      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-filter="done">Done</button>' +
+      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="open">Open</button>' +
+      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="all">All</button>' +
+      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="done">Done</button>' +
       '</div></div>' +
       '<p id="event-intake-status" class="text-sm text-slate-500">Loading requests…</p>' +
-      '<div id="event-intake-body" class="overflow-x-auto"></div>' +
+      '<div id="event-intake-body"></div>' +
       '</section></div>';
 
-    if (!main.dataset.eiFilter) main.dataset.eiFilter = 'open';
+    if (!main.dataset.eiFilter && !eventIntakeFilter) eventIntakeFilter = 'open';
+    if (main.dataset.eiFilter) eventIntakeFilter = main.dataset.eiFilter;
+    main.dataset.eiFilter = eventIntakeFilter;
     loadEventIntakeAdmin();
   }
 
@@ -21790,7 +22030,9 @@
     var bodyEl = document.getElementById('event-intake-body');
     if (!statusEl || !bodyEl) return;
 
-    var filter = main.dataset.eiFilter || 'open';
+    var filter = eventIntakeFilter || main.dataset.eiFilter || 'open';
+    eventIntakeFilter = filter;
+    main.dataset.eiFilter = filter;
 
     function setStatus(text, tone) {
       statusEl.textContent = text || '';
@@ -21831,38 +22073,43 @@
                 var desc = String(row.description || '').trim();
                 var tickets = String(row.ticketDetails || '').trim();
                 var notes = String(row.notes || '').trim();
-                var actions =
+                var actions = '';
+                if (row.status === 'open') {
+                  actions +=
+                    '<button type="button" class="rounded-lg bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 hover:bg-brand-900" data-ei-create-toggle="' +
+                    attrEsc(row.id) +
+                    '">Create listing</button> ';
+                }
+                actions +=
                   row.status === 'open'
-                    ? '<button type="button" class="admin-btn admin-btn-primary text-xs" data-ei-status="done" data-ei-id="' +
+                    ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-status="done" data-ei-id="' +
                       attrEsc(row.id) +
                       '">Mark done</button> ' +
-                      '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-status="spam" data-ei-id="' +
+                      '<button type="button" class="rounded-lg border border-red-200 bg-white text-red-700 text-xs font-semibold px-3 py-1.5 hover:bg-red-50" data-ei-status="spam" data-ei-id="' +
                       attrEsc(row.id) +
                       '">Spam</button>'
-                    : '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-status="open" data-ei-id="' +
+                    : '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-status="open" data-ei-id="' +
                       attrEsc(row.id) +
                       '">Reopen</button>';
 
                 var findOrgBtn =
-                  '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-find-organiser="1" data-ei-group-name="' +
+                  '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-find-organiser="1" data-ei-group-name="' +
                   attrEsc(row.groupName || '') +
+                  '" data-ei-email="' +
+                  attrEsc(row.email || '') +
                   '">Find organiser</button>';
 
                 var importBrandBtn = row.organiserWebsiteUrl
-                  ? '<button type="button" class="admin-btn admin-btn-outline text-xs" data-ei-import-brand="1" data-ei-group-name="' +
+                  ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-import-brand="1" data-ei-group-name="' +
                     attrEsc(row.groupName || '') +
+                    '" data-ei-email="' +
+                    attrEsc(row.email || '') +
                     '" data-ei-website="' +
                     attrEsc(row.organiserWebsiteUrl || '') +
                     '">Import logo + description</button>'
                   : '';
 
                 actions += ' ' + findOrgBtn + (importBrandBtn ? ' ' + importBrandBtn : '');
-                if (row.status === 'open') {
-                  actions +=
-                    ' <button type="button" class="admin-btn admin-btn-primary text-xs" data-ei-create-toggle="' +
-                    attrEsc(row.id) +
-                    '">Create listing</button>';
-                }
 
                 return (
                   '<article class="border border-slate-200 rounded-lg p-4 space-y-2">' +
@@ -22001,6 +22248,127 @@
     });
   }
 
+  function searchIntakeOrganisers(query) {
+    query = String(query || '').trim();
+    if (!query) return Promise.resolve([]);
+    return adminGet('/api/admin/organisers?limit=8&q=' + encodeURIComponent(query)).then(function (data) {
+      if (data && data.error) throw new Error(data.message || data.error);
+      return Array.isArray(data && data.organisers) ? data.organisers : [];
+    });
+  }
+
+  function pickIntakeOrganiser(list, email, name) {
+    var rows = Array.isArray(list) ? list : [];
+    var em = String(email || '').trim().toLowerCase();
+    var nm = String(name || '').trim().toLowerCase();
+    var i;
+    if (em) {
+      for (i = 0; i < rows.length; i++) {
+        if (String(rows[i].email || '').trim().toLowerCase() === em) return rows[i];
+      }
+    }
+    if (nm) {
+      for (i = 0; i < rows.length; i++) {
+        if (String(rows[i].name || '').trim().toLowerCase() === nm) return rows[i];
+      }
+    }
+    return rows.length === 1 ? rows[0] : null;
+  }
+
+  function setIntakeCreateOrganiser(form, id, name) {
+    if (!form) return;
+    var hidden = form.querySelector('input[name="organiser_id"]');
+    var chosen = form.querySelector('.ei-create-org-chosen');
+    var results = form.querySelector('.ei-create-org-results');
+    var search = form.querySelector('.ei-create-org-search');
+    if (hidden) hidden.value = id || '';
+    if (chosen) {
+      chosen.textContent = name ? 'Using: ' + name : '';
+      chosen.classList.toggle('hidden', !name);
+    }
+    if (search && name) search.value = name;
+    if (results) {
+      results.innerHTML = '';
+      results.classList.add('hidden');
+    }
+  }
+
+  function createGroupFromIntakeForm(form) {
+    var search = form.querySelector('.ei-create-org-search');
+    var name = String((search && search.value) || form.getAttribute('data-group-name') || '').trim();
+    var email = String(form.getAttribute('data-contact-email') || '').trim();
+    var website = String(form.getAttribute('data-website') || '').trim();
+    if (!name) return Promise.reject(new Error('Enter a group name.'));
+    if (!email) {
+      return Promise.reject(
+        new Error('This request has no contact email — search for an existing group first.')
+      );
+    }
+    return adminPost('/api/admin/organisers', {
+      action: 'create_group',
+      name: name,
+      contact_email: email,
+      website: website,
+      provision_login: true,
+    }).then(function (data) {
+      if (!data || !data.ok) throw new Error((data && data.message) || data.error || 'Could not create group');
+      var org = data.organiser;
+      if (!org || !org.id) throw new Error('Group was created but no id came back.');
+      return org;
+    });
+  }
+
+  function resolveIntakeOrganiser(form) {
+    var existing = formFieldVal(form, 'organiser_id');
+    if (existing) return Promise.resolve(existing);
+    var email = String(form.getAttribute('data-contact-email') || '').trim();
+    var search = form.querySelector('.ei-create-org-search');
+    var name = String((search && search.value) || form.getAttribute('data-group-name') || '').trim();
+    var lookups = [];
+    if (email) lookups.push(searchIntakeOrganisers(email));
+    if (name && name.toLowerCase() !== email.toLowerCase()) lookups.push(searchIntakeOrganisers(name));
+    if (!lookups.length) lookups.push(Promise.resolve([]));
+
+    return Promise.all(lookups)
+      .then(function (results) {
+        var merged = [];
+        var seen = {};
+        results.forEach(function (list) {
+          (list || []).forEach(function (o) {
+            if (!o || !o.id || seen[o.id]) return;
+            seen[o.id] = true;
+            merged.push(o);
+          });
+        });
+        var match = pickIntakeOrganiser(merged, email, name);
+        if (match) return match;
+        return createGroupFromIntakeForm(form);
+      })
+      .then(function (org) {
+        var id = org && org.id;
+        setIntakeCreateOrganiser(form, id, (org && org.name) || name);
+        if (!id) throw new Error('Choose an organiser / group first.');
+        return id;
+      });
+  }
+
+  function showIntakeCreateForm(form) {
+    if (!form) return;
+    form.classList.remove('hidden');
+    if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    var search = form.querySelector('.ei-create-org-search');
+    var email = String(form.getAttribute('data-contact-email') || '').trim();
+    if (search) {
+      search.dispatchEvent(new Event('focus'));
+    }
+    if (email && !formFieldVal(form, 'organiser_id')) {
+      searchIntakeOrganisers(email).then(function (list) {
+        var match = pickIntakeOrganiser(list, email, form.getAttribute('data-group-name'));
+        if (match) setIntakeCreateOrganiser(form, match.id, match.name);
+      }).catch(function () {});
+    }
+  }
+
   function bindEventIntakeCreateForms() {
     (main.querySelectorAll('.ei-create-form') || []).forEach(function (form) {
       if (form.dataset.bound === '1') return;
@@ -22054,7 +22422,7 @@
             var list = data && Array.isArray(data.organisers) ? data.organisers : [];
             if (!list.length) {
               results.innerHTML =
-                '<p class="px-3 py-2 text-xs text-slate-500">No group found. Create it under Groups first.</p>';
+                '<p class="px-3 py-2 text-xs text-slate-500">No matching group yet — creating the listing will add one from this request.</p>';
               results.classList.remove('hidden');
               return;
             }
@@ -22111,7 +22479,6 @@
   function submitEventIntakeCreateForm(form) {
     var msg = form.querySelector('.ei-create-msg');
     var btn = form.querySelector('[type="submit"]');
-    var organiserId = formFieldVal(form, 'organiser_id');
     var occurrences = collectEiCreateOccurrences(form);
     var status = formFieldVal(form, 'status') || 'published';
     var payHow = form.getAttribute('data-pay-how') || 'free_tickets';
@@ -22120,10 +22487,6 @@
       if (!msg) return;
       msg.textContent = text || '';
       msg.className = 'ei-create-msg text-xs ' + (ok ? 'text-emerald-700 font-semibold' : 'text-red-700 font-semibold');
-    }
-    if (!organiserId) {
-      setMsg('Choose an organiser / group first.');
-      return;
     }
     if (status !== 'draft' && !occurrences.length) {
       setMsg('Add at least one date before publishing.');
@@ -22148,28 +22511,33 @@
       },
     ];
     if (btn) btn.disabled = true;
-    setMsg('Creating…');
+    setMsg('Matching group…');
     msg.className = 'ei-create-msg text-xs text-slate-500';
-    adminPost(
-      '/api/admin/events',
-      Object.assign(
-        {
-          action: 'create',
-          title: formFieldVal(form, 'title'),
-          organiser_id: organiserId,
-          occurrences: occurrences,
-          event_type: formFieldVal(form, 'event_type') || 'Meeting',
-          meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
-          status: status,
-          meeting_link: formFieldVal(form, 'meeting_link'),
-          attendance_mode: door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
-          max_attendees: maxPlaces,
-          tickets: tickets,
-          photo_url: formFieldVal(form, 'photo_url'),
-        },
-        eventDetailsPayloadFromForm(form)
-      )
-    )
+    resolveIntakeOrganiser(form)
+      .then(function (organiserId) {
+        setMsg('Creating listing…');
+        msg.className = 'ei-create-msg text-xs text-slate-500';
+        return adminPost(
+          '/api/admin/events',
+          Object.assign(
+            {
+              action: 'create',
+              title: formFieldVal(form, 'title'),
+              organiser_id: organiserId,
+              occurrences: occurrences,
+              event_type: formFieldVal(form, 'event_type') || 'Meeting',
+              meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
+              status: status,
+              meeting_link: formFieldVal(form, 'meeting_link'),
+              attendance_mode: door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
+              max_attendees: maxPlaces,
+              tickets: tickets,
+              photo_url: formFieldVal(form, 'photo_url'),
+            },
+            eventDetailsPayloadFromForm(form)
+          )
+        );
+      })
       .then(function (data) {
         if (!data || !data.ok) throw new Error((data && data.message) || data.error || 'Create failed');
         if (!intakeId) return data;
@@ -22198,23 +22566,36 @@
       if (!main || !document.getElementById('event-intake-body')) return;
       var filterBtn = e.target.closest('[data-ei-filter]');
       if (filterBtn && main.contains(filterBtn)) {
-        main.dataset.eiFilter = filterBtn.getAttribute('data-ei-filter') || 'open';
+        eventIntakeFilter = filterBtn.getAttribute('data-ei-filter') || 'open';
+        main.dataset.eiFilter = eventIntakeFilter;
         loadEventIntakeAdmin();
         return;
       }
 
       var createToggle = e.target.closest('[data-ei-create-toggle]');
       if (createToggle && main.contains(createToggle)) {
-        var createId = createToggle.getAttribute('data-ei-create-toggle');
-        var createForm = main.querySelector('.ei-create-form[data-intake-id="' + createId + '"]');
+        var article = createToggle.closest('article');
+        var createForm =
+          (article && article.querySelector('.ei-create-form')) ||
+          main.querySelector('.ei-create-form[data-intake-id="' + createToggle.getAttribute('data-ei-create-toggle') + '"]');
         if (createForm) {
-          createForm.classList.toggle('hidden');
-          var search = createForm.querySelector('.ei-create-org-search');
-          if (search && !createForm.classList.contains('hidden')) {
-            search.dispatchEvent(new Event('focus'));
-          }
+          if (createForm.classList.contains('hidden')) showIntakeCreateForm(createForm);
+          else createForm.classList.add('hidden');
         }
         return;
+      }
+
+      var card = e.target.closest('#event-intake-body article');
+      if (
+        card &&
+        main.contains(card) &&
+        !e.target.closest('a, button, input, select, textarea, form')
+      ) {
+        var cardForm = card.querySelector('.ei-create-form');
+        if (cardForm && cardForm.classList.contains('hidden')) {
+          showIntakeCreateForm(cardForm);
+          return;
+        }
       }
 
       var createCancel = e.target.closest('[data-ei-create-cancel]');
@@ -22226,20 +22607,39 @@
 
       var findOrgBtn = e.target.closest('[data-ei-find-organiser]');
       if (findOrgBtn && main.contains(findOrgBtn)) {
-        var q = findOrgBtn.getAttribute('data-ei-group-name') || '';
-        q = String(q).trim();
-        if (!q) {
-          window.alert('Enter a group name first.');
+        var findEmail = String(findOrgBtn.getAttribute('data-ei-email') || '').trim();
+        var findName = String(findOrgBtn.getAttribute('data-ei-group-name') || '').trim();
+        var findQueries = [];
+        if (findEmail) findQueries.push(searchIntakeOrganisers(findEmail));
+        if (findName) findQueries.push(searchIntakeOrganisers(findName));
+        if (!findQueries.length) {
+          window.alert('This request has no group name or email to search with.');
           return;
         }
-        adminGet('/api/admin/organisers?limit=5&q=' + encodeURIComponent(q))
-          .then(function (data) {
-            var list = data && Array.isArray(data.organisers) ? data.organisers : [];
-            if (!list.length) {
-              window.alert('No organiser profile found for "' + q + '".');
+        Promise.all(findQueries)
+          .then(function (results) {
+            var merged = [];
+            var seen = {};
+            results.forEach(function (list) {
+              (list || []).forEach(function (o) {
+                if (!o || !o.id || seen[o.id]) return;
+                seen[o.id] = true;
+                merged.push(o);
+              });
+            });
+            var match = pickIntakeOrganiser(merged, findEmail, findName) || merged[0];
+            if (!match) {
+              var findArticle = findOrgBtn.closest('article');
+              var findForm = findArticle && findArticle.querySelector('.ei-create-form');
+              if (findForm) {
+                showIntakeCreateForm(findForm);
+                window.alert('No group profile yet. Create the listing and we will add the group from this request.');
+                return;
+              }
+              window.alert('No organiser profile found for "' + (findName || findEmail) + '".');
               return;
             }
-            location.replace('#cleanup/groups?organiser=' + attrEsc(list[0].id));
+            location.replace('#cleanup/groups?organiser=' + encodeURIComponent(match.id));
           })
           .catch(function (err) {
             window.alert((err && err.message) || 'Could not find organiser.');
@@ -22249,20 +22649,29 @@
 
       var importBrandBtn = e.target.closest('[data-ei-import-brand]');
       if (importBrandBtn && main.contains(importBrandBtn)) {
-        var q2 = importBrandBtn.getAttribute('data-ei-group-name') || '';
-        var website = importBrandBtn.getAttribute('data-ei-website') || '';
-        q2 = String(q2).trim();
-        website = String(website).trim();
-        if (!q2 || !website) {
-          window.alert('Missing organiser name or website URL.');
+        var q2 = String(importBrandBtn.getAttribute('data-ei-group-name') || '').trim();
+        var importEmail = String(importBrandBtn.getAttribute('data-ei-email') || '').trim();
+        var website = String(importBrandBtn.getAttribute('data-ei-website') || '').trim();
+        if (!website) {
+          window.alert('Missing website URL.');
           return;
         }
-
-        adminGet('/api/admin/organisers?limit=5&q=' + encodeURIComponent(q2))
-          .then(function (data) {
-            var list = data && Array.isArray(data.organisers) ? data.organisers : [];
-            if (!list.length) throw new Error('no_org');
-            var organiser = list[0];
+        var importQueries = [];
+        if (importEmail) importQueries.push(searchIntakeOrganisers(importEmail));
+        if (q2) importQueries.push(searchIntakeOrganisers(q2));
+        Promise.all(importQueries.length ? importQueries : [Promise.resolve([])])
+          .then(function (results) {
+            var merged = [];
+            var seen = {};
+            results.forEach(function (list) {
+              (list || []).forEach(function (o) {
+                if (!o || !o.id || seen[o.id]) return;
+                seen[o.id] = true;
+                merged.push(o);
+              });
+            });
+            var organiser = pickIntakeOrganiser(merged, importEmail, q2) || merged[0];
+            if (!organiser) throw new Error('No group profile yet. Create the listing first — that adds the group.');
             return adminPost('/api/admin/organisers', {
               action: 'fetch_website_meta',
               url: website,
@@ -22276,7 +22685,7 @@
               });
             }).then(function () {
               window.alert('Brand details imported. Opening organiser profile…');
-              location.replace('#cleanup/groups?organiser=' + attrEsc(organiser.id));
+              location.replace('#cleanup/groups?organiser=' + encodeURIComponent(organiser.id));
             });
           })
           .catch(function (err) {

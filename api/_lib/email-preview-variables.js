@@ -596,6 +596,23 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.browse_opportunities_url = vars.browse_opportunities_url || vars.opportunities_url || site + '/opportunities/';
   }
 
+  if (slug === 'organiser_listing_updated_by_hub') {
+    vars.listing_label = vars.listing_label || vars.event_name || 'London Founders Breakfast';
+    vars.listing_kind = vars.listing_kind || 'your event listing';
+    vars.change_reason = vars.change_reason || 'Listing wording';
+    vars.listing_url = vars.listing_url || vars.event_url;
+    vars.cta_label = vars.cta_label || 'View your listing';
+    vars.dashboard_url = vars.dashboard_url || organiserDashboardUrl(site);
+    vars.admin_message_row =
+      vars.admin_message_row ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
+      '<tr><td style="padding:20px 22px;">' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Note from the Hub team</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">We have updated the wording on your listing so guest visits are described as complimentary rather than free.</p>' +
+      '</td></tr></table></td></tr>';
+  }
+
   if (slug === 'listing_report_upheld_reporter') {
     vars.reporter_name = vars.reporter_name || vars.user_name || 'Alex Morgan';
     vars.listing_title = vars.listing_title || vars.event_name || 'London Founders Breakfast';

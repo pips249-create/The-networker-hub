@@ -46,6 +46,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'event_removed_by_hub',
   'event_unpublished_by_hub',
   'organiser_listing_unpublished_by_hub',
+  'organiser_listing_updated_by_hub',
   'organiser_hub_warning',
   'organiser_hub_suspended',
   'organiser_ranking_badge',
