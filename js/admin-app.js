@@ -7778,7 +7778,7 @@
         main.innerHTML =
           '<div class="space-y-4">' +
           '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">' +
-          '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Extra logos — live Powered by heroes are included automatically</p></a>' +
+          '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Logos on the home page partners strip</p></a>' +
           '<a href="#sponsorship/city-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">City partners</p><p class="text-xs text-slate-500 mt-1">City exclusivity waitlist and slots</p></a>' +
           '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">County partners</p><p class="text-xs text-slate-500 mt-1">Twelve launch counties — enquiry + manual logo</p></a>' +
           '</div></div>';
@@ -7983,8 +7983,8 @@
       '<span class="admin-ad-picker-status" id="home-partners-picker-status">…</span>' +
       '</div>' +
       '<p class="admin-ad-picker-label">Home page — Partners &amp; sponsors</p>' +
-      '<p class="admin-ad-picker-help">Extra logos for the home strip. Live Powered by heroes are included automatically.</p>' +
-      '<span class="admin-ad-picker-action">Edit extras →</span>' +
+      '<p class="admin-ad-picker-help">Logos for the home page partners strip. What you save here is what the live site shows.</p>' +
+      '<span class="admin-ad-picker-action">Edit logos →</span>' +
       '</a></div></section></div>';
 
     var statusEl = document.getElementById('sponsor-picker-status');
@@ -10710,10 +10710,10 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="home-partners-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Home page — Partners &amp; sponsors</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Live <strong>Powered by</strong> heroes (Events, Organisers, Opportunities) always appear in this strip automatically. Add any <strong>extra</strong> logos here — duplicates of the live heroes are skipped.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">These logos appear under <strong>Trusted by our partners &amp; sponsors</strong> on the home page. Remove a company and Save to take it off the live site. Powered by heroes on Events / Organisers / Opportunities are separate.</p></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700 shrink-0">' +
       '<input type="checkbox" id="home-partners-active" class="rounded border-slate-300" checked> ' +
-      'Show extras on home page</label></div>' +
+      'Show partners on home page</label></div>' +
       '<div id="home-partners-list" class="space-y-4 min-w-0"></div>' +
       '<div class="flex flex-wrap gap-3">' +
       '<button type="button" id="home-partners-add" class="rounded-lg border border-slate-200 text-slate-700 px-4 py-2 text-sm font-semibold hover:bg-slate-50">+ Add company</button>' +
@@ -21887,7 +21887,7 @@
     }
 
     return (
-      '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3" data-intake-id="' +
+      '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3" hidden data-intake-id="' +
       attrEsc(row.id) +
       '" data-pay-how="' +
       attrEsc(payHow) +
@@ -21998,7 +21998,7 @@
         : '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
-      '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel>Cancel</button>' +
+                  '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel onclick="window.AdminEventIntake&&AdminEventIntake.cancelCreate(this,event)">Cancel</button>' +
       '<span class="ei-create-msg text-xs"></span></div></div></form>'
     );
   }
@@ -22011,9 +22011,9 @@
       '<div><h3 class="font-bold text-brand-900">Event requests</h3>' +
       '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing from the request — they finish Stripe (if paid), VAT, refunds, and terms before ticket sales open.</p></div>' +
       '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="open">Open</button>' +
-      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="all">All</button>' +
-      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="done">Done</button>' +
+      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="open" onclick="window.AdminEventIntake&&AdminEventIntake.filter(\'open\',event)">Open</button>' +
+      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="all" onclick="window.AdminEventIntake&&AdminEventIntake.filter(\'all\',event)">All</button>' +
+      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="done" onclick="window.AdminEventIntake&&AdminEventIntake.filter(\'done\',event)">Done</button>' +
       '</div></div>' +
       '<p id="event-intake-status" class="text-sm text-slate-500">Loading requests…</p>' +
       '<div id="event-intake-body"></div>' +
@@ -22023,6 +22023,44 @@
     if (main.dataset.eiFilter) eventIntakeFilter = main.dataset.eiFilter;
     main.dataset.eiFilter = eventIntakeFilter;
     loadEventIntakeAdmin();
+    var statusEl = document.getElementById('event-intake-status');
+    var section = statusEl && statusEl.closest('section');
+    if (section && section.dataset.eiListen !== '1') {
+      section.dataset.eiListen = '1';
+      section.addEventListener('click', function (e) {
+        var t = e.target && e.target.closest ? e.target : e.target && e.target.parentElement;
+        if (!t || !t.closest) return;
+        var filterBtn = t.closest('[data-ei-filter]');
+        if (filterBtn && window.AdminEventIntake) {
+          window.AdminEventIntake.filter(filterBtn.getAttribute('data-ei-filter'), e);
+          return;
+        }
+        var createToggle = t.closest('[data-ei-create-toggle]');
+        if (createToggle && window.AdminEventIntake) {
+          window.AdminEventIntake.toggleCreate(createToggle, e);
+          return;
+        }
+        var cancel = t.closest('[data-ei-create-cancel]');
+        if (cancel && window.AdminEventIntake) {
+          window.AdminEventIntake.cancelCreate(cancel, e);
+          return;
+        }
+        var findBtn = t.closest('[data-ei-find-organiser]');
+        if (findBtn && window.AdminEventIntake) {
+          window.AdminEventIntake.findOrganiser(findBtn, e);
+          return;
+        }
+        var importBtn = t.closest('[data-ei-import-brand]');
+        if (importBtn && window.AdminEventIntake) {
+          window.AdminEventIntake.importBrand(importBtn, e);
+          return;
+        }
+        var statusBtn = t.closest('[data-ei-status]');
+        if (statusBtn && window.AdminEventIntake) {
+          window.AdminEventIntake.setStatus(statusBtn, e);
+        }
+      });
+    }
   }
 
   function loadEventIntakeAdmin() {
@@ -22078,26 +22116,26 @@
                   actions +=
                     '<button type="button" class="rounded-lg bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 hover:bg-brand-900" data-ei-create-toggle="' +
                     attrEsc(row.id) +
-                    '">Create listing</button> ';
+                    '" onclick="window.AdminEventIntake&&AdminEventIntake.toggleCreate(this,event)">Create listing</button> ';
                 }
                 actions +=
                   row.status === 'open'
                     ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-status="done" data-ei-id="' +
                       attrEsc(row.id) +
-                      '">Mark done</button> ' +
+                      '" onclick="window.AdminEventIntake&&AdminEventIntake.setStatus(this,event)">Mark done</button> ' +
                       '<button type="button" class="rounded-lg border border-red-200 bg-white text-red-700 text-xs font-semibold px-3 py-1.5 hover:bg-red-50" data-ei-status="spam" data-ei-id="' +
                       attrEsc(row.id) +
-                      '">Spam</button>'
+                      '" onclick="window.AdminEventIntake&&AdminEventIntake.setStatus(this,event)">Spam</button>'
                     : '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-status="open" data-ei-id="' +
                       attrEsc(row.id) +
-                      '">Reopen</button>';
+                      '" onclick="window.AdminEventIntake&&AdminEventIntake.setStatus(this,event)">Reopen</button>';
 
                 var findOrgBtn =
                   '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-find-organiser="1" data-ei-group-name="' +
                   attrEsc(row.groupName || '') +
                   '" data-ei-email="' +
                   attrEsc(row.email || '') +
-                  '">Find organiser</button>';
+                  '" onclick="window.AdminEventIntake&&AdminEventIntake.findOrganiser(this,event)">Find organiser</button>';
 
                 var importBrandBtn = row.organiserWebsiteUrl
                   ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-import-brand="1" data-ei-group-name="' +
@@ -22106,13 +22144,13 @@
                     attrEsc(row.email || '') +
                     '" data-ei-website="' +
                     attrEsc(row.organiserWebsiteUrl || '') +
-                    '">Import logo + description</button>'
+                    '" onclick="window.AdminEventIntake&&AdminEventIntake.importBrand(this,event)">Import logo + description</button>'
                   : '';
 
                 actions += ' ' + findOrgBtn + (importBrandBtn ? ' ' + importBrandBtn : '');
 
                 return (
-                  '<article class="border border-slate-200 rounded-lg p-4 space-y-2">' +
+                  '<article class="ei-request-card border border-slate-200 rounded-lg p-4 space-y-2">' +
                   '<div class="flex flex-wrap items-start justify-between gap-2">' +
                   '<div><p class="text-xs text-slate-500">' +
                   esc(formatAdminDateTime(row.createdAt)) +
@@ -22142,6 +22180,7 @@
                   '<div class="flex flex-wrap gap-2">' +
                   actions +
                   '</div></div>' +
+                  eventIntakeCreateFormHtml(row) +
                   '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Date(s)</dt><dd>' +
                   esc(row.eventDates || '—') +
@@ -22206,7 +22245,6 @@
                     ? '<p class="text-sm text-slate-600"><strong>Description:</strong> ' + esc(desc) + '</p>'
                     : '') +
                   (notes ? '<p class="text-sm text-slate-600"><strong>Notes:</strong> ' + esc(notes) + '</p>' : '') +
-                  eventIntakeCreateFormHtml(row) +
                   '</article>'
                 );
               })
@@ -22354,23 +22392,41 @@
 
   function showIntakeCreateForm(form) {
     if (!form) return;
+    form.hidden = false;
     form.classList.remove('hidden');
-    if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     var search = form.querySelector('.ei-create-org-search');
     var email = String(form.getAttribute('data-contact-email') || '').trim();
     if (search) {
+      try {
+        search.focus();
+      } catch (_e) {}
       search.dispatchEvent(new Event('focus'));
     }
     if (email && !formFieldVal(form, 'organiser_id')) {
-      searchIntakeOrganisers(email).then(function (list) {
-        var match = pickIntakeOrganiser(list, email, form.getAttribute('data-group-name'));
-        if (match) setIntakeCreateOrganiser(form, match.id, match.name);
-      }).catch(function () {});
+      searchIntakeOrganisers(email)
+        .then(function (list) {
+          var match = pickIntakeOrganiser(list, email, form.getAttribute('data-group-name'));
+          if (match) setIntakeCreateOrganiser(form, match.id, match.name);
+        })
+        .catch(function () {});
     }
   }
 
+  function hideIntakeCreateForm(form) {
+    if (!form) return;
+    form.hidden = true;
+    form.classList.add('hidden');
+  }
+
+  function eventIntakeCardForm(el) {
+    var card = el && el.closest ? el.closest('.ei-request-card') : null;
+    return card ? card.querySelector('.ei-create-form') : null;
+  }
+
   function bindEventIntakeCreateForms() {
-    (main.querySelectorAll('.ei-create-form') || []).forEach(function (form) {
+    var root = document.getElementById('event-intake-body') || main;
+    (root.querySelectorAll('.ei-create-form') || []).forEach(function (form) {
       if (form.dataset.bound === '1') return;
       form.dataset.bound = '1';
       var dates = form.querySelector('.ei-create-dates');
@@ -22561,156 +22617,135 @@
       });
   }
 
-  if (typeof window !== 'undefined') {
-    document.addEventListener('click', function (e) {
-      if (!main || !document.getElementById('event-intake-body')) return;
-      var filterBtn = e.target.closest('[data-ei-filter]');
-      if (filterBtn && main.contains(filterBtn)) {
-        eventIntakeFilter = filterBtn.getAttribute('data-ei-filter') || 'open';
-        main.dataset.eiFilter = eventIntakeFilter;
-        loadEventIntakeAdmin();
-        return;
-      }
+  function eiOnce(el, e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!el) return true;
+    var now = Date.now();
+    if (el._eiAt && now - el._eiAt < 400) return false;
+    el._eiAt = now;
+    return true;
+  }
 
-      var createToggle = e.target.closest('[data-ei-create-toggle]');
-      if (createToggle && main.contains(createToggle)) {
-        var article = createToggle.closest('article');
-        var createForm =
-          (article && article.querySelector('.ei-create-form')) ||
-          main.querySelector('.ei-create-form[data-intake-id="' + createToggle.getAttribute('data-ei-create-toggle') + '"]');
-        if (createForm) {
-          if (createForm.classList.contains('hidden')) showIntakeCreateForm(createForm);
-          else createForm.classList.add('hidden');
-        }
-        return;
-      }
-
-      var card = e.target.closest('#event-intake-body article');
-      if (
-        card &&
-        main.contains(card) &&
-        !e.target.closest('a, button, input, select, textarea, form')
-      ) {
-        var cardForm = card.querySelector('.ei-create-form');
-        if (cardForm && cardForm.classList.contains('hidden')) {
-          showIntakeCreateForm(cardForm);
-          return;
-        }
-      }
-
-      var createCancel = e.target.closest('[data-ei-create-cancel]');
-      if (createCancel && main.contains(createCancel)) {
-        var cancelForm = createCancel.closest('.ei-create-form');
-        if (cancelForm) cancelForm.classList.add('hidden');
-        return;
-      }
-
-      var findOrgBtn = e.target.closest('[data-ei-find-organiser]');
-      if (findOrgBtn && main.contains(findOrgBtn)) {
-        var findEmail = String(findOrgBtn.getAttribute('data-ei-email') || '').trim();
-        var findName = String(findOrgBtn.getAttribute('data-ei-group-name') || '').trim();
-        var findQueries = [];
-        if (findEmail) findQueries.push(searchIntakeOrganisers(findEmail));
-        if (findName) findQueries.push(searchIntakeOrganisers(findName));
-        if (!findQueries.length) {
-          window.alert('This request has no group name or email to search with.');
-          return;
-        }
-        Promise.all(findQueries)
-          .then(function (results) {
-            var merged = [];
-            var seen = {};
-            results.forEach(function (list) {
-              (list || []).forEach(function (o) {
-                if (!o || !o.id || seen[o.id]) return;
-                seen[o.id] = true;
-                merged.push(o);
-              });
-            });
-            var match = pickIntakeOrganiser(merged, findEmail, findName) || merged[0];
-            if (!match) {
-              var findArticle = findOrgBtn.closest('article');
-              var findForm = findArticle && findArticle.querySelector('.ei-create-form');
-              if (findForm) {
-                showIntakeCreateForm(findForm);
-                window.alert('No group profile yet. Create the listing and we will add the group from this request.');
-                return;
-              }
-              window.alert('No organiser profile found for "' + (findName || findEmail) + '".');
-              return;
-            }
-            location.replace('#cleanup/groups?organiser=' + encodeURIComponent(match.id));
-          })
-          .catch(function (err) {
-            window.alert((err && err.message) || 'Could not find organiser.');
-          });
-        return;
-      }
-
-      var importBrandBtn = e.target.closest('[data-ei-import-brand]');
-      if (importBrandBtn && main.contains(importBrandBtn)) {
-        var q2 = String(importBrandBtn.getAttribute('data-ei-group-name') || '').trim();
-        var importEmail = String(importBrandBtn.getAttribute('data-ei-email') || '').trim();
-        var website = String(importBrandBtn.getAttribute('data-ei-website') || '').trim();
-        if (!website) {
-          window.alert('Missing website URL.');
-          return;
-        }
-        var importQueries = [];
-        if (importEmail) importQueries.push(searchIntakeOrganisers(importEmail));
-        if (q2) importQueries.push(searchIntakeOrganisers(q2));
-        Promise.all(importQueries.length ? importQueries : [Promise.resolve([])])
-          .then(function (results) {
-            var merged = [];
-            var seen = {};
-            results.forEach(function (list) {
-              (list || []).forEach(function (o) {
-                if (!o || !o.id || seen[o.id]) return;
-                seen[o.id] = true;
-                merged.push(o);
-              });
-            });
-            var organiser = pickIntakeOrganiser(merged, importEmail, q2) || merged[0];
-            if (!organiser) throw new Error('No group profile yet. Create the listing first — that adds the group.');
-            return adminPost('/api/admin/organisers', {
-              action: 'fetch_website_meta',
-              url: website,
-            }).then(function (meta) {
-              return adminPost('/api/admin/organisers', {
-                action: 'bulk_update',
-                ids: [organiser.id],
-                website: meta.url || website,
-                description: meta.description || null,
-                photo_url: meta.logo_url || meta.logoUrl || null,
-              });
-            }).then(function () {
-              window.alert('Brand details imported. Opening organiser profile…');
-              location.replace('#cleanup/groups?organiser=' + encodeURIComponent(organiser.id));
-            });
-          })
-          .catch(function (err) {
-            window.alert((err && err.message) || 'Could not import organiser brand.');
-          });
-        return;
-      }
-
-      var statusBtn = e.target.closest('[data-ei-status]');
-      if (!statusBtn || !main.contains(statusBtn)) return;
-      var id = statusBtn.getAttribute('data-ei-id');
-      var status = statusBtn.getAttribute('data-ei-status');
+  window.AdminEventIntake = {
+    filter: function (status, e) {
+      if (!eiOnce(e && e.currentTarget, e)) return;
+      eventIntakeFilter = String(status || 'open');
+      if (main) main.dataset.eiFilter = eventIntakeFilter;
+      loadEventIntakeAdmin();
+    },
+    toggleCreate: function (btn, e) {
+      if (!eiOnce(btn, e)) return;
+      var form = eventIntakeCardForm(btn);
+      if (!form) return;
+      if (form.hidden || form.classList.contains('hidden')) showIntakeCreateForm(form);
+      else hideIntakeCreateForm(form);
+    },
+    cancelCreate: function (btn, e) {
+      if (!eiOnce(btn, e)) return;
+      hideIntakeCreateForm(btn && btn.closest ? btn.closest('.ei-create-form') : null);
+    },
+    setStatus: function (btn, e) {
+      if (!eiOnce(btn, e)) return;
+      var id = btn.getAttribute('data-ei-id');
+      var status = btn.getAttribute('data-ei-status');
       if (!id || !status) return;
-      statusBtn.disabled = true;
+      btn.disabled = true;
       adminPatch('/api/admin/event-intake', { id: id, status: status })
         .then(function (data) {
           if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
           loadEventIntakeAdmin();
         })
         .catch(function (err) {
-          statusBtn.disabled = false;
+          btn.disabled = false;
           window.alert((err && err.message) || 'Could not update request.');
         });
-    });
-  }
+    },
+    findOrganiser: function (btn, e) {
+      if (!eiOnce(btn, e)) return;
+      var findEmail = String(btn.getAttribute('data-ei-email') || '').trim();
+      var findName = String(btn.getAttribute('data-ei-group-name') || '').trim();
+      var findQueries = [];
+      if (findEmail) findQueries.push(searchIntakeOrganisers(findEmail));
+      if (findName) findQueries.push(searchIntakeOrganisers(findName));
+      if (!findQueries.length) {
+        window.alert('This request has no group name or email to search with.');
+        return;
+      }
+      Promise.all(findQueries)
+        .then(function (results) {
+          var merged = [];
+          var seen = {};
+          results.forEach(function (list) {
+            (list || []).forEach(function (o) {
+              if (!o || !o.id || seen[o.id]) return;
+              seen[o.id] = true;
+              merged.push(o);
+            });
+          });
+          var match = pickIntakeOrganiser(merged, findEmail, findName) || merged[0];
+          if (!match) {
+            var findForm = eventIntakeCardForm(btn);
+            if (findForm) {
+              showIntakeCreateForm(findForm);
+              window.alert('No group profile yet. Create the listing and we will add the group from this request.');
+              return;
+            }
+            window.alert('No organiser profile found for "' + (findName || findEmail) + '".');
+            return;
+          }
+          location.replace('#cleanup/groups?organiser=' + encodeURIComponent(match.id));
+        })
+        .catch(function (err) {
+          window.alert((err && err.message) || 'Could not find organiser.');
+        });
+    },
+    importBrand: function (btn, e) {
+      if (!eiOnce(btn, e)) return;
+      var q2 = String(btn.getAttribute('data-ei-group-name') || '').trim();
+      var importEmail = String(btn.getAttribute('data-ei-email') || '').trim();
+      var website = String(btn.getAttribute('data-ei-website') || '').trim();
+      if (!website) {
+        window.alert('Missing website URL.');
+        return;
+      }
+      var importQueries = [];
+      if (importEmail) importQueries.push(searchIntakeOrganisers(importEmail));
+      if (q2) importQueries.push(searchIntakeOrganisers(q2));
+      Promise.all(importQueries.length ? importQueries : [Promise.resolve([])])
+        .then(function (results) {
+          var merged = [];
+          var seen = {};
+          results.forEach(function (list) {
+            (list || []).forEach(function (o) {
+              if (!o || !o.id || seen[o.id]) return;
+              seen[o.id] = true;
+              merged.push(o);
+            });
+          });
+          var organiser = pickIntakeOrganiser(merged, importEmail, q2) || merged[0];
+          if (!organiser) throw new Error('No group profile yet. Create the listing first — that adds the group.');
+          return adminPost('/api/admin/organisers', {
+            action: 'fetch_website_meta',
+            url: website,
+          }).then(function (meta) {
+            return adminPost('/api/admin/organisers', {
+              action: 'bulk_update',
+              ids: [organiser.id],
+              website: meta.url || website,
+              description: meta.description || null,
+              photo_url: meta.logo_url || meta.logoUrl || null,
+            });
+          }).then(function () {
+            window.alert('Brand details imported. Opening organiser profile…');
+            location.replace('#cleanup/groups?organiser=' + encodeURIComponent(organiser.id));
+          });
+        })
+        .catch(function (err) {
+          window.alert((err && err.message) || 'Could not import organiser brand.');
+        });
+    },
+  };
 
   function renderCleanupHub(fullHash) {
     var tab = resolveHubTab(
