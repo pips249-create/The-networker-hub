@@ -22002,12 +22002,40 @@
         : '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
-                  '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel onclick="window.AdminEventIntake&&AdminEventIntake.cancelCreate(this,event)">Cancel</button>' +
+                  '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel>Cancel</button>' +
       '<span class="ei-create-msg text-xs"></span></div></div></form>'
     );
   }
 
+  function eventIntakeHashQuery() {
+    return parseAdminHashQuery(currentAdminHash());
+  }
+
+  function eventIntakeCleanHash() {
+    return (
+      '#cleanup/requests' +
+      (eventIntakeFilter && eventIntakeFilter !== 'open' ? '?view=' + encodeURIComponent(eventIntakeFilter) : '')
+    );
+  }
+
+  function eventIntakeActionHref(action, id) {
+    var params = [];
+    if (eventIntakeFilter && eventIntakeFilter !== 'open') {
+      params.push('view=' + encodeURIComponent(eventIntakeFilter));
+    }
+    params.push('ei=' + encodeURIComponent(action));
+    params.push('id=' + encodeURIComponent(id));
+    return '#cleanup/requests?' + params.join('&');
+  }
+
   function renderEventIntakeAdmin() {
+    if (!main.dataset.eiFilter && !eventIntakeFilter) eventIntakeFilter = 'open';
+    if (main.dataset.eiFilter) eventIntakeFilter = main.dataset.eiFilter;
+    var intakeQuery = eventIntakeHashQuery();
+    var view = String(intakeQuery.get('view') || '').toLowerCase();
+    if (view === 'open' || view === 'all' || view === 'done') eventIntakeFilter = view;
+    main.dataset.eiFilter = eventIntakeFilter;
+
     main.innerHTML =
       '<div class="space-y-4">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
@@ -22015,17 +22043,26 @@
       '<div><h3 class="font-bold text-brand-900">Event requests</h3>' +
       '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing from the request — they finish Stripe (if paid), VAT, refunds, and terms before ticket sales open.</p></div>' +
       '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="open" onclick="window.AdminEventIntake&&AdminEventIntake.filter(\'open\',event)">Open</button>' +
-      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="all" onclick="window.AdminEventIntake&&AdminEventIntake.filter(\'all\',event)">All</button>' +
-      '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-filter="done" onclick="window.AdminEventIntake&&AdminEventIntake.filter(\'done\',event)">Done</button>' +
+      '<a href="#cleanup/requests?view=open" class="rounded-lg border text-xs font-semibold px-3 py-1.5 ' +
+      (eventIntakeFilter === 'open'
+        ? 'border-brand-700 bg-brand-50 text-brand-900'
+        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50') +
+      '">Open</a>' +
+      '<a href="#cleanup/requests?view=all" class="rounded-lg border text-xs font-semibold px-3 py-1.5 ' +
+      (eventIntakeFilter === 'all'
+        ? 'border-brand-700 bg-brand-50 text-brand-900'
+        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50') +
+      '">All</a>' +
+      '<a href="#cleanup/requests?view=done" class="rounded-lg border text-xs font-semibold px-3 py-1.5 ' +
+      (eventIntakeFilter === 'done'
+        ? 'border-brand-700 bg-brand-50 text-brand-900'
+        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50') +
+      '">Done</a>' +
       '</div></div>' +
       '<p id="event-intake-status" class="text-sm text-slate-500">Loading requests…</p>' +
       '<div id="event-intake-body"></div>' +
       '</section></div>';
 
-    if (!main.dataset.eiFilter && !eventIntakeFilter) eventIntakeFilter = 'open';
-    if (main.dataset.eiFilter) eventIntakeFilter = main.dataset.eiFilter;
-    main.dataset.eiFilter = eventIntakeFilter;
     loadEventIntakeAdmin();
     bindEventIntakeDocClicks();
   }
@@ -22034,6 +22071,15 @@
     var statusEl = document.getElementById('event-intake-status');
     var bodyEl = document.getElementById('event-intake-body');
     if (!statusEl || !bodyEl) return;
+
+    var query = eventIntakeHashQuery();
+    var view = String(query.get('view') || '').toLowerCase();
+    if (view === 'open' || view === 'all' || view === 'done') eventIntakeFilter = view;
+    var pendingEi = String(query.get('ei') || '').toLowerCase();
+    var pendingId = String(query.get('id') || '').trim();
+    if (pendingEi && pendingId) {
+      history.replaceState(null, '', location.pathname + location.search + eventIntakeCleanHash());
+    }
 
     var filter = eventIntakeFilter || main.dataset.eiFilter || 'open';
     eventIntakeFilter = filter;
@@ -22057,6 +22103,21 @@
       return [row.venue, row.city, row.postcode].filter(Boolean).join(', ') || '—';
     }
 
+    if (pendingId && (pendingEi === 'done' || pendingEi === 'spam' || pendingEi === 'open')) {
+      setStatus('Updating request…');
+      adminPost('/api/admin/event-intake', { id: pendingId, status: pendingEi })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+          loadEventIntakeAdmin();
+        })
+        .catch(function (err) {
+          setStatus((err && err.message) || 'Could not update request.', 'error');
+          window.alert((err && err.message) || 'Could not update request.');
+          loadEventIntakeAdmin();
+        });
+      return;
+    }
+
     setStatus('Loading requests…');
     adminGet('/api/admin/event-intake?limit=100&status=' + encodeURIComponent(filter))
       .then(function (data) {
@@ -22078,40 +22139,64 @@
                 var desc = String(row.description || '').trim();
                 var tickets = String(row.ticketDetails || '').trim();
                 var notes = String(row.notes || '').trim();
+                var linkClass =
+                  'inline-flex items-center rounded-lg border text-xs font-semibold px-3 py-1.5 no-underline';
                 var actions = '';
                 if (row.status === 'open') {
                   actions +=
-                    '<button type="button" class="rounded-lg bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 hover:bg-brand-900" data-ei-create-toggle="' +
+                    '<a href="' +
+                    attrEsc(eventIntakeActionHref('create', row.id)) +
+                    '" class="' +
+                    linkClass +
+                    ' border-brand-700 bg-brand-700 text-white hover:bg-brand-900" data-ei-create-toggle="' +
                     attrEsc(row.id) +
-                    '" onclick="window.AdminEventIntake&&AdminEventIntake.toggleCreate(this,event)">Create listing</button> ';
+                    '">Create listing</a> ';
                 }
                 actions +=
                   row.status === 'open'
-                    ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-status="done" data-ei-id="' +
-                      attrEsc(row.id) +
-                      '" onclick="window.AdminEventIntake&&AdminEventIntake.setStatus(this,event)">Mark done</button> ' +
-                      '<button type="button" class="rounded-lg border border-red-200 bg-white text-red-700 text-xs font-semibold px-3 py-1.5 hover:bg-red-50" data-ei-status="spam" data-ei-id="' +
-                      attrEsc(row.id) +
-                      '" onclick="window.AdminEventIntake&&AdminEventIntake.setStatus(this,event)">Spam</button>'
-                    : '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-status="open" data-ei-id="' +
-                      attrEsc(row.id) +
-                      '" onclick="window.AdminEventIntake&&AdminEventIntake.setStatus(this,event)">Reopen</button>';
+                    ? '<a href="' +
+                      attrEsc(eventIntakeActionHref('done', row.id)) +
+                      '" class="' +
+                      linkClass +
+                      ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Mark done</a> ' +
+                      '<a href="' +
+                      attrEsc(eventIntakeActionHref('spam', row.id)) +
+                      '" class="' +
+                      linkClass +
+                      ' border-red-200 bg-white text-red-700 hover:bg-red-50">Spam</a>'
+                    : '<a href="' +
+                      attrEsc(eventIntakeActionHref('open', row.id)) +
+                      '" class="' +
+                      linkClass +
+                      ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Reopen</a>';
 
                 var findOrgBtn =
-                  '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-find-organiser="1" data-ei-group-name="' +
+                  '<a href="' +
+                  attrEsc(eventIntakeActionHref('find', row.id)) +
+                  '" class="' +
+                  linkClass +
+                  ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-find-organiser="1" data-ei-find-id="' +
+                  attrEsc(row.id) +
+                  '" data-ei-group-name="' +
                   attrEsc(row.groupName || '') +
                   '" data-ei-email="' +
                   attrEsc(row.email || '') +
-                  '" onclick="window.AdminEventIntake&&AdminEventIntake.findOrganiser(this,event)">Find organiser</button>';
+                  '">Find organiser</a>';
 
                 var importBrandBtn = row.organiserWebsiteUrl
-                  ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-ei-import-brand="1" data-ei-group-name="' +
+                  ? '<a href="' +
+                    attrEsc(eventIntakeActionHref('import', row.id)) +
+                    '" class="' +
+                    linkClass +
+                    ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-import-brand="1" data-ei-import-id="' +
+                    attrEsc(row.id) +
+                    '" data-ei-group-name="' +
                     attrEsc(row.groupName || '') +
                     '" data-ei-email="' +
                     attrEsc(row.email || '') +
                     '" data-ei-website="' +
                     attrEsc(row.organiserWebsiteUrl || '') +
-                    '" onclick="window.AdminEventIntake&&AdminEventIntake.importBrand(this,event)">Import logo + description</button>'
+                    '">Import logo + description</a>'
                   : '';
 
                 actions += ' ' + findOrgBtn + (importBrandBtn ? ' ' + importBrandBtn : '');
@@ -22143,10 +22228,7 @@
                       esc(row.phone) +
                       '</a>'
                     : '') +
-                  '</p></div>' +
-                  '<div class="flex flex-wrap gap-2 relative z-40">' +
-                  actions +
-                  '</div></div>' +
+                  '</p></div></div>' +
                   eventIntakeCreateFormHtml(row) +
                   '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Date(s)</dt><dd>' +
@@ -22212,6 +22294,9 @@
                     ? '<p class="text-sm text-slate-600"><strong>Description:</strong> ' + esc(desc) + '</p>'
                     : '') +
                   (notes ? '<p class="text-sm text-slate-600"><strong>Notes:</strong> ' + esc(notes) + '</p>' : '') +
+                  '<div class="flex flex-wrap gap-2 pt-1">' +
+                  actions +
+                  '</div>' +
                   '</article>'
                 );
               })
@@ -22228,6 +22313,23 @@
           'ok'
         );
         bindEventIntakeCreateForms();
+        var noopEvt = {
+          preventDefault: function () {},
+          stopPropagation: function () {},
+        };
+        if (pendingId && window.AdminEventIntake) {
+          if (pendingEi === 'create') {
+            var createBtn = bodyEl.querySelector('[data-ei-create-toggle="' + pendingId + '"]');
+            if (createBtn) window.AdminEventIntake.toggleCreate(createBtn, noopEvt);
+            else showIntakeCreateForm(bodyEl.querySelector('.ei-create-form[data-intake-id="' + pendingId + '"]'));
+          } else if (pendingEi === 'find') {
+            var findBtn = bodyEl.querySelector('[data-ei-find-id="' + pendingId + '"]');
+            if (findBtn) window.AdminEventIntake.findOrganiser(findBtn, noopEvt);
+          } else if (pendingEi === 'import') {
+            var importBtn = bodyEl.querySelector('[data-ei-import-id="' + pendingId + '"]');
+            if (importBtn) window.AdminEventIntake.importBrand(importBtn, noopEvt);
+          }
+        }
       })
       .catch(function (err) {
         bodyEl.innerHTML =
@@ -22620,6 +22722,7 @@
   function handleEventIntakeDocClick(e) {
     var t = eventIntakeClickEl(e);
     if (!t) return;
+    if (t.closest && t.closest('a[href*="cleanup/requests"]')) return;
     var btn =
       t.closest('[data-ei-filter]') ||
       t.closest('[data-ei-create-toggle]') ||

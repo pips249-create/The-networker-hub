@@ -239,6 +239,10 @@ body.hub-page-admin .site-nav {
   pointer-events: none;
 }
 
+#admin-main .ei-request-card a {
+  pointer-events: auto;
+}
+
 .admin-hub-tab {
   display: inline-flex;
   align-items: center;
