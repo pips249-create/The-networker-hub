@@ -11,6 +11,7 @@ function cleanText(raw, max) {
 }
 
 function mapActorRole(session, access) {
+  if (session && session.impersonator) return 'admin';
   try {
     const { isPlatformAdmin } = require('./organiser');
     if (session && isPlatformAdmin(session)) return 'admin';
@@ -23,11 +24,33 @@ function mapActorRole(session, access) {
   return 'unknown';
 }
 
+function actorDisplayName(session) {
+  return cleanText(session?.name || '', 80);
+}
+
 function actorFromSession(session, access) {
+  const impersonator = session && session.impersonator;
+  if (impersonator && impersonator.email) {
+    return {
+      actor_user_id: impersonator.sub || impersonator.userId || null,
+      actor_email: cleanText(impersonator.email, 200) || null,
+      actor_role: 'admin',
+      metadata: {
+        impersonatedEmail: cleanText(session.email, 200) || null,
+        actorName: actorDisplayName(impersonator),
+      },
+    };
+  }
+  const extras = {};
+  if (mapActorRole(session, access) === 'admin') {
+    const name = actorDisplayName(session);
+    if (name) extras.metadata = { actorName: name };
+  }
   return {
     actor_user_id: session?.sub || session?.userId || null,
     actor_email: cleanText(session?.email || '', 200) || null,
     actor_role: mapActorRole(session, access),
+    ...extras,
   };
 }
 
@@ -73,7 +96,21 @@ async function logEntityActivity(entry) {
 
 async function logFromSession(session, access, entry) {
   const actor = actorFromSession(session, access);
-  return logEntityActivity({ ...entry, ...actor });
+  const actorMeta =
+    actor.metadata && typeof actor.metadata === 'object' && !Array.isArray(actor.metadata)
+      ? actor.metadata
+      : {};
+  const entryMeta =
+    entry.metadata && typeof entry.metadata === 'object' && !Array.isArray(entry.metadata)
+      ? entry.metadata
+      : {};
+  const actorFields = { ...actor };
+  delete actorFields.metadata;
+  return logEntityActivity({
+    ...entry,
+    ...actorFields,
+    metadata: { ...actorMeta, ...entryMeta },
+  });
 }
 
 function mapActivityRow(r) {

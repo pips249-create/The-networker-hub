@@ -121,6 +121,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_claim_invite',
   'organiser_claim_confirmed',
   'organiser_launch_invite',
+  'organiser_call_followup',
   'organiser_rebrand_announcement',
   'organiser_team_invite',
   'opportunity_listing_live',
@@ -672,6 +673,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'organiser_email_verify' ||
     slug === 'account_welcome' ||
     slug === 'organiser_launch_invite' ||
+    slug === 'organiser_call_followup' ||
     slug === 'organiser_claim_invite' ||
     slug === 'organiser_claim_confirmed'
   ) {
@@ -691,6 +693,7 @@ function shouldAttachListUnsubscribe(slug) {
   if (
     s === 'organiser_rebrand_announcement' ||
     s === 'organiser_launch_invite' ||
+    s === 'organiser_call_followup' ||
     s === 'organiser_claim_invite' ||
     s === 'organiser_monthly_group_update' ||
     s === 'member_roster_new_event' ||

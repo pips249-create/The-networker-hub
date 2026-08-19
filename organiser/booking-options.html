@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260814box3" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260819cta1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -430,12 +430,6 @@
       </div>
     </div>
 
-    <div class="ee-booking-help-sticky-cta" hidden>
-      <a class="ee-btn ee-btn-gold" data-tickets-link href="/organiser/event-tickets"
-        >Continue to set up tickets →</a
-      >
-    </div>
-
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -444,21 +438,6 @@
         Array.prototype.forEach.call(document.querySelectorAll('[data-tickets-link]'), function (el) {
           el.setAttribute('href', ticketsHref);
         });
-
-        var stickyCta = document.querySelector('.ee-booking-help-sticky-cta');
-        var bottomActions = document.querySelector('.ee-booking-help-actions');
-        if (stickyCta && bottomActions && 'IntersectionObserver' in window) {
-          stickyCta.hidden = false;
-          var stickyObserver = new IntersectionObserver(
-            function (entries) {
-              var entry = entries[0];
-              var show = entry && !entry.isIntersecting;
-              stickyCta.classList.toggle('is-visible', show);
-            },
-            { root: null, threshold: 0.15 }
-          );
-          stickyObserver.observe(bottomActions);
-        }
 
         var sections = ['tickets', 'membership', 'both']
           .map(function (id) {

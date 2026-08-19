@@ -12353,6 +12353,16 @@
     return 'Unknown';
   }
 
+  function hubSupportActivityWho(item) {
+    const meta = item && item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
+    const raw = String(meta.actorName || meta.impersonatorName || '').trim();
+    const first = raw.split(/\s+/)[0] || '';
+    if (first && first.indexOf('@') === -1) {
+      return first + ' at The Networker Hub';
+    }
+    return 'Hub support';
+  }
+
   function renderTeamActivityItems(items) {
     if (!items || !items.length) {
       return '<p class="org-team-activity-empty">No activity recorded yet. Edits to events, organiser pages, and team access will show here.</p>';
@@ -12368,7 +12378,7 @@
           const roleLabel = teamActivityRoleLabel(item.actorRole);
           const who =
             String(item.actorRole || '').toLowerCase() === 'admin'
-              ? roleLabel
+              ? hubSupportActivityWho(item)
               : (item.actorEmail || 'Unknown user') + ' · ' + roleLabel;
           return (
             '<li class="org-team-activity-item">' +

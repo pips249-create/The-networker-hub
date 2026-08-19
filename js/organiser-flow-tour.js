@@ -412,6 +412,7 @@
     {
       title: 'Set up ticket types',
       body: 'You saved your event dates — now define ticket types. Each tier you add is copied to every date in the series.',
+      target: '#ee-attendance-card-wrap',
     },
     {
       title: 'Add ticket tiers',

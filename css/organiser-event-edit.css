@@ -2605,44 +2605,8 @@ body.organiser-booking-options-page {
   margin-top: 4px;
 }
 
-.ee-booking-help-sticky-cta {
-  display: none;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 60;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(244, 248, 250, 0.96);
-  border-top: 1px solid rgba(26, 46, 59, 0.1);
-  box-shadow: 0 -8px 24px rgba(28, 50, 64, 0.08);
-}
-
-.ee-booking-help-sticky-cta.is-visible {
-  display: block;
-}
-
-.ee-booking-help-sticky-cta .ee-btn {
-  display: block;
-  width: 100%;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-@media (min-width: 780px) {
-  .ee-booking-help-sticky-cta {
-    display: none !important;
-  }
-}
-
 .organiser-booking-options-page .ee-booking-help {
-  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 780px) {
-  .organiser-booking-options-page .ee-booking-help {
-    padding-bottom: 72px;
-  }
+  padding-bottom: 72px;
 }
 
 .ee-booking-help-example {
