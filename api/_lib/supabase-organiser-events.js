@@ -14,6 +14,7 @@ const { geocodeUkPostcode } = require('./postcode-geocode');
 const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace, emailMatchedOrganiserIdsForSession, mergeEmailMatchedGroups } = require('./supabase-organiser-access');
 const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
+const { applyListingLifecyclePreserve } = require('./listing-lifecycle');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
@@ -1513,14 +1514,17 @@ async function buildSharedSeriesRowTemplate(base, anchorId) {
   return row;
 }
 
-function mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId) {
+function mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId, peerRow) {
   const dates = parseDateIso(occurrence.date, occurrence.endDate);
-  return {
-    ...sharedRow,
-    starts_at: dates.starts_at,
-    ends_at: dates.ends_at,
-    series_group_id: seriesGroupId,
-  };
+  return applyListingLifecyclePreserve(
+    {
+      ...sharedRow,
+      starts_at: dates.starts_at,
+      ends_at: dates.ends_at,
+      series_group_id: seriesGroupId,
+    },
+    peerRow
+  );
 }
 
 function lockedSeriesPeerPatch(sharedRow, occurrence, seriesGroupId) {
@@ -1546,7 +1550,7 @@ async function insertEventRowsBatch(sb, rows) {
 async function updateSeriesPeerRow(sb, peerRow, sharedRow, occurrence, seriesGroupId) {
   const patch = peerRow.locked
     ? lockedSeriesPeerPatch(sharedRow, occurrence, seriesGroupId)
-    : mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId);
+    : mergeOccurrenceIntoRow(sharedRow, occurrence, seriesGroupId, peerRow);
   const { data, error } = await sb.from('events').update(patch).eq('id', peerRow.id).select('*').single();
   if (error) throw new Error(error.message);
   if (peerRow.starts_at !== data.starts_at && data.starts_at) {
@@ -1666,7 +1670,7 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
   }
 
   const insertRows = insertOccurrences.map((occurrence) =>
-    mergeOccurrenceIntoRow(sharedRow, occurrence, resolvedSeriesGroupId)
+    mergeOccurrenceIntoRow(sharedRow, occurrence, resolvedSeriesGroupId, anchorRow)
   );
   const [createdRows, updatedRows] = await Promise.all([
     insertRows.length ? insertEventRowsBatch(sb, insertRows) : Promise.resolve([]),
@@ -2271,6 +2275,26 @@ async function propagateSeriesEventDetails(sb, updatedRow) {
 async function enableTicketSalesOnPublishedEventsIfReady(sb, eventIds, createdTickets, refundPayload) {
   const ids = (eventIds || []).filter(Boolean);
   if (!ids.length) return;
+
+  const { data: current, error: currentErr } = await sb
+    .from('events')
+    .select('id, status, published_at')
+    .in('id', ids);
+  if (currentErr) throw new Error(currentErr.message);
+  const demoted = (current || []).filter((row) => {
+    const status = String(row.status || '').toLowerCase();
+    return status === 'draft' && row.published_at;
+  });
+  if (demoted.length) {
+    const { error: restoreErr } = await sb
+      .from('events')
+      .update({ status: 'published', approval_status: 'Approved' })
+      .in(
+        'id',
+        demoted.map((row) => row.id)
+      );
+    if (restoreErr) throw new Error(restoreErr.message);
+  }
 
   const { data: rows, error } = await sb
     .from('events')

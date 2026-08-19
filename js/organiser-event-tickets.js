@@ -30,6 +30,7 @@
   let paymentSetupState = null;
   let returnedFromStripe = false;
   let ticketsLocked = false;
+  let lastPersistedTicketSignature = '';
   let organiserComplimentaryVisits = 0;
   let organiserComplimentaryVisitsScope = 'per_group';
   let anchorEvent = null;
@@ -321,6 +322,37 @@
     if (!ev) return false;
     if (ev.locked) return true;
     return eventTicketsSoldCount(ev) > 0;
+  }
+
+  function isExistingPublicListing(ev) {
+    const row = ev || anchorEvent;
+    if (!row) return false;
+    const status = String(row.status || row.listingStatus || '').toLowerCase();
+    if (status === 'published') return true;
+    if (status === 'unpublished') return false;
+    return Boolean(row.publishedAt || row.published_at);
+  }
+
+  function ticketPersistBlockers(tiers) {
+    const list = tiers || collectActiveTiers();
+    const blockers = [];
+    if (!list.length) {
+      blockers.push('Add at least one ticket type with a name');
+    } else if (!tiersHaveRequiredSaleEnds(list)) {
+      blockers.push('Choose a valid sale end for every ticket');
+    }
+    const unpaidNamed = Array.from(document.querySelectorAll('.ee-tier-row')).some(function (row) {
+      const name = row.querySelector('.ee-tier-name')?.value.trim();
+      if (!name) return false;
+      const paid = row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="paid"]');
+      if (!paid) return false;
+      const price = Number(row.querySelector('.ee-tier-price')?.value);
+      return !Number.isFinite(price) || price <= 0;
+    });
+    if (unpaidNamed) {
+      blockers.push('Enter a price for each paid ticket');
+    }
+    return blockers;
   }
 
   function applyTicketsLockUi(ev) {
@@ -2774,7 +2806,11 @@
     }
 
     const parts = [];
-    parts.push('Continue to review, then Confirm & publish — that is what makes the listing live.');
+    if (isExistingPublicListing()) {
+      parts.push('Save tickets onto this listing. They stay on the organiser page — the group does not need to type them again.');
+    } else {
+      parts.push('Continue to review, then Confirm & publish — that is what makes the listing live.');
+    }
 
     if (membersOnlyEventEnabled()) {
       if (needsMembersAfterPublish()) {
@@ -4046,6 +4082,9 @@
   function ticketsSetupReadyForReview(tiers) {
     if (!payHowConfirmed) return false;
     try {
+      if (isExistingPublicListing()) {
+        return ticketPersistBlockers(tiers).length === 0;
+      }
       const list = tiers || collectActiveTiers();
       return getPublishBlockers(list, { includeBankDetails: false }).length === 0;
     } catch {
@@ -4079,10 +4118,13 @@
       }
       const tiers = collectActiveTiers();
       syncPaidOnlySections(tiers);
-      const blockers = getPublishBlockers(tiers);
-      const bankPending = needsBankDetailsSetup(tiers);
-      // Keep Publish clickable so incomplete setup shows a clear message instead of a dead click.
+      const liveListing = isExistingPublicListing();
+      const blockers = liveListing
+        ? ticketPersistBlockers(tiers)
+        : getPublishBlockers(tiers);
+      const bankPending = !liveListing && needsBankDetailsSetup(tiers);
       btn.disabled = false;
+      btn.textContent = liveListing ? 'Save tickets' : 'Continue to review →';
       syncContinueToReviewVisibility(tiers);
       refreshPaymentSetupCard(tiers);
       if (warn) {
@@ -4093,7 +4135,11 @@
           warn.hidden = false;
           const parts = [];
           if (blockers.length) {
-            parts.push('Before this event can go live: ' + blockers.join('; ') + '.');
+            parts.push(
+              liveListing
+                ? 'Before tickets can be saved: ' + blockers.join('; ') + '.'
+                : 'Before this event can go live: ' + blockers.join('; ') + '.'
+            );
           }
           if (bankPending && !blockers.some((b) => /bank details/i.test(b))) {
             parts.push(
@@ -4437,6 +4483,7 @@
     const applicationBtn = document.getElementById('ee-mode-category-exclusivity');
     const continueBtn = document.getElementById('ee-attendance-continue');
     const payHowContinueBtn = document.getElementById('ee-pay-how-continue');
+    const firstBind = !continueBtn?.dataset.boundAttendanceContinue;
     if (generalBtn && !generalBtn.dataset.boundAttendanceDoor) {
       generalBtn.dataset.boundAttendanceDoor = '1';
       generalBtn.addEventListener('click', () => {
@@ -4464,7 +4511,7 @@
       });
     }
     bindPayHowFields();
-    hideLaterTicketSteps();
+    if (firstBind) hideLaterTicketSteps();
     syncPayHowStepUi();
     syncAttendanceStepUi();
   }
@@ -4754,6 +4801,9 @@
     syncEventCapacityCard();
     updatePublishButton();
     captureSavedTicketsSnapshot(collectActiveTiers());
+    if (loaded.tickets.length && !restoredDraft) {
+      lastPersistedTicketSignature = ticketsChangeSignature(collectActiveTiers());
+    }
 
     if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
       window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 0 });
@@ -4828,13 +4878,22 @@
     }
 
     await ensureMemberRosterStatus();
-    const blockers = getPublishBlockers(tiers, { includeBankDetails: false });
-    if (blockers.length) {
-      showAlert('Before this event can go live: ' + blockers.join('; ') + '.', 'warn');
+    const persistBlockers = isExistingPublicListing()
+      ? ticketPersistBlockers(tiers)
+      : getPublishBlockers(tiers, { includeBankDetails: false });
+    if (persistBlockers.length) {
+      showAlert(
+        isExistingPublicListing()
+          ? 'Before tickets can be saved: ' + persistBlockers.join('; ') + '.'
+          : 'Before this event can go live: ' + persistBlockers.join('; ') + '.',
+        'warn'
+      );
       const warn = document.getElementById('ee-publish-warn');
       if (warn) {
         warn.hidden = false;
-        warn.textContent = 'Before this event can go live: ' + blockers.join('; ') + '.';
+        warn.textContent = isExistingPublicListing()
+          ? 'Before tickets can be saved: ' + persistBlockers.join('; ') + '.'
+          : 'Before this event can go live: ' + persistBlockers.join('; ') + '.';
       }
       updatePublishButton();
       return;
@@ -4868,7 +4927,7 @@
       });
     }
 
-    await saveTickets(false, { redirectToReview: true });
+    await saveTickets(false, { redirectToReview: !isExistingPublicListing() });
   }
 
   async function saveTickets(publish, options) {
@@ -4984,7 +5043,7 @@
       }
     }
 
-    if (!publish && existingTicketsLoaded && !ticketsChangedFromSnapshot(tiers)) {
+    if (!publish && lastPersistedTicketSignature && !ticketsChangedFromSnapshot(tiers)) {
       if (options.redirectToReview) {
         if (hasPaidTickets) {
           try {
@@ -5008,7 +5067,9 @@
         return;
       }
       showAlert(
-        'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
+        isExistingPublicListing()
+          ? 'Tickets are already saved on this listing.'
+          : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
       );
       return;
@@ -5167,6 +5228,7 @@
     }
 
     captureSavedTicketsSnapshot(tiers);
+    lastPersistedTicketSignature = ticketsChangeSignature(tiers);
 
     if (publish) {
       const published = Boolean(data.published);
@@ -5211,7 +5273,9 @@
         return;
       }
       showAlert(
-        'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
+        isExistingPublicListing()
+          ? 'Tickets saved on this listing. The organiser will see them — they do not need to type them again.'
+          : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
       );
       if (tiersHavePaidPrice(collectActiveTiers())) {

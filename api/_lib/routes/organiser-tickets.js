@@ -106,8 +106,11 @@ module.exports = async function handler(req, res) {
     if (eventIds.length && tickets.length) {
       try {
         const { groupIds, adminView } = await ownedEventIds();
-        const ids = await filterOwnedEventIds(eventIds, groupIds, adminView);
-        if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
+        const requested = [...new Set(eventIds)];
+        const ids = await filterOwnedEventIds(requested, groupIds, adminView);
+        if (!ids.length || ids.length !== requested.length) {
+          return json(res, 403, EVENT_NOT_OWNED);
+        }
         const tiers = tickets
           .map((t, idx) => ({
             name: String(t.name || '').trim(),
@@ -220,6 +223,23 @@ module.exports = async function handler(req, res) {
               : null,
           refund: publish ? refundPayload || {} : refundPayload,
         });
+        try {
+          const { logFromSession } = require('../entity-activity-log');
+          await logFromSession(auth.session, null, {
+            entity_type: 'event',
+            entity_id: ids[0],
+            action: publish ? 'tickets_published' : 'tickets_updated',
+            summary:
+              (publish ? 'Published tickets' : 'Updated tickets') +
+              ' (' +
+              tiers.length +
+              ' type' +
+              (tiers.length === 1 ? '' : 's') +
+              ')',
+          });
+        } catch {
+          /* activity log must not block saves */
+        }
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {
         return json(res, e.status || 500, {
