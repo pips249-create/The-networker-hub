@@ -14352,9 +14352,10 @@
   }
 
   function hubHashTab(fullHash, fallback) {
-    var parts = String(fullHash || '')
+    var path = String(fullHash || '')
       .replace(/^#/, '')
-      .split(/[/?]/);
+      .split('?')[0];
+    var parts = path.split('/');
     return parts[1] || fallback || '';
   }
 
@@ -16561,7 +16562,10 @@
 
   function renderGroupCleanup(fullHash) {
     var query = parseAdminHashQuery(fullHash || (location.hash || '').replace('#', ''));
-    var focusId = String(query.get('organiser') || query.get('id') || '').trim();
+    var focusId = String(query.get('organiser') || '').trim();
+    if (!focusId && !query.get('intake') && !query.get('ei')) {
+      focusId = String(query.get('id') || '').trim();
+    }
     groupCleanupState.focusOrganiserId = focusId;
     if (focusId) groupCleanupState.expanded[focusId] = true;
 
@@ -22023,8 +22027,8 @@
     if (eventIntakeFilter && eventIntakeFilter !== 'open') {
       params.push('view=' + encodeURIComponent(eventIntakeFilter));
     }
-    params.push('ei=' + encodeURIComponent(action));
-    params.push('id=' + encodeURIComponent(id));
+    params.push('intake=' + encodeURIComponent(action));
+    params.push('rid=' + encodeURIComponent(id));
     return '#cleanup/requests?' + params.join('&');
   }
 
@@ -22075,10 +22079,12 @@
     var query = eventIntakeHashQuery();
     var view = String(query.get('view') || '').toLowerCase();
     if (view === 'open' || view === 'all' || view === 'done') eventIntakeFilter = view;
-    var pendingEi = String(query.get('ei') || '').toLowerCase();
-    var pendingId = String(query.get('id') || '').trim();
+    var pendingEi = String(query.get('intake') || query.get('ei') || '').toLowerCase();
+    var pendingId = String(query.get('rid') || query.get('id') || '').trim();
     if (pendingEi && pendingId) {
-      history.replaceState(null, '', location.pathname + location.search + eventIntakeCleanHash());
+      try {
+        history.replaceState(null, '', location.pathname + location.search + eventIntakeCleanHash());
+      } catch (_e) {}
     }
 
     var filter = eventIntakeFilter || main.dataset.eiFilter || 'open';
@@ -22507,7 +22513,7 @@
         '[data-ei-filter], [data-ei-create-toggle], [data-ei-create-cancel], [data-ei-find-organiser], [data-ei-import-brand], [data-ei-status]'
       )
       .forEach(function (btn) {
-        if (btn.dataset.eiBound === '1') return;
+        if (btn.tagName === 'A' || btn.dataset.eiBound === '1') return;
         btn.dataset.eiBound = '1';
         btn.addEventListener('click', handleEventIntakeDocClick);
       });
@@ -22722,7 +22728,7 @@
   function handleEventIntakeDocClick(e) {
     var t = eventIntakeClickEl(e);
     if (!t) return;
-    if (t.closest && t.closest('a[href*="cleanup/requests"]')) return;
+    if (t.closest && t.closest('a[href*="cleanup/"]')) return;
     var btn =
       t.closest('[data-ei-filter]') ||
       t.closest('[data-ei-create-toggle]') ||
@@ -22759,9 +22765,7 @@
   }
 
   function bindEventIntakeDocClicks() {
-    if (window.__eventIntakeDocClickBound) return;
-    window.__eventIntakeDocClickBound = true;
-    document.addEventListener('click', handleEventIntakeDocClick, true);
+    /* Hash links drive Event requests. Do not intercept clicks on Fix listings. */
   }
 
   window.AdminEventIntake = {
@@ -23940,7 +23944,7 @@
       location.replace('#' + hash);
       return;
     }
-    var routeKey = hash.split('/')[0];
+    var routeKey = hash.split('?')[0].split('/')[0];
     if (!routes[routeKey]) {
       routeKey = 'dashboard';
       hash = 'dashboard';
