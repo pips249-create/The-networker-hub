@@ -61,6 +61,22 @@ assert(
     return p === '%manch_ster%';
   })
 );
+assert('exact-only patterns stay tiny', searchTermIlikePatterns('manchester', { fuzzy: false }).length === 1);
+assert(
+  'fuzzy without substitutions omits wildcards',
+  !searchTermIlikePatterns('manchester', { exact: false, substitutions: false }).some(function (p) {
+    return p.indexOf('_') !== -1;
+  })
+);
+assert(
+  'browse-sized OR stays bounded',
+  searchTermIlikePatterns('manchester', { fuzzy: false }).length +
+    searchTermIlikePatterns('manchester', { exact: false, substitutions: false }).length * 3 +
+    searchTermIlikePatterns('manchester', { exact: false }).filter(function (p) {
+      return p.indexOf('_') !== -1;
+    }).length <
+    80
+);
 
 // Location-style multi-word queries (city + area)
 assert(

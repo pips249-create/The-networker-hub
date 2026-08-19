@@ -4,10 +4,12 @@
 (function () {
   var API_PATH = '/api/hub-listings';
   var ANALYTICS_PATH = '/api/browse-analytics';
-  var DEBOUNCE_MS = 320;
+  var DEBOUNCE_MS = 400;
   var debounceTimer = null;
   var fetchToken = 0;
+  var fetchAbort = null;
   var lastTypeCounts = null;
+  var lastTypeCountSignature = '';
   var lastPinsSignature = '';
   var lastFilterSignature = '';
 
@@ -18,6 +20,17 @@
     delete copy.meta;
     delete copy.mode;
     delete copy.offset;
+    return JSON.stringify(copy);
+  }
+
+  function browseTypeCountSignature(params) {
+    var copy = Object.assign({}, params || {});
+    delete copy.page;
+    delete copy.limit;
+    delete copy.meta;
+    delete copy.mode;
+    delete copy.offset;
+    delete copy.q;
     return JSON.stringify(copy);
   }
 
@@ -308,23 +321,36 @@
   function hubBrowseFetch(page, options) {
     options = options || {};
     var token = ++fetchToken;
+    if (fetchAbort) {
+      try {
+        fetchAbort.abort();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    fetchAbort = typeof AbortController === 'function' ? new AbortController() : null;
+    var signal = fetchAbort ? fetchAbort.signal : undefined;
     var params = gatherParams(page);
     var url = buildUrl(params);
     var filterSignature = browseFilterSignature(params);
+    var typeCountSignature = browseTypeCountSignature(params);
 
     if (filterSignature !== lastFilterSignature) {
       lastFilterSignature = filterSignature;
-      lastTypeCounts = null;
       if (window.hubBrowseInvalidatePins) window.hubBrowseInvalidatePins();
       if (isMapViewOpen() && window.hubRefreshMap) {
         window.hubRefreshMap([]);
       }
     }
+    if (typeCountSignature !== lastTypeCountSignature) {
+      lastTypeCountSignature = typeCountSignature;
+      lastTypeCounts = null;
+    }
 
     setBrowseResultsLoading(true);
 
     // Allow short HTTP cache (API sends max-age≈60) so identical filter reloads are cheap.
-    return fetch(url, { credentials: 'same-origin' })
+    return fetch(url, { credentials: 'same-origin', signal: signal })
       .then(function (res) {
         if (!res.ok) {
           return res
@@ -343,6 +369,7 @@
       })
       .then(function (data) {
         if (token !== fetchToken) return data;
+        if (!data) return data;
         if (!data.configured) throw new Error('not_configured');
         if (data.error) throw new Error(data.message || data.error);
         applyBrowsePayload(data, page);
@@ -366,6 +393,9 @@
         return data;
       })
       .catch(function (err) {
+        if (err && (err.name === 'AbortError' || err.message === 'The user aborted a request.')) {
+          return null;
+        }
         if (token === fetchToken) onBrowseFetchError(err);
         throw err;
       })
