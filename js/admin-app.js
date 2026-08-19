@@ -14916,6 +14916,39 @@
       });
   }
 
+  function sendGroupClaimInvite(organiserId, email, name, triggerBtn) {
+    var to = String(email || '').trim();
+    if (!to) {
+      window.alert('Add a contact email before sending the claim link.');
+      return;
+    }
+    if (
+      !window.confirm(
+        'Email their claim link to ' +
+          to +
+          (name ? ' for “' + name + '”' : '') +
+          '?\n\nThis sends Email 2 (claim your page) with their personal URL. No email is sent until you confirm.'
+      )
+    ) {
+      return;
+    }
+    if (triggerBtn) triggerBtn.disabled = true;
+    adminPost('/api/admin/organisers', {
+      action: 'send_claim_invite',
+      id: organiserId,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || 'Could not send claim email');
+        window.alert(data.message || 'Email 2 sent.');
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not send claim email.');
+      })
+      .finally(function () {
+        if (triggerBtn) triggerBtn.disabled = false;
+      });
+  }
+
   function createGroupCleanupForm(form) {
     var msg = document.getElementById('group-create-msg');
     var btn = form.querySelector('[type="submit"]');
@@ -14951,14 +14984,14 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
         if (msg) {
-          msg.textContent = data.message || 'Group created.';
+          msg.textContent = (data.message || 'Group created.') + ' Use Email their claim link on the row when you are ready.';
           msg.className = 'text-xs text-emerald-700 font-semibold';
         }
         var newId = data.organiser && data.organiser.id;
         form.reset();
         groupCleanupState.createOpen = false;
         groupCleanupState.page = 0;
-        groupCleanupState.q = '';
+        groupCleanupState.q = email;
         invalidateEventOrganiserOptionsCache();
         var panel = document.getElementById('group-create-panel');
         var toggle = document.getElementById('group-create-toggle');
@@ -14968,7 +15001,7 @@
           toggle.textContent = '+ New networking group';
         }
         var search = document.getElementById('group-cleanup-search');
-        if (search) search.value = '';
+        if (search) search.value = email;
         if (newId) groupCleanupState.expanded[newId] = true;
         return fetchGroupCleanup(0);
       })
@@ -15917,6 +15950,17 @@
       return;
     }
 
+    var claimEmailBtn = e.target.closest('[data-send-group-claim-email]');
+    if (claimEmailBtn) {
+      sendGroupClaimInvite(
+        claimEmailBtn.getAttribute('data-send-group-claim-email'),
+        claimEmailBtn.getAttribute('data-group-email'),
+        claimEmailBtn.getAttribute('data-group-name'),
+        claimEmailBtn
+      );
+      return;
+    }
+
     var provisionBtn = e.target.closest('[data-provision-group-login]');
     if (provisionBtn) {
       provisionGroupLogin(provisionBtn.getAttribute('data-provision-group-login'), provisionBtn);
@@ -16517,6 +16561,15 @@
                 attrEsc(publicHref) +
                 '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline px-1 py-1">View</a>'
               : '') +
+            (o.email
+              ? '<button type="button" data-send-group-claim-email="' +
+                attrEsc(o.id) +
+                '" data-group-email="' +
+                attrEsc(o.email || '') +
+                '" data-group-name="' +
+                attrEsc(o.name || '') +
+                '" class="text-xs font-semibold rounded-lg border border-violet-200 text-violet-900 px-2.5 py-1 hover:bg-violet-50">Email their claim link</button>'
+              : '') +
             (!o.has_login && o.email
               ? '<button type="button" data-provision-group-login="' +
                 attrEsc(o.id) +
@@ -16591,7 +16644,7 @@
       (groupCleanupState.createOpen ? '' : ' hidden') +
       '">' +
       '<h3 class="text-sm font-semibold text-brand-900">New networking group</h3>' +
-      '<p class="text-xs text-slate-600">Creates a draft group profile and adds a login for the contact email. No emails are sent.</p>' +
+      '<p class="text-xs text-slate-600">Creates a draft group profile and adds a login for the contact email. No emails are sent until you click <strong>Email their claim link</strong> on the row.</p>' +
       '<form id="group-create-form" class="grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-name">Group name</label>' +
       '<input type="text" id="group-create-name" name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Catalyst Networking Club"></div>' +

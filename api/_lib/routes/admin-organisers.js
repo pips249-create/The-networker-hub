@@ -5,6 +5,7 @@ const { publicOrganiserSlug } = require('../organiser-slug');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
+const { resolveOrganiserClaimUrl } = require('../organiser-claim-url');
 const { resolveClaimDispute, clearDisputedProfileEmail, resolveOrganiserClaimRequest, approveOrganiserClaimRequest } = require('../admin-supabase-data');
 const { applyIlikeSearch } = require('../search-match');
 
@@ -753,10 +754,13 @@ async function createOrganiserGroupFromAdmin(body) {
   if (error) throw new Error(error.message);
   const counts = await eventCountsForOrganisers(sb, [created.id]);
   const loginMeta = await loginMetaForOrganisers(sb, [row]);
+  const host = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const claimUrl = await resolveOrganiserClaimUrl(email, host);
 
   return {
     organiser: mapOrganiserRow(row, counts[created.id] || 0, loginMeta.get(created.id)),
     provision,
+    claimUrl,
   };
 }
 
@@ -863,6 +867,88 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'create_group_failed',
         message: messages[e.message] || e.message || 'Could not create group.',
+      });
+    }
+  }
+
+  if (body.action === 'send_claim_invite') {
+    const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    if (!organiserId) {
+      return json(res, 400, { ok: false, error: 'missing_id', message: 'Group id is required.' });
+    }
+    try {
+      const sb = getSupabaseAdmin();
+      const { data: organiser, error } = await sb
+        .from('organisers')
+        .select('id, name, email, contact_email, supabase_user_id')
+        .eq('id', organiserId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!organiser) {
+        return json(res, 404, { ok: false, error: 'organiser_not_found', message: 'Group profile not found.' });
+      }
+      const email = String(organiser.contact_email || organiser.email || '')
+        .trim()
+        .toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return json(res, 400, {
+          ok: false,
+          error: 'organiser_missing_email',
+          message: 'Add a valid contact email before sending the claim email.',
+        });
+      }
+      const loginMeta = await loginMetaForOrganisers(sb, [organiser]);
+      const meta = loginMeta.get(organiser.id);
+      if (meta && meta.emailsEnabled === false) {
+        return json(res, 400, {
+          ok: false,
+          error: 'emails_blocked',
+          message: 'Emails are blocked for this group. Enable emails first, then send the claim link.',
+        });
+      }
+
+      const host = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+      const claimUrl = await resolveOrganiserClaimUrl(email, host);
+      const organiserName = String(organiser.name || '').trim() || 'your group';
+      const { sendTemplatedEmail } = require('../send-template-email');
+      const { campaignSiteVars } = require('../organiser-campaign-defaults');
+      await sendTemplatedEmail({
+        slug: 'organiser_launch_invite',
+        to: email,
+        variables: {
+          ...campaignSiteVars(host),
+          organiser_name: organiserName,
+          claim_url: claimUrl,
+          add_event_url: host + '/add-your-event',
+        },
+        skipEmailCheck: true,
+      });
+
+      try {
+        const { logFromSession } = require('../entity-activity-log');
+        await logFromSession(session, null, {
+          entity_type: 'organiser',
+          entity_id: organiser.id,
+          organiser_id: organiser.id,
+          action: 'admin_claim_invite',
+          summary: 'Hub admin sent Email 2 claim invite to ' + email,
+          metadata: { to: email, slug: 'organiser_launch_invite', source: 'admin' },
+        });
+      } catch {
+        /* ignore */
+      }
+
+      return json(res, 200, {
+        ok: true,
+        email,
+        claimUrl,
+        message: 'Email 2 sent to ' + email + ' with their claim link.',
+      });
+    } catch (e) {
+      return json(res, e.status || 500, {
+        ok: false,
+        error: e.message || 'send_claim_invite_failed',
+        message: e.message || 'Could not send the claim email.',
       });
     }
   }
