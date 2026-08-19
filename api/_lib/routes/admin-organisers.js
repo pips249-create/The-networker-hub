@@ -911,13 +911,14 @@ module.exports = async function handler(req, res) {
       const claimUrl = await resolveOrganiserClaimUrl(email, host);
       const organiserName = String(organiser.name || '').trim() || 'your group';
       const { sendTemplatedEmail } = require('../send-template-email');
-      const { campaignSiteVars } = require('../organiser-campaign-defaults');
+      const { campaignSiteVars, foundOrganiserLaunchInviteCopy } = require('../organiser-campaign-defaults');
       await sendTemplatedEmail({
         slug: 'organiser_launch_invite',
         to: email,
+        subject: "We've set up a page for " + organiserName + ' on The Networker Hub',
         variables: {
           ...campaignSiteVars(host),
-          organiser_name: organiserName,
+          ...foundOrganiserLaunchInviteCopy(organiserName),
           claim_url: claimUrl,
           add_event_url: host + '/add-your-event',
         },

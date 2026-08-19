@@ -368,6 +368,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   }
   // Preview/test vars from local admin often carry localhost — force public links.
   merged = rewriteEmailVarsToPublicSite(merged, siteUrl);
+  if (slug === 'organiser_launch_invite') {
+    const { applyOrganiserLaunchInviteCopy } = require('./organiser-campaign-defaults');
+    applyOrganiserLaunchInviteCopy(merged);
+  }
 
   let bodyHtml = template.body_html;
   bodyHtml = ensureUnsubscribePlaceholder(bodyHtml);

@@ -32,7 +32,7 @@ const {
   OPPORTUNITY_MINI_SPONSOR_SLUGS,
   HUB_PARTNER_SPONSOR_SLUGS,
 } = require('./email-sponsor-sections');
-const { campaignSiteVars } = require('./organiser-campaign-defaults');
+const { campaignSiteVars, applyOrganiserLaunchInviteCopy } = require('./organiser-campaign-defaults');
 const { buildListingAlertSeriesCopy } = require('./listing-alert-series');
 
 function sampleRecommendationCard(title, subtitle, url) {
@@ -695,6 +695,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     if (slug === 'organiser_launch_invite' || slug === 'organiser_call_followup') {
       vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-launch-token';
       vars.add_event_url = vars.add_event_url || site + '/add-your-event';
+    }
+    if (slug === 'organiser_launch_invite') {
+      applyOrganiserLaunchInviteCopy(vars);
     }
     if (slug === 'organiser_call_followup') {
       vars.book_call_url =

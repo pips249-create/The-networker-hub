@@ -14927,7 +14927,7 @@
         'Email their claim link to ' +
           to +
           (name ? ' for “' + name + '”' : '') +
-          '?\n\nThis sends Email 2 (claim your page) with their personal URL. No email is sent until you confirm.'
+          '?\n\nThis sends Email 2, worded as: we found their group, invited them to the Hub, and have already set up their page. No email is sent until you confirm.'
       )
     ) {
       return;
