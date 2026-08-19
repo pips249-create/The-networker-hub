@@ -9,7 +9,13 @@ function emailMatchesProfile(sessionEmail, row) {
     .trim()
     .toLowerCase();
   if (!em) return false;
-  return profileEmail(row) === em;
+  const profile = String(row?.email || '')
+    .trim()
+    .toLowerCase();
+  const contact = String(row?.contact_email || '')
+    .trim()
+    .toLowerCase();
+  return (profile && profile === em) || (contact && contact === em);
 }
 
 module.exports = {

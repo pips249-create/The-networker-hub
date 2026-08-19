@@ -154,9 +154,39 @@ function sessionFromRequest(req) {
   return verifySession(token, secret);
 }
 
+/** Organiser pages the admin opened impersonation from — must stay editable. */
+function impersonatedOrganiserIdsFromSession(session) {
+  if (!session || !session.impersonator) return [];
+  const raw = session.impersonatedOrganiserIds;
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.map((id) => String(id || '').trim()).filter(Boolean))];
+}
+
+function applyImpersonationToSessionUser(fresh, session) {
+  if (!fresh || !session || !session.impersonator) return fresh;
+  fresh.impersonator = session.impersonator;
+  const ids = impersonatedOrganiserIdsFromSession(session);
+  if (ids.length) fresh.impersonatedOrganiserIds = ids;
+  return fresh;
+}
+
 const SESSION_MAX_AGE_DEFAULT_SEC = 60 * 60 * 24 * 7;
 const SESSION_MAX_AGE_REMEMBER_SEC = 60 * 60 * 24 * 30;
 const SESSION_MAX_AGE_BROWSER_SEC = 60 * 60 * 24;
+
+function cookieSecureSuffix() {
+  return process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
+}
+
+function appendSetCookie(res, cookie) {
+  const prev = res.getHeader('Set-Cookie');
+  if (!prev) {
+    res.setHeader('Set-Cookie', cookie);
+    return;
+  }
+  const list = Array.isArray(prev) ? prev.concat(cookie) : [String(prev), cookie];
+  res.setHeader('Set-Cookie', list);
+}
 
 function setSessionCookie(res, payload, options) {
   const secret = process.env.SESSION_SECRET;
@@ -181,18 +211,19 @@ function setSessionCookie(res, payload, options) {
     },
     secret
   );
-  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
   const maxAgePart = sessionOnly ? '' : `; Max-Age=${maxAgeSec}`;
-  res.setHeader(
-    'Set-Cookie',
-    `hub_session=${token}; Path=/; HttpOnly; SameSite=Lax${maxAgePart}${secure}`
+  appendSetCookie(
+    res,
+    `hub_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax${maxAgePart}${cookieSecureSuffix()}`
   );
   return true;
 }
 
 function clearSessionCookie(res) {
-  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `hub_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
+  appendSetCookie(
+    res,
+    `hub_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecureSuffix()}`
+  );
 }
 
 const HUB_VIEW_COOKIE = 'hub_view';
@@ -217,10 +248,9 @@ function hubViewFromRequest(req) {
 
 function setHubViewCookie(res, mode) {
   const view = mode === 'organiser' ? 'organiser' : 'attendee';
-  const secure = process.env.VERCEL_ENV === 'production' ? '; Secure' : '';
-  res.setHeader(
-    'Set-Cookie',
-    `${HUB_VIEW_COOKIE}=${view}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}${secure}`
+  appendSetCookie(
+    res,
+    `${HUB_VIEW_COOKIE}=${view}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}${cookieSecureSuffix()}`
   );
 }
 
@@ -710,6 +740,8 @@ module.exports = {
   hashPassword,
   verifyPassword,
   sessionFromRequest,
+  impersonatedOrganiserIdsFromSession,
+  applyImpersonationToSessionUser,
   setSessionCookie,
   clearSessionCookie,
   json,

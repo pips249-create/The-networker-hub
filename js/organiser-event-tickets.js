@@ -3566,6 +3566,29 @@
       return { tickets: [], event: null, authFailed: true };
     }
 
+    if (
+      ticketsRes.status === 403 ||
+      eventRes.status === 403 ||
+      (ticketsRes.data && ticketsRes.data.error === 'event_not_owned') ||
+      (eventRes.data && eventRes.data.error === 'event_not_owned')
+    ) {
+      const ownedErr =
+        (eventRes.data && eventRes.data.error === 'event_not_owned' && eventRes.data) ||
+        (ticketsRes.data && ticketsRes.data.error === 'event_not_owned' && ticketsRes.data) ||
+        ticketsRes.data ||
+        eventRes.data ||
+        {};
+      showAlert(
+        ownedErr.message ||
+          'This event is not on this organiser account, so tickets cannot be edited here.',
+        'warn'
+      );
+      const tickets =
+        ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
+      const event = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
+      return { tickets: tickets, event: event, authFailed: false, notOwned: true };
+    }
+
     const tickets =
       ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
     const event = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
@@ -4524,7 +4547,7 @@
     }
     if (!loaded || loaded.authFailed) return;
 
-    if (!loaded.event && eventIds.length) {
+    if (!loaded.event && eventIds.length && !loaded.notOwned) {
       try {
         sessionStorage.removeItem(SERIES_STORAGE_KEY);
       } catch {

@@ -4,6 +4,13 @@ const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-
 const { validateRefundPublishPayload } = require('../event-refund-policy');
 const { tiersHavePaidPrice } = require('../supabase-events');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
+
+const EVENT_NOT_OWNED = {
+  error: 'event_not_owned',
+  message:
+    'This event is not on the organiser pages for this account. If you are impersonating, impersonate the group that owns the listing, then open tickets from My Events.',
+};
 
 function requestHasPaidTickets(tiers, alumniFastPass) {
   if (alumniFastPass?.enabled && Number(alumniFastPass.price) > 0) return true;
@@ -28,9 +35,8 @@ module.exports = async function handler(req, res) {
     json,
     setCors,
     requireOrganiserSession,
-    listGroupsForSession,
-    listEventsForSession,
     listTicketsForSession,
+    listEventIdsForOrganiserGroups,
     isPlatformAdmin,
     createTicket,
     createTicketsForEvents,
@@ -62,31 +68,24 @@ module.exports = async function handler(req, res) {
   }
 
   async function ownedEventIds() {
-    const groups = await listGroupsForSession(auth.session);
-    const { organiserPersonalScopeFromRequest } = require('../auth');
-    const adminView =
-      isPlatformAdmin(auth.session) && !organiserPersonalScopeFromRequest(req);
-    const events = await listEventsForSession(
-      auth.session,
-      groups.map((g) => g.id),
-      [],
-      adminView
-    );
-    return { groups, groupIds: groups.map((g) => g.id), adminView, allowed: new Set(events.map((e) => e.id)) };
+    const { adminView } = adminViewFromSession(auth.session, req);
+    const scope = await resolveOrganiserGroupScope(auth.session, adminView);
+    return { groups: scope.groups, groupIds: scope.groupIds, adminView };
   }
 
   if (req.method === 'GET') {
     const eventId = String(req.query?.eventId || '').trim();
     try {
       if (eventId) {
-        const { groups, groupIds, adminView } = await ownedEventIds();
+        const { groupIds, adminView } = await ownedEventIds();
         const ids = await filterOwnedEventIds([eventId], groupIds, adminView);
-        if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
+        if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
         const tickets = await listTicketsForSession(auth.session, ids);
         return json(res, 200, { ok: true, tickets });
       }
-      const { allowed } = await ownedEventIds();
-      const tickets = await listTicketsForSession(auth.session, [...allowed]);
+      const { groupIds, adminView } = await ownedEventIds();
+      const ids = await listEventIdsForOrganiserGroups(groupIds, adminView);
+      const tickets = await listTicketsForSession(auth.session, ids);
       return json(res, 200, { ok: true, tickets });
     } catch (e) {
       return json(res, e.status || 500, {
@@ -106,13 +105,9 @@ module.exports = async function handler(req, res) {
 
     if (eventIds.length && tickets.length) {
       try {
-        const groups = await listGroupsForSession(auth.session);
-        const groupIds = groups.map((g) => g.id);
-        const { organiserPersonalScopeFromRequest } = require('../auth');
-        const adminView =
-          isPlatformAdmin(auth.session) && !organiserPersonalScopeFromRequest(req);
+        const { groupIds, adminView } = await ownedEventIds();
         const ids = await filterOwnedEventIds(eventIds, groupIds, adminView);
-        if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
+        if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
         const tiers = tickets
           .map((t, idx) => ({
             name: String(t.name || '').trim(),
@@ -249,7 +244,7 @@ module.exports = async function handler(req, res) {
       const ctx = await ownedEventIds();
       if (!isPlatformAdmin(auth.session)) {
         const ids = await filterOwnedEventIds([eventId], ctx.groupIds, ctx.adminView);
-        if (!ids.length) return json(res, 403, { error: 'event_not_owned' });
+        if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
       }
       const ticket = await createTicket({
         eventId,
@@ -281,8 +276,9 @@ module.exports = async function handler(req, res) {
       return json(res, 503, { error: 'enable_sales_unavailable' });
     }
     try {
-      const groups = await listGroupsForSession(auth.session);
-      const groupIds = groups.map((g) => g.id);
+      const { groupIds, adminView } = await ownedEventIds();
+      const ids = await filterOwnedEventIds([eventId], groupIds, adminView);
+      if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
       const event = await enableTicketSalesForEvent(auth.session, eventId, groupIds);
       return json(res, 200, {
         ok: true,

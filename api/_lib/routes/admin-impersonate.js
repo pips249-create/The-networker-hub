@@ -4,6 +4,7 @@ const {
   json,
   setCors,
   setSessionCookie,
+  setHubViewCookie,
   normalizeRole,
   appendSystemLog,
 } = require('../auth');
@@ -121,7 +122,10 @@ module.exports = async function handler(req, res) {
     }
 
     const targetRole = normalizeRole(target.role);
-    if (targetRole === 'admin') {
+    const impersonatingGroup = Boolean(organiserId || organiserIdsToClaim.length);
+    // Groups often use a team inbox that is also a Command Center login.
+    // Block impersonating another admin's account, but still open that group's workspace.
+    if (targetRole === 'admin' && !impersonatingGroup) {
       return json(res, 403, {
         error: 'cannot_impersonate_admin',
         message: 'Admin accounts cannot be impersonated.',
@@ -145,14 +149,19 @@ module.exports = async function handler(req, res) {
     const sessionUser = {
       sub: target.id,
       email: target.email,
-      role: targetRole,
+      // Never carry platform-admin into the public Hub / organiser workspace.
+      role: 'client',
       name: target.name || '',
       impersonator,
+      impersonatedOrganiserIds: [
+        ...new Set(
+          (organiserIdsToClaim || [])
+            .concat(organiserId || [])
+            .map((id) => String(id || '').trim())
+            .filter(Boolean)
+        ),
+      ],
     };
-
-    if (!setSessionCookie(res, sessionUser)) {
-      return json(res, 503, { error: 'session_failed' });
-    }
 
     await appendSystemLog(
       `Admin ${session.email} started impersonating ${target.email}`,
@@ -214,6 +223,13 @@ module.exports = async function handler(req, res) {
         : body.view === 'events'
           ? '/events/'
           : '/account/');
+
+    if (!setSessionCookie(res, sessionUser)) {
+      return json(res, 503, { error: 'session_failed' });
+    }
+    const openOrganiser =
+      body.view === 'organiser' || String(redirect).indexOf('/organiser') !== -1;
+    setHubViewCookie(res, openOrganiser ? 'organiser' : 'attendee');
 
     return json(res, 200, {
       ok: true,

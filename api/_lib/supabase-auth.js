@@ -262,12 +262,13 @@ async function findUserByEmail(email) {
   const sb = getSupabaseAdmin();
 
   if (typeof sb.auth.admin.getUserByEmail === 'function') {
-    const { data, error } = await sb.auth.admin.getUserByEmail(em);
-    if (!error && data?.user) {
-      return authUserRecordToAppUser(data.user, em);
-    }
-    if (error && !/not found|user not found/i.test(String(error.message || ''))) {
-      throw new Error(error.message);
+    try {
+      const { data, error } = await sb.auth.admin.getUserByEmail(em);
+      if (!error && data?.user) {
+        return authUserRecordToAppUser(data.user, em);
+      }
+    } catch {
+      /* fall through to listUsers */
     }
   }
 

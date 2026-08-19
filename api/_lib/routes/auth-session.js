@@ -8,6 +8,7 @@ const {
   normalizeRole,
   isAdminRole,
   isClientRole,
+  applyImpersonationToSessionUser,
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
@@ -31,11 +32,32 @@ module.exports = async function handler(req, res) {
     if (useSupabase()) {
       const user = await sbAuth.findUserByEmail(session.email);
       if (!user) {
+        if (session.impersonator) {
+          return json(res, 200, {
+            ok: true,
+            user: {
+              sub: session.sub,
+              email: session.email,
+              role: 'client',
+              name: session.name || '',
+            },
+            hubView: hubViewFromRequest(req),
+            organiserProfiles: 0,
+            organiserAccess: true,
+            organiserUiVisible: true,
+            organiserEmailVerified: true,
+            pendingClaimCount: 0,
+            canOrganise: true,
+            canToggleHubMode: false,
+            impersonating: true,
+            impersonatorEmail: session.impersonator.email || null,
+          });
+        }
         clearSessionCookie(res);
         return json(res, 200, { ok: false, user: null });
       }
 
-      const role = normalizeRole(user.role);
+      const role = session.impersonator ? 'client' : normalizeRole(user.role);
       const fresh = {
         sub: user.id,
         email: user.email,
@@ -43,7 +65,7 @@ module.exports = async function handler(req, res) {
         name: user.name,
       };
       if (session.impersonator) {
-        fresh.impersonator = session.impersonator;
+        applyImpersonationToSessionUser(fresh, session);
       }
       setSessionCookie(res, fresh);
 
@@ -52,6 +74,7 @@ module.exports = async function handler(req, res) {
       const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
       const organiserTermsAccepted = await sbAuth.hasOrganiserTermsAccepted(fresh.sub);
       const accessStatus = await getOrganiserAccessStatus(fresh);
+      const impersonating = !!session.impersonator;
 
       return json(res, 200, {
         ok: true,
@@ -59,20 +82,21 @@ module.exports = async function handler(req, res) {
         hubView: hubViewFromRequest(req),
         organiserProfiles,
         organiserTermsAccepted,
-        organiserAccess: accessStatus.organiserAccess,
-        organiserUiVisible: accessStatus.organiserUiVisible,
-        organiserEmailVerified: accessStatus.organiserEmailVerified,
+        organiserAccess: accessStatus.organiserAccess || impersonating,
+        organiserUiVisible: accessStatus.organiserUiVisible || impersonating,
+        organiserEmailVerified: accessStatus.organiserEmailVerified || impersonating,
         pendingClaimCount: accessStatus.pendingClaimCount,
         canOrganise:
           accessStatus.organiserAccess ||
           organiserProfiles > 0 ||
           accessStatus.pendingClaimCount > 0 ||
-          isAdminRole(role),
+          isAdminRole(role) ||
+          impersonating,
         canToggleHubMode:
           isClientRole(role) &&
-          !session.impersonator &&
+          !impersonating &&
           accessStatus.organiserUiVisible,
-        impersonating: !!session.impersonator,
+        impersonating,
         impersonatorEmail: session.impersonator ? session.impersonator.email : null,
       });
     }
@@ -81,11 +105,30 @@ module.exports = async function handler(req, res) {
     const { listGroupsForUser } = require('../organiser-provider').getOrganiserApi();
     const user = await findUserByEmail(session.email);
     if (!user || !user.passwordHash) {
+      if (session.impersonator) {
+        return json(res, 200, {
+          ok: true,
+          user: {
+            sub: session.sub,
+            email: session.email,
+            role: 'client',
+            name: session.name || '',
+          },
+          hubView: hubViewFromRequest(req),
+          organiserProfiles: 0,
+          canOrganise: true,
+          canToggleHubMode: false,
+          impersonating: true,
+          impersonatorEmail: session.impersonator.email || null,
+          organiserUiVisible: true,
+          organiserAccess: true,
+        });
+      }
       clearSessionCookie(res);
       return json(res, 200, { ok: false, user: null });
     }
 
-    const role = normalizeRole(user.role);
+    const role = session.impersonator ? 'client' : normalizeRole(user.role);
     const fresh = {
       sub: user.id,
       email: user.email,
@@ -93,7 +136,7 @@ module.exports = async function handler(req, res) {
       name: user.name,
     };
     if (session.impersonator) {
-      fresh.impersonator = session.impersonator;
+      applyImpersonationToSessionUser(fresh, session);
     }
 
     setSessionCookie(res, fresh);
@@ -106,28 +149,34 @@ module.exports = async function handler(req, res) {
       /* optional */
     }
 
+    const impersonating = !!session.impersonator;
     return json(res, 200, {
       ok: true,
       user: fresh,
       hubView: hubViewFromRequest(req),
       organiserProfiles,
-      canOrganise: organiserProfiles > 0 || isAdminRole(role),
-      canToggleHubMode: isClientRole(role) && !session.impersonator,
-      impersonating: !!session.impersonator,
+      canOrganise: organiserProfiles > 0 || isAdminRole(role) || impersonating,
+      canToggleHubMode: isClientRole(role) && !impersonating,
+      impersonating,
       impersonatorEmail: session.impersonator ? session.impersonator.email : null,
+      organiserUiVisible: organiserProfiles > 0 || impersonating,
+      organiserAccess: organiserProfiles > 0 || impersonating,
     });
   } catch {
+    const impersonating = !!session.impersonator;
     return json(res, 200, {
       ok: true,
       user: {
         email: session.email,
-        role: normalizeRole(session.role),
+        role: impersonating ? 'client' : normalizeRole(session.role),
         name: session.name,
         sub: session.sub,
       },
-      canToggleHubMode: isClientRole(session.role) && !session.impersonator,
-      impersonating: !!session.impersonator,
+      canToggleHubMode: isClientRole(session.role) && !impersonating,
+      impersonating,
       impersonatorEmail: session.impersonator ? session.impersonator.email : null,
+      organiserUiVisible: impersonating,
+      organiserAccess: impersonating,
     });
   }
 };

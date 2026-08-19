@@ -6,9 +6,8 @@ const { getSupabaseAdmin } = require('./supabase');
 const { normalizeTicketVisibility } = require('./ticket-visibility');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
 const { resolveImageUrl } = require('./supabase-storage');
-const { isAdminRole } = require('./auth');
+const { isAdminRole, hubViewFromRequest, organiserPersonalScopeFromRequest, impersonatedOrganiserIdsFromSession } = require('./auth');
 const { findUserByEmail } = require('./supabase-auth');
-const { hubViewFromRequest, organiserPersonalScopeFromRequest } = require('./auth');
 
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
@@ -2264,6 +2263,73 @@ async function propagateSeriesEventDetails(sb, updatedRow) {
   }
 }
 
+/**
+ * Tickets saved onto an already-public listing-only event should go live when
+ * checkout is allowed (free always; paid when refund terms + bank details exist).
+ * Ticket types still persist if sales cannot be enabled yet.
+ */
+async function enableTicketSalesOnPublishedEventsIfReady(sb, eventIds, createdTickets, refundPayload) {
+  const ids = (eventIds || []).filter(Boolean);
+  if (!ids.length) return;
+
+  const { data: rows, error } = await sb
+    .from('events')
+    .select(
+      'id, status, organiser_id, refund_policy, refund_policy_details, refund_cutoff_days, refund_terms_agreed, refund_terms_agreed_at, starts_at'
+    )
+    .in('id', ids)
+    .eq('status', 'published');
+  if (error) throw new Error(error.message);
+  if (!(rows || []).length) return;
+
+  if (refundPayload && String(refundPayload.refundPolicy || '').trim()) {
+    await saveRefundPolicyForEvents(ids, refundPayload);
+  }
+
+  const { tiersHavePaidPrice } = require('./supabase-events');
+  const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
+  const { assertRefundPolicyForPaidCheckout } = require('./event-refund-policy');
+
+  for (const row of rows) {
+    const list = (createdTickets || []).filter(
+      (ticket) => String(ticket.eventId || ticket.event_id || '') === String(row.id)
+    );
+    if (!list.length) continue;
+
+    const hasPaid = tiersHavePaidPrice(list);
+    if (hasPaid) {
+      try {
+        await assertOrganiserReadyForPaidPublish(sb, [row.organiser_id], list);
+        const refunded = {
+          ...row,
+          refund_policy: (refundPayload && refundPayload.refundPolicy) || row.refund_policy,
+          refund_policy_details:
+            (refundPayload && refundPayload.refundPolicyDetails) || row.refund_policy_details,
+          refund_cutoff_days:
+            refundPayload && refundPayload.refundCutoffDays != null
+              ? refundPayload.refundCutoffDays
+              : row.refund_cutoff_days,
+          refund_terms_agreed: Boolean(
+            (refundPayload && refundPayload.refundTermsAgreed) ||
+              row.refund_terms_agreed ||
+              row.refund_terms_agreed_at
+          ),
+        };
+        assertRefundPolicyForPaidCheckout(refunded);
+      } catch {
+        continue;
+      }
+    }
+
+    const onSale = eventHasTicketsOnSale(list, undefined, row.starts_at);
+    const { error: salesErr } = await sb
+      .from('events')
+      .update({ ticket_sales_enabled: onSale })
+      .eq('id', row.id);
+    if (salesErr) throw new Error(salesErr.message);
+  }
+}
+
 /** Same shape as Airtable API: { eventIds, tickets, publish, refund } */
 async function createTicketsForEvents({
   eventIds,
@@ -2496,6 +2562,10 @@ async function createTicketsForEvents({
 
   if (attendeeExtras != null && typeof attendeeExtras === 'object') {
     await saveAttendeeExtrasForEvents(ids, attendeeExtras);
+  }
+
+  if (!publish) {
+    await enableTicketSalesOnPublishedEventsIfReady(sb, ids, out, refund);
   }
 
   return { created: out.length, tickets: out, publishedEvents };
@@ -2806,6 +2876,7 @@ async function resolveWorkspaceGroupIds(session, groups, access, adminView) {
   if (adminView) return (groups || []).map((g) => g.id).filter(Boolean);
   const ids = new Set(workspaceGroupIds(groups, access));
   (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => ids.add(id));
+  impersonatedOrganiserIdsFromSession(session).forEach((id) => ids.add(id));
   return [...ids];
 }
 
@@ -2839,6 +2910,22 @@ async function prepareOrganiserWorkspaceScope(session, adminView) {
   }
 
   const groupIds = await resolveWorkspaceGroupIds(session, groups, access, adminView);
+  if (!adminView) {
+    const missing = impersonatedOrganiserIdsFromSession(session).filter(
+      (id) => !groups.some((g) => g.id === id)
+    );
+    if (missing.length) {
+      try {
+        const sb = getSupabaseAdmin();
+        const { data, error } = await sb.from('organisers').select('*').in('id', missing);
+        if (!error && data && data.length) {
+          groups = dedupeGroupsById(groups.concat(data.map((row) => sbOrg.rowToGroup(row))));
+        }
+      } catch {
+        /* workspace still works with ids even if extra group rows fail to load */
+      }
+    }
+  }
   return { groups, groupIds, access, groupsError };
 }
 
@@ -3282,6 +3369,7 @@ module.exports = {
   getLeanOrganiserWorkspace,
   getOrganiserWorkspaceStats,
   getOrganiserWorkspace,
+  prepareOrganiserWorkspaceScope,
   airtableSetupHint,
   rowToEvent,
   newSeriesGroupId,

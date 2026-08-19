@@ -17761,7 +17761,7 @@
         return;
       }
       const hasAccess =
-        data.organiserUiVisible || data.user.role === 'admin';
+        data.organiserUiVisible || data.user.role === 'admin' || data.impersonating;
       if (!hasAccess) {
         setDashboardLoading(false);
         if (data.organiserAccess && !data.organiserUiVisible) {

@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { assertDescriptionLimit } = require('../text-limits');
+const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 
 function parseBody(req) {
   let body = req.body;
@@ -84,7 +85,6 @@ module.exports = async function handler(req, res) {
     json,
     setCors,
     requireOrganiserSession,
-    listGroupsForSession,
     listEventsForSession,
     listEventsForSeriesGroup,
     groupOwnedBySession,
@@ -114,8 +114,14 @@ module.exports = async function handler(req, res) {
   const EVENT_NOT_OWNED = {
     error: 'event_not_owned',
     message:
-      'You do not have access to this event. Open it from My Events, or create a new listing under an organiser page you own.',
+      'This event is not on the organiser pages for this account. If you are impersonating, impersonate the group that owns the listing, then open it from My Events.',
   };
+
+  function sessionOwnsGroup(session, groups, groupIds, groupId) {
+    if (groupOwnedBySession(session, groups, groupId)) return true;
+    const id = String(groupId || '').trim();
+    return Boolean(id && (groupIds || []).includes(id));
+  }
 
   async function requireVerifiedForPublish(body) {
     if (!isPublishIntent(body)) return null;
@@ -131,16 +137,17 @@ module.exports = async function handler(req, res) {
 
   /** Prefer id+group checks — listing the full catalogue can miss drafts (row caps). */
   async function sessionGroups() {
-    const groups = await listGroupsForSession(auth.session);
-    return { groups, groupIds: groups.map((g) => g.id) };
+    const { adminView } = adminViewFromSession(auth.session, req);
+    const scope = await resolveOrganiserGroupScope(auth.session, adminView);
+    return { groups: scope.groups, groupIds: scope.groupIds, adminView };
   }
 
   async function assertOwnsEventId(eventId) {
-    const { groups, groupIds } = await sessionGroups();
-    if (isPlatformAdmin(auth.session)) return { ok: true, groups, groupIds };
+    const { groups, groupIds, adminView } = await sessionGroups();
+    if (adminView) return { ok: true, groups, groupIds, adminView };
     const owned = await filterOwnedEventIds([eventId], groupIds, false);
-    if (!owned.length) return { ok: false, groups, groupIds };
-    return { ok: true, groups, groupIds };
+    if (!owned.length) return { ok: false, groups, groupIds, adminView };
+    return { ok: true, groups, groupIds, adminView };
   }
 
   if (req.method === 'GET') {
@@ -148,11 +155,7 @@ module.exports = async function handler(req, res) {
     const seriesGroupId = String(req.query?.seriesGroupId || req.query?.series_group_id || '').trim();
     try {
       if (seriesGroupId) {
-        const groups = await listGroupsForSession(auth.session);
-        const groupIds = groups.map((g) => g.id);
-        const { organiserPersonalScopeFromRequest } = require('../auth');
-        const adminView =
-          isPlatformAdmin(auth.session) && !organiserPersonalScopeFromRequest(req);
+        const { groupIds } = await sessionGroups();
         const events = await listEventsForSeriesGroup(groupIds, seriesGroupId);
         return json(res, 200, { ok: true, events });
       }
@@ -168,21 +171,9 @@ module.exports = async function handler(req, res) {
         } catch {
           /* sales enrichment optional */
         }
-        if (
-          !isPlatformAdmin(auth.session) &&
-          event.organiserGroupId &&
-          !groupOwnedBySession(auth.session, access.groups, event.organiserGroupId)
-        ) {
-          const emailMatch =
-            event.ownerEmail && event.ownerEmail === auth.session.email.toLowerCase();
-          if (!emailMatch) {
-            return json(res, 403, EVENT_NOT_OWNED);
-          }
-        }
         return json(res, 200, { ok: true, event: enriched });
       }
-      const groups = await listGroupsForSession(auth.session);
-      const groupIds = groups.map((g) => g.id);
+      const { groups, groupIds } = await sessionGroups();
       const events = await listEventsForSession(auth.session, groupIds, []);
       return json(res, 200, { ok: true, events, groups });
     } catch (e) {
@@ -210,7 +201,7 @@ module.exports = async function handler(req, res) {
       const base = eventPayloadFromBody(body, auth.session.email);
       if (!base.title) return json(res, 400, { error: 'missing_title' });
       if (!base.groupId) return json(res, 400, { error: 'missing_group' });
-      if (!groupOwnedBySession(auth.session, groups, base.groupId)) {
+      if (!sessionOwnsGroup(auth.session, groups, access.groupIds, base.groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
 
@@ -391,8 +382,8 @@ module.exports = async function handler(req, res) {
     if (!occ.length && !isDraft) return json(res, 400, { error: 'missing_dates' });
 
     try {
-      const groups = await listGroupsForSession(auth.session);
-      if (!groupOwnedBySession(auth.session, groups, groupId)) {
+      const { groups, groupIds } = await sessionGroups();
+      if (!sessionOwnsGroup(auth.session, groups, groupIds, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
       validateEventDescription(body);
