@@ -317,7 +317,7 @@ async function createGroupUpdateCreditsCheckoutSession(opts) {
 }
 
 /**
- * City Partner — monthly subscription or prepaid 1 / 3 / 6 months.
+ * City Partner — monthly subscription or prepaid 6 / 12 months.
  */
 async function createCityPartnerCheckoutSession(opts) {
   const stripe = getStripeClient();

@@ -81,7 +81,9 @@ async function fetchAllOrganisers(sb) {
   while (true) {
     const { data, error } = await sb
       .from('organisers')
-      .select('id, name, slug, contact_email, email, listing_status, verification_status')
+      .select(
+        'id, name, slug, contact_email, email, listing_status, verification_status, ownership_claim_status'
+      )
       .order('name')
       .range(from, from + pageSize - 1);
     if (error) throw error;
@@ -212,6 +214,7 @@ function fillTemplate(template, vars) {
     const name = String(r.name || '').trim();
     const slug = publicOrganiserSlug(r) || '';
     if (isExcludedLaunchOrganiser({ email, slug, name })) continue;
+    if (String(r.ownership_claim_status || '').toLowerCase() === 'claimed') continue;
     if (!byEmail.has(email)) {
       byEmail.set(email, { email, groups: [] });
     }
@@ -261,6 +264,52 @@ function fillTemplate(template, vars) {
   if (accountEmails) {
     console.log('Already signed in (login link):', rows.filter((r) => r.hasAccount).length);
     console.log('Need register / set-password link:', rows.filter((r) => !r.hasAccount).length);
+  }
+
+  function emailsFromCsv(file) {
+    const p = path.join(root, file);
+    if (!fs.existsSync(p)) return [];
+    return fs
+      .readFileSync(p, 'utf8')
+      .replace(/^\uFEFF/, '')
+      .split(/\r?\n/)
+      .slice(1)
+      .map((line) => String(line.split(',')[0] || '').trim().toLowerCase())
+      .filter((e) => e.includes('@'));
+  }
+
+  const sent = new Set([
+    ...emailsFromCsv('data/Segment-A-Email2-1st-100-Brevo-import.csv'),
+    ...emailsFromCsv('data/Segment-A-Email2-2nd-100-Brevo-import.csv'),
+    ...emailsFromCsv('data/Segment-C-Email2-100-Brevo-import.csv'),
+    ...emailsFromCsv('data/Segment-D-Email2-100-Brevo-import.csv'),
+  ]);
+  const remaining = rows.filter((r) => !sent.has(r.email));
+  const remainingCsv =
+    bom +
+    'Email,Organiser name,OTHER_GROUPS_NOTE,CLAIM_URL\n' +
+    remaining
+      .map(
+        (r) =>
+          r.email + ',' + esc(r.name) + ',' + esc(r.otherNote) + ',' + esc(r.claimUrl)
+      )
+      .join('\n') +
+    '\n';
+  fs.writeFileSync(path.join(root, 'data/Segment-E-Email2-Brevo-import.csv'), remainingCsv);
+  console.log('Wrote data/Segment-E-Email2-Brevo-import.csv');
+  console.log('Already sent (batches 1–4):', sent.size);
+  console.log('Remaining recipients:', remaining.length);
+  const leftoverUnsubs = remaining.filter((r) =>
+    [
+      'suzy@uniqueladies.co.uk',
+      'ian@shoutnetwork.co.uk',
+      'admin@thinklikeatree.co.uk',
+      'p.heathcote@theyorkshiresociety.og',
+      'sarah@thinklikeatree.co.uk',
+    ].includes(r.email)
+  );
+  if (leftoverUnsubs.length) {
+    console.warn('UNSUB STILL IN REMAINING:', leftoverUnsubs.map((r) => r.email).join(', '));
   }
 
   const hrefs = [

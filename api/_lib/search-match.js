@@ -124,16 +124,25 @@ function typoVariantTerms(term) {
   return out;
 }
 
-function searchTermIlikePatterns(term) {
+function searchTermIlikePatterns(term, options) {
+  const opts = options || {};
   const t = sanitizeSearchTerm(term);
   if (!t || t === 'and') return [];
-  const patterns = ['%' + t + '%'];
+
+  const patterns = [];
+  if (opts.exact !== false) {
+    patterns.push('%' + t + '%');
+  }
+
+  const fuzzy = opts.fuzzy !== false && t.length >= FUZZY_MIN_LEN;
+  if (!fuzzy) return patterns;
+
   const variants = typoVariantTerms(t);
   for (let i = 0; i < variants.length; i++) {
     patterns.push('%' + variants[i] + '%');
   }
   // Single-character substitution via LIKE `_` so e.g. "manchaster" still hits "manchester".
-  if (t.length >= FUZZY_MIN_LEN) {
+  if (opts.substitutions !== false) {
     for (let i = 0; i < t.length; i++) {
       patterns.push('%' + t.slice(0, i) + '_' + t.slice(i + 1) + '%');
     }

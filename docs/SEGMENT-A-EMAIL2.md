@@ -29,7 +29,10 @@
 | `data/email2-brevo-preview.html` | Browser preview |
 | `data/Segment-A-Email2-1st-100-Brevo-import.csv` | Soft batch — 1st 100 (A–Z by group name) |
 | `data/Segment-A-Email2-2nd-100-Brevo-import.csv` | Soft batch — **2nd 100** (next A–Z after 1st 100) |
-| `data/Segment-A-Email2-Brevo-import.csv` | Full Segment A (~1,096) — use after soft batches are stable |
+| `data/Segment-C-Email2-100-Brevo-import.csv` | Soft batch — **3rd 100** |
+| `data/Segment-D-Email2-100-Brevo-import.csv` | Soft batch — **4th 100** |
+| `data/Segment-E-Email2-Brevo-import.csv` | **Segment E (last wave)** — everyone not in batches 1–4, minus unsubscribes |
+| `data/Segment-A-Email2-Brevo-import.csv` | Full Segment A (rebuild; excludes unsubs) |
 | `data/Segment-A-Email2-TEST-Brevo-import.csv` | Catherine + Rosie + test addresses |
 
 Rebuild:
@@ -52,6 +55,6 @@ node scripts/build-email2-brevo.js
 9. [ ] Optional: one more test send to yourself from the campaign
 10. [ ] **Send now** — first 100
 
-Widen to full Segment A later with `data/Segment-A-Email2-Brevo-import.csv`.
+Widen with `data/Segment-E-Email2-Brevo-import.csv` (everyone not already sent in batches 1–4). Do **not** import the full `Segment-A-Email2-Brevo-import.csv` or you will re-mail the first 400.
 
 Email 1 tracking: `docs/SEGMENT-A-EMAIL1.md`

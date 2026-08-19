@@ -7,6 +7,35 @@ const EXCLUDED_EMAILS = new Set([
   'getconnected@my-chamber.co.uk',
   'enquiries@lincs-chamber.co.uk',
   'customerservices@tvchamber.co.uk',
+  // Brevo unsubscribes 18 Aug 2026 — plus same-group inboxes still on Segment A.
+  'sarah@thinklikeatree.co.uk',
+  'admin@thinklikeatree.co.uk',
+  'events@cw-chamber.co.uk',
+  'events@maverrik.co.uk',
+  'david.martin@ether-solutions.co.uk',
+  'hello@elm-online.co.uk',
+  'sicapp74@gmail.com',
+  'shaya@mindfulaboutlife.com',
+  'sasha.boltman@bbxworld.com',
+  'info@shoutconnect.co.uk',
+  'sam.morris1311@gmail.com',
+  'andy@pro-doc.co.uk',
+  'vramsden@hotmail.com',
+  'tim@make-work.work',
+  'sarah.clarke@evansco.co.uk',
+  'jackywood2016@icloud.com',
+  'info@deepconnexions.co.uk',
+  'ian@shoutconnect.co.uk',
+  'hannah.forbes@c2compliance.co.uk',
+  'ccc@greshamstreet.com',
+  'suzy@uniqueladies.co.uk',
+  'jayson.gurney@darlingtonbusinessclub.co.uk',
+  'info@berkshiremummies.co.uk',
+  'ian@shoutnetwork.co.uk',
+  'contact@theyorkshiresociety.org',
+  'p.heathcote@theyorkshiresociety.og',
+  'hello@blueskyseo.co.uk',
+  'lee@revitalise-connect.com',
 ]);
 
 const EXCLUDED_SLUGS = new Set([
@@ -15,6 +44,7 @@ const EXCLUDED_SLUGS = new Set([
   'chamber-of-trade-mid-yorkshire',
   'chamber-of-trade-lincolnshire',
   'chamber-of-trade-thames-valley',
+  'revitalise-networking-club',
 ]);
 
 function normalizeEmail(email) {

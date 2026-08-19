@@ -5644,7 +5644,7 @@ body.nav-menu-open .ad-sticky-cta {
 
 .city-partner-term-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 
@@ -5652,6 +5652,7 @@ body.nav-menu-open .ad-sticky-cta {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
   margin: 0;
   padding: 10px 12px;
   border-radius: 10px;
@@ -5680,6 +5681,7 @@ body.nav-menu-open .ad-sticky-cta {
 
 .city-partner-term-option-copy {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
@@ -5689,23 +5691,20 @@ body.nav-menu-open .ad-sticky-cta {
   font-size: 0.9rem;
   font-weight: 700;
   color: #2d2636;
+  overflow-wrap: break-word;
 }
 
 .city-partner-term-option-copy em {
   font-style: normal;
   font-size: 0.78rem;
+  line-height: 1.35;
   color: #625f73;
+  overflow-wrap: break-word;
 }
 
-@media (min-width: 520px) {
+@media (min-width: 420px) {
   .city-partner-term-options {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 720px) {
-  .city-partner-term-options {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -5908,14 +5907,12 @@ body.nav-menu-open .ad-sticky-cta {
 }
 
 .city-partner-booked-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 10px;
-  align-items: center;
-  padding: 10px 12px;
+  display: block;
+  padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid rgba(50, 43, 120, 0.1);
-  background: rgba(255, 255, 255, 0.55);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(50, 43, 120, 0.06);
 }
 
 .city-partner-booked-name {
@@ -5931,10 +5928,20 @@ body.nav-menu-open .ad-sticky-cta {
 
 .city-partner-booked-copy {
   min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.city-partner-booked-heading {
+  display: block;
 }
 
 .city-partner-booked-name strong,
-.city-partner-booked-copy strong {
+.city-partner-booked-copy strong,
+.city-partner-booked-heading strong {
   font-weight: 700;
   color: #2b2648;
   white-space: nowrap;
@@ -5948,7 +5955,6 @@ body.nav-menu-open .ad-sticky-cta {
 }
 
 .city-partner-booked-waitlist {
-  justify-self: end;
   display: inline-flex;
   align-items: center;
   justify-content: center;

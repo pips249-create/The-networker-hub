@@ -174,30 +174,38 @@ function applySearchFilter(query, params) {
   const terms = tokenizeSearchQuery(params.q);
   if (!terms.length) return query;
 
-  const fields = [
+  // Keep the PostgREST OR list small. Leading-wildcard ILIKE cannot use btree
+  // indexes, so scanning `description` (and meeting/format tabs) on every typo
+  // variant was making browse search take several seconds per keystroke.
+  const exactFields = [
     'title',
-    'description',
     'city',
     'venue',
     'location_label',
     'postcode',
     'organiser_name',
     'event_type',
-    'meeting_type',
-    'format_tab',
   ];
+  const fuzzyFields = ['title', 'city', 'organiser_name'];
 
   let next = query;
   terms.forEach((term) => {
-    const patterns = searchTermIlikePatterns(term);
-    // highlights is text[] — ilike on it throws "operator does not exist: text[] ~~* unknown".
     const orParts = [];
-    patterns.forEach((pattern) => {
-      fields.forEach((field) => {
+    searchTermIlikePatterns(term, { fuzzy: false }).forEach((pattern) => {
+      exactFields.forEach((field) => {
         orParts.push(`${field}.ilike.${pattern}`);
       });
     });
-    next = next.or(orParts.join(','));
+    searchTermIlikePatterns(term, { exact: false, substitutions: false }).forEach((pattern) => {
+      fuzzyFields.forEach((field) => {
+        orParts.push(`${field}.ilike.${pattern}`);
+      });
+    });
+    searchTermIlikePatterns(term, { exact: false }).forEach((pattern) => {
+      if (pattern.indexOf('_') === -1) return;
+      orParts.push(`title.ilike.${pattern}`);
+    });
+    if (orParts.length) next = next.or(orParts.join(','));
   });
   return next;
 }
@@ -234,14 +242,14 @@ function applyOutcodeFilter(query, params) {
   let next = query;
   terms.forEach((term) => {
     if (term.length < 3) return;
-    const patterns = searchTermIlikePatterns(term);
+    const patterns = searchTermIlikePatterns(term, { fuzzy: false });
     const orParts = [];
     patterns.forEach((pattern) => {
       orParts.push(`city.ilike.${pattern}`);
       orParts.push(`location_label.ilike.${pattern}`);
       orParts.push(`venue.ilike.${pattern}`);
     });
-    next = next.or(orParts.join(','));
+    if (orParts.length) next = next.or(orParts.join(','));
   });
   return next;
 }
@@ -734,38 +742,57 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     };
   }
 
-  const pageData = await fetchBrowsePageIds(sb, params);
+  const wantFeatured = params.mode === 'featured' || params.includeMeta;
+  // Text search already does a heavy ILIKE pass — skip 11 type-count queries and
+  // spotlight slot status so the first page of results can return immediately.
+  const wantHeavyMeta = params.includeMeta && !params.q;
+
+  const featuredPromise = wantFeatured
+    ? (async () => {
+        // Spotlight uses location, search, format, dates, and price floor — but not
+        // event-type chips, free-only, or max price, so premium stays visible when
+        // users refine the grid (Option B: relevant premium).
+        let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
+        fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
+        // Over-fetch then series-dedupe so multi-date groups count as one slot (same as admin).
+        fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX * 4);
+        const { data: featuredRows, error: fErr } = await fq;
+        if (fErr) throw new Error(fErr.message);
+        return dedupeFeaturedRowsBySeries(
+          (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row))
+        ).slice(0, SPOTLIGHT_CAROUSEL_MAX);
+      })()
+    : Promise.resolve([]);
+
+  const typeCountsPromise = wantHeavyMeta ? fetchBrowseTypeCounts(sb, params) : Promise.resolve(null);
+  const spotlightPromise = wantHeavyMeta
+    ? require('./event-featured-slots').getFeaturedSpotlightSlotStatus()
+    : Promise.resolve(null);
+
+  const [pageData, liveFeatured, typeCounts, spotlightSlots] = await Promise.all([
+    fetchBrowsePageIds(sb, params),
+    featuredPromise,
+    typeCountsPromise,
+    spotlightPromise,
+  ]);
+
   const pageRows = await fetchRowsByIds(sb, pageData.ids);
-  const events = dedupeEventsById(await hydrateBrowseEvents(sb, pageRows));
+  const [events, featured] = await Promise.all([
+    hydrateBrowseEvents(sb, pageRows).then(dedupeEventsById),
+    liveFeatured.length
+      ? hydrateBrowseEvents(sb, liveFeatured).then(dedupeEventsById)
+      : Promise.resolve([]),
+  ]);
 
   const order = new Map(pageData.ids.map((id, i) => [id, i]));
   events.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 
-  let featured = [];
-  if (params.mode === 'featured' || params.includeMeta) {
-    // Spotlight uses location, search, format, dates, and price floor — but not
-    // event-type chips, free-only, or max price, so premium stays visible when
-    // users refine the grid (Option B: relevant premium).
-    let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
-    fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
-    // Over-fetch then series-dedupe so multi-date groups count as one slot (same as admin).
-    fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX * 4);
-    const { data: featuredRows, error: fErr } = await fq;
-    if (fErr) throw new Error(fErr.message);
-    const liveFeatured = dedupeFeaturedRowsBySeries(
-      (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row))
-    ).slice(0, SPOTLIGHT_CAROUSEL_MAX);
-    featured = dedupeEventsById(await hydrateBrowseEvents(sb, liveFeatured));
-  }
-
   let meta = null;
   if (params.includeMeta) {
-    const { getFeaturedSpotlightSlotStatus } = require('./event-featured-slots');
-    const spotlightSlots = await getFeaturedSpotlightSlotStatus();
     meta = {
-      typeCounts: await fetchBrowseTypeCounts(sb, params),
-      spotlightHasActiveFeatured: spotlightSlots.used > 0,
-      spotlightSlots,
+      typeCounts: typeCounts || undefined,
+      spotlightHasActiveFeatured: spotlightSlots ? spotlightSlots.used > 0 : undefined,
+      spotlightSlots: spotlightSlots || undefined,
     };
   }
 

@@ -363,6 +363,7 @@
         return '<option value="' + esc(name) + '">' + esc(name) + '</option>';
       })
       .join('');
+    packageEl.dispatchEvent(new Event('change'));
   }
 
   function prefillEnquiryForm(sectionLabel, packageName) {
@@ -556,6 +557,25 @@
     var cityPartnerNote = document.getElementById('ad-enquiry-city-partner-note');
     var submitBtn = document.getElementById('ad-enquiry-submit');
 
+    function isTerritorySponsorPackage(pkg) {
+      return pkg === 'City Partner' || pkg === 'City Sponsor' || pkg === 'County Sponsor';
+    }
+
+    function syncEnquiryDurationOptions() {
+      var durationEl = document.getElementById('ad-enquiry-duration');
+      if (!durationEl || !packageEl) return;
+      var hideShort = isTerritorySponsorPackage(String(packageEl.value || '').trim());
+      Array.prototype.forEach.call(durationEl.options, function (opt) {
+        var isShort = opt.getAttribute('data-ad-term-short') === 'true';
+        opt.hidden = hideShort && isShort;
+        opt.disabled = hideShort && isShort;
+      });
+      var selected = durationEl.options[durationEl.selectedIndex];
+      if (selected && selected.disabled) {
+        durationEl.value = 'Monthly (rolling)';
+      }
+    }
+
     function syncCityPartnerEnquiryNote() {
       if (!cityPartnerNote || !packageEl) return;
       var pkg = String(packageEl.value || '').trim();
@@ -564,8 +584,12 @@
     }
 
     if (packageEl) {
-      packageEl.addEventListener('change', syncCityPartnerEnquiryNote);
+      packageEl.addEventListener('change', function () {
+        syncCityPartnerEnquiryNote();
+        syncEnquiryDurationOptions();
+      });
       syncCityPartnerEnquiryNote();
+      syncEnquiryDurationOptions();
     }
 
     form.addEventListener('submit', function (e) {

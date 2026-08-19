@@ -56,7 +56,7 @@
   }
 
   function isPrepaidTerm(term) {
-    return term === '1' || term === '3' || term === '6' || term === '12' || term === 'yearly';
+    return term === '6' || term === '12' || term === 'yearly';
   }
 
   function prepaidDiscountPercent(termMonths) {
@@ -86,42 +86,52 @@
     });
   }
 
-  function bookedCitySummaryLabel(city) {
-    var name = String(city.name || '').toUpperCase();
-    var status = city.availableFrom
-      ? '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry from ' +
-        esc(formatAvailableFrom(city.availableFrom)) +
-        '.'
-      : '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.';
-    return (
-      '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
-      '<span class="city-partner-exclusivity-text">' +
-      '<strong class="city-partner-exclusivity-city">' +
-      esc(name) +
-      ':</strong> ' +
-      status +
-      '</span>'
-    );
-  }
-
   function bookedCityStatusText(city) {
     if (city.availableFrom) {
       return (
-        '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry from ' +
+        '(CLAIMED) — Waitlist open for re-entry from ' +
         formatAvailableFrom(city.availableFrom) +
         '.'
       );
     }
-    if (city.live) {
-      return '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.';
-    }
-    return '(EXCLUSIVELY CLAIMED) — Waitlist open for re-entry.';
+    return '(CLAIMED) — Waitlist open for re-entry.';
   }
 
-  function cityAvailabilitySuffix(city) {
-    if (city.available) return '';
-    if (city.availableFrom) return ' (WAITLIST ONLY)';
-    return ' (CLAIMED)';
+  function bookedCityCardHtml(city) {
+    var onWaitlist = isOnWaitlist(city.slug);
+    return (
+      '<li class="city-partner-booked-item">' +
+      '<span class="city-partner-booked-name">' +
+      '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
+      '<span class="city-partner-booked-copy">' +
+      '<span class="city-partner-booked-heading">' +
+      '<strong>' +
+      esc(String(city.name || '').toUpperCase()) +
+      ':</strong> ' +
+      esc(bookedCityStatusText(city)) +
+      '</span>' +
+      '<button type="button" class="city-partner-booked-waitlist' +
+      (onWaitlist ? ' city-partner-booked-waitlist--joined' : '') +
+      '" data-city-waitlist="' +
+      esc(city.slug) +
+      '"' +
+      (onWaitlist ? ' disabled' : '') +
+      '>' +
+      (onWaitlist ? 'On waitlist ✓' : 'Join waitlist') +
+      '</button>' +
+      '</span>' +
+      '</span>' +
+      '</li>'
+    );
+  }
+
+  function bindWaitlistButtons(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-city-waitlist]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        joinWaitlistForCity(btn.getAttribute('data-city-waitlist'), btn);
+      });
+    });
   }
 
   function isOnWaitlist(slug) {
@@ -266,33 +276,20 @@
       cityListEl.innerHTML = '';
     }
 
-    cityListEl.innerHTML +=
-      sorted
-        .map(function (city) {
-          if (city.available) {
-            return (
-              '<label class="city-partner-city">' +
-              '<input type="checkbox" name="city-partner-city" value="' +
-              esc(city.slug) +
-              '">' +
-              '<span>' +
-              esc(city.name) +
-              '</span>' +
-              '</label>'
-            );
-          }
-          return (
-            '<label class="city-partner-city city-partner-city--unavailable">' +
-            '<input type="checkbox" disabled aria-disabled="true">' +
-            '<span>' +
-            esc(city.name) +
-            '<em class="city-partner-city-status">' +
-            esc(cityAvailabilitySuffix(city)) +
-            '</em></span>' +
-            '</label>'
-          );
-        })
-        .join('');
+    cityListEl.innerHTML += available
+      .map(function (city) {
+        return (
+          '<label class="city-partner-city">' +
+          '<input type="checkbox" name="city-partner-city" value="' +
+          esc(city.slug) +
+          '">' +
+          '<span>' +
+          esc(city.name) +
+          '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
 
     cityListEl.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(function (input) {
       input.addEventListener('change', updateQuote);
@@ -334,47 +331,13 @@
     if (!hasBooked) return;
 
     if (bookedSummaryListEl) {
-      bookedSummaryListEl.innerHTML = booked
-        .map(function (city) {
-          return '<li class="city-partner-exclusivity-item">' + bookedCitySummaryLabel(city) + '</li>';
-        })
-        .join('');
+      bookedSummaryListEl.innerHTML = booked.map(bookedCityCardHtml).join('');
+      bindWaitlistButtons(bookedSummaryListEl);
     }
 
     if (bookedListEl) {
-      bookedListEl.innerHTML = booked
-        .map(function (city) {
-          var onWaitlist = isOnWaitlist(city.slug);
-          return (
-            '<li class="city-partner-booked-item">' +
-            '<span class="city-partner-booked-name">' +
-            '<span class="city-partner-claimed-dot" aria-hidden="true"></span>' +
-            '<span class="city-partner-booked-copy">' +
-            '<strong>' +
-            esc(String(city.name || '').toUpperCase()) +
-            ':</strong> ' +
-            esc(bookedCityStatusText(city)) +
-            '</span>' +
-            '</span>' +
-            '<button type="button" class="city-partner-booked-waitlist' +
-            (onWaitlist ? ' city-partner-booked-waitlist--joined' : '') +
-            '" data-city-waitlist="' +
-            esc(city.slug) +
-            '"' +
-            (onWaitlist ? ' disabled' : '') +
-            '>' +
-            (onWaitlist ? 'On waitlist ✓' : 'Join waitlist') +
-            '</button>' +
-            '</li>'
-          );
-        })
-        .join('');
-
-      bookedListEl.querySelectorAll('[data-city-waitlist]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          joinWaitlistForCity(btn.getAttribute('data-city-waitlist'), btn);
-        });
-      });
+      bookedListEl.innerHTML = booked.map(bookedCityCardHtml).join('');
+      bindWaitlistButtons(bookedListEl);
     }
   }
 
@@ -410,7 +373,7 @@
   function joinWaitlistForCity(slug, btn) {
     var email = emailEl ? String(emailEl.value || '').trim() : '';
     if (!email) {
-      setStatus('Enter your work email above to join the waitlist.', 'error');
+      setStatus('Enter your work email in checkout to join the waitlist.', 'error');
       if (emailEl) emailEl.focus();
       return;
     }

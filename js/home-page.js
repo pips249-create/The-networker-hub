@@ -2,12 +2,6 @@
  * Home page — scroll reveals and home page partners strip.
  */
 (function () {
-  /** Live Powered by heroes — always shown in the home partners strip when published. */
-  var LIVE_HERO_SLOTS = [
-    'events_sponsor_hub',
-    'organisers_sponsor_hub',
-    'opportunities_sponsor_hub',
-  ];
   /** Dark-on-transparent Barnsgate mark for white partner tiles (CMS often stores the navy-plate PNG). */
   var BARNSGATE_LIGHT_LOGO = '/assets/sponsors/barnsgate-logo-on-light.svg?v=20260806light';
   var activePartnersScroller = null;
@@ -16,26 +10,6 @@
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
     return d.innerHTML;
-  }
-
-  function sponsorLogo(block) {
-    if (window.CmsSponsorFields && window.CmsSponsorFields.logoUrl) {
-      return window.CmsSponsorFields.logoUrl(block);
-    }
-    return String((block && (block.logo_url || block.image_url)) || '').trim();
-  }
-
-  function sponsorCompany(block) {
-    if (window.CmsSponsorFields && window.CmsSponsorFields.companyName) {
-      return window.CmsSponsorFields.companyName(block);
-    }
-    return String((block && block.company_name) || '').trim();
-  }
-
-  function sponsorCta(block) {
-    var url = String((block && block.cta_url) || '').trim();
-    if (/^(https?:|mailto:)/i.test(url)) return url;
-    return '';
   }
 
   function isBarnsgatePartner(name, url) {
@@ -51,21 +25,6 @@
     // Navy-plate Barnsgate assets look boxed on white tiles — use the light-bg mark.
     if (isBarnsgatePartner(name, u)) return BARNSGATE_LIGHT_LOGO;
     return u;
-  }
-
-  function partnerFromSponsorBlock(block) {
-    var name = sponsorCompany(block) || 'Partner';
-    var logo = partnerLogoForStrip(sponsorLogo(block), name);
-    var flaggedDark = !!(block && (block.logo_band_dark === true || block.logoBandDark === true));
-    // Light-bg strip logo must never sit on a CMS dark band (unreadable).
-    if (logo === BARNSGATE_LIGHT_LOGO) flaggedDark = false;
-    return {
-      name: name,
-      logo: logo,
-      url: sponsorCta(block),
-      label: String((block && block.cta_label) || '').trim() || 'Visit website',
-      logoBandDark: partnerNeedsDarkBand(name, flaggedDark),
-    };
   }
 
   function addUniquePartner(list, seen, row) {
@@ -438,31 +397,20 @@
     var section = document.getElementById('home-partners');
     revealSection(section);
 
-    Promise.all([fetchCmsSlot('home_partners'), Promise.all(LIVE_HERO_SLOTS.map(fetchCmsSlot))]).then(
-      function (results) {
-        var homeData = results[0];
-        var slotResults = results[1] || [];
+    fetchCmsSlot('home_partners')
+      .then(function (homeData) {
         var partners = [];
         var seen = new Set();
-
-        // Live Powered by heroes first (Events / Organisers / Opportunities).
-        slotResults.forEach(function (slotData) {
-          if (!slotData || !slotData.ok || !slotData.block) return;
-          addUniquePartner(partners, seen, partnerFromSponsorBlock(slotData.block));
-        });
-
-        // Then any extras managed under Home partners in Command Centre.
         if (homeData && homeData.ok && homeData.active !== false && Array.isArray(homeData.partners)) {
           homeData.partners.forEach(function (p) {
             addUniquePartner(partners, seen, partnerFromRow(p));
           });
         }
-
         renderPartners(partners);
-      }
-    ).catch(function () {
-      renderPartners([]);
-    });
+      })
+      .catch(function () {
+        renderPartners([]);
+      });
   }
 
   function initHeroHubertForm() {
