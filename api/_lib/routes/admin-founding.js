@@ -43,20 +43,71 @@ function mapRow(row) {
     foundingHomepageUntil: homepageUntil,
     foundingHomepage: homepageActive,
     isInternal: Boolean(row.is_internal),
+    supabaseUserId: row.supabase_user_id || null,
+    // Auth confidence (Command Centre / social only — not used on the public site)
+    hasSignedIn: Boolean(row._hasSignedIn),
+    authProvisioned: Boolean(row._authProvisioned),
+    authFullName: String(row._authFullName || '').trim(),
+    socialConfirmed: Boolean(row._socialConfirmed),
   };
+}
+
+function looksLikePersonName(fullName, groupName) {
+  const n = String(fullName || '').trim();
+  const g = String(groupName || '').trim();
+  if (!n) return false;
+  if (n.toLowerCase() === g.toLowerCase()) return false;
+  const parts = n.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return false;
+  return /^[\p{L}'’.\-]+(?:\s+[\p{L}'’.\-]+)+$/u.test(n);
+}
+
+async function enrichAuthConfidence(sb, organisers) {
+  const list = Array.isArray(organisers) ? organisers : [];
+  const out = [];
+  for (const row of list) {
+    const uid = row.supabaseUserId;
+    let hasSignedIn = false;
+    let authProvisioned = false;
+    let authFullName = '';
+    if (uid) {
+      try {
+        const { data } = await sb.auth.admin.getUserById(uid);
+        const u = data && data.user;
+        if (u) {
+          hasSignedIn = Boolean(u.last_sign_in_at);
+          authProvisioned = Boolean(u.user_metadata && u.user_metadata.provisioned_organiser_id);
+          authFullName = String((u.user_metadata && u.user_metadata.full_name) || '').trim();
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    const personNamed = looksLikePersonName(authFullName, row.name);
+    // High confidence for social: real sign-in, or self-register (person name, not soft-provisioned).
+    const socialConfirmed = hasSignedIn || (!authProvisioned && personNamed);
+    out.push({
+      ...row,
+      hasSignedIn,
+      authProvisioned,
+      authFullName,
+      socialConfirmed,
+    });
+  }
+  return out;
 }
 
 async function listFounding(sb) {
   const { data, error } = await sb
     .from('organisers')
     .select(
-      'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until, is_internal'
+      'id, name, slug, email, contact_email, website, photo_url, ownership_claim_status, ownership_claimed_at, founding_organiser_at, founding_homepage_until, is_internal, supabase_user_id'
     )
     .not('founding_organiser_at', 'is', null)
     .order('founding_organiser_at', { ascending: true })
     .limit(500);
   if (error) throw new Error(error.message);
-  return (data || []).map(mapRow);
+  return enrichAuthConfidence(sb, (data || []).map(mapRow));
 }
 
 async function homepageSlotCount(sb) {
@@ -102,6 +153,7 @@ module.exports = async function handler(req, res) {
       const missingLogo = organisers.filter((o) => !o.photoUrl).length;
       const missingWebsite = organisers.filter((o) => !o.website).length;
       const needsAssets = organisers.filter((o) => !o.photoUrl || !o.website).length;
+      const socialConfirmed = organisers.filter((o) => o.socialConfirmed && !o.isInternal).length;
       return json(res, 200, {
         ok: true,
         organisers,
@@ -115,6 +167,7 @@ module.exports = async function handler(req, res) {
           missingLogo,
           missingWebsite,
           needsAssets,
+          socialConfirmed,
         },
       });
     } catch (e) {

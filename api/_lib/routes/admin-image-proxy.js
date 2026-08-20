@@ -18,6 +18,16 @@ function parseUrlParam(req) {
   }
 }
 
+function prepareSvgBuffer(buf) {
+  let text = buf.toString('utf8');
+  if (!/<svg[\s>]/i.test(text)) return buf;
+  // Canvas Image() often fails on SVGs without explicit width/height.
+  if (!/\swidth\s*=/i.test(text) && /viewBox\s*=/i.test(text)) {
+    text = text.replace(/<svg\b/i, '<svg width="1200" height="800"');
+  }
+  return Buffer.from(text, 'utf8');
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
@@ -39,13 +49,19 @@ module.exports = async function handler(req, res) {
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     return json(res, 400, { error: 'invalid_protocol' });
   }
+  // Prefer https when both work — avoids mixed-content / Squarespace http quirks.
+  if (parsed.protocol === 'http:') {
+    parsed.protocol = 'https:';
+  }
 
   try {
     const upstream = await fetch(parsed.toString(), {
       redirect: 'follow',
       headers: {
         Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'User-Agent': 'TheNetworkerHubAdminImageProxy/1.0',
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Referer: parsed.origin + '/',
       },
     });
     if (!upstream.ok) {
@@ -54,17 +70,25 @@ module.exports = async function handler(req, res) {
 
     const contentType = String(upstream.headers.get('content-type') || 'image/png')
       .split(';')[0]
-      .trim();
+      .trim()
+      .toLowerCase();
     if (!/^image\//i.test(contentType) && contentType !== 'application/octet-stream') {
       return json(res, 502, { error: 'not_an_image', contentType });
     }
 
-    const buf = Buffer.from(await upstream.arrayBuffer());
+    let buf = Buffer.from(await upstream.arrayBuffer());
     if (!buf.length) return json(res, 502, { error: 'empty_image' });
     if (buf.length > MAX_BYTES) return json(res, 502, { error: 'too_large' });
 
+    const isSvg =
+      contentType.includes('svg') || buf.slice(0, 200).toString('utf8').includes('<svg');
+    if (isSvg) buf = prepareSvgBuffer(buf);
+
     res.statusCode = 200;
-    res.setHeader('Content-Type', /^image\//i.test(contentType) ? contentType : 'image/png');
+    res.setHeader(
+      'Content-Type',
+      isSvg ? 'image/svg+xml' : /^image\//i.test(contentType) ? contentType : 'image/png'
+    );
     res.setHeader('Content-Length', String(buf.length));
     res.setHeader('Cache-Control', 'private, max-age=300');
     res.setHeader('Access-Control-Allow-Origin', '*');

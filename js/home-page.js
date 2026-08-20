@@ -501,14 +501,91 @@
   function splitFoundingRows(list) {
     var rowA = [];
     var rowB = [];
-    (list || []).forEach(function (org, i) {
-      (i % 2 === 0 ? rowA : rowB).push(org);
+    var countA = {};
+    var countB = {};
+    (list || []).forEach(function (org) {
+      var key = foundingBrandKey(org);
+      var a = countA[key] || 0;
+      var b = countB[key] || 0;
+      // Prefer the shorter row, but keep same-brand chapters off the same row when possible.
+      var preferA =
+        a < b || (a === b && rowA.length <= rowB.length);
+      if (preferA) {
+        rowA.push(org);
+        countA[key] = a + 1;
+      } else {
+        rowB.push(org);
+        countB[key] = b + 1;
+      }
     });
-    // Keep rows balanced when the list is odd (soft-launch BMUK may make it uneven).
     if (rowA.length > rowB.length + 1 && rowB.length) {
       rowB.push(rowA.pop());
     }
-    return { rowA: rowA, rowB: rowB };
+    return {
+      rowA: spreadFoundingLogos(rowA),
+      rowB: spreadFoundingLogos(rowB),
+    };
+  }
+
+  /** Group key so regional chapters that share a logo (e.g. Women in Property) can be spaced out. */
+  function foundingBrandKey(org) {
+    var n = String((org && org.name) || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (/women\s*in\s*property/.test(n)) return 'brand:women-in-property';
+    if (/women\s*in\s*the\s*law/.test(n)) return 'brand:women-in-the-law';
+    if (/women\s*mean\s*business|\bwmb\b|womenmeanbiz/.test(n)) return 'brand:wmb';
+    if (org && org.id) return 'id:' + org.id;
+    return 'name:' + n;
+  }
+
+  /**
+   * Spread lookalike / same-brand logos so they are not clumped in the marquee
+   * (Women in Property chapters were sitting next to each other).
+   */
+  function spreadFoundingLogos(list) {
+    var items = (list || []).slice();
+    if (items.length < 3) return items;
+
+    var buckets = {};
+    var brandOrder = [];
+    items.forEach(function (org) {
+      var key = foundingBrandKey(org);
+      if (!buckets[key]) {
+        buckets[key] = [];
+        brandOrder.push(key);
+      }
+      buckets[key].push(org);
+    });
+
+    var multiBrand = brandOrder.some(function (k) {
+      return buckets[k].length > 1;
+    });
+    if (!multiBrand) return items;
+
+    var out = [];
+    var lastBrand = '';
+    var remaining = items.length;
+    while (remaining > 0) {
+      var candidates = brandOrder
+        .filter(function (k) {
+          return buckets[k].length > 0;
+        })
+        .sort(function (a, b) {
+          return buckets[b].length - buckets[a].length;
+        });
+      if (!candidates.length) break;
+
+      var pick = candidates[0];
+      if (pick === lastBrand && candidates.length > 1) {
+        pick = candidates[1];
+      }
+      out.push(buckets[pick].shift());
+      lastBrand = pick;
+      remaining -= 1;
+    }
+    return out;
   }
 
   function paintFoundingTrack(track, marquee, orgs, opts) {
@@ -557,17 +634,19 @@
     revealSection(section);
     track.setAttribute('aria-busy', 'false');
 
+    var spaced = spreadFoundingLogos(list);
+
     // Two rows once we have enough logos — halves the loop length so the strip doesn't crawl.
-    var useDual = list.length >= 8 && trackB && marqueeB;
+    var useDual = spaced.length >= 8 && trackB && marqueeB;
     if (wrap) wrap.classList.toggle('home-founding-marquees--dual', useDual);
 
     if (useDual) {
-      var rows = splitFoundingRows(list);
+      var rows = splitFoundingRows(spaced);
       paintFoundingTrack(track, marquee, rows.rowA, { reverse: false });
       paintFoundingTrack(trackB, marqueeB, rows.rowB, { reverse: true });
       trackB.setAttribute('aria-hidden', 'true');
     } else {
-      paintFoundingTrack(track, marquee, list, { reverse: false });
+      paintFoundingTrack(track, marquee, spaced, { reverse: false });
       if (marqueeB) marqueeB.hidden = true;
       if (trackB) {
         trackB.innerHTML = '';

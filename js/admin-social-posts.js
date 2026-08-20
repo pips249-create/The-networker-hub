@@ -568,6 +568,53 @@
     });
   }
 
+  /**
+   * Explicit allowlist for the founding social graphic (Command Centre only).
+   * Athena Network is intentionally excluded. Soft-launch BMUK is always included.
+   */
+  var SOCIAL_FOUNDING_ALLOW = [
+    /^business\s*matching/i,
+    /^first\s*connections$/i,
+    /^we\s*are\s*in\s*business/i,
+    /^treehouse\s*tribe/i,
+    /^the\s*business\s*network/i,
+    /^the\s*business\s*community/i,
+    /^searchnorwich/i,
+    /^like[- ]?minded\s*professionals/i,
+    /^scottish\s*national\s*network/i,
+    /^norwich\s*kitty/i,
+    /^big\s*business\s*breakfast/i,
+    /^get\s*connected/i,
+  ];
+
+  function isSocialFoundingAllowed(name) {
+    var n = String(name || '').trim();
+    if (!n) return false;
+    if (/athena/i.test(n)) return false;
+    return SOCIAL_FOUNDING_ALLOW.some(function (re) {
+      return re.test(n);
+    });
+  }
+
+  function socialGraphicFoundingOrganisers(organisers) {
+    var list = publicFoundingOrganisers(organisers).filter(function (o) {
+      return isSocialFoundingAllowed(o && o.name);
+    });
+    var hasBmuk = false;
+    for (var i = 0; i < list.length; i++) {
+      if (!isBmukName(list[i] && list[i].name)) continue;
+      hasBmuk = true;
+      list[i] = Object.assign({}, list[i], {
+        photoUrl: '/assets/marketing/bmu-logo.png',
+      });
+      break;
+    }
+    if (!hasBmuk) {
+      list.unshift(softLaunchFoundingSeed());
+    }
+    return list;
+  }
+
   function softLaunchFoundingSeed() {
     return {
       id: 'soft-launch-bmuk',
@@ -586,16 +633,28 @@
 
   function withSoftLaunchFounding(organisers) {
     var list = publicFoundingOrganisers(organisers).slice();
-    if (!list.some(function (o) {
-      return isBmukName(o && o.name);
-    })) {
+    var hasBmuk = false;
+    for (var i = 0; i < list.length; i++) {
+      if (!isBmukName(list[i] && list[i].name)) continue;
+      hasBmuk = true;
+      // Always use the Hub marketing BMUK logo for this graphic.
+      list[i] = Object.assign({}, list[i], {
+        photoUrl: '/assets/marketing/bmu-logo.png',
+      });
+      break;
+    }
+    if (!hasBmuk) {
       list.unshift(softLaunchFoundingSeed());
     }
     return list;
   }
 
-  function foundingNameLists(organisers) {
-    var list = withSoftLaunchFounding(organisers);
+  function foundingNameLists(organisers, opts) {
+    opts = opts || {};
+    // Social posts use the explicit allowlist (not the full live founding cohort).
+    var list = opts.socialConfirmedOnly
+      ? socialGraphicFoundingOrganisers(organisers)
+      : withSoftLaunchFounding(organisers);
     var homepage = list.filter(function (o) {
       return o.foundingHomepage || o.softLaunch;
     });
@@ -628,7 +687,7 @@
   }
 
   function foundingLinkedInCaption(organisers) {
-    var names = foundingNameLists(organisers);
+    var names = foundingNameLists(organisers, { socialConfirmedOnly: true });
     return (
       'Meet the Founding Organisers of The Networker Hub 🎉\n\n' +
       'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n' +
@@ -697,17 +756,16 @@
 
     // Admin proxy needs the session cookie — fetch with credentials, then blob URL.
     if (src.indexOf('/api/admin/image-proxy?') === 0) {
-      return fetch(src, { credentials: 'include', cache: 'force-cache' })
+      return fetch(src, { credentials: 'include', cache: 'no-store' })
         .then(function (res) {
           if (!res.ok) throw new Error('proxy_' + res.status);
           return res.blob();
         })
         .then(function (blob) {
-          if (!blob || !blob.size || (blob.type && blob.type.indexOf('image/') !== 0 && blob.type !== 'application/octet-stream')) {
-            throw new Error('not_image');
-          }
+          if (!blob || !blob.size) throw new Error('empty');
+          // Some hosts omit type or send octet-stream — still try to decode as an image.
           var objectUrl = URL.createObjectURL(blob);
-          return loadImageFromSrc(objectUrl, 8000).then(function (img) {
+          return loadImageFromSrc(objectUrl, 10000).then(function (img) {
             URL.revokeObjectURL(objectUrl);
             return img;
           });
@@ -720,31 +778,162 @@
     return loadImageFromSrc(src, 10000);
   }
 
-  function drawFoundingLogoTile(ctx, photo, x, y, cell) {
-    var inset = 14;
-    var box = cell - inset * 2;
-
-    // Light plate so dark / navy logos stay readable on the purple card.
-    ctx.fillStyle = '#ffffff';
+  function drawFoundingTilePlate(ctx, x, y, cell, opts) {
+    opts = opts || {};
+    ctx.fillStyle = opts.fill || '#ffffff';
     roundRect(ctx, x, y, cell, cell, 18);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 1;
-    roundRect(ctx, x, y, cell, cell, 18);
-    ctx.stroke();
+    if (opts.dashed) {
+      ctx.save();
+      ctx.setLineDash([7, 6]);
+      ctx.strokeStyle = opts.stroke || '#c4a574';
+      ctx.lineWidth = 2;
+      roundRect(ctx, x + 1, y + 1, cell - 2, cell - 2, 17);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.strokeStyle = opts.stroke || 'rgba(28, 32, 64, 0.1)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, y, cell, cell, 18);
+      ctx.stroke();
+    }
+  }
 
+  /**
+   * Pick a plate colour from the logo itself:
+   * - mostly light → dark plate (white wordmarks)
+   * - mostly dark / black-backed (e.g. BMUK) → black plate
+   * - otherwise → white
+   */
+  function foundingLogoPlateFill(photo) {
+    try {
+      var tw = 48;
+      var th = 48;
+      var tmp = document.createElement('canvas');
+      tmp.width = tw;
+      tmp.height = th;
+      var tctx = tmp.getContext('2d', { willReadFrequently: true });
+      if (!tctx) return '#ffffff';
+      tctx.clearRect(0, 0, tw, th);
+      tctx.drawImage(photo, 0, 0, tw, th);
+      var data = tctx.getImageData(0, 0, tw, th).data;
+      var sum = 0;
+      var n = 0;
+      for (var i = 0; i < data.length; i += 4) {
+        var a = data[i + 3];
+        if (a < 40) continue;
+        sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+        n += 1;
+      }
+      if (n < 8) return '#ffffff';
+      var avg = sum / n;
+      if (avg > 210) return '#1c2040';
+      if (avg < 55) return '#0a0a0a';
+      return '#ffffff';
+    } catch (e) {
+      return '#ffffff';
+    }
+  }
+
+  function wrapCanvasLines(ctx, text, maxWidth, maxLines) {
+    var words = String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ');
+    var lines = [];
+    var current = '';
+    for (var i = 0; i < words.length; i++) {
+      var next = current ? current + ' ' + words[i] : words[i];
+      if (current && ctx.measureText(next).width > maxWidth) {
+        lines.push(current);
+        current = words[i];
+        if (lines.length >= maxLines - 1) {
+          var rest = [current].concat(words.slice(i + 1)).join(' ');
+          lines.push(truncateCanvasText(ctx, rest, maxWidth));
+          return lines;
+        }
+      } else {
+        current = next;
+      }
+    }
+    if (current) lines.push(current);
+    return lines.slice(0, maxLines);
+  }
+
+  function drawFoundingLogoTile(ctx, photo, x, y, cell) {
     if (!photo || !photo.width || !photo.height) return false;
 
-    var pad = 16;
-    var maxW = box - pad;
-    var maxH = box - pad;
-    var scale = Math.min(maxW / photo.width, maxH / photo.height, 1);
+    var fill = foundingLogoPlateFill(photo);
+    drawFoundingTilePlate(ctx, x, y, cell, { fill: fill });
+
+    var pad = 20;
+    var maxW = cell - pad * 2;
+    var maxH = cell - pad * 2;
+    var scale = Math.min(maxW / photo.width, maxH / photo.height);
     var dw = Math.max(1, photo.width * scale);
     var dh = Math.max(1, photo.height * scale);
     var dx = x + (cell - dw) / 2;
     var dy = y + (cell - dh) / 2;
+
+    ctx.save();
+    roundRect(ctx, x + 2, y + 2, cell - 4, cell - 4, 16);
+    ctx.clip();
     ctx.drawImage(photo, dx, dy, dw, dh);
+    ctx.restore();
     return true;
+  }
+
+  function drawFoundingNameTile(ctx, org, x, y, cell) {
+    drawFoundingTilePlate(ctx, x, y, cell, { fill: '#ffffff' });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#1c2040';
+    ctx.font = '700 18px system-ui, sans-serif';
+    var lines = wrapCanvasLines(ctx, org && org.name ? org.name : 'Group', cell - 28, 4);
+    var lineH = 24;
+    var startY = y + cell / 2 - ((lines.length - 1) * lineH) / 2;
+    for (var i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], x + cell / 2, startY + i * lineH);
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawFoundingWordmarkTile(ctx, org, x, y, cell) {
+    drawFoundingTilePlate(ctx, x, y, cell, { fill: '#ffffff' });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#c4a574';
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.fillText('FOUNDING', x + cell / 2, y + cell * 0.28);
+    ctx.fillStyle = '#1c2040';
+    ctx.font = '700 20px Georgia, "DM Serif Display", serif';
+    var lines = wrapCanvasLines(ctx, org && org.name ? org.name : 'Group', cell - 28, 3);
+    var lineH = 26;
+    var startY = y + cell / 2 + 4 - ((lines.length - 1) * lineH) / 2;
+    for (var i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], x + cell / 2, startY + i * lineH);
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawFoundingCtaTile(ctx, x, y, cell) {
+    drawFoundingTilePlate(ctx, x, y, cell, {
+      fill: '#f7f0e4',
+      stroke: '#c4a574',
+      dashed: true,
+    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#c4a574';
+    ctx.font = '700 14px system-ui, sans-serif';
+    ctx.fillText('YOUR LOGO', x + cell / 2, y + cell / 2 - 22);
+    ctx.fillStyle = '#1c2040';
+    ctx.font = '700 28px Georgia, "DM Serif Display", serif';
+    ctx.fillText('here', x + cell / 2, y + cell / 2 + 8);
+    ctx.fillStyle = '#635c5e';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('Claim before 1 Sept', x + cell / 2, y + cell / 2 + 40);
+    ctx.textBaseline = 'alphabetic';
   }
 
   function drawCircleImage(ctx, img, x, y, radius) {
@@ -857,11 +1046,16 @@
   }
 
   async function generateFoundingCardImage(organisers) {
-    var names = foundingNameLists(organisers);
+    var names = foundingNameLists(organisers, { socialConfirmedOnly: true });
     var withPhotos = names.featured.filter(function (o) {
-      return String(o.photoUrl || '').trim();
+      return String(o.photoUrl || '').trim() || o.softLaunchWordmark;
     });
-    var tiles = (withPhotos.length ? withPhotos : names.featured).slice(0, 20);
+    var tiles = (withPhotos.length ? withPhotos : names.featured).slice(0, 19);
+    tiles.push({
+      id: 'cta-your-logo',
+      name: 'Your logo here',
+      isCta: true,
+    });
     var cols = tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4;
     var rows = Math.max(1, Math.ceil(Math.max(tiles.length, 1) / cols));
     var width = 1080;
@@ -906,6 +1100,7 @@
     } else {
       var photos = await Promise.all(
         tiles.map(function (org) {
+          if (org.isCta || org.softLaunchWordmark) return Promise.resolve(null);
           return loadImage(org.photoUrl);
         })
       );
@@ -915,24 +1110,25 @@
         var row = Math.floor(i / cols);
         var x = padX + col * (cell + gap);
         var y = headerHeight + row * (cell + gap);
+        if (org.isCta) {
+          drawFoundingCtaTile(ctx, x, y, cell);
+          continue;
+        }
+        if (org.softLaunchWordmark) {
+          drawFoundingWordmarkTile(ctx, org, x, y, cell);
+          continue;
+        }
         var photo = photos[i];
         var drew = drawFoundingLogoTile(ctx, photo, x, y, cell);
         if (!drew) {
-          ctx.fillStyle = '#452d5c';
-          ctx.font = '600 20px system-ui, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          var label = truncateCanvasText(ctx, org.name || 'Group', cell - 28);
-          ctx.fillText(label, x + cell / 2, y + cell / 2);
-          ctx.textBaseline = 'alphabetic';
+          drawFoundingNameTile(ctx, org, x, y, cell);
         }
       }
     }
 
+    var realCount = Math.max(0, (names.list || []).length);
     var countLine =
-      names.list.length === 1
-        ? '1 founding organiser'
-        : String(names.list.length || 0) + ' founding organisers';
+      realCount === 1 ? '1 founding organiser' : String(realCount) + ' founding organisers';
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.font = '500 22px system-ui, sans-serif';
     ctx.textAlign = 'center';
@@ -1546,11 +1742,11 @@
           });
         return;
       }
-      var names = foundingNameLists(state.foundingOrganisers);
+      var names = foundingNameLists(state.foundingOrganisers, { socialConfirmedOnly: true });
       if (!names.list.length) {
         captionEl.value =
-          'No founding organisers yet. Badges unlock when a group claims before 1 September.';
-        setPreview(hubLogoUrl(), url, 'No founding organisers yet');
+          'No confirmed founding organisers yet for this graphic (self-claimed accounts only).';
+        setPreview(hubLogoUrl(), url, 'No confirmed founding organisers yet');
         state.foundingCardUrl = '';
         renderTags(null);
         return;
