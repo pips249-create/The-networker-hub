@@ -541,6 +541,37 @@
   }
 
   /**
+   * Homepage strip: one tile per shared brand logo (Women in Property chapters share artwork).
+   */
+  function dedupeFoundingBrandLogos(list) {
+    var seen = {};
+    var out = [];
+    (list || []).forEach(function (org) {
+      var key = foundingBrandKey(org);
+      if (key.indexOf('brand:') !== 0) {
+        out.push(org);
+        return;
+      }
+      if (seen[key]) return;
+      seen[key] = true;
+      // Prefer a chapter that has a logo URL when collapsing.
+      var best = org;
+      if (!String(org.photoUrl || '').trim()) {
+        var withPhoto = (list || []).find(function (o) {
+          return foundingBrandKey(o) === key && String(o.photoUrl || '').trim();
+        });
+        if (withPhoto) best = withPhoto;
+      }
+      // Display as the parent brand when collapsing Women in Property chapters.
+      if (key === 'brand:women-in-property') {
+        best = Object.assign({}, best, { name: 'Women in Property' });
+      }
+      out.push(best);
+    });
+    return out;
+  }
+
+  /**
    * Spread lookalike / same-brand logos so they are not clumped in the marquee
    * (Women in Property chapters were sitting next to each other).
    */
@@ -634,7 +665,7 @@
     revealSection(section);
     track.setAttribute('aria-busy', 'false');
 
-    var spaced = spreadFoundingLogos(list);
+    var spaced = spreadFoundingLogos(dedupeFoundingBrandLogos(list));
 
     // Two rows once we have enough logos — halves the loop length so the strip doesn't crawl.
     var useDual = spaced.length >= 8 && trackB && marqueeB;
