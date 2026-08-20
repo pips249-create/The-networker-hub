@@ -570,19 +570,66 @@
 
   /**
    * Explicit allowlist + display order for the founding social graphic (Command Centre only).
+   * One tile per slot — always, even if a logo URL fails to load.
    */
   var SOCIAL_FOUNDING_ORDER = [
-    { re: /^the\s*business\s*community/i, key: 'tbc' },
-    { re: /^get\s*connected/i, key: 'get-connected' },
-    { re: /business\s*matching|^bmuk\b/i, key: 'bmuk' },
-    { re: /^first\s*connections$/i, key: 'first-connections' },
-    { re: /^the\s*business\s*show/i, key: 'business-show' },
-    { re: /^z[oö]c[oö]/i, key: 'zoco' },
-    { re: /^scottish\s*national\s*network/i, key: 'snn' },
-    { re: /^searchnorwich/i, key: 'searchnorwich' },
-    { re: /^beyond\s*wealth/i, key: 'beyond-wealth' },
-    { re: /^we\s*are\s*in\s*business/i, key: 'waib' },
-    { re: /^the\s*business\s*network/i, key: 'tbn' },
+    {
+      re: /business\s*community/i,
+      key: 'tbc',
+      label: 'The Business Community',
+    },
+    {
+      re: /^get\s*connected/i,
+      key: 'get-connected',
+      label: 'Get Connected',
+      fallbackPhoto: '/assets/marketing/get-connected-logo.png',
+    },
+    {
+      re: /business\s*matching|^bmuk\b/i,
+      key: 'bmuk',
+      label: 'Business Matching UK',
+      softLaunch: true,
+    },
+    {
+      re: /^first\s*connections/i,
+      key: 'first-connections',
+      label: 'First Connections',
+    },
+    {
+      re: /business\s*show/i,
+      key: 'business-show',
+      label: 'The Business Show - London',
+    },
+    {
+      re: /^zoco\b|^z[oö]c[oö]\b/i,
+      key: 'zoco',
+      label: 'Zoco Networking Group',
+    },
+    {
+      re: /scottish\s*national\s*network|\bsnn\b/i,
+      key: 'snn',
+      label: 'Scottish National Network',
+    },
+    {
+      re: /searchnorwich/i,
+      key: 'searchnorwich',
+      label: 'SearchNorwichXL',
+    },
+    {
+      re: /beyond\s*wealth/i,
+      key: 'beyond-wealth',
+      label: 'Beyond Wealth',
+    },
+    {
+      re: /we\s*are\s*in\s*business/i,
+      key: 'waib',
+      label: 'We Are In Business',
+    },
+    {
+      re: /business\s*network/i,
+      key: 'tbn',
+      label: 'The Business Network Birmingham',
+    },
   ];
 
   var SOCIAL_FOUNDING_TOTAL = 30;
@@ -600,16 +647,38 @@
   }
 
   function socialGraphicFoundingOrganisers(organisers) {
-    // Always use the Hub marketing BMUK tile — DB BMUK rows are not founding yet
-    // and regional "Business Matching UK - …" names must not crowd the graphic.
-    var list = publicFoundingOrganisers(organisers).filter(function (o) {
-      return isSocialFoundingAllowed(o && o.name) && !isBmukName(o && o.name);
+    var byKey = {};
+    publicFoundingOrganisers(organisers).forEach(function (o) {
+      if (!o || isBmukName(o.name)) return;
+      var idx = socialFoundingOrderIndex(o.name);
+      if (idx < 0) return;
+      var key = SOCIAL_FOUNDING_ORDER[idx].key;
+      // Prefer the entry that already has a photo URL.
+      if (!byKey[key] || (!String(byKey[key].photoUrl || '').trim() && String(o.photoUrl || '').trim())) {
+        byKey[key] = o;
+      }
     });
-    list.unshift(softLaunchFoundingSeed());
-    list.sort(function (a, b) {
-      return socialFoundingOrderIndex(a.name) - socialFoundingOrderIndex(b.name);
+
+    return SOCIAL_FOUNDING_ORDER.map(function (slot) {
+      if (slot.softLaunch || slot.key === 'bmuk') {
+        return softLaunchFoundingSeed();
+      }
+      var org = byKey[slot.key];
+      if (org) {
+        var photo = String(org.photoUrl || '').trim() || slot.fallbackPhoto || '';
+        return Object.assign({}, org, {
+          photoUrl: photo,
+          name: org.name || slot.label,
+        });
+      }
+      return {
+        id: 'social-slot-' + slot.key,
+        name: slot.label,
+        photoUrl: slot.fallbackPhoto || '',
+        foundingHomepage: true,
+        isInternal: false,
+      };
     });
-    return list;
   }
 
   function softLaunchFoundingSeed() {
@@ -1075,10 +1144,8 @@
 
   async function generateFoundingCardImage(organisers) {
     var names = foundingNameLists(organisers, { socialConfirmedOnly: true });
-    var withPhotos = names.featured.filter(function (o) {
-      return String(o.photoUrl || '').trim();
-    });
-    var tiles = (withPhotos.length ? withPhotos : names.featured).slice(0, 19);
+    // Always include every allowlisted slot (name fallback if logo URL is missing/fails).
+    var tiles = (names.featured || []).slice();
     tiles.push({
       id: 'cta-your-logo',
       name: 'Your logo here',
