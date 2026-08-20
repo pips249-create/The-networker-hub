@@ -8928,7 +8928,6 @@
         (data.byPlacement[0].placement || data.byPlacement[0].key);
       dir = directoryFromSponsorSlot(top);
     }
-    if (!dir && /barnsgate/i.test(String(brand.company || ''))) dir = 'events';
     if (!dir) dir = 'events';
     return SPONSOR_PACK_THEMES[dir] || SPONSOR_PACK_THEMES.events;
   }
@@ -8955,7 +8954,6 @@
       return 'Page Partner emails';
     }
     if (theme && theme.tierLabel) return theme.tierLabel;
-    if (/barnsgate/i.test(String(brandName || ''))) return 'Events Headline Sponsor';
     return 'Directory Partner';
   }
 
@@ -8978,7 +8976,6 @@
       return '';
     }
     if (theme && theme.feeLabel) return theme.feeLabel;
-    if (/barnsgate/i.test(String(brandName || ''))) return '£2,000 / month + VAT';
     return '';
   }
 
@@ -9649,20 +9646,12 @@
     var brand = (data && data.brand) || {};
     var brandName = brand.company || 'Partner';
     var hubUrl = '/assets/logo-nav-transparent.png';
-    var brandUrl = '/assets/sponsors/barnsgate-logo.png';
+    var brandUrl = brand.logoUrl || '';
     try {
       hubUrl = new URL(hubUrl, window.location.origin).href;
-      brandUrl = new URL(brandUrl, window.location.origin).href;
+      if (brandUrl) brandUrl = new URL(brandUrl, window.location.origin).href;
     } catch (_e) {
       /* keep */
-    }
-    if (!/barnsgate/i.test(brandName) && brand.logoUrl) {
-      brandUrl = brand.logoUrl;
-      try {
-        brandUrl = new URL(brandUrl, window.location.origin).href;
-      } catch (_e2) {
-        /* keep */
-      }
     }
 
     var summary = (data && data.summary) || {};
@@ -9726,9 +9715,11 @@
             return '';
           });
         }),
-      fetchImageAsDataUrl(brandUrl).catch(function () {
-        return '';
-      }),
+      brandUrl
+        ? fetchImageAsDataUrl(brandUrl).catch(function () {
+            return '';
+          })
+        : Promise.resolve(''),
       loadJsPdfLibrary(),
     ]).then(function (parts) {
       var hubData = parts[0] || '';
@@ -10132,7 +10123,6 @@
       '<div><label for="sponsor-clicks-company">Brand</label>' +
       '<select id="sponsor-clicks-company">' +
       '<option value="">All sponsors</option>' +
-      '<option value="Barnsgate Solutions">Barnsgate Solutions</option>' +
       '</select></div>' +
       '<div><label for="sponsor-clicks-placement">Placement</label>' +
       '<select id="sponsor-clicks-placement">' +
@@ -10154,7 +10144,6 @@
       '</select></div>' +
       '<div class="sponsor-pack-filter-actions">' +
       '<button type="submit" class="sponsor-pack-btn sponsor-pack-btn--primary">Apply</button>' +
-      '<button type="button" id="sponsor-clicks-barnsgate" class="sponsor-pack-btn">Barnsgate pack</button>' +
       '<button type="button" id="sponsor-clicks-export" class="sponsor-pack-btn">Export CSV</button>' +
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
@@ -10172,7 +10161,6 @@
     var form = document.getElementById('sponsor-clicks-filters');
     var exportBtn = document.getElementById('sponsor-clicks-export');
     var printBtn = document.getElementById('sponsor-clicks-print');
-    var barnsgateBtn = document.getElementById('sponsor-clicks-barnsgate');
     var lastReport = null;
 
     function setStatus(text, tone) {
@@ -10258,22 +10246,17 @@
       var sel = document.getElementById('sponsor-clicks-company');
       if (!sel || sel.tagName !== 'SELECT') return;
       var current = selected != null ? String(selected) : sel.value || '';
-      if (/^barnsgate$/i.test(current.trim())) current = 'Barnsgate Solutions';
       var list = Array.isArray(brands) ? brands.slice() : [];
       var seen = {};
       var deduped = [];
       list.forEach(function (name) {
         var n = String(name || '').trim();
         if (!n) return;
-        if (/barnsgate/i.test(n)) n = 'Barnsgate Solutions';
         var key = n.toLowerCase();
         if (seen[key]) return;
         seen[key] = true;
         deduped.push(n);
       });
-      if (!deduped.some(function (b) { return /barnsgate/i.test(String(b || '')); })) {
-        deduped.unshift('Barnsgate Solutions');
-      }
       deduped.sort(function (a, b) {
         return a.localeCompare(b);
       });
@@ -10333,7 +10316,7 @@
       var toLabel = String(data.to || '').slice(0, 10);
       var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png';
       var brandLogo = brand.logoUrl || '';
-      var brandDark = brand.logoBandDark === true || /barnsgate/i.test(brandName);
+      var brandDark = brand.logoBandDark === true;
       var ctrInfo = formatSponsorPackCtr(summary.clicks || 0, summary.pageVisits || 0);
       var ctrLabel = ctrInfo.label;
       var execLine = String(data.executiveSummary || '').trim();
@@ -10586,25 +10569,6 @@
         load();
       });
     }
-    if (barnsgateBtn) {
-      barnsgateBtn.addEventListener('click', function () {
-        var company = document.getElementById('sponsor-clicks-company');
-        var placement = document.getElementById('sponsor-clicks-placement');
-        if (company) {
-          company.value = 'Barnsgate Solutions';
-          if (company.value !== 'Barnsgate Solutions') {
-            // ensure option exists
-            var opt = document.createElement('option');
-            opt.value = 'Barnsgate Solutions';
-            opt.textContent = 'Barnsgate Solutions';
-            company.appendChild(opt);
-            company.value = 'Barnsgate Solutions';
-          }
-        }
-        if (placement) placement.value = 'events_sponsor_hub';
-        load();
-      });
-    }
     if (printBtn) {
       printBtn.addEventListener('click', function () {
         if (!lastReport || !lastReport.ok) {
@@ -10613,9 +10577,7 @@
         }
         var companyFilter = ((document.getElementById('sponsor-clicks-company') || {}).value || '').trim();
         if (!companyFilter) {
-          window.alert(
-            'Enter a brand (e.g. Barnsgate) and click Apply before downloading the client PDF.'
-          );
+          window.alert('Pick a brand and click Apply before downloading the client PDF.');
           return;
         }
         var brand =

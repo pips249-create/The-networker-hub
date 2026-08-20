@@ -165,8 +165,6 @@ function countBy(rows, keyFn, weightFn) {
     .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 }
 
-const BARNSGATE_PACK_LOGO = '/assets/sponsors/barnsgate-logo.png';
-
 const SLOT_LOGO_PRIORITY = [
   'events_sponsor_hub',
   'sponsor_hub',
@@ -178,10 +176,6 @@ const SLOT_LOGO_PRIORITY = [
 
 function companyIlike(filter) {
   return '%' + cleanText(filter, MAX_COMPANY).replace(/%/g, '') + '%';
-}
-
-function isBarnsgateBrand(name) {
-  return /barnsgate/i.test(String(name || ''));
 }
 
 /** Which directory pack theme to use (events / organisers / opportunities). */
@@ -304,7 +298,6 @@ function resolvePackDirectory({ brand, placementFilter, byPlacement }) {
       : '';
   const fromTop = directoryFromSlot(top);
   if (fromTop) return fromTop;
-  if (brand && isBarnsgateBrand(brand.company)) return 'events';
   return 'events';
 }
 
@@ -329,36 +322,16 @@ async function lookupBrandLogo(sb, companyFilter) {
     .order('updated_at', { ascending: false })
     .limit(12);
 
-  if (error || !data || !data.length) {
-    if (isBarnsgateBrand(companyFilter)) {
-      return {
-        company: 'Barnsgate Solutions',
-        logoUrl: BARNSGATE_PACK_LOGO,
-        slot: 'events_sponsor_hub',
-        directory: 'events',
-        logoBandDark: true,
-      };
-    }
-    return null;
-  }
+  if (error || !data || !data.length) return null;
 
   const ranked = data
     .slice()
     .sort((a, b) => scoreLogoCandidate(b, companyFilter) - scoreLogoCandidate(a, companyFilter));
   const preferred = ranked[0];
-  let logo = String(preferred.logo_url || preferred.image_url || '').trim();
-  let company = String(preferred.company_name || '').trim() || companyFilter;
-  let logoBandDark = preferred.logo_band_dark === true;
-  let slot = String(preferred.slot || '').trim() || null;
-
-  if (isBarnsgateBrand(company) || isBarnsgateBrand(companyFilter)) {
-    company = company || 'Barnsgate Solutions';
-    if (!logo || /\.svg(?:[?#]|$)/i.test(logo) || /website-files\.com/i.test(logo)) {
-      logo = BARNSGATE_PACK_LOGO;
-    }
-    logoBandDark = true;
-    slot = slot || 'events_sponsor_hub';
-  }
+  const logo = String(preferred.logo_url || preferred.image_url || '').trim();
+  const company = String(preferred.company_name || '').trim() || companyFilter;
+  const logoBandDark = preferred.logo_band_dark === true;
+  const slot = String(preferred.slot || '').trim() || null;
 
   if (!company && !logo) return null;
   return {
@@ -714,30 +687,22 @@ async function listSponsorBrands() {
 
   const map = new Map();
   for (const row of data || []) {
-    let name = cleanText(row.company_name, MAX_COMPANY);
+    const name = cleanText(row.company_name, MAX_COMPANY);
     if (!name) continue;
-    // Prefer one canonical label when CMS rows use shortened variants.
-    if (isBarnsgateBrand(name)) name = 'Barnsgate Solutions';
     const key = name.toLowerCase();
     const existing = map.get(key);
     const score =
       (row.active === false ? 0 : 2) +
       (/sponsor|partner/i.test(String(row.slot || '')) ? 2 : 0) +
-      (row.logo_url || row.image_url ? 1 : 0) +
-      (name === 'Barnsgate Solutions' ? 1 : 0);
+      (row.logo_url || row.image_url ? 1 : 0);
     if (!existing || score > existing.score) {
       map.set(key, { company: name, score });
     }
   }
 
-  const brands = Array.from(map.values())
+  return Array.from(map.values())
     .map((b) => b.company)
     .sort((a, b) => a.localeCompare(b));
-
-  if (!brands.some((b) => isBarnsgateBrand(b))) {
-    brands.unshift('Barnsgate Solutions');
-  }
-  return brands;
 }
 
 async function getSponsorClicksReport(query) {
