@@ -600,24 +600,12 @@
   }
 
   function socialGraphicFoundingOrganisers(organisers) {
+    // Always use the Hub marketing BMUK tile — DB BMUK rows are not founding yet
+    // and regional "Business Matching UK - …" names must not crowd the graphic.
     var list = publicFoundingOrganisers(organisers).filter(function (o) {
-      return isSocialFoundingAllowed(o && o.name);
+      return isSocialFoundingAllowed(o && o.name) && !isBmukName(o && o.name);
     });
-    var hasBmuk = false;
-    for (var i = 0; i < list.length; i++) {
-      if (!isBmukName(list[i] && list[i].name)) continue;
-      hasBmuk = true;
-      // Always paint the marketing BMUK logo (never a wordmark tile).
-      list[i] = Object.assign({}, list[i], {
-        photoUrl: '/assets/marketing/bmu-logo.png',
-        softLaunchWordmark: false,
-        forceWhitePlate: true,
-      });
-      break;
-    }
-    if (!hasBmuk) {
-      list.unshift(softLaunchFoundingSeed());
-    }
+    list.unshift(softLaunchFoundingSeed());
     list.sort(function (a, b) {
       return socialFoundingOrderIndex(a.name) - socialFoundingOrderIndex(b.name);
     });
@@ -634,6 +622,7 @@
       softLaunch: true,
       softLaunchWordmark: false,
       forceWhitePlate: true,
+      knockOutBlackBg: true,
       isInternal: false,
     };
   }
@@ -643,21 +632,12 @@
   }
 
   function withSoftLaunchFounding(organisers) {
-    var list = publicFoundingOrganisers(organisers).slice();
-    var hasBmuk = false;
-    for (var i = 0; i < list.length; i++) {
-      if (!isBmukName(list[i] && list[i].name)) continue;
-      hasBmuk = true;
-      list[i] = Object.assign({}, list[i], {
-        photoUrl: '/assets/marketing/bmu-logo.png',
-        softLaunchWordmark: false,
-        forceWhitePlate: true,
-      });
-      break;
-    }
-    if (!hasBmuk) {
-      list.unshift(softLaunchFoundingSeed());
-    }
+    var list = publicFoundingOrganisers(organisers)
+      .filter(function (o) {
+        return !isBmukName(o && o.name);
+      })
+      .slice();
+    list.unshift(softLaunchFoundingSeed());
     return list;
   }
 
@@ -878,9 +858,42 @@
     return lines.slice(0, maxLines);
   }
 
+  /**
+   * BMUK marketing PNG is charcoal-on-black — knock out near-black so it reads on a white plate.
+   */
+  function knockOutNearBlackBackground(photo) {
+    try {
+      var w = photo.naturalWidth || photo.width;
+      var h = photo.naturalHeight || photo.height;
+      if (!w || !h) return photo;
+      var tmp = document.createElement('canvas');
+      tmp.width = w;
+      tmp.height = h;
+      var tctx = tmp.getContext('2d', { willReadFrequently: true });
+      if (!tctx) return photo;
+      tctx.drawImage(photo, 0, 0);
+      var imageData = tctx.getImageData(0, 0, w, h);
+      var d = imageData.data;
+      for (var i = 0; i < d.length; i += 4) {
+        if (d[i] < 45 && d[i + 1] < 45 && d[i + 2] < 45) {
+          d[i + 3] = 0;
+        }
+      }
+      tctx.putImageData(imageData, 0, 0);
+      return tmp;
+    } catch (e) {
+      return photo;
+    }
+  }
+
   function drawFoundingLogoTile(ctx, photo, x, y, cell, opts) {
     opts = opts || {};
     if (!photo || !photo.width || !photo.height) return false;
+
+    var source = opts.knockOutBlackBg ? knockOutNearBlackBackground(photo) : photo;
+    var sw = source.width || source.naturalWidth || photo.width;
+    var sh = source.height || source.naturalHeight || photo.height;
+    if (!sw || !sh) return false;
 
     var fill = opts.forceWhitePlate
       ? '#ffffff'
@@ -892,16 +905,16 @@
     var pad = 20;
     var maxW = cell - pad * 2;
     var maxH = cell - pad * 2;
-    var scale = Math.min(maxW / photo.width, maxH / photo.height);
-    var dw = Math.max(1, photo.width * scale);
-    var dh = Math.max(1, photo.height * scale);
+    var scale = Math.min(maxW / sw, maxH / sh);
+    var dw = Math.max(1, sw * scale);
+    var dh = Math.max(1, sh * scale);
     var dx = x + (cell - dw) / 2;
     var dy = y + (cell - dh) / 2;
 
     ctx.save();
     roundRect(ctx, x + 2, y + 2, cell - 4, cell - 4, 16);
     ctx.clip();
-    ctx.drawImage(photo, dx, dy, dw, dh);
+    ctx.drawImage(source, dx, dy, dw, dh);
     ctx.restore();
     return true;
   }
@@ -1132,6 +1145,7 @@
         var photo = photos[i];
         var drew = drawFoundingLogoTile(ctx, photo, x, y, cell, {
           forceWhitePlate: Boolean(org.forceWhitePlate || isBmukName(org.name)),
+          knockOutBlackBg: Boolean(org.knockOutBlackBg || isBmukName(org.name)),
         });
         if (!drew) {
           drawFoundingNameTile(ctx, org, x, y, cell);
