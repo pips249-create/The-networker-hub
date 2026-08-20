@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260805bottom2" />
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
-    <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
+    <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260820ticketembed1" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260807rank" />
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260820credits1" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
@@ -104,6 +104,9 @@
                 <a href="#team" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="team" id="org-nav-team">
                   Team &amp; invites
                   <span class="org-nav-badge" id="org-team-nav-badge" hidden>Invite</span>
+                </a>
+                <a href="#ticket-widget" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="ticket-widget">
+                  Ticket widget
                 </a>
                 <a href="#business-list" class="hub-side-nav-link hub-side-nav-link--nested" data-org-route="business-list">List a business opportunity</a>
                 <a href="/add-your-event" class="hub-side-nav-link hub-side-nav-link--nested" id="org-nav-send-event">
@@ -1812,6 +1815,66 @@
           </div>
         </section>
 
+        <!-- Website ticket embed -->
+        <section class="org-page" id="org-page-ticket-widget" data-org-page="ticket-widget">
+          <header class="org-page-head">
+            <p class="org-page-kicker">Website</p>
+            <h1 class="org-page-title">Ticket widget</h1>
+            <p class="org-page-lead">
+              Put tickets on your own site. Buyers see your event in an embed; checkout stays on The Networker Hub.
+            </p>
+          </header>
+
+          <article class="org-partner-badge-card org-ticket-widget-card" id="org-ticket-widget-panel">
+            <label class="org-partner-badge-meta" for="org-ticket-widget-event">Event</label>
+            <select id="org-ticket-widget-event" class="org-ticket-widget-select" aria-label="Event for ticket widget">
+              <option value="">Loading events…</option>
+            </select>
+
+            <div id="org-ticket-widget-empty" class="org-section-sub" hidden>
+              Publish an event first — then you can copy a website embed for its tickets.
+            </div>
+
+            <div id="org-ticket-widget-ready" hidden>
+              <p class="org-partner-badge-meta" style="margin-top: 1rem">Preview</p>
+              <div class="org-ticket-widget-preview-wrap">
+                <iframe
+                  id="org-ticket-widget-preview"
+                  class="org-ticket-widget-preview"
+                  title="Ticket widget preview"
+                  loading="lazy"
+                ></iframe>
+              </div>
+
+              <label class="org-partner-badge-meta" for="org-ticket-widget-code" style="margin-top: 1rem">
+                Website embed code
+              </label>
+              <textarea
+                id="org-ticket-widget-code"
+                class="org-partner-badge-code"
+                rows="8"
+                readonly
+              ></textarea>
+              <div class="org-partner-badge-actions">
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" id="org-ticket-widget-copy">
+                  Copy embed code
+                </button>
+                <a
+                  class="org-btn org-btn-outline org-btn-sm"
+                  id="org-ticket-widget-open"
+                  href="/embed/tickets"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >Open widget page</a>
+              </div>
+              <p class="org-section-sub" style="margin-top: 0.75rem">
+                Optional colours: add <code>&amp;brand=9a7aa8</code>, <code>&amp;bg=faf7f2</code>, or
+                <code>&amp;accent=b8956a</code> to the iframe <code>src</code>.
+              </p>
+            </div>
+          </article>
+        </section>
+
         <!-- Team members -->
         <section class="org-page" id="org-page-team" data-org-page="team">
           <header class="org-page-head org-page-head--split">
@@ -2752,6 +2815,7 @@
               <span class="org-more-sheet-link-label">Team &amp; invites</span>
               <span class="org-nav-badge" id="org-more-team-badge" hidden>Invite</span>
             </a>
+            <a href="#ticket-widget" class="org-more-sheet-link" data-org-route="ticket-widget">Ticket widget</a>
             <a href="#business-list" class="org-more-sheet-link" data-org-route="business-list">List a business opportunity</a>
             <a href="/add-your-event" class="org-more-sheet-link org-more-sheet-link--external">Send us an event</a>
             <a href="/organiser/booking-options" class="org-more-sheet-link org-more-sheet-link--external" target="_blank" rel="noopener noreferrer">How booking options work</a>
@@ -3672,7 +3736,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260820hubreview1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260820ticketembed1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

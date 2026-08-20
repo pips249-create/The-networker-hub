@@ -88,7 +88,9 @@
     { "source": "/guides/export-attendees-and-visits.html", "destination": "/guides/export-attendees-and-visits", "permanent": true },
     { "source": "/guides/organiser-leavebehind.html", "destination": "/guides/organiser-leavebehind", "permanent": true },
     { "source": "/help/organiser-payouts.html", "destination": "/help/organiser-payouts", "permanent": true },
-    { "source": "/help/pricing-fees.html", "destination": "/help/pricing-fees", "permanent": true }
+    { "source": "/help/pricing-fees.html", "destination": "/help/pricing-fees", "permanent": true },
+    { "source": "/embed/event.html", "destination": "/embed/event", "permanent": true },
+    { "source": "/embed/tickets.html", "destination": "/embed/tickets", "permanent": true }
   ],
   "headers": [
     {
@@ -146,6 +148,18 @@
       "source": "/agents.txt",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    },
+    {
+      "source": "/embed/event(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "ALLOWALL" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors *; form-action 'self' https://checkout.stripe.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.resend.com https://vitals.vercel-insights.com https://unpkg.com https://api.openai.com https://api.postcodes.io; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://connect.stripe.com https://maps.google.com https://www.google.com https://maps.googleapis.com https://www.openstreetmap.org; upgrade-insecure-requests"
+        },
+        { "key": "Cache-Control", "value": "public, max-age=60, must-revalidate" }
       ]
     }
   ],
@@ -240,6 +254,18 @@
     {
       "source": "/events/:slug",
       "destination": "/events/event.html?slug=:slug"
+    },
+    {
+      "source": "/embed/event",
+      "destination": "/embed/event.html"
+    },
+    {
+      "source": "/embed/event/:slug",
+      "destination": "/embed/event.html?slug=:slug"
+    },
+    {
+      "source": "/embed/tickets",
+      "destination": "/embed/tickets.html"
     },
     {
       "source": "/opportunities/networking/:slug",

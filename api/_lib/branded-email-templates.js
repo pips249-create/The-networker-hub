@@ -25,7 +25,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_call_followup: {
     file: 'organiser-call-followup.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Need a hand with {{group_name}}?',
+    subject: 'Do you need a hand with {{group_name}}?',
   },
   organiser_rebrand_announcement: {
     file: 'organiser-rebrand-announcement.html',

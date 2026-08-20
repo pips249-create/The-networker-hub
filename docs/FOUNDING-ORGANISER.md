@@ -12,6 +12,17 @@
 
 Do **not** limit the badge to 50 — that creates #51 disappointment. Cap only the homepage slots.
 
+### After the first 50 homepage slots fill
+Everyone who claims before 1 Sept still gets the **Founding Organiser · 2026 badge** on their Hub profile (and the claim email / PNG). What stops at 50 is only the **homepage logo strip**.
+
+| Still get after #50 | Do not get after #50 |
+|---------------------|----------------------|
+| Founding badge on public organiser page | Homepage marquee slot |
+| Named in group social / leaderboard shoutouts (cohort) | Soft-launch “first 50 on homepage” framing |
+| Preview gateway / About founding strips (where those load all founding claimants with logos) | — |
+
+Ops can still manually add/remove a homepage slot in Command Centre if needed (e.g. swap a logo-less early claim for a later one with assets). The homepage UI uses **two scrolling rows** once there are enough logos, so a full first-50 strip does not crawl as one endless line.
+
 ### Technical
 - Migration: `supabase/migrations/241_founding_organiser.sql` (+ `254_founding_award_on_claim.sql` backfill)
 - Award on claim (before 1 Sept): `api/_lib/founding-organiser.js` → `foundingFieldsForClaim` via `claimGroupForSession` only (personalised claim URL). **Not** on admin provision / `ensureOrganiserClaimedForAdminEvent`.

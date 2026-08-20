@@ -637,11 +637,16 @@ async function provisionOrganiserLogin(organiserId) {
     { onConflict: 'email' }
   );
 
+  const claimStatus = String(organiser.ownership_claim_status || '').toLowerCase();
   const organiserPatch = {
     supabase_user_id: userId,
-    ownership_claim_status: 'pending',
-    ownership_claimed_at: null,
   };
+  // Provisioning a login must not mark the page claimed, and must not demote
+  // an organiser who already completed the claim flow.
+  if (claimStatus !== 'claimed' && claimStatus !== 'disputed') {
+    organiserPatch.ownership_claim_status = 'pending';
+    organiserPatch.ownership_claimed_at = null;
+  }
   if (!organiser.organiser_account_id) {
     let account = null;
     const { data: byUser } = await sb

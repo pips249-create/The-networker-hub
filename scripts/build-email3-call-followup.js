@@ -8,8 +8,8 @@
  * Outputs:
  *   data/email3-brevo-ready.html
  *   data/email3-brevo-preview.html
- *   data/Segment-A-Email3-openers-Brevo-import.csv
- *   data/Segment-A-Email3-call-sheet.csv
+ *   data/Email3-A-Segment.csv
+ *   data/Email3-A-Segment-call-sheet.csv
  */
 const fs = require('fs');
 const path = require('path');
@@ -46,7 +46,7 @@ const SEGMENT_A_OPENERS = [
   'website@birmingham-chamber.com',
   'support@1networking.biz',
   'president@asb-scotland.org',
-  'natalie@whitcombehr.co.uk',
+  'hello@hytheandseektravel.co.uk',
   'info@chamber-business.com',
   'info@brchamber.co.uk',
   'info@berkshiremummies.co.uk',
@@ -63,9 +63,8 @@ const LOOKUP_ALIASES = {
   'shal@virtuallythere.co': 'shai@virtuallythere.co',
 };
 
-/** Openers who are not on the latest Email 2 rebuild (e.g. marked claimed). */
 const FALLBACK_ROWS = {
-  'natalie@whitcombehr.co.uk': {
+  'hello@hytheandseektravel.co.uk': {
     name: 'BITA - Kent',
     otherNote: '',
     slug: 'bita-kent',
@@ -167,8 +166,18 @@ function phoneIndex() {
 
   fs.writeFileSync(path.join(root, 'data/email3-brevo-ready.html'), ready);
   fs.writeFileSync(path.join(root, 'data/email3-brevo-preview.html'), html);
+
+  const resendBroadcast = fillTemplate(template, {
+    ...shared,
+    group_name: '{{{contact.organiser_name}}}',
+    other_groups_note: '',
+    claim_url: '{{{contact.claim_url}}}',
+    unsubscribe_url: '{{{RESEND_UNSUBSCRIBE_URL}}}',
+  });
+  fs.writeFileSync(path.join(root, 'data/email3-resend-broadcast.html'), resendBroadcast);
   console.log('Wrote data/email3-brevo-ready.html');
   console.log('Wrote data/email3-brevo-preview.html');
+  console.log('Wrote data/email3-resend-broadcast.html');
 
   const byEmail = parseEmail2Csv('data/Segment-A-Email2-Brevo-import.csv');
   const phones = phoneIndex();
@@ -208,7 +217,7 @@ function phoneIndex() {
       .map((r) => r.email + ',' + esc(r.name) + ',' + esc(r.otherNote) + ',' + esc(r.claimUrl))
       .join('\n') +
     '\n';
-  fs.writeFileSync(path.join(root, 'data/Segment-A-Email3-openers-Brevo-import.csv'), csv);
+  fs.writeFileSync(path.join(root, 'data/Email3-A-Segment.csv'), csv);
 
   const sheet =
     bom +
@@ -228,10 +237,10 @@ function phoneIndex() {
       )
       .join('\n') +
     '\n';
-  fs.writeFileSync(path.join(root, 'data/Segment-A-Email3-call-sheet.csv'), sheet);
+  fs.writeFileSync(path.join(root, 'data/Email3-A-Segment-call-sheet.csv'), sheet);
 
-  console.log('Wrote data/Segment-A-Email3-openers-Brevo-import.csv');
-  console.log('Wrote data/Segment-A-Email3-call-sheet.csv');
+  console.log('Wrote data/Email3-A-Segment.csv');
+  console.log('Wrote data/Email3-A-Segment-call-sheet.csv');
   console.log('Openers on screenshot:', SEGMENT_A_OPENERS.length);
   console.log('To mail / call:', rows.length);
   if (skipped.length) {

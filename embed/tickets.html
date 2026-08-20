@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket widget – The Networker Hub</title>
+  <meta
+    name="description"
+    content="Embed Networker Hub event tickets on your own website. White-label ticket widget with secure Hub checkout."
+  />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any" />
+  <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/hub.css?v=20260728footer" />
+  <link rel="stylesheet" href="/css/hub-mobile.css?v=20260807nav2" />
+  <style>
+    .embed-help {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    .embed-help h1 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 400;
+      margin: 8px 0 12px;
+      color: var(--text-body);
+    }
+    .embed-help .lede {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      max-width: 38rem;
+    }
+    .embed-help label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 650;
+      margin-bottom: 6px;
+    }
+    .embed-help input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      font: inherit;
+      margin-bottom: 16px;
+      background: #fff;
+    }
+    .embed-help textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px 14px;
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      resize: vertical;
+      background: #fff;
+    }
+    .embed-help-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0 28px;
+    }
+    .embed-help-preview {
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #f3efe8;
+      min-height: 200px;
+    }
+    .embed-help-preview iframe {
+      display: block;
+      width: 100%;
+      border: 0;
+      min-height: 280px;
+      background: transparent;
+    }
+    .embed-help-note {
+      margin-top: 18px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .embed-help-kicker {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--lavender-deep);
+    }
+  </style>
+</head>
+<body>
+  <div id="hub-site-nav"></div>
+  <script src="/js/site-nav.js?v=20260814listevent1" data-root="/" data-page=""></script>
+
+  <main class="embed-help">
+    <p class="embed-help-kicker">For organisers</p>
+    <h1>Put tickets on your website</h1>
+    <p class="lede">
+      Paste one snippet on your site. Buyers see your event and ticket prices in an embed;
+      checkout still happens securely on The Networker Hub — your live Hub event page is unchanged.
+    </p>
+
+    <label for="embed-slug">Event slug</label>
+    <input
+      id="embed-slug"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="e.g. london-business-breakfast-may"
+    />
+
+    <label for="embed-code">Website embed code</label>
+    <textarea id="embed-code" readonly rows="7"></textarea>
+    <div class="embed-help-actions">
+      <button type="button" class="btn btn-primary" id="embed-copy">Copy embed code</button>
+      <a class="btn btn-secondary" id="embed-open" href="/embed/event" target="_blank" rel="noopener">Open widget</a>
+    </div>
+
+    <p class="embed-help-kicker">Preview</p>
+    <div class="embed-help-preview">
+      <iframe id="embed-preview" title="Ticket widget preview" loading="lazy"></iframe>
+    </div>
+    <p class="embed-help-note">
+      Optional colours: add <code>&amp;brand=9a7aa8</code>, <code>&amp;bg=faf7f2</code>, or
+      <code>&amp;accent=b8956a</code> to the iframe <code>src</code>. Checkout always uses the
+      full Hub event page so nothing on the live site changes.
+    </p>
+  </main>
+
+  <div id="hub-site-footer"></div>
+  <script src="/js/site-footer.js?v=20260811meetup1" data-root="/"></script>
+  <script>
+    (function () {
+      var slugInput = document.getElementById('embed-slug');
+      var codeEl = document.getElementById('embed-code');
+      var preview = document.getElementById('embed-preview');
+      var copyBtn = document.getElementById('embed-copy');
+      var openLink = document.getElementById('embed-open');
+      var origin = window.location.origin || 'https://www.thenetworkerhub.com';
+
+      function slug() {
+        return String(slugInput && slugInput.value || '')
+          .trim()
+          .replace(/^\/+|\/+$/g, '')
+          .replace(/^events\//i, '');
+      }
+
+      function widgetUrl() {
+        var s = slug();
+        if (!s) return origin + '/embed/event';
+        return origin + '/embed/event/' + encodeURIComponent(s);
+      }
+
+      function snippet() {
+        var src = widgetUrl();
+        return (
+          '<!-- The Networker Hub ticket widget -->\n' +
+          '<iframe\n' +
+          '  src="' +
+          src +
+          '"\n' +
+          '  title="Event tickets"\n' +
+          '  loading="lazy"\n' +
+          '  style="width:100%;max-width:420px;min-height:320px;border:0;overflow:hidden;display:block;"\n' +
+          '></iframe>\n' +
+          '<script>\n' +
+          "window.addEventListener('message', function (e) {\n" +
+          "  if (!e.data || e.data.source !== 'tnh-ticket-embed' || e.data.type !== 'resize') return;\n" +
+          "  var frame = document.querySelector('iframe[src*=\"/embed/event\"]');\n" +
+          '  if (frame && e.data.height) frame.style.height = e.data.height + \"px\";\n' +
+          '});\n' +
+          '</' +
+          'script>'
+        );
+      }
+
+      function refresh() {
+        var src = widgetUrl();
+        if (codeEl) codeEl.value = snippet();
+        if (openLink) openLink.href = src;
+        if (preview) {
+          preview.src = slug() ? src : 'about:blank';
+        }
+      }
+
+      if (slugInput) {
+        slugInput.addEventListener('input', refresh);
+        var q = new URLSearchParams(window.location.search || '');
+        var fromQuery = String(q.get('slug') || '').trim();
+        if (fromQuery) slugInput.value = fromQuery;
+      }
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var text = codeEl ? codeEl.value : '';
+          if (!text) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(
+              function () {
+                copyBtn.textContent = 'Copied';
+                setTimeout(function () {
+                  copyBtn.textContent = 'Copy embed code';
+                }, 1600);
+              },
+              function () {
+                codeEl.select();
+                document.execCommand('copy');
+              }
+            );
+          } else {
+            codeEl.select();
+            document.execCommand('copy');
+          }
+        });
+      }
+      window.addEventListener('message', function (e) {
+        if (!e.data || e.data.source !== 'tnh-ticket-embed' || e.data.type !== 'resize') return;
+        if (preview && e.data.height) preview.style.height = e.data.height + 'px';
+      });
+      refresh();
+    })();
+  </script>
+</body>
+</html>

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20260728footer">
-<link rel="stylesheet" href="css/home-page.css?v=20260813foundfix">
+<link rel="stylesheet" href="css/home-page.css?v=20260820found2row">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
@@ -89,12 +89,17 @@
           <p class="section-kicker home-partners-kicker" id="home-founding-heading">Founding organisers</p>
           <p class="home-founding-sub">Already on The Networker Hub — confirmed ahead of launch</p>
         </header>
-        <div class="home-partners-marquee" id="home-founding-marquee" tabindex="-1" aria-label="Founding organiser logos">
-          <div class="home-partners-track home-partners-track--loading" id="home-founding-logos" aria-live="polite" aria-busy="true">
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
-            <span class="home-partner-skeleton" aria-hidden="true"></span>
+        <div class="home-founding-marquees" id="home-founding-marquees" aria-label="Founding organiser logos">
+          <div class="home-partners-marquee home-founding-marquee-row" id="home-founding-marquee" tabindex="-1">
+            <div class="home-partners-track home-partners-track--loading" id="home-founding-logos" aria-live="polite" aria-busy="true">
+              <span class="home-partner-skeleton" aria-hidden="true"></span>
+              <span class="home-partner-skeleton" aria-hidden="true"></span>
+              <span class="home-partner-skeleton" aria-hidden="true"></span>
+              <span class="home-partner-skeleton" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="home-partners-marquee home-founding-marquee-row" id="home-founding-marquee-b" hidden tabindex="-1">
+            <div class="home-partners-track" id="home-founding-logos-b" aria-hidden="true"></div>
           </div>
         </div>
         <p class="home-partners-cta home-founding-cta">
@@ -338,7 +343,7 @@
 <script src="js/networking-region-directory.js?v=20260811perf1"></script>
 <script src="js/networking-region-search.js?v=20260729county"></script>
 <script src="js/cms-sponsor-fields.js?v=20260806barnstile"></script>
-<script src="js/home-page.js?v=20260818partners"></script>
+<script src="js/home-page.js?v=20260820found2row"></script>
 <script src="js/hubert-chat.js?v=20260710"></script>
 <script src="js/hubert-widget.js?v=20260711" data-root=""></script>
 

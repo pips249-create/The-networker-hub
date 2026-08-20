@@ -30,6 +30,21 @@ function isSpamReview(text) {
   return /buy cheap|viagra|casino|click here|http:\/\//i.test(t);
 }
 
+async function fetchAllRows(sb, table, select, options = {}) {
+  const pageSize = 1000;
+  const orderColumn = options.orderColumn || 'id';
+  const rows = [];
+  for (let from = 0; ; from += pageSize) {
+    let query = sb.from(table).select(select);
+    if (orderColumn) query = query.order(orderColumn, { ascending: true });
+    const { data, error } = await query.range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+  return rows;
+}
+
 const INCOMPLETE_ORGANISER_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
 
@@ -619,11 +634,13 @@ async function fetchUsers(sb) {
   ) {
     accountsRes = await sb.from('hub_accounts').select(accountsSelectFallback);
   }
-  const [attendeesRes, organisersRes, authRes] = await Promise.all([
-    sb.from('attendees').select('supabase_user_id, name, email, location'),
-    sb
-      .from('organisers')
-      .select('id, supabase_user_id, name, email, city, featured, listing_status'),
+  const [attendees, organisers, authRes] = await Promise.all([
+    fetchAllRows(sb, 'attendees', 'id, supabase_user_id, name, email, location'),
+    fetchAllRows(
+      sb,
+      'organisers',
+      'id, supabase_user_id, name, email, city, featured, listing_status'
+    ),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -632,10 +649,10 @@ async function fetchUsers(sb) {
 
   const authById = new Map((authRes.data?.users || []).map((u) => [u.id, u]));
   const attendeeByUser = new Map(
-    (attendeesRes.data || []).filter((a) => a.supabase_user_id).map((a) => [a.supabase_user_id, a])
+    (attendees || []).filter((a) => a.supabase_user_id).map((a) => [a.supabase_user_id, a])
   );
   const organiserByUser = new Map(
-    (organisersRes.data || []).filter((o) => o.supabase_user_id).map((o) => [o.supabase_user_id, o])
+    (organisers || []).filter((o) => o.supabase_user_id).map((o) => [o.supabase_user_id, o])
   );
 
   const users = [];
@@ -676,7 +693,7 @@ async function fetchUsers(sb) {
     seen.add(acc.user_id);
   }
 
-  for (const att of attendeesRes.data || []) {
+  for (const att of attendees || []) {
     if (!att.supabase_user_id || seen.has(att.supabase_user_id)) continue;
     const auth = authById.get(att.supabase_user_id);
     users.push({

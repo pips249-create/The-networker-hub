@@ -352,8 +352,12 @@ async function bootstrapOrganiserFromPendingClaims(session) {
 }
 
 /**
- * When Command Centre creates events for a group, treat the profile as owned by its
- * contact email so the organiser dashboard lists those events after impersonation.
+ * When Command Centre creates events / impersonates a group, ensure a login exists
+ * for the contact email so staff can open the workspace.
+ *
+ * Does NOT set ownership_claim_status to claimed — that is reserved for the
+ * personalised claim-URL flow (Email 2). Admin work used to false-claim pages
+ * and hide "Email their claim link".
  */
 async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   const sb = getSupabaseAdmin();
@@ -363,12 +367,12 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   const { data: organiser, error } = await sb.from('organisers').select('*').eq('id', oid).maybeSingle();
   if (error) throw new Error(error.message);
   if (!organiser) return { claimed: false, reason: 'not_found' };
-  if (organiser.ownership_claim_status === 'claimed') return { claimed: true, already: true };
   if (organiser.ownership_claim_status === 'disputed') return { claimed: false, reason: 'disputed' };
 
   const em = profileEmail(organiser);
   if (!em) return { claimed: false, reason: 'missing_email' };
 
+  const alreadyClaimed = organiser.ownership_claim_status === 'claimed';
   const { provisionOrganiserLogin } = require('./supabase-auth');
   let userId = organiser.supabase_user_id || null;
   if (!userId) {
@@ -378,23 +382,20 @@ async function ensureOrganiserClaimedForAdminEvent(organiserId) {
 
   const { getOrCreateOrganiserAccount } = require('./supabase-organiser-access');
   const account = await getOrCreateOrganiserAccount({ sub: userId, email: em });
-  const now = new Date().toISOString();
   const patch = {
     supabase_user_id: userId,
-    ownership_claim_status: 'claimed',
-    ownership_claimed_at: now,
-    ownership_disputed_at: null,
-    ownership_disputed_by_email: null,
   };
+  if (!alreadyClaimed) {
+    patch.ownership_claim_status = 'pending';
+    patch.ownership_claimed_at = null;
+  }
   if (account?.id && !organiser.organiser_account_id) {
     patch.organiser_account_id = account.id;
   }
-  // Do NOT award Founding Organiser here — admin/provisioned claims are not
-  // the personalised claim-URL flow. Badge only via claimGroupForSession.
 
   const { error: upErr } = await sb.from('organisers').update(patch).eq('id', oid);
   if (upErr) throw new Error(upErr.message);
-  return { claimed: true };
+  return { claimed: alreadyClaimed, provisioned: true, already: alreadyClaimed };
 }
 
 /**

@@ -117,6 +117,8 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     linkedin_url: String(row.linkedin_url || '').trim(),
     x_url: String(row.x_url || '').trim(),
     listing_status: row.listing_status || '',
+    ownership_claim_status: String(row.ownership_claim_status || '').trim().toLowerCase(),
+    claim_invite_sent_at: row.claim_invite_sent_at || null,
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
@@ -205,6 +207,30 @@ async function loginMetaForOrganisers(sb, rows) {
   }
 
   return meta;
+}
+
+async function claimInviteSentAtForOrganisers(sb, ids) {
+  const map = new Map();
+  const unique = [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  if (!unique.length) return map;
+  try {
+    const { data, error } = await sb
+      .from('entity_activity_log')
+      .select('organiser_id, created_at')
+      .eq('action', 'admin_claim_invite')
+      .in('organiser_id', unique)
+      .order('created_at', { ascending: false })
+      .limit(Math.min(unique.length * 5, 200));
+    if (error) throw error;
+    (data || []).forEach((row) => {
+      const id = String(row.organiser_id || '').trim();
+      if (!id || map.has(id)) return;
+      map.set(id, row.created_at || null);
+    });
+  } catch {
+    /* activity log optional */
+  }
+  return map;
 }
 
 async function resolveOrganiserPhotoUrl(body, folder) {
@@ -342,7 +368,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, slug, featured, featured_until, created_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, ownership_claim_status, slug, featured, featured_until, created_at',
       { count: 'exact' }
     )
     .order('featured', { ascending: false })
@@ -372,13 +398,17 @@ async function listOrganisersForAdmin(query) {
 
   const rows = res.data || [];
   const { moderationSummariesForOrganisers } = require('../organiser-moderation');
-  const [counts, loginMeta, moderationById] = await Promise.all([
+  const [counts, loginMeta, moderationById, claimInviteSentAt] = await Promise.all([
     eventCountsForOrganisers(
       sb,
       rows.map((r) => r.id)
     ),
     loginMetaForOrganisers(sb, rows),
     moderationSummariesForOrganisers(
+      sb,
+      rows.map((r) => r.id)
+    ),
+    claimInviteSentAtForOrganisers(
       sb,
       rows.map((r) => r.id)
     ),
@@ -389,7 +419,12 @@ async function listOrganisersForAdmin(query) {
 
   return {
     organisers: rows.map((row) =>
-      mapOrganiserRow(row, counts[row.id] || 0, loginMeta.get(row.id), moderationById.get(row.id))
+      mapOrganiserRow(
+        { ...row, claim_invite_sent_at: claimInviteSentAt.get(row.id) || null },
+        counts[row.id] || 0,
+        loginMeta.get(row.id),
+        moderationById.get(row.id)
+      )
     ),
     count: rows.length,
     total,
@@ -880,7 +915,7 @@ module.exports = async function handler(req, res) {
       const sb = getSupabaseAdmin();
       const { data: organiser, error } = await sb
         .from('organisers')
-        .select('id, name, email, contact_email, supabase_user_id')
+        .select('id, name, email, contact_email, supabase_user_id, ownership_claim_status')
         .eq('id', organiserId)
         .maybeSingle();
       if (error) throw new Error(error.message);
@@ -899,6 +934,13 @@ module.exports = async function handler(req, res) {
       }
       const loginMeta = await loginMetaForOrganisers(sb, [organiser]);
       const meta = loginMeta.get(organiser.id);
+      if (String(organiser.ownership_claim_status || '').toLowerCase() === 'claimed') {
+        return json(res, 400, {
+          ok: false,
+          error: 'already_claimed',
+          message: 'This group has already claimed their page, so the claim invite is not needed.',
+        });
+      }
       if (meta && meta.emailsEnabled === false) {
         return json(res, 400, {
           ok: false,
@@ -943,6 +985,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         email,
         claimUrl,
+        claimInviteSentAt: new Date().toISOString(),
         message: 'Email 2 sent to ' + email + ' with their claim link.',
       });
     } catch (e) {
@@ -1340,17 +1383,27 @@ module.exports = async function handler(req, res) {
     }
 
     const sb = getSupabaseAdmin();
+    // Saving contact email must NOT auto-claim. Claimed means the organiser
+    // completed the claim flow (or Impersonate/events explicitly claimed).
+    // Staff edits previously flipped new pages to "Claimed" and blocked Email 2.
+    if (Object.prototype.hasOwnProperty.call(patch, 'contact_email')) {
+      const { data: existing, error: existingErr } = await sb
+        .from('organisers')
+        .select('id, ownership_claim_status')
+        .eq('id', id)
+        .maybeSingle();
+      if (existingErr) throw new Error(existingErr.message);
+      if (!existing) {
+        return json(res, 404, { ok: false, error: 'organiser_not_found', message: 'Group not found.' });
+      }
+      const status = String(existing.ownership_claim_status || '').toLowerCase();
+      if (status !== 'claimed' && status !== 'disputed') {
+        patch.ownership_claim_status = 'pending';
+      }
+    }
     const { data, error } = await sb.from('organisers').update(patch).eq('id', id).select('*').single();
     if (error) throw new Error(error.message);
     invalidateIncompleteOrganiserCount();
-    if (patch.contact_email) {
-      try {
-        const { ensureOrganiserClaimedForAdminEvent } = require('../supabase-organiser-claims');
-        await ensureOrganiserClaimedForAdminEvent(id);
-      } catch {
-        /* profile email saved; claim can run later */
-      }
-    }
     try {
       const { logFromSession } = require('../entity-activity-log');
       await logFromSession(session, null, {

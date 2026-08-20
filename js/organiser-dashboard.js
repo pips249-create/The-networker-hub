@@ -608,6 +608,133 @@
     bindRankingShareActions(root);
   }
 
+  function ticketWidgetEmbeddableEvents() {
+    return (state.events || []).filter(function (ev) {
+      if (!ev || !ev.id) return false;
+      const key = String(ev.statusKey || ev.status || '').toLowerCase();
+      return (
+        key === 'live' ||
+        key === 'upcoming' ||
+        key === 'published' ||
+        key === 'archived' ||
+        String(ev.status || '').toLowerCase() === 'published'
+      );
+    });
+  }
+
+  function ticketWidgetUrlForEvent(ev) {
+    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const slug = String((ev && ev.slug) || '').trim();
+    if (slug) return origin + '/embed/event/' + encodeURIComponent(slug);
+    return origin + '/embed/event?id=' + encodeURIComponent(ev && ev.id ? ev.id : '');
+  }
+
+  function ticketWidgetSnippet(src) {
+    return (
+      '<!-- The Networker Hub ticket widget -->\n' +
+      '<iframe\n' +
+      '  src="' +
+      src +
+      '"\n' +
+      '  title="Event tickets"\n' +
+      '  loading="lazy"\n' +
+      '  style="width:100%;max-width:420px;min-height:320px;border:0;overflow:hidden;display:block;"\n' +
+      '></iframe>\n' +
+      '<script>\n' +
+      "window.addEventListener('message', function (e) {\n" +
+      "  if (!e.data || e.data.source !== 'tnh-ticket-embed' || e.data.type !== 'resize') return;\n" +
+      "  var frame = document.querySelector('iframe[src*=\"/embed/event\"]');\n" +
+      '  if (frame && e.data.height) frame.style.height = e.data.height + "px";\n' +
+      '});\n' +
+      '</scr' +
+      'ipt>'
+    );
+  }
+
+  function syncTicketWidgetSelection() {
+    const select = document.getElementById('org-ticket-widget-event');
+    const empty = document.getElementById('org-ticket-widget-empty');
+    const ready = document.getElementById('org-ticket-widget-ready');
+    const codeEl = document.getElementById('org-ticket-widget-code');
+    const preview = document.getElementById('org-ticket-widget-preview');
+    const openLink = document.getElementById('org-ticket-widget-open');
+    if (!select) return;
+
+    const id = String(select.value || '').trim();
+    const ev = (state.events || []).find(function (row) {
+      return row && String(row.id) === id;
+    });
+    if (!ev) {
+      if (empty) empty.hidden = false;
+      if (ready) ready.hidden = true;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    if (ready) ready.hidden = false;
+    const src = ticketWidgetUrlForEvent(ev);
+    if (codeEl) codeEl.value = ticketWidgetSnippet(src);
+    if (preview) preview.src = src;
+    if (openLink) openLink.href = src;
+  }
+
+  function renderTicketWidgetPage() {
+    const select = document.getElementById('org-ticket-widget-event');
+    const empty = document.getElementById('org-ticket-widget-empty');
+    const ready = document.getElementById('org-ticket-widget-ready');
+    const copyBtn = document.getElementById('org-ticket-widget-copy');
+    if (!select) return;
+
+    const events = ticketWidgetEmbeddableEvents();
+    const prev = String(select.value || '').trim();
+    if (!events.length) {
+      select.innerHTML = '<option value="">No published events yet</option>';
+      select.disabled = true;
+      if (empty) empty.hidden = false;
+      if (ready) ready.hidden = true;
+      return;
+    }
+
+    select.disabled = false;
+    select.innerHTML = events
+      .map(function (ev) {
+        const label = eventFilterOptionLabel({
+          title: ev.title,
+          date: ev.date,
+        });
+        return (
+          '<option value="' +
+          attrEsc(ev.id) +
+          '">' +
+          esc(label) +
+          '</option>'
+        );
+      })
+      .join('');
+    if (prev && events.some(function (ev) {
+      return String(ev.id) === prev;
+    })) {
+      select.value = prev;
+    }
+
+    if (!select.dataset.ticketWidgetBound) {
+      select.dataset.ticketWidgetBound = '1';
+      select.addEventListener('change', syncTicketWidgetSelection);
+      window.addEventListener('message', function (e) {
+        if (!e.data || e.data.source !== 'tnh-ticket-embed' || e.data.type !== 'resize') return;
+        const frame = document.getElementById('org-ticket-widget-preview');
+        if (frame && e.data.height) frame.style.height = e.data.height + 'px';
+      });
+    }
+    if (copyBtn && !copyBtn.dataset.ticketWidgetBound) {
+      copyBtn.dataset.ticketWidgetBound = '1';
+      copyBtn.addEventListener('click', function () {
+        const ta = document.getElementById('org-ticket-widget-code');
+        copyOrganiserText((ta && ta.value) || '', copyBtn);
+      });
+    }
+    syncTicketWidgetSelection();
+  }
+
   function rankingShareText(groupName, row) {
     const badge = rankingBadgeText(row);
     const absUrl = groupPublicProfileAbsUrl(row.id, row.slug);
@@ -10760,6 +10887,7 @@
     const moreRoutes = {
       team: true,
       'business-list': true,
+      'ticket-widget': true,
     };
     if (nestedActive || moreRoutes[activeRoute]) {
       more.open = true;
@@ -11117,6 +11245,13 @@
           renderTeam();
           updateGettingStartedPanel();
           updateTeamNavBadge();
+        })
+      );
+    }
+    if (page === 'ticket-widget') {
+      routeLoadTasks.push(
+        ensureEventsLoaded().then(function () {
+          renderTicketWidgetPage();
         })
       );
     }
@@ -15971,6 +16106,9 @@
     renderGroups();
     if (document.querySelector('[data-org-page="memberships"].is-active')) renderMembershipsPage();
     if (document.querySelector('[data-org-page="team"].is-active')) renderTeam();
+    if (document.querySelector('[data-org-page="ticket-widget"].is-active') && state.eventsLoaded) {
+      renderTicketWidgetPage();
+    }
     if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
       renderMyEventsHub();
       fillEventSelect(document.getElementById('ticket-event'));
@@ -16031,6 +16169,7 @@
     if (page === 'memberships') return 'Loading memberships…';
     if (page === 'groups') return 'Loading organiser pages…';
     if (page === 'team') return 'Loading team…';
+    if (page === 'ticket-widget') return 'Loading ticket widget…';
     if (page === 'business-list') return 'Loading listing form…';
     if (page === 'dashboard') return 'Loading overview…';
     return 'Loading…';

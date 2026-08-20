@@ -568,10 +568,36 @@
     });
   }
 
+  function softLaunchFoundingSeed() {
+    return {
+      id: 'soft-launch-bmuk',
+      name: 'Business Matching UK',
+      photoUrl: '/assets/marketing/bmu-logo.png',
+      website: 'https://business-matching.co.uk/',
+      foundingHomepage: true,
+      softLaunch: true,
+      isInternal: false,
+    };
+  }
+
+  function isBmukName(name) {
+    return /bmuk|\bbmu\b|business\s*matching/i.test(String(name || ''));
+  }
+
+  function withSoftLaunchFounding(organisers) {
+    var list = publicFoundingOrganisers(organisers).slice();
+    if (!list.some(function (o) {
+      return isBmukName(o && o.name);
+    })) {
+      list.unshift(softLaunchFoundingSeed());
+    }
+    return list;
+  }
+
   function foundingNameLists(organisers) {
-    var list = publicFoundingOrganisers(organisers);
+    var list = withSoftLaunchFounding(organisers);
     var homepage = list.filter(function (o) {
-      return o.foundingHomepage;
+      return o.foundingHomepage || o.softLaunch;
     });
     var featured = (homepage.length ? homepage : list).slice(0, 40);
     var names = featured
@@ -613,9 +639,27 @@
     );
   }
 
+  function canvasSafeImageUrl(url) {
+    var src = String(url || '').trim();
+    if (!src) return '';
+    // Same-origin / data / blob — load directly.
+    if (/^(data:|blob:|\/)/i.test(src)) return src;
+    try {
+      var parsed = new URL(src, window.location.origin);
+      if (parsed.origin === window.location.origin) return parsed.pathname + parsed.search;
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        // Remote hosts usually omit CORS — proxy so canvas can paint the logo.
+        return '/api/admin/image-proxy?url=' + encodeURIComponent(parsed.toString());
+      }
+    } catch (e) {
+      /* fall through */
+    }
+    return src;
+  }
+
   function loadImage(url) {
     return new Promise(function (resolve) {
-      var src = String(url || '').trim();
+      var src = canvasSafeImageUrl(url);
       if (!src) {
         resolve(null);
         return;

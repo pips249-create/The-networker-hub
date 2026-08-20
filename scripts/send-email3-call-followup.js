@@ -21,7 +21,7 @@ const { campaignSiteVars } = require('../api/_lib/organiser-campaign-defaults');
 
 const SITE = 'https://www.thenetworkerhub.com';
 const BOOK_CALL = 'https://savvycal.com/TheNetworkerHub/website-preview';
-const CSV = path.join(root, 'data/Segment-A-Email3-openers-Brevo-import.csv');
+const CSV = path.join(root, 'data/Email3-A-Segment.csv');
 const SLUG = 'organiser_call_followup';
 
 const args = process.argv.slice(2);

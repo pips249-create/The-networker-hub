@@ -498,43 +498,85 @@
     );
   }
 
+  function splitFoundingRows(list) {
+    var rowA = [];
+    var rowB = [];
+    (list || []).forEach(function (org, i) {
+      (i % 2 === 0 ? rowA : rowB).push(org);
+    });
+    // Keep rows balanced when the list is odd (soft-launch BMUK may make it uneven).
+    if (rowA.length > rowB.length + 1 && rowB.length) {
+      rowB.push(rowA.pop());
+    }
+    return { rowA: rowA, rowB: rowB };
+  }
+
+  function paintFoundingTrack(track, marquee, orgs, opts) {
+    opts = opts || {};
+    if (!track) return;
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var useMarquee = orgs.length >= 4 && !prefersReducedMotion;
+    var items = orgs.map(foundingItemHtml).join('');
+    var seconds = useMarquee ? Math.max(36, Math.round(orgs.length * 4.2)) : '';
+
+    track.classList.remove('home-partners-track--loading');
+    track.classList.toggle('home-partners-track--marquee', useMarquee);
+    track.classList.toggle('home-partners-track--marquee-reverse', Boolean(useMarquee && opts.reverse));
+    track.classList.toggle('home-partners-track--scroll', false);
+    track.classList.toggle('home-partners-track--static', !useMarquee);
+    track.innerHTML = useMarquee ? items + items : items;
+    if (seconds) track.style.setProperty('--home-marquee-duration', seconds + 's');
+    else track.style.removeProperty('--home-marquee-duration');
+
+    if (marquee) {
+      marquee.hidden = false;
+      marquee.classList.remove('home-partners-marquee--scrollable');
+      marquee.scrollLeft = 0;
+      marquee.setAttribute('tabindex', '-1');
+    }
+  }
+
   function renderFoundingOrganisers(list) {
     var section = document.getElementById('home-founding');
     var track = document.getElementById('home-founding-logos');
+    var trackB = document.getElementById('home-founding-logos-b');
     var marquee = document.getElementById('home-founding-marquee');
+    var marqueeB = document.getElementById('home-founding-marquee-b');
+    var wrap = document.getElementById('home-founding-marquees');
     if (!section || !track) return;
 
     if (!list.length) {
       section.hidden = true;
       track.setAttribute('aria-busy', 'false');
       if (marquee) marquee.classList.remove('home-partners-marquee--scrollable');
+      if (marqueeB) marqueeB.hidden = true;
+      if (wrap) wrap.classList.remove('home-founding-marquees--dual');
       return;
     }
 
     revealSection(section);
-    track.classList.remove('home-partners-track--loading');
     track.setAttribute('aria-busy', 'false');
 
-    var items = list.map(foundingItemHtml).join('');
-    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Need a full row before looping — otherwise 2 logos look duplicated (BMUK, FC, BMUK, FC).
-    var useMarquee = list.length >= 6 && !prefersReducedMotion;
-    var isStatic = !useMarquee;
-    var isScrollable = false;
+    // Two rows once we have enough logos — halves the loop length so the strip doesn't crawl.
+    var useDual = list.length >= 8 && trackB && marqueeB;
+    if (wrap) wrap.classList.toggle('home-founding-marquees--dual', useDual);
 
-    track.classList.toggle('home-partners-track--marquee', useMarquee);
-    track.classList.toggle('home-partners-track--scroll', isScrollable);
-    track.classList.toggle('home-partners-track--static', isStatic);
-    track.innerHTML = useMarquee ? items + items : items;
-    track.style.setProperty(
-      '--home-marquee-duration',
-      useMarquee ? Math.max(60, Math.round(list.length * 3.8)) + 's' : ''
-    );
-
-    if (marquee) {
-      marquee.classList.toggle('home-partners-marquee--scrollable', isScrollable);
-      marquee.scrollLeft = 0;
-      marquee.setAttribute('tabindex', '-1');
+    if (useDual) {
+      var rows = splitFoundingRows(list);
+      paintFoundingTrack(track, marquee, rows.rowA, { reverse: false });
+      paintFoundingTrack(trackB, marqueeB, rows.rowB, { reverse: true });
+      trackB.setAttribute('aria-hidden', 'true');
+    } else {
+      paintFoundingTrack(track, marquee, list, { reverse: false });
+      if (marqueeB) marqueeB.hidden = true;
+      if (trackB) {
+        trackB.innerHTML = '';
+        trackB.classList.remove(
+          'home-partners-track--marquee',
+          'home-partners-track--marquee-reverse',
+          'home-partners-track--static'
+        );
+      }
     }
   }
 
