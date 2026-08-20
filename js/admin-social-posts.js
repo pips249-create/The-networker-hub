@@ -168,21 +168,21 @@
           id: 'welcome',
           label: 'Group welcome',
           caption:
-            'Proud to welcome our Founding Organisers on The Networker Hub.\n\nThese networking groups have already confirmed their pages ahead of our 1 September launch — and they\'re part of the Hub organiser leaderboard.\n\n{{name_block}}\n\nRunning a UK networking group? Confirm your page and join them:\n{{url}}\n\n#TheNetworkerHub #UKNetworking #FoundingOrganisers',
+            'Meet the Founding Organisers of The Networker Hub 🎉\n\nThese UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n{{name_block}}\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking',
           image: 'founding_card',
         },
         {
           id: 'leaderboard',
           label: 'Leaderboard shoutout',
           caption:
-            '👏 Founding Organisers are live on The Networker Hub — and on the organiser leaderboard.\n\n{{name_block}}\n\nConfirm your page before 1 September:\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers',
+            'Founding Organisers are live — and on the Hub leaderboard 👏\n\n{{name_block}}\n\nPublic browsing & ticket buying open 1 September. Confirm your organiser page before then to join them:\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #NetworkingEvents #BusinessNetworking #NetworkingGroups #SmallBusinessUK #B2B',
           image: 'founding_card',
         },
         {
           id: 'short',
           label: 'Short & punchy',
           caption:
-            'Meet our Founding Organisers 🎉\n\n{{name_block_short}}\n\nJoin them on The Networker Hub → {{url}}',
+            'Our Founding Organisers · 2026 🙌\n\n{{name_block_short}}\n\nRun a UK networking group? Claim your free page before 1 Sept → {{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #SME',
           image: 'founding_card',
         },
       ],
@@ -630,12 +630,12 @@
   function foundingLinkedInCaption(organisers) {
     var names = foundingNameLists(organisers);
     return (
-      'Proud to welcome our Founding Organisers on The Networker Hub.\n\n' +
-      'These networking groups have already confirmed their pages ahead of our 1 September launch — and they\'re part of the Hub organiser leaderboard.\n\n' +
+      'Meet the Founding Organisers of The Networker Hub 🎉\n\n' +
+      'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n' +
       names.nameBlock +
-      '\n\nRunning a UK networking group? Confirm your page and join them:\n' +
+      '\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n' +
       hubForOrganisersUrl() +
-      '\n\n#TheNetworkerHub #UKNetworking #FoundingOrganisers'
+      '\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
     );
   }
 
@@ -657,23 +657,94 @@
     return src;
   }
 
-  function loadImage(url) {
+  function loadImageFromSrc(src, timeoutMs) {
     return new Promise(function (resolve) {
-      var src = canvasSafeImageUrl(url);
       if (!src) {
         resolve(null);
         return;
       }
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        resolve(null);
+      }, timeoutMs || 12000);
       var img = new Image();
-      img.crossOrigin = 'anonymous';
+      // Only needed for cross-origin CDN URLs. Same-origin proxy must NOT use
+      // anonymous CORS — that omits cookies and the admin proxy returns 401.
+      if (/^https?:\/\//i.test(src) && src.indexOf(window.location.origin) !== 0) {
+        img.crossOrigin = 'anonymous';
+      }
       img.onload = function () {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         resolve(img);
       };
       img.onerror = function () {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         resolve(null);
       };
       img.src = src;
     });
+  }
+
+  function loadImage(url) {
+    var src = canvasSafeImageUrl(url);
+    if (!src) return Promise.resolve(null);
+
+    // Admin proxy needs the session cookie — fetch with credentials, then blob URL.
+    if (src.indexOf('/api/admin/image-proxy?') === 0) {
+      return fetch(src, { credentials: 'include', cache: 'force-cache' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('proxy_' + res.status);
+          return res.blob();
+        })
+        .then(function (blob) {
+          if (!blob || !blob.size || (blob.type && blob.type.indexOf('image/') !== 0 && blob.type !== 'application/octet-stream')) {
+            throw new Error('not_image');
+          }
+          var objectUrl = URL.createObjectURL(blob);
+          return loadImageFromSrc(objectUrl, 8000).then(function (img) {
+            URL.revokeObjectURL(objectUrl);
+            return img;
+          });
+        })
+        .catch(function () {
+          return null;
+        });
+    }
+
+    return loadImageFromSrc(src, 10000);
+  }
+
+  function drawFoundingLogoTile(ctx, photo, x, y, cell) {
+    var inset = 14;
+    var box = cell - inset * 2;
+
+    // Light plate so dark / navy logos stay readable on the purple card.
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, x, y, cell, cell, 18);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, x, y, cell, cell, 18);
+    ctx.stroke();
+
+    if (!photo || !photo.width || !photo.height) return false;
+
+    var pad = 16;
+    var maxW = box - pad;
+    var maxH = box - pad;
+    var scale = Math.min(maxW / photo.width, maxH / photo.height, 1);
+    var dw = Math.max(1, photo.width * scale);
+    var dh = Math.max(1, photo.height * scale);
+    var dx = x + (cell - dw) / 2;
+    var dy = y + (cell - dh) / 2;
+    ctx.drawImage(photo, dx, dy, dw, dh);
+    return true;
   }
 
   function drawCircleImage(ctx, img, x, y, radius) {
@@ -833,33 +904,25 @@
       ctx.font = '500 26px system-ui, sans-serif';
       ctx.fillText('Names will appear here as groups confirm', width / 2, headerHeight + 80);
     } else {
+      var photos = await Promise.all(
+        tiles.map(function (org) {
+          return loadImage(org.photoUrl);
+        })
+      );
       for (var i = 0; i < tiles.length; i++) {
         var org = tiles[i];
         var col = i % cols;
         var row = Math.floor(i / cols);
         var x = padX + col * (cell + gap);
         var y = headerHeight + row * (cell + gap);
-
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        roundRect(ctx, x, y, cell, cell, 18);
-        ctx.fill();
-
-        var photo = await loadImage(org.photoUrl);
-        var inset = 18;
-        var box = cell - inset * 2;
-        if (photo) {
-          var scale = Math.min(box / photo.width, box / photo.height);
-          var dw = photo.width * scale;
-          var dh = photo.height * scale;
-          var dx = x + (cell - dw) / 2;
-          var dy = y + (cell - dh) / 2;
-          ctx.drawImage(photo, dx, dy, dw, dh);
-        } else {
-          ctx.fillStyle = 'rgba(255,255,255,0.9)';
-          ctx.font = '600 22px system-ui, sans-serif';
+        var photo = photos[i];
+        var drew = drawFoundingLogoTile(ctx, photo, x, y, cell);
+        if (!drew) {
+          ctx.fillStyle = '#452d5c';
+          ctx.font = '600 20px system-ui, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          var label = truncateCanvasText(ctx, org.name || 'Group', box - 8);
+          var label = truncateCanvasText(ctx, org.name || 'Group', cell - 28);
           ctx.fillText(label, x + cell / 2, y + cell / 2);
           ctx.textBaseline = 'alphabetic';
         }

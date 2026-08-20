@@ -23153,12 +23153,12 @@
       : '• (confirmations will appear here as groups claim)';
     if (more > 0) nameBlock += '\n• …and ' + more + ' more founding organisers';
     return (
-      'Proud to welcome our Founding Organisers on The Networker Hub.\n\n' +
-      'These networking groups have already confirmed their pages ahead of our 1 September launch — and they\'re part of the Hub organiser leaderboard.\n\n' +
+      'Meet the Founding Organisers of The Networker Hub 🎉\n\n' +
+      'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n' +
       nameBlock +
-      '\n\nRunning a UK networking group? Confirm your page and join them:\n' +
+      '\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n' +
       'https://www.thenetworkerhub.com/for-organisers\n\n' +
-      '#TheNetworkerHub #UKNetworking #FoundingOrganisers'
+      '#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
     );
   }
 
