@@ -317,6 +317,47 @@ async function createGroupUpdateCreditsCheckoutSession(opts) {
 }
 
 /**
+ * Extra Attendee round-up / Who’s going send credits (platform one-time payment).
+ */
+async function createConnectionsCreditsCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const { getCreditPack } = require('./connections-credits');
+  const organiserId = String(opts.organiserId || '').trim();
+  const pack = getCreditPack(opts.packId);
+  if (!organiserId) throw new Error('missing_organiser_id');
+  if (!pack) throw new Error('invalid_pack');
+
+  const groupName = String(opts.groupName || 'Your group').trim() || 'Your group';
+  const amountPence = pack.amountPence;
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: opts.email,
+    client_reference_id: 'oec-credits-' + organiserId + '-' + pack.id,
+    metadata: {
+      checkout_type: 'connections_credits',
+      organiser_id: organiserId,
+      credit_pack: pack.id,
+      credit_quantity: String(pack.credits),
+      amount_pence: String(amountPence),
+      owner_email: String(opts.email || '').toLowerCase(),
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: [
+      lineItemFromCatalog(pack.catalogKey, {
+        currency: 'gbp',
+        product_data: {
+          name: 'Attendee round-up — ' + pack.label,
+          description: pack.blurb + ' · ' + groupName,
+        },
+        unit_amount: amountPence,
+      }),
+    ],
+  });
+}
+
+/**
  * City Partner — monthly subscription or prepaid 6 / 12 months.
  */
 async function createCityPartnerCheckoutSession(opts) {
@@ -593,6 +634,7 @@ module.exports = {
   createOpportunityPremiumCheckoutSession,
   createEventFeaturedCheckoutSession,
   createGroupUpdateCreditsCheckoutSession,
+  createConnectionsCreditsCheckoutSession,
   createCityPartnerCheckoutSession,
   createMembershipCheckoutSession,
   createMembershipBillingPortalSession,

@@ -1698,8 +1698,9 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260812comm7';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260820credits1';
   const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260814fast1';
+  const EMAIL_ANALYTICS_JS = '../js/organiser-email-analytics.js?v=20260820analytics1';
   let communicateToolsBound = false;
 
   function loadStylesheetOnce(href) {
@@ -1798,6 +1799,23 @@
     return loadScriptOnce(GROUP_UPDATES_JS);
   }
 
+  function ensureEmailAnalyticsAssets() {
+    if (window.HubOrganiserEmailAnalytics) return Promise.resolve();
+    return loadScriptOnce(EMAIL_ANALYTICS_JS);
+  }
+
+  function ensureEmailAnalyticsReady() {
+    return ensureEmailAnalyticsAssets()
+      .then(function () {
+        if (window.HubOrganiserEmailAnalytics && window.HubOrganiserEmailAnalytics.init) {
+          window.HubOrganiserEmailAnalytics.init({ groups: state.groups || [] });
+        }
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
   function prefetchHeavyWorkspaceAssets() {
     ensureMemberRosterAssets();
     ensureEventConnectionsAssets();
@@ -1833,9 +1851,13 @@
       r === 'connections-email' ||
       r === 'group-updates' ||
       r === 'monthly-updates' ||
+      r === 'email-analytics' ||
+      r === 'email-metrics' ||
+      r === 'analytics' ||
       // In-page Communicate tool anchors (must not be treated as unknown routes)
       r === 'org-attendee-email-panel' ||
-      r === 'org-group-update-panel'
+      r === 'org-group-update-panel' ||
+      r === 'org-email-analytics-panel'
     );
   }
 
@@ -1851,6 +1873,14 @@
       r === 'org-group-update-panel'
     ) {
       return 'group-updates';
+    }
+    if (
+      r === 'email-analytics' ||
+      r === 'email-metrics' ||
+      r === 'analytics' ||
+      r === 'org-email-analytics-panel'
+    ) {
+      return 'email-analytics';
     }
     if (
       r === 'attendee-email' ||
@@ -1876,18 +1906,43 @@
   }
 
   function syncCommunicateTools(toolHash) {
-    const monthly = toolHash === 'group-updates';
+    const tool =
+      toolHash === 'group-updates'
+        ? 'monthly'
+        : toolHash === 'email-analytics'
+          ? 'analytics'
+          : 'roundup';
     document.querySelectorAll('[data-comm-tool]').forEach(function (el) {
-      const isMonthly = el.getAttribute('data-comm-tool') === 'monthly';
-      el.classList.toggle('is-active', monthly ? isMonthly : !isMonthly);
+      const key = el.getAttribute('data-comm-tool');
+      el.classList.toggle('is-active', key === tool);
+    });
+    const panels = {
+      roundup: document.getElementById('org-attendee-email-panel'),
+      monthly: document.getElementById('org-group-update-panel'),
+      analytics: document.getElementById('org-email-analytics-panel'),
+    };
+    Object.keys(panels).forEach(function (key) {
+      const panel = panels[key];
+      if (!panel) return;
+      const show = key === tool;
+      panel.hidden = !show;
+      panel.setAttribute('aria-hidden', show ? 'false' : 'true');
     });
     if (!toolHash || toolHash === 'communicate') return;
-    const panelId = monthly ? 'org-group-update-panel' : 'org-attendee-email-panel';
+    const panelId =
+      tool === 'monthly'
+        ? 'org-group-update-panel'
+        : tool === 'analytics'
+          ? 'org-email-analytics-panel'
+          : 'org-attendee-email-panel';
     const panel = document.getElementById(panelId);
     if (panel && panel.scrollIntoView) {
       requestAnimationFrame(function () {
         panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+    }
+    if (tool === 'analytics') {
+      ensureEmailAnalyticsReady();
     }
   }
 
@@ -1897,8 +1952,14 @@
     document.querySelectorAll('[data-comm-tool]').forEach(function (link) {
       link.addEventListener('click', function (e) {
         e.preventDefault();
-        const tool = link.getAttribute('data-comm-tool') === 'monthly' ? 'monthly' : 'roundup';
-        setRoute(tool === 'monthly' ? 'group-updates' : 'attendee-email');
+        const key = link.getAttribute('data-comm-tool');
+        const route =
+          key === 'monthly'
+            ? 'group-updates'
+            : key === 'analytics'
+              ? 'email-analytics'
+              : 'attendee-email';
+        setRoute(route);
       });
     });
   }

@@ -606,7 +606,8 @@ async function handleCheckoutSessionCompleted(session) {
     metadata.checkout_type === 'event_featured' ||
     metadata.checkout_type === 'opportunity_premium' ||
     metadata.checkout_type === 'opportunity_listing' ||
-    metadata.checkout_type === 'group_update_credits'
+    metadata.checkout_type === 'group_update_credits' ||
+    metadata.checkout_type === 'connections_credits'
   ) {
     return { skipped: true, reason: 'not_ticket_checkout' };
   }

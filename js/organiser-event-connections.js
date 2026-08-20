@@ -12,6 +12,7 @@
     sending: false,
     bound: false,
     engagementPollTimer: null,
+    creditPacks: [],
   };
 
   function els() {
@@ -123,34 +124,165 @@
   function setUsage(preview) {
     var el = els().usage;
     if (!el) return;
-    var free =
-      preview && (preview.freeAllowanceUsed || preview.lastSentAt)
+    var freeUsed = Boolean(
+      preview
+        ? preview.freeAllowanceUsed
+        : allowanceFromEvents(selectedGroupId()).freeAllowanceUsed
+    );
+    var last =
+      preview && (preview.lastSentAt || preview.freeAllowanceUsed)
         ? {
-            freeAllowanceUsed: Boolean(preview.freeAllowanceUsed),
             lastSentAt: preview.lastSentAt || null,
             lastSentCount: Number(preview.lastSentCount) || 0,
           }
         : allowanceFromEvents(selectedGroupId());
+    var extraCredits =
+      preview && preview.extraCredits != null
+        ? Number(preview.extraCredits) || 0
+        : state.preview && state.preview.extraCredits != null
+          ? Number(state.preview.extraCredits) || 0
+          : 0;
+    var packs =
+      (preview && preview.creditPacks) ||
+      state.creditPacks ||
+      (state.preview && state.preview.creditPacks) ||
+      [];
+    if (packs.length) state.creditPacks = packs;
     var pageName = selectedGroupName();
+    var canSend = preview && preview.canSend != null ? Boolean(preview.canSend) : !freeUsed || extraCredits > 0;
+    var nextBillable = (preview && preview.nextBillable) || (freeUsed ? (extraCredits > 0 ? 'extra' : 'none') : 'free');
+
     el.hidden = false;
-    el.classList.toggle('is-used', Boolean(free.freeAllowanceUsed));
-    if (!free.freeAllowanceUsed) {
-      el.textContent =
-        'Free send still available for ' + pageName + ' — one Attendee round-up included.';
+    el.classList.toggle('is-used', freeUsed && extraCredits < 1);
+    el.classList.toggle('has-credits', freeUsed && extraCredits > 0);
+
+    var bits = [];
+    if (!freeUsed) {
+      bits.push(
+        'Free send still available for <strong>' +
+          esc(pageName) +
+          '</strong> — one Attendee round-up included.'
+      );
+    } else {
+      var when = '';
+      try {
+        when = last.lastSentAt ? new Date(last.lastSentAt).toLocaleString('en-GB') : '';
+      } catch (e) {
+        when = String(last.lastSentAt || '');
+      }
+      bits.push(
+        'Free send used for <strong>' +
+          esc(pageName) +
+          '</strong>' +
+          (when ? ' · Last sent ' + esc(when) : '') +
+          (last.lastSentCount ? ' to ' + esc(last.lastSentCount) + ' people' : '') +
+          '.'
+      );
+      bits.push(
+        'Extra credits: <strong>' +
+          esc(extraCredits) +
+          '</strong>' +
+          (nextBillable === 'extra' ? ' — your next send uses 1 credit.' : '')
+      );
+    }
+
+    if (packs.length && selectedGroupId()) {
+      bits.push(
+        '<span class="oec-credit-buy-label">Buy extra sends</span> ' +
+          packs
+            .map(function (p) {
+              return (
+                '<button type="button" class="org-btn org-btn-outline org-btn-sm oec-buy-credits" data-pack-id="' +
+                esc(p.id) +
+                '">' +
+                esc(p.label || p.id + ' credit') +
+                ' · ' +
+                esc(p.amountLabel || '') +
+                '</button>'
+              );
+            })
+            .join(' ')
+      );
+    } else if (freeUsed && !canSend) {
+      bits.push('Extra sends are a paid add-on — packs appear here once checkout is ready.');
+    }
+
+    el.innerHTML = bits.map(function (b) {
+      return '<p>' + b + '</p>';
+    }).join('');
+
+    var sendBtn = els().sendBtn;
+    if (sendBtn && !state.sending) {
+      var hasEvent = Boolean(els().event && String(els().event.value || '').trim());
+      sendBtn.disabled = !hasEvent || !canSend;
+    }
+  }
+
+  async function buyCredits(packId) {
+    var organiserId = selectedGroupId();
+    if (!organiserId) {
+      setStatus('Choose an organiser page first.', 'error');
       return;
     }
-    var when = '';
-    try {
-      when = free.lastSentAt ? new Date(free.lastSentAt).toLocaleString('en-GB') : '';
-    } catch (e) {
-      when = String(free.lastSentAt || '');
+    setStatus('Opening secure checkout…');
+    var res = await api('/api/organiser/connections-credits-checkout', {
+      method: 'POST',
+      body: {
+        organiserId: organiserId,
+        packId: packId,
+      },
+    });
+    if (!res.ok || !res.data || !res.data.ok || !res.data.url) {
+      throw new Error((res.data && (res.data.message || res.data.error)) || 'Checkout failed');
     }
-    el.textContent =
-      'Free send used for ' +
-      pageName +
-      (when ? ' · Last sent ' + when : '') +
-      (free.lastSentCount ? ' to ' + free.lastSentCount + ' people' : '') +
-      '. Extra sends will be a paid add-on soon.';
+    window.location.href = res.data.url;
+  }
+
+  async function completeCreditsPurchase(sessionId) {
+    var sid = String(sessionId || '').trim();
+    if (!sid) return;
+    setStatus('Confirming your credit purchase…');
+    var res = await api('/api/organiser/connections-credits-complete', {
+      method: 'POST',
+      body: { sessionId: sid },
+    });
+    if (!res.ok || !res.data || !res.data.ok) {
+      throw new Error((res.data && (res.data.message || res.data.error)) || 'Could not confirm purchase');
+    }
+    var added =
+      (res.data.result && res.data.result.creditsAdded) ||
+      (res.data.result && res.data.result.alreadyApplied ? 'your' : '');
+    setStatus(
+      added
+        ? 'Payment received — ' +
+            (res.data.result.alreadyApplied
+              ? 'credits already on this page.'
+              : added + ' credit(s) added.')
+        : 'Payment received — credits updated.',
+      'ok'
+    );
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.delete('connections_credits_session');
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    } catch (e) {
+      /* ignore */
+    }
+    if (els().event && els().event.value) {
+      await loadPreview();
+    } else if (res.data.allowance) {
+      setUsage(
+        Object.assign({}, state.preview || {}, {
+          freeAllowanceUsed: res.data.allowance.freeAllowanceUsed,
+          lastSentAt: res.data.allowance.lastSentAt,
+          lastSentCount: res.data.allowance.lastSentCount,
+          extraCredits: res.data.allowance.extraCredits,
+          canSend: res.data.allowance.canSend,
+          nextBillable: res.data.allowance.nextBillable,
+          creditPacks: res.data.allowance.creditPacks || state.creditPacks,
+        })
+      );
+    }
   }
 
   function syncFormReadyState() {
@@ -581,7 +713,7 @@
     return res.data;
   }
 
-  async function send(force) {
+  async function send() {
     var e = els();
     if (state.sending) return;
     var eventId = e.event ? String(e.event.value || '').trim() : '';
@@ -600,24 +732,33 @@
       setStatus(preview.timingError.message, 'error');
       return;
     }
+    if (preview.canSend === false) {
+      setStatus(
+        preview.blockedReason === 'credits_not_ready'
+          ? 'Extra credits aren’t available yet — try again shortly.'
+          : 'Your free send is used. Buy an extra send above to email another guest list.',
+        'error'
+      );
+      return;
+    }
     var included = includedAttendees(preview);
     if (included.length < 2) {
       setStatus('Include at least two guests in the round-up.', 'error');
       return;
     }
-    var already = Boolean(preview.freeAllowanceUsed);
     var label = listKind === 'going' ? 'who’s going list' : 'attendee round-up';
     var omitted = excludedEmailList(preview).length;
-    var confirmMsg = already
-      ? 'Your free round-up for this organiser page was already used. Extra sends will be a paid add-on soon. Send again now anyway?'
-      : 'Send the ' +
-        label +
-        ' to ' +
-        included.length +
-        ' guest' +
-        (included.length === 1 ? '' : 's') +
-        (omitted ? ' (' + omitted + ' omitted)' : '') +
-        '? This uses your one free send for this organiser page.';
+    var billable = preview.nextBillable === 'extra' ? ' Uses 1 extra send credit.' : ' Uses your one free send for this organiser page.';
+    var confirmMsg =
+      'Send the ' +
+      label +
+      ' to ' +
+      included.length +
+      ' guest' +
+      (included.length === 1 ? '' : 's') +
+      (omitted ? ' (' + omitted + ' omitted)' : '') +
+      '?' +
+      billable;
     if (!global.confirm(confirmMsg)) return;
 
     state.sending = true;
@@ -633,25 +774,11 @@
           fromName: e.fromName ? e.fromName.value : '',
           organiserNote: e.note ? e.note.value : '',
           excludeEmails: excludedEmailList(preview),
-          force: Boolean(force || already),
         },
       });
       if (!res.ok) {
-        if (res.status === 409 && res.data.error === 'already_sent') {
-          if (
-            global.confirm(
-              (res.data.message || 'Free send already used for this organiser page.') +
-                ' Send again anyway?'
-            )
-          ) {
-            state.sending = false;
-            if (e.sendBtn) e.sendBtn.disabled = false;
-            return send(true);
-          }
-          setStatus('Send cancelled.', 'error');
-          return;
-        }
         setStatus(res.data.message || res.data.error || 'Send failed.', 'error');
+        if (res.status === 402) setUsage(preview);
         return;
       }
       setStatus(res.data.message || 'Sent.', 'ok');
@@ -748,9 +875,18 @@
           });
       });
     }
+    if (e.usage) {
+      e.usage.addEventListener('click', function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('.oec-buy-credits') : null;
+        if (!btn) return;
+        buyCredits(btn.getAttribute('data-pack-id')).catch(function (err) {
+          setStatus(err.message || 'Checkout failed.', 'error');
+        });
+      });
+    }
     if (e.sendBtn) {
       e.sendBtn.addEventListener('click', function () {
-        send(false).catch(function (err) {
+        send().catch(function (err) {
           setStatus(err.message || 'Send failed.', 'error');
         });
       });
@@ -768,6 +904,24 @@
     fillEvents();
     setUsage(null);
     syncFormReadyState();
+
+    var pendingSession = '';
+    try {
+      pendingSession =
+        new URLSearchParams(window.location.search).get('connections_credits_session') || '';
+    } catch (err) {
+      pendingSession = '';
+    }
+    if (pendingSession) {
+      completeCreditsPurchase(pendingSession).catch(function (err) {
+        setStatus(
+          (err && err.message) ||
+            'Payment received, but credits need a moment to appear — refresh shortly.',
+          'error'
+        );
+      });
+    }
+
     if (opts.eventId) {
       var e = els();
       if (e.event) {

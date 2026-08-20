@@ -593,7 +593,7 @@ const FALLBACK_REPLIES = [
   {
     match: /email who attended|attendee list email|who else (was|attended)|share attendee (emails|list)|email.*who attended|email attendee list|attendee round-?up|who.?s going|who is going/i,
     reply:
-      'Open Communicate under My events in the organiser sidebar. Before the event starts you can send “Who’s going” (confirmed bookings). After it starts, send “Who attended”. Untick anyone you want to omit. Add who the email is from and an optional note — your group logo is included. One free send per organiser page; more email tools unlock as paid add-ons.',
+      'Open Communicate under My events in the organiser sidebar. Before the event starts you can send “Who’s going” (confirmed bookings). After it starts, send “Who attended”. Untick anyone you want to omit. Add who the email is from and an optional note — your group logo is included. One free send per organiser page; extra sends are paid (£9 for 1, £22 for 3). Use the Analytics tab for opens and clicks.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,

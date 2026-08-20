@@ -381,6 +381,89 @@ async function loadGroupFreeAllowance(sb, organiserId) {
   };
 }
 
+async function loadExtraCredits(sb, organiserId) {
+  if (!organiserId) return 0;
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id, name, connections_extra_credits')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (error && /connections_extra_credits/i.test(String(error.message || ''))) {
+    return { extraCredits: 0, organiserName: '', creditsReady: false };
+  }
+  if (error) throw new Error(error.message);
+  return {
+    extraCredits: Math.max(0, Number(data && data.connections_extra_credits) || 0),
+    organiserName: String((data && data.name) || '').trim(),
+    creditsReady: true,
+  };
+}
+
+async function getConnectionsAllowance(organiserId) {
+  if (!isSupabaseConfigured()) {
+    const err = new Error('Database not configured');
+    err.status = 503;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const free = await loadGroupFreeAllowance(sb, organiserId);
+  const extras = await loadExtraCredits(sb, organiserId);
+  const freeRemaining = free.freeAllowanceUsed ? 0 : 1;
+  const canSend = freeRemaining > 0 || extras.extraCredits > 0;
+  let nextBillable = 'none';
+  if (canSend) nextBillable = freeRemaining > 0 ? 'free' : 'extra';
+  const { listCreditPacks } = require('./connections-credits');
+  return {
+    freeAllowanceUsed: free.freeAllowanceUsed,
+    freeRemaining,
+    freePerPage: 1,
+    lastSentAt: free.lastSentAt,
+    lastSentCount: free.lastSentCount,
+    lastSentEventId: free.lastSentEventId,
+    extraCredits: extras.extraCredits,
+    creditsReady: extras.creditsReady !== false,
+    canSend,
+    nextBillable,
+    blockedReason: !canSend ? (extras.creditsReady === false ? 'credits_not_ready' : 'no_credits') : null,
+    organiserName: extras.organiserName,
+    freeAllowanceScope: 'group',
+    creditPacks: listCreditPacks(),
+  };
+}
+
+async function consumeExtraCredit(sb, organiserId) {
+  const { data: org, error: creditErr } = await sb
+    .from('organisers')
+    .select('connections_extra_credits')
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (creditErr && /connections_extra_credits/i.test(String(creditErr.message || ''))) {
+    const err = new Error(
+      'Your free round-up for this organiser page was already used. Extra credits aren’t available yet — buy a pack once pricing is live, or try again shortly.'
+    );
+    err.status = 402;
+    err.code = 'no_credits';
+    throw err;
+  }
+  if (creditErr) throw new Error(creditErr.message);
+  const current = Math.max(0, Number(org && org.connections_extra_credits) || 0);
+  if (current < 1) {
+    const err = new Error(
+      'Your free round-up for this organiser page was already used. Buy an extra send to email another guest list.'
+    );
+    err.status = 402;
+    err.code = 'no_credits';
+    throw err;
+  }
+  const next = current - 1;
+  const { error: upErr } = await sb
+    .from('organisers')
+    .update({ connections_extra_credits: next })
+    .eq('id', organiserId);
+  if (upErr) throw new Error(upErr.message);
+  return next;
+}
+
 function copyForListKind(listKind, eventTitle) {
   const kind = normalizeListKind(listKind);
   const name = String(eventTitle || 'Event').trim() || 'Event';
@@ -408,6 +491,26 @@ function copyForListKind(listKind, eventTitle) {
   };
 }
 
+function formatListCountLabel(count, listKind) {
+  const n = Math.max(0, Number(count) || 0);
+  if (normalizeListKind(listKind) === 'going') {
+    return n === 1 ? '1 confirmed guest' : n + ' confirmed guests';
+  }
+  return n === 1 ? '1 attendee' : n + ' attendees';
+}
+
+function sharedByClauseFor(fromName, organiserName) {
+  const from = String(fromName || '').trim();
+  const org = String(organiserName || '').trim();
+  const hubNames = ['the networker hub', 'networker hub'];
+  const fromKey = from.toLowerCase();
+  if (!from || hubNames.includes(fromKey)) return '';
+  if (org && fromKey === org.toLowerCase()) {
+    return ' by ' + from;
+  }
+  return ' by ' + from;
+}
+
 async function getConnectionsPreview(session, eventId, listKindInput) {
   if (!isSupabaseConfigured()) {
     const err = new Error('Database not configured');
@@ -432,7 +535,7 @@ async function getConnectionsPreview(session, eventId, listKindInput) {
   const site = publicSiteBase();
   const organiserLogoUrl = organiserLogoUrlForEmail(organiser, site) || '';
   const copy = copyForListKind(listKind, event.title);
-  const free = await loadGroupFreeAllowance(sb, event.organiser_id);
+  const allowance = await getConnectionsAllowance(event.organiser_id);
   const engagement = await loadEngagementForEvent(sb, event.id);
 
   return {
@@ -454,11 +557,17 @@ async function getConnectionsPreview(session, eventId, listKindInput) {
       jobTitle: a.jobTitle,
       guestNames: a.guestNames,
     })),
-    lastSentAt: free.lastSentAt,
-    lastSentCount: free.lastSentCount,
-    lastSentEventId: free.lastSentEventId,
-    freeAllowanceUsed: free.freeAllowanceUsed,
+    lastSentAt: allowance.lastSentAt,
+    lastSentCount: allowance.lastSentCount,
+    lastSentEventId: allowance.lastSentEventId,
+    freeAllowanceUsed: allowance.freeAllowanceUsed,
     freeAllowanceScope: 'group',
+    freeRemaining: allowance.freeRemaining,
+    extraCredits: allowance.extraCredits,
+    canSend: allowance.canSend,
+    nextBillable: allowance.nextBillable,
+    blockedReason: allowance.blockedReason,
+    creditPacks: allowance.creditPacks,
     defaultSubject: defaultSubject(event.title, listKind),
     copyKicker: copy.kicker,
     copyHeadline: copy.headline,
@@ -470,7 +579,7 @@ async function getConnectionsPreview(session, eventId, listKindInput) {
 
 async function sendConnectionsEmail(
   session,
-  { eventId, organiserNote, subject, fromName, listKind: listKindInput, excludeEmails, force }
+  { eventId, organiserNote, subject, fromName, listKind: listKindInput, excludeEmails }
 ) {
   if (!isSupabaseConfigured()) {
     const err = new Error('Database not configured');
@@ -493,15 +602,21 @@ async function sendConnectionsEmail(
     throw err;
   }
 
-  const free = await loadGroupFreeAllowance(sb, event.organiser_id);
-  if (free.freeAllowanceUsed && !force) {
+  const allowance = await getConnectionsAllowance(event.organiser_id);
+  if (!allowance.canSend) {
     const err = new Error(
-      'Your free round-up for this organiser page was already used. Extra sends will be a paid add-on soon — confirm only if you need to send again now.'
+      allowance.blockedReason === 'credits_not_ready'
+        ? 'Your free round-up for this organiser page was already used. Extra credits aren’t available yet — try again shortly.'
+        : 'Your free round-up for this organiser page was already used. Buy an extra send to email another guest list.'
     );
-    err.status = 409;
-    err.code = 'already_sent';
-    err.lastSentAt = free.lastSentAt;
+    err.status = 402;
+    err.code = 'no_credits';
+    err.lastSentAt = allowance.lastSentAt;
     throw err;
+  }
+  const useExtra = allowance.nextBillable === 'extra';
+  if (useExtra) {
+    await consumeExtraCredit(sb, event.organiser_id);
   }
 
   const organiser = event.organisers || {};
@@ -531,19 +646,31 @@ async function sendConnectionsEmail(
   const recipientRows = [];
 
   try {
-    const { data: sendRow, error: sendErr } = await sb
+    const sendPayload = {
+      event_id: event.id,
+      organiser_id: event.organiser_id,
+      list_kind: listKind,
+      subject: emailSubject,
+      sent_count: 0,
+      failed_count: 0,
+      skipped_count: 0,
+      used_extra_credit: Boolean(useExtra),
+    };
+    let sendRow;
+    let sendErr;
+    ({ data: sendRow, error: sendErr } = await sb
       .from('event_connections_sends')
-      .insert({
-        event_id: event.id,
-        organiser_id: event.organiser_id,
-        list_kind: listKind,
-        subject: emailSubject,
-        sent_count: 0,
-        failed_count: 0,
-        skipped_count: 0,
-      })
+      .insert(sendPayload)
       .select('id')
-      .single();
+      .single());
+    if (sendErr && /used_extra_credit/i.test(String(sendErr.message || ''))) {
+      delete sendPayload.used_extra_credit;
+      ({ data: sendRow, error: sendErr } = await sb
+        .from('event_connections_sends')
+        .insert(sendPayload)
+        .select('id')
+        .single());
+    }
     if (!sendErr && sendRow && sendRow.id) sendId = sendRow.id;
   } catch (e) {
     sendId = null;
@@ -567,6 +694,7 @@ async function sendConnectionsEmail(
           '</strong>' +
           dateClause +
           ' — reach out while the conversations are fresh.';
+    const sharedByClause = sharedByClauseFor(senderName, organiserName);
     try {
       await sendTemplatedEmail({
         slug: SLUG,
@@ -580,10 +708,11 @@ async function sendConnectionsEmail(
           event_date_clause: dateClause,
           organiser_name: organiserName,
           from_name: senderName,
+          shared_by_clause: sharedByClause,
           list_kicker: copy.kicker,
           list_headline: copy.headline,
           list_lede: 'Hi ' + escapeHtml(firstName) + ', ' + ledeBody,
-          list_count_label: String(otherCount) + ' ' + copy.listLabel,
+          list_count_label: formatListCountLabel(otherCount, listKind),
           footer_reason: copy.footerReason,
           attendee_count: String(otherCount),
           connections_list_html: listHtml + trackingPixelHtml(trackToken),
@@ -658,12 +787,15 @@ async function sendConnectionsEmail(
 
   const label = listKind === 'going' ? 'who’s going list' : 'attendee round-up';
   const omitted = allAttendees.length - attendees.length;
+  const refreshed = await getConnectionsAllowance(event.organiser_id).catch(() => null);
   return {
     ok: true,
     eventId: event.id,
     eventTitle: String(event.title || 'Event').trim(),
     listKind,
     sendId,
+    usedExtraCredit: Boolean(useExtra),
+    allowance: refreshed,
     recipientCount: attendees.length,
     omittedCount: omitted,
     sent,
@@ -680,7 +812,8 @@ async function sendConnectionsEmail(
           (sent === 1 ? '' : 's') +
           (omitted ? ' (' + omitted + ' omitted)' : '') +
           (skipped ? ' (' + skipped + ' opted out)' : '') +
-          (failed ? '. ' + failed + ' failed.' : '.')
+          (failed ? '. ' + failed + ' failed.' : '.') +
+          (useExtra ? ' Used 1 extra send credit.' : '')
         : failed
           ? 'Could not send the email.'
           : 'No emails were sent — recipients may have email turned off.',
@@ -750,12 +883,144 @@ async function getConnectionsEngagement(session, eventId) {
   };
 }
 
+async function listConnectionsSends(session, organiserId, limit) {
+  if (!isSupabaseConfigured()) {
+    const err = new Error('Database not configured');
+    err.status = 503;
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const orgId = String(organiserId || '').trim();
+  if (!orgId) {
+    const err = new Error('missing_organiser_id');
+    err.status = 400;
+    throw err;
+  }
+  const access = await resolveOrganiserAccess(session);
+  if (!access.role) {
+    const err = new Error('not_authenticated');
+    err.status = 401;
+    throw err;
+  }
+  const groupIds = access.groupIds || [];
+  if (!groupIds.includes(orgId)) {
+    const err = new Error('group_not_owned');
+    err.status = 403;
+    throw err;
+  }
+
+  const take = Math.min(40, Math.max(1, Number(limit) || 20));
+  const { data: sends, error } = await sb
+    .from('event_connections_sends')
+    .select('id, event_id, list_kind, subject, sent_count, failed_count, skipped_count, created_at, used_extra_credit')
+    .eq('organiser_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(take);
+  if (error && /event_connections_sends|schema cache|does not exist/i.test(String(error.message || ''))) {
+    return { sends: [], allowance: await getConnectionsAllowance(orgId) };
+  }
+  if (error && /used_extra_credit/i.test(String(error.message || ''))) {
+    const fallback = await sb
+      .from('event_connections_sends')
+      .select('id, event_id, list_kind, subject, sent_count, failed_count, skipped_count, created_at')
+      .eq('organiser_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(take);
+    if (fallback.error) throw new Error(fallback.error.message);
+    return listConnectionsSendsHydrate(sb, orgId, fallback.data || []);
+  }
+  if (error) throw new Error(error.message);
+  return listConnectionsSendsHydrate(sb, orgId, sends || []);
+}
+
+async function listConnectionsSendsHydrate(sb, organiserId, sends) {
+  const eventIds = Array.from(
+    new Set((sends || []).map((s) => s.event_id).filter(Boolean))
+  );
+  let eventMap = {};
+  if (eventIds.length) {
+    const { data: events } = await sb.from('events').select('id, title, starts_at').in('id', eventIds);
+    (events || []).forEach((ev) => {
+      eventMap[ev.id] = ev;
+    });
+  }
+
+  const out = [];
+  for (const send of sends || []) {
+    const eng = await loadEngagementForSend(sb, send);
+    const ev = eventMap[send.event_id] || {};
+    out.push({
+      id: send.id,
+      eventId: send.event_id,
+      eventTitle: String(ev.title || 'Event').trim(),
+      eventDate: ev.starts_at ? formatDateOnly(ev.starts_at) : '',
+      listKind: send.list_kind || 'attended',
+      subject: send.subject || '',
+      sentAt: send.created_at,
+      sentCount: Number(send.sent_count) || eng.sent || 0,
+      usedExtraCredit: Boolean(send.used_extra_credit),
+      opened: eng.opened,
+      openRate: eng.openRate,
+      clicked: eng.clicked,
+      clickRate: eng.clickRate,
+    });
+  }
+  return {
+    sends: out,
+    allowance: await getConnectionsAllowance(organiserId),
+  };
+}
+
+async function loadEngagementForSend(sb, send) {
+  const empty = {
+    hasSend: false,
+    sent: 0,
+    opened: 0,
+    openRate: 0,
+    clicked: 0,
+    clickRate: 0,
+    sentAt: null,
+    listKind: null,
+  };
+  if (!send || !send.id) return empty;
+  const { data: rows, error } = await sb
+    .from('event_connections_recipients')
+    .select('sent_at, opened_at, clicked_at')
+    .eq('send_id', send.id);
+  if (error) {
+    return {
+      ...empty,
+      hasSend: true,
+      sent: Number(send.sent_count) || 0,
+      sentAt: send.created_at || null,
+      listKind: send.list_kind || null,
+    };
+  }
+  const delivered = (rows || []).filter((r) => r.sent_at);
+  const opened = delivered.filter((r) => r.opened_at).length;
+  const clicked = delivered.filter((r) => r.clicked_at).length;
+  const sentCount = delivered.length || Number(send.sent_count) || 0;
+  return {
+    hasSend: true,
+    sendId: send.id,
+    listKind: send.list_kind || null,
+    sentAt: send.created_at || null,
+    sent: sentCount,
+    opened,
+    openRate: sentCount ? Math.round((opened / sentCount) * 1000) / 10 : 0,
+    clicked,
+    clickRate: sentCount ? Math.round((clicked / sentCount) * 1000) / 10 : 0,
+  };
+}
+
 module.exports = {
   SLUG,
   MAX_ATTENDEES,
   getConnectionsPreview,
   sendConnectionsEmail,
   getConnectionsEngagement,
+  getConnectionsAllowance,
+  listConnectionsSends,
   defaultSubject,
   normalizeListKind,
 };

@@ -184,6 +184,7 @@ const RAW_HTML_PLACEHOLDER_KEYS = new Set([
   'listing_badge',
   'organiser_intro',
   'connections_list_html',
+  'list_lede',
 ]);
 
 function isRawHtmlPlaceholderKey(key) {

@@ -222,21 +222,30 @@ function testUiWiring() {
   assert.ok(html.includes('id="oec-engagement-refresh"'));
   assert.ok(html.includes('href="#group-updates"'));
   assert.ok(html.includes('href="#attendee-email"'));
+  assert.ok(html.includes('href="#email-analytics"'));
+  assert.ok(html.includes('id="org-email-analytics-panel"'));
   assert.ok(html.includes('data-comm-tool'));
   assert.ok(html.includes('Monthly group update'));
-  ok('Communicate page hosts attendee round-up + monthly group update');
+  assert.ok(html.includes('extras from £9') || html.includes('extras from £9'));
+  ok('Communicate page hosts attendee round-up + monthly group update + analytics');
 
   const js = fs.readFileSync(path.join(__dirname, '../js/organiser-event-connections.js'), 'utf8');
   assert.ok(js.includes('HubOrganiserEventConnections'));
   assert.ok(js.includes('/api/organiser/event-connections'));
   assert.ok(js.includes('renderEngagement'));
   assert.ok(js.includes('scheduleEngagementPoll'));
-  ok('event-connections JS loads API + engagement');
+  assert.ok(js.includes('connections-credits-checkout'));
+  assert.ok(js.includes('oec-buy-credits'));
+  ok('event-connections JS loads API + engagement + credit checkout');
 
   const dash = fs.readFileSync(path.join(__dirname, '../js/organiser-dashboard.js'), 'utf8');
   assert.ok(dash.includes('GROUP_UPDATES_JS'));
+  assert.ok(dash.includes('EMAIL_ANALYTICS_JS'));
   assert.ok(dash.includes('ensureGroupUpdatesAssets'));
+  assert.ok(dash.includes('ensureEmailAnalyticsReady'));
   assert.ok(dash.includes('org-group-update-panel'));
+  assert.ok(dash.includes('email-analytics'));
+  ok('dashboard wires group updates + email analytics assets');
   assert.ok(dash.includes('communicateToolHash'));
   assert.ok(dash.includes('syncCommunicateTools'));
   assert.ok(dash.includes('bindCommunicateTools'));

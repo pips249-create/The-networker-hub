@@ -424,6 +424,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.list_lede =
       'Hi Alex, here are the confirmed attendees from <strong style="color:#1c2040;">Summer Networking Mixer</strong> on Tuesday 14 July 2026 — reach out while the conversations are fresh.';
     vars.list_count_label = '3 attendees';
+    vars.shared_by_clause = ' by Sarah from City Connectors';
     vars.footer_reason = 'You received this because you attended';
     vars.organiser_note_html =
       '<tr><td class="mobile-pad" style="padding:8px 40px 16px;">' +

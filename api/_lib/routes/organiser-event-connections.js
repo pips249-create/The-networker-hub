@@ -1,11 +1,13 @@
 /**
- * Organiser event connections email API — preview + send attendee list.
+ * Organiser event connections email API — preview + send attendee list + history.
  */
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const {
   getConnectionsPreview,
   sendConnectionsEmail,
+  listConnectionsSends,
+  getConnectionsAllowance,
 } = require('../event-connections-email');
 
 function parseBody(req) {
@@ -46,6 +48,31 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const url = new URL(req.url, 'http://localhost');
+      const action = String(
+        req.query?.action || url.searchParams.get('action') || ''
+      ).trim();
+      const organiserId = String(
+        req.query?.organiserId ||
+          req.query?.organiser_id ||
+          req.query?.groupId ||
+          url.searchParams.get('organiserId') ||
+          url.searchParams.get('organiser_id') ||
+          url.searchParams.get('groupId') ||
+          ''
+      ).trim();
+
+      if (action === 'history' || action === 'analytics') {
+        if (!organiserId) return json(res, 400, { ok: false, error: 'missing_organiser_id' });
+        const history = await listConnectionsSends(auth.session, organiserId);
+        return json(res, 200, { ok: true, ...history });
+      }
+
+      if (action === 'allowance') {
+        if (!organiserId) return json(res, 400, { ok: false, error: 'missing_organiser_id' });
+        const allowance = await getConnectionsAllowance(organiserId);
+        return json(res, 200, { ok: true, allowance });
+      }
+
       const eventId = String(
         req.query?.eventId ||
           req.query?.event_id ||
@@ -76,7 +103,6 @@ module.exports = async function handler(req, res) {
         fromName: body.fromName || body.from_name || body.senderName || body.sender_name || '',
         listKind: body.listKind || body.list_kind || '',
         excludeEmails: body.excludeEmails || body.exclude_emails || body.omitEmails || [],
-        force: body.force === true || body.resend === true,
       });
       return json(res, 200, result);
     }

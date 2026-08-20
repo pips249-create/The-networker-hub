@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260728lb2" />
     <link rel="stylesheet" href="../css/hub-partner-badge.css?v=20260727" />
     <link rel="stylesheet" href="../css/rankings-page.css?v=20260807rank" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260812ux3" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260820credits1" />
     <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260716drawer" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
@@ -1924,13 +1924,14 @@
             <nav class="org-communicate-tools" aria-label="Communicate tools">
               <a class="org-communicate-tool is-active" href="#attendee-email" data-comm-tool="roundup">Attendee round-up</a>
               <a class="org-communicate-tool" href="#group-updates" data-comm-tool="monthly">Monthly group update</a>
+              <a class="org-communicate-tool" href="#email-analytics" data-comm-tool="analytics">Analytics</a>
             </nav>
           </header>
 
           <section class="org-attendee-email-panel org-attendee-email-panel--embedded" id="org-attendee-email-panel" aria-labelledby="org-attendee-email-title">
             <header class="org-attendee-email-panel-head">
               <div>
-                <p class="org-attendee-email-kicker">Free · 1 send per organiser page</p>
+                <p class="org-attendee-email-kicker">Free · 1 send per organiser page · extras from £9</p>
                 <h2 class="org-section-title" id="org-attendee-email-title">Attendee round-up</h2>
                 <p class="org-section-sub org-sub-lead org-sub-lead--flush">
                   Share a branded guest list — name, company, job title and email — so people can keep networking.
@@ -1940,7 +1941,7 @@
             </header>
 
             <p class="org-attendee-email-status" id="oec-status" role="status"></p>
-            <p class="org-attendee-email-usage" id="oec-usage" hidden></p>
+            <aside class="org-attendee-email-usage" id="oec-usage" hidden role="status"></aside>
 
             <div class="org-attendee-email-layout">
               <form class="org-attendee-email-form" id="oec-form" autocomplete="off">
@@ -2039,7 +2040,7 @@
             </div>
           </section>
 
-          <section class="org-group-update-panel org-group-update-panel--embedded" id="org-group-update-panel" aria-labelledby="org-social-email-title">
+          <section class="org-group-update-panel org-group-update-panel--embedded" id="org-group-update-panel" hidden aria-labelledby="org-social-email-title">
             <header class="org-attendee-email-panel-head">
               <div>
                 <p class="org-attendee-email-kicker">1 free send / organiser page / month</p>
@@ -2157,6 +2158,36 @@
                   <div class="org-group-update-report" id="ogu-report" hidden></div>
                 </div>
               </aside>
+            </div>
+          </section>
+
+          <section class="org-email-analytics-panel org-email-analytics-panel--embedded" id="org-email-analytics-panel" hidden aria-labelledby="org-email-analytics-title">
+            <header class="org-attendee-email-panel-head">
+              <div>
+                <p class="org-attendee-email-kicker">Opens · clicks · bookings</p>
+                <h2 class="org-section-title" id="org-email-analytics-title">Email analytics</h2>
+                <p class="org-section-sub org-sub-lead org-sub-lead--flush">
+                  Recent Attendee round-ups and Monthly group updates for this organiser page — refresh to pull the latest opens and clicks.
+                </p>
+              </div>
+            </header>
+            <div class="org-email-analytics-toolbar">
+              <div class="org-group-update-row" id="oea-group-wrap" hidden>
+                <label for="oea-group">Organiser page</label>
+                <select id="oea-group" aria-label="Organiser page for email analytics"></select>
+              </div>
+              <button type="button" class="org-btn org-btn-outline org-btn-sm" id="oea-refresh">Refresh</button>
+            </div>
+            <p class="org-attendee-email-status" id="oea-status" role="status"></p>
+            <div class="org-email-analytics-grid">
+              <section class="org-email-analytics-card" aria-labelledby="oea-roundup-heading">
+                <h3 class="org-section-title" id="oea-roundup-heading">Attendee round-ups</h3>
+                <div id="oea-roundup-list"></div>
+              </section>
+              <section class="org-email-analytics-card" aria-labelledby="oea-monthly-heading">
+                <h3 class="org-section-title" id="oea-monthly-heading">Monthly group updates</h3>
+                <div id="oea-monthly-list"></div>
+              </section>
             </div>
           </section>
         </section>
