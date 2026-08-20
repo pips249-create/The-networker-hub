@@ -1133,7 +1133,7 @@ html:has(.about-page) {
   color: inherit;
   width: 184px;
   height: 84px;
-  padding: 14px 20px;
+  padding: 10px 14px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(194, 153, 209, 0.28);
@@ -1170,7 +1170,7 @@ html:has(.about-page) {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 48px;
+  max-height: 60px;
   object-fit: contain;
   object-position: center;
 }

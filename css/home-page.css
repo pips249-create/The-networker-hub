@@ -2888,9 +2888,13 @@ html:has(.home-page) {
   background: rgba(255, 255, 255, 0.92);
 }
 
+.home-founding-item {
+  padding: 10px 14px;
+}
+
 .home-founding-item .home-partner-logo {
-  max-width: 148px;
-  max-height: 52px;
+  max-width: 156px;
+  max-height: 60px;
 }
 
 /* Logo tiles: never show a letter beside an image */

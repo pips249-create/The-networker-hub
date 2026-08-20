@@ -99,6 +99,31 @@ function resolvePhotoUrl(raw) {
   return `${base.replace(/\/$/, '')}/storage/v1/object/public/organiser-assets/${clean}`;
 }
 
+/** Local cropped marks for logos that ship with heavy padding in the source file. */
+const ORGANISER_LOGO_OVERRIDES = {
+  '2139f600-1c38-4a18-84b4-a4c0de03d9e9':
+    '/assets/marketing/get-connected-logo.png?v=20260820',
+  'get-connected': '/assets/marketing/get-connected-logo.png?v=20260820',
+};
+
+function organiserDisplayPhotoUrl(row) {
+  const id = String((row && row.id) || '')
+    .trim()
+    .toLowerCase();
+  const slug = String((row && (row.slug || publicOrganiserSlug(row))) || '')
+    .trim()
+    .toLowerCase();
+  const name = String((row && row.name) || '')
+    .trim()
+    .toLowerCase();
+  const override =
+    ORGANISER_LOGO_OVERRIDES[id] ||
+    ORGANISER_LOGO_OVERRIDES[slug] ||
+    (name === 'get connected' ? ORGANISER_LOGO_OVERRIDES['get-connected'] : '');
+  if (override) return override;
+  return resolvePhotoUrl(row && row.photo_url);
+}
+
 function rowToPublicOrganiser(row, eventCount, options) {
   options = options || {};
   const industries = Array.isArray(row.industries) ? row.industries.filter(Boolean) : [];
@@ -118,7 +143,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
     slug,
     name,
     description,
-    photoUrl: resolvePhotoUrl(row.photo_url),
+    photoUrl: organiserDisplayPhotoUrl(row),
     industries,
     industry,
     industrySlug: slugIndustry(industry),
@@ -524,7 +549,7 @@ async function listPublicSiblingOrganisersByEmail(email, excludeId) {
       id: row.id,
       name: String(row.name || '').trim(),
       slug: publicOrganiserSlug(row) || '',
-      photoUrl: resolvePhotoUrl(row.photo_url),
+      photoUrl: organiserDisplayPhotoUrl(row),
     }))
     .filter((row) => row.name && row.slug);
 }
@@ -550,6 +575,7 @@ module.exports = {
   rowToPublicOrganiser,
   fetchOrganiserReviews,
   resolvePhotoUrl,
+  organiserDisplayPhotoUrl,
   isPublicOrganiser,
   isOrganiserClaimable,
   applyPublicOrganiserBrowseFilter,

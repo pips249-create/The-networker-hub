@@ -7,20 +7,13 @@
 const { json, setCors } = require('./_lib/auth');
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const { publicOrganiserSlug } = require('./_lib/organiser-slug');
+const { organiserDisplayPhotoUrl } = require('./_lib/supabase-organisers-browse');
 const {
   listFoundingHomepageOrganisers,
   listFoundingOrganisersForGateway,
   FOUNDING_HOMEPAGE_UNTIL,
   FOUNDING_HOMEPAGE_CAP,
 } = require('./_lib/founding-organiser');
-
-function resolvePhotoUrl(raw) {
-  const url = String(raw || '').trim();
-  if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
-  if (url.startsWith('/')) return url;
-  return '';
-}
 
 function safeWebsite(url) {
   const raw = String(url || '').trim();
@@ -44,7 +37,7 @@ function mapRow(row, { includeHubHref }) {
     name: String(row.name || '').trim() || 'Organiser',
     slug,
     href: hubHref || website,
-    photoUrl: resolvePhotoUrl(row.photo_url),
+    photoUrl: organiserDisplayPhotoUrl(row),
     website,
     industry: industries[0] || '',
     foundingOrganiser: true,
