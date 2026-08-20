@@ -168,21 +168,21 @@
           id: 'welcome',
           label: 'Group welcome',
           caption:
-            'Meet the Founding Organisers of The Networker Hub 🎉\n\nThese UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n{{name_block}}\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking',
+            'Meet a few of our Founding Organisers · 2026 🎉\n\nHere are just a few of our 30 founding organisers confirmed ahead of launch on The Networker Hub:\n\n{{name_block}}\n\nWant your logo in the next post? Claim your free page, then email catherine@thenetworkerhub.com and ask to be included.\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking',
           image: 'founding_card',
         },
         {
           id: 'leaderboard',
           label: 'Leaderboard shoutout',
           caption:
-            'Founding Organisers are live — and on the Hub leaderboard 👏\n\n{{name_block}}\n\nPublic browsing & ticket buying open 1 September. Confirm your organiser page before then to join them:\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #NetworkingEvents #BusinessNetworking #NetworkingGroups #SmallBusinessUK #B2B',
+            'Just a few of our 30 Founding Organisers · 2026 👏\n\n{{name_block}}\n\nWant in on the next shoutout? Claim your page, then email catherine@thenetworkerhub.com.\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #NetworkingEvents #BusinessNetworking #NetworkingGroups #SmallBusinessUK #B2B',
           image: 'founding_card',
         },
         {
           id: 'short',
           label: 'Short & punchy',
           caption:
-            'Our Founding Organisers · 2026 🙌\n\n{{name_block_short}}\n\nRun a UK networking group? Claim your free page before 1 Sept → {{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #SME',
+            'Just a few of our 30 Founding Organisers · 2026 🙌\n\n{{name_block_short}}\n\nClaim your page + email catherine@thenetworkerhub.com to be in the next post → {{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #SME',
           image: 'founding_card',
         },
       ],
@@ -569,31 +569,34 @@
   }
 
   /**
-   * Explicit allowlist for the founding social graphic (Command Centre only).
-   * Athena Network is intentionally excluded. Soft-launch BMUK is always included.
+   * Explicit allowlist + display order for the founding social graphic (Command Centre only).
    */
-  var SOCIAL_FOUNDING_ALLOW = [
-    /^business\s*matching/i,
-    /^first\s*connections$/i,
-    /^we\s*are\s*in\s*business/i,
-    /^treehouse\s*tribe/i,
-    /^the\s*business\s*network/i,
-    /^the\s*business\s*community/i,
-    /^searchnorwich/i,
-    /^like[- ]?minded\s*professionals/i,
-    /^scottish\s*national\s*network/i,
-    /^norwich\s*kitty/i,
-    /^big\s*business\s*breakfast/i,
-    /^get\s*connected/i,
+  var SOCIAL_FOUNDING_ORDER = [
+    { re: /^the\s*business\s*community/i, key: 'tbc' },
+    { re: /^get\s*connected/i, key: 'get-connected' },
+    { re: /business\s*matching|^bmuk\b/i, key: 'bmuk' },
+    { re: /^first\s*connections$/i, key: 'first-connections' },
+    { re: /^the\s*business\s*show/i, key: 'business-show' },
+    { re: /^z[oö]c[oö]/i, key: 'zoco' },
+    { re: /^scottish\s*national\s*network/i, key: 'snn' },
+    { re: /^searchnorwich/i, key: 'searchnorwich' },
+    { re: /^beyond\s*wealth/i, key: 'beyond-wealth' },
+    { re: /^we\s*are\s*in\s*business/i, key: 'waib' },
+    { re: /^the\s*business\s*network/i, key: 'tbn' },
   ];
 
-  function isSocialFoundingAllowed(name) {
+  var SOCIAL_FOUNDING_TOTAL = 30;
+
+  function socialFoundingOrderIndex(name) {
     var n = String(name || '').trim();
-    if (!n) return false;
-    if (/athena/i.test(n)) return false;
-    return SOCIAL_FOUNDING_ALLOW.some(function (re) {
-      return re.test(n);
-    });
+    for (var i = 0; i < SOCIAL_FOUNDING_ORDER.length; i++) {
+      if (SOCIAL_FOUNDING_ORDER[i].re.test(n)) return i;
+    }
+    return -1;
+  }
+
+  function isSocialFoundingAllowed(name) {
+    return socialFoundingOrderIndex(name) >= 0;
   }
 
   function socialGraphicFoundingOrganisers(organisers) {
@@ -604,14 +607,20 @@
     for (var i = 0; i < list.length; i++) {
       if (!isBmukName(list[i] && list[i].name)) continue;
       hasBmuk = true;
+      // Always paint the marketing BMUK logo (never a wordmark tile).
       list[i] = Object.assign({}, list[i], {
         photoUrl: '/assets/marketing/bmu-logo.png',
+        softLaunchWordmark: false,
+        forceDarkPlate: true,
       });
       break;
     }
     if (!hasBmuk) {
       list.unshift(softLaunchFoundingSeed());
     }
+    list.sort(function (a, b) {
+      return socialFoundingOrderIndex(a.name) - socialFoundingOrderIndex(b.name);
+    });
     return list;
   }
 
@@ -623,6 +632,8 @@
       website: 'https://business-matching.co.uk/',
       foundingHomepage: true,
       softLaunch: true,
+      softLaunchWordmark: false,
+      forceDarkPlate: true,
       isInternal: false,
     };
   }
@@ -637,9 +648,10 @@
     for (var i = 0; i < list.length; i++) {
       if (!isBmukName(list[i] && list[i].name)) continue;
       hasBmuk = true;
-      // Always use the Hub marketing BMUK logo for this graphic.
       list[i] = Object.assign({}, list[i], {
         photoUrl: '/assets/marketing/bmu-logo.png',
+        softLaunchWordmark: false,
+        forceDarkPlate: true,
       });
       break;
     }
@@ -651,20 +663,21 @@
 
   function foundingNameLists(organisers, opts) {
     opts = opts || {};
-    // Social posts use the explicit allowlist (not the full live founding cohort).
     var list = opts.socialConfirmedOnly
       ? socialGraphicFoundingOrganisers(organisers)
       : withSoftLaunchFounding(organisers);
     var homepage = list.filter(function (o) {
       return o.foundingHomepage || o.softLaunch;
     });
-    var featured = (homepage.length ? homepage : list).slice(0, 40);
+    // Social allowlist: show every allowed group even if homepage flag is missing.
+    var featured = (
+      opts.socialConfirmedOnly ? list : homepage.length ? homepage : list
+    ).slice(0, 40);
     var names = featured
       .map(function (o) {
         return o.name;
       })
       .filter(Boolean);
-    var more = Math.max(0, list.length - names.length);
     var nameBlock = names.length
       ? names
           .map(function (n) {
@@ -672,9 +685,7 @@
           })
           .join('\n')
       : '• (confirmations will appear here as groups claim)';
-    if (more > 0) nameBlock += '\n• …and ' + more + ' more founding organisers';
     var shortNames = names.slice(0, 12);
-    var shortMore = Math.max(0, list.length - shortNames.length);
     var nameBlockShort = shortNames.length
       ? shortNames
           .map(function (n) {
@@ -682,17 +693,24 @@
           })
           .join('\n')
       : '• (more names coming soon)';
-    if (shortMore > 0) nameBlockShort += '\n• …and ' + shortMore + ' more';
-    return { nameBlock: nameBlock, nameBlockShort: nameBlockShort, featured: featured, list: list };
+    return {
+      nameBlock: nameBlock,
+      nameBlockShort: nameBlockShort,
+      featured: featured,
+      list: list,
+      totalCount: SOCIAL_FOUNDING_TOTAL,
+    };
   }
 
   function foundingLinkedInCaption(organisers) {
     var names = foundingNameLists(organisers, { socialConfirmedOnly: true });
     return (
-      'Meet the Founding Organisers of The Networker Hub 🎉\n\n' +
-      'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n' +
+      'Meet a few of our Founding Organisers · 2026 🎉\n\n' +
+      'Here are just a few of our ' +
+      SOCIAL_FOUNDING_TOTAL +
+      ' founding organisers confirmed ahead of launch on The Networker Hub:\n\n' +
       names.nameBlock +
-      '\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n' +
+      '\n\nWant your logo in the next post? Claim your free page, then email catherine@thenetworkerhub.com and ask to be included.\n' +
       hubForOrganisersUrl() +
       '\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
     );
@@ -860,10 +878,11 @@
     return lines.slice(0, maxLines);
   }
 
-  function drawFoundingLogoTile(ctx, photo, x, y, cell) {
+  function drawFoundingLogoTile(ctx, photo, x, y, cell, opts) {
+    opts = opts || {};
     if (!photo || !photo.width || !photo.height) return false;
 
-    var fill = foundingLogoPlateFill(photo);
+    var fill = opts.forceDarkPlate ? '#0a0a0a' : foundingLogoPlateFill(photo);
     drawFoundingTilePlate(ctx, x, y, cell, { fill: fill });
 
     var pad = 20;
@@ -898,24 +917,6 @@
     ctx.textBaseline = 'alphabetic';
   }
 
-  function drawFoundingWordmarkTile(ctx, org, x, y, cell) {
-    drawFoundingTilePlate(ctx, x, y, cell, { fill: '#ffffff' });
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#c4a574';
-    ctx.font = '700 13px system-ui, sans-serif';
-    ctx.fillText('FOUNDING', x + cell / 2, y + cell * 0.28);
-    ctx.fillStyle = '#1c2040';
-    ctx.font = '700 20px Georgia, "DM Serif Display", serif';
-    var lines = wrapCanvasLines(ctx, org && org.name ? org.name : 'Group', cell - 28, 3);
-    var lineH = 26;
-    var startY = y + cell / 2 + 4 - ((lines.length - 1) * lineH) / 2;
-    for (var i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], x + cell / 2, startY + i * lineH);
-    }
-    ctx.textBaseline = 'alphabetic';
-  }
-
   function drawFoundingCtaTile(ctx, x, y, cell) {
     drawFoundingTilePlate(ctx, x, y, cell, {
       fill: '#f7f0e4',
@@ -924,15 +925,25 @@
     });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    var cx = x + cell / 2;
     ctx.fillStyle = '#c4a574';
-    ctx.font = '700 14px system-ui, sans-serif';
-    ctx.fillText('YOUR LOGO', x + cell / 2, y + cell / 2 - 22);
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.fillText('YOUR LOGO HERE', cx, y + cell * 0.22);
     ctx.fillStyle = '#1c2040';
-    ctx.font = '700 28px Georgia, "DM Serif Display", serif';
-    ctx.fillText('here', x + cell / 2, y + cell / 2 + 8);
+    ctx.font = '700 17px Georgia, "DM Serif Display", serif';
+    ctx.fillText('Claim your page', cx, y + cell * 0.4);
     ctx.fillStyle = '#635c5e';
-    ctx.font = '600 13px system-ui, sans-serif';
-    ctx.fillText('Claim before 1 Sept', x + cell / 2, y + cell / 2 + 40);
+    ctx.font = '600 12px system-ui, sans-serif';
+    var lines = [
+      'Then email',
+      'catherine@thenetworkerhub.com',
+      'to be included in our',
+      'social media post',
+    ];
+    var startY = y + cell * 0.55;
+    for (var i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], cx, startY + i * 16);
+    }
     ctx.textBaseline = 'alphabetic';
   }
 
@@ -1048,7 +1059,7 @@
   async function generateFoundingCardImage(organisers) {
     var names = foundingNameLists(organisers, { socialConfirmedOnly: true });
     var withPhotos = names.featured.filter(function (o) {
-      return String(o.photoUrl || '').trim() || o.softLaunchWordmark;
+      return String(o.photoUrl || '').trim();
     });
     var tiles = (withPhotos.length ? withPhotos : names.featured).slice(0, 19);
     tiles.push({
@@ -1083,7 +1094,7 @@
 
     ctx.fillStyle = 'rgba(255,255,255,0.82)';
     ctx.font = '500 24px system-ui, sans-serif';
-    ctx.fillText('Confirmed ahead of launch on The Networker Hub', width / 2, 126);
+    ctx.fillText('Just a few of our 30 founding organisers', width / 2, 126);
 
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.fillRect(80, 160, width - 160, 2);
@@ -1100,7 +1111,7 @@
     } else {
       var photos = await Promise.all(
         tiles.map(function (org) {
-          if (org.isCta || org.softLaunchWordmark) return Promise.resolve(null);
+          if (org.isCta) return Promise.resolve(null);
           return loadImage(org.photoUrl);
         })
       );
@@ -1114,25 +1125,24 @@
           drawFoundingCtaTile(ctx, x, y, cell);
           continue;
         }
-        if (org.softLaunchWordmark) {
-          drawFoundingWordmarkTile(ctx, org, x, y, cell);
-          continue;
-        }
         var photo = photos[i];
-        var drew = drawFoundingLogoTile(ctx, photo, x, y, cell);
+        var drew = drawFoundingLogoTile(ctx, photo, x, y, cell, {
+          forceDarkPlate: Boolean(org.forceDarkPlate || isBmukName(org.name)),
+        });
         if (!drew) {
           drawFoundingNameTile(ctx, org, x, y, cell);
         }
       }
     }
 
-    var realCount = Math.max(0, (names.list || []).length);
-    var countLine =
-      realCount === 1 ? '1 founding organiser' : String(realCount) + ' founding organisers';
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.font = '500 22px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(countLine + ' · thenetworkerhub.com', width / 2, height - 48);
+    ctx.fillText(
+      'Just a few of our ' + SOCIAL_FOUNDING_TOTAL + ' founding organisers · thenetworkerhub.com',
+      width / 2,
+      height - 48
+    );
 
     return canvas.toDataURL('image/png');
   }
