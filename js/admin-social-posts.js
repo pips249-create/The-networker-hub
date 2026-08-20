@@ -611,7 +611,7 @@
       list[i] = Object.assign({}, list[i], {
         photoUrl: '/assets/marketing/bmu-logo.png',
         softLaunchWordmark: false,
-        forceDarkPlate: true,
+        forceWhitePlate: true,
       });
       break;
     }
@@ -633,7 +633,7 @@
       foundingHomepage: true,
       softLaunch: true,
       softLaunchWordmark: false,
-      forceDarkPlate: true,
+      forceWhitePlate: true,
       isInternal: false,
     };
   }
@@ -651,7 +651,7 @@
       list[i] = Object.assign({}, list[i], {
         photoUrl: '/assets/marketing/bmu-logo.png',
         softLaunchWordmark: false,
-        forceDarkPlate: true,
+        forceWhitePlate: true,
       });
       break;
     }
@@ -882,7 +882,11 @@
     opts = opts || {};
     if (!photo || !photo.width || !photo.height) return false;
 
-    var fill = opts.forceDarkPlate ? '#0a0a0a' : foundingLogoPlateFill(photo);
+    var fill = opts.forceWhitePlate
+      ? '#ffffff'
+      : opts.forceDarkPlate
+        ? '#0a0a0a'
+        : foundingLogoPlateFill(photo);
     drawFoundingTilePlate(ctx, x, y, cell, { fill: fill });
 
     var pad = 20;
@@ -1127,7 +1131,7 @@
         }
         var photo = photos[i];
         var drew = drawFoundingLogoTile(ctx, photo, x, y, cell, {
-          forceDarkPlate: Boolean(org.forceDarkPlate || isBmukName(org.name)),
+          forceWhitePlate: Boolean(org.forceWhitePlate || isBmukName(org.name)),
         });
         if (!drew) {
           drawFoundingNameTile(ctx, org, x, y, cell);
