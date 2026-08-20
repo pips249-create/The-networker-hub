@@ -14916,15 +14916,44 @@
       });
   }
 
+  function groupIsClaimed(o) {
+    return String((o && o.ownership_claim_status) || '').toLowerCase() === 'claimed';
+  }
+
+  function groupClaimEmailButtonHtml(o) {
+    if (!o || !o.email || groupIsClaimed(o)) return '';
+    var sent = Boolean(o.claim_invite_sent_at);
+    var cls = sent
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+      : 'border-violet-200 text-violet-900 hover:bg-violet-50';
+    var label = sent ? 'Claim email sent' : 'Email their claim link';
+    return (
+      '<button type="button" data-send-group-claim-email="' +
+      attrEsc(o.id) +
+      '" data-group-email="' +
+      attrEsc(o.email || '') +
+      '" data-group-name="' +
+      attrEsc(o.name || '') +
+      '" data-claim-email-sent="' +
+      (sent ? '1' : '0') +
+      '" class="text-xs font-semibold rounded-lg border ' +
+      cls +
+      ' px-2.5 py-1">' +
+      label +
+      '</button>'
+    );
+  }
+
   function sendGroupClaimInvite(organiserId, email, name, triggerBtn) {
     var to = String(email || '').trim();
     if (!to) {
       window.alert('Add a contact email before sending the claim link.');
       return;
     }
+    var alreadySent = triggerBtn && triggerBtn.getAttribute('data-claim-email-sent') === '1';
     if (
       !window.confirm(
-        'Email their claim link to ' +
+        (alreadySent ? 'Send the claim email again to ' : 'Email their claim link to ') +
           to +
           (name ? ' for “' + name + '”' : '') +
           '?\n\nThis sends Email 2, worded as: we found their group, invited them to the Hub, and have already set up their page. No email is sent until you confirm.'
@@ -14939,7 +14968,15 @@
     })
       .then(function (data) {
         if (!data || !data.ok) throw new Error((data && data.message) || 'Could not send claim email');
-        window.alert(data.message || 'Email 2 sent.');
+        if (groupCleanupCache && groupCleanupCache.organisers) {
+          groupCleanupCache.organisers.forEach(function (org) {
+            if (String(org.id) === String(organiserId)) {
+              org.claim_invite_sent_at = data.claimInviteSentAt || new Date().toISOString();
+            }
+          });
+          renderGroupCleanupList(groupCleanupCache);
+          bindGroupCleanupPageUi();
+        }
       })
       .catch(function (err) {
         window.alert(err.message || 'Could not send claim email.');
@@ -16540,6 +16577,9 @@
             esc(o.name || 'Untitled') +
             '</h3>' +
             listingStatusBadge(o.listing_status) +
+            (groupIsClaimed(o)
+              ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900">Claimed</span>'
+              : '') +
             (String(o.listing_status || '').toLowerCase() === 'unpublished' && !o.hub_suspended
               ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200">Hidden from browse</span>'
               : '') +
@@ -16561,15 +16601,7 @@
                 attrEsc(publicHref) +
                 '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline px-1 py-1">View</a>'
               : '') +
-            (o.email
-              ? '<button type="button" data-send-group-claim-email="' +
-                attrEsc(o.id) +
-                '" data-group-email="' +
-                attrEsc(o.email || '') +
-                '" data-group-name="' +
-                attrEsc(o.name || '') +
-                '" class="text-xs font-semibold rounded-lg border border-violet-200 text-violet-900 px-2.5 py-1 hover:bg-violet-50">Email their claim link</button>'
-              : '') +
+            groupClaimEmailButtonHtml(o) +
             (!o.has_login && o.email
               ? '<button type="button" data-provision-group-login="' +
                 attrEsc(o.id) +
@@ -21866,10 +21898,18 @@
     var s = String(text || '');
     var iso = s.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
     if (iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
+    // "Fri, 4 Sept 2026", "4th September 2026", "Tue 8 Sep 2026"
     var uk = s.match(
-      /\b(\d{1,2})(?:st|nd|rd|th)?\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(20\d{2})\b/i
+      /\b(\d{1,2})(?:st|nd|rd|th)?\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(20\d{2})\b/i
     );
-    if (!uk) return '';
+    if (!uk) {
+      // "04/09/2026" or "4/9/2026" (UK day/month/year)
+      var slash = s.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/);
+      if (slash) {
+        return slash[3] + '-' + ('0' + slash[2]).slice(-2) + '-' + ('0' + slash[1]).slice(-2);
+      }
+      return '';
+    }
     var months = {
       jan: '01',
       feb: '02',
@@ -21887,6 +21927,20 @@
     var day = ('0' + uk[1]).slice(-2);
     var mon = months[uk[2].slice(0, 3).toLowerCase()] || '';
     return mon ? uk[3] + '-' + mon + '-' + day : '';
+  }
+
+  function guessIntakeEventType(title, format) {
+    var t = String(title || '').toLowerCase();
+    var online = String(format || '').toLowerCase() === 'online';
+    if (/\bwebinar\b/.test(t) || (online && /\b(zoom|teams|online)\b/.test(t))) return 'Webinar';
+    if (/\b(masterclass|master class)\b/.test(t)) return 'Masterclass';
+    if (/\bworkshop\b/.test(t)) return 'Workshop';
+    if (/\b(seminar|training|tax|inheritance|briefing|lunch\s*&\s*learn)\b/.test(t)) return 'Seminar';
+    if (/\b(conference|summit)\b/.test(t)) return 'Conference';
+    if (/\b(exhibition|expo|trade show)\b/.test(t)) return 'Exhibition';
+    if (/\bawards?\b/.test(t)) return 'Awards';
+    if (online) return 'Webinar';
+    return 'Meeting';
   }
 
   function parseIntakeHhMm(text, fallback) {
@@ -21928,6 +21982,7 @@
     var start = parseIntakeHhMm(row.startTime, '10:00') || '10:00';
     var end = parseIntakeHhMm(row.endTime, '') || defaultEventCreateEndTime(start);
     var paid = payHow === 'paid_tickets' || payHow === 'both';
+    var eventType = guessIntakeEventType(row.eventTitle, format);
     var ticketName =
       payHow === 'free_tickets'
         ? 'Free ticket'
@@ -21936,15 +21991,19 @@
           : payHow === 'both'
             ? 'Guest ticket'
             : 'Standard ticket';
-    var ticketPrice = paid ? firstPoundAmount(row.ticketDetails) : '0';
+    var ticketPrice = paid ? firstPoundAmount(row.ticketDetails) || firstPoundAmount(row.pricing) : '0';
     var descParts = [];
     if (row.description) descParts.push(String(row.description).trim());
-    if (row.notes) descParts.push(String(row.notes).trim());
-    if ((payHow === 'membership' || payHow === 'both') && row.ticketDetails) {
-      descParts.push('Membership: ' + String(row.ticketDetails).trim());
-    }
+    if (row.notes) descParts.push('Notes: ' + String(row.notes).trim());
+    if (row.ticketDetails) descParts.push('Tickets / pricing: ' + String(row.ticketDetails).trim());
     if (String(row.freeTrialVisits || '').toLowerCase() === 'yes' && row.freeTrialDetails) {
       descParts.push('Free trial visits: ' + String(row.freeTrialDetails).trim());
+    }
+    if (row.contactName || row.phone) {
+      descParts.push(
+        'Contact: ' +
+          [row.contactName, row.phone].filter(Boolean).join(' · ')
+      );
     }
 
     return (
@@ -21956,16 +22015,43 @@
       attrEsc(row.groupName || '') +
       '" data-contact-email="' +
       attrEsc(row.email || '') +
+      '" data-contact-name="' +
+      attrEsc(row.contactName || '') +
+      '" data-contact-phone="' +
+      attrEsc(row.phone || '') +
       '" data-website="' +
       attrEsc(row.organiserWebsiteUrl || '') +
       '">' +
       '<div class="grid sm:grid-cols-2 gap-3">' +
-      '<p class="sm:col-span-2 text-xs text-slate-600">Pre-filled from their request. We will match their group by email, or create it if it is new. Ticket sales stay closed until they confirm.</p>' +
-      '<p class="sm:col-span-2 text-[11px] text-slate-500">They wrote dates as: <strong>' +
+      '<p class="sm:col-span-2 text-sm font-semibold text-brand-900">Create listing from this request</p>' +
+      '<p class="sm:col-span-2 text-xs text-slate-600">Everything below is pre-filled from what they sent. Check the date, times, and group, then create. Ticket sales stay closed until they confirm Stripe (if paid), VAT, refunds, and terms.</p>' +
+      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600 space-y-1">' +
+      '<p><strong>They wrote:</strong> ' +
       esc(row.eventDates || '—') +
-      '</strong>' +
-      (row.ticketDetails ? ' · Tickets: ' + esc(row.ticketDetails) : '') +
+      (row.startTime || row.endTime
+        ? ' · ' + esc([row.startTime, row.endTime].filter(Boolean).join(' – '))
+        : '') +
       '</p>' +
+      '<p><strong>Parsed date:</strong> ' +
+      (ymd ? esc(ymd) : '<span class="text-red-700 font-semibold">Could not read the date — pick one below</span>') +
+      ' · <strong>Times:</strong> ' +
+      esc(start) +
+      '–' +
+      esc(end) +
+      '</p>' +
+      '<p><strong>Group / contact:</strong> ' +
+      esc(row.groupName || '—') +
+      ' · ' +
+      esc(row.contactName || '—') +
+      ' · ' +
+      esc(row.email || '—') +
+      (row.phone ? ' · ' + esc(row.phone) : '') +
+      '</p>' +
+      (row.organiserWebsiteUrl
+        ? '<p><strong>Website:</strong> ' + esc(row.organiserWebsiteUrl) + '</p>'
+        : '') +
+      (row.ticketDetails ? '<p><strong>Tickets:</strong> ' + esc(row.ticketDetails) + '</p>' : '') +
+      '</div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
       '<div class="ei-create-org-picker relative">' +
       '<input type="hidden" name="organiser_id">' +
@@ -21974,9 +22060,7 @@
       '" autocomplete="off">' +
       '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
       '<p class="ei-create-org-chosen hidden mt-1 text-xs text-brand-800"></p></div>' +
-      '<p class="text-[11px] text-slate-500 mt-1">Contact: ' +
-      esc(row.email || '—') +
-      '. If this group is not on the Hub yet, creating the listing will add it.</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">We match by email first. If this group is not on the Hub yet, creating the listing will add it from this request.</p></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(row.eventTitle || '') +
@@ -22001,7 +22085,7 @@
       '</select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
       '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      eventTypeOptions('Meeting') +
+      eventTypeOptions(eventType) +
       '</select></div>' +
       eventLocationFieldsHtml(
         {
@@ -22051,15 +22135,17 @@
       eventStatusOptions('published') +
       '</select>' +
       '<p class="text-[11px] text-slate-500 mt-1">Published = visible listing. Ticket sales stay closed until they confirm.</p></div>' +
-      (row.photoUrl
-        ? '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Photo URL</label>' +
-          '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-          attrEsc(row.photoUrl) +
-          '"></div>'
-        : '') +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Photo URL</label>' +
+      '<input type="url" name="photo_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(row.photoUrl || '') +
+      '" placeholder="Optional — leave blank to use the group logo later"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser website</label>' +
+      '<input type="url" name="organiser_website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(row.organiserWebsiteUrl || '') +
+      '" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
-                  '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel>Cancel</button>' +
+      '<button type="button" class="text-xs font-semibold text-slate-600 hover:underline" data-ei-create-cancel>Cancel</button>' +
       '<span class="ei-create-msg text-xs"></span></div></div></form>'
     );
   }
@@ -22198,18 +22284,17 @@
                 var desc = String(row.description || '').trim();
                 var tickets = String(row.ticketDetails || '').trim();
                 var notes = String(row.notes || '').trim();
-                var linkClass =
-                  'inline-flex items-center rounded-lg border text-xs font-semibold px-3 py-1.5 no-underline';
+                var btnClass =
+                  'inline-flex items-center rounded-lg border text-xs font-semibold px-3 py-1.5';
+                var linkClass = btnClass + ' no-underline';
                 var actions = '';
                 if (row.status === 'open') {
                   actions +=
-                    '<a href="' +
-                    attrEsc(eventIntakeActionHref('create', row.id)) +
-                    '" class="' +
-                    linkClass +
+                    '<button type="button" class="' +
+                    btnClass +
                     ' border-brand-700 bg-brand-700 text-white hover:bg-brand-900" data-ei-create-toggle="' +
                     attrEsc(row.id) +
-                    '">Create listing</a> ';
+                    '">Create listing</button> ';
                 }
                 actions +=
                   row.status === 'open'
@@ -22230,23 +22315,19 @@
                       ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Reopen</a>';
 
                 var findOrgBtn =
-                  '<a href="' +
-                  attrEsc(eventIntakeActionHref('find', row.id)) +
-                  '" class="' +
-                  linkClass +
+                  '<button type="button" class="' +
+                  btnClass +
                   ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-find-organiser="1" data-ei-find-id="' +
                   attrEsc(row.id) +
                   '" data-ei-group-name="' +
                   attrEsc(row.groupName || '') +
                   '" data-ei-email="' +
                   attrEsc(row.email || '') +
-                  '">Find organiser</a>';
+                  '">Find organiser</button>';
 
                 var importBrandBtn = row.organiserWebsiteUrl
-                  ? '<a href="' +
-                    attrEsc(eventIntakeActionHref('import', row.id)) +
-                    '" class="' +
-                    linkClass +
+                  ? '<button type="button" class="' +
+                    btnClass +
                     ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-import-brand="1" data-ei-import-id="' +
                     attrEsc(row.id) +
                     '" data-ei-group-name="' +
@@ -22255,7 +22336,7 @@
                     attrEsc(row.email || '') +
                     '" data-ei-website="' +
                     attrEsc(row.organiserWebsiteUrl || '') +
-                    '">Import logo + description</a>'
+                    '">Import logo + description</button>'
                   : '';
 
                 actions += ' ' + findOrgBtn + (importBrandBtn ? ' ' + importBrandBtn : '');
@@ -22288,7 +22369,6 @@
                       '</a>'
                     : '') +
                   '</p></div></div>' +
-                  eventIntakeCreateFormHtml(row) +
                   '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Date(s)</dt><dd>' +
                   esc(row.eventDates || '—') +
@@ -22356,6 +22436,7 @@
                   '<div class="flex flex-wrap gap-2 pt-1">' +
                   actions +
                   '</div>' +
+                  eventIntakeCreateFormHtml(row) +
                   '</article>'
                 );
               })
@@ -22463,7 +22544,9 @@
     var search = form.querySelector('.ei-create-org-search');
     var name = String((search && search.value) || form.getAttribute('data-group-name') || '').trim();
     var email = String(form.getAttribute('data-contact-email') || '').trim();
-    var website = String(form.getAttribute('data-website') || '').trim();
+    var website = String(
+      formFieldVal(form, 'organiser_website') || form.getAttribute('data-website') || ''
+    ).trim();
     if (!name) return Promise.reject(new Error('Enter a group name.'));
     if (!email) {
       return Promise.reject(
@@ -22525,19 +22608,41 @@
     form.classList.remove('hidden');
     form.style.display = 'block';
     if (form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    var statusEl = document.getElementById('event-intake-status');
+    if (statusEl) {
+      statusEl.textContent = 'Review the pre-filled form below, then click Create listing in the form.';
+      statusEl.className = 'text-sm text-brand-800 font-semibold';
+    }
     var search = form.querySelector('.ei-create-org-search');
     var email = String(form.getAttribute('data-contact-email') || '').trim();
+    var groupName = String(form.getAttribute('data-group-name') || '').trim();
     if (search) {
       try {
         search.focus();
       } catch (_e) {}
-      search.dispatchEvent(new Event('focus'));
     }
-    if (email && !formFieldVal(form, 'organiser_id')) {
-      searchIntakeOrganisers(email)
-        .then(function (list) {
-          var match = pickIntakeOrganiser(list, email, form.getAttribute('data-group-name'));
-          if (match) setIntakeCreateOrganiser(form, match.id, match.name);
+    function tryMatch(list) {
+      var match = pickIntakeOrganiser(list, email, groupName);
+      if (match) setIntakeCreateOrganiser(form, match.id, match.name);
+      return match;
+    }
+    if (!formFieldVal(form, 'organiser_id')) {
+      var lookups = [];
+      if (email) lookups.push(searchIntakeOrganisers(email));
+      if (groupName) lookups.push(searchIntakeOrganisers(groupName));
+      if (!lookups.length) return;
+      Promise.all(lookups)
+        .then(function (results) {
+          var merged = [];
+          var seen = {};
+          results.forEach(function (list) {
+            (list || []).forEach(function (o) {
+              if (!o || !o.id || seen[o.id]) return;
+              seen[o.id] = true;
+              merged.push(o);
+            });
+          });
+          tryMatch(merged);
         })
         .catch(function () {});
     }
@@ -22563,12 +22668,14 @@
     bindEventIntakeDocClicks();
     (page || root)
       .querySelectorAll(
-        '[data-ei-filter], [data-ei-create-toggle], [data-ei-create-cancel], [data-ei-find-organiser], [data-ei-import-brand], [data-ei-status]'
+        '[data-ei-create-toggle], [data-ei-create-cancel], [data-ei-find-organiser], [data-ei-import-brand]'
       )
       .forEach(function (btn) {
-        if (btn.tagName === 'A' || btn.dataset.eiBound === '1') return;
+        if (btn.dataset.eiBound === '1') return;
         btn.dataset.eiBound = '1';
-        btn.addEventListener('click', handleEventIntakeDocClick);
+        btn.addEventListener('click', function (e) {
+          handleEventIntakeDocClick(e);
+        });
       });
     (root.querySelectorAll('.ei-create-form') || []).forEach(function (form) {
       if (form.dataset.bound === '1') return;
@@ -22783,19 +22890,13 @@
     if (!t) return;
     if (t.closest && t.closest('a[href*="cleanup/"]')) return;
     var btn =
-      t.closest('[data-ei-filter]') ||
       t.closest('[data-ei-create-toggle]') ||
       t.closest('[data-ei-create-cancel]') ||
       t.closest('[data-ei-find-organiser]') ||
-      t.closest('[data-ei-import-brand]') ||
-      t.closest('[data-ei-status]');
+      t.closest('[data-ei-import-brand]');
     if (!btn) return;
     var api = window.AdminEventIntake;
     if (!api) return;
-    if (btn.hasAttribute('data-ei-filter')) {
-      api.filter(btn.getAttribute('data-ei-filter'), e);
-      return;
-    }
     if (btn.hasAttribute('data-ei-create-toggle')) {
       api.toggleCreate(btn, e);
       return;
@@ -22810,10 +22911,6 @@
     }
     if (btn.hasAttribute('data-ei-import-brand')) {
       api.importBrand(btn, e);
-      return;
-    }
-    if (btn.hasAttribute('data-ei-status')) {
-      api.setStatus(btn, e);
     }
   }
 
