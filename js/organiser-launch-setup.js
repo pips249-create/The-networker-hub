@@ -125,11 +125,17 @@
     });
     families.forEach(function (fam) {
       if (!fam || !fam.key) return;
+      if (familyNeedsHubListingReview(fam)) return;
       if (!Object.keys(idSet).length || idSet[String(fam.organiserId || '')]) {
         s.eventsDone[String(fam.key)] = true;
       }
     });
-    s.dismissed = true;
+    // Keep the prompt available when Hub-listed events still need sales review.
+    if (families.some(familyNeedsHubListingReview)) {
+      s.dismissed = false;
+    } else {
+      s.dismissed = true;
+    }
     writeState(s);
   }
 
@@ -176,8 +182,50 @@
     });
   }
 
+  function eventIsPast(ev) {
+    if (!ev) return false;
+    var raw = ev.startsAt || ev.starts_at || ev.date || ev.eventDate || '';
+    if (!raw) return false;
+    var d = new Date(raw);
+    if (isNaN(d.getTime())) return false;
+    return d.getTime() < Date.now() - 12 * 60 * 60 * 1000;
+  }
+
+  function eventIsCancelledOrGone(ev) {
+    if (!ev) return true;
+    var st = String(ev.status || '').toLowerCase();
+    var key = String(ev.statusKey || ev.listingStatus || '').toLowerCase();
+    return (
+      st === 'cancelled' ||
+      key === 'cancelled' ||
+      st === 'archived' ||
+      key === 'archived' ||
+      st === 'unpublished' ||
+      key === 'unpublished'
+    );
+  }
+
+  /** Published by the Hub / admin with ticket sales still closed — organiser must review. */
+  function eventNeedsHubListingReview(ev) {
+    if (!ev || eventIsCancelledOrGone(ev) || eventIsPast(ev)) return false;
+    var salesOn = ev.ticketSalesEnabled === true || ev.ticket_sales_enabled === true;
+    if (salesOn) return false;
+    return eventLooksPublished(ev);
+  }
+
+  function familyNeedsHubListingReview(family) {
+    return (family && family.events || []).some(eventNeedsHubListingReview);
+  }
+
   function eventFamilyNeedsSetup(family, tickets, stored) {
     if (!family || !family.key) return false;
+    var members = family.events || [];
+    if (!members.length) return false;
+
+    // Hub-listed published events with sales still closed always need review.
+    // Do not honour localStorage "done" flags — sales must be confirmed on the server.
+    if (familyNeedsHubListingReview(family)) return true;
+
     if (familyMarkedDone(family, stored)) {
       // Heal alternate keys (series key vs ev:id) so claim/reloads stay consistent.
       if (!stored.eventsDone[String(family.key)]) {
@@ -185,8 +233,7 @@
       }
       return false;
     }
-    var members = family.events || [];
-    if (!members.length) return false;
+
     var ids = members.map(function (e) {
       return e.id;
     });
@@ -195,12 +242,13 @@
       return e.ticketSalesEnabled === true || e.ticket_sales_enabled === true;
     });
     var anyPublished = members.some(eventLooksPublished);
-    // Already published in the workspace — leave the setup queue even if local flags lagged.
-    if (anyPublished && (anySalesOn || tiers.length)) {
+    // Already published with sales live (or finished setup) — leave the queue.
+    if (anyPublished && anySalesOn) {
       markEventFamilyMembersDone(family);
       return false;
     }
     if (anyPublished) {
+      // Published without sales should have been caught above; treat as done if past/cancelled.
       markEventFamilyMembersDone(family);
       return false;
     }
@@ -285,6 +333,25 @@
           group: g,
           ordinal: idx + 1,
         });
+        // Hub-listed events still need review even if the profile is thin.
+        pendingFamilies.forEach(function (fam) {
+          if (!fam || queuedEventKeys[fam.key]) return;
+          if (String(fam.organiserId || '') !== gid) return;
+          if (!familyNeedsHubListingReview(fam)) return;
+          queuedEventKeys[fam.key] = true;
+          queue.push({
+            kind: 'event',
+            id: fam.key,
+            title: fam.title,
+            isSeries: fam.isSeries,
+            dateCount: fam.dateCount,
+            date: fam.date || '',
+            place: fam.place || '',
+            family: fam,
+            hubListed: true,
+            indexHint: 'Listed by the Hub — review',
+          });
+        });
         return;
       }
       // Heal localStorage when the page already looks complete.
@@ -296,6 +363,7 @@
         if (!fam || queuedEventKeys[fam.key]) return;
         if (String(fam.organiserId || '') !== gid) return;
         queuedEventKeys[fam.key] = true;
+        var hubListed = familyNeedsHubListingReview(fam);
         queue.push({
           kind: 'event',
           id: fam.key,
@@ -305,7 +373,12 @@
           date: fam.date || '',
           place: fam.place || '',
           family: fam,
-          indexHint: fam.isSeries ? 'Series (' + fam.dateCount + ' dates)' : 'Event',
+          hubListed: hubListed,
+          indexHint: hubListed
+            ? 'Listed by the Hub — review'
+            : fam.isSeries
+              ? 'Series (' + fam.dateCount + ' dates)'
+              : 'Event',
         });
       });
     });
@@ -314,6 +387,7 @@
     pendingFamilies.forEach(function (fam) {
       if (!fam || queuedEventKeys[fam.key]) return;
       queuedEventKeys[fam.key] = true;
+      var hubListed = familyNeedsHubListingReview(fam);
       queue.push({
         kind: 'event',
         id: fam.key,
@@ -323,8 +397,20 @@
         date: fam.date || '',
         place: fam.place || '',
         family: fam,
-        indexHint: fam.isSeries ? 'Series (' + fam.dateCount + ' dates)' : 'Event',
+        hubListed: hubListed,
+        indexHint: hubListed
+          ? 'Listed by the Hub — review'
+          : fam.isSeries
+            ? 'Series (' + fam.dateCount + ' dates)'
+            : 'Event',
       });
+    });
+
+    // Prefer Hub-listed event reviews before profile polish.
+    queue.sort(function (a, b) {
+      var aHub = a && a.kind === 'event' && a.hubListed ? 1 : 0;
+      var bHub = b && b.kind === 'event' && b.hubListed ? 1 : 0;
+      return bHub - aHub;
     });
 
     return { queue: queue, stored: stored, families: families };
@@ -332,7 +418,11 @@
 
   function nextItem(input) {
     var built = buildQueue(input);
-    if (built.stored.dismissed) return null;
+    var hasHubListed = built.queue.some(function (q) {
+      return q.kind === 'event' && q.hubListed;
+    });
+    // Hub-listed events must surface even if the organiser dismissed an earlier setup prompt.
+    if (built.stored.dismissed && !hasHubListed) return null;
     return built.queue[0] || null;
   }
 
@@ -345,12 +435,16 @@
     var eventsLeft = built.queue.filter(function (q) {
       return q.kind === 'event';
     }).length;
+    var hasHubListed = built.queue.some(function (q) {
+      return q.kind === 'event' && q.hubListed;
+    });
     return {
       remaining: total,
       profilesLeft: profilesLeft,
       eventsLeft: eventsLeft,
       done: total === 0,
-      dismissed: built.stored.dismissed,
+      dismissed: Boolean(built.stored.dismissed) && !hasHubListed,
+      hasHubListed: hasHubListed,
     };
   }
 
@@ -381,5 +475,7 @@
     profileLooksThin: profileLooksThin,
     profileNeedsReview: profileNeedsReview,
     eventLooksPublished: eventLooksPublished,
+    eventNeedsHubListingReview: eventNeedsHubListingReview,
+    familyNeedsHubListingReview: familyNeedsHubListingReview,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

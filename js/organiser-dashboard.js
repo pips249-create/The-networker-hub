@@ -13982,7 +13982,10 @@
     if (!modal || !launch || state.adminView) return false;
 
     const built = launch.buildQueue(launchSetupInput());
-    if (built.stored.dismissed || !built.queue.length) {
+    const hasHubListed = (built.queue || []).some(function (q) {
+      return q.kind === 'event' && q.hubListed;
+    });
+    if ((!hasHubListed && built.stored.dismissed) || !built.queue.length) {
       hideLaunchSetupModal();
       return false;
     }
@@ -14018,7 +14021,9 @@
       progressEl.textContent = launchSetupProgressLabel(built, item);
     }
     if (kicker) {
-      if (item.kind === 'event') {
+      if (item.kind === 'event' && item.hubListed) {
+        kicker.textContent = 'Listed for you by the Hub';
+      } else if (item.kind === 'event') {
         kicker.textContent = 'Still in draft — publish to finish';
       } else {
         kicker.textContent =
@@ -14033,6 +14038,9 @@
           (state.groups || []).length > 1
             ? 'Review your other organiser page'
             : 'Review your organiser page';
+      } else if (item.hubListed) {
+        titleEl.textContent =
+          eventsLeft > 1 ? 'Review these Hub listings' : 'Review this event';
       } else {
         titleEl.textContent =
           eventsLeft > 1
@@ -14046,6 +14054,9 @@
           (state.groups || []).length > 1
             ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported). Public ticket buying opens 1 September.'
             : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens 1 September — until then, get everything ready in the workspace.';
+      } else if (item.hubListed) {
+        introEl.textContent =
+          'We listed this from your request. Check the details, then confirm tickets, refunds, VAT, and Stripe (if paid) so ticket sales can open.';
       } else {
         introEl.textContent =
           'Listings stay Draft until you set tickets and tap Confirm & publish. Saving details alone is not enough. Publish now in the workspace — public ticket buying still opens 1 September.';
@@ -14103,7 +14114,9 @@
               '</strong>' +
               metaHtml +
               '</span>' +
-              '<span class="org-launch-setup-event-go">Publish →</span>' +
+              '<span class="org-launch-setup-event-go">' +
+              (ev.hubListed ? 'Review →' : 'Publish →') +
+              '</span>' +
               '</button>'
             );
           })
@@ -14116,8 +14129,11 @@
     }
     if (metaEl) {
       if (item.kind === 'event') {
-        metaEl.textContent =
-          eventsLeft > 1
+        metaEl.textContent = item.hubListed
+          ? eventsLeft > 1
+            ? 'Open each listing → check details, then confirm tickets, refunds, VAT, and Stripe so sales can open.'
+            : 'Next: check details, then confirm tickets, refunds, VAT, and Stripe so sales can open.'
+          : eventsLeft > 1
             ? 'Open a listing → details, tickets, then Confirm & publish. Drafts stay here until you publish.'
             : 'Next: details, tickets, then Confirm & publish. It stays Draft until then.';
       } else {
