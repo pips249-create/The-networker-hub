@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VC Innovations × The Networker Hub — FTT Fintech Festival listing proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/hub.css?v=20260728footer">
+<link rel="stylesheet" href="/css/sponsor-pitch.css?v=20260820vci1">
+<link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any">
+<link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png?v=20260722fav2" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260722fav2">
+<meta name="description" content="Partnership proposal for VC Innovations — list FTT Fintech Festival on The Networker Hub event directory.">
+<style>
+  .vci-logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 0 auto 22px;
+  }
+  .vci-logo-row img { display: block; max-height: 44px; width: auto; }
+  .vci-logo-x { color: var(--pitch-muted); font-size: 1.4rem; font-weight: 600; }
+  .vci-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 18px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #e8f6f8;
+    color: var(--pitch-teal);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .vci-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pitch-teal);
+  }
+  .vci-ask-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 20px 0 8px;
+  }
+  .vci-ask {
+    border: 1px solid var(--pitch-border);
+    border-radius: 16px;
+    background: #fff;
+    padding: 18px 16px;
+  }
+  .vci-ask.is-primary {
+    border-color: rgba(13, 110, 122, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(13, 110, 122, 0.18);
+  }
+  .vci-ask strong { display: block; font-size: 1.05rem; margin-bottom: 6px; color: var(--pitch-ink); }
+  .vci-ask em { display: block; font-style: normal; color: var(--pitch-teal); font-weight: 700; margin-bottom: 8px; }
+  .vci-ask span { display: block; font-size: 0.92rem; line-height: 1.5; color: var(--pitch-muted); }
+  .vci-ask .badge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--pitch-teal-soft);
+    color: var(--pitch-teal);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .vci-ask ul {
+    margin: 10px 0 0;
+    padding: 0 0 0 1.1rem;
+    color: var(--pitch-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .vci-overview-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 16px;
+    margin: 18px 0 8px;
+  }
+  .vci-card {
+    border: 1px solid var(--pitch-border);
+    border-radius: 16px;
+    background: #fff;
+    padding: 18px 16px;
+  }
+  .vci-card h3 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    color: var(--pitch-ink);
+  }
+  .vci-card p, .vci-card li {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--pitch-muted);
+  }
+  .vci-card ul {
+    margin: 10px 0 0;
+    padding: 0 0 0 1.1rem;
+  }
+  .vci-card .kicker {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pitch-teal);
+  }
+  .vci-legal {
+    border: 1px solid var(--pitch-border);
+    border-radius: 16px;
+    background: #fff;
+    padding: 22px 20px;
+    margin-top: 12px;
+  }
+  .vci-legal h3 {
+    margin: 22px 0 8px;
+    font-size: 1.02rem;
+    color: var(--pitch-ink);
+  }
+  .vci-legal h3:first-child { margin-top: 0; }
+  .vci-legal p, .vci-legal li {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--pitch-muted);
+  }
+  .vci-legal p { margin: 0 0 10px; }
+  .vci-legal ul { margin: 0 0 10px; padding: 0 0 0 1.15rem; }
+  .vci-sign-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 22px;
+  }
+  .vci-sign {
+    border-top: 1px solid var(--pitch-border);
+    padding-top: 14px;
+  }
+  .vci-sign strong {
+    display: block;
+    margin-bottom: 18px;
+    color: var(--pitch-ink);
+    font-size: 0.95rem;
+  }
+  .vci-sign span {
+    display: block;
+    margin-top: 22px;
+    font-size: 0.85rem;
+    color: var(--pitch-muted);
+    border-bottom: 1px solid rgba(13, 110, 122, 0.25);
+    padding-bottom: 4px;
+  }
+  .vci-note {
+    margin: 18px 0 0;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(13, 110, 122, 0.28);
+    background: linear-gradient(180deg, #e8f6f8 0%, #fff 100%);
+  }
+  .vci-note h3 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    color: var(--pitch-ink);
+  }
+  .vci-note p {
+    margin: 0;
+    color: var(--pitch-muted);
+    line-height: 1.55;
+    font-size: 0.95rem;
+  }
+  @media (max-width: 800px) {
+    .vci-ask-grid,
+    .vci-overview-grid,
+    .vci-sign-grid { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .sponsor-pitch-banner,
+    .sponsor-pitch-nav,
+    .sponsor-pitch-cta-actions,
+    .no-print { display: none !important; }
+    .vci-legal { break-inside: avoid; }
+  }
+</style>
+</head>
+<body class="sponsor-pitch-page">
+
+<div class="sponsor-pitch-banner">
+  <span><strong>Partnership proposal</strong> · VC Innovations × The Networker Hub</span>
+  <span class="sponsor-pitch-banner-actions no-print">
+    <a href="mailto:catherine@thenetworkerhub.com">catherine@thenetworkerhub.com</a>
+    <button type="button" onclick="window.print()">Print / save PDF</button>
+  </span>
+</div>
+
+<div class="sponsor-pitch-shell">
+
+  <header class="sponsor-pitch-hero">
+    <div class="vci-logo-row">
+      <img src="/assets/logo-nav-transparent.png" alt="The Networker Hub" width="220" height="48">
+      <span class="vci-logo-x" aria-hidden="true">×</span>
+      <strong style="font-size:1.15rem;color:var(--pitch-ink);letter-spacing:0.02em;">VC Innovations</strong>
+    </div>
+    <p class="vci-status">Prepared for Alicia Condon · Head of Marketing</p>
+    <p class="sponsor-pitch-kicker">Event directory partnership</p>
+    <h1>Showcase FTT Fintech Festival on The Networker Hub.</h1>
+    <p class="sponsor-pitch-lede">
+      A simple proposal to list <strong>FTT Fintech Festival</strong> (9–10 November 2026, The Brewery, London)
+      on our UK events directory — so founders, directors and networking groups browsing the Hub can find it and buy tickets.
+      Listing is free. No media buy required.
+    </p>
+    <p class="sponsor-pitch-price-chip">£0 <span>to list · optional Hub ticketing if useful</span></p>
+  </header>
+
+  <nav class="sponsor-pitch-nav" id="pitch-section-nav" aria-label="Sections">
+    <div class="sponsor-pitch-nav-inner">
+      <button type="button" class="is-active" data-pitch-section="overview">Company overview</button>
+      <button type="button" data-pitch-section="proposal">Proposal</button>
+      <button type="button" data-pitch-section="options">Options</button>
+      <button type="button" data-pitch-section="how">How it works</button>
+      <button type="button" data-pitch-section="agreement">Agreement</button>
+      <button type="button" data-pitch-section="next">Next steps</button>
+    </div>
+  </nav>
+
+  <section class="sponsor-pitch-section" id="overview">
+    <h2>Company overview</h2>
+    <div class="vci-overview-grid">
+      <article class="vci-card">
+        <span class="kicker">Who we are</span>
+        <h3>The Networker Hub</h3>
+        <p>
+          The Networker Hub is the UK platform for business networking events, organiser pages, and business opportunities.
+          It is the next generation of <strong>the-networker.co.uk</strong> — same team, rebuilt as a full directory and ticketing platform.
+        </p>
+        <ul>
+          <li><strong>27,000+</strong> events listed last year</li>
+          <li><strong>17,000+</strong> networkers used the platform last year</li>
+          <li>Public browsing from <strong>25 August 2026</strong>; tickets &amp; enquiries from <strong>1 September 2026</strong></li>
+        </ul>
+      </article>
+      <article class="vci-card">
+        <span class="kicker">Legal entity</span>
+        <h3>The Networker Group Ltd</h3>
+        <ul>
+          <li>England &amp; Wales · 15252227</li>
+          <li>VAT: 454 4092 94</li>
+          <li>Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon PE28 4YF</li>
+          <li><a href="https://www.thenetworkerhub.com" target="_blank" rel="noopener">thenetworkerhub.com</a></li>
+          <li><a href="mailto:catherine@thenetworkerhub.com">catherine@thenetworkerhub.com</a></li>
+        </ul>
+      </article>
+    </div>
+    <div class="pitch-stat-grid" style="margin-top:16px;">
+      <article class="pitch-stat">
+        <strong>Events</strong>
+        <span>Networking meetings, conferences, exhibitions and festivals in one searchable directory</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>Organisers</strong>
+        <span>Public organiser pages, ticketing, payouts, and attendee tools</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>Audience</strong>
+        <span>UK founders, directors, freelancers and group organisers — B2B, high intent</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>Team</strong>
+        <span>Rosie (partnerships) and Catherine (product / operations) at The Networker Group Ltd</span>
+      </article>
+    </div>
+    <p class="section-intro" style="text-align:center;max-width:42em;margin:18px auto 0;color:var(--pitch-muted);line-height:1.6;font-size:0.95rem;">
+      More background:
+      <a href="https://www.thenetworkerhub.com/about" target="_blank" rel="noopener">About us</a>
+      ·
+      <a href="https://www.thenetworkerhub.com/for-organisers" target="_blank" rel="noopener">For organisers</a>
+      ·
+      <a href="https://www.thenetworkerhub.com/legal-policies" target="_blank" rel="noopener">Legal policies</a>
+    </p>
+  </section>
+
+  <section class="sponsor-pitch-section" id="proposal">
+    <h2>What we are proposing</h2>
+    <p class="section-intro" style="text-align:center;max-width:42em;margin:0 auto 22px;color:var(--pitch-muted);line-height:1.6;">
+      We would like to help VC Innovations showcase <strong>FTT Fintech Festival</strong> on The Networker Hub —
+      so people already browsing UK business events can discover it and register.
+      This is a directory partnership, not an advertising purchase.
+    </p>
+    <div class="pitch-placement-grid">
+      <article class="pitch-placement">
+        <span class="pitch-placement-type">Event</span>
+        <strong>FTT Fintech Festival</strong>
+        <p>9–10 November 2026 · The Brewery, London · listed on /events/ with your branding and registration link</p>
+      </article>
+      <article class="pitch-placement">
+        <span class="pitch-placement-type">Organiser</span>
+        <strong>VC Innovations page</strong>
+        <p>Public organiser profile for VC Innovations / Fintech Talents, with logo, website and future events</p>
+      </article>
+      <article class="pitch-placement">
+        <span class="pitch-placement-type">Cost</span>
+        <strong>Free to list</strong>
+        <p>No monthly fee. Optional paid boosts (e.g. Premium Spotlight) only if you want extra placement later</p>
+      </article>
+    </div>
+    <div class="vci-note">
+      <h3>Attendance (separate from listing)</h3>
+      <p>
+        Separately, Rosie asked us to explore attending Fintech Festival.
+        Happy to discuss press / community / organiser passes if useful — that is optional and does not affect the listing proposal below.
+      </p>
+    </div>
+  </section>
+
+  <section class="sponsor-pitch-section" id="options">
+    <h2>Two ways to list</h2>
+    <div class="vci-ask-grid">
+      <article class="vci-ask is-primary">
+        <span class="badge">Recommended</span>
+        <strong>Option A — Discovery listing</strong>
+        <em>£0 · keep your existing ticket flow</em>
+        <span>We publish the Festival on the Hub with your copy, dates, venue and a clear CTA to your registration page (e.g. fintechtalents.com).</span>
+        <ul>
+          <li>No change to how you sell tickets today</li>
+          <li>No Stripe Connect setup required</li>
+          <li>Best fit for large festivals with an existing registration stack</li>
+        </ul>
+      </article>
+      <article class="vci-ask">
+        <span class="badge">Optional</span>
+        <strong>Option B — Hub ticketing</strong>
+        <em>£0 to list · attendees pay booking fee</em>
+        <span>Sell tickets (or a ticket type) through The Networker Hub via Stripe Connect. You receive 100% of the ticket price you set.</span>
+        <ul>
+          <li>Attendees pay 4.5% + 20p booking fee at checkout</li>
+          <li>Useful if you want a Hub-native checkout for a pass or add-on</li>
+          <li>Can sit alongside Option A (link out for main Festival registration)</li>
+        </ul>
+      </article>
+    </div>
+    <p class="section-intro" style="text-align:center;max-width:40em;margin:18px auto 0;color:var(--pitch-muted);line-height:1.6;font-size:0.95rem;">
+      Most conference and festival partners choose <strong>Option A</strong>. We can start there and add Hub ticketing later if it helps.
+    </p>
+  </section>
+
+  <section class="sponsor-pitch-section" id="how">
+    <h2>How it works</h2>
+    <div class="pitch-stat-grid">
+      <article class="pitch-stat">
+        <strong>1. Confirm</strong>
+        <span>You reply with Option A or B, plus logo, short description, registration URL, and any ticket / pass notes</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>2. We publish</strong>
+        <span>We create the VC Innovations organiser page and the Festival event listing (you can edit anytime)</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>3. Go live</strong>
+        <span>Listing is visible as Hub browsing opens (25 Aug). Ticket buying on Hub from 1 Sept if Option B</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>4. Report</strong>
+        <span>We can share listing views and outbound clicks to your registration URL on request</span>
+      </article>
+    </div>
+    <div class="pitch-spec-row">
+      <div><strong>Assets needed</strong> Logo (PNG/SVG) · 150–250 word description · registration URL</div>
+      <div><strong>Contact</strong> Alicia Condon · alicia.condon@vcinnovations.co.uk</div>
+      <div><strong>Our contact</strong> Catherine Hancher · catherine@thenetworkerhub.com</div>
+      <div><strong>Policies</strong> <a href="/legal-policies#organisers" target="_blank" rel="noopener">Organiser terms</a></div>
+    </div>
+  </section>
+
+  <section class="sponsor-pitch-section" id="agreement">
+    <h2>Event listing agreement</h2>
+    <p class="section-intro" style="text-align:center;max-width:42em;margin:0 auto 12px;color:var(--pitch-muted);line-height:1.6;">
+      Short-form agreement for listing FTT Fintech Festival on The Networker Hub.
+      Full platform rules sit in our published Organiser Terms.
+    </p>
+
+    <div class="vci-legal">
+      <h3>1. Parties</h3>
+      <p>
+        This agreement is between <strong>The Networker Group Ltd</strong> (company no. 15252227)
+        trading as The Networker Hub (&ldquo;Hub&rdquo;) and <strong>VC Innovations Ltd</strong> (&ldquo;Organiser&rdquo;).
+      </p>
+
+      <h3>2. Purpose</h3>
+      <p>
+        The Hub will list the Organiser&rsquo;s event <strong>FTT Fintech Festival</strong>
+        (9–10 November 2026, The Brewery, London) on thenetworkerhub.com, and may create a public organiser profile for VC Innovations / Fintech Talents.
+      </p>
+
+      <h3>3. Listing options</h3>
+      <ul>
+        <li><strong>Option A (Discovery):</strong> Directory listing with link to the Organiser&rsquo;s chosen registration URL. No Hub ticket sale.</li>
+        <li><strong>Option B (Hub ticketing):</strong> Tickets sold via Hub Stripe Connect. Organiser receives 100% of the ticket price set. Attendees pay a booking fee of 4.5% + 20p per ticket at checkout.</li>
+      </ul>
+      <p>The Organiser confirms Option A or B in writing (email is fine). Option A is the default if unspecified.</p>
+
+      <h3>4. Fees</h3>
+      <ul>
+        <li>Creating and maintaining the organiser page and Festival listing is <strong>free</strong>.</li>
+        <li>Optional paid placements (e.g. Premium Spotlight, sponsorship) are separate and only apply if the Organiser later requests them in writing.</li>
+        <li>Under Option B only, the attendee booking fee applies as published on the Hub.</li>
+      </ul>
+
+      <h3>5. Content and brand</h3>
+      <ul>
+        <li>The Organiser warrants that listing copy, images and ticket information are accurate and that it has the right to use submitted logos and materials.</li>
+        <li>The Organiser grants the Hub a non-exclusive licence to display those materials for the listing and related Hub communications about the event.</li>
+        <li>Listings are not an endorsement by the Hub of the Organiser, its speakers, sponsors or exhibitors.</li>
+      </ul>
+
+      <h3>6. Responsibilities</h3>
+      <ul>
+        <li><strong>Organiser:</strong> delivers the event; manages its own registration/ticket fulfilment under Option A; complies with applicable law and the Hub&rsquo;s published <a href="/legal-policies#organisers" target="_blank" rel="noopener">Organiser Terms</a>.</li>
+        <li><strong>Hub:</strong> provides the directory listing and organiser tools in good faith; does not guarantee ticket volume, attendance or commercial outcomes.</li>
+      </ul>
+
+      <h3>7. Data</h3>
+      <p>
+        Under Option A, registration data stays on the Organiser&rsquo;s systems. Under Option B, booking data is processed as described in the Hub Privacy Policy and Organiser Terms (attendee details shared with the Organiser to run the booking).
+      </p>
+
+      <h3>8. Term and ending</h3>
+      <p>
+        Starts when both parties confirm by email (or signed below) and continues until the Festival ends, or either party ends the listing earlier by written notice.
+        The Hub may remove a listing that breaches Organiser Terms or is inaccurate.
+      </p>
+
+      <h3>9. Liability</h3>
+      <p>
+        Nothing in this agreement excludes liability that cannot be limited under UK law.
+        Subject to that, each party&rsquo;s total liability arising from this listing arrangement is limited to £500,
+        except for unpaid Option B ticket amounts owed to the Organiser.
+      </p>
+
+      <h3>10. Governing law</h3>
+      <p>England and Wales. Related platform use is also governed by the Hub Terms and Organiser Terms at thenetworkerhub.com/legal-policies.</p>
+
+      <div class="vci-sign-grid">
+        <div class="vci-sign">
+          <strong>For The Networker Group Ltd</strong>
+          <span>Name / signature</span>
+          <span>Date</span>
+        </div>
+        <div class="vci-sign">
+          <strong>For VC Innovations Ltd</strong>
+          <span>Name / signature</span>
+          <span>Date</span>
+        </div>
+      </div>
+      <p style="margin-top:16px;font-size:0.82rem;">
+        Email confirmation accepting Option A or B and these terms is sufficient in place of wet-ink signatures.
+        Version dated 20 August 2026.
+      </p>
+    </div>
+  </section>
+
+  <section class="sponsor-pitch-section" id="next">
+    <h2>Next steps</h2>
+    <div class="pitch-stat-grid">
+      <article class="pitch-stat">
+        <strong>Reply</strong>
+        <span>Confirm Option A or B, and send logo + description + registration URL</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>Optional call</strong>
+        <span>15 minutes with Catherine if useful — happy to walk through the listing live</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>We publish</strong>
+        <span>Usually same day once assets arrive</span>
+      </article>
+      <article class="pitch-stat">
+        <strong>Festival attendance</strong>
+        <span>If passes are available, let us know preferred route (press / community / paid)</span>
+      </article>
+    </div>
+
+    <div class="sponsor-pitch-cta">
+      <div>
+        <h2>Happy to list FTT Fintech Festival?</h2>
+        <p>Reply to Catherine with Option A or B — or book a short call and we&rsquo;ll set the page up together.</p>
+      </div>
+      <div class="sponsor-pitch-cta-actions no-print">
+        <a class="primary" href="mailto:alicia.condon@vcinnovations.co.uk?cc=catherine@thenetworkerhub.com&amp;subject=FTT%20Fintech%20Festival%20%E2%80%94%20Networker%20Hub%20listing%20proposal&amp;body=Hi%20Alicia%2C%0A%0AThank%20you%20%E2%80%94%20here%20is%20our%20proposal%20and%20listing%20agreement%3A%0Ahttps%3A%2F%2Fwww.thenetworkerhub.com%2Fp-tnh-vci-ftt-k9w4%0A%0AWe%20recommend%20Option%20A%20(discovery%20listing%2C%20%C2%A30)%20linking%20to%20your%20existing%20registration%20page.%0A%0ABest%20wishes%2C%0ACatherine">Email Alicia →</a>
+        <a class="secondary" href="/for-organisers" target="_blank" rel="noopener">Organiser overview</a>
+      </div>
+    </div>
+
+    <p class="pitch-footnote">
+      Prepared by The Networker Hub for VC Innovations Ltd · FTT Fintech Festival listing partnership · not a paid advertising proposal ·
+      confidential share link (noindex)
+    </p>
+  </section>
+
+</div>
+
+<script src="/js/pitch-analytics.js?v=20260806pitch1"></script>
+<script>
+(function () {
+  var nav = document.getElementById('pitch-section-nav');
+  if (!nav) return;
+  var buttons = nav.querySelectorAll('[data-pitch-section]');
+  function setActive(id) {
+    buttons.forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-pitch-section') === id);
+    });
+  }
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-pitch-section');
+      var el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActive(id);
+    });
+  });
+  var sections = ['overview', 'proposal', 'options', 'how', 'agreement', 'next'];
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) setActive(entry.target.id);
+      });
+    }, { rootMargin: '-40% 0px -50% 0px', threshold: 0 });
+    sections.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -46,6 +46,8 @@
     { "source": "/p/tnh-ev-hub-k7m2", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },
     { "source": "/p-tnh-barnsgate-ev-m4p8.html", "destination": "/p-tnh-barnsgate-ev-m4p8", "permanent": true },
     { "source": "/p/tnh-barnsgate-ev-m4p8", "destination": "/p-tnh-barnsgate-ev-m4p8", "permanent": true },
+    { "source": "/p-tnh-vci-ftt-k9w4.html", "destination": "/p-tnh-vci-ftt-k9w4", "permanent": true },
+    { "source": "/p/tnh-vci-ftt-k9w4", "destination": "/p-tnh-vci-ftt-k9w4", "permanent": true },
     { "source": "/p-tnh-org-onboard-x4n7.html", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
     { "source": "/p/tnh-org-onboard-x4n7", "destination": "/p-tnh-org-onboard-x4n7", "permanent": true },
     { "source": "/p-tnh-org-cheats-c8r3.html", "destination": "/p-tnh-org-cheats-c8r3", "permanent": true },
@@ -354,6 +356,10 @@
     {
       "source": "/p-tnh-barnsgate-ev-m4p8",
       "destination": "/p-tnh-barnsgate-ev-m4p8.html"
+    },
+    {
+      "source": "/p-tnh-vci-ftt-k9w4",
+      "destination": "/p-tnh-vci-ftt-k9w4.html"
     },
     {
       "source": "/help/organiser-payouts",
