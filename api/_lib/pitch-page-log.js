@@ -8,6 +8,7 @@ const ALLOWED_ACTIONS = new Set(['view', 'pdf_download']);
 
 const PITCH_LABELS = {
   '/p-tnh-barnsgate-ev-m4p8': 'Barnsgate — Events Headline',
+  '/p-tnh-vci-ftt-k9w4': 'VC Innovations — FTT Fintech Festival listing',
   '/p-tnh-ev-hub-k7m2': 'Events Headline — sales walkthrough',
   '/p-tnh-org-onboard-x4n7': 'Organiser onboarding pitch',
   '/p-tnh-org-cheats-c8r3': 'Organiser demo cheat sheets',
