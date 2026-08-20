@@ -10446,28 +10446,46 @@
       if (empty) empty.hidden = false;
       workspace.hidden = true;
       filters.membershipsGroup = '';
+      if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.setLoading === 'function') {
+        window.OrganiserMemberRoster.setLoading(false);
+      }
       return;
     }
 
     if (empty) empty.hidden = true;
 
-    const groupId = filters.membershipsGroup;
+    // Fill the organiser-page chooser before capturing groupId. Capturing first left
+    // groupId empty on #memberships visits, so the stale-guard skipped the roster load.
+    fillMembershipsGroupFilter();
+    const groupId = String(filters.membershipsGroup || '').trim();
     const needsRosterLoad =
       groupId &&
       (membershipsRosterLoadedFor !== groupId || !membershipsRosterAppearsPainted());
 
     setMembershipsPageLoading(false);
     workspace.hidden = false;
-    const pageLoading = document.getElementById('omr-page-loading');
-    if (needsRosterLoad && pageLoading) {
-      pageLoading.hidden = false;
-      pageLoading.setAttribute('aria-busy', 'true');
-    }
-
-    fillMembershipsGroupFilter();
     updateMembershipNetworkSummary();
-    updateMembershipPageCard(filters.membershipsGroup);
+    updateMembershipPageCard(groupId);
     syncMembershipGroupUrl();
+
+    if (
+      needsRosterLoad &&
+      window.OrganiserMemberRoster &&
+      typeof window.OrganiserMemberRoster.setLoading === 'function'
+    ) {
+      window.OrganiserMemberRoster.setLoading(true);
+    } else if (needsRosterLoad) {
+      const pageLoading = document.getElementById('omr-page-loading');
+      if (pageLoading) {
+        pageLoading.hidden = false;
+        pageLoading.setAttribute('aria-busy', 'true');
+      }
+    } else if (
+      window.OrganiserMemberRoster &&
+      typeof window.OrganiserMemberRoster.clearStuckLoading === 'function'
+    ) {
+      window.OrganiserMemberRoster.clearStuckLoading();
+    }
 
     const sel = document.getElementById('filter-memberships-group');
     if (sel && sel.dataset.membershipsBound !== '1') {
@@ -10508,18 +10526,40 @@
             membershipsRosterLoadedFor = '';
             setMembershipsPageLoading(false);
             workspace.hidden = false;
+            if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.setLoading === 'function') {
+              window.OrganiserMemberRoster.setLoading(false);
+            }
             showOrganiserAlert(err.message || 'Could not load membership', true);
           });
       });
     }
 
+    if (!groupId) {
+      if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.setLoading === 'function') {
+        window.OrganiserMemberRoster.setLoading(false);
+      }
+      return;
+    }
+
     ensureMemberRosterAssets()
       .then(function () {
         const roster = window.OrganiserMemberRoster;
-        if (!roster) return;
+        // Ignore stale async completions after the user switched organiser page.
         if (filters.membershipsGroup !== groupId) return;
         workspace.hidden = false;
         setMembershipsPageLoading(false);
+        if (!roster) {
+          const pageLoading = document.getElementById('omr-page-loading');
+          if (pageLoading) {
+            pageLoading.hidden = true;
+            pageLoading.setAttribute('aria-busy', 'false');
+          }
+          workspace.classList.remove('is-membership-loading');
+          const page = document.getElementById('org-page-memberships');
+          if (page) page.classList.remove('is-membership-loading');
+          showOrganiserAlert('Could not load membership tools. Please refresh and try again.', true);
+          return;
+        }
         const selectedGroup = findGroupById(groupId);
         if (
           selectedGroup &&
@@ -10529,11 +10569,10 @@
           roster.setGroupRosterSummary(groupId, selectedGroup.rosterSummary);
         }
         if (typeof roster.bindControls === 'function') roster.bindControls();
-        if (groupId && typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
+        if (typeof roster.setActiveGroupId === 'function') roster.setActiveGroupId(groupId);
 
         const shouldLoad =
           typeof roster.loadForGroup === 'function' &&
-          groupId &&
           (membershipsRosterLoadedFor !== groupId ||
             !membershipsRosterAppearsPainted() ||
             (typeof roster.getActiveGroupId === 'function' && roster.getActiveGroupId() !== groupId));
@@ -10552,6 +10591,16 @@
         membershipsRosterLoadedFor = '';
         setMembershipsPageLoading(false);
         workspace.hidden = false;
+        if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.setLoading === 'function') {
+          window.OrganiserMemberRoster.setLoading(false);
+        } else {
+          const pageLoading = document.getElementById('omr-page-loading');
+          if (pageLoading) {
+            pageLoading.hidden = true;
+            pageLoading.setAttribute('aria-busy', 'false');
+          }
+          workspace.classList.remove('is-membership-loading');
+        }
         showOrganiserAlert(err.message || 'Could not load membership', true);
       });
   }
