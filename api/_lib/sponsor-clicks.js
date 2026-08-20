@@ -277,7 +277,11 @@ function isLegacyPagePartnerPlacement(placement) {
 }
 
 function placementFilterMeta(raw) {
-  const key = normalizePlacement(raw);
+  // normalizePlacement('') becomes 'sponsor' for write paths — do not treat blank
+  // report filters as placement=sponsor or every "All placements" pack reads as zero.
+  const cleaned = cleanText(raw, MAX_PLACEMENT);
+  if (!cleaned) return { key: '', keys: [], directory: '', includeLegacyByPath: false };
+  const key = normalizePlacement(cleaned);
   if (!key) return { key: '', keys: [], directory: '', includeLegacyByPath: false };
   const keys = expandPlacementFilter(key);
   const directory = directoryFromSlot(key);
