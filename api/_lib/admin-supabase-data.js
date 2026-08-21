@@ -639,7 +639,7 @@ async function fetchUsers(sb) {
     fetchAllRows(
       sb,
       'organisers',
-      'id, supabase_user_id, name, email, city, featured, listing_status'
+      'id, supabase_user_id, name, email, outcode, featured, listing_status'
     ),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
@@ -662,6 +662,7 @@ async function fetchUsers(sb) {
     const auth = authById.get(acc.user_id);
     const org = organiserByUser.get(acc.user_id);
     const att = attendeeByUser.get(acc.user_id);
+    const orgPlace = String(org?.outcode || '').trim() || null;
     let role = 'Attendee';
     if (acc.role === 'admin') role = 'Admin';
     else if (org) role = 'Organiser';
@@ -673,8 +674,8 @@ async function fetchUsers(sb) {
       name: acc.display_name || org?.name || att?.name || auth?.user_metadata?.full_name || '—',
       email: auth?.email || att?.email || org?.email || '—',
       role,
-      city: org?.city || att?.location || '—',
-      location: att?.location || org?.city || '—',
+      city: orgPlace || att?.location || '—',
+      location: att?.location || orgPlace || '—',
       postcode: '—',
       status: 'Active',
       featured: Boolean(org?.featured),

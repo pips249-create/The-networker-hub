@@ -914,6 +914,33 @@ body.org-claim-invite-active #org-region-cta {
   gap: 12px;
 }
 
+.org-events-more-wrap {
+  margin-top: 14px;
+}
+
+.org-events-more-wrap[hidden] {
+  display: none !important;
+}
+
+.org-events-more-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  width: 100%;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1.5px solid var(--border-soft);
+  background: #fff;
+  color: var(--charcoal);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.org-events-more-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
 .org-event-row {
   display: flex;
   align-items: center;

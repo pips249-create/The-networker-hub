@@ -3,8 +3,11 @@
  */
 (function () {
   var API = '/api/organisers';
+  var UPCOMING_PAGE_SIZE = 6;
   var currentOrganiser = null;
   var claimFormBound = false;
+  var upcomingEvents = [];
+  var upcomingShown = 0;
 
   var MOCK_REVIEWS = [
     {
@@ -845,16 +848,58 @@
     }
   }
 
+  function eventRowHtml(ev) {
+    var meta = [ev.dateLine, ev.city, ev.meetingType].filter(Boolean).join(' · ');
+    return (
+      '<a class="org-event-row" href="' +
+      escapeHtml(eventHref(ev)) +
+      '"><div><p class="org-event-row-title">' +
+      escapeHtml(ev.title) +
+      '</p><p class="org-event-row-meta">' +
+      escapeHtml(meta || 'Details on event page') +
+      '</p></div><span class="org-event-row-cta">View event →</span></a>'
+    );
+  }
+
+  function updateUpcomingMoreButton() {
+    var wrap = document.getElementById('org-events-more-wrap');
+    var btn = document.getElementById('org-events-more-btn');
+    if (!wrap || !btn) return;
+    var remaining = upcomingEvents.length - upcomingShown;
+    if (remaining <= 0) {
+      wrap.hidden = true;
+      return;
+    }
+    var batch = Math.min(UPCOMING_PAGE_SIZE, remaining);
+    wrap.hidden = false;
+    btn.textContent =
+      remaining === 1
+        ? 'Show 1 more listing'
+        : 'Show ' + batch + ' more · ' + remaining + ' remaining';
+  }
+
+  function paintUpcomingEvents() {
+    var list = document.getElementById('org-events');
+    if (!list) return;
+    list.innerHTML = upcomingEvents.slice(0, upcomingShown).map(eventRowHtml).join('');
+    updateUpcomingMoreButton();
+  }
+
   function renderEvents(events) {
     var list = document.getElementById('org-events');
     var empty = document.getElementById('org-events-empty');
     var claimPreview = document.getElementById('org-events-claim-preview');
+    var moreWrap = document.getElementById('org-events-more-wrap');
     var heading = document.getElementById('org-upcoming-heading');
     var isClaimPreview = queryParams().isClaim || document.body.classList.contains('org-claim-invite-active');
     if (!list) return;
 
-    if (!events || !events.length) {
+    upcomingEvents = Array.isArray(events) ? events : [];
+    upcomingShown = 0;
+
+    if (!upcomingEvents.length) {
       list.innerHTML = '';
+      if (moreWrap) moreWrap.hidden = true;
       if (isClaimPreview) {
         if (empty) empty.hidden = true;
         if (claimPreview) claimPreview.hidden = false;
@@ -869,22 +914,20 @@
     if (empty) empty.hidden = true;
     if (claimPreview) claimPreview.hidden = true;
 
-    list.innerHTML = events
-      .map(function (ev) {
-        var meta = [ev.dateLine, ev.city, ev.meetingType].filter(Boolean).join(' · ');
-        return (
-          '<a class="org-event-row" href="' +
-          escapeHtml(eventHref(ev)) +
-          '"><div><p class="org-event-row-title">' +
-          escapeHtml(ev.title) +
-          '</p><p class="org-event-row-meta">' +
-          escapeHtml(meta || 'Details on event page') +
-          '</p></div><span class="org-event-row-cta">View event →</span></a>'
-        );
-      })
-      .join('');
+    upcomingShown = Math.min(UPCOMING_PAGE_SIZE, upcomingEvents.length);
+    paintUpcomingEvents();
+    applyOrganiserRegionCta(upcomingEvents);
+  }
 
-    applyOrganiserRegionCta(events);
+  function bindUpcomingMore() {
+    var btn = document.getElementById('org-events-more-btn');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      if (upcomingShown >= upcomingEvents.length) return;
+      upcomingShown = Math.min(upcomingShown + UPCOMING_PAGE_SIZE, upcomingEvents.length);
+      paintUpcomingEvents();
+    });
   }
 
   function showReviewStatus(message, type) {
@@ -1360,5 +1403,6 @@
     }
   }
 
+  bindUpcomingMore();
   load();
 })();
