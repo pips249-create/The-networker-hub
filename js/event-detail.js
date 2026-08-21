@@ -417,6 +417,56 @@
     return base ? base + '#org-membership-join' : '';
   }
 
+  function eventOffersPaidHubMembership(ev) {
+    const plan = ev && ev.organiserMembershipPlan;
+    if (!plan || !plan.offered) return false;
+    const monthly = Number(plan.monthly && plan.monthly.amountPounds) || 0;
+    const annual = Number(plan.annual && plan.annual.amountPounds) || 0;
+    return monthly >= 1 || annual >= 1;
+  }
+
+  function membershipSoftUpsellHtml(ev) {
+    if (!ev || isRosterMemberForEvent()) return '';
+    if (ev.isMembersOnlyEvent) return '';
+    const paidJoin = eventOffersPaidHubMembership(ev);
+    const memberRate = Boolean(ev.hasMembersOnlyTiers);
+    const offered = Boolean(ev.organiserMembershipOffered) || paidJoin || memberRate;
+    if (!offered) return '';
+
+    const signInHref = authPageUrl('login');
+    const joinHref = organiserMembershipJoinHref(ev);
+    const plan = ev.organiserMembershipPlan || null;
+    const monthly = plan && plan.monthly ? Number(plan.monthly.amountPounds) || 0 : 0;
+    const annual = plan && plan.annual ? Number(plan.annual.amountPounds) || 0 : 0;
+    let joinLabel = 'join membership';
+    if (monthly >= 1 && annual >= 1) joinLabel = 'join monthly or annual membership';
+    else if (monthly >= 1) joinLabel = 'join monthly membership';
+    else if (annual >= 1) joinLabel = 'join annual membership';
+
+    const parts = [
+      '<div class="ticket-membership-upsell">',
+      '<p class="ticket-membership-upsell-line">',
+      memberRate || paidJoin
+        ? 'Already a member? <a href="' +
+          escapeHtml(signInHref) +
+          '">Sign in</a> with your membership email for the member rate.'
+        : 'Already on this group\u2019s member list? <a href="' +
+          escapeHtml(signInHref) +
+          '">Sign in</a> with that email.',
+      '</p>',
+    ];
+    if (paidJoin && joinHref) {
+      parts.push(
+        '<p class="ticket-membership-upsell-line ticket-membership-upsell-line--secondary">',
+        'Or <a href="' + escapeHtml(joinHref) + '">' + escapeHtml(joinLabel) + '</a>',
+        monthly >= 1 ? ' (from £' + escapeHtml(String(monthly % 1 ? monthly.toFixed(2) : monthly)) + '/month)' : '',
+        '.</p>'
+      );
+    }
+    parts.push('</div>');
+    return parts.join('');
+  }
+
   function membershipJoinCtaHtml(ev) {
     const href = organiserMembershipJoinHref(ev);
     const plan = ev && ev.organiserMembershipPlan;
@@ -2940,6 +2990,13 @@
             ? 'This is a members-only event. Sign in with the email on this group\u2019s membership list to book.'
             : 'This is a members-only event — booking is for people on this group\u2019s membership list only.') +
           '</p>';
+      }
+    } else if (firstSelectable && !rosterMember) {
+      const upsell = membershipSoftUpsellHtml(ev);
+      if (upsell) {
+        const wrap = document.createElement('div');
+        wrap.innerHTML = upsell;
+        if (wrap.firstChild) tiersEl.appendChild(wrap.firstChild);
       }
     }
 

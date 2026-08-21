@@ -2180,12 +2180,22 @@ async function expandEventIdsToSeriesPeers(sb, eventIds) {
 
   const { data: anchors, error } = await sb
     .from('events')
-    .select('id, series_group_id, organiser_id, title, status')
+    .select('id, series_group_id, organiser_id, title, status, duplicated_from_event_id')
     .in('id', seedIds);
   if (error) throw new Error(error.message);
 
   const expanded = new Set(seedIds);
-  const peerLists = await Promise.all((anchors || []).map((row) => fetchSeriesPeerIds(sb, row)));
+  // One peer lookup per series group — not once per date (16-date series used to fan out 16 identical queries).
+  const seenSeries = new Set();
+  const peerJobs = [];
+  for (const row of anchors || []) {
+    if (row.duplicated_from_event_id) continue;
+    const seriesKey = String(row.series_group_id || '').trim();
+    if (!seriesKey || seenSeries.has(seriesKey)) continue;
+    seenSeries.add(seriesKey);
+    peerJobs.push(fetchSeriesPeerIds(sb, row));
+  }
+  const peerLists = await Promise.all(peerJobs);
   peerLists.forEach((peerIds) => peerIds.forEach((id) => expanded.add(id)));
   return [...expanded];
 }
@@ -2314,16 +2324,43 @@ async function enableTicketSalesOnPublishedEventsIfReady(sb, eventIds, createdTi
   const { assertOrganiserReadyForPaidPublish } = require('./stripe-connect');
   const { assertRefundPolicyForPaidCheckout } = require('./event-refund-policy');
 
+  const ticketsByEventId = new Map();
+  (createdTickets || []).forEach((ticket) => {
+    const eventId = String(ticket.eventId || ticket.event_id || '');
+    if (!eventId) return;
+    if (!ticketsByEventId.has(eventId)) ticketsByEventId.set(eventId, []);
+    ticketsByEventId.get(eventId).push(ticket);
+  });
+
+  // One Stripe Connect check per organiser (not per date) — was the main delay on long series.
+  const paidOrganiserIds = new Set();
+  const paidTicketsForAssert = [];
   for (const row of rows) {
-    const list = (createdTickets || []).filter(
-      (ticket) => String(ticket.eventId || ticket.event_id || '') === String(row.id)
-    );
+    const list = ticketsByEventId.get(String(row.id)) || [];
+    if (!list.length) continue;
+    if (!tiersHavePaidPrice(list)) continue;
+    if (row.organiser_id) paidOrganiserIds.add(row.organiser_id);
+    paidTicketsForAssert.push(...list);
+  }
+  let connectReady = true;
+  if (paidOrganiserIds.size) {
+    try {
+      await assertOrganiserReadyForPaidPublish(sb, [...paidOrganiserIds], paidTicketsForAssert);
+    } catch {
+      connectReady = false;
+    }
+  }
+
+  const enableIds = [];
+  const disableIds = [];
+  for (const row of rows) {
+    const list = ticketsByEventId.get(String(row.id)) || [];
     if (!list.length) continue;
 
     const hasPaid = tiersHavePaidPrice(list);
     if (hasPaid) {
+      if (!connectReady) continue;
       try {
-        await assertOrganiserReadyForPaidPublish(sb, [row.organiser_id], list);
         const refunded = {
           ...row,
           refund_policy: (refundPayload && refundPayload.refundPolicy) || row.refund_policy,
@@ -2346,10 +2383,22 @@ async function enableTicketSalesOnPublishedEventsIfReady(sb, eventIds, createdTi
     }
 
     const onSale = eventHasTicketsOnSale(list, undefined, row.starts_at);
+    if (onSale) enableIds.push(row.id);
+    else disableIds.push(row.id);
+  }
+
+  if (enableIds.length) {
     const { error: salesErr } = await sb
       .from('events')
-      .update({ ticket_sales_enabled: onSale })
-      .eq('id', row.id);
+      .update({ ticket_sales_enabled: true })
+      .in('id', enableIds);
+    if (salesErr) throw new Error(salesErr.message);
+  }
+  if (disableIds.length) {
+    const { error: salesErr } = await sb
+      .from('events')
+      .update({ ticket_sales_enabled: false })
+      .in('id', disableIds);
     if (salesErr) throw new Error(salesErr.message);
   }
 }

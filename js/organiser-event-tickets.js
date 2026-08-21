@@ -5116,6 +5116,20 @@
         location.href = reviewPageUrl();
         return;
       }
+      // Tickets unchanged — only persist membership fees if needed (avoids rewriting every series date).
+      if (hubMembershipEnabled()) {
+        try {
+          const membershipSaved = await saveHubMembershipPlanIfNeeded();
+          if (!membershipSaved.ok) {
+            showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert('Could not save membership prices. Check your connection and try again.', 'warn');
+          return;
+        }
+      }
       showAlert(
         isExistingPublicListing()
           ? 'Tickets are already saved on this listing.'
@@ -5174,24 +5188,6 @@
       }
     }
 
-    if (hubMembershipEnabled()) {
-      let membershipSaved;
-      try {
-        membershipSaved = await saveHubMembershipPlanIfNeeded();
-      } catch (membershipErr) {
-        console.error(membershipErr);
-        membershipSaved = {
-          ok: false,
-          message: 'Could not save membership prices. Check your connection and try again.',
-        };
-      }
-      if (!membershipSaved.ok) {
-        showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
-        reenableSaveButtons();
-        return;
-      }
-    }
-
     const body = {
       eventIds,
       tickets: tiers,
@@ -5223,17 +5219,35 @@
       ? 'Creating and publishing your event'
       : 'Saving your tickets';
 
+    // Membership plan + ticket rewrite in parallel (membership was a serial wait before).
+    const membershipPromise = hubMembershipEnabled()
+      ? saveHubMembershipPlanIfNeeded().catch(function (membershipErr) {
+          console.error(membershipErr);
+          return {
+            ok: false,
+            message: 'Could not save membership prices. Check your connection and try again.',
+          };
+        })
+      : Promise.resolve({ ok: true });
+
     let result;
+    let membershipSaved = { ok: true };
     try {
       if (loading && loading.run) {
-        result = await loading.run(
+        const pair = await loading.run(
           busyMessage,
-          saveWork,
+          function () {
+            return Promise.all([membershipPromise, saveWork()]);
+          },
           publish ? { progressStep: 'publish' } : null
         );
+        membershipSaved = pair[0];
+        result = pair[1];
       } else {
         if (loading) loading.show(busyMessage);
-        result = await saveWork();
+        const pair = await Promise.all([membershipPromise, saveWork()]);
+        membershipSaved = pair[0];
+        result = pair[1];
         if (loading) loading.hide();
       }
     } catch (err) {
@@ -5243,6 +5257,11 @@
       return;
     } finally {
       reenableSaveButtons();
+    }
+
+    if (!membershipSaved.ok) {
+      showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
+      return;
     }
 
     if (!result) {
@@ -5331,7 +5350,7 @@
       }
       showAlert(
         isExistingPublicListing()
-          ? 'Tickets saved on this listing. The organiser will see them — they do not need to type them again.'
+          ? 'Tickets saved on this listing.'
           : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
       );

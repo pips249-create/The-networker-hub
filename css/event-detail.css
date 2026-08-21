@@ -1515,6 +1515,34 @@ a:hover {
   margin-top: 4px;
 }
 
+.ticket-membership-upsell {
+  margin: 4px 0 0;
+  padding: 12px 2px 0;
+  border-top: 1px solid var(--border-soft, #e8e6f0);
+}
+
+.ticket-membership-upsell-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-muted, #6b7280);
+}
+
+.ticket-membership-upsell-line + .ticket-membership-upsell-line {
+  margin-top: 6px;
+}
+
+.ticket-membership-upsell-line a {
+  color: var(--purple-700, #4c1d95);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ticket-membership-upsell-line--secondary {
+  font-size: 12px;
+}
+
 .ticket-tiers {
   margin-bottom: 20px;
 }
