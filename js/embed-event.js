@@ -82,7 +82,7 @@
       return true;
     });
     if (tickets.length) return tickets;
-    if (ev.isMembersOnlyEvent || ev.hasMembersOnlyTiers) return [];
+    if (ev.isMembersOnlyEvent) return [];
     return [
       {
         id: (ev.id || 'event') + '-standard',

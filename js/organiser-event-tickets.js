@@ -249,7 +249,9 @@
       blockers.push('Choose tickets or monthly membership (or both)');
     }
     if (payHowIncludesMembership() && !hubMembershipHasPrice()) {
-      blockers.push('Enter a monthly and/or annual membership amount (0 is fine if joining is free)');
+      blockers.push(
+        'Membership must be blank/£0 (free via member list) or at least £1 for Hub billing'
+      );
     }
     if (
       payHowIncludesTickets() &&
@@ -887,10 +889,28 @@
     }
   }
 
-  function notifyEmbedDrawerReady() {
-    if (isEmbedDrawer && window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+  function ticketsStepIsComplete() {
+    return Boolean(lastPersistedTicketSignature);
+  }
+
+  function syncTicketsStepProgressUi() {
+    if (window.HubEventWizard && typeof window.HubEventWizard.setStepComplete === 'function') {
+      window.HubEventWizard.setStepComplete(ticketsStepIsComplete());
     }
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: 'hub-event-drawer-ready',
+          progressStep: 'tickets',
+          stepComplete: ticketsStepIsComplete(),
+        },
+        window.location.origin
+      );
+    }
+  }
+
+  function notifyEmbedDrawerReady() {
+    syncTicketsStepProgressUi();
   }
 
   function goBackToEventDetailsInDrawer() {
@@ -2621,7 +2641,11 @@
     }
 
     if (membershipMeeting && memberRosterLoadState === 'idle') loadMemberRosterStatus();
-    if ((membershipMeeting || attendanceMode === 'category_exclusivity') && groupId) {
+    if ((membershipMeeting ||
+        attendanceMode === 'category_exclusivity' ||
+        (payHowIncludesTickets() && payHowIncludesMembership())) &&
+      groupId
+    ) {
       if (loadHubMembershipPlan._for !== groupId) {
         loadHubMembershipPlan._for = groupId;
         loadHubMembershipPlan(groupId);
@@ -3044,29 +3068,46 @@
     return 'included';
   }
 
-  function collectHubMembershipPayload() {
-    if (!hubMembershipEnabled()) return null;
+  function readHubMembershipAmounts() {
     const monthlyRaw = String(document.getElementById('ee-hub-membership-monthly')?.value || '').trim();
     const annualRaw = String(document.getElementById('ee-hub-membership-annual')?.value || '').trim();
+    const monthly = monthlyRaw === '' ? null : Number(monthlyRaw);
+    const annual = annualRaw === '' ? null : Number(annualRaw);
+    return { monthlyRaw: monthlyRaw, annualRaw: annualRaw, monthly: monthly, annual: annual };
+  }
+
+  function hubMembershipIsPaid() {
+    const amounts = readHubMembershipAmounts();
+    return (
+      (amounts.monthly != null && Number.isFinite(amounts.monthly) && amounts.monthly >= 1) ||
+      (amounts.annual != null && Number.isFinite(amounts.annual) && amounts.annual >= 1)
+    );
+  }
+
+  function collectHubMembershipPayload() {
+    if (!hubMembershipEnabled()) return null;
+    if (!hubMembershipIsPaid()) return null;
+    const amounts = readHubMembershipAmounts();
     return {
       active: true,
       vatTreatment: readHubMembershipVat(),
-      monthlyAmountPounds: monthlyRaw === '' ? null : monthlyRaw,
-      annualAmountPounds: annualRaw === '' ? null : annualRaw,
-      clearMonthly: monthlyRaw === '',
-      clearAnnual: annualRaw === '',
+      monthlyAmountPounds: amounts.monthly != null && amounts.monthly >= 1 ? amounts.monthly : null,
+      annualAmountPounds: amounts.annual != null && amounts.annual >= 1 ? amounts.annual : null,
+      clearMonthly: !(amounts.monthly != null && amounts.monthly >= 1),
+      clearAnnual: !(amounts.annual != null && amounts.annual >= 1),
     };
   }
 
   function hubMembershipHasPrice() {
-    const monthlyRaw = String(document.getElementById('ee-hub-membership-monthly')?.value || '').trim();
-    const annualRaw = String(document.getElementById('ee-hub-membership-annual')?.value || '').trim();
-    if (monthlyRaw === '' && annualRaw === '') return false;
-    const monthly = monthlyRaw === '' ? null : Number(monthlyRaw);
-    const annual = annualRaw === '' ? null : Number(annualRaw);
-    const monthlyOk = monthly == null || (Number.isFinite(monthly) && monthly >= 0);
-    const annualOk = annual == null || (Number.isFinite(annual) && annual >= 0);
-    return monthlyOk && annualOk && (monthly != null || annual != null);
+    const amounts = readHubMembershipAmounts();
+    if (amounts.monthlyRaw !== '' && !Number.isFinite(amounts.monthly)) return false;
+    if (amounts.annualRaw !== '' && !Number.isFinite(amounts.annual)) return false;
+    if (amounts.monthly != null && amounts.monthly < 0) return false;
+    if (amounts.annual != null && amounts.annual < 0) return false;
+    // Hub billing stores £1+ only. Blank or 0 = free join via member list (no plan row).
+    if (amounts.monthly != null && amounts.monthly > 0 && amounts.monthly < 1) return false;
+    if (amounts.annual != null && amounts.annual > 0 && amounts.annual < 1) return false;
+    return true;
   }
 
   async function loadHubMembershipPlan(groupId) {
@@ -3087,13 +3128,13 @@
     const annualEl = document.getElementById('ee-hub-membership-annual');
     if (monthlyEl) {
       monthlyEl.value =
-        plan && plan.monthlyAmountPence != null
+        plan && plan.monthlyAmountPence != null && Number(plan.monthlyAmountPence) >= 100
           ? String((plan.monthlyAmountPence / 100).toFixed(2)).replace(/\.00$/, '')
           : '';
     }
     if (annualEl) {
       annualEl.value =
-        plan && plan.annualAmountPence != null
+        plan && plan.annualAmountPence != null && Number(plan.annualAmountPence) >= 100
           ? String((plan.annualAmountPence / 100).toFixed(2)).replace(/\.00$/, '')
           : '';
     }
@@ -3103,25 +3144,21 @@
     });
     const connectNote = document.getElementById('ee-hub-membership-connect');
     if (connectNote) {
-      const paid =
-        (Number(monthlyEl?.value) || 0) >= 1 || (Number(annualEl?.value) || 0) >= 1;
+      const paid = hubMembershipIsPaid();
       connectNote.hidden = data.connectReady !== false || !paid;
     }
     if (plan && plan.offered) {
       setHubMembershipEnabled(true);
-      const freeOnly =
-        (plan.monthlyAmountPence == null || Number(plan.monthlyAmountPence) < 100) &&
-        (plan.annualAmountPence == null || Number(plan.annualAmountPence) < 100);
       setHubMembershipStatus(
-        freeOnly
-          ? 'Free membership loaded from your Memberships settings — people join via your member list.'
-          : 'Membership fees loaded from your Memberships settings.',
+        plan.paid
+          ? 'Membership fees loaded from your Memberships settings.'
+          : 'Free membership — people join via your member list (no Hub charge).',
         'ok'
       );
     } else if (isMembershipMeetingMode() || hubMembershipEnabled()) {
       setHubMembershipStatus(
-        'Enter a monthly and/or annual fee (use 0 if membership is free).',
-        'warn'
+        'Leave blank if joining is free (member list only). Paid Hub memberships start from £1.',
+        'ok'
       );
     } else {
       setHubMembershipStatus('');
@@ -3137,10 +3174,20 @@
     if (!hubMembershipHasPrice()) {
       return {
         ok: false,
-        message: 'Enter a monthly and/or annual membership fee (0 is fine if joining is free), or turn off group membership.',
+        message:
+          'Membership prices must be blank/£0 (free via member list) or at least £1 for Hub billing.',
       };
     }
+    // Free join — no organiser_membership_plans row (database only allows £1+).
+    if (!hubMembershipIsPaid()) {
+      setHubMembershipStatus(
+        'Joining stays free via your member list — no Hub membership charge to save.',
+        'ok'
+      );
+      return { ok: true };
+    }
     const payload = collectHubMembershipPayload();
+    if (!payload) return { ok: true };
     const { ok, data } = await api('/api/organiser/membership-plans', {
       method: 'PUT',
       body: JSON.stringify(Object.assign({ organiserId: groupId }, payload)),
@@ -4910,7 +4957,10 @@
     }
 
     if (hubMembershipEnabled() && !hubMembershipHasPrice()) {
-      showAlert('Enter a monthly and/or annual group membership fee (0 is fine if joining is free), or turn membership off.', 'warn');
+      showAlert(
+        'Membership must be blank/£0 (free via member list) or at least £1 for Hub billing.',
+        'warn'
+      );
       document.getElementById('ee-hub-membership-monthly')?.focus();
       updatePublishButton();
       return;
@@ -5072,6 +5122,7 @@
           : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
       );
+      notifyEmbedDrawerReady();
       return;
     }
 
@@ -5094,42 +5145,49 @@
     if (btn) btn.disabled = true;
     if (saveBtn) saveBtn.disabled = true;
 
+    const reenableSaveButtons = function () {
+      if (saveBtn) saveBtn.disabled = false;
+      updatePublishButton();
+    };
+
+    try {
     if (usesGuestVisitProgramme()) {
       const visits = readGuestVisitsAllowed();
       if (visits < 1) {
         showAlert('Enter how many free trial visits a visitor can take (1–3).', 'warn');
-        if (btn) btn.disabled = false;
-        if (saveBtn) saveBtn.disabled = false;
-        updatePublishButton();
+        reenableSaveButtons();
         return;
       }
       const groupId = seriesMeta.organiserGroupId;
       if (!groupId) {
         showAlert('Choose an organiser page before enabling the guest visit programme.', 'warn');
-        if (btn) btn.disabled = false;
-        if (saveBtn) saveBtn.disabled = false;
-        updatePublishButton();
+        reenableSaveButtons();
         return;
       }
       if (visits !== organiserComplimentaryVisits || readGuestVisitsScope() !== organiserComplimentaryVisitsScope) {
         const saved = await saveOrganiserGuestVisitsAllowed(groupId, visits, readGuestVisitsScope());
         if (!saved.ok) {
           showAlert(saved.message || 'Could not save free trial visit allowance.', 'warn');
-          if (btn) btn.disabled = false;
-          if (saveBtn) saveBtn.disabled = false;
-          updatePublishButton();
+          reenableSaveButtons();
           return;
         }
       }
     }
 
     if (hubMembershipEnabled()) {
-      const membershipSaved = await saveHubMembershipPlanIfNeeded();
+      let membershipSaved;
+      try {
+        membershipSaved = await saveHubMembershipPlanIfNeeded();
+      } catch (membershipErr) {
+        console.error(membershipErr);
+        membershipSaved = {
+          ok: false,
+          message: 'Could not save membership prices. Check your connection and try again.',
+        };
+      }
       if (!membershipSaved.ok) {
         showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
-        if (btn) btn.disabled = false;
-        if (saveBtn) saveBtn.disabled = false;
-        updatePublishButton();
+        reenableSaveButtons();
         return;
       }
     }
@@ -5184,8 +5242,7 @@
       showAlert('Could not save tickets. Check your connection and try again.', 'warn');
       return;
     } finally {
-      if (saveBtn) saveBtn.disabled = false;
-      updatePublishButton();
+      reenableSaveButtons();
     }
 
     if (!result) {
@@ -5278,6 +5335,7 @@
           : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
         'ok'
       );
+      notifyEmbedDrawerReady();
       if (tiersHavePaidPrice(collectActiveTiers())) {
         document.getElementById('ee-vat-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
@@ -5355,6 +5413,13 @@
     }
 
     location.href = publishedUrl;
+    } catch (saveErr) {
+      console.error(saveErr);
+      if (loading) loading.hide();
+      showAlert('Could not save tickets. Check your connection and try again.', 'warn');
+    } finally {
+      reenableSaveButtons();
+    }
   }
 
   document.getElementById('ee-tickets-form').addEventListener('submit', async (e) => {

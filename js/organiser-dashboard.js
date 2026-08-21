@@ -7856,6 +7856,7 @@
   let eventDrawerLoadingHideTimer = null;
   let eventDrawerCreateFlow = false;
   let eventDrawerProgressStep = '';
+  let eventDrawerStepComplete = false;
   let eventDrawerBackEventId = '';
   let eventDrawerBackTarget = '';
 
@@ -7948,6 +7949,7 @@
     setEventDrawerBackButton(false);
     eventDrawerCreateFlow = false;
     eventDrawerProgressStep = '';
+    eventDrawerStepComplete = false;
     renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
     setTimeout(function () {
@@ -8052,10 +8054,15 @@
 
     EVENT_DRAWER_PROGRESS_STEPS.forEach(function (step, i) {
       const isCurrent = step.id === stepId;
-      const isDone = i < currentIndex;
+      // Mark prior steps done; also mark the current step when the iframe reports it is complete
+      // (e.g. tickets already saved on a live listing — otherwise step 3 never shows a ✓).
+      const isDone =
+        i < currentIndex ||
+        (isCurrent && eventDrawerStepComplete) ||
+        (stepId === 'publish' && step.id === 'publish');
       let cls = 'ee-wizard-step';
       if (isCurrent) cls += ' is-current';
-      else if (isDone) cls += ' is-done';
+      if (isDone) cls += ' is-done';
 
       const numContent = isDone ? '✓' : String(i + 1);
       parts.push('<li class="' + cls + '"');
@@ -8079,7 +8086,13 @@
   function renderEventDrawerOverview(ev, drawerUi) {
     const cancelRow = document.getElementById('org-event-drawer-cancel');
     if (drawerUi && drawerUi.progressStep) {
+      if (drawerUi.progressStep !== eventDrawerProgressStep) {
+        eventDrawerStepComplete = false;
+      }
       eventDrawerProgressStep = drawerUi.progressStep;
+      if (typeof drawerUi.stepComplete === 'boolean') {
+        eventDrawerStepComplete = drawerUi.stepComplete;
+      }
     }
     const progressStep = eventDrawerCreateFlow && eventDrawerProgressStep ? eventDrawerProgressStep : null;
     renderEventDrawerProgress(progressStep);
@@ -17644,8 +17657,17 @@
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
         setEventDrawerLoading(false);
         if (e.data.progressStep && eventDrawerCreateFlow) {
+          if (e.data.progressStep !== eventDrawerProgressStep) {
+            eventDrawerStepComplete = false;
+          }
           eventDrawerProgressStep = e.data.progressStep;
+          if (typeof e.data.stepComplete === 'boolean') {
+            eventDrawerStepComplete = e.data.stepComplete;
+          }
           renderEventDrawerProgress(eventDrawerProgressStep);
+        } else if (typeof e.data.stepComplete === 'boolean' && eventDrawerCreateFlow) {
+          eventDrawerStepComplete = e.data.stepComplete;
+          if (eventDrawerProgressStep) renderEventDrawerProgress(eventDrawerProgressStep);
         }
         return;
       }
@@ -17665,7 +17687,13 @@
       if (e.data && e.data.type === 'hub-event-drawer-busy') {
         setEventDrawerLoading(Boolean(e.data.busy), e.data.message || '');
         if (e.data.progressStep && eventDrawerCreateFlow) {
+          if (e.data.progressStep !== eventDrawerProgressStep) {
+            eventDrawerStepComplete = false;
+          }
           eventDrawerProgressStep = e.data.progressStep;
+          if (typeof e.data.stepComplete === 'boolean') {
+            eventDrawerStepComplete = e.data.stepComplete;
+          }
           renderEventDrawerProgress(eventDrawerProgressStep);
         }
         return;

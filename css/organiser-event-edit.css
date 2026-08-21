@@ -149,6 +149,11 @@ a.ee-wizard-link:hover {
   font-size: 13px;
 }
 
+.ee-wizard-step.is-current.is-done .ee-wizard-num {
+  background: #e8f5ec;
+  color: #2d6a3e;
+}
+
 .ee-wizard-label {
   line-height: 1.25;
   overflow: hidden;

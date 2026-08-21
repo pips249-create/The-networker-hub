@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260728footer" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260818comp1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260821ticketstep1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -379,7 +379,7 @@
                     id="ee-hub-membership-monthly"
                     min="0"
                     step="0.01"
-                    placeholder="0 = free"
+                    placeholder="Blank = free, or from 1"
                     inputmode="decimal"
                   />
                 </div>
@@ -390,11 +390,14 @@
                     id="ee-hub-membership-annual"
                     min="0"
                     step="0.01"
-                    placeholder="0 = free, or e.g. 250"
+                    placeholder="Optional, from 1"
                     inputmode="decimal"
                   />
                 </div>
               </div>
+              <p class="ee-hint" id="ee-hub-membership-free-hint">
+                Leave blank (or 0) if joining is free via your member list. Hub-billed memberships start from £1.
+              </p>
               <fieldset class="ee-field" aria-label="VAT on membership">
                 <legend class="ee-label-block">VAT on membership</legend>
                 <label class="ee-check">
@@ -646,7 +649,7 @@
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260716perf" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260727" defer></script>
-    <script src="../js/organiser-event-wizard.js?v=20260727loc1" data-step="tickets" defer></script>
+    <script src="../js/organiser-event-wizard.js?v=20260821ticketstep1" data-step="tickets" defer></script>
     <script src="../js/hubert-chat.js?v=20260612" defer></script>
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260819cta1" data-root="../" defer></script>
@@ -658,6 +661,6 @@
     <script src="../js/organiser-field-tips.js?v=20260818comp2" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260819save1" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260821membfee2" defer></script>
   </body>
 </html>

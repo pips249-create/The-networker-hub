@@ -911,7 +911,7 @@
         priceNum > 0 ? publicListingPriceLabel(ev, { withFrom: false }) : 'Free';
       return;
     }
-    if (ev.isMembersOnlyEvent || ev.hasMembersOnlyTiers) {
+    if (ev.isMembersOnlyEvent) {
       if (isRosterMemberForEvent()) {
         const memberOnly = (rosterMemberTickets || []).find(function (t) {
           return t.isMembersOnly;
@@ -932,6 +932,22 @@
       }
       labelEl.textContent = 'Members only';
       priceEl.textContent = 'Sign in';
+      return;
+    }
+    if (ev.hasMembersOnlyTiers && isRosterMemberForEvent()) {
+      const memberOnly = (rosterMemberTickets || []).find(function (t) {
+        return t.isMembersOnly;
+      });
+      labelEl.textContent = 'Member booking';
+      if (memberOnly) {
+        priceEl.textContent =
+          memberOnly.priceKey === 'free' || !(Number(memberOnly.priceNum) > 0)
+            ? 'Free'
+            : memberOnly.price || memberTicketPriceLabel(ev);
+      } else {
+        priceEl.textContent =
+          ev.priceKey === 'free' ? 'Free' : memberTicketPriceLabel(ev);
+      }
       return;
     }
     labelEl.textContent = 'Tickets from';
@@ -2519,9 +2535,9 @@
   }
 
   function ticketTiersForEvent(ev) {
-    const membersOnlyListing = Boolean(
-      ev && (ev.isMembersOnlyEvent || ev.hasMembersOnlyTiers)
-    );
+    // Closed listing = member tiers only (no public ticket). A member price alongside
+    // public tickets must still show public rates to visitors.
+    const membersOnlyListing = Boolean(ev && ev.isMembersOnlyEvent);
     // Never invent a public "Standard ticket" for closed / member-list listings —
     // those tiers stay hidden until roster eligibility returns the real member rates.
     let base;
@@ -2568,6 +2584,10 @@
     } else if (membersOnlyListing) {
       combined = combined.filter(function (t) {
         return t.isMembersOnly;
+      });
+    } else {
+      combined = combined.filter(function (t) {
+        return !t.isMembersOnly;
       });
     }
     return combined.map(presentMemberBookingTier);
@@ -2909,7 +2929,7 @@
       !firstSelectable &&
       !tiersEl.children.length &&
       !isCategoryExclusivity &&
-      ev.hasMembersOnlyTiers
+      ev.isMembersOnlyEvent
     ) {
       if (membershipAfterVisits && !rosterMember) {
         tiersEl.innerHTML = membershipJoinCtaHtml(ev);

@@ -10,6 +10,8 @@
     { id: 'publish', label: 'Publish' },
   ];
 
+  var currentStepComplete = false;
+
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
@@ -131,15 +133,18 @@
 
     STEPS.forEach(function (step, i) {
       var isCurrent = step.id === currentStepId;
-      var isDone = i < currentIndex || (currentStepId === 'publish' && step.id === 'publish');
+      var isDone =
+        i < currentIndex ||
+        (isCurrent && currentStepComplete) ||
+        (currentStepId === 'publish' && step.id === 'publish');
       var href = stepHref(step.id, ctx);
       var canLink = isDone && !isCurrent && href && step.id !== 'publish';
 
       var cls = 'ee-wizard-step';
       if (isCurrent) cls += ' is-current';
-      else if (isDone) cls += ' is-done';
+      if (isDone) cls += ' is-done';
 
-      var numContent = isDone && !isCurrent ? '✓' : String(i + 1);
+      var numContent = isDone ? '✓' : String(i + 1);
 
       parts.push('<li class="' + cls + '"');
       if (isCurrent) parts.push(' aria-current="step"');
@@ -177,5 +182,15 @@
   var mount = document.getElementById('ee-wizard-mount');
   var params = new URLSearchParams(location.search);
   var isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+
+  function setStepComplete(done) {
+    currentStepComplete = Boolean(done);
+    if (!isEmbedDrawer && step && mount) render(step, mount);
+  }
+
+  window.HubEventWizard = {
+    setStepComplete: setStepComplete,
+  };
+
   if (!isEmbedDrawer && step && mount) render(step, mount);
 })();
