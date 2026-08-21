@@ -47,6 +47,9 @@ const ANON_PAGES = [
   { path: '/help/pricing-fees', expect: /fee|pricing|booking/i },
   { path: '/help/organiser-payouts', expect: /payout|stripe|connect/i },
   { path: '/add-your-event', expect: /event|list|send|details|intake/i },
+  // Ticket widget must load without the preview password (iframe on organiser sites).
+  { path: '/embed/event', expect: /ticket|embed|slug|loading/i },
+  { path: '/embed/tickets', expect: /ticket|embed|website|slug/i },
 ];
 
 const ANON_APIS = [{ path: '/api/auth/session', expectOkJson: true }];

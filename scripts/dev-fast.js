@@ -47,6 +47,12 @@ function resolveFilePath(urlPath) {
   if (!pathname.startsWith('/')) pathname = '/' + pathname;
   if (pathname !== '/' && pathname.endsWith('/')) pathname = pathname.slice(0, -1);
 
+  // Mirror vercel.json: /embed/event/:slug → embed/event.html (slug stays in the path for JS).
+  const embedEvent = pathname.match(/^\/embed\/event\/([^/]+)$/i);
+  if (embedEvent && embedEvent[1] && embedEvent[1].toLowerCase() !== 'event.html') {
+    pathname = '/embed/event';
+  }
+
   const candidates = [];
   if (pathname === '/') {
     candidates.push('index.html');

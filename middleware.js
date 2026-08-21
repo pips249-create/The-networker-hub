@@ -39,9 +39,20 @@ function isSocialCrawler(request) {
   return SOCIAL_CRAWLER_UA.test(ua);
 }
 
+/** Ticket iframe widget — must load anonymously on organiser websites while the gate is on. */
+function isTicketEmbedPath(pathname) {
+  const path = String(pathname || '').replace(/\/$/, '') || '/';
+  return (
+    path === '/embed/event' ||
+    path === '/embed/event.html' ||
+    /^\/embed\/event\/[^/]+$/i.test(path)
+  );
+}
+
 function isPublicListingPath(pathname, searchParams) {
   const path = String(pathname || '').replace(/\/$/, '') || '/';
   const params = searchParams || new URLSearchParams();
+  if (isTicketEmbedPath(path)) return true;
   const eventMatch = path.match(/^\/events\/([^/]+)$/);
   if (eventMatch && !SKIP_EVENT_SLUGS.has(decodeURIComponent(eventMatch[1]))) return true;
   // Fallback share links: /events/event?id=… (and .html) — used when slug is missing.
@@ -147,6 +158,9 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/api/organiser',
   '/api/contact-chat',
   '/api/event-intake',
+  // Snippet helper for organisers (widget iframe itself is fully public via isTicketEmbedPath).
+  '/embed/tickets',
+  '/embed/tickets.html',
 ];
 
 /** Public organiser profile pages for Email 2 path B (`/organisers/{slug}` only). */
@@ -556,6 +570,7 @@ function isGateBypassPath(pathname) {
   ) {
     return true;
   }
+  if (isTicketEmbedPath(pathname)) return true;
   if (isInternalSalesPath(pathname)) return true;
   return isOrganiserEarlyAccessPath(pathname);
 }
