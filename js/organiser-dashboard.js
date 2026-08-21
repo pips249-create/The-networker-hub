@@ -625,7 +625,9 @@
   function ticketWidgetUrlForEvent(ev) {
     const origin = location.origin || 'https://www.thenetworkerhub.com';
     const slug = String((ev && ev.slug) || '').trim();
-    if (slug) return origin + '/embed/event/' + encodeURIComponent(slug);
+    // Query form only — cleanUrls maps embed/event.html → /embed/event, so
+    // /embed/event/:slug 404s as a nested path under a clean URL file.
+    if (slug) return origin + '/embed/event?slug=' + encodeURIComponent(slug);
     return origin + '/embed/event?id=' + encodeURIComponent(ev && ev.id ? ev.id : '');
   }
 

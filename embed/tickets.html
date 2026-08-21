@@ -158,7 +158,7 @@
       function widgetUrl() {
         var s = slug();
         if (!s) return origin + '/embed/event';
-        return origin + '/embed/event/' + encodeURIComponent(s);
+        return origin + '/embed/event?slug=' + encodeURIComponent(s);
       }
 
       function snippet() {

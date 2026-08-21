@@ -847,6 +847,31 @@ export default async function middleware(request) {
 
   const siteGated = Boolean(gateResult && gateResult.authorized);
 
+  // cleanUrls maps embed/event.html → /embed/event, so /embed/event/:slug is not a
+  // valid filesystem child and Vercel rewrites 404. Serve the widget HTML here;
+  // the browser URL keeps the slug path for embed-event.js.
+  const embedSlugMatch = pathname.match(/^\/embed\/event\/([^/]+)$/i);
+  if (embedSlugMatch) {
+    const embedSlug = decodeURIComponent(embedSlugMatch[1] || '').trim();
+    if (embedSlug && !/\.html$/i.test(embedSlug)) {
+      try {
+        const htmlRes = await fetch(new URL('/embed/event', url.origin).toString());
+        if (htmlRes.ok) {
+          return new Response(await htmlRes.text(), {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=60, must-revalidate',
+              'X-Robots-Tag': NOINDEX_HEADER,
+            },
+          });
+        }
+      } catch {
+        /* fall through to static / 404 */
+      }
+    }
+  }
+
   let type;
   let slug;
   let templatePath;
