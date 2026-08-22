@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const auth = requireOrganiserSession(req);
+  const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   const api = organiserApi();

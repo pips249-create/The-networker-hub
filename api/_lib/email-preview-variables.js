@@ -22,7 +22,7 @@ const {
   opportunityPublicUrl,
 } = require('./hub-email-urls');
 const { buildDenialEmailVars } = require('./registration-emails');
-const { buildMeetingLinkEmailSection } = require('./lifecycle-emails');
+const { buildMeetingLinkEmailSection, buildPostEventReviewEmailVars } = require('./lifecycle-emails');
 const {
   EVENT_MAIN_SPONSOR_SLUGS,
   EVENT_MINI_SPONSOR_SLUGS,
@@ -183,6 +183,22 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   if (slug === 'meeting_link_added') {
     vars.meeting_link_section = buildMeetingLinkEmailSection(vars.meeting_link);
     vars.meeting_type = 'Online';
+  }
+
+  if (slug === 'post_event_review_request' || slug === 'post_event_review_reminder') {
+    Object.assign(
+      vars,
+      buildPostEventReviewEmailVars(
+        {
+          id: '00000000-0000-4000-8000-000000000001',
+          title: vars.event_name || 'Founders Breakfast',
+          starts_at: '2026-06-10T08:00:00.000Z',
+        },
+        { name: vars.user_name || 'Alex' },
+        { name: vars.organiser_name || 'City Connectors' },
+        site
+      )
+    );
   }
 
   if (slug === 'online_join_reminder') {

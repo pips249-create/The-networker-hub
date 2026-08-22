@@ -139,13 +139,13 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   post_event_review_request: {
     file: 'post-event-review-request.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-purple-review-v2',
     subject: 'How was {{event_name}}?',
   },
   post_event_review_reminder: {
     file: 'post-event-review-reminder.html',
-    marker: 'hub-email-layout-v3-purple',
-    subject: 'Quick reminder — how was {{event_name}}?',
+    marker: 'hub-email-layout-v3-purple-review-v2',
+    subject: 'Still time to review {{event_name}}',
   },
   account_welcome: {
     file: 'account-welcome.html',

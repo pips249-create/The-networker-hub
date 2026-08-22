@@ -8,7 +8,7 @@ const { formatEventDateTime } = require('./favourite-sales-emails');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 const {
   baseEmailVars,
-  reviewUrlForEvent,
+  buildPostEventReviewEmailVars,
   hubPaymentUrl,
   eventPublicUrl,
 } = require('./lifecycle-emails');
@@ -82,7 +82,8 @@ const POST_EVENT_REVIEW_HOURS = 24;
 // Catch up missed sends (e.g. if cron skipped a day) up to this age.
 const POST_EVENT_REVIEW_MAX_AGE_DAYS = 14;
 const POST_EVENT_REVIEW_BATCH_LIMIT = 75;
-const GUEST_VISIT_FOLLOWUP_HOURS = 24;
+/** Day after the ~24h review ask — avoids guest conversion + review landing minutes apart. */
+const GUEST_VISIT_FOLLOWUP_HOURS = 48;
 const GUEST_VISIT_FOLLOWUP_MAX_AGE_DAYS = 14;
 const GUEST_VISIT_FOLLOWUP_BATCH_LIMIT = 50;
 const CATEGORY_EXCLUSIVITY_PAYMENT_REMINDER_HOURS = 48;
@@ -1206,6 +1207,21 @@ async function sendDuePostEventReviewEmails(sb, options) {
     });
   }
 
+  const organiserIds = [
+    ...new Set(events.map((row) => row.organiser_id).filter(Boolean)),
+  ];
+  const organiserById = {};
+  if (organiserIds.length) {
+    const { data: organisers, error: orgErr } = await sb
+      .from('organisers')
+      .select('id, name')
+      .in('id', organiserIds);
+    if (orgErr) throw new Error(orgErr.message);
+    (organisers || []).forEach((row) => {
+      organiserById[row.id] = row;
+    });
+  }
+
   const { data: existingReviews, error: reviewErr } = await sb
     .from('reviews')
     .select('attendee_id, event_id')
@@ -1240,14 +1256,15 @@ async function sendDuePostEventReviewEmails(sb, options) {
     }
 
     try {
-      const reviewUrl = reviewUrlForEvent(eventRow, siteUrl);
+      const organiser = organiserById[eventRow.organiser_id] || null;
+      const emailVars = buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl);
       if (dryRun) {
         result.candidates.push({
           registration_id: registration.id,
           attendee_email: attendeeEmail,
           event_id: eventRow.id,
           event_title: eventRow.title,
-          review_url: reviewUrl,
+          review_url: emailVars.review_url,
         });
         result.sent += 1;
         continue;
@@ -1271,12 +1288,7 @@ async function sendDuePostEventReviewEmails(sb, options) {
         await sendTemplatedEmail({
           slug: 'post_event_review_request',
           to: attendeeEmail,
-          variables: {
-            ...baseEmailVars(siteUrl),
-            user_name: String(attendee?.name || '').trim() || 'there',
-            event_name: String(eventRow.title || 'your event').trim(),
-            review_url: reviewUrl,
-          },
+          variables: emailVars,
           skipEmailCheck: true,
         });
       } catch (sendErr) {
@@ -1343,7 +1355,7 @@ async function sendDuePostEventReviewReminderEmails(sb) {
   const eventIds = [...new Set(registrations.map((r) => r.event_id).filter(Boolean))];
   const { data: events, error: eventErr } = await sb
     .from('events')
-    .select('id, title, slug, ends_at, starts_at')
+    .select('id, title, slug, ends_at, starts_at, organiser_id')
     .in('id', eventIds);
   if (eventErr) throw new Error(eventErr.message);
   const eventById = {};
@@ -1361,6 +1373,21 @@ async function sendDuePostEventReviewReminderEmails(sb) {
     if (attErr) throw new Error(attErr.message);
     (attendees || []).forEach((row) => {
       attendeeById[row.id] = row;
+    });
+  }
+
+  const organiserIds = [
+    ...new Set((events || []).map((row) => row.organiser_id).filter(Boolean)),
+  ];
+  const organiserById = {};
+  if (organiserIds.length) {
+    const { data: organisers, error: orgErr } = await sb
+      .from('organisers')
+      .select('id, name')
+      .in('id', organiserIds);
+    if (orgErr) throw new Error(orgErr.message);
+    (organisers || []).forEach((row) => {
+      organiserById[row.id] = row;
     });
   }
 
@@ -1396,7 +1423,10 @@ async function sendDuePostEventReviewReminderEmails(sb) {
     }
 
     try {
-      const reviewUrl = reviewUrlForEvent(eventRow, siteUrl);
+      const organiser = eventRow.organiser_id
+        ? organiserById[eventRow.organiser_id] || null
+        : null;
+      const emailVars = buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl);
       // Claim before send so overlapping cron workers cannot double-send.
       const claimedAt = new Date().toISOString();
       const { data: claimed, error: claimErr } = await sb
@@ -1415,12 +1445,7 @@ async function sendDuePostEventReviewReminderEmails(sb) {
         await sendTemplatedEmail({
           slug: 'post_event_review_reminder',
           to: attendeeEmail,
-          variables: {
-            ...baseEmailVars(siteUrl),
-            user_name: String(attendee?.name || '').trim() || 'there',
-            event_name: String(eventRow.title || 'your event').trim(),
-            review_url: reviewUrl,
-          },
+          variables: emailVars,
           skipEmailCheck: true,
         });
       } catch (sendErr) {

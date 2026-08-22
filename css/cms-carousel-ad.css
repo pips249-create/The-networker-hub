@@ -261,6 +261,24 @@
   color: var(--purple-700, #7a3d8a);
 }
 
+.cms-ad-logo-only--available {
+  border: 1px dashed rgba(122, 61, 138, 0.35);
+  border-radius: var(--radius, 12px);
+  background: var(--surface, #fff);
+}
+
+.cms-ad-logo-only--available .cms-ad-carousel-placeholder-link {
+  display: block;
+  padding: 12px 10px 14px;
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.cms-ad-carousel-slide--available .cms-ad-logo-only-badge {
+  background: rgba(122, 61, 138, 0.12);
+  color: var(--purple-700, #7a3d8a);
+}
+
 .cms-ad-compact--available .cms-ad-compact-placeholder-link {
   display: block;
   text-decoration: none !important;

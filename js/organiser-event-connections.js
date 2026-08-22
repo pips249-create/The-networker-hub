@@ -30,6 +30,7 @@
       fromName: document.getElementById('oec-from-name'),
       note: document.getElementById('oec-note'),
       omitWrap: document.getElementById('oec-omit-wrap'),
+      omitHint: document.getElementById('oec-omit-hint'),
       omitList: document.getElementById('oec-omit-list'),
       previewBtn: document.getElementById('oec-preview'),
       sendBtn: document.getElementById('oec-send'),
@@ -450,6 +451,12 @@
       return;
     }
     e.omitWrap.hidden = false;
+    if (e.omitHint) {
+      e.omitHint.textContent =
+        preview.listKind === 'attended'
+          ? 'Untick anyone who did not attend — they are left off this email and marked as did not attend (no review email).'
+          : 'Untick anyone who should be left out of the email and the shared list.';
+    }
     e.omitList.innerHTML = (preview.attendees || [])
       .map(function (a) {
         var email = String(a.email || '').toLowerCase();
@@ -706,7 +713,10 @@
         included.length +
           ' guest' +
           (included.length === 1 ? '' : 's') +
-          ' will receive the list (minus themselves). Untick anyone you want to omit.',
+          ' will receive the list (minus themselves). ' +
+          (res.data.listKind === 'attended'
+            ? 'Untick anyone who did not attend — they skip the review email too.'
+            : 'Untick anyone you want to omit.'),
         'ok'
       );
     }
@@ -749,6 +759,10 @@
     var label = listKind === 'going' ? 'who’s going list' : 'attendee round-up';
     var omitted = excludedEmailList(preview).length;
     var billable = preview.nextBillable === 'extra' ? ' Uses 1 extra send credit.' : ' Uses your one free send for this organiser page.';
+    var noShowNote =
+      listKind === 'attended' && omitted
+        ? ' Omitted guests will be marked as did not attend and will not get a review email.'
+        : '';
     var confirmMsg =
       'Send the ' +
       label +
@@ -758,6 +772,7 @@
       (included.length === 1 ? '' : 's') +
       (omitted ? ' (' + omitted + ' omitted)' : '') +
       '?' +
+      noShowNote +
       billable;
     if (!global.confirm(confirmMsg)) return;
 

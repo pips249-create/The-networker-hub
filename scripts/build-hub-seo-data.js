@@ -16,6 +16,7 @@ const pages = [
   'about',
   'rankings',
   'for-organisers',
+  'for-networkers',
   'for-attendees',
   'advertising',
   'events',

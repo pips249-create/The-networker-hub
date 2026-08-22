@@ -85,7 +85,7 @@ The dashboard is not linked on the public site — only admins reach it after si
 1. User clicks **Forgot password** on the login page.  
 2. A reset token is saved in Airtable.  
 3. If `RESEND_API_KEY` is set, an email is sent.  
-4. Otherwise set `AUTH_DEV_RESET_LINK=true` on Preview to show the reset URL in the API response (development only).
+4. Production never returns `resetUrl` in the API response. On Preview only, set `AUTH_SHOW_RESET_LINK=true` (or `AUTH_DEV_RESET_LINK=true`) to opt in to showing the reset URL when email is not sent.
 
 Reset page: `/reset-password?token=...`
 

@@ -55,6 +55,7 @@
       var bright = 0;
       var dark = 0;
       var total = 0;
+      var sumLum = 0;
 
       for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
@@ -65,7 +66,9 @@
           var pb = data[i + 2];
           var lum = pixelLuminance(pr, pg, pb);
           total++;
-          if (lum > 0.92) bright++;
+          sumLum += lum;
+          // Near-white logos AND cream/tan wordmarks (e.g. Plate & Post) need a dark pad.
+          if (lum > 0.68) bright++;
           if (lum < 0.35) dark++;
           var onEdge = x < 4 || y < 4 || x >= size - 4 || y >= size - 4;
           if (onEdge) {
@@ -79,14 +82,22 @@
 
       if (!total) return null;
 
+      var meanLum = sumLum / total;
       var bgR = edgeN ? edgeR / edgeN : 0;
       var bgG = edgeN ? edgeG / edgeN : 0;
       var bgB = edgeN ? edgeB / edgeN : 0;
-      var bgLum = pixelLuminance(bgR, bgG, bgB);
+      var bgLum = edgeN ? pixelLuminance(bgR, bgG, bgB) : meanLum;
       var brightRatio = bright / total;
       var darkRatio = dark / total;
 
-      // Light artwork on a transparent/white file — prefer a dark surround.
+      // Light / cream artwork on transparent or white — prefer a dark surround.
+      // Transparent PNGs often have no edge pixels; use overall luminance instead.
+      if (darkRatio < 0.12 && brightRatio > 0.06) {
+        if (meanLum > 0.58 || bgLum > 0.72 || !edgeN) {
+          return { color: LOGO_BAND_DARK, dark: true, darkSurface: false };
+        }
+      }
+
       if (bgLum > 0.72 && brightRatio > 0.08 && darkRatio < 0.12) {
         return { color: LOGO_BAND_DARK, dark: true, darkSurface: false };
       }
@@ -446,6 +457,15 @@
     );
   }
 
+  function isCompactAdLogoWrap(wrap) {
+    return !!(wrap && wrap.closest('.cms-ad-compact, .cms-ad-logo-only, .cms-ad-carousel'));
+  }
+
+  function prefersDarkLogoBand(img) {
+    var band = sampleLogoBandColor(img);
+    return !!(band && band.dark && !band.darkSurface);
+  }
+
   function logoBandDark(block) {
     return !!(block && block.logo_band_dark === true);
   }
@@ -489,7 +509,7 @@
         }
         return;
       }
-      if (!band && isHeroLogoWrap(wrap)) {
+      if (!band && (isHeroLogoWrap(wrap) || isCompactAdLogoWrap(wrap))) {
         band = { color: LOGO_BAND_DARK, dark: true };
       }
       wrap.style.backgroundColor = (band && band.color) || LOGO_BAND_LIGHT;
@@ -526,7 +546,7 @@
       paint();
     } else if (img.complete) {
       // Broken/empty image (often CORS) — events already fired, so fall back now.
-      if (logoBandForceDark(wrap, opts) || isHeroLogoWrap(wrap)) {
+      if (logoBandForceDark(wrap, opts) || isHeroLogoWrap(wrap) || isCompactAdLogoWrap(wrap)) {
         applyDarkLogoBand(wrap);
       } else {
         wrap.style.backgroundColor = LOGO_BAND_LIGHT;
@@ -537,7 +557,7 @@
       img.addEventListener(
         'error',
         function () {
-          if (logoBandForceDark(wrap, opts) || isHeroLogoWrap(wrap)) {
+          if (logoBandForceDark(wrap, opts) || isHeroLogoWrap(wrap) || isCompactAdLogoWrap(wrap)) {
             applyDarkLogoBand(wrap);
           } else {
             wrap.style.backgroundColor = LOGO_BAND_LIGHT;
@@ -558,6 +578,8 @@
     isLogoUrl: isLogoUrl,
     sanitizeCtaColor: sanitizeCtaColor,
     sampleLogoColorHex: sampleLogoColorHex,
+    sampleLogoBandColor: sampleLogoBandColor,
+    prefersDarkLogoBand: prefersDarkLogoBand,
     ctaColor: ctaColor,
     ctaTextOnBg: ctaTextOnBg,
     applyCtaColor: applyCtaColor,

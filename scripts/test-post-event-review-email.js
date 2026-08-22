@@ -46,11 +46,18 @@ async function testTemplateBuild() {
 
   if (!built.html || built.html.length < 500) fail('template HTML too short');
   if (!built.html.includes('Leave a review')) fail('missing CTA copy');
+  if (!built.html.includes('Tap a star')) fail('missing star rating prompt');
+  if (!built.html.includes('star_rating_row') && !built.html.includes('review-star-link')) {
+    fail('missing clickable star rating row');
+  }
   if (!built.html.includes(vars.review_url)) fail('review_url not substituted in HTML');
   if (!vars.review_url.includes('#review/')) {
     fail('review_url should deep-link with #review/eventId hash');
   }
   if (!vars.review_url.includes('?review=')) fail('review_url should include ?review=eventId');
+  if (!String(vars.star_rating_row || '').includes('rating=5')) {
+    fail('star_rating_row should include rated deep links');
+  }
 
   pass('template builds with review deep link → ' + vars.review_url);
   return built;
@@ -65,6 +72,8 @@ async function testReviewUrlHelper() {
   if (!url.includes('#review/')) {
     fail('reviewUrlForEvent missing #review/eventId hash');
   }
+  const rated = reviewUrlForEvent({ id: eventId }, 'https://example.com', { rating: 4 });
+  if (!rated.includes('rating=4')) fail('reviewUrlForEvent missing rating param');
   pass('reviewUrlForEvent → ' + url);
 }
 

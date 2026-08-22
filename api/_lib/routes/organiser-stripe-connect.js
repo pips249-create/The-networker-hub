@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { error: 'method_not_allowed' });
   }
 
-  const auth = requireOrganiserSession(req);
+  const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   const verified = await assertOrganiserEmailVerified(auth.session);

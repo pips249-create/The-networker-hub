@@ -899,6 +899,92 @@ window.HUB_SEO_DATA = {
         }
       ]
     },
+    "for-networkers": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "The Networker Hub",
+          "legalName": "The Networker Group Ltd",
+          "url": "https://www.thenetworkerhub.com",
+          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+          "image": "https://www.thenetworkerhub.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
+          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+            "addressLocality": "Huntingdon",
+            "addressRegion": "Cambridgeshire",
+            "postalCode": "PE28 4YF",
+            "addressCountry": "GB"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "hello@thenetworkerhub.com",
+            "availableLanguage": [
+              "English"
+            ]
+          },
+          "founder": [
+            {
+              "@type": "Person",
+              "name": "Rosie"
+            },
+            {
+              "@type": "Person",
+              "name": "Catherine Hancher"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "url": "https://www.thenetworkerhub.com/for-networkers",
+          "name": "For networkers – The Networker Hub",
+          "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free My Hub account with saved alerts, member rates, booking reminders, reviews, and guest visits.",
+          "about": {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "The Networker Hub",
+            "legalName": "The Networker Group Ltd",
+            "url": "https://www.thenetworkerhub.com",
+            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
+            "image": "https://www.thenetworkerhub.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
+            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
+              "addressLocality": "Huntingdon",
+              "addressRegion": "Cambridgeshire",
+              "postalCode": "PE28 4YF",
+              "addressCountry": "GB"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "hello@thenetworkerhub.com",
+              "availableLanguage": [
+                "English"
+              ]
+            },
+            "founder": [
+              {
+                "@type": "Person",
+                "name": "Rosie"
+              },
+              {
+                "@type": "Person",
+                "name": "Catherine Hancher"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "for-attendees": {
       "@context": "https://schema.org",
       "@graph": [
@@ -942,7 +1028,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/for-attendees",
+          "url": "https://www.thenetworkerhub.com/for-networkers",
           "name": "For networkers – The Networker Hub",
           "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free My Hub account with saved alerts, member rates, booking reminders, reviews, and guest visits.",
           "about": {

@@ -14,6 +14,7 @@ const {
   findUserByEmail,
   isAdminRole,
   normalizeRole,
+  sessionWithLiveAdminRole,
 } = require('./auth');
 const { composeEventDescription } = require('./event-description');
 
@@ -241,11 +242,13 @@ function tables() {
 }
 
 /** Any signed-in user can manage organiser profiles linked to their account. */
-function requireOrganiserSession(req) {
+async function requireOrganiserSession(req) {
   const session = sessionFromRequest(req);
   if (!session) return { ok: false, status: 401, error: 'not_authenticated' };
   if (!session.email) return { ok: false, status: 403, error: 'missing_email' };
-  return { ok: true, session };
+  // Cookie admin role can lag after DB revoke — re-check before platform-wide organiser access.
+  const liveSession = await sessionWithLiveAdminRole(session);
+  return { ok: true, session: liveSession };
 }
 
 function isPlatformAdmin(session) {
@@ -1363,7 +1366,7 @@ async function enrichGroupForDashboard(group, session, adminView) {
 }
 
 async function getOrganiserWorkspace(req) {
-  const auth = requireOrganiserSession(req);
+  const auth = await requireOrganiserSession(req);
   if (!auth.ok) return auth;
   const { session } = auth;
   const isAdmin = isPlatformAdmin(session);

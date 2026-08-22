@@ -1,56 +1,49 @@
 # The Networker Hub
 
-Member and organiser platform for networking events, exhibitions, and training and workshops.
+Member and organiser platform for UK networking events, exhibitions, and business opportunities.
 
-**Live preview:** https://the-networker-hub.vercel.app/
+**Production:** https://www.thenetworkerhub.com · **Preview:** https://the-networker-hub.vercel.app/
+
+## Start here
+
+| Doc | Use when |
+|-----|----------|
+| [`LOCAL-DEV.md`](LOCAL-DEV.md) | Day-to-day local work (`npm start`, smoke tests, gate unlock) |
+| [`SUPABASE-SETUP.md`](SUPABASE-SETUP.md) | Database / Auth project setup |
+| [`CHECKOUT-SETUP.md`](CHECKOUT-SETUP.md) | Stripe Connect + ticket checkout |
+| [`PIPS-TODO.md`](PIPS-TODO.md) | Launch checklist and ops backlog |
+| [`docs/OPS-RELIABILITY.md`](docs/OPS-RELIABILITY.md) | Health checks, backups, cron |
+
+Copy [`.env.example`](.env.example) → `local.env`, fill secrets, then `npm run sync-env && npm start`.
+
+## Stack
+
+- **Frontend:** static HTML/CSS/JS on Vercel
+- **API:** Vercel serverless functions under `api/`
+- **Data:** Supabase (Postgres) — browse, accounts, organiser workspace, bookings
+- **Payments:** Stripe (Connect destination charges)
+- **Email:** Resend (when `AUTH_SEND_EMAILS` / transactional mail is enabled)
+
+Airtable is legacy only. Do not use it for new work; see archived notes in `VERCEL-AIRTABLE.md` if you need history.
 
 ## What’s in this folder
 
-| File / folder | Purpose |
-|---------------|---------|
-| **`PIPS-TODO.md`** | **Pip's to-do list** — tabbed checklist for things to do later (migrations, Resend, etc.) |
+| Path | Purpose |
+|------|---------|
 | `index.html` | Hub home |
-| `events/index.html` | Events & exhibitions (filters, Premium Spotlight, Powered by hero) |
-| `api/events.js` | Vercel function — loads events from Airtable |
-| `js/events.js` | Renders listings from the API |
-| `css/hub.css` | Shared styles |
-| `assets/logo.png` | Logo (transparent background; `logo-original.png` is the backup) |
-
-## Airtable setup
-
-1. Create a base with a table named **Events** (or set `AIRTABLE_EVENTS_TABLE`).
-2. Suggested fields (names are flexible — the API maps common alternatives):
-
-| Field | Example |
-|-------|---------|
-| Title | Cambridge Business Breakfast |
-| Description | Short blurb for cards |
-| Date | 2026-06-12 |
-| Time | 08:00 |
-| Price | 18 or Free |
-| Location | Cambridge |
-| Industry | Professional services |
-| Meeting Format | In person / Online |
-| Type | Meeting or Exhibition |
-| Featured | Yes (for Premium Spotlight) |
-| Photo | Attachment (cover image) |
-| Organiser | Yorkshire Network Co. |
-
-3. In [Vercel](https://vercel.com) → your project → **Settings → Environment Variables**, add:
-
-- `AIRTABLE_API_KEY` — personal access token from [airtable.com/create/tokens](https://airtable.com/create/tokens)
-- `AIRTABLE_BASE_ID` — from the base URL: `https://airtable.com/appXXXXXXXX/...`
-- `AIRTABLE_EVENTS_TABLE` — optional, default `Events`
-
-4. Redeploy. The browse page calls `/api/events` (not Airtable directly, so the key stays private).
-
-**Local testing:** `npx vercel dev` in this folder (requires Vercel CLI and env vars).
-
-Copy `.env.example` for variable names.
+| `events/` · `opportunities/` | Public directories |
+| `organiser/` | Organiser workspace |
+| `admin/` | Command Centre |
+| `api/` | Serverless routes (`auth`, `organiser`, `admin`, `cron`, listings) |
+| `js/` · `css/` | Shared front-end |
+| `supabase/migrations/` | Schema migrations |
+| `middleware.js` | Soft-launch gate, host canonicalisation, SEO HTML injection |
 
 ## Deploy on Vercel
 
-1. Import `pips249-create/The-networker-hub` from GitHub  
+1. Import the GitHub repo  
 2. Framework: **Other** (static site + `/api` functions)  
-3. Add environment variables above  
+3. Set env vars from `.env.example` (required: Supabase, `SESSION_SECRET`, `SITE_URL`, Stripe, Resend, `CRON_SECRET`)  
 4. Redeploy after each push  
+
+Local: `npm start` (wraps Vercel CLI). See `LOCAL-DEV.md`.

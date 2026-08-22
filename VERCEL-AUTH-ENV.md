@@ -223,6 +223,6 @@ After deploy, check `/api/auth/config-check` — `siteAccess.siteAccessRequired`
 | Key | Purpose |
 |-----|---------|
 | `RESEND_API_KEY` | Email for forgot-password links |
-| `AUTH_DEV_RESET_LINK` | `true` on Preview only — shows reset URL in API (dev) |
+| `AUTH_SHOW_RESET_LINK` / `AUTH_DEV_RESET_LINK` | Preview-only opt-in (`true`) to include `resetUrl` in the forgot-password API when email is not sent. Production never returns `resetUrl`. |
 
 See also: `AUTH-SETUP.md`

@@ -35,7 +35,7 @@ async function resolveOrganiserGroupScope(session, adminView) {
 
 async function resolveOrganiserApiScope(req) {
   const { requireOrganiserSession } = require('./organiser');
-  const wsAuth = requireOrganiserSession(req);
+  const wsAuth = await requireOrganiserSession(req);
   if (!wsAuth.ok) return wsAuth;
 
   const { session } = wsAuth;

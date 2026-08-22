@@ -275,6 +275,35 @@ function requireAdmin(session) {
 }
 
 /**
+ * Prefer this when a cookie claims admin: confirm hub_accounts.role is still admin.
+ * Non-admin cookies are left unchanged. Lookup failure demotes claimed admins (fail closed).
+ */
+async function sessionWithLiveAdminRole(session) {
+  if (!session || !isAdminRole(session.role)) return session;
+
+  const userId = String(session.sub || session.userId || session.id || '').trim();
+  if (!userId) {
+    return { ...session, role: USER_ROLES.CLIENT };
+  }
+
+  try {
+    const { getHubAccount } = require('./supabase-auth');
+    const { isSupabaseConfigured } = require('./supabase');
+    if (!isSupabaseConfigured()) {
+      return { ...session, role: USER_ROLES.CLIENT };
+    }
+    const hub = await getHubAccount(userId);
+    if (!isAdminRole(hub?.role)) {
+      return { ...session, role: normalizeRole(hub?.role) || USER_ROLES.CLIENT };
+    }
+    return { ...session, role: USER_ROLES.ADMIN };
+  } catch (e) {
+    console.error('[auth] sessionWithLiveAdminRole failed', e?.message || e);
+    return { ...session, role: USER_ROLES.CLIENT };
+  }
+}
+
+/**
  * Prefer this on privileged entry points: cookie role + live hub_accounts.role.
  * Revoking admin in the DB takes effect immediately (not after session expiry).
  */
@@ -747,6 +776,7 @@ module.exports = {
   json,
   requireAdmin,
   requireAdminLive,
+  sessionWithLiveAdminRole,
   airtableConfig,
   airtableFetch,
   escapeFormulaValue,

@@ -13,6 +13,18 @@ const sbAuth = require('../supabase-auth');
 const { enforceRateLimitAsync } = require('../rate-limit');
 const { isRecipientAllowed } = require('../email-allowlist');
 
+/**
+ * Reset URLs must never leak in production API responses.
+ * Opt-in only for non-production when AUTH_SHOW_RESET_LINK or AUTH_DEV_RESET_LINK is true.
+ */
+function shouldExposeResetLink() {
+  if (String(process.env.VERCEL_ENV || '').toLowerCase() === 'production') return false;
+  return (
+    process.env.AUTH_SHOW_RESET_LINK === 'true' ||
+    process.env.AUTH_DEV_RESET_LINK === 'true'
+  );
+}
+
 function fieldNameOnRecord(recordFields, candidates, fallback) {
   const f = recordFields || {};
   for (const key of candidates) {
@@ -79,18 +91,15 @@ async function handleSupabaseForgot(email) {
     }
   }
 
-  if (!resetUrl) {
+  const showLinkOnPage = !emailSent && shouldExposeResetLink();
+
+  if (!resetUrl && showLinkOnPage) {
     try {
       resetUrl = await createPasswordResetLink(email);
     } catch (e) {
       return { status: 500, body: { error: 'server_error', message: e.message } };
     }
   }
-
-  const showLinkOnPage =
-    !emailSent &&
-    (process.env.AUTH_SHOW_RESET_LINK !== 'false' ||
-      process.env.AUTH_DEV_RESET_LINK === 'true');
 
   return {
     status: 200,
@@ -209,10 +218,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    const showLinkOnPage =
-      !emailSent &&
-      (process.env.AUTH_SHOW_RESET_LINK !== 'false' ||
-        process.env.AUTH_DEV_RESET_LINK === 'true');
+    const showLinkOnPage = !emailSent && shouldExposeResetLink();
 
     return json(res, 200, {
       ok: true,
@@ -220,7 +226,9 @@ module.exports = async function handler(req, res) {
       accountFound: true,
       message: emailSent
         ? 'Check your email for a reset link (valid 15 minutes).'
-        : 'Email is not configured yet — use the reset link shown below.',
+        : showLinkOnPage
+          ? 'Email is not configured yet — use the reset link shown below.'
+          : 'Password reset emails are turned off. Ask your admin to set a new password, or use account settings after signing in.',
       ...(showLinkOnPage ? { resetUrl } : {}),
     });
   } catch (e) {

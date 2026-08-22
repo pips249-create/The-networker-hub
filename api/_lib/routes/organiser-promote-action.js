@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
-  const auth = requireOrganiserSession(req);
+  const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   const limited = enforceRateLimit(req, res, 'organiser_promote_action', {

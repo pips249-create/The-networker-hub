@@ -20,6 +20,7 @@ const {
 const { ownerNameFromOpportunity } = require('./opportunity-emails');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 const { escapeHtml } = require('./event-refund-policy');
+const { formatEventDateTime } = require('./favourite-sales-emails');
 
 function baseEmailVars(siteUrl) {
   const site = siteBase(siteUrl);
@@ -174,20 +175,60 @@ async function sendEventAlmostFullEmail(sb, eventRow, stats) {
   return { sent: true, to: contact.email };
 }
 
-function reviewUrlForEvent(eventRow, siteUrl) {
+function reviewUrlForEvent(eventRow, siteUrl, options) {
   const site = siteBase(siteUrl);
   const eventId = String(eventRow?.id || '').trim();
+  const opts = options && typeof options === 'object' ? options : {};
+  const rating = Math.max(0, Math.min(5, Math.round(Number(opts.rating) || 0)));
   if (eventId) {
     const encoded = encodeURIComponent(eventId);
-    return (
-      hubAccountUrl(site) +
-      '?review=' +
-      encoded +
-      '#review/' +
-      encoded
-    );
+    let url = hubAccountUrl(site) + '?review=' + encoded;
+    if (rating >= 1) url += '&rating=' + String(rating);
+    return url + '#review/' + encoded;
   }
   return hubAccountUrl(site) + '#reviews-pending';
+}
+
+function buildReviewStarRatingRow(eventRow, siteUrl) {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    const href = escapeHtml(reviewUrlForEvent(eventRow, siteUrl, { rating: i }));
+    stars.push(
+      '<a class="review-star-link" href="' +
+        href +
+        '" style="display:inline-block;padding:4px 8px;font-size:40px;line-height:1;color:#e6b422;text-decoration:none;" aria-label="' +
+        i +
+        ' star' +
+        (i === 1 ? '' : 's') +
+        '">&#9733;</a>'
+    );
+  }
+  return (
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">' +
+    '<tr><td style="text-align:center;line-height:1;">' +
+    stars.join('') +
+    '</td></tr></table>'
+  );
+}
+
+function buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl) {
+  const site = siteBase(siteUrl);
+  const { event_date } = formatEventDateTime(eventRow?.starts_at);
+  const organiserName = String(organiser?.name || '').trim() || 'the organiser';
+  const eventName = String(eventRow?.title || 'your event').trim();
+  const metaParts = [];
+  if (event_date) metaParts.push(event_date);
+  if (organiserName && organiserName !== 'the organiser') metaParts.push(organiserName);
+  return {
+    ...baseEmailVars(site),
+    user_name: String(attendee?.name || '').trim() || 'there',
+    event_name: eventName,
+    organiser_name: organiserName,
+    event_date: event_date || '',
+    event_meta: metaParts.join(' · ') || organiserName,
+    review_url: reviewUrlForEvent(eventRow, site),
+    star_rating_row: buildReviewStarRatingRow(eventRow, site),
+  };
 }
 
 module.exports = {
@@ -200,6 +241,8 @@ module.exports = {
   sendOpportunityPremiumExpiredEmail,
   sendEventAlmostFullEmail,
   reviewUrlForEvent,
+  buildReviewStarRatingRow,
+  buildPostEventReviewEmailVars,
   hubPaymentUrl,
   eventPublicUrl,
   organiserBusinessDashboardUrl,

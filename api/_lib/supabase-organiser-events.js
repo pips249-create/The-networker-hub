@@ -3004,7 +3004,7 @@ async function prepareOrganiserWorkspaceScope(session, adminView) {
 
 async function getLeanOrganiserWorkspace(req) {
   const { requireOrganiserSession } = require('./organiser');
-  const wsAuth = requireOrganiserSession(req);
+  const wsAuth = await requireOrganiserSession(req);
   if (!wsAuth.ok) return wsAuth;
 
   const { session } = wsAuth;
@@ -3138,7 +3138,7 @@ async function getLeanOrganiserWorkspace(req) {
 
 async function getOrganiserWorkspace(req) {
   const { requireOrganiserSession } = require('./organiser');
-  const wsAuth = requireOrganiserSession(req);
+  const wsAuth = await requireOrganiserSession(req);
   if (!wsAuth.ok) return wsAuth;
 
   const { session } = wsAuth;
@@ -3368,7 +3368,7 @@ function airtableSetupHint() {
 /** Revenue/ticket totals for the signed-in workspace — deferred from lean bootstrap. */
 async function getOrganiserWorkspaceStats(req) {
   const { requireOrganiserSession } = require('./organiser');
-  const wsAuth = requireOrganiserSession(req);
+  const wsAuth = await requireOrganiserSession(req);
   if (!wsAuth.ok) return wsAuth;
 
   const { session } = wsAuth;

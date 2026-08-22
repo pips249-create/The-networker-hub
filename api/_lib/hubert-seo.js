@@ -378,11 +378,11 @@ function buildSchemaGraph(page, origin) {
         'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.',
       about: buildOrganizationSchema(base),
     });
-  } else if (page === 'for-attendees') {
+  } else if (page === 'for-networkers' || page === 'for-attendees') {
     graph.push({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      url: base + '/for-attendees',
+      url: base + '/for-networkers',
       name: 'For networkers – The Networker Hub',
       description:
         'UK Events, Organiser pages, and Business Opportunities in one place. Free My Hub account with saved alerts, member rates, booking reminders, reviews, and guest visits.',
@@ -475,7 +475,7 @@ function buildLlmsTxt(origin) {
     '/for-organisers\n' +
     '- For Networkers: ' +
     base +
-    '/for-attendees\n' +
+    '/for-networkers\n' +
     '- Organiser guides: ' +
     base +
     '/guides\n' +

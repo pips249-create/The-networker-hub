@@ -199,6 +199,10 @@
       title: 'Sales targets',
       subtitle: 'Track progress towards your revenue goal',
     },
+    'revenue-mix': {
+      title: 'Revenue mix',
+      subtitle: 'Model sponsorship, ticketing, and upsells — see when each stream matters',
+    },
     'sales-kit': {
       title: 'Organiser sales kit',
       subtitle: 'Shared outreach log, cheat sheets, and walkthrough tools for Catherine, Rosie & Jamie',
@@ -375,6 +379,15 @@
         'Deals is for offline sponsorship entries not invoiced through Stripe — you can log and remove manual entries so totals stay accurate.',
       ],
     },
+    'revenue-mix': {
+      title: 'How to use the revenue mix model',
+      steps: [
+        'Pick Launch, Growth, or Scale — or adjust the fields for your own forecast.',
+        'Load live sponsor slots to pull Headline and Page Partner fill from the CMS.',
+        'Raise paid ticket volume to see when transaction fees start to catch sponsorship.',
+        'Use Sales targets for recorded actuals and Payments for live booking data.',
+      ],
+    },
     spotlight: {
       title: 'How to feature events',
       steps: [
@@ -477,7 +490,7 @@
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'moderation'],
-    revenue: ['financials', 'revenue-targets', 'sales-kit', 'spotlight', 'sponsorship'],
+    revenue: ['financials', 'revenue-mix', 'revenue-targets', 'sales-kit', 'spotlight', 'sponsorship'],
     comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
@@ -5849,6 +5862,15 @@
     loadRevenueTargets(section);
   }
 
+  function renderRevenueMix() {
+    if (window.AdminRevenueMix && window.AdminRevenueMix.render) {
+      window.AdminRevenueMix.render(main, { esc: esc, attrEsc: attrEsc });
+      return;
+    }
+    main.innerHTML =
+      '<p class="text-sm text-slate-600">Revenue mix model failed to load. Refresh the page.</p>';
+  }
+
   function renderRevenueTargetsHub(fullHash) {
     var tab = resolveHubTab(fullHash, 'revenue-targets', ['overview', 'chart', 'deals'], 'overview');
     if (!tab) return;
@@ -5885,6 +5907,8 @@
         '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
         '<a href="#cleanup/groups" class="admin-shortcut"><span class="admin-shortcut-label">Fix listings</span><span class="admin-shortcut-desc">Group pages and events</span></a>' +
         '<a href="#spotlight/events" class="admin-shortcut"><span class="admin-shortcut-label">Premium Spotlight</span><span class="admin-shortcut-desc">Featured carousels</span></a>' +
+        '<a href="#financials" class="admin-shortcut"><span class="admin-shortcut-label">Payments</span><span class="admin-shortcut-desc">Ticket revenue &amp; payouts</span></a>' +
+        '<a href="#revenue-mix" class="admin-shortcut"><span class="admin-shortcut-label">Revenue mix</span><span class="admin-shortcut-desc">Sponsorship vs ticketing model</span></a>' +
         '<a href="#revenue-targets" class="admin-shortcut"><span class="admin-shortcut-label">Sales targets</span><span class="admin-shortcut-desc">Forecast vs actual</span></a>' +
         '<a href="#sales-kit" class="admin-shortcut"><span class="admin-shortcut-label">Organiser sales kit</span><span class="admin-shortcut-desc">Cheat sheets &amp; demos</span></a>' +
         '<a href="#financials/payouts" class="admin-shortcut"><span class="admin-shortcut-label">Payouts</span><span class="admin-shortcut-desc">Approve and mark paid</span></a>' +
@@ -7151,6 +7175,7 @@
       '<p id="financials-status" class="text-sm text-slate-500">Loading financial data from Supabase…</p>' +
       '<div id="financials-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>' +
       '<div class="grid gap-3 sm:grid-cols-3">' +
+      '<a href="#revenue-mix" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Revenue mix</p><p class="text-xs text-slate-500 mt-1">Sponsorship vs ticketing model</p></a>' +
       '<a href="#financials/organisers" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Organisers</p><p class="text-xs text-slate-500 mt-1">Revenue and Stripe Connect</p></a>' +
       '<a href="#financials/payouts" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Payouts</p><p class="text-xs text-slate-500 mt-1">Queue and refunds pending</p></a>' +
       '<a href="#financials/activity" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Activity</p><p class="text-xs text-slate-500 mt-1">Recent registrations</p></a>' +
@@ -11704,6 +11729,7 @@
       var logo = ad.logo_url || '';
       var pending = pendingLogos[ad.id];
       if (pending && pending.preview) logo = pending.preview;
+      var darkBand = ad.logo_band_dark === true;
       return (
         '<div class="rounded-xl border border-slate-200 p-4 space-y-3 min-w-0" data-carousel-ad-id="' +
         attrEsc(ad.id) +
@@ -11711,20 +11737,34 @@
         '<div class="flex flex-wrap items-center justify-between gap-2">' +
         '<p class="text-sm font-semibold text-brand-900">Ad slot ' +
         (index + 1) +
+        (index === CAROUSEL_SIZE - 1 ? ' · available on site' : '') +
         '</p>' +
+        '<div class="flex items-center gap-3">' +
         '<label class="flex items-center gap-2 text-xs text-slate-600">' +
         '<input type="checkbox" class="event-carousel-ad-active rounded border-slate-300"' +
         (ad.active !== false ? ' checked' : '') +
-        '> Active</label></div>' +
-        '<p class="text-xs text-slate-500">Required for an active slot: logo + click-through link.</p>' +
+        '> Active</label>' +
+        '<label class="flex items-center gap-2 text-xs text-slate-600" title="For white, cream, or light logos">' +
+        '<input type="checkbox" class="event-carousel-ad-logo-dark rounded border-slate-300"' +
+        (darkBand ? ' checked' : '') +
+        '> Dark logo band</label></div></div>' +
+        '<p class="text-xs text-slate-500">Required for an active slot: logo + click-through link. Tick <strong>Dark logo band</strong> for cream/white logos. Prefer <strong>upload</strong> over Facebook/Instagram links — those expire.</p>' +
+        (index === CAROUSEL_SIZE - 1
+          ? '<p class="text-xs text-brand-800 bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">When this slot is inactive and other slots are filled, the live site shows <strong>Advertise your business here</strong> as the last carousel slide.</p>'
+          : '') +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(pending ? '' : logo) +
-        '" placeholder="https://…"></div>' +
+        '" placeholder="https://… or upload below"></div>' +
+        '<p class="text-xs text-slate-500">Paste a direct image link (.png / .jpg) or upload the file. Facebook &amp; Instagram image links usually fail — download the logo and use <strong>Choose file</strong>.</p>' +
         '<div><label class="block text-xs text-slate-500 mb-1">Or upload logo (max 2MB)</label>' +
         '<input type="file" class="event-carousel-ad-logo-file block w-full text-sm text-slate-600" accept="image/png,image/jpeg,image/webp,image/gif">' +
         (logo
-          ? '<img src="' + attrEsc(logo) + '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 bg-white p-1" />'
+          ? '<img src="' +
+            attrEsc(logo) +
+            '" alt="" class="mt-2 max-h-12 max-w-[160px] object-contain rounded border border-slate-100 p-1' +
+            (darkBand ? ' bg-slate-900' : ' bg-white') +
+            '" />'
           : '') +
         '</div>' +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Click-through link <span class="text-brand-700">*</span></label>' +
@@ -11755,6 +11795,7 @@
         var linkUrlEl = row.querySelector('.event-carousel-ad-link-url');
         var endsAtEl = row.querySelector('.event-carousel-ad-ends-at');
         var activeCheckbox = row.querySelector('.event-carousel-ad-active');
+        var darkCheckbox = row.querySelector('.event-carousel-ad-logo-dark');
         var existing = adsState.find(function (ad) {
           return ad.id === id;
         });
@@ -11767,6 +11808,7 @@
           logo_url: logoUrl,
           cta_url: linkUrlEl ? linkUrlEl.value.trim() : '',
           active: activeCheckbox ? activeCheckbox.checked : false,
+          logo_band_dark: darkCheckbox ? darkCheckbox.checked : false,
           ends_at: endsAtEl ? datetimeLocalUtcToIso(endsAtEl.value) : null,
         });
       });
@@ -11775,6 +11817,50 @@
 
     function renderAdList() {
       listEl.innerHTML = adsState.map(adRowHtml).join('');
+    }
+
+    function detectCarouselLogoBandDark(logoUrl) {
+      return new Promise(function (resolve) {
+        var url = String(logoUrl || '').trim();
+        if (!url || !window.CmsSponsorFields || !window.CmsSponsorFields.prefersDarkLogoBand) {
+          resolve(false);
+          return;
+        }
+        var img = new Image();
+        if (!/^data:/i.test(url)) img.crossOrigin = 'anonymous';
+        img.onload = function () {
+          try {
+            resolve(window.CmsSponsorFields.prefersDarkLogoBand(img) === true);
+          } catch (e) {
+            resolve(false);
+          }
+        };
+        img.onerror = function () {
+          resolve(false);
+        };
+        img.src = url;
+      });
+    }
+
+    function applyDetectedDarkBands(ads) {
+      var jobs = ads.map(function (ad, index) {
+        if (ad.logo_band_dark || !ad.logo_url) return Promise.resolve({ index: index, dark: false });
+        var logo = ad.logo_url;
+        if (pendingLogos[ad.id] && pendingLogos[ad.id].preview) logo = pendingLogos[ad.id].preview;
+        return detectCarouselLogoBandDark(logo).then(function (dark) {
+          return { index: index, dark: dark };
+        });
+      });
+      return Promise.all(jobs).then(function (results) {
+        var changed = false;
+        var next = ads.slice();
+        results.forEach(function (result) {
+          if (!result.dark) return;
+          if (!next[result.index].logo_band_dark) changed = true;
+          next[result.index] = Object.assign({}, next[result.index], { logo_band_dark: true });
+        });
+        return { ads: next, changed: changed };
+      });
     }
 
     function loadCarousel() {
@@ -11790,17 +11876,22 @@
           }
           adsState = Array.isArray(data.ads) && data.ads.length ? data.ads : defaultAds();
           if (activeEl) activeEl.checked = data.active !== false;
-          renderAdList();
-          var liveCount = adsState.filter(function (ad) {
-            return ad.active !== false && ad.logo_url && ad.cta_url;
-          }).length;
-          setCarouselStatus(
-            liveCount
-              ? liveCount + ' active ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
-              : data.active === false
-                ? 'Mini sponsors are hidden — tick “Mini sponsors active” above, add logo + link per slot, then save.'
-                : 'No active ads yet — add a logo and click-through link for each slot you want live, then save.'
-          );
+          applyDetectedDarkBands(adsState).then(function (detected) {
+            adsState = detected.ads;
+            renderAdList();
+            var liveCount = adsState.filter(function (ad) {
+              return ad.active !== false && ad.logo_url && ad.cta_url;
+            }).length;
+            setCarouselStatus(
+              detected.changed
+                ? 'Light logo detected — Dark logo band applied. Save mini sponsors to publish.'
+                : liveCount
+                  ? liveCount + ' active ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
+                  : data.active === false
+                    ? 'Mini sponsors are hidden — tick “Mini sponsors active” above, add logo + link per slot, then save.'
+                    : 'No active ads yet — add a logo and click-through link for each slot you want live, then save.'
+            );
+          });
         })
         .catch(function () {
           adsState = defaultAds();
@@ -11819,6 +11910,12 @@
     });
 
     listEl.addEventListener('change', function (ev) {
+      var darkToggle = ev.target.closest('.event-carousel-ad-logo-dark');
+      if (darkToggle) {
+        adsState = readAdsFromDom();
+        renderAdList();
+        return;
+      }
       var fileInput = ev.target.closest('.event-carousel-ad-logo-file');
       if (fileInput) {
         var row = fileInput.closest('[data-carousel-ad-id]');
@@ -11844,65 +11941,191 @@
             filename: file.name || 'logo.jpg',
             existing: existing ? existing.logo_url : '',
           };
+          // Cream/white logos vanish on the white preview — auto-tick dark band when sampling says so.
+          var dataUrl = String(reader.result || '');
+          if (dataUrl && window.CmsSponsorFields && window.CmsSponsorFields.prefersDarkLogoBand) {
+            var probe = new Image();
+            probe.onload = function () {
+              try {
+                if (window.CmsSponsorFields.prefersDarkLogoBand(probe)) {
+                  adsState = readAdsFromDom();
+                  adsState.forEach(function (ad) {
+                    if (ad.id === id) ad.logo_band_dark = true;
+                  });
+                }
+              } catch (e) {
+                /* ignore sampling failures */
+              }
+              renderAdList();
+            };
+            probe.onerror = function () {
+              renderAdList();
+            };
+            probe.src = dataUrl;
+            return;
+          }
           renderAdList();
         };
         reader.readAsDataURL(file);
       }
     });
 
+    function isHostedCarouselLogoUrl(url) {
+      return /\/storage\/v1\/object\/public\/organiser-assets\//i.test(String(url || '').trim());
+    }
+
+    function importCarouselLogoFromUrl(logoUrl) {
+      return fetch('/api/admin/image-proxy?url=' + encodeURIComponent(String(logoUrl || '').trim()), {
+        credentials: 'include',
+      }).then(function (response) {
+        if (!response.ok) {
+          throw new Error(
+            'Could not import that logo link. Download the image to your computer, then use Choose file to upload it. Facebook and Instagram links expire and often block imports.'
+          );
+        }
+        return response.blob();
+      }).then(function (blob) {
+        if (!blob || !blob.size) {
+          throw new Error('That logo link returned an empty file — upload the image file instead.');
+        }
+        if (blob.size > 2 * 1024 * 1024) {
+          throw new Error('Logo must be under 2MB — upload a smaller file.');
+        }
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () {
+            resolve({
+              preview: String(reader.result || ''),
+              data: String(reader.result || ''),
+              mime: blob.type || 'image/jpeg',
+              filename: 'logo.jpg',
+            });
+          };
+          reader.onerror = function () {
+            reject(new Error('Could not read the imported logo.'));
+          };
+          reader.readAsDataURL(blob);
+        });
+      });
+    }
+
+    function prepareCarouselAdsForSave(ads) {
+      return Promise.all(
+        ads.map(function (ad) {
+          if (pendingLogos[ad.id] && pendingLogos[ad.id].data) {
+            return Promise.resolve(ad);
+          }
+          var logoUrl = String(ad.logo_url || '').trim();
+          if (!logoUrl || isHostedCarouselLogoUrl(logoUrl) || !/^https:\/\//i.test(logoUrl)) {
+            return Promise.resolve(ad);
+          }
+          return importCarouselLogoFromUrl(logoUrl).then(function (imported) {
+            pendingLogos[ad.id] = {
+              preview: imported.preview,
+              data: imported.data,
+              mime: imported.mime,
+              filename: imported.filename,
+              existing: ad.logo_url,
+            };
+            return ad;
+          });
+        })
+      );
+    }
+
+    function carouselAdHasLogo(ad) {
+      if (/^https:\/\//i.test(String(ad.logo_url || '').trim())) return true;
+      if (pendingLogos[ad.id] && pendingLogos[ad.id].data) return true;
+      return false;
+    }
+
     saveBtn.addEventListener('click', function () {
       var ads = readAdsFromDom();
+      var missingLogoSlot = ads.find(function (ad) {
+        return ad.active && !carouselAdHasLogo(ad);
+      });
+      if (missingLogoSlot) {
+        setCarouselStatus(
+          'Ad slot ' +
+            (missingLogoSlot.slot_index + 1) +
+            ' is active but missing a logo — upload a file or paste a direct image URL (ending in .png, .jpg, etc.).',
+          'error'
+        );
+        return;
+      }
+
       saveBtn.disabled = true;
       setCarouselStatus('Saving…');
 
-      var payload = {
-        active: activeEl ? activeEl.checked : true,
-        ads: ads.map(function (ad) {
-          var pending = pendingLogos[ad.id];
-          var item = {
-            id: ad.id,
-            slot_index: ad.slot_index,
-            logo_url: ad.logo_url,
-            cta_url: ad.cta_url,
-            active: ad.active,
-          };
-          if (pending && pending.data) {
-            item.logoBase64 = pending.data;
-            item.logoMime = pending.mime;
-            item.logoFilename = pending.filename;
+      prepareCarouselAdsForSave(ads)
+        .then(function () {
+          setCarouselStatus('Uploading logo…');
+          return applyDetectedDarkBands(readAdsFromDom());
+        })
+        .then(function (detected) {
+          ads = detected.ads;
+          if (detected.changed) {
+            adsState = ads;
+            renderAdList();
           }
-          return item;
-        }),
-      };
 
-      fetch('/api/admin/event-carousel?slot=' + encodeURIComponent(slotKey), {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-        .then(function (r) {
-          return r.json().then(function (data) {
-            if (!r.ok || data.ok === false) {
-              var msg = data.message || data.error || 'Save failed';
+          var payload = {
+          active: activeEl ? activeEl.checked : true,
+          ads: ads.map(function (ad) {
+            var pending = pendingLogos[ad.id];
+            var item = {
+              id: ad.id,
+              slot_index: ad.slot_index,
+              logo_url: ad.logo_url,
+              cta_url: ad.cta_url,
+              active: ad.active,
+              logo_band_dark: ad.logo_band_dark === true,
+              ends_at: ad.ends_at || null,
+            };
+            if (pending && pending.data) {
+              item.logoBase64 = pending.data;
+              item.logoMime = pending.mime;
+              item.logoFilename = pending.filename;
+            }
+            return item;
+          }),
+        };
+
+        return fetch('/api/admin/event-carousel?slot=' + encodeURIComponent(slotKey), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              if (!r.ok || data.ok === false) {
+                var msg = data.message || data.error || 'Save failed';
               if (data.error === 'missing_carousel_logo') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a logo.';
               } else if (data.error === 'missing_carousel_link') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
               } else if (data.error === 'missing_carousel_cta') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
+              } else if (/web page/i.test(msg)) {
+                msg =
+                  'Logo URL must be a direct link to an image file — upload the logo file instead, or use a URL ending in .png / .jpg / .webp.';
+              } else if (/fetch logo/i.test(msg) || /upload failed/i.test(msg)) {
+                msg =
+                  'Could not save the logo — upload the image file directly (max 2MB) rather than linking to a website homepage.';
               }
-              throw new Error(msg);
-            }
-            return data;
+                throw new Error(msg);
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            pendingLogos = {};
+            adsState = Array.isArray(data.ads) ? data.ads : defaultAds();
+            if (activeEl) activeEl.checked = data.active !== false;
+            renderAdList();
+            setCarouselStatus('Saved — mini sponsors updated.', 'ok');
           });
-        })
-        .then(function (data) {
-          pendingLogos = {};
-          adsState = Array.isArray(data.ads) ? data.ads : defaultAds();
-          if (activeEl) activeEl.checked = data.active !== false;
-          renderAdList();
-          setCarouselStatus('Saved — mini sponsors updated.', 'ok');
         })
         .catch(function (err) {
           setCarouselStatus(err.message || 'Could not save carousel.', 'error');
@@ -24014,6 +24237,7 @@
     social: renderSocialHub,
     moderation: renderModerationHub,
     financials: renderFinancialsHub,
+    'revenue-mix': renderRevenueMix,
     'revenue-targets': renderRevenueTargetsHub,
     'sales-kit': renderSalesKit,
     spotlight: renderSpotlightHub,

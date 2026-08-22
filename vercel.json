@@ -65,6 +65,7 @@
     { "source": "/for-organisers.html", "destination": "/for-organisers", "permanent": true },
     { "source": "/add-your-event.html", "destination": "/add-your-event", "permanent": true },
     { "source": "/for-attendees", "destination": "/for-networkers", "permanent": true },
+    { "source": "/for-attendees.html", "destination": "/for-networkers", "permanent": true },
     { "source": "/for-networkers.html", "destination": "/for-networkers", "permanent": true },
     { "source": "/testing-bo.html", "destination": "/testing-bo", "permanent": true },
     { "source": "/legal-policies.html", "destination": "/legal-policies", "permanent": true },

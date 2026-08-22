@@ -52,22 +52,32 @@ async function resolveCarouselLogos(ads, slot) {
   const out = [];
   for (let i = 0; i < ads.length; i++) {
     const ad = { ...ads[i] };
-      if (ad.logoBase64) {
+    const folder = `sponsor-logos/${slot}/${ad.id || 'ad'}`;
+    const hasUpload = Boolean(ad.logoBase64) || /^data:image\//i.test(String(ad.logo_url || '').trim());
+    const hasRemoteUrl = /^https?:\/\//i.test(String(ad.logo_url || '').trim());
+
+    if (hasUpload || hasRemoteUrl) {
+      try {
         const uploaded = await resolveImageUrl({
-          folder: `sponsor-logos/${slot}/${ad.id || 'ad'}`,
+          folder,
           logoUrl: ad.logo_url,
-          logoBase64: ad.logoBase64,
+          logoBase64: ad.logoBase64 || (/^data:image\//i.test(String(ad.logo_url || '')) ? ad.logo_url : ''),
           logoMime: ad.logoMime,
           logoFilename: ad.logoFilename,
+          mirrorExternal: hasRemoteUrl && !hasUpload,
         });
         if (uploaded) ad.logo_url = uploaded;
         else if (ad.active) {
           throw new Error(`Logo upload failed for ad slot ${(ad.slot_index || 0) + 1}`);
         }
-      delete ad.logoBase64;
-      delete ad.logoMime;
-      delete ad.logoFilename;
+      } catch (e) {
+        if (ad.active) throw e;
+      }
     }
+
+    delete ad.logoBase64;
+    delete ad.logoMime;
+    delete ad.logoFilename;
     out.push(ad);
   }
   return out;

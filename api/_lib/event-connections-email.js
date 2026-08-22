@@ -8,6 +8,7 @@ const { publicSiteBase, unsubscribeUrl, logoNavUrl, logoFooterUrl } = require('.
 const { formatDateOnly } = require('./event-timezone');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { organiserLogoUrlForEmail } = require('./organiser-member-roster');
+const { markRegistrationNoShow } = require('./organiser-no-shows');
 const crypto = require('crypto');
 
 const SLUG = 'event_connections_list';
@@ -577,6 +578,32 @@ async function getConnectionsPreview(session, eventId, listKindInput) {
   };
 }
 
+/**
+ * When sending “Who attended”, guests unticked from the round-up are treated as
+ * no-shows so they skip the review email and cannot leave a review.
+ */
+async function markOmittedAsNoShows(session, { allAttendees, excluded, groupIds }) {
+  if (!excluded || !excluded.size) return { marked: 0, skipped: 0 };
+  let marked = 0;
+  let skipped = 0;
+  for (const attendee of allAttendees || []) {
+    if (!excluded.has(attendee.email) || !attendee.registrationId) continue;
+    try {
+      const result = await markRegistrationNoShow(session, {
+        registrationId: attendee.registrationId,
+        groupIds,
+        userId: session && session.sub,
+      });
+      if (result && result.already) skipped += 1;
+      else marked += 1;
+    } catch (_err) {
+      // Already reviewed, not eligible, etc. — do not block the round-up send.
+      skipped += 1;
+    }
+  }
+  return { marked, skipped };
+}
+
 async function sendConnectionsEmail(
   session,
   { eventId, organiserNote, subject, fromName, listKind: listKindInput, excludeEmails }
@@ -617,6 +644,17 @@ async function sendConnectionsEmail(
   const useExtra = allowance.nextBillable === 'extra';
   if (useExtra) {
     await consumeExtraCredit(sb, event.organiser_id);
+  }
+
+  let noShowMarked = 0;
+  if (listKind === 'attended' && excluded.size) {
+    const access = await resolveOrganiserAccess(session);
+    const noShowResult = await markOmittedAsNoShows(session, {
+      allAttendees,
+      excluded,
+      groupIds: access.groupIds || [],
+    });
+    noShowMarked = noShowResult.marked;
   }
 
   const organiser = event.organisers || {};
@@ -788,6 +826,14 @@ async function sendConnectionsEmail(
   const label = listKind === 'going' ? 'who’s going list' : 'attendee round-up';
   const omitted = allAttendees.length - attendees.length;
   const refreshed = await getConnectionsAllowance(event.organiser_id).catch(() => null);
+  const noShowClause =
+    noShowMarked > 0
+      ? ' Marked ' +
+        noShowMarked +
+        ' omitted guest' +
+        (noShowMarked === 1 ? '' : 's') +
+        ' as did not attend (they won’t get a review email).'
+      : '';
   return {
     ok: true,
     eventId: event.id,
@@ -798,6 +844,7 @@ async function sendConnectionsEmail(
     allowance: refreshed,
     recipientCount: attendees.length,
     omittedCount: omitted,
+    noShowMarkedCount: noShowMarked,
     sent,
     skipped,
     failed,
@@ -813,7 +860,8 @@ async function sendConnectionsEmail(
           (omitted ? ' (' + omitted + ' omitted)' : '') +
           (skipped ? ' (' + skipped + ' opted out)' : '') +
           (failed ? '. ' + failed + ' failed.' : '.') +
-          (useExtra ? ' Used 1 extra send credit.' : '')
+          (useExtra ? ' Used 1 extra send credit.' : '') +
+          noShowClause
         : failed
           ? 'Could not send the email.'
           : 'No emails were sent — recipients may have email turned off.',

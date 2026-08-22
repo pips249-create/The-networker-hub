@@ -130,8 +130,10 @@ const templates = [
     'Hi {{user_name}}, the organiser added an online join link for <strong style="color:#1c2040;">{{event_name}}</strong>.') +
     cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.65;color:#ffffff;margin:0 0 14px;">{{meeting_link_section}}</p>')) +
     ctaRow(btn('{{event_url}}', 'View event &rarr;', '#4aa8f0'))],
-  ['post-event-review-request.html', 'Leave a review', hero('&#9733;', '#fff4d6', '#b8860b', 'How was it?', '#b8860b', 'Share your experience',
-    'Hi {{user_name}}, we hope you enjoyed <strong style="color:#1c2040;">{{event_name}}</strong>. A quick review helps other networkers discover great groups.') +
+  ['post-event-review-request.html', 'Leave a review', hero('&#9733;', '#fff4d6', '#b8860b', 'How was it?', '#b8860b', 'How was {{event_name}}?',
+    'Hi {{user_name}}, thanks for coming. A quick review of <strong style="color:#1c2040;">{{organiser_name}}</strong> helps other networkers choose where to go next — it only takes a minute.') +
+    cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">{{event_name}}</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.72);margin:0;">{{event_meta}}</p>')) +
+    '<tr><td class="mobile-pad" style="padding:20px 40px 8px;text-align:center;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:600;color:#635c5e;margin:0 0 12px;">Tap a star to get started</p>{{star_rating_row}}</td></tr>' +
     ctaRow(btn('{{review_url}}', 'Leave a review &rarr;', '#1c2040'))],
   ['guest-visit-followup.html', 'Guest visit follow-up', hero('&#127915;', '#ebe0f0', '#9a7aa8', 'Guest visit', '#9a7aa8', 'Hope to see you again',
     'Hi {{user_name}}, we hope you enjoyed your guest visit to <strong style="color:#1c2040;">{{event_name}}</strong> with <strong style="color:#1c2040;">{{organiser_name}}</strong>. If plans changed, we know things come up — you are always welcome back.') +

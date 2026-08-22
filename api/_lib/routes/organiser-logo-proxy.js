@@ -52,10 +52,19 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { error: 'invalid_logo_url' });
     }
 
-    const upstream = await fetch(logoUrl, {
-      redirect: 'follow',
-      headers: { Accept: 'image/*,*/*' },
-    });
+    const { assertUrlSafeForServerFetch } = require('../safe-url-fetch');
+    let upstream;
+    try {
+      ({ response: upstream } = await assertUrlSafeForServerFetch(logoUrl, {
+        maxRedirects: 3,
+        headers: { Accept: 'image/*,*/*' },
+      }));
+    } catch (err) {
+      if (err && (err.code === 'ssrf_blocked' || err.code === 'invalid_url' || err.code === 'invalid_protocol')) {
+        return json(res, 400, { error: 'invalid_logo_url' });
+      }
+      throw err;
+    }
     if (!upstream.ok) {
       return json(res, 502, { error: 'logo_fetch_failed', status: upstream.status });
     }

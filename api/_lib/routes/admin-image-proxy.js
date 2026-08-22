@@ -5,6 +5,7 @@
  * GET /api/admin/image-proxy?url=
  */
 const { json } = require('../auth');
+const { assertUrlSafeForServerFetch, imageFetchHeadersForUrl } = require('../safe-url-fetch');
 
 const MAX_BYTES = 2.5 * 1024 * 1024;
 
@@ -21,6 +22,12 @@ function parseUrlParam(req) {
 function prepareSvgBuffer(buf) {
   let text = buf.toString('utf8');
   if (!/<svg[\s>]/i.test(text)) return buf;
+  // Drop executable / remote content that could turn SVG into an XSS vector in canvas/admin UI.
+  text = text
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/xlink:href\s*=\s*("|')\s*javascript:[^"']*\1/gi, '')
+    .replace(/href\s*=\s*("|')\s*javascript:[^"']*\1/gi, '');
   // Canvas Image() often fails on SVGs without explicit width/height.
   if (!/\swidth\s*=/i.test(text) && /viewBox\s*=/i.test(text)) {
     text = text.replace(/<svg\b/i, '<svg width="1200" height="800"');
@@ -55,14 +62,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const upstream = await fetch(parsed.toString(), {
-      redirect: 'follow',
-      headers: {
-        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Referer: parsed.origin + '/',
-      },
+    const { response: upstream } = await assertUrlSafeForServerFetch(parsed.toString(), {
+      preferHttps: true,
+      maxRedirects: 5,
+      headers: imageFetchHeadersForUrl(parsed.toString()),
     });
     if (!upstream.ok) {
       return json(res, 502, { error: 'fetch_failed', status: upstream.status });
@@ -94,6 +97,12 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.end(buf);
   } catch (err) {
+    if (err && err.code === 'ssrf_blocked') {
+      return json(res, 400, { error: 'url_not_allowed' });
+    }
+    if (err && (err.code === 'invalid_url' || err.code === 'invalid_protocol')) {
+      return json(res, 400, { error: err.code });
+    }
     return json(res, 500, {
       error: 'image_proxy_failed',
       message: err && err.message ? err.message : 'failed',

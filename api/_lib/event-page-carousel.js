@@ -76,6 +76,7 @@ function normalizeCarouselAd(raw, index, slot) {
     cta_url: String(raw?.cta_url || raw?.ctaUrl || '').trim(),
     cta_label: String(raw?.cta_label || raw?.ctaLabel || 'Enquire now').trim(),
     cta_color: sanitizeCtaColor(raw?.cta_color || raw?.ctaColor) || '',
+    logo_band_dark: raw?.logo_band_dark === true || raw?.logoBandDark === true,
     active: raw?.active !== false,
     ends_at: endsAt,
   };
@@ -115,7 +116,9 @@ function normalizeCarouselAdsList(list, slot) {
 }
 
 function hasValidCarouselLogo(url) {
-  return /^(https?:|\/|data:image\/)/i.test(String(url || '').trim());
+  const u = String(url || '').trim();
+  if (!u || /^data:image\//i.test(u)) return false;
+  return /^https:\/\//i.test(u);
 }
 
 function hasValidCarouselCta(url) {

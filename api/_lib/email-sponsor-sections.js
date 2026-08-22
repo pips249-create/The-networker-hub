@@ -193,6 +193,7 @@ function toMiniSponsorAd(block) {
       sponsorCompanyName(block) ||
       String(block.company_name || block.title || '').trim() ||
       'Sponsor',
+    logo_band_dark: block.logo_band_dark === true || block.logoBandDark === true,
   };
 }
 
@@ -203,6 +204,7 @@ function buildMiniSponsorsRow(ads, options = {}) {
   const placement = String(options.placement || 'email_mini_sponsor').trim() || 'email_mini_sponsor';
   const campaign = String(options.campaign || placement).trim() || placement;
   const tracked = [];
+  const darkPad = '#1a1a2e';
 
   const cells = list
     .map(function (ad) {
@@ -219,16 +221,25 @@ function buildMiniSponsorsRow(ads, options = {}) {
         placement,
         company: String(ad.company_name || '').trim(),
       });
+      const imgHtml =
+        '<img src="' +
+        logo +
+        '" alt="' +
+        name +
+        '" width="80" style="max-width:80px;width:100%;height:auto;display:block;margin:0 auto;opacity:0.92;border:0;">';
+      const logoHtml = ad.logo_band_dark
+        ? '<span style="display:inline-block;padding:8px 12px;background:' +
+          darkPad +
+          ';border-radius:6px;line-height:0;">' +
+          imgHtml +
+          '</span>'
+        : imgHtml;
       return (
         '<td class="mini-sponsor-cell" style="width:33.33%;padding:6px 8px;text-align:center;vertical-align:middle;">' +
         '<a href="' +
         url +
         '" style="text-decoration:none;display:inline-block;">' +
-        '<img src="' +
-        logo +
-        '" alt="' +
-        name +
-        '" width="80" style="max-width:80px;width:100%;height:auto;display:block;margin:0 auto;opacity:0.92;">' +
+        logoHtml +
         '</a></td>'
       );
     })

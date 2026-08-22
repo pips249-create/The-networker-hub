@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
 
     if (groupsOnly) {
       const { requireOrganiserSession, listGroupsForSession } = api;
-      const wsAuth = requireOrganiserSession(req);
+      const wsAuth = await requireOrganiserSession(req);
       if (!wsAuth.ok) {
         return json(res, wsAuth.status || 401, { error: wsAuth.error });
       }

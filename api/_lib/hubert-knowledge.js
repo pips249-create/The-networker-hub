@@ -33,7 +33,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'KEY PAGES',
     body:
       'Home / · Events /events/ · Opportunities /opportunities/ · List an opportunity /opportunities/list · ' +
-      'My Hub /account/ · For networkers /for-attendees · For organisers /for-organisers · Organiser workspace /organiser/ · Organiser guides /guides · ' +
+      'My Hub /account/ · For networkers /for-networkers · For organisers /for-organisers · Organiser workspace /organiser/ · Organiser guides /guides · ' +
       'Sign in /login · Register /register · FAQ /faq · Help: organiser payouts /help/organiser-payouts · ticket fees /help/pricing-fees · ' +
       'About /about · Contact /contact (chat with Hubert) · Advertising /advertising · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
   },
@@ -593,12 +593,12 @@ const FALLBACK_REPLIES = [
   {
     match: /email who attended|attendee list email|who else (was|attended)|share attendee (emails|list)|email.*who attended|email attendee list|attendee round-?up|who.?s going|who is going/i,
     reply:
-      'Open Communicate under My events in the organiser sidebar. Before the event starts you can send “Who’s going” (confirmed bookings). After it starts, send “Who attended”. Untick anyone you want to omit. Add who the email is from and an optional note — your group logo is included. One free send per organiser page; extra sends are paid (£9 for 1, £22 for 3). Use the Analytics tab for opens and clicks.',
+      'Open Communicate under My events in the organiser sidebar. Before the event starts you can send “Who’s going” (confirmed bookings). After it starts, send “Who attended”. Untick anyone who did not attend — they are left off the round-up and marked as did not attend so they skip the review email. Add who the email is from and an optional note — your group logo is included. One free send per organiser page; extra sends are paid (£9 for 1, £22 for 3). Use the Analytics tab for opens and clicks.',
   },
   {
     match: /who (has |)(attended|registered|booked)|see (who|my) (attendee|registration|book)|view.*attendee|who is coming|attendee list|see registrations/i,
     reply:
-      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. After the event starts, use Didn’t attend on a row so that person does not get a review request. After the event, use Attendee round-up (with one event selected) to share who attended with the other guests — no-shows are left off that list.',
+      'Sign in and open /organiser/ → Events → Attendees. You will see everyone registered for your events — name, email, ticket type, visit count (1st visit vs returning), quantity, and booking date. Filter by event or by new vs returning, or click Download attendees CSV to export. After the event starts, use Didn’t attend on a row so that person does not get a review request — or untick them when you send the Attendee round-up; that marks them as did not attend too. After the event, use Attendee round-up (with one event selected) to share who attended with the other guests — no-shows are left off that list.',
   },
   {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,

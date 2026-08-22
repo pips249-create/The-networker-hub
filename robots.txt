@@ -5,7 +5,18 @@ Disallow: /admin/
 Disallow: /account/
 Disallow: /organiser/
 Disallow: /api/
+Allow: /api/seo-meta
+Allow: /api/hubert-schema
 Disallow: /events/booking-success
+Disallow: /marketing/
+Disallow: /p-tnh-
+Disallow: /peek/
+Disallow: /testing-bo
+Disallow: /site-access
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /home2.5
+Disallow: /advertising-cta-preview
 
 Sitemap: https://www.thenetworkerhub.com/sitemap.xml
 

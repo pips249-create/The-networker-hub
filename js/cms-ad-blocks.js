@@ -14,26 +14,28 @@
 
   var PLACEHOLDER_COPY = {
     event_page_carousel_ads: {
-      headline: 'Get your business seen here',
+      headline: 'Advertise your business here',
       price: '£600 / month + VAT',
       cta: 'Advertise here →',
     },
     organiser_page_carousel_ads: {
-      headline: 'Get your business seen here',
+      headline: 'Advertise your business here',
       price: '£300 / month + VAT',
       cta: 'Advertise here →',
     },
     opportunity_page_carousel_ads: {
-      headline: 'Get your business seen here',
+      headline: 'Advertise your business here',
       price: '£600 / month + VAT',
       cta: 'Advertise here →',
     },
     opportunity_page_sidebar_ad: {
-      headline: 'Get your business seen here',
+      headline: 'Advertise your business here',
       price: '£600 / month + VAT',
       cta: 'Advertise here →',
     },
   };
+
+  var CAROUSEL_MAX_SLOTS = 3;
 
   function advertisingPathForSlot(slotOrSubject) {
     var key = String(slotOrSubject || '').trim().toLowerCase();
@@ -139,7 +141,8 @@
         ' sponsor-logo--full" src="' +
         esc(url) +
         '" alt="" loading="lazy" decoding="async" ' +
-        'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)">' +
+        'onload="window.CmsSponsorFields&&window.CmsSponsorFields.applyLogoBand(this.parentElement,this,true)" ' +
+        'onerror="window.CmsAdBlocks&&window.CmsAdBlocks.hideBrokenCarouselImage(this)">' +
         '</div>'
       );
     }
@@ -208,12 +211,30 @@
   function isCompactRenderable(block) {
     if (!block || block.active === false) return false;
     var logo = window.CmsSponsorFields ? window.CmsSponsorFields.logoUrl(block) : block.logo_url;
-    var hasLogo = window.CmsSponsorFields
-      ? window.CmsSponsorFields.isLogoUrl(logo)
-      : /^https?:\/\//i.test(String(logo || '').trim());
+    var hasLogo = /^https:\/\//i.test(String(logo || '').trim());
     var ctaUrl = String(block.cta_url || '').trim();
     var hasCtaUrl = /^https?:\/\//i.test(ctaUrl) && ctaUrl.replace(/^https?:\/\//i, '').trim().length > 0;
     return hasLogo && hasCtaUrl;
+  }
+
+  function hideBrokenCarouselImage(img) {
+    if (!img) return;
+    var slide = img.closest('.cms-ad-carousel-slide, .cms-ad-logo-only, .cms-ad-compact');
+    if (slide) slide.hidden = true;
+    var carousel = img.closest('.cms-ad-carousel');
+    if (!carousel) return;
+    var visible = carousel.querySelectorAll('.cms-ad-carousel-slide:not([hidden])');
+    if (!visible.length) {
+      var host = carousel.closest('[id$="-sidebar-ad"], [id$="-ad"], aside, .cms-ad-slot');
+      if (host) {
+        host.hidden = true;
+        host.innerHTML = '';
+      }
+    } else if (visible.length === 1) {
+      carousel.querySelectorAll('.cms-ad-carousel-controls').forEach(function (el) {
+        el.hidden = true;
+      });
+    }
   }
 
   function renderCompactAd(container, block, slot, options) {
@@ -554,7 +575,8 @@
         imgClass +
         '" src="' +
         esc(url) +
-        '" alt="" loading="lazy" decoding="async">'
+        '" alt="" loading="lazy" decoding="async" ' +
+        'onerror="window.CmsAdBlocks&&window.CmsAdBlocks.hideBrokenCarouselImage(this)">'
       : '<div class="cms-ad-logo-only-placeholder">Your logo here</div>';
     return (
       '<a class="cms-ad-logo-link' +
@@ -663,12 +685,42 @@
     );
   }
 
+  function renderCarouselAvailableSlideHtml(slotOrSubject, slideIndex, total) {
+    var href = advertisingPathForSlot(slotOrSubject);
+    var copy = placeholderCopyForSlot(slotOrSubject);
+    var isActive = slideIndex === 0 ? ' is-active' : '';
+    return (
+      '<div class="cms-ad-carousel-slide cms-ad-carousel-slide--available' +
+      isActive +
+      '" data-carousel-slide="' +
+      slideIndex +
+      '" role="group" aria-roledescription="slide" aria-label="Available slot ' +
+      (slideIndex + 1) +
+      ' of ' +
+      total +
+      '">' +
+      '<aside class="cms-ad-logo-only cms-ad-logo-only--fill cms-ad-logo-only--available">' +
+      '<span class="cms-ad-logo-only-badge">Available</span>' +
+      '<a class="cms-ad-carousel-placeholder-link" href="' +
+      esc(href) +
+      '">' +
+      placeholderPitchHtml(copy) +
+      '<span class="cms-ad-carousel-placeholder-cta">' +
+      esc(copy.cta) +
+      '</span></a></aside></div>'
+    );
+  }
+
   function renderCarouselAd(container, ads, slotOrSubject, options) {
     if (!container) return false;
     options = options || {};
     var list = Array.isArray(ads) ? ads : [];
+    var showPlaceholder = options.showPlaceholder === true;
+    var showLastPlaceholder =
+      options.showLastSlotPlaceholder !== false && showPlaceholder;
+
     if (!list.length) {
-      if (options.showPlaceholder) {
+      if (showPlaceholder) {
         return renderCarouselPlaceholder(container, slotOrSubject);
       }
       container.hidden = true;
@@ -676,7 +728,9 @@
       return false;
     }
 
-    if (list.length === 1) {
+    var appendLastPlaceholder = showLastPlaceholder && list.length < CAROUSEL_MAX_SLOTS;
+
+    if (list.length === 1 && !appendLastPlaceholder) {
       return renderLogoOnlyAd(container, list[0], slotOrSubject);
     }
 
@@ -684,35 +738,44 @@
       list = shuffleArray(list);
     }
 
-    var dots = list
-      .map(function (_ad, index) {
-        return (
-          '<button type="button" class="cms-ad-carousel-dot' +
-          (index === 0 ? ' is-active' : '') +
-          '" data-carousel-dot="' +
-          index +
-          '" aria-label="Show sponsor ' +
-          (index + 1) +
-          '"></button>'
-        );
+    var total = list.length + (appendLastPlaceholder ? 1 : 0);
+    var slideHtml = list
+      .map(function (block, index) {
+        return renderCompactSlideHtml(block, index, total);
       })
+      .concat(
+        appendLastPlaceholder
+          ? [renderCarouselAvailableSlideHtml(slotOrSubject, list.length, total)]
+          : []
+      )
       .join('');
+
+    var dots = [];
+    for (var di = 0; di < total; di++) {
+      dots.push(
+        '<button type="button" class="cms-ad-carousel-dot' +
+          (di === 0 ? ' is-active' : '') +
+          '" data-carousel-dot="' +
+          di +
+          '" aria-label="Show slide ' +
+          (di + 1) +
+          '"></button>'
+      );
+    }
 
     container.hidden = false;
     container.innerHTML =
       '<div class="cms-ad-carousel" data-carousel-count="' +
-      list.length +
+      total +
       '">' +
       '<div class="cms-ad-carousel-viewport" aria-live="polite">' +
       '<div class="cms-ad-carousel-track">' +
-      list.map(function (block, index) {
-        return renderCompactSlideHtml(block, index, list.length);
-      }).join('') +
+      slideHtml +
       '</div></div>' +
       '<div class="cms-ad-carousel-controls">' +
       '<button type="button" class="cms-ad-carousel-arrow cms-ad-carousel-arrow--prev" aria-label="Previous sponsor">‹</button>' +
       '<div class="cms-ad-carousel-dots" role="tablist" aria-label="Sponsor adverts">' +
-      dots +
+      dots.join('') +
       '</div>' +
       '<button type="button" class="cms-ad-carousel-arrow cms-ad-carousel-arrow--next" aria-label="Next sponsor">›</button>' +
       '</div></div>';
@@ -835,6 +898,7 @@
     renderCarouselAd: renderCarouselAd,
     renderCarouselPlaceholder: renderCarouselPlaceholder,
     renderLogoOnlyAd: renderLogoOnlyAd,
+    hideBrokenCarouselImage: hideBrokenCarouselImage,
     isCompactRenderable: isCompactRenderable,
     loadCmsAd: loadCmsAd,
     loadCityPartnerSlot: loadCityPartnerSlot,

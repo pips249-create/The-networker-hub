@@ -1609,13 +1609,16 @@
     return html;
   }
 
-  function openReviewModal(reg) {
+  function openReviewModal(reg, options) {
     const modal = document.getElementById('ad-review-modal');
     const sub = document.getElementById('ad-review-modal-sub');
     const eventIdInput = document.getElementById('ad-review-event-id');
     const text = document.getElementById('ad-review-text');
     const err = document.getElementById('ad-review-error');
     if (!modal || !eventIdInput) return;
+
+    const opts = options && typeof options === 'object' ? options : {};
+    const initialRating = Math.max(0, Math.min(5, Math.round(Number(opts.rating) || 0)));
 
     if (sub) {
       const org = reg.organiserName ? String(reg.organiserName).trim() : 'the organiser';
@@ -1629,8 +1632,9 @@
     eventIdInput.value = reg.eventId || '';
     if (text) text.value = '';
     if (err) err.hidden = true;
-    setReviewStars(0);
-    resetReviewFeedbackStep();
+    setReviewStars(initialRating);
+    if (initialRating >= 1) showReviewFeedbackStep();
+    else resetReviewFeedbackStep();
     syncReviewNameFields();
     loadReviewNameState();
     modal.hidden = false;
@@ -2479,6 +2483,8 @@
   function openReviewFromQuery() {
     const eventId = consumePendingReviewEventId();
     if (!eventId) return;
+    const ratingParam = Number(new URLSearchParams(location.search).get('rating') || 0);
+    const initialRating = ratingParam >= 1 && ratingParam <= 5 ? Math.round(ratingParam) : 0;
     setSavedScope('reviews');
     setReviewsScope('pending');
     setRoute('saved');
@@ -2486,7 +2492,7 @@
     const launch = () => {
       if (!reg) return;
       if (reg.reviewStatus === 'pending') {
-        openReviewModal(reg);
+        openReviewModal(reg, { rating: initialRating });
       } else if (reg.reviewStatus === 'reviewed') {
         openViewReviewModal(reg);
       }
@@ -2497,7 +2503,14 @@
       });
     }
     clearPendingReviewEventId();
-    history.replaceState(null, '', location.pathname + (location.search || '') + '#reviews-pending');
+    try {
+      const clean = new URL(location.href);
+      clean.searchParams.delete('review');
+      clean.searchParams.delete('rating');
+      history.replaceState(null, '', clean.pathname + clean.search + '#reviews-pending');
+    } catch {
+      history.replaceState(null, '', location.pathname + '#reviews-pending');
+    }
   }
 
   function openPaymentFromQuery() {
