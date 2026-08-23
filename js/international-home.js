@@ -13,7 +13,21 @@
 
   /** ISO numeric ids (3 digits) for markets actively being built out. */
   var BUILDING_HUBS = {
-    // Example: '372': { iso2: 'IE', name: 'Ireland' },
+    '036': { iso2: 'AU', name: 'Australia' },
+    '124': { iso2: 'CA', name: 'Canada' },
+  };
+
+  /**
+   * Markets we do not plan to serve — no waitlist, no click-through.
+   * Focus on sanctions / severe regulatory barriers (UK company perspective).
+   */
+  var UNAVAILABLE_MARKETS = {
+    '112': { iso2: 'BY', name: 'Belarus' },
+    '192': { iso2: 'CU', name: 'Cuba' },
+    '364': { iso2: 'IR', name: 'Iran' },
+    '408': { iso2: 'KP', name: 'North Korea' },
+    '643': { iso2: 'RU', name: 'Russia' },
+    '760': { iso2: 'SY', name: 'Syria' },
   };
 
   var ISO_NUMERIC_TO_ALPHA2 = {
@@ -76,9 +90,19 @@
     var name = feature.properties && feature.properties.name ? String(feature.properties.name) : 'Unknown';
     var live = LIVE_HUBS[numericId] || null;
     var building = !live && (BUILDING_HUBS[numericId] || null);
-    var iso2 = (live && live.iso2) || (building && building.iso2) || ISO_NUMERIC_TO_ALPHA2[numericId] || '';
-    var displayName = (live && live.name) || (building && building.name) || name;
-    var status = live ? 'live' : building ? 'building' : 'soon';
+    var unavailable = !live && !building && (UNAVAILABLE_MARKETS[numericId] || null);
+    var iso2 =
+      (live && live.iso2) ||
+      (building && building.iso2) ||
+      (unavailable && unavailable.iso2) ||
+      ISO_NUMERIC_TO_ALPHA2[numericId] ||
+      '';
+    var displayName =
+      (live && live.name) ||
+      (building && building.name) ||
+      (unavailable && unavailable.name) ||
+      name;
+    var status = live ? 'live' : building ? 'building' : unavailable ? 'unavailable' : 'soon';
     return {
       numericId: numericId,
       iso2: iso2,
@@ -86,6 +110,7 @@
       status: status,
       live: status === 'live',
       building: status === 'building',
+      unavailable: status === 'unavailable',
       url: live ? live.url : '',
     };
   }
@@ -121,7 +146,7 @@
   function hideCountryPopup() {
     if (!els.popup) return;
     els.popup.hidden = true;
-    els.popup.classList.remove('is-visible', 'is-below', 'intl-country-popup--live', 'intl-country-popup--building', 'intl-country-popup--soon');
+    els.popup.classList.remove('is-visible', 'is-below', 'intl-country-popup--live', 'intl-country-popup--building', 'intl-country-popup--soon', 'intl-country-popup--unavailable');
   }
 
   function positionCountryPopup(path) {
@@ -153,7 +178,12 @@
     }
     var hasStats = Boolean(meta.live && stats && stats.events != null);
 
-    els.popup.classList.remove('intl-country-popup--live', 'intl-country-popup--building', 'intl-country-popup--soon');
+    els.popup.classList.remove(
+      'intl-country-popup--live',
+      'intl-country-popup--building',
+      'intl-country-popup--soon',
+      'intl-country-popup--unavailable'
+    );
     els.popup.classList.add('intl-country-popup--' + meta.status);
 
     if (meta.live) {
@@ -162,6 +192,9 @@
     } else if (meta.building) {
       els.popupKicker.textContent = 'Building';
       els.popupAction.textContent = 'Tell us about your group →';
+    } else if (meta.unavailable) {
+      els.popupKicker.textContent = 'Not available';
+      els.popupAction.textContent = 'We don\u2019t operate in this region';
     } else {
       els.popupKicker.textContent = 'Coming soon';
       els.popupAction.textContent = 'Register your interest →';
@@ -220,7 +253,7 @@
   }
 
   function handleCountryAction(meta) {
-    if (!meta) return;
+    if (!meta || meta.unavailable) return;
     if (meta.live && meta.url) {
       window.location.href = meta.url;
       return;
@@ -301,9 +334,14 @@
 
   function populateMobileSelect() {
     if (!els.select) return;
-    var sorted = state.countries.slice().sort(function (a, b) {
-      return a.name.localeCompare(b.name);
-    });
+    var sorted = state.countries
+      .filter(function (meta) {
+        return !meta.unavailable;
+      })
+      .slice()
+      .sort(function (a, b) {
+        return a.name.localeCompare(b.name);
+      });
     sorted.forEach(function (meta) {
       var option = document.createElement('option');
       option.value = meta.numericId;
@@ -316,13 +354,19 @@
   function countryStatusLabel(meta) {
     if (meta.live) return ' — live';
     if (meta.building) return ' — building';
+    if (meta.unavailable) return ' — not available';
     return ' — coming soon';
   }
 
   function bindCountryPath(path, meta) {
     path.setAttribute('data-country-id', meta.numericId);
-    path.setAttribute('tabindex', '0');
-    path.setAttribute('role', 'button');
+    if (!meta.unavailable) {
+      path.setAttribute('tabindex', '0');
+      path.setAttribute('role', 'button');
+    } else {
+      path.removeAttribute('tabindex');
+      path.setAttribute('role', 'img');
+    }
     path.setAttribute('aria-label', meta.name + countryStatusLabel(meta));
 
     function onEnter() {
@@ -341,9 +385,10 @@
     path.addEventListener('focus', onEnter);
     path.addEventListener('blur', onLeave);
     path.addEventListener('click', function () {
-      handleCountryAction(meta);
+      if (!meta.unavailable) handleCountryAction(meta);
     });
     path.addEventListener('keydown', function (event) {
+      if (meta.unavailable) return;
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         handleCountryAction(meta);
@@ -379,6 +424,7 @@
       path.classList.add('intl-country');
       if (meta.live) path.classList.add('intl-country--live');
       else if (meta.building) path.classList.add('intl-country--building');
+      else if (meta.unavailable) path.classList.add('intl-country--unavailable');
       else path.classList.add('intl-country--soon');
       bindCountryPath(path, meta);
       els.svg.appendChild(path);
